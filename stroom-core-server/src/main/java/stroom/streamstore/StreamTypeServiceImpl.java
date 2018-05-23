@@ -38,9 +38,10 @@ public class StreamTypeServiceImpl extends NamedEntityServiceImpl<StreamType, Fi
     }
 
     /**
-     * @return the feed by it's ID or null
+     * @return the stream type by it's ID or null
      */
     @SuppressWarnings("unchecked")
+    @Override
     public StreamType get(final String streamTypeName) {
         final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT e FROM ");

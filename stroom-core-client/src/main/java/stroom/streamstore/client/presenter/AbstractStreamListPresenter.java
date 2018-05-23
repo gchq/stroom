@@ -37,7 +37,7 @@ import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.IdSet;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.ResultList;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.node.shared.Volume;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
@@ -473,7 +473,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         fetchSet.add(StreamType.ENTITY_TYPE);
         // }
         // if (securityContext.hasAppPermission(Feed.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
-        fetchSet.add(Feed.ENTITY_TYPE);
+        fetchSet.add(FeedDoc.DOCUMENT_TYPE);
         // }
         // if (securityContext.hasAppPermission(StreamProcessor.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
         fetchSet.add(StreamProcessor.ENTITY_TYPE);

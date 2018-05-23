@@ -19,20 +19,12 @@ package stroom.entity.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.FeedService;
 import stroom.feed.MetaMap;
-import stroom.feed.shared.Feed;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.feed.shared.FeedDoc;
 import stroom.streamstore.StreamSource;
 import stroom.streamstore.StreamStore;
-import stroom.streamstore.StreamTypeService;
-import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
-import stroom.util.ArgsUtil;
 import stroom.util.date.DateUtil;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -41,8 +33,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.List;
-import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -123,7 +113,7 @@ public final class SendStreamDataClient {
     /**
      * Perform the HTTP Post.
      */
-    private static void sendStream(final URL url, final StreamStore streamStore, final Feed feed, final long streamId)
+    private static void sendStream(final URL url, final StreamStore streamStore, final FeedDoc feed, final long streamId)
             throws IOException {
         final HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         if (connection instanceof HttpsURLConnection) {

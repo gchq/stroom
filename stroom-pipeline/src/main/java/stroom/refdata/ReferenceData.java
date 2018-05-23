@@ -16,11 +16,8 @@
 
 package stroom.refdata;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.entity.DocumentPermissionCache;
-import stroom.feed.shared.Feed;
-import stroom.pipeline.errorhandler.ErrorReceiver;
+import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.StreamHolder;
@@ -231,7 +228,7 @@ public class ReferenceData {
         final boolean hasPermission = localDocumentPermissionCache.computeIfAbsent(pipelineReference, k ->
                 documentPermissionCache == null ||
                         documentPermissionCache.hasDocumentPermission(
-                                Feed.ENTITY_TYPE,
+                                FeedDoc.DOCUMENT_TYPE,
                                 pipelineReference.getFeed().getUuid(),
                                 DocumentPermissionNames.USE));
 

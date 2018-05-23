@@ -19,7 +19,7 @@ package stroom.refdata;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.docref.DocRef;
 import stroom.security.MockSecurityContext;
@@ -48,7 +48,7 @@ public class TestMapStoreCache extends StroomUnitTest {
 
             long time = System.currentTimeMillis();
             for (int i = 0; i < MAX_CACHE_ITEMS; i++) {
-                final Feed feed = new Feed();
+                final FeedDoc feed = new FeedDoc();
                 feed.setName("test " + i);
                 feed.setReference(true);
                 feed.setId(i);
@@ -65,7 +65,7 @@ public class TestMapStoreCache extends StroomUnitTest {
 
             time = System.currentTimeMillis();
             for (int i = 0; i < MAX_CACHE_ITEMS; i++) {
-                final Feed feed = new Feed();
+                final FeedDoc feed = new FeedDoc();
                 feed.setName("test " + i);
                 feed.setReference(true);
                 feed.setId(i);

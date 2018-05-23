@@ -22,11 +22,10 @@ import stroom.cache.StroomCacheManager;
 import stroom.dashboard.shared.QueryEntity;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.guice.StroomBeanStore;
 import stroom.index.IndexShardManager;
 import stroom.index.IndexShardWriterCache;
-import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.jobsystem.shared.ClusterLock;
 import stroom.jobsystem.shared.Job;
@@ -82,7 +81,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
             DocumentPermission.TABLE_NAME,
             "explorerTreeNode",
             "explorerTreePath",
-            Feed.TABLE_NAME,
+            FeedDoc.TABLE_NAME,
             "IDX_VOL", //link table between IDX and VOL so no entity of its own
             IndexShard.TABLE_NAME,
             Job.TABLE_NAME,

@@ -21,9 +21,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.cluster.ClearServiceClusterTask;
 import stroom.entity.shared.Period;
-import stroom.feed.FeedService;
-import stroom.feed.shared.Feed;
-import stroom.feed.shared.FindFeedCriteria;
+import stroom.streamstore.FdService;
+import stroom.feed.shared.FeedDoc;
+import stroom.streamstore.FindFdCriteria;
 import stroom.jobsystem.JobTrackedSchedule;
 import stroom.jobsystem.shared.JobManager;
 import stroom.node.NodeService;
@@ -86,7 +86,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     private static final String BENCHMARK_REFERENCE = "BENCHMARK-REFERENCE";
     private static final String BENCHMARK_EVENTS = "BENCHMARK-EVENTS";
 
-    private final FeedService feedService;
+    private final FdService feedService;
     private final PipelineStore pipelineStore;
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final StreamProcessorService streamProcessorService;
@@ -108,7 +108,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     private Task<?> task;
 
     @Inject
-    BenchmarkClusterExecutor(final FeedService feedService,
+    BenchmarkClusterExecutor(final FdService feedService,
                              final PipelineStore pipelineStore,
                              final StreamProcessorFilterService streamProcessorFilterService,
                              final StreamProcessorService streamProcessorService,
@@ -199,9 +199,9 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 
                 dispatchHelper.execAsync(new ClearServiceClusterTask(task, null), TargetType.ACTIVE);
 
-                final Feed referenceFeed = feedService.find(new FindFeedCriteria(BENCHMARK_REFERENCE)).getFirst();
+                final FeedDoc referenceFeed = feedService.find(new FindFdCriteria(BENCHMARK_REFERENCE)).getFirst();
                 final DocRef referencePipeline = pipelineStore.findByName(BENCHMARK_REFERENCE).get(0);
-                final Feed eventFeed = feedService.find(new FindFeedCriteria(BENCHMARK_EVENTS)).getFirst();
+                final FeedDoc eventFeed = feedService.find(new FindFdCriteria(BENCHMARK_EVENTS)).getFirst();
                 final DocRef eventsPipeline = pipelineStore.findByName(BENCHMARK_EVENTS).get(0);
 
                 // Not setup to run benchmark
@@ -268,7 +268,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
         return streamProcessor;
     }
 
-    private Period writeData(final Feed feed, final StreamType streamType, final String data, final int streamCount) {
+    private Period writeData(final FeedDoc feed, final StreamType streamType, final String data, final int streamCount) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
         if (!isTerminated()) {
@@ -311,7 +311,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
         return System.currentTimeMillis() + TIME_OUT;
     }
 
-    private void processData(final Feed feed,
+    private void processData(final FeedDoc feed,
                              final StreamType rawStreamType,
                              final StreamType processedStreamType,
                              final StreamProcessor streamProcessor,
@@ -457,7 +457,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     // }
     // }
 
-    private void recordTranslationStats(final Feed feed, final Period processPeriod) {
+    private void recordTranslationStats(final FeedDoc feed, final Period processPeriod) {
         // // Flush out the attributes as we need these for the stats
         // dispatchHelper.execAsync(new FlushServiceClusterTask(null, null,
         // "Flush stream attribute values",

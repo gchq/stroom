@@ -17,8 +17,8 @@
 
 package stroom.pipeline.writer;
 
-import stroom.feed.FeedService;
-import stroom.feed.shared.Feed;
+import stroom.streamstore.FdService;
+import stroom.feed.shared.FeedDoc;
 import stroom.node.NodeCache;
 import stroom.pipeline.destination.RollingDestination;
 import stroom.pipeline.destination.RollingDestinationFactory;
@@ -54,12 +54,12 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
 
     private final StreamStore streamStore;
     private final StreamHolder streamHolder;
-    private final FeedService feedService;
+    private final FdService feedService;
     private final StreamTypeService streamTypeService;
     private final NodeCache nodeCache;
 
     private DocRef feedRef;
-    private Feed feed;
+    private FeedDoc feed;
     private String streamType;
     private boolean segmentOutput = true;
 
@@ -70,7 +70,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
                           final TaskContext taskContext,
                           final StreamStore streamStore,
                           final StreamHolder streamHolder,
-                          final FeedService feedService,
+                          final FdService feedService,
                           final StreamTypeService streamTypeService,
                           final NodeCache nodeCache) {
         super(destinations, taskContext);
@@ -138,7 +138,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     }
 
     @PipelineProperty(description = "The feed that output stream should be written to. If not specified the feed the input stream belongs to will be used.")
-    @PipelinePropertyDocRef(types = Feed.ENTITY_TYPE)
+    @PipelinePropertyDocRef(types = FeedDoc.DOCUMENT_TYPE)
     public void setFeed(final DocRef feedRef) {
         this.feedRef = feedRef;
     }

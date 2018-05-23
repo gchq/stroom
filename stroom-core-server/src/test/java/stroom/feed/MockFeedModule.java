@@ -21,13 +21,14 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import stroom.entity.FindService;
 import stroom.entity.shared.Clearable;
+import stroom.streamstore.FdService;
 
 public class MockFeedModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(FeedService.class).to(MockFeedService.class);
+        bind(FdService.class).to(MockFeedService.class);
         bind(FeedNameCache.class).to(FeedNameCacheImpl.class);
-        bind(FeedService.class).annotatedWith(Names.named("cachedFeedService")).to(MockFeedService.class);
+        bind(FdService.class).annotatedWith(Names.named("cachedFeedService")).to(MockFeedService.class);
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(MockFeedService.class);

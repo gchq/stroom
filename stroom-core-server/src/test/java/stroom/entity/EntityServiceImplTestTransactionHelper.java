@@ -19,8 +19,8 @@ package stroom.entity;
 
 import org.junit.Assert;
 
-import stroom.feed.FeedService;
-import stroom.feed.shared.Feed;
+import stroom.streamstore.FdService;
+import stroom.feed.shared.FeedDoc;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -28,14 +28,14 @@ import javax.inject.Named;
 
 // @Transactional
 class EntityServiceImplTestTransactionHelper {
-    private final FeedService feedService;
-    private final FeedService cachedFeedService;
+    private final FdService feedService;
+    private final FdService cachedFeedService;
 
-    private Feed feed;
+    private FeedDoc feed;
 
     @Inject
-    EntityServiceImplTestTransactionHelper(final FeedService feedService,
-                                           @Named("cachedFeedService") final FeedService cachedFeedService) {
+    EntityServiceImplTestTransactionHelper(final FdService feedService,
+                                           @Named("cachedFeedService") final FdService cachedFeedService) {
         this.feedService = feedService;
         this.cachedFeedService = cachedFeedService;
     }
@@ -46,16 +46,16 @@ class EntityServiceImplTestTransactionHelper {
 
     // @Transactional
     public void test1() {
-        Feed feed1 = feedService.loadById(feed.getId());
-        Feed feed2 = cachedFeedService.loadById(feed.getId());
+        FeedDoc feed1 = feedService.loadById(feed.getId());
+        FeedDoc feed2 = cachedFeedService.loadById(feed.getId());
 
         Assert.assertTrue("This method is transactional but loadById should start a new one", feed1 != feed2);
         Assert.assertEquals(feed1, feed2);
     }
 
     public void test2() {
-        Feed feed1 = cachedFeedService.loadById(feed.getId());
-        Feed feed2 = cachedFeedService.loadById(feed.getId());
+        FeedDoc feed1 = cachedFeedService.loadById(feed.getId());
+        FeedDoc feed2 = cachedFeedService.loadById(feed.getId());
 
         Assert.assertTrue(feed1 == feed2);
         Assert.assertEquals(feed1, feed2);

@@ -21,11 +21,11 @@ import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
-import stroom.feed.FeedService;
+import stroom.streamstore.FdService;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
-import stroom.feed.shared.Feed;
-import stroom.feed.shared.FindFeedCriteria;
+import stroom.feed.shared.FeedDoc;
+import stroom.streamstore.FindFdCriteria;
 import stroom.importexport.ImportExportSerializer;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.node.NodeCache;
@@ -98,7 +98,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     @Inject
     private TaskManager taskManager;
     @Inject
-    private FeedService feedService;
+    private FdService feedService;
     @Inject
     private PipelineStore pipelineStore;
     @Inject
@@ -143,7 +143,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         // Create a stream processor for each pipeline.
         final List<DocRef> pipelines = pipelineStore.list();
         for (final DocRef pipelineRef : pipelines) {
-            final Feed feed = feedService.loadByName(pipelineRef.getName());
+            final FeedDoc feed = feedService.loadByName(pipelineRef.getName());
 
             if (feed != null && feed.isReference() == reference) {
                 StreamProcessor streamProcessor = new StreamProcessor();
@@ -197,7 +197,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         }
     }
 
-    private void test(final Path inputFile, final Feed feed, final Path outputDir, final String stem,
+    private void test(final Path inputFile, final FeedDoc feed, final Path outputDir, final String stem,
                       final boolean compareOutput, final List<Exception> exceptions) throws IOException {
         LOGGER.info("Testing input {}, feed {}, output {}, stem {}",
                 inputFile.getFileName().toString(), feed.getName(), outputDir.getFileName().toString(), stem);
@@ -259,7 +259,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         Assert.assertTrue("There should not be any more tasks here", tasks.size() == 0);
     }
 
-    private void addStream(final Path file, final Feed feed) throws IOException {
+    private void addStream(final Path file, final FeedDoc feed) throws IOException {
         if (file.getFileName().toString().endsWith(".zip")) {
             loadZipData(file, feed);
 
@@ -302,7 +302,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         }
     }
 
-    private void loadZipData(final Path file, final Feed feed) throws IOException {
+    private void loadZipData(final Path file, final FeedDoc feed) throws IOException {
         final MetaMap metaMap = new MetaMap();
         metaMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
 
@@ -340,10 +340,10 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         final List<Exception> exceptions = new ArrayList<>();
 
         // We first need to get all of the feeds from the DB.
-        final FindFeedCriteria feedCriteria = new FindFeedCriteria(feedName);
+        final FindFdCriteria feedCriteria = new FindFdCriteria(feedName);
 
         // feedCriteria.setFeedType(FeedType.REFERENCE);
-        final BaseResultList<Feed> feeds = feedService.find(feedCriteria);
+        final BaseResultList<FeedDoc> feeds = feedService.find(feedCriteria);
         Assert.assertTrue("No feeds found", feeds != null && feeds.size() > 0);
         Assert.assertEquals("Expected 1 feed", 1, feeds.size());
         final List<DocRef> pipelines = pipelineStore.findByName(feedName);
@@ -351,7 +351,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         Assert.assertEquals("Expected 1 pipeline", 1, pipelines.size());
 
         final DocRef pipelineRef = pipelines.get(0);
-        final Feed feed = feeds.getFirst();
+        final FeedDoc feed = feeds.getFirst();
 
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
                 .addTerm(StreamDataSource.FEED, Condition.EQUALS, feedName)

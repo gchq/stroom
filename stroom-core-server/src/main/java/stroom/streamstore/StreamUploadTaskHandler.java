@@ -21,10 +21,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.util.EntityServiceExceptionUtil;
-import stroom.feed.FeedService;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
@@ -63,7 +62,7 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
     private final TaskContext taskContext;
     private final StreamStore streamStore;
     private final StreamTypeService streamTypeService;
-    private final FeedService feedService;
+    private final FdService feedService;
     private final MetaDataStatistic metaDataStatistics;
     private final Security security;
 
@@ -71,7 +70,7 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
     StreamUploadTaskHandler(final TaskContext taskContext,
                             final StreamStore streamStore,
                             @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
-                            @Named("cachedFeedService") final FeedService feedService,
+                            @Named("cachedFeedService") final FdService feedService,
                             final MetaDataStatistic metaDataStatistics,
                             final Security security) {
         this.taskContext = taskContext;
@@ -165,7 +164,7 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
                                   final StreamUploadTask streamUploadTask, final MetaMap metaMap) {
         try {
             final StreamType streamType = streamTypeService.loadByName(task.getStreamType().getName());
-            final Feed feed = feedService.loadByUuid(task.getFeed().getUuid());
+            final FeedDoc feed = feedService.loadByUuid(task.getFeed().getUuid());
             final List<StreamTargetStroomStreamHandler> handlerList = StreamTargetStroomStreamHandler
                     .buildSingleHandlerList(streamStore, feedService, metaDataStatistics, feed, streamType);
             final byte[] buffer = BufferFactory.create();
@@ -190,7 +189,7 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
                     "Read");
 
             final StreamType streamType = streamTypeService.loadByName(task.getStreamType().getName());
-            final Feed feed = feedService.loadByUuid(task.getFeed().getUuid());
+            final FeedDoc feed = feedService.loadByUuid(task.getFeed().getUuid());
             final Stream stream = Stream.createStream(streamType, feed, effectiveMs);
 
             streamTarget = streamStore.openStreamTarget(stream);

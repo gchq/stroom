@@ -19,9 +19,10 @@ package stroom.feed;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.shared.BaseResultList;
-import stroom.feed.shared.Feed;
-import stroom.feed.shared.FindFeedCriteria;
+import stroom.feed.shared.FeedDoc;
+import stroom.streamstore.FindFdCriteria;
 import stroom.pipeline.PipelineStore;
+import stroom.streamstore.FdService;
 import stroom.streamstore.shared.StreamType;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
@@ -38,7 +39,7 @@ public class TestFeedServiceImpl extends AbstractCoreIntegrationTest {
     private static final int TEST_PAGE = 2;
 
     @Inject
-    private FeedService feedService;
+    private FdService feedService;
     @Inject
     private PipelineStore pipelineStore;
     @Inject
@@ -50,20 +51,20 @@ public class TestFeedServiceImpl extends AbstractCoreIntegrationTest {
     @Test
     public void test1() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        Feed fd = feedService.create(feedName);
+        FeedDoc fd = feedService.create(feedName);
         fd = feedService.save(fd);
         fd = feedService.save(fd);
 
         Assert.assertNotNull(feedService.loadByName(feedName));
         Assert.assertNull(feedService.loadByName(feedName + "void"));
 
-        final Feed test1 = feedService.loadByName(feedName);
+        final FeedDoc test1 = feedService.loadByName(feedName);
         Assert.assertNotNull(test1.getCreateTime());
         Assert.assertNotNull(test1.getUpdateTime());
 
         final HashSet<String> fetchSet = new HashSet<>();
         fetchSet.add(StreamType.ENTITY_TYPE);
-        final Feed test2 = feedService.loadById(fd.getId(), fetchSet);
+        final FeedDoc test2 = feedService.loadById(fd.getId(), fetchSet);
         Assert.assertNotNull(test2.getCreateTime());
         Assert.assertNotNull(test2.getUpdateTime());
         Assert.assertNotNull(test2.getStreamType().getDisplayValue());
@@ -80,51 +81,51 @@ public class TestFeedServiceImpl extends AbstractCoreIntegrationTest {
      */
     @Test
     public void test2() {
-        Feed rfd = feedService.create("REF_FEED_1");
+        FeedDoc rfd = feedService.create("REF_FEED_1");
         rfd.setDescription("Junit");
         rfd.setReference(true);
         rfd = feedService.save(rfd);
 
-        final Set<Feed> refFeed = new HashSet<>();
+        final Set<FeedDoc> refFeed = new HashSet<>();
         refFeed.add(rfd);
 
-        Feed fd = feedService.create("EVT_FEED_1");
+        FeedDoc fd = feedService.create("EVT_FEED_1");
         fd.setDescription("Junit");
         fd = feedService.save(fd);
 
         // Find just reference feed.
-        FindFeedCriteria criteria = new FindFeedCriteria();
+        FindFdCriteria criteria = new FindFdCriteria();
         criteria.setReference(true);
-        List<Feed> list = feedService.find(criteria);
+        List<FeedDoc> list = feedService.find(criteria);
         Assert.assertEquals(1, list.size());
         Assert.assertEquals(rfd, list.get(0));
 
         // Find just event feed.
-        criteria = new FindFeedCriteria();
+        criteria = new FindFdCriteria();
         criteria.setReference(false);
         list = feedService.find(criteria);
         Assert.assertEquals(1, list.size());
         Assert.assertEquals(fd, list.get(0));
 
         // Find both feeds.
-        criteria = new FindFeedCriteria();
+        criteria = new FindFdCriteria();
         list = feedService.find(criteria);
         Assert.assertEquals(2, list.size());
 
         final List<String> sortList = new ArrayList<>();
-        sortList.add(FindFeedCriteria.FIELD_NAME);
-        sortList.add(FindFeedCriteria.FIELD_TYPE);
-        sortList.add(FindFeedCriteria.FIELD_CLASSIFICATION);
+        sortList.add(FindFdCriteria.FIELD_NAME);
+        sortList.add(FindFdCriteria.FIELD_TYPE);
+        sortList.add(FindFdCriteria.FIELD_CLASSIFICATION);
 
         // Test order by.
         for (final String field : sortList) {
-            criteria = new FindFeedCriteria();
+            criteria = new FindFdCriteria();
             criteria.setSort(field);
             list = feedService.find(criteria);
             Assert.assertEquals(2, list.size());
         }
 
-        criteria = new FindFeedCriteria();
+        criteria = new FindFdCriteria();
         criteria.getFeedIdSet().add(rfd);
         list = feedService.find(criteria);
         Assert.assertEquals(1, list.size());
@@ -137,16 +138,16 @@ public class TestFeedServiceImpl extends AbstractCoreIntegrationTest {
     @Test
     public void testPaging() {
         for (int i = 0; i < TEST_SIZE; i++) {
-            final Feed rfd = feedService.create("REF_FEED_" + i);
+            final FeedDoc rfd = feedService.create("REF_FEED_" + i);
             rfd.setDescription("Junit");
             feedService.save(rfd);
         }
 
-        final FindFeedCriteria criteria = new FindFeedCriteria();
+        final FindFdCriteria criteria = new FindFdCriteria();
         criteria.obtainPageRequest().setLength(TEST_PAGE);
         criteria.obtainPageRequest().setOffset(Long.valueOf(0));
 
-        BaseResultList<Feed> list = feedService.find(criteria);
+        BaseResultList<FeedDoc> list = feedService.find(criteria);
         Assert.assertEquals(TEST_PAGE, list.size());
         Assert.assertEquals(0L, list.getPageResponse().getOffset().intValue());
         Assert.assertEquals(TEST_PAGE, list.getPageResponse().getLength().intValue());
@@ -167,16 +168,16 @@ public class TestFeedServiceImpl extends AbstractCoreIntegrationTest {
     @Test
     public void testNonLazyLoad() {
         try {
-            final Feed fd1 = feedService.create("K1_12345");
+            final FeedDoc fd1 = feedService.create("K1_12345");
             fd1.setDescription("Junit");
             feedService.save(fd1);
 
-            final Feed fd2 = feedService.create("K2_12345");
+            final FeedDoc fd2 = feedService.create("K2_12345");
             fd2.setDescription("Junit");
             feedService.save(fd2);
 
             // check for eager load up
-            final Feed dbFd = feedService.loadByName("K2_12345");
+            final FeedDoc dbFd = feedService.loadByName("K2_12345");
 
             Assert.assertNotNull(dbFd);
             // Assert.assertNotNull(dbFd.getFeed());

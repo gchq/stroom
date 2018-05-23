@@ -24,11 +24,15 @@ import com.google.inject.name.Names;
 import stroom.entity.CachingEntityManager;
 import stroom.entity.FindService;
 import stroom.explorer.ExplorerActionHandler;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
+import stroom.pipeline.PipelineStore;
+import stroom.pipeline.PipelineStoreImpl;
 import stroom.security.SecurityContext;
 import stroom.persist.EntityManagerSupport;
+import stroom.streamstore.FdService;
+import stroom.streamstore.FdServiceImpl;
 import stroom.task.TaskHandler;
 
 import javax.inject.Named;
@@ -36,32 +40,36 @@ import javax.inject.Named;
 public class FeedModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(FeedService.class).to(FeedServiceImpl.class);
+        bind(FdService.class).to(FdServiceImpl.class);
+        bind(FeedStore.class).to(FeedStoreImpl.class);
         bind(FeedNameCache.class).to(FeedNameCacheImpl.class);
         bind(RemoteFeedService.class).annotatedWith(Names.named("remoteFeedService")).to(RemoteFeedServiceImpl.class);
+
+        // TODO : @66 FIX PLACES THAT USE PIPELINE CACHING
+        bind(FeedStore.class).annotatedWith(Names.named("cachedFeedStore")).to(FeedStoreImpl.class);
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.feed.FetchSupportedEncodingsActionHandler.class);
 
         final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
-        explorerActionHandlerBinder.addBinding().to(stroom.feed.FeedServiceImpl.class);
+        explorerActionHandlerBinder.addBinding().to(FeedStoreImpl.class);
 
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
-        importExportActionHandlerBinder.addBinding().to(stroom.feed.FeedServiceImpl.class);
+        importExportActionHandlerBinder.addBinding().to(FeedStoreImpl.class);
 
         final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
-        entityServiceByTypeBinder.addBinding(Feed.ENTITY_TYPE).to(stroom.feed.FeedServiceImpl.class);
+        entityServiceByTypeBinder.addBinding(FeedDoc.DOCUMENT_TYPE).to(FdServiceImpl.class);
 
         final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
-        findServiceBinder.addBinding().to(stroom.feed.FeedServiceImpl.class);
+        findServiceBinder.addBinding().to(FdServiceImpl.class);
     }
-
-    @Provides
-    @Named("cachedFeedService")
-    public FeedService cachedFeedService(final CachingEntityManager entityManager,
-                                         final EntityManagerSupport entityManagerSupport,
-                                         final ImportExportHelper importExportHelper,
-                                         final SecurityContext securityContext) {
-        return new FeedServiceImpl(entityManager, entityManagerSupport, importExportHelper, securityContext);
-    }
+//
+//    @Provides
+//    @Named("cachedFeedService")
+//    public FdService cachedFeedService(final CachingEntityManager entityManager,
+//                                       final EntityManagerSupport entityManagerSupport,
+//                                       final ImportExportHelper importExportHelper,
+//                                       final SecurityContext securityContext) {
+//        return new FdServiceImpl(entityManager, entityManagerSupport, importExportHelper, securityContext);
+//    }
 }

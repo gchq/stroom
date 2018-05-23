@@ -1,6 +1,5 @@
 package stroom.streamstore.shared;
 
-import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
@@ -56,20 +55,20 @@ public final class ExpressionUtil {
                 .build();
     }
 
-    public static ExpressionOperator createFeedExpression(final Feed feed) {
-        return createFeedsExpression(feed);
+    public static ExpressionOperator createFeedExpression(final String feedName) {
+        return createFeedsExpression(feedName);
     }
 
-    public static ExpressionOperator createFeedsExpression(final Feed... feeds) {
+    public static ExpressionOperator createFeedsExpression(final String... feedNames) {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
 
-        if (feeds != null) {
-            if (feeds.length == 1) {
-                builder.addTerm(StreamDataSource.FEED, Condition.EQUALS, feeds[0].getName());
+        if (feedNames != null) {
+            if (feedNames.length == 1) {
+                builder.addTerm(StreamDataSource.FEED, Condition.EQUALS, feedNames[0]);
             } else {
                 final ExpressionOperator.Builder or = new ExpressionOperator.Builder(Op.OR);
-                for (final Feed feed : feeds) {
-                    or.addTerm(StreamDataSource.FEED, Condition.EQUALS, feed.getName());
+                for (final String feedName : feedNames) {
+                    or.addTerm(StreamDataSource.FEED, Condition.EQUALS, feedName);
                 }
                 builder.addOperator(or.build());
             }

@@ -21,13 +21,12 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.jobsystem.MockTask;
 import stroom.node.NodeService;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.streamstore.FindStreamVolumeCriteria;
-import stroom.streamstore.StreamMaintenanceService;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.StreamTarget;
 import stroom.streamstore.fs.FileSystemCleanExecutor;
@@ -81,7 +80,7 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         final ZonedDateTime oldDate = ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_SIXTY);
 
         // Write a file 2 files ... on we leave locked and the other not locked
-        final Feed feed = commonTestScenarioCreator.createSimpleFeed();
+        final FeedDoc feed = commonTestScenarioCreator.createSimpleFeed();
         final Stream lockfile1 = Stream.createStream(StreamType.RAW_EVENTS, feed, null);
         final Stream nolockfile1 = Stream.createStream(StreamType.RAW_EVENTS, feed, null);
 
@@ -154,7 +153,7 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
 
     @Test
     public void testArchiveRemovedFile() {
-        final Feed feed = commonTestScenarioCreator.createSimpleFeed();
+        final FeedDoc feed = commonTestScenarioCreator.createSimpleFeed();
 
         final Stream data = commonTestScenarioCreator.createSample2LineRawFile(feed, StreamType.RAW_EVENTS);
 
@@ -198,7 +197,7 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
 
         waitForTaskManagerToComplete();
 
-        final Feed feed = commonTestScenarioCreator.createSimpleFeed();
+        final FeedDoc feed = commonTestScenarioCreator.createSimpleFeed();
         final long endTime = System.currentTimeMillis();
         final long twoDaysTime = 1000 * 60 * 60 * 24 * 2;
         final long tenMin = 1000 * 60 * 10;

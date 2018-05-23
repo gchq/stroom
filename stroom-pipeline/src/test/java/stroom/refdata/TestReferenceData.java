@@ -29,7 +29,7 @@ import stroom.docstore.memory.MemoryPersistence;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Range;
 import stroom.feed.MockFeedService;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.PipelineStoreImpl;
 import stroom.pipeline.shared.PipelineDoc;
@@ -63,8 +63,8 @@ public class TestReferenceData extends StroomUnitTest {
 
     @Test
     public void testSimple() {
-        final Feed feed1 = feedService.create("TEST_FEED_1");
-        final Feed feed2 = feedService.create("TEST_FEED_2");
+        final FeedDoc feed1 = feedService.create("TEST_FEED_1");
+        final FeedDoc feed2 = feedService.create("TEST_FEED_2");
         final DocRef pipeline1Ref = pipelineStore.createDocument("TEST_PIPELINE_1");
         final DocRef pipeline2Ref = pipelineStore.createDocument("TEST_PIPELINE_2");
 
@@ -144,7 +144,7 @@ public class TestReferenceData extends StroomUnitTest {
 
     @Test
     public void testNestedMaps() {
-        Feed feed1 = feedService.create("TEST_FEED_V1");
+        FeedDoc feed1 = feedService.create("TEST_FEED_V1");
         feed1.setReference(true);
         feed1 = feedService.save(feed1);
 
@@ -182,7 +182,7 @@ public class TestReferenceData extends StroomUnitTest {
 
     @Test
     public void testRange() {
-        Feed feed1 = feedService.create("TEST_FEED_V1");
+        FeedDoc feed1 = feedService.create("TEST_FEED_V1");
         feed1.setReference(true);
         feed1 = feedService.save(feed1);
 

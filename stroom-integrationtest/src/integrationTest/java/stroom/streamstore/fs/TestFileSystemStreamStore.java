@@ -25,8 +25,8 @@ import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.IdRange;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.Period;
-import stroom.feed.FeedService;
-import stroom.feed.shared.Feed;
+import stroom.streamstore.FdService;
+import stroom.feed.shared.FeedDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -86,14 +86,14 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     @Inject
     private StreamAttributeValueFlush streamAttributeValueFlush;
     @Inject
-    private FeedService feedService;
+    private FdService feedService;
     @Inject
     private StreamTaskCreator streamTaskCreator;
     @Inject
     private StreamAttributeMapService streamMDService;
 
-    private Feed feed1;
-    private Feed feed2;
+    private FeedDoc feed1;
+    private FeedDoc feed2;
     private int initialReplicationCount = 1;
 
     @Override
@@ -113,8 +113,8 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     /**
      * Setup some test data.
      */
-    private Feed setupFeed(final String feedName) {
-        Feed sample = feedService.loadByName(feedName);
+    private FeedDoc setupFeed(final String feedName) {
+        FeedDoc sample = feedService.loadByName(feedName);
         if (sample == null) {
             sample = feedService.create(feedName);
             sample.setDescription("Junit");
@@ -278,7 +278,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         Assert.assertEquals(1L, streamStore.find(findStreamCriteria).size());
     }
 
-    private Stream createStream(final Feed feed, final Long streamTaskId, final Long parentStreamId)
+    private Stream createStream(final FeedDoc feed, final Long streamTaskId, final Long parentStreamId)
             throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
@@ -606,7 +606,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                                 final boolean lock) throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
-        final Feed sample = setupFeed(feed);
+        final FeedDoc sample = setupFeed(feed);
         final Stream stream = Stream.createStream(type, sample,
                 ZonedDateTime.of(year, month, N1, N13, 0, 0, 0, ZoneOffset.UTC).toInstant().toEpochMilli());
 

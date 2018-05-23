@@ -21,7 +21,7 @@ import org.hibernate.proxy.LazyInitializer;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.streamstore.shared.Stream;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
@@ -39,7 +39,7 @@ public class TestBaseEntityDeProxyProcessor extends StroomUnitTest {
 
         final Stream deproxy = (Stream) (new BaseEntityDeProxyProcessor(true).process(stream));
 
-        Assert.assertTrue(deproxy.getFeed().getClass().equals(Feed.class));
+        Assert.assertTrue(deproxy.getFeed().getClass().equals(FeedDoc.class));
         Assert.assertEquals(100L, deproxy.getFeed().getId());
     }
 
@@ -47,7 +47,7 @@ public class TestBaseEntityDeProxyProcessor extends StroomUnitTest {
         private static final long serialVersionUID = -6963635707336015922L;
     }
 
-    public static class DummyFeed extends Feed implements HibernateProxy {
+    public static class DummyFeed extends FeedDoc implements HibernateProxy {
         private static final long serialVersionUID = -338271738308074875L;
 
         @Override
@@ -55,7 +55,7 @@ public class TestBaseEntityDeProxyProcessor extends StroomUnitTest {
             final Object proxy = Proxy.newProxyInstance(this.getClass().getClassLoader(),
                     new Class<?>[]{LazyInitializer.class}, (proxy1, method, args) -> {
                         if (method.getName().equals("getEntityName")) {
-                            return Feed.class.getName();
+                            return FeedDoc.class.getName();
                         }
                         return null;
                     });

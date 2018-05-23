@@ -23,9 +23,9 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
-import stroom.feed.FeedService;
-import stroom.feed.shared.Feed;
-import stroom.feed.shared.FindFeedCriteria;
+import stroom.streamstore.FdService;
+import stroom.feed.shared.FeedDoc;
+import stroom.streamstore.FindFdCriteria;
 import stroom.util.date.DateUtil;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
@@ -49,10 +49,10 @@ public class ProxyRepositoryCreator {
     private static final String INPUT_EXTENSION = ".in";
     private static final String ZIP_EXTENSION = ".zip";
 
-    private final FeedService feedService;
+    private final FdService feedService;
     private final StroomZipRepository repository;
 
-    public ProxyRepositoryCreator(final FeedService feedService, final StroomZipRepository repository) {
+    public ProxyRepositoryCreator(final FdService feedService, final StroomZipRepository repository) {
         this.feedService = feedService;
         this.repository = repository;
     }
@@ -87,7 +87,7 @@ public class ProxyRepositoryCreator {
 
     private void loadInput(final Path file, final boolean mandateEffectiveDate, final Long effectiveMs) {
         // Get the feed.
-        final Feed feed = getFeed(file);
+        final FeedDoc feed = getFeed(file);
 
         try {
             if (feed.isReference() == mandateEffectiveDate) {
@@ -118,7 +118,7 @@ public class ProxyRepositoryCreator {
 
     private void loadZip(final Path file, final boolean mandateEffectiveDate, final Long effectiveMs) {
         // Get the feed.
-        final Feed feed = getFeed(file);
+        final FeedDoc feed = getFeed(file);
 
         if (feed.isReference() == mandateEffectiveDate) {
             LOGGER.info("Loading data: " + FileUtil.getCanonicalPath(file));
@@ -168,7 +168,7 @@ public class ProxyRepositoryCreator {
         }
     }
 
-    private MetaMap createMap(final Feed feed, final Long effectiveMs) {
+    private MetaMap createMap(final FeedDoc feed, final Long effectiveMs) {
         final String dateTime = DateUtil.createNormalDateTimeString(effectiveMs);
 
         final MetaMap map = new MetaMap();
@@ -180,7 +180,7 @@ public class ProxyRepositoryCreator {
         return map;
     }
 
-    private Feed getFeed(final Path file) {
+    private FeedDoc getFeed(final Path file) {
         // Get the stem of the file name.
         String stem = file.getFileName().toString();
         int index = stem.indexOf('.');
@@ -189,9 +189,9 @@ public class ProxyRepositoryCreator {
         }
 
         // Find the associated feed.
-        final FindFeedCriteria findFeedCriteria = new FindFeedCriteria();
+        final FindFdCriteria findFeedCriteria = new FindFdCriteria();
         findFeedCriteria.getName().setString(stem);
-        final BaseResultList<Feed> list = feedService.find(findFeedCriteria);
+        final BaseResultList<FeedDoc> list = feedService.find(findFeedCriteria);
 
         if (list.size() == 0) {
             throw new RuntimeException("Feed not found \"" + stem + "\"");

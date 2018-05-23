@@ -17,19 +17,20 @@
 
 package stroom.feed;
 
-import stroom.feed.shared.Feed;
-import stroom.feed.shared.Feed.FeedStatus;
+import stroom.feed.shared.FeedDoc;
+import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.security.Security;
+import stroom.streamstore.FdService;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
 class RemoteFeedServiceImpl implements RemoteFeedService {
     private final Security security;
-    private final FeedService feedService;
+    private final FdService feedService;
 
     @Inject
-    RemoteFeedServiceImpl(final Security security, @Named("cachedFeedService") final FeedService feedService) {
+    RemoteFeedServiceImpl(final Security security, @Named("cachedFeedService") final FdService feedService) {
         this.security = security;
         this.feedService = feedService;
     }
@@ -37,7 +38,7 @@ class RemoteFeedServiceImpl implements RemoteFeedService {
     @Override
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest request) {
         return security.asProcessingUserResult(() -> {
-            final Feed feed = feedService.loadByName(request.getFeedName());
+            final FeedDoc feed = feedService.loadByName(request.getFeedName());
 
             if (feed == null) {
                 return GetFeedStatusResponse.createFeedIsNotDefinedResponse();

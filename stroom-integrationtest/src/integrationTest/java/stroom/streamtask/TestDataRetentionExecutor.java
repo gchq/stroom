@@ -21,8 +21,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
-import stroom.feed.FeedService;
-import stroom.feed.shared.Feed;
+import stroom.streamstore.FdService;
+import stroom.feed.shared.FeedDoc;
 import stroom.policy.DataRetentionExecutor;
 import stroom.policy.DataRetentionService;
 import stroom.query.api.v2.ExpressionOperator;
@@ -30,7 +30,6 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.DataRetentionRule;
-import stroom.streamstore.StreamMaintenanceService;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.fs.FileSystemStreamMaintenanceService;
 import stroom.streamstore.shared.FindStreamCriteria;
@@ -55,7 +54,7 @@ public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
     @Inject
     private FileSystemStreamMaintenanceService streamMaintenanceService;
     @Inject
-    private FeedService feedService;
+    private FdService feedService;
     @Inject
     private DataRetentionExecutor dataRetentionExecutor;
     @Inject
@@ -63,7 +62,7 @@ public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
 
     @Test
     public void testMultipleRuns() {
-        Feed feed = commonTestScenarioCreator.createSimpleFeed();
+        FeedDoc feed = commonTestScenarioCreator.createSimpleFeed();
 
         final long now = System.currentTimeMillis();
         final long timeOutsideRetentionPeriod = now - TimeUnit.DAYS.toMillis(RETENTION_PERIOD_DAYS)

@@ -19,7 +19,7 @@ package stroom.streamstore;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
@@ -43,7 +43,7 @@ public class TestStreamAttributeMapServiceImpl extends AbstractCoreIntegrationTe
 
     @Test
     public void testSimple() throws IOException {
-        final Feed eventFeed = commonTestScenarioCreator.createSimpleFeed();
+        final FeedDoc eventFeed = commonTestScenarioCreator.createSimpleFeed();
 
         final Stream md = commonTestScenarioCreator.createSample2LineRawFile(eventFeed, StreamType.RAW_EVENTS);
 

@@ -34,7 +34,7 @@ import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -87,7 +87,7 @@ public class StreamEventLog {
         });
     }
 
-    public void viewStream(final Stream stream, final Feed feed, final StreamType streamType, final Throwable th) {
+    public void viewStream(final Stream stream, final FeedDoc feed, final StreamType streamType, final Throwable th) {
         security.insecure(() -> {
             try {
                 if (stream != null) {
@@ -145,7 +145,7 @@ public class StreamEventLog {
         return null;
     }
 
-    private event.logging.Object createStreamObject(final Stream stream, final Feed feed,
+    private event.logging.Object createStreamObject(final Stream stream, final FeedDoc feed,
                                                     final StreamType streamType) {
         final event.logging.Object object = new event.logging.Object();
         object.setType("Stream");

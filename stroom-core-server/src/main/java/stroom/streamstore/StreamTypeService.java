@@ -24,4 +24,5 @@ import stroom.streamstore.shared.StreamType;
 
 public interface StreamTypeService
         extends NamedEntityService<StreamType>, FindService<StreamType, FindStreamTypeCriteria> {
+    StreamType get(String streamTypeName);
 }

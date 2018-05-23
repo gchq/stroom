@@ -20,7 +20,7 @@ import com.google.common.base.Strings;
 import org.apache.commons.lang.mutable.MutableInt;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.feed.MetaMap;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.node.shared.Volume;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeConstants;
@@ -161,7 +161,7 @@ public class StreamRestoreTool extends DatabaseTool {
             feedIdNameMap = new HashMap<>();
             try (final Connection connection = getConnection()) {
                 try (final Statement statement = connection.createStatement()) {
-                    try (final ResultSet resultSet = statement.executeQuery("select " + Feed.ID + "," + SQLNameConstants.NAME + " from " + Feed.TABLE_NAME)) {
+                    try (final ResultSet resultSet = statement.executeQuery("select " + FeedDoc.ID + "," + SQLNameConstants.NAME + " from " + FeedDoc.TABLE_NAME)) {
                         while (resultSet.next()) {
                             feedIdNameMap.put(resultSet.getLong(1), resultSet.getString(2));
                         }
@@ -442,7 +442,7 @@ public class StreamRestoreTool extends DatabaseTool {
                                     Long.valueOf(streamAttributes.get(StreamAttributeConstants.PARENT_STREAM_ID)));
                         }
                         stream.updateStatus(StreamStatus.UNLOCKED);
-                        stream.setFeed(Feed.createStub(Long.valueOf(streamAttributes.get(FEED_ID))));
+                        stream.setFeed(FeedDoc.createStub(Long.valueOf(streamAttributes.get(FEED_ID))));
                         stream.setStreamType(
                                 StreamType.createStub(getPathStreamTypeMap().get(streamAttributes.get(STREAM_TYPE_PATH))));
 

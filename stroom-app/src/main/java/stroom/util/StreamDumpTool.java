@@ -19,8 +19,8 @@ package stroom.util;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
-import stroom.feed.FeedService;
-import stroom.feed.shared.Feed;
+import stroom.streamstore.FdService;
+import stroom.feed.shared.FeedDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -119,10 +119,10 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         }
 
         final StreamStore streamStore = injector.getInstance(StreamStore.class);
-        final FeedService feedService = injector.getInstance(Key.get(FeedService.class, Names.named("cachedFeedService")));
+        final FdService feedService = injector.getInstance(Key.get(FdService.class, Names.named("cachedFeedService")));
         final StreamTypeService streamTypeService = injector.getInstance(Key.get(StreamTypeService.class, Names.named("cachedStreamTypeService")));
 
-        Feed definition = null;
+        FeedDoc definition = null;
         if (feed != null) {
             definition = feedService.loadByName(feed);
             if (definition == null) {

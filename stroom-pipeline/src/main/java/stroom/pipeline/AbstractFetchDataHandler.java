@@ -22,8 +22,8 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceException;
 import stroom.feed.FeedProperties;
-import stroom.feed.FeedService;
-import stroom.feed.shared.Feed;
+import stroom.streamstore.FdService;
+import stroom.feed.shared.FeedDoc;
 import stroom.guice.PipelineScopeRunnable;
 import stroom.io.StreamCloser;
 import stroom.logging.StreamEventLog;
@@ -88,7 +88,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
     private final boolean streamsTotalIsExact = true;
 
     private final StreamStore streamStore;
-    private final FeedService feedService;
+    private final FdService feedService;
     private final FeedProperties feedProperties;
     private final StreamProcessorService streamProcessorService;
     private final Provider<FeedHolder> feedHolderProvider;
@@ -111,7 +111,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
     private boolean pageTotalIsExact = false;
 
     AbstractFetchDataHandler(final StreamStore streamStore,
-                             final FeedService feedService,
+                             final FdService feedService,
                              final FeedProperties feedProperties,
                              final StreamProcessorService streamProcessorService,
                              final Provider<FeedHolder> feedHolderProvider,
@@ -149,7 +149,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
         return security.useAsReadResult(() -> {
             final StreamCloser streamCloser = new StreamCloser();
             List<StreamType> availableChildStreamTypes;
-            Feed feed = null;
+            FeedDoc feed = null;
             StreamType streamType = null;
 
             StreamSource streamSource = null;
@@ -344,7 +344,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                 streamsRowCount, resultPageRange, pageRowCount, null, error, false);
     }
 
-    private void writeEventLog(final Stream stream, final Feed feed, final StreamType streamType,
+    private void writeEventLog(final Stream stream, final FeedDoc feed, final StreamType streamType,
                                final Exception e) {
         try {
             streamEventLog.viewStream(stream, feed, streamType, e);

@@ -14,28 +14,29 @@
  * limitations under the License.
  */
 
-package stroom.feed.shared;
+package stroom.streamstore;
 
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.FindDocumentEntityCriteria;
+import stroom.streamstore.shared.Fd;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 
 /**
  * Class used to find feed definitions.
  */
-public class FindFeedCriteria extends FindDocumentEntityCriteria {
+public class FindFdCriteria extends FindDocumentEntityCriteria {
     public static final String FIELD_TYPE = "Type";
     public static final String FIELD_CLASSIFICATION = "Classification";
     private static final long serialVersionUID = 1L;
     private Boolean reference;
-    private EntityIdSet<Feed> feedIdSet = new EntityIdSet<>();
+    private EntityIdSet<Fd> feedIdSet = new EntityIdSet<>();
 
-    public FindFeedCriteria() {
+    public FindFdCriteria() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public FindFeedCriteria(final String name) {
+    public FindFdCriteria(final String name) {
         super(name);
     }
 
@@ -47,7 +48,7 @@ public class FindFeedCriteria extends FindDocumentEntityCriteria {
         this.reference = reference;
     }
 
-    public EntityIdSet<Feed> getFeedIdSet() {
+    public EntityIdSet<Fd> getFeedIdSet() {
         return feedIdSet;
     }
 
@@ -64,11 +65,11 @@ public class FindFeedCriteria extends FindDocumentEntityCriteria {
     public boolean equals(final Object o) {
         if (o == this) {
             return true;
-        } else if (o == null || !(o instanceof FindFeedCriteria)) {
+        } else if (o == null || !(o instanceof FindFdCriteria)) {
             return false;
         }
 
-        final FindFeedCriteria ffc = (FindFeedCriteria) o;
+        final FindFdCriteria ffc = (FindFdCriteria) o;
         final EqualsBuilder builder = new EqualsBuilder();
         builder.appendSuper(super.equals(o));
         builder.append(feedIdSet, ffc.feedIdSet);

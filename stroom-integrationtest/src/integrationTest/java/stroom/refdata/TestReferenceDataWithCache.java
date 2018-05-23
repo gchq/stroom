@@ -23,8 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 import stroom.entity.shared.DocRefUtil;
-import stroom.feed.FeedService;
-import stroom.feed.shared.Feed;
+import stroom.streamstore.FdService;
+import stroom.feed.shared.FeedDoc;
 import stroom.guice.PipelineScopeRunnable;
 import stroom.guice.StroomBeanStore;
 import stroom.pipeline.PipelineStore;
@@ -49,7 +49,7 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     private final EventListBuilder builder = EventListBuilderFactory.createBuilder();
 
     @Inject
-    private FeedService feedService;
+    private FdService feedService;
     @Inject
     private PipelineStore pipelineStore;
     @Inject
@@ -63,11 +63,11 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     @Test
     public void testSimple() {
         pipelineScopeRunnable.scopeRunnable(() -> {
-            Feed feed1 = feedService.create("TEST_FEED_1");
+            FeedDoc feed1 = feedService.create("TEST_FEED_1");
             feed1.setReference(true);
             feed1 = feedService.save(feed1);
 
-            Feed feed2 = feedService.create("TEST_FEED_2");
+            FeedDoc feed2 = feedService.create("TEST_FEED_2");
             feed2.setReference(true);
             feed2 = feedService.save(feed2);
 
@@ -157,7 +157,7 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     @Test
     public void testNestedMaps() {
         pipelineScopeRunnable.scopeRunnable(() -> {
-            Feed feed = feedService.create("TEST_FEED_V3");
+            FeedDoc feed = feedService.create("TEST_FEED_V3");
             feed.setReference(true);
             feed = feedService.save(feed);
 

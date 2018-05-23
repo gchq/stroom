@@ -19,7 +19,7 @@ package stroom.streamstore.upload;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.shared.DocRefUtil;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.security.UserTokenUtil;
@@ -59,7 +59,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
 
     @Test
     public void testDownload() throws IOException {
-        final Feed feed = commonTestScenarioCreator.createSimpleFeed();
+        final FeedDoc feed = commonTestScenarioCreator.createSimpleFeed();
         commonTestScenarioCreator.createSample2LineRawFile(feed, StreamType.RAW_EVENTS);
         commonTestScenarioCreator.createSample2LineRawFile(feed, StreamType.RAW_EVENTS);
 
@@ -89,7 +89,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
 
     @Test
     public void testUploadFlatFile() throws IOException {
-        final Feed feed = commonTestScenarioCreator.createSimpleFeed();
+        final FeedDoc feed = commonTestScenarioCreator.createSimpleFeed();
         final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
         findStreamCriteria.setExpression(ExpressionUtil.createFeedExpression(feed));
 
@@ -105,7 +105,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
     @Test
     public void testDownloadNestedComplex() throws IOException {
         final Path file = Files.createTempFile(getCurrentTestDir(), "TestStreamDownloadTaskHandler", ".zip");
-        final Feed feed = commonTestScenarioCreator.createSimpleFeed();
+        final FeedDoc feed = commonTestScenarioCreator.createSimpleFeed();
 
         final StreamTarget streamTarget = streamStore
                 .openStreamTarget(Stream.createStream(StreamType.RAW_EVENTS, feed, null));

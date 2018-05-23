@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.util.ConnectionUtil;
 import stroom.entity.util.SqlBuilder;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.docref.DocRef;
 import stroom.streamstore.OldFindStreamCriteria;
@@ -61,7 +61,7 @@ public class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrat
 
     @Test
     public void testBasic() {
-        final Feed feed1 = commonTestScenarioCreator.createSimpleFeed();
+        final FeedDoc feed1 = commonTestScenarioCreator.createSimpleFeed();
 
         commonTestScenarioCreator.createSample2LineRawFile(feed1, StreamType.RAW_EVENTS);
         Assert.assertEquals(0, commonTestControl.countEntity(StreamTask.class));

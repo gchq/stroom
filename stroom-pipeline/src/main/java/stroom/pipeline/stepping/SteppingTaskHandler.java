@@ -23,8 +23,8 @@ import org.xml.sax.SAXException;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.feed.FeedProperties;
-import stroom.feed.FeedService;
-import stroom.feed.shared.Feed;
+import stroom.streamstore.FdService;
+import stroom.feed.shared.FeedDoc;
 import stroom.io.StreamCloser;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.PipelineStore;
@@ -94,7 +94,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
 
     private final StreamStore streamStore;
     private final StreamCloser streamCloser;
-    private final FeedService feedService;
+    private final FdService feedService;
     private final FeedProperties feedProperties;
     private final StreamTypeService streamTypeService;
     private final TaskContext taskContext;
@@ -128,7 +128,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     @Inject
     SteppingTaskHandler(final StreamStore streamStore,
                         final StreamCloser streamCloser,
-                        final FeedService feedService,
+                        final FdService feedService,
                         final FeedProperties feedProperties,
                         @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
                         final TaskContext taskContext,
@@ -338,7 +338,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                     }
 
                     // Load the feed.
-                    final Feed feed = feedService.load(streamSource.getStream().getFeed());
+                    final FeedDoc feed = feedService.load(streamSource.getStream().getFeed());
 
                     // Get the stream type.
                     final StreamType streamType = streamTypeService.load(stepSource.getType());
@@ -687,7 +687,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                         // Skip to the appropriate stream.
                         if (inputStream.getEntry(location.getStreamNo() - 1)) {
                             // Load the feed.
-                            final Feed feed = feedService.load(streamSource.getStream().getFeed());
+                            final FeedDoc feed = feedService.load(streamSource.getStream().getFeed());
 
                             // Get the stream type.
                             final StreamType streamType = streamTypeService.load(streamSource.getType());

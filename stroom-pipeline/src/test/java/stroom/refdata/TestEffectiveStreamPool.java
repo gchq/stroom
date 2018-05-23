@@ -20,7 +20,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import stroom.entity.shared.DocRefUtil;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.docref.DocRef;
 import stroom.security.MockSecurityContext;
 import stroom.security.Security;
@@ -50,10 +50,10 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
 
     @Test
     public void testGrowingWindow() {
-        final Feed referenceFeed = new Feed();
+        final FeedDoc referenceFeed = new FeedDoc();
         referenceFeed.setReference(true);
         referenceFeed.setName("TEST_REF");
-        final Feed eventFeed = new Feed();
+        final FeedDoc eventFeed = new FeedDoc();
         eventFeed.setName("TEST_REF");
 
         final MockStreamStore mockStreamStore = new MockStreamStore() {
@@ -124,10 +124,10 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
 
     @Test
     public void testExpiry() throws InterruptedException {
-        final Feed referenceFeed = new Feed();
+        final FeedDoc referenceFeed = new FeedDoc();
         referenceFeed.setReference(true);
         referenceFeed.setName("TEST_REF");
-        final Feed eventFeed = new Feed();
+        final FeedDoc eventFeed = new FeedDoc();
         eventFeed.setName("TEST_REF");
 
         final MockStore mockStore = new MockStore();
@@ -215,7 +215,7 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
                     .collect(Collectors.toList());
         }
 
-        void addEffectiveStream(final Feed feed, long effectiveTimeMs) {
+        void addEffectiveStream(final FeedDoc feed, long effectiveTimeMs) {
             final Stream stream = Stream.createStreamForTesting(StreamType.RAW_REFERENCE, feed,
                     effectiveTimeMs, effectiveTimeMs);
             streams.add(stream);

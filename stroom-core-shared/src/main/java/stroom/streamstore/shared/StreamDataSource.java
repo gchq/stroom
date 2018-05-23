@@ -2,8 +2,6 @@ package stroom.streamstore.shared;
 
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
-import stroom.feed.shared.Feed;
-import stroom.pipeline.shared.PipelineDoc;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 
@@ -57,7 +55,7 @@ public class StreamDataSource {
         STREAM_FIELDS.put(STREAM_ID, Stream.ID);
         STREAM_FIELDS.put(PARENT_STREAM_ID, Stream.PARENT_STREAM_ID);
         STREAM_FIELDS.put(CREATE_TIME, Stream.CREATE_MS);
-        FEED_FIELDS.put(FEED, Feed.NAME);
+        FEED_FIELDS.put(FEED, Fd.NAME);
         STREAM_TYPE_FIELDS.put(STREAM_TYPE, StreamType.NAME);
 //        PIPELINE_FIELDS.put(PIPELINE, PipelineDoc.NAME);
 

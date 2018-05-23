@@ -19,8 +19,8 @@ package stroom.streamtask;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.feed.FeedService;
-import stroom.feed.shared.Feed;
+import stroom.streamstore.FdService;
+import stroom.feed.shared.FeedDoc;
 import stroom.jobsystem.MockTask;
 import stroom.node.NodeCache;
 import stroom.node.NodeService;
@@ -66,7 +66,7 @@ public class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
     @Inject
     private StreamMaintenanceService streamMaintenanceService;
     @Inject
-    private FeedService feedService;
+    private FdService feedService;
     @Inject
     private FileSystemCleanExecutor fileSystemCleanTaskExecutor;
     @Inject
@@ -113,7 +113,7 @@ public class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
         final ZonedDateTime newDate = ZonedDateTime.now(ZoneOffset.UTC).minusDays(FIFTY);
 
         // Write a file 2 files ... on we leave locked and the other not locked
-        Feed feed = commonTestScenarioCreator.createSimpleFeed();
+        FeedDoc feed = commonTestScenarioCreator.createSimpleFeed();
         feed.setRetentionDayAge(FIFTY_FIVE);
         feed = feedService.save(feed);
 

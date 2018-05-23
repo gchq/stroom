@@ -25,7 +25,7 @@ import com.gwtplatform.mvp.client.View;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.EntityReferenceFindAction;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.item.client.StringListBox;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
@@ -54,7 +54,7 @@ public class NewPipelineReferencePresenter
 
         pipelinePresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
         pipelinePresenter.setRequiredPermissions(DocumentPermissionNames.USE);
-        feedPresenter.setIncludedTypes(Feed.ENTITY_TYPE);
+        feedPresenter.setIncludedTypes(FeedDoc.DOCUMENT_TYPE);
         feedPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
 
         pipelinePresenter.getWidget().getElement().getStyle().setMarginBottom(0, Unit.PX);

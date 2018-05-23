@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.feed.shared;
+package stroom.feed;
 
+import stroom.docref.HasDisplayValue;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.streamstore.shared.StreamType;
-import stroom.docref.HasDisplayValue;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -40,7 +40,7 @@ import javax.persistence.UniqueConstraint;
  */
 @Entity
 @Table(name = "FD", uniqueConstraints = @UniqueConstraint(columnNames = {SQLNameConstants.NAME}))
-public class Feed extends DocumentEntity {
+public class OldFeed extends DocumentEntity {
     public static final String TABLE_NAME = SQLNameConstants.FEED;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
     public static final String FOREIGN_KEY_EVENT_FEED = FK_PREFIX + SQLNameConstants.EVENT + SEP + SQLNameConstants.FEED
@@ -67,16 +67,16 @@ public class Feed extends DocumentEntity {
     private StreamType streamType;
     private byte pstatus = FeedStatus.RECEIVE.getPrimitiveValue();
 
-    public Feed() {
+    public OldFeed() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public Feed(final String name) {
+    public OldFeed(final String name) {
         setName(name);
     }
 
-    public static Feed createStub(final long pk) {
-        final Feed feed = new Feed();
+    public static OldFeed createStub(final long pk) {
+        final OldFeed feed = new OldFeed();
         feed.setStub(pk);
         return feed;
     }

@@ -48,58 +48,25 @@ public class StreamTypeUiManager {
         streamTypeList = list;
     }
 
-    public List<StreamType> getRawStreamTypeList() {
-        final List<StreamType> rtn = new ArrayList<>();
+    public List<String> getRawStreamTypeList() {
+        final List<String> rtn = new ArrayList<>();
         for (final StreamType streamType : streamTypeList) {
             if (streamType.isStreamTypeRaw()) {
-                rtn.add(streamType);
+                rtn.add(streamType.getName());
             }
         }
-        Collections.sort(rtn, new StreamTypeCompare());
+        rtn.sort(Comparator.naturalOrder());
         return rtn;
     }
 
-    public List<StreamType> getProcessedStreamTypeList() {
-        final List<StreamType> rtn = new ArrayList<>();
+    public List<String> getProcessedStreamTypeList() {
+        final List<String> rtn = new ArrayList<>();
         for (final StreamType streamType : streamTypeList) {
             if (streamType.isStreamTypeProcessed()) {
-                rtn.add(streamType);
+                rtn.add(streamType.getName());
             }
         }
-        Collections.sort(rtn, new StreamTypeCompare());
+        rtn.sort(Comparator.naturalOrder());
         return rtn;
     }
-
-    public List<StreamType> getRootStreamTypeList() {
-        final List<StreamType> rtnList = new ArrayList<>();
-        for (final StreamType streamType : streamTypeList) {
-            if (!streamType.isStreamTypeChild()) {
-                rtnList.add(streamType);
-            }
-        }
-        Collections.sort(rtnList, new StreamTypeCompare());
-        return rtnList;
-    }
-
-    static class StreamTypeCompare implements Comparator<StreamType> {
-        @Override
-        public int compare(final StreamType o1, final StreamType o2) {
-            if (o1.isStreamTypeRaw() == o2.isStreamTypeRaw()) {
-                if (o1.isStreamTypeError()) {
-                    return +1;
-                }
-                if (o2.isStreamTypeError()) {
-                    return -1;
-                }
-                return o1.getName().compareTo(o2.getName());
-            }
-            if (o1.isStreamTypeRaw()) {
-                return -1;
-            } else {
-                return +1;
-            }
-
-        }
-    }
-
 }

@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.util.XMLUtil;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -77,7 +77,7 @@ public abstract class AbstractBenchmark {
         Arrays.asList(args).forEach(arg -> LOGGER.info(arg.toString()));
     }
 
-    protected Stream writeData(final Feed feed, final StreamType streamType, final String data) {
+    protected Stream writeData(final FeedDoc feed, final StreamType streamType, final String data) {
         // Add the associated data to the stream store.
         final Stream stream = Stream.createStream(streamType, feed, System.currentTimeMillis());
 
@@ -127,7 +127,7 @@ public abstract class AbstractBenchmark {
         return output.toString();
     }
 
-    protected void verifyData(final Feed feed, final String verificationString) {
+    protected void verifyData(final FeedDoc feed, final String verificationString) {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
         builder.addTerm(StreamDataSource.FEED, Condition.EQUALS, feed.getName());
         if (feed.isReference()) {
@@ -156,7 +156,7 @@ public abstract class AbstractBenchmark {
         }
     }
 
-    protected void deleteData(final Feed... feeds) {
+    protected void deleteData(final FeedDoc... feeds) {
         final FindStreamCriteria criteria = new FindStreamCriteria();
         criteria.setExpression(ExpressionUtil.createFeedsExpression(feeds));
         streamStore.findDelete(criteria);

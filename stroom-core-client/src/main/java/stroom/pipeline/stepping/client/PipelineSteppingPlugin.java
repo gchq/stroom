@@ -26,7 +26,7 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.SharedDocRef;
 import stroom.explorer.client.presenter.EntityChooser;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
@@ -84,7 +84,7 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
             if (pipeline != null) {
                 final FindStreamAttributeMapCriteria streamAttributeMapCriteria = new FindStreamAttributeMapCriteria();
                 streamAttributeMapCriteria.obtainFindStreamCriteria().obtainSelectedIdSet().add(streamId);
-                streamAttributeMapCriteria.getFetchSet().add(Feed.ENTITY_TYPE);
+                streamAttributeMapCriteria.getFetchSet().add(FeedDoc.DOCUMENT_TYPE);
                 streamAttributeMapCriteria.getFetchSet().add(StreamType.ENTITY_TYPE);
                 streamAttributeMapCriteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
                 streamAttributeMapCriteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);

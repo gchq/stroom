@@ -25,7 +25,7 @@ import stroom.entity.shared.IdRange;
 import stroom.entity.shared.IncludeExcludeEntityIdSet;
 import stroom.entity.shared.Matcher;
 import stroom.entity.shared.Period;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.docref.DocRef;
 import stroom.streamstore.shared.Stream;
@@ -61,9 +61,9 @@ public class OldFindStreamCriteria extends BaseCriteria
      * versions.
      **/
     @Deprecated
-    private EntityIdSet<Feed> feedIdSet;
+    private EntityIdSet<FeedDoc> feedIdSet;
 
-    private IncludeExcludeEntityIdSet<Feed> feeds;
+    private IncludeExcludeEntityIdSet<FeedDoc> feeds;
     private CriteriaSet<DocRef> pipelineSet;
     private EntityIdSet<StreamType> streamTypeIdSet;
     private EntityIdSet<Stream> streamIdSet;
@@ -205,7 +205,7 @@ public class OldFindStreamCriteria extends BaseCriteria
         return statusSet;
     }
 
-    public IncludeExcludeEntityIdSet<Feed> getFeeds() {
+    public IncludeExcludeEntityIdSet<FeedDoc> getFeeds() {
         if (feedIdSet != null) {
             feeds = new IncludeExcludeEntityIdSet<>();
             feeds.setInclude(feedIdSet);
@@ -215,11 +215,11 @@ public class OldFindStreamCriteria extends BaseCriteria
         return feeds;
     }
 
-    public void setFeeds(final IncludeExcludeEntityIdSet<Feed> feeds) {
+    public void setFeeds(final IncludeExcludeEntityIdSet<FeedDoc> feeds) {
         this.feeds = feeds;
     }
 
-    public IncludeExcludeEntityIdSet<Feed> obtainFeeds() {
+    public IncludeExcludeEntityIdSet<FeedDoc> obtainFeeds() {
         if (feedIdSet != null) {
             feeds = new IncludeExcludeEntityIdSet<>();
             feeds.setInclude(feedIdSet);
@@ -237,7 +237,7 @@ public class OldFindStreamCriteria extends BaseCriteria
      * previous versions.
      **/
     @Deprecated
-    public EntityIdSet<Feed> getFeedIdSet() {
+    public EntityIdSet<FeedDoc> getFeedIdSet() {
         return feedIdSet;
     }
 
@@ -246,7 +246,7 @@ public class OldFindStreamCriteria extends BaseCriteria
      * previous versions.
      **/
     @Deprecated
-    public void setFeedIdSet(final EntityIdSet<Feed> feedIdSet) {
+    public void setFeedIdSet(final EntityIdSet<FeedDoc> feedIdSet) {
         if (feedIdSet != null) {
             feeds = new IncludeExcludeEntityIdSet<>();
             feeds.setInclude(feedIdSet);

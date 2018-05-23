@@ -18,10 +18,10 @@
 package stroom.test;
 
 import org.junit.Assert;
-import stroom.feed.FeedService;
+import stroom.streamstore.FdService;
 import stroom.feed.StroomHeaderArguments;
-import stroom.feed.shared.Feed;
-import stroom.feed.shared.Feed.FeedStatus;
+import stroom.feed.shared.FeedDoc;
+import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.index.IndexStore;
 import stroom.index.IndexVolumeService;
 import stroom.index.shared.IndexDoc;
@@ -60,7 +60,7 @@ import java.util.Set;
  * Help class to create some basic scenarios for testing.
  */
 public class CommonTestScenarioCreator {
-    private final FeedService feedService;
+    private final FdService feedService;
     private final StreamStore streamStore;
     private final StreamProcessorService streamProcessorService;
     private final StreamProcessorFilterService streamProcessorFilterService;
@@ -70,7 +70,7 @@ public class CommonTestScenarioCreator {
     private final NodeCache nodeCache;
 
     @Inject
-    CommonTestScenarioCreator(final FeedService feedService,
+    CommonTestScenarioCreator(final FdService feedService,
                               final StreamStore streamStore,
                               final StreamProcessorService streamProcessorService,
                               final StreamProcessorFilterService streamProcessorFilterService,
@@ -99,15 +99,15 @@ public class CommonTestScenarioCreator {
 //        return null;
 //    }
 
-    public Feed createSimpleFeed() {
+    public FeedDoc createSimpleFeed() {
         return createSimpleFeed("Junit");
     }
 
     /**
      * @return a basic feed
      */
-    public Feed createSimpleFeed(final String name) {
-        Feed feed = feedService.create(FileSystemTestUtil.getUniqueTestString());
+    public FeedDoc createSimpleFeed(final String name) {
+        FeedDoc feed = feedService.create(FileSystemTestUtil.getUniqueTestString());
         feed.setDescription(name);
         feed.setStatus(FeedStatus.RECEIVE);
         feed.setStreamType(StreamType.RAW_EVENTS);
@@ -116,8 +116,8 @@ public class CommonTestScenarioCreator {
         return feed;
     }
 
-    public Feed createSimpleFeed(final String name, final String uuid) {
-        Feed feed = feedService.create(FileSystemTestUtil.getUniqueTestString());
+    public FeedDoc createSimpleFeed(final String name, final String uuid) {
+        FeedDoc feed = feedService.create(FileSystemTestUtil.getUniqueTestString());
         feed.setUuid(uuid);
         feed.setDescription(name);
         feed.setStatus(FeedStatus.RECEIVE);
@@ -127,7 +127,7 @@ public class CommonTestScenarioCreator {
         return feed;
     }
 
-    public void createBasicTranslateStreamProcessor(final Feed feed) {
+    public void createBasicTranslateStreamProcessor(final FeedDoc feed) {
 
         final QueryData findStreamQueryData = new QueryData.Builder()
                 .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
@@ -184,7 +184,7 @@ public class CommonTestScenarioCreator {
      * @param feed related
      * @return a basic raw file
      */
-    public Stream createSample2LineRawFile(final Feed feed, final StreamType streamType) {
+    public Stream createSample2LineRawFile(final FeedDoc feed, final StreamType streamType) {
         final Stream stream = Stream.createStream(streamType, feed, null);
         final StreamTarget target = streamStore.openStreamTarget(stream);
 
@@ -199,7 +199,7 @@ public class CommonTestScenarioCreator {
         return target.getStream();
     }
 
-    public Stream createSampleBlankProcessedFile(final Feed feed, final Stream sourceStream) {
+    public Stream createSampleBlankProcessedFile(final FeedDoc feed, final Stream sourceStream) {
         final Stream stream = Stream.createProcessedStream(sourceStream, feed, StreamType.EVENTS, null, null);
 
         final StreamTarget target = streamStore.openStreamTarget(stream);

@@ -20,7 +20,7 @@ package stroom.pipeline.task;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.node.NodeCache;
 import stroom.pipeline.XsltStore;
 import stroom.pipeline.errorhandler.ProcessException;
@@ -327,7 +327,7 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
             xsltDoc.setData(StreamUtil.fileToString(IMPORTED_XSLT));
             xsltStore.writeDocument(xsltDoc);
 
-            Feed hostNameToIP = null;
+            FeedDoc hostNameToIP = null;
 
             for (int i = 0; i < NO_OF_REFERENCE_FILES; i++) {
                 // Setup the feed definitions.
@@ -335,7 +335,7 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
                         FORMAT_DEFINITION, XSLT_HOST_NAME_TO_IP, reference);
             }
 
-            final Set<Feed> referenceFeeds = new HashSet<>();
+            final Set<FeedDoc> referenceFeeds = new HashSet<>();
             referenceFeeds.add(hostNameToIP);
 
             for (int i = 0; i < NO_OF_EVENT_FILES; i++) {

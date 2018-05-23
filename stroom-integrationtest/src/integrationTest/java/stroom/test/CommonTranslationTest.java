@@ -19,7 +19,7 @@ package stroom.test;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.node.NodeCache;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.streamstore.StreamStore;
@@ -129,15 +129,15 @@ public class CommonTranslationTest {
         // commonTestControl.setup();
 
         // Setup the feed definitions.
-        final Feed hostNameToIP = storeCreationTool.addReferenceData(REFFEED_HOSTNAME_TO_IP,
+        final FeedDoc hostNameToIP = storeCreationTool.addReferenceData(REFFEED_HOSTNAME_TO_IP,
                 TextConverterType.DATA_SPLITTER, CSV_WITH_HEADING, XSLT_HOST_NAME_TO_IP, REFDATA_HOST_NAME_TO_IP);
-        final Feed hostNameToLocation = storeCreationTool.addReferenceData(REFFEED_HOSTNAME_TO_LOCATION,
+        final FeedDoc hostNameToLocation = storeCreationTool.addReferenceData(REFFEED_HOSTNAME_TO_LOCATION,
                 TextConverterType.DATA_SPLITTER, CSV_WITH_HEADING, XSLT_HOST_NAME_TO_LOCATION,
                 REFDATA_HOST_NAME_TO_LOCATION);
-        final Feed idToUser = storeCreationTool.addReferenceData(ID_TO_USER, TextConverterType.DATA_SPLITTER,
+        final FeedDoc idToUser = storeCreationTool.addReferenceData(ID_TO_USER, TextConverterType.DATA_SPLITTER,
                 CSV_WITH_HEADING, EMPLOYEE_REFERENCE_XSL, EMPLOYEE_REFERENCE_CSV);
 
-        final Set<Feed> referenceFeeds = new HashSet<>();
+        final Set<FeedDoc> referenceFeeds = new HashSet<>();
         referenceFeeds.add(hostNameToIP);
         referenceFeeds.add(hostNameToLocation);
         referenceFeeds.add(idToUser);

@@ -22,8 +22,8 @@ import org.junit.Test;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
-import stroom.feed.FeedService;
-import stroom.feed.shared.Feed;
+import stroom.streamstore.FdService;
+import stroom.feed.shared.FeedDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.streamstore.shared.QueryData;
@@ -43,7 +43,7 @@ public class TestStreamProcessorFilterService extends AbstractCoreIntegrationTes
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
-    private FeedService feedService;
+    private FdService feedService;
     @Inject
     private StreamProcessorService streamProcessorService;
     @Inject
@@ -102,8 +102,8 @@ public class TestStreamProcessorFilterService extends AbstractCoreIntegrationTes
         streamProcessor = streamProcessorService.save(streamProcessor);
         Assert.assertEquals(1, streamProcessorService.find(new FindStreamProcessorCriteria()).size());
 
-        final Feed feed1 = commonTestScenarioCreator.createSimpleFeed("Feed1");
-        final Feed feed2 = commonTestScenarioCreator.createSimpleFeed("Feed2");
+        final FeedDoc feed1 = commonTestScenarioCreator.createSimpleFeed("Feed1");
+        final FeedDoc feed2 = commonTestScenarioCreator.createSimpleFeed("Feed2");
 
 
         final QueryData findStreamQueryData = new QueryData.Builder()
@@ -126,7 +126,7 @@ public class TestStreamProcessorFilterService extends AbstractCoreIntegrationTes
         final BaseResultList<StreamProcessorFilter> filters = streamProcessorFilterService
                 .find(findStreamProcessorFilterCriteria);
         StreamProcessorFilter filter = filters.getFirst();
-        String xml = buildXML(new Feed[]{feed1, feed2}, null);
+        String xml = buildXML(new FeedDoc[]{feed1, feed2}, null);
         Assert.assertEquals(xml, filter.getData());
 
         // TODO DocRefId - Need to rewrite the build XML to handle expression operators
@@ -146,7 +146,7 @@ public class TestStreamProcessorFilterService extends AbstractCoreIntegrationTes
 //        Assert.assertEquals(xml, filter.getData());
     }
 
-    private String buildXML(final Feed[] include, final Feed[] exclude) {
+    private String buildXML(final FeedDoc[] include, final FeedDoc[] exclude) {
         final StringBuilder sb = new StringBuilder();
         String xml = "" +
                 "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n" +
@@ -165,7 +165,7 @@ public class TestStreamProcessorFilterService extends AbstractCoreIntegrationTes
                     "         <operator>\n" +
                     "            <op>OR</op>\n" +
                     "            <children>\n";
-            for (final Feed feed : include) {
+            for (final FeedDoc feed : include) {
                 xml += "" +
                         "               <term>\n" +
                         "                  <field>Feed</field>\n" +

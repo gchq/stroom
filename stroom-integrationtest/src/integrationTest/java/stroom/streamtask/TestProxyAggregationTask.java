@@ -19,8 +19,8 @@ package stroom.streamtask;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.shared.BaseResultList;
-import stroom.feed.FeedService;
-import stroom.feed.shared.Feed;
+import stroom.streamstore.FdService;
+import stroom.feed.shared.FeedDoc;
 import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.io.SeekableInputStream;
 import stroom.proxy.repo.StroomZipFile;
@@ -62,7 +62,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     @Inject
     private StreamStore streamStore;
     @Inject
-    private FeedService feedService;
+    private FdService feedService;
     @Inject
     private MetaDataStatistic metaDataStatistic;
     @Inject
@@ -91,8 +91,8 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
         final Path proxyDir = getCurrentTestDir().resolve("proxy" + FileSystemTestUtil.getUniqueTestString());
 
-        final Feed eventFeed1 = commonTestScenarioCreator.createSimpleFeed();
-        final Feed eventFeed2 = commonTestScenarioCreator.createSimpleFeed();
+        final FeedDoc eventFeed1 = commonTestScenarioCreator.createSimpleFeed();
+        final FeedDoc eventFeed2 = commonTestScenarioCreator.createSimpleFeed();
 
         Files.createDirectories(proxyDir);
 
@@ -160,7 +160,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
         final Path proxyDir = getCurrentTestDir().resolve("proxy" + FileSystemTestUtil.getUniqueTestString());
 
-        final Feed eventFeed1 = commonTestScenarioCreator.createSimpleFeed();
+        final FeedDoc eventFeed1 = commonTestScenarioCreator.createSimpleFeed();
 
         Files.createDirectory(proxyDir);
 
@@ -205,7 +205,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         // commonTestControl.deleteAll();
         final Path proxyDir = getCurrentTestDir().resolve("proxy" + FileSystemTestUtil.getUniqueTestString());
 
-        final Feed eventFeed1 = commonTestScenarioCreator.createSimpleFeed();
+        final FeedDoc eventFeed1 = commonTestScenarioCreator.createSimpleFeed();
 
         FileUtil.mkdirs(proxyDir);
 
@@ -239,7 +239,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
         final Path proxyDir = getCurrentTestDir().resolve("proxy" + FileSystemTestUtil.getUniqueTestString());
 
-        final Feed eventFeed1 = commonTestScenarioCreator.createSimpleFeed();
+        final FeedDoc eventFeed1 = commonTestScenarioCreator.createSimpleFeed();
 
         FileUtil.mkdirs(proxyDir);
 
@@ -290,7 +290,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
         final Path proxyDir = getCurrentTestDir().resolve("proxy" + FileSystemTestUtil.getUniqueTestString());
 
-        final Feed eventFeed1 = commonTestScenarioCreator.createSimpleFeed();
+        final FeedDoc eventFeed1 = commonTestScenarioCreator.createSimpleFeed();
 
         FileUtil.mkdirs(proxyDir);
 
@@ -349,7 +349,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         is.getInputStream().close();
     }
 
-    private OutputStream writeLockedTestFile(final Path testFile, final Feed eventFeed)
+    private OutputStream writeLockedTestFile(final Path testFile, final FeedDoc eventFeed)
             throws IOException {
         Files.createDirectories(testFile.getParent());
         final ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(testFile));
@@ -369,7 +369,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         return zipOutputStream;
     }
 
-    private void writeTestFileWithContext(final Path testFile, final Feed eventFeed, final String content,
+    private void writeTestFileWithContext(final Path testFile, final FeedDoc eventFeed, final String content,
                                           final String context) throws IOException {
         Files.createDirectories(testFile.getParent());
         final OutputStream fileOutputStream = Files.newOutputStream(testFile);
@@ -394,7 +394,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
     }
 
-    private void writeTestFile(final Path testFile, final Feed eventFeed, final String data)
+    private void writeTestFile(final Path testFile, final FeedDoc eventFeed, final String data)
             throws IOException {
         Files.createDirectories(testFile.getParent());
         final ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(testFile));
@@ -413,7 +413,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         zipOutputStream.close();
     }
 
-    private void writeTestFileWithManyEntries(final Path testFile, final Feed eventFeed, final int count)
+    private void writeTestFileWithManyEntries(final Path testFile, final FeedDoc eventFeed, final int count)
             throws IOException {
         Files.createDirectories(testFile.getParent());
         final ZipOutputStream zipOutputStream = new ZipOutputStream(
@@ -445,7 +445,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
         final Path proxyDir = getCurrentTestDir().resolve("proxy" + FileSystemTestUtil.getUniqueTestString());
 
-        final Feed eventFeed1 = commonTestScenarioCreator.createSimpleFeed();
+        final FeedDoc eventFeed1 = commonTestScenarioCreator.createSimpleFeed();
 
         FileUtil.mkdirs(proxyDir);
 
@@ -467,7 +467,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
         final Path proxyDir = getCurrentTestDir().resolve("proxy" + FileSystemTestUtil.getUniqueTestString());
 
-        final Feed eventFeed1 = commonTestScenarioCreator.createSimpleFeed();
+        final FeedDoc eventFeed1 = commonTestScenarioCreator.createSimpleFeed();
 
         Files.createDirectories(proxyDir);
 

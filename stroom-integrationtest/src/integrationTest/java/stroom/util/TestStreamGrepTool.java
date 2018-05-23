@@ -17,7 +17,7 @@
 package stroom.util;
 
 import org.junit.Test;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.StreamTarget;
 import stroom.streamstore.shared.Stream;
@@ -38,7 +38,7 @@ public class TestStreamGrepTool extends AbstractCoreIntegrationTest {
     @Test
     public void test() throws IOException {
         try {
-            final Feed feed = commonTestScenarioCreator.createSimpleFeed("TEST", "12345");
+            final FeedDoc feed = commonTestScenarioCreator.createSimpleFeed("TEST", "12345");
 
             addData(feed, "This is some test data to match on");
             addData(feed, "This is some test data to not match on");
@@ -53,7 +53,7 @@ public class TestStreamGrepTool extends AbstractCoreIntegrationTest {
         }
     }
 
-    private void addData(final Feed feed, final String data) throws IOException {
+    private void addData(final FeedDoc feed, final String data) throws IOException {
         Stream stream = Stream.createStreamForTesting(StreamType.RAW_EVENTS, feed, null, System.currentTimeMillis());
         final StreamTarget streamTarget = streamStore.openStreamTarget(stream);
         streamTarget.getOutputStream().write(data.getBytes(StreamUtil.DEFAULT_CHARSET));

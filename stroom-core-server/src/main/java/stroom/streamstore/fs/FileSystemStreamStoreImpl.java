@@ -36,10 +36,10 @@ import stroom.entity.util.FieldMap;
 import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
 import stroom.entity.util.SqlUtil;
-import stroom.feed.FeedService;
+import stroom.streamstore.FdService;
 import stroom.feed.MetaMap;
-import stroom.feed.shared.Feed;
-import stroom.feed.shared.FindFeedCriteria;
+import stroom.feed.shared.FeedDoc;
+import stroom.streamstore.FindFdCriteria;
 import stroom.node.NodeCache;
 import stroom.node.VolumeService;
 import stroom.node.shared.Volume;
@@ -115,7 +115,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
     static {
         final Set<String> set = new HashSet<>();
-        set.add(Feed.ENTITY_TYPE);
+        set.add(FeedDoc.DOCUMENT_TYPE);
         set.add(StreamType.ENTITY_TYPE);
         SOURCE_FETCH_SET = set;
     }
@@ -125,7 +125,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     private final StroomDatabaseInfo stroomDatabaseInfo;
     private final NodeCache nodeCache;
     private final StreamProcessorService streamProcessorService;
-    private final FeedService feedService;
+    private final FdService feedService;
     private final StreamTypeService streamTypeService;
     private final VolumeService volumeService;
     private final ExpressionToFindCriteria expressionToFindCriteria;
@@ -175,7 +175,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
                               final StroomDatabaseInfo stroomDatabaseInfo,
                               final NodeCache nodeCache,
                               @Named("cachedStreamProcessorService") final StreamProcessorService streamProcessorService,
-                              @Named("cachedFeedService") final FeedService feedService,
+                              @Named("cachedFeedService") final FdService feedService,
                               @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
                               final VolumeService volumeService,
                               final StreamAttributeValueFlush streamAttributeValueFlush,
@@ -319,7 +319,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
         // Ensure user has permission to read this stream.
         if (entity != null) {
-            final Feed feed = entity.getFeed();
+            final FeedDoc feed = entity.getFeed();
             if (!securityContext.hasDocumentPermission(feed.getType(), feed.getUuid(), DocumentPermissionNames.READ)) {
                 throw new StreamPermissionException(securityContext.getUserId(), "You do not have permission to read stream with id=" + id);
             }
@@ -578,7 +578,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         }
 
         // Ensure the user has permission to delete this stream.
-        final Feed feed = loaded.getFeed();
+        final FeedDoc feed = loaded.getFeed();
         if (!securityContext.hasDocumentPermission(feed.getType(), feed.getUuid(), DocumentPermissionNames.DELETE)) {
             throw new StreamPermissionException(securityContext.getUserId(), "You do not have permission to delete stream with id=" + loaded.getId());
         }
@@ -821,15 +821,15 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         // We only need to restrict data by feed for non admins.
         if (!securityContext.isAdmin()) {
             // If the user is filtering by feed then make sure they can read all of the feeds that they are filtering by.
-            final EntityIdSet<Feed> feeds = findStreamCriteria.obtainFeeds().obtainInclude();
+            final EntityIdSet<FeedDoc> feeds = findStreamCriteria.obtainFeeds().obtainInclude();
 
             // Ensure a user cannot match all feeds.
             feeds.setMatchAll(Boolean.FALSE);
-            final List<Feed> restrictedFeeds = getRestrictedFeeds(requiredPermission);
+            final List<FeedDoc> restrictedFeeds = getRestrictedFeeds(requiredPermission);
 
             if (feeds.size() > 0) {
                 final Set<Long> restrictedFeedIds =
-                        restrictedFeeds.stream().map(Feed::getId).collect(Collectors.toSet());
+                        restrictedFeeds.stream().map(FeedDoc::getId).collect(Collectors.toSet());
 
                 // Retain only the feeds that the user has the required permission on.
                 feeds.getSet().retainAll(restrictedFeedIds);
@@ -840,8 +840,8 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         }
     }
 
-    private List<Feed> getRestrictedFeeds(final String requiredPermission) {
-        final FindFeedCriteria findFeedCriteria = new FindFeedCriteria();
+    private List<FeedDoc> getRestrictedFeeds(final String requiredPermission) {
+        final FindFdCriteria findFeedCriteria = new FindFdCriteria();
         findFeedCriteria.setRequiredPermission(requiredPermission);
         findFeedCriteria.setPageRequest(null);
         return feedService.find(findFeedCriteria);
@@ -1077,7 +1077,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
         sql.appendEntityIdSetQuery("S." + Stream.PARENT_STREAM_ID, criteria.getParentStreamIdSet());
         sql.appendEntityIdSetQuery("S." + StreamType.FOREIGN_KEY, criteria.getStreamTypeIdSet());
-        sql.appendIncludeExcludeSetQuery("S." + Feed.FOREIGN_KEY, criteria.getFeeds());
+        sql.appendIncludeExcludeSetQuery("S." + FeedDoc.FOREIGN_KEY, criteria.getFeeds());
 
         sql.appendDocRefSetQuery("SP." + StreamProcessor.PIPELINE_UUID, criteria.getPipelineSet());
         sql.appendEntityIdSetQuery("S." + StreamProcessor.FOREIGN_KEY, criteria.getStreamProcessorIdSet());
@@ -1149,7 +1149,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     @SuppressWarnings("unchecked")
     private List<Stream> findStreamSource(final EffectiveMetaDataCriteria criteria) {
         final StreamType streamType = getStreamType(criteria.getStreamType());
-        final Feed feed = getFeed(criteria.getFeed());
+        final FeedDoc feed = getFeed(criteria.getFeed());
 
         // Build up the HQL
         final HqlBuilder sql = new HqlBuilder();
@@ -1257,7 +1257,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
     private Map<Long, Long> getMaxEffective(final EffectiveMetaDataCriteria criteria) {
         final StreamType streamType = getStreamType(criteria.getStreamType());
-        final Feed feed = getFeed(criteria.getFeed());
+        final FeedDoc feed = getFeed(criteria.getFeed());
 
         final Map<Long, Long> rtnMap = new HashMap<>();
 
@@ -1303,7 +1303,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         sql.append(" = ");
         sql.arg(streamType.getId());
         sql.append(" AND ");
-        sql.append(Feed.FOREIGN_KEY);
+        sql.append(FeedDoc.FOREIGN_KEY);
         sql.append(" = ");
         sql.arg(feed.getId());
         sql.append(")");
@@ -1449,14 +1449,14 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         return new FindStreamCriteria();
     }
 
-    private Feed getFeed(final DocRef docRef) {
+    private FeedDoc getFeed(final DocRef docRef) {
         if (docRef == null) {
             throw new NullPointerException("No doc ref specified for feed");
         }
         if (docRef.getUuid() == null) {
             throw new NullPointerException("No doc ref uuid specified for feed");
         }
-        final Feed feed = feedService.loadByUuid(docRef.getUuid());
+        final FeedDoc feed = feedService.loadByUuid(docRef.getUuid());
         if (feed == null) {
             throw new EntityServiceException("Unable to find feed: " + docRef);
         }

@@ -19,7 +19,7 @@ package stroom.streamstore.fs;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.streamstore.MockStreamStore;
 import stroom.streamstore.StreamSource;
 import stroom.streamstore.StreamTarget;
@@ -45,7 +45,7 @@ public class TestMockStreamStore extends StroomUnitTest {
 
         mockStreamStore.clear();
 
-        final Feed feed = new Feed();
+        final FeedDoc feed = new FeedDoc();
         feed.setId(1L);
 
         final Stream stream1 = Stream.createStream(StreamType.EVENTS, feed, null);

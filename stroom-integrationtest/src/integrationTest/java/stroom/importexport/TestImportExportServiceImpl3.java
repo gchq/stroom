@@ -22,8 +22,8 @@ import org.junit.Test;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.feed.FeedService;
-import stroom.feed.shared.Feed;
+import stroom.streamstore.FdService;
+import stroom.feed.shared.FeedDoc;
 import stroom.importexport.shared.ImportState;
 import stroom.pipeline.PipelineStore;
 import stroom.resource.ResourceStore;
@@ -47,7 +47,7 @@ public class TestImportExportServiceImpl3 extends AbstractCoreIntegrationTest {
     @Inject
     private PipelineStore pipelineStore;
     @Inject
-    private FeedService feedService;
+    private FdService feedService;
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
@@ -57,7 +57,7 @@ public class TestImportExportServiceImpl3 extends AbstractCoreIntegrationTest {
     public void testImportZip() throws IOException {
         final int BATCH_SIZE = 200;
         for (int i = 0; i < BATCH_SIZE; i++) {
-            explorerService.create(Feed.ENTITY_TYPE, FileSystemTestUtil.getUniqueTestString(), null, null);
+            explorerService.create(FeedDoc.DOCUMENT_TYPE, FileSystemTestUtil.getUniqueTestString(), null, null);
         }
         final List<Message> msgList = new ArrayList<>();
 

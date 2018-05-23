@@ -22,9 +22,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
-import stroom.feed.FeedService;
-import stroom.feed.shared.Feed;
-import stroom.streamstore.StreamMaintenanceService;
+import stroom.streamstore.FdService;
+import stroom.feed.shared.FeedDoc;
 import stroom.streamstore.StreamRetentionExecutor;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.fs.FileSystemStreamMaintenanceService;
@@ -49,13 +48,13 @@ public class TestStreamRetentionExecutor extends AbstractCoreIntegrationTest {
     @Inject
     private FileSystemStreamMaintenanceService streamMaintenanceService;
     @Inject
-    private FeedService feedService;
+    private FdService feedService;
     @Inject
     private StreamRetentionExecutor streamRetentionExecutor;
 
     @Test
     public void testMultipleRuns() {
-        Feed feed = commonTestScenarioCreator.createSimpleFeed();
+        FeedDoc feed = commonTestScenarioCreator.createSimpleFeed();
 
         final long now = System.currentTimeMillis();
         final long timeOutsideRetentionPeriod = now - TimeUnit.DAYS.toMillis(RETENTION_PERIOD_DAYS)

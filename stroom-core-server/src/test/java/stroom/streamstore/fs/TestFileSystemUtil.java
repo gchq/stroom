@@ -19,7 +19,7 @@ package stroom.streamstore.fs;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.streamstore.shared.Stream;
@@ -91,7 +91,7 @@ public class TestFileSystemUtil extends StroomUnitTest {
 
     @Test
     public void testCreateRootStreamFile() throws IOException {
-        final Stream md = Stream.createStreamForTesting(StreamType.EVENTS, Feed.createStub(1), null,
+        final Stream md = Stream.createStreamForTesting(StreamType.EVENTS, FeedDoc.createStub(1), null,
                 DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z"));
         md.setId(1001001L);
 
@@ -103,7 +103,7 @@ public class TestFileSystemUtil extends StroomUnitTest {
 
     @Test
     public void testCreateChildStreamFile() throws IOException {
-        final Stream md = Stream.createStreamForTesting(StreamType.RAW_EVENTS, Feed.createStub(1), null,
+        final Stream md = Stream.createStreamForTesting(StreamType.RAW_EVENTS, FeedDoc.createStub(1), null,
                 DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z"));
         md.setId(1001001L);
 
@@ -240,7 +240,7 @@ public class TestFileSystemUtil extends StroomUnitTest {
 
     @Test
     public void testDirPath() {
-        final Stream data1 = Stream.createStreamForTesting(StreamType.EVENTS, Feed.createStub(2), null,
+        final Stream data1 = Stream.createStreamForTesting(StreamType.EVENTS, FeedDoc.createStub(2), null,
                 DateUtil.parseNormalDateTimeString("2008-11-18T10:00:00.000Z"));
         data1.setId(100100L);
 
@@ -250,7 +250,7 @@ public class TestFileSystemUtil extends StroomUnitTest {
 
     @Test
     public void testDirPath2() {
-        final Stream data1 = Stream.createStreamForTesting(StreamType.EVENTS, Feed.createStub(2), null,
+        final Stream data1 = Stream.createStreamForTesting(StreamType.EVENTS, FeedDoc.createStub(2), null,
                 DateUtil.parseNormalDateTimeString("2008-11-18T10:00:00.000Z"));
 
         data1.setId(1100100L);

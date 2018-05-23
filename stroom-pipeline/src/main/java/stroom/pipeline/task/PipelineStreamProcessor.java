@@ -24,9 +24,9 @@ import org.slf4j.MarkerFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.feed.FeedProperties;
-import stroom.feed.FeedService;
+import stroom.streamstore.FdService;
 import stroom.feed.MetaMap;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.io.StreamCloser;
 import stroom.node.NodeCache;
 import stroom.pipeline.DefaultErrorWriter;
@@ -102,7 +102,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
 
     private final PipelineFactory pipelineFactory;
     private final StreamStore streamStore;
-    private final FeedService feedService;
+    private final FdService feedService;
     private final PipelineStore pipelineStore;
     private final TaskContext taskContext;
     private final PipelineHolder pipelineHolder;
@@ -132,7 +132,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     @Inject
     PipelineStreamProcessor(final PipelineFactory pipelineFactory,
                             final StreamStore streamStore,
-                            @Named("cachedFeedService") final FeedService feedService,
+                            @Named("cachedFeedService") final FdService feedService,
                             @Named("cachedPipelineStore") final PipelineStore pipelineStore,
                             final TaskContext taskContext,
                             final PipelineHolder pipelineHolder,
@@ -221,7 +221,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             }
 
             // Load the feed.
-            final Feed feed = feedService.load(stream.getFeed());
+            final FeedDoc feed = feedService.load(stream.getFeed());
             if (feed != null) {
                 feedName = feed.getName();
                 feedHolder.setFeedName(feed.getName());

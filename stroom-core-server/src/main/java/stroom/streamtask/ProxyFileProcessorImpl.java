@@ -18,10 +18,12 @@ package stroom.streamtask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.FeedService;
+import stroom.docref.DocRef;
+import stroom.feed.FeedStore;
+import stroom.streamstore.FdService;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.properties.StroomPropertyService;
 import stroom.proxy.repo.ProxyFileHandler;
@@ -59,7 +61,7 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
     final static long DEFAULT_MAX_STREAM_SIZE = ModelStringUtil.parseIECByteSizeString("10G");
 
     private final StreamStore streamStore;
-    private final FeedService feedService;
+    private final FeedStore feedStore;
     private final MetaDataStatistic metaDataStatistic;
     private final int maxAggregation;
     private final long maxStreamSize;
@@ -69,7 +71,7 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
 
     @Inject
     ProxyFileProcessorImpl(final StreamStore streamStore,
-                           @Named("cachedFeedService") final FeedService feedService,
+                           @Named("cachedFeedService") final FdService feedService,
                            final MetaDataStatistic metaDataStatistic,
                            final StroomPropertyService propertyService) {
         this(
@@ -82,12 +84,12 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
     }
 
     ProxyFileProcessorImpl(final StreamStore streamStore,
-                           final FeedService feedService,
+                           final FeedStore feedStore,
                            final MetaDataStatistic metaDataStatistic,
                            final int maxAggregation,
                            final long maxStreamSize) {
         this.streamStore = streamStore;
-        this.feedService = feedService;
+        this.feedStore = feedStore;
         this.metaDataStatistic = metaDataStatistic;
         this.maxAggregation = maxAggregation;
         this.maxStreamSize = maxStreamSize;
@@ -95,12 +97,12 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
 
     @Override
     public void processFeedFiles(final StroomZipRepository stroomZipRepository, final String feedName, final List<Path> fileList) {
-        final Feed feed = feedService.loadByName(feedName);
+        final List<DocRef> refs = feedStore.findByName(feedName);
 
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         LOGGER.info("processFeedFiles() - Started {} ({} Files)", feedName, fileList.size());
 
-        if (feed == null) {
+        if (refs == null || refs.size() == 0) {
             LOGGER.error("processFeedFiles() - " + feedName + " Failed to find feed");
             return;
         }
@@ -110,6 +112,7 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
         }
 
         // We don't want to aggregate reference feeds.
+        final FeedDoc feed = feedStore.readDocument(refs.get(0));
         final boolean oneByOne = feed.isReference() || !aggregate;
 
         List<StreamTargetStroomStreamHandler> handlers = openStreamHandlers(feed);
@@ -166,12 +169,12 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
         LOGGER.info("processFeedFiles() - Completed {} in {}", feedName, logExecutionTime);
     }
 
-    private List<StreamTargetStroomStreamHandler> openStreamHandlers(final Feed feed) {
+    private List<StreamTargetStroomStreamHandler> openStreamHandlers(final FeedDoc feed) {
         // We don't want to aggregate reference feeds.
         final boolean oneByOne = feed.isReference() || !aggregate;
 
         final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(streamStore,
-                feedService, metaDataStatistic, feed, feed.getStreamType());
+                feedService, metaDataStatistic, feed.getName(), feed.getStreamType());
 
         streamTargetStroomStreamHandler.setOneByOne(oneByOne);
 

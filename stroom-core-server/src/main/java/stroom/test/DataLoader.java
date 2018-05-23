@@ -20,10 +20,10 @@ package stroom.test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
-import stroom.feed.FeedService;
+import stroom.streamstore.FdService;
 import stroom.feed.MetaMap;
-import stroom.feed.shared.Feed;
-import stroom.feed.shared.FindFeedCriteria;
+import stroom.feed.shared.FeedDoc;
+import stroom.streamstore.FindFdCriteria;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
@@ -54,10 +54,10 @@ public class DataLoader {
     private static final String INPUT_EXTENSION = ".in";
     private static final String ZIP_EXTENSION = ".zip";
 
-    private final FeedService feedService;
+    private final FdService feedService;
     private final StreamStore streamStore;
 
-    public DataLoader(final FeedService feedService, final StreamStore streamStore) {
+    public DataLoader(final FdService feedService, final StreamStore streamStore) {
         this.feedService = feedService;
         this.streamStore = streamStore;
     }
@@ -91,7 +91,7 @@ public class DataLoader {
     }
 
     private void loadInputFile(final Path file, final boolean mandateEffectiveDate, final Long effectiveMs) {
-        final Feed feed = getFeed(file);
+        final FeedDoc feed = getFeed(file);
         try (final InputStream inputStream = Files.newInputStream(file)) {
             loadInputStream(feed, FileUtil.getCanonicalPath(file), inputStream, mandateEffectiveDate, effectiveMs);
         } catch (final IOException e) {
@@ -99,7 +99,7 @@ public class DataLoader {
         }
     }
 
-    public void loadInputStream(final Feed feed, final String info, final InputStream inputStream,
+    public void loadInputStream(final FeedDoc feed, final String info, final InputStream inputStream,
                                 final boolean mandateEffectiveDate, final Long effectiveMs) {
         if (feed.isReference() == mandateEffectiveDate) {
             LOGGER.info("Loading data: " + info);
@@ -130,7 +130,7 @@ public class DataLoader {
     }
 
     private void loadZipFile(final Path file, final boolean mandateEffectiveDate, final Long effectiveMs) {
-        final Feed feed = getFeed(file);
+        final FeedDoc feed = getFeed(file);
 
         if (feed.isReference() == mandateEffectiveDate) {
             LOGGER.info("Loading data: " + FileUtil.getCanonicalPath(file));
@@ -174,7 +174,7 @@ public class DataLoader {
         }
     }
 
-    private Feed getFeed(final Path file) {
+    private FeedDoc getFeed(final Path file) {
         // Get the stem of the file name.
         String stem = file.getFileName().toString();
         int index = stem.indexOf('.');
@@ -189,11 +189,11 @@ public class DataLoader {
         return getFeed(stem);
     }
 
-    public Feed getFeed(final String name) {
+    public FeedDoc getFeed(final String name) {
         // Find the associated feed.
-        final FindFeedCriteria findFeedCriteria = new FindFeedCriteria();
+        final FindFdCriteria findFeedCriteria = new FindFdCriteria();
         findFeedCriteria.getName().setString(name);
-        final BaseResultList<Feed> list = feedService.find(findFeedCriteria);
+        final BaseResultList<FeedDoc> list = feedService.find(findFeedCriteria);
 
         if (list.size() == 0) {
             throw new RuntimeException("Feed not found \"" + name + "\"");

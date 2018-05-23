@@ -19,10 +19,9 @@ package stroom.streamstore;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.feed.FeedService;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.streamstore.fs.FileSystemStreamMaintenanceService;
 import stroom.streamstore.fs.serializable.RANestedInputStream;
@@ -50,7 +49,7 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
     @Inject
     private StreamStore streamStore;
     @Inject
-    private FeedService feedService;
+    private FdService feedService;
     @Inject
     private FileSystemStreamMaintenanceService streamMaintenanceService;
     @Inject
@@ -215,7 +214,7 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
     private void doTest(final Path file, final int processCount, final Set<String> expectedFiles,
                         final HashMap<StreamType, String> expectedContent,
                         final HashMap<StreamType, List<String>> expectedBoundaries) throws IOException {
-        final Feed eventFeed = commonTestScenarioCreator.createSimpleFeed();
+        final FeedDoc eventFeed = commonTestScenarioCreator.createSimpleFeed();
 
         final MetaMap metaMap = new MetaMap();
         metaMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);

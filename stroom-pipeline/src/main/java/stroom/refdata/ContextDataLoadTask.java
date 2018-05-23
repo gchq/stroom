@@ -16,7 +16,6 @@
 
 package stroom.refdata;
 
-import stroom.feed.shared.Feed;
 import stroom.docref.DocRef;
 import stroom.streamstore.shared.Stream;
 import stroom.task.ServerTask;

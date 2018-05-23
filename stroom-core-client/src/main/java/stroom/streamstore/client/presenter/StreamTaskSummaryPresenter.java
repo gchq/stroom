@@ -26,17 +26,17 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.docref.DocRef;
+import stroom.docref.SharedObject;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.ResultList;
 import stroom.entity.shared.SummaryDataRow;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.docref.DocRef;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.TaskStatus;
 import stroom.util.shared.ModelStringUtil;
-import stroom.docref.SharedObject;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -146,13 +146,13 @@ public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<S
         return getView().getSelectionModel();
     }
 
-    private void setCriteria(final Feed feed) {
+    private void setFeedCriteria(final String feedName) {
         final FindStreamTaskCriteria criteria = initCriteria();
-        criteria.obtainFeedIdSet().add(feed);
+        criteria.obtainFeedNameSet().add(feedName);
         dataProvider.setCriteria(criteria);
     }
 
-    private void setCriteria(final DocRef pipelineRef) {
+    private void setPipelineCriteria(final DocRef pipelineRef) {
         final FindStreamTaskCriteria criteria = initCriteria();
         criteria.obtainPipelineSet().add(pipelineRef);
         dataProvider.setCriteria(criteria);
@@ -164,10 +164,10 @@ public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<S
 
     @Override
     public void read(final DocRef docRef, final SharedObject entity) {
-        if (entity instanceof Feed) {
-            setCriteria((Feed) entity);
+        if (entity instanceof FeedDoc) {
+            setFeedCriteria(docRef.getName());
         } else if (entity instanceof PipelineDoc) {
-            setCriteria(docRef);
+            setPipelineCriteria(docRef);
         } else {
             setNullCriteria();
         }

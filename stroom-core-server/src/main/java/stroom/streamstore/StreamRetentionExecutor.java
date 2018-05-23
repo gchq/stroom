@@ -21,9 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Period;
 import stroom.entity.util.PeriodUtil;
-import stroom.feed.FeedService;
-import stroom.feed.shared.Feed;
-import stroom.feed.shared.FindFeedCriteria;
+import stroom.feed.shared.FeedDoc;
 import stroom.jobsystem.ClusterLockService;
 import stroom.jobsystem.JobTrackedSchedule;
 import stroom.query.api.v2.ExpressionOperator;
@@ -49,13 +47,13 @@ public class StreamRetentionExecutor {
     private static final String LOCK_NAME = "StreamRetentionExecutor";
     private static final int DELETE_STREAM_BATCH_SIZE = 1000;
 
-    private final FeedService feedService;
+    private final FdService feedService;
     private final StreamStore streamStore;
     private final TaskContext taskContext;
     private final ClusterLockService clusterLockService;
 
     @Inject
-    StreamRetentionExecutor(final FeedService feedService,
+    StreamRetentionExecutor(final FdService feedService,
                             final StreamStore streamStore,
                             final TaskContext taskContext,
                             final ClusterLockService clusterLockService) {
@@ -77,9 +75,9 @@ public class StreamRetentionExecutor {
         LOGGER.info("Stream Retention Executor - start");
         if (clusterLockService.tryLock(LOCK_NAME)) {
             try {
-                final FindFeedCriteria findFeedCriteria = new FindFeedCriteria();
-                final List<Feed> feedList = feedService.find(findFeedCriteria);
-                for (final Feed feed : feedList) {
+                final FindFdCriteria findFeedCriteria = new FindFdCriteria();
+                final List<FeedDoc> feedList = feedService.find(findFeedCriteria);
+                for (final FeedDoc feed : feedList) {
                     if (!Thread.currentThread().isInterrupted()) {
                         processFeed(feed);
                     }
@@ -95,7 +93,7 @@ public class StreamRetentionExecutor {
         }
     }
 
-    private void processFeed(final Feed feed) {
+    private void processFeed(final FeedDoc feed) {
         if (feed.getRetentionDayAge() == null) {
             LOGGER.info("processFeed() - {} Skipping as no retention set", feed.getName());
             return;

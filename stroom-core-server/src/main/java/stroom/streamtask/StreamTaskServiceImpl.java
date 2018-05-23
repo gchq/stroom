@@ -29,7 +29,7 @@ import stroom.entity.shared.SummaryDataRow;
 import stroom.entity.util.FieldMap;
 import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.node.shared.Node;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.Security;
@@ -78,7 +78,7 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
             sql.append(", SP.");
             sql.append(StreamProcessor.PIPELINE_UUID);
             sql.append(" PIPE_UUID, F.");
-            sql.append(Feed.ID);
+            sql.append(FeedDoc.ID);
             sql.append(" FEED_ID, F.");
             sql.append(SQLNameConstants.NAME);
             sql.append(" F_NAME, SPF.");
@@ -100,11 +100,11 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
             sql.append(" = ST.");
             sql.append(Stream.FOREIGN_KEY);
             sql.append(") JOIN ");
-            sql.append(Feed.TABLE_NAME);
+            sql.append(FeedDoc.TABLE_NAME);
             sql.append(" F ON (F.");
-            sql.append(Feed.ID);
+            sql.append(FeedDoc.ID);
             sql.append(" = S.");
-            sql.append(Feed.FOREIGN_KEY);
+            sql.append(FeedDoc.FOREIGN_KEY);
             sql.append(") JOIN ");
             sql.append(StreamProcessorFilter.TABLE_NAME);
             sql.append(" SPF ON (SPF.");
@@ -201,7 +201,7 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
                 if (fetchSet.contains(Stream.ENTITY_TYPE)) {
                     sql.append(" JOIN FETCH " + alias + ".stream AS s");
                 }
-                if (fetchSet.contains(Feed.ENTITY_TYPE)) {
+                if (fetchSet.contains(FeedDoc.DOCUMENT_TYPE)) {
                     sql.append(" JOIN FETCH s.feed AS f");
                 }
                 if (fetchSet.contains(StreamType.ENTITY_TYPE)) {

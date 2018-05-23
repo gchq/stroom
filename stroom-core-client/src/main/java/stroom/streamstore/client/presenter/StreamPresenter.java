@@ -34,19 +34,19 @@ import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.ExportFileCompleteUtil;
+import stroom.docref.DocRef;
+import stroom.docref.SharedObject;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceFindDeleteAction;
 import stroom.entity.shared.IdSet;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.ResultList;
 import stroom.entity.shared.SharedDocRef;
 import stroom.entity.shared.Sort.Direction;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.process.client.presenter.ExpressionPresenter;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -65,7 +65,6 @@ import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.ReprocessDataAction;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.svg.client.SvgPresets;
-import stroom.docref.SharedObject;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -95,7 +94,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     private final ButtonView streamListFilter;
 
     private FindStreamAttributeMapCriteria findStreamAttributeMapCriteria;
-    private Feed feedCriteria;
+    private String feedName;
     private ButtonView streamListUpload;
     private ButtonView streamListDownload;
     private ButtonView streamListDelete;
@@ -288,7 +287,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
 
         // Some button's may not exist due to permissions
         if (streamListUpload != null) {
-            registerHandler(streamListUpload.addClickHandler(event -> streamUploadPresenter.get().show(StreamPresenter.this, DocRefUtil.create(feedCriteria))));
+            registerHandler(streamListUpload.addClickHandler(event -> streamUploadPresenter.get().show(StreamPresenter.this, feedName)));
         }
         if (streamListDownload != null) {
             registerHandler(streamListDownload
@@ -420,8 +419,8 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
 
     @Override
     public void read(final DocRef docRef, final SharedObject entity) {
-        if (entity instanceof Feed) {
-            setFeedCriteria((Feed) entity);
+        if (entity instanceof FeedDoc) {
+            setFeedCriteria(docRef.getName());
         } else if (entity instanceof PipelineDoc) {
             setPipelineCriteria((PipelineDoc) entity);
         } else {
@@ -437,7 +436,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         pageRequest.setLength(PageRequest.DEFAULT_PAGE_SIZE);
         pageRequest.setOffset(0L);
 
-        criteria.obtainFindStreamCriteria().getFetchSet().add(Feed.ENTITY_TYPE);
+        criteria.obtainFindStreamCriteria().getFetchSet().add(FeedDoc.DOCUMENT_TYPE);
         criteria.obtainFindStreamCriteria().getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
         criteria.obtainFindStreamCriteria().getFetchSet().add(StreamProcessor.ENTITY_TYPE);
         criteria.obtainFindStreamCriteria().getFetchSet().add(StreamType.ENTITY_TYPE);
@@ -446,13 +445,13 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         return criteria;
     }
 
-    private void setFeedCriteria(final Feed feed) {
-        feedCriteria = feed;
+    private void setFeedCriteria(final String feedName) {
+        this.feedName = feedName;
         showStreamListButtons(true);
         showStreamRelationListButtons(true);
 
         findStreamAttributeMapCriteria = createFindStreamAttributeMapCriteria();
-        findStreamAttributeMapCriteria.obtainFindStreamCriteria().setExpression(ExpressionUtil.createFeedExpression(feed));
+        findStreamAttributeMapCriteria.obtainFindStreamCriteria().setExpression(ExpressionUtil.createFeedExpression(feedName));
 
         initCriteria();
     }

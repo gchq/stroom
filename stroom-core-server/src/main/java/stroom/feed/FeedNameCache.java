@@ -1,7 +1,9 @@
 package stroom.feed;
 
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
+
+import java.util.Optional;
 
 public interface FeedNameCache {
-    Feed get(String feedName);
+    Optional<FeedDoc> get(String feedName);
 }

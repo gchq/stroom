@@ -19,11 +19,11 @@ package stroom.headless;
 
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.StringCriteria;
-import stroom.feed.FeedService;
+import stroom.streamstore.FdService;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
-import stroom.feed.shared.Feed;
-import stroom.feed.shared.FindFeedCriteria;
+import stroom.feed.shared.FeedDoc;
+import stroom.streamstore.FindFdCriteria;
 import stroom.pipeline.ErrorWriterProxy;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -71,7 +71,7 @@ import java.util.List;
 @TaskHandlerBean(task = HeadlessTranslationTask.class)
 class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTranslationTask, VoidResult> {
     private final PipelineFactory pipelineFactory;
-    private final FeedService feedService;
+    private final FdService feedService;
     private final PipelineStore pipelineStore;
     private final MetaData metaData;
     private final PipelineHolder pipelineHolder;
@@ -87,7 +87,7 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
 
     @Inject
     HeadlessTranslationTaskHandler(final PipelineFactory pipelineFactory,
-                                   @Named("cachedFeedService") final FeedService feedService,
+                                   @Named("cachedFeedService") final FdService feedService,
                                    @Named("cachedPipelineStore") final PipelineStore pipelineStore,
                                    final MetaData metaData,
                                    final PipelineHolder pipelineHolder,
@@ -137,7 +137,7 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
 
                 // Get the feed.
                 final String feedName = metaData.get(StroomHeaderArguments.FEED);
-                final Feed feed = getFeed(feedName);
+                final FeedDoc feed = getFeed(feedName);
                 feedHolder.setFeedName(feedName);
 
                 // Setup the meta data holder.
@@ -235,14 +235,14 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
         return null;
     }
 
-    private Feed getFeed(final String feedName) {
+    private FeedDoc getFeed(final String feedName) {
         if (feedName == null) {
             throw new RuntimeException("No feed name found in meta data");
         }
 
-        final FindFeedCriteria feedCriteria = new FindFeedCriteria();
+        final FindFdCriteria feedCriteria = new FindFdCriteria();
         feedCriteria.setName(new StringCriteria(feedName));
-        final BaseResultList<Feed> feeds = feedService.find(feedCriteria);
+        final BaseResultList<FeedDoc> feeds = feedService.find(feedCriteria);
 
         if (feeds.size() == 0) {
             throw new RuntimeException("No configuration found for feed \"" + feedName + "\"");

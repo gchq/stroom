@@ -20,9 +20,8 @@ package stroom.streamtask;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.shared.Period;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.node.shared.Node;
-import stroom.pipeline.shared.PipelineDoc;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
@@ -50,7 +49,7 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
 
     @Test
     public void testSaveAndGetAll() {
-        final Feed efd = commonTestScenarioCreator.createSimpleFeed();
+        final FeedDoc efd = commonTestScenarioCreator.createSimpleFeed();
         final Stream file1 = commonTestScenarioCreator.createSample2LineRawFile(efd, StreamType.RAW_EVENTS);
         final Stream file2 = commonTestScenarioCreator.createSampleBlankProcessedFile(efd, file1);
         final Stream file3 = commonTestScenarioCreator.createSample2LineRawFile(efd, StreamType.RAW_EVENTS);
@@ -113,7 +112,7 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
 
         criteria.getFetchSet().add(Stream.ENTITY_TYPE);
         criteria.getFetchSet().add(Node.ENTITY_TYPE);
-        criteria.getFetchSet().add(Feed.ENTITY_TYPE);
+        criteria.getFetchSet().add(FeedDoc.DOCUMENT_TYPE);
         criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
 
         Assert.assertEquals(0, streamTaskService.find(criteria).size());

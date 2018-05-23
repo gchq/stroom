@@ -18,10 +18,9 @@ package stroom.streamstore.fs;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.jobsystem.MockTask;
 import stroom.streamstore.FindStreamVolumeCriteria;
-import stroom.streamstore.StreamMaintenanceService;
 import stroom.streamstore.StreamRange;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
@@ -47,7 +46,7 @@ public class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrat
     public void testSimple() throws IOException {
         // commonTestControl.deleteDir();
 
-        final Feed eventFeed = commonTestScenarioCreator.createSimpleFeed();
+        final FeedDoc eventFeed = commonTestScenarioCreator.createSimpleFeed();
 
         final Stream md = commonTestScenarioCreator.createSample2LineRawFile(eventFeed, StreamType.RAW_EVENTS);
 

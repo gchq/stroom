@@ -18,7 +18,6 @@ package stroom.streamstore.shared;
 
 import stroom.entity.shared.BaseEntityBig;
 import stroom.entity.shared.SQLNameConstants;
-import stroom.feed.shared.Feed;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamTask;
 
@@ -28,7 +27,6 @@ import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.PostLoad;
-import javax.persistence.PrePersist;
 import javax.persistence.Transient;
 
 /**
@@ -68,7 +66,7 @@ public class Stream extends BaseEntityBig {
     /**
      * We don't eager fetch this one ... you need to call loadFeed.
      */
-    private Feed feed;
+    private Fd feed;
 
     private StreamType streamType;
 
@@ -111,7 +109,7 @@ public class Stream extends BaseEntityBig {
         return stream;
     }
 
-    public static Stream createStream(final StreamType type, final Feed feed, final Long effectiveMs) {
+    public static Stream createStream(final StreamType type, final Fd feed, final Long effectiveMs) {
         final Stream stream = new Stream();
 
         stream.streamType = type;
@@ -128,8 +126,8 @@ public class Stream extends BaseEntityBig {
         return stream;
     }
 
-    public static Stream createStreamForTesting(final StreamType type, final Feed feed, final Long effectiveMs,
-                                                      final long createMs) {
+    public static Stream createStreamForTesting(final StreamType type, final Fd feed, final Long effectiveMs,
+                                                final long createMs) {
         final Stream stream = new Stream();
 
         stream.streamType = type;
@@ -146,8 +144,8 @@ public class Stream extends BaseEntityBig {
         return stream;
     }
 
-    public static Stream createProcessedStream(final Stream parent, final Feed feed, final StreamType streamType,
-                                                     final StreamProcessor streamProcessor, final StreamTask streamTask) {
+    public static Stream createProcessedStream(final Stream parent, final Fd feed, final StreamType streamType,
+                                               final StreamProcessor streamProcessor, final StreamTask streamTask) {
         final Stream stream = new Stream();
 
         if (parent != null) {
@@ -177,12 +175,12 @@ public class Stream extends BaseEntityBig {
     }
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = Feed.FOREIGN_KEY)
-    public Feed getFeed() {
+    @JoinColumn(name = Fd.FOREIGN_KEY)
+    public Fd getFeed() {
         return feed;
     }
 
-    public void setFeed(final Feed feed) {
+    public void setFeed(final Fd feed) {
         this.feed = applySetter(this.feed, feed);
     }
 

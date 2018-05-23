@@ -17,11 +17,14 @@
 
 package stroom.feed;
 
-        import stroom.entity.DocumentEntityService;
-        import stroom.entity.FindService;
-        import stroom.feed.shared.Feed;
-        import stroom.feed.shared.FindFeedCriteria;
+import stroom.docref.DocRef;
+import stroom.document.DocumentStore;
+import stroom.feed.shared.FeedDoc;
 
-public interface FeedService extends DocumentEntityService<Feed>, FindService<Feed, FindFeedCriteria> {
-    Feed loadByName(String name);
+import java.util.List;
+
+public interface FeedStore extends DocumentStore<FeedDoc> {
+    List<DocRef> findByName(String name);
+
+    List<DocRef> list();
 }

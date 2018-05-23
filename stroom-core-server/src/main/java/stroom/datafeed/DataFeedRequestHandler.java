@@ -19,18 +19,20 @@ package stroom.datafeed;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.FeedService;
+import stroom.feed.FeedNameCache;
+import stroom.streamstore.FdService;
 import stroom.feed.MetaMap;
 import stroom.feed.MetaMapFactory;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.StroomStatusCode;
 import stroom.feed.StroomStreamException;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.properties.StroomPropertyService;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.docref.DocRef;
 import stroom.security.Security;
 import stroom.streamstore.StreamStore;
+import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.StreamTargetStroomStreamHandler;
 import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.util.thread.BufferFactory;
@@ -42,6 +44,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -54,7 +57,7 @@ class DataFeedRequestHandler implements RequestHandler {
 
     private final Security security;
     private final StreamStore streamStore;
-    private final FeedService feedService;
+    private final FeedNameCache feedNameCache;
     private final MetaDataStatistic metaDataStatistics;
     private final MetaMapFilterFactory metaMapFilterFactory;
     private final StroomPropertyService stroomPropertyService;
@@ -64,13 +67,13 @@ class DataFeedRequestHandler implements RequestHandler {
     @Inject
     public DataFeedRequestHandler(final Security security,
                                   final StreamStore streamStore,
-                                  @Named("cachedFeedService") final FeedService feedService,
+                                  final FeedNameCache feedNameCache,
                                   final MetaDataStatistic metaDataStatistics,
                                   final MetaMapFilterFactory metaMapFilterFactory,
                                   final StroomPropertyService stroomPropertyService) {
         this.security = security;
         this.streamStore = streamStore;
-        this.feedService = feedService;
+        this.feedNameCache = feedNameCache;
         this.metaDataStatistics = metaDataStatistics;
         this.metaMapFilterFactory = metaMapFilterFactory;
         this.stroomPropertyService = stroomPropertyService;
@@ -95,7 +98,13 @@ class DataFeedRequestHandler implements RequestHandler {
                     throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED);
                 }
 
-                final Feed feed = feedService.loadByName(metaMap.get(StroomHeaderArguments.FEED));
+                final Optional<FeedDoc> feed = feedNameCache.get(feedName);
+                String streamTypeName = StreamType.RAW_EVENTS.getName();
+                if (feed.isPresent() && feed.get().getStreamType() != null) {
+                    streamTypeName = feed.get().getStreamType();
+                }
+
+                final FeedDoc feed = feedService.loadByName(metaMap.get(StroomHeaderArguments.FEED));
 
                 if (feed == null) {
                     throw new StroomStreamException(StroomStatusCode.FEED_IS_NOT_DEFINED);
@@ -106,7 +115,7 @@ class DataFeedRequestHandler implements RequestHandler {
                 }
 
                 List<StreamTargetStroomStreamHandler> handlers = StreamTargetStroomStreamHandler.buildSingleHandlerList(streamStore,
-                        feedService, metaDataStatistics, feed, feed.getStreamType());
+                        feedService, metaDataStatistics, feedName, streamTypeName);
 
                 final byte[] buffer = BufferFactory.create();
                 final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlers, buffer, "DataFeedRequestHandler-" + metaMap.get(StroomHeaderArguments.GUID));

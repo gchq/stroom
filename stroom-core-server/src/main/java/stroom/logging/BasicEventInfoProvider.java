@@ -27,8 +27,8 @@ import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.Document;
 import stroom.entity.shared.NamedEntity;
-import stroom.feed.FeedService;
-import stroom.feed.shared.Feed;
+import stroom.streamstore.FdService;
+import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.streamstore.StreamTypeService;
 import stroom.streamstore.shared.Stream;
@@ -40,11 +40,11 @@ class BasicEventInfoProvider implements EventInfoProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(BasicEventInfoProvider.class);
 
     private final StreamTypeService streamTypeService;
-    private final FeedService feedService;
+    private final FdService feedService;
 
     @Inject
     BasicEventInfoProvider(@Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
-                           @Named("cachedFeedService") final FeedService feedService) {
+                           @Named("cachedFeedService") final FdService feedService) {
         this.streamTypeService = streamTypeService;
         this.feedService = feedService;
     }
@@ -66,9 +66,9 @@ class BasicEventInfoProvider implements EventInfoProvider {
             }
 
             // Add description.
-            if (entity instanceof Feed) {
+            if (entity instanceof FeedDoc) {
                 try {
-                    final Feed feed = (Feed) entity;
+                    final FeedDoc feed = (FeedDoc) entity;
                     description = feed.getDescription();
                 } catch (final RuntimeException e) {
                     LOGGER.error("Unable to get feed description!", e);
@@ -82,9 +82,9 @@ class BasicEventInfoProvider implements EventInfoProvider {
             object.setDescription(description);
 
             // Add unknown but useful data items.
-            if (entity instanceof Feed) {
+            if (entity instanceof FeedDoc) {
                 try {
-                    final Feed feed = (Feed) entity;
+                    final FeedDoc feed = (FeedDoc) entity;
                     object.getData()
                             .add(EventLoggingUtil.createData("FeedStatus", feed.getStatus().getDisplayValue()));
                     // Stream type is now lazy

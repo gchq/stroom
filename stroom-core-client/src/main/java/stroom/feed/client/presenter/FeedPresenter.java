@@ -24,7 +24,7 @@ import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.docref.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -33,13 +33,13 @@ import stroom.streamstore.client.presenter.StreamTaskPresenter;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
-public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Feed> {
+public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, FeedDoc> {
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData DATA = new TabDataImpl("Data");
     // private static final Tab MONITORING = new Tab("Monitoring");
     private static final TabData TASKS = new TabDataImpl("Active Tasks");
 
-    private final TabContentProvider<Feed> tabContentProvider = new TabContentProvider<>();
+    private final TabContentProvider<FeedDoc> tabContentProvider = new TabContentProvider<>();
 
     @Inject
     public FeedPresenter(final EventBus eventBus,
@@ -78,13 +78,13 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
     }
 
     @Override
-    public void onRead(final DocRef docRef, final Feed feed) {
+    public void onRead(final DocRef docRef, final FeedDoc feed) {
         super.onRead(docRef, feed);
         tabContentProvider.read(docRef, feed);
     }
 
     @Override
-    protected void onWrite(final Feed feed) {
+    protected void onWrite(final FeedDoc feed) {
         tabContentProvider.write(feed);
     }
 
@@ -96,6 +96,6 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
 
     @Override
     public String getType() {
-        return Feed.ENTITY_TYPE;
+        return FeedDoc.DOCUMENT_TYPE;
     }
 }

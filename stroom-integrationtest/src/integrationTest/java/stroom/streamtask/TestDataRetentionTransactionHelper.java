@@ -23,9 +23,8 @@ import org.slf4j.LoggerFactory;
 import stroom.dictionary.DictionaryStore;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Period;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.policy.DataRetentionStreamFinder;
-import stroom.streamstore.StreamMaintenanceService;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.fs.FileSystemStreamMaintenanceService;
 import stroom.streamstore.shared.FindStreamCriteria;
@@ -62,7 +61,7 @@ public class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationT
     @Test
     public void testRowCount() throws SQLException {
         try (final Connection connection = dataSource.getConnection()) {
-            Feed feed = commonTestScenarioCreator.createSimpleFeed();
+            FeedDoc feed = commonTestScenarioCreator.createSimpleFeed();
 
             final long now = System.currentTimeMillis();
             final long timeOutsideRetentionPeriod = now - TimeUnit.DAYS.toMillis(RETENTION_PERIOD_DAYS)

@@ -18,7 +18,7 @@ package stroom.streamtask;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.query.api.v2.ExpressionOperator;
@@ -53,8 +53,8 @@ public class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
 
         Assert.assertEquals(0, commonTestControl.countEntity(StreamTask.class));
 
-        final Feed feed1 = commonTestScenarioCreator.createSimpleFeed();
-        final Feed feed2 = commonTestScenarioCreator.createSimpleFeed();
+        final FeedDoc feed1 = commonTestScenarioCreator.createSimpleFeed();
+        final FeedDoc feed2 = commonTestScenarioCreator.createSimpleFeed();
 
         commonTestScenarioCreator.createSample2LineRawFile(feed1, StreamType.RAW_EVENTS);
         commonTestScenarioCreator.createSample2LineRawFile(feed2, StreamType.RAW_EVENTS);
@@ -97,8 +97,8 @@ public class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
         Assert.assertEquals(0, commonTestControl.countEntity(StreamTask.class));
         Assert.assertEquals(0, commonTestControl.countEntity(StreamTask.class));
 
-        final Feed feed1 = commonTestScenarioCreator.createSimpleFeed();
-        final Feed feed2 = commonTestScenarioCreator.createSimpleFeed();
+        final FeedDoc feed1 = commonTestScenarioCreator.createSimpleFeed();
+        final FeedDoc feed2 = commonTestScenarioCreator.createSimpleFeed();
 
         Assert.assertNull(streamTaskCreator.getStreamTaskCreatorRecentStreamDetails());
         streamTaskCreator.createTasks(new SimpleTaskContext());
@@ -155,7 +155,7 @@ public class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
 
         Assert.assertEquals(0, commonTestControl.countEntity(StreamTask.class));
 
-        final Feed feed = commonTestScenarioCreator.createSimpleFeed();
+        final FeedDoc feed = commonTestScenarioCreator.createSimpleFeed();
         commonTestScenarioCreator.createSample2LineRawFile(feed, StreamType.RAW_EVENTS);
         commonTestScenarioCreator.createBasicTranslateStreamProcessor(feed);
 

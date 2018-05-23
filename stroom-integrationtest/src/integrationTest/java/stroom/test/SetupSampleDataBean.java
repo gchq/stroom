@@ -24,15 +24,14 @@ import stroom.db.migration.mysql.V6_0_0_21__Dictionary;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.util.ConnectionUtil;
-import stroom.feed.FeedService;
-import stroom.feed.shared.Feed;
-import stroom.feed.shared.Feed.FeedStatus;
-import stroom.feed.shared.FindFeedCriteria;
+import stroom.streamstore.FdService;
+import stroom.feed.shared.FeedDoc;
+import stroom.feed.shared.FeedDoc.FeedStatus;
+import stroom.streamstore.FindFdCriteria;
 import stroom.importexport.ImportExportSerializer;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.index.IndexStore;
 import stroom.index.IndexVolumeService;
-import stroom.index.shared.IndexDoc;
 import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
@@ -41,7 +40,6 @@ import stroom.pipeline.PipelineStore;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.sql.entity.StatisticStoreStore;
 import stroom.statistics.stroomstats.entity.StroomStatsStoreStore;
 import stroom.streamstore.StreamAttributeKeyService;
@@ -94,7 +92,7 @@ public final class SetupSampleDataBean {
 
     private static final int LOAD_CYCLES = 10;
 
-    private final FeedService feedService;
+    private final FdService feedService;
     private final StreamStore streamStore;
     private final StreamAttributeKeyService streamAttributeKeyService;
     private final CommonTestControl commonTestControl;
@@ -109,7 +107,7 @@ public final class SetupSampleDataBean {
     private final StroomStatsStoreStore stroomStatsStoreStore;
 
     @Inject
-    SetupSampleDataBean(final FeedService feedService,
+    SetupSampleDataBean(final FdService feedService,
                         final StreamStore streamStore,
                         final StreamAttributeKeyService streamAttributeKeyService,
                         final CommonTestControl commonTestControl,
@@ -221,7 +219,7 @@ public final class SetupSampleDataBean {
             }
         }
 
-        final List<Feed> feeds = feedService.find(new FindFeedCriteria());
+        final List<FeedDoc> feeds = feedService.find(new FindFdCriteria());
         logEntities(feeds, "feeds");
 
         generateSampleStatisticsData();
@@ -235,7 +233,7 @@ public final class SetupSampleDataBean {
         logDocRefs(stroomStatsStoreEntities, "stroomStatsStores");
 
         // Create stream processors for all feeds.
-        for (final Feed feed : feeds) {
+        for (final FeedDoc feed : feeds) {
             // Find the pipeline for this feed.
             final List<DocRef> pipelines = pipelineStore.list().stream().filter(docRef -> feed.getName().equals(docRef.getName())).collect(Collectors.toList());
             if (pipelines == null || pipelines.size() == 0) {
@@ -313,15 +311,15 @@ public final class SetupSampleDataBean {
             importExportSerializer.read(configDir, null, ImportMode.IGNORE_CONFIRMATION);
 
             // Enable all flags for all feeds.
-            final List<Feed> feeds = feedService.find(new FindFeedCriteria());
-            for (final Feed feed : feeds) {
+            final List<FeedDoc> feeds = feedService.find(new FindFdCriteria());
+            for (final FeedDoc feed : feeds) {
                 feed.setStatus(FeedStatus.RECEIVE);
                 feedService.save(feed);
             }
 
             LOGGER.info("Node count = " + commonTestControl.countEntity(Node.class));
             LOGGER.info("Volume count = " + commonTestControl.countEntity(Volume.class));
-            LOGGER.info("Feed count = " + commonTestControl.countEntity(Feed.class));
+            LOGGER.info("Feed count = " + commonTestControl.countEntity(FeedDoc.class));
             LOGGER.info("StreamAttributeKey count = " + commonTestControl.countEntity(StreamAttributeKey.class));
             LOGGER.info("Dashboard count = " + dashboardStore.list().size());
             LOGGER.info("Pipeline count = " + pipelineStore.list().size());
@@ -345,7 +343,7 @@ public final class SetupSampleDataBean {
 
             // Load each data item 10 times to create a reasonable amount to
             // test.
-            final Feed fd = dataLoader.getFeed("DATA_SPLITTER-EVENTS");
+            final FeedDoc fd = dataLoader.getFeed("DATA_SPLITTER-EVENTS");
             for (int i = 0; i < LOAD_CYCLES; i++) {
                 // Load reference data first.
                 dataLoader.read(dataDir, true, startTime);
@@ -381,7 +379,7 @@ public final class SetupSampleDataBean {
         try {
             LOGGER.info("Generating statistics test data for feed {}", feedName);
 
-            final Feed feed = dataLoader.getFeed(feedName);
+            final FeedDoc feed = dataLoader.getFeed(feedName);
 
             dataLoader.loadInputStream(
                     feed,
@@ -435,7 +433,7 @@ public final class SetupSampleDataBean {
                 GenerateSampleStatisticsData::generateValueData);
 
         try {
-            final Feed apiFeed = dataLoader.getFeed(STATS_COUNT_API_FEED_NAME);
+            final FeedDoc apiFeed = dataLoader.getFeed(STATS_COUNT_API_FEED_NAME);
             String sampleData = new String(Files.readAllBytes(Paths.get(STATS_COUNT_API_DATA_FILE)));
 
             dataLoader.loadInputStream(

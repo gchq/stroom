@@ -26,21 +26,21 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.docref.DocRef;
+import stroom.docref.SharedObject;
 import stroom.entity.client.presenter.EntityServiceFindActionDataProvider;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.Sort.Direction;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.node.shared.Node;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.docref.DocRef;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamTask;
-import stroom.docref.SharedObject;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -204,8 +204,8 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
         return dataProvider;
     }
 
-    private void setFeedCriteria(final Feed feed) {
-        final FindStreamTaskCriteria criteria = initCriteria(feed, null);
+    private void setFeedCriteria(final String feedName) {
+        final FindStreamTaskCriteria criteria = initCriteria(feedName, null);
         dataProvider.setCriteria(criteria);
     }
 
@@ -229,8 +229,8 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
 
     @Override
     public void read(final DocRef docRef, final SharedObject entity) {
-        if (entity instanceof Feed) {
-            setFeedCriteria((Feed) entity);
+        if (entity instanceof FeedDoc) {
+            setFeedCriteria(docRef.getName());
         } else if (entity instanceof PipelineDoc) {
             setPipelineCriteria(docRef);
         } else {
@@ -238,12 +238,12 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
         }
     }
 
-    private FindStreamTaskCriteria initCriteria(final Feed feed, final DocRef pipelineRef) {
+    private FindStreamTaskCriteria initCriteria(final String feedName, final DocRef pipelineRef) {
         final FindStreamTaskCriteria criteria = new FindStreamTaskCriteria();
         criteria.setSort(FindStreamTaskCriteria.FIELD_CREATE_TIME, Direction.DESCENDING, false);
         criteria.getFetchSet().add(Stream.ENTITY_TYPE);
         criteria.getFetchSet().add(StreamType.ENTITY_TYPE);
-        criteria.getFetchSet().add(Feed.ENTITY_TYPE);
+        criteria.getFetchSet().add(FeedDoc.DOCUMENT_TYPE);
         criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
         criteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
         criteria.getFetchSet().add(Node.ENTITY_TYPE);
@@ -251,8 +251,8 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
         // Only show unlocked stuff
         criteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
 
-        if (feed != null) {
-            criteria.obtainFeedIdSet().add(feed);
+        if (feedName != null) {
+            criteria.obtainFeedNameSet().add(feedName);
         }
         if (pipelineRef != null) {
             criteria.obtainPipelineSet().add(pipelineRef);

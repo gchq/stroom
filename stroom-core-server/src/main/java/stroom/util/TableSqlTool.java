@@ -16,7 +16,7 @@
 
 package stroom.util;
 
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.jobsystem.shared.ClusterLock;
 import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobNode;
@@ -25,7 +25,6 @@ import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
 import stroom.node.shared.Volume;
 import stroom.node.shared.VolumeState;
-import stroom.pipeline.shared.PipelineDoc;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamAttributeValue;
@@ -47,7 +46,7 @@ public class TableSqlTool {
             Node.TABLE_NAME,
             StreamType.TABLE_NAME,
             ClusterLock.TABLE_NAME,
-            Feed.TABLE_NAME,
+            FeedDoc.TABLE_NAME,
             Volume.TABLE_NAME,
             VolumeState.TABLE_NAME,
             GlobalProperty.TABLE_NAME,

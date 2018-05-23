@@ -19,7 +19,7 @@ package stroom.importexport;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.feed.FeedService;
+import stroom.streamstore.FdService;
 import stroom.importexport.shared.ImportState;
 import stroom.pipeline.PipelineStore;
 import stroom.resource.ResourceStore;
@@ -43,7 +43,7 @@ public class TestImportExportServiceImpl2 extends AbstractCoreIntegrationTest {
     @Inject
     private PipelineStore pipelineStore;
     @Inject
-    private FeedService feedService;
+    private FdService feedService;
 
     @Test
     public void testImportZip() throws IOException {

@@ -21,10 +21,11 @@ import stroom.entity.MockDocumentEntityService;
 import stroom.entity.shared.BaseResultList;
 import stroom.explorer.ExplorerActionHandler;
 import stroom.explorer.shared.DocumentType;
-import stroom.feed.shared.Feed;
-import stroom.feed.shared.FindFeedCriteria;
+import stroom.feed.shared.FeedDoc;
+import stroom.streamstore.FindFdCriteria;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
+import stroom.streamstore.FdService;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -39,7 +40,7 @@ import javax.inject.Singleton;
  * </p>
  */
 @Singleton
-public class MockFeedService extends MockDocumentEntityService<Feed, FindFeedCriteria> implements FeedService, ExplorerActionHandler, ImportExportActionHandler {
+public class MockFeedService extends MockDocumentEntityService<FeedDoc, FindFdCriteria> implements FdService, ExplorerActionHandler, ImportExportActionHandler {
     public MockFeedService() {
     }
 
@@ -49,19 +50,19 @@ public class MockFeedService extends MockDocumentEntityService<Feed, FindFeedCri
     }
 
     @Override
-    public Class<Feed> getEntityClass() {
-        return Feed.class;
+    public Class<FeedDoc> getEntityClass() {
+        return FeedDoc.class;
     }
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(3, Feed.ENTITY_TYPE, Feed.ENTITY_TYPE);
+        return new DocumentType(3, FeedDoc.DOCUMENT_TYPE, FeedDoc.DOCUMENT_TYPE);
     }
 
     @Override
-    public Feed loadByName(final String name) {
-        BaseResultList<Feed> list = find(createCriteria());
-        for (final Feed feed : list) {
+    public FeedDoc loadByName(final String name) {
+        BaseResultList<FeedDoc> list = find(createCriteria());
+        for (final FeedDoc feed : list) {
             if (feed.getName().equals(name)) {
                 return feed;
             }

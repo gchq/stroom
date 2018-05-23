@@ -18,8 +18,8 @@
 package stroom.pipeline.writer;
 
 import stroom.feed.MetaMap;
-import stroom.feed.FeedService;
-import stroom.feed.shared.Feed;
+import stroom.streamstore.FdService;
+import stroom.feed.shared.FeedDoc;
 import stroom.io.StreamCloser;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ProcessException;
@@ -53,7 +53,7 @@ public class StreamAppender extends AbstractAppender {
     private final ErrorReceiverProxy errorReceiverProxy;
     private final StreamStore streamStore;
     private final StreamHolder streamHolder;
-    private final FeedService feedService;
+    private final FdService feedService;
     private final StreamTypeService streamTypeService;
     private final StreamProcessorHolder streamProcessorHolder;
     private final MetaData metaData;
@@ -68,7 +68,7 @@ public class StreamAppender extends AbstractAppender {
     public StreamAppender(final ErrorReceiverProxy errorReceiverProxy,
                    final StreamStore streamStore,
                    final StreamHolder streamHolder,
-                   final FeedService feedService,
+                   final FdService feedService,
                    final StreamTypeService streamTypeService,
                    final StreamProcessorHolder streamProcessorHolder,
                    final MetaData metaData,
@@ -88,7 +88,7 @@ public class StreamAppender extends AbstractAppender {
     protected OutputStream createOutputStream() throws IOException {
         final Stream parentStream = streamHolder.getStream();
 
-        Feed feed;
+        FeedDoc feed;
         if (feedRef != null) {
             feed = feedService.loadByUuid(feedRef.getUuid());
         } else {
@@ -154,7 +154,7 @@ public class StreamAppender extends AbstractAppender {
         }
     }
 
-    @PipelinePropertyDocRef(types = Feed.ENTITY_TYPE)
+    @PipelinePropertyDocRef(types = FeedDoc.DOCUMENT_TYPE)
     @PipelineProperty(description = "The feed that output stream should be written to. If not specified the feed the input stream belongs to will be used.")
     public void setFeed(final DocRef feedRef) {
         this.feedRef = feedRef;

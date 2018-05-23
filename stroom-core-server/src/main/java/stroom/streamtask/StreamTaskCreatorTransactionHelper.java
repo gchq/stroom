@@ -28,7 +28,7 @@ import stroom.entity.shared.IdRange;
 import stroom.entity.shared.Sort.Direction;
 import stroom.entity.util.ConnectionUtil;
 import stroom.entity.util.SqlBuilder;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.jobsystem.ClusterLockService;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
@@ -441,7 +441,7 @@ class StreamTaskCreatorTransactionHelper {
             } else {
                 final SqlBuilder sql = new SqlBuilder();
                 sql.append("SELECT DISTINCT(");
-                sql.append(Feed.FOREIGN_KEY);
+                sql.append(FeedDoc.FOREIGN_KEY);
                 sql.append("), 'A' FROM ");
                 sql.append(Stream.TABLE_NAME);
                 sql.append(" WHERE ");

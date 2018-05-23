@@ -8,8 +8,7 @@ import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.Period;
 import stroom.feed.FeedNameCache;
-import stroom.feed.FeedService;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.docref.DocRef;
@@ -41,7 +40,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ExpressionToFindCriteria {
-    private final FeedService feedService;
+    private final FdService feedService;
     private final PipelineStore pipelineStore;
     private final FeedNameCache feedNameCache;
     private final DictionaryStore dictionaryStore;
@@ -58,7 +57,7 @@ public class ExpressionToFindCriteria {
             String.format("%s [%s]", err, OP_STACK_DISPLAY.apply(ops));
 
     @Inject
-    public ExpressionToFindCriteria(@Named("cachedFeedService") final FeedService feedService,
+    public ExpressionToFindCriteria(@Named("cachedFeedService") final FdService feedService,
                                     @Named("cachedPipelineStore") final PipelineStore pipelineStore,
                                     final FeedNameCache feedNameCache,
                                     final DictionaryStore dictionaryStore,
@@ -298,10 +297,10 @@ public class ExpressionToFindCriteria {
         });
     }
 
-    private Set<Feed> findFeeds(final String field, final String value) {
+    private Set<FeedDoc> findFeeds(final String field, final String value) {
         // Try by UUID
         try {
-            final Feed feed = feedService.loadByUuid(value);
+            final FeedDoc feed = feedService.loadByUuid(value);
             if (feed != null) {
                 return Collections.singleton(feed);
             }
@@ -311,7 +310,7 @@ public class ExpressionToFindCriteria {
 
         // Try by name
         try {
-            final Feed feed = feedNameCache.get(value);
+            final FeedDoc feed = feedNameCache.get(value);
             if (feed != null) {
                 return Collections.singleton(feed);
             }

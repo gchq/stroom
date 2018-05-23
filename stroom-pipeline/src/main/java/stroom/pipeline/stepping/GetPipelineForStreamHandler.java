@@ -19,7 +19,7 @@ package stroom.pipeline.stepping;
 
 import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.SharedDocRef;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;
@@ -109,7 +109,7 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
             criteria.setExpression(ExpressionUtil.createStreamExpression(id));
             criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
             criteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
-            criteria.getFetchSet().add(Feed.ENTITY_TYPE);
+            criteria.getFetchSet().add(FeedDoc.DOCUMENT_TYPE);
 
             final List<Stream> streamList = streamStore.find(criteria);
             if (streamList != null && streamList.size() > 0) {

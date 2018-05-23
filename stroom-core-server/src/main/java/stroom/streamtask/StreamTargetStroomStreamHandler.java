@@ -19,23 +19,26 @@ package stroom.streamtask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.FeedService;
+import stroom.feed.FeedStore;
 import stroom.feed.MetaMap;
 import stroom.feed.MetaMapFactory;
 import stroom.feed.StroomHeaderArguments;
-import stroom.feed.shared.Feed;
-import stroom.streamtask.statistic.MetaDataStatistic;
+import stroom.feed.shared.FeedDoc;
 import stroom.proxy.repo.StroomHeaderStreamHandler;
 import stroom.proxy.repo.StroomStreamHandler;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.proxy.repo.StroomZipNameSet;
+import stroom.streamstore.FdService;
 import stroom.streamstore.StreamFactory;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.StreamTarget;
+import stroom.streamstore.StreamTypeService;
 import stroom.streamstore.fs.serializable.NestedStreamTarget;
+import stroom.streamstore.shared.Fd;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
+import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.util.io.CloseableUtil;
 
 import java.io.ByteArrayOutputStream;
@@ -68,42 +71,50 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamTargetStroomStreamHandler.class);
 
     private final StreamStore streamStore;
-    private final FeedService feedService;
+    private final FdService feedService;
+    private final StreamTypeService streamTypeService;
     private final MetaDataStatistic metaDataStatistics;
     private final HashSet<Stream> streamSet;
     private final StroomZipNameSet stroomZipNameSet;
-    private final Map<String, Feed> feedMap = new HashMap<>();
-    private final Map<Feed, NestedStreamTarget> feedNestedStreamTarget = new HashMap<>();
-    private final Map<Feed, StreamTarget> feedStreamTarget = new HashMap<>();
+    private final Map<String, Fd> feedMap = new HashMap<>();
+    private final Map<String, StreamType> streamTypeMap = new HashMap<>();
+    private final Map<Fd, NestedStreamTarget> feedNestedStreamTarget = new HashMap<>();
+    private final Map<Fd, StreamTarget> feedStreamTarget = new HashMap<>();
     private final ByteArrayOutputStream currentHeaderByteArrayOutputStream = new ByteArrayOutputStream();
     private boolean oneByOne;
     private StroomZipFileType currentFileType = null;
     private StroomZipEntry currentStroomZipEntry = null;
     private StroomZipEntry lastDatStroomZipEntry = null;
     private StroomZipEntry lastCtxStroomZipEntry = null;
-    private Feed currentFeed;
+    private FeedDoc currentFeed;
     private StreamType currentStreamType;
     private MetaMap globalMetaMap;
     private MetaMap currentMetaMap;
 
-    public StreamTargetStroomStreamHandler(final StreamStore streamStore, final FeedService feedService,
-                                           final MetaDataStatistic metaDataStatistics, final Feed feed, final StreamType streamType) {
+    public StreamTargetStroomStreamHandler(final StreamStore streamStore,
+                                           final FeedStore feedStore feedService,
+                                           final StreamTypeService streamTypeService,
+                                           final MetaDataStatistic metaDataStatistics,
+                                           final String feedName,
+                                           final String streamTypeName) {
         this.streamStore = streamStore;
         this.feedService = feedService;
+        this.streamTypeService = streamTypeService;
         this.metaDataStatistics = metaDataStatistics;
-        this.currentFeed = feed;
-        this.currentStreamType = streamType;
+        this.currentFeed = getFeed(feedName);
+        this.currentStreamType = getStreamType(streamTypeName);
         this.streamSet = new HashSet<>();
         this.stroomZipNameSet = new StroomZipNameSet(true);
     }
 
     public static List<StreamTargetStroomStreamHandler> buildSingleHandlerList(final StreamStore streamStore,
-                                                                               final FeedService feedService,
+                                                                               final FdService feedService,
+                                                                               final StreamTypeService streamTypeService,
                                                                                final MetaDataStatistic metaDataStatistics,
-                                                                               final Feed feed,
-                                                                               final StreamType streamType) {
+                                                                               final String feedName,
+                                                                               final String streamTypeName) {
         final ArrayList<StreamTargetStroomStreamHandler> list = new ArrayList<>();
-        list.add(new StreamTargetStroomStreamHandler(streamStore, feedService, metaDataStatistics, feed, streamType));
+        list.add(new StreamTargetStroomStreamHandler(streamStore, feedService, streamTypeService, metaDataStatistics, feedName, streamTypeName));
         return list;
     }
 
@@ -112,7 +123,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     }
 
     @Override
-    public void handleHeader(final MetaMap metaMap) throws IOException {
+    public void handleHeader(final MetaMap metaMap) {
         globalMetaMap = metaMap;
     }
 
@@ -129,16 +140,24 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
         }
     }
 
-    private Feed getFeed(final String name) throws IOException {
-        Feed feed = feedMap.get(name);
-        if (feed == null) {
-            feed = feedService.loadByName(name);
-            if (feed == null) {
-                throw new IOException("Unable to get feed " + name);
+    private Fd getFeed(final String name) {
+        return feedMap.computeIfAbsent(name, k -> {
+            final Fd fd = feedService.loadByName(name);
+            if (fd == null) {
+                throw new RuntimeException("Unable to get feed " + k);
             }
-            feedMap.put(name, feed);
-        }
-        return feed;
+            return fd;
+        });
+    }
+
+    private StreamType getStreamType(final String name) {
+        return streamTypeMap.computeIfAbsent(name, k -> {
+            final StreamType streamType = streamTypeService.loadByName(k);
+            if (streamType == null) {
+                throw new RuntimeException("Unable to get stream type " + k);
+            }
+            return streamType;
+        });
     }
 
     @Override

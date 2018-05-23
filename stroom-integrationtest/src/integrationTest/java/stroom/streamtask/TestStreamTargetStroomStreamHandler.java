@@ -19,10 +19,10 @@ package stroom.streamtask;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.feed.FeedService;
+import stroom.streamstore.FdService;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.streamstore.MockStreamStore;
@@ -37,7 +37,7 @@ public class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrat
     @Inject
     private StreamStore streamStore;
     @Inject
-    private FeedService feedService;
+    private FdService feedService;
 
     /**
      * This test is used to check that feeds that are set to be reference feeds
@@ -49,7 +49,7 @@ public class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrat
     public void testReferenceNonAggregation() throws IOException {
         ((MockStreamStore) streamStore).clear();
 
-        Feed feed = feedService.create("TEST_FEED");
+        FeedDoc feed = feedService.create("TEST_FEED");
         feed.setReference(true);
         feed = feedService.save(feed);
 
@@ -86,8 +86,8 @@ public class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrat
     public void testFeedChange() throws IOException {
         ((MockStreamStore) streamStore).clear();
 
-        final Feed feed1 = feedService.create("TEST_FEED1");
-        final Feed feed2 = feedService.create("TEST_FEED2");
+        final FeedDoc feed1 = feedService.create("TEST_FEED1");
+        final FeedDoc feed2 = feedService.create("TEST_FEED2");
 
         final MetaMap metaMap1 = new MetaMap();
         metaMap1.put(StroomHeaderArguments.FEED, "TEST_FEED1");
@@ -126,7 +126,7 @@ public class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrat
     public void testFeedAggregation() throws IOException {
         ((MockStreamStore) streamStore).clear();
 
-        final Feed feed = feedService.create("TEST_FEED");
+        final FeedDoc feed = feedService.create("TEST_FEED");
 
         final MetaMap metaMap = new MetaMap();
         metaMap.put(StroomHeaderArguments.FEED, "TEST_FEED");

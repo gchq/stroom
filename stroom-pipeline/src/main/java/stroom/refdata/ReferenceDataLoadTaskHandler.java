@@ -20,8 +20,6 @@ package stroom.refdata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.FeedProperties;
-import stroom.feed.FeedService;
-import stroom.feed.shared.Feed;
 import stroom.io.StreamCloser;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.PipelineStore;
@@ -40,10 +38,12 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.Security;
+import stroom.streamstore.FdService;
 import stroom.streamstore.StreamSource;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
+import stroom.streamstore.shared.Fd;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.StreamProcessorService;
@@ -69,7 +69,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
     private final StreamProcessorService streamProcessorService;
     private final PipelineFactory pipelineFactory;
     private final MapStoreHolder mapStoreHolder;
-    private final FeedService feedService;
+    private final FdService feedService;
     private final PipelineStore pipelineStore;
     private final PipelineHolder pipelineHolder;
     private final FeedHolder feedHolder;
@@ -89,7 +89,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                                  final StreamProcessorService streamProcessorService,
                                  final PipelineFactory pipelineFactory,
                                  final MapStoreHolder mapStoreHolder,
-                                 @Named("cachedFeedService") final FeedService feedService,
+                                 @Named("cachedFeedService") final FdService feedService,
                                  @Named("cachedPipelineStore") final PipelineStore pipelineStore,
                                  final PipelineHolder pipelineHolder,
                                  final FeedHolder feedHolder,
@@ -144,8 +144,8 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                     final Stream stream = streamSource.getStream();
                     try {
                         // Load the feed.
-                        final Feed feed = feedService.load(stream.getFeed());
-                        final String feedName = feed.getName();
+                        final Fd fd = feedService.load(stream.getFeed());
+                        final String feedName = fd.getName();
                         feedHolder.setFeedName(feedName);
 
                         // Setup the meta data holder.
