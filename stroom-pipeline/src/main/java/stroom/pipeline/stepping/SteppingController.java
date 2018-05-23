@@ -18,6 +18,7 @@ package stroom.pipeline.stepping;
 
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
+import stroom.guice.PipelineScoped;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -26,7 +27,6 @@ import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.StepType;
 import stroom.pipeline.state.StreamHolder;
 import stroom.task.TaskContext;
-import stroom.guice.PipelineScoped;
 import stroom.util.shared.Highlight;
 import stroom.util.shared.Location;
 import stroom.xml.converter.ds3.DS3Reader;
@@ -117,7 +117,7 @@ public class SteppingController {
         return taskContext;
     }
 
-    public void setTaskMonitor(final TaskContext taskContext) {
+    public void setTaskContext(final TaskContext taskContext) {
         this.taskContext = taskContext;
     }
 
@@ -143,11 +143,12 @@ public class SteppingController {
         // Get the current stream number.
         final long currentStreamNo = streamHolder.getStreamNo() + 1;
 
+        if (Thread.currentThread().isInterrupted()) {
+            return true;
+        }
+
         // Update the progress monitor.
         if (getTaskContext() != null) {
-            if (getTaskContext().isTerminated()) {
-                return true;
-            }
             getTaskContext().info("Processing stream - {} : [{}:{}]", streamInfo, currentStreamNo, currentRecordNo);
         }
 

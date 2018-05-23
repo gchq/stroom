@@ -19,6 +19,7 @@ package stroom.search.extraction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.docref.DocRef;
 import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.PipelineStore;
@@ -39,7 +40,6 @@ import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
-import stroom.docref.DocRef;
 import stroom.search.SearchException;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
@@ -121,7 +121,7 @@ public class ExtractionTaskHandler {
             LAMBDA_LOGGER.logDurationIfDebugEnabled(
                     () -> {
                         taskContext.setName("Extraction");
-                        if (!taskContext.isTerminated()) {
+                        if (!Thread.currentThread().isInterrupted()) {
                             final String streamId = String.valueOf(task.getStreamId());
                             taskContext.info("Extracting " + task.getEventIds().length + " records from stream " + streamId);
 

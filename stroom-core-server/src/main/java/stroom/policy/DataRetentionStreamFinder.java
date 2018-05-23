@@ -108,7 +108,7 @@ public class DataRetentionStreamFinder implements AutoCloseable {
         }
 
         try (final ResultSet resultSet = preparedStatement.executeQuery()) {
-            while (resultSet.next() && !taskContext.isTerminated()) {
+            while (resultSet.next() && !Thread.currentThread().isInterrupted()) {
                 final Map<String, Object> attributeMap = createAttributeMap(resultSet, activeRules.getFieldSet());
                 final Long streamId = (Long) attributeMap.get(StreamDataSource.STREAM_ID);
                 final Long createMs = (Long) attributeMap.get(StreamDataSource.CREATE_TIME);

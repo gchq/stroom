@@ -19,7 +19,6 @@ package stroom.task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.shared.Task;
-import stroom.task.TaskContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +40,7 @@ public class AsyncTaskHelper<R> {
     private volatile long completed;
     private volatile long total;
     private volatile boolean busy;
+
     public AsyncTaskHelper(final String taskInfo, final TaskContext taskContext, final TaskManager taskManager,
                            final int concurrent) {
         this.taskInfo = taskInfo;
@@ -58,7 +58,7 @@ public class AsyncTaskHelper<R> {
         // Add the task to the task list.
         lock.lock();
         try {
-            if (!taskContext.isTerminated()) {
+            if (!Thread.currentThread().isInterrupted()) {
                 total++;
 
                 remaining++;

@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
+import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.feed.FeedService;
 import stroom.feed.MetaMap;
@@ -54,7 +55,6 @@ import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.state.SearchIdHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
-import stroom.docref.DocRef;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.streamstore.OldFindStreamCriteria;
@@ -410,7 +410,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                 // Loop over the stream boundaries and process each
                 // sequentially.
                 final long streamCount = mainProvider.getStreamCount();
-                for (long streamNo = 0; streamNo < streamCount && !taskContext.isTerminated(); streamNo++) {
+                for (long streamNo = 0; streamNo < streamCount && !Thread.currentThread().isInterrupted(); streamNo++) {
                     InputStream inputStream = null;
 
                     // If the task requires specific events to be processed then

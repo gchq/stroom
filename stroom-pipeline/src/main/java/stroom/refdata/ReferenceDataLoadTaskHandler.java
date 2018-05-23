@@ -48,7 +48,6 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.StreamProcessorService;
 import stroom.task.AbstractTaskHandler;
-import stroom.task.TaskContext;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.Severity;
 
@@ -79,7 +78,6 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
     private final LocationFactoryProxy locationFactory;
     private final StreamCloser streamCloser;
     private final ErrorReceiverProxy errorReceiverProxy;
-    private final TaskContext taskContext;
     private final PipelineDataCache pipelineDataCache;
     private final Security security;
 
@@ -99,7 +97,6 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                                  final LocationFactoryProxy locationFactory,
                                  final StreamCloser streamCloser,
                                  final ErrorReceiverProxy errorReceiverProxy,
-                                 final TaskContext taskContext,
                                  final PipelineDataCache pipelineDataCache,
                                  final Security security) {
         this.streamStore = streamStore;
@@ -115,7 +112,6 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
         this.streamHolder = streamHolder;
         this.streamCloser = streamCloser;
         this.errorReceiverProxy = errorReceiverProxy;
-        this.taskContext = taskContext;
         this.pipelineDataCache = pipelineDataCache;
         this.security = security;
     }
@@ -215,7 +211,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                 // Loop over the stream boundaries and process each
                 // sequentially.
                 final long streamCount = mainProvider.getStreamCount();
-                for (long streamNo = 0; streamNo < streamCount && !taskContext.isTerminated(); streamNo++) {
+                for (long streamNo = 0; streamNo < streamCount && !Thread.currentThread().isInterrupted(); streamNo++) {
                     streamHolder.setStreamNo(streamNo);
                     streamLocationFactory.setStreamNo(streamNo + 1);
 

@@ -12,9 +12,4 @@ public class SimpleTaskContext implements TaskContext {
     @Override
     public void terminate() {
     }
-
-    @Override
-    public boolean isTerminated() {
-        return false;
-    }
 }

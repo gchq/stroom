@@ -22,9 +22,9 @@ import stroom.entity.util.SqlBuilder;
 import stroom.jobsystem.ClusterLockService;
 import stroom.properties.StroomPropertyService;
 import stroom.streamstore.shared.Stream;
+import stroom.task.TaskContext;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
-import stroom.task.TaskContext;
 
 import java.util.Arrays;
 
@@ -66,7 +66,7 @@ public abstract class AbstractBatchDeleteExecutor {
         LOGGER.info(taskName + " - start");
         if (clusterLockService.tryLock(clusterLockName)) {
             try {
-                if (!taskContext.isTerminated()) {
+                if (!Thread.currentThread().isInterrupted()) {
                     final Long age = getDeleteAge(deleteAgePropertyName);
                     if (age != null) {
                         delete(age);
@@ -84,7 +84,7 @@ public abstract class AbstractBatchDeleteExecutor {
     }
 
     public void delete(final long age) {
-        if (!taskContext.isTerminated()) {
+        if (!Thread.currentThread().isInterrupted()) {
             long count = 0;
             long total = 0;
 
@@ -107,7 +107,7 @@ public abstract class AbstractBatchDeleteExecutor {
                 truncateTempIdTable(total);
             }
 
-            if (!taskContext.isTerminated()) {
+            if (!Thread.currentThread().isInterrupted()) {
                 do {
                     // Insert a batch of ids into the temp id table and find out
                     // how many were inserted.
@@ -120,7 +120,7 @@ public abstract class AbstractBatchDeleteExecutor {
                         // Remove the current batch of ids from the id table.
                         truncateTempIdTable(total);
                     }
-                } while (!taskContext.isTerminated() && count >= deleteBatchSize);
+                } while (!Thread.currentThread().isInterrupted() && count >= deleteBatchSize);
             }
 
             LOGGER.debug("Deleted {} streams in {}.", total, logExecutionTime);

@@ -18,8 +18,10 @@ package stroom.pipeline.factory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.destination.DestinationProvider;
+import stroom.docref.DocRef;
+import stroom.guice.PipelineScoped;
 import stroom.pipeline.SupportsCodeInjection;
+import stroom.pipeline.destination.DestinationProvider;
 import stroom.pipeline.errorhandler.TerminatedException;
 import stroom.pipeline.filter.SAXEventRecorder;
 import stroom.pipeline.filter.SAXRecordDetector;
@@ -28,13 +30,6 @@ import stroom.pipeline.filter.XMLFilter;
 import stroom.pipeline.parser.AbstractParser;
 import stroom.pipeline.reader.InputStreamRecordDetectorElement;
 import stroom.pipeline.reader.ReaderRecordDetectorElement;
-import stroom.pipeline.source.SourceElement;
-import stroom.pipeline.stepping.ElementMonitor;
-import stroom.pipeline.stepping.Recorder;
-import stroom.pipeline.stepping.SteppingController;
-import stroom.pipeline.stepping.SteppingFilter;
-import stroom.pipeline.stepping.SteppingTask;
-import stroom.pipeline.writer.OutputRecorder;
 import stroom.pipeline.shared.SteppingFilterSettings;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
@@ -43,9 +38,13 @@ import stroom.pipeline.shared.data.PipelineLink;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.docref.DocRef;
-import stroom.task.TaskContext;
-import stroom.guice.PipelineScoped;
+import stroom.pipeline.source.SourceElement;
+import stroom.pipeline.stepping.ElementMonitor;
+import stroom.pipeline.stepping.Recorder;
+import stroom.pipeline.stepping.SteppingController;
+import stroom.pipeline.stepping.SteppingFilter;
+import stroom.pipeline.stepping.SteppingTask;
+import stroom.pipeline.writer.OutputRecorder;
 
 import javax.inject.Inject;
 import java.lang.reflect.InvocationTargetException;
@@ -64,17 +63,14 @@ public class PipelineFactory {
     private final ElementRegistryFactory pipelineElementRegistryFactory;
     private final ElementFactory elementFactory;
     private final ProcessorFactory processorFactory;
-    private final TaskContext taskContext;
 
     @Inject
     public PipelineFactory(final ElementRegistryFactory pipelineElementRegistryFactory,
                            final ElementFactory elementFactory,
-                           final ProcessorFactory processorFactory,
-                           final TaskContext taskContext) {
+                           final ProcessorFactory processorFactory) {
         this.pipelineElementRegistryFactory = pipelineElementRegistryFactory;
         this.elementFactory = elementFactory;
         this.processorFactory = processorFactory;
-        this.taskContext = taskContext;
 
         if (processorFactory == null) {
             throw new NullPointerException("processorFactory is null");
@@ -93,7 +89,7 @@ public class PipelineFactory {
         final ElementRegistry pipelineElementRegistry = pipelineElementRegistryFactory.get();
 
         final Terminator terminator = () -> {
-            if (taskContext.isTerminated()) {
+            if (Thread.currentThread().isInterrupted()) {
                 throw new TerminatedException();
             }
         };

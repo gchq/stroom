@@ -27,7 +27,6 @@ import stroom.pipeline.errorhandler.ExpectedProcessException;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.task.GenericServerTask;
 import stroom.task.TaskCallback;
-import stroom.task.TaskContext;
 import stroom.task.TaskManager;
 import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
@@ -42,15 +41,12 @@ class ProcessorFactoryImpl implements ProcessorFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorFactoryImpl.class);
     private final TaskManager taskManager;
     private final ErrorReceiverProxy errorReceiverProxy;
-    private final TaskContext taskContext;
 
     @Inject
     public ProcessorFactoryImpl(final TaskManager taskManager,
-                                final ErrorReceiverProxy errorReceiverProxy,
-                                final TaskContext taskContext) {
+                                final ErrorReceiverProxy errorReceiverProxy) {
         this.taskManager = taskManager;
         this.errorReceiverProxy = errorReceiverProxy;
-        this.taskContext = taskContext;
     }
 
     @Override
@@ -63,23 +59,20 @@ class ProcessorFactoryImpl implements ProcessorFactory {
             return processors.get(0);
         }
 
-        return new MultiWayProcessor(processors, taskManager, errorReceiverProxy, taskContext);
+        return new MultiWayProcessor(processors, taskManager, errorReceiverProxy);
     }
 
     static class MultiWayProcessor implements Processor {
         private final List<Processor> processors;
         private final TaskManager taskManager;
         private final ErrorReceiver errorReceiver;
-        private final TaskContext taskContext;
 
         MultiWayProcessor(final List<Processor> processors,
                           final TaskManager taskManager,
-                          final ErrorReceiver errorReceiver,
-                          final TaskContext taskContext) {
+                          final ErrorReceiver errorReceiver) {
             this.processors = processors;
             this.taskManager = taskManager;
             this.errorReceiver = errorReceiver;
-            this.taskContext = taskContext;
         }
 
         @Override
@@ -121,7 +114,7 @@ class ProcessorFactoryImpl implements ProcessorFactory {
             }
 
             try {
-                while (!taskContext.isTerminated() && countDownLatch.getCount() > 0) {
+                while (!Thread.currentThread().isInterrupted() && countDownLatch.getCount() > 0) {
                     countDownLatch.await(10, TimeUnit.SECONDS);
                 }
             } catch (final InterruptedException e) {

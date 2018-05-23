@@ -542,7 +542,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
 
                             // Skip once we have done all that is required
                             final int requiredTasks = tasksToCreate;
-                            if (requiredTasks > 0 && !taskContext.isTerminated()) {
+                            if (requiredTasks > 0 && !Thread.currentThread().isInterrupted()) {
                                 final QueryData queryData = loadedFilter.getQueryData();
 
                                 final Context context = new Context(null, System.currentTimeMillis());
@@ -635,7 +635,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                                     } else {
                                         // Create tasks from a standard stream
                                         // filter criteria.
-                                        createTasksFromCriteria(loadedFilter, findStreamCriteria, taskContext, logPrefix,
+                                        createTasksFromCriteria(loadedFilter, findStreamCriteria, logPrefix,
                                                 streamQueryTime, node, requiredTasks, queue, recentStreamInfo, tracker);
                                     }
                                 }
@@ -688,7 +688,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                         taskContext.info("Adding {}/{} non owned Tasks", count, size);
                     }
 
-                    if (taskContext.isTerminated()) {
+                    if (Thread.currentThread().isInterrupted()) {
                         break;
                     }
                 } catch (final RuntimeException e) {
@@ -810,7 +810,6 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
 
     private void createTasksFromCriteria(final StreamProcessorFilter filter,
                                          final OldFindStreamCriteria findStreamCriteria,
-                                         final TaskContext taskContext,
                                          final String logPrefix,
                                          final long streamQueryTime,
                                          final Node node,

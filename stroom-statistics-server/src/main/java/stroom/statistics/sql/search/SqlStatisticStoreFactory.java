@@ -3,9 +3,9 @@ package stroom.statistics.sql.search;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.docref.DocRef;
 import stroom.node.shared.ClientProperties;
 import stroom.properties.StroomPropertyService;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
@@ -16,14 +16,12 @@ import stroom.task.ExecutorProvider;
 import stroom.task.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.HasTerminate;
 
 import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
@@ -101,28 +99,6 @@ public class SqlStatisticStoreFactory implements StoreFactory {
 
         return store;
     }
-
-
-
-    private HasTerminate getTaskMonitor() {
-
-        return new HasTerminate() {
-
-            private final AtomicBoolean isTerminated = new AtomicBoolean(false);
-
-            @Override
-            public void terminate() {
-                isTerminated.set(true);
-            }
-
-            @Override
-            public boolean isTerminated() {
-                return isTerminated.get();
-            }
-        };
-    }
-
-
 
     private List<Integer> getDefaultMaxResultsSizes() {
         final String value = stroomPropertyService.getProperty(ClientProperties.DEFAULT_MAX_RESULTS);

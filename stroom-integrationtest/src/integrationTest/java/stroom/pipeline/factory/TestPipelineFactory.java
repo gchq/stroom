@@ -25,11 +25,9 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.task.SimpleTaskContext;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StroomPipelineTestFileUtil;
 
-import java.io.IOException;
 import java.util.Map;
 
 public class TestPipelineFactory extends AbstractProcessIntegrationTest {
@@ -49,17 +47,21 @@ public class TestPipelineFactory extends AbstractProcessIntegrationTest {
         pipelineDataMerger.merge(pipelineDoc.getPipelineData());
         final PipelineData mergedPipelineData = pipelineDataMerger.createMergedData();
 
-        final PipelineFactory pipelineFactory = new PipelineFactory(elementRegistryFactory, elementRegistryFactory,
-                new SimpleProcessorFactory(), new SimpleTaskContext());
+        final PipelineFactory pipelineFactory = new PipelineFactory(
+                elementRegistryFactory,
+                elementRegistryFactory,
+                new SimpleProcessorFactory());
         final Pipeline pipeline = pipelineFactory.create(mergedPipelineData);
 
         System.out.println(pipeline);
     }
 
     @Test
-    public void testOverride() throws IOException {
-        final PipelineFactory pipelineFactory = new PipelineFactory(elementRegistryFactory, elementRegistryFactory,
-                new SimpleProcessorFactory(), new SimpleTaskContext());
+    public void testOverride() {
+        final PipelineFactory pipelineFactory = new PipelineFactory(
+                elementRegistryFactory,
+                elementRegistryFactory,
+                new SimpleProcessorFactory());
 
         final String data1 = StroomPipelineTestFileUtil
                 .getString("TestPipelineFactory/EventDataPipeline.Pipeline.data.xml");

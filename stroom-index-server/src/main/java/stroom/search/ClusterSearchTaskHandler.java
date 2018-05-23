@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dictionary.DictionaryStore;
+import stroom.docref.DocRef;
 import stroom.index.IndexStore;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
@@ -31,7 +32,6 @@ import stroom.index.shared.IndexFieldsMap;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.MessageUtil;
 import stroom.properties.StroomPropertyService;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Param;
 import stroom.query.common.v2.Coprocessor;
@@ -154,7 +154,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     @Override
     public void exec(final ClusterSearchTask task, final TaskCallback<NodeResult> callback) {
         security.useAsRead(() -> {
-            if (!taskContext.isTerminated()) {
+            if (!Thread.currentThread().isInterrupted()) {
                 taskContext.info("Initialising...");
 
                 this.task = task;
@@ -530,7 +530,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     final boolean searchComplete = searchCompleteLatch.await(waitTime, TimeUnit.MILLISECONDS);
 
                     try {
-                        if (!taskContext.isTerminated()) {
+                        if (!Thread.currentThread().isInterrupted()) {
                             taskContext.setName("Search Result Sender");
                             taskContext.info("Creating search result");
 
@@ -568,7 +568,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                         }
 
                         // Make sure we don't continue to execute this task if it should have terminated.
-                        if (taskContext.isTerminated() || searchComplete) {
+                        if (Thread.currentThread().isInterrupted() || searchComplete) {
                             complete();
                         } else {
                             // Try to send more data.

@@ -178,7 +178,7 @@ public class FileSystemCleanExecutor {
                         Thread.currentThread().interrupt();
                     }
 
-                    if (taskContext.isTerminated()) {
+                    if (Thread.currentThread().isInterrupted()) {
                         logInfo("Stopping file system clean task.");
                         asyncTaskHelper.clear();
                     }

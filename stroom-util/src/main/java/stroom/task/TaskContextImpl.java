@@ -28,11 +28,6 @@ class TaskContextImpl implements TaskContext {
     }
 
     @Override
-    public boolean isTerminated() {
-        return CurrentTaskState.isTerminated();
-    }
-
-    @Override
     public void terminate() {
         CurrentTaskState.terminate();
     }

@@ -17,8 +17,8 @@
 package stroom.db.migration.mysql;
 
 import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
-import stroom.entity.shared.DocRefs;
 import stroom.docref.DocRef;
+import stroom.entity.shared.DocRefs;
 import stroom.script.ScriptSerialiser;
 import stroom.script.shared.ScriptDoc;
 
@@ -36,7 +36,7 @@ public class V6_2_0_7__Script implements JdbcMigration {
     public void migrate(final Connection connection) throws Exception {
         final ScriptSerialiser serialiser = new ScriptSerialiser();
 
-        try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT CRT_MS, CRT_USER, UPD_MS, UPD_USER, NAME, UUID, DESCRIP, DEP, FK_RES_ID FROM SCRIPT")) {
+        try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT CRT_MS, CRT_USER, UPD_MS, UPD_USER, NAME, UUID, DESCRIP, DEP, DAT FROM SCRIPT")) {
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
                     final Long crtMs = resultSet.getLong(1);
@@ -47,7 +47,7 @@ public class V6_2_0_7__Script implements JdbcMigration {
                     final String uuid = resultSet.getString(6);
                     final String descrip = resultSet.getString(7);
                     final String dep = resultSet.getString(8);
-                    final Long resId = resultSet.getLong(9);
+                    final String dat = resultSet.getString(9);
 
                     final ScriptDoc document = new ScriptDoc();
                     document.setType(ScriptDoc.DOCUMENT_TYPE);
@@ -59,24 +59,13 @@ public class V6_2_0_7__Script implements JdbcMigration {
                     document.setCreateUser(crtUser);
                     document.setUpdateUser(updUser);
                     document.setDescription(descrip);
+                    document.setData(dat);
 
                     final DocRefs docRefs = serialiser.getDocRefsFromLegacyXML(dep);
                     if (docRefs != null) {
                         final List<DocRef> dependencies = new ArrayList<>(docRefs.getDoc());
                         dependencies.sort(DocRef::compareTo);
                         document.setDependencies(dependencies);
-                    }
-
-                    if (resId != null) {
-                        try (final PreparedStatement ps = connection.prepareStatement("SELECT DAT FROM RES WHERE ID = ?")) {
-                            ps.setLong(1, resId);
-                            try (final ResultSet rs = ps.executeQuery()) {
-                                if (rs.next()) {
-                                    final String dat = resultSet.getString(1);
-                                    document.setData(dat);
-                                }
-                            }
-                        }
                     }
 
                     final Map<String, byte[]> dataMap = serialiser.write(document);
@@ -99,9 +88,6 @@ public class V6_2_0_7__Script implements JdbcMigration {
         }
 
         try (final PreparedStatement preparedStatement = connection.prepareStatement("RENAME TABLE SCRIPT TO OLD_SCRIPT")) {
-            preparedStatement.execute();
-        }
-        try (final PreparedStatement preparedStatement = connection.prepareStatement("RENAME TABLE RES TO OLD_RES")) {
             preparedStatement.execute();
         }
     }

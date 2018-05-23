@@ -65,11 +65,6 @@ public final class CurrentTaskState {
         }
     }
 
-    static boolean isTerminated() {
-        final TaskThread taskThread = currentState();
-        return taskThread != null && taskThread.isTerminated();
-    }
-
     static void terminate() {
         final TaskThread taskThread = currentState();
         if (taskThread != null) {

@@ -16,6 +16,7 @@
 
 package stroom.index;
 
+import stroom.docref.DocRef;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
@@ -23,11 +24,9 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.jobsystem.JobTrackedSchedule;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
-import stroom.docref.DocRef;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.task.GenericServerTask;
-import stroom.task.TaskContext;
 import stroom.task.TaskManager;
 import stroom.util.io.FileUtil;
 import stroom.util.lifecycle.StroomFrequencySchedule;
@@ -72,7 +71,6 @@ public class IndexShardManagerImpl implements IndexShardManager {
     private final Provider<IndexShardWriterCache> indexShardWriterCacheProvider;
     private final NodeCache nodeCache;
     private final TaskManager taskManager;
-    private final TaskContext taskContext;
     private final Security security;
 
     private final StripedLock shardUpdateLocks = new StripedLock();
@@ -86,14 +84,12 @@ public class IndexShardManagerImpl implements IndexShardManager {
                           final Provider<IndexShardWriterCache> indexShardWriterCacheProvider,
                           final NodeCache nodeCache,
                           final TaskManager taskManager,
-                          final TaskContext taskContext,
                           final Security security) {
         this.indexStore = indexStore;
         this.indexShardService = indexShardService;
         this.indexShardWriterCacheProvider = indexShardWriterCacheProvider;
         this.nodeCache = nodeCache;
         this.taskManager = taskManager;
-        this.taskContext = taskContext;
         this.security = security;
 
         allowedStateTransitions.put(IndexShardStatus.CLOSED, new HashSet<>(Arrays.asList(IndexShardStatus.OPEN, IndexShardStatus.DELETED, IndexShardStatus.CORRUPT)));
@@ -126,7 +122,7 @@ public class IndexShardManagerImpl implements IndexShardManager {
                         try {
                             final LogExecutionTime logExecutionTime = new LogExecutionTime();
                             final Iterator<IndexShard> iter = shards.iterator();
-                            while (!taskContext.isTerminated() && iter.hasNext()) {
+                            while (!Thread.currentThread().isInterrupted() && iter.hasNext()) {
                                 final IndexShard shard = iter.next();
                                 final IndexShardWriter writer = indexShardWriterCache.getWriterByShardId(shard.getId());
                                 try {

@@ -56,7 +56,7 @@ public class StreamProgressMonitor {
             if (taskContext != null) {
                 taskContext.info(msg);
 
-                if (taskContext.isTerminated()) {
+                if (Thread.currentThread().isInterrupted()) {
                     throw new IOException("Progress Stopped");
                 }
             }

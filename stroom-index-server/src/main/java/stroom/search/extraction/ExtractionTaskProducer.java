@@ -20,8 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.expression.v1.Val;
-import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.docref.DocRef;
+import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.query.common.v2.Coprocessor;
 import stroom.search.Event;
 import stroom.search.extraction.ExtractionTask.ResultReceiver;
@@ -129,7 +129,7 @@ public class ExtractionTaskProducer extends AbstractTaskProducer implements Task
                 }
 
                 // Clear the event map if we have terminated so that other processing does not occur.
-                if (taskContext.isTerminated()) {
+                if (Thread.currentThread().isInterrupted()) {
                     terminate();
                 }
 
@@ -209,7 +209,7 @@ public class ExtractionTaskProducer extends AbstractTaskProducer implements Task
 
 //        LOGGER.info("ExtractionTaskProducer - getNext {finishedAddingTasks=" + finishedAddingTasks + ", completedEventMapping="+ completedEventMapping.get() + "}");
 
-        if (taskContext.isTerminated()) {
+        if (Thread.currentThread().isInterrupted()) {
 //            LOGGER.info("ExtractionTaskProducer - getNext isTerminated()");
             terminate();
         } else {
@@ -321,7 +321,7 @@ public class ExtractionTaskProducer extends AbstractTaskProducer implements Task
     }
 
     private boolean testComplete() {
-        return taskContext.isTerminated() || (finishedAddingTasks && (tasksTotal.get() - tasksCompleted.get()) == 0);
+        return Thread.currentThread().isInterrupted() || (finishedAddingTasks && (tasksTotal.get() - tasksCompleted.get()) == 0);
     }
 
     @Override

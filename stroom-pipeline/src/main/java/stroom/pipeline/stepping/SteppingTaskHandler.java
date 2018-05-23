@@ -20,6 +20,7 @@ package stroom.pipeline.stepping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
+import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
@@ -48,7 +49,6 @@ import stroom.pipeline.state.PipelineContext;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
-import stroom.docref.DocRef;
 import stroom.security.Security;
 import stroom.security.UserTokenUtil;
 import stroom.security.shared.PermissionNames;
@@ -183,7 +183,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
 
                 // Set the controller for the pipeline.
                 controller.setRequest(request);
-                controller.setTaskMonitor(taskContext);
+                controller.setTaskContext(taskContext);
 
                 try {
                     // Initialise the process by finding streams to process and setting
@@ -237,7 +237,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     }
 
     private void initialise(final SteppingTask request) {
-        if (!taskContext.isTerminated()) {
+        if (!Thread.currentThread().isInterrupted()) {
             final StepType stepType = request.getStepType();
             currentLocation = request.getStepLocation();
 
@@ -299,7 +299,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     }
 
     private void process(final SteppingTask request, final Long streamId) {
-        if (!taskContext.isTerminated()) {
+        if (!Thread.currentThread().isInterrupted()) {
             final StepType stepType = request.getStepType();
 
             if (streamId != null && !streamId.equals(lastStreamId)) {
@@ -403,7 +403,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     }
 
     private Long getStreamId(final SteppingTask request) {
-        if (!taskContext.isTerminated()) {
+        if (!Thread.currentThread().isInterrupted()) {
             final StepType stepType = request.getStepType();
             // If we are just refreshing then just return the same task we used
             // before.
@@ -499,7 +499,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
             lastFeed = null;
         }
 
-        if (!taskContext.isTerminated()) {
+        if (!Thread.currentThread().isInterrupted()) {
             // Create a new pipeline for a new feed or if the feed has changed.
             if (lastFeed == null) {
                 lastFeed = feed;
@@ -572,7 +572,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                 // sequentially. Loop over the stream boundaries and process
                 // each sequentially until we find a record.
                 boolean done = controller.isFound();
-                while (!done && streamNo > 0 && streamNo <= streamCount && !taskContext.isTerminated()) {
+                while (!done && streamNo > 0 && streamNo <= streamCount && !Thread.currentThread().isInterrupted()) {
                     // Set the stream number.
                     streamHolder.setStreamNo(streamNo - 1);
                     streamLocationFactory.setStreamNo(streamNo);

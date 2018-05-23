@@ -19,7 +19,6 @@ import stroom.statistics.shared.StatisticType;
 import stroom.statistics.sql.SQLStatisticConstants;
 import stroom.statistics.sql.SQLStatisticNames;
 import stroom.statistics.sql.rollup.RollUpBitMask;
-import stroom.task.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -61,7 +60,6 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
     private final DataSource statisticsDataSource;
     private final StroomPropertyService propertyService;
-    private final TaskContext taskContext;
 
     //defines how the entity fields relate to the table columns
     private static final Map<String, List<String>> STATIC_FIELDS_TO_COLUMNS_MAP = ImmutableMap.<String, List<String>>builder()
@@ -74,11 +72,9 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     @SuppressWarnings("unused") // Called by DI
     @Inject
     StatisticsSearchServiceImpl(@Named("statisticsDataSource") final DataSource statisticsDataSource,
-                                final StroomPropertyService propertyService,
-                                final TaskContext taskContext) {
+                                final StroomPropertyService propertyService) {
         this.statisticsDataSource = statisticsDataSource;
         this.propertyService = propertyService;
-        this.taskContext = taskContext;
     }
 
     @Override
@@ -384,7 +380,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
                                         //advance the resultSet, if it is a row emit it, else finish the flow
                                         // TODO prob needs to change in 6.1
-                                        if (Thread.currentThread().isInterrupted() || taskContext.isTerminated()) {
+                                        if (Thread.currentThread().isInterrupted() || Thread.currentThread().isInterrupted()) {
                                             LOGGER.debug("Task is terminated/interrupted, calling onComplete");
                                             emitter.onComplete();
                                         } else {
