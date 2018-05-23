@@ -21,10 +21,12 @@ import { LineContainer, LineTo } from 'components/LineTo';
 import { withPipeline } from './withPipeline';
 
 import PipelineElement from './PipelineElement';
+import PipelineElementSettings from './elements';
 
 import './PipelineEditor.css';
 
 import { iterateNodes } from 'lib/treeUtils';
+import { getPipelineAsTree } from './pipelineUtils';
 
 class PipelineEditor extends Component {
   static propTypes = {
@@ -46,11 +48,13 @@ class PipelineEditor extends Component {
 
     const HORIZONTAL_SPACING = 150;
     const VERTICAL_SPACING = 100;
+    const HORIZONTAL_START_PX = 50;
     const commonStyle = {
-      position: 'absolute',
+      position: 'absolute'
     };
 
-    iterateNodes(nextProps.pipeline.asTree, (lineage, node) => {
+    let asTree = getPipelineAsTree(nextProps.pipeline.pipeline);
+    iterateNodes(asTree, (lineage, node) => {
       const horizontalPos = lineage.length;
       let verticalPos = currentHeight;
       if (verticalPositionsByHorz[horizontalPos]) {
@@ -64,7 +68,7 @@ class PipelineEditor extends Component {
         style: {
           ...commonStyle,
           top: `${verticalPos * VERTICAL_SPACING}px`,
-          left: `${horizontalPos * HORIZONTAL_SPACING}px`,
+          left: `${HORIZONTAL_START_PX + (horizontalPos * HORIZONTAL_SPACING)}px`,
         },
       };
     });
@@ -74,7 +78,7 @@ class PipelineEditor extends Component {
     };
   }
 
-  renderElements(element) {
+  renderElements() {
     return this.props.pipeline.pipeline.elements.add.element.map(e => (
       <div key={e.id} id={e.id} style={this.state.elementLayouts[e.id].style}>
         <PipelineElement pipelineId={this.props.pipelineId} elementId={e.id} />
@@ -93,13 +97,15 @@ class PipelineEditor extends Component {
 
     return (
       <div className="Pipeline-editor">
-        <LineContainer lineContextId={`pipeline-lines-${pipelineId}`}>
+        <LineContainer className='Pipeline-editor__overview' lineContextId={`pipeline-lines-${pipelineId}`}>
           <h4>Pipeline Editor {pipelineId}</h4>
-          {this.renderElements(pipeline.asTree)}
+          {this.renderElements()}
           {this.renderLines()}
         </LineContainer>
 
-        <div>Pipeline Element Settings</div>
+        <div className='Pipeline-editor__settings'>
+          <PipelineElementSettings pipelineId={pipelineId} />
+        </div>
       </div>
     );
   }

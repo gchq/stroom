@@ -18,11 +18,11 @@ import PropTypes from 'prop-types';
 
 import { connect } from 'react-redux'
 
-class XmlReader extends Component {
+class DSParser extends Component {
 
     render() {
         return (
-            <div>XML Reader</div>
+            <div>DataSource Parser</div>
         )
     }
 }
@@ -34,4 +34,4 @@ export default connect(
     {
 
     }
-)(XmlReader);
+)(DSParser);

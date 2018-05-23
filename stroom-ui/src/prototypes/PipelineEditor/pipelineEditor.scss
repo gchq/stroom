@@ -1,8 +1,6 @@
 .Pipeline-editor {
-  width: 100%;
-  padding: 15px;
-  margin: 0px !important;
-  background-color: lightgray;
+  display: flex;
+  flex-direction: column;
 }
 
 .Pipeline-element {
@@ -13,4 +11,14 @@
   border-width: thin;
   border-radius: 5px;
   background-color: white;
+}
+
+.Pipeline-editor__overview {
+  padding: 2rem;
+  height: 20rem;
+  background-color: lightblue;
+}
+
+.Pipeline-editor__settings {
+  height: auto;
 }

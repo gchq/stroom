@@ -1,6 +1,6 @@
 import { createAction, handleActions, combineActions } from 'redux-actions';
 
-import { getPipelineAsTree, moveElementInPipeline } from './pipelineUtils';
+import { moveElementInPipeline } from './pipelineUtils';
 
 const pipelineChanged = createAction('PIPELINE_CHANGED', (pipelineId, pipeline) => ({
   pipelineId,
@@ -26,23 +26,30 @@ const pipelineReducer = handleActions(
       ...state,
       [action.payload.pipelineId]: {
         pipeline: action.payload.pipeline,
-        asTree: getPipelineAsTree(action.payload.pipeline),
-        selected: undefined,
+        selectedElementId: undefined,
       },
     }),
     [pipelineElementSelected]: (state, action) => ({
       ...state,
       [action.payload.pipelineId]: {
         ...state[action.payload.pipelineId],
-        selected: action.payload.elementId,
+        selectedElementId: action.payload.elementId,
       },
     }),
     [pipelineElementMoved]: (state, action) => ({
       ...state,
-      [action.payload.pipelineId]: {},
+      [action.payload.pipelineId]: {
+        ...state[action.payload.pipelineId],
+        pipeline: moveElementInPipeline(state[action.payload.pipelineId])
+      },
     }),
   },
   defaultPipelineState,
 );
 
-export { pipelineChanged, pipelineReducer };
+export {
+  pipelineChanged,
+  pipelineElementSelected,
+  pipelineElementMoved,
+  pipelineReducer
+};

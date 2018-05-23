@@ -16,24 +16,41 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import { connect } from 'react-redux'
+
 import { withPipeline } from './withPipeline';
+
+import { pipelineElementSelected } from './redux';
 
 class PipelineEditor extends Component {
   static propTypes = {
     pipelineId: PropTypes.string.isRequired,
     pipeline: PropTypes.object.isRequired,
     elementId: PropTypes.string.isRequired,
+
+    pipelineElementSelected : PropTypes.func.isRequired
   };
+
+  onSingleClick() {
+    this.props.pipelineElementSelected(this.props.pipelineId, this.props.elementId);
+  }
 
   render() {
     const { elementId } = this.props;
 
     return (
-      <div className="Pipeline-element">
+      <div onClick={this.onSingleClick.bind(this)} className="Pipeline-element">
         <h4>{elementId}</h4>
       </div>
     );
   }
 }
 
-export default withPipeline(PipelineEditor);
+export default connect(
+  (state) => ({
+      // state
+  }),
+  {
+    pipelineElementSelected
+  }
+)(withPipeline(PipelineEditor));

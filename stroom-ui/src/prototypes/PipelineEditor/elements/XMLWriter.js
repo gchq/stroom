@@ -18,11 +18,11 @@ import PropTypes from 'prop-types';
 
 import { connect } from 'react-redux'
 
-class XSLTFilter extends Component {
+class XMLWriter extends Component {
 
     render() {
         return (
-            <div>XSLT Filter</div>
+            <div>XML Writer</div>
         )
     }
 }
@@ -34,4 +34,4 @@ export default connect(
     {
 
     }
-)(XSLTFilter);
+)(XMLWriter);

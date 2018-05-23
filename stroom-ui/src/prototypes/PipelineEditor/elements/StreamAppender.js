@@ -18,11 +18,11 @@ import PropTypes from 'prop-types';
 
 import { connect } from 'react-redux'
 
-class XSLTFilter extends Component {
+class StreamAppender extends Component {
 
     render() {
         return (
-            <div>XSLT Filter</div>
+            <div>Stream Appender</div>
         )
     }
 }
@@ -34,4 +34,4 @@ export default connect(
     {
 
     }
-)(XSLTFilter);
+)(StreamAppender);

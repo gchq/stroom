@@ -13,10 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import XmlReader from './XmlReader';
-import XsltFilter from './XsltFilter';
+import DSParser from './DSParser';
+import XSLTFilter from './XSLTFilter';
+import StreamAppender from './StreamAppender';
+import XMLWriter from './XMLWriter';
+import PipelineElementSettings from './PipelineElementSettings';
 
-export default {
-    'XML_READER' : XmlReader,
-    'XSLT' : XsltFilter
+export default PipelineElementSettings;
+
+export const elementsByType = {
+    'DSParser' : DSParser,
+    'XSLTFilter' : XSLTFilter,
+    'XMLWriter' : XMLWriter,
+    'StreamAppender' : StreamAppender
+
 }

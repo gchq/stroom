@@ -22,42 +22,40 @@ import { connect } from 'react-redux';
  * This is a Higher Order Component
  * https://reactjs.org/docs/higher-order-components.html
  *
- * It provides the pipeline by connecting to the redux store and using a provided
+ * It provides the selected element ID for a pipeline by connecting to the redux store and using a provided
  * pipelineId to look it up.
  *
  * @param {React.Component} WrappedComponent
  */
-export function withPipeline(WrappedComponent, customIdPropertyName) {
-  const idPropertyName = customIdPropertyName || 'pipelineId';
+export function withSelectedPipelineElement(WrappedComponent) {
 
-  const WithPipeline = class extends Component {
+  const WithSelectedPipelineElement = class extends Component {
     static propTypes = {
-      [idPropertyName]: PropTypes.string.isRequired,
-      pipelines: PropTypes.object.isRequired,
+      pipelineId: PropTypes.string.isRequired
     };
 
     state = {
-      pipeline: undefined,
+      selectedElementId: undefined,
     };
 
     static getDerivedStateFromProps(nextProps, prevState) {
-      const pipeline = nextProps.pipelines[nextProps[idPropertyName]];
+      const pipeline = nextProps.pipelines[nextProps.pipelineId];
 
       return {
-        pipeline,
+        selectedElementId : pipeline.selectedElementId,
       };
     }
 
     render() {
-      if (!!this.state.pipeline) {
+      if (!!this.state.selectedElementId) {
         return (
           <WrappedComponent
-            pipeline={this.state.pipeline}
+          selectedElementId={this.state.selectedElementId}
             {...this.props}
           />
         );
       }
-      return <span>awaiting pipeline state</span>;
+      return <span>awaiting pipeline state for element</span>;
     }
   };
 
@@ -68,5 +66,5 @@ export function withPipeline(WrappedComponent, customIdPropertyName) {
     {
       // actions
     },
-  )(WithPipeline);
+  )(WithSelectedPipelineElement);
 }
