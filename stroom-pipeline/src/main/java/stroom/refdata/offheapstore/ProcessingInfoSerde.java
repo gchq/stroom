@@ -25,26 +25,26 @@ import java.nio.ByteBuffer;
 import java.util.Objects;
 
 class ProcessingInfoSerde implements
-        Serde<ProcessingInfo>,
-        Serializer<ProcessingInfo>,
-        Deserializer<ProcessingInfo> {
+        Serde<RefDataProcessingInfo>,
+        Serializer<RefDataProcessingInfo>,
+        Deserializer<RefDataProcessingInfo> {
 
     @Override
-    public ProcessingInfo deserialize(final ByteBuffer byteBuffer) {
+    public RefDataProcessingInfo deserialize(final ByteBuffer byteBuffer) {
         final long createTimeEpochMs = byteBuffer.getLong();
         final long effectiveTimeEpochMs = byteBuffer.getLong();
         final byte processtingStateId = byteBuffer.get();
-        final ProcessingInfo.ProcessingState processingState = ProcessingInfo.ProcessingState.valueOf(processtingStateId);
-        return new ProcessingInfo(createTimeEpochMs, lastAccessedTimeEpochMs, effectiveTimeEpochMs, processingState);
+        final RefDataProcessingInfo.ProcessingState processingState = RefDataProcessingInfo.ProcessingState.valueOf(processtingStateId);
+        return new RefDataProcessingInfo(createTimeEpochMs, lastAccessedTimeEpochMs, effectiveTimeEpochMs, processingState);
     }
 
     @Override
-    public void serialize(final ByteBuffer byteBuffer, final ProcessingInfo processingInfo) {
-        Objects.requireNonNull(processingInfo);
+    public void serialize(final ByteBuffer byteBuffer, final RefDataProcessingInfo refDataProcessingInfo) {
+        Objects.requireNonNull(refDataProcessingInfo);
         Objects.requireNonNull(byteBuffer);
-        byteBuffer.putLong(processingInfo.getCreateTimeEpochMs());
-        byteBuffer.putLong(processingInfo.getEffectiveTimeEpochMs());
-        byteBuffer.putLong(processingInfo.getProcessingState().getId());
+        byteBuffer.putLong(refDataProcessingInfo.getCreateTimeEpochMs());
+        byteBuffer.putLong(refDataProcessingInfo.getEffectiveTimeEpochMs());
+        byteBuffer.putLong(refDataProcessingInfo.getProcessingState().getId());
         byteBuffer.flip();
     }
 }

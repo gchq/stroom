@@ -31,6 +31,8 @@ public class RefStreamDefinition {
         this.pipelineDocRef = pipelineDocRef;
         this.pipelineVersion = pipelineVersion;
         this.streamId = streamId;
+
+        //TODO should we also have streamNo in here to differentiate between nested streams?
     }
 
     DocRef getPipelineDocRef() {

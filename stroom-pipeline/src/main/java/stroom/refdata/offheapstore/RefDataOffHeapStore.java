@@ -17,6 +17,7 @@
 
 package stroom.refdata.offheapstore;
 
+import com.google.common.base.Preconditions;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
@@ -35,6 +36,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public class RefDataOffHeapStore implements RefDataStore {
@@ -62,7 +64,7 @@ public class RefDataOffHeapStore implements RefDataStore {
     private final BasicLmdbDb<MapDefinition, UID> mapUidStoreForwardDb;
     private final BasicLmdbDb<UID, MapDefinition> mapUidStoreBackwardDb;
 
-    private final BasicLmdbDb<RefStreamDefinition, ProcessingInfo> processedMapsStoreDb;
+    private final BasicLmdbDb<RefStreamDefinition, RefDataProcessingInfo> processedMapsStoreDb;
 
     /**
      * @param dbDir   The directory the LMDB environment will be created in, it must already exist
@@ -95,12 +97,23 @@ public class RefDataOffHeapStore implements RefDataStore {
     }
 
     /**
-     * Returns the {@link ProcessingInfo} for the passed {@link MapDefinition}, or an empty
+     * Returns the {@link RefDataProcessingInfo} for the passed {@link MapDefinition}, or an empty
      * {@link Optional} if there isn't one.
      */
     @Override
-    public Optional<ProcessingInfo> getProcessingInfo(final RefStreamDefinition refStreamDefinition) {
+    public Optional<RefDataProcessingInfo> getProcessingInfo(final RefStreamDefinition refStreamDefinition) {
         return Optional.empty();
+    }
+
+    @Override
+    public boolean isDataLoaded(final RefStreamDefinition refStreamDefinition) {
+
+        // TODO we could optimise this so that it doesn't deser the whole object, instead just
+        // extract the state value while in a txn
+        return getProcessingInfo(refStreamDefinition)
+                .map(RefDataProcessingInfo::getProcessingState)
+                .filter(Predicate.isEqual(RefDataProcessingInfo.ProcessingState.COMPLETE))
+                .isPresent();
     }
 
     @Override
@@ -137,8 +150,13 @@ public class RefDataOffHeapStore implements RefDataStore {
         return Optional.empty();
     }
 
+//    @Override
+//    public Optional<RefDataValue> getValue(final ValueStoreKey valueStoreKey) {
+//        return Optional.empty();
+//    }
+
     @Override
-    public Optional<RefDataValue> getValue(final ValueStoreKey valueStoreKey) {
+    public Optional<RefDataValueProxy> getValueProxy(final MapDefinition mapDefinition, final String key) {
         return Optional.empty();
     }
 
@@ -179,13 +197,26 @@ public class RefDataOffHeapStore implements RefDataStore {
     }
 
 
+    public RefDataLoader loader(final RefStreamDefinition refStreamDefinition, final long effectiveTimeMs) {
+        return new RefDataLoaderImpl(this, env, refStreamDefinition, effectiveTimeMs);
+    }
+
     private static Dbi<ByteBuffer> openDbi(final Env<ByteBuffer> env, final String name) {
         LOGGER.debug("Opening LMDB database with name: {}", name);
         return env.openDbi(name, DbiFlags.MDB_CREATE);
     }
 
-    public RefDataLoader loader() {
-        return new RefDataLoaderImpl(env);
+    private UID createMapUID(final MapDefinition mapDefinition) {
+
+        //Build a new UID based on +1 from the highest current UID
+        //create forward mapping
+        //create reverse mapping
+
+        return null;
+    }
+
+    private void setProcessingInfo(final RefStreamDefinition refStreamDefinition, final RefDataProcessingInfo refDataProcessingInfo) {
+
     }
 
 
@@ -198,27 +229,68 @@ public class RefDataOffHeapStore implements RefDataStore {
      */
     public static class RefDataLoaderImpl implements RefDataLoader {
 
-        private final Txn<ByteBuffer> txn;
+        private Txn<ByteBuffer> txn = null;
+        private final RefDataOffHeapStore refDataOffHeapStore;
+        private final Env<ByteBuffer> lmdbEnvironment;
         private boolean initialised = false;
-        private RefStreamDefinition refStreamDefinition;
-        private long effectiveTimeMs;
+        private final RefStreamDefinition refStreamDefinition;
+        private final long effectiveTimeMs;
+        private int maxPutsBeforeCommit = Integer.MAX_VALUE;
+        private int putsCounter = 0;
+
         // TODO we could just hit lmdb each time, but there may be serde costs
         private final Map<MapDefinition, UID> mapDefinitionToUIDMap = new HashMap<>();
 
-        RefDataLoaderImpl(final Env<ByteBuffer> lmdbEnvironment) {
-            this.txn = lmdbEnvironment.txnWrite();
+        RefDataLoaderImpl(final RefDataOffHeapStore refDataOffHeapStore,
+                          final Env<ByteBuffer> lmdbEnvironment,
+                          final RefStreamDefinition refStreamDefinition,
+                          final long effectiveTimeMs) {
+            this.refDataOffHeapStore = refDataOffHeapStore;
+            this.lmdbEnvironment = lmdbEnvironment;
+            this.refStreamDefinition = refStreamDefinition;
+            this.effectiveTimeMs = effectiveTimeMs;
+        }
 
+        public void initialise() {
+            throwExceptionIfAlreadyInitialised();
 
+            // TODO create processed streams entry if it doesn't exist with a state of IN_PROGRESS
+            // TODO if it does exist update the update time
+
+            beginTxn();
+            this.initialised = true;
+        }
+
+        public void completeProcessing() {
+            throwExceptionIfNotInitialised();
+
+            // Set the processing info record to COMPLETE and update the last update time
         }
 
         @Override
-        public void initialise(final RefStreamDefinition refStreamDefinition, final long effectiveTimeMs) {
-            this.refStreamDefinition = refStreamDefinition;
-            this.effectiveTimeMs = effectiveTimeMs;
-            // TODO create processed streams entry if it doesn't exist
-            // TODO if it does exist update the update time
+        public void setCommitInterval(final int maxPutsBeforeCommit) {
+            Preconditions.checkArgument(maxPutsBeforeCommit >= 1);
+            this.maxPutsBeforeCommit = maxPutsBeforeCommit;
+        }
 
-            this.initialised = true;
+
+        private void beginTxn() {
+            if (txn != null) {
+                throw new RuntimeException("Transaction is already open");
+            }
+            this.txn = lmdbEnvironment.txnWrite();
+        }
+
+
+        private void commit() {
+            if (txn != null) {
+                try {
+                    txn.commit();
+                    txn = null;
+                } catch (Exception e) {
+                    throw new RuntimeException("Error committing write transaction", e);
+                }
+            }
         }
 
         @Override
@@ -226,6 +298,7 @@ public class RefDataOffHeapStore implements RefDataStore {
                         final RefDataValue refDataValue,
                         final boolean overwriteExistingValue) {
             throwExceptionIfNotInitialised();
+            beginTxnIfRequired();
 
 
             //create forward+reverse map ID entries if they don't exist
@@ -234,6 +307,7 @@ public class RefDataOffHeapStore implements RefDataStore {
             //see if key exists, then put value based on overwriteExistingValue
 
             //throw exception if entry exists and overwriteExistingValue is false
+
         }
 
         @Override
@@ -241,6 +315,7 @@ public class RefDataOffHeapStore implements RefDataStore {
                         final RefDataValue refDataValue,
                         final boolean overwriteExistingValue) {
             throwExceptionIfNotInitialised();
+            beginTxnIfRequired();
 
             //create forward+reverse map ID entries if they don't exist
             //hold them in the mapDefinitionToUIDMap if we do create them
@@ -249,11 +324,36 @@ public class RefDataOffHeapStore implements RefDataStore {
 
             //throw exception if entry exists and overwriteExistingValue is false
 
+        }
+
+        private UID getOrCrteateMapUID(final MapDefinition mapDefinition) {
+            return mapDefinitionToUIDMap.computeIfAbsent(mapDefinition, refDataOffHeapStore::createMapUID);
+        }
+
+        private void commitIfRequired() {
+            putsCounter++;
+            if (putsCounter >= maxPutsBeforeCommit) {
+                //
+                commit();
+            }
+        }
+
+
+        private void beginTxnIfRequired() {
+            if (txn == null) {
+                beginTxn();
+            }
         }
 
         private void throwExceptionIfNotInitialised() {
             if (!initialised) {
                 throw new RuntimeException("Loader not initialised");
+            }
+        }
+
+        private void throwExceptionIfAlreadyInitialised() {
+            if (initialised) {
+                throw new RuntimeException("Loader is already initialised");
             }
         }
 

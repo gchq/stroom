@@ -15,23 +15,24 @@
  *
  */
 
-package stroom.refdata.offheapstore;
+package stroom.refdata;
 
-import stroom.entity.shared.Range;
+import stroom.guice.PipelineScoped;
+import stroom.refdata.offheapstore.RefDataLoader;
 
-public interface RefDataLoader extends AutoCloseable {
+@PipelineScoped
+public class RefDataLoaderHolder {
+    private RefDataLoader refDataLoader;
 
-    void initialise();
+    RefDataLoaderHolder(final RefDataLoader refDataLoader) {
+        this.refDataLoader = refDataLoader;
+    }
 
-    void completeProcessing();
+    public RefDataLoader getRefDataLoader() {
+        return refDataLoader;
+    }
 
-    void setCommitInterval(final int putsBeforeCommit);
-
-    void put(String key,
-             RefDataValue refDataValue,
-             boolean overwriteExistingValue);
-
-    void put(Range<Long> keyRange,
-             RefDataValue refDataValue,
-             boolean overwriteExistingValue);
+    public void setRefDataLoader(final RefDataLoader refDataLoader) {
+        this.refDataLoader = refDataLoader;
+    }
 }

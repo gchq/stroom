@@ -16,13 +16,20 @@
 
 package stroom.refdata;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.DocumentPermissionCache;
 import stroom.feed.shared.Feed;
+import stroom.pipeline.PipelineService;
+import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.query.api.v2.DocRef;
+import stroom.refdata.offheapstore.MapDefinition;
 import stroom.refdata.offheapstore.RefDataStore;
+import stroom.refdata.offheapstore.RefDataValueProxy;
+import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.refdata.saxevents.EventListValue;
 import stroom.refdata.saxevents.StringValue;
 import stroom.refdata.saxevents.ValueProxy;
@@ -35,6 +42,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -43,6 +51,8 @@ import java.util.NavigableSet;
 import java.util.Optional;
 
 public class ReferenceData {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReferenceData.class);
+
     // Actually 11.5 days but this is fine for the purposes of reference data.
     private static final long APPROX_TEN_DAYS = 1000000000;
 
@@ -59,6 +69,7 @@ public class ReferenceData {
     private final ContextDataLoader contextDataLoader;
     private final DocumentPermissionCache documentPermissionCache;
     private final RefDataStore refDataStore;
+    private final PipelineService pipelineService;
 
     @Inject
     ReferenceData(final EffectiveStreamCache effectiveStreamCache,
@@ -67,7 +78,8 @@ public class ReferenceData {
                   final StreamHolder streamHolder,
                   final ContextDataLoader contextDataLoader,
                   final DocumentPermissionCache documentPermissionCache,
-                  final RefDataStore refDataStore) {
+                  final RefDataStore refDataStore,
+                  @Named("cachedPipelineService") final PipelineService pipelineService) {
         this.effectiveStreamCache = effectiveStreamCache;
         this.mapStoreCache = mapStoreCache;
         this.feedHolder = feedHolder;
@@ -75,6 +87,7 @@ public class ReferenceData {
         this.contextDataLoader = contextDataLoader;
         this.documentPermissionCache = documentPermissionCache;
         this.refDataStore = refDataStore;
+        this.pipelineService = pipelineService;
     }
 
     /**
@@ -192,7 +205,6 @@ public class ReferenceData {
                     mapStore.getErrorReceiver().replay(result);
                 }
 
-                //TODO is this an NPEventList or a SimpleEventList?
                 final ValueProxy<EventListValue> eventListProxy = mapStore.getEventListProxy(mapName, keyName);
                 if (eventListProxy != null) {
                     result.log(Severity.WARNING, () -> "Map store has no reference data for context data");
@@ -261,6 +273,39 @@ public class ReferenceData {
                 final EffectiveStream effectiveStream = streamSet.floor(new EffectiveStream(0, time));
                 // If we have an effective time then use it.
                 if (effectiveStream != null) {
+
+                    final PipelineEntity pipelineEntity = pipelineService.loadByUuid(pipelineReference.getPipeline().getUuid());
+                    final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
+                            pipelineReference.getPipeline(),
+                            pipelineEntity.getVersion(),
+                            effectiveStream.getStreamId());
+
+                    // establish if we have the data for the effective stream in the store
+                    final boolean isEffectiveStreamDataLoaded = refDataStore.isDataLoaded(refStreamDefinition);
+
+                    if (!isEffectiveStreamDataLoaded) {
+                        // we don't have the data so kick off a process to load it all in
+                        LOGGER.debug("Loading effective stream {}", refStreamDefinition);
+                    }
+
+                    // now we have the data so just do the lookup
+                    final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
+                    Optional<RefDataValueProxy> optRefDataValueProxy = refDataStore.getValueProxy(mapDefinition, keyName);
+
+                    LOGGER.debug("Lookup for mapDefinition {}, key {}, returned {}", mapDefinition, keyName, optRefDataValueProxy);
+
+                    if (optRefDataValueProxy.isPresent()) {
+                        result.log(Severity.INFO, () -> "Map store contains reference data (" + effectiveStream + ")");
+
+                        result.setEventListProxy();
+                    } else {
+                        result.log(Severity.WARNING, () -> "Map store has no reference data (" + effectiveStream + ")");
+                    }
+
+
+                    //TODO either do the lookup here and get a proxy object or we could do the lookup
+
+
                     // Now try and get reference data for the feed at this time.
                     final MapStoreCacheKey mapStorePoolKey = new MapStoreCacheKey(pipelineReference.getPipeline(),
                             effectiveStream.getStreamId());

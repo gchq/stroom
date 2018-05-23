@@ -17,12 +17,9 @@
 
 package stroom.refdata.offheapstore;
 
-import stroom.refdata.saxevents.Key;
-
 import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -33,9 +30,9 @@ public class RefDataValueProxy {
     private final RefDataStore refDataStore;
     private final ValueStoreKey valueStoreKey;
     // held so we know what type of value we are proxying for
-    private final Class<?> valueClazz;
+    private final Class<? extends RefDataValue> valueClazz;
 
-    RefDataValueProxy(final RefDataStore refDataStore, final ValueStoreKey valueStoreKey, final Class<?> valueClazz) {
+    RefDataValueProxy(final RefDataStore refDataStore, final ValueStoreKey valueStoreKey, final Class<? extends RefDataValue> valueClazz) {
         Objects.requireNonNull(refDataStore);
         this.refDataStore = Objects.requireNonNull(refDataStore);
         this.valueStoreKey = Objects.requireNonNull(valueStoreKey);
@@ -77,7 +74,7 @@ public class RefDataValueProxy {
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        final RefDataValueProxy<?> that = (RefDataValueProxy<?>) o;
+        final RefDataValueProxy that = (RefDataValueProxy) o;
         return Objects.equals(refDataStore, that.refDataStore) &&
                 Objects.equals(valueStoreKey, that.valueStoreKey) &&
                 Objects.equals(valueClazz, that.valueClazz);
@@ -85,7 +82,6 @@ public class RefDataValueProxy {
 
     @Override
     public int hashCode() {
-
         return Objects.hash(refDataStore, valueStoreKey, valueClazz);
     }
 

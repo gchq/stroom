@@ -21,29 +21,29 @@ import stroom.util.logging.LambdaLogger;
 
 import java.util.Objects;
 
-public class ProcessingInfo {
+public class RefDataProcessingInfo {
 
     private final long createTimeEpochMs;
     private final long lastAccessedTimeEpochMs;
     private final long effectiveTimeEpochMs;
     private final ProcessingState processingState;
 
-    ProcessingInfo(final long createTimeEpochMs,
-                   final long lastAccessedTimeEpochMs,
-                   final long effectiveTimeEpochMs,
-                   final ProcessingState processingState) {
+    RefDataProcessingInfo(final long createTimeEpochMs,
+                          final long lastAccessedTimeEpochMs,
+                          final long effectiveTimeEpochMs,
+                          final ProcessingState processingState) {
         this.createTimeEpochMs = createTimeEpochMs;
         this.lastAccessedTimeEpochMs = lastAccessedTimeEpochMs;
         this.effectiveTimeEpochMs = effectiveTimeEpochMs;
         this.processingState = processingState;
     }
 
-    ProcessingInfo updateState(final ProcessingState newProcessingState) {
-        return new ProcessingInfo(createTimeEpochMs, lastAccessedTimeEpochMs, effectiveTimeEpochMs, newProcessingState);
+    RefDataProcessingInfo updateState(final ProcessingState newProcessingState) {
+        return new RefDataProcessingInfo(createTimeEpochMs, lastAccessedTimeEpochMs, effectiveTimeEpochMs, newProcessingState);
     }
 
-    ProcessingInfo updateLastAccessedTime() {
-        return new ProcessingInfo(createTimeEpochMs, System.currentTimeMillis(), effectiveTimeEpochMs, processingState);
+    RefDataProcessingInfo updateLastAccessedTime() {
+        return new RefDataProcessingInfo(createTimeEpochMs, System.currentTimeMillis(), effectiveTimeEpochMs, processingState);
     }
 
     long getCreateTimeEpochMs() {
@@ -62,7 +62,7 @@ public class ProcessingInfo {
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        final ProcessingInfo that = (ProcessingInfo) o;
+        final RefDataProcessingInfo that = (RefDataProcessingInfo) o;
         return createTimeEpochMs == that.createTimeEpochMs &&
                 effectiveTimeEpochMs == that.effectiveTimeEpochMs &&
                 processingState == that.processingState;
@@ -76,7 +76,7 @@ public class ProcessingInfo {
 
     @Override
     public String toString() {
-        return "ProcessingInfo{" +
+        return "RefDataProcessingInfo{" +
                 "createTimeEpochMs=" + createTimeEpochMs +
                 ", effectiveTimeEpochMs=" + effectiveTimeEpochMs +
                 ", processingState=" + processingState +

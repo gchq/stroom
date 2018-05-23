@@ -19,6 +19,7 @@ package stroom.refdata;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.entity.shared.DocRefUtil;
 import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.io.StreamCloser;
@@ -37,6 +38,10 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
+import stroom.query.api.v2.DocRef;
+import stroom.refdata.offheapstore.RefDataLoader;
+import stroom.refdata.offheapstore.RefDataStore;
+import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.security.Security;
 import stroom.streamstore.StreamSource;
 import stroom.streamstore.StreamStore;
@@ -52,6 +57,7 @@ import stroom.util.shared.Severity;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.IOException;
+import java.util.Objects;
 
 /**
  * Processes reference data that meets some supplied criteria (feed names,
@@ -71,6 +77,8 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
     private final PipelineHolder pipelineHolder;
     private final FeedHolder feedHolder;
     private final StreamHolder streamHolder;
+    private final RefDataLoaderHolder refDataLoaderHolder;
+    private final RefDataStore refDataStore;
     private final LocationFactoryProxy locationFactory;
     private final StreamCloser streamCloser;
     private final ErrorReceiverProxy errorReceiverProxy;
@@ -89,6 +97,8 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                                  final PipelineHolder pipelineHolder,
                                  final FeedHolder feedHolder,
                                  final StreamHolder streamHolder,
+                                 final RefDataLoaderHolder refDataLoaderHolder,
+                                 final RefDataStore refDataStore,
                                  final LocationFactoryProxy locationFactory,
                                  final StreamCloser streamCloser,
                                  final ErrorReceiverProxy errorReceiverProxy,
@@ -102,8 +112,10 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
         this.pipelineService = pipelineService;
         this.pipelineHolder = pipelineHolder;
         this.feedHolder = feedHolder;
+        this.refDataStore = refDataStore;
         this.locationFactory = locationFactory;
         this.streamHolder = streamHolder;
+        this.refDataLoaderHolder = refDataLoaderHolder;
         this.streamCloser = streamCloser;
         this.errorReceiverProxy = errorReceiverProxy;
         this.taskContext = taskContext;
@@ -201,23 +213,39 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                 final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
                 locationFactory.setLocationFactory(streamLocationFactory);
 
-                // Loop over the stream boundaries and process each
-                // sequentially.
-                final long streamCount = mainProvider.getStreamCount();
-                for (long streamNo = 0; streamNo < streamCount && !taskContext.isTerminated(); streamNo++) {
-                    streamHolder.setStreamNo(streamNo);
-                    streamLocationFactory.setStreamNo(streamNo + 1);
+                final PipelineEntity pipelineEntity = Objects.requireNonNull(pipelineHolder.getPipeline());
+                final DocRef pipelineDocRef = DocRefUtil.create(pipelineEntity);
+                final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
+                        pipelineDocRef,
+                        pipelineEntity.getVersion(),
+                        streamHolder.getStream().getId());
 
-                    // Get the stream.
-                    final StreamSourceInputStream inputStream = mainProvider.getStream(streamNo);
+                try (RefDataLoader refDataLoader = refDataStore.loader(refStreamDefinition, stream.getEffectiveMs())) {
+                    refDataLoaderHolder.setRefDataLoader(refDataLoader);
 
-                    // Process the boundary.
-                    try {
-                        pipeline.process(inputStream, encoding);
-                    } catch (final RuntimeException e) {
-                        log(Severity.FATAL_ERROR, e.getMessage(), e);
+                    // Loop over the stream boundaries and process each
+                    // sequentially.
+                    final long streamCount = mainProvider.getStreamCount();
+                    for (long streamNo = 0; streamNo < streamCount && !taskContext.isTerminated(); streamNo++) {
+                        streamHolder.setStreamNo(streamNo);
+                        streamLocationFactory.setStreamNo(streamNo + 1);
+
+                        // Get the stream.
+                        final StreamSourceInputStream inputStream = mainProvider.getStream(streamNo);
+
+                        // Process the boundary.
+                        try {
+                            //process the pipeline, ref data will be loaded via the ReferenceDataFilter
+                            pipeline.process(inputStream, encoding);
+                        } catch (final RuntimeException e) {
+                            log(Severity.FATAL_ERROR, e.getMessage(), e);
+                        }
                     }
+                } catch (Exception e) {
+                    log(Severity.FATAL_ERROR, "Error closing refDataLoader: " + e.getMessage(), e);
                 }
+
+
             } catch (final RuntimeException e) {
                 log(Severity.FATAL_ERROR, e.getMessage(), e);
             } finally {

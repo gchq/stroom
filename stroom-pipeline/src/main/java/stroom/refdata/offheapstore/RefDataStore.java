@@ -27,9 +27,14 @@ import java.util.function.Supplier;
 
 public interface RefDataStore {
 
-    Optional<ProcessingInfo> getProcessingInfo(final RefStreamDefinition refStreamDefinition);
+    Optional<RefDataProcessingInfo> getProcessingInfo(final RefStreamDefinition refStreamDefinition);
 
-    //TODO consider a bulk put method or a builder type class to check/load them all in one txn
+    /**
+     * Returns true if all the data for the passed stream definition has been successfully loaded into the
+     * store and is available for use.
+     */
+    boolean isDataLoaded(final RefStreamDefinition refStreamDefinition);
+
     /**
      * Performs a lookup using the passed mapDefinition and key and if not found will call the refDataValueSupplier
      * to create a new entry for that mapDefinition, key and value. The check-and-put will be done in an atomic way
@@ -56,7 +61,16 @@ public interface RefDataStore {
     Optional<RefDataValue> getValue(final MapDefinition mapDefinition,
                                     final String key);
 
-    Optional<RefDataValue> getValue(final ValueStoreKey valueStoreKey);
+    /**
+     * Looks up the passed key and mapDefinition in the store and if found returns a proxy to the
+     * actual value. The proxy allows the value to be read/processed/mapped inside a transaction
+     * to avoid unnecessary copying of data.
+     */
+    Optional<RefDataValueProxy> getValueProxy(final MapDefinition mapDefinition,
+                                              final String key);
+
+//    Optional<RefDataValue> getValue(final ValueStoreKey valueStoreKey);
+
 
     /**
      * Performs a lookup using the passed mapDefinition and key and then applies the valueConsumer to
@@ -86,4 +100,6 @@ public interface RefDataStore {
 
     <T> Optional<T> mapBytes(final ValueStoreKey valueStoreKey,
                              final Function<ByteBuffer, T> valueMapper);
+
+    RefDataLoader loader(final RefStreamDefinition refStreamDefinition, final long effectiveTimeMs);
 }

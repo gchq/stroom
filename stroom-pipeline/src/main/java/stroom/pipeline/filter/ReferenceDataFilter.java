@@ -35,10 +35,9 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.query.api.v2.DocRef;
 import stroom.refdata.MapStoreHolder;
+import stroom.refdata.RefDataLoaderHolder;
 import stroom.refdata.offheapstore.FastInfosetValue;
 import stroom.refdata.offheapstore.MapDefinition;
-import stroom.refdata.offheapstore.RefDataOffHeapStore;
-import stroom.refdata.offheapstore.RefDataStore;
 import stroom.refdata.offheapstore.RefDataValue;
 import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.refdata.offheapstore.StringValue;
@@ -112,8 +111,8 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     private final PipelineHolder pipelineHolder;
     private final EventListInternPool internPool;
     private final OffHeapEventListInternPool offHeapEventListInternPool;
-    private final RefDataStore refDataStore;
     private final ErrorReceiverProxy errorReceiverProxy;
+    private final RefDataLoaderHolder refDataLoaderHolder;
 
     private final SAXDocumentSerializer saxDocumentSerializer = new SAXDocumentSerializer();
     private final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -122,7 +121,6 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     private final List<Tuple3> rangeValueEntries = new ArrayList<>();
 
     private RefStreamDefinition refStreamDefinition = null;
-    private RefDataOffHeapStore.RefDataLoader refDataLoader;
 
     private String mapName;
     private String key;
@@ -146,14 +144,14 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                                final EventListInternPool internPool,
                                final ErrorReceiverProxy errorReceiverProxy,
                                final OffHeapEventListInternPool offHeapEventListInternPool,
-                               final RefDataStore refDataStore) {
+                               final RefDataLoaderHolder refDataLoaderHolder) {
         this.mapStoreHolder = mapStoreHolder;
         this.streamHolder = streamHolder;
         this.pipelineHolder = pipelineHolder;
         this.internPool = internPool;
         this.errorReceiverProxy = errorReceiverProxy;
         this.offHeapEventListInternPool = offHeapEventListInternPool;
-        this.refDataStore = refDataStore;
+        this.refDataLoaderHolder =refDataLoaderHolder;
     }
 
 
@@ -171,7 +169,10 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         byteArrayOutputStream.reset();
         saxDocumentSerializer.reset();
 
-        refDataLoader = new RefDataOffHeapStore.RefDataLoaderImpl()
+        if (refDataLoaderHolder.getRefDataLoader() == null) {
+            errorReceiverProxy.log(Severity.FATAL_ERROR, null, getElementId(), "RefDataLoader is missing", null);
+        }
+        refDataLoaderHolder.getRefDataLoader().initialise();
     }
 
     /**
@@ -271,11 +272,13 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                     if (mapName != null) {
                         final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
 
+                        RefDataValue refDataValue = getRefDataValueFromBuffers();
                         if (key != null) {
                             // TODO we may be able to pass a Consumer<ByteBuffer> and then use a ByteBufferOutputStream
                             // to write directly to a direct byteBuffer, however we will not know the size up front
                             LOGGER.trace("Putting key {} into map {}", key, mapDefinition);
-                            refDataStore.put(mapDefinition, key, this::getRefDataValueFromBuffers, overrideExistingValues);
+                            refDataLoaderHolder.getRefDataLoader()
+                                    .put(key, refDataValue, overrideExistingValues);
                         } else if (rangeFrom != null && rangeTo != null) {
                             if (rangeFrom > rangeTo) {
                                 errorReceiverProxy
@@ -288,7 +291,8 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                                 // if from==to we still record it as a range
                                 final Range<Long> range = new Range<>(rangeFrom, rangeTo + 1);
                                 LOGGER.trace("Putting range {} into map {}", range, mapDefinition);
-                                refDataStore.put(mapDefinition, range, this::getRefDataValueFromBuffers, overrideExistingValues);
+                                refDataLoaderHolder.getRefDataLoader()
+                                        .put(range, refDataValue, overrideExistingValues);
                             }
                         }
                     }
