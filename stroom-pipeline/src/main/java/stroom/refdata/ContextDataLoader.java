@@ -16,12 +16,11 @@
 
 package stroom.refdata;
 
-import stroom.feed.shared.Feed;
 import stroom.docref.DocRef;
 import stroom.streamstore.shared.Stream;
 
 import java.io.InputStream;
 
 public interface ContextDataLoader {
-    MapStore load(InputStream inputStream, Stream stream, Feed feed, DocRef contextPipeline);
+    MapStore load(InputStream inputStream, Stream stream, String feedName, DocRef contextPipeline);
 }

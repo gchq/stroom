@@ -201,7 +201,7 @@ public class TestIndexingFilter extends AbstractProcessIntegrationTest {
             final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
             final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData);
 
-            feedHolderProvider.get().setFeed(new Feed());
+//            feedHolderProvider.get().setFeed(new Feed());
 
 //            // Setup the meta data holder.
 //            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));

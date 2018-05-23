@@ -17,13 +17,11 @@
 
 package stroom.feed;
 
-import stroom.entity.DocumentEntityService;
-import stroom.entity.FindService;
-import stroom.feed.shared.Feed;
-import stroom.feed.shared.FindFeedCriteria;
+        import stroom.entity.DocumentEntityService;
+        import stroom.entity.FindService;
+        import stroom.feed.shared.Feed;
+        import stroom.feed.shared.FindFeedCriteria;
 
 public interface FeedService extends DocumentEntityService<Feed>, FindService<Feed, FindFeedCriteria> {
-    String getDisplayClassification(final Feed feed);
-
     Feed loadByName(String name);
 }

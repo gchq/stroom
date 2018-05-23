@@ -7,6 +7,7 @@ import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.Period;
+import stroom.feed.FeedNameCache;
 import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.PipelineStore;
@@ -42,6 +43,7 @@ import java.util.stream.Collectors;
 public class ExpressionToFindCriteria {
     private final FeedService feedService;
     private final PipelineStore pipelineStore;
+    private final FeedNameCache feedNameCache;
     private final DictionaryStore dictionaryStore;
     private final StreamAttributeKeyService streamAttributeKeyService;
     private final StreamTypeService streamTypeService;
@@ -58,11 +60,13 @@ public class ExpressionToFindCriteria {
     @Inject
     public ExpressionToFindCriteria(@Named("cachedFeedService") final FeedService feedService,
                                     @Named("cachedPipelineStore") final PipelineStore pipelineStore,
+                                    final FeedNameCache feedNameCache,
                                     final DictionaryStore dictionaryStore,
                                     final StreamAttributeKeyService streamAttributeKeyService,
                                     @Named("cachedStreamTypeService") StreamTypeService streamTypeService) {
         this.feedService = feedService;
         this.pipelineStore = pipelineStore;
+        this.feedNameCache = feedNameCache;
         this.dictionaryStore = dictionaryStore;
         this.streamAttributeKeyService = streamAttributeKeyService;
         this.streamTypeService = streamTypeService;
@@ -307,7 +311,7 @@ public class ExpressionToFindCriteria {
 
         // Try by name
         try {
-            final Feed feed = feedService.loadByName(value);
+            final Feed feed = feedNameCache.get(value);
             if (feed != null) {
                 return Collections.singleton(feed);
             }

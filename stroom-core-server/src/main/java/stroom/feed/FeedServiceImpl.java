@@ -112,21 +112,6 @@ public class FeedServiceImpl extends DocumentEntityServiceImpl<Feed, FindFeedCri
     }
 
     @Override
-    public String getDisplayClassification(final Feed feed) {
-        String classification = null;
-
-        if (feed != null) {
-            classification = feed.getClassification();
-        }
-
-        if (classification == null || classification.trim().isEmpty()) {
-            return StroomProperties.getProperty("stroom.unknownClassification");
-        }
-
-        return classification.trim().toUpperCase();
-    }
-
-    @Override
     protected Feed internalSave(final Feed entity) {
         if (entity != null) {
             if (entity.getStreamType() == null) {

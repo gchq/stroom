@@ -130,8 +130,8 @@ public class TestXMLWithErrorsInTransform extends AbstractProcessIntegrationTest
             final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
             final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
-            feedHolder.setFeed(new Feed());
-
+//            feedHolder.setFeedName("");
+//
 //            // Setup the meta data holder.
 //            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
 

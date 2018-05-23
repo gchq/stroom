@@ -37,6 +37,7 @@ public class FeedModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(FeedService.class).to(FeedServiceImpl.class);
+        bind(FeedNameCache.class).to(FeedNameCacheImpl.class);
         bind(RemoteFeedService.class).annotatedWith(Names.named("remoteFeedService")).to(RemoteFeedServiceImpl.class);
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);

@@ -23,13 +23,13 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
+import stroom.feed.FeedProperties;
 import stroom.feed.FeedService;
 import stroom.feed.MetaMap;
 import stroom.feed.shared.Feed;
 import stroom.io.StreamCloser;
 import stroom.node.NodeCache;
 import stroom.pipeline.DefaultErrorWriter;
-import stroom.pipeline.EncodingSelection;
 import stroom.pipeline.ErrorWriterProxy;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.PipelineStore;
@@ -107,6 +107,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     private final TaskContext taskContext;
     private final PipelineHolder pipelineHolder;
     private final FeedHolder feedHolder;
+    private final FeedProperties feedProperties;
     private final MetaDataHolder metaDataHolder;
     private final StreamHolder streamHolder;
     private final SearchIdHolder searchIdHolder;
@@ -136,6 +137,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                             final TaskContext taskContext,
                             final PipelineHolder pipelineHolder,
                             final FeedHolder feedHolder,
+                            final FeedProperties feedProperties,
                             final MetaDataHolder metaDataHolder,
                             final StreamHolder streamHolder,
                             final SearchIdHolder searchIdHolder,
@@ -158,6 +160,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         this.taskContext = taskContext;
         this.pipelineHolder = pipelineHolder;
         this.feedHolder = feedHolder;
+        this.feedProperties = feedProperties;
         this.metaDataHolder = metaDataHolder;
         this.streamHolder = streamHolder;
         this.searchIdHolder = searchIdHolder;
@@ -205,7 +208,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         // Record when processing began so we know how long it took
         // afterwards.
         final long startTime = System.currentTimeMillis();
-        Feed feed = null;
+        String feedName = null;
         PipelineDoc pipelineDoc = null;
 
         try {
@@ -218,8 +221,11 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             }
 
             // Load the feed.
-            feed = feedService.load(stream.getFeed());
-            feedHolder.setFeed(feed);
+            final Feed feed = feedService.load(stream.getFeed());
+            if (feed != null) {
+                feedName = feed.getName();
+                feedHolder.setFeedName(feed.getName());
+            }
 
             // Setup the meta data holder.
             metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
@@ -229,22 +235,18 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             pipelineHolder.setPipeline(DocRefUtil.create(pipelineDoc));
 
             // Create some processing info.
-            final StringBuilder infoSb = new StringBuilder();
-            infoSb.append(" pipeline=");
-            infoSb.append(pipelineDoc.getName());
-            infoSb.append(", feed=");
-            infoSb.append(feed.getName());
-            infoSb.append(", streamId=");
-            infoSb.append(stream.getId());
-            infoSb.append(", streamCreated=");
-            infoSb.append(DateUtil.createNormalDateTimeString(stream.getCreateMs()));
-            final String info = infoSb.toString();
+            final String info = "" +
+                    " pipeline=" +
+                    pipelineDoc.getName() +
+                    ", feed=" +
+                    feedName +
+                    ", streamId=" +
+                    stream.getId() +
+                    ", streamCreated=" +
+                    DateUtil.createNormalDateTimeString(stream.getCreateMs());
 
             // Create processing start message.
-            final StringBuilder processingInfoSb = new StringBuilder();
-            processingInfoSb.append(PROCESSING);
-            processingInfoSb.append(info);
-            final String processingInfo = processingInfoSb.toString();
+            final String processingInfo = PROCESSING + info;
 
             // Log that we are starting to process.
             taskContext.info(processingInfo);
@@ -258,15 +260,14 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             // Process the streams.
             final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
             final Pipeline pipeline = pipelineFactory.create(pipelineData);
-            processNestedStreams(pipeline, stream, streamSource, feed, stream.getStreamType());
+            processNestedStreams(pipeline, stream, streamSource, feedName, stream.getStreamType());
 
             // Create processing finished message.
-            final StringBuilder finishedInfoSb = new StringBuilder();
-            finishedInfoSb.append(FINISHED);
-            finishedInfoSb.append(info);
-            finishedInfoSb.append(", finished in ");
-            finishedInfoSb.append(ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime));
-            final String finishedInfo = finishedInfoSb.toString();
+            final String finishedInfo = "" +
+                    FINISHED +
+                    info +
+                    ", finished in " +
+                    ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime);
 
             // Log that we have finished processing.
             taskContext.info(finishedInfo);
@@ -280,7 +281,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             checkSuperseded(startTime);
 
             // Record some statistics about processing.
-            recordStats(feed, pipelineDoc);
+            recordStats(feedName, pipelineDoc);
 
             // Update the meta data for all output streams to use.
             updateMetaData(streamSource);
@@ -350,13 +351,13 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         }
     }
 
-    private void recordStats(final Feed feed, final PipelineDoc pipelineDoc) {
+    private void recordStats(final String feedName, final PipelineDoc pipelineDoc) {
         try {
             InternalStatisticEvent event = InternalStatisticEvent.createPlusOneCountStat(
                     INTERNAL_STAT_KEY_PIPELINE_STREAM_PROCESSOR,
                     System.currentTimeMillis(),
                     ImmutableMap.of(
-                            "Feed", feed.getName(),
+                            "Feed", feedName,
                             "Pipeline", pipelineDoc.getName(),
                             "Node", nodeCache.getDefaultNode().getName()));
 
@@ -389,8 +390,11 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     /**
      * Processes a source and writes the result to a target.
      */
-    private void processNestedStreams(final Pipeline pipeline, final Stream stream, final StreamSource streamSource,
-                                      final Feed feed, final StreamType streamType) {
+    private void processNestedStreams(final Pipeline pipeline,
+                                      final Stream stream,
+                                      final StreamSource streamSource,
+                                      final String feedName,
+                                      final StreamType streamType) {
         try {
             boolean startedProcessing = false;
 
@@ -411,7 +415,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                 // sequentially.
                 final long streamCount = mainProvider.getStreamCount();
                 for (long streamNo = 0; streamNo < streamCount && !Thread.currentThread().isInterrupted(); streamNo++) {
-                    InputStream inputStream = null;
+                    InputStream inputStream;
 
                     // If the task requires specific events to be processed then
                     // add them.
@@ -434,7 +438,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                     }
 
                     // Get the appropriate encoding for the stream type.
-                    final String encoding = EncodingSelection.select(feed, streamType);
+                    final String encoding = feedProperties.getEncoding(feedName, streamType);
 
                     // We want to get a preview of the input stream so we can
                     // skip it if it is effectively empty.
@@ -581,9 +585,9 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         private OutputStream processInfoOutputStream;
         private StreamTarget processInfoStreamTarget;
 
-        public ProcessInfoOutputStreamProvider(final StreamStore streamStore, final StreamCloser streamCloser,
-                                               final MetaData metaData, final Stream stream, final StreamProcessor streamProcessor,
-                                               final StreamTask streamTask) {
+        ProcessInfoOutputStreamProvider(final StreamStore streamStore, final StreamCloser streamCloser,
+                                        final MetaData metaData, final Stream stream, final StreamProcessor streamProcessor,
+                                        final StreamTask streamTask) {
             this.streamStore = streamStore;
             this.streamCloser = streamCloser;
             this.metaData = metaData;
@@ -593,21 +597,21 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         }
 
         @Override
-        public Destination borrowDestination() throws IOException {
+        public Destination borrowDestination() {
             return this;
         }
 
         @Override
-        public void returnDestination(final Destination destination) throws IOException {
+        public void returnDestination(final Destination destination) {
         }
 
         @Override
-        public OutputStream getByteArrayOutputStream() throws IOException {
+        public OutputStream getByteArrayOutputStream() {
             return getOutputStream(null, null);
         }
 
         @Override
-        public OutputStream getOutputStream(final byte[] header, final byte[] footer) throws IOException {
+        public OutputStream getOutputStream(final byte[] header, final byte[] footer) {
             if (processInfoOutputStream == null) {
                 // Create a processing info stream to write all processing
                 // information to.

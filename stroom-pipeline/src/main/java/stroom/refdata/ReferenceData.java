@@ -200,7 +200,7 @@ public class ReferenceData {
             final long byteCount = contextStream.size();
             // Only use context data if we actually have some.
             if (byteCount > MINIMUM_BYTE_COUNT) {
-                return contextDataLoader.load(contextStream, stream, feedHolder.getFeed(), contextPipeline);
+                return contextDataLoader.load(contextStream, stream, feedHolder.getFeedName(), contextPipeline);
             }
         }
 

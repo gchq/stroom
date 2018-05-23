@@ -26,6 +26,7 @@ public class MockFeedModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(FeedService.class).to(MockFeedService.class);
+        bind(FeedNameCache.class).to(FeedNameCacheImpl.class);
         bind(FeedService.class).annotatedWith(Names.named("cachedFeedService")).to(MockFeedService.class);
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);

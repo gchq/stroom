@@ -98,7 +98,7 @@ public class F2XTestUtil {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
 
         // Setup the feed.
-        feedHolder.setFeed(feed);
+        feedHolder.setFeedName(feed.getName());
 
 //        // Setup the meta data holder.
 //        metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));

@@ -19,10 +19,10 @@ package stroom.refdata;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.feed.FeedProperties;
 import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.io.StreamCloser;
-import stroom.pipeline.EncodingSelection;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.StreamLocationFactory;
@@ -73,6 +73,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
     private final PipelineStore pipelineStore;
     private final PipelineHolder pipelineHolder;
     private final FeedHolder feedHolder;
+    private final FeedProperties feedProperties;
     private final MetaDataHolder metaDataHolder;
     private final StreamHolder streamHolder;
     private final LocationFactoryProxy locationFactory;
@@ -92,6 +93,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                                  @Named("cachedPipelineStore") final PipelineStore pipelineStore,
                                  final PipelineHolder pipelineHolder,
                                  final FeedHolder feedHolder,
+                                 final FeedProperties feedProperties,
                                  final MetaDataHolder metaDataHolder,
                                  final StreamHolder streamHolder,
                                  final LocationFactoryProxy locationFactory,
@@ -107,6 +109,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
         this.pipelineStore = pipelineStore;
         this.pipelineHolder = pipelineHolder;
         this.feedHolder = feedHolder;
+        this.feedProperties = feedProperties;
         this.metaDataHolder = metaDataHolder;
         this.locationFactory = locationFactory;
         this.streamHolder = streamHolder;
@@ -142,7 +145,8 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                     try {
                         // Load the feed.
                         final Feed feed = feedService.load(stream.getFeed());
-                        feedHolder.setFeed(feed);
+                        final String feedName = feed.getName();
+                        feedHolder.setFeedName(feedName);
 
                         // Setup the meta data holder.
                         metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
@@ -155,7 +159,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                         final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
                         final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
-                        populateMaps(pipeline, stream, streamSource, feed, stream.getStreamType(), mapStoreBuilder);
+                        populateMaps(pipeline, stream, streamSource, feedName, stream.getStreamType(), mapStoreBuilder);
                         if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug("Finished loading reference data: " + mapStorePoolKey.toString());
                         }
@@ -178,8 +182,12 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
         });
     }
 
-    private void populateMaps(final Pipeline pipeline, final Stream stream, final StreamSource streamSource,
-                              final Feed feed, final StreamType streamType, final MapStoreBuilder mapStoreBuilder) {
+    private void populateMaps(final Pipeline pipeline,
+                              final Stream stream,
+                              final StreamSource streamSource,
+                              final String feedName,
+                              final StreamType streamType,
+                              final MapStoreBuilder mapStoreBuilder) {
         try {
             // Get the stream providers.
             streamHolder.setStream(stream);
@@ -203,7 +211,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
 
             try {
                 // Get the appropriate encoding for the stream type.
-                final String encoding = EncodingSelection.select(feed, streamType);
+                final String encoding = feedProperties.getEncoding(feedName, streamType);
 
                 final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
                 locationFactory.setLocationFactory(streamLocationFactory);

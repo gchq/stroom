@@ -259,7 +259,7 @@ public class ExtractionTaskHandler {
                 // Here we need to reload the feed as this will get the related
                 // objects Translation etc
                 final Feed feed = feedService.load(source.getStream().getFeed());
-                feedHolder.setFeed(feed);
+                feedHolder.setFeedName(feed.getName());
 
                 // Setup the meta data holder.
                 metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));

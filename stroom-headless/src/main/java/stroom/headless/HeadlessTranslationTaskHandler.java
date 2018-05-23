@@ -138,7 +138,7 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
                 // Get the feed.
                 final String feedName = metaData.get(StroomHeaderArguments.FEED);
                 final Feed feed = getFeed(feedName);
-                feedHolder.setFeed(feed);
+                feedHolder.setFeedName(feedName);
 
                 // Setup the meta data holder.
                 metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));

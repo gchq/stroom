@@ -19,9 +19,8 @@ package stroom.refdata;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.shared.Feed;
+import stroom.feed.FeedProperties;
 import stroom.io.StreamCloser;
-import stroom.pipeline.EncodingSelection;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiverIdDecorator;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -55,6 +54,7 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
     private final PipelineFactory pipelineFactory;
     private final MapStoreHolder mapStoreHolder;
     private final FeedHolder feedHolder;
+    private final FeedProperties feedProperties;
     private final MetaDataHolder metaDataHolder;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final PipelineStore pipelineStore;
@@ -69,6 +69,7 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
     ContextDataLoadTaskHandler(final PipelineFactory pipelineFactory,
                                final MapStoreHolder mapStoreHolder,
                                final FeedHolder feedHolder,
+                               final FeedProperties feedProperties,
                                final MetaDataHolder metaDataHolder,
                                final ErrorReceiverProxy errorReceiverProxy,
                                @Named("cachedPipelineStore") final PipelineStore pipelineStore,
@@ -79,6 +80,7 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
         this.pipelineFactory = pipelineFactory;
         this.mapStoreHolder = mapStoreHolder;
         this.feedHolder = feedHolder;
+        this.feedProperties = feedProperties;
         this.metaDataHolder = metaDataHolder;
         this.errorReceiverProxy = errorReceiverProxy;
         this.pipelineStore = pipelineStore;
@@ -98,7 +100,7 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
 
             final InputStream inputStream = task.getInputStream();
             final Stream stream = task.getStream();
-            final Feed feed = task.getFeed();
+            final String feedName = task.getFeedName();
 
             if (inputStream != null) {
                 final StreamCloser streamCloser = new StreamCloser();
@@ -110,7 +112,7 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
                     if (LOGGER.isDebugEnabled()) {
                         final StringBuilder sb = new StringBuilder();
                         sb.append("(feed = ");
-                        sb.append(feed.getName());
+                        sb.append(feedName);
                         if (stream != null) {
                             sb.append(", source id = ");
                             sb.append(stream.getId());
@@ -125,13 +127,13 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
                     final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
                     final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
-                    feedHolder.setFeed(feed);
+                    feedHolder.setFeedName(feedName);
 
                     // Setup the meta data holder.
                     metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
 
                     // Get the appropriate encoding for the stream type.
-                    final String encoding = EncodingSelection.select(feed, StreamType.CONTEXT);
+                    final String encoding = feedProperties.getEncoding(feedName, StreamType.CONTEXT);
                     mapStoreHolder.setMapStoreBuilder(mapStoreBuilder);
                     // Parse the stream.
                     pipeline.process(inputStream, encoding);

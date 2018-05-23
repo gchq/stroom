@@ -17,6 +17,7 @@
 
 package stroom.headless;
 
+import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.StringCriteria;
 import stroom.feed.FeedService;
@@ -43,7 +44,6 @@ import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
-import stroom.docref.DocRef;
 import stroom.security.Security;
 import stroom.streamstore.fs.serializable.RASegmentInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
@@ -136,7 +136,7 @@ class CLITranslationTaskHandler extends AbstractTaskHandler<CLITranslationTask, 
                 // Get the feed.
                 final String feedName = metaData.get(StroomHeaderArguments.FEED);
                 final Feed feed = getFeed(feedName);
-                feedHolder.setFeed(feed);
+                feedHolder.setFeedName(feedName);
 
                 // Setup the meta data holder.
                 metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
