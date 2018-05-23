@@ -6,9 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
+* Issue **#776** : Removal of index shard searcher caching to hopefully fix Lucene directory closing issue.
 
-Uplift stroom-expression to v1.4.1
+* Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
+
+* Uplift stroom-expression to v1.4.1
 
 ## [v5.3.4] - 2018-05-16
 
