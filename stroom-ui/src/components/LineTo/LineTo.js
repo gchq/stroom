@@ -16,54 +16,53 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import { connect } from 'react-redux'
+import { connect } from 'react-redux';
 
 import LineContext from './LineContext';
 
 import { lineCreated, lineDestroyed } from './redux';
 
 class LineTo extends Component {
-    static propTypes = {
-        // These are the id's of the endpoint elements.
-        lineContextId : PropTypes.string.isRequired,
-        lineId : PropTypes.string.isRequired,
-        lineType : PropTypes.string,
-        fromId : PropTypes.string.isRequired,
-        toId : PropTypes.string.isRequired
-    }
+  static propTypes = {
+    // These are the id's of the endpoint elements.
+    lineContextId: PropTypes.string.isRequired,
+    lineId: PropTypes.string.isRequired,
+    lineType: PropTypes.string,
+    fromId: PropTypes.string.isRequired,
+    toId: PropTypes.string.isRequired,
+  };
 
-    componentDidMount() {
-        this.props.lineCreated(this.props.lineContextId, 
-            this.props.lineId,
-            this.props.lineType,
-            this.props.fromId,
-            this.props.toId);
-    }
+  componentDidMount() {
+    this.props.lineCreated(
+      this.props.lineContextId,
+      this.props.lineId,
+      this.props.lineType,
+      this.props.fromId,
+      this.props.toId,
+    );
+  }
 
-    componentWillUnmount() {
-        this.props.lineDestroyed(this.props.lineContextId, this.props.lineId);
-    }
+  componentWillUnmount() {
+    this.props.lineDestroyed(this.props.lineContextId, this.props.lineId);
+  }
 
-    render() {
-        return (
-            <span></span>
-        )
-    }
+  render() {
+    return null;
+  }
 }
 
 const ReduxLineTo = connect(
-    (state) => ({
-        // operators are nested, so take all their props from parent
-
-    }),
-    {
-        lineCreated,
-        lineDestroyed
-    }
-)(LineTo)
+  state => ({
+    // operators are nested, so take all their props from parent
+  }),
+  {
+    lineCreated,
+    lineDestroyed,
+  },
+)(LineTo);
 
 export default props => (
-    <LineContext.Consumer>
-        {lineContextId => <ReduxLineTo {...props} lineContextId={lineContextId} />}
-    </LineContext.Consumer>
-  );
+  <LineContext.Consumer>
+    {lineContextId => <ReduxLineTo {...props} lineContextId={lineContextId} />}
+  </LineContext.Consumer>
+);

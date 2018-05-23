@@ -1,9 +1,16 @@
-.Pipeline-card {
-    width: 100%;
-    padding: 15px;
-    margin: 0px !important;
+.Pipeline-editor {
+  width: 100%;
+  padding: 15px;
+  margin: 0px !important;
+  background-color: lightgray;
 }
 
 .Pipeline-element {
-    margin-right: 3rem;
+  padding: 0.5rem;
+  width: 100%;
+  height: 100%;
+  border-style: solid;
+  border-width: thin;
+  border-radius: 5px;
+  background-color: white;
 }
