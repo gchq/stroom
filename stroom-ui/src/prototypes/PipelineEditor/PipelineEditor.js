@@ -25,13 +25,15 @@ import PipelineElementSettings from './elements';
 
 import './PipelineEditor.css';
 
-import { iterateNodes } from 'lib/treeUtils';
-import { getPipelineAsTree } from './pipelineUtils';
+import {
+  iterateNodes
+} from 'lib/treeUtils';
 
 class PipelineEditor extends Component {
   static propTypes = {
     pipelineId: PropTypes.string.isRequired,
     pipeline: PropTypes.object.isRequired,
+    pipelineAsTree : PropTypes.object.isRequired
   };
 
   // the state will hold the layout information, with layout information attached
@@ -42,10 +44,6 @@ class PipelineEditor extends Component {
   static getDerivedStateFromProps(nextProps, prevState) {
     const elementLayouts = {};
 
-    // Current height of a column, keyed on horizontal position
-    const verticalPositionsByHorz = {};
-    const currentHeight = 1;
-
     const HORIZONTAL_SPACING = 150;
     const VERTICAL_SPACING = 100;
     const HORIZONTAL_START_PX = 50;
@@ -53,16 +51,17 @@ class PipelineEditor extends Component {
       position: 'absolute'
     };
 
-    let asTree = getPipelineAsTree(nextProps.pipeline.pipeline);
-    iterateNodes(asTree, (lineage, node) => {
+    let verticalPos = 1;
+    let lastLineageLengthSeen = -1;
+    iterateNodes(nextProps.pipelineAsTree, (lineage, node) => {
       const horizontalPos = lineage.length;
-      let verticalPos = currentHeight;
-      if (verticalPositionsByHorz[horizontalPos]) {
-        verticalPos = verticalPositionsByHorz[horizontalPos] + 1;
-      }
-      verticalPositionsByHorz[horizontalPos] = verticalPos;
 
-      elementLayouts[node.id] = {
+      if (horizontalPos <= lastLineageLengthSeen) {
+        verticalPos += 1;
+      }
+      lastLineageLengthSeen = horizontalPos;
+      
+      elementLayouts[node.uuid] = {
         horizontalPos,
         verticalPos,
         style: {

@@ -18,14 +18,62 @@ import PropTypes from 'prop-types';
 
 import { connect } from 'react-redux'
 
+import { DragSource, DropTarget } from 'react-dnd';
+
 import { withPipeline } from './withPipeline';
 
-import { pipelineElementSelected } from './redux';
+import {
+  pipelineElementSelected,
+  pipelineElementMoved
+} from './redux';
+
+import {
+  getPipelineAsTree,
+  canMovePipelineElement
+} from './pipelineUtils';
+
+import { ItemTypes } from './dragDropTypes';
+
+const dragSource = {
+  canDrag(props) {
+		return true;
+	},
+  beginDrag(props) {
+    return {
+      elementId : props.elementId
+    };
+  }
+};
+
+function dragCollect(connect, monitor) {
+    return {
+        connectDragSource: connect.dragSource(),
+        isDragging: monitor.isDragging()
+    }
+}
+
+const dropTarget = {
+    canDrop(props, monitor) {
+        return canMovePipelineElement(props.pipeline, props.pipelineAsTree, monitor.getItem().elementId, props.elementId)
+    },
+    drop(props, monitor) {
+        props.pipelineElementMoved(props.pipelineId, monitor.getItem().elementId, props.elementId);
+    }
+}
+
+function dropCollect(connect, monitor) {
+    return {
+      connectDropTarget: connect.dropTarget(),
+      isOver: monitor.isOver(),
+      canDrop: monitor.canDrop()
+    };
+}
 
 class PipelineEditor extends Component {
   static propTypes = {
     pipelineId: PropTypes.string.isRequired,
     pipeline: PropTypes.object.isRequired,
+    pipelineAsTree : PropTypes.object.isRequired,
     elementId: PropTypes.string.isRequired,
 
     pipelineElementSelected : PropTypes.func.isRequired
@@ -36,12 +84,38 @@ class PipelineEditor extends Component {
   }
 
   render() {
-    const { elementId } = this.props;
+    const {
+      connectDragSource,
+      isDragging,
+      connectDropTarget,
+      isOver,
+      canDrop, 
+      elementId
+    } = this.props;
+
+    let className='Pipeline-element';
+    if (isOver) {
+      className += ' Pipeline-element__over';
+    }
+    if (isDragging) {
+        className += ' Pipeline-element__dragging '   
+    }
+    if (isOver) {
+        if (canDrop) {
+            className += ' Pipeline-element__over_can_drop';
+        } else {
+            className += ' Pipeline-element__over_cannot_drop';
+        }
+    }
 
     return (
-      <div onClick={this.onSingleClick.bind(this)} className="Pipeline-element">
-        <h4>{elementId}</h4>
-      </div>
+      connectDragSource(
+        connectDropTarget(
+          <div onClick={this.onSingleClick.bind(this)} className={className}>
+            <h4>{elementId}</h4>
+          </div>
+        )
+      )
     );
   }
 }
@@ -51,6 +125,11 @@ export default connect(
       // state
   }),
   {
-    pipelineElementSelected
+    pipelineElementSelected,
+    pipelineElementMoved
   }
-)(withPipeline(PipelineEditor));
+)(withPipeline(DragSource(ItemTypes.ELEMENT, dragSource, dragCollect)(
+  DropTarget([ItemTypes.ELEMENT], dropTarget, dropCollect)(
+    PipelineEditor
+  )
+)));

@@ -53,7 +53,7 @@ storiesOf('Document Explorer', module)
         store.dispatch(receiveDocTree(testTree));
         store.dispatch(docRefPicked('dropdown2', sam));
         store.dispatch(docRefPicked('modal2', gimli));
-    })) // must be recorder after/outside of the test initialisation decorators
+    }))
     .addDecorator(DragDropDecorator)
     .add('Explorer Tree (multi-select, dnd)', () => 
         <DocExplorer 

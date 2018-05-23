@@ -13,6 +13,22 @@
   background-color: white;
 }
 
+.Pipeline-element__over {
+  border-color: blue;
+}
+
+.Pipeline-element__over_can_drop {
+  background-color: greenyellow;
+}
+.Pipeline-element__over_cannot_drop {
+  background-color: red;
+}
+
+.Pipeline-element__dragging {
+  border-style: dotted;
+  opacity: 0.5
+}
+
 .Pipeline-editor__overview {
   padding: 2rem;
   height: 20rem;

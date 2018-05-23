@@ -40,7 +40,10 @@ const pipelineReducer = handleActions(
       ...state,
       [action.payload.pipelineId]: {
         ...state[action.payload.pipelineId],
-        pipeline: moveElementInPipeline(state[action.payload.pipelineId])
+        pipeline: moveElementInPipeline(
+          state[action.payload.pipelineId].pipeline,
+          action.payload.itemToMove,
+          action.payload.destination)
       },
     }),
   },
