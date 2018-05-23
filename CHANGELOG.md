@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.4.0] - 2018-05-23
+
 * Issue **#776** : Removal of index shard searcher caching to hopefully fix Lucene directory closing issue.
 
 * Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
@@ -814,7 +816,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.3.4...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.4.0...HEAD
+[v5.4.0]: https://github.com/gchq/stroom/compare/v5.3.4...v5.4.0
 [v5.3.4]: https://github.com/gchq/stroom/compare/v5.3.3...v5.3.4
 [v5.3.3]: https://github.com/gchq/stroom/compare/v5.3.2...v5.3.3
 [v5.3.2]: https://github.com/gchq/stroom/compare/v5.3.1...v5.3.2
