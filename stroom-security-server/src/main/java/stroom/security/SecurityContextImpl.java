@@ -19,7 +19,7 @@ package stroom.security;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.exception.AuthenticationException;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;

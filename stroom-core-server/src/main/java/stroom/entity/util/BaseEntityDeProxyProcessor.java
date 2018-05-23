@@ -26,7 +26,7 @@ import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.HasEntity;
 import stroom.entity.shared.HasPassword;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 import java.beans.IntrospectionException;
 import java.beans.Introspector;

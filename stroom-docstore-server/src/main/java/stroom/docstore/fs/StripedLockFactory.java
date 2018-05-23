@@ -1,29 +1,31 @@
 package stroom.docstore.fs;
 
-import stroom.docstore.RWLock;
 import stroom.docstore.RWLockFactory;
 
 import java.util.concurrent.locks.Lock;
+import java.util.function.Supplier;
 
 final class StripedLockFactory implements RWLockFactory {
     private final StripedLock stripedLock = new StripedLock();
 
     @Override
-    public RWLock lock(final String uuid) {
+    public void lock(final String uuid, final Runnable runnable) {
         final Lock lock = stripedLock.getLockForKey(uuid);
-        return new Impl(lock);
+        lock.lock();
+        try {
+            runnable.run();
+        } finally {
+            lock.unlock();
+        }
     }
 
-    class Impl implements RWLock {
-        private final Lock lock;
-
-        Impl(Lock lock) {
-            this.lock = lock;
-            lock.lock();
-        }
-
-        @Override
-        public void close() {
+    @Override
+    public <T> T lockResult(final String uuid, final Supplier<T> supplier) {
+        final Lock lock = stripedLock.getLockForKey(uuid);
+        lock.lock();
+        try {
+            return supplier.get();
+        } finally {
             lock.unlock();
         }
     }

@@ -19,37 +19,30 @@ package stroom.xmlschema;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
-import stroom.entity.FindService;
-import stroom.entity.event.EntityEvent.Handler;
-import stroom.entity.shared.Clearable;
-import stroom.explorer.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
-import stroom.pipeline.MockPipelineService;
-import stroom.pipeline.MockTextConverterService;
-import stroom.pipeline.MockXSLTService;
-import stroom.xmlschema.shared.XMLSchema;
+import stroom.xmlschema.shared.XmlSchemaDoc;
 
 public class MockXmlSchemaModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(XMLSchemaService.class).to(MockXMLSchemaService.class);
+        bind(XmlSchemaStore.class).to(XmlSchemaStoreImpl.class);
 
 //        final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), Handler.class);
 //        entityEventHandlerBinder.addBinding().to(XMLSchemaCache.class);
 //
 //        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
-//        explorerActionHandlerBinder.addBinding().to(XMLSchemaServiceImpl.class);
+//        explorerActionHandlerBinder.addBinding().to(XmlSchemaStoreImpl.class);
 
-        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-        clearableBinder.addBinding().to(MockXMLSchemaService.class);
+//        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
+//        clearableBinder.addBinding().to(XmlSchemaStoreImpl.class);
 
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
-        importExportActionHandlerBinder.addBinding().to(MockXMLSchemaService.class);
+        importExportActionHandlerBinder.addBinding().to(XmlSchemaStoreImpl.class);
 
         final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
-        entityServiceByTypeBinder.addBinding(XMLSchema.ENTITY_TYPE).to(MockXMLSchemaService.class);
+        entityServiceByTypeBinder.addBinding(XmlSchemaDoc.DOCUMENT_TYPE).to(XmlSchemaStoreImpl.class);
 
-        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
-        findServiceBinder.addBinding().to(MockXMLSchemaService.class);
+//        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
+//        findServiceBinder.addBinding().to(XmlSchemaStoreImpl.class);
     }
 }

@@ -20,12 +20,14 @@ package stroom.pipeline.stepping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
+import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.io.StreamCloser;
 import stroom.pipeline.EncodingSelection;
 import stroom.pipeline.LocationFactoryProxy;
-import stroom.pipeline.PipelineService;
+import stroom.pipeline.PipelineStore;
 import stroom.pipeline.StreamLocationFactory;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
@@ -34,7 +36,7 @@ import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.StepType;
 import stroom.pipeline.shared.SteppingResult;
@@ -42,9 +44,11 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.state.CurrentUserHolder;
 import stroom.pipeline.state.FeedHolder;
+import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.PipelineContext;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
+import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.Security;
 import stroom.security.UserTokenUtil;
 import stroom.security.shared.PermissionNames;
@@ -58,6 +62,7 @@ import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
+import stroom.streamtask.StreamProcessorService;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskContext;
 import stroom.task.TaskHandlerBean;
@@ -93,12 +98,14 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     private final StreamTypeService streamTypeService;
     private final TaskContext taskContext;
     private final FeedHolder feedHolder;
+    private final MetaDataHolder metaDataHolder;
     private final PipelineHolder pipelineHolder;
+    private final StreamProcessorService streamProcessorService;
     private final StreamHolder streamHolder;
     private final LocationFactoryProxy locationFactory;
     private final CurrentUserHolder currentUserHolder;
     private final SteppingController controller;
-    private final PipelineService pipelineService;
+    private final PipelineStore pipelineStore;
     private final PipelineFactory pipelineFactory;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final SteppingResponseCache steppingResponseCache;
@@ -124,12 +131,14 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                         @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
                         final TaskContext taskContext,
                         final FeedHolder feedHolder,
+                        final MetaDataHolder metaDataHolder,
                         final PipelineHolder pipelineHolder,
+                        final StreamProcessorService streamProcessorService,
                         final StreamHolder streamHolder,
                         final LocationFactoryProxy locationFactory,
                         final CurrentUserHolder currentUserHolder,
                         final SteppingController controller,
-                        final PipelineService pipelineService,
+                        final PipelineStore pipelineStore,
                         final PipelineFactory pipelineFactory,
                         final ErrorReceiverProxy errorReceiverProxy,
                         final SteppingResponseCache steppingResponseCache,
@@ -142,12 +151,14 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
         this.streamTypeService = streamTypeService;
         this.taskContext = taskContext;
         this.feedHolder = feedHolder;
+        this.metaDataHolder = metaDataHolder;
         this.pipelineHolder = pipelineHolder;
+        this.streamProcessorService = streamProcessorService;
         this.streamHolder = streamHolder;
         this.locationFactory = locationFactory;
         this.currentUserHolder = currentUserHolder;
         this.controller = controller;
-        this.pipelineService = pipelineService;
+        this.pipelineStore = pipelineStore;
         this.pipelineFactory = pipelineFactory;
         this.errorReceiverProxy = errorReceiverProxy;
         this.steppingResponseCache = steppingResponseCache;
@@ -172,7 +183,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
 
                 // Set the controller for the pipeline.
                 controller.setRequest(request);
-                controller.setTaskMonitor(taskContext);
+                controller.setTaskContext(taskContext);
 
                 try {
                     // Initialise the process by finding streams to process and setting
@@ -226,7 +237,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     }
 
     private void initialise(final SteppingTask request) {
-        if (!taskContext.isTerminated()) {
+        if (!Thread.currentThread().isInterrupted()) {
             final StepType stepType = request.getStepType();
             currentLocation = request.getStepLocation();
 
@@ -288,7 +299,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     }
 
     private void process(final SteppingTask request, final Long streamId) {
-        if (!taskContext.isTerminated()) {
+        if (!Thread.currentThread().isInterrupted()) {
             final StepType stepType = request.getStepType();
 
             if (streamId != null && !streamId.equals(lastStreamId)) {
@@ -392,7 +403,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     }
 
     private Long getStreamId(final SteppingTask request) {
-        if (!taskContext.isTerminated()) {
+        if (!Thread.currentThread().isInterrupted()) {
             final StepType stepType = request.getStepType();
             // If we are just refreshing then just return the same task we used
             // before.
@@ -488,7 +499,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
             lastFeed = null;
         }
 
-        if (!taskContext.isTerminated()) {
+        if (!Thread.currentThread().isInterrupted()) {
             // Create a new pipeline for a new feed or if the feed has changed.
             if (lastFeed == null) {
                 lastFeed = feed;
@@ -561,7 +572,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                 // sequentially. Loop over the stream boundaries and process
                 // each sequentially until we find a record.
                 boolean done = controller.isFound();
-                while (!done && streamNo > 0 && streamNo <= streamCount && !taskContext.isTerminated()) {
+                while (!done && streamNo > 0 && streamNo <= streamCount && !Thread.currentThread().isInterrupted()) {
                     // Set the stream number.
                     streamHolder.setStreamNo(streamNo - 1);
                     streamLocationFactory.setStreamNo(streamNo);
@@ -624,15 +635,20 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
 
     private Pipeline createPipeline(final SteppingController controller, final Feed feed) {
         if (pipeline == null) {
+            final DocRef pipelineRef = controller.getRequest().getPipeline();
+
             // Set the pipeline so it can be used by a filter if needed.
-            final PipelineEntity pipelineEntity = pipelineService
-                    .loadByUuid(controller.getRequest().getPipeline().getUuid());
+            final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
 
             feedHolder.setFeed(feed);
-            pipelineHolder.setPipeline(pipelineEntity);
+
+            // Setup the meta data holder.
+            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
+
+            pipelineHolder.setPipeline(DocRefUtil.create(pipelineDoc));
             pipelineContext.setStepping(true);
 
-            final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+            final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
             pipeline = pipelineFactory.create(pipelineData, controller);
 
             // Don't return a pipeline if we cannot step with it.

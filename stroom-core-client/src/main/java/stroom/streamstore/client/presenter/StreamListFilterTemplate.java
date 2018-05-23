@@ -17,7 +17,7 @@
 package stroom.streamstore.client.presenter;
 
 import stroom.streamstore.shared.StreamType;
-import stroom.util.shared.HasDisplayValue;
+import stroom.docref.HasDisplayValue;
 
 import java.util.Arrays;
 import java.util.List;

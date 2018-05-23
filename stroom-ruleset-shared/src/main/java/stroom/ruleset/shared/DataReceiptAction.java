@@ -17,7 +17,7 @@
 
 package stroom.ruleset.shared;
 
-import stroom.util.shared.HasDisplayValue;
+import stroom.docref.HasDisplayValue;
 
 public enum DataReceiptAction implements HasDisplayValue {
     RECEIVE("Receive"), REJECT("Reject"), DROP("Drop");

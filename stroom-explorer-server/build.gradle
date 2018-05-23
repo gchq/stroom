@@ -1,3 +1,5 @@
+ext.moduleName = 'stroom.explorer.server'
+
 dependencies {
     compile files('libs/jpatreedao-1.0.jar')
     compile project(':stroom-core-shared')
@@ -8,13 +10,15 @@ dependencies {
     compile project(':stroom-security-api')
     compile project(':stroom-explorer-api')
 
+    compile libs.stroomDocRef
     compile libs.stroomQueryApi
     compile libs.eventLogging
-    compile libs.hibernate_jpa_api
-    compile libs.javax_inject
-    compile libs.slf4j_api
     compile libs.flyway_core
     compile libs.guice4
+    compile libs.hibernate_jpa_api
+    compile libs.javax_inject
+    compile libs.jaxb_api
+    compile libs.slf4j_api
 
     integrationTestRuntime libs.mysql_connector_java
     integrationTestCompile libs.junit

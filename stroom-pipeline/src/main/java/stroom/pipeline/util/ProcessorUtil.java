@@ -33,9 +33,9 @@ import java.util.List;
 public class ProcessorUtil {
 //    public static void processCombined(final InputStream inputStream, final ErrorReceiverProxy errorReceiverProxy,
 //            final XMLFilter filter, final LocationFactoryProxy locationFactory,
-//            final ParserFactoryPool parserFactoryPool, final TextConverterService textConverterService) {
+//            final ParserFactoryPool parserFactoryPool, final TextConverterStore textConverterStore) {
 //        final CombinedParser parser = new CombinedParser(errorReceiverProxy, locationFactory, parserFactoryPool,
-//                textConverterService);
+//                textConverterStore);
 //        doProcess(filter, inputStream, errorReceiverProxy, parser);
 //
 //    }

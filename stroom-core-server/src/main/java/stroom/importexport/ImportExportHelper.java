@@ -19,6 +19,7 @@ package stroom.importexport;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.docstore.EncodingUtil;
 import stroom.entity.GenericEntityService;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRefUtil;
@@ -31,7 +32,7 @@ import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.importexport.shared.ImportState.State;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
@@ -62,7 +63,7 @@ public class ImportExportHelper {
     }
 
     @SuppressWarnings("unchecked")
-    public <E extends DocumentEntity> void performImport(final E entity, final Map<String, String> dataMap,
+    public <E extends DocumentEntity> void performImport(final E entity, final Map<String, byte[]> dataMap,
                                                          final ImportState importState, final ImportMode importMode) {
         try {
 //            init();
@@ -70,7 +71,7 @@ public class ImportExportHelper {
             final List<Property> propertyList = BeanPropertyUtil.getPropertyList(entity.getClass(), false);
 
             final Config config = new Config();
-            config.read(new StringReader(dataMap.get("xml")));
+            config.read(new StringReader(EncodingUtil.asString(dataMap.get("xml"))));
 
 //            final BaseEntityBeanWrapper beanWrapper = new BaseEntityBeanWrapper(entity);
 
@@ -117,7 +118,7 @@ public class ImportExportHelper {
                 if (property.isExternalFile()) {
                     final String fileExtension = property.getExtensionProvider().getExtension(entity, propertyName);
                     final String dataKey = propertyName + "." + fileExtension;
-                    final String data = dataMap.get(dataKey);
+                    final String data = EncodingUtil.asString(dataMap.get(dataKey));
                     if (data != null) {
                         final List<Object> newDataList = new ArrayList<>();
                         newDataList.add(data);
@@ -375,9 +376,9 @@ public class ImportExportHelper {
 //    private String toPath(final Folder folder, final String name) {
 //        if (folder != null) {
 //            if (name != null) {
-//                return entityPathResolver.getEntityPath(Folder.ENTITY_TYPE, null, folder) + "/" + name;
+//                return entityPathResolver.getEntityPath(Folder.DOCUMENT_TYPE, null, folder) + "/" + name;
 //            } else {
-//                return entityPathResolver.getEntityPath(Folder.ENTITY_TYPE, null, folder);
+//                return entityPathResolver.getEntityPath(Folder.DOCUMENT_TYPE, null, folder);
 //            }
 //        } else {
 //            return "/" + name;
@@ -398,9 +399,9 @@ public class ImportExportHelper {
 //    }
 
 
-    public Map<String, String> performExport(final DocumentEntity entity,
+    public Map<String, byte[]> performExport(final DocumentEntity entity,
                                              final boolean omitAuditFields, final List<Message> messageList) {
-        final Map<String, String> dataMap = new HashMap<>();
+        final Map<String, byte[]> dataMap = new HashMap<>();
         final List<Property> propertyList = BeanPropertyUtil.getPropertyList(entity.getClass(), omitAuditFields);
 
         try {
@@ -423,7 +424,7 @@ public class ImportExportHelper {
                             final String fileExtension = property.getExtensionProvider().getExtension(entity,
                                     propertyName);
                             if (fileExtension != null) {
-                                dataMap.put(propertyName + "." + fileExtension, data);
+                                dataMap.put(propertyName + "." + fileExtension, EncodingUtil.asBytes(data));
                             }
                         }
                     }
@@ -481,7 +482,7 @@ public class ImportExportHelper {
 
             final StringWriter writer = new StringWriter();
             config.write(writer, entity.getType());
-            dataMap.put("xml", writer.toString());
+            dataMap.put("xml", EncodingUtil.asBytes(writer.toString()));
 
         } catch (final RuntimeException | IllegalAccessException | InvocationTargetException | IOException e) {
             messageList.add(new Message(Severity.ERROR, EntityServiceExceptionUtil.getDefaultMessage(e, e)));

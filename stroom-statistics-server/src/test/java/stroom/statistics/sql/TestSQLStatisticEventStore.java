@@ -26,8 +26,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import stroom.properties.MockStroomPropertyService;
-import stroom.query.api.v2.DocRef;
-import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.docref.DocRef;
+import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.sql.entity.StatisticStoreCache;
 import stroom.util.concurrent.AtomicSequence;
 import stroom.util.concurrent.SimpleExecutor;
@@ -47,8 +47,8 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
     private final MockStroomPropertyService propertyService = new MockStroomPropertyService();
     private final StatisticStoreCache mockStatisticsDataSourceCache = new StatisticStoreCache() {
         @Override
-        public StatisticStoreEntity getStatisticsDataSource(final String statisticName) {
-            final StatisticStoreEntity statisticsDataSource = new StatisticStoreEntity();
+        public StatisticStoreDoc getStatisticsDataSource(final String statisticName) {
+            final StatisticStoreDoc statisticsDataSource = new StatisticStoreDoc();
             statisticsDataSource.setName(statisticName);
             statisticsDataSource.setPrecision(1000L);
 
@@ -56,7 +56,7 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
         }
 
         @Override
-        public StatisticStoreEntity getStatisticsDataSource(final DocRef docRef) {
+        public StatisticStoreDoc getStatisticsDataSource(final DocRef docRef) {
             return null;
         }
     };

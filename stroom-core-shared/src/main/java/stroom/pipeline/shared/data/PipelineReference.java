@@ -16,10 +16,11 @@
 
 package stroom.pipeline.shared.data;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import stroom.entity.shared.Copyable;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.util.shared.CompareBuilder;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -69,6 +70,10 @@ public final class PipelineReference implements Comparable<PipelineReference>, S
 
     @XmlTransient
     private SourcePipeline source;
+
+    @XmlTransient
+    @JsonIgnore
+    private int hashCode = -1;
 
     public PipelineReference() {
         // Default constructor necessary for GWT serialisation.
@@ -150,7 +155,10 @@ public final class PipelineReference implements Comparable<PipelineReference>, S
 
     @Override
     public int hashCode() {
-        return Objects.hash(element, name, pipeline, feed, streamType);
+        if (hashCode == -1) {
+            hashCode = Objects.hash(element, name, pipeline, feed, streamType);
+        }
+        return hashCode;
     }
 
     @Override

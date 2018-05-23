@@ -17,7 +17,7 @@ import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.Security;
 import stroom.security.UserService;
 import stroom.security.UserTokenUtil;

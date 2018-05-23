@@ -232,8 +232,10 @@ public class StroomEntityManagerImpl implements StroomEntityManager {
             final SummaryDataRow summaryDataRow = new SummaryDataRow();
             int pos = 0;
             for (int i = 0; i < numberKeys; i++) {
-                summaryDataRow.getKey().add(((Number) row[pos++]).longValue());
-                summaryDataRow.getLabel().add((String.valueOf(row[pos++])));
+                final Object key = row[pos++];
+                final Object value = row[pos++];
+                summaryDataRow.getKey().add(((Number) key).longValue());
+                summaryDataRow.getLabel().add((String.valueOf(value)));
             }
             summaryDataRow.setCount(((Number) row[pos++]).longValue());
             summaryData.add(summaryDataRow);

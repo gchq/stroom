@@ -4,7 +4,7 @@ import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.datasource.api.v2.DataSource;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.Result;
@@ -14,7 +14,7 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
 import stroom.query.common.v2.SearchResponseCreatorManager;
-import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.sql.SQLStatisticCacheImpl;
 import stroom.statistics.sql.StatisticsQueryService;
 import stroom.statistics.sql.entity.StatisticStoreCache;
@@ -68,7 +68,7 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
         Preconditions.checkNotNull(searchRequest.getResultRequests(), "searchRequest must have at least one resultRequest");
         Preconditions.checkArgument(!searchRequest.getResultRequests().isEmpty(), "searchRequest must have at least one resultRequest");
 
-        final StatisticStoreEntity statisticStoreEntity = statisticStoreCache.getStatisticsDataSource(docRef);
+        final StatisticStoreDoc statisticStoreEntity = statisticStoreCache.getStatisticsDataSource(docRef);
 
         if (statisticStoreEntity == null) {
             return buildEmptyResponse(
@@ -89,7 +89,7 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
     }
 
     private SearchResponse buildResponse(final SearchRequest searchRequest,
-                                         final StatisticStoreEntity statisticStoreEntity) {
+                                         final StatisticStoreDoc statisticStoreEntity) {
 
         Preconditions.checkNotNull(searchRequest);
         Preconditions.checkNotNull(statisticStoreEntity);

@@ -1,0 +1,15 @@
+{
+  "type" : "Script",
+  "uuid" : "bee10b7d-023d-487a-af83-414ee1b7174f",
+  "name" : "TrafficLights",
+  "version" : "56e3b2ec-f89a-466c-bf14-e2e84aaf982f",
+  "dependencies" : [ {
+    "type" : "Script",
+    "uuid" : "49a5f46c-f627-49ed-afb9-0066b99e235a",
+    "name" : "Common"
+  }, {
+    "type" : "Script",
+    "uuid" : "5d4252d6-6f13-4f24-9481-9e98e038747c",
+    "name" : "GenericGrid"
+  } ]
+}

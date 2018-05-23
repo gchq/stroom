@@ -22,11 +22,10 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.DocRefUtil;
-import stroom.index.IndexService;
+import stroom.index.IndexStore;
 import stroom.index.shared.FindIndexCriteria;
-import stroom.index.shared.Index;
-import stroom.pipeline.shared.PipelineEntity;
-import stroom.query.api.v2.DocRef;
+import stroom.index.shared.IndexDoc;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
@@ -57,7 +56,7 @@ public class TestTagCloudSearch extends AbstractSearchTest {
     @Inject
     private CommonIndexingTest commonIndexingTest;
     @Inject
-    private IndexService indexService;
+    private IndexStore indexStore;
 
     @Override
     public void onBefore() {
@@ -71,9 +70,9 @@ public class TestTagCloudSearch extends AbstractSearchTest {
     public void test() {
         final String componentId = "table-1";
 
-        final Index index = indexService.find(new FindIndexCriteria()).getFirst();
+        final DocRef indexRef = indexStore.list().get(0);
+        final IndexDoc index = indexStore.readDocument(indexRef);
         Assert.assertNotNull("Index is null", index);
-        final DocRef dataSourceRef = DocRefUtil.create(index);
 
         // Create text field.
         final Field fldText = new Field.Builder()
@@ -90,11 +89,11 @@ public class TestTagCloudSearch extends AbstractSearchTest {
                 .format(Format.Type.NUMBER)
                 .build();
 
-        final PipelineEntity resultPipeline = commonIndexingTest.getSearchResultTextPipeline();
-        final TableSettings tableSettings = new TableSettings(null, Arrays.asList(fldText, fldCount), true, DocRefUtil.create(resultPipeline), null, null);
+        final DocRef resultPipeline = commonIndexingTest.getSearchResultTextPipeline();
+        final TableSettings tableSettings = new TableSettings(null, Arrays.asList(fldText, fldCount), true, resultPipeline, null, null);
 
         final ExpressionOperator.Builder expression = buildExpression("user5", "2000-01-01T00:00:00.000Z", "2016-01-02T00:00:00.000Z");
-        final Query query = new Query(dataSourceRef, expression.build());
+        final Query query = new Query(indexRef, expression.build());
 
         final ResultRequest tableResultRequest = new ResultRequest(componentId, Collections.singletonList(tableSettings), null, null, ResultRequest.ResultStyle.TABLE, Fetch.CHANGES);
 
@@ -144,7 +143,7 @@ public class TestTagCloudSearch extends AbstractSearchTest {
     }
 
     private ExpressionOperator.Builder buildExpression(final String user, final String from,
-                                              final String to) {
+                                                       final String to) {
         final ExpressionOperator.Builder operator = new ExpressionOperator.Builder();
         operator.addTerm("UserId", Condition.CONTAINS, user);
         operator.addTerm("EventTime", Condition.BETWEEN, from + "," + to);

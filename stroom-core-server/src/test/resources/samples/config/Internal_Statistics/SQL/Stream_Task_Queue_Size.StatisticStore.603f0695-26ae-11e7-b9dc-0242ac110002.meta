@@ -1,0 +1,15 @@
+{
+  "type" : "StatisticStore",
+  "uuid" : "603f0695-26ae-11e7-b9dc-0242ac110002",
+  "name" : "Stream Task Queue Size",
+  "version" : "eea191ab-926e-4c32-8d4e-1d70ff7fd666",
+  "description" : "Stream Task Queue Size",
+  "statisticType" : "VALUE",
+  "rollUpType" : "NONE",
+  "precision" : 60000,
+  "enabled" : true,
+  "config" : {
+    "statisticFields" : [ ],
+    "customRollUpMasks" : [ ]
+  }
+}

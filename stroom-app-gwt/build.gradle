@@ -1,3 +1,5 @@
+ext.moduleName = 'stroom.app.gwt'
+
 def resourcesDir = project(':stroom-app').file('src/main/resources')
 def unitCacheDir = "${resourcesDir}/gwt-unitCache"
 def warDir = "${resourcesDir}/ui"
@@ -21,12 +23,14 @@ dependencies {
     compile project(':stroom-core-client-widget')
     compile project(':stroom-security-client')
 
+    compile "${libs.stroomDocRef}:sources"
+    permitUnusedDeclared libs.stroomDocRef
+    permitUnusedDeclared "${libs.stroomDocRef}:sources"
     compile "${libs.stroomQueryApi}:sources"
-    compile "${libs.stroomQueryCommon}:sources"
-
     permitUnusedDeclared libs.stroomQueryApi
-    permitUnusedDeclared libs.stroomQueryCommon
     permitUnusedDeclared "${libs.stroomQueryApi}:sources"
+    compile "${libs.stroomQueryCommon}:sources"
+    permitUnusedDeclared libs.stroomQueryCommon
     permitUnusedDeclared "${libs.stroomQueryCommon}:sources"
 
     compile libs.gin

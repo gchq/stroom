@@ -21,6 +21,7 @@ import com.google.inject.Injector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
+import stroom.docstore.fs.FSPersistenceConfig;
 import stroom.entity.util.XMLUtil;
 import stroom.guice.PipelineScopeRunnable;
 import stroom.importexport.ImportExportService;
@@ -68,11 +69,13 @@ public class Headless extends AbstractCommandLineTool {
     private String input;
     private String output;
     private String config;
+    private String content;
     private String tmp;
 
     private Path inputDir;
     private Path outputFile;
     private Path configFile;
+    private Path contentDir;
     private Path tmpDir;
 
     public static void main(final String[] args) {
@@ -91,7 +94,11 @@ public class Headless extends AbstractCommandLineTool {
         this.config = config;
     }
 
-    public void setTmp(final String tmp) throws IOException {
+    public void setContent(final String content) {
+        this.content = content;
+    }
+
+    public void setTmp(final String tmp) {
         this.tmp = tmp;
 
         final Path tempDir = Paths.get(tmp);
@@ -113,6 +120,9 @@ public class Headless extends AbstractCommandLineTool {
         if (config == null) {
             failArg("config", "required");
         }
+        if (content == null) {
+            failArg("content", "required");
+        }
         if (tmp == null) {
             failArg("tmp", "required");
         }
@@ -122,6 +132,7 @@ public class Headless extends AbstractCommandLineTool {
         inputDir = Paths.get(input);
         outputFile = Paths.get(output);
         configFile = Paths.get(config);
+        contentDir = Paths.get(content);
         tmpDir = Paths.get(tmp);
 
         if (!Files.isDirectory(inputDir)) {
@@ -133,6 +144,9 @@ public class Headless extends AbstractCommandLineTool {
         }
         if (!Files.isRegularFile(configFile)) {
             throw new RuntimeException("Config file \"" + FileUtil.getCanonicalPath(configFile) + "\" cannot be found!");
+        }
+        if (!Files.isDirectory(contentDir)) {
+            throw new RuntimeException("Content dir \"" + FileUtil.getCanonicalPath(contentDir) + "\" cannot be found!");
         }
 
         // Make sure tmp dir exists and is empty.
@@ -175,6 +189,7 @@ public class Headless extends AbstractCommandLineTool {
         init();
 
         final Injector injector = createInjector();
+
         // Start persistance.
         injector.getInstance(PersistService.class).start();
         try {
@@ -195,6 +210,10 @@ public class Headless extends AbstractCommandLineTool {
         // Because we use HSQLDB for headless we need to insert stream types this way for now.
         final StreamTypeServiceTransactionHelper streamTypeServiceTransactionHelper = injector.getInstance(StreamTypeServiceTransactionHelper.class);
         streamTypeServiceTransactionHelper.doInserts();
+
+        // Set the content directory.
+        final FSPersistenceConfig fsPersistenceConfig = injector.getInstance(FSPersistenceConfig.class);
+        fsPersistenceConfig.setPath(contentDir.toAbsolutePath().toString());
 
         // Read the configuration.
         readConfig(injector);

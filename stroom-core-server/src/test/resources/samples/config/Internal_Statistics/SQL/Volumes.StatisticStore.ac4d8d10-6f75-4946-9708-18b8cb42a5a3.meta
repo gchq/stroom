@@ -1,0 +1,25 @@
+{
+  "type" : "StatisticStore",
+  "uuid" : "ac4d8d10-6f75-4946-9708-18b8cb42a5a3",
+  "name" : "Volumes",
+  "version" : "d8d6354c-2079-4240-a507-b8304891222a",
+  "description" : "Volumes",
+  "statisticType" : "VALUE",
+  "rollUpType" : "NONE",
+  "precision" : 60000,
+  "enabled" : true,
+  "config" : {
+    "statisticFields" : [ {
+      "fieldName" : "Id"
+    }, {
+      "fieldName" : "Node"
+    }, {
+      "fieldName" : "Path"
+    }, {
+      "fieldName" : "Type"
+    } ],
+    "customRollUpMasks" : [ {
+      "rolledUpTagPositions" : [ ]
+    } ]
+  }
+}

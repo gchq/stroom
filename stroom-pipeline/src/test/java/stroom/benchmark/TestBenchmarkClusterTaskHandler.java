@@ -27,7 +27,20 @@ import stroom.util.test.StroomUnitTest;
 public class TestBenchmarkClusterTaskHandler extends StroomUnitTest {
     @Test
     public void testSimple() {
-        final BenchmarkClusterExecutor benchmarkClusterTaskHandler = new BenchmarkClusterExecutor(null, null, null, null, null, null, null, null, null, null, null, null, new BenchmarkClusterConfig());
+        final BenchmarkClusterExecutor benchmarkClusterTaskHandler = new BenchmarkClusterExecutor(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                new BenchmarkClusterConfig());
         Assert.assertEquals("1000 EPS", 1000, benchmarkClusterTaskHandler.toEPS(1000, new Period(0L, 1000L)));
         Assert.assertEquals("1000000 EPS", 1000000, benchmarkClusterTaskHandler.toEPS(1000000L, new Period(0L, 1000L)));
     }

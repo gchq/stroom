@@ -21,7 +21,7 @@ import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docstore.JsonSerialiser;
 import stroom.docstore.Serialiser;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 import java.io.ByteArrayOutputStream;
 import java.sql.Connection;

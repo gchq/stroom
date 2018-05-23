@@ -24,7 +24,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.item.client.ItemListBox;
 import stroom.pipeline.client.presenter.TextConverterSettingsPresenter.TextConverterSettingsView;
-import stroom.pipeline.shared.TextConverter.TextConverterType;
+import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.util.shared.HasReadOnly;
 
 public class TextConverterSettingsViewImpl extends ViewImpl implements TextConverterSettingsView, HasReadOnly {

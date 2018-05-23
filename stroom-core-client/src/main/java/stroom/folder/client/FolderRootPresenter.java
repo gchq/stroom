@@ -34,7 +34,7 @@ import stroom.streamstore.client.presenter.StreamTaskPresenter;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPreset;
 import stroom.util.client.ImageUtil;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 

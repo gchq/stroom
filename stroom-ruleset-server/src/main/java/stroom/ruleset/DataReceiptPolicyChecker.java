@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.dictionary.DictionaryStore;
 import stroom.feed.MetaMap;
+import stroom.docref.DocRef;
 import stroom.ruleset.shared.DataReceiptAction;
 import stroom.ruleset.shared.Rule;
 import stroom.ruleset.shared.RuleSet;
@@ -46,16 +47,16 @@ class DataReceiptPolicyChecker {
 
     private final RuleSetService ruleSetService;
     private final DictionaryStore dictionaryStore;
-    private final String policyUUID;
+    private final DocRef policyRef;
     private final AtomicLong lastRefresh = new AtomicLong();
     private volatile Checker checker = new ReceiveAllChecker();
 
     DataReceiptPolicyChecker(final RuleSetService ruleSetService,
                              final DictionaryStore dictionaryStore,
-                             final String policyUUID) {
+                             final DocRef policyRef) {
         this.ruleSetService = ruleSetService;
         this.dictionaryStore = dictionaryStore;
-        this.policyUUID = policyUUID;
+        this.policyRef = policyRef;
     }
 
     DataReceiptAction check(final MetaMap metaMap) {
@@ -77,7 +78,7 @@ class DataReceiptPolicyChecker {
     private synchronized void refresh() {
         if (needsRefresh()) {
             // We need to examine the meta map and ensure we aren't dropping or rejecting this data.
-            final RuleSet dataReceiptPolicy = ruleSetService.read(policyUUID);
+            final RuleSet dataReceiptPolicy = ruleSetService.readDocument(policyRef);
             if (dataReceiptPolicy != null && dataReceiptPolicy.getRules() != null && dataReceiptPolicy.getFields() != null) {
                 // Create a map of fields.
                 final Map<String, DataSourceField> fieldMap = dataReceiptPolicy.getFields()

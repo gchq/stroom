@@ -16,8 +16,8 @@
 
 package stroom.dashboard.shared;
 
-import stroom.query.api.v2.DocRef;
-import stroom.util.shared.SharedObject;
+import stroom.docref.DocRef;
+import stroom.docref.SharedObject;
 
 public interface CoprocessorSettings extends SharedObject {
     boolean extractValues();

@@ -44,7 +44,7 @@ public class NamespaceContextImpl implements NamespaceContext {
 
     @SuppressWarnings("rawtypes")
     @Override
-    public Iterator getPrefixes(final String namespaceURI) {
+    public Iterator<String> getPrefixes(final String namespaceURI) {
         final Set<String> prefixSet = uriToPrefixMap.get(namespaceURI);
         if (prefixSet == null || prefixSet.size() == 0) {
             return null;
@@ -57,12 +57,7 @@ public class NamespaceContextImpl implements NamespaceContext {
         prefixToUriMap.put(prefix, namespaceURI);
 
         // Add to URI to prefix map.
-        Set<String> prefixSet = uriToPrefixMap.get(namespaceURI);
-        if (prefixSet == null) {
-            prefixSet = new HashSet<>();
-            uriToPrefixMap.put(namespaceURI, prefixSet);
-        }
-        prefixSet.add(prefix);
+        uriToPrefixMap.computeIfAbsent(namespaceURI, k -> new HashSet<>()).add(prefix);
     }
 
     public void removePrefix(final String prefix) {

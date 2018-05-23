@@ -1,0 +1,15 @@
+{
+  "type" : "Script",
+  "uuid" : "3296b381-f383-496f-8f54-9d42a0fd5bf1",
+  "name" : "SeriesSessionMap",
+  "version" : "a11d2fda-115b-45ec-9fa3-4ec4c72e2580",
+  "dependencies" : [ {
+    "type" : "Script",
+    "uuid" : "49a5f46c-f627-49ed-afb9-0066b99e235a",
+    "name" : "Common"
+  }, {
+    "type" : "Script",
+    "uuid" : "5d4252d6-6f13-4f24-9481-9e98e038747c",
+    "name" : "GenericGrid"
+  } ]
+}

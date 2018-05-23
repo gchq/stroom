@@ -17,8 +17,8 @@
 
 package stroom.entity.shared;
 
-import stroom.query.api.v2.DocRef;
-import stroom.util.shared.SharedObject;
+import stroom.docref.DocRef;
+import stroom.docref.SharedObject;
 
 public abstract class AbstractEntityAction<R extends SharedObject> extends Action<R> {
     private static final long serialVersionUID = 8804463889602947196L;

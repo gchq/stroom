@@ -17,7 +17,7 @@
 package stroom.task.cluster;
 
 import stroom.node.shared.Node;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 public interface ClusterResultCollector<R extends SharedObject> {
     CollectorId getId();

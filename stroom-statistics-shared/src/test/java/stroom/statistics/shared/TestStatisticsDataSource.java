@@ -35,7 +35,7 @@ public class TestStatisticsDataSource {
 
     @Test
     public void testIsValidFieldPass() {
-        final StatisticStoreEntity sds = buildStatisticsDataSource(true);
+        final StatisticStoreDoc sds = buildStatisticsDataSource(true);
 
         final String fieldToTest = FIELD1;
 
@@ -44,7 +44,7 @@ public class TestStatisticsDataSource {
 
     @Test
     public void testIsValidFieldFailBadFieldName() {
-        final StatisticStoreEntity sds = buildStatisticsDataSource(true);
+        final StatisticStoreDoc sds = buildStatisticsDataSource(true);
 
         final String fieldToTest = "BadFieldName";
 
@@ -54,7 +54,7 @@ public class TestStatisticsDataSource {
     @Test
     public void testIsValidFieldFailNoFields() {
         // build with no fields
-        final StatisticStoreEntity sds = buildStatisticsDataSource(false);
+        final StatisticStoreDoc sds = buildStatisticsDataSource(false);
 
         final String fieldToTest = "BadFieldName";
 
@@ -63,11 +63,11 @@ public class TestStatisticsDataSource {
 
     @Test
     public void testListOrder1() {
-        final StatisticStoreEntity sds = buildStatisticsDataSource(true);
+        final StatisticStoreDoc sds = buildStatisticsDataSource(true);
 
         Assert.assertEquals(
                 Arrays.asList(new StatisticField(FIELD1), new StatisticField(FIELD2), new StatisticField(FIELD3)),
-                new ArrayList<>(sds.getStatisticDataSourceDataObject().getStatisticFields()));
+                new ArrayList<>(sds.getConfig().getStatisticFields()));
 
         Assert.assertEquals(Arrays.asList(FIELD1, FIELD2, FIELD3), getFieldNames(sds));
 
@@ -76,11 +76,11 @@ public class TestStatisticsDataSource {
 
     @Test
     public void testListOrder2() {
-        final StatisticStoreEntity sds = buildStatisticsDataSource(true);
+        final StatisticStoreDoc sds = buildStatisticsDataSource(true);
 
         Assert.assertEquals(
                 Arrays.asList(new StatisticField(FIELD1), new StatisticField(FIELD2), new StatisticField(FIELD3)),
-                sds.getStatisticDataSourceDataObject().getStatisticFields());
+                sds.getConfig().getStatisticFields());
 
         Assert.assertEquals(Arrays.asList(FIELD1, FIELD2, FIELD3), getFieldNames(sds));
 
@@ -88,10 +88,10 @@ public class TestStatisticsDataSource {
 
         // remove an item and check the order
 
-        sds.getStatisticDataSourceDataObject().removeStatisticField(new StatisticField(FIELD2));
+        sds.getConfig().removeStatisticField(new StatisticField(FIELD2));
 
         Assert.assertEquals(Arrays.asList(new StatisticField(FIELD1), new StatisticField(FIELD3)),
-                sds.getStatisticDataSourceDataObject().getStatisticFields());
+                sds.getConfig().getStatisticFields());
 
         Assert.assertEquals(Arrays.asList(FIELD1, FIELD3), getFieldNames(sds));
 
@@ -99,20 +99,20 @@ public class TestStatisticsDataSource {
 
         // add an item back in and check the order
 
-        sds.getStatisticDataSourceDataObject().addStatisticField(new StatisticField(FIELD2));
+        sds.getConfig().addStatisticField(new StatisticField(FIELD2));
 
         Assert.assertEquals(
                 Arrays.asList(new StatisticField(FIELD1), new StatisticField(FIELD2), new StatisticField(FIELD3)),
-                sds.getStatisticDataSourceDataObject().getStatisticFields());
+                sds.getConfig().getStatisticFields());
 
         Assert.assertEquals(Arrays.asList(FIELD1, FIELD2, FIELD3), getFieldNames(sds));
 
         Assert.assertEquals(Arrays.asList(FIELD1, FIELD2, FIELD3), sds.getFieldNames());
     }
 
-    private List<String> getFieldNames(final StatisticStoreEntity sds) {
+    private List<String> getFieldNames(final StatisticStoreDoc sds) {
         final List<String> list = new ArrayList<>();
-        for (final StatisticField statisticField : sds.getStatisticDataSourceDataObject().getStatisticFields()) {
+        for (final StatisticField statisticField : sds.getConfig().getStatisticFields()) {
             list.add(statisticField.getFieldName());
         }
         return list;
@@ -120,19 +120,19 @@ public class TestStatisticsDataSource {
 
     @Test
     public void testFieldPositions() {
-        final StatisticStoreEntity sds = buildStatisticsDataSource(true);
+        final StatisticStoreDoc sds = buildStatisticsDataSource(true);
 
         Assert.assertEquals(0, sds.getPositionInFieldList(FIELD1).intValue());
         Assert.assertEquals(1, sds.getPositionInFieldList(FIELD2).intValue());
         Assert.assertEquals(2, sds.getPositionInFieldList(FIELD3).intValue());
 
-        sds.getStatisticDataSourceDataObject().removeStatisticField(new StatisticField(FIELD2));
+        sds.getConfig().removeStatisticField(new StatisticField(FIELD2));
 
         Assert.assertEquals(0, sds.getPositionInFieldList(FIELD1).intValue());
         Assert.assertEquals(null, sds.getPositionInFieldList(FIELD2));
         Assert.assertEquals(1, sds.getPositionInFieldList(FIELD3).intValue());
 
-        sds.getStatisticDataSourceDataObject().addStatisticField(new StatisticField(FIELD2));
+        sds.getConfig().addStatisticField(new StatisticField(FIELD2));
 
         Assert.assertEquals(0, sds.getPositionInFieldList(FIELD1).intValue());
         Assert.assertEquals(1, sds.getPositionInFieldList(FIELD2).intValue());
@@ -141,21 +141,21 @@ public class TestStatisticsDataSource {
 
     @Test
     public void testIsRollUpCombinationSupported_nullList() {
-        final StatisticStoreEntity sds = buildStatisticsDataSource(true);
+        final StatisticStoreDoc sds = buildStatisticsDataSource(true);
 
         Assert.assertTrue(sds.isRollUpCombinationSupported(null));
     }
 
     @Test
     public void testIsRollUpCombinationSupported_emptyList() {
-        final StatisticStoreEntity sds = buildStatisticsDataSource(true);
+        final StatisticStoreDoc sds = buildStatisticsDataSource(true);
 
         Assert.assertTrue(sds.isRollUpCombinationSupported(new HashSet<>()));
     }
 
     @Test
     public void testIsRollUpCombinationSupported_rollUpTypeAll() {
-        final StatisticStoreEntity sds = buildStatisticsDataSource(true);
+        final StatisticStoreDoc sds = buildStatisticsDataSource(true);
 
         sds.setRollUpType(StatisticRollUpType.ALL);
 
@@ -164,7 +164,7 @@ public class TestStatisticsDataSource {
 
     @Test
     public void testIsRollUpCombinationSupported_rollUpTypeNone() {
-        final StatisticStoreEntity sds = buildStatisticsDataSource(true);
+        final StatisticStoreDoc sds = buildStatisticsDataSource(true);
 
         sds.setRollUpType(StatisticRollUpType.NONE);
 
@@ -173,7 +173,7 @@ public class TestStatisticsDataSource {
 
     @Test
     public void testIsRollUpCombinationSupported_rollUpTypeCustom() {
-        final StatisticStoreEntity sds = buildStatisticsDataSource(true);
+        final StatisticStoreDoc sds = buildStatisticsDataSource(true);
 
         sds.setRollUpType(StatisticRollUpType.CUSTOM);
 
@@ -188,7 +188,7 @@ public class TestStatisticsDataSource {
         Assert.assertFalse(sds.isRollUpCombinationSupported(new HashSet<>(Arrays.asList(FIELD3))));
     }
 
-    private StatisticStoreEntity buildStatisticsDataSource(final boolean addFields) {
+    private StatisticStoreDoc buildStatisticsDataSource(final boolean addFields) {
         final StatisticsDataSourceData statisticsDataSourceData = new StatisticsDataSourceData();
 
         if (addFields) {
@@ -205,8 +205,8 @@ public class TestStatisticsDataSource {
             statisticsDataSourceData.addCustomRollUpMask(new CustomRollUpMask(Collections.emptyList()));
         }
 
-        final StatisticStoreEntity sds = new StatisticStoreEntity();
-        sds.setStatisticDataSourceDataObject(statisticsDataSourceData);
+        final StatisticStoreDoc sds = new StatisticStoreDoc();
+        sds.setConfig(statisticsDataSourceData);
         return sds;
     }
 }

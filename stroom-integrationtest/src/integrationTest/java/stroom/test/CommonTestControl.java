@@ -31,8 +31,6 @@ public interface CommonTestControl {
      * Shutdown database.
      */
     void shutdown();
-    //
-    // public void clearContext();
 
     /**
      * Return a entity count.
@@ -42,5 +40,5 @@ public interface CommonTestControl {
      */
     int countEntity(Class<?> clazz);
 
-    void deleteEntity(Class<?> clazz);
+//    int countDocs(String type);
 }

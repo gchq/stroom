@@ -20,24 +20,32 @@ package stroom.xml.converter;
 import stroom.cache.MockSchemaPool;
 import stroom.cache.SchemaLoaderImpl;
 import stroom.cache.SchemaPool;
+import stroom.docstore.Persistence;
+import stroom.docstore.Store;
+import stroom.docstore.memory.MemoryPersistence;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.filter.SchemaFilter;
 import stroom.pipeline.state.PipelineContext;
+import stroom.docref.DocRef;
+import stroom.security.MockSecurityContext;
+import stroom.security.SecurityContext;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.xml.converter.ds3.DS3ParserFactory;
-import stroom.xmlschema.MockXMLSchemaService;
-import stroom.xmlschema.XMLSchemaCache;
-import stroom.xmlschema.XMLSchemaService;
+import stroom.xmlschema.XmlSchemaCache;
+import stroom.xmlschema.XmlSchemaStore;
+import stroom.xmlschema.XmlSchemaStoreImpl;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
-import stroom.xmlschema.shared.XMLSchema;
+import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import java.nio.file.Path;
 
 public class SchemaFilterFactory {
-    private final XMLSchemaService xmlSchemaService = new MockXMLSchemaService();
-    private final XMLSchemaCache xmlSchemaCache = new XMLSchemaCache(xmlSchemaService);
+    private final SecurityContext securityContext = new MockSecurityContext();
+    private final Persistence persistence = new MemoryPersistence();
+    private final XmlSchemaStore xmlSchemaStore = new XmlSchemaStoreImpl(new Store<>(persistence, securityContext), securityContext, persistence);
+    private final XmlSchemaCache xmlSchemaCache = new XmlSchemaCache(xmlSchemaStore);
     private final SchemaLoaderImpl schemaLoader = new SchemaLoaderImpl(xmlSchemaCache);
 
     public SchemaFilterFactory() {
@@ -67,24 +75,19 @@ public class SchemaFilterFactory {
         return schemaFilter;
     }
 
-    public void loadXMLSchema(final String schemaGroup, final String schemaName, final String namespaceURI,
-                              final String systemId, final String fileName) {
+    private void loadXMLSchema(final String schemaGroup, final String schemaName, final String namespaceURI,
+                               final String systemId, final String fileName) {
         final Path dir = FileSystemTestUtil.getConfigXSDDir();
 
         final Path file = dir.resolve(fileName);
 
-        final XMLSchema xmlSchema = new XMLSchema();
+        final DocRef docRef = xmlSchemaStore.createDocument(schemaName);
+        final XmlSchemaDoc xmlSchema = xmlSchemaStore.readDocument(docRef);
         xmlSchema.setSchemaGroup(schemaGroup);
         xmlSchema.setName(schemaName);
         xmlSchema.setNamespaceURI(namespaceURI);
         xmlSchema.setSystemId(systemId);
         xmlSchema.setData(StreamUtil.fileToString(file));
-
-        final FindXMLSchemaCriteria criteria = new FindXMLSchemaCriteria();
-        criteria.getName().setString(schemaName);
-
-        if (xmlSchemaService.find(criteria).size() == 0) {
-            xmlSchemaService.save(xmlSchema);
-        }
+        xmlSchemaStore.writeDocument(xmlSchema);
     }
 }

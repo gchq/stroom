@@ -6,6 +6,49 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Moved Index entities over to the new multi part document store.
+
+* Moved Pipeline entities over to the new multi part document store.
+
+* Moved both Statistic Store entity types over to the new multi part document store.
+
+* Moved XSLT entities over to the new multi part document store.
+
+* Moved Visualisation entities over to the new multi part document store.
+
+* Moved Script entities over to the new multi part document store.
+
+* Moved Dashboard entities over to the new multi part document store.
+
+* Moved XmlSchema entities over to the new multi part document store.
+
+* Moved TextConverter entities over to the new multi part document store.
+
+* Modified the storage of dictionaries to use the new multi part document store.
+
+* Changed the document store to hold multiple entries for a document so that various parts of a document can be written separately, e.g. the meta data about a dictionary and the dictionary text are now written as separate DB entries. Entries are combined during the serialisation/deserialisation process.
+
+* Changed the import export API to use byte arrays to hold values rather than strings. *POSSIBLE BREAKING CHANGE*
+Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
+
+* Uplift stroom-expression to v1.4.1
+
+* Issue **#766** : Fix NullPointerExceptions when downloading table results to Excel format.
+
+* Issue **#770** : Speculative fix for memory leak in SQL Stats queries.
+
+* Issue **#761** : New fix for premature truncation of SQL stats queries due to thread interruption.
+
+## [v6.0-alpha.24]
+
+* Issue **#748** : Fix build issue resulting from a change to SafeXMLFilter.
+
+## [v6.0-alpha.23]
+
+* Issue **#748** : Added a command line interface (CLI) in addition to headless execution so that full pipelines can be run against input files.
+
+* Issue **#748** : Fixes for error output for headless mode.
+
 * Issue **#761** : Fixed statistic searches failing to search more than once.
 
 * Issue **#756** : Fix for state being held by `InheritableThreadLocal` causing objects to be held in memory longer than necessary.
@@ -900,4 +943,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#28** : Dashboard component dependencies are now listed with the component name plus the component id in brackets rather than just the component id.
 
 [Unreleased]: https://github.com/gchq/stroom/compare/v6.0.0...HEAD
-[v6.0.0]: https://github.com/gchq/stroom/compare/v5.2.0...v6.0.0
+[v6.0.0]: https://github.com/gchq/stroom/compare/v5.4.0...v6.0.0

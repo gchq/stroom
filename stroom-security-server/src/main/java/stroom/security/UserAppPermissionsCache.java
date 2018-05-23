@@ -24,7 +24,7 @@ import stroom.entity.event.EntityEventBus;
 import stroom.entity.event.EntityEventHandler;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.EntityAction;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.shared.UserAppPermissions;
 import stroom.security.shared.UserRef;
 import stroom.util.cache.CacheManager;

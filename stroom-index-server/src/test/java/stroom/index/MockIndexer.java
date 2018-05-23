@@ -21,6 +21,7 @@ import stroom.index.shared.IndexShardKey;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 
 public class MockIndexer implements Indexer {
     private final IndexShardWriterCache indexShardWriterCache;
@@ -40,7 +41,7 @@ public class MockIndexer implements Indexer {
             final IndexShardWriter indexShardWriter = indexShardWriterCache.getWriterByShardKey(key);
             indexShardWriter.addDocument(document);
         } catch (final IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
+            throw new UncheckedIOException(e);
         }
     }
 }

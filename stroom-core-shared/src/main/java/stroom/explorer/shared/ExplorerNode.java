@@ -17,11 +17,11 @@
 package stroom.explorer.shared;
 
 import stroom.entity.shared.HasUuid;
-import stroom.query.api.v2.DocRef;
-import stroom.util.shared.HasDisplayValue;
+import stroom.docref.DocRef;
+import stroom.docref.HasDisplayValue;
 import stroom.util.shared.HasNodeState;
 import stroom.util.shared.HasType;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 public class ExplorerNode implements HasType, HasUuid, HasNodeState, HasDisplayValue, SharedObject {
     private static final long serialVersionUID = -5216736591679930246L;

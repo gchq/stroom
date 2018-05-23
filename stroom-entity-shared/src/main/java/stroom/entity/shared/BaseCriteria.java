@@ -17,7 +17,7 @@
 package stroom.entity.shared;
 
 import stroom.entity.shared.Sort.Direction;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 import java.util.ArrayList;
 import java.util.HashSet;

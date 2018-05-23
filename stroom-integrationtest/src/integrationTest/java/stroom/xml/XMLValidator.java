@@ -16,22 +16,22 @@
 
 package stroom.xml;
 
-import stroom.pipeline.PipelineService;
+import stroom.guice.PipelineScopeRunnable;
+import stroom.pipeline.PipelineStore;
 import stroom.pipeline.PipelineTestUtil;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineFactory;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
+import stroom.docref.DocRef;
 import stroom.test.StroomPipelineTestFileUtil;
-import stroom.guice.PipelineScopeRunnable;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 import java.io.BufferedInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -41,17 +41,17 @@ public class XMLValidator {
     private static final String NO_RESOURCE_PROVIDED = "No resource provided";
 
     private final Provider<PipelineFactory> pipelineFactoryProvider;
-    private final PipelineService pipelineService;
+    private final PipelineStore pipelineStore;
     private final Provider<ErrorReceiverProxy> errorReceiverProvider;
     private final PipelineScopeRunnable pipelineScopeRunnable;
 
     @Inject
     XMLValidator(final Provider<PipelineFactory> pipelineFactoryProvider,
-                 final PipelineService pipelineService,
+                 final PipelineStore pipelineStore,
                  final Provider<ErrorReceiverProxy> errorReceiverProvider,
                  final PipelineScopeRunnable pipelineScopeRunnable) {
         this.pipelineFactoryProvider = pipelineFactoryProvider;
-        this.pipelineService = pipelineService;
+        this.pipelineStore = pipelineStore;
         this.errorReceiverProvider = errorReceiverProvider;
         this.pipelineScopeRunnable = pipelineScopeRunnable;
     }
@@ -77,9 +77,10 @@ public class XMLValidator {
                     errorReceiverProvider.get().setErrorReceiver(new LoggingErrorReceiver());
 
                     // Create the pipeline.
-                    PipelineEntity pipelineEntity = PipelineTestUtil.createTestPipeline(pipelineService,
+                    final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore,
                             StroomPipelineTestFileUtil.getString("F2XTestUtil/validation.Pipeline.data.xml"));
-                    final PipelineData pipelineData = pipelineEntity.getPipelineData();
+                    final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+                    final PipelineData pipelineData = pipelineDoc.getPipelineData();
 
                     // final ElementType schemaFilterElementType = new ElementType(
                     // "SchemaFilter");
@@ -93,7 +94,7 @@ public class XMLValidator {
                     // schemaFilterElementType, "schemaGroup", "String", false);
                     pipelineData
                             .addProperty(PipelineDataUtil.createProperty("schemaFilter", "schemaGroup", "DATA_SPLITTER"));
-                    pipelineEntity = pipelineService.save(pipelineEntity);
+                    pipelineStore.writeDocument(pipelineDoc);
 
                     final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData);
                     pipeline.process(inputStream);

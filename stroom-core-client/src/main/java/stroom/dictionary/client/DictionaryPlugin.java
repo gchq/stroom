@@ -28,7 +28,7 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 public class DictionaryPlugin extends DocumentPlugin<DictionaryDoc> {
     private final Provider<DictionaryPresenter> editorProvider;

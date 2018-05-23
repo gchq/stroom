@@ -27,7 +27,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.AbstractSubmitCompleteHandler;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.EntityItemListBox;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.streamstore.client.view.FileData;
 import stroom.streamstore.client.view.FileData.Status;
 import stroom.streamstore.shared.UploadDataAction;

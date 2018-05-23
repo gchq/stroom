@@ -34,7 +34,7 @@ import stroom.entity.shared.PermissionInheritance;
 import stroom.explorer.client.presenter.EntityTreePresenter;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -74,7 +74,7 @@ public class CreateDocumentPresenter
 //            ExplorerNode folder = null;
 //            for (final ExplorerNode parent : event.getCurrentParents()) {
 //                if (folder == null && parent != null && parent instanceof EntityData
-//                        && Folder.ENTITY_TYPE.equals(parent.getType())) {
+//                        && Folder.DOCUMENT_TYPE.equals(parent.getType())) {
 //                    folder = parent;
 //                }
 //            }

@@ -25,7 +25,7 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.NamedEntity;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 public abstract class EntityPlugin<E extends NamedEntity> extends DocumentPlugin<E> {
     @Inject

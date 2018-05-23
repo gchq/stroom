@@ -32,9 +32,9 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.stats.shared.StatisticField;
-import stroom.stats.shared.StroomStatsStoreEntity;
+import stroom.stats.shared.StroomStatsStoreDoc;
 import stroom.stats.shared.StroomStatsStoreEntityData;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
@@ -44,7 +44,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGridView<StatisticField>>
-        implements HasDocumentRead<StroomStatsStoreEntity>, HasWrite<StroomStatsStoreEntity>, HasDirtyHandlers {
+        implements HasDocumentRead<StroomStatsStoreDoc>, HasWrite<StroomStatsStoreDoc>, HasDirtyHandlers {
     private final StroomStatsStoreFieldEditPresenter stroomStatsStoreFieldEditPresenter;
     private final ButtonView newButton;
     private final ButtonView editButton;
@@ -222,9 +222,9 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGr
     }
 
     @Override
-    public void read(final DocRef docRef, final StroomStatsStoreEntity stroomStatsStoreEntity) {
+    public void read(final DocRef docRef, final StroomStatsStoreDoc stroomStatsStoreEntity) {
         if (stroomStatsStoreEntity != null) {
-            stroomStatsStoreEntityData = stroomStatsStoreEntity.getDataObject();
+            stroomStatsStoreEntityData = stroomStatsStoreEntity.getConfig();
 
             if (customMaskListPresenter != null) {
                 customMaskListPresenter.read(docRef, stroomStatsStoreEntity);
@@ -234,8 +234,8 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGr
     }
 
     @Override
-    public void write(final StroomStatsStoreEntity entity) {
-        entity.setDataObject(stroomStatsStoreEntityData);
+    public void write(final StroomStatsStoreDoc entity) {
+        entity.setConfig(stroomStatsStoreEntityData);
     }
 
     @Override

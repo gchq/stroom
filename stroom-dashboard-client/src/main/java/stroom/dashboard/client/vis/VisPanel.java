@@ -29,7 +29,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import stroom.dashboard.client.vis.MyScriptInjector.FromString;
 import stroom.dashboard.client.vis.MyScriptInjector.FromUrl;
-import stroom.script.shared.Script;
+import stroom.script.shared.ScriptDoc;
 import stroom.visualisation.client.presenter.VisFunction;
 import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 
@@ -37,11 +37,11 @@ import java.util.List;
 import java.util.Set;
 
 public class VisPanel extends SimplePanel implements VisPane {
-    private final Set<Long> loadedScripts;
+    private final Set<String> loadedScripts;
     private JavaScriptObject vis;
     private boolean autoResize = true;
 
-    public VisPanel(final Set<Long> loadedScripts) {
+    public VisPanel(final Set<String> loadedScripts) {
         this.loadedScripts = loadedScripts;
     }
 
@@ -55,11 +55,11 @@ public class VisPanel extends SimplePanel implements VisPane {
     }
 
     @Override
-    public void injectScripts(final List<Script> scripts, final VisFunction function) {
+    public void injectScripts(final List<ScriptDoc> scripts, final VisFunction function) {
         injectScriptsFromURL(scripts, function);
     }
 
-    private void injectScriptDirectly(final List<Script> scripts, final VisFunction function) {
+    private void injectScriptDirectly(final List<ScriptDoc> scripts, final VisFunction function) {
         if (scripts == null || scripts.size() == 0) {
             // Set the function status to loaded. This will tell all handlers
             // that the function is ready for use.
@@ -71,17 +71,17 @@ public class VisPanel extends SimplePanel implements VisPane {
             // Only load script if we haven't already had a failure.
             if (!LoadStatus.FAILURE.equals(function.getStatus())) {
                 // Get the next script to load.
-                final Script script = scripts.remove(0);
+                final ScriptDoc script = scripts.remove(0);
 
                 // Make sure we don't inject a script more than once.
-                if (!loadedScripts.contains(script.getId())) {
+                if (!loadedScripts.contains(script.getUuid())) {
                     // Remember that we have loaded this script so we don't try
                     // and fetch it again.
-                    loadedScripts.add(script.getId());
+                    loadedScripts.add(script.getUuid());
 
-                    if (script.getResource() != null) {
+                    if (script.getData() != null) {
                         try {
-                            final String text = script.getResource();
+                            final String text = script.getData();
                             final FromString fromString = fromString(text);
                             fromString.inject();
 
@@ -104,7 +104,7 @@ public class VisPanel extends SimplePanel implements VisPane {
         }
     }
 
-    private void injectScriptsFromString(final List<Script> scripts, final VisFunction function) {
+    private void injectScriptsFromString(final List<ScriptDoc> scripts, final VisFunction function) {
         if (scripts == null || scripts.size() == 0) {
             // Set the function status to loaded. This will tell all handlers
             // that the function is ready for use.
@@ -116,16 +116,16 @@ public class VisPanel extends SimplePanel implements VisPane {
             // Only load script if we haven't already had a failure.
             if (!LoadStatus.FAILURE.equals(function.getStatus())) {
                 // Get the next script to load.
-                final Script script = scripts.remove(0);
+                final ScriptDoc script = scripts.remove(0);
 
                 // Make sure we don't inject a script more than once.
-                if (!loadedScripts.contains(script.getId())) {
+                if (!loadedScripts.contains(script.getUuid())) {
                     final RequestCallback requestCallback = new RequestCallback() {
                         @Override
                         public void onResponseReceived(final Request request, final Response response) {
                             // Make sure we don't inject a script more than
                             // once.
-                            if (!loadedScripts.contains(script.getId())) {
+                            if (!loadedScripts.contains(script.getUuid())) {
                                 try {
                                     final String text = response.getText();
 
@@ -147,7 +147,7 @@ public class VisPanel extends SimplePanel implements VisPane {
                                     // Remember that we have loaded or at least
                                     // attempted to load this script so we don't
                                     // try and fetch it again.
-                                    loadedScripts.add(script.getId());
+                                    loadedScripts.add(script.getUuid());
                                 }
                             } else {
                                 // Inject the next script in the list.
@@ -178,7 +178,7 @@ public class VisPanel extends SimplePanel implements VisPane {
         }
     }
 
-    private void injectScriptsFromURL(final List<Script> scripts, final VisFunction function) {
+    private void injectScriptsFromURL(final List<ScriptDoc> scripts, final VisFunction function) {
         if (scripts == null || scripts.size() == 0) {
             // Set the function status to loaded. This will tell all handlers
             // that the function is ready for use.
@@ -190,17 +190,17 @@ public class VisPanel extends SimplePanel implements VisPane {
             // Only load script if we haven't already had a failure.
             if (!LoadStatus.FAILURE.equals(function.getStatus())) {
                 // Get the next script to load.
-                final Script script = scripts.remove(0);
+                final ScriptDoc script = scripts.remove(0);
 
                 // Make sure we don't inject a script more than once.
-                if (!loadedScripts.contains(script.getId())) {
+                if (!loadedScripts.contains(script.getUuid())) {
                     final Callback<Void, Exception> callback = new Callback<Void, Exception>() {
                         @Override
                         public void onSuccess(final Void result) {
                             // Remember that we have loaded or at least
                             // attempted to load this script so we don't try and
                             // fetch it again.
-                            loadedScripts.add(script.getId());
+                            loadedScripts.add(script.getUuid());
                             // Inject the next script in the list.
                             injectScriptsFromURL(scripts, function);
                         }
@@ -210,7 +210,7 @@ public class VisPanel extends SimplePanel implements VisPane {
                             // Remember that we have loaded or at least
                             // attempted to load this script so we don't try and
                             // fetch it again.
-                            loadedScripts.add(script.getId());
+                            loadedScripts.add(script.getUuid());
                             // Show failure message.
                             failure(function,
                                     "Failed to inject script '" + script.getName() + "' - " + e.getMessage());
@@ -231,13 +231,11 @@ public class VisPanel extends SimplePanel implements VisPane {
         }
     }
 
-    private String createURL(final Script script) {
+    private String createURL(final ScriptDoc script) {
         final StringBuilder sb = new StringBuilder();
         sb.append("script?");
         sb.append("uuid=");
         sb.append(script.getUuid());
-        sb.append("&id=");
-        sb.append(script.getId());
         sb.append("&name=");
         sb.append(script.getName());
         sb.append("&ver=");

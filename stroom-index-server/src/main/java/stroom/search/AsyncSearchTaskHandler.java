@@ -20,10 +20,10 @@ package stroom.search;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Sort.Direction;
-import stroom.index.IndexService;
 import stroom.index.IndexShardService;
+import stroom.index.IndexStore;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.Index;
+import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
@@ -64,7 +64,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
     private final TargetNodeSetFactory targetNodeSetFactory;
     private final Provider<ClusterDispatchAsync> dispatchAsyncProvider;
     private final ClusterDispatchAsyncHelper dispatchHelper;
-    private final IndexService indexService;
+    private final IndexStore indexStore;
     private final IndexShardService indexShardService;
     private final TaskManager taskManager;
     private final Security security;
@@ -74,7 +74,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                            final TargetNodeSetFactory targetNodeSetFactory,
                            final Provider<ClusterDispatchAsync> dispatchAsyncProvider,
                            final ClusterDispatchAsyncHelper dispatchHelper,
-                           final IndexService indexService,
+                           final IndexStore indexStore,
                            final IndexShardService indexShardService,
                            final TaskManager taskManager,
                            final Security security) {
@@ -82,7 +82,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
         this.targetNodeSetFactory = targetNodeSetFactory;
         this.dispatchAsyncProvider = dispatchAsyncProvider;
         this.dispatchHelper = dispatchHelper;
-        this.indexService = indexService;
+        this.indexStore = indexStore;
         this.indexShardService = indexShardService;
         this.taskManager = taskManager;
         this.security = security;
@@ -90,109 +90,107 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
 
     @Override
     public VoidResult exec(final AsyncSearchTask task) {
-        return security.secureResult(() -> {
-            return security.useAsReadResult(() -> {
-                final ClusterSearchResultCollector resultCollector = task.getResultCollector();
+        return security.secureResult(() -> security.useAsReadResult(() -> {
+            final ClusterSearchResultCollector resultCollector = task.getResultCollector();
 
-                if (!taskContext.isTerminated()) {
-                    final Node sourceNode = targetNodeSetFactory.getSourceNode();
+            if (!Thread.currentThread().isInterrupted()) {
+                final Node sourceNode = targetNodeSetFactory.getSourceNode();
 
-                    try {
-                        // Get the nodes that we are going to send the search request
-                        // to.
-                        final Set<Node> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
-                        taskContext.info(task.getSearchName() + " - initialising");
-                        final Query query = task.getQuery();
+                try {
+                    // Get the nodes that we are going to send the search request
+                    // to.
+                    final Set<Node> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
+                    taskContext.info(task.getSearchName() + " - initialising");
+                    final Query query = task.getQuery();
 
-                        // Reload the index.
-                        final Index index = indexService.loadByUuid(query.getDataSource().getUuid());
+                    // Reload the index.
+                    final IndexDoc index = indexStore.readDocument(query.getDataSource());
 
-                        // Get an array of stored index fields that will be used for
-                        // getting stored data.
-                        // TODO : Specify stored fields based on the fields that all
-                        // coprocessors will require. Also
-                        // batch search only needs stream and event id stored fields.
-                        final IndexField[] storedFields = getStoredFields(index);
+                    // Get an array of stored index fields that will be used for
+                    // getting stored data.
+                    // TODO : Specify stored fields based on the fields that all
+                    // coprocessors will require. Also
+                    // batch search only needs stream and event id stored fields.
+                    final IndexField[] storedFields = getStoredFields(index);
 
-                        // Get a list of search index shards to look through.
-                        final FindIndexShardCriteria findIndexShardCriteria = new FindIndexShardCriteria();
-                        findIndexShardCriteria.getIndexSet().add(query.getDataSource());
-                        // Only non deleted indexes.
-                        findIndexShardCriteria.getIndexShardStatusSet().addAll(IndexShard.NON_DELETED_INDEX_SHARD_STATUS);
-                        // Order by partition name and key.
-                        findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_PARTITION, Direction.DESCENDING, false);
-                        findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_ID, Direction.DESCENDING, false);
-                        findIndexShardCriteria.getFetchSet().add(Node.ENTITY_TYPE);
-                        final List<IndexShard> indexShards = indexShardService.find(findIndexShardCriteria);
+                    // Get a list of search index shards to look through.
+                    final FindIndexShardCriteria findIndexShardCriteria = new FindIndexShardCriteria();
+                    findIndexShardCriteria.getIndexSet().add(query.getDataSource());
+                    // Only non deleted indexes.
+                    findIndexShardCriteria.getIndexShardStatusSet().addAll(IndexShard.NON_DELETED_INDEX_SHARD_STATUS);
+                    // Order by partition name and key.
+                    findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_PARTITION, Direction.DESCENDING, false);
+                    findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_ID, Direction.DESCENDING, false);
+                    findIndexShardCriteria.getFetchSet().add(Node.ENTITY_TYPE);
+                    final List<IndexShard> indexShards = indexShardService.find(findIndexShardCriteria);
 
-                        // Build a map of nodes that will deal with each set of shards.
-                        final Map<Node, List<Long>> shardMap = new HashMap<>();
-                        for (final IndexShard indexShard : indexShards) {
-                            if (IndexShardStatus.CORRUPT.equals(indexShard.getStatus())) {
-                                resultCollector.getErrorSet(indexShard.getNode()).add(
-                                        "Attempt to search an index shard marked as corrupt: id=" + indexShard.getId() + ".");
-                            } else {
-                                final Node node = indexShard.getNode();
-                                shardMap.computeIfAbsent(node, k -> new ArrayList<>()).add(indexShard.getId());
-                            }
+                    // Build a map of nodes that will deal with each set of shards.
+                    final Map<Node, List<Long>> shardMap = new HashMap<>();
+                    for (final IndexShard indexShard : indexShards) {
+                        if (IndexShardStatus.CORRUPT.equals(indexShard.getStatus())) {
+                            resultCollector.getErrorSet(indexShard.getNode()).add(
+                                    "Attempt to search an index shard marked as corrupt: id=" + indexShard.getId() + ".");
+                        } else {
+                            final Node node = indexShard.getNode();
+                            shardMap.computeIfAbsent(node, k -> new ArrayList<>()).add(indexShard.getId());
                         }
-
-                        // Start remote cluster search execution.
-                        final Map<Node, List<Long>> filteredShardNodes = shardMap.entrySet().stream()
-                                .filter(entry -> {
-                                    final Node node = entry.getKey();
-                                    if (targetNodes.contains(node)) {
-                                        return true;
-                                    } else {
-                                        resultCollector.getErrorSet(node)
-                                                .add("Node is not enabled or active. Some search results may be missing.");
-                                        return false;
-                                    }
-                                })
-                                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-
-                        // Tell the result collector which nodes we expect to get results from.
-                        resultCollector.setExpectedNodes(filteredShardNodes.keySet());
-
-                        // Now send out distributed search tasks to each worker node.
-                        filteredShardNodes.forEach((node, shards) -> {
-                            final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(task, task.getUserToken(), "Cluster Search", query, shards, sourceNode, storedFields,
-                                    task.getResultSendFrequency(), task.getCoprocessorMap(), task.getDateTimeLocale(), task.getNow());
-                            LOGGER.debug("Dispatching clusterSearchTask to node {}", node);
-                            dispatchAsyncProvider.get().execAsync(clusterSearchTask, resultCollector, sourceNode,
-                                    Collections.singleton(node));
-                        });
-                        taskContext.info(task.getSearchName() + " - searching...");
-
-                        // Await completion.
-                        resultCollector.awaitCompletion();
-
-                    } catch (final NullClusterStateException | NodeNotFoundException | RuntimeException e) {
-                        resultCollector.getErrorSet(sourceNode).add(e.getMessage());
-                    } catch (final InterruptedException e) {
-                        resultCollector.getErrorSet(sourceNode).add(e.getMessage());
-
-                        // Continue to interrupt this thread.
-                        Thread.currentThread().interrupt();
-                    } finally {
-                        taskContext.info(task.getSearchName() + " - complete");
-
-                        // Make sure we try and terminate any child tasks on worker
-                        // nodes if we need to.
-                        terminateTasks(task);
-
-                        // Let the result handler know search has finished.
-                        resultCollector.complete();
-
-                        // We need to wait here for the client to keep getting results if
-                        // this is an interactive search.
-                        taskContext.info(task.getSearchName() + " - staying alive for UI requests");
                     }
-                }
 
-                return VoidResult.INSTANCE;
-            });
-        });
+                    // Start remote cluster search execution.
+                    final Map<Node, List<Long>> filteredShardNodes = shardMap.entrySet().stream()
+                            .filter(entry -> {
+                                final Node node = entry.getKey();
+                                if (targetNodes.contains(node)) {
+                                    return true;
+                                } else {
+                                    resultCollector.getErrorSet(node)
+                                            .add("Node is not enabled or active. Some search results may be missing.");
+                                    return false;
+                                }
+                            })
+                            .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+
+                    // Tell the result collector which nodes we expect to get results from.
+                    resultCollector.setExpectedNodes(filteredShardNodes.keySet());
+
+                    // Now send out distributed search tasks to each worker node.
+                    filteredShardNodes.forEach((node, shards) -> {
+                        final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(task, task.getUserToken(), "Cluster Search", query, shards, sourceNode, storedFields,
+                                task.getResultSendFrequency(), task.getCoprocessorMap(), task.getDateTimeLocale(), task.getNow());
+                        LOGGER.debug("Dispatching clusterSearchTask to node {}", node);
+                        dispatchAsyncProvider.get().execAsync(clusterSearchTask, resultCollector, sourceNode,
+                                Collections.singleton(node));
+                    });
+                    taskContext.info(task.getSearchName() + " - searching...");
+
+                    // Await completion.
+                    resultCollector.awaitCompletion();
+
+                } catch (final NullClusterStateException | NodeNotFoundException | RuntimeException e) {
+                    resultCollector.getErrorSet(sourceNode).add(e.getMessage());
+                } catch (final InterruptedException e) {
+                    resultCollector.getErrorSet(sourceNode).add(e.getMessage());
+
+                    // Continue to interrupt this thread.
+                    Thread.currentThread().interrupt();
+                } finally {
+                    taskContext.info(task.getSearchName() + " - complete");
+
+                    // Make sure we try and terminate any child tasks on worker
+                    // nodes if we need to.
+                    terminateTasks(task);
+
+                    // Let the result handler know search has finished.
+                    resultCollector.complete();
+
+                    // We need to wait here for the client to keep getting results if
+                    // this is an interactive search.
+                    taskContext.info(task.getSearchName() + " - staying alive for UI requests");
+                }
+            }
+
+            return VoidResult.INSTANCE;
+        }));
     }
 
     private void terminateTasks(final AsyncSearchTask task) {
@@ -215,16 +213,14 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
         taskManager.execAsync(outerTask);
     }
 
-    private IndexField[] getStoredFields(final Index index) {
-        final List<IndexField> indexFields = index.getIndexFieldsObject().getIndexFields();
+    private IndexField[] getStoredFields(final IndexDoc index) {
+        final List<IndexField> indexFields = index.getIndexFields();
         final List<IndexField> list = new ArrayList<>(indexFields.size());
         for (final IndexField indexField : indexFields) {
             if (indexField.isStored()) {
                 list.add(indexField);
             }
         }
-        IndexField[] array = new IndexField[list.size()];
-        array = list.toArray(array);
-        return array;
+        return list.toArray(new IndexField[0]);
     }
 }

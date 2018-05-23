@@ -17,7 +17,7 @@
 package stroom.statistics.sql.entity;
 
 import stroom.datasource.api.v2.DataSource;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 public interface StatisticsDataSourceProvider {
 

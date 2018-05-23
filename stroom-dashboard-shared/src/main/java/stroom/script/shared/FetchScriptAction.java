@@ -17,12 +17,12 @@
 package stroom.script.shared;
 
 import stroom.entity.shared.Action;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.util.shared.SharedList;
 
 import java.util.Set;
 
-public class FetchScriptAction extends Action<SharedList<Script>> {
+public class FetchScriptAction extends Action<SharedList<ScriptDoc>> {
     private static final long serialVersionUID = -1773544031158236156L;
 
     private DocRef script;

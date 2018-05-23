@@ -1,3 +1,5 @@
+ext.moduleName = 'stroom.externaldoc.server'
+
 dependencies {
     compile project(':stroom-core-server')
     compile project(':stroom-docstore-server')
@@ -10,6 +12,7 @@ dependencies {
     compile libs.guice4
     compile libs.jackson_annotations
     compile libs.javax_inject
+    compile libs.stroomDocRef
     compile libs.stroomQueryApi
     compile libs.stroomQueryAudit
     compile libs.stroomQueryAuthorisation

@@ -22,25 +22,26 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.event.EntityEvent;
 import stroom.entity.event.EntityEventHandler;
-import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
-import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityAction;
-import stroom.query.api.v2.DocRef;
-import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.docref.DocRef;
+import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Singleton
 @EntityEventHandler(
-        type = StatisticStoreEntity.ENTITY_TYPE,
+        type = StatisticStoreDoc.DOCUMENT_TYPE,
         action = {
                 EntityAction.CREATE,
                 EntityAction.UPDATE,
@@ -51,35 +52,36 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
     private static final String STATISTICS_DATA_SOURCE_CACHE_NAME_BY_ID = "StatisticDataSourceCacheById";
     private static final String STATISTICS_DATA_SOURCE_CACHE_NAME_BY_NAME = "StatisticDataSourceCacheByName";
 
-    private final StatisticStoreEntityService statisticsDataSourceService;
+    private final StatisticStoreStore statisticStoreStore;
     private final CacheManager cacheManager;
 
-    private volatile LoadingCache<String, Optional<StatisticStoreEntity>> cacheByName;
-    private volatile LoadingCache<DocRef, Optional<StatisticStoreEntity>> cacheByRef;
+    private volatile LoadingCache<String, Optional<StatisticStoreDoc>> cacheByName;
+    private volatile LoadingCache<DocRef, Optional<StatisticStoreDoc>> cacheByRef;
 
     @Inject
-    StatisticsDataSourceCacheImpl(final StatisticStoreEntityService statisticsDataSourceService,
-                                         final CacheManager cacheManager) {
-        this.statisticsDataSourceService = statisticsDataSourceService;
+    StatisticsDataSourceCacheImpl(final StatisticStoreStore statisticStoreStore,
+                                  final CacheManager cacheManager) {
+        this.statisticStoreStore = statisticStoreStore;
         this.cacheManager = cacheManager;
     }
 
-    private LoadingCache<String, Optional<StatisticStoreEntity>> getCacheByName() {
+    private LoadingCache<String, Optional<StatisticStoreDoc>> getCacheByName() {
         if (cacheByName == null) {
             synchronized (this) {
                 if (cacheByName == null) {
-                    final CacheLoader<String, Optional<StatisticStoreEntity>> cacheLoader = CacheLoader.from(k -> {
+                    final CacheLoader<String, Optional<StatisticStoreDoc>> cacheLoader = CacheLoader.from(k -> {
+                        if (k == null) {
+                            return Optional.empty();
+                        }
+
                         // Id and key not found in cache so try pulling it from the DB
-
-                        final BaseResultList<StatisticStoreEntity> results = statisticsDataSourceService
-                                .find(FindStatisticsEntityCriteria.instanceByName(k));
-
+                        final List<DocRef> results = statisticStoreStore.list().stream().filter(docRef -> k.equals(docRef.getName())).collect(Collectors.toList());
                         if (results.size() > 1) {
                             throw new RuntimeException(String.format(
-                                    "Found multiple StatisticDataSource entities with name %s, engine %s and type %s.  This should not happen",
+                                    "Found multiple StatisticDataSource entities with name %s. This should not happen",
                                     k));
                         } else if (results.size() == 1) {
-                            return Optional.ofNullable(results.iterator().next());
+                            return Optional.ofNullable(statisticStoreStore.readDocument(results.get(0)));
                         }
 
                         return Optional.empty();
@@ -91,11 +93,11 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
         return cacheByName;
     }
 
-    private LoadingCache<DocRef, Optional<StatisticStoreEntity>> getCacheByRef() {
+    private LoadingCache<DocRef, Optional<StatisticStoreDoc>> getCacheByRef() {
         if (cacheByRef == null) {
             synchronized (this) {
                 if (cacheByRef == null) {
-                    final CacheLoader<DocRef, Optional<StatisticStoreEntity>> cacheLoader = CacheLoader.from(k -> Optional.ofNullable(statisticsDataSourceService.loadByUuid(k.getUuid())));
+                    final CacheLoader<DocRef, Optional<StatisticStoreDoc>> cacheLoader = CacheLoader.from(k -> Optional.ofNullable(statisticStoreStore.readDocument(k)));
                     cacheByRef = createCache(STATISTICS_DATA_SOURCE_CACHE_NAME_BY_ID, cacheLoader);
                 }
             }
@@ -114,30 +116,30 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
     }
 
     @Override
-    public StatisticStoreEntity getStatisticsDataSource(final DocRef docRef) {
+    public StatisticStoreDoc getStatisticsDataSource(final DocRef docRef) {
         return getCacheByRef().getUnchecked(docRef).orElse(null);
     }
 
     @Override
-    public StatisticStoreEntity getStatisticsDataSource(final String statisticName) {
+    public StatisticStoreDoc getStatisticsDataSource(final String statisticName) {
         return getCacheByName().getUnchecked(statisticName).orElse(null);
     }
 
     @Override
     public void onChange(final EntityEvent event) {
         try {
-            final Cache<String, Optional<StatisticStoreEntity>> cacheByEngineName = getCacheByName();
-            final Cache<DocRef, Optional<StatisticStoreEntity>> cacheByRef = getCacheByRef();
+            final Cache<String, Optional<StatisticStoreDoc>> cacheByEngineName = getCacheByName();
+            final Cache<DocRef, Optional<StatisticStoreDoc>> cacheByRef = getCacheByRef();
 
             final EntityAction entityAction = event.getAction();
 
             if (EntityAction.UPDATE.equals(entityAction) ||
                     EntityAction.DELETE.equals(entityAction) ||
                     EntityAction.CREATE.equals(entityAction)) {
-                final Optional<StatisticStoreEntity> optional = cacheByRef.getIfPresent(event.getDocRef());
+                final Optional<StatisticStoreDoc> optional = cacheByRef.getIfPresent(event.getDocRef());
 
                 if (optional != null && optional.isPresent()) {
-                    final StatisticStoreEntity statisticStoreEntity = optional.get();
+                    final StatisticStoreDoc statisticStoreEntity = optional.get();
 
                     // found it in one cache so remove from both
                     cacheByRef.invalidate(event.getDocRef());
@@ -153,7 +155,7 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
                     cacheByEngineName.asMap().forEach((k, v) -> {
                         try {
                             if (v.isPresent()) {
-                                final StatisticStoreEntity value = v.get();
+                                final StatisticStoreDoc value = v.get();
                                 final DocRef docRef = DocRefUtil.create(value);
 
                                 if (docRef.equals(event.getDocRef())) {

@@ -16,7 +16,7 @@
 
 package stroom.dashboard.shared;
 
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 public interface FormatSettings extends SharedObject {
     boolean isDefault();

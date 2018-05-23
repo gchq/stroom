@@ -41,14 +41,14 @@ import stroom.entity.shared.ResultList;
 import stroom.index.shared.DeleteIndexShardAction;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.FlushIndexShardAction;
-import stroom.index.shared.Index;
+import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.client.ClientSecurityContext;
-import stroom.security.shared.PermissionNames;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.streamstore.client.presenter.ActionDataProvider;
 import stroom.streamstore.client.presenter.ColumnSizeConstants;
 import stroom.svg.client.SvgPresets;
@@ -65,7 +65,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexShard>>
-        implements Refreshable, HasDocumentRead<Index>, HasPermissionCheck {
+        implements Refreshable, HasDocumentRead<IndexDoc>, HasPermissionCheck {
     private final TooltipPresenter tooltipPresenter;
     private final ClientDispatchAsync dispatcher;
     private final ClientSecurityContext securityContext;
@@ -75,7 +75,6 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     private final FindIndexShardCriteria queryCriteria = new FindIndexShardCriteria();
     private final ButtonView buttonFlush;
     private final ButtonView buttonDelete;
-    private Index index;
     private boolean readOnly;
     private boolean allowDelete;
 
@@ -200,9 +199,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
             protected void showInfo(final IndexShard indexShard, final int x, final int y) {
                 final StringBuilder html = new StringBuilder();
 
-                if (index != null) {
-                    TooltipUtil.addRowData(html, "Index Id", String.valueOf(index.getId()));
-                }
+                TooltipUtil.addRowData(html, "Index UUID", String.valueOf(indexShard.getIndexUuid()));
                 TooltipUtil.addRowData(html, "Shard Id", String.valueOf(indexShard.getId()));
                 TooltipUtil.addRowData(html, "Node", indexShard.getNode().getName());
                 TooltipUtil.addRowData(html, "Partition", indexShard.getPartition());
@@ -357,8 +354,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     }
 
     @Override
-    public void read(final DocRef docRef, final Index index) {
-        this.index = index;
+    public void read(final DocRef docRef, final IndexDoc index) {
         selectionCriteria.getIndexSet().add(docRef);
         selectionCriteria.getFetchSet().add(Node.ENTITY_TYPE);
         selectionCriteria.getFetchSet().add(Volume.ENTITY_TYPE);

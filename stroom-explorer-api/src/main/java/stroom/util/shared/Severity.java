@@ -16,6 +16,9 @@
 
 package stroom.util.shared;
 
+import stroom.docref.HasDisplayValue;
+import stroom.docref.SharedObject;
+
 public enum Severity implements HasDisplayValue, SharedObject {
     INFO(1, "INFO", "Information"), WARNING(2, "WARN", "Warnings"), ERROR(3, "ERROR", "Errors"), FATAL_ERROR(4, "FATAL",
             "Fatal Errors");

@@ -16,15 +16,19 @@
 
 package stroom.dashboard.shared;
 
-import stroom.query.api.v2.DocRef;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import stroom.docref.DocRef;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "text", propOrder = {"tableId", "pipeline", "showAsHtml"})
+@JsonPropertyOrder({"tableId", "pipeline", "showAsHtml"})
+@XmlRootElement(name = "text")
+@XmlType(name = "TextComponentSettings", propOrder = {"tableId", "pipeline", "showAsHtml"})
 public class TextComponentSettings extends ComponentSettings {
     private static final long serialVersionUID = -2530827581046882396L;
 

@@ -1,0 +1,13 @@
+{
+  "type" : "Visualisation",
+  "uuid" : "547b440d-4bb1-4d3b-86b7-ff2e41b49311",
+  "name" : "BarChart",
+  "version" : "4f5636dc-5b2d-4f42-b787-fc101a2298cc",
+  "description" : "Git commit: a1e3bba4e658189a7de874fd1c6748624084d7e4\nGit commit time: 2016-09-21 17:03:32 +0100",
+  "functionName" : "visualisations.BarChart",
+  "scriptRef" : {
+    "type" : "Script",
+    "uuid" : "dac25a4c-7a4e-4e7e-b861-74e16edd1b60",
+    "name" : "BarChart"
+  }
+}

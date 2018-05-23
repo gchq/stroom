@@ -12,7 +12,7 @@ import stroom.entity.shared.ExternalDocRefConstants;
 import stroom.entity.shared.SharedDocRef;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

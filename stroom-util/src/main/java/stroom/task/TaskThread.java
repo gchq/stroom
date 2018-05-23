@@ -45,13 +45,13 @@ class TaskThread implements HasTerminate {
 
     public synchronized void setThread(final Thread thread) {
         this.thread = thread;
-        if (isTerminated()) {
+        if (terminate) {
             interrupt();
         }
     }
-
-    @Override
-    public boolean isTerminated() {
+//
+//    @Override
+    boolean isTerminated() {
         final Thread thread = this.thread;
         if (thread != null) {
             if (thread.isInterrupted()) {
@@ -72,6 +72,15 @@ class TaskThread implements HasTerminate {
 
         interrupt();
     }
+
+//    boolean isInterrupted() {
+//        try {
+//            return this.thread.isInterrupted();
+//        } catch (final NullPointerException e) {
+//            // Ignore.
+//        }
+//        return false;
+//    }
 
     private synchronized void interrupt() {
         final Thread thread = this.thread;
@@ -105,7 +114,7 @@ class TaskThread implements HasTerminate {
         if (name == null) {
             name = task.getTaskName();
         }
-        if (isTerminated()) {
+        if (terminate) {
             name = "<<terminated>> " + name;
         }
 

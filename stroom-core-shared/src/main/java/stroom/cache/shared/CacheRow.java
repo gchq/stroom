@@ -16,7 +16,7 @@
 
 package stroom.cache.shared;
 
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 public class CacheRow implements SharedObject {
     private static final long serialVersionUID = -7367500560554774611L;

@@ -35,7 +35,7 @@ import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.item.client.ItemListBox;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.customdatebox.client.MyDateBox;

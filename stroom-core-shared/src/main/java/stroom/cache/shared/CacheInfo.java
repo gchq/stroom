@@ -16,7 +16,7 @@
 
 package stroom.cache.shared;
 
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 import java.util.Map;
 

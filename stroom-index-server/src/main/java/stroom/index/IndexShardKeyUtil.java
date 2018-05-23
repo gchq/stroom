@@ -16,9 +16,8 @@
 
 package stroom.index;
 
-import stroom.index.shared.Index;
-import stroom.index.shared.Index.PartitionBy;
-import stroom.index.shared.IndexShard;
+import stroom.index.shared.IndexDoc;
+import stroom.index.shared.IndexDoc.PartitionBy;
 import stroom.index.shared.IndexShardKey;
 import stroom.util.concurrent.AtomicSequence;
 
@@ -47,24 +46,24 @@ public final class IndexShardKeyUtil {
         // Utility class
     }
 
-    public static IndexShardKey createKey(final IndexShard indexShard) {
-        final int shardNo = SEQUENCE.next(indexShard.getIndex().getShardsPerPartition());
-        return new IndexShardKey(indexShard.getIndex(), indexShard.getPartition(), indexShard.getPartitionFromTime(), indexShard.getPartitionToTime(), shardNo);
-    }
+//    public static IndexShardKey createKey(final IndexShard indexShard) {
+//        final int shardNo = SEQUENCE.next(indexShard.getIndex().getShardsPerPartition());
+//        return new IndexShardKey(indexShard.getIndex(), indexShard.getPartition(), indexShard.getPartitionFromTime(), indexShard.getPartitionToTime(), shardNo);
+//    }
 
-    public static IndexShardKey createTestKey(final Index index) {
+    public static IndexShardKey createTestKey(final IndexDoc index) {
         final String partition = ALL;
         final int shardNo = SEQUENCE.next(index.getShardsPerPartition());
 
-        return new IndexShardKey(index, partition, null, null, shardNo);
+        return new IndexShardKey(index.getUuid(), partition, null, null, shardNo);
     }
 
-    public static IndexShardKey createTimeBasedPartition(final Index index, final long timeMs) {
+    public static IndexShardKey createTimeBasedPartition(final IndexDoc index, final long timeMs) {
         final int shardNo = SEQUENCE.next(index.getShardsPerPartition());
         return createTimeBasedKey(index, timeMs, shardNo);
     }
 
-    public static IndexShardKey createTimeBasedKey(final Index index, final long timeMs, final int shardNo) {
+    public static IndexShardKey createTimeBasedKey(final IndexDoc index, final long timeMs, final int shardNo) {
         String partition = ALL;
 
         LocalDate dateFrom = null;
@@ -121,7 +120,7 @@ public final class IndexShardKeyUtil {
             partitionToTime = dateTo.atStartOfDay(UTC).toInstant().toEpochMilli();
         }
 
-        return new IndexShardKey(index, partition, partitionFromTime, partitionToTime, shardNo);
+        return new IndexShardKey(index.getUuid(), partition, partitionFromTime, partitionToTime, shardNo);
     }
 
     private static LocalDate roundDown(final LocalDate dateTime, final TemporalUnit temporalUnit, final int size) {

@@ -24,7 +24,7 @@ import stroom.entity.shared.PrimitiveValueConverter;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
-import stroom.util.shared.HasDisplayValue;
+import stroom.docref.HasDisplayValue;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.persistence.Column;
@@ -40,13 +40,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * A place where a index has been created.
+ * A place where a indexUuid has been created.
  */
 @Entity
 @Table(name = "IDX_SHRD")
 public class IndexShard extends AuditedEntity {
     public static final String TABLE_NAME = SQLNameConstants.INDEX + SEP + SQLNameConstants.SHARD;
-    public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
+    public static final String OLD_INDEX_ID = "OLD_" + SQLNameConstants.INDEX + ID_SUFFIX;
     public static final String FILE_SIZE = SQLNameConstants.FILE + SEP + SQLNameConstants.SIZE;
     public static final String COMMIT_MS = SQLNameConstants.COMMIT + SQLNameConstants.MS_SUFFIX;
     public static final String COMMIT_DURATION_MS = SQLNameConstants.COMMIT + SEP + SQLNameConstants.DURATION
@@ -59,23 +59,31 @@ public class IndexShard extends AuditedEntity {
             + SQLNameConstants.MS_SUFFIX;
     public static final String PARTITION_TO_TIME = SQLNameConstants.PARTITION + SEP + SQLNameConstants.TO
             + SQLNameConstants.MS_SUFFIX;
+    public static final String INDEX_UUID = SQLNameConstants.INDEX + SEP + SQLNameConstants.UUID;
     public static final String INDEX_VERSION = SQLNameConstants.INDEX + SEP + SQLNameConstants.VERSION;
     public static final String ENTITY_TYPE = "IndexShard";
     public static final Set<IndexShardStatus> NON_DELETED_INDEX_SHARD_STATUS = Collections.unmodifiableSet(
             new HashSet<>(Arrays.asList(IndexShardStatus.OPEN, IndexShardStatus.CLOSED, IndexShardStatus.CORRUPT)));
     public static final Set<IndexShardStatus> READABLE_INDEX_SHARD_STATUS = Collections
             .unmodifiableSet(new HashSet<>(Arrays.asList(IndexShardStatus.OPEN, IndexShardStatus.CLOSED)));
+
     private static final long serialVersionUID = 3699846921846088685L;
+
     /**
-     * The index that this index shard belongs to.
+     * A reference to the old index id required for backward compatibility.
      */
-    private Index index;
+    private Integer oldIndexId;
+
     /**
-     * Volume the index is on
+     * The indexUuid that this indexUuid shard belongs to.
+     */
+    private String indexUuid;
+    /**
+     * Volume the indexUuid is on
      */
     private Volume volume;
     /**
-     * The owner of the index (the writer)
+     * The owner of the indexUuid (the writer)
      */
     private Node node;
     /**
@@ -116,14 +124,22 @@ public class IndexShard extends AuditedEntity {
     public IndexShard() {
     }
 
-    @ManyToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = Index.FOREIGN_KEY)
-    public Index getIndex() {
-        return index;
+    @Column(name = OLD_INDEX_ID, nullable = true)
+    public Integer getOldIndexId() {
+        return oldIndexId;
     }
 
-    public void setIndex(final Index index) {
-        this.index = index;
+    public void setOldIndexId(final Integer oldIndexId) {
+        this.oldIndexId = oldIndexId;
+    }
+
+    @Column(name = INDEX_UUID, nullable = false)
+    public String getIndexUuid() {
+        return indexUuid;
+    }
+
+    public void setIndexUuid(final String index) {
+        this.indexUuid = index;
     }
 
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
@@ -285,18 +301,18 @@ public class IndexShard extends AuditedEntity {
     }
 
     /**
-     * The status of this index shard
+     * The status of this indexUuid shard
      */
     public enum IndexShardStatus implements HasDisplayValue, HasPrimitiveValue {
         // Closed - Nobody is writing to it
         CLOSED("Closed", 0),
-        // Open - We are writing to it (maybe index or merge)
+        // Open - We are writing to it (maybe indexUuid or merge)
         OPEN("Open", 1),
         //        // Final - used to mark that a shard is full or will no longer be used.
 //        FINAL("Final", 3),
-// Closing - We are in the process of closing the index shard.
+// Closing - We are in the process of closing the indexUuid shard.
         CLOSING("Closing", 10),
-        // Opening - We are in the process of opening an index shard.
+        // Opening - We are in the process of opening an indexUuid shard.
         OPENING("Opening", 20),
         // Deleted - Used to mark shard for deletion
         DELETED("Deleted", 99),

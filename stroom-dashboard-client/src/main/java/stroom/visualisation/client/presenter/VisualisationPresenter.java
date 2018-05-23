@@ -23,14 +23,13 @@ import stroom.dashboard.client.vis.ClearFunctionCacheEvent;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.entity.shared.DocRefUtil;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.client.ClientSecurityContext;
-import stroom.visualisation.shared.Visualisation;
+import stroom.visualisation.shared.VisualisationDoc;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
-public class VisualisationPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Visualisation> {
+public class VisualisationPresenter extends DocumentEditTabPresenter<LinkTabPanelView, VisualisationDoc> {
     private static final TabData SETTINGS_TAB = new TabDataImpl("Settings");
 
     private final VisualisationSettingsPresenter settingsPresenter;
@@ -63,7 +62,7 @@ public class VisualisationPresenter extends DocumentEditTabPresenter<LinkTabPane
     }
 
     @Override
-    public void onRead(final DocRef docRef, final Visualisation visualisation) {
+    public void onRead(final DocRef docRef, final VisualisationDoc visualisation) {
         super.onRead(docRef, visualisation);
         loadCount++;
         settingsPresenter.read(docRef, visualisation);
@@ -76,12 +75,12 @@ public class VisualisationPresenter extends DocumentEditTabPresenter<LinkTabPane
     }
 
     @Override
-    protected void onWrite(final Visualisation visualisation) {
+    protected void onWrite(final VisualisationDoc visualisation) {
         settingsPresenter.write(visualisation);
     }
 
     @Override
     public String getType() {
-        return Visualisation.ENTITY_TYPE;
+        return VisualisationDoc.DOCUMENT_TYPE;
     }
 }

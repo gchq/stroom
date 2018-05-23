@@ -16,7 +16,7 @@
 
 package stroom.cell.tickbox.shared;
 
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 public enum TickBoxState implements SharedObject {
     TICK, HALF_TICK, UNTICK;

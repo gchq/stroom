@@ -36,6 +36,7 @@ import stroom.content.ContentSyncService;
 import stroom.content.ProxySecurityFilter;
 import stroom.datafeed.DataFeedServlet;
 import stroom.dictionary.DictionaryResource;
+import stroom.dictionary.DictionaryResource2;
 import stroom.dictionary.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dispatch.shared.DispatchService;
@@ -51,6 +52,7 @@ import stroom.proxy.servlet.ProxyStatusServlet;
 import stroom.proxy.servlet.ProxyWelcomeServlet;
 import stroom.resource.SessionResourceStoreImpl;
 import stroom.ruleset.RuleSetResource;
+import stroom.ruleset.RuleSetResource2;
 import stroom.ruleset.RuleSetService;
 import stroom.ruleset.shared.RuleSet;
 import stroom.script.ScriptServlet;
@@ -139,7 +141,9 @@ public class App extends Application<Config> {
 
         // Add health checks
         GuiceUtil.addHealthCheck(environment.healthChecks(), injector, DictionaryResource.class);
+        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, DictionaryResource2.class);
         GuiceUtil.addHealthCheck(environment.healthChecks(), injector, RuleSetResource.class);
+        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, RuleSetResource2.class);
 
         // Add filters
         GuiceUtil.addFilter(servletContextHandler, injector, ProxySecurityFilter.class, "/*");
@@ -154,7 +158,9 @@ public class App extends Application<Config> {
 
         // Add resources.
         GuiceUtil.addResource(environment.jersey(), injector, DictionaryResource.class);
+        GuiceUtil.addResource(environment.jersey(), injector, DictionaryResource2.class);
         GuiceUtil.addResource(environment.jersey(), injector, RuleSetResource.class);
+        GuiceUtil.addResource(environment.jersey(), injector, RuleSetResource2.class);
 
         // Listen to the lifecycle of the Dropwizard app.
         GuiceUtil.manage(environment.lifecycle(), injector, ProxyLifecycle.class);
@@ -183,7 +189,9 @@ public class App extends Application<Config> {
         GuiceUtil.addHealthCheck(environment.healthChecks(), injector, SqlStatisticsQueryResource.class);
         GuiceUtil.addHealthCheck(environment.healthChecks(), injector, StroomIndexQueryResource.class);
         GuiceUtil.addHealthCheck(environment.healthChecks(), injector, DictionaryResource.class);
+        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, DictionaryResource2.class);
         GuiceUtil.addHealthCheck(environment.healthChecks(), injector, RuleSetResource.class);
+        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, RuleSetResource2.class);
 
         // Add filters
         GuiceUtil.addFilter(servletContextHandler, injector, HttpServletRequestFilter.class, "/*");
@@ -214,7 +222,9 @@ public class App extends Application<Config> {
 
         // Add resources.
         GuiceUtil.addResource(environment.jersey(), injector, DictionaryResource.class);
+        GuiceUtil.addResource(environment.jersey(), injector, DictionaryResource2.class);
         GuiceUtil.addResource(environment.jersey(), injector, RuleSetResource.class);
+        GuiceUtil.addResource(environment.jersey(), injector, RuleSetResource2.class);
         GuiceUtil.addResource(environment.jersey(), injector, StroomIndexQueryResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, SqlStatisticsQueryResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, AuthorisationResource.class);

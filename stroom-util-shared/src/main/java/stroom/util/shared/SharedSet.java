@@ -16,6 +16,8 @@
 
 package stroom.util.shared;
 
+import stroom.docref.SharedObject;
+
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;

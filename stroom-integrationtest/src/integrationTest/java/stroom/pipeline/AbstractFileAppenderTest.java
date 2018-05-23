@@ -16,7 +16,7 @@
 
 package stroom.pipeline;
 
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.docref.DocRef;
 import stroom.test.ComparisonHelper;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;
@@ -24,7 +24,7 @@ import stroom.util.io.FileUtil;
 import java.nio.file.Path;
 
 public abstract class AbstractFileAppenderTest extends AbstractAppenderTest {
-    void test(final PipelineEntity pipelineEntity,
+    void test(final DocRef pipelineRef,
               final String dir,
               final String name,
               final String type,
@@ -42,7 +42,7 @@ public abstract class AbstractFileAppenderTest extends AbstractAppenderTest {
         FileUtil.deleteFile(outputFile);
         FileUtil.deleteFile(outputLockFile);
 
-        super.test(pipelineEntity, dir, name, type, outputReference, encoding);
+        super.test(pipelineRef, dir, name, type, outputReference, encoding);
 
         final Path refFile = StroomPipelineTestFileUtil.getTestResourcesFile(outputReference);
         ComparisonHelper.compareFiles(refFile, outputFile, false, false);

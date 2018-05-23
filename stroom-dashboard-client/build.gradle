@@ -1,13 +1,17 @@
+ext.moduleName = 'stroom.dashboard.client'
+
 dependencies {
     compile project(':stroom-core-client')
     compile project(':stroom-core-client-widget')
     compile project(':stroom-core-shared')
+    compile project(':stroom-docstore-shared')
     compile project(':stroom-dashboard-shared')
     compile project(':stroom-entity-shared')
     compile project(':stroom-security-client-api')
     compile project(':stroom-util-shared')
     runtime project(':stroom-security-client')
 
+    compile libs.stroomDocRef
     compile libs.stroomQueryApi
     compile libs.stroomQueryCommon
 

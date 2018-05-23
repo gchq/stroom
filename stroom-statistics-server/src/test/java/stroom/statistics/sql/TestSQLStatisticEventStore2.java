@@ -18,23 +18,21 @@ package stroom.statistics.sql;
 
 import org.junit.Assert;
 import org.junit.Test;
-
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
-import stroom.statistics.sql.entity.StatisticStoreEntityService;
+import stroom.statistics.shared.StatisticStoreDoc;
+import stroom.statistics.shared.StatisticsDataSourceData;
+import stroom.statistics.shared.common.CustomRollUpMask;
+import stroom.statistics.shared.common.StatisticField;
+import stroom.statistics.shared.common.StatisticRollUpType;
 import stroom.statistics.sql.rollup.RollUpBitMask;
 import stroom.statistics.sql.rollup.RolledUpStatisticEvent;
 import stroom.statistics.sql.search.FilterTermsTree;
 import stroom.statistics.sql.search.FindEventCriteria;
 import stroom.statistics.sql.search.StatStoreCriteriaBuilder;
-import stroom.statistics.shared.StatisticStoreEntity;
-import stroom.statistics.shared.StatisticsDataSourceData;
-import stroom.statistics.shared.common.CustomRollUpMask;
-import stroom.statistics.shared.common.StatisticField;
-import stroom.statistics.shared.common.StatisticRollUpType;
 import stroom.util.date.DateUtil;
 import stroom.util.test.StroomUnitTest;
 
@@ -59,7 +57,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
     public void testGenerateTagRollUpsTwoTagsAllRollUps() {
         final StatisticEvent event = buildEvent(buildTagList());
 
-        final StatisticStoreEntity statisticsDataSource = buildStatisticDataSource();
+        final StatisticStoreDoc statisticsDataSource = buildStatisticDataSource();
 
         final RolledUpStatisticEvent rolledUpStatisticEvent = SQLStatisticEventStore.generateTagRollUps(event,
                 statisticsDataSource);
@@ -110,7 +108,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
     public void testGenerateTagRollUpsTwoTagsCustomRollUps() {
         final StatisticEvent event = buildEvent(buildTagList());
 
-        final StatisticStoreEntity statisticsDataSource = buildStatisticDataSource(StatisticRollUpType.CUSTOM);
+        final StatisticStoreDoc statisticsDataSource = buildStatisticDataSource(StatisticRollUpType.CUSTOM);
 
         final RolledUpStatisticEvent rolledUpStatisticEvent = SQLStatisticEventStore.generateTagRollUps(event,
                 statisticsDataSource);
@@ -165,7 +163,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
     public void testGenerateTagRollUpsNoTags() {
         final StatisticEvent event = buildEvent(new ArrayList<>());
 
-        final StatisticStoreEntity statisticsDataSource = buildStatisticDataSource();
+        final StatisticStoreDoc statisticsDataSource = buildStatisticDataSource();
 
         final RolledUpStatisticEvent rolledUpStatisticEvent = SQLStatisticEventStore.generateTagRollUps(event,
                 statisticsDataSource);
@@ -191,7 +189,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
     public void testGenerateTagRollUpsNotEnabled() {
         final StatisticEvent event = buildEvent(buildTagList());
 
-        final StatisticStoreEntity statisticsDataSource = buildStatisticDataSource(StatisticRollUpType.NONE);
+        final StatisticStoreDoc statisticsDataSource = buildStatisticDataSource(StatisticRollUpType.NONE);
 
         final RolledUpStatisticEvent rolledUpStatisticEvent = SQLStatisticEventStore.generateTagRollUps(event,
                 statisticsDataSource);
@@ -225,12 +223,12 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
         return tagList;
     }
 
-    private StatisticStoreEntity buildStatisticDataSource() {
+    private StatisticStoreDoc buildStatisticDataSource() {
         return buildStatisticDataSource(StatisticRollUpType.ALL);
     }
 
-    private StatisticStoreEntity buildStatisticDataSource(final StatisticRollUpType statisticRollUpType) {
-        final StatisticStoreEntity statisticsDataSource = new StatisticStoreEntity();
+    private StatisticStoreDoc buildStatisticDataSource(final StatisticRollUpType statisticRollUpType) {
+        final StatisticStoreDoc statisticsDataSource = new StatisticStoreDoc();
 
         final StatisticsDataSourceData statisticsDataSourceData = new StatisticsDataSourceData();
 
@@ -250,7 +248,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
         statisticsDataSourceData.addCustomRollUpMask(new CustomRollUpMask(Arrays.asList(1))); // tag
         // 2
 
-        statisticsDataSource.setStatisticDataSourceDataObject(statisticsDataSourceData);
+        statisticsDataSource.setConfig(statisticsDataSourceData);
         statisticsDataSource.setRollUpType(statisticRollUpType);
 
         return statisticsDataSource;
@@ -263,7 +261,7 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
         final Query query = new Query(null, rootOperator.build());
         final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);
 
-        final StatisticStoreEntity dataSource = new StatisticStoreEntity();
+        final StatisticStoreDoc dataSource = new StatisticStoreDoc();
         dataSource.setName("MyDataSource");
 
         StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
@@ -276,13 +274,13 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
         final String dateTerm = "2000-01-01T00:00:00.000Z,2010-01-01T00:00:00.000Z";
 
-        rootOperator.addTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME,
+        rootOperator.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME,
                 Condition.IN_DICTIONARY, dateTerm);
 
         final Query query = new Query(null, rootOperator.build());
         final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);
 
-        final StatisticStoreEntity dataSource = new StatisticStoreEntity();
+        final StatisticStoreDoc dataSource = new StatisticStoreDoc();
         dataSource.setName("MyDataSource");
 
         StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
@@ -300,12 +298,12 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
         final String dateTerm = fromDateStr + "," + toDateStr;
 
-        rootOperator.addTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
+        rootOperator.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
 
         final Query query = new Query(null, rootOperator.build());
         final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);
 
-        final StatisticStoreEntity dataSource = new StatisticStoreEntity();
+        final StatisticStoreDoc dataSource = new StatisticStoreDoc();
         dataSource.setName("MyDataSource");
 
         final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
@@ -328,12 +326,12 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
         final String dateTerm = fromDateStr;
 
-        rootOperator.addTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
+        rootOperator.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
 
         final Query query = new Query(null, rootOperator.build());
         final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);
 
-        final StatisticStoreEntity dataSource = new StatisticStoreEntity();
+        final StatisticStoreDoc dataSource = new StatisticStoreDoc();
         dataSource.setName("MyDataSource");
 
         StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
@@ -350,13 +348,13 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
         final String dateTerm = fromDateStr + "," + toDateStr;
 
-        rootOperator.addTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
+        rootOperator.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
         rootOperator.addTerm(null, Condition.EQUALS, "xxx");
 
         final Query query = new Query(null, rootOperator.build());
         final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);
 
-        final StatisticStoreEntity dataSource = new StatisticStoreEntity();
+        final StatisticStoreDoc dataSource = new StatisticStoreDoc();
         dataSource.setName("MyDataSource");
 
         StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
@@ -373,13 +371,13 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
         final String dateTerm = fromDateStr + "," + toDateStr;
 
-        rootOperator.addTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
+        rootOperator.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
         rootOperator.addTerm("MyField", Condition.EQUALS, "");
 
         final Query query = new Query(null, rootOperator.build());
         final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);
 
-        final StatisticStoreEntity dataSource = new StatisticStoreEntity();
+        final StatisticStoreDoc dataSource = new StatisticStoreDoc();
         dataSource.setName("MyDataSource");
 
         final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);
@@ -399,14 +397,14 @@ public class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
         final String dateTerm = fromDateStr + "," + toDateStr;
 
-        rootOperator.addTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
+        rootOperator.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
 
         rootOperator.addTerm("MyField", Condition.EQUALS, "xxx");
 
         final Query query = new Query(null, rootOperator.build());
         final SearchRequest searchRequest = new SearchRequest(null, query, null, null, true);
 
-        final StatisticStoreEntity dataSource = new StatisticStoreEntity();
+        final StatisticStoreDoc dataSource = new StatisticStoreDoc();
         dataSource.setName("MyDataSource");
 
         final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(searchRequest, dataSource);

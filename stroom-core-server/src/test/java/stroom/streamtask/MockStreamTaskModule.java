@@ -72,8 +72,8 @@ public class MockStreamTaskModule extends AbstractModule {
 //    @Bean
 //    @Scope(StroomScope.TASK)
 //    public CreateProcessorHandler createProcessorHandler(final StreamProcessorFilterService streamProcessorFilterService,
-//                                                         final PipelineService pipelineService) {
-//        return new CreateProcessorHandler(streamProcessorFilterService, pipelineService);
+//                                                         final PipelineStore pipelineStore) {
+//        return new CreateProcessorHandler(streamProcessorFilterService, pipelineStore);
 //    }
 //
 //    @Bean

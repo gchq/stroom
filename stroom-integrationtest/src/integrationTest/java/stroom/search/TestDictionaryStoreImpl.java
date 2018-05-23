@@ -21,7 +21,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.dictionary.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.inject.Inject;
@@ -35,12 +35,12 @@ public class TestDictionaryStoreImpl extends AbstractCoreIntegrationTest {
     public void test() {
         // Create a dictionary and save it.
         final DocRef docRef = dictionaryStore.createDocument("TEST");
-        final DictionaryDoc dictionary = dictionaryStore.read(docRef.getUuid());
+        final DictionaryDoc dictionary = dictionaryStore.readDocument(docRef);
         dictionary.setData("This\nis\na\nlist\nof\nwords");
-        dictionaryStore.update(dictionary);
+        dictionaryStore.writeDocument(dictionary);
 
         // Make sure we can get it back.
-        final DictionaryDoc loaded = dictionaryStore.read(dictionary.getUuid());
+        final DictionaryDoc loaded = dictionaryStore.readDocument(docRef);
         Assert.assertNotNull(loaded);
         Assert.assertEquals(dictionary.getData(), loaded.getData());
         Assert.assertEquals(dictionary.getData(), dictionaryStore.getCombinedData(docRef));
@@ -50,23 +50,23 @@ public class TestDictionaryStoreImpl extends AbstractCoreIntegrationTest {
     public void testImport() {
         // Create a dictionary and save it.
         final DocRef docRef1 = dictionaryStore.createDocument("TEST");
-        final DictionaryDoc dictionary1 = dictionaryStore.read(docRef1.getUuid());
+        final DictionaryDoc dictionary1 = dictionaryStore.readDocument(docRef1);
         dictionary1.setData("dic1");
-        dictionaryStore.update(dictionary1);
+        dictionaryStore.writeDocument(dictionary1);
 
         // Create a dictionary and save it.
         final DocRef docRef2 = dictionaryStore.createDocument("TEST");
-        final DictionaryDoc dictionary2 = dictionaryStore.read(docRef2.getUuid());
+        final DictionaryDoc dictionary2 = dictionaryStore.readDocument(docRef2);
         dictionary2.setData("dic2");
         dictionary2.setImports(Collections.singletonList(docRef1));
-        dictionaryStore.update(dictionary2);
+        dictionaryStore.writeDocument(dictionary2);
 
         // Create a dictionary and save it.
         final DocRef docRef3 = dictionaryStore.createDocument("TEST");
-        final DictionaryDoc dictionary3 = dictionaryStore.read(docRef3.getUuid());
+        final DictionaryDoc dictionary3 = dictionaryStore.readDocument(docRef3);
         dictionary3.setData("dic3");
         dictionary3.setImports(Collections.singletonList(docRef2));
-        dictionaryStore.update(dictionary3);
+        dictionaryStore.writeDocument(dictionary3);
 
         // Make sure we can get it back.
         Assert.assertEquals("dic1", dictionaryStore.getCombinedData(docRef1));

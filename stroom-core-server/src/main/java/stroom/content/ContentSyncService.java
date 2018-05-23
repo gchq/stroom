@@ -10,7 +10,7 @@ import stroom.importexport.DocumentData;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;

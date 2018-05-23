@@ -16,21 +16,27 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "numberFormatSettings", propOrder = {"decimalPlaces", "useSeparator"})
+@JsonPropertyOrder({"decimalPlaces", "useSeparator"})
+@XmlRootElement(name = "numberFormatSettings")
+@XmlType(name = "NumberFormatSettings", propOrder = {"decimalPlaces", "useSeparator"})
 public class NumberFormatSettings implements FormatSettings {
-    public static final int DEFAULT_DECIMAL_PLACES = 0;
-    public static final boolean DEFAULT_USE_SEPARATOR = false;
     private static final long serialVersionUID = 9145624653060319801L;
+
+    private static final int DEFAULT_DECIMAL_PLACES = 0;
+    private static final boolean DEFAULT_USE_SEPARATOR = false;
+
     @XmlElement(name = "decimalPlaces")
     private Integer decimalPlaces;
     @XmlElement(name = "useSeparator")

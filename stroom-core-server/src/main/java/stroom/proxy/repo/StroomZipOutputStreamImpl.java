@@ -18,7 +18,6 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
     private static Logger LOGGER = LoggerFactory.getLogger(StroomZipOutputStreamImpl.class);
     private final Path file;
     private final Path lockFile;
-    private final TaskContext taskContext;
     private final ZipOutputStream zipOutputStream;
     private final StreamProgressMonitor streamProgressMonitor;
     private StroomZipNameSet stroomZipNameSet;
@@ -34,8 +33,6 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
     }
 
     public StroomZipOutputStreamImpl(final Path path, final TaskContext taskContext, final boolean monitorEntries) throws IOException {
-        this.taskContext = taskContext;
-
         Path file = path;
         Path lockFile = path.getParent().resolve(path.getFileName().toString() + LOCK_EXTENSION);
 
@@ -88,10 +85,8 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
         }
         entryCount++;
         inEntry = true;
-        if (taskContext != null) {
-            if (taskContext.isTerminated()) {
-                throw new IOException("Progress Stopped");
-            }
+        if (Thread.currentThread().isInterrupted()) {
+            throw new IOException("Progress Stopped");
         }
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace("addEntry() - " + file + " - " + name + " - adding");

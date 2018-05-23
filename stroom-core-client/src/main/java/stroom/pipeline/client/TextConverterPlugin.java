@@ -22,13 +22,15 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.docstore.shared.DocRefUtil;
+import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.pipeline.client.presenter.TextConverterPresenter;
-import stroom.pipeline.shared.TextConverter;
+import stroom.pipeline.shared.TextConverterDoc;
+import stroom.docref.DocRef;
 
-public class TextConverterPlugin extends EntityPlugin<TextConverter> {
+public class TextConverterPlugin extends DocumentPlugin<TextConverterDoc> {
     private final Provider<TextConverterPresenter> editorProvider;
 
     @Inject
@@ -48,6 +50,11 @@ public class TextConverterPlugin extends EntityPlugin<TextConverter> {
 
     @Override
     public String getType() {
-        return TextConverter.ENTITY_TYPE;
+        return TextConverterDoc.DOCUMENT_TYPE;
+    }
+
+    @Override
+    protected DocRef getDocRef(final TextConverterDoc document) {
+        return DocRefUtil.create(document);
     }
 }

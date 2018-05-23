@@ -28,7 +28,7 @@ import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.ResultRequest;
-import stroom.visualisation.VisualisationService;
+import stroom.visualisation.VisualisationStore;
 
 import java.util.List;
 import java.util.Map;
@@ -40,7 +40,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class TestSearchRequestMapper {
 
     @Mock
-    private VisualisationService visualisationService;
+    private VisualisationStore visualisationStore;
 
     @InjectMocks
     private SearchRequestMapper searchRequestMapper;

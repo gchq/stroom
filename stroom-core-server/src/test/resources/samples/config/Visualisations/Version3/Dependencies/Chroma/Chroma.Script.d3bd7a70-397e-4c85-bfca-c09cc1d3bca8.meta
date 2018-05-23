@@ -1,0 +1,7 @@
+{
+  "type" : "Script",
+  "uuid" : "d3bd7a70-397e-4c85-bfca-c09cc1d3bca8",
+  "name" : "Chroma",
+  "version" : "5b86cbb8-2a7c-47f9-8808-1e977b0fab51",
+  "dependencies" : [ ]
+}

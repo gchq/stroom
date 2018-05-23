@@ -361,7 +361,7 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
             currentTasks.put(task.getId(), taskThread);
             taskThread.setThread(Thread.currentThread());
 
-            if (stop.get() || taskThread.isTerminated()) {
+            if (stop.get() || currentThread.isInterrupted()) {
                 throw new TaskTerminatedException(stop.get());
             }
 

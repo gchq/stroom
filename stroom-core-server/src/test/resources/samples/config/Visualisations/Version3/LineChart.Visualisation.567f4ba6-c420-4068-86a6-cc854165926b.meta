@@ -1,0 +1,13 @@
+{
+  "type" : "Visualisation",
+  "uuid" : "567f4ba6-c420-4068-86a6-cc854165926b",
+  "name" : "LineChart",
+  "version" : "6b037e92-331a-488e-b2e9-6d385f683dfb",
+  "description" : "Git commit: a1e3bba4e658189a7de874fd1c6748624084d7e4\nGit commit time: 2016-09-21 17:03:32 +0100",
+  "functionName" : "visualisations.LineChart",
+  "scriptRef" : {
+    "type" : "Script",
+    "uuid" : "788b5981-7199-4f7e-a9db-33594f910134",
+    "name" : "LineChart"
+  }
+}

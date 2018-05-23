@@ -20,7 +20,7 @@ import stroom.node.shared.Node;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 import stroom.util.shared.TaskId;
 import stroom.util.shared.TreeRow;
 

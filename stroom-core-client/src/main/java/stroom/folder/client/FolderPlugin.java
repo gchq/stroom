@@ -27,7 +27,7 @@ import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.shared.SharedDocRef;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.shared.PermissionNames;
 import stroom.security.client.ClientSecurityContext;
 

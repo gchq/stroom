@@ -1,4 +1,8 @@
+ext.moduleName = 'stroom.util.shared'
+
 dependencies {
+    compile libs.stroomDocRef
+
     testCompile libs.hamcrest_core
     testCompile libs.junit
 

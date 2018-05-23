@@ -17,22 +17,23 @@
 package stroom.dictionary.shared;
 
 import stroom.entity.shared.Action;
+import stroom.docref.DocRef;
 import stroom.util.shared.ResourceGeneration;
 
 public class DownloadDictionaryAction extends Action<ResourceGeneration> {
     private static final long serialVersionUID = -3560107233301674555L;
 
-    private String uuid;
+    private DocRef dictionaryRef;
 
     public DownloadDictionaryAction() {
     }
 
-    public DownloadDictionaryAction(final String uuid) {
-        this.uuid = uuid;
+    public DownloadDictionaryAction(final DocRef dictionaryRef) {
+        this.dictionaryRef = dictionaryRef;
     }
 
-    public String getUuid() {
-        return uuid;
+    public DocRef getDictrionaryRef() {
+        return dictionaryRef;
     }
 
     @Override

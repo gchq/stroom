@@ -17,12 +17,12 @@
 
 package stroom.ruleset;
 
-import stroom.docstore.JsonSerialiser;
+import stroom.docstore.JsonSerialiser2;
 import stroom.docstore.Store;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.ruleset.shared.RuleSet;
 import stroom.util.shared.Message;
@@ -41,7 +41,7 @@ public class RuleSetServiceImpl implements RuleSetService {
     public RuleSetServiceImpl(final Store<RuleSet> store) {
         this.store = store;
         store.setType(RuleSet.DOCUMENT_TYPE, RuleSet.class);
-        store.setSerialiser(new JsonSerialiser<>());
+        store.setSerialiser(new JsonSerialiser2<>(RuleSet.class));
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -122,31 +122,16 @@ public class RuleSetServiceImpl implements RuleSetService {
     }
 
     @Override
-    public DocRef importDocument(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
+    public DocRef importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
         return store.importDocument(docRef, dataMap, importState, importMode);
     }
 
     @Override
-    public Map<String, String> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
+    public Map<String, byte[]> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
         return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     ////////////////////////////////////////////////////////////////////////
     // END OF ImportExportActionHandler
     ////////////////////////////////////////////////////////////////////////
-
-    @Override
-    public String getDocType() {
-        return RuleSet.DOCUMENT_TYPE;
-    }
-
-    @Override
-    public RuleSet read(final String uuid) {
-        return store.read(uuid);
-    }
-
-    @Override
-    public RuleSet update(final RuleSet dataReceiptPolicy) {
-        return store.update(dataReceiptPolicy);
-    }
 }

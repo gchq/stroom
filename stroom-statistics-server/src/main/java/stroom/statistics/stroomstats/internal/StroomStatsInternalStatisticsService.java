@@ -7,7 +7,7 @@ import stroom.connectors.kafka.StroomKafkaProducer;
 import stroom.kafka.StroomKafkaProducerFactoryService;
 import stroom.connectors.kafka.StroomKafkaProducerRecord;
 import stroom.properties.StroomPropertyService;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsService;
 import stroom.stats.schema.v4.ObjectFactory;

@@ -30,7 +30,7 @@ import stroom.datasource.DataSourceProvider;
 import stroom.datasource.DataSourceProviderRegistry;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.util.EntityServiceExceptionUtil;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.Row;
 import stroom.resource.ResourceStore;

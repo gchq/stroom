@@ -18,7 +18,7 @@ package stroom.streamtask.shared;
 
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
-import stroom.util.shared.HasDisplayValue;
+import stroom.docref.HasDisplayValue;
 
 /**
  * The status of this stream process.

@@ -1,6 +1,9 @@
+ext.moduleName = 'stroom.core.client.widget'
+
 dependencies {
     compile project(':stroom-util-shared')
 
+    compile libs.stroomDocRef
     compile libs.gin
     compile libs.guice3
     compile libs.gwt_user

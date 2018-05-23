@@ -60,7 +60,7 @@ public class SessionListServlet extends HttpServlet {
                 super.service(req, res);
             } catch (ServletException e) {
                 throw new RuntimeException(e.getMessage(), e);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
         });

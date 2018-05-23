@@ -14,12 +14,11 @@ import stroom.dashboard.expression.v1.ValString;
 import stroom.entity.util.PreparedStatementUtil;
 import stroom.entity.util.SqlBuilder;
 import stroom.properties.StroomPropertyService;
-import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.shared.StatisticType;
 import stroom.statistics.sql.SQLStatisticConstants;
 import stroom.statistics.sql.SQLStatisticNames;
 import stroom.statistics.sql.rollup.RollUpBitMask;
-import stroom.task.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -41,7 +40,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@SuppressWarnings("unused") //called by DI
+@SuppressWarnings("unused")
+        //called by DI
 //TODO rename to StatisticsDatabaseSearchServiceImpl
 class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
@@ -60,28 +60,25 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
     private final DataSource statisticsDataSource;
     private final StroomPropertyService propertyService;
-    private final TaskContext taskContext;
 
     //defines how the entity fields relate to the table columns
     private static final Map<String, List<String>> STATIC_FIELDS_TO_COLUMNS_MAP = ImmutableMap.<String, List<String>>builder()
-            .put(StatisticStoreEntity.FIELD_NAME_DATE_TIME, Collections.singletonList(ALIASED_TIME_MS_COL))
-            .put(StatisticStoreEntity.FIELD_NAME_PRECISION_MS, Collections.singletonList(ALIASED_PRECISION_COL))
-            .put(StatisticStoreEntity.FIELD_NAME_COUNT, Collections.singletonList(ALIASED_COUNT_COL))
-            .put(StatisticStoreEntity.FIELD_NAME_VALUE, Arrays.asList(ALIASED_COUNT_COL, ALIASED_VALUE_COL))
+            .put(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Collections.singletonList(ALIASED_TIME_MS_COL))
+            .put(StatisticStoreDoc.FIELD_NAME_PRECISION_MS, Collections.singletonList(ALIASED_PRECISION_COL))
+            .put(StatisticStoreDoc.FIELD_NAME_COUNT, Collections.singletonList(ALIASED_COUNT_COL))
+            .put(StatisticStoreDoc.FIELD_NAME_VALUE, Arrays.asList(ALIASED_COUNT_COL, ALIASED_VALUE_COL))
             .build();
 
     @SuppressWarnings("unused") // Called by DI
     @Inject
     StatisticsSearchServiceImpl(@Named("statisticsDataSource") final DataSource statisticsDataSource,
-                                final StroomPropertyService propertyService,
-                                final TaskContext taskContext) {
+                                final StroomPropertyService propertyService) {
         this.statisticsDataSource = statisticsDataSource;
         this.propertyService = propertyService;
-        this.taskContext = taskContext;
     }
 
     @Override
-    public Flowable<Val[]> search(final StatisticStoreEntity statisticStoreEntity,
+    public Flowable<Val[]> search(final StatisticStoreDoc statisticStoreEntity,
                                   final FindEventCriteria criteria,
                                   final FieldIndexMap fieldIndexMap) {
 
@@ -96,7 +93,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         return getFlowableQueryResults(sql, resultSetMapper);
     }
 
-    private List<String> getSelectColumns(final StatisticStoreEntity statisticStoreEntity,
+    private List<String> getSelectColumns(final StatisticStoreDoc statisticStoreEntity,
                                           final FieldIndexMap fieldIndexMap) {
         //assemble a map of how fields map to 1-* select cols
 
@@ -124,7 +121,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     /**
      * Construct the sql select for the query's criteria
      */
-    private SqlBuilder buildSql(final StatisticStoreEntity statisticStoreEntity,
+    private SqlBuilder buildSql(final StatisticStoreDoc statisticStoreEntity,
                                 final FindEventCriteria criteria,
                                 final FieldIndexMap fieldIndexMap) {
         /**
@@ -206,7 +203,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
      */
     private Function<ResultSet, Val[]> buildResultSetMapper(
             final FieldIndexMap fieldIndexMap,
-            final StatisticStoreEntity statisticStoreEntity) {
+            final StatisticStoreDoc statisticStoreEntity) {
 
         LAMBDA_LOGGER.debug(() -> String.format("Building mapper for fieldIndexMap %s, entity %s",
                 fieldIndexMap, statisticStoreEntity.getUuid()));
@@ -218,17 +215,17 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                     final int idx = entry.getValue();
                     final String fieldName = entry.getKey();
                     final ValueExtractor extractor;
-                    if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_DATE_TIME)) {
+                    if (fieldName.equals(StatisticStoreDoc.FIELD_NAME_DATE_TIME)) {
                         extractor = buildLongValueExtractor(SQLStatisticNames.TIME_MS, idx);
-                    } else if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_COUNT)) {
+                    } else if (fieldName.equals(StatisticStoreDoc.FIELD_NAME_COUNT)) {
                         extractor = buildLongValueExtractor(SQLStatisticNames.COUNT, idx);
-                    } else if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_PRECISION_MS)) {
+                    } else if (fieldName.equals(StatisticStoreDoc.FIELD_NAME_PRECISION_MS)) {
                         extractor = buildPrecisionMsExtractor(idx);
-                    } else if (fieldName.equals(StatisticStoreEntity.FIELD_NAME_VALUE)) {
+                    } else if (fieldName.equals(StatisticStoreDoc.FIELD_NAME_VALUE)) {
                         final StatisticType statisticType = statisticStoreEntity.getStatisticType();
                         if (statisticType.equals(StatisticType.COUNT)) {
                             extractor = buildLongValueExtractor(SQLStatisticNames.COUNT, idx);
-                        } else if (statisticType.equals(StatisticType.VALUE)){
+                        } else if (statisticType.equals(StatisticType.VALUE)) {
                             // value stat
                             extractor = buildStatValueExtractor(idx);
                         } else {
@@ -377,9 +374,13 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                                         }
                                     },
                                     (rs, emitter) -> {
+                                        // The line below can be un-commented in development debugging to slow down the
+                                        // return of all results to test iterative results and dashboard polling.
+                                        // LockSupport.parkNanos(200_000);
+
                                         //advance the resultSet, if it is a row emit it, else finish the flow
                                         // TODO prob needs to change in 6.1
-                                        if (Thread.currentThread().isInterrupted() || taskContext.isTerminated()) {
+                                        if (Thread.currentThread().isInterrupted() || Thread.currentThread().isInterrupted()) {
                                             LOGGER.debug("Task is terminated/interrupted, calling onComplete");
                                             emitter.onComplete();
                                         } else {
@@ -436,7 +437,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
      * found in the data and thus would return no data.
      */
     private static RollUpBitMask buildRollUpBitMaskFromCriteria(final FindEventCriteria criteria,
-                                                                final StatisticStoreEntity statisticsDataSource) {
+                                                                final StatisticStoreDoc statisticsDataSource) {
         final Set<String> rolledUpTagsFound = criteria.getRolledUpFieldNames();
 
         final RollUpBitMask result;

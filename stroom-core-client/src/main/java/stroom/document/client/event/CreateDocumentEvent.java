@@ -22,7 +22,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.gwtplatform.mvp.client.MyPresenter;
 import stroom.entity.shared.PermissionInheritance;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 public class CreateDocumentEvent extends GwtEvent<CreateDocumentEvent.Handler> {
     private static Type<Handler> TYPE;

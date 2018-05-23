@@ -19,7 +19,7 @@ package stroom.pipeline.shared;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.RowCount;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 import java.util.List;
 

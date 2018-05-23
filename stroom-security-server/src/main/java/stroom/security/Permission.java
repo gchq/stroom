@@ -18,7 +18,7 @@ package stroom.security;
 
 import stroom.entity.shared.BaseEntitySmall;
 import stroom.entity.shared.SQLNameConstants;
-import stroom.util.shared.HasDisplayValue;
+import stroom.docref.HasDisplayValue;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;

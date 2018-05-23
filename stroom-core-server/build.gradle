@@ -1,3 +1,5 @@
+ext.moduleName = 'stroom.core.server'
+
 dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-entity-shared')
@@ -12,6 +14,7 @@ dependencies {
     compile project(':stroom-connectors')
 
     compile libs.eventLogging
+    compile libs.stroomDocRef
     compile libs.stroomQueryApi
     compile libs.stroomQueryCommon
 
@@ -37,11 +40,13 @@ dependencies {
     compile libs.validation_api
     compile libs.ws_rs_api
     compile libs.curator_x_discovery
+    compile libs.jackson_databind
     compile libs.jersey_client
     compile libs.jersey_common
     compile libs.hibernate_jpa_api
     compile libs.hibernate_core
     compile libs.javassist
+    compile libs.jaxb_api
     compile libs.slf4j_api
     compile libs.xml_apis
     compile libs.flyway_core

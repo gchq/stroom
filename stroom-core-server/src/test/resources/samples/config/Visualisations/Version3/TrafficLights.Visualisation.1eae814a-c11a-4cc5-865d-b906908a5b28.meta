@@ -1,0 +1,13 @@
+{
+  "type" : "Visualisation",
+  "uuid" : "1eae814a-c11a-4cc5-865d-b906908a5b28",
+  "name" : "TrafficLights",
+  "version" : "e1025512-c224-4580-a001-848a33448a8c",
+  "description" : "Git commit: a1e3bba4e658189a7de874fd1c6748624084d7e4\nGit commit time: 2016-09-21 17:03:32 +0100",
+  "functionName" : "visualisations.TrafficLights",
+  "scriptRef" : {
+    "type" : "Script",
+    "uuid" : "bee10b7d-023d-487a-af83-414ee1b7174f",
+    "name" : "TrafficLights"
+  }
+}

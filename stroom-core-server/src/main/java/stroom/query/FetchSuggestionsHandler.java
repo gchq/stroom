@@ -24,7 +24,8 @@ import stroom.entity.shared.StringCriteria;
 import stroom.entity.shared.StringCriteria.MatchStyle;
 import stroom.feed.FeedService;
 import stroom.node.NodeService;
-import stroom.pipeline.PipelineService;
+import stroom.pipeline.PipelineStore;
+import stroom.docref.DocRef;
 import stroom.query.shared.FetchSuggestionsAction;
 import stroom.security.Security;
 import stroom.streamstore.StreamTypeService;
@@ -45,19 +46,19 @@ import java.util.stream.Collectors;
 @TaskHandlerBean(task = FetchSuggestionsAction.class)
 class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction, SharedList<SharedString>> {
     private final FeedService feedService;
-    private final PipelineService pipelineService;
+    private final PipelineStore pipelineStore;
     private final StreamTypeService streamTypeService;
     private final NodeService nodeService;
     private final Security security;
 
     @Inject
     FetchSuggestionsHandler(@Named("cachedFeedService") final FeedService feedService,
-                            @Named("cachedPipelineService") final PipelineService pipelineService,
+                            @Named("cachedPipelineStore") final PipelineStore pipelineStore,
                             @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
                             @Named("cachedNodeService") final NodeService nodeService,
                             final Security security) {
         this.feedService = feedService;
-        this.pipelineService = pipelineService;
+        this.pipelineStore = pipelineStore;
         this.streamTypeService = streamTypeService;
         this.nodeService = nodeService;
         this.security = security;
@@ -73,7 +74,12 @@ class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction
                     }
 
                     if (task.getField().getName().equals(StreamDataSource.PIPELINE)) {
-                        return createList(pipelineService, task.getText());
+                        return new SharedList<>(pipelineStore.list().stream()
+                                .filter(docRef -> docRef.getName().contains(task.getText()))
+                                .map(DocRef::getName)
+                                .map(SharedString::wrap)
+                                .sorted()
+                                .collect(Collectors.toList()));
                     }
 
                     if (task.getField().getName().equals(StreamDataSource.STREAM_TYPE)) {

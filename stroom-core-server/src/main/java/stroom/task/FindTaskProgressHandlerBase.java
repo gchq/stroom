@@ -30,7 +30,7 @@ import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskProgress;
 import stroom.util.shared.CompareUtil;
 import stroom.util.shared.Expander;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 import stroom.util.shared.Task;
 import stroom.util.shared.TaskId;
 

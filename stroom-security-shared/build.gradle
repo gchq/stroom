@@ -1,12 +1,12 @@
+ext.moduleName = 'stroom.security.shared'
+
 dependencies {
     compile project(':stroom-entity-shared')
     compile project(':stroom-util-shared')
 
     runtime project(':stroom-security-api')
 
-    compile libs.stroomQueryApi
-
-//    testCompile libs.junit
+    compile libs.stroomDocRef
 
     //the following logging libs are needed when running junits outside dropwizard
     testRuntime libs.jcl_over_slf4j

@@ -19,7 +19,7 @@ package stroom.entity.util;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.HasPrimitiveValue;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 public class SqlBuilder extends AbstractSqlBuilder {
     public SqlBuilder() {

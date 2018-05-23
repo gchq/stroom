@@ -127,8 +127,7 @@ public abstract class AbstractWriter extends AbstractXMLFilter implements Target
             } else if (outputStreams.size() == 1) {
                 outputStream.setOutputStream(outputStreams.get(0));
             } else {
-                OutputStream[] arr = new OutputStream[outputStreams.size()];
-                arr = outputStreams.toArray(arr);
+                final OutputStream[] arr = outputStreams.toArray(new OutputStream[0]);
                 outputStream.setOutputStream(new MultiOutputStream(arr));
             }
         }

@@ -1,8 +1,9 @@
+ext.moduleName = 'stroom.statistics.api'
+
 dependencies {
     compile project(':stroom-entity-shared')
-    compile project(':stroom-util-shared')
 
-
+    compile libs.stroomDocRef
     compile libs.stroomQueryApi
     compile libs.guava
 }

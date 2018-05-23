@@ -1,3 +1,5 @@
+ext.moduleName = 'stroom.integrationtest'
+
 dependencies {
     compile project(':stroom-app')
     permitUnusedDeclared project(':stroom-app')

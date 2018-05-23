@@ -16,7 +16,7 @@
 
 package stroom.pipeline.shared;
 
-import stroom.util.shared.HasDisplayValue;
+import stroom.docref.HasDisplayValue;
 
 public enum SupportedRetentionAge implements HasDisplayValue {
     RT_FOREVER("Forever", null), RT_1("1 Day", 1), RT_2("2 Days", 2), RT_4("4 Days", 4), RT_7("1 Week", 7), RT_31(

@@ -200,7 +200,7 @@ public final class ComparisonHelper {
             }
 
         } catch (final IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
+            throw new UncheckedIOException(e);
         } finally {
             if (reader1 != null) {
                 try {

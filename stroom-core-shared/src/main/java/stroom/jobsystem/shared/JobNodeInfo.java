@@ -16,7 +16,7 @@
 
 package stroom.jobsystem.shared;
 
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 public class JobNodeInfo implements SharedObject {
     private static final long serialVersionUID = 5184354985064930910L;

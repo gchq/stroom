@@ -3,8 +3,8 @@ package stroom.streamstore.shared;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
 import stroom.feed.shared.Feed;
-import stroom.pipeline.shared.PipelineEntity;
-import stroom.query.api.v2.DocRef;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 
 import java.util.ArrayList;
@@ -29,7 +29,7 @@ public class StreamDataSource {
     private static final Map<String, String> STREAM_FIELDS = new HashMap<>();
     private static final Map<String, String> FEED_FIELDS = new HashMap<>();
     private static final Map<String, String> STREAM_TYPE_FIELDS = new HashMap<>();
-    private static final Map<String, String> PIPELINE_FIELDS = new HashMap<>();
+//    private static final Map<String, String> PIPELINE_FIELDS = new HashMap<>();
 
     public static final String FEED = "Feed";
     public static final String PIPELINE = "Pipeline";
@@ -59,7 +59,7 @@ public class StreamDataSource {
         STREAM_FIELDS.put(CREATE_TIME, Stream.CREATE_MS);
         FEED_FIELDS.put(FEED, Feed.NAME);
         STREAM_TYPE_FIELDS.put(STREAM_TYPE, StreamType.NAME);
-        PIPELINE_FIELDS.put(PIPELINE, PipelineEntity.NAME);
+//        PIPELINE_FIELDS.put(PIPELINE, PipelineDoc.NAME);
 
         FIELDS.add(createStringField(FEED));
         FIELDS.add(createStringField(PIPELINE));
@@ -160,7 +160,7 @@ public class StreamDataSource {
         return STREAM_TYPE_FIELDS;
     }
 
-    public static Map<String, String> getPipelineFields() {
-        return PIPELINE_FIELDS;
-    }
+//    public static Map<String, String> getPipelineFields() {
+//        return PIPELINE_FIELDS;
+//    }
 }

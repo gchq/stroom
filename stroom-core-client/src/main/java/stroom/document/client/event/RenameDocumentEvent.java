@@ -21,7 +21,7 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.gwtplatform.mvp.client.PresenterWidget;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 public class RenameDocumentEvent extends GwtEvent<RenameDocumentEvent.Handler> {
     private static Type<Handler> TYPE;

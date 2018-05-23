@@ -26,11 +26,11 @@ import com.gwtplatform.mvp.client.View;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.pipeline.client.presenter.XSLTSettingsPresenter.XSLTSettingsView;
-import stroom.pipeline.shared.XSLT;
-import stroom.query.api.v2.DocRef;
+import stroom.pipeline.shared.XsltDoc;
+import stroom.docref.DocRef;
 import stroom.security.client.ClientSecurityContext;
 
-public class XSLTSettingsPresenter extends DocumentSettingsPresenter<XSLTSettingsView, XSLT> {
+public class XSLTSettingsPresenter extends DocumentSettingsPresenter<XSLTSettingsView, XsltDoc> {
     @Inject
     public XSLTSettingsPresenter(final EventBus eventBus, final XSLTSettingsView view,
                                  final ClientSecurityContext securityContext) {
@@ -50,16 +50,16 @@ public class XSLTSettingsPresenter extends DocumentSettingsPresenter<XSLTSetting
 
     @Override
     public String getType() {
-        return XSLT.ENTITY_TYPE;
+        return XsltDoc.DOCUMENT_TYPE;
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final XSLT xslt) {
+    protected void onRead(final DocRef docRef, final XsltDoc xslt) {
         getView().getDescription().setText(xslt.getDescription());
     }
 
     @Override
-    protected void onWrite(final XSLT xslt) {
+    protected void onWrite(final XsltDoc xslt) {
         xslt.setDescription(getView().getDescription().getText().trim());
     }
 

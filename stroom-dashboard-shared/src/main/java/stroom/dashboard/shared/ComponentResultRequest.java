@@ -17,7 +17,7 @@
 package stroom.dashboard.shared;
 
 import stroom.query.api.v2.ResultRequest.Fetch;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 public abstract class ComponentResultRequest implements SharedObject {
     private static final long serialVersionUID = -7455554742243923562L;

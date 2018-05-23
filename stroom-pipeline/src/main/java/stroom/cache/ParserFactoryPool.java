@@ -16,8 +16,8 @@
 
 package stroom.cache;
 
-import stroom.pipeline.shared.TextConverter;
+import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pool.Pool;
 
-public interface ParserFactoryPool extends Pool<TextConverter, StoredParserFactory> {
+public interface ParserFactoryPool extends Pool<TextConverterDoc, StoredParserFactory> {
 }

@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.properties.StroomPropertyService;
 import stroom.statistics.shared.StatisticStore;
-import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.shared.common.CustomRollUpMask;
 import stroom.statistics.shared.common.StatisticRollUpType;
 import stroom.statistics.sql.entity.StatisticStoreCache;
@@ -120,7 +120,7 @@ public class SQLStatisticEventStore implements Statistics {
 
     // TODO could go futher up the chain so is store agnostic
     public static RolledUpStatisticEvent generateTagRollUps(final StatisticEvent event,
-                                                            final StatisticStoreEntity statisticsDataSource) {
+                                                            final StatisticStoreDoc statisticsDataSource) {
         RolledUpStatisticEvent rolledUpStatisticEvent = null;
 
         final int eventTagListSize = event.getTagList().size();
@@ -138,7 +138,7 @@ public class SQLStatisticEventStore implements Statistics {
 
         } else if (StatisticRollUpType.CUSTOM.equals(rollUpType)) {
             final Set<List<Boolean>> perms = new HashSet<>();
-            for (final CustomRollUpMask mask : statisticsDataSource.getStatisticDataSourceDataObject()
+            for (final CustomRollUpMask mask : statisticsDataSource.getConfig()
                     .getCustomRollUpMasks()) {
                 final RollUpBitMask rollUpBitMask = RollUpBitMask.fromTagPositions(mask.getRolledUpTagPositions());
 
@@ -256,7 +256,7 @@ public class SQLStatisticEventStore implements Statistics {
 
         final Long optionalEventProcessingThresholdMs = getEventProcessingThresholdMs();
 
-        final StatisticStoreEntity entity = (StatisticStoreEntity) Preconditions.checkNotNull(statisticStore);
+        final StatisticStoreDoc entity = (StatisticStoreDoc) Preconditions.checkNotNull(statisticStore);
 
         // validate the first stat in the batch to check we have a statistic
         // data source for it.
@@ -297,7 +297,7 @@ public class SQLStatisticEventStore implements Statistics {
             LOGGER.debug("putEvent - count=1");
         }
 
-        final StatisticStoreEntity entity = (StatisticStoreEntity) statisticStore;
+        final StatisticStoreDoc entity = (StatisticStoreDoc) statisticStore;
 
         // validate the first stat in the batch to check we have a statistic
         // data source for it.
@@ -360,7 +360,7 @@ public class SQLStatisticEventStore implements Statistics {
 
     @Override
     public void putEvent(final StatisticEvent statisticEvent) {
-        final StatisticStoreEntity statisticsDataSource = getStatisticsDataSource(statisticEvent.getName());
+        final StatisticStoreDoc statisticsDataSource = getStatisticsDataSource(statisticEvent.getName());
         putEvent(statisticEvent, statisticsDataSource);
     }
 
@@ -380,7 +380,7 @@ public class SQLStatisticEventStore implements Statistics {
         if (eventsBatch.size() > 0) {
             final StatisticEvent firstEventInBatch = eventsBatch.get(0);
             final String statName = firstEventInBatch.getName();
-            final StatisticStoreEntity statisticsDataSource = getStatisticsDataSource(statName);
+            final StatisticStoreDoc statisticsDataSource = getStatisticsDataSource(statName);
 
             if (statisticsDataSource == null) {
                 throw new RuntimeException(String.format("No statistic data source exists for name %s", statName));
@@ -391,7 +391,7 @@ public class SQLStatisticEventStore implements Statistics {
     }
 
     protected boolean validateStatisticDataSource(final StatisticEvent statisticEvent,
-                                                  final StatisticStoreEntity statisticsDataSource) {
+                                                  final StatisticStoreDoc statisticsDataSource) {
         if (statisticsDataSourceValidator != null) {
             return statisticsDataSourceValidator.validateStatisticDataSource(statisticEvent.getName(),
                     statisticEvent.getType(), statisticsDataSource);
@@ -401,7 +401,7 @@ public class SQLStatisticEventStore implements Statistics {
         }
     }
 
-    protected StatisticStoreEntity getStatisticsDataSource(final String statisticName) {
+    protected StatisticStoreDoc getStatisticsDataSource(final String statisticName) {
         return statisticsDataSourceCache.getStatisticsDataSource(statisticName);
     }
 

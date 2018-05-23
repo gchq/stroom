@@ -3,7 +3,6 @@ package stroom.streamstore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.shared.Feed;
-import stroom.pipeline.shared.PipelineEntity;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamDataSource;
@@ -45,9 +44,9 @@ class StreamAttributeMapUtil {
             }
             final StreamProcessor streamProcessor = stream.getStreamProcessor();
             if (streamProcessor != null) {
-                final PipelineEntity pipeline = streamProcessor.getPipeline();
-                if (pipeline != null) {
-                    attributeMap.put(StreamDataSource.PIPELINE, pipeline.getName());
+                final String pipelineUuid = streamProcessor.getPipelineUuid();
+                if (pipelineUuid != null) {
+                    attributeMap.put(StreamDataSource.PIPELINE, pipelineUuid);
                 }
             }
         }

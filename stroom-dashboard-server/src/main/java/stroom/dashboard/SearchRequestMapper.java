@@ -42,7 +42,7 @@ import stroom.dashboard.shared.TimeZone;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dashboard.shared.VisResultRequest;
 import stroom.query.api.v2.DateTimeFormat;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.NumberFormat;
 import stroom.query.api.v2.Param;
@@ -54,8 +54,8 @@ import stroom.query.api.v2.Sort.SortDirection;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeZone.Use;
 import stroom.util.shared.OffsetRange;
-import stroom.visualisation.VisualisationService;
-import stroom.visualisation.shared.Visualisation;
+import stroom.visualisation.VisualisationStore;
+import stroom.visualisation.shared.VisualisationDoc;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -71,11 +71,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class SearchRequestMapper {
-    private final VisualisationService visualisationService;
+    private final VisualisationStore visualisationStore;
 
     @Inject
-    public SearchRequestMapper(final VisualisationService visualisationService) {
-        this.visualisationService = visualisationService;
+    public SearchRequestMapper(final VisualisationStore visualisationStore) {
+        this.visualisationStore = visualisationStore;
     }
 
     public stroom.query.api.v2.SearchRequest mapRequest(final DashboardQueryKey queryKey,
@@ -352,8 +352,8 @@ public class SearchRequestMapper {
 //        }
 //
 //        final TableSettings tableSettings = new TableSettings();
-//        tableSettings.setFields(fields.toArray(new stroom.query.api.v2.Field[fields.size()]));
-//        tableSettings.setMaxResults(limits.toArray(new Integer[limits.size()]));
+//        tableSettings.setFields(fields.toArray(new stroom.query.api.v2.Field[0]));
+//        tableSettings.setMaxResults(limits.toArray(new Integer[0]));
 //        tableSettings.setShowDetail(true);
 //
 //        return tableSettings;
@@ -388,7 +388,7 @@ public class SearchRequestMapper {
                 return null;
             }
 
-            final Visualisation visualisation = visualisationService.loadByUuid(docRef.getUuid());
+            final VisualisationDoc visualisation = visualisationStore.readDocument(docRef);
 
             if (visualisation == null || visualisation.getSettings() == null || visualisation.getSettings().length() == 0) {
                 return null;
@@ -396,7 +396,6 @@ public class SearchRequestMapper {
 
             ObjectMapper mapper = new ObjectMapper();
             mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
             mapper.setSerializationInclusion(Include.NON_NULL);
 
             final VisSettings visSettings = mapper.readValue(visualisation.getSettings(), VisSettings.class);
@@ -478,7 +477,7 @@ public class SearchRequestMapper {
 //                return null;
 //            }
 //
-//            final Visualisation visualisation = visualisationService.loadByUuid(docRef.getUuid());
+//            final Visualisation visualisation = visualisationStore.loadByUuid(docRef.getUuid());
 //
 //            if (visualisation == null || visualisation.getSettings() == null || visualisation.getSettings().length() == 0) {
 //                return null;

@@ -1,0 +1,13 @@
+{
+  "type" : "Visualisation",
+  "uuid" : "195fbed2-5a75-456f-bd98-f2dd184b94f9",
+  "name" : "DayWeekHeatMap",
+  "version" : "aaaa2e11-0733-4557-a08d-06eeb1bf2019",
+  "description" : "Git commit: a1e3bba4e658189a7de874fd1c6748624084d7e4\nGit commit time: 2016-09-21 17:03:32 +0100",
+  "functionName" : "visualisations.DayWeekHeatMap",
+  "scriptRef" : {
+    "type" : "Script",
+    "uuid" : "abb0e349-b61a-4946-9231-86d5a98596c7",
+    "name" : "DayWeekHeatMap"
+  }
+}

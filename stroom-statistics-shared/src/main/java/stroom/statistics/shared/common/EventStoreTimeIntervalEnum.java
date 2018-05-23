@@ -16,7 +16,7 @@
 
 package stroom.statistics.shared.common;
 
-import stroom.util.shared.HasDisplayValue;
+import stroom.docref.HasDisplayValue;
 
 import java.util.HashMap;
 import java.util.Map;

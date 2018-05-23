@@ -18,7 +18,7 @@ package stroom.dispatch.shared;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 import stroom.entity.shared.Action;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 public interface DispatchService extends RemoteService {
     <R extends SharedObject> R exec(Action<R> action);

@@ -16,8 +16,8 @@
 
 package stroom.entity.shared;
 
-import stroom.query.api.v2.DocRef;
-import stroom.util.shared.SharedObject;
+import stroom.docref.DocRef;
+import stroom.docref.SharedObject;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Collection;

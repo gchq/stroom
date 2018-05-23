@@ -32,12 +32,12 @@ import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.client.JSONUtil;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.EqualsUtil;
-import stroom.visualisation.shared.Visualisation;
+import stroom.visualisation.shared.VisualisationDoc;
 import stroom.widget.tab.client.presenter.TabData;
 
 import java.util.ArrayList;
@@ -63,7 +63,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
         this.dispatcher = dispatcher;
         view.setUiHandlers(this);
 
-        visualisationPresenter.setIncludedTypes(Visualisation.ENTITY_TYPE);
+        visualisationPresenter.setIncludedTypes(VisualisationDoc.DOCUMENT_TYPE);
         visualisationPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
 
         view.setVisualisationView(visualisationPresenter.getView());

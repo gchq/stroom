@@ -225,7 +225,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
     public void updateIndexConfig(final IndexConfig indexConfig) {
         this.maxDocumentCount = indexConfig.getIndex().getMaxDocsPerShard();
         if (indexConfig.getIndexFields() != null) {
-            for (final IndexField indexField : indexConfig.getIndexFields().getIndexFields()) {
+            for (final IndexField indexField : indexConfig.getIndexFields()) {
                 // Add the field analyser.
                 final Analyzer analyzer = AnalyzerFactory.create(indexField.getAnalyzerType(),
                         indexField.isCaseSensitive());

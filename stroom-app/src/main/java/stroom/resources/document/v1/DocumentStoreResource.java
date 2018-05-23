@@ -19,7 +19,7 @@ package stroom.resources.document.v1;
 
 import com.codahale.metrics.annotation.Timed;
 import stroom.document.DocumentStore;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;

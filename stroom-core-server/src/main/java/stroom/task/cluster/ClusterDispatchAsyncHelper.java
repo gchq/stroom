@@ -22,7 +22,7 @@ import stroom.node.shared.Node;
 import stroom.properties.StroomPropertyService;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

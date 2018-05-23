@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import stroom.util.shared.SharedList;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 /**
  * List that knows how big the whole set is.

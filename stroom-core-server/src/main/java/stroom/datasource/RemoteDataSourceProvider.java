@@ -21,7 +21,7 @@ import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.datasource.api.v2.DataSource;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
@@ -89,7 +89,7 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
             // We'll look for the user's API key in the session, but if they're not logged in we'll try and get
             // one from the security context.
             String usersApiKey = HttpSessionUtil.getUserApiKey(httpServletRequestHolder.get().getSession(true));
-            if(usersApiKey == null || usersApiKey.isEmpty()){
+            if (usersApiKey == null || usersApiKey.isEmpty()) {
                 usersApiKey = securityContext.getApiToken();
             }
 
@@ -106,7 +106,7 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
                         response.getStatus(), request, webTarget.getUri(), response.getStatusInfo().getReasonPhrase()));
             }
 
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             throw new RuntimeException(String.format("Error sending request %s to %s", request, path), e);
         }
     }

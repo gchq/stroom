@@ -1,0 +1,15 @@
+{
+  "type" : "Script",
+  "uuid" : "187f4abd-db8b-43d6-ade5-eea19c0b1bf4",
+  "name" : "StackedArea",
+  "version" : "c8bcb557-1d3f-491b-a371-78ece1bf2f9b",
+  "dependencies" : [ {
+    "type" : "Script",
+    "uuid" : "49a5f46c-f627-49ed-afb9-0066b99e235a",
+    "name" : "Common"
+  }, {
+    "type" : "Script",
+    "uuid" : "5d4252d6-6f13-4f24-9481-9e98e038747c",
+    "name" : "GenericGrid"
+  } ]
+}

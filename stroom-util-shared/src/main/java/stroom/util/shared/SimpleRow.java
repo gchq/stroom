@@ -16,6 +16,8 @@
 
 package stroom.util.shared;
 
+import stroom.docref.SharedObject;
+
 public class SimpleRow implements SharedObject {
     private static final long serialVersionUID = -5141968253120011771L;
 

@@ -30,8 +30,8 @@ import stroom.entity.shared.SQLNameConstants;
 import stroom.entity.util.FieldMap;
 import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
-import stroom.security.shared.PermissionNames;
 import stroom.security.shared.FindUserCriteria;
+import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserRef;
 import stroom.util.config.StroomProperties;
 
@@ -39,6 +39,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.persistence.PersistenceException;
 import javax.persistence.Transient;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -336,8 +337,8 @@ class UserServiceImpl implements UserService {
     public String getEntityType() {
         if (entityType == null) {
             try {
-                entityType = getEntityClass().newInstance().getType();
-            } catch (final IllegalAccessException | InstantiationException e) {
+                entityType = getEntityClass().getDeclaredConstructor(new Class[0]).newInstance().getType();
+            } catch (final IllegalAccessException | InstantiationException | NoSuchMethodException | InvocationTargetException e) {
                 throw new RuntimeException(e);
             }
         }

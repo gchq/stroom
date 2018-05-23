@@ -16,7 +16,7 @@
 
 package stroom.entity.shared;
 
-import stroom.util.shared.HasDisplayValue;
+import stroom.docref.HasDisplayValue;
 
 public enum EntityAction implements HasDisplayValue {
     CREATE("Create"), UPDATE("Update"), DELETE("Delete"), CLEAR_CACHE("Clear Cache");

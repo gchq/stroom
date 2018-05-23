@@ -16,7 +16,7 @@
 
 package stroom.dashboard.shared;
 
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 public class ValidateExpressionResult implements SharedObject {
     private static final long serialVersionUID = 7559713171858774241L;

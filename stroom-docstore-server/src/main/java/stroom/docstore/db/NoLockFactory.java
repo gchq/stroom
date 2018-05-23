@@ -1,20 +1,17 @@
 package stroom.docstore.db;
 
-import stroom.docstore.RWLock;
 import stroom.docstore.RWLockFactory;
+
+import java.util.function.Supplier;
 
 class NoLockFactory implements RWLockFactory {
     @Override
-    public RWLock lock(final String uuid) {
-        return new Impl();
+    public void lock(final String uuid, final Runnable runnable) {
+        runnable.run();
     }
 
-    class Impl implements RWLock {
-        Impl() {
-        }
-
-        @Override
-        public void close() {
-        }
+    @Override
+    public <T> T lockResult(final String uuid, final Supplier<T> supplier) {
+        return supplier.get();
     }
 }

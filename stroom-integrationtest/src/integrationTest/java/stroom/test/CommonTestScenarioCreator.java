@@ -18,12 +18,13 @@
 package stroom.test;
 
 import org.junit.Assert;
-import stroom.feed.StroomHeaderArguments;
 import stroom.feed.FeedService;
+import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.Feed.FeedStatus;
-import stroom.index.IndexService;
-import stroom.index.shared.Index;
+import stroom.index.IndexStore;
+import stroom.index.IndexVolumeService;
+import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
 import stroom.node.NodeCache;
@@ -31,6 +32,7 @@ import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeUseStatus;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.streamstore.StreamStore;
@@ -49,9 +51,10 @@ import stroom.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Help class to create some basic scenarios for testing.
@@ -61,8 +64,9 @@ public class CommonTestScenarioCreator {
     private final StreamStore streamStore;
     private final StreamProcessorService streamProcessorService;
     private final StreamProcessorFilterService streamProcessorFilterService;
-    private final IndexService indexService;
+    private final IndexStore indexStore;
     private final VolumeService volumeService;
+    private final IndexVolumeService indexVolumeService;
     private final NodeCache nodeCache;
 
     @Inject
@@ -70,15 +74,17 @@ public class CommonTestScenarioCreator {
                               final StreamStore streamStore,
                               final StreamProcessorService streamProcessorService,
                               final StreamProcessorFilterService streamProcessorFilterService,
-                              final IndexService indexService,
+                              final IndexStore indexStore,
                               final VolumeService volumeService,
+                              final IndexVolumeService indexVolumeService,
                               final NodeCache nodeCache) {
         this.feedService = feedService;
         this.streamStore = streamStore;
         this.streamProcessorService = streamProcessorService;
         this.streamProcessorFilterService = streamProcessorFilterService;
-        this.indexService = indexService;
+        this.indexStore = indexStore;
         this.volumeService = volumeService;
+        this.indexVolumeService = indexVolumeService;
         this.nodeCache = nodeCache;
     }
 
@@ -142,33 +148,34 @@ public class CommonTestScenarioCreator {
         streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, queryData);
     }
 
-    public Index createIndex(final String name) {
-        return createIndex(name, createIndexFields(), Index.DEFAULT_MAX_DOCS_PER_SHARD);
+    public DocRef createIndex(final String name) {
+        return createIndex(name, createIndexFields(), IndexDoc.DEFAULT_MAX_DOCS_PER_SHARD);
     }
 
-    public Index createIndex(final String name, final IndexFields indexFields) {
-        return createIndex(name, indexFields, Index.DEFAULT_MAX_DOCS_PER_SHARD);
+    public DocRef createIndex(final String name, final List<IndexField> indexFields) {
+        return createIndex(name, indexFields, IndexDoc.DEFAULT_MAX_DOCS_PER_SHARD);
     }
 
-    public Index createIndex(final String name, final IndexFields indexFields, final int maxDocsPerShard) {
+    public DocRef createIndex(final String name, final List<IndexField> indexFields, final int maxDocsPerShard) {
         // Create a test index.
-        Index index = indexService.create(name);
+        final DocRef indexRef = indexStore.createDocument(name);
+        final IndexDoc index = indexStore.readDocument(indexRef);
         index.setMaxDocsPerShard(maxDocsPerShard);
-        index.setIndexFieldsObject(indexFields);
+        index.setIndexFields(indexFields);
+        indexStore.writeDocument(index);
+        Assert.assertNotNull(index);
 
         final FindVolumeCriteria findVolumeCriteria = new FindVolumeCriteria();
         findVolumeCriteria.getIndexStatusSet().add(VolumeUseStatus.ACTIVE);
         findVolumeCriteria.getNodeIdSet().add(nodeCache.getDefaultNode());
-        final List<Volume> volumes = volumeService.find(findVolumeCriteria);
-        index.getVolumes().addAll(volumes);
+        final Set<Volume> volumes = new HashSet<>(volumeService.find(findVolumeCriteria));
+        indexVolumeService.setVolumesForIndex(indexRef, volumes);
 
-        index = indexService.save(index);
-        Assert.assertNotNull(index);
-        return index;
+        return indexRef;
     }
 
-    public IndexFields createIndexFields() {
-        final IndexFields indexFields = IndexFields.createStreamIndexFields();
+    public List<IndexField> createIndexFields() {
+        final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(IndexField.createField("test"));
         return indexFields;
     }
@@ -176,7 +183,6 @@ public class CommonTestScenarioCreator {
     /**
      * @param feed related
      * @return a basic raw file
-     * @throws IOException
      */
     public Stream createSample2LineRawFile(final Feed feed, final StreamType streamType) {
         final Stream stream = Stream.createStream(streamType, feed, null);

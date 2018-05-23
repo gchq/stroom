@@ -27,11 +27,13 @@ import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataWithPipelineAction;
 import stroom.pipeline.state.FeedHolder;
+import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.streamstore.StreamStore;
+import stroom.streamtask.StreamProcessorService;
 import stroom.task.TaskHandlerBean;
 
 import javax.inject.Inject;
@@ -44,10 +46,12 @@ class FetchDataWithPipelineHandler extends AbstractFetchDataHandler<FetchDataWit
     @Inject
     FetchDataWithPipelineHandler(final StreamStore streamStore,
                                  final FeedService feedService,
+                                 final StreamProcessorService streamProcessorService,
                                  final Provider<FeedHolder> feedHolderProvider,
+                                 final Provider<MetaDataHolder> metaDataHolderProvider,
                                  final Provider<PipelineHolder> pipelineHolderProvider,
                                  final Provider<StreamHolder> streamHolderProvider,
-                                 final PipelineService pipelineService,
+                                 final PipelineStore pipelineStore,
                                  final Provider<PipelineFactory> pipelineFactoryProvider,
                                  final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
                                  final PipelineDataCache pipelineDataCache,
@@ -56,10 +60,12 @@ class FetchDataWithPipelineHandler extends AbstractFetchDataHandler<FetchDataWit
                                  final PipelineScopeRunnable pipelineScopeRunnable) {
         super(streamStore,
                 feedService,
+                streamProcessorService,
                 feedHolderProvider,
+                metaDataHolderProvider,
                 pipelineHolderProvider,
                 streamHolderProvider,
-                pipelineService,
+                pipelineStore,
                 pipelineFactoryProvider,
                 errorReceiverProxyProvider,
                 pipelineDataCache,

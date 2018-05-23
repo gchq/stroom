@@ -256,9 +256,7 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
             return null;
         }
 
-        Severity[] severities = new Severity[expandedSeverities.size()];
-        severities = expandedSeverities.toArray(severities);
-        return severities;
+        return expandedSeverities.toArray(new Severity[0]);
     }
 
     public void resetExpandedSeverities() {

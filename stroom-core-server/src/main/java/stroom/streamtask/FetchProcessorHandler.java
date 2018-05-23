@@ -19,7 +19,7 @@ package stroom.streamtask;
 
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.shared.PermissionNames;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
@@ -33,7 +33,7 @@ import stroom.streamtask.shared.StreamProcessorRow;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.Expander;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -66,9 +66,9 @@ class FetchProcessorHandler extends AbstractTaskHandler<FetchProcessorAction, Re
 
             final FindStreamProcessorFilterCriteria criteria = new FindStreamProcessorFilterCriteria();
             final FindStreamProcessorCriteria criteriaRoot = new FindStreamProcessorCriteria();
-            if (action.getPipelineId() != null) {
-                criteria.obtainPipelineIdSet().add(action.getPipelineId());
-                criteriaRoot.obtainPipelineIdSet().add(action.getPipelineId());
+            if (action.getPipeline() != null) {
+                criteria.obtainPipelineSet().add(action.getPipeline());
+                criteriaRoot.obtainPipelineSet().add(action.getPipeline());
             }
 
             // If the user is not an admin then only show them filters that were created by them.
@@ -77,8 +77,8 @@ class FetchProcessorHandler extends AbstractTaskHandler<FetchProcessorAction, Re
             }
 
             criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
-            criteria.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
-            criteriaRoot.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
+            criteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
+            criteriaRoot.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
 
             final BaseResultList<StreamProcessor> streamProcessors = streamProcessorService.find(criteriaRoot);
 
@@ -90,13 +90,13 @@ class FetchProcessorHandler extends AbstractTaskHandler<FetchProcessorAction, Re
 
             final List<StreamProcessor> sorted = new ArrayList<>(processors);
             sorted.sort((o1, o2) -> {
-                if (o1.getPipeline() != null && o2.getPipeline() != null) {
-                    return o1.getPipeline().getName().compareTo(o2.getPipeline().getName());
+                if (o1.getPipelineUuid() != null && o2.getPipelineUuid() != null) {
+                    return o1.getPipelineUuid().compareTo(o2.getPipelineUuid());
                 }
-                if (o1.getPipeline() != null) {
+                if (o1.getPipelineUuid() != null) {
                     return -1;
                 }
-                if (o2.getPipeline() != null) {
+                if (o2.getPipelineUuid() != null) {
                     return 1;
                 }
                 return o1.compareTo(o2);

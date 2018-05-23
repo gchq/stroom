@@ -16,7 +16,7 @@
 
 package stroom.streamstore.shared;
 
-import stroom.util.shared.HasDisplayValue;
+import stroom.docref.HasDisplayValue;
 
 public enum TimeUnit implements HasDisplayValue {
     MINUTES("Minutes"), HOURS("Hours"), DAYS("Days"), WEEKS("Weeks"), MONTHS("Months"), YEARS("Years");

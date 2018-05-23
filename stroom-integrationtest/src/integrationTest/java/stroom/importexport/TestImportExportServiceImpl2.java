@@ -21,7 +21,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.feed.FeedService;
 import stroom.importexport.shared.ImportState;
-import stroom.pipeline.PipelineService;
+import stroom.pipeline.PipelineStore;
 import stroom.resource.ResourceStore;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.StroomCoreServerTestFileUtil;
@@ -41,7 +41,7 @@ public class TestImportExportServiceImpl2 extends AbstractCoreIntegrationTest {
     @Inject
     private ResourceStore resourceStore;
     @Inject
-    private PipelineService pipelineService;
+    private PipelineStore pipelineStore;
     @Inject
     private FeedService feedService;
 

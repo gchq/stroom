@@ -7,7 +7,7 @@ import stroom.dictionary.shared.DictionaryDoc;
 import stroom.entity.util.XMLMarshallerUtil;
 import stroom.entity.shared.IdRange;
 import stroom.entity.shared.Range;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.stream.OldFindStreamCriteria;

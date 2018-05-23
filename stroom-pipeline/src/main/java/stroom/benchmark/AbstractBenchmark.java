@@ -34,8 +34,8 @@ import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
-import stroom.util.io.StreamUtil;
 import stroom.task.TaskContext;
+import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -59,11 +59,11 @@ public abstract class AbstractBenchmark {
     }
 
     protected boolean isTerminated() {
-        return taskContext.isTerminated();
+        return Thread.currentThread().isInterrupted();
     }
 
     public void abortDueToTimeout() {
-        taskContext.terminate();
+        Thread.currentThread().interrupt();
     }
 
     protected void info(final Object... args) {
@@ -166,7 +166,7 @@ public abstract class AbstractBenchmark {
         final StringBuilder sb = new StringBuilder();
         sb.append("FileNo,Country,Site,Building,Floor,Room,Desk\n");
 
-        for (int i = 0; i < recordCount && !taskContext.isTerminated(); i++) {
+        for (int i = 0; i < recordCount && !Thread.currentThread().isInterrupted(); i++) {
             sb.append(i);
             sb.append(",UK,Site ");
             sb.append(i);
@@ -182,7 +182,7 @@ public abstract class AbstractBenchmark {
 
         final SimpleDateFormat df = new SimpleDateFormat("dd/MM/yyyy,HH:mm:ss");
 
-        for (int i = 0; i < recordCount && !taskContext.isTerminated(); i++) {
+        for (int i = 0; i < recordCount && !Thread.currentThread().isInterrupted(); i++) {
             sb.append(df.format(new Date()));
             sb.append(",");
             sb.append(i);

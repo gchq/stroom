@@ -3,27 +3,25 @@ package stroom.statistics.sql.search;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.docref.DocRef;
 import stroom.node.shared.ClientProperties;
 import stroom.properties.StroomPropertyService;
-import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
 import stroom.query.common.v2.StoreSize;
-import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.sql.entity.StatisticStoreCache;
 import stroom.task.ExecutorProvider;
 import stroom.task.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.HasTerminate;
 
 import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
@@ -69,20 +67,20 @@ public class SqlStatisticStoreFactory implements StoreFactory {
         Preconditions.checkNotNull(searchRequest.getResultRequests(), "searchRequest must have at least one resultRequest");
         Preconditions.checkArgument(!searchRequest.getResultRequests().isEmpty(), "searchRequest must have at least one resultRequest");
 
-        final StatisticStoreEntity statisticStoreEntity = statisticStoreCache.getStatisticsDataSource(docRef);
+        final StatisticStoreDoc statisticStoreDoc = statisticStoreCache.getStatisticsDataSource(docRef);
 
-        Preconditions.checkNotNull(statisticStoreEntity, "Statistic configuration could not be found for uuid "
+        Preconditions.checkNotNull(statisticStoreDoc, "Statistic configuration could not be found for uuid "
                 + docRef.getUuid());
 
-        final Store store = buildStore(searchRequest, statisticStoreEntity);
+        final Store store = buildStore(searchRequest, statisticStoreDoc);
         return store;
     }
 
     private Store buildStore(final SearchRequest searchRequest,
-                             final StatisticStoreEntity statisticStoreEntity) {
+                             final StatisticStoreDoc statisticStoreDoc) {
 
         Preconditions.checkNotNull(searchRequest);
-        Preconditions.checkNotNull(statisticStoreEntity);
+        Preconditions.checkNotNull(statisticStoreDoc);
 
         final StoreSize storeSize = new StoreSize(getStoreSizes());
         final List<Integer> defaultMaxResultsSizes = getDefaultMaxResultsSizes();
@@ -91,7 +89,7 @@ public class SqlStatisticStoreFactory implements StoreFactory {
         //wrap the resultHandler in a new store, initiating the search in the process
         final SqlStatisticsStore store = new SqlStatisticsStore(
                 searchRequest,
-                statisticStoreEntity,
+                statisticStoreDoc,
                 statisticsSearchService,
                 defaultMaxResultsSizes,
                 storeSize,
@@ -101,28 +99,6 @@ public class SqlStatisticStoreFactory implements StoreFactory {
 
         return store;
     }
-
-
-
-    private HasTerminate getTaskMonitor() {
-
-        return new HasTerminate() {
-
-            private final AtomicBoolean isTerminated = new AtomicBoolean(false);
-
-            @Override
-            public void terminate() {
-                isTerminated.set(true);
-            }
-
-            @Override
-            public boolean isTerminated() {
-                return isTerminated.get();
-            }
-        };
-    }
-
-
 
     private List<Integer> getDefaultMaxResultsSizes() {
         final String value = stroomPropertyService.getProperty(ClientProperties.DEFAULT_MAX_RESULTS);

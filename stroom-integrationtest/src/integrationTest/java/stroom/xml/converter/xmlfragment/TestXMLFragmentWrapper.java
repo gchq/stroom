@@ -19,7 +19,7 @@ package stroom.xml.converter.xmlfragment;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.guice.PipelineScopeRunnable;
-import stroom.pipeline.shared.TextConverter.TextConverterType;
+import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.xml.F2XTestUtil;
 import stroom.xml.XMLValidator;

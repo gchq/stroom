@@ -32,7 +32,7 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.structure.client.view.Box;
 import stroom.pipeline.structure.client.view.TreePanel;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.widget.htree.client.BracketConnectorRenderer;
 import stroom.widget.htree.client.ConnectorRenderer;

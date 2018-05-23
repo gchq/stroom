@@ -32,10 +32,10 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
-import stroom.util.date.DateUtil;
-import stroom.util.logging.LogExecutionTime;
-import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.task.TaskContext;
+import stroom.util.date.DateUtil;
+import stroom.util.lifecycle.StroomSimpleCronSchedule;
+import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -80,7 +80,7 @@ public class StreamRetentionExecutor {
                 final FindFeedCriteria findFeedCriteria = new FindFeedCriteria();
                 final List<Feed> feedList = feedService.find(findFeedCriteria);
                 for (final Feed feed : feedList) {
-                    if (!taskContext.isTerminated()) {
+                    if (!Thread.currentThread().isInterrupted()) {
                         processFeed(feed);
                     }
                 }

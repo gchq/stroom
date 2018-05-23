@@ -16,7 +16,7 @@
 
 package stroom.stats.shared;
 
-import stroom.util.shared.HasDisplayValue;
+import stroom.docref.HasDisplayValue;
 
 /**
  * Enum used to hold the intervals used in storing the event stats. The time of

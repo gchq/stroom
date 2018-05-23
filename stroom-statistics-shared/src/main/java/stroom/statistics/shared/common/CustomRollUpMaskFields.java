@@ -16,7 +16,7 @@
 
 package stroom.statistics.shared.common;
 
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 import java.util.Set;
 

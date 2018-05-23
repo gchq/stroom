@@ -28,7 +28,7 @@ import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.HasCriteria;
 import stroom.entity.shared.HasIsConstrained;
 import stroom.entity.shared.ResultList;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 import java.util.ArrayList;
 

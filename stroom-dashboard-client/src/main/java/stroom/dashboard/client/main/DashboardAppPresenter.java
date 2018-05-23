@@ -31,32 +31,28 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
 import com.gwtplatform.mvp.client.proxy.RevealRootContentEvent;
 import stroom.alert.client.event.AlertEvent;
-import stroom.dashboard.shared.Dashboard;
+import stroom.dashboard.shared.DashboardDoc;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.DocRefUtil;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.DocumentServiceReadAction;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.client.event.CurrentUserChangedEvent;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 
 import javax.inject.Inject;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class DashboardAppPresenter
         extends MyPresenter<DashboardAppPresenter.DashboardAppView, DashboardAppPresenter.DashboardAppProxy>
         implements TaskStartEvent.TaskStartHandler, TaskEndEvent.TaskEndHandler {
-    private static final Logger logger = Logger.getLogger(DashboardAppPresenter.class.getName());
-
     @ContentSlot
     public static final GwtEvent.Type<RevealContentHandler<?>> CONTENT = new GwtEvent.Type<>();
 
     private final ClientSecurityContext securityContext;
     private final DashboardPresenter dashboardPresenter;
 
-    private Dashboard dashboard;
+    private DashboardDoc dashboard;
     private String params;
 
     @Inject
@@ -80,7 +76,7 @@ public class DashboardAppPresenter
 
             } else {
                 final DocRef docRef = new DocRef(type, uuid);
-                dispatcher.exec(new DocumentServiceReadAction<Dashboard>(docRef))
+                dispatcher.exec(new DocumentServiceReadAction<DashboardDoc>(docRef))
                         .onSuccess(this::onLoadSuccess)
                         .onFailure(this::onLoadFailure);
             }
@@ -108,7 +104,7 @@ public class DashboardAppPresenter
         });
     }
 
-    private void onLoadSuccess(final Dashboard dashboard) {
+    private void onLoadSuccess(final DashboardDoc dashboard) {
         if (dashboard == null) {
             AlertEvent.fireError(this, "No dashboard uuid has been specified", null);
 

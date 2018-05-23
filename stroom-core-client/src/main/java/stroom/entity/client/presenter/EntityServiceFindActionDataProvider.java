@@ -26,7 +26,7 @@ import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.ResultList;
 import stroom.entity.shared.Sort.Direction;
 import stroom.streamstore.client.presenter.ActionDataProvider;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 public class EntityServiceFindActionDataProvider<C extends BaseCriteria, E extends SharedObject>
         implements Refreshable, ColumnSortEvent.Handler {

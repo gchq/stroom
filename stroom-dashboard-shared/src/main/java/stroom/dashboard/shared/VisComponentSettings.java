@@ -16,16 +16,20 @@
 
 package stroom.dashboard.shared;
 
-import stroom.query.api.v2.DocRef;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import stroom.docref.DocRef;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "vis", propOrder = {"tableId", "visualisation", "json"})
+@JsonPropertyOrder({"tableId", "visualisation", "json"})
+@XmlRootElement(name = "vis")
+@XmlType(name = "VisComponentSettings", propOrder = {"tableId", "visualisation", "json"})
 public class VisComponentSettings extends ComponentSettings {
     private static final long serialVersionUID = -2530827581046882396L;
 

@@ -28,10 +28,9 @@ import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import stroom.cache.StoredXsltExecutable;
 import stroom.cache.XSLTPool;
-import stroom.entity.shared.StringCriteria;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.SupportsCodeInjection;
-import stroom.pipeline.XSLTService;
+import stroom.pipeline.XsltStore;
 import stroom.pipeline.errorhandler.ErrorListenerAdaptor;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverIdDecorator;
@@ -43,8 +42,7 @@ import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.shared.ElementIcons;
-import stroom.pipeline.shared.FindXSLTCriteria;
-import stroom.pipeline.shared.XSLT;
+import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.shared.data.PipelineReference;
@@ -52,7 +50,7 @@ import stroom.pipeline.state.PipelineContext;
 import stroom.pipeline.writer.PathCreator;
 import stroom.pool.PoolItem;
 import stroom.properties.StroomPropertyService;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.util.CharBuffer;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
@@ -80,7 +78,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
 
     private final XSLTPool xsltPool;
     private final ErrorReceiverProxy errorReceiverProxy;
-    private final XSLTService xsltService;
+    private final XsltStore xsltStore;
     private final StroomPropertyService stroomPropertyService;
     private final LocationFactoryProxy locationFactory;
     private final PipelineContext pipelineContext;
@@ -112,14 +110,14 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     @Inject
     public XSLTFilter(final XSLTPool xsltPool,
                       final ErrorReceiverProxy errorReceiverProxy,
-                      final XSLTService xsltService,
+                      final XsltStore xsltStore,
                       final StroomPropertyService stroomPropertyService,
                       final LocationFactoryProxy locationFactory,
                       final PipelineContext pipelineContext,
                       final PathCreator pathCreator) {
         this.xsltPool = xsltPool;
         this.errorReceiverProxy = errorReceiverProxy;
-        this.xsltService = xsltService;
+        this.xsltStore = xsltStore;
         this.stroomPropertyService = stroomPropertyService;
         this.locationFactory = locationFactory;
         this.pipelineContext = pipelineContext;
@@ -131,7 +129,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         try {
             errorListener = new ErrorListenerAdaptor(getElementId(), locationFactory, errorReceiverProxy);
             maxElementCount = getMaxElements();
-            XSLT xslt = null;
+            XsltDoc xslt = null;
 
             // Load XSLT from a name pattern if one has been specified.
             if (xsltNamePattern != null && xsltNamePattern.trim().length() > 0) {
@@ -154,11 +152,8 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                 }
 
                 LOGGER.debug("Finding XSLT with resolved name '{}' from pattern '{}'", resolvedName, xsltNamePattern);
-                final FindXSLTCriteria criteria = new FindXSLTCriteria();
-                criteria.setName(new StringCriteria(resolvedName));
-                criteria.setSort(FindXSLTCriteria.FIELD_ID);
-                final List<XSLT> xsltList = xsltService.find(criteria);
-                if (xsltList == null || xsltList.size() == 0) {
+                final List<DocRef> docs = xsltStore.findByName(resolvedName);
+                if (docs == null || docs.size() == 0) {
                     if (!suppressXSLTNotFoundWarnings) {
                         final StringBuilder sb = new StringBuilder();
                         sb.append("No XSLT found with name '");
@@ -177,16 +172,16 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                         errorReceiverProxy.log(Severity.WARNING, null, getElementId(), sb.toString(), null);
                     }
                 } else {
-                    xslt = xsltList.get(0);
+                    xslt = xsltStore.readDocument(docs.get(0));
 
-                    if (xsltList.size() > 1) {
+                    if (docs.size() > 1) {
                         final String message = "" +
                                 "Multiple XSLT found with name '" +
                                 resolvedName +
                                 "' from pattern '" +
                                 xsltNamePattern +
-                                "' - using XSLT with lowest id (" +
-                                xslt.getId() +
+                                "' - using XSLT with uuid (" +
+                                xslt.getUuid() +
                                 ")";
                         errorReceiverProxy.log(Severity.WARNING, null, getElementId(), message, null);
                     }
@@ -195,7 +190,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
 
             // Load the XSLT from a reference if we haven't found it by name.
             if (xslt == null && xsltRef != null) {
-                xslt = xsltService.loadByUuid(xsltRef.getUuid());
+                xslt = xsltStore.readDocument(xsltRef);
                 if (xslt == null) {
                     final String message = "" +
                             "XSLT \"" +
@@ -599,7 +594,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     }
 
     @PipelineProperty(description = "The XSLT to use.")
-    @PipelinePropertyDocRef(types = XSLT.ENTITY_TYPE)
+    @PipelinePropertyDocRef(types = XsltDoc.DOCUMENT_TYPE)
     public void setXslt(final DocRef xsltRef) {
         this.xsltRef = xsltRef;
     }

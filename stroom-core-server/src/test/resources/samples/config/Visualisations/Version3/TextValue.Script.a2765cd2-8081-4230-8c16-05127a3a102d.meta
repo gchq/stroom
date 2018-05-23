@@ -1,0 +1,15 @@
+{
+  "type" : "Script",
+  "uuid" : "a2765cd2-8081-4230-8c16-05127a3a102d",
+  "name" : "TextValue",
+  "version" : "d03e244d-5e0f-41e1-8ba9-4c1e2347944b",
+  "dependencies" : [ {
+    "type" : "Script",
+    "uuid" : "49a5f46c-f627-49ed-afb9-0066b99e235a",
+    "name" : "Common"
+  }, {
+    "type" : "Script",
+    "uuid" : "5d4252d6-6f13-4f24-9481-9e98e038747c",
+    "name" : "GenericGrid"
+  } ]
+}

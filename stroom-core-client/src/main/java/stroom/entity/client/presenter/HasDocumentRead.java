@@ -16,7 +16,7 @@
 
 package stroom.entity.client.presenter;
 
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 public interface HasDocumentRead<E> {
     void read(DocRef docRef, E entity);

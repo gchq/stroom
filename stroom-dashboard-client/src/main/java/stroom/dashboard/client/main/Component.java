@@ -20,7 +20,7 @@ import stroom.dashboard.client.flexlayout.TabLayout;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.TabConfig;
-import stroom.util.shared.HasDisplayValue;
+import stroom.docref.HasDisplayValue;
 import stroom.widget.tab.client.presenter.Layer;
 import stroom.widget.tab.client.presenter.TabData;
 

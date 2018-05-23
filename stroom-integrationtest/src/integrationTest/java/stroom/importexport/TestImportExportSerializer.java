@@ -19,8 +19,6 @@ package stroom.importexport;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
@@ -29,10 +27,9 @@ import stroom.feed.shared.Feed;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.importexport.shared.ImportState.State;
-import stroom.pipeline.PipelineService;
-import stroom.pipeline.shared.FindPipelineEntityCriteria;
-import stroom.pipeline.shared.PipelineEntity;
-import stroom.query.api.v2.DocRef;
+import stroom.pipeline.PipelineStore;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.docref.DocRef;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
@@ -41,9 +38,8 @@ import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.FileSystemTestUtil;
-import stroom.xmlschema.XMLSchemaService;
-import stroom.xmlschema.shared.FindXMLSchemaCriteria;
-import stroom.xmlschema.shared.XMLSchema;
+import stroom.xmlschema.XmlSchemaStore;
+import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -62,11 +58,11 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
     @Inject
     private FeedService feedService;
     @Inject
-    private XMLSchemaService xmlSchemaService;
+    private XmlSchemaStore xmlSchemaStore;
     @Inject
     private ImportExportSerializer importExportSerializer;
     @Inject
-    private PipelineService pipelineService;
+    private PipelineStore pipelineStore;
     @Inject
     private ExplorerService explorerService;
 
@@ -85,7 +81,7 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
         commonTestControl.createRequiredXMLSchemas();
 
-        BaseResultList<XMLSchema> allSchemas = xmlSchemaService.find(new FindXMLSchemaCriteria());
+        List<DocRef> allSchemas = xmlSchemaStore.list();
 
         final Path testDataDir = getCurrentTestDir().resolve("ExportTest");
 
@@ -109,9 +105,10 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         eventFeed = feedService.readDocument(docRef);
         eventFeed.setDescription("New Description");
         feedService.save(eventFeed);
-        for (final XMLSchema xmlSchema : allSchemas) {
+        for (final DocRef ref : allSchemas) {
+            final XmlSchemaDoc xmlSchema = xmlSchemaStore.readDocument(ref);
             xmlSchema.setData("XML");
-            xmlSchemaService.save(xmlSchema);
+            xmlSchemaStore.writeDocument(xmlSchema);
         }
 
         list = new ArrayList<>();
@@ -137,10 +134,11 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         Assert.assertEquals(State.NEW, list.get(1).getState());
 
         importExportSerializer.read(testDataDir, list, ImportMode.IGNORE_CONFIRMATION);
-        allSchemas = xmlSchemaService.find(new FindXMLSchemaCriteria());
+        allSchemas = xmlSchemaStore.list();
 
-        for (final XMLSchema xmlSchema : allSchemas) {
-            Assert.assertNotSame("XML", xmlSchemaService.load(xmlSchema).getData());
+        for (final DocRef ref : allSchemas) {
+            final XmlSchemaDoc xmlSchema = xmlSchemaStore.readDocument(ref);
+            Assert.assertNotSame("XML", xmlSchema.getData());
         }
 
         Assert.assertNotNull(testDataDir);
@@ -149,15 +147,13 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
     @Test
     public void testPipeline() throws IOException {
         final DocRef folder = explorerService.create(ExplorerConstants.FOLDER, FileSystemTestUtil.getUniqueTestString(), null, null);
-        final DocRef parentPipelineRef = explorerService.create(PipelineEntity.ENTITY_TYPE, "Parent", folder, null);
-        final PipelineEntity parentPipeline = pipelineService.readDocument(parentPipelineRef);
+        final DocRef parentPipelineRef = explorerService.create(PipelineDoc.DOCUMENT_TYPE, "Parent", folder, null);
+        final DocRef childPipelineRef = explorerService.create(PipelineDoc.DOCUMENT_TYPE, "Child", folder, null);
+        final PipelineDoc childPipeline = pipelineStore.readDocument(childPipelineRef);
+        childPipeline.setParentPipeline(parentPipelineRef);
+        pipelineStore.writeDocument(childPipeline);
 
-        final DocRef childPipelineRef = explorerService.create(PipelineEntity.ENTITY_TYPE, "Child", folder, null);
-        final PipelineEntity childPipeline = pipelineService.readDocument(childPipelineRef);
-        childPipeline.setParentPipeline(DocRefUtil.create(parentPipeline));
-        pipelineService.save(childPipeline);
-
-        Assert.assertEquals(2, pipelineService.find(new FindPipelineEntityCriteria()).size());
+        Assert.assertEquals(2, pipelineStore.list().size());
 
         final Path testDataDir = getCurrentTestDir().resolve("ExportTest");
 
@@ -167,21 +163,21 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         importExportSerializer.write(testDataDir, buildFindFolderCriteria(), true, new ArrayList<>());
 
         final String fileNamePrefix = ImportExportFileNameUtil.createFilePrefix(childPipelineRef);
-        final String fileName = fileNamePrefix + ".xml";
+        final String fileName = fileNamePrefix + ".meta";
         final Path path = testDataDir.resolve(folder.getName()).resolve(fileName);
-        final String childXml = new String(Files.readAllBytes(path), StreamUtil.DEFAULT_CHARSET);
+        final String childJson = new String(Files.readAllBytes(path), StreamUtil.DEFAULT_CHARSET);
 
-        Assert.assertTrue("Parent reference not serialised\n" + childXml,
-                childXml.contains("&lt;name&gt;Parent&lt;/name&gt;"));
+        Assert.assertTrue("Parent reference not serialised\n" + childJson,
+                childJson.contains("\"name\" : \"Parent\""));
 
         // Remove all entities from the database.
         clean(true);
 
-        Assert.assertEquals(0, pipelineService.find(new FindPipelineEntityCriteria()).size());
+        Assert.assertEquals(0, pipelineStore.list().size());
 
         importExportSerializer.read(testDataDir, null, ImportMode.IGNORE_CONFIRMATION);
 
-        Assert.assertEquals(2, pipelineService.find(new FindPipelineEntityCriteria()).size());
+        Assert.assertEquals(2, pipelineStore.list().size());
     }
 
     @Test

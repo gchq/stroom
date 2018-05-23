@@ -24,7 +24,7 @@ import stroom.guice.StroomBeanStore;
 import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 import javax.inject.Inject;
 

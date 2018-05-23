@@ -21,15 +21,17 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import stroom.entity.shared.Clearable;
-import stroom.index.shared.Index;
-import stroom.index.shared.IndexFields;
+import stroom.index.shared.IndexDoc;
+import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
@@ -41,21 +43,21 @@ public class IndexConfigCacheImpl implements IndexConfigCache, Clearable {
     @Inject
     @SuppressWarnings("unchecked")
     IndexConfigCacheImpl(final CacheManager cacheManager,
-                         final IndexService indexService) {
+                         final IndexStore indexStore) {
         final CacheLoader<DocRef, IndexConfig> cacheLoader = CacheLoader.from(k -> {
             if (k == null) {
                 throw new NullPointerException("Null key supplied");
             }
 
-            final Index loaded = indexService.loadByUuid(k.getUuid());
+            final IndexDoc loaded = indexStore.readDocument(k);
             if (loaded == null) {
                 throw new NullPointerException("No index can be found for: " + k);
             }
 
             // Create a map of index fields keyed by name.
-            final IndexFields indexFields = loaded.getIndexFieldsObject();
-            if (indexFields == null || indexFields.getIndexFields() == null || indexFields.getIndexFields().size() == 0) {
-                throw new IndexException("No index fields have been set for: " + k);
+            List<IndexField> indexFields = loaded.getIndexFields();
+            if (indexFields == null) {
+                indexFields = new ArrayList<>();
             }
 
             final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(indexFields);

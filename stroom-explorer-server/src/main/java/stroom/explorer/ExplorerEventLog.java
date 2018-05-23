@@ -18,7 +18,7 @@
 package stroom.explorer;
 
 import stroom.entity.shared.PermissionInheritance;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 interface ExplorerEventLog {
     void create(String type, String uuid, String name, DocRef folder, PermissionInheritance permissionInheritance, Exception ex);

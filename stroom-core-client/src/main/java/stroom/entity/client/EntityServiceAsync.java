@@ -19,7 +19,7 @@ package stroom.entity.client;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 public interface EntityServiceAsync<E extends SharedObject, C extends BaseCriteria> {
     void find(C criteria, AsyncCallback<BaseResultList<E>> callback);

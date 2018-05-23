@@ -17,11 +17,9 @@
 package stroom.search;
 
 import org.junit.Assert;
-import stroom.entity.shared.DocRefUtil;
-import stroom.index.IndexService;
-import stroom.index.shared.FindIndexCriteria;
-import stroom.index.shared.Index;
-import stroom.query.api.v2.DocRef;
+import stroom.index.IndexStore;
+import stroom.index.shared.IndexDoc;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
@@ -40,7 +38,6 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.config.StroomProperties;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -85,10 +82,10 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
             final Consumer<Map<String, List<Row>>> resultMapConsumer,
             final int maxShardTasks,
             final int maxExtractionTasks,
-            final IndexService indexService) {
+            final IndexStore indexStore) {
         testInteractive(expressionIn, expectResultCount, componentIds, tableSettingsCreator,
                 extractValues, resultMapConsumer, maxShardTasks,
-                maxExtractionTasks, indexService, searchResponseCreatorManager);
+                maxExtractionTasks, indexStore, searchResponseCreatorManager);
     }
 
     public static void testInteractive(
@@ -100,7 +97,7 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
             final Consumer<Map<String, List<Row>>> resultMapConsumer,
             final int maxShardTasks,
             final int maxExtractionTasks,
-            final IndexService indexService,
+            final IndexStore indexStore,
             final SearchResponseCreatorManager searchResponseCreatorManager) {
 
         // ADDED THIS SECTION TO TEST SPRING VALUE INJECTION.
@@ -114,9 +111,9 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
                 Integer.toString(maxExtractionTasks),
                 StroomProperties.Source.TEST);
 
-        final Index index = indexService.find(new FindIndexCriteria()).getFirst();
+        final DocRef indexRef = indexStore.list().get(0);
+        final IndexDoc index = indexStore.readDocument(indexRef);
         Assert.assertNotNull("Index is null", index);
-        final DocRef dataSourceRef = DocRefUtil.create(index);
 
         final List<ResultRequest> resultRequests = new ArrayList<>(componentIds.size());
 
@@ -128,7 +125,7 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
         }
 
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final Query query = new Query(dataSourceRef, expressionIn.build());
+        final Query query = new Query(indexRef, expressionIn.build());
         final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, ZoneOffset.UTC.getId(), false);
         final SearchResponse searchResponse = AbstractSearchTest.search(searchRequest, searchResponseCreatorManager);
 

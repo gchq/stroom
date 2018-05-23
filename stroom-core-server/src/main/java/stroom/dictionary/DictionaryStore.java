@@ -19,15 +19,11 @@ package stroom.dictionary;
 
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.document.DocumentStore;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 import java.util.List;
 
 public interface DictionaryStore extends DocumentStore<DictionaryDoc> {
-    DictionaryDoc read(String uuid);
-
-    DictionaryDoc update(DictionaryDoc doc);
-
     List<DocRef> findByName(String name);
 
     List<DocRef> list();

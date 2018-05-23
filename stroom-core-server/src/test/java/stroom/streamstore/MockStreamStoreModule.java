@@ -34,10 +34,10 @@ public class MockStreamStoreModule extends AbstractModule {
     }
     //    @Bean
 //    public ExpressionToFindCriteria expressionToFindCriteria(@Named("cachedFeedService") final FeedService feedService,
-//                                                             @Named("cachedPipelineService") final PipelineService pipelineService,
+//                                                             @Named("cachedPipelineStore") final PipelineStore pipelineStore,
 //                                                             final DictionaryStore dictionaryStore,
 //                                                             final StreamAttributeKeyService streamAttributeKeyService) {
-//        return new ExpressionToFindCriteria(feedService, pipelineService, dictionaryStore, streamAttributeKeyService);
+//        return new ExpressionToFindCriteria(feedService, pipelineStore, dictionaryStore, streamAttributeKeyService);
 //    }
 //
 //    @Bean

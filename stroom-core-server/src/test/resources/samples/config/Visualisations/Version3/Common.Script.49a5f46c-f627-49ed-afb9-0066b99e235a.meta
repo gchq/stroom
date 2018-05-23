@@ -1,0 +1,23 @@
+{
+  "type" : "Script",
+  "uuid" : "49a5f46c-f627-49ed-afb9-0066b99e235a",
+  "name" : "Common",
+  "version" : "dcbdeff7-f664-48d7-aaf5-bc18b722cd60",
+  "dependencies" : [ {
+    "type" : "Script",
+    "uuid" : "84c6fa29-3f4b-4ccc-971a-741259566d2b",
+    "name" : "CSS"
+  }, {
+    "type" : "Script",
+    "uuid" : "61cc6424-9899-4f38-ad77-f4204f9de166",
+    "name" : "D3"
+  }, {
+    "type" : "Script",
+    "uuid" : "4f336f7d-5357-4fb3-a42b-88c967588e0a",
+    "name" : "D3-Tip"
+  }, {
+    "type" : "Script",
+    "uuid" : "72c19c4d-25d7-4bfd-bd1e-fb0ba6dc86bb",
+    "name" : "JSHashes"
+  } ]
+}

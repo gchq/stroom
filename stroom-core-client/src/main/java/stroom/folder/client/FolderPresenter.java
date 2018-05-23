@@ -26,13 +26,13 @@ import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.process.client.presenter.ProcessorPresenter;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.shared.PermissionNames;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.streamstore.client.presenter.ClassificationWrappedStreamPresenter;
 import stroom.streamstore.client.presenter.StreamTaskPresenter;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 

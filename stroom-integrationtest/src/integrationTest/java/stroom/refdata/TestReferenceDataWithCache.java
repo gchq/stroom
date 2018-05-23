@@ -27,12 +27,10 @@ import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.guice.PipelineScopeRunnable;
 import stroom.guice.StroomBeanStore;
-import stroom.pipeline.PipelineService;
-import stroom.pipeline.errorhandler.ErrorReceiver;
-import stroom.pipeline.errorhandler.FatalErrorReceiver;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.PipelineStore;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.streamstore.shared.StreamType;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.cache.CacheManager;
@@ -48,13 +46,12 @@ import java.util.TreeSet;
 
 public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestReferenceDataWithCache.class);
-    private static volatile DocRef folder;
     private final EventListBuilder builder = EventListBuilderFactory.createBuilder();
 
     @Inject
     private FeedService feedService;
     @Inject
-    private PipelineService pipelineService;
+    private PipelineStore pipelineStore;
     @Inject
     private StroomBeanStore beanStore;
     @Inject
@@ -74,12 +71,12 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
             feed2.setReference(true);
             feed2 = feedService.save(feed2);
 
-            final PipelineEntity pipeline1 = pipelineService.create("TEST_PIPELINE_1");
-            final PipelineEntity pipeline2 = pipelineService.create("TEST_PIPELINE_2");
+            final DocRef pipeline1Ref = pipelineStore.createDocument("TEST_PIPELINE_1");
+            final DocRef pipeline2Ref = pipelineStore.createDocument("TEST_PIPELINE_2");
 
-            final PipelineReference pipelineReference1 = new PipelineReference(DocRefUtil.create(pipeline1),
+            final PipelineReference pipelineReference1 = new PipelineReference(pipeline1Ref,
                     DocRefUtil.create(feed1), StreamType.REFERENCE.getName());
-            final PipelineReference pipelineReference2 = new PipelineReference(DocRefUtil.create(pipeline2),
+            final PipelineReference pipelineReference2 = new PipelineReference(pipeline2Ref,
                     DocRefUtil.create(feed2), StreamType.REFERENCE.getName());
 
             final List<PipelineReference> pipelineReferences = new ArrayList<>();
@@ -105,12 +102,10 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                 referenceData.setEffectiveStreamCache(effectiveStreamCache);
                 referenceData.setMapStorePool(mapStoreCache);
 
-                final ErrorReceiver errorReceiver = new FatalErrorReceiver();
-
                 // Add multiple reference data items to prove that looping over maps
                 // works.
-                addData(referenceData, pipeline1, new String[]{"SID_TO_PF_1", "SID_TO_PF_2"});
-                addData(referenceData, pipeline2, new String[]{"SID_TO_PF_3", "SID_TO_PF_4"});
+                addData(referenceData, pipeline1Ref, new String[]{"SID_TO_PF_1", "SID_TO_PF_2"});
+                addData(referenceData, pipeline2Ref, new String[]{"SID_TO_PF_3", "SID_TO_PF_4"});
                 checkData(referenceData, pipelineReferences, "SID_TO_PF_1");
                 checkData(referenceData, pipelineReferences, "SID_TO_PF_2");
                 checkData(referenceData, pipelineReferences, "SID_TO_PF_3");
@@ -121,27 +116,27 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
         });
     }
 
-    private void addData(final ReferenceData referenceData, final PipelineEntity pipeline, final String[] mapNames) {
+    private void addData(final ReferenceData referenceData, final DocRef pipelineRef, final String[] mapNames) {
         MapStoreBuilder mapStoreBuilder = new MapStoreBuilderImpl(null);
         for (final String mapName : mapNames) {
             mapStoreBuilder.setEvents(mapName, "user1", getEventsFromString("1111"), false);
             mapStoreBuilder.setEvents(mapName, "user2", getEventsFromString("2222"), false);
         }
-        referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipeline), 1), mapStoreBuilder.getMapStore());
+        referenceData.put(new MapStoreCacheKey(pipelineRef, 1), mapStoreBuilder.getMapStore());
 
         mapStoreBuilder = new MapStoreBuilderImpl(null);
         for (final String mapName : mapNames) {
             mapStoreBuilder.setEvents(mapName, "user1", getEventsFromString("A1111"), false);
             mapStoreBuilder.setEvents(mapName, "user2", getEventsFromString("A2222"), false);
         }
-        referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipeline), 2), mapStoreBuilder.getMapStore());
+        referenceData.put(new MapStoreCacheKey(pipelineRef, 2), mapStoreBuilder.getMapStore());
 
         mapStoreBuilder = new MapStoreBuilderImpl(null);
         for (final String mapName : mapNames) {
             mapStoreBuilder.setEvents(mapName, "user1", getEventsFromString("B1111"), false);
             mapStoreBuilder.setEvents(mapName, "user2", getEventsFromString("B2222"), false);
         }
-        referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipeline), 3), mapStoreBuilder.getMapStore());
+        referenceData.put(new MapStoreCacheKey(pipelineRef, 3), mapStoreBuilder.getMapStore());
     }
 
     private void checkData(final ReferenceData data, final List<PipelineReference> pipelineReferences, final String mapName) {
@@ -166,9 +161,8 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
             feed.setReference(true);
             feed = feedService.save(feed);
 
-            final PipelineEntity pipelineEntity = new PipelineEntity();
-            final PipelineReference pipelineReference = new PipelineReference(DocRefUtil.create(pipelineEntity),
-                    DocRefUtil.create(feed), StreamType.REFERENCE.getName());
+            final DocRef pipelineRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, "1234");
+            final PipelineReference pipelineReference = new PipelineReference(pipelineRef, DocRefUtil.create(feed), StreamType.REFERENCE.getName());
             final List<PipelineReference> pipelineReferences = new ArrayList<>();
             pipelineReferences.add(pipelineReference);
 
@@ -192,7 +186,7 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                 final MapStoreBuilder mapStoreBuilder = new MapStoreBuilderImpl(null);
                 mapStoreBuilder.setEvents("CARD_NUMBER_TO_PF_NUMBER", "011111", getEventsFromString("091111"), false);
                 mapStoreBuilder.setEvents("NUMBER_TO_SID", "091111", getEventsFromString("user1"), false);
-                data.put(new MapStoreCacheKey(DocRefUtil.create(pipelineEntity), 0), mapStoreBuilder.getMapStore());
+                data.put(new MapStoreCacheKey(pipelineRef, 0), mapStoreBuilder.getMapStore());
 
                 Assert.assertEquals("091111", lookup(data, pipelineReferences, 0, "CARD_NUMBER_TO_PF_NUMBER", "011111"));
                 Assert.assertEquals("user1", lookup(data, pipelineReferences, 0, "NUMBER_TO_SID", "091111"));

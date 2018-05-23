@@ -68,7 +68,7 @@ public class IndexShardSearchTaskHandler {
                 () -> {
                     try {
                         taskContext.setName("Search Index Shard");
-                        if (!taskContext.isTerminated()) {
+                        if (!Thread.currentThread().isInterrupted()) {
                             taskContext.info("Searching shard " + task.getShardNumber() + " of " + task.getShardTotal() + " (id="
                                     + task.getIndexShardId() + ")");
 

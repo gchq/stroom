@@ -1,0 +1,21 @@
+{
+  "type" : "StatisticStore",
+  "uuid" : "a5b76a2e-7689-4f5d-9316-e948140423f9",
+  "name" : "ValueStatisticSQL",
+  "version" : "8561d55b-f5e4-46c6-bbc4-6fa503fa717c",
+  "description" : "This is my description",
+  "statisticType" : "VALUE",
+  "rollUpType" : "ALL",
+  "precision" : 60000,
+  "enabled" : true,
+  "config" : {
+    "statisticFields" : [ {
+      "fieldName" : "colour"
+    }, {
+      "fieldName" : "state"
+    }, {
+      "fieldName" : "user"
+    } ],
+    "customRollUpMasks" : [ ]
+  }
+}

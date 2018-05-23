@@ -26,7 +26,7 @@ import stroom.datasource.api.v2.DataSourceField;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.structure.client.view.DraggableTreePanel;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.query.client.ExpressionTreePresenter.ExpressionTreeView;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;

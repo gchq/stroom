@@ -18,24 +18,23 @@ package stroom.search;
 
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
-import stroom.index.shared.Index;
+import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldType;
-import stroom.index.shared.IndexFields;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public final class IndexDataSourceFieldUtil {
-    public static List<DataSourceField> getDataSourceFields(final Index index) {
-        if (index == null || index.getIndexFieldsObject() == null || index.getIndexFieldsObject().getIndexFields() == null) {
+    public static List<DataSourceField> getDataSourceFields(final IndexDoc index) {
+        if (index == null || index.getIndexFields() == null) {
             return null;
         }
 
-        final IndexFields indexFields = index.getIndexFieldsObject();
-        final List<DataSourceField> dataSourceFields = new ArrayList<>(indexFields.getIndexFields().size());
-        for (int i = 0; i < indexFields.getIndexFields().size(); i++) {
-            final IndexField indexField = indexFields.getIndexFields().get(i);
+        final List<IndexField> indexFields = index.getIndexFields();
+        final List<DataSourceField> dataSourceFields = new ArrayList<>(indexFields.size());
+        for (int i = 0; i < indexFields.size(); i++) {
+            final IndexField indexField = indexFields.get(i);
             dataSourceFields.add(new DataSourceField(getDataSourceFieldType(indexField.getFieldType()), indexField.getFieldName(), indexField.isIndexed(), indexField.getSupportedConditions()));
         }
 

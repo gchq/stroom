@@ -1,0 +1,13 @@
+{
+  "type" : "Visualisation",
+  "uuid" : "7e484d5d-29af-4776-b1c2-4cdad2d9ea1b",
+  "name" : "TextValue",
+  "version" : "c0476ff1-b019-4697-af0e-1bd42da65ade",
+  "description" : "Git commit: a1e3bba4e658189a7de874fd1c6748624084d7e4\nGit commit time: 2016-09-21 17:03:32 +0100",
+  "functionName" : "visualisations.TextValue",
+  "scriptRef" : {
+    "type" : "Script",
+    "uuid" : "a2765cd2-8081-4230-8c16-05127a3a102d",
+    "name" : "TextValue"
+  }
+}

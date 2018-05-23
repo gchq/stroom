@@ -20,11 +20,10 @@ package stroom.search;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.shared.DocRefUtil;
-import stroom.index.IndexService;
+import stroom.index.IndexStore;
 import stroom.index.shared.FindIndexCriteria;
-import stroom.index.shared.Index;
-import stroom.pipeline.shared.PipelineEntity;
-import stroom.query.api.v2.DocRef;
+import stroom.index.shared.IndexDoc;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
@@ -58,7 +57,7 @@ public class TestEventSearch extends AbstractSearchTest {
     @Inject
     private CommonIndexingTest commonIndexingTest;
     @Inject
-    private IndexService indexService;
+    private IndexStore indexStore;
 
     @Override
     public void onBefore() {
@@ -89,9 +88,9 @@ public class TestEventSearch extends AbstractSearchTest {
         StroomProperties.setOverrideProperty("stroom.search.shard.concurrentTasks", "1", StroomProperties.Source.TEST);
         StroomProperties.setOverrideProperty("stroom.search.extraction.concurrentTasks", "1", StroomProperties.Source.TEST);
 
-        final Index index = indexService.find(new FindIndexCriteria()).getFirst();
+        final DocRef indexRef = indexStore.list().get(0);
+        final IndexDoc index = indexStore.readDocument(indexRef);
         Assert.assertNotNull("Index is null", index);
-        final DocRef dataSourceRef = DocRefUtil.create(index);
 
         final List<ResultRequest> resultRequests = new ArrayList<>(componentIds.size());
 
@@ -103,7 +102,7 @@ public class TestEventSearch extends AbstractSearchTest {
         }
 
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final Query query = new Query(dataSourceRef, expressionIn.build());
+        final Query query = new Query(indexRef, expressionIn.build());
         final SearchRequest searchRequest = new SearchRequest(queryKey, query, resultRequests, ZoneOffset.UTC.getId(), false);
         final SearchResponse searchResponse = search(searchRequest);
 
@@ -169,7 +168,7 @@ public class TestEventSearch extends AbstractSearchTest {
         }
     }
 
-    private TableSettings createTableSettings(final Index index, final boolean extractValues) {
+    private TableSettings createTableSettings(final IndexDoc index, final boolean extractValues) {
         final Field idField = new Field.Builder()
                 .name("IdTreeNode")
                 .expression(ParamUtil.makeParam("StreamId"))
@@ -181,8 +180,8 @@ public class TestEventSearch extends AbstractSearchTest {
                 .format(Format.Type.DATE_TIME)
                 .build();
 
-        final PipelineEntity resultPipeline = commonIndexingTest.getSearchResultPipeline();
-        return new TableSettings(null, Arrays.asList(idField, timeField), extractValues, DocRefUtil.create(resultPipeline), null, null);
+        final DocRef resultPipeline = commonIndexingTest.getSearchResultPipeline();
+        return new TableSettings(null, Arrays.asList(idField, timeField), extractValues, resultPipeline, null, null);
     }
 
     private ExpressionOperator.Builder buildExpression(final String userField,

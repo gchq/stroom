@@ -25,7 +25,7 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.importexport.shared.ImportState;
-import stroom.pipeline.PipelineService;
+import stroom.pipeline.PipelineStore;
 import stroom.resource.ResourceStore;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
@@ -45,7 +45,7 @@ public class TestImportExportServiceImpl3 extends AbstractCoreIntegrationTest {
     @Inject
     private ResourceStore resourceStore;
     @Inject
-    private PipelineService pipelineService;
+    private PipelineStore pipelineStore;
     @Inject
     private FeedService feedService;
     @Inject

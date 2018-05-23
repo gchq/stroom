@@ -16,18 +16,23 @@
 
 package stroom.dashboard.shared;
 
-import stroom.util.shared.HasDisplayValue;
-import stroom.util.shared.SharedObject;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import stroom.docref.HasDisplayValue;
+import stroom.docref.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "timeZone", propOrder = {"use", "id", "offsetHours", "offsetMinutes"})
+@JsonPropertyOrder({"use", "id", "offsetHours", "offsetMinutes"})
+@XmlRootElement(name = "timeZone")
+@XmlType(name = "TimeZone", propOrder = {"use", "id", "offsetHours", "offsetMinutes"})
 public class TimeZone implements SharedObject {
     private static final long serialVersionUID = 1200175661441813029L;
+
     @XmlElement(name = "use")
     private Use use;
     @XmlElement(name = "id")

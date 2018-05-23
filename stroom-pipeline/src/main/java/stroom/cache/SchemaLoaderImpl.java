@@ -27,7 +27,7 @@ import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.filter.LSResourceResolverImpl;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
-import stroom.xmlschema.XMLSchemaCache;
+import stroom.xmlschema.XmlSchemaCache;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 
 import javax.inject.Inject;
@@ -40,10 +40,10 @@ import java.io.InputStream;
 public class SchemaLoaderImpl implements SchemaLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(SchemaLoaderImpl.class);
 
-    private final XMLSchemaCache xmlSchemaCache;
+    private final XmlSchemaCache xmlSchemaCache;
 
     @Inject
-    public SchemaLoaderImpl(final XMLSchemaCache xmlSchemaCache) {
+    public SchemaLoaderImpl(final XmlSchemaCache xmlSchemaCache) {
         this.xmlSchemaCache = xmlSchemaCache;
     }
 

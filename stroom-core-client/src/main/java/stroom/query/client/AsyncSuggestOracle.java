@@ -20,7 +20,7 @@ import com.google.gwt.user.client.ui.MultiWordSuggestOracle.MultiWordSuggestion;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.query.shared.FetchSuggestionsAction;
 import stroom.util.shared.SharedString;
 

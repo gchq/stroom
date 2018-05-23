@@ -7,13 +7,11 @@ import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.Period;
-import stroom.entity.shared.StringCriteria;
 import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
-import stroom.pipeline.PipelineService;
-import stroom.pipeline.shared.FindPipelineEntityCriteria;
-import stroom.pipeline.shared.PipelineEntity;
-import stroom.query.api.v2.DocRef;
+import stroom.pipeline.PipelineStore;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -43,7 +41,7 @@ import java.util.stream.Collectors;
 
 public class ExpressionToFindCriteria {
     private final FeedService feedService;
-    private final PipelineService pipelineService;
+    private final PipelineStore pipelineStore;
     private final DictionaryStore dictionaryStore;
     private final StreamAttributeKeyService streamAttributeKeyService;
     private final StreamTypeService streamTypeService;
@@ -59,12 +57,12 @@ public class ExpressionToFindCriteria {
 
     @Inject
     public ExpressionToFindCriteria(@Named("cachedFeedService") final FeedService feedService,
-                                    @Named("cachedPipelineService") final PipelineService pipelineService,
+                                    @Named("cachedPipelineStore") final PipelineStore pipelineStore,
                                     final DictionaryStore dictionaryStore,
                                     final StreamAttributeKeyService streamAttributeKeyService,
                                     @Named("cachedStreamTypeService") StreamTypeService streamTypeService) {
         this.feedService = feedService;
-        this.pipelineService = pipelineService;
+        this.pipelineStore = pipelineStore;
         this.dictionaryStore = dictionaryStore;
         this.streamAttributeKeyService = streamAttributeKeyService;
         this.streamTypeService = streamTypeService;
@@ -237,9 +235,9 @@ public class ExpressionToFindCriteria {
                     }
                     break;
                 case StreamDataSource.PIPELINE:
-                    criteria.setPipelineIdSet(
-                            convertEntityIdSetValues(
-                                    criteria.getPipelineIdSet(),
+                    criteria.setPipelineSet(
+                            convertDocRefSetValues(
+                                    criteria.getPipelineSet(),
                                     field,
                                     getAllValues(terms),
                                     value -> findPipelines(field, value)));
@@ -321,12 +319,16 @@ public class ExpressionToFindCriteria {
         throw new EntityServiceException(errorMsg);
     }
 
-    private Set<PipelineEntity> findPipelines(final String field, final String value) {
+    private CriteriaSet<DocRef> findPipelines(final String field, final String value) {
+        final CriteriaSet<DocRef> set = new CriteriaSet<>();
+
         // Try by UUID
         try {
-            final PipelineEntity pipeline = pipelineService.loadByUuid(value);
+            final DocRef pipelineRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, value);
+            final PipelineDoc pipeline = pipelineStore.readDocument(pipelineRef);
             if (pipeline != null) {
-                return Collections.singleton(pipeline);
+                set.add(pipelineRef);
+                return set;
             }
         } catch (final RuntimeException e) {
             // Ignore.
@@ -334,11 +336,10 @@ public class ExpressionToFindCriteria {
 
         // Try by name
         try {
-            final FindPipelineEntityCriteria criteria = new FindPipelineEntityCriteria();
-            criteria.setName(new StringCriteria(value));
-            final List<PipelineEntity> list = pipelineService.find(criteria);
+            final List<DocRef> list = pipelineStore.findByName(value);
             if (list != null) {
-                return new HashSet<>(list);
+                list.forEach(set::add);
+                return set;
             }
         } catch (final RuntimeException e) {
             // Ignore.
@@ -527,6 +528,38 @@ public class ExpressionToFindCriteria {
         }
 
         return entityIdSet;
+    }
+
+    private CriteriaSet<DocRef> convertDocRefSetValues(final CriteriaSet<DocRef> existing, final String field, final List<String> values, final Function<String, CriteriaSet<DocRef>> mapping) {
+        if (existing != null && existing.size() > 0) {
+            final String errorMsg = "Field has already been added " + field;
+            throw new EntityServiceException(errorMsg);
+        }
+
+        final CriteriaSet<DocRef> set = new CriteriaSet<>();
+        for (final String value : values) {
+            if (value == null) {
+                final String errorMsg = "Null value used for " + field;
+                throw new EntityServiceException(errorMsg);
+            }
+            try {
+                final CriteriaSet<DocRef> val = mapping.apply(value);
+                if (val == null) {
+                    final String errorMsg = "Unexpected value '" + value + "' used for " + field;
+                    throw new EntityServiceException(errorMsg);
+                }
+                val.forEach(set::add);
+            } catch (final RuntimeException e) {
+                final String errorMsg = "Unexpected value '" + value + "' used for " + field;
+                throw new EntityServiceException(errorMsg);
+            }
+        }
+
+        if (set.size() == 0) {
+            return null;
+        }
+
+        return set;
     }
 
     private <T extends BaseEntity> EntityIdSet<T> convertEntityIdSetLongValues(final EntityIdSet<T> existing, final String field, final List<String> values, final Function<String, Long> mapping) {

@@ -12,7 +12,7 @@ import org.glassfish.jersey.client.ClientResponse;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Test;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.Query;
@@ -73,7 +73,6 @@ public class TestStroomIndexQueryResource {
     private static ObjectMapper getMapper(final boolean indent) {
         final ObjectMapper mapper = new ObjectMapper();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
         mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         // Enabling default typing adds type information where it would otherwise be ambiguous, i.e. for abstract classes

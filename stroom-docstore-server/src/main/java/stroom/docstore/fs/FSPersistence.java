@@ -2,24 +2,24 @@ package stroom.docstore.fs;
 
 import stroom.docstore.Persistence;
 import stroom.docstore.RWLockFactory;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Singleton
 public class FSPersistence implements Persistence {
-    private static final String FILE_EXTENSION = ".json";
+    private static final String META = "meta";
 
     private final RWLockFactory lockFactory = new StripedLockFactory();
     private final Path dir;
@@ -46,62 +46,83 @@ public class FSPersistence implements Persistence {
 
     @Override
     public boolean exists(final DocRef docRef) {
-        final Path filePath = getPath(docRef);
+        final Path filePath = getPath(docRef, META);
         return Files.isRegularFile(filePath);
     }
 
     @Override
-    public InputStream getInputStream(final DocRef docRef) {
-        try {
-            final Path path = getPath(docRef);
-            return Files.newInputStream(path);
+    public Map<String, byte[]> read(final DocRef docRef) throws IOException {
+        final Map<String, byte[]> data = new HashMap<>();
+        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(getPathForType(docRef.getType()), docRef.getUuid() + ".*")) {
+            stream.forEach(file -> {
+                try {
+                    final String fileName = file.getFileName().toString();
+                    final int index = fileName.indexOf(".");
+//                    final String uuid = fileName.substring(0, index);
+                    final String ext = fileName.substring(index + 1);
+
+                    final byte[] bytes = Files.readAllBytes(file);
+                    data.put(ext, bytes);
+
+                } catch (final IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            });
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
+
+        if (data.size() == 0) {
+            return null;
+        }
+
+        return data;
     }
 
     @Override
-    public OutputStream getOutputStream(final DocRef docRef, final boolean update) {
-        try {
-            final Path filePath = getPath(docRef);
-            if (update) {
-                if (!Files.isRegularFile(filePath)) {
-                    throw new RuntimeException("Document does not exist with uuid=" + docRef.getUuid());
-                }
-            } else if (Files.isRegularFile(filePath)) {
-                throw new RuntimeException("Document already exists with uuid=" + docRef.getUuid());
+    public void write(final DocRef docRef, final boolean update, final Map<String, byte[]> data) throws IOException {
+        final Path filePath = getPath(docRef, META);
+        if (update) {
+            if (!Files.isRegularFile(filePath)) {
+                throw new RuntimeException("Document does not exist with uuid=" + docRef.getUuid());
             }
-            return Files.newOutputStream(filePath);
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
+        } else if (Files.isRegularFile(filePath)) {
+            throw new RuntimeException("Document already exists with uuid=" + docRef.getUuid());
         }
+
+        data.forEach((ext, bytes) -> {
+            try {
+                Files.write(getPath(docRef, ext), bytes);
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
     }
 
     @Override
     public void delete(final DocRef docRef) {
-        try {
-            final Path path = getPath(docRef);
-            Files.delete(path);
-        } catch (final RuntimeException e) {
-            throw e;
+        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(getPathForType(docRef.getType()), docRef.getUuid() + ".*")) {
+            stream.forEach(file -> {
+                try {
+                    Files.delete(file);
+                } catch (final IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            });
         } catch (final IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
+            throw new UncheckedIOException(e);
         }
     }
 
     @Override
     public List<DocRef> list(final String type) {
         final List<DocRef> list = new ArrayList<>();
-        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(getPathForType(type), "*" + FILE_EXTENSION)) {
+        try (final DirectoryStream<Path> stream = Files.newDirectoryStream(getPathForType(type), "*." + META)) {
             stream.forEach(file -> {
-                try {
-                    final String fileName = file.getFileName().toString();
-                    final int index = fileName.indexOf(".");
-                    final String uuid = fileName.substring(0, index);
-                    list.add(new DocRef(type, uuid));
-                } catch (final RuntimeException e) {
-                    throw new RuntimeException(e.getMessage(), e);
-                }
+                final String fileName = file.getFileName().toString();
+                final int index = fileName.indexOf(".");
+                final String uuid = fileName.substring(0, index);
+                list.add(new DocRef(type, uuid));
             });
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
@@ -114,8 +135,8 @@ public class FSPersistence implements Persistence {
         return lockFactory;
     }
 
-    private Path getPath(final DocRef docRef) {
-        return getPathForType(docRef.getType()).resolve(docRef.getUuid() + FILE_EXTENSION);
+    private Path getPath(final DocRef docRef, final String ext) {
+        return getPathForType(docRef.getType()).resolve(docRef.getUuid() + "." + ext);
     }
 
     private Path getPathForType(final String type) {

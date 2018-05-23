@@ -4,22 +4,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docstore.Persistence;
 import stroom.docstore.RWLockFactory;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Singleton
 public class DBPersistence implements Persistence {
@@ -37,13 +35,25 @@ public class DBPersistence implements Persistence {
     @Override
     public boolean exists(final DocRef docRef) {
         try (final Connection connection = dataSource.getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT id FROM doc WHERE type = ? AND uuid = ?")) {
+            final Long id = getId(connection, docRef);
+            return id != null;
+        } catch (final SQLException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public Map<String, byte[]> read(final DocRef docRef) throws IOException {
+        final Map<String, byte[]> data = new HashMap<>();
+        try (final Connection connection = dataSource.getConnection()) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT ext, data FROM doc WHERE type = ? AND uuid = ?")) {
                 preparedStatement.setString(1, docRef.getType());
                 preparedStatement.setString(2, docRef.getUuid());
 
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
-                    if (resultSet.next()) {
-                        return true;
+                    while (resultSet.next()) {
+                        data.put(resultSet.getString(1), resultSet.getBytes(2));
                     }
                 }
             }
@@ -52,18 +62,62 @@ public class DBPersistence implements Persistence {
             throw new RuntimeException(e.getMessage(), e);
         }
 
-        return false;
+        if (data.size() == 0) {
+            throw new RuntimeException("Document not found " + docRef);
+        }
+
+        return data;
     }
 
     @Override
-    public InputStream getInputStream(final DocRef docRef) {
-        final DocEntity doc = load(docRef);
-        return new ByteArrayInputStream(doc.getData());
-    }
+    public void write(final DocRef docRef, final boolean update, final Map<String, byte[]> data) throws IOException {
+        try (final Connection connection = dataSource.getConnection()) {
+            // Get the auto commit status.
+            final boolean autoCommit = connection.getAutoCommit();
 
-    @Override
-    public OutputStream getOutputStream(final DocRef docRef, final boolean update) {
-        return new DBOutputStream(docRef, update);
+            // Turn auto commit off.
+            connection.setAutoCommit(false);
+
+            try {
+                final boolean exists = getId(connection, docRef) != null;
+                if (update) {
+                    if (!exists) {
+                        throw new RuntimeException("Document does not exist with uuid=" + docRef.getUuid());
+                    }
+                } else if (exists) {
+                    throw new RuntimeException("Document already exists with uuid=" + docRef.getUuid());
+                }
+
+                data.forEach((ext, bytes) -> {
+                    if (update) {
+                        final Long existingId = getId(connection, docRef, ext);
+                        if (existingId != null) {
+                            update(connection, existingId, docRef, ext, bytes);
+                        } else {
+                            save(connection, docRef, ext, bytes);
+                        }
+                    } else {
+                        save(connection, docRef, ext, bytes);
+                    }
+                });
+
+                // Commit all of the changes.
+                connection.commit();
+
+            } catch (final RuntimeException e) {
+                // Rollback any changes.
+                connection.rollback();
+
+                LOGGER.error(e.getMessage(), e);
+                throw new RuntimeException(e.getMessage(), e);
+            } finally {
+                // Turn auto commit back on.
+                connection.setAutoCommit(autoCommit);
+            }
+        } catch (final SQLException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 
     @Override
@@ -86,13 +140,14 @@ public class DBPersistence implements Persistence {
         final List<DocRef> list = new ArrayList<>();
 
         try (final Connection connection = dataSource.getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT uuid FROM doc WHERE type = ? ORDER BY id")) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT DISTINCT uuid, name FROM doc WHERE type = ? ORDER BY id")) {
                 preparedStatement.setString(1, type);
 
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {
                         final String uuid = resultSet.getString(1);
-                        list.add(new DocRef(type, uuid));
+                        final String name = resultSet.getString(2);
+                        list.add(new DocRef(type, uuid, name));
                     }
                 }
             }
@@ -109,21 +164,14 @@ public class DBPersistence implements Persistence {
         return LOCK_FACTORY;
     }
 
-    private DocEntity load(final DocRef docRef) {
-        try (final Connection connection = dataSource.getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT id, type, uuid, name, data FROM doc WHERE type = ? AND uuid = ?")) {
-                preparedStatement.setString(1, docRef.getType());
-                preparedStatement.setString(2, docRef.getUuid());
+    private Long getId(final Connection connection, final DocRef docRef) {
+        try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT id FROM doc WHERE type = ? AND uuid = ? LIMIT 1")) {
+            preparedStatement.setString(1, docRef.getType());
+            preparedStatement.setString(2, docRef.getUuid());
 
-                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
-                    if (resultSet.next()) {
-                        final long id = resultSet.getLong(1);
-                        final String type = resultSet.getString(2);
-                        final String uid = resultSet.getString(3);
-                        final String name = resultSet.getString(4);
-                        final byte[] data = resultSet.getBytes(5);
-                        return new DocEntity(id, type, uid, name, data);
-                    }
+            try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getLong(1);
                 }
             }
         } catch (final SQLException e) {
@@ -131,67 +179,56 @@ public class DBPersistence implements Persistence {
             throw new RuntimeException(e.getMessage(), e);
         }
 
-        throw new RuntimeException("Document not found " + docRef);
+        return null;
     }
 
-    private void save(final DocEntity entity) {
-        try (final Connection connection = dataSource.getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO doc (type, uuid, name, data) VALUES (?, ?, ?, ?)")) {
-                preparedStatement.setString(1, entity.getType());
-                preparedStatement.setString(2, entity.getUuid());
-                preparedStatement.setString(3, entity.getName());
-                preparedStatement.setBytes(4, entity.getData());
+    private Long getId(final Connection connection, final DocRef docRef, final String ext) {
+        try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT id FROM doc WHERE type = ? AND uuid = ? AND ext = ?")) {
+            preparedStatement.setString(1, docRef.getType());
+            preparedStatement.setString(2, docRef.getUuid());
+            preparedStatement.setString(3, ext);
 
-                preparedStatement.execute();
-            }
-        } catch (final SQLException e) {
-            LOGGER.debug(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
-    }
-
-    private void update(final DocEntity entity) {
-        try (final Connection connection = dataSource.getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement("UPDATE doc SET type = ?, uuid = ?, name = ?, data = ? WHERE id = ?")) {
-                preparedStatement.setString(1, entity.getType());
-                preparedStatement.setString(2, entity.getUuid());
-                preparedStatement.setString(3, entity.getName());
-                preparedStatement.setBytes(4, entity.getData());
-                preparedStatement.setLong(5, entity.getId());
-
-                preparedStatement.execute();
-            }
-        } catch (final SQLException e) {
-            LOGGER.debug(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
-    }
-
-    private class DBOutputStream extends ByteArrayOutputStream {
-        private final DocRef docRef;
-        private final boolean update;
-        private volatile boolean closed;
-
-        public DBOutputStream(final DocRef docRef, final boolean update) {
-            this.docRef = docRef;
-            this.update = update;
-        }
-
-        @Override
-        public synchronized void close() throws IOException {
-            super.close();
-            if (!closed) {
-                closed = true;
-
-                if (update) {
-                    final DocEntity entity = load(docRef);
-                    entity.setData(toByteArray());
-                    update(entity);
-                } else {
-                    final DocEntity entity = new DocEntity(-1, docRef.getType(), docRef.getUuid(), docRef.getName(), toByteArray());
-                    save(entity);
+            try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getLong(1);
                 }
             }
+        } catch (final SQLException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
+        }
+
+        return null;
+    }
+
+    private void save(final Connection connection, final DocRef docRef, final String ext, final byte[] bytes) {
+        try (final PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO doc (type, uuid, name, ext, data) VALUES (?, ?, ?, ?, ?)")) {
+            preparedStatement.setString(1, docRef.getType());
+            preparedStatement.setString(2, docRef.getUuid());
+            preparedStatement.setString(3, docRef.getName());
+            preparedStatement.setString(4, ext);
+            preparedStatement.setBytes(5, bytes);
+
+            preparedStatement.execute();
+        } catch (final SQLException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+    private void update(final Connection connection, final Long id, final DocRef docRef, final String ext, final byte[] bytes) {
+        try (final PreparedStatement preparedStatement = connection.prepareStatement("UPDATE doc SET type = ?, uuid = ?, name = ?, ext = ?, data = ? WHERE id = ?")) {
+            preparedStatement.setString(1, docRef.getType());
+            preparedStatement.setString(2, docRef.getUuid());
+            preparedStatement.setString(3, docRef.getName());
+            preparedStatement.setString(4, ext);
+            preparedStatement.setBytes(5, bytes);
+            preparedStatement.setLong(6, id);
+
+            preparedStatement.execute();
+        } catch (final SQLException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 }
