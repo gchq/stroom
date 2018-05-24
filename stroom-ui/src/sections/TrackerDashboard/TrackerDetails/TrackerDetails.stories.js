@@ -23,7 +23,7 @@ import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
 
 import TrackerDetails from './TrackerDetails';
 import { actionCreators } from '../redux';
-import { trackers } from '../trackerTestData.test';
+import { trackers } from '../test/trackerTestData.test';
 
 const containerStyle = {
   border: '30px solid green',

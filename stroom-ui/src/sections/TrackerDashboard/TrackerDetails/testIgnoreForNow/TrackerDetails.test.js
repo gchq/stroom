@@ -1,6 +1,6 @@
 import React from "react";
-import TrackerDetails from "./TrackerDetails";
-import TrackerDashboard from "../TrackerDashboard/TrackerDashboard";
+import TrackerDetails from "../TrackerDetails";
+import TrackerDashboard from "../../TrackerDashboard/TrackerDashboard";
 
 import renderer from "react-test-renderer";
 
@@ -9,7 +9,7 @@ import thunk from "redux-thunk";
 import fetchMock from "fetch-mock";
 import expect from "expect"; // You can use any testing library
 
-import { fetchTrackers } from "../streamTasksResourceClient";
+import { fetchTrackers } from "../../streamTasksResourceClient";
 
 const middlewares = [thunk];
 const mockStore = configureMockStore(middlewares);
