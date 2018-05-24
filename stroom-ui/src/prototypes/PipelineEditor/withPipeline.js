@@ -18,7 +18,10 @@ import PropTypes from 'prop-types';
 
 import { connect } from 'react-redux';
 
-import { getPipelineAsTree } from './pipelineUtils';
+import {
+  getPipelineAsTree,
+  getPipelineLayoutInformation
+} from './pipelineUtils';
 
 /**
  * This is a Higher Order Component
@@ -40,19 +43,23 @@ export function withPipeline(WrappedComponent, customIdPropertyName) {
 
     state = {
       pipeline: undefined,
-      pipelineAsTree : undefined
+      asTree : undefined,
+      layoutInformation : undefined
     };
 
     static getDerivedStateFromProps(nextProps, prevState) {
       const pipeline = nextProps.pipelines[nextProps[idPropertyName]];
-      let pipelineAsTree;
+      let asTree;
+      let layoutInformation;
       if (!!pipeline && !!pipeline.pipeline) {
-        pipelineAsTree = getPipelineAsTree(pipeline.pipeline);
+        asTree = getPipelineAsTree(pipeline.pipeline);
+        layoutInformation = getPipelineLayoutInformation(asTree);
       }
 
       return {
         pipeline,
-        pipelineAsTree
+        asTree,
+        layoutInformation
       };
     }
 
@@ -61,7 +68,8 @@ export function withPipeline(WrappedComponent, customIdPropertyName) {
         return (
           <WrappedComponent
             pipeline={this.state.pipeline}
-            pipelineAsTree={this.state.pipelineAsTree}
+            asTree={this.state.asTree}
+            layoutInformation={this.state.layoutInformation}
             {...this.props}
           />
         );

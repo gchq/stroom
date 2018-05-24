@@ -16,7 +16,8 @@
 
  import {
   findItem,
-  findMatch
+  findMatch,
+  iterateNodes
  } from 'lib/treeUtils';
 
  /**
@@ -48,6 +49,54 @@ export function getPipelineAsTree(pipeline) {
   const rootId = pipeline.links.add.link[0].from;
 
   return elements[rootId];
+}
+
+export const ORIENTATION = {
+  horizontal : 1,
+  vertical : 2
+}
+
+/**
+ * This calculates the layout information for the elements in a tree where the tree
+ * must be layed out in a graphical manner.
+ * The result object only indicates horizontal and vertical positions as 1-up integers.
+ * A further mapping is required to convert this to specific layout pixel information.
+ * 
+ * @param {treeNode} asTree The pipeline information as a tree with UUID's and 'children' on nodes.
+ * @return {object} An object with a key for each UUID in the tree. The values are objects with
+ * the following properties {horizontalPos, verticalPos}. These position indicators are just
+ * 1-up integer values that can then bo converted to specific layout information (pixel position, position in grid etc)
+ */
+export function getPipelineLayoutInformation(asTree, orientation = ORIENTATION.horizontal) {
+  const layoutInformation = {};
+
+  let sidewayPosition = 1;
+  let lastLineageLengthSeen = -1;
+  iterateNodes(asTree, (lineage, node) => {
+    const forwardPosition = lineage.length;
+
+    if (forwardPosition <= lastLineageLengthSeen) {
+      sidewayPosition += 1;
+    }
+    lastLineageLengthSeen = forwardPosition;
+    
+    switch (orientation) {
+      case ORIENTATION.horizontal:
+        layoutInformation[node.uuid] = {
+          horizontalPos : forwardPosition,
+          verticalPos : sidewayPosition
+        };
+        break;
+      case ORIENTATION.vertical:
+        layoutInformation[node.uuid] = {
+          horizontalPos : sidewayPosition,
+          verticalPos : forwardPosition
+        };
+        break;
+    }    
+  });
+
+  return layoutInformation;
 }
 
 export function canMovePipelineElement(pipeline, pipelineAsTree, itemToMove, destination) {

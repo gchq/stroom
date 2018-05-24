@@ -25,9 +25,9 @@ import { lineContainerCreated, lineContainerDestroyed } from './redux';
 const straightLineCreator = ({ lineId, fromRect, toRect }) => (
   <line
     key={lineId}
-    x1={fromRect.right}
+    x1={fromRect.right + fromRect.width / 2}
     y1={fromRect.top + fromRect.height / 2}
-    x2={toRect.left}
+    x2={toRect.right + toRect.height / 2}
     y2={toRect.top + toRect.height / 2}
     style={{
         stroke: 'black',

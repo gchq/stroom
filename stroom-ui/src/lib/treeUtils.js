@@ -28,6 +28,21 @@ export function guid() {
 }
 
 /**
+ * This function can be used to convert all the values inside an object using
+ * a specified mapper function. The output object will have the same keys as the input
+ * but with the mapped values.
+ * 
+ * @param {object} input The input object
+ * @param {function} mapper Mapping function to apply to each value in the object
+ */
+export function mapObject(input, mapper) {
+    return  Object.keys(input).reduce(function(previous, current) {
+        previous[current] = mapper(input[current]);
+        return previous;
+    }, {});
+}
+
+/**
  * Given a tree of data, returns a new tree with the item to move
  * relocated to the intended destination.
  * 

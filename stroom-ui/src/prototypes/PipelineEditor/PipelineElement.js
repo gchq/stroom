@@ -27,10 +27,7 @@ import {
   pipelineElementMoved
 } from './redux';
 
-import {
-  getPipelineAsTree,
-  canMovePipelineElement
-} from './pipelineUtils';
+import { canMovePipelineElement } from './pipelineUtils';
 
 import { ItemTypes } from './dragDropTypes';
 
@@ -54,7 +51,7 @@ function dragCollect(connect, monitor) {
 
 const dropTarget = {
     canDrop(props, monitor) {
-        return canMovePipelineElement(props.pipeline, props.pipelineAsTree, monitor.getItem().elementId, props.elementId)
+        return canMovePipelineElement(props.pipeline, props.asTree, monitor.getItem().elementId, props.elementId)
     },
     drop(props, monitor) {
         props.pipelineElementMoved(props.pipelineId, monitor.getItem().elementId, props.elementId);
@@ -73,7 +70,7 @@ class PipelineEditor extends Component {
   static propTypes = {
     pipelineId: PropTypes.string.isRequired,
     pipeline: PropTypes.object.isRequired,
-    pipelineAsTree : PropTypes.object.isRequired,
+    asTree : PropTypes.object.isRequired,
     elementId: PropTypes.string.isRequired,
 
     pipelineElementSelected : PropTypes.func.isRequired

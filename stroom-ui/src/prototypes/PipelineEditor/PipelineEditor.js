@@ -16,7 +16,12 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import { LineContainer, LineTo } from 'components/LineTo';
+import {
+  LineContainer,
+  LineTo
+} from 'components/LineTo';
+
+import { mapObject } from 'lib/treeUtils';
 
 import { withPipeline } from './withPipeline';
 
@@ -25,25 +30,20 @@ import PipelineElementSettings from './elements';
 
 import './PipelineEditor.css';
 
-import {
-  iterateNodes
-} from 'lib/treeUtils';
-
 class PipelineEditor extends Component {
   static propTypes = {
     pipelineId: PropTypes.string.isRequired,
     pipeline: PropTypes.object.isRequired,
-    pipelineAsTree : PropTypes.object.isRequired
+    asTree : PropTypes.object.isRequired,
+    layoutInformation : PropTypes.object.isRequired
   };
 
   // the state will hold the layout information, with layout information attached
   state = {
-    elementLayouts: {},
+    elementStyles: {},
   };
 
   static getDerivedStateFromProps(nextProps, prevState) {
-    const elementLayouts = {};
-
     const HORIZONTAL_SPACING = 150;
     const VERTICAL_SPACING = 100;
     const HORIZONTAL_START_PX = 50;
@@ -51,35 +51,18 @@ class PipelineEditor extends Component {
       position: 'absolute'
     };
 
-    let verticalPos = 1;
-    let lastLineageLengthSeen = -1;
-    iterateNodes(nextProps.pipelineAsTree, (lineage, node) => {
-      const horizontalPos = lineage.length;
-
-      if (horizontalPos <= lastLineageLengthSeen) {
-        verticalPos += 1;
-      }
-      lastLineageLengthSeen = horizontalPos;
-      
-      elementLayouts[node.uuid] = {
-        horizontalPos,
-        verticalPos,
-        style: {
-          ...commonStyle,
-          top: `${verticalPos * VERTICAL_SPACING}px`,
-          left: `${HORIZONTAL_START_PX + (horizontalPos * HORIZONTAL_SPACING)}px`,
-        },
-      };
-    });
-
     return {
-      elementLayouts,
-    };
+      elementStyles : mapObject(nextProps.layoutInformation, l => ({
+        ...commonStyle,
+        top: `${l.verticalPos * VERTICAL_SPACING}px`,
+        left: `${HORIZONTAL_START_PX + (l.horizontalPos * HORIZONTAL_SPACING)}px`,
+      }))
+    }
   }
 
   renderElements() {
     return this.props.pipeline.pipeline.elements.add.element.map(e => (
-      <div key={e.id} id={e.id} style={this.state.elementLayouts[e.id].style}>
+      <div key={e.id} id={e.id} style={this.state.elementStyles[e.id]}>
         <PipelineElement pipelineId={this.props.pipelineId} elementId={e.id} />
       </div>
     ));
