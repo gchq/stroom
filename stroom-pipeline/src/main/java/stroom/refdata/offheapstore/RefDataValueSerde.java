@@ -52,4 +52,14 @@ class RefDataValueSerde implements
         refDataValue.putValue(byteBuffer);
         byteBuffer.flip();
     }
+
+    public static Class<? extends RefDataValue> determineType(final byte bTypeId) {
+        if (bTypeId == FastInfosetValue.TYPE_ID) {
+            return FastInfosetValue.class;
+        } else if (bTypeId == StringValue.TYPE_ID){
+            return StringValue.class;
+        } else {
+            throw new RuntimeException(LambdaLogger.buildMessage("Unexpected typeId value {}", Byte.toString(bTypeId)));
+        }
+    }
 }

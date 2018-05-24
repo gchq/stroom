@@ -50,6 +50,10 @@ public class RefDataProcessingInfo {
         return createTimeEpochMs;
     }
 
+    long getLastAccessedTimeEpochMs() {
+        return lastAccessedTimeEpochMs;
+    }
+
     long getEffectiveTimeEpochMs() {
         return effectiveTimeEpochMs;
     }

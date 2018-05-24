@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.refdata.saxevents;
+package stroom.refdata.offheapstore;
 
 import com.esotericsoftware.kryo.io.ByteBufferInputStream;
 import com.sun.xml.fastinfoset.sax.SAXDocumentParser;
@@ -27,6 +27,7 @@ import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.tree.tiny.TinyBuilder;
 import org.jvnet.fastinfoset.FastInfosetException;
 import org.xml.sax.SAXException;
+import stroom.refdata.saxevents.FastInfosetValue;
 import stroom.util.logging.LambdaLogger;
 
 import java.io.IOException;
@@ -76,7 +77,7 @@ class FastInfosetConsumer extends EventListProxyConsumer {
 
     private Sequence convertByteBufferToSequence(final ByteBuffer byteBuffer) {
         // Initialise objects for de-serialising the bytebuffer
-        final PipelineConfiguration pipelineConfiguration = buildPipelineConfguration();
+        final PipelineConfiguration pipelineConfiguration = buildPipelineConfiguration();
         final TinyBuilder receiver = new TinyBuilder(pipelineConfiguration);
         try {
             startDocument(receiver, pipelineConfiguration);
@@ -113,20 +114,19 @@ class FastInfosetConsumer extends EventListProxyConsumer {
 
 
     @Override
-    public Sequence map(final ValueProxy<EventListValue> eventListProxy) {
-        if (eventListProxy == null) {
+    public Sequence map(final RefDataValueProxy refDataValueProxy) {
+        if (refDataValueProxy == null) {
             return EmptyAtomicSequence.getInstance();
         }
 
-        Class valueClazz = eventListProxy.getValueClazz();
-        if (valueClazz != FastInfosetValue.class) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Unexpected type {}", valueClazz.getCanonicalName()));
+        Class<? extends RefDataValue> valueClass = refDataValueProxy.getValueClass();
+        if (valueClass.isAssignableFrom(FastInfosetValue.class)) {
+            throw new RuntimeException(LambdaLogger.buildMessage("Unexpected type {}", valueClass.getCanonicalName()));
         }
 
         // Get the value of the proxy and if found map it
-        Optional<Sequence> optSequence = eventListProxy.mapValue(this::convertByteBufferToSequence);
+        Optional<Sequence> optSequence = refDataValueProxy.mapBytes(this::convertByteBufferToSequence);
 
         return optSequence.orElseGet(EmptyAtomicSequence::getInstance);
     }
-
 }

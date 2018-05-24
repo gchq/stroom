@@ -31,7 +31,7 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.StreamHolder;
 import stroom.refdata.ReferenceData;
 import stroom.refdata.ReferenceDataResult;
-import stroom.refdata.saxevents.EventListProxyConsumer;
+import stroom.refdata.offheapstore.EventListProxyConsumer;
 import stroom.refdata.saxevents.EventListValue;
 import stroom.refdata.saxevents.ValueProxy;
 import stroom.util.date.DateUtil;

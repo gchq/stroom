@@ -26,13 +26,16 @@ public class RefStreamDefinition {
     private final DocRef pipelineDocRef;
     private final byte pipelineVersion;
     private final long streamId;
+    private final long streamNo;
 
-    public RefStreamDefinition(final DocRef pipelineDocRef, final byte pipelineVersion, final long streamId) {
+    public RefStreamDefinition(final DocRef pipelineDocRef,
+                               final byte pipelineVersion,
+                               final long streamId,
+                               final long streamNo) {
         this.pipelineDocRef = pipelineDocRef;
         this.pipelineVersion = pipelineVersion;
         this.streamId = streamId;
-
-        //TODO should we also have streamNo in here to differentiate between nested streams?
+        this.streamNo = streamNo;
     }
 
     DocRef getPipelineDocRef() {
@@ -47,12 +50,17 @@ public class RefStreamDefinition {
         return streamId;
     }
 
+    long getStreamNo() {
+        return streamNo;
+    }
+
     @Override
     public String toString() {
         return "RefStreamDefinition{" +
                 "pipelineDocRef=" + pipelineDocRef +
                 ", pipelineVersion=" + pipelineVersion +
                 ", streamId=" + streamId +
+                ", streamNo=" + streamNo +
                 '}';
     }
 
@@ -63,13 +71,12 @@ public class RefStreamDefinition {
         final RefStreamDefinition that = (RefStreamDefinition) o;
         return pipelineVersion == that.pipelineVersion &&
                 streamId == that.streamId &&
+                streamNo == that.streamNo &&
                 Objects.equals(pipelineDocRef, that.pipelineDocRef);
     }
 
     @Override
     public int hashCode() {
-
-        return Objects.hash(pipelineDocRef, pipelineVersion, streamId);
+        return Objects.hash(pipelineDocRef, pipelineVersion, streamId, streamNo);
     }
-
 }

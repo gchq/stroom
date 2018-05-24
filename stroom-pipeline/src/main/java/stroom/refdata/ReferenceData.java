@@ -32,8 +32,6 @@ import stroom.refdata.offheapstore.RefDataValue;
 import stroom.refdata.offheapstore.RefDataValueProxy;
 import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.refdata.offheapstore.StringValue;
-import stroom.refdata.saxevents.EventListValue;
-import stroom.refdata.saxevents.ValueProxy;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
@@ -193,7 +191,7 @@ public class ReferenceData {
             final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                     pipelineReference.getPipeline(),
                     pipelineEntity.getVersion(),
-                    streamHolder.getStream().getParentStreamId());
+                    streamHolder.getStream().getParentStreamId(), streamNo);
 
             // TODO we may want to implement some sort of on-heap store that fronts our off-heap store
             // Thus all writes/reads go through the on-heap store first and only data that is deemed
@@ -363,7 +361,7 @@ public class ReferenceData {
                     final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                             pipelineReference.getPipeline(),
                             pipelineEntity.getVersion(),
-                            effectiveStream.getStreamId());
+                            effectiveStream.getStreamId(), streamNo);
 
                     // establish if we have the data for the effective stream in the store
                     final boolean isEffectiveStreamDataLoaded = refDataStore.isDataLoaded(refStreamDefinition);

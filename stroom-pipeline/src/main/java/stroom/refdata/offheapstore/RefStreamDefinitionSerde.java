@@ -71,22 +71,32 @@ public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinit
     static class RefStreamDefinitionKryoSerializer extends com.esotericsoftware.kryo.Serializer<RefStreamDefinition> {
 
         @Override
-        public void write(final Kryo kryo, final Output output, final RefStreamDefinition refStreamDefinition) {
+        public void write(final Kryo kryo,
+                          final Output output,
+                          final RefStreamDefinition refStreamDefinition) {
             output.writeString(refStreamDefinition.getPipelineDocRef().getUuid());
             output.writeString(refStreamDefinition.getPipelineDocRef().getType());
             output.writeByte(refStreamDefinition.getPipelineVersion());
-
             // write as variable length bytes as we don't require fixed width
-            output.writeLong(refStreamDefinition.getStreamId(), true);
+            output.writeVarLong(refStreamDefinition.getStreamId(), true);
+            output.writeVarLong(refStreamDefinition.getStreamNo(), true);
         }
 
         @Override
-        public RefStreamDefinition read(final Kryo kryo, final Input input, final Class<RefStreamDefinition> type) {
+        public RefStreamDefinition read(final Kryo kryo,
+                                        final Input input,
+                                        final Class<RefStreamDefinition> type) {
             final String pipelineUuid = input.readString();
             final String pipelineType = input.readString();
             final byte pipelineVersion = input.readByte();
-            final long streamId = input.readLong();
-            return new RefStreamDefinition(new DocRef(pipelineUuid, pipelineType), pipelineVersion, streamId);
+            final long streamId = input.readVarLong(true);
+            final long streamNo = input.readVarLong(true);
+
+            return new RefStreamDefinition(
+                    new DocRef(pipelineUuid, pipelineType),
+                    pipelineVersion,
+                    streamId,
+                    streamNo);
         }
     }
 }

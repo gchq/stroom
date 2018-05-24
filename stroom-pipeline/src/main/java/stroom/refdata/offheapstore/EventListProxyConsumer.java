@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.refdata.saxevents;
+package stroom.refdata.offheapstore;
 
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.PipelineConfiguration;
@@ -24,6 +24,7 @@ import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.expr.parser.Location;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
+import stroom.refdata.saxevents.ValueProxy;
 
 public abstract class EventListProxyConsumer {
 
@@ -65,14 +66,14 @@ public abstract class EventListProxyConsumer {
         receiver.close();
     }
 
-    PipelineConfiguration buildPipelineConfguration() {
+    PipelineConfiguration buildPipelineConfiguration() {
         final Configuration configuration = context.getConfiguration();
         return configuration.makePipelineConfiguration();
     }
 
 //    public abstract void consume(ValueProxy<EventListValue> eventListProxy);
 
-    public abstract Sequence map(ValueProxy<EventListValue> eventListProxy);
+    public abstract Sequence map(RefDataValueProxy refDataValueProxy);
 
     private static class NullLocation implements Location {
         @Override

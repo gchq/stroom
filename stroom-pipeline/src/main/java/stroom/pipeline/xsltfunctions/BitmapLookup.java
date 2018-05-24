@@ -23,8 +23,8 @@ import net.sf.saxon.trans.XPathException;
 import stroom.pipeline.state.StreamHolder;
 import stroom.refdata.ReferenceData;
 import stroom.refdata.ReferenceDataResult;
-import stroom.refdata.saxevents.EventListProxyConsumer;
-import stroom.refdata.saxevents.EventListProxyConsumerFactory;
+import stroom.refdata.offheapstore.EventListProxyConsumer;
+import stroom.refdata.offheapstore.EventListProxyConsumerFactory;
 import stroom.refdata.saxevents.EventListValue;
 import stroom.refdata.saxevents.ValueProxy;
 import stroom.util.date.DateUtil;
@@ -47,7 +47,7 @@ class BitmapLookup extends AbstractLookup {
                                 final boolean ignoreWarnings,
                                 final boolean trace,
                                 final LookupIdentifier lookupIdentifier) throws XPathException {
-//        SequenceMaker sequenceMaker = null;
+        SequenceMaker sequenceMaker = null;
 
         int val;
         try {

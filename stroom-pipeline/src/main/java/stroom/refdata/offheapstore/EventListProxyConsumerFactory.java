@@ -15,11 +15,11 @@
  *
  */
 
-package stroom.refdata.saxevents;
+package stroom.refdata.offheapstore;
 
 import net.sf.saxon.expr.XPathContext;
-import stroom.refdata.offheapstore.RefDataValue;
-import stroom.refdata.offheapstore.RefDataValueProxy;
+import stroom.refdata.saxevents.FastInfosetValue;
+import stroom.refdata.saxevents.StringValue;
 import stroom.util.logging.LambdaLogger;
 
 public class EventListProxyConsumerFactory {
@@ -48,9 +48,9 @@ public class EventListProxyConsumerFactory {
                                                      final XPathContext context) {
 
         final Class<? extends RefDataValue> valueClass = refDataValueProxy.getValueClass();
-        if (valueClass == FastInfosetValue.class) {
+        if (valueClass.isAssignableFrom(FastInfosetValue.class)) {
             return new FastInfosetConsumer(context);
-        } else if (valueClass == StringValue.class) {
+        } else if (valueClass.isAssignableFrom(StringValue.class)) {
             return new StringValueConsumer(context);
         } else {
             throw new RuntimeException(LambdaLogger.buildMessage("Unexpected type {}", valueClass.getCanonicalName()));

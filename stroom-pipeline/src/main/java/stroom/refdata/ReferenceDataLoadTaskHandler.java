@@ -218,7 +218,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                 final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                         pipelineDocRef,
                         pipelineEntity.getVersion(),
-                        streamHolder.getStream().getId());
+                        streamHolder.getStream().getId(), streamNo);
 
                 try (RefDataLoader refDataLoader = refDataStore.loader(refStreamDefinition, stream.getEffectiveMs())) {
                     refDataLoaderHolder.setRefDataLoader(refDataLoader);

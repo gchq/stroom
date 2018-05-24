@@ -76,13 +76,16 @@ class MapDefinitionSerde extends AbstractKryoSerde<MapDefinition> {
 
         @Override
         public void write(final Kryo kryo, final Output output, final MapDefinition mapDefinition) {
+            // first serialise the refStreamDefinition part
             refStreamDefinitionSerializer.write(kryo, output, mapDefinition.getRefStreamDefinition());
             output.writeString(mapDefinition.getMapName());
         }
 
         @Override
         public MapDefinition read(final Kryo kryo, final Input input, final Class<MapDefinition> type) {
-            RefStreamDefinition refStreamDefinition = refStreamDefinitionSerializer.read(kryo, input, RefStreamDefinition.class);
+            // first de-serialise the refStreamDefinition part
+            final RefStreamDefinition refStreamDefinition =
+                    refStreamDefinitionSerializer.read(kryo, input, RefStreamDefinition.class);
             final String mapName = input.readString();
             return new MapDefinition(refStreamDefinition, mapName);
         }

@@ -31,11 +31,15 @@ class ProcessingInfoSerde implements
 
     @Override
     public RefDataProcessingInfo deserialize(final ByteBuffer byteBuffer) {
+        // the read order here must match the write order in serialize()
         final long createTimeEpochMs = byteBuffer.getLong();
+        final long lastAccessedTimeEpochMs = byteBuffer.getLong();
         final long effectiveTimeEpochMs = byteBuffer.getLong();
         final byte processtingStateId = byteBuffer.get();
-        final RefDataProcessingInfo.ProcessingState processingState = RefDataProcessingInfo.ProcessingState.valueOf(processtingStateId);
-        return new RefDataProcessingInfo(createTimeEpochMs, lastAccessedTimeEpochMs, effectiveTimeEpochMs, processingState);
+        final RefDataProcessingInfo.ProcessingState processingState =
+                RefDataProcessingInfo.ProcessingState.valueOf(processtingStateId);
+        return new RefDataProcessingInfo(
+                createTimeEpochMs, lastAccessedTimeEpochMs, effectiveTimeEpochMs, processingState);
     }
 
     @Override
@@ -43,6 +47,7 @@ class ProcessingInfoSerde implements
         Objects.requireNonNull(refDataProcessingInfo);
         Objects.requireNonNull(byteBuffer);
         byteBuffer.putLong(refDataProcessingInfo.getCreateTimeEpochMs());
+        byteBuffer.putLong(refDataProcessingInfo.getLastAccessedTimeEpochMs());
         byteBuffer.putLong(refDataProcessingInfo.getEffectiveTimeEpochMs());
         byteBuffer.putLong(refDataProcessingInfo.getProcessingState().getId());
         byteBuffer.flip();

@@ -164,7 +164,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         this.refStreamDefinition = new RefStreamDefinition(
                 pipelineDocRef,
                 pipelineEntity.getVersion(),
-                streamHolder.getStream().getId());
+                streamHolder.getStream().getId(), streamNo);
         contentBuffer.clear();
         byteArrayOutputStream.reset();
         saxDocumentSerializer.reset();

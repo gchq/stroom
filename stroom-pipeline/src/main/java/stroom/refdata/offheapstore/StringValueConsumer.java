@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.refdata.saxevents;
+package stroom.refdata.offheapstore;
 
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.ReceiverOptions;
@@ -42,7 +42,7 @@ public class StringValueConsumer extends EventListProxyConsumer {
 
     private Sequence convertByteBufferToSequence(final ByteBuffer byteBuffer) {
         // Initialise objects for de-serialising the bytebuffer
-        final PipelineConfiguration pipelineConfiguration = buildPipelineConfguration();
+        final PipelineConfiguration pipelineConfiguration = buildPipelineConfiguration();
         final TinyBuilder receiver = new TinyBuilder(pipelineConfiguration);
         try {
             startDocument(receiver, pipelineConfiguration);
@@ -70,18 +70,18 @@ public class StringValueConsumer extends EventListProxyConsumer {
     }
 
     @Override
-    public Sequence map(final ValueProxy<EventListValue> eventListProxy) {
-        if (eventListProxy == null) {
+    public Sequence map(final RefDataValueProxy refDataValueProxy) {
+        if (refDataValueProxy == null) {
             return EmptyAtomicSequence.getInstance();
         }
 
-        Class valueClazz = eventListProxy.getValueClazz();
-        if (valueClazz != StringValue.class) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Unexpected type {}", valueClazz.getCanonicalName()));
+        Class<? extends RefDataValue> valueClass = refDataValueProxy.getValueClass();
+        if (!valueClass.isAssignableFrom(StringValue.class)) {
+            throw new RuntimeException(LambdaLogger.buildMessage("Unexpected type {}", valueClass.getCanonicalName()));
         }
 
         // Get the value of the proxy and if found map it
-        Optional<Sequence> optSequence = eventListProxy.mapValue(this::convertByteBufferToSequence);
+        Optional<Sequence> optSequence = refDataValueProxy.mapBytes(this::convertByteBufferToSequence);
 
         return optSequence.orElseGet(EmptyAtomicSequence::getInstance);
     }

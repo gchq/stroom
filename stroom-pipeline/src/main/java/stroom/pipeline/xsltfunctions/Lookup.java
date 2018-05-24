@@ -23,10 +23,8 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.refdata.ReferenceData;
 import stroom.refdata.ReferenceDataResult;
 import stroom.refdata.offheapstore.RefDataValueProxy;
-import stroom.refdata.saxevents.EventListProxyConsumer;
-import stroom.refdata.saxevents.EventListProxyConsumerFactory;
-import stroom.refdata.saxevents.EventListValue;
-import stroom.refdata.saxevents.ValueProxy;
+import stroom.refdata.offheapstore.EventListProxyConsumer;
+import stroom.refdata.offheapstore.EventListProxyConsumerFactory;
 
 import javax.inject.Inject;
 

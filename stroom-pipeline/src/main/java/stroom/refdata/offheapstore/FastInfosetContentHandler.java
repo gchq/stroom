@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.refdata.saxevents;
+package stroom.refdata.offheapstore;
 
 import net.sf.saxon.event.ReceivingContentHandler;
 
