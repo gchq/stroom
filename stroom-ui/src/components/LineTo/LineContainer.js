@@ -20,14 +20,27 @@ import { connect } from 'react-redux';
 
 import LineContext from './LineContext';
 
-import { lineContainerCreated, lineContainerDestroyed } from './redux';
+import { mapObject } from 'lib/treeUtils';
 
+import {
+  lineContainerCreated,
+  lineContainerDestroyed
+} from './redux';
+
+/**
+ * This function is the default line creation function.
+ * It shows how such a function can be written. The first parameter is an object that must contain
+ * the following
+ * { lineId, fromRect, toRect}
+ * 
+ * @param {{ lineId, fromRect, toRect }} line details
+ */
 const straightLineCreator = ({ lineId, fromRect, toRect }) => (
   <line
     key={lineId}
-    x1={fromRect.right + fromRect.width / 2}
+    x1={fromRect.left + fromRect.width / 2}
     y1={fromRect.top + fromRect.height / 2}
-    x2={toRect.right + toRect.height / 2}
+    x2={toRect.left + toRect.height / 2}
     y2={toRect.top + toRect.height / 2}
     style={{
         stroke: 'black',
@@ -106,7 +119,7 @@ class LineContainer extends Component {
       if (!ltf) {
         return <text key={l.lineId}>Invalid line type for known creators {lt}</text>;
       }
-      return ltf(l);
+      return ltf(l, this.setLineRef);
     });
   }
 

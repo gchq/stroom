@@ -171,7 +171,7 @@ class ExpressionOperator extends Component {
                 <div key={c.uuid}>
                     <LineTo 
                         lineId={c.uuid}
-                        lineType='curve'
+                        lineType='downRightElbow'
                         fromId={'expression-item' + this.props.operator.uuid} 
                         toId={'expression-item' + c.uuid}
                         />

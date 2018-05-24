@@ -11,6 +11,7 @@
   border-width: thin;
   border-radius: 5px;
   background-color: white;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 
 .Pipeline-element__over {
@@ -32,7 +33,7 @@
 .Pipeline-editor__overview {
   padding: 2rem;
   height: 20rem;
-  background-color: lightblue;
+  background-color: azure;
 }
 
 .Pipeline-editor__settings {

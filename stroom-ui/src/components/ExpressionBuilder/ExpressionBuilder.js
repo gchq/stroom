@@ -32,7 +32,7 @@ const defaultExpression = {
     "enabled" : true
 };
 
-const curve = ({lineId, fromRect, toRect}) => {
+const downRightElbow = ({lineId, fromRect, toRect}) => {
     let from = {
         x : fromRect.left + (fromRect.width / 2),
         y : fromRect.bottom
@@ -42,9 +42,8 @@ const curve = ({lineId, fromRect, toRect}) => {
         y : toRect.top + (toRect.height / 2)
     };
     let pathSpec = 'M ' + from.x + ' ' + from.y
-                + ' C ' + from.x + ' ' + from.y + ' '
-                        + from.x + ' ' + to.y + ' '
-                        + to.x + ' ' + to.y;
+                + ' L ' + from.x + ' ' + to.y
+                + ' L ' + to.x + ' ' + to.y;
     return (
         <path key={lineId}  d={pathSpec} style={{
             stroke:'black',
@@ -55,7 +54,7 @@ const curve = ({lineId, fromRect, toRect}) => {
 }
 
 let lineElementCreators = {
-    'curve' : curve
+    'downRightElbow' : downRightElbow
 }
 
 const ExpressionBuilder = ({expressionId, dataSource, expression}) => (

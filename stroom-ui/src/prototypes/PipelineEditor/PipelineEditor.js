@@ -30,6 +30,57 @@ import PipelineElementSettings from './elements';
 
 import './PipelineEditor.css';
 
+const curve = ({lineId, fromRect, toRect}) => {
+
+  // if they are inline with eachother, draw a straight line
+  if (fromRect.top === toRect.top) {
+    let from = {
+      x : fromRect.right,
+      y : fromRect.top + (fromRect.height / 2)
+    };
+    let to = {
+      x : toRect.left,
+      y : toRect.top + (toRect.height / 2)
+    };
+
+    let pathSpec = 'M ' + from.x + ' ' + from.y
+                + ' L ' + to.x + ' ' + to.y;
+    return (
+      <path key={lineId}  d={pathSpec} style={{
+          stroke:'black',
+          strokeWidth: 2,
+          fill: 'none'
+          }} />
+    )
+  } else {
+    // otherwise draw a curve
+    let from = {
+      x : fromRect.left + (fromRect.width / 2),
+      y : fromRect.bottom
+    };
+    let to = {
+      x : toRect.left,
+      y : toRect.top + (toRect.height / 2)
+    };
+
+    let pathSpec = 'M ' + from.x + ' ' + from.y
+                + ' C ' + from.x + ' ' + from.y + ' '
+                        + from.x + ' ' + to.y + ' '
+                        + to.x + ' ' + to.y;
+    return (
+        <path key={lineId}  d={pathSpec} style={{
+            stroke:'black',
+            strokeWidth: 2,
+            fill: 'none'
+        }} />
+    )
+  }
+}
+
+let lineElementCreators = {
+  'curve' : curve
+}
+
 class PipelineEditor extends Component {
   static propTypes = {
     pipelineId: PropTypes.string.isRequired,
@@ -71,7 +122,7 @@ class PipelineEditor extends Component {
   renderLines() {
     return this.props.pipeline.pipeline.links.add.link
       .map(l => ({ ...l, lineId: `${l.from}-${l.to}` }))
-      .map(l => <LineTo lineId={l.lineId} key={l.lineId} fromId={l.from} toId={l.to} />);
+      .map(l => <LineTo lineId={l.lineId} key={l.lineId} fromId={l.from} toId={l.to} lineType='curve'/>);
   }
 
   render() {
@@ -79,7 +130,10 @@ class PipelineEditor extends Component {
 
     return (
       <div className="Pipeline-editor">
-        <LineContainer className='Pipeline-editor__overview' lineContextId={`pipeline-lines-${pipelineId}`}>
+        <LineContainer 
+            className='Pipeline-editor__overview' 
+            lineContextId={`pipeline-lines-${pipelineId}`}
+            lineElementCreators={lineElementCreators}>
           <h4>Pipeline Editor {pipelineId}</h4>
           {this.renderElements()}
           {this.renderLines()}
