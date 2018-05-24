@@ -2,11 +2,13 @@ import loremIpsum from 'lorem-ipsum';
 
 const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min)) + min;
 
+const LOREM_CONFIG = { count: 3, units: 'words' };
+
 const minimalTracker_undefinedLastPollAge = {
   filterId: 1,
   enabled: true,
   lastPollAge: undefined,
-  pipelineName: loremIpsum({ count: 3, units: 'words' }),
+  pipelineName: loremIpsum(LOREM_CONFIG),
   priority: getRandomInt(1, 99),
   filterXml: '<xml/>',
   createUser: 'tester',
@@ -17,7 +19,7 @@ const minimalTracker_nullLastPollAge = {
   filterId: 2,
   enabled: true,
   lastPollAge: null,
-  pipelineName: loremIpsum({ count: 3, units: 'words' }),
+  pipelineName: loremIpsum(LOREM_CONFIG),
   priority: getRandomInt(1, 99),
   filterXml: '<xml/>',
   createUser: 'tester',
@@ -28,7 +30,7 @@ const minimalTracker_emptyLastPollAge = {
   filterId: 3,
   enabled: true,
   lastPollAge: '',
-  pipelineName: loremIpsum({ count: 3, units: 'words' }),
+  pipelineName: loremIpsum(LOREM_CONFIG),
   priority: getRandomInt(1, 99),
   filterXml: '<xml/>',
   createUser: 'tester',
@@ -38,7 +40,7 @@ const minimalTracker_emptyLastPollAge = {
 const maximalTracker = {
   filterId: 4,
   enabled: true,
-  pipelineName: loremIpsum({ count: 3, units: 'words' }),
+  pipelineName: loremIpsum(LOREM_CONFIG),
   trackerPercent: getRandomInt(0, 100),
   priority: getRandomInt(1, 99),
   filterXml: '<xml/>',
@@ -76,7 +78,7 @@ const maximalTracker_withLongName = {
 export const generateGenericTracker = filterId => ({
   filterId,
   enabled: true,
-  pipelineName: loremIpsum({ count: 3, units: 'words' }),
+  pipelineName: loremIpsum(LOREM_CONFIG),
   trackerPercent: getRandomInt(0, 100),
   priority: getRandomInt(1, 99),
   filterXml: '<xml/>',

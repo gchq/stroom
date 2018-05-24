@@ -150,6 +150,28 @@ export function iterateNodes(tree, callback, lineage) {
 }
 
 /**
+ * Picks a random item from the tree that passes the filter function.
+ * 
+ * @param {treeNode} tree The tree through which to search
+ * @param {function} filterFunction Callback that takes (lineage, node) and returns true/false for inclusion in random options
+ */
+export function pickRandomItem(tree, filterFunction) {
+    let options = [];
+
+    iterateNodes(tree, (lineage, node) => {
+        if (filterFunction(lineage, node)) {
+            options.push(node);
+        }
+    })
+
+    if (options.length > 0) {
+        return options[Math.floor(Math.random() * options.length)];
+    }
+
+    return undefined;
+}
+
+/**
  * Given a tree, and a UUID, finds and returns the matching object.
  * 
  * @param {treeNode} tree 

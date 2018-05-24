@@ -15,9 +15,9 @@
  */
 import expect from 'expect.js';
 
-import { getPipelineAsTree } from '../src/prototypes/PipelineEditor/pipelineUtils';
+import { getPipelineAsTree } from '../pipelineUtils';
 
-import { testPipeline } from '../src/prototypes/PipelineEditor/storybook/testPipelines';
+import { testPipeline } from '../storybook/testPipelines';
 
 describe('Pipeline Utils', () => {
   describe('#getPipelineAsTree', () => {
@@ -26,10 +26,12 @@ describe('Pipeline Utils', () => {
       const asTree = getPipelineAsTree(testPipeline);
 
       // Then
-      expect(asTree.id).to.be('CSV splitter filter');
-      expect(asTree.children[0].id).children.be('XSLT filter');
-      expect(asTree.children[0].children[0].id).to.be('XML writer');
-      expect(asTree.children[0].children[0].children[0].id).to.be('stream appender');
+      expect(asTree.uuid).to.be('CSV splitter filter');
+      expect(asTree.children[0].uuid).to.be('XSLT filter');
+      expect(asTree.children[0].children[0].uuid).to.be('XML writer 1');
+      expect(asTree.children[0].children[0].children[0].uuid).to.be('stream appender 1');
+      expect(asTree.children[0].children[1].uuid).to.be('XML writer 2');
+      expect(asTree.children[0].children[1].children[0].uuid).to.be('stream appender 2');
     });
   });
 });

@@ -20,7 +20,7 @@ import {
     findMatch,
     canMove,
     findItem
-} from '../src/lib/treeUtils';
+} from '../treeUtils';
 
 // Denormalised so I can refer to individual elements in the tree.
 const oneOne = {

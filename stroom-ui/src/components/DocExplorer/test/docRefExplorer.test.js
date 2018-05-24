@@ -18,8 +18,9 @@ import expect from 'expect.js';
 import { createStore } from 'redux';
 
 import {
+    guid,
     iterateNodes
-} from '../src/lib/treeUtils';
+} from 'lib/treeUtils';
 
 import {
     DEFAULT_EXPLORER_ID,
@@ -34,23 +35,12 @@ import {
     openDocRefContextMenu,
     closeDocRefContextMenu,
     explorerTreeReducer
-} from '../src/components/DocExplorer/redux';
+} from '../redux';
 
 import { 
     testTree, 
-    fellowship, 
-    sam, 
-    ridersOfRohan,
-    gimli, 
-    smaug,
-    golem,
-    shelob,
-    agents_of_chaos,
-    evilTrinkets,
-    giftsFromGaladriel,
-    favouriteAdjectives,
     DOC_REF_TYPES 
-} from '../src/components/DocExplorer/storybook/testTree'
+} from '../storybook/testTree'
 
 // Rebuilt for each test
 let store;
@@ -70,7 +60,7 @@ describe('Doc Explorer Reducer', () => {
         });
         it('should create a new explorer state for given ID', () => {
             // Given
-            let explorerId = 'testIdMonkey';
+            let explorerId = guid();
             let allowMultiSelect = true;
             let allowDragAndDrop = true;
             let typeFilter = undefined;
@@ -92,7 +82,7 @@ describe('Doc Explorer Reducer', () => {
     describe('Type Filtering', () => {
         it('should make all doc refs visible with no type filter', () => {
             // Given
-            let explorerId = 'testIdGroot';
+            let explorerId = guid();
             let allowMultiSelect = true;
             let allowDragAndDrop = true;
             let typeFilter = undefined;
@@ -110,10 +100,10 @@ describe('Doc Explorer Reducer', () => {
         })
         it('should only make doc refs matching type filter visible', () => {
             // Given
-            let explorerId = 'testIdGroot';
+            let explorerId = guid();
             let allowMultiSelect = true;
             let allowDragAndDrop = true;
-            let typeFilter = DOC_REF_TYPES.HOBBIT;
+            let typeFilter = DOC_REF_TYPES.XSLT;
 
             // When
             store.dispatch(receiveDocTree(testTree))
@@ -125,24 +115,24 @@ describe('Doc Explorer Reducer', () => {
             let explorer = state.explorers[explorerId];
 
             // Check a folder that contains a match
-            expect(explorer.isVisible[fellowship.uuid]).to.be(true);
+            expect(explorer.isVisible[testTree.children[0].uuid]).to.be(true);
             
             // Check a matching doc
-            expect(explorer.isVisible[sam.uuid]).to.be(true);
+            expect(explorer.isVisible[testTree.children[0].children[0].children[2].uuid]).to.be(true);
 
             // Check a folder that doesn't contain a matching
-            expect(explorer.isVisible[ridersOfRohan.uuid]).to.be(false);
+            expect(explorer.isVisible[testTree.children[1].children[1].uuid]).to.be(false);
 
             // Check a non matching doc
-            expect(explorer.isVisible[gimli.uuid]).to.be(false);
+            expect(explorer.isVisible[testTree.children[0].children[0].children[1].uuid]).to.be(false);
         });
         it('should combine search terms and type filters correctly', () => {
             // Given
-            let explorerId = 'testIdRimmer';
+            let explorerId = guid();
             let allowMultiSelect = true;
             let allowDragAndDrop = true;
             let typeFilter = DOC_REF_TYPES.DICTIONARY;
-            let searchTerm = 'sma';
+            let searchTerm = testTree.children[0].children[1].children[0].name;
 
             // When
             store.dispatch(receiveDocTree(testTree))
@@ -156,27 +146,28 @@ describe('Doc Explorer Reducer', () => {
             let explorer = state.explorers[explorerId];
             
             // Check a matching folder
-            expect(explorer.isVisible[fellowship.uuid]).to.be(true);
+            expect(explorer.isVisible[testTree.children[0].children[1].uuid]).to.be(true);
 
             // Check a matching doc
-            expect(explorer.isVisible[evilTrinkets.uuid]).to.be(true);
+            expect(explorer.isVisible[testTree.children[0].children[1].children[0].uuid]).to.be(true);
 
             // Check a folder that doesn't contain a matching
-            expect(explorer.isVisible[ridersOfRohan.uuid]).to.be(false);
+            expect(explorer.isVisible[testTree.children[2].children[0].uuid]).to.be(false);
 
             // Check a non matching doc
-            expect(explorer.isVisible[sam.uuid]).to.be(false);
+            expect(explorer.isVisible[testTree.children[3].uuid]).to.be(false);
         })
         it('should combine search terms and type filters correctly', () => {
             // Given
-            let explorerId = 'testIdLister';
+            let explorerId = guid();
             let allowMultiSelect = true;
             let allowDragAndDrop = true;
-            let typeFilter = DOC_REF_TYPES.HOBBIT;
-            let searchTerm = 'sma';
+            let typeFilter = DOC_REF_TYPES.Index;
+            let subTree = testTree.children[1];
+            let searchTerm = subTree.children[0].children[3].name;
 
             // When
-            store.dispatch(receiveDocTree(agents_of_chaos))
+            store.dispatch(receiveDocTree(subTree))
             store.dispatch(explorerTreeOpened(explorerId, allowMultiSelect, allowDragAndDrop, typeFilter));
             store.dispatch(searchTermChanged(explorerId, searchTerm));
             store.dispatch(searchTermChanged(explorerId, undefined));
@@ -187,14 +178,13 @@ describe('Doc Explorer Reducer', () => {
             let explorer = state.explorers[explorerId];
 
             // Check the matching doc
-            expect(explorer.isVisible[golem.uuid]).to.be(true);
+            expect(explorer.isVisible[subTree.children[0].children[3].uuid]).to.be(true);
 
             // Check not matching docs
-            expect(explorer.isVisible[shelob.uuid]).to.be(false);
-            expect(explorer.isVisible[smaug.uuid]).to.be(false);
+            expect(explorer.isVisible[subTree.children[0].children[5].uuid]).to.be(false);
 
             // Check matching folder
-            expect(explorer.isVisible[agents_of_chaos.uuid]).to.be(true);
+            expect(explorer.isVisible[subTree.children[0].uuid]).to.be(true);
         });
     });
 });

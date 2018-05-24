@@ -35,12 +35,13 @@ import {
 
 import markdown from './docExplorer.md';
 import { 
-    testTree, 
-    fellowship, 
-    sam, 
-    gimli, 
+    testTree,
     DOC_REF_TYPES 
 } from './testTree'
+
+import {
+    pickRandomItem
+} from 'lib/treeUtils';
 
 import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
 
@@ -51,8 +52,8 @@ import {
 storiesOf('Document Explorer', module)
     .addDecorator(ReduxDecoratorWithInitialisation((store) => {
         store.dispatch(receiveDocTree(testTree));
-        store.dispatch(docRefPicked('dropdown2', sam));
-        store.dispatch(docRefPicked('modal2', gimli));
+        store.dispatch(docRefPicked('dropdown2', pickRandomItem(testTree, (l, n) => n.type === DOC_REF_TYPES.XSLT)));
+        store.dispatch(docRefPicked('modal2', pickRandomItem(testTree, (l, n) => n.type === DOC_REF_TYPES.Pipeline)));
     }))
     .addDecorator(DragDropDecorator)
     .add('Explorer Tree (multi-select, dnd)', () => 
@@ -69,8 +70,8 @@ storiesOf('Document Explorer', module)
     )
     .add('Explorer Tree (type filter to monster)', () => 
         <DocExplorer 
-            explorerId='filtered-monster'
-            typeFilter={DOC_REF_TYPES.MONSTER}
+            explorerId='filtered-xslt'
+            typeFilter={DOC_REF_TYPES.XSLT}
             />
     )
     .add('Explorer Tree (type filter to dictionary)', () => 
