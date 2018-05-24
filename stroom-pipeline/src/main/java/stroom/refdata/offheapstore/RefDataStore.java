@@ -69,7 +69,7 @@ public interface RefDataStore {
     Optional<RefDataValueProxy> getValueProxy(final MapDefinition mapDefinition,
                                               final String key);
 
-//    Optional<RefDataValue> getValue(final ValueStoreKey valueStoreKey);
+    Optional<RefDataValue> getValue(final ValueStoreKey valueStoreKey);
 
 
     /**

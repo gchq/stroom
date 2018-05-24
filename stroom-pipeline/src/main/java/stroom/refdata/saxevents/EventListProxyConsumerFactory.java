@@ -18,6 +18,8 @@
 package stroom.refdata.saxevents;
 
 import net.sf.saxon.expr.XPathContext;
+import stroom.refdata.offheapstore.RefDataValue;
+import stroom.refdata.offheapstore.RefDataValueProxy;
 import stroom.util.logging.LambdaLogger;
 
 public class EventListProxyConsumerFactory {
@@ -42,16 +44,16 @@ public class EventListProxyConsumerFactory {
 //        }
 //    }
 
-    public static EventListProxyConsumer getConsumer(final ValueProxy<EventListValue> eventListProxy,
+    public static EventListProxyConsumer getConsumer(final RefDataValueProxy refDataValueProxy,
                                                      final XPathContext context) {
 
-        final Class clazz = eventListProxy.getValueClazz();
-        if (clazz == FastInfosetValue.class) {
+        final Class<? extends RefDataValue> valueClass = refDataValueProxy.getValueClass();
+        if (valueClass == FastInfosetValue.class) {
             return new FastInfosetConsumer(context);
-        } else if (clazz == StringValue.class) {
+        } else if (valueClass == StringValue.class) {
             return new StringValueConsumer(context);
         } else {
-            throw new RuntimeException(LambdaLogger.buildMessage("Unexpected type {}", clazz.getCanonicalName()));
+            throw new RuntimeException(LambdaLogger.buildMessage("Unexpected type {}", valueClass.getCanonicalName()));
         }
     }
 

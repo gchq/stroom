@@ -28,10 +28,11 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.query.api.v2.DocRef;
 import stroom.refdata.offheapstore.MapDefinition;
 import stroom.refdata.offheapstore.RefDataStore;
+import stroom.refdata.offheapstore.RefDataValue;
 import stroom.refdata.offheapstore.RefDataValueProxy;
 import stroom.refdata.offheapstore.RefStreamDefinition;
+import stroom.refdata.offheapstore.StringValue;
 import stroom.refdata.saxevents.EventListValue;
-import stroom.refdata.saxevents.StringValue;
 import stroom.refdata.saxevents.ValueProxy;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
@@ -39,6 +40,7 @@ import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
@@ -52,6 +54,7 @@ import java.util.Optional;
 
 public class ReferenceData {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReferenceData.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ReferenceData.class);
 
     // Actually 11.5 days but this is fine for the purposes of reference data.
     private static final long APPROX_TEN_DAYS = 1000000000;
@@ -116,8 +119,8 @@ public class ReferenceData {
             // Look up the KV then use that to recurse
             doGetValue(pipelineReferences, time, startMap, key, result);
 
-            final ValueProxy<EventListValue> valueProxy = result.getEventListProxy();
-            Optional<EventListValue> optValue = valueProxy.supplyValue();
+            final RefDataValueProxy refDataValueProxy = result.getRefDataValueProxy();
+            Optional<RefDataValue> optValue = refDataValueProxy.supplyValue();
             // This is a nested map so we are expecting the value of the first map to be a simple
             // string so we can use it as the key for the next map
 
@@ -125,13 +128,13 @@ public class ReferenceData {
                 // map broken ... no link found
                 result.log(Severity.WARNING, () -> "No map found for '" + startMap + "'");
             } else {
-                final EventListValue eventListValue = optValue.get();
+                final RefDataValue refDataValue = optValue.get();
                 try {
-                    final StringValue stringValue = (StringValue) eventListValue;
+                    final StringValue stringValue = (StringValue) refDataValue;
                     getValue(pipelineReferences, time, nextMap, stringValue.getValue(), result);
                 } catch (ClassCastException e) {
                     result.log(Severity.ERROR, () -> LambdaLogger.buildMessage("Value is the wrong type, expected: {}, found: {}",
-                            StringValue.class.getName(), eventListValue.getClass().getName()));
+                            StringValue.class.getName(), refDataValue.getClass().getName()));
                 }
             }
         } else {
@@ -155,7 +158,7 @@ public class ReferenceData {
             }
 
             // If we have a list of events then we are done.
-            if (referenceDataResult.getEventListProxy() != null) {
+            if (referenceDataResult.getRefDataValueProxy() != null) {
                 return;
             }
         }
@@ -169,16 +172,41 @@ public class ReferenceData {
                                           final String mapName,
                                           final String keyName,
                                           final ReferenceDataResult result) {
+
+        LOGGER.trace("getNestedStreamEventList called, pipe: {}, map {}, key {}",
+                pipelineReference.getName(),
+                mapName,
+                keyName);
         try {
             // Get nested stream.
             final String streamTypeString = pipelineReference.getStreamType();
             final long streamNo = streamHolder.getStreamNo();
-            CachedMapStore cachedMapStore = nestedStreamCache.get(streamTypeString);
-            MapStore mapStore = null;
 
-            if (cachedMapStore != null && cachedMapStore.getStreamNo() == streamNo) {
-                mapStore = cachedMapStore.getMapStore();
-            } else {
+            final PipelineEntity pipelineEntity = pipelineService.loadByUuid(
+                    pipelineReference.getPipeline().getUuid());
+
+            LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("StreamId {}, parentStreamId {}",
+                    streamHolder.getStream().getId(),
+                    streamHolder.getStream().getParentStreamId()));
+
+            // this is a nested stream so use the parent stream Id
+            final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
+                    pipelineReference.getPipeline(),
+                    pipelineEntity.getVersion(),
+                    streamHolder.getStream().getParentStreamId());
+
+            // TODO we may want to implement some sort of on-heap store that fronts our off-heap store
+            // Thus all writes/reads go through the on-heap store first and only data that is deemed
+            // too big for the on-heap store gets passed down to the off-heap store. This would reduce
+            // the disk io and storage for small or transient data and reduce the number of write txns
+            // used.  This may be an unnecessary optimisation.
+
+            // Establish if we have the data for the context stream in the store
+            final boolean isEffectiveStreamDataLoaded = refDataStore.isDataLoaded(refStreamDefinition);
+
+            if (!isEffectiveStreamDataLoaded) {
+                // data is not in the store so load it
+
                 StreamType streamType = null;
                 for (final StreamType st : StreamType.initialValues()) {
                     if (st.getName().equals(streamTypeString)) {
@@ -191,51 +219,105 @@ public class ReferenceData {
                 // have any context data stream.
                 if (provider != null) {
                     final StreamSourceInputStream inputStream = provider.getStream(streamNo);
-                    mapStore = getContextData(streamHolder.getStream(), inputStream, pipelineReference.getPipeline());
+                    loadContextData(streamHolder.getStream(), inputStream, pipelineReference.getPipeline());
                 }
-
-                cachedMapStore = new CachedMapStore(streamNo, mapStore);
-                nestedStreamCache.put(streamTypeString, cachedMapStore);
             }
 
-            if (mapStore != null) {
-                result.log(Severity.INFO, () -> "Retrieved map store from context data");
+            // do the lookup to get the proxy for the value
+            final Optional<RefDataValueProxy> optRefDataValueProxy = refDataStore.getValueProxy(
+                    new MapDefinition(refStreamDefinition, mapName),
+                    keyName);
 
-                if (mapStore.getErrorReceiver() != null) {
-                    mapStore.getErrorReceiver().replay(result);
-                }
-
-                final ValueProxy<EventListValue> eventListProxy = mapStore.getEventListProxy(mapName, keyName);
-                if (eventListProxy != null) {
-                    result.log(Severity.WARNING, () -> "Map store has no reference data for context data");
-                } else {
-                    result.log(Severity.INFO, () -> "Map store contains reference data for context data");
-                }
-
-                result.setEventListProxy(eventListProxy);
+            if (optRefDataValueProxy.isPresent()) {
+                result.setRefDataValueProxy(optRefDataValueProxy.get());
+                result.log(Severity.INFO, () -> "Found value for context data");
             } else {
-                result.log(Severity.WARNING, () -> "No map store can be retrieved for context data");
+                result.log(Severity.WARNING, () -> LambdaLogger.buildMessage(
+                            "No value proxy found when we have just loaded it, map {}, key {}",
+                            mapName, keyName));
             }
+
+            // the data is now in the store so get the value proxy
+
+//            CachedMapStore cachedMapStore = nestedStreamCache.get(streamTypeString);
+//            MapStore mapStore = null;
+//
+//            if (cachedMapStore != null && cachedMapStore.getStreamNo() == streamNo) {
+//                mapStore = cachedMapStore.getMapStore();
+//            } else {
+//                StreamType streamType = null;
+//                for (final StreamType st : StreamType.initialValues()) {
+//                    if (st.getName().equals(streamTypeString)) {
+//                        streamType = st;
+//                        break;
+//                    }
+//                }
+//                final StreamSourceInputStreamProvider provider = streamHolder.getProvider(streamType);
+//                // There may not be a provider for this stream type if we do not
+//                // have any context data stream.
+//                if (provider != null) {
+//                    final StreamSourceInputStream inputStream = provider.getStream(streamNo);
+//
+//                    mapStore = getContextData(streamHolder.getStream(), inputStream, pipelineReference.getPipeline());
+//                }
+//
+//                cachedMapStore = new CachedMapStore(streamNo, mapStore);
+//                nestedStreamCache.put(streamTypeString, cachedMapStore);
+//            }
+//
+//            if (mapStore != null) {
+//                result.log(Severity.INFO, () -> "Retrieved map store from context data");
+//
+//                if (mapStore.getErrorReceiver() != null) {
+//                    mapStore.getErrorReceiver().replay(result);
+//                }
+//
+//                final ValueProxy<EventListValue> eventListProxy = mapStore.getEventListProxy(mapName, keyName);
+//                if (eventListProxy != null) {
+//                    result.log(Severity.WARNING, () -> "Map store has no reference data for context data");
+//                } else {
+//                    result.log(Severity.INFO, () -> "Map store contains reference data for context data");
+//                }
+//
+//                result.setRefDataValueProxy(eventListProxy);
+//            } else {
+//                result.log(Severity.WARNING, () -> "No map store can be retrieved for context data");
+//            }
         } catch (final IOException e) {
             result.log(Severity.ERROR, null, getClass().getSimpleName(), e.getMessage(), e);
         }
     }
 
-    private MapStore getContextData(final Stream stream,
-                                    final StreamSourceInputStream contextStream,
-                                    final DocRef contextPipeline) {
+    private void loadContextData(
+            final Stream stream,
+            final StreamSourceInputStream contextStream,
+            final DocRef contextPipeline) {
+
         if (contextStream != null) {
             // Check the size of the input stream.
             final long byteCount = contextStream.size();
             // Only use context data if we actually have some.
             if (byteCount > MINIMUM_BYTE_COUNT) {
                 // build a mapstore from the context stream
-                return contextDataLoader.load(contextStream, stream, feedHolder.getFeed(), contextPipeline);
+                contextDataLoader.load(contextStream, stream, feedHolder.getFeed(), contextPipeline);
             }
         }
-
-        return new MapStoreImpl();
     }
+
+//    private MapStore getContextData(final Stream stream, final StreamSourceInputStream contextStream,
+//                                    final DocRef contextPipeline) {
+//        if (contextStream != null) {
+//            // Check the size of the input stream.
+//            final long byteCount = contextStream.size();
+//            // Only use context data if we actually have some.
+//            if (byteCount > MINIMUM_BYTE_COUNT) {
+//                // build a mapstore from the context stream
+//                return contextDataLoader.load(contextStream, stream, feedHolder.getFeed(), contextPipeline);
+//            }
+//        }
+//
+//        return new MapStoreImpl();
+//    }
 
     /**
      * Get an event list from a store level/non nested stream that is sensitive
@@ -254,8 +336,11 @@ public class ReferenceData {
         // Make sure the reference feed is persistent otherwise lookups will
         // fail as the equals method will only test for feeds that are the
         // same object instance rather than id.
-        assert pipelineReference.getFeed() != null && pipelineReference.getFeed().getUuid() != null && pipelineReference.getFeed().getUuid().length() > 0
-                && pipelineReference.getStreamType() != null && pipelineReference.getStreamType().length() > 0;
+        assert pipelineReference.getFeed() != null &&
+                pipelineReference.getFeed().getUuid() != null &&
+                pipelineReference.getFeed().getUuid().length() > 0 &&
+                pipelineReference.getStreamType() != null &&
+                pipelineReference.getStreamType().length() > 0;
 
         // Check that the current user has permission to read the stream.
         if (documentPermissionCache == null || documentPermissionCache.hasDocumentPermission(Feed.ENTITY_TYPE, pipelineReference.getFeed().getUuid(), DocumentPermissionNames.USE)) {
@@ -290,45 +375,15 @@ public class ReferenceData {
 
                     // now we have the data so just do the lookup
                     final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
-                    Optional<RefDataValueProxy> optRefDataValueProxy = refDataStore.getValueProxy(mapDefinition, keyName);
+                    final Optional<RefDataValueProxy> optRefDataValueProxy = refDataStore.getValueProxy(mapDefinition, keyName);
 
                     LOGGER.debug("Lookup for mapDefinition {}, key {}, returned {}", mapDefinition, keyName, optRefDataValueProxy);
 
                     if (optRefDataValueProxy.isPresent()) {
                         result.log(Severity.INFO, () -> "Map store contains reference data (" + effectiveStream + ")");
-
-                        result.setEventListProxy();
+                        result.setRefDataValueProxy(optRefDataValueProxy.get());
                     } else {
                         result.log(Severity.WARNING, () -> "Map store has no reference data (" + effectiveStream + ")");
-                    }
-
-
-                    //TODO either do the lookup here and get a proxy object or we could do the lookup
-
-
-                    // Now try and get reference data for the feed at this time.
-                    final MapStoreCacheKey mapStorePoolKey = new MapStoreCacheKey(pipelineReference.getPipeline(),
-                            effectiveStream.getStreamId());
-                    // Get the map store associated with this effective feed.
-                    final MapStore mapStore = getMapStore(mapStorePoolKey);
-                    if (mapStore != null) {
-                        result.log(Severity.INFO, () -> "Retrieved map store (" + effectiveStream + ")");
-
-                        if (mapStore.getErrorReceiver() != null) {
-                            mapStore.getErrorReceiver().replay(result);
-                        }
-
-                        final ValueProxy<EventListValue> valueProxy = mapStore.getEventListProxy(mapName, keyName);
-                        if (valueProxy != null) {
-                            result.log(Severity.INFO, () -> "Map store contains reference data (" + effectiveStream + ")");
-
-                            result.setEventListProxy(valueProxy);
-
-                        } else {
-                            result.log(Severity.WARNING, () -> "Map store has no reference data (" + effectiveStream + ")");
-                        }
-                    } else {
-                        result.log(Severity.WARNING, () -> "No map store can be retrieved (" + effectiveStream + ")");
                     }
                 } else {
                     result.log(Severity.WARNING, () -> "No effective streams can be found in the returned set (" + effectiveStreamKey + ")");

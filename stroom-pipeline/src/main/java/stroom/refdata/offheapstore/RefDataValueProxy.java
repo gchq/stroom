@@ -32,7 +32,10 @@ public class RefDataValueProxy {
     // held so we know what type of value we are proxying for
     private final Class<? extends RefDataValue> valueClazz;
 
-    RefDataValueProxy(final RefDataStore refDataStore, final ValueStoreKey valueStoreKey, final Class<? extends RefDataValue> valueClazz) {
+    RefDataValueProxy(final RefDataStore refDataStore,
+                      final ValueStoreKey valueStoreKey,
+                      final Class<? extends RefDataValue> valueClazz) {
+
         Objects.requireNonNull(refDataStore);
         this.refDataStore = Objects.requireNonNull(refDataStore);
         this.valueStoreKey = Objects.requireNonNull(valueStoreKey);
@@ -49,24 +52,24 @@ public class RefDataValueProxy {
         return refDataStore.getValue(valueStoreKey);
     }
 
-    <T> Optional<T> mapValue(final Function<RefDataValue, T> valueMapper) {
+    public <T> Optional<T> mapValue(final Function<RefDataValue, T> valueMapper) {
         return refDataStore.map(valueStoreKey, valueMapper);
     }
 
-    <T> Optional<T> mapBytes(final Function<ByteBuffer, T> valueMapper) {
+    public <T> Optional<T> mapBytes(final Function<ByteBuffer, T> valueMapper) {
         return refDataStore.mapBytes(valueStoreKey, valueMapper);
     }
 
-    void consumeValue(final Consumer<RefDataValue> valueConsumer) {
+    public void consumeValue(final Consumer<RefDataValue> valueConsumer) {
         refDataStore.consumeValue(valueStoreKey, valueConsumer);
     }
 
-    void consumeBytes(final Consumer<ByteBuffer> bytesConsumer) {
+    public void consumeBytes(final Consumer<ByteBuffer> bytesConsumer) {
         refDataStore.consumeBytes(valueStoreKey, bytesConsumer);
     }
 
 
-    Class<?> getValueClazz() {
+    public Class<? extends RefDataValue> getValueClass() {
         return valueClazz;
     }
 

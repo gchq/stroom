@@ -150,10 +150,10 @@ public class RefDataOffHeapStore implements RefDataStore {
         return Optional.empty();
     }
 
-//    @Override
-//    public Optional<RefDataValue> getValue(final ValueStoreKey valueStoreKey) {
-//        return Optional.empty();
-//    }
+    @Override
+    public Optional<RefDataValue> getValue(final ValueStoreKey valueStoreKey) {
+        return Optional.empty();
+    }
 
     @Override
     public Optional<RefDataValueProxy> getValueProxy(final MapDefinition mapDefinition, final String key) {

@@ -22,6 +22,7 @@ import net.sf.saxon.trans.XPathException;
 import stroom.pipeline.state.StreamHolder;
 import stroom.refdata.ReferenceData;
 import stroom.refdata.ReferenceDataResult;
+import stroom.refdata.offheapstore.RefDataValueProxy;
 import stroom.refdata.saxevents.EventListProxyConsumer;
 import stroom.refdata.saxevents.EventListProxyConsumerFactory;
 import stroom.refdata.saxevents.EventListValue;
@@ -45,7 +46,8 @@ class Lookup extends AbstractLookup {
                                 final boolean trace,
                                 final LookupIdentifier lookupIdentifier) throws XPathException {
         final ReferenceDataResult result = getReferenceData(map, key, eventTime, lookupIdentifier);
-        final ValueProxy<EventListValue> eventListProxy = result.getEventListProxy();
+
+        final RefDataValueProxy refDataValueProxy = result.getRefDataValueProxy();
 
 //        final SequenceMaker sequenceMaker = new SequenceMaker(context,
 //                EventListProxyConsumerFactory.getConsumerSupplier(eventListProxy));
