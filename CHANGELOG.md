@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#778** : Fix for text selection on tooltips etc in the latest version of Chrome.
+
 ## [v5.4.0] - 2018-05-23
 
 * Issue **#776** : Removal of index shard searcher caching to hopefully fix Lucene directory closing issue.
