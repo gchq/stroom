@@ -53,10 +53,9 @@ import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.RangeChangeEvent.Handler;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.data.pager.client.Pager;
+import stroom.svg.client.SvgPreset;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.ImageButtonView;
-import stroom.svg.client.SvgPreset;
 import stroom.widget.util.client.DoubleSelectTest;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -754,6 +753,8 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
     }
 
     protected void doSelect(final R selection, final SelectionType selectionType) {
+        final List<R> initialSelection = selectionModel.getSelectedItems();
+
         if (selection == null) {
             multiSelectStart = null;
             selectionModel.clear();
@@ -787,7 +788,21 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
             selectionModel.setSelected(selection);
         }
 
-        MultiSelectEvent.fire(dataGrid, selectionType);
+        // Only fire a selection event if the selection has really been modified.
+        final List<R> finalSelection = selectionModel.getSelectedItems();
+        if (initialSelection.size() != finalSelection.size()) {
+            MultiSelectEvent.fire(dataGrid, selectionType);
+        } else {
+            for (final R item : initialSelection) {
+                finalSelection.remove(item);
+            }
+            for (final R item : finalSelection) {
+                initialSelection.remove(item);
+            }
+            if (initialSelection.size() == 0 && finalSelection.size() == 0) {
+                MultiSelectEvent.fire(dataGrid, selectionType);
+            }
+        }
     }
 
     @Override
