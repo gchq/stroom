@@ -57,6 +57,14 @@ export function withModal(WrappedComponent, customIdPropertyName) {
             }
         }
 
+        componentDidMount() {
+            this.props.modalCreated(this.props[idPropertyName]);
+        }
+
+        componentWillUnmount() {
+            this.props.modalDestroyed(this.props[idPropertyName]);
+        }
+
         render() {
             return <WrappedComponent modalOpen={this.state.modalOpen} {...this.props} />
         }
@@ -68,6 +76,8 @@ export function withModal(WrappedComponent, customIdPropertyName) {
         }),
         {
             // actions
+            modalCreated,
+            modalDestroyed
         }
     )(WithModal);
 }

@@ -199,25 +199,23 @@ class ExpressionOperator extends Component {
         let enabledButton;
         if (this.props.isRoot) {
             enabledButton = <Button 
+                                icon='dont'
                                 compact
                                 basic
-                                >Root Op 
-                            </Button>
+                                />
         } else {
             if (this.props.operator.enabled) {
-                enabledButton = <Button 
+                enabledButton = <Button icon='checkmark'
                                     compact 
                                     color='blue'
                                     onClick={this.onEnabledChange.bind(this)}
-                                    >Enabled 
-                                </Button>
+                                    /> 
             } else {
-                enabledButton = <Button 
+                enabledButton = <Button icon='checkmark'
                                     compact
                                     basic
                                     onClick={this.onEnabledChange.bind(this)}
-                                    >Disabled 
-                                </Button>
+                                    />
             }
         }
 

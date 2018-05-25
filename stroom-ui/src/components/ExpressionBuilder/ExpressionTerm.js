@@ -187,18 +187,18 @@ class ExpressionTerm extends Component {
         let enabledButton;
         if (term.enabled) {
             enabledButton = <Button 
+                                icon='checkmark'
                                 compact 
                                 color='blue'
                                 onClick={this.onEnabledChange.bind(this)}
-                                >Enabled 
-                            </Button>
+                                />
         } else {
             enabledButton = <Button 
+                                icon='checkmark'
                                 compact
                                 basic
                                 onClick={this.onEnabledChange.bind(this)}
-                                >Disabled 
-                            </Button>
+                                />
         }
 
         let fieldOptions = dataSource.fields.map(f => {
