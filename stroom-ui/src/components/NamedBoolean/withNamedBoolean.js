@@ -19,65 +19,65 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 
 import {
-    modalCreated,
-    modalDestroyed
+    namedBooleanCreated,
+    namedBooleanDestroyed
 } from './redux';
 
 /**
  * This is a Higher Order Component
  * https://reactjs.org/docs/higher-order-components.html
  * 
- * It provides the state of the modal (open/closed) by using the given modalId
- * (or custom named ID property) to lookup the state in the modal redux reducer.
+ * It provides the state of a named boolean by using the given id property
+ * to lookup the state in the namedBoolean redux reducer.
  * 
- * This allows react components that contain modal elements to remain stateless.
+ * This allows react components that contain named boolean elements to remain stateless.
+ * Such as modals, or toggles which radically alter the state of an element.
  * 
  * @param {React.Component} WrappedComponent 
  */
-export function withModal(WrappedComponent, customIdPropertyName) {
-    let idPropertyName = customIdPropertyName || 'modalId';
+export function withNamedBoolean(WrappedComponent, idPropertyName, booleanPropertyName) {
 
-    let WithModal = class extends Component {
+    let WithNamedBoolean = class extends Component {
         static propTypes = {
             [idPropertyName]: PropTypes.string.isRequired,
-            modal: PropTypes.object.isRequired
+            namedBoolean: PropTypes.object.isRequired
         }
 
         state = {
-            modalOpen : undefined
+            [booleanPropertyName] : undefined
         }
 
         static getDerivedStateFromProps(nextProps, prevState) {
-            let currentValue = nextProps.modal[nextProps[idPropertyName]];
+            let currentValue = nextProps.namedBoolean[nextProps[idPropertyName]];
             if (currentValue === undefined) {
                 currentValue = false;
             }
             return {
-                modalOpen : currentValue
+                [booleanPropertyName] : currentValue
             }
         }
 
         componentDidMount() {
-            this.props.modalCreated(this.props[idPropertyName]);
+            this.props.namedBooleanCreated(this.props[idPropertyName]);
         }
 
         componentWillUnmount() {
-            this.props.modalDestroyed(this.props[idPropertyName]);
+            this.props.namedBooleanDestroyed(this.props[idPropertyName]);
         }
 
         render() {
-            return <WrappedComponent modalOpen={this.state.modalOpen} {...this.props} />
+            return <WrappedComponent {...this.state} {...this.props} />
         }
     }
 
     return connect(
         (state) => ({
-            modal: state.modal
+            namedBoolean: state.namedBoolean
         }),
         {
             // actions
-            modalCreated,
-            modalDestroyed
+            namedBooleanCreated,
+            namedBooleanDestroyed
         }
-    )(WithModal);
+    )(WithNamedBoolean);
 }

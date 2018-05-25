@@ -30,6 +30,10 @@
     opacity: 0.5;
 }
 
+.expression-item--disabled .expression-item--readonly {
+    text-decoration: line-through;
+}
+
 .input-between__divider {
     margin-right: 1rem;
     margin-left: 1rem;

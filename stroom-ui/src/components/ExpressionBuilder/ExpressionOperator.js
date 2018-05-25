@@ -182,29 +182,38 @@ class ExpressionOperator extends Component {
     }
 
     render() {
-        const { connectDragSource, isDragging, connectDropTarget, isOver, canDrop } = this.props;
+        const {
+            connectDragSource,
+            isDragging,
+            connectDropTarget,
+            isOver,
+            canDrop,
+            operator,
+            isRoot,
+            isEnabled
+        } = this.props;
 
         let color = 'grey';
         if (isOver) {
             color= (canDrop) ? 'blue' : 'red'
         }
         let className = 'expression-item';
-        if (this.props.isRoot) {
+        if (isRoot) {
             className += ' expression-item__root'
         }
-        if (!this.props.isEnabled) {
+        if (!isEnabled) {
             className += ' expression-item--disabled';
         }
 
         let enabledButton;
-        if (this.props.isRoot) {
+        if (isRoot) {
             enabledButton = <Button 
                                 icon='dont'
                                 compact
                                 basic
                                 />
         } else {
-            if (this.props.operator.enabled) {
+            if (operator.enabled) {
                 enabledButton = <Button icon='checkmark'
                                     compact 
                                     color='blue'
@@ -223,14 +232,14 @@ class ExpressionOperator extends Component {
             <div className={className}>
                 {connectDragSource(connectDropTarget(
                     <div>
-                        <span id={'expression-item' + this.props.operator.uuid}><Icon color={color} name='bars'/></span>
+                        <span id={'expression-item' + operator.uuid}><Icon color={color} name='bars'/></span>
                         
                         <Button.Group>
                             {LOGICAL_OPERATORS.map(l => {
                                 return (
                                     <Button 
                                         color='blue'
-                                        basic={(this.props.operator.op !== l)}
+                                        basic={(operator.op !== l)}
                                         key={l}
                                         compact
                                         onClick={() => this.onOpChange(l)}
@@ -251,7 +260,7 @@ class ExpressionOperator extends Component {
                                 Group
                             </Button>
                             {enabledButton}
-                            {!this.props.isRoot ? 
+                            {!isRoot ? 
                                 <Button icon='trash' compact onClick={this.onOperatorDelete.bind(this)} />
                                 :
                                 <Button disabled icon='dont' compact />

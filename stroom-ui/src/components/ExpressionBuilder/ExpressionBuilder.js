@@ -16,11 +16,23 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types'; 
 
+import { connect } from 'react-redux';
+
 import ExpressionOperator from './ExpressionOperator';
+import ROExpressionOperator from './ROExpressionOperator';
 import { LineContainer } from 'components/LineTo'
 
 import { withDataSource } from 'components/DataSource';
 import { withExpression } from './withExpression';
+
+import {
+    Checkbox
+} from 'semantic-ui-react';
+
+import {
+    withNamedBoolean,
+    setNamedBoolean
+} from 'components/NamedBoolean';
 
 import './ExpressionBuilder.css'
 
@@ -57,17 +69,37 @@ let lineElementCreators = {
     'downRightElbow' : downRightElbow
 }
 
-const ExpressionBuilder = ({expressionId, dataSource, expression}) => (
+const ExpressionBuilder = ({expressionId, 
+                            dataSource, 
+                            expression, 
+                            isReadOnly, 
+                            setNamedBoolean}) => (
     <LineContainer 
         lineContextId={'expression-lines-' + expressionId}
         lineElementCreators={lineElementCreators}
         >
-        <ExpressionOperator 
-            dataSource={dataSource}
-            expressionId={expressionId}
-            isRoot={true}
-            isEnabled={true}
-            operator={expression}  />
+        <Checkbox 
+            label='Edit Mode'
+            toggle
+            checked={!isReadOnly} 
+            onChange={() => setNamedBoolean(expressionId, !isReadOnly)} 
+            />
+        {isReadOnly ? 
+            <ROExpressionOperator 
+                dataSource={dataSource}
+                expressionId={expressionId}
+                isRoot={true}
+                isEnabled={true}
+                operator={expression}
+                />
+            :
+            <ExpressionOperator 
+                dataSource={dataSource}
+                expressionId={expressionId}
+                isRoot={true}
+                isEnabled={true}
+                operator={expression}  />
+        }
     </LineContainer>
 )
 
@@ -75,7 +107,16 @@ ExpressionBuilder.propTypes = {
     dataSource : PropTypes.object.isRequired,
     expressionId : PropTypes.string.isRequired,
     expression: PropTypes.object.isRequired, // expects the entire map of expressions to be available
+    isReadOnly : PropTypes.bool.isRequired
 }
 
-export default withDataSource(withExpression(ExpressionBuilder));
+export default connect(
+    (state) => ({
+        // state
+    }),
+    {
+        // actions
+        setNamedBoolean
+    }
+)(withDataSource(withExpression(withNamedBoolean(ExpressionBuilder, 'expressionId', 'isReadOnly'))));
 

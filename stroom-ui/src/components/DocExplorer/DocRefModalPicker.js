@@ -31,10 +31,9 @@ import { docRefPicked } from './redux';
 import { withCreatedExplorer } from './withExplorer';
 import { withPickedDocRef } from './withPickedDocRef';
 import {
-    withModal,
-    modalOpened,
-    modalClosed
-} from 'lib/ModalState';
+    withNamedBoolean,
+    setNamedBoolean
+} from 'components/NamedBoolean';
 
 import DocExplorer from './DocExplorer';
 
@@ -47,15 +46,17 @@ class DocRefModalPicker extends Component {
         typeFilter : PropTypes.string,
         docRef : PropTypes.object,
         docRefPicked : PropTypes.func.isRequired,
-        modalOpen : PropTypes.bool.isRequired
+        modalOpen : PropTypes.bool.isRequired,
+
+        setNamedBoolean : PropTypes.func.isRequired
     }
 
     handleOpen() {
-        this.props.modalOpened(this.props.pickerId);
+        this.props.setNamedBoolean(this.props.pickerId, true);
     }
 
     handleClose() {
-        this.props.modalClosed(this.props.pickerId);
+        this.props.setNamedBoolean(this.props.pickerId, false);
     }
 
     onDocRefSelected() {
@@ -119,7 +120,6 @@ export default connect(
     {
         // actions
         docRefPicked,
-        modalOpened,
-        modalClosed
+        setNamedBoolean
     }
-)(withPickedDocRef(withModal(withCreatedExplorer(DocRefModalPicker, 'pickerId'), 'pickerId')));
+)(withPickedDocRef(withNamedBoolean(withCreatedExplorer(DocRefModalPicker, 'pickerId'), 'pickerId', 'modalOpen')));
