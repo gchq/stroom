@@ -42,7 +42,7 @@ public class RefDataStoreProvider implements Provider<RefDataStore> {
 
     @Inject
     RefDataStoreProvider(final StroomPropertyService stroomPropertyService,
-                         final RefDataOffHeapStore.RefDataOffHeapStoreFactory refDataOffHeapStoreFactory) {
+                         final RefDataOffHeapStore.Factory refDataOffHeapStoreFactory) {
         this.stroomPropertyService = stroomPropertyService;
 
 

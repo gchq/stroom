@@ -15,14 +15,16 @@ public class RefDataValueProxyConsumer {
     private final Receiver receiver;
     private final PipelineConfiguration pipelineConfiguration;
 
-    private final Map<Integer, AbstractByteBufferConsumer.ByteBufferConsumerFactory> typeToByteBufferConsumerFactoryMap;
+    // injected map of typeId to the appropriate bytebuffer consumer factory
+    private final Map<Integer, AbstractByteBufferConsumer.Factory> typeToByteBufferConsumerFactoryMap;
+    // map to hold onto the
     private final Map<Integer, RefDataValueByteBufferConsumer> typeToConsumerMap = new HashMap<>();
 
     @Inject
     public RefDataValueProxyConsumer(
             @Assisted final Receiver receiver,
             @Assisted final PipelineConfiguration pipelineConfiguration,
-            final Map<Integer, AbstractByteBufferConsumer.ByteBufferConsumerFactory> typeToByteBufferConsumerFactoryMap) {
+            final Map<Integer, AbstractByteBufferConsumer.Factory> typeToByteBufferConsumerFactoryMap) {
         this.receiver = receiver;
         this.pipelineConfiguration = pipelineConfiguration;
         this.typeToByteBufferConsumerFactoryMap = typeToByteBufferConsumerFactoryMap;
@@ -55,7 +57,7 @@ public class RefDataValueProxyConsumer {
         });
     }
 
-    public interface RefDataValueProxyConsumerFactory {
+    public interface Factory {
         RefDataValueProxyConsumer create(final Receiver receiver,
                                          final PipelineConfiguration pipelineConfiguration);
     }

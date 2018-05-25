@@ -367,7 +367,7 @@ public class RefDataOffHeapStore implements RefDataStore {
         }
     }
 
-    public interface RefDataOffHeapStoreFactory {
+    public interface Factory {
         RefDataStore create(final Path dbDir, final long maxSize);
     }
 

@@ -31,11 +31,13 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.XSLT;
 import stroom.refdata.offheapstore.AbstractByteBufferConsumer;
+import stroom.refdata.offheapstore.FastInfosetByteBufferConsumer;
 import stroom.refdata.offheapstore.FastInfosetValue;
 import stroom.refdata.offheapstore.RefDataOffHeapStore;
 import stroom.refdata.offheapstore.RefDataStore;
 import stroom.refdata.offheapstore.RefDataStoreProvider;
 import stroom.refdata.offheapstore.RefDataValue;
+import stroom.refdata.offheapstore.StringByteBufferConsumer;
 import stroom.refdata.offheapstore.StringValue;
 import stroom.refdata.offheapstore.serdes.RefDatValueSubSerde;
 import stroom.refdata.offheapstore.serdes.StringValueSerde;
@@ -71,20 +73,29 @@ public class PipelineModule extends AbstractModule {
         taskHandlerBinder.addBinding().to(stroom.pipeline.PipelineStepActionHandler.class);
         taskHandlerBinder.addBinding().to(stroom.pipeline.SavePipelineXMLHandler.class);
 
-        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
+        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder =
+                Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
         explorerActionHandlerBinder.addBinding().to(stroom.pipeline.PipelineServiceImpl.class);
         explorerActionHandlerBinder.addBinding().to(stroom.pipeline.TextConverterServiceImpl.class);
         explorerActionHandlerBinder.addBinding().to(stroom.pipeline.XSLTServiceImpl.class);
 
-        final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
+        final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder =
+                Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
         importExportActionHandlerBinder.addBinding().to(stroom.pipeline.PipelineServiceImpl.class);
         importExportActionHandlerBinder.addBinding().to(stroom.pipeline.TextConverterServiceImpl.class);
         importExportActionHandlerBinder.addBinding().to(stroom.pipeline.XSLTServiceImpl.class);
 
-        final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
-        entityServiceByTypeBinder.addBinding(PipelineEntity.ENTITY_TYPE).to(stroom.pipeline.PipelineServiceImpl.class);
-        entityServiceByTypeBinder.addBinding(TextConverter.ENTITY_TYPE).to(stroom.pipeline.TextConverterServiceImpl.class);
-        entityServiceByTypeBinder.addBinding(XSLT.ENTITY_TYPE).to(stroom.pipeline.XSLTServiceImpl.class);
+        final MapBinder<String, Object> entityServiceByTypeBinder =
+                MapBinder.newMapBinder(binder(), String.class, Object.class);
+        entityServiceByTypeBinder
+                .addBinding(PipelineEntity.ENTITY_TYPE)
+                .to(stroom.pipeline.PipelineServiceImpl.class);
+        entityServiceByTypeBinder
+                .addBinding(TextConverter.ENTITY_TYPE)
+                .to(stroom.pipeline.TextConverterServiceImpl.class);
+        entityServiceByTypeBinder
+                .addBinding(XSLT.ENTITY_TYPE)
+                .to(stroom.pipeline.XSLTServiceImpl.class);
 
         final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
         findServiceBinder.addBinding().to(stroom.pipeline.PipelineServiceImpl.class);
@@ -95,20 +106,27 @@ public class PipelineModule extends AbstractModule {
         refDataValueBinder.addBinding().to(stroom.refdata.offheapstore.FastInfosetValue.class);
         refDataValueBinder.addBinding().to(stroom.refdata.offheapstore.StringValue.class);
 
+        // bind the various RefDataValue impls into a map keyed on their ID
         final MapBinder<Integer, RefDatValueSubSerde> refDataValueSerdeBinder = MapBinder.newMapBinder(
                 binder(), Integer.class, RefDatValueSubSerde.class);
-        refDataValueSerdeBinder.addBinding(FastInfosetValue.TYPE_ID).to(stroom.refdata.offheapstore.FastInfoSetValueSerde.class);
-        refDataValueSerdeBinder.addBinding(StringValue.TYPE_ID).to(StringValueSerde.class);
+        refDataValueSerdeBinder
+                .addBinding(FastInfosetValue.TYPE_ID)
+                .to(stroom.refdata.offheapstore.FastInfoSetValueSerde.class);
+        refDataValueSerdeBinder
+                .addBinding(StringValue.TYPE_ID)
+                .to(StringValueSerde.class);
 
-        final MapBinder<Integer, AbstractByteBufferConsumer.ByteBufferConsumerFactory> refDataValueByteBufferConsumerBinder = MapBinder.newMapBinder(
-                binder(), Integer.class, AbstractByteBufferConsumer.ByteBufferConsumerFactory.class);
+        // bind the various RefDataValue ByteBuffer consumer factories into a map keyed on their ID
+        final MapBinder<Integer, AbstractByteBufferConsumer.Factory> refDataValueByteBufferConsumerBinder = MapBinder.newMapBinder(
+                binder(), Integer.class, AbstractByteBufferConsumer.Factory.class);
         refDataValueByteBufferConsumerBinder
                 .addBinding(FastInfosetValue.TYPE_ID)
-                .to(stroom.refdata.offheapstore.FastInfosetByteBufferConsumer.FastInfosetByteBufferConsumerFactory.class);
+                .to(FastInfosetByteBufferConsumer.Factory.class);
         refDataValueByteBufferConsumerBinder
                 .addBinding(StringValue.TYPE_ID)
-                .to(stroom.refdata.offheapstore.StringByteBufferConsumer.StringByteBufferConsumerFactory.class);
+                .to(StringByteBufferConsumer.Factory.class);
 
+        // bind all the reference data off heap tables
         install(new FactoryModuleBuilder().build(KeyValueStoreDb.Factory.class));
         install(new FactoryModuleBuilder().build(RangeStoreDb.Factory.class));
         install(new FactoryModuleBuilder().build(ValueStoreDb.Factory.class));
@@ -118,9 +136,7 @@ public class PipelineModule extends AbstractModule {
 
         install(new FactoryModuleBuilder()
                 .implement(RefDataStore.class, RefDataOffHeapStore.class)
-                .build(RefDataOffHeapStore.RefDataOffHeapStoreFactory.class));
-
-
+                .build(RefDataOffHeapStore.Factory.class));
 
     }
 

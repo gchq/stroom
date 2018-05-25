@@ -197,11 +197,13 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
 
     static class SequenceMaker {
         private final XPathContext context;
+        private final RefDataValueProxyConsumer.Factory consumerFactory;
         private Builder builder;
         private RefDataValueProxyConsumer consumer;
 
-        SequenceMaker(final XPathContext context) {
+        SequenceMaker(final XPathContext context, final RefDataValueProxyConsumer.Factory consumerFactory) {
             this.context = context;
+            this.consumerFactory = consumerFactory;
         }
 
         void open() throws XPathException {
@@ -230,7 +232,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                 final PipelineConfiguration pipelineConfiguration = configuration.makePipelineConfiguration();
 
                 builder = new TinyBuilder(pipelineConfiguration);
-                consumer = new RefDataValueProxyConsumer(builder, pipelineConfiguration);
+                consumer = consumerFactory.create(builder, pipelineConfiguration);
             }
         }
 

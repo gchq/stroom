@@ -35,7 +35,7 @@ public class StringByteBufferConsumer implements RefDataValueByteBufferConsumer 
 
     }
 
-    public static class StringByteBufferConsumerFactory implements AbstractByteBufferConsumer.ByteBufferConsumerFactory {
+    public static class Factory implements AbstractByteBufferConsumer.Factory {
 
         @Override
         public AbstractByteBufferConsumer create(final Receiver receiver,

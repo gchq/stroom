@@ -40,7 +40,7 @@ public class FastInfosetByteBufferConsumer extends AbstractByteBufferConsumer {
         saxDocumentParser.reset();
     }
 
-    public static class FastInfosetByteBufferConsumerFactory implements ByteBufferConsumerFactory {
+    public static class Factory implements AbstractByteBufferConsumer.Factory {
         @Override
         public AbstractByteBufferConsumer create(final Receiver receiver,
                                                  final PipelineConfiguration pipelineConfiguration) {

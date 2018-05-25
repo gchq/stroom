@@ -21,7 +21,7 @@ public abstract class AbstractByteBufferConsumer implements RefDataValueByteBuff
 
 
 
-    public interface ByteBufferConsumerFactory {
+    public interface Factory {
         RefDataValueByteBufferConsumer create(final Receiver receiver, final PipelineConfiguration pipelineConfiguration);
     }
 }
