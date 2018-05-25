@@ -24,7 +24,7 @@ import io.swagger.annotations.Api;
 import org.apache.commons.lang.NotImplementedException;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Sort;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.streamtask.StreamProcessorFilterService;
@@ -155,7 +155,7 @@ public class StreamTaskResource implements HasHealthCheck {
         }
 
         criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
-        criteria.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
+        criteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
 
         // We have to load everything because we need to sort by progress, and we can't do that on the database.
         final List<StreamTask> values = find(criteria);
@@ -206,8 +206,8 @@ public class StreamTaskResource implements HasHealthCheck {
 
             // Indented to make the source easier to read
             builder
-                    .withPipelineName(   filter.getStreamProcessor().getPipeline().getName())
-                    .withPipelineId(     filter.getStreamProcessor().getPipeline().getId())
+                    .withPipelineName(   filter.getStreamProcessor().getPipelineName())
+                    //.withPipelineId(     filter.getStreamProcessor().getPipeline().getId())
                     .withPriority(       filter.getPriority())
                     .withEnabled(        filter.isEnabled())
                     .withFilterId(       filter.getId())
