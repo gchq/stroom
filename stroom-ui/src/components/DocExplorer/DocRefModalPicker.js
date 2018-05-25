@@ -30,6 +30,11 @@ import { findItem } from 'lib/treeUtils';
 import { docRefPicked } from './redux';
 import { withCreatedExplorer } from './withExplorer';
 import { withPickedDocRef } from './withPickedDocRef';
+import {
+    withModal,
+    modalOpened,
+    modalClosed
+} from 'lib/ModalState';
 
 import DocExplorer from './DocExplorer';
 
@@ -41,19 +46,16 @@ class DocRefModalPicker extends Component {
 
         typeFilter : PropTypes.string,
         docRef : PropTypes.object,
-        docRefPicked : PropTypes.func.isRequired
-    }
-
-    state = {
-        modalOpen : false
+        docRefPicked : PropTypes.func.isRequired,
+        modalOpen : PropTypes.bool.isRequired
     }
 
     handleOpen() {
-        this.setState({ modalOpen: true });
+        this.props.modalOpened(this.props.pickerId);
     }
 
     handleClose() {
-        this.setState({ modalOpen: false });
+        this.props.modalClosed(this.props.pickerId);
     }
 
     onDocRefSelected() {
@@ -74,23 +76,31 @@ class DocRefModalPicker extends Component {
     }
 
     render() {
-        let value = (!!this.props.docRef) ? this.props.docRef.name : '';
+        let {
+            docRef,
+            modalOpen,
+            tree,
+            pickerId,
+            typeFilter
+        } = this.props;
+
+        let value = (!!docRef) ? docRef.name : '';
 
         return (
             <Modal
                 trigger={<Input onFocus={this.handleOpen.bind(this)} value={value + '...'}/>}
-                open={this.state.modalOpen}
+                open={modalOpen}
                 onClose={this.handleClose}
                 size='small'
                 dimmer='blurring'
             >
                 <Modal.Header>Select a Doc Ref</Modal.Header>
                 <Modal.Content scrolling>
-                    <DocExplorer tree={this.props.tree}
-                                explorerId={this.props.pickerId}
+                    <DocExplorer tree={tree}
+                                explorerId={pickerId}
                                 allowMultiSelect={false}
                                 allowDragAndDrop={false}
-                                typeFilter={this.props.typeFilter}
+                                typeFilter={typeFilter}
                                 />
                 </Modal.Content>
                 <Modal.Actions>
@@ -108,6 +118,8 @@ export default connect(
     }),
     {
         // actions
-        docRefPicked
+        docRefPicked,
+        modalOpened,
+        modalClosed
     }
-)(withPickedDocRef(withCreatedExplorer(DocRefModalPicker, 'pickerId')));
+)(withPickedDocRef(withModal(withCreatedExplorer(DocRefModalPicker, 'pickerId'), 'pickerId')));

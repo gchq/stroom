@@ -109,7 +109,7 @@ class PipelineEditor extends Component {
       connectDragSource(
         connectDropTarget(
           <div onClick={this.onSingleClick.bind(this)} className={className}>
-            <h4>{elementId}</h4>
+            {elementId}
           </div>
         )
       )

@@ -75,15 +75,6 @@ class ExpressionTerm extends Component {
         isDragging: PropTypes.bool.isRequired
     }
 
-    state = {
-        pickerId : undefined
-    }
-
-    static getDerivedStateFromProps(nextProps, prevState) {
-        let pickerId = joinDictionaryTermId(nextProps.expressionId, nextProps.term.uuid);
-        return { pickerId }
-    }
-
     componentDidMount() {
         this.checkDictionary();
     }
@@ -104,9 +95,7 @@ class ExpressionTerm extends Component {
             pickedDocRefs,
             docRefPicked
         } = this.props;
-        let {
-            pickerId
-        } = this.state;
+        let pickerId = joinDictionaryTermId(expressionId, term.uuid);
 
         if (term.condition === 'IN_DICTIONARY') {
             // Get the current state of the picked doc refs
@@ -185,11 +174,10 @@ class ExpressionTerm extends Component {
             isDragging,
             term,
             isEnabled,
-            dataSource
+            dataSource,
+            expressionId
         } = this.props;
-        const {
-            pickerId
-        } = this.state;
+        let pickerId = joinDictionaryTermId(expressionId, term.uuid);
 
         let className = 'expression-item';
         if (!isEnabled) {
@@ -316,7 +304,7 @@ class ExpressionTerm extends Component {
 
         return connectDragSource(    
             <div className={className}>
-                <span><Icon color='grey' name='list layout'/></span>
+                <span><Icon color='grey' name='bars'/></span>
                 <Dropdown placeholder='field' 
                             selection 
                             options={fieldOptions} 

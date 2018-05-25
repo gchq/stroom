@@ -225,7 +225,7 @@ class ExpressionOperator extends Component {
             <div className={className}>
                 {connectDragSource(connectDropTarget(
                     <div>
-                        <span id={'expression-item' + this.props.operator.uuid}><Icon color={color} name='list layout'/></span>
+                        <span id={'expression-item' + this.props.operator.uuid}><Icon color={color} name='bars'/></span>
                         
                         <Button.Group>
                             {LOGICAL_OPERATORS.map(l => {
@@ -246,11 +246,11 @@ class ExpressionOperator extends Component {
                         <Button.Group floated='right'>
                             <Button compact onClick ={this.onAddTerm.bind(this)}>
                                 <Icon name='add' />
-                                Add Term
+                                Term
                             </Button>
                             <Button compact onClick={this.onAddOperator.bind(this)}>
-                                <Icon name='add circle' />
-                                Add Group
+                                <Icon name='add' />
+                                Group
                             </Button>
                             {enabledButton}
                             {!this.props.isRoot ? 

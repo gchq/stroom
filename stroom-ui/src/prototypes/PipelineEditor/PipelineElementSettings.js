@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import { withPipeline } from '../withPipeline';
+import { withPipeline } from './withPipeline';
 import { withSelectedPipelineElement } from './withSelectedPipelineElement';
 
 class PipelineElementSettings extends Component {

@@ -5,8 +5,11 @@
 
 .Pipeline-element {
   padding: 0.5rem;
-  width: 100%;
-  height: 100%;
+  width: 8rem;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   border-style: solid;
   border-width: thin;
   border-radius: 5px;

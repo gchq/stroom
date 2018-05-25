@@ -26,23 +26,25 @@ import { mapObject } from 'lib/treeUtils';
 import { withPipeline } from './withPipeline';
 
 import PipelineElement from './PipelineElement';
-import PipelineElementSettings from './elements';
+import PipelineElementSettings from './PipelineElementSettings';
 
 import './PipelineEditor.css';
 
 const curve = ({lineId, fromRect, toRect}) => {
 
+  let from = {
+    x : fromRect.right,
+    y : fromRect.top + (fromRect.height / 2)
+  };
+  let to = {
+    x : toRect.left,
+    y : toRect.top + (toRect.height / 2)
+  };
+
+
   // if they are inline with eachother, draw a straight line
   if (fromRect.top === toRect.top) {
-    let from = {
-      x : fromRect.right,
-      y : fromRect.top + (fromRect.height / 2)
-    };
-    let to = {
-      x : toRect.left,
-      y : toRect.top + (toRect.height / 2)
-    };
-
+    
     let pathSpec = 'M ' + from.x + ' ' + from.y
                 + ' L ' + to.x + ' ' + to.y;
     return (
@@ -53,19 +55,26 @@ const curve = ({lineId, fromRect, toRect}) => {
           }} />
     )
   } else {
-    // otherwise draw a curve
-    let from = {
-      x : fromRect.left + (fromRect.width / 2),
-      y : fromRect.bottom
-    };
-    let to = {
-      x : toRect.left,
-      y : toRect.top + (toRect.height / 2)
-    };
+    // // otherwise draw a curve
+    // let from = {
+    //   x : fromRect.left + (fromRect.width / 2),
+    //   y : fromRect.bottom
+    // };
+    // let to = {
+    //   x : toRect.left,
+    //   y : toRect.top + (toRect.height / 2)
+    // };
+    let mid = {
+      x : from.x + (to.x - from.x) / 2,
+      y : from.y + (to.y - from.y) / 2
+    }
 
     let pathSpec = 'M ' + from.x + ' ' + from.y
                 + ' C ' + from.x + ' ' + from.y + ' '
-                        + from.x + ' ' + to.y + ' '
+                        + mid.x + ' ' + from.y + ' '
+                        + mid.x + ' ' + mid.y
+                + ' C ' + mid.x + ' ' + mid.y + ' '
+                        + mid.x + ' ' + to.y + ' '
                         + to.x + ' ' + to.y;
     return (
         <path key={lineId}  d={pathSpec} style={{
@@ -89,12 +98,7 @@ class PipelineEditor extends Component {
     layoutInformation : PropTypes.object.isRequired
   };
 
-  // the state will hold the layout information, with layout information attached
-  state = {
-    elementStyles: {},
-  };
-
-  static getDerivedStateFromProps(nextProps, prevState) {
+  renderElements() {
     const HORIZONTAL_SPACING = 150;
     const VERTICAL_SPACING = 100;
     const HORIZONTAL_START_PX = 50;
@@ -102,18 +106,14 @@ class PipelineEditor extends Component {
       position: 'absolute'
     };
 
-    return {
-      elementStyles : mapObject(nextProps.layoutInformation, l => ({
+    let elementStyles = mapObject(this.props.layoutInformation, l => ({
         ...commonStyle,
         top: `${l.verticalPos * VERTICAL_SPACING}px`,
         left: `${HORIZONTAL_START_PX + (l.horizontalPos * HORIZONTAL_SPACING)}px`,
-      }))
-    }
-  }
+      }));
 
-  renderElements() {
     return this.props.pipeline.pipeline.elements.add.element.map(e => (
-      <div key={e.id} id={e.id} style={this.state.elementStyles[e.id]}>
+      <div key={e.id} id={e.id} style={elementStyles[e.id]}>
         <PipelineElement pipelineId={this.props.pipelineId} elementId={e.id} />
       </div>
     ));

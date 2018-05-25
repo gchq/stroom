@@ -20,6 +20,7 @@ import {
   authenticationReducer as authentication,
   authorisationReducer as authorisation,
 } from 'startup/Authentication';
+import { modalReducer as modal } from 'lib/ModalState';
 import { lineContainerReducer as lineContainer } from 'components/LineTo';
 import { explorerTreeReducer as explorerTree } from 'components/DocExplorer';
 import { dataSourceReducer as dataSources } from 'components/DataSource';
@@ -41,4 +42,5 @@ export default combineReducers({
   pipelines,
   errorPage,
   lineContainer,
+  modal
 });

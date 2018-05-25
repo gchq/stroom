@@ -34,7 +34,7 @@ const defaultExpression = {
 
 const downRightElbow = ({lineId, fromRect, toRect}) => {
     let from = {
-        x : fromRect.left + (fromRect.width / 2),
+        x : fromRect.left + (fromRect.width / 2) - 2,
         y : fromRect.bottom
     };
     let to = {
@@ -46,7 +46,7 @@ const downRightElbow = ({lineId, fromRect, toRect}) => {
                 + ' L ' + to.x + ' ' + to.y;
     return (
         <path key={lineId}  d={pathSpec} style={{
-            stroke:'black',
+            stroke:'grey',
             strokeWidth: 2,
             fill: 'none'
         }} />
