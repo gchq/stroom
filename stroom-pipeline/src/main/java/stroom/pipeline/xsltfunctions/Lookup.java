@@ -22,20 +22,18 @@ import net.sf.saxon.trans.XPathException;
 import stroom.pipeline.state.StreamHolder;
 import stroom.refdata.ReferenceData;
 import stroom.refdata.ReferenceDataResult;
-import stroom.refdata.offheapstore.EventListProxyConsumer;
-import stroom.refdata.offheapstore.EventListProxyConsumerFactory;
-import stroom.refdata.offheapstore.RefDataValue;
 import stroom.refdata.offheapstore.RefDataValueProxy;
+import stroom.refdata.offheapstore.RefDataValueProxyConsumer;
+import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
-import java.util.Set;
 
 class Lookup extends AbstractLookup {
     @Inject
     Lookup(final ReferenceData referenceData,
            final StreamHolder streamHolder,
-           final Set<RefDataValue> refDataValues) {
-        super(referenceData, streamHolder);
+           final RefDataValueProxyConsumer.Factory consumerFactory) {
+        super(referenceData, streamHolder, consumerFactory);
     }
 
     @Override
@@ -50,32 +48,31 @@ class Lookup extends AbstractLookup {
 
         final RefDataValueProxy refDataValueProxy = result.getRefDataValueProxy();
 
-//        final SequenceMaker sequenceMaker = new SequenceMaker(context,
+        final SequenceMaker sequenceMaker = new SequenceMaker(context, getConsumerFactory());
 //                EventListProxyConsumerFactory.getConsumerSupplier(eventListProxy));
-        final EventListProxyConsumer eventListConsumer = EventListProxyConsumerFactory.getConsumer(
-                eventListProxy,
-                context);
-
-        final Sequence sequence = eventListConsumer.map(eventListProxy);
-
-//        if (eventListProxy != null) {
-//            sequenceMaker.open();
+//        final EventListProxyConsumer eventListConsumer = EventListProxyConsumerFactory.getConsumer(
+//                eventListProxy,
+//                context);
 //
-//            // TODO need to change the ReferenceDataResult to hold the value proxy
-//            // then here we can pass our consume method (changed to accept a ByteBuffer (or maybe InputStream))
-//            // to the OffHeapPool to consume inside a txn
-//            sequenceMaker.consume(eventListProxy);
-//
-//            sequenceMaker.close();
-//
-//            if (trace) {
-//                outputInfo(Severity.INFO, "Lookup success ", lookupIdentifier, trace, result, context);
-//            }
-//        } else if (!ignoreWarnings) {
-//            outputInfo(Severity.WARNING, "Lookup failed ", lookupIdentifier, trace, result, context);
-//        }
+//        final Sequence sequence = eventListConsumer.map(eventListProxy);
 
-//        return sequenceMaker.toSequence();
-        return sequence;
+        if (refDataValueProxy != null) {
+            sequenceMaker.open();
+
+            // TODO need to change the ReferenceDataResult to hold the value proxy
+            // then here we can pass our consume method (changed to accept a ByteBuffer (or maybe InputStream))
+            // to the OffHeapPool to consume inside a txn
+            sequenceMaker.consume(refDataValueProxy);
+
+            sequenceMaker.close();
+
+            if (trace) {
+                outputInfo(Severity.INFO, "Lookup success ", lookupIdentifier, trace, result, context);
+            }
+        } else if (!ignoreWarnings) {
+            outputInfo(Severity.WARNING, "Lookup failed ", lookupIdentifier, trace, result, context);
+        }
+
+        return sequenceMaker.toSequence();
     }
 }

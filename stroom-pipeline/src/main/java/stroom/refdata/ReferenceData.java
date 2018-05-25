@@ -358,6 +358,10 @@ public class ReferenceData {
                 if (effectiveStream != null) {
 
                     final PipelineEntity pipelineEntity = pipelineService.loadByUuid(pipelineReference.getPipeline().getUuid());
+
+                    //TODO should always be zero for a ref stream??
+                    final long streamNo = 0;
+
                     final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                             pipelineReference.getPipeline(),
                             pipelineEntity.getVersion(),

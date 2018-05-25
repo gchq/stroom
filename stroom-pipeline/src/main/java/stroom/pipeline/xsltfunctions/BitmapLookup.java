@@ -23,10 +23,8 @@ import net.sf.saxon.trans.XPathException;
 import stroom.pipeline.state.StreamHolder;
 import stroom.refdata.ReferenceData;
 import stroom.refdata.ReferenceDataResult;
-import stroom.refdata.offheapstore.EventListProxyConsumer;
-import stroom.refdata.offheapstore.EventListProxyConsumerFactory;
-import stroom.refdata.saxevents.EventListValue;
-import stroom.refdata.saxevents.ValueProxy;
+import stroom.refdata.offheapstore.RefDataValueProxy;
+import stroom.refdata.offheapstore.RefDataValueProxyConsumer;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 
@@ -35,8 +33,9 @@ import javax.inject.Inject;
 class BitmapLookup extends AbstractLookup {
     @Inject
     BitmapLookup(final ReferenceData referenceData,
-                 final StreamHolder streamHolder) {
-        super(referenceData, streamHolder);
+                 final StreamHolder streamHolder,
+                 final RefDataValueProxyConsumer.Factory consumerFactory) {
+        super(referenceData, streamHolder, consumerFactory);
     }
 
     @Override
@@ -67,20 +66,20 @@ class BitmapLookup extends AbstractLookup {
             for (final int bit : bits) {
                 final String k = String.valueOf(bit);
                 final ReferenceDataResult result = getReferenceData(map, k, eventTime, lookupIdentifier);
-                final ValueProxy<EventListValue> eventListProxy = result.getEventListProxy();
+                final RefDataValueProxy refDataValueProxy = result.getRefDataValueProxy();
 
-                final EventListProxyConsumer eventListConsumer = EventListProxyConsumerFactory.getConsumer(
-                        eventListProxy,
-                        context);
+//                final EventListProxyConsumer eventListConsumer = EventListProxyConsumerFactory.getConsumer(
+//                        eventListProxy,
+//                        context);
 
-                final Sequence sequence = eventListConsumer.map(eventListProxy);
+//                final Sequence sequence = eventListConsumer.map(eventListProxy);
 
-                if (eventList != null) {
+                if (refDataValueProxy != null) {
                     if (sequenceMaker == null) {
-                        sequenceMaker = new SequenceMaker(context);
+                        sequenceMaker = new SequenceMaker(context, getConsumerFactory());
                         sequenceMaker.open();
                     }
-                    sequenceMaker.consume(eventList);
+                    sequenceMaker.consume(refDataValueProxy);
 
                     if (trace) {
                         outputInfo(Severity.INFO, "Lookup success ", lookupIdentifier, trace, result, context);
@@ -116,11 +115,10 @@ class BitmapLookup extends AbstractLookup {
                 outputWarning(context, sb, null);
             }
 
-//            if (sequenceMaker != null) {
-//                sequenceMaker.close();
-//                return sequenceMaker.toSequence();
-//            }
-            return sequence;
+            if (sequenceMaker != null) {
+                sequenceMaker.close();
+                return sequenceMaker.toSequence();
+            }
         }
 
         return EmptyAtomicSequence.getInstance();

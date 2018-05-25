@@ -42,12 +42,20 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
 
     private final ReferenceData referenceData;
     private final StreamHolder streamHolder;
+    private final RefDataValueProxyConsumer.Factory consumerFactory;
 
     private long defaultMs = -1;
 
-    AbstractLookup(final ReferenceData referenceData, final StreamHolder streamHolder) {
+    AbstractLookup(final ReferenceData referenceData,
+                   final StreamHolder streamHolder,
+                   final RefDataValueProxyConsumer.Factory consumerFactory) {
         this.referenceData = referenceData;
         this.streamHolder = streamHolder;
+        this.consumerFactory = consumerFactory;
+    }
+
+    RefDataValueProxyConsumer.Factory getConsumerFactory() {
+        return consumerFactory;
     }
 
     @Override
