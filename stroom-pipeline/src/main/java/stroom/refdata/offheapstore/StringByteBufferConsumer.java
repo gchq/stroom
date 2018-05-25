@@ -19,10 +19,20 @@ package stroom.refdata.offheapstore;
 
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
+import net.sf.saxon.event.ReceiverOptions;
+import net.sf.saxon.expr.parser.Location;
+import net.sf.saxon.trans.XPathException;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 public class StringByteBufferConsumer implements RefDataValueByteBufferConsumer {
+
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(StringByteBufferConsumer.class);
+
+    static final Location NULL_LOCATION = new NullLocation();
 
     private final Receiver receiver;
 
@@ -33,6 +43,12 @@ public class StringByteBufferConsumer implements RefDataValueByteBufferConsumer 
     @Override
     public void consumeBytes(final Receiver receiver, final ByteBuffer byteBuffer) {
 
+        final String str = StandardCharsets.UTF_8.decode(byteBuffer).toString();
+        try {
+            receiver.characters(str, NULL_LOCATION, ReceiverOptions.WHOLE_TEXT_NODE);
+        } catch (XPathException e) {
+            throw new RuntimeException(LambdaLogger.buildMessage("Error passing string {} to receiver", str), e);
+        }
     }
 
     public static class Factory implements AbstractByteBufferConsumer.Factory {

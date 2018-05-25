@@ -17,23 +17,12 @@
 
 package stroom.refdata.offheapstore;
 
-import net.sf.saxon.event.PipelineConfiguration;
-import net.sf.saxon.event.ReceiverOptions;
 import net.sf.saxon.expr.XPathContext;
-import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
-import net.sf.saxon.trans.XPathException;
-import net.sf.saxon.tree.tiny.TinyBuilder;
-import stroom.util.logging.LambdaLogger;
 
 import java.nio.ByteBuffer;
-import java.util.Optional;
 
 public class StringValueConsumer extends EventListProxyConsumer {
-
-//    public StringValueConsumer(final Receiver receiver, final PipelineConfiguration pipe) {
-//        super(receiver, pipe);
-//    }
 
 
     StringValueConsumer(final XPathContext context) {
@@ -42,48 +31,50 @@ public class StringValueConsumer extends EventListProxyConsumer {
 
     private Sequence convertByteBufferToSequence(final ByteBuffer byteBuffer) {
         // Initialise objects for de-serialising the bytebuffer
-        final PipelineConfiguration pipelineConfiguration = buildPipelineConfiguration();
-        final TinyBuilder receiver = new TinyBuilder(pipelineConfiguration);
-        try {
-            startDocument(receiver, pipelineConfiguration);
-        } catch (XPathException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Error starting document"), e);
-        }
-
-        StringValue stringValue = StringValue.fromByteBuffer(byteBuffer);
-
-        try {
-            receiver.characters(stringValue.getValue(), NULL_LOCATION, ReceiverOptions.WHOLE_TEXT_NODE);
-        } catch (XPathException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Error passing string {} to receiver", stringValue), e);
-        }
-
-        try {
-            endDocument(receiver);
-        } catch (XPathException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Error ending document"), e);
-        }
-        final Sequence sequence = receiver.getCurrentRoot();
-        // Reset the builder, detaching it from the constructed document.
-        receiver.reset();
-        return sequence;
+//        final PipelineConfiguration pipelineConfiguration = buildPipelineConfiguration();
+//        final TinyBuilder receiver = new TinyBuilder(pipelineConfiguration);
+//        try {
+//            startDocument(receiver, pipelineConfiguration);
+//        } catch (XPathException e) {
+//            throw new RuntimeException(LambdaLogger.buildMessage("Error starting document"), e);
+//        }
+//
+//        StringValue stringValue =
+//
+//        try {
+//            receiver.characters(stringValue.getValue(), NULL_LOCATION, ReceiverOptions.WHOLE_TEXT_NODE);
+//        } catch (XPathException e) {
+//            throw new RuntimeException(LambdaLogger.buildMessage("Error passing string {} to receiver", stringValue), e);
+//        }
+//
+//        try {
+//            endDocument(receiver);
+//        } catch (XPathException e) {
+//            throw new RuntimeException(LambdaLogger.buildMessage("Error ending document"), e);
+//        }
+//        final Sequence sequence = receiver.getCurrentRoot();
+//        // Reset the builder, detaching it from the constructed document.
+//        receiver.reset();
+//        return sequence;
+        return null;
     }
 
     @Override
     public Sequence map(final RefDataValueProxy refDataValueProxy) {
-        if (refDataValueProxy == null) {
-            return EmptyAtomicSequence.getInstance();
-        }
+//        if (refDataValueProxy == null) {
+//            return EmptyAtomicSequence.getInstance();
+//        }
+//
+//        Class<? extends RefDataValue> valueClass = refDataValueProxy.getValueClass();
+//        if (!valueClass.isAssignableFrom(StringValue.class)) {
+//            throw new RuntimeException(LambdaLogger.buildMessage("Unexpected type {}", valueClass.getCanonicalName()));
+//        }
+//
+//        // Get the value of the proxy and if found map it
+//        Optional<Sequence> optSequence = refDataValueProxy.mapBytes(this::convertByteBufferToSequence);
 
-        Class<? extends RefDataValue> valueClass = refDataValueProxy.getValueClass();
-        if (!valueClass.isAssignableFrom(StringValue.class)) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Unexpected type {}", valueClass.getCanonicalName()));
-        }
-
-        // Get the value of the proxy and if found map it
-        Optional<Sequence> optSequence = refDataValueProxy.mapBytes(this::convertByteBufferToSequence);
-
-        return optSequence.orElseGet(EmptyAtomicSequence::getInstance);
+//        return optSequence.orElseGet(EmptyAtomicSequence::getInstance);
+        return null;
     }
 
 //    public void consume(final ValueProxy<EventListValue> eventListProxy) {

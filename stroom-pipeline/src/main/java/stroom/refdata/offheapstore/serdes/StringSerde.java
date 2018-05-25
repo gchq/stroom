@@ -15,25 +15,25 @@
  *
  */
 
-package stroom.refdata.offheapstore;
+package stroom.refdata.offheapstore.serdes;
 
-import stroom.entity.shared.Range;
+import stroom.refdata.lmdb.serde.Serde;
 
-public interface RefDataLoader extends AutoCloseable {
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
-    RefStreamDefinition getRefStreamDefinition();
+public class StringSerde implements Serde<String> {
 
-    void initialise();
+    @Override
+    public String deserialize(final ByteBuffer byteBuffer) {
+        String str = StandardCharsets.UTF_8.decode(byteBuffer).toString();
+        byteBuffer.flip();
+        return str;
+    }
 
-    void completeProcessing();
-
-    void setCommitInterval(final int putsBeforeCommit);
-
-    void put(String key,
-             RefDataValue refDataValue,
-             boolean overwriteExistingValue);
-
-    void put(Range<Long> keyRange,
-             RefDataValue refDataValue,
-             boolean overwriteExistingValue);
+    @Override
+    public void serialize(final ByteBuffer byteBuffer, final String str) {
+        byteBuffer.put(str.getBytes(StandardCharsets.UTF_8));
+        byteBuffer.flip();
+    }
 }

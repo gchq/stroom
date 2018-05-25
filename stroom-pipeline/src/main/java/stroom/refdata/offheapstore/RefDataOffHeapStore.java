@@ -252,6 +252,11 @@ public class RefDataOffHeapStore implements RefDataStore {
             this.effectiveTimeMs = effectiveTimeMs;
         }
 
+        @Override
+        public RefStreamDefinition getRefStreamDefinition() {
+            return refStreamDefinition;
+        }
+
         public void initialise() {
             throwExceptionIfAlreadyInitialised();
 

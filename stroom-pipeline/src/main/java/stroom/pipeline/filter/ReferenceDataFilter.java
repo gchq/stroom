@@ -38,8 +38,8 @@ import stroom.refdata.MapStoreHolder;
 import stroom.refdata.RefDataLoaderHolder;
 import stroom.refdata.offheapstore.FastInfosetValue;
 import stroom.refdata.offheapstore.MapDefinition;
+import stroom.refdata.offheapstore.RefDataLoader;
 import stroom.refdata.offheapstore.RefDataValue;
-import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.refdata.offheapstore.StringValue;
 import stroom.refdata.saxevents.OffHeapEventListInternPool;
 import stroom.util.CharBuffer;
@@ -120,8 +120,6 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     private final List<Tuple3> keyValueEntries = new ArrayList<>();
     private final List<Tuple3> rangeValueEntries = new ArrayList<>();
 
-    private RefStreamDefinition refStreamDefinition = null;
-
     private String mapName;
     private String key;
     private boolean inValue;
@@ -161,10 +159,6 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         // build the definition of the stream that is being processed
         final PipelineEntity pipelineEntity = Objects.requireNonNull(pipelineHolder.getPipeline());
         final DocRef pipelineDocRef = DocRefUtil.create(pipelineEntity);
-        this.refStreamDefinition = new RefStreamDefinition(
-                pipelineDocRef,
-                pipelineEntity.getVersion(),
-                streamHolder.getStream().getId(), streamNo);
         contentBuffer.clear();
         byteArrayOutputStream.reset();
         saxDocumentSerializer.reset();
@@ -270,7 +264,8 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                 // end of the ref data item so ensure it is persisted in the store
                 try {
                     if (mapName != null) {
-                        final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
+                        final RefDataLoader refDataLoader = Objects.requireNonNull(refDataLoaderHolder.getRefDataLoader());
+                        final MapDefinition mapDefinition = new MapDefinition(refDataLoader.getRefStreamDefinition(), mapName);
 
                         RefDataValue refDataValue = getRefDataValueFromBuffers();
                         if (key != null) {

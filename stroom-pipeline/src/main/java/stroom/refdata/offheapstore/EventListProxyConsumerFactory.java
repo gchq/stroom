@@ -17,11 +17,6 @@
 
 package stroom.refdata.offheapstore;
 
-import net.sf.saxon.expr.XPathContext;
-import stroom.refdata.saxevents.FastInfosetValue;
-import stroom.refdata.saxevents.StringValue;
-import stroom.util.logging.LambdaLogger;
-
 public class EventListProxyConsumerFactory {
 
 //    public static EventListProxyConsumer getConsumer(final ValueProxy<EventListValue> eventListProxy,
@@ -44,17 +39,17 @@ public class EventListProxyConsumerFactory {
 //        }
 //    }
 
-    public static EventListProxyConsumer getConsumer(final RefDataValueProxy refDataValueProxy,
-                                                     final XPathContext context) {
-
-        final Class<? extends RefDataValue> valueClass = refDataValueProxy.getValueClass();
-        if (valueClass.isAssignableFrom(FastInfosetValue.class)) {
-            return new FastInfosetConsumer(context);
-        } else if (valueClass.isAssignableFrom(StringValue.class)) {
-            return new StringValueConsumer(context);
-        } else {
-            throw new RuntimeException(LambdaLogger.buildMessage("Unexpected type {}", valueClass.getCanonicalName()));
-        }
-    }
+//    public static EventListProxyConsumer getConsumer(final RefDataValueProxy refDataValueProxy,
+//                                                     final XPathContext context) {
+//
+//        final Class<? extends RefDataValue> valueClass = refDataValueProxy.getValueClass();
+//        if (valueClass.isAssignableFrom(FastInfosetValue.class)) {
+//            return new FastInfosetConsumer(context);
+//        } else if (valueClass.isAssignableFrom(StringValue.class)) {
+//            return new StringValueConsumer(context);
+//        } else {
+//            throw new RuntimeException(LambdaLogger.buildMessage("Unexpected type {}", valueClass.getCanonicalName()));
+//        }
+//    }
 
 }

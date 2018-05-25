@@ -215,25 +215,26 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
 
                 final PipelineEntity pipelineEntity = Objects.requireNonNull(pipelineHolder.getPipeline());
                 final DocRef pipelineDocRef = DocRefUtil.create(pipelineEntity);
-                final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
-                        pipelineDocRef,
-                        pipelineEntity.getVersion(),
-                        streamHolder.getStream().getId(),
-                        streamNo);
 
-                try (RefDataLoader refDataLoader = refDataStore.loader(refStreamDefinition, stream.getEffectiveMs())) {
-                    refDataLoaderHolder.setRefDataLoader(refDataLoader);
 
-                    // Loop over the stream boundaries and process each
-                    // sequentially.
-                    final long streamCount = mainProvider.getStreamCount();
-                    for (long streamNo = 0; streamNo < streamCount && !taskContext.isTerminated(); streamNo++) {
-                        streamHolder.setStreamNo(streamNo);
-                        streamLocationFactory.setStreamNo(streamNo + 1);
+                // Loop over the stream boundaries and process each
+                // sequentially.
+                final long streamCount = mainProvider.getStreamCount();
+                for (long streamNo = 0; streamNo < streamCount && !taskContext.isTerminated(); streamNo++) {
+                    streamHolder.setStreamNo(streamNo);
+                    streamLocationFactory.setStreamNo(streamNo + 1);
 
-                        // Get the stream.
-                        final StreamSourceInputStream inputStream = mainProvider.getStream(streamNo);
+                    // Get the stream.
+                    final StreamSourceInputStream inputStream = mainProvider.getStream(streamNo);
 
+                    final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
+                            pipelineDocRef,
+                            pipelineEntity.getVersion(),
+                            streamHolder.getStream().getId(),
+                            streamNo);
+
+                    try (RefDataLoader refDataLoader = refDataStore.loader(refStreamDefinition, stream.getEffectiveMs())) {
+                        refDataLoaderHolder.setRefDataLoader(refDataLoader);
                         // Process the boundary.
                         try {
                             //process the pipeline, ref data will be loaded via the ReferenceDataFilter
@@ -241,9 +242,11 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                         } catch (final RuntimeException e) {
                             log(Severity.FATAL_ERROR, e.getMessage(), e);
                         }
+                    } catch (Exception e) {
+                        log(Severity.FATAL_ERROR, "Error closing refDataLoader: " + e.getMessage(), e);
                     }
-                } catch (Exception e) {
-                    log(Severity.FATAL_ERROR, "Error closing refDataLoader: " + e.getMessage(), e);
+                    // clear the reference to the loader now we have finished with it
+                    refDataLoaderHolder.setRefDataLoader(null);
                 }
 
 

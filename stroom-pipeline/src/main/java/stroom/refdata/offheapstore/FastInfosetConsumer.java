@@ -21,18 +21,15 @@ import com.esotericsoftware.kryo.io.ByteBufferInputStream;
 import com.sun.xml.fastinfoset.sax.SAXDocumentParser;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.expr.XPathContext;
-import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.tree.tiny.TinyBuilder;
 import org.jvnet.fastinfoset.FastInfosetException;
 import org.xml.sax.SAXException;
-import stroom.refdata.saxevents.FastInfosetValue;
 import stroom.util.logging.LambdaLogger;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Optional;
 
 class FastInfosetConsumer extends EventListProxyConsumer {
 
@@ -115,18 +112,19 @@ class FastInfosetConsumer extends EventListProxyConsumer {
 
     @Override
     public Sequence map(final RefDataValueProxy refDataValueProxy) {
-        if (refDataValueProxy == null) {
-            return EmptyAtomicSequence.getInstance();
-        }
-
-        Class<? extends RefDataValue> valueClass = refDataValueProxy.getValueClass();
-        if (valueClass.isAssignableFrom(FastInfosetValue.class)) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Unexpected type {}", valueClass.getCanonicalName()));
-        }
-
-        // Get the value of the proxy and if found map it
-        Optional<Sequence> optSequence = refDataValueProxy.mapBytes(this::convertByteBufferToSequence);
-
-        return optSequence.orElseGet(EmptyAtomicSequence::getInstance);
+//        if (refDataValueProxy == null) {
+//            return EmptyAtomicSequence.getInstance();
+//        }
+//
+//        Class<? extends RefDataValue> valueClass = refDataValueProxy.getValueClass();
+//        if (valueClass.isAssignableFrom(FastInfosetValue.class)) {
+//            throw new RuntimeException(LambdaLogger.buildMessage("Unexpected type {}", valueClass.getCanonicalName()));
+//        }
+//
+//        // Get the value of the proxy and if found map it
+//        Optional<Sequence> optSequence = refDataValueProxy.mapBytes(this::convertByteBufferToSequence);
+//
+//        return optSequence.orElseGet(EmptyAtomicSequence::getInstance);
+        return null;
     }
 }

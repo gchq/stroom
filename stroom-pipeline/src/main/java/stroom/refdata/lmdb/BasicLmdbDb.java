@@ -30,7 +30,7 @@ public class BasicLmdbDb<K,V> extends AbstractLmdbDb<K, V> {
                 final Serde<K> keySerde,
                 final Serde<V> valueSerde,
                 final String dbName) {
-        super(lmdbEnvironment, keySerde, valueSerde);
+        super(lmdbEnvironment, keySerde, valueSerde, dbName);
         this.name = dbName;
     }
 
