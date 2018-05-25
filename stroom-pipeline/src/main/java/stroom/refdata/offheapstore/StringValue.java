@@ -17,17 +17,15 @@
 
 package stroom.refdata.offheapstore;
 
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 public class StringValue extends RefDataValue {
 
-    static final byte TYPE_ID = 0;
+    public static final int TYPE_ID = 0;
 
     private final String value;
 
-    private StringValue(final String value) {
+    public StringValue(final String value) {
         this.value = value;
     }
 
@@ -53,18 +51,18 @@ public class StringValue extends RefDataValue {
     }
 
     @Override
-    public byte getTypeId() {
+    public int getTypeId() {
         return TYPE_ID;
     }
 
-    @Override
-    void putValue(final ByteBuffer byteBuffer) {
-        byteBuffer.put(value.getBytes(StandardCharsets.UTF_8));
-    }
+//    @Override
+//    void putValue(final ByteBuffer byteBuffer) {
+//        byteBuffer.put(value.getBytes(StandardCharsets.UTF_8));
+//    }
 
-    static StringValue fromByteBuffer(final ByteBuffer byteBuffer) {
-        return new StringValue(StandardCharsets.UTF_8.decode(byteBuffer).toString());
-    }
+//    static StringValue fromByteBuffer(final ByteBuffer byteBuffer) {
+//        return new StringValue(StandardCharsets.UTF_8.decode(byteBuffer).toString());
+//    }
 
     @Override
     public String toString() {

@@ -1,23 +1,32 @@
 package stroom.refdata.offheapstore;
 
+import com.google.inject.assistedinject.Assisted;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
 import net.sf.saxon.trans.XPathException;
 
+import javax.inject.Inject;
+import java.util.HashMap;
 import java.util.Map;
 
 
-class RefDataValueProxyConsumer {
+public class RefDataValueProxyConsumer {
 
     private final Receiver receiver;
     private final PipelineConfiguration pipelineConfiguration;
 
-//    private final Map<Class<? extends RefDataValue>, RefDataValueByteBufferConsumer> typeToConsumerMap =
-//            Maps.
+    private final Map<Integer, AbstractByteBufferConsumer.ByteBufferConsumerFactory> typeToByteBufferConsumerFactoryMap;
+    private final Map<Integer, RefDataValueByteBufferConsumer> typeToConsumerMap = new HashMap<>();
 
-    RefDataValueProxyConsumer(final Receiver receiver, final PipelineConfiguration pipelineConfiguration) {
+    @Inject
+    public RefDataValueProxyConsumer(
+            @Assisted final Receiver receiver,
+            @Assisted final PipelineConfiguration pipelineConfiguration,
+            final Map<Integer, AbstractByteBufferConsumer.ByteBufferConsumerFactory> typeToByteBufferConsumerFactoryMap) {
         this.receiver = receiver;
         this.pipelineConfiguration = pipelineConfiguration;
+        this.typeToByteBufferConsumerFactoryMap = typeToByteBufferConsumerFactoryMap;
+
     }
 
     public void startDocument() throws XPathException {
@@ -36,16 +45,19 @@ class RefDataValueProxyConsumer {
         //
         refDataValueProxy.consumeBytes(byteBuffer -> {
             byte bTypeId = byteBuffer.get();
+            Integer typeId = (int) bTypeId;
 
-            final Class<? extends RefDataValue> valueClass = RefDataValueSerde.determineType(bTypeId);
+            // work out which byteBufferConsumer to use based
+            RefDataValueByteBufferConsumer consumer = typeToConsumerMap.computeIfAbsent(typeId, k ->
+                    typeToByteBufferConsumerFactoryMap.get(k).create(receiver, pipelineConfiguration));
 
-            //TODO determine which consumer class to use based on the type
-
-            final RefDataValueByteBufferConsumer byteBufferConsumer;
-
-
-            byteBufferConsumer.consumeBytes(receiver, byteBuffer);
+            consumer.consumeBytes(receiver, byteBuffer);
         });
+    }
+
+    public interface RefDataValueProxyConsumerFactory {
+        RefDataValueProxyConsumer create(final Receiver receiver,
+                                         final PipelineConfiguration pipelineConfiguration);
     }
 
 }

@@ -15,11 +15,12 @@
  *
  */
 
-package stroom.refdata.offheapstore;
+package stroom.refdata.offheapstore.serdes;
 
 import stroom.refdata.lmdb.serde.Deserializer;
 import stroom.refdata.lmdb.serde.Serde;
 import stroom.refdata.lmdb.serde.Serializer;
+import stroom.refdata.offheapstore.RefDataProcessingInfo;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -35,9 +36,10 @@ class ProcessingInfoSerde implements
         final long createTimeEpochMs = byteBuffer.getLong();
         final long lastAccessedTimeEpochMs = byteBuffer.getLong();
         final long effectiveTimeEpochMs = byteBuffer.getLong();
-        final byte processtingStateId = byteBuffer.get();
+        final byte processingStateId = byteBuffer.get();
         final RefDataProcessingInfo.ProcessingState processingState =
-                RefDataProcessingInfo.ProcessingState.valueOf(processtingStateId);
+                RefDataProcessingInfo.ProcessingState.fromByte(processingStateId);
+
         return new RefDataProcessingInfo(
                 createTimeEpochMs, lastAccessedTimeEpochMs, effectiveTimeEpochMs, processingState);
     }

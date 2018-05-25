@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.refdata.offheapstore;
+package stroom.refdata.offheapstore.serdes;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
@@ -25,16 +25,19 @@ import com.esotericsoftware.kryo.pool.KryoPool;
 import org.objenesis.strategy.StdInstantiatorStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.entity.shared.Range;
 import stroom.refdata.lmdb.serde.AbstractKryoSerde;
+import stroom.refdata.offheapstore.RangeStoreKey;
+import stroom.refdata.offheapstore.UID;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import java.nio.ByteBuffer;
 
-class KeyValueStoreKeySerde extends AbstractKryoSerde<KeyValueStoreKey> {
+public class RangeStoreKeySerde extends AbstractKryoSerde<RangeStoreKey> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(KeyValueStoreKeySerde.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(KeyValueStoreKeySerde.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RangeStoreKeySerde.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(RangeStoreKeySerde.class);
 
     private static final KryoFactory kryoFactory = () -> {
         Kryo kryo = new Kryo();
@@ -42,7 +45,7 @@ class KeyValueStoreKeySerde extends AbstractKryoSerde<KeyValueStoreKey> {
             LAMBDA_LOGGER.debug(() -> String.format("Initialising Kryo on thread %s",
                     Thread.currentThread().getName()));
 
-            kryo.register(KeyValueStoreKey.class, new KeyValueStoreKeyKryoSerializer());
+            kryo.register(RangeStoreKey.class, new RangeStoreKeyKryoSerializer());
             ((Kryo.DefaultInstantiatorStrategy) kryo.getInstantiatorStrategy()).setFallbackInstantiatorStrategy(
                     new StdInstantiatorStrategy());
             kryo.setRegistrationRequired(true);
@@ -57,30 +60,34 @@ class KeyValueStoreKeySerde extends AbstractKryoSerde<KeyValueStoreKey> {
             .build();
 
     @Override
-    public KeyValueStoreKey deserialize(final ByteBuffer byteBuffer) {
+    public RangeStoreKey deserialize(final ByteBuffer byteBuffer) {
         return super.deserialize(pool, byteBuffer);
     }
 
     @Override
-    public void serialize(final ByteBuffer byteBuffer, final KeyValueStoreKey object) {
-        super.serialize(pool, byteBuffer, object);
+    public void serialize(final ByteBuffer byteBuffer, final RangeStoreKey rangeStoreKey) {
+        // TODO how do we know how big the serialized form will be
+        super.serialize(pool, byteBuffer, rangeStoreKey);
     }
 
-    private static class KeyValueStoreKeyKryoSerializer extends com.esotericsoftware.kryo.Serializer<KeyValueStoreKey> {
+    private static class RangeStoreKeyKryoSerializer extends com.esotericsoftware.kryo.Serializer<RangeStoreKey> {
 
         @Override
-        public void write(final Kryo kryo, final Output output, final KeyValueStoreKey key) {
+        public void write(final Kryo kryo, final Output output, final RangeStoreKey key) {
             RefDataSerdeUtils.writeUid(output, key.getMapUid());
-            output.writeString(key.getKey());
             RefDataSerdeUtils.writeTimeMs(output, key.getEffectiveTimeEpochMs());
+            Range<Long> range = key.getKeyRange();
+            RefDataSerdeUtils.writeTimeMs(output, range.getFrom());
+            RefDataSerdeUtils.writeTimeMs(output, range.getTo());
         }
 
         @Override
-        public KeyValueStoreKey read(final Kryo kryo, final Input input, final Class<KeyValueStoreKey> type) {
+        public RangeStoreKey read(final Kryo kryo, final Input input, final Class<RangeStoreKey> type) {
             final UID mapUid = RefDataSerdeUtils.readUid(input);
-            final String key = input.readString();
             final long effectiveTimeEpochMs = RefDataSerdeUtils.readTimeMs(input);
-            return new KeyValueStoreKey(mapUid, key, effectiveTimeEpochMs);
+            long startMs = RefDataSerdeUtils.readTimeMs(input);
+            long endMs = RefDataSerdeUtils.readTimeMs(input);
+            return new RangeStoreKey(mapUid, effectiveTimeEpochMs, new Range<>(startMs, endMs));
         }
     }
 }

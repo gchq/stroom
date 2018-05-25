@@ -72,6 +72,7 @@ ext.versions = [
     dropwizard         :  '1.2.5', //if you change this version you should check the versions below that need to move in sync with it
     dropwizard_metrics :  '3.2.5', //should be kept in step with dropwizard
     guava              :  '21.0',
+    guice4             :  '4.2.0',
     gwt                :  '2.8.2',
     hibernate          :  '5.2.13.Final', //dropwiz 1.2.5 uses -validator 5.4.2.Final and -core 5.2.12.Final
     jackson            :  '2.8.6',
@@ -129,9 +130,10 @@ ext.libs = [
     flyway_core                     :  "org.flywaydb:flyway-core:4.0.3",
     gin                             :  "com.google.gwt.inject:gin:2.1.2",
     guava                           :  "com.google.guava:guava:$versions.guava", //>=v21 removes MoreExecutors.sameThreadExecutor() which is needed by curator 2.11
-    guice4                          :  "com.google.inject:guice:4.2.0",
     guice3                          :  "com.google.inject:guice:3.0",
-    guice_multibindings             :  "com.google.inject.extensions:guice-multibindings:4.2.0",
+    guice4                          :  "com.google.inject:guice:$versions.guice4",
+    guice_multibindings             :  "com.google.inject.extensions:guice-multibindings:$versions.guice4",
+    guice_assistedinject            :  "com.google.inject.extensions:guice-assistedinject:$versions.guice4",
     gwt_dev                         :  "com.google.gwt:gwt-dev:$versions.gwt",
     gwt_servlet                     :  "com.google.gwt:gwt-servlet:$versions.gwt",
     gwt_user                        :  "com.google.gwt:gwt-user:$versions.gwt",

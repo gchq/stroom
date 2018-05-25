@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-abstract class AbstractLmdbDb<K, V> {
+public abstract class AbstractLmdbDb<K, V> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractLmdbDb.class);
 
@@ -42,11 +42,10 @@ abstract class AbstractLmdbDb<K, V> {
     private final Dbi<ByteBuffer> lmdbDbi;
     private final Env<ByteBuffer> lmdbEnvironment;
 
-    AbstractLmdbDb(final Env<ByteBuffer> lmdbEnvironment,
-                   final Serde<K> keySerde,
-                   final Serde<V> valueSerde,
-                   final String dbName) {
-
+    public AbstractLmdbDb(final Env<ByteBuffer> lmdbEnvironment,
+                          final Serde<K> keySerde,
+                          final Serde<V> valueSerde,
+                          final String dbName) {
         this.keySerde = keySerde;
         this.valueSerde = valueSerde;
         this.dbName = dbName;
@@ -54,7 +53,7 @@ abstract class AbstractLmdbDb<K, V> {
         this.lmdbDbi = openDbi(lmdbEnvironment, dbName);
     }
 
-    String getDbName() {
+    public String getDbName() {
         return dbName;
     }
 

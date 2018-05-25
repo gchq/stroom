@@ -28,10 +28,10 @@ public class RefDataProcessingInfo {
     private final long effectiveTimeEpochMs;
     private final ProcessingState processingState;
 
-    RefDataProcessingInfo(final long createTimeEpochMs,
-                          final long lastAccessedTimeEpochMs,
-                          final long effectiveTimeEpochMs,
-                          final ProcessingState processingState) {
+    public RefDataProcessingInfo(final long createTimeEpochMs,
+                                 final long lastAccessedTimeEpochMs,
+                                 final long effectiveTimeEpochMs,
+                                 final ProcessingState processingState) {
         this.createTimeEpochMs = createTimeEpochMs;
         this.lastAccessedTimeEpochMs = lastAccessedTimeEpochMs;
         this.effectiveTimeEpochMs = effectiveTimeEpochMs;
@@ -46,19 +46,19 @@ public class RefDataProcessingInfo {
         return new RefDataProcessingInfo(createTimeEpochMs, System.currentTimeMillis(), effectiveTimeEpochMs, processingState);
     }
 
-    long getCreateTimeEpochMs() {
+    public long getCreateTimeEpochMs() {
         return createTimeEpochMs;
     }
 
-    long getLastAccessedTimeEpochMs() {
+    public long getLastAccessedTimeEpochMs() {
         return lastAccessedTimeEpochMs;
     }
 
-    long getEffectiveTimeEpochMs() {
+    public long getEffectiveTimeEpochMs() {
         return effectiveTimeEpochMs;
     }
 
-    ProcessingState getProcessingState() {
+    public ProcessingState getProcessingState() {
         return processingState;
     }
 
@@ -98,11 +98,11 @@ public class RefDataProcessingInfo {
             this.id = id;
         }
 
-        byte getId() {
+        public byte getId() {
             return id;
         }
 
-        static ProcessingState valueOf(final byte id) {
+        public static ProcessingState fromByte(final byte id) {
             for (ProcessingState processingState : ProcessingState.values()) {
                 if (id == processingState.id) {
                     return processingState;

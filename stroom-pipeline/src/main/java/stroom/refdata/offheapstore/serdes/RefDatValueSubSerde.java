@@ -15,23 +15,11 @@
  *
  */
 
-package stroom.refdata.offheapstore;
+package stroom.refdata.offheapstore.serdes;
 
-public abstract class RefDataValue {
+import stroom.refdata.lmdb.serde.Serde;
+import stroom.refdata.offheapstore.RefDataValue;
 
-    public abstract boolean equals(Object obj);
-
-    public abstract int hashCode();
-
-    /**
-     * @return A code to represent the class of this, unique within all sub-classes of {@link RefDataValue}
-     */
-    public abstract int getTypeId();
-
-//    /**
-//     * Puts the objects value in byte serialized form into the passed {@link ByteBuffer}. The position of the
-//     * buffer after putValue will be after the put value.
-//     */
-//    abstract void putValue(final ByteBuffer byteBuffer);
+public interface RefDatValueSubSerde extends Serde<RefDataValue> {
 
 }

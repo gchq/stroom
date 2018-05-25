@@ -15,11 +15,12 @@
  *
  */
 
-package stroom.refdata.offheapstore;
+package stroom.refdata.offheapstore.serdes;
 
 import stroom.refdata.lmdb.serde.Deserializer;
 import stroom.refdata.lmdb.serde.Serde;
 import stroom.refdata.lmdb.serde.Serializer;
+import stroom.refdata.offheapstore.UID;
 
 import java.nio.ByteBuffer;
 

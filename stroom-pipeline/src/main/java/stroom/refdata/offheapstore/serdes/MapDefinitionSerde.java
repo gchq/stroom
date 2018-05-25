@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.refdata.offheapstore;
+package stroom.refdata.offheapstore.serdes;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
@@ -26,12 +26,14 @@ import org.objenesis.strategy.StdInstantiatorStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.serde.AbstractKryoSerde;
+import stroom.refdata.offheapstore.MapDefinition;
+import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import java.nio.ByteBuffer;
 
-class MapDefinitionSerde extends AbstractKryoSerde<MapDefinition> {
+public class MapDefinitionSerde extends AbstractKryoSerde<MapDefinition> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MapDefinitionSerde.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(MapDefinitionSerde.class);

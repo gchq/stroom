@@ -15,10 +15,11 @@
  *
  */
 
-package stroom.refdata.offheapstore;
+package stroom.refdata.offheapstore.serdes;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import stroom.refdata.offheapstore.UID;
 
 /**
  * Utility methods for working with Kryo to ensure consistency

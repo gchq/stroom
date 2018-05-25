@@ -25,21 +25,21 @@ public class KeyValueStoreKey {
     private final String key;
     private final long effectiveTimeEpochMs;
 
-    KeyValueStoreKey(final UID mapUid, final String key, final long effectiveTimeEpochMs) {
+    public KeyValueStoreKey(final UID mapUid, final String key, final long effectiveTimeEpochMs) {
         this.mapUid = Objects.requireNonNull(mapUid);
         this.key = Objects.requireNonNull(key);
         this.effectiveTimeEpochMs = effectiveTimeEpochMs;
     }
 
-    UID getMapUid() {
+    public UID getMapUid() {
         return mapUid;
     }
 
-    String getKey() {
+    public String getKey() {
         return key;
     }
 
-    long getEffectiveTimeEpochMs() {
+    public long getEffectiveTimeEpochMs() {
         return effectiveTimeEpochMs;
     }
 

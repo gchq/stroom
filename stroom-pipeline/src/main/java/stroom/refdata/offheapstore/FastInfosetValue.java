@@ -22,7 +22,7 @@ import java.util.Arrays;
 
 public class FastInfosetValue extends RefDataValue {
 
-    static final byte TYPE_ID = 1;
+    public static final int TYPE_ID = 1;
 
     private final byte[] fastInfosetBytes;
 
@@ -42,7 +42,7 @@ public class FastInfosetValue extends RefDataValue {
     }
 
     @Override
-    public byte getTypeId() {
+    public int getTypeId() {
         return TYPE_ID;
     }
 
@@ -63,8 +63,8 @@ public class FastInfosetValue extends RefDataValue {
         return fastInfosetBytes;
     }
 
-    @Override
-    void putValue(final ByteBuffer byteBuffer) {
-        byteBuffer.put(fastInfosetBytes);
-    }
+//    @Override
+//    void putValue(final ByteBuffer byteBuffer) {
+//        byteBuffer.put(fastInfosetBytes);
+//    }
 }

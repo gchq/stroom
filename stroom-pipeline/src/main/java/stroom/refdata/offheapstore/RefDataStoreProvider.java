@@ -38,10 +38,11 @@ public class RefDataStoreProvider implements Provider<RefDataStore> {
     private static final long MAX_STORE_SIZE_BYTES_DEFAULT = ByteSizeUnit.GIBIBYTE.longBytes(10);
 
     private final StroomPropertyService stroomPropertyService;
-    private final RefDataOffHeapStore refDataOffHeapStore;
+    private final RefDataStore refDataStore;
 
     @Inject
-    RefDataStoreProvider(final StroomPropertyService stroomPropertyService) {
+    RefDataStoreProvider(final StroomPropertyService stroomPropertyService,
+                         final RefDataOffHeapStore.RefDataOffHeapStoreFactory refDataOffHeapStoreFactory) {
         this.stroomPropertyService = stroomPropertyService;
 
 
@@ -50,12 +51,12 @@ public class RefDataStoreProvider implements Provider<RefDataStore> {
         long maxStoreSizeBytes = stroomPropertyService.getLongProperty(
                 MAX_STORE_SIZE_BYTES_PROP_KEY, MAX_STORE_SIZE_BYTES_DEFAULT);
 
-        this.refDataOffHeapStore = new RefDataOffHeapStore(storeDir, maxStoreSizeBytes);
+        this.refDataStore = refDataOffHeapStoreFactory.create(storeDir, maxStoreSizeBytes);
     }
 
     @Override
     public RefDataStore get() {
-        return refDataOffHeapStore;
+        return refDataStore;
     }
 
     private Path getStoreDir() {

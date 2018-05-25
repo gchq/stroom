@@ -38,19 +38,19 @@ public class RefStreamDefinition {
         this.streamNo = streamNo;
     }
 
-    DocRef getPipelineDocRef() {
+    public DocRef getPipelineDocRef() {
         return pipelineDocRef;
     }
 
-    byte getPipelineVersion() {
+    public byte getPipelineVersion() {
         return pipelineVersion;
     }
 
-    long getStreamId() {
+    public long getStreamId() {
         return streamId;
     }
 
-    long getStreamNo() {
+    public long getStreamNo() {
         return streamNo;
     }
 

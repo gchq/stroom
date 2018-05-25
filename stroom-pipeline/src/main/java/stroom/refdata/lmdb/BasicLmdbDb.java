@@ -24,10 +24,18 @@ import java.nio.ByteBuffer;
 
 public class BasicLmdbDb<K,V> extends AbstractLmdbDb<K, V> {
 
+    private final String name;
+
     public BasicLmdbDb(final Env<ByteBuffer> lmdbEnvironment,
                 final Serde<K> keySerde,
                 final Serde<V> valueSerde,
                 final String dbName) {
-        super(lmdbEnvironment, keySerde, valueSerde, dbName);
+        super(lmdbEnvironment, keySerde, valueSerde);
+        this.name = dbName;
+    }
+
+    @Override
+    public String getDbName() {
+        return name;
     }
 }

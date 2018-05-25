@@ -10,14 +10,12 @@ import org.xml.sax.SAXException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-class FastInfosetByteBufferConsumer extends AbstractByteBufferConsumer {
+public class FastInfosetByteBufferConsumer extends AbstractByteBufferConsumer {
 
-    private final PipelineConfiguration pipelineConfiguration;
     private final SAXDocumentParser saxDocumentParser;
 
     FastInfosetByteBufferConsumer(final Receiver receiver, final PipelineConfiguration pipelineConfiguration) {
         super(receiver);
-        this.pipelineConfiguration = pipelineConfiguration;
 
         final FastInfosetContentHandler fastInfosetContentHandler = new FastInfosetContentHandler();
         fastInfosetContentHandler.setPipelineConfiguration(pipelineConfiguration);
@@ -40,5 +38,13 @@ class FastInfosetByteBufferConsumer extends AbstractByteBufferConsumer {
 
         //TODO do we need to reset this here
         saxDocumentParser.reset();
+    }
+
+    public static class FastInfosetByteBufferConsumerFactory implements ByteBufferConsumerFactory {
+        @Override
+        public AbstractByteBufferConsumer create(final Receiver receiver,
+                                                 final PipelineConfiguration pipelineConfiguration) {
+            return new FastInfosetByteBufferConsumer(receiver, pipelineConfiguration);
+        }
     }
 }

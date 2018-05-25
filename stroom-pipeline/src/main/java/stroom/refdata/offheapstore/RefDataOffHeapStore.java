@@ -18,6 +18,7 @@
 package stroom.refdata.offheapstore;
 
 import com.google.common.base.Preconditions;
+import com.google.inject.assistedinject.Assisted;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
@@ -25,10 +26,16 @@ import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Range;
-import stroom.refdata.lmdb.BasicLmdbDb;
+import stroom.refdata.offheapstore.tables.KeyValueStoreDb;
+import stroom.refdata.offheapstore.tables.MapUidForwardDb;
+import stroom.refdata.offheapstore.tables.MapUidReverseDb;
+import stroom.refdata.offheapstore.tables.ProcessingInfoDb;
+import stroom.refdata.offheapstore.tables.RangeStoreDb;
+import stroom.refdata.offheapstore.tables.ValueStoreDb;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import javax.inject.Inject;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -43,12 +50,6 @@ public class RefDataOffHeapStore implements RefDataStore {
     private static final Logger LOGGER = LoggerFactory.getLogger(RefDataOffHeapStore.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(RefDataOffHeapStore.class);
 
-    private static final String KEY_VALUE_STORE_DB_NAME = "KeyValueStore";
-    private static final String RANGE_STORE_DB_NAME = "RangeStore";
-    private static final String VALUE_STORE_DB_NAME = "ValueStore";
-    private static final String MAP_UID_STORE_FORWARD_DB_NAME = "MapUidStoreForward";
-    private static final String MAP_UID_STORE_BACKWARD_DB_NAME = "MapUidStoreBackward";
-    private static final String PROCESSING_INFO_DB_NAME = "ProcessingInfoMapsStore";
 
     private final Path dbDir;
     private final long maxSize;
@@ -56,22 +57,28 @@ public class RefDataOffHeapStore implements RefDataStore {
     private final Env<ByteBuffer> env;
 
     // the DBs that make up the store
-    private final BasicLmdbDb<KeyValueStoreKey, ValueStoreKey> keyValueStoreDb;
-    private final BasicLmdbDb<RangeStoreKey, ValueStoreKey> rangeStoreDb;
-
-    private final BasicLmdbDb<ValueStoreKey, RefDataValue> valueStoreDb;
-
-    private final BasicLmdbDb<MapDefinition, UID> mapUidStoreForwardDb;
-    private final BasicLmdbDb<UID, MapDefinition> mapUidStoreBackwardDb;
-
-    private final BasicLmdbDb<RefStreamDefinition, RefDataProcessingInfo> processedMapsStoreDb;
+    private final KeyValueStoreDb keyValueStoreDb;
+    private final RangeStoreDb rangeStoreDb;
+    private final ValueStoreDb valueStoreDb;
+    private final MapUidForwardDb mapUidForwardDb;
+    private final MapUidReverseDb mapUidReverseDb;
+    private final ProcessingInfoDb processingInfoDb;
 
     /**
      * @param dbDir   The directory the LMDB environment will be created in, it must already exist
      * @param maxSize The max size in bytes of the environment. This should be less than the available
      *                disk space for dbDir. This size covers all DBs created in this environment.
      */
-    RefDataOffHeapStore(final Path dbDir, final long maxSize) {
+    @Inject
+    RefDataOffHeapStore(
+            @Assisted final Path dbDir,
+            @Assisted final long maxSize,
+            final KeyValueStoreDb.Factory keyValueStoreDbFactory,
+            final ValueStoreDb.Factory valueStoreDbFactory,
+            final RangeStoreDb.Factory rangeStoreDbFactory,
+            final MapUidForwardDb.Factory mapUidForwardDbFactory,
+            final MapUidReverseDb.Factory mapUidReverseDbFactory,
+            final ProcessingInfoDb.Factory processingInfoDbFactory) {
         this.dbDir = dbDir;
         this.maxSize = maxSize;
 
@@ -82,18 +89,12 @@ public class RefDataOffHeapStore implements RefDataStore {
                 .open(dbDir.toFile());
 
         // create all the databases
-        this.keyValueStoreDb = new BasicLmdbDb<>(
-                env, new KeyValueStoreKeySerde(), new ValueStoreKeySerde(), KEY_VALUE_STORE_DB_NAME);
-        this.rangeStoreDb = new BasicLmdbDb<>(
-                env, new RangeStoreKeySerde(), new ValueStoreKeySerde(), RANGE_STORE_DB_NAME);
-        this.valueStoreDb = new BasicLmdbDb<>(
-                env, new ValueStoreKeySerde(), new RefDataValueSerde(), VALUE_STORE_DB_NAME);
-        this.mapUidStoreForwardDb = new BasicLmdbDb<>(
-                env, new MapDefinitionSerde(), new UIDSerde(), MAP_UID_STORE_FORWARD_DB_NAME);
-        this.mapUidStoreBackwardDb = new BasicLmdbDb<>(
-                env, new UIDSerde(), new MapDefinitionSerde(), MAP_UID_STORE_BACKWARD_DB_NAME);
-        this.processedMapsStoreDb = new BasicLmdbDb<>(
-                env, new RefStreamDefinitionSerde(), new ProcessingInfoSerde(), PROCESSING_INFO_DB_NAME);
+        this.keyValueStoreDb = keyValueStoreDbFactory.create(env);
+        this.rangeStoreDb = rangeStoreDbFactory.create(env);
+        this.valueStoreDb = valueStoreDbFactory.create(env);
+        this.mapUidForwardDb = mapUidForwardDbFactory.create(env);
+        this.mapUidReverseDb = mapUidReverseDbFactory.create(env);
+        this.processingInfoDb = processingInfoDbFactory.create(env);
     }
 
     /**
@@ -364,6 +365,10 @@ public class RefDataOffHeapStore implements RefDataStore {
                 txn.close();
             }
         }
+    }
+
+    public interface RefDataOffHeapStoreFactory {
+        RefDataStore create(final Path dbDir, final long maxSize);
     }
 
 }

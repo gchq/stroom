@@ -19,7 +19,6 @@ package stroom.pipeline.xsltfunctions;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.Builder;
 import net.sf.saxon.event.PipelineConfiguration;
-import net.sf.saxon.event.Receiver;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
@@ -31,14 +30,12 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.StreamHolder;
 import stroom.refdata.ReferenceData;
 import stroom.refdata.ReferenceDataResult;
-import stroom.refdata.offheapstore.EventListProxyConsumer;
-import stroom.refdata.saxevents.EventListValue;
-import stroom.refdata.saxevents.ValueProxy;
+import stroom.refdata.offheapstore.RefDataValueProxy;
+import stroom.refdata.offheapstore.RefDataValueProxyConsumer;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 
 import java.util.List;
-import java.util.function.BiFunction;
 
 abstract class AbstractLookup extends StroomExtensionFunctionCall {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractLookup.class);
@@ -201,13 +198,10 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
     static class SequenceMaker {
         private final XPathContext context;
         private Builder builder;
-        private EventListProxyConsumer consumer;
-        private BiFunction<Receiver, PipelineConfiguration, EventListProxyConsumer> consumerSupplier;
+        private RefDataValueProxyConsumer consumer;
 
-        SequenceMaker(final XPathContext context,
-                      final BiFunction<Receiver, PipelineConfiguration, EventListProxyConsumer> consumerSupplier) {
+        SequenceMaker(final XPathContext context) {
             this.context = context;
-            this.consumerSupplier = consumerSupplier;
         }
 
         void open() throws XPathException {
@@ -223,9 +217,9 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
             consumer.endDocument();
         }
 
-        void consume(final ValueProxy<EventListValue> eventList) throws XPathException {
+        void consume(final RefDataValueProxy refDataValueProxy) throws XPathException {
             // TODO : Possibly replace NPEventList with TinyTree to improve performance.
-            consumer.consume(eventList);
+            consumer.consume(refDataValueProxy);
         }
 
         private void ensureConsumer() {
@@ -233,10 +227,10 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                 // We have some reference data so build a tiny tree.
                 final Configuration configuration = context.getConfiguration();
 
-                final PipelineConfiguration pipe = configuration.makePipelineConfiguration();
+                final PipelineConfiguration pipelineConfiguration = configuration.makePipelineConfiguration();
 
-                builder = new TinyBuilder(pipe);
-                consumer = consumerSupplier.apply(builder, pipe);
+                builder = new TinyBuilder(pipelineConfiguration);
+                consumer = new RefDataValueProxyConsumer(builder, pipelineConfiguration);
             }
         }
 

@@ -22,16 +22,19 @@ import net.sf.saxon.trans.XPathException;
 import stroom.pipeline.state.StreamHolder;
 import stroom.refdata.ReferenceData;
 import stroom.refdata.ReferenceDataResult;
-import stroom.refdata.offheapstore.RefDataValueProxy;
 import stroom.refdata.offheapstore.EventListProxyConsumer;
 import stroom.refdata.offheapstore.EventListProxyConsumerFactory;
+import stroom.refdata.offheapstore.RefDataValue;
+import stroom.refdata.offheapstore.RefDataValueProxy;
 
 import javax.inject.Inject;
+import java.util.Set;
 
 class Lookup extends AbstractLookup {
     @Inject
     Lookup(final ReferenceData referenceData,
-           final StreamHolder streamHolder) {
+           final StreamHolder streamHolder,
+           final Set<RefDataValue> refDataValues) {
         super(referenceData, streamHolder);
     }
 

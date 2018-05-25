@@ -69,9 +69,9 @@ public class RefDataValueProxy {
     }
 
 
-    public Class<? extends RefDataValue> getValueClass() {
-        return valueClazz;
-    }
+//    public Class<? extends RefDataValue> getValueClass() {
+//        return valueClazz;
+//    }
 
     @Override
     public boolean equals(final Object o) {

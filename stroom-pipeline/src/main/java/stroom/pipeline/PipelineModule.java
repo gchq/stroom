@@ -18,6 +18,7 @@ package stroom.pipeline;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.CachingEntityManager;
@@ -25,13 +26,26 @@ import stroom.entity.FindService;
 import stroom.explorer.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
+import stroom.persist.EntityManagerSupport;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.XSLT;
+import stroom.refdata.offheapstore.AbstractByteBufferConsumer;
+import stroom.refdata.offheapstore.FastInfosetValue;
+import stroom.refdata.offheapstore.RefDataOffHeapStore;
 import stroom.refdata.offheapstore.RefDataStore;
 import stroom.refdata.offheapstore.RefDataStoreProvider;
+import stroom.refdata.offheapstore.RefDataValue;
+import stroom.refdata.offheapstore.StringValue;
+import stroom.refdata.offheapstore.serdes.RefDatValueSubSerde;
+import stroom.refdata.offheapstore.serdes.StringValueSerde;
+import stroom.refdata.offheapstore.tables.KeyValueStoreDb;
+import stroom.refdata.offheapstore.tables.MapUidForwardDb;
+import stroom.refdata.offheapstore.tables.MapUidReverseDb;
+import stroom.refdata.offheapstore.tables.ProcessingInfoDb;
+import stroom.refdata.offheapstore.tables.RangeStoreDb;
+import stroom.refdata.offheapstore.tables.ValueStoreDb;
 import stroom.security.SecurityContext;
-import stroom.persist.EntityManagerSupport;
 import stroom.task.TaskHandler;
 
 import javax.inject.Named;
@@ -76,6 +90,38 @@ public class PipelineModule extends AbstractModule {
         findServiceBinder.addBinding().to(stroom.pipeline.PipelineServiceImpl.class);
         findServiceBinder.addBinding().to(stroom.pipeline.TextConverterServiceImpl.class);
         findServiceBinder.addBinding().to(stroom.pipeline.XSLTServiceImpl.class);
+
+        final Multibinder<RefDataValue> refDataValueBinder = Multibinder.newSetBinder(binder(), RefDataValue.class);
+        refDataValueBinder.addBinding().to(stroom.refdata.offheapstore.FastInfosetValue.class);
+        refDataValueBinder.addBinding().to(stroom.refdata.offheapstore.StringValue.class);
+
+        final MapBinder<Integer, RefDatValueSubSerde> refDataValueSerdeBinder = MapBinder.newMapBinder(
+                binder(), Integer.class, RefDatValueSubSerde.class);
+        refDataValueSerdeBinder.addBinding(FastInfosetValue.TYPE_ID).to(stroom.refdata.offheapstore.FastInfoSetValueSerde.class);
+        refDataValueSerdeBinder.addBinding(StringValue.TYPE_ID).to(StringValueSerde.class);
+
+        final MapBinder<Integer, AbstractByteBufferConsumer.ByteBufferConsumerFactory> refDataValueByteBufferConsumerBinder = MapBinder.newMapBinder(
+                binder(), Integer.class, AbstractByteBufferConsumer.ByteBufferConsumerFactory.class);
+        refDataValueByteBufferConsumerBinder
+                .addBinding(FastInfosetValue.TYPE_ID)
+                .to(stroom.refdata.offheapstore.FastInfosetByteBufferConsumer.FastInfosetByteBufferConsumerFactory.class);
+        refDataValueByteBufferConsumerBinder
+                .addBinding(StringValue.TYPE_ID)
+                .to(stroom.refdata.offheapstore.StringByteBufferConsumer.StringByteBufferConsumerFactory.class);
+
+        install(new FactoryModuleBuilder().build(KeyValueStoreDb.Factory.class));
+        install(new FactoryModuleBuilder().build(RangeStoreDb.Factory.class));
+        install(new FactoryModuleBuilder().build(ValueStoreDb.Factory.class));
+        install(new FactoryModuleBuilder().build(MapUidForwardDb.Factory.class));
+        install(new FactoryModuleBuilder().build(MapUidReverseDb.Factory.class));
+        install(new FactoryModuleBuilder().build(ProcessingInfoDb.Factory.class));
+
+        install(new FactoryModuleBuilder()
+                .implement(RefDataStore.class, RefDataOffHeapStore.class)
+                .build(RefDataOffHeapStore.RefDataOffHeapStoreFactory.class));
+
+
+
     }
 
     @Provides

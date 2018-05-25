@@ -28,7 +28,7 @@ import java.util.Objects;
  * hashcode of the value is held on the instance rather than computing it on the fly
  * each time to save processing.
  */
-class ValueStoreKey {
+public class ValueStoreKey {
 
     private static final int SIZE_IN_BYTES = Integer.BYTES + Integer.BYTES;
     private static final int DEFAULT_UNIQUE_ID = 0;
@@ -54,7 +54,7 @@ class ValueStoreKey {
         return new ValueStoreKey(valueHashCode, MAX_UNIQUE_ID);
     }
 
-    ValueStoreKey(final int valueHashCode, final int uniqueId) {
+    public ValueStoreKey(final int valueHashCode, final int uniqueId) {
         // Due to the way keys are sorted, negative unique ids are not supported
         Preconditions.checkArgument(uniqueId >= 0);
         this.valueHashCode = valueHashCode;
@@ -69,11 +69,11 @@ class ValueStoreKey {
         return new ValueStoreKey(valueHashCode, uniqueId + 1);
     }
 
-    int getValueHashCode() {
+    public int getValueHashCode() {
         return valueHashCode;
     }
 
-    int getUniqueId() {
+    public int getUniqueId() {
         return uniqueId;
     }
 

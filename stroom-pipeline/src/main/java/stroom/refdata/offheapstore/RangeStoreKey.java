@@ -32,7 +32,7 @@ public class RangeStoreKey {
     private final Range<Long> keyRange;
 
 
-    RangeStoreKey(final UID mapUid, final long effectiveTimeEpochMs, final Range<Long> keyRange) {
+    public RangeStoreKey(final UID mapUid, final long effectiveTimeEpochMs, final Range<Long> keyRange) {
         this.mapUid = Objects.requireNonNull(mapUid);
         this.effectiveTimeEpochMs = effectiveTimeEpochMs;
         this.keyRange = Objects.requireNonNull(keyRange);
@@ -41,15 +41,15 @@ public class RangeStoreKey {
         }
     }
 
-    UID getMapUid() {
+    public UID getMapUid() {
         return mapUid;
     }
 
-    long getEffectiveTimeEpochMs() {
+    public long getEffectiveTimeEpochMs() {
         return effectiveTimeEpochMs;
     }
 
-    Range<Long> getKeyRange() {
+    public Range<Long> getKeyRange() {
         return keyRange;
     }
 

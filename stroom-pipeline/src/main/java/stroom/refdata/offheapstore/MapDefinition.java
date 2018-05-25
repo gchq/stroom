@@ -50,11 +50,11 @@ public class MapDefinition {
         return refStreamDefinition.getStreamId();
     }
 
-    String getMapName() {
+    public String getMapName() {
         return mapName;
     }
 
-    RefStreamDefinition getRefStreamDefinition() {
+    public RefStreamDefinition getRefStreamDefinition() {
         return refStreamDefinition;
     }
 
