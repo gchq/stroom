@@ -32,58 +32,60 @@ import {
  *
  * @param {React.Component} WrappedComponent
  */
-export function withPipeline(WrappedComponent, customIdPropertyName) {
-  const idPropertyName = customIdPropertyName || 'pipelineId';
+export function withPipeline(customIdPropertyName) {
+  return WrappedComponent => {
+    const idPropertyName = customIdPropertyName || 'pipelineId';
 
-  const WithPipeline = class extends Component {
-    static propTypes = {
-      [idPropertyName]: PropTypes.string.isRequired,
-      pipelines: PropTypes.object.isRequired,
-    };
-
-    state = {
-      pipeline: undefined,
-      asTree : undefined,
-      layoutInformation : undefined
-    };
-
-    static getDerivedStateFromProps(nextProps, prevState) {
-      const pipeline = nextProps.pipelines[nextProps[idPropertyName]];
-      let asTree;
-      let layoutInformation;
-      if (!!pipeline && !!pipeline.pipeline) {
-        asTree = getPipelineAsTree(pipeline.pipeline);
-        layoutInformation = getPipelineLayoutInformation(asTree);
-      }
-
-      return {
-        pipeline,
-        asTree,
-        layoutInformation
+    const WithPipeline = class extends Component {
+      static propTypes = {
+        [idPropertyName]: PropTypes.string.isRequired,
+        pipelines: PropTypes.object.isRequired,
       };
-    }
 
-    render() {
-      if (!!this.state.pipeline) {
-        return (
-          <WrappedComponent
-            pipeline={this.state.pipeline}
-            asTree={this.state.asTree}
-            layoutInformation={this.state.layoutInformation}
-            {...this.props}
-          />
-        );
+      state = {
+        pipeline: undefined,
+        asTree : undefined,
+        layoutInformation : undefined
+      };
+
+      static getDerivedStateFromProps(nextProps, prevState) {
+        const pipeline = nextProps.pipelines[nextProps[idPropertyName]];
+        let asTree;
+        let layoutInformation;
+        if (!!pipeline && !!pipeline.pipeline) {
+          asTree = getPipelineAsTree(pipeline.pipeline);
+          layoutInformation = getPipelineLayoutInformation(asTree);
+        }
+
+        return {
+          pipeline,
+          asTree,
+          layoutInformation
+        };
       }
-      return <span>awaiting pipeline state</span>;
-    }
-  };
 
-  return connect(
-    state => ({
-      pipelines: state.pipelines,
-    }),
-    {
-      // actions
-    },
-  )(WithPipeline);
+      render() {
+        if (!!this.state.pipeline) {
+          return (
+            <WrappedComponent
+              pipeline={this.state.pipeline}
+              asTree={this.state.asTree}
+              layoutInformation={this.state.layoutInformation}
+              {...this.props}
+            />
+          );
+        }
+        return <span>awaiting pipeline state</span>;
+      }
+    };
+
+    return connect(
+      state => ({
+        pipelines: state.pipelines,
+      }),
+      {
+        // actions
+      },
+    )(WithPipeline);
+  }
 }

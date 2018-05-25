@@ -32,52 +32,52 @@ import {
  * 
  * This allows react components that contain named boolean elements to remain stateless.
  * Such as modals, or toggles which radically alter the state of an element.
- * 
- * @param {React.Component} WrappedComponent 
  */
-export function withNamedBoolean(WrappedComponent, idPropertyName, booleanPropertyName) {
+export function withNamedBoolean(idPropertyName, booleanPropertyName) {
 
-    let WithNamedBoolean = class extends Component {
-        static propTypes = {
-            [idPropertyName]: PropTypes.string.isRequired,
-            namedBoolean: PropTypes.object.isRequired
-        }
-
-        state = {
-            [booleanPropertyName] : undefined
-        }
-
-        static getDerivedStateFromProps(nextProps, prevState) {
-            let currentValue = nextProps.namedBoolean[nextProps[idPropertyName]];
-            if (currentValue === undefined) {
-                currentValue = false;
+    return WrappedComponent => {
+        let WithNamedBoolean = class extends Component {
+            static propTypes = {
+                [idPropertyName]: PropTypes.string.isRequired,
+                namedBoolean: PropTypes.object.isRequired
             }
-            return {
-                [booleanPropertyName] : currentValue
+
+            state = {
+                [booleanPropertyName] : undefined
+            }
+
+            static getDerivedStateFromProps(nextProps, prevState) {
+                let currentValue = nextProps.namedBoolean[nextProps[idPropertyName]];
+                if (currentValue === undefined) {
+                    currentValue = false;
+                }
+                return {
+                    [booleanPropertyName] : currentValue
+                }
+            }
+
+            componentDidMount() {
+                this.props.namedBooleanCreated(this.props[idPropertyName]);
+            }
+
+            componentWillUnmount() {
+                this.props.namedBooleanDestroyed(this.props[idPropertyName]);
+            }
+
+            render() {
+                return <WrappedComponent {...this.state} {...this.props} />
             }
         }
 
-        componentDidMount() {
-            this.props.namedBooleanCreated(this.props[idPropertyName]);
-        }
-
-        componentWillUnmount() {
-            this.props.namedBooleanDestroyed(this.props[idPropertyName]);
-        }
-
-        render() {
-            return <WrappedComponent {...this.state} {...this.props} />
-        }
+        return connect(
+            (state) => ({
+                namedBoolean: state.namedBoolean
+            }),
+            {
+                // actions
+                namedBooleanCreated,
+                namedBooleanDestroyed
+            }
+        )(WithNamedBoolean);
     }
-
-    return connect(
-        (state) => ({
-            namedBoolean: state.namedBoolean
-        }),
-        {
-            // actions
-            namedBooleanCreated,
-            namedBooleanDestroyed
-        }
-    )(WithNamedBoolean);
 }

@@ -26,39 +26,39 @@ import { explorerTreeOpened, DEFAULT_EXPLORER_ID } from './redux';
  * 
  * It provides the picked doc ref by connecting to the redux store and using a provided
  * pickerId to look it up.
- * 
- * @param {React.Component} WrappedComponent 
  */
-export function withPickedDocRef(WrappedComponent, customIdPropertyName) {
-    let idPropertyName = customIdPropertyName || 'pickerId';
+export function withPickedDocRef(customIdPropertyName) {
+    return WrappedComponent => {
+        let idPropertyName = customIdPropertyName || 'pickerId';
 
-    let WithPickedDocRef = class extends Component {
-        static propTypes = {
-            [idPropertyName]: PropTypes.string.isRequired,
-            pickedDocRefs: PropTypes.object.isRequired
-        }
+        let WithPickedDocRef = class extends Component {
+            static propTypes = {
+                [idPropertyName]: PropTypes.string.isRequired,
+                pickedDocRefs: PropTypes.object.isRequired
+            }
 
-        state = {
-            docRef : undefined
-        }
+            state = {
+                docRef : undefined
+            }
 
-        static getDerivedStateFromProps(nextProps, prevState) {
-            return {
-                docRef : nextProps.pickedDocRefs[nextProps[idPropertyName]]
+            static getDerivedStateFromProps(nextProps, prevState) {
+                return {
+                    docRef : nextProps.pickedDocRefs[nextProps[idPropertyName]]
+                }
+            }
+
+            render() {
+                return <WrappedComponent docRef={this.state.docRef} {...this.props} />
             }
         }
 
-        render() {
-            return <WrappedComponent docRef={this.state.docRef} {...this.props} />
-        }
+        return connect(
+            (state) => ({
+                pickedDocRefs: state.explorerTree.pickedDocRefs
+            }),
+            {
+                // actions
+            }
+        )(WithPickedDocRef);
     }
-
-    return connect(
-        (state) => ({
-            pickedDocRefs: state.explorerTree.pickedDocRefs
-        }),
-        {
-            // actions
-        }
-    )(WithPickedDocRef);
 }

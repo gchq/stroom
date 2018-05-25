@@ -24,4 +24,4 @@ class PipelineElementSettings extends Component {
     }
 }
 
-export default withPipeline(withSelectedPipelineElement(PipelineElementSettings));
+export default withPipeline()(withSelectedPipelineElement()(PipelineElementSettings));

@@ -91,7 +91,7 @@ class DocRefModalPicker extends Component {
             <Modal
                 trigger={<Input onFocus={this.handleOpen.bind(this)} value={value + '...'}/>}
                 open={modalOpen}
-                onClose={this.handleClose}
+                onClose={this.handleClose.bind(this)}
                 size='small'
                 dimmer='blurring'
             >
@@ -122,4 +122,4 @@ export default connect(
         docRefPicked,
         setNamedBoolean
     }
-)(withPickedDocRef(withNamedBoolean(withCreatedExplorer(DocRefModalPicker, 'pickerId'), 'pickerId', 'modalOpen')));
+)(withPickedDocRef()(withCreatedExplorer('pickerId')(withNamedBoolean('pickerId', 'modalOpen')(DocRefModalPicker))));

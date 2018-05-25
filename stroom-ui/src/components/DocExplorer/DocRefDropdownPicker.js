@@ -107,4 +107,4 @@ export default connect(
     {
         docRefPicked
     }
-)(withPickedDocRef(DocRefDropdownPicker));
+)(withPickedDocRef()(DocRefDropdownPicker));

@@ -144,5 +144,5 @@ export default connect(
         openDocRef,
         openDocRefContextMenu
     }
-)(withExistingExplorer(
+)(withExistingExplorer()(
     (DragSource(ItemTypes.DOC_REF, dragSource, dragCollect)(DocRef))));

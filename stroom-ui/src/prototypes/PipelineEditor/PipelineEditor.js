@@ -147,4 +147,4 @@ class PipelineEditor extends Component {
   }
 }
 
-export default withPipeline(PipelineEditor);
+export default withPipeline()(PipelineEditor);

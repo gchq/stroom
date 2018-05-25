@@ -66,4 +66,4 @@ export default connect(
   {
     searchTermChanged
   },
-)(withCreatedExplorer(DocExplorer));
+)(withCreatedExplorer()(DocExplorer));

@@ -125,7 +125,7 @@ export default connect(
     pipelineElementSelected,
     pipelineElementMoved
   }
-)(withPipeline(DragSource(ItemTypes.ELEMENT, dragSource, dragCollect)(
+)(withPipeline()(DragSource(ItemTypes.ELEMENT, dragSource, dragCollect)(
   DropTarget([ItemTypes.ELEMENT], dropTarget, dropCollect)(
     PipelineEditor
   )

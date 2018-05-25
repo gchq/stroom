@@ -27,44 +27,45 @@ import { connect } from 'react-redux';
  *
  * @param {React.Component} WrappedComponent
  */
-export function withSelectedPipelineElement(WrappedComponent) {
-
-  const WithSelectedPipelineElement = class extends Component {
-    static propTypes = {
-      pipelineId: PropTypes.string.isRequired
-    };
-
-    state = {
-      selectedElementId: undefined,
-    };
-
-    static getDerivedStateFromProps(nextProps, prevState) {
-      const pipeline = nextProps.pipelines[nextProps.pipelineId];
-
-      return {
-        selectedElementId : pipeline.selectedElementId,
+export function withSelectedPipelineElement() {
+  return WrappedComponent => {
+    const WithSelectedPipelineElement = class extends Component {
+      static propTypes = {
+        pipelineId: PropTypes.string.isRequired
       };
-    }
 
-    render() {
-      if (!!this.state.selectedElementId) {
-        return (
-          <WrappedComponent
-          selectedElementId={this.state.selectedElementId}
-            {...this.props}
-          />
-        );
+      state = {
+        selectedElementId: undefined,
+      };
+
+      static getDerivedStateFromProps(nextProps, prevState) {
+        const pipeline = nextProps.pipelines[nextProps.pipelineId];
+
+        return {
+          selectedElementId : pipeline.selectedElementId,
+        };
       }
-      return <span>awaiting pipeline state for element</span>;
-    }
-  };
 
-  return connect(
-    state => ({
-      pipelines: state.pipelines,
-    }),
-    {
-      // actions
-    },
-  )(WithSelectedPipelineElement);
+      render() {
+        if (!!this.state.selectedElementId) {
+          return (
+            <WrappedComponent
+            selectedElementId={this.state.selectedElementId}
+              {...this.props}
+            />
+          );
+        }
+        return <span>awaiting pipeline state for element</span>;
+      }
+    };
+
+    return connect(
+      state => ({
+        pipelines: state.pipelines,
+      }),
+      {
+        // actions
+      },
+    )(WithSelectedPipelineElement);
+  }
 }

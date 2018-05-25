@@ -177,7 +177,7 @@ const DndFolder = connect(
         toggleFolderOpen,
         openDocRefContextMenu
     }
-)(withExistingExplorer(
+)(withExistingExplorer()(
     (DragSource(ItemTypes.FOLDER, dragSource, dragCollect)(
         DropTarget([ItemTypes.FOLDER, ItemTypes.DOC_REF], dropTarget, dropCollect)(
             Folder

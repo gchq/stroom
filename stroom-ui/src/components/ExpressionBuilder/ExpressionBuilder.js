@@ -72,42 +72,66 @@ let lineElementCreators = {
 const ExpressionBuilder = ({expressionId, 
                             dataSource, 
                             expression, 
-                            isReadOnly, 
-                            setNamedBoolean}) => (
-    <LineContainer 
-        lineContextId={'expression-lines-' + expressionId}
-        lineElementCreators={lineElementCreators}
-        >
-        <Checkbox 
-            label='Edit Mode'
-            toggle
-            checked={!isReadOnly} 
-            onChange={() => setNamedBoolean(expressionId, !isReadOnly)} 
+                            isEditableSystemSet, 
+                            isEditableUserSet,
+                            setNamedBoolean}) => {
+                                
+    let roOperator = (
+        <ROExpressionOperator 
+            dataSource={dataSource}
+            expressionId={expressionId}
+            isRoot={true}
+            isEnabled={true}
+            operator={expression}
             />
-        {isReadOnly ? 
-            <ROExpressionOperator 
-                dataSource={dataSource}
-                expressionId={expressionId}
-                isRoot={true}
-                isEnabled={true}
-                operator={expression}
-                />
-            :
-            <ExpressionOperator 
-                dataSource={dataSource}
-                expressionId={expressionId}
-                isRoot={true}
-                isEnabled={true}
-                operator={expression}  />
-        }
-    </LineContainer>
-)
+    )
+
+    let editOperator = (
+        <ExpressionOperator 
+                    dataSource={dataSource}
+                    expressionId={expressionId}
+                    isRoot={true}
+                    isEnabled={true}
+                    operator={expression}  />
+    )
+
+    let theComponent;
+    if (isEditableSystemSet) {
+        theComponent = (
+            <div>
+                <Checkbox 
+                    label='Edit Mode'
+                    toggle
+                    checked={isEditableUserSet} 
+                    onChange={() => setNamedBoolean(expressionId, !isEditableUserSet)} 
+                    />
+                {isEditableUserSet ? editOperator : roOperator}
+            </div>
+        )
+    } else {
+        theComponent = roOperator;
+    }
+
+    return (
+        <LineContainer 
+            lineContextId={'expression-lines-' + expressionId}
+            lineElementCreators={lineElementCreators}
+            >
+            {theComponent}
+        </LineContainer>
+    );
+}
 
 ExpressionBuilder.propTypes = {
     dataSource : PropTypes.object.isRequired,
     expressionId : PropTypes.string.isRequired,
     expression: PropTypes.object.isRequired, // expects the entire map of expressions to be available
-    isReadOnly : PropTypes.bool.isRequired
+    isEditableSystemSet : PropTypes.bool.isRequired,
+    isEditableUserSet : PropTypes.bool.isRequired
+}
+
+ExpressionBuilder.defaultProps = {
+    isEditableSystemSet : false
 }
 
 export default connect(
@@ -118,5 +142,5 @@ export default connect(
         // actions
         setNamedBoolean
     }
-)(withDataSource(withExpression(withNamedBoolean(ExpressionBuilder, 'expressionId', 'isReadOnly'))));
+)(withDataSource(withExpression(withNamedBoolean('expressionId', 'isEditableUserSet')(ExpressionBuilder))));
 
