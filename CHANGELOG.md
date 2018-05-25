@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.4.1] - 2018-05-25
+
 * Issue **#778** : Fix for text selection on tooltips etc in the latest version of Chrome.
 
 ## [v5.4.0] - 2018-05-23
@@ -818,7 +820,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.4.0...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.4.1...HEAD
+[v5.4.1]: https://github.com/gchq/stroom/compare/v5.4.0...v5.4.1
 [v5.4.0]: https://github.com/gchq/stroom/compare/v5.3.4...v5.4.0
 [v5.3.4]: https://github.com/gchq/stroom/compare/v5.3.3...v5.3.4
 [v5.3.3]: https://github.com/gchq/stroom/compare/v5.3.2...v5.3.3
