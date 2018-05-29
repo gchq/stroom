@@ -137,3 +137,28 @@ export function moveElementInPipeline(pipeline, itemToMove, destination) {
     }
   }
 }
+
+export function deleteElementInPipeline(pipeline, itemToDelete) {
+  return {
+    properties : {
+      add : {
+        property : pipeline.properties.add.property
+          .filter(p => p.element !== itemToDelete)
+      }
+    },
+    elements : {
+      add : {
+        element : pipeline.elements.add.element
+          .filter(e => e.id !== itemToDelete)
+      }
+    },
+    links : {
+      add : {
+        link: pipeline.links.add.link
+        // Remove any existing link that goes into the deleting item
+        .filter(l => (l.to !== itemToDelete))
+        .filter(l => (l.from !== itemToDelete))
+      }
+    }
+  }
+}

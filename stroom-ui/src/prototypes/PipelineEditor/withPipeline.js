@@ -45,9 +45,7 @@ export function withPipeline(customIdPropertyName) {
       state = {
         pipeline: undefined,
         asTree : undefined,
-        layoutInformation : undefined,
-        contextMenuElementId : undefined,
-        selectedElementId : undefined
+        layoutInformation : undefined
       };
 
       static getDerivedStateFromProps(nextProps, prevState) {

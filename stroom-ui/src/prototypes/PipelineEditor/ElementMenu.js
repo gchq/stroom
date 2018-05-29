@@ -25,7 +25,7 @@ import {
 } from 'semantic-ui-react'
 
 import {
-    openPipelineElementContextMenu,
+    requestDeletePipelineElement,
     closePipelineElementContextMenu
 } from './redux';
 
@@ -35,6 +35,7 @@ class ElementMenu extends Component {
         elementId: PropTypes.string.isRequired,
         isOpen : PropTypes.bool.isRequired,
 
+        requestDeletePipelineElement : PropTypes.func.isRequired,
         closePipelineElementContextMenu : PropTypes.func.isRequired
     }
 
@@ -53,20 +54,28 @@ class ElementMenu extends Component {
     }
 
     render() {
+        let {
+            pipelineId,
+            elementId,
+            isOpen,
+            closePipelineElementContextMenu,
+            requestDeletePipelineElement
+        } = this.props;
+
         return (
             <Dropdown
                 floating 
                 direction='right'
                 icon={null}
-                open={this.props.isOpen}
+                open={isOpen}
                 onClose={this.onClose.bind(this)}
             >
                 <Dropdown.Menu>
-                    <Dropdown.Item onClick={this.onOpenElement.bind(this)}>
+                    <Dropdown.Item onClick={() => console.log('Add item')}>
                         <Icon name='file' />
                         Open
                     </Dropdown.Item>
-                    <Dropdown.Item onClick={this.onDeleteElement.bind(this)}>
+                    <Dropdown.Item onClick={() => requestDeletePipelineElement(pipelineId, elementId)}>
                         <Icon name='trash' />
                         Delete
                     </Dropdown.Item>
@@ -81,7 +90,7 @@ export default connect(
         // state
     }),
     {
-        openPipelineElementContextMenu,
         closePipelineElementContextMenu,
+        requestDeletePipelineElement
     }
 )(ElementMenu)

@@ -1,6 +1,9 @@
 import { createAction, handleActions, combineActions } from 'redux-actions';
 
-import { moveElementInPipeline } from './pipelineUtils';
+import {
+  moveElementInPipeline,
+  deleteElementInPipeline
+} from './pipelineUtils';
 
 const pipelineChanged = createAction('PIPELINE_CHANGED', (pipelineId, pipeline) => ({
   pipelineId,
@@ -16,6 +19,21 @@ const pipelineElementMoved = createAction(
   'PIPELINE_ELEMENT_MOVED',
   (pipelineId, itemToMove, destination) => ({ pipelineId, itemToMove, destination }),
 );
+
+const requestDeletePipelineElement = createAction(
+  'REQUEST_DELETE_PIPELINE_ELEMENT',
+  (pipelineId, elementId) => ({pipelineId, elementId})
+)
+
+const confirmDeletePipelineElement = createAction(
+  'CONFIRM_DELETE_PIPELINE_ELEMENT',
+  (pipelineId, elementId) => ({pipelineId, elementId})
+)
+
+const cancelDeletePipelineElement = createAction(
+  'CANCEL_DELETE_PIPELINE_ELEMENT',
+  (pipelineId) => ({pipelineId})
+)
 
 const openPipelineElementContextMenu = createAction(
   'OPEN_PIPELINE_ELEMENT_CONTEXT_MENU',
@@ -36,6 +54,7 @@ const pipelineReducer = handleActions(
       [action.payload.pipelineId]: {
         pipeline: action.payload.pipeline,
         selectedElementId: undefined,
+        pendingElementIdToDelete : undefined
       },
     }),
     [pipelineElementSelected]: (state, action) => ({
@@ -45,6 +64,30 @@ const pipelineReducer = handleActions(
         selectedElementId: action.payload.elementId,
       },
     }),
+    [requestDeletePipelineElement]:(state, action) => ({
+      ...state,
+      [action.payload.pipelineId]: {
+        ...state[action.payload.pipelineId],
+        pendingElementIdToDelete : action.payload.elementId
+      }
+    }),
+    [confirmDeletePipelineElement]:(state, action) => ({
+      ...state,
+      [action.payload.pipelineId]: {
+        pipeline : deleteElementInPipeline(
+          state[action.payload.pipelineId].pipeline,
+          action.payload.elementId
+        ),
+        pendingElementIdToDelete : undefined
+      }
+    }),
+    [cancelDeletePipelineElement]: (state, action) => ({
+      ...state,
+      [action.payload.pipelineId]: {
+        ...state[action.payload.pipelineId],
+        pendingElementIdToDelete : undefined
+      }
+    }),
     [pipelineElementMoved]: (state, action) => ({
       ...state,
       [action.payload.pipelineId]: {
@@ -52,7 +95,8 @@ const pipelineReducer = handleActions(
         pipeline: moveElementInPipeline(
           state[action.payload.pipelineId].pipeline,
           action.payload.itemToMove,
-          action.payload.destination)
+          action.payload.destination
+        )
       },
     }),
     [openPipelineElementContextMenu]: (state, action) => ({
@@ -76,6 +120,9 @@ const pipelineReducer = handleActions(
 export {
   pipelineChanged,
   pipelineElementSelected,
+  requestDeletePipelineElement,
+  confirmDeletePipelineElement,
+  cancelDeletePipelineElement,
   pipelineElementMoved,
   openPipelineElementContextMenu,
   closePipelineElementContextMenu,

@@ -16,6 +16,12 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import { connect } from 'react-redux';
+
+import {
+  Confirm
+} from 'semantic-ui-react';
+
 import {
   LineContainer,
   LineTo
@@ -24,6 +30,11 @@ import {
 import { mapObject } from 'lib/treeUtils';
 
 import { withPipeline } from './withPipeline';
+
+import {
+  confirmDeletePipelineElement,
+  cancelDeletePipelineElement
+} from './redux';
 
 import PipelineElement from './PipelineElement';
 import PipelineElementSettings from './PipelineElementSettings';
@@ -127,10 +138,22 @@ class PipelineEditor extends Component {
   }
 
   render() {
-    const { pipelineId, pipeline } = this.props;
+    const {
+      pipelineId,
+      pipeline,
+      pendingElementIdToDelete,
+      cancelDeletePipelineElement,
+      confirmDeletePipelineElement
+    } = this.props;
 
     return (
       <div className="Pipeline-editor">
+        <Confirm
+          open={!!pendingElementIdToDelete}
+          content='This will delete the element from the pipeline, are you sure?'
+          onCancel={() => cancelDeletePipelineElement(pipelineId)}
+          onConfirm={() => confirmDeletePipelineElement(pipelineId, pendingElementIdToDelete)}
+          />
         <LineContainer 
             className='Pipeline-editor__overview' 
             lineContextId={`pipeline-lines-${pipelineId}`}
@@ -148,4 +171,12 @@ class PipelineEditor extends Component {
   }
 }
 
-export default withPipeline()(PipelineEditor);
+export default connect(
+  state => ({
+    // state
+  }),
+  {
+    confirmDeletePipelineElement,
+    cancelDeletePipelineElement
+  },
+)(withPipeline()(PipelineEditor));

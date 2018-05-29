@@ -35,6 +35,9 @@ import { canMovePipelineElement } from './pipelineUtils';
 
 import { ItemTypes } from './dragDropTypes';
 
+const streamLogo = require('images/pipeline/stream.svg');
+
+console.log('fuck', streamLogo);
 const dragSource = {
   canDrag(props) {
 		return true;
@@ -127,7 +130,7 @@ class PipelineElement extends Component {
               onClick={this.onSingleClick.bind(this)}
               onContextMenu={this.onRightClick.bind(this)}
               >
-              
+              <img className='Pipeline-element__icon' src={streamLogo} />
               {elementId}
             </span>
             <span className='Pipeline-element__context-menu'>
