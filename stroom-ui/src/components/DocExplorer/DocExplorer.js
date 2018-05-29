@@ -18,7 +18,11 @@ import PropTypes from 'prop-types';
 
 import { connect } from 'react-redux';
 
-import { Input, Icon } from 'semantic-ui-react';
+import {
+  Input,
+  Icon,
+  Confirm
+} from 'semantic-ui-react';
 
 import './DocExplorer.css';
 
@@ -26,7 +30,11 @@ import Folder from './Folder';
 
 import { withCreatedExplorer } from './withExplorer';
 
-import { searchTermChanged } from './redux';
+import {
+  searchTermChanged,
+  confirmDeleteDocRef,
+  cancelDeleteDocRef
+} from './redux';
 
 class DocExplorer extends Component {
   static propTypes = {
@@ -34,7 +42,9 @@ class DocExplorer extends Component {
     explorer: PropTypes.object.isRequired,
     documentTree: PropTypes.object.isRequired,
 
-    searchTermChanged: PropTypes.func.isRequired
+    searchTermChanged: PropTypes.func.isRequired,
+    confirmDeleteDocRef : PropTypes.func.isRequired,
+    cancelDeleteDocRef : PropTypes.func.isRequired
   };
 
   render() {
@@ -42,15 +52,28 @@ class DocExplorer extends Component {
       documentTree, 
       explorerId, 
       explorer, 
-      searchTermChanged
+      searchTermChanged,
+      cancelDeleteDocRef,
+      confirmDeleteDocRef
     } = this.props;
+
+    const {
+      searchTerm,
+      pendingDocRefToDelete
+    } = explorer;
 
     return (
       <div>
+        <Confirm
+                open={!!pendingDocRefToDelete}
+                content='This will delete the doc ref from the explorer, are you sure?'
+                onCancel={() => cancelDeleteDocRef(explorerId)}
+                onConfirm={() => confirmDeleteDocRef(explorerId, pendingDocRefToDelete)}
+                />
         <Input
           icon="search"
           placeholder="Search..."
-          value={explorer.searchTerm}
+          value={searchTerm}
           onChange={e => searchTermChanged(explorerId, e.target.value)}
         />
         <Folder explorerId={explorerId} folder={documentTree} />
@@ -64,6 +87,8 @@ export default connect(
     documentTree: state.explorerTree.documentTree
   }),
   {
-    searchTermChanged
+    searchTermChanged,
+    cancelDeleteDocRef,
+    confirmDeleteDocRef
   },
 )(withCreatedExplorer()(DocExplorer));

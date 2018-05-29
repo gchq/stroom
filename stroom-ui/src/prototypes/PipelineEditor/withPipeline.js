@@ -45,7 +45,9 @@ export function withPipeline(customIdPropertyName) {
       state = {
         pipeline: undefined,
         asTree : undefined,
-        layoutInformation : undefined
+        layoutInformation : undefined,
+        contextMenuElementId : undefined,
+        selectedElementId : undefined
       };
 
       static getDerivedStateFromProps(nextProps, prevState) {
@@ -58,7 +60,7 @@ export function withPipeline(customIdPropertyName) {
         }
 
         return {
-          pipeline,
+          ...pipeline,
           asTree,
           layoutInformation
         };
@@ -68,9 +70,7 @@ export function withPipeline(customIdPropertyName) {
         if (!!this.state.pipeline) {
           return (
             <WrappedComponent
-              pipeline={this.state.pipeline}
-              asTree={this.state.asTree}
-              layoutInformation={this.state.layoutInformation}
+              {...this.state}
               {...this.props}
             />
           );

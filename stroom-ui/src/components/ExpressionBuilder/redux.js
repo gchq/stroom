@@ -37,7 +37,7 @@ const expressionEditorDestroyed = createAction('EXPRESSION_EDITOR_DESTROYED',
 const expressionSetEditable = createAction('EXPRESSION_SET_EDITABLE_BY_USER',
     (expressionId, isEditableUserSet) => ({expressionId, isEditableUserSet}));
 const requestExpressionItemDelete = createAction('REQUEST_EXPRESSION_ITEM_DELETE',
-    (expressionId, itemId) => ({expressionId, itemId}));
+    (expressionId, itemUuid) => ({expressionId, itemUuid}));
 const cancelExpressionItemDelete = createAction('CANCEL_EXPRESSION_ITEM_DELETE',
     (expressionId) => ({expressionId}));
 
@@ -50,7 +50,7 @@ const expressionOperatorAdded = createAction('EXPRESSION_OPERATOR_ADDED',
     (expressionId, operatorId) => ({expressionId, operatorId}));
 const expressionItemUpdated = createAction('EXPRESSION_ITEM_UPDATED',
     (expressionId, itemId, updates) => ({expressionId, itemId, updates}))
-const expressionItemDeleted = createAction('EXPRESSION_ITEM_DELETED',
+const confirmExpressionItemDeleted = createAction('EXPRESSION_ITEM_DELETED',
     (expressionId, itemId) => ({expressionId, itemId}));
 const expressionItemMoved = createAction('EXPRESSION_ITEM_MOVED',
     (expressionId, itemToMove, destination) => ({expressionId, itemToMove, destination}));
@@ -158,7 +158,7 @@ const expressionReducer = handleActions({
     }),
 
     // Expression Item Deleted
-    [expressionItemDeleted]:
+    [confirmExpressionItemDeleted]:
     (state, action) => ({
         ...state,
         [action.payload.expressionId] : deleteItemFromTree(
@@ -209,13 +209,16 @@ const expressionReducer = handleActions({
 const defaultEditorsState = {}
 const defaultEditorState = {
     isEditableUserSet : false,
-
+    pendingDeletionUuid : undefined
 }
 
 const expressionEditorReducer = handleActions({
     [expressionEditorCreated]:
     (state, action) => ({
-        [action.payload.expressionId] : defaultEditorState
+        [action.payload.expressionId] : {
+            ...defaultEditorState,
+            ...state[action.payload.expressionId]
+        }
     }),
 
     [expressionEditorDestroyed]:
@@ -226,7 +229,32 @@ const expressionEditorReducer = handleActions({
     [expressionSetEditable]:
     (state, action) => ({
         [action.payload.expressionId] : {
+            ...state[action.payload.expressionId],
             isEditableUserSet : action.payload.isEditableUserSet
+        }
+    }),
+
+    [requestExpressionItemDelete]:
+    (state, action) => ({
+        [action.payload.expressionId] : {
+            ...state[action.payload.expressionId],
+            pendingDeletionUuid : action.payload.itemUuid
+        }
+    }),
+
+    [confirmExpressionItemDeleted]:
+    (state, action) => ({
+        [action.payload.expressionId] : {
+            ...state[action.payload.expressionId],
+            pendingDeletionUuid : undefined
+        }
+    }),
+
+    [cancelExpressionItemDelete]:
+    (state, action) => ({
+        [action.payload.expressionId] : {
+            ...state[action.payload.expressionId],
+            pendingDeletionUuid : undefined
         }
     })
 }, defaultEditorsState)
@@ -241,7 +269,7 @@ export {
     expressionTermAdded,
     expressionOperatorAdded,
     expressionItemUpdated,
-    expressionItemDeleted,
+    confirmExpressionItemDeleted,
     expressionItemMoved,
     expressionReducer,
     expressionEditorReducer,

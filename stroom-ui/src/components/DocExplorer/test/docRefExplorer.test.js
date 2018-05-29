@@ -29,7 +29,6 @@ import {
     moveExplorerItem,
     toggleFolderOpen,
     openDocRef,
-    deleteDocRef,
     searchTermChanged,
     selectDocRef,
     openDocRefContextMenu,

@@ -18,6 +18,11 @@ import PropTypes from 'prop-types'
 
 import { connect } from 'react-redux'
 
+import {
+    expressionEditorCreated,
+    expressionEditorDestroyed
+} from './redux';
+
 /**
  * This is a Higher Order Component
  * https://reactjs.org/docs/higher-order-components.html
@@ -33,11 +38,15 @@ export function withExpression() {
             static propTypes = {
                 expressionId: PropTypes.string.isRequired,
                 expressions: PropTypes.object.isRequired,
-                expressionEditors : PropTypes.object.isRequired
+                expressionEditors : PropTypes.object.isRequired,
+
+                expressionEditorCreated : PropTypes.func.isRequired,
+                expressionEditorDestroyed : PropTypes.func.isRequired
             }
 
             state = {
-                expression : undefined
+                expression : undefined,
+                editor: undefined
             }
         
             static getDerivedStateFromProps(nextProps, prevState) {
@@ -47,9 +56,20 @@ export function withExpression() {
                 }
             }
 
+            componentDidMount() {
+                this.props.expressionEditorCreated(this.props.expressionId);
+            }
+
+            componentWillUnmount() {
+                this.props.expressionEditorDestroyed(this.props.expressionId);
+            }
+
             render() {
                 if (!!this.state.expression) {
-                    return <WrappedComponent expression={this.state.expression} editor={this.state.editor} {...this.props} />
+                    return <WrappedComponent 
+                        {...this.state}
+                        {...this.props}
+                        />
                 } else {
                     return <span>awaiting expression state</span>
                 }
@@ -63,6 +83,8 @@ export function withExpression() {
             }),
             {
                 // actions
+                expressionEditorCreated,
+                expressionEditorDestroyed,
             }
         )(WithExpression);
     }

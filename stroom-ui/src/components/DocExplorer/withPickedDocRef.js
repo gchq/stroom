@@ -48,7 +48,10 @@ export function withPickedDocRef(customIdPropertyName) {
             }
 
             render() {
-                return <WrappedComponent docRef={this.state.docRef} {...this.props} />
+                return <WrappedComponent
+                    {...this.state}
+                    {...this.props}
+                    />
             }
         }
 

@@ -50,7 +50,7 @@ export function withSelectedPipelineElement() {
         if (!!this.state.selectedElementId) {
           return (
             <WrappedComponent
-            selectedElementId={this.state.selectedElementId}
+              {...this.state}
               {...this.props}
             />
           );

@@ -17,6 +17,15 @@ const pipelineElementMoved = createAction(
   (pipelineId, itemToMove, destination) => ({ pipelineId, itemToMove, destination }),
 );
 
+const openPipelineElementContextMenu = createAction(
+  'OPEN_PIPELINE_ELEMENT_CONTEXT_MENU',
+  (pipelineId, elementId) => ({pipelineId, elementId})
+)
+const closePipelineElementContextMenu = createAction(
+  'CLOSE_PIPELINE_ELEMENT_CONTEXT_MENU',
+  (pipelineId, elementId) => ({pipelineId, elementId})
+)
+
 // pipelines, keyed on ID, there may be several expressions on a page
 const defaultPipelineState = {};
 
@@ -46,6 +55,20 @@ const pipelineReducer = handleActions(
           action.payload.destination)
       },
     }),
+    [openPipelineElementContextMenu]: (state, action) => ({
+      ...state,
+      [action.payload.pipelineId]: {
+        ...state[action.payload.pipelineId],
+        contextMenuElementId : action.payload.elementId
+      }
+    }),
+    [closePipelineElementContextMenu]: (state, action) => ({
+      ...state,
+      [action.payload.pipelineId]: {
+        ...state[action.payload.pipelineId],
+        contextMenuElementId : undefined
+      }
+    })
   },
   defaultPipelineState,
 );
@@ -54,5 +77,7 @@ export {
   pipelineChanged,
   pipelineElementSelected,
   pipelineElementMoved,
+  openPipelineElementContextMenu,
+  closePipelineElementContextMenu,
   pipelineReducer
 };

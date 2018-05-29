@@ -36,7 +36,7 @@ import {
     expressionOperatorAdded,
     expressionItemUpdated,
     expressionItemMoved,
-    expressionItemDeleted
+    requestExpressionItemDelete
 } from './redux';
 
 import {
@@ -98,7 +98,7 @@ class ExpressionOperator extends Component {
         expressionTermAdded : PropTypes.func.isRequired,
         expressionOperatorAdded : PropTypes.func.isRequired,
         expressionItemUpdated : PropTypes.func.isRequired,
-        expressionItemDeleted : PropTypes.func.isRequired,
+        requestExpressionItemDelete : PropTypes.func.isRequired,
         expressionItemMoved : PropTypes.func.isRequired,
         
         // React DnD
@@ -131,7 +131,7 @@ class ExpressionOperator extends Component {
     }
 
     onOperatorDelete() {
-        this.props.expressionItemDeleted(this.props.expressionId, this.props.operator.uuid);
+        this.props.requestExpressionItemDelete(this.props.expressionId, this.props.operator.uuid);
     }
 
     onEnabledChange() {
@@ -287,7 +287,7 @@ const DndExpressionOperator = connect(
         expressionOperatorAdded,
         expressionItemUpdated,
         expressionItemMoved,
-        expressionItemDeleted,
+        requestExpressionItemDelete,
     }
 )
     (DragSource(ItemTypes.OPERATOR, dragSource, dragCollect)(

@@ -37,7 +37,7 @@ import {
 
 import {
     expressionItemUpdated,
-    expressionItemDeleted,
+    requestExpressionItemDelete,
     joinDictionaryTermId
 } from './redux';
 
@@ -67,7 +67,7 @@ class ExpressionTerm extends Component {
 
         // Actions
         expressionItemUpdated : PropTypes.func.isRequired,
-        expressionItemDeleted : PropTypes.func.isRequired,
+        requestExpressionItemDelete : PropTypes.func.isRequired,
         docRefPicked : PropTypes.func.isRequired,
 
         // React DnD
@@ -111,7 +111,7 @@ class ExpressionTerm extends Component {
     }
 
     onDeleteTerm() {
-        this.props.expressionItemDeleted(this.props.expressionId, this.props.term.uuid);
+        this.props.requestExpressionItemDelete(this.props.expressionId, this.props.term.uuid);
     }
 
     onEnabledChange() {
@@ -338,7 +338,7 @@ export default connect(
     }),
     {
         expressionItemUpdated,
-        expressionItemDeleted,
+        requestExpressionItemDelete,
         docRefPicked
     }
 )

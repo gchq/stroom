@@ -67,8 +67,12 @@ const selectDocRef = createAction('SELECT_DOC_REF',
     (explorerId, docRef) => ({explorerId, docRef}));
 const openDocRef = createAction('OPEN_DOC_REF',
     (explorerId, docRef) => ({explorerId, docRef}))
-const deleteDocRef = createAction('DELETE_DOC_REF',
+const requestDeleteDocRef = createAction('REQUEST_DELETE_DOC_REF',
     (explorerId, docRef) => ({explorerId, docRef}));
+const confirmDeleteDocRef = createAction('CONFIRM_DELETE_DOC_REF',
+    (explorerId, docRef) => ({explorerId, docRef}));
+const cancelDeleteDocRef = createAction('CANCEL_DELETE_DOC_REF',
+    (explorerId) => ({explorerId}));
 const openDocRefContextMenu = createAction('OPEN_DOC_REF_CONTEXT_MENU',
     (explorerId, docRef) => ({explorerId, docRef}));
 const closeDocRefContextMenu = createAction('CLOSE_DOC_REF_CONTEXT_MENU',
@@ -178,7 +182,8 @@ function getUpdatedExplorer(documentTree, optExplorer, searchTerm, typeFilter) {
         isVisible : getIsVisibleMap(documentTree, isInTypeFilterMap, isInSearchMap),
         isFolderOpen : getFolderIsOpenMap(documentTree, isInTypeFilterMap, isSearching, isInSearchMap, explorer.isFolderOpen),
         inSearch : isInSearchMap,
-        inTypeFilter : isInTypeFilterMap
+        inTypeFilter : isInTypeFilterMap,
+        pendingDocRefToDelete : undefined
     }
 }
 
@@ -348,8 +353,42 @@ const explorerTreeReducer = handleActions(
             }
         },
 
-        // Delete Doc Ref
-        [deleteDocRef]:
+        // Request Delete Doc Ref
+        [requestDeleteDocRef]:
+        (state, action) => {
+            let { explorerId, docRef } = action.payload;
+
+            return {
+                ...state,
+                explorers : {
+                    ...state.explorers,
+                    [explorerId] : {
+                        ...state.explorers[explorerId],
+                        pendingDocRefToDelete : docRef
+                    }
+                }
+            }
+        },
+
+        // Cancel Delete Doc Ref
+        [cancelDeleteDocRef]:
+        (state, action) => {
+            let { explorerId } = action.payload;
+
+            return {
+                ...state,
+                explorers : {
+                    ...state.explorers,
+                    [explorerId] : {
+                        ...state.explorers[explorerId],
+                        pendingDocRefToDelete : undefined
+                    }
+                }
+            }
+        },
+
+        // Confirm Delete Doc Ref
+        [confirmDeleteDocRef]:
         (state, action) => {
             let { explorerId, docRef } = action.payload;
 
@@ -378,7 +417,9 @@ export {
     moveExplorerItem,
     toggleFolderOpen,
     openDocRef,
-    deleteDocRef,
+    requestDeleteDocRef,
+    confirmDeleteDocRef,
+    cancelDeleteDocRef,
     docRefPicked,
     searchTermChanged,
     selectDocRef,

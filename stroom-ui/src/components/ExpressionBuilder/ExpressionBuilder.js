@@ -26,13 +26,14 @@ import { withDataSource } from 'components/DataSource';
 import { withExpression } from './withExpression';
 
 import {
-    Checkbox
+    Checkbox,
+    Confirm
 } from 'semantic-ui-react';
 
 import {
-    expressionEditorCreated,
-    expressionEditorDestroyed,
-    expressionSetEditable
+    expressionSetEditable,
+    confirmExpressionItemDeleted,
+    cancelExpressionItemDelete
 } from './redux';
 
 import './ExpressionBuilder.css'
@@ -70,68 +71,68 @@ let lineElementCreators = {
     'downRightElbow' : downRightElbow
 }
 
-class ExpressionBuilder extends Component {
-    componentDidMount() {
-        this.props.expressionEditorCreated(this.props.expressionId);
+const ExpressionBuilder = ({ expressionId, 
+    dataSource, 
+    expression, 
+    editor,
+    isEditableSystemSet,
+    expressionSetEditable,
+    confirmExpressionItemDeleted,
+    cancelExpressionItemDelete
+}) => {                                
+    let {
+        isEditableUserSet,
+        pendingDeletionUuid
+    } = editor;
+
+    let roOperator = (
+        <ROExpressionOperator 
+            expressionId={expressionId}
+            isEnabled={true}
+            operator={expression}
+            />
+    )
+
+    let editOperator = (
+        <ExpressionOperator 
+                    dataSource={dataSource}
+                    expressionId={expressionId}
+                    isRoot={true}
+                    isEnabled={true}
+                    operator={expression}  />
+    )
+
+    let theComponent;
+    if (isEditableSystemSet) {
+        theComponent = (
+            <div>
+                <Checkbox 
+                    label='Edit Mode'
+                    toggle
+                    checked={isEditableUserSet} 
+                    onChange={() => expressionSetEditable(expressionId, !isEditableUserSet)} 
+                    />
+                {isEditableUserSet ? editOperator : roOperator}
+            </div>
+        )
+    } else {
+        theComponent = roOperator;
     }
-
-    componentWillUnmount() {
-        this.props.expressionEditorDestroyed(this.props.expressionId);
-    }
-
-    render() {
-        let { expressionId, 
-            dataSource, 
-            expression, 
-            editor,
-            isEditableSystemSet, 
-            expressionSetEditable } = this.props;
-                                
-        let { isEditableUserSet } = editor;
-
-        let roOperator = (
-            <ROExpressionOperator 
-                expressionId={expressionId}
-                isEnabled={true}
-                operator={expression}
+    
+    return (
+        <LineContainer 
+            lineContextId={'expression-lines-' + expressionId}
+            lineElementCreators={lineElementCreators}
+            >
+            <Confirm
+                open={!!pendingDeletionUuid}
+                content='This will delete the item from the expression, are you sure?'
+                onCancel={() => cancelExpressionItemDelete(expressionId)}
+                onConfirm={() => confirmExpressionItemDeleted(expressionId, pendingDeletionUuid)}
                 />
-        )
-
-        let editOperator = (
-            <ExpressionOperator 
-                        dataSource={dataSource}
-                        expressionId={expressionId}
-                        isRoot={true}
-                        isEnabled={true}
-                        operator={expression}  />
-        )
-
-        let theComponent;
-        if (isEditableSystemSet) {
-            theComponent = (
-                <div>
-                    <Checkbox 
-                        label='Edit Mode'
-                        toggle
-                        checked={isEditableUserSet} 
-                        onChange={() => expressionSetEditable(expressionId, !isEditableUserSet)} 
-                        />
-                    {isEditableUserSet ? editOperator : roOperator}
-                </div>
-            )
-        } else {
-            theComponent = roOperator;
-        }
-
-        return (
-            <LineContainer 
-                lineContextId={'expression-lines-' + expressionId}
-                lineElementCreators={lineElementCreators}
-                >
-                {theComponent}
-            </LineContainer>
-        );
-    }
+            {theComponent}
+        </LineContainer>
+    );
 }
 
 ExpressionBuilder.propTypes = {
@@ -139,7 +140,11 @@ ExpressionBuilder.propTypes = {
     expressionId : PropTypes.string.isRequired,
     expression: PropTypes.object.isRequired,
     editor : PropTypes.object.isRequired,
-    isEditableSystemSet : PropTypes.bool.isRequired
+    isEditableSystemSet : PropTypes.bool.isRequired,
+    pendingDeletionUuid : PropTypes.string,
+
+    confirmExpressionItemDeleted : PropTypes.func.isRequired,
+    cancelExpressionItemDelete : PropTypes.func.isRequired,
 }
 
 ExpressionBuilder.defaultProps = {
@@ -153,8 +158,8 @@ export default connect(
     {
         // actions
         expressionSetEditable,
-        expressionEditorCreated,
-        expressionEditorDestroyed
+        confirmExpressionItemDeleted,
+        cancelExpressionItemDelete
     }
 )(withDataSource()(withExpression()(ExpressionBuilder)));
 

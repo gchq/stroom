@@ -49,7 +49,10 @@ export function withExistingExplorer(customIdPropertyName) {
 
             render() {
                 if (!!this.state.explorer) {
-                    return <WrappedComponent explorer={this.state.explorer} {...this.props} />
+                    return <WrappedComponent 
+                        {...this.state} 
+                        {...this.props} 
+                        />
                 } else {
                     return <span>awaiting explorer state</span>
                 }

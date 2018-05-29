@@ -25,52 +25,51 @@ import {
 } from 'semantic-ui-react'
 
 import {
-    toggleFolderOpen,
-    requestDeleteDocRef,
-    closeDocRefContextMenu
+    openPipelineElementContextMenu,
+    closePipelineElementContextMenu
 } from './redux';
 
-class FolderMenu extends Component {
+class ElementMenu extends Component {
     static propTypes = {
-        explorerId : PropTypes.string.isRequired,
-        docRef: PropTypes.object.isRequired,
+        pipelineId : PropTypes.string.isRequired,
+        elementId: PropTypes.string.isRequired,
         isOpen : PropTypes.bool.isRequired,
 
-        toggleFolderOpen : PropTypes.func.isRequired,
-        requestDeleteDocRef : PropTypes.func.isRequired,
-        closeDocRefContextMenu : PropTypes.func.isRequired
+        closePipelineElementContextMenu : PropTypes.func.isRequired
     }
 
-    onOpenFolder() {
-        this.props.toggleFolderOpen(this.props.explorerId, this.props.docRef);
+    onOpenElement() {
+        console.log('Open Element ' + this.props.pipelineId + ', Element: ' + this.props.elementId);
         this.onClose();
     }
 
-    onRequestDeleteFolder() {
-        this.props.requestDeleteDocRef(this.props.explorerId, this.props.docRef);
+    onDeleteElement() {
+        console.log('Delete Element ' + this.props.pipelineId + ', Element: ' + this.props.elementId);
         this.onClose();
     }
 
     onClose() {
-        this.props.closeDocRefContextMenu(this.props.explorerId)
+        this.props.closePipelineElementContextMenu(this.props.pipelineId)
     }
 
     render() {
-
         return (
-            <Dropdown inline icon={null}
+            <Dropdown
+                floating 
+                direction='right'
+                icon={null}
                 open={this.props.isOpen}
                 onClose={this.onClose.bind(this)}
             >
                 <Dropdown.Menu>
-                <Dropdown.Item onClick={this.onOpenFolder.bind(this)}>
-                    <Icon name='folder' />
-                    Open
-                </Dropdown.Item>
-                <Dropdown.Item onClick={this.onRequestDeleteFolder.bind(this)}>
-                    <Icon name='trash' />
-                    Delete
-                </Dropdown.Item>
+                    <Dropdown.Item onClick={this.onOpenElement.bind(this)}>
+                        <Icon name='file' />
+                        Open
+                    </Dropdown.Item>
+                    <Dropdown.Item onClick={this.onDeleteElement.bind(this)}>
+                        <Icon name='trash' />
+                        Delete
+                    </Dropdown.Item>
                 </Dropdown.Menu>
             </Dropdown>
         )
@@ -82,8 +81,7 @@ export default connect(
         // state
     }),
     {
-        toggleFolderOpen,
-        requestDeleteDocRef,
-        closeDocRefContextMenu
+        openPipelineElementContextMenu,
+        closePipelineElementContextMenu,
     }
-)(FolderMenu)
+)(ElementMenu)

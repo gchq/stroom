@@ -47,7 +47,10 @@ export function withDataSource() {
 
             render() {
                 if (!!this.state.dataSource) {
-                    return <WrappedComponent dataSource={this.state.dataSource} {...this.props} />
+                    return <WrappedComponent
+                        {...this.state}
+                        {...this.props} 
+                        />
                 } else {
                     return <span>awaiting data source state</span>
                 }

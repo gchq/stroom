@@ -7,7 +7,6 @@ import PropTypes from 'prop-types';
 class ROExpressionTerm extends Component {
     static propTypes = {
         // Props
-        dataSource: PropTypes.object.isRequired, // complete definition of the data source
         expressionId : PropTypes.string.isRequired, // the ID of the overall expression
         term : PropTypes.object.isRequired, // the operator that this particular element is to represent
         isEnabled: PropTypes.bool.isRequired, // a combination of any parent enabled state, and its own
@@ -17,7 +16,6 @@ class ROExpressionTerm extends Component {
         const {
             term,
             isEnabled,
-            dataSource,
             expressionId
         } = this.props;
 

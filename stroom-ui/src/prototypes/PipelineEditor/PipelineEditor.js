@@ -113,7 +113,7 @@ class PipelineEditor extends Component {
         left: `${HORIZONTAL_START_PX + (l.horizontalPos * HORIZONTAL_SPACING)}px`,
       }));
 
-    return this.props.pipeline.pipeline.elements.add.element.map(e => (
+    return this.props.pipeline.elements.add.element.map(e => (
       <div key={e.id} id={e.id} style={elementStyles[e.id]}>
         <PipelineElement pipelineId={this.props.pipelineId} elementId={e.id} />
       </div>
@@ -121,7 +121,7 @@ class PipelineEditor extends Component {
   }
 
   renderLines() {
-    return this.props.pipeline.pipeline.links.add.link
+    return this.props.pipeline.links.add.link
       .map(l => ({ ...l, lineId: `${l.from}-${l.to}` }))
       .map(l => <LineTo lineId={l.lineId} key={l.lineId} fromId={l.from} toId={l.to} lineType='curve'/>);
   }

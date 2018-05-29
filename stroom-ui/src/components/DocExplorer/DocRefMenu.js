@@ -26,7 +26,7 @@ import {
 
 import {
     openDocRef,
-    deleteDocRef,
+    requestDeleteDocRef,
     openDocRefContextMenu,
     closeDocRefContextMenu
 } from './redux';
@@ -38,7 +38,7 @@ class DocRefMenu extends Component {
         isOpen : PropTypes.bool.isRequired,
 
         openDocRef : PropTypes.func.isRequired,
-        deleteDocRef : PropTypes.func.isRequired,
+        requestDeleteDocRef : PropTypes.func.isRequired,
         closeDocRefContextMenu : PropTypes.func.isRequired
     }
 
@@ -47,8 +47,8 @@ class DocRefMenu extends Component {
         this.onClose();
     }
 
-    onDeleteDocRef() {
-        this.props.deleteDocRef(this.props.explorerId, this.props.docRef);
+    onRequestDeleteDocRef() {
+        this.props.requestDeleteDocRef(this.props.explorerId, this.props.docRef);
         this.onClose();
     }
 
@@ -67,7 +67,7 @@ class DocRefMenu extends Component {
                         <Icon name='file' />
                         Open
                     </Dropdown.Item>
-                    <Dropdown.Item onClick={this.onDeleteDocRef.bind(this)}>
+                    <Dropdown.Item onClick={this.onRequestDeleteDocRef.bind(this)}>
                         <Icon name='trash' />
                         Delete
                     </Dropdown.Item>
@@ -83,7 +83,7 @@ export default connect(
     }),
     {
         openDocRef,
-        deleteDocRef,
+        requestDeleteDocRef,
         closeDocRefContextMenu
     }
 )(DocRefMenu)

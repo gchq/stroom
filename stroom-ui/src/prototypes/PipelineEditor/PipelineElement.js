@@ -24,8 +24,12 @@ import { withPipeline } from './withPipeline';
 
 import {
   pipelineElementSelected,
-  pipelineElementMoved
+  pipelineElementMoved,
+  openPipelineElementContextMenu,
+  closePipelineElementContextMenu
 } from './redux';
+
+import ElementMenu from './ElementMenu';
 
 import { canMovePipelineElement } from './pipelineUtils';
 
@@ -66,18 +70,24 @@ function dropCollect(connect, monitor) {
     };
 }
 
-class PipelineEditor extends Component {
+class PipelineElement extends Component {
   static propTypes = {
     pipelineId: PropTypes.string.isRequired,
     pipeline: PropTypes.object.isRequired,
     asTree : PropTypes.object.isRequired,
     elementId: PropTypes.string.isRequired,
+    contextMenuElementId : PropTypes.string,
 
     pipelineElementSelected : PropTypes.func.isRequired
   };
 
   onSingleClick() {
     this.props.pipelineElementSelected(this.props.pipelineId, this.props.elementId);
+  }
+
+  onRightClick(e) {
+      this.props.openPipelineElementContextMenu(this.props.pipelineId, this.props.elementId);
+      e.preventDefault();
   }
 
   render() {
@@ -87,8 +97,12 @@ class PipelineEditor extends Component {
       connectDropTarget,
       isOver,
       canDrop, 
-      elementId
+      pipelineId,
+      elementId,
+      contextMenuElementId
     } = this.props;
+
+    let isContextMenuOpen = !!contextMenuElementId && contextMenuElementId === elementId;
 
     let className='Pipeline-element';
     if (isOver) {
@@ -108,9 +122,22 @@ class PipelineEditor extends Component {
     return (
       connectDragSource(
         connectDropTarget(
-          <div onClick={this.onSingleClick.bind(this)} className={className}>
-            {elementId}
-          </div>
+          <span>
+            <span className={className}
+              onClick={this.onSingleClick.bind(this)}
+              onContextMenu={this.onRightClick.bind(this)}
+              >
+              
+              {elementId}
+            </span>
+            <span className='Pipeline-element__context-menu'>
+              <ElementMenu 
+                pipelineId={pipelineId}
+                elementId={elementId}
+                isOpen={isContextMenuOpen}
+                />
+            </span>
+          </span>
         )
       )
     );
@@ -123,10 +150,12 @@ export default connect(
   }),
   {
     pipelineElementSelected,
-    pipelineElementMoved
+    pipelineElementMoved,
+    openPipelineElementContextMenu,
+    closePipelineElementContextMenu
   }
 )(withPipeline()(DragSource(ItemTypes.ELEMENT, dragSource, dragCollect)(
   DropTarget([ItemTypes.ELEMENT], dropTarget, dropCollect)(
-    PipelineEditor
+    PipelineElement
   )
 )));
