@@ -23,13 +23,17 @@ import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Period;
 import stroom.feed.MetaMap;
 import stroom.io.SeekableInputStream;
+import stroom.streamstore.shared.Feed;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
+import stroom.streamtask.shared.StreamProcessor;
+import stroom.streamtask.shared.StreamTask;
 import stroom.util.collections.TypedMap;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -62,6 +66,87 @@ public class MockStreamStore implements StreamStore, Clearable {
      * This id is used to emulate the primary key on the database.
      */
     private long currentId;
+
+    private final FeedService feedService;
+    private final StreamTypeService streamTypeService;
+
+    @Inject
+    MockStreamStore(final FeedService feedService,
+                    final StreamTypeService streamTypeService) {
+        this.feedService = feedService;
+        this.streamTypeService = streamTypeService;
+    }
+
+    public MockStreamStore() {
+        this.feedService = new MockFeedService();
+        this.streamTypeService = new MockStreamTypeService();
+    }
+
+    @Override
+    public Stream createStream(final String streamTypeName,
+                               final String feedName,
+                               final Long effectiveMs) {
+        return createStream(streamTypeName, feedName, System.currentTimeMillis(), effectiveMs);
+    }
+
+    @Override
+    public Stream createStream(final String streamTypeName,
+                               final String feedName,
+                               final Long createMs,
+                               final Long effectiveMs) {
+        final StreamType streamType = streamTypeService.getOrCreate(streamTypeName);
+        final Feed feed = feedService.getOrCreate(feedName);
+
+        final Stream stream = new Stream();
+        stream.setStreamType(streamType);
+        stream.setFeed(feed);
+        stream.setCreateMs(createMs);
+        // Ensure an effective time.
+        if (effectiveMs != null) {
+            stream.setEffectiveMs(effectiveMs);
+        } else {
+            stream.setEffectiveMs(stream.getCreateMs());
+        }
+
+        return stream;
+    }
+
+    @Override
+    public Stream createProcessedStream(final Stream parent,
+                                        final String streamTypeName,
+                                        final String feedName,
+                                        final StreamProcessor streamProcessor,
+                                        final StreamTask streamTask) {
+        final StreamType streamType = streamTypeService.getOrCreate(streamTypeName);
+        final Feed feed = feedService.getOrCreate(feedName);
+
+        final Stream stream = new Stream();
+
+        if (parent != null) {
+            if (parent.getEffectiveMs() != null) {
+                stream.setEffectiveMs(parent.getEffectiveMs());
+            } else {
+                stream.setEffectiveMs(parent.getCreateMs());
+            }
+            stream.setParentStreamId(parent.getId());
+        }
+
+        stream.setStreamType(streamType);
+        stream.setFeed(feed);
+        stream.setStreamProcessor(streamProcessor);
+        if (streamTask != null) {
+            stream.setStreamTaskId(streamTask.getId());
+        }
+
+        // When were we created
+        stream.setCreateMs(System.currentTimeMillis());
+        // Ensure an effective time
+        if (stream.getEffectiveMs() == null) {
+            stream.setEffectiveMs(stream.getCreateMs());
+        }
+
+        return stream;
+    }
 
     /**
      * Load a stream by id.
@@ -244,7 +329,7 @@ public class MockStreamStore implements StreamStore, Clearable {
                     match = false;
                 } else if (!typeMap.containsKey(streamType.getId())) {
                     match = false;
-                } else if (!criteria.getFeed().getUuid().equals(stream.getFeed().getUuid())) {
+                } else if (!criteria.getFeed().equals(stream.getFeed().getName())) {
                     match = false;
                 }
 

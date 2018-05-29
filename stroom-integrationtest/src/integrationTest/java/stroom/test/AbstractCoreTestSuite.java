@@ -4,6 +4,8 @@ import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import stroom.dashboard.TestDashboardStoreImpl;
+import stroom.streamstore.TestFeedServiceCache;
+import stroom.streamstore.TestFeedServiceImpl;
 import stroom.xmlschema.TestXMLSchemaStoreImpl;
 
 @Ignore("Don't run this test suite automatically as the tests are already run on their own")
@@ -11,10 +13,9 @@ import stroom.xmlschema.TestXMLSchemaStoreImpl;
 @Suite.SuiteClasses({
         TestDashboardStoreImpl.class,
         stroom.docstore.db.TestDBPersistence.class,
-        stroom.entity.TestEntityServiceImpl.class,
         stroom.explorer.TestExplorerTree.class,
-        stroom.feed.TestFeedServiceCache.class,
-        stroom.feed.TestFeedServiceImpl.class,
+        TestFeedServiceCache.class,
+        TestFeedServiceImpl.class,
         stroom.importexport.TestImportExportDashboards.class,
         stroom.importexport.TestImportExportSerializer.class,
         stroom.importexport.TestImportExportServiceImpl.class,

@@ -327,7 +327,7 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
             xsltDoc.setData(StreamUtil.fileToString(IMPORTED_XSLT));
             xsltStore.writeDocument(xsltDoc);
 
-            FeedDoc hostNameToIP = null;
+            DocRef hostNameToIP = null;
 
             for (int i = 0; i < NO_OF_REFERENCE_FILES; i++) {
                 // Setup the feed definitions.
@@ -335,7 +335,7 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
                         FORMAT_DEFINITION, XSLT_HOST_NAME_TO_IP, reference);
             }
 
-            final Set<FeedDoc> referenceFeeds = new HashSet<>();
+            final Set<DocRef> referenceFeeds = new HashSet<>();
             referenceFeeds.add(hostNameToIP);
 
             for (int i = 0; i < NO_OF_EVENT_FILES; i++) {

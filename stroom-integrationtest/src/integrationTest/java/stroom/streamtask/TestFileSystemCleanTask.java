@@ -21,7 +21,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.shared.FeedDoc;
 import stroom.jobsystem.MockTask;
 import stroom.node.NodeService;
 import stroom.node.shared.FindNodeCriteria;
@@ -39,6 +38,7 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -80,9 +80,9 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         final ZonedDateTime oldDate = ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_SIXTY);
 
         // Write a file 2 files ... on we leave locked and the other not locked
-        final FeedDoc feed = commonTestScenarioCreator.createSimpleFeed();
-        final Stream lockfile1 = Stream.createStream(StreamType.RAW_EVENTS, feed, null);
-        final Stream nolockfile1 = Stream.createStream(StreamType.RAW_EVENTS, feed, null);
+        final String feedName = FileSystemTestUtil.getUniqueTestString();
+        final Stream lockfile1 = streamStore.createStream(StreamType.RAW_EVENTS.getName(), feedName, null);
+        final Stream nolockfile1 = streamStore.createStream(StreamType.RAW_EVENTS.getName(), feedName, null);
 
         //
         // FILE1 LOCKED
@@ -117,20 +117,20 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         // Create some other files on the file system
 
         // Copy something that is quite old into the same directory.
-        final Path oldfile = directory.resolve( "oldfile.txt");
+        final Path oldfile = directory.resolve("oldfile.txt");
         Files.createFile(oldfile);
         FileUtil.setLastModified(oldfile, oldDate.toInstant().toEpochMilli());
 
         // Create a old sub directory;
-        final Path olddir = directory.resolve( "olddir");
+        final Path olddir = directory.resolve("olddir");
         FileUtil.mkdirs(olddir);
         FileUtil.setLastModified(olddir, ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_SIXTY).toInstant().toEpochMilli());
 
-        final Path newdir = directory.resolve( "newdir");
+        final Path newdir = directory.resolve("newdir");
         FileUtil.mkdirs(newdir);
         FileUtil.setLastModified(newdir, ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_SIXTY).toInstant().toEpochMilli());
 
-        final Path oldfileinnewdir = newdir.resolve( "oldfileinnewdir.txt");
+        final Path oldfileinnewdir = newdir.resolve("oldfileinnewdir.txt");
         Files.createFile(oldfileinnewdir);
         FileUtil.setLastModified(oldfileinnewdir, ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_FOUR).toInstant().toEpochMilli());
 
@@ -147,15 +147,15 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         Assert.assertFalse("expected deleted " + oldfile, Files.isRegularFile(oldfile));
         Assert.assertFalse("deleted deleted " + olddir, Files.isDirectory(olddir));
         Assert.assertTrue("not deleted new dir", Files.isDirectory(newdir));
-        Assert.assertFalse("deleted old file in new dir",  Files.isRegularFile(oldfileinnewdir));
+        Assert.assertFalse("deleted old file in new dir", Files.isRegularFile(oldfileinnewdir));
 
     }
 
     @Test
     public void testArchiveRemovedFile() {
-        final FeedDoc feed = commonTestScenarioCreator.createSimpleFeed();
+        final String feedName = FileSystemTestUtil.getUniqueTestString();
 
-        final Stream data = commonTestScenarioCreator.createSample2LineRawFile(feed, StreamType.RAW_EVENTS);
+        final Stream data = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamType.RAW_EVENTS.getName());
 
         Collection<Path> files = streamMaintenanceService.findAllStreamFile(data);
 
@@ -197,13 +197,13 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
 
         waitForTaskManagerToComplete();
 
-        final FeedDoc feed = commonTestScenarioCreator.createSimpleFeed();
+        final String feedName = FileSystemTestUtil.getUniqueTestString();
         final long endTime = System.currentTimeMillis();
         final long twoDaysTime = 1000 * 60 * 60 * 24 * 2;
         final long tenMin = 1000 * 60 * 10;
         final long startTime = endTime - twoDaysTime;
         for (long time = startTime; time < endTime; time += tenMin) {
-            final Stream stream = Stream.createStreamForTesting(StreamType.RAW_EVENTS, feed, null, time);
+            final Stream stream = streamStore.createStream(StreamType.RAW_EVENTS.getName(), feedName, null, time);
             final StreamTarget t = streamStore.openStreamTarget(stream);
             t.getOutputStream().write("TEST".getBytes(StreamUtil.DEFAULT_CHARSET));
             streamStore.closeStreamTarget(t);

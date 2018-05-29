@@ -38,6 +38,7 @@ public class StreamDataSource {
     public static final String CREATE_TIME = "Create Time";
     public static final String EFFECTIVE_TIME = "Effective Time";
     public static final String STATUS_TIME = "Status Time";
+    public static final String STREAM_PROCESSOR_ID = "Stream Processor Id";
 
     // Extended fields.
     public static final String NODE = "Node";
@@ -55,7 +56,7 @@ public class StreamDataSource {
         STREAM_FIELDS.put(STREAM_ID, Stream.ID);
         STREAM_FIELDS.put(PARENT_STREAM_ID, Stream.PARENT_STREAM_ID);
         STREAM_FIELDS.put(CREATE_TIME, Stream.CREATE_MS);
-        FEED_FIELDS.put(FEED, Fd.NAME);
+        FEED_FIELDS.put(FEED, Feed.NAME);
         STREAM_TYPE_FIELDS.put(STREAM_TYPE, StreamType.NAME);
 //        PIPELINE_FIELDS.put(PIPELINE, PipelineDoc.NAME);
 
@@ -68,6 +69,7 @@ public class StreamDataSource {
         FIELDS.add(createDateField(CREATE_TIME));
         FIELDS.add(createDateField(EFFECTIVE_TIME));
         FIELDS.add(createDateField(STATUS_TIME));
+        FIELDS.add(createIdField(STREAM_PROCESSOR_ID));
         FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(DataSourceField::getName, Function.identity()));
 
         EXTENDED_FIELDS.addAll(FIELDS);

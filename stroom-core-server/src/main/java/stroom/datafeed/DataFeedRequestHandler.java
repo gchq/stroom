@@ -19,17 +19,14 @@ package stroom.datafeed;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.docref.DocRef;
 import stroom.feed.FeedNameCache;
-import stroom.streamstore.FdService;
 import stroom.feed.MetaMap;
 import stroom.feed.MetaMapFactory;
 import stroom.feed.StroomHeaderArguments;
-import stroom.feed.StroomStatusCode;
-import stroom.feed.StroomStreamException;
 import stroom.feed.shared.FeedDoc;
 import stroom.properties.StroomPropertyService;
 import stroom.proxy.repo.StroomStreamProcessor;
-import stroom.docref.DocRef;
 import stroom.security.Security;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.StreamType;
@@ -38,7 +35,6 @@ import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.util.thread.BufferFactory;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -98,24 +94,22 @@ class DataFeedRequestHandler implements RequestHandler {
                     throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED);
                 }
 
-                final Optional<FeedDoc> feed = feedNameCache.get(feedName);
-                String streamTypeName = StreamType.RAW_EVENTS.getName();
-                if (feed.isPresent() && feed.get().getStreamType() != null) {
-                    streamTypeName = feed.get().getStreamType();
-                }
+                final Optional<FeedDoc> optional = feedNameCache.get(feedName);
+                final String streamTypeName = optional
+                        .map(FeedDoc::getStreamType)
+                        .orElse(StreamType.RAW_EVENTS.getName());
 
-                final FeedDoc feed = feedService.loadByName(metaMap.get(StroomHeaderArguments.FEED));
-
-                if (feed == null) {
-                    throw new StroomStreamException(StroomStatusCode.FEED_IS_NOT_DEFINED);
-                }
-
-                if (!feed.isReceive()) {
-                    throw new StroomStreamException(StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVED_DATA);
-                }
+//                final String feedName = metaMap.get(StroomHeaderArguments.FEED);
+//                if (feedName == null) {
+//                    throw new StroomStreamException(StroomStatusCode.FEED_IS_NOT_DEFINED);
+//                }
+//
+//                if (!feed.isReceive()) {
+//                    throw new StroomStreamException(StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVED_DATA);
+//                }
 
                 List<StreamTargetStroomStreamHandler> handlers = StreamTargetStroomStreamHandler.buildSingleHandlerList(streamStore,
-                        feedService, metaDataStatistics, feedName, streamTypeName);
+                        feedNameCache, metaDataStatistics, feedName, streamTypeName);
 
                 final byte[] buffer = BufferFactory.create();
                 final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlers, buffer, "DataFeedRequestHandler-" + metaMap.get(StroomHeaderArguments.GUID));

@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.fs;
+package stroom.streamstore;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.feed.shared.FeedDoc;
-import stroom.streamstore.MockStreamStore;
-import stroom.streamstore.StreamSource;
-import stroom.streamstore.StreamTarget;
+import stroom.streamstore.shared.Feed;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
@@ -45,10 +42,9 @@ public class TestMockStreamStore extends StroomUnitTest {
 
         mockStreamStore.clear();
 
-        final FeedDoc feed = new FeedDoc();
-        feed.setId(1L);
-
-        final Stream stream1 = Stream.createStream(StreamType.EVENTS, feed, null);
+        final Stream stream1 = new Stream();
+        stream1.setStreamType(StreamType.EVENTS);
+        stream1.setFeed(Feed.createStub(1L));
 
         final StreamTarget streamTarget = mockStreamStore.openStreamTarget(stream1);
         streamTarget.getOutputStream().write("PARENT".getBytes(StreamUtil.DEFAULT_CHARSET));

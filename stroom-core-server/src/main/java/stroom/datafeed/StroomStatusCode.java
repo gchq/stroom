@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.feed;
+package stroom.datafeed;
 
 import javax.servlet.http.HttpServletResponse;
 

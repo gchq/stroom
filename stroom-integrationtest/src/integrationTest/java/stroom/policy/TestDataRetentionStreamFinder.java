@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 import stroom.dictionary.DictionaryStore;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Period;
-import stroom.feed.shared.FeedDoc;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.fs.FileSystemStreamMaintenanceService;
 import stroom.streamstore.shared.FindStreamCriteria;
@@ -31,8 +30,8 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.CommonTestScenarioCreator;
 import stroom.util.date.DateUtil;
+import stroom.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;
@@ -44,8 +43,6 @@ import java.util.concurrent.TimeUnit;
 public class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDataRetentionStreamFinder.class);
 
-    @Inject
-    private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
     private StreamStore streamStore;
     @Inject
@@ -60,7 +57,7 @@ public class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
     @Test
     public void testRowCount() throws SQLException {
         try (final Connection connection = dataSource.getConnection()) {
-            FeedDoc feed = commonTestScenarioCreator.createSimpleFeed();
+            final String feedName = FileSystemTestUtil.getUniqueTestString();
 
             final long now = System.currentTimeMillis();
             final long timeOutsideRetentionPeriod = now - TimeUnit.DAYS.toMillis(RETENTION_PERIOD_DAYS)
@@ -69,10 +66,9 @@ public class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
             LOGGER.info("now: %s", DateUtil.createNormalDateTimeString(now));
             LOGGER.info("timeOutsideRetentionPeriod: %s", DateUtil.createNormalDateTimeString(timeOutsideRetentionPeriod));
 
-            Stream streamInsideRetention = Stream.createStreamForTesting(StreamType.RAW_EVENTS, feed, null, now);
+            Stream streamInsideRetention = streamStore.createStream(StreamType.RAW_EVENTS.getName(), feedName, null, now);
             streamInsideRetention.setStatusMs(now);
-            Stream streamOutsideRetention = Stream.createStreamForTesting(StreamType.RAW_EVENTS, feed, null,
-                    timeOutsideRetentionPeriod);
+            Stream streamOutsideRetention = streamStore.createStream(StreamType.RAW_EVENTS.getName(), feedName, null, timeOutsideRetentionPeriod);
             streamOutsideRetention.setStatusMs(now);
 
             streamMaintenanceService.save(streamInsideRetention);

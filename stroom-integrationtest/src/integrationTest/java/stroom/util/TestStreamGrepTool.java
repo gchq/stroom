@@ -17,34 +17,31 @@
 package stroom.util;
 
 import org.junit.Test;
-import stroom.feed.shared.FeedDoc;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.StreamTarget;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.StreamUtil;
+import stroom.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
 import java.io.IOException;
 
 public class TestStreamGrepTool extends AbstractCoreIntegrationTest {
     @Inject
-    private CommonTestScenarioCreator commonTestScenarioCreator;
-    @Inject
     private StreamStore streamStore;
 
     @Test
     public void test() throws IOException {
-        try {
-            final FeedDoc feed = commonTestScenarioCreator.createSimpleFeed("TEST", "12345");
+        final String feedName = FileSystemTestUtil.getUniqueTestString();
 
-            addData(feed, "This is some test data to match on");
-            addData(feed, "This is some test data to not match on");
+        try {
+            addData(feedName, "This is some test data to match on");
+            addData(feedName, "This is some test data to not match on");
 
             final StreamGrepTool streamGrepTool = new StreamGrepTool();
-            streamGrepTool.setFeed(feed.getName());
+            streamGrepTool.setFeed(feedName);
             streamGrepTool.setMatch("to match on");
             streamGrepTool.run();
 
@@ -53,8 +50,8 @@ public class TestStreamGrepTool extends AbstractCoreIntegrationTest {
         }
     }
 
-    private void addData(final FeedDoc feed, final String data) throws IOException {
-        Stream stream = Stream.createStreamForTesting(StreamType.RAW_EVENTS, feed, null, System.currentTimeMillis());
+    private void addData(final String feedName, final String data) throws IOException {
+        Stream stream = streamStore.createStream(StreamType.RAW_EVENTS.getName(), feedName, null, System.currentTimeMillis());
         final StreamTarget streamTarget = streamStore.openStreamTarget(stream);
         streamTarget.getOutputStream().write(data.getBytes(StreamUtil.DEFAULT_CHARSET));
         streamStore.closeStreamTarget(streamTarget);

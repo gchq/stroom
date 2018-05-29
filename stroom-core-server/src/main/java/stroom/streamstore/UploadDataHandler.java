@@ -52,7 +52,7 @@ class UploadDataHandler extends AbstractTaskHandler<UploadDataAction, ResourceKe
                 final Path file = resourceStore.getTempFile(action.getKey());
 
                 taskManager.exec(new StreamUploadTask(action.getUserToken(), action.getFileName(), file,
-                        action.getFeed(), action.getStreamType(), action.getEffectiveMs(), action.getMetaData()));
+                        action.getFeedName(), action.getStreamTypeName(), action.getEffectiveMs(), action.getMetaData()));
 
             } catch (final RuntimeException e) {
                 throw EntityServiceExceptionUtil.create(e);

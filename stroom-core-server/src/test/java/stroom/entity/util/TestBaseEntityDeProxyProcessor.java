@@ -23,31 +23,28 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import stroom.feed.shared.FeedDoc;
 import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamType;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
 import java.lang.reflect.Proxy;
-import java.util.HashSet;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestBaseEntityDeProxyProcessor extends StroomUnitTest {
     @Test
     public void testDeProxy() {
-        final DummyFeed dummyFeed = new DummyFeed();
-        dummyFeed.setId(Long.valueOf(100));
-        final Stream stream = Stream.createStream(null, dummyFeed, null);
+        final DummyStreamType streamType = new DummyStreamType();
+        streamType.setId(100L);
+        final Stream stream = new Stream();
+        stream.setStreamType(streamType);
 
         final Stream deproxy = (Stream) (new BaseEntityDeProxyProcessor(true).process(stream));
 
-        Assert.assertTrue(deproxy.getFeed().getClass().equals(FeedDoc.class));
-        Assert.assertEquals(100L, deproxy.getFeed().getId());
+        Assert.assertEquals(deproxy.getStreamType().getClass(), StreamType.class);
+        Assert.assertEquals(100L, deproxy.getStreamType().getId());
     }
 
-    public static class OurSet<T> extends HashSet<T> {
-        private static final long serialVersionUID = -6963635707336015922L;
-    }
-
-    public static class DummyFeed extends FeedDoc implements HibernateProxy {
+    public static class DummyStreamType extends StreamType implements HibernateProxy {
         private static final long serialVersionUID = -338271738308074875L;
 
         @Override

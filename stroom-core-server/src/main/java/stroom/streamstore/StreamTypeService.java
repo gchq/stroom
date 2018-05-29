@@ -19,10 +19,21 @@ package stroom.streamstore;
 
 import stroom.entity.FindService;
 import stroom.entity.NamedEntityService;
+import stroom.entity.shared.CriteriaSet;
+import stroom.entity.shared.EntityIdSet;
+import stroom.streamstore.shared.Feed;
 import stroom.streamstore.shared.FindStreamTypeCriteria;
 import stroom.streamstore.shared.StreamType;
 
 public interface StreamTypeService
         extends NamedEntityService<StreamType>, FindService<StreamType, FindStreamTypeCriteria> {
     StreamType get(String streamTypeName);
+
+    StreamType getOrCreate(String streamTypeName);
+
+    long getId(String name);
+
+//    String getName(long id);
+
+    EntityIdSet<StreamType> convertNameSet(CriteriaSet<String> streamTypes);
 }

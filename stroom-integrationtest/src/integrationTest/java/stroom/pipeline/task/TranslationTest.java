@@ -20,12 +20,13 @@ package stroom.pipeline.task;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
-import stroom.streamstore.FdService;
+import stroom.feed.FeedNameCache;
+import stroom.feed.FeedStore;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
-import stroom.streamstore.FindFdCriteria;
 import stroom.importexport.ImportExportSerializer;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.node.NodeCache;
@@ -36,12 +37,12 @@ import stroom.pipeline.shared.StepType;
 import stroom.pipeline.shared.SteppingResult;
 import stroom.pipeline.stepping.SteppingTask;
 import stroom.proxy.repo.StroomStreamProcessor;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.UserTokenUtil;
+import stroom.streamstore.FindFeedCriteria;
 import stroom.streamstore.StreamSource;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.StreamTarget;
@@ -87,6 +88,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TranslationTest.class);
@@ -98,7 +100,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     @Inject
     private TaskManager taskManager;
     @Inject
-    private FdService feedService;
+    private FeedStore feedStore;
     @Inject
     private PipelineStore pipelineStore;
     @Inject
@@ -107,6 +109,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     private StreamProcessorFilterService streamProcessorFilterService;
     @Inject
     private StreamStore streamStore;
+    @Inject
+    private FeedNameCache feedNameCache;
     @Inject
     private StreamTypeService streamTypeService;
     @Inject
@@ -143,9 +147,15 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         // Create a stream processor for each pipeline.
         final List<DocRef> pipelines = pipelineStore.list();
         for (final DocRef pipelineRef : pipelines) {
-            final FeedDoc feed = feedService.loadByName(pipelineRef.getName());
+            final List<DocRef> feedRefs = feedStore.findByName(pipelineRef.getName());
 
-            if (feed != null && feed.isReference() == reference) {
+            FeedDoc feed = null;
+            if (feedRefs.size() > 0) {
+                feed = feedStore.readDocument(feedRefs.get(0));
+            }
+            final FeedDoc feedDoc = feed;
+
+            if (feedDoc != null && feedDoc.isReference() == reference) {
                 StreamProcessor streamProcessor = new StreamProcessor();
                 streamProcessor.setPipelineUuid(pipelineRef.getUuid());
                 streamProcessor.setEnabled(true);
@@ -161,7 +171,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                 final QueryData findStreamQueryData = new QueryData.Builder()
                         .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
                         .expression(new ExpressionOperator.Builder(Op.AND)
-                                .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed.getName())
+                                .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
                                 .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, streamType)
                                 .build())
                         .build();
@@ -180,7 +190,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                     final String stem = fileName.substring(0, index);
 
                     try {
-                        test(p, feed, outputDir, stem, compareOutput, exceptions);
+                        test(p, feedDoc, outputDir, stem, compareOutput, exceptions);
                     } catch (final IOException | RuntimeException e) {
                         Assert.fail(e.getMessage());
                     }
@@ -265,22 +275,22 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
         } else {
             // Add the associated data to the stream store.
-            StreamType streamType;
+            String streamTypeName;
             long millis;
             if (feed.isReference()) {
-                streamType = StreamType.RAW_REFERENCE;
+                streamTypeName = StreamType.RAW_REFERENCE.getName();
 
                 // We need to ensure the reference data is older then the earliest
                 // event we are going to see. In the case of these component tests
                 // we have some events from 2007.
                 millis = DateUtil.parseNormalDateTimeString("2006-01-01T00:00:00.000Z");
             } else {
-                streamType = StreamType.RAW_EVENTS;
+                streamTypeName = StreamType.RAW_EVENTS.getName();
                 millis = DateUtil.parseNormalDateTimeString("2006-04-01T00:00:00.000Z");
             }
 
             // Create the stream.
-            final Stream stream = Stream.createStreamForTesting(streamType, feed, millis,
+            final Stream stream = streamStore.createStream(streamTypeName, feed.getName(), millis,
                     millis);
             final StreamTarget target = streamStore.openStreamTarget(stream);
 
@@ -307,7 +317,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         metaMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
 
         final List<StreamTargetStroomStreamHandler> handlerList = StreamTargetStroomStreamHandler
-                .buildSingleHandlerList(streamStore, feedService, null, feed, feed.getStreamType());
+                .buildSingleHandlerList(streamStore, feedNameCache, null, feed.getName(), feed.getStreamType());
 
         final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlerList, new byte[1000],
                 "DefaultDataFeedRequest-");
@@ -340,24 +350,23 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         final List<Exception> exceptions = new ArrayList<>();
 
         // We first need to get all of the feeds from the DB.
-        final FindFdCriteria feedCriteria = new FindFdCriteria(feedName);
+        final FindFeedCriteria feedCriteria = new FindFeedCriteria(feedName);
 
         // feedCriteria.setFeedType(FeedType.REFERENCE);
-        final BaseResultList<FeedDoc> feeds = feedService.find(feedCriteria);
-        Assert.assertTrue("No feeds found", feeds != null && feeds.size() > 0);
-        Assert.assertEquals("Expected 1 feed", 1, feeds.size());
+        final Optional<FeedDoc> feeds = feedNameCache.get(feedName);
+        Assert.assertTrue("No feeds found", feeds.isPresent());
         final List<DocRef> pipelines = pipelineStore.findByName(feedName);
         Assert.assertTrue("No pipelines found", pipelines != null && pipelines.size() > 0);
         Assert.assertEquals("Expected 1 pipeline", 1, pipelines.size());
 
         final DocRef pipelineRef = pipelines.get(0);
-        final FeedDoc feed = feeds.getFirst();
+        final FeedDoc feed = feeds.get();
 
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
                 .addTerm(StreamDataSource.FEED, Condition.EQUALS, feedName)
                 .addOperator(new ExpressionOperator.Builder(Op.OR)
-                        .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.RAW_REFERENCE.getDisplayValue())
-                        .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.RAW_EVENTS.getDisplayValue())
+                        .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.RAW_REFERENCE.getName())
+                        .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.RAW_EVENTS.getName())
                         .build())
                 .build();
 

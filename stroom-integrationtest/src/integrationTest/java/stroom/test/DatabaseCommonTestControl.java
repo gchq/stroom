@@ -45,6 +45,7 @@ import stroom.security.User;
 import stroom.security.UserGroupUser;
 import stroom.streamstore.StreamAttributeKeyService;
 import stroom.streamstore.fs.FileSystemUtil;
+import stroom.streamstore.shared.Feed;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeConstants;
@@ -81,7 +82,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
             DocumentPermission.TABLE_NAME,
             "explorerTreeNode",
             "explorerTreePath",
-            FeedDoc.TABLE_NAME,
+            Feed.TABLE_NAME,
             "IDX_VOL", //link table between IDX and VOL so no entity of its own
             IndexShard.TABLE_NAME,
             Job.TABLE_NAME,

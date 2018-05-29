@@ -18,37 +18,28 @@ package stroom.streamstore;
 
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.FindDocumentEntityCriteria;
-import stroom.streamstore.shared.Fd;
+import stroom.streamstore.shared.Feed;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 
 /**
  * Class used to find feed definitions.
  */
-public class FindFdCriteria extends FindDocumentEntityCriteria {
+public class FindFeedCriteria extends FindDocumentEntityCriteria {
     public static final String FIELD_TYPE = "Type";
     public static final String FIELD_CLASSIFICATION = "Classification";
     private static final long serialVersionUID = 1L;
-    private Boolean reference;
-    private EntityIdSet<Fd> feedIdSet = new EntityIdSet<>();
+    private EntityIdSet<Feed> feedIdSet = new EntityIdSet<>();
 
-    public FindFdCriteria() {
+    public FindFeedCriteria() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public FindFdCriteria(final String name) {
+    public FindFeedCriteria(final String name) {
         super(name);
     }
 
-    public Boolean getReference() {
-        return reference;
-    }
-
-    public void setReference(final Boolean reference) {
-        this.reference = reference;
-    }
-
-    public EntityIdSet<Fd> getFeedIdSet() {
+    public EntityIdSet<Feed> getFeedIdSet() {
         return feedIdSet;
     }
 
@@ -57,7 +48,6 @@ public class FindFdCriteria extends FindDocumentEntityCriteria {
         final HashCodeBuilder builder = new HashCodeBuilder();
         builder.appendSuper(super.hashCode());
         builder.append(feedIdSet);
-        builder.append(reference);
         return builder.toHashCode();
     }
 
@@ -65,15 +55,14 @@ public class FindFdCriteria extends FindDocumentEntityCriteria {
     public boolean equals(final Object o) {
         if (o == this) {
             return true;
-        } else if (o == null || !(o instanceof FindFdCriteria)) {
+        } else if (!(o instanceof FindFeedCriteria)) {
             return false;
         }
 
-        final FindFdCriteria ffc = (FindFdCriteria) o;
+        final FindFeedCriteria ffc = (FindFeedCriteria) o;
         final EqualsBuilder builder = new EqualsBuilder();
         builder.appendSuper(super.equals(o));
         builder.append(feedIdSet, ffc.feedIdSet);
-        builder.append(reference, ffc.reference);
         return builder.isEquals();
     }
 }

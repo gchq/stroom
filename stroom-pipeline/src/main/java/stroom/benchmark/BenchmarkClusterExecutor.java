@@ -19,24 +19,22 @@ package stroom.benchmark;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.docref.DocRef;
 import stroom.entity.cluster.ClearServiceClusterTask;
 import stroom.entity.shared.Period;
-import stroom.streamstore.FdService;
-import stroom.feed.shared.FeedDoc;
-import stroom.streamstore.FindFdCriteria;
 import stroom.jobsystem.JobTrackedSchedule;
 import stroom.jobsystem.shared.JobManager;
 import stroom.node.NodeService;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.pipeline.PipelineStore;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.statistics.sql.StatisticEvent;
 import stroom.statistics.sql.StatisticTag;
 import stroom.statistics.sql.Statistics;
+import stroom.streamstore.FeedService;
 import stroom.streamstore.StreamAttributeMapService;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
@@ -86,7 +84,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     private static final String BENCHMARK_REFERENCE = "BENCHMARK-REFERENCE";
     private static final String BENCHMARK_EVENTS = "BENCHMARK-EVENTS";
 
-    private final FdService feedService;
+    private final FeedService feedService;
     private final PipelineStore pipelineStore;
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final StreamProcessorService streamProcessorService;
@@ -108,7 +106,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     private Task<?> task;
 
     @Inject
-    BenchmarkClusterExecutor(final FdService feedService,
+    BenchmarkClusterExecutor(final FeedService feedService,
                              final PipelineStore pipelineStore,
                              final StreamProcessorFilterService streamProcessorFilterService,
                              final StreamProcessorService streamProcessorService,
@@ -199,13 +197,11 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 
                 dispatchHelper.execAsync(new ClearServiceClusterTask(task, null), TargetType.ACTIVE);
 
-                final FeedDoc referenceFeed = feedService.find(new FindFdCriteria(BENCHMARK_REFERENCE)).getFirst();
                 final DocRef referencePipeline = pipelineStore.findByName(BENCHMARK_REFERENCE).get(0);
-                final FeedDoc eventFeed = feedService.find(new FindFdCriteria(BENCHMARK_EVENTS)).getFirst();
                 final DocRef eventsPipeline = pipelineStore.findByName(BENCHMARK_EVENTS).get(0);
 
                 // Not setup to run benchmark
-                if (referenceFeed == null || referencePipeline == null || eventFeed == null || eventsPipeline == null) {
+                if (referencePipeline == null || eventsPipeline == null) {
                     return;
                 }
 
@@ -217,14 +213,14 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                 final String referenceData = createReferenceData(benchmarkClusterConfig.getRecordCount());
                 final String eventData = createEventData(benchmarkClusterConfig.getRecordCount());
 
-                final Period refPeriod = writeData(referenceFeed, StreamType.RAW_REFERENCE, referenceData, benchmarkClusterConfig.getStreamCount());
+                final Period refPeriod = writeData(BENCHMARK_REFERENCE, StreamType.RAW_REFERENCE.getName(), referenceData, benchmarkClusterConfig.getStreamCount());
 
-                processData(referenceFeed, StreamType.RAW_REFERENCE, StreamType.REFERENCE, referenceProcessor,
+                processData(BENCHMARK_REFERENCE, StreamType.RAW_REFERENCE, StreamType.REFERENCE, referenceProcessor,
                         refPeriod);
 
-                final Period evtPeriod = writeData(eventFeed, StreamType.RAW_EVENTS, eventData, benchmarkClusterConfig.getStreamCount());
+                final Period evtPeriod = writeData(BENCHMARK_EVENTS, StreamType.RAW_EVENTS.getName(), eventData, benchmarkClusterConfig.getStreamCount());
 
-                processData(eventFeed, StreamType.RAW_EVENTS, StreamType.EVENTS, eventsProcessor, evtPeriod);
+                processData(BENCHMARK_EVENTS, StreamType.RAW_EVENTS, StreamType.EVENTS, eventsProcessor, evtPeriod);
 
                 // Probe.setPrefix("EVENTS");
                 // writeData(eventFeed, StreamType.RAW_EVENTS, eventData, node);
@@ -268,7 +264,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
         return streamProcessor;
     }
 
-    private Period writeData(final FeedDoc feed, final StreamType streamType, final String data, final int streamCount) {
+    private Period writeData(final String feedName, final String streamTypeName, final String data, final int streamCount) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
         if (!isTerminated()) {
@@ -281,7 +277,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                 final int count = i;
                 final GenericServerTask writerTask = GenericServerTask.create("WriteBenchmarkData", "Writing benchmark data");
                 writerTask.setRunnable(() -> {
-                    final Stream stream = writeData(feed, streamType, data);
+                    final Stream stream = writeData(feedName, streamTypeName, data);
 
                     rangeLock.lock();
                     try {
@@ -311,7 +307,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
         return System.currentTimeMillis() + TIME_OUT;
     }
 
-    private void processData(final FeedDoc feed,
+    private void processData(final String feedName,
                              final StreamType rawStreamType,
                              final StreamType processedStreamType,
                              final StreamProcessor streamProcessor,
@@ -321,13 +317,13 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                 final long startTime = System.currentTimeMillis();
 
                 // Translate the data across the cluster.
-                LOGGER.info("Processing data {}", feed.getName());
+                LOGGER.info("Processing data {}", feedName);
                 final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
                 final ExpressionOperator rawExpression = new ExpressionOperator.Builder(Op.AND)
                         .addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(createPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(createPeriod.getToMs()))
-                        .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed.getName())
-                        .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, rawStreamType.getDisplayValue())
+                        .addTerm(StreamDataSource.FEED, Condition.EQUALS, feedName)
+                        .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, rawStreamType.getName())
                         .build();
                 final QueryData rawCriteria = new QueryData();
                 rawCriteria.setExpression(rawExpression);
@@ -339,8 +335,8 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                 // Wait for the cluster to stop processing.
                 final ExpressionOperator processedExpression = new ExpressionOperator.Builder(Op.AND)
                         .addTerm(StreamDataSource.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(startTime))
-                        .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed.getName())
-                        .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, processedStreamType.getDisplayValue())
+                        .addTerm(StreamDataSource.FEED, Condition.EQUALS, feedName)
+                        .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, processedStreamType.getName())
                         .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
                         .build();
                 final FindStreamCriteria processedCriteria = new FindStreamCriteria();
@@ -379,8 +375,8 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                 // Record benchmark statistics if we weren't asked to stop.
                 if (!isTerminated()) {
                     final Period processPeriod = new Period(startTime, System.currentTimeMillis());
-                    LOGGER.info("Translated {} data in {}", feed.getName(), logExecutionTime);
-                    recordTranslationStats(feed, processPeriod);
+                    LOGGER.info("Translated {} data in {}", feedName, logExecutionTime);
+                    recordTranslationStats(feedName, processPeriod);
                 }
 
                 jobManager.setJobEnabled(StreamProcessorTask.JOB_NAME, false);
@@ -457,18 +453,18 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     // }
     // }
 
-    private void recordTranslationStats(final FeedDoc feed, final Period processPeriod) {
+    private void recordTranslationStats(final String feedName, final Period processPeriod) {
         // // Flush out the attributes as we need these for the stats
         // dispatchHelper.execAsync(new FlushServiceClusterTask(null, null,
         // "Flush stream attribute values",
         // StreamAttributeValueFlush.class));
 
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed.getName())
+                .addTerm(StreamDataSource.FEED, Condition.EQUALS, feedName)
                 .addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(processPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(processPeriod.getToMs()))
                 .addOperator(new ExpressionOperator.Builder(Op.OR)
-                        .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.EVENTS.getDisplayValue())
-                        .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.REFERENCE.getDisplayValue())
+                        .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.EVENTS.getName())
+                        .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.REFERENCE.getName())
                         .build())
                 .build();
 
@@ -497,12 +493,12 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 
             statisticEventList.add(StatisticEvent.createValue(nowMs,
                     ROOT_TEST_NAME, Arrays.asList(new StatisticTag("Node", node.getName()),
-                            new StatisticTag("Feed", feed.getName()), new StatisticTag("Type", EPS)),
+                            new StatisticTag("Feed", feedName), new StatisticTag("Type", EPS)),
                     (double) toEPS(nodeWritten, nodePeriod)));
 
             statisticEventList.add(StatisticEvent.createValue(nowMs,
                     ROOT_TEST_NAME, Arrays.asList(new StatisticTag("Node", node.getName()),
-                            new StatisticTag("Feed", feed.getName()), new StatisticTag("Type", ERROR)),
+                            new StatisticTag("Feed", feedName), new StatisticTag("Type", ERROR)),
                     (double) toEPS(nodeError, nodePeriod)));
 
         }

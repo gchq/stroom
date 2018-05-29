@@ -19,9 +19,9 @@ package stroom.streamstore;
 
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.feed.FeedNameCache;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
-import stroom.feed.shared.FeedDoc;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.streamstore.fs.FileSystemStreamMaintenanceService;
 import stroom.streamstore.fs.serializable.RANestedInputStream;
@@ -49,11 +49,9 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
     @Inject
     private StreamStore streamStore;
     @Inject
-    private FdService feedService;
+    private FeedNameCache feedNameCache;
     @Inject
     private FileSystemStreamMaintenanceService streamMaintenanceService;
-    @Inject
-    private CommonTestScenarioCreator commonTestScenarioCreator;
 
     @Test
     public void testSimpleSingleFile() throws IOException {
@@ -214,13 +212,13 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
     private void doTest(final Path file, final int processCount, final Set<String> expectedFiles,
                         final HashMap<StreamType, String> expectedContent,
                         final HashMap<StreamType, List<String>> expectedBoundaries) throws IOException {
-        final FeedDoc eventFeed = commonTestScenarioCreator.createSimpleFeed();
+        final String feedName = FileSystemTestUtil.getUniqueTestString();
 
         final MetaMap metaMap = new MetaMap();
         metaMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
 
         final List<StreamTargetStroomStreamHandler> handlerList = StreamTargetStroomStreamHandler
-                .buildSingleHandlerList(streamStore, feedService, null, eventFeed, eventFeed.getStreamType());
+                .buildSingleHandlerList(streamStore, feedNameCache, null, feedName, StreamType.RAW_EVENTS.getName());
 
         final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlerList, new byte[1000],
                 "DefaultDataFeedRequest-" + metaMap.get(StroomHeaderArguments.GUID));

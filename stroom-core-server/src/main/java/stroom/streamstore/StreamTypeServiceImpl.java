@@ -17,20 +17,31 @@
 
 package stroom.streamstore;
 
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.NamedEntityServiceImpl;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.CriteriaSet;
+import stroom.entity.shared.EntityIdSet;
 import stroom.entity.util.HqlBuilder;
 import stroom.security.Security;
+import stroom.streamstore.shared.Feed;
 import stroom.streamstore.shared.FindStreamTypeCriteria;
 import stroom.streamstore.shared.StreamType;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class StreamTypeServiceImpl extends NamedEntityServiceImpl<StreamType, FindStreamTypeCriteria> implements StreamTypeService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamTypeServiceImpl.class);
+
+//    private final Map<Long, String> nameCache = new ConcurrentHashMap<>();
+    private final Map<String, Long> idCache = new ConcurrentHashMap<>();
+
     @Inject
     StreamTypeServiceImpl(final StroomEntityManager entityManager,
                           final Security security) {
@@ -57,6 +68,51 @@ public class StreamTypeServiceImpl extends NamedEntityServiceImpl<StreamType, Fi
             return null;
         }
         return results.get(0);
+    }
+
+    @Override
+    public StreamType getOrCreate(final String name) {
+        StreamType streamType = get(name);
+        if (streamType == null) {
+            try {
+                // Try and create.
+                streamType = create(name);
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e.getMessage(), e);
+                streamType = get(name);
+            }
+        }
+        return streamType;
+    }
+
+    @Override
+    public long getId(final String name) {
+        return idCache.computeIfAbsent(name, k -> {
+            final StreamType streamType = getOrCreate(name);
+            return streamType.getId();
+        });
+    }
+
+//    @Override
+//    public String getName(final long id) {
+//        return nameCache.computeIfAbsent(id, k ->  {
+//            final StreamType streamType = loadById(id);
+//            return streamType.getName();
+//        });
+//    }
+
+    @Override
+    public EntityIdSet<StreamType> convertNameSet(final CriteriaSet<String> streamTypes) {
+        if (streamTypes == null) {
+            return null;
+        }
+
+        final EntityIdSet<StreamType> entityIdSet = new EntityIdSet<>();
+        entityIdSet.setMatchAll(streamTypes.getMatchAll());
+        entityIdSet.setMatchNull(streamTypes.getMatchNull());
+        streamTypes.forEach(streamTypeName -> entityIdSet.add(getId(streamTypeName)));
+
+        return entityIdSet;
     }
 
     @Override

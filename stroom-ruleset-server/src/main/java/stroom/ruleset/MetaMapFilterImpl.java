@@ -19,8 +19,8 @@ package stroom.ruleset;
 
 import stroom.datafeed.MetaMapFilter;
 import stroom.feed.MetaMap;
-import stroom.feed.StroomStatusCode;
-import stroom.feed.StroomStreamException;
+import stroom.datafeed.StroomStatusCode;
+import stroom.datafeed.StroomStreamException;
 import stroom.ruleset.shared.DataReceiptAction;
 
 class MetaMapFilterImpl implements MetaMapFilter {

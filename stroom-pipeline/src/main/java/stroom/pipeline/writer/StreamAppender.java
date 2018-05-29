@@ -17,8 +17,8 @@
 
 package stroom.pipeline.writer;
 
+import stroom.docref.DocRef;
 import stroom.feed.MetaMap;
-import stroom.streamstore.FdService;
 import stroom.feed.shared.FeedDoc;
 import stroom.io.StreamCloser;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -32,13 +32,10 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaData;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
-import stroom.docref.DocRef;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.StreamTarget;
-import stroom.streamstore.StreamTypeService;
 import stroom.streamstore.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamType;
 import stroom.util.io.WrappedOutputStream;
 import stroom.util.shared.Severity;
 
@@ -53,64 +50,40 @@ public class StreamAppender extends AbstractAppender {
     private final ErrorReceiverProxy errorReceiverProxy;
     private final StreamStore streamStore;
     private final StreamHolder streamHolder;
-    private final FdService feedService;
-    private final StreamTypeService streamTypeService;
     private final StreamProcessorHolder streamProcessorHolder;
     private final MetaData metaData;
     private final StreamCloser streamCloser;
 
-    private DocRef feedRef;
+    private String feed;
     private String streamType;
     private boolean segmentOutput = true;
     private StreamTarget streamTarget;
 
     @Inject
     public StreamAppender(final ErrorReceiverProxy errorReceiverProxy,
-                   final StreamStore streamStore,
-                   final StreamHolder streamHolder,
-                   final FdService feedService,
-                   final StreamTypeService streamTypeService,
-                   final StreamProcessorHolder streamProcessorHolder,
-                   final MetaData metaData,
-                   final StreamCloser streamCloser) {
+                          final StreamStore streamStore,
+                          final StreamHolder streamHolder,
+                          final StreamProcessorHolder streamProcessorHolder,
+                          final MetaData metaData,
+                          final StreamCloser streamCloser) {
         super(errorReceiverProxy);
         this.errorReceiverProxy = errorReceiverProxy;
         this.streamStore = streamStore;
         this.streamHolder = streamHolder;
-        this.feedService = feedService;
-        this.streamTypeService = streamTypeService;
         this.streamProcessorHolder = streamProcessorHolder;
         this.metaData = metaData;
         this.streamCloser = streamCloser;
     }
 
     @Override
-    protected OutputStream createOutputStream() throws IOException {
+    protected OutputStream createOutputStream() {
         final Stream parentStream = streamHolder.getStream();
-
-        FeedDoc feed;
-        if (feedRef != null) {
-            feed = feedService.loadByUuid(feedRef.getUuid());
-        } else {
-            if (parentStream == null) {
-                throw new ProcessException("Unable to determine feed as no parent stream set");
-            }
-
-            // Use current feed if none other has been specified.
-            feed = feedService.load(parentStream.getFeed());
-        }
-
         if (streamType == null) {
             errorReceiverProxy.log(Severity.FATAL_ERROR, null, getElementId(), "Stream type not specified", null);
             throw new ProcessException("Stream type not specified");
         }
-        final StreamType st = streamTypeService.loadByName(streamType);
-        if (st == null) {
-            errorReceiverProxy.log(Severity.FATAL_ERROR, null, getElementId(), "Stream type not specified", null);
-            throw new ProcessException("Stream type not specified");
-        }
 
-        final Stream stream = Stream.createProcessedStream(parentStream, feed, st,
+        final Stream stream = streamStore.createProcessedStream(parentStream, feed, streamType,
                 streamProcessorHolder.getStreamProcessor(), streamProcessorHolder.getStreamTask());
 
         streamTarget = streamStore.openStreamTarget(stream);
@@ -157,7 +130,7 @@ public class StreamAppender extends AbstractAppender {
     @PipelinePropertyDocRef(types = FeedDoc.DOCUMENT_TYPE)
     @PipelineProperty(description = "The feed that output stream should be written to. If not specified the feed the input stream belongs to will be used.")
     public void setFeed(final DocRef feedRef) {
-        this.feedRef = feedRef;
+        this.feed = feedRef.getName();
     }
 
     @PipelineProperty(description = "The stream type that the output stream should be written as. This must be specified.")

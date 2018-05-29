@@ -21,8 +21,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
-import stroom.streamstore.FdService;
+import stroom.feed.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.streamstore.StreamRetentionExecutor;
 import stroom.streamstore.StreamStore;
@@ -32,8 +33,8 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.CommonTestScenarioCreator;
 import stroom.util.date.DateUtil;
+import stroom.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
 import java.util.concurrent.TimeUnit;
@@ -41,20 +42,19 @@ import java.util.concurrent.TimeUnit;
 public class TestStreamRetentionExecutor extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestStreamRetentionExecutor.class);
     private static final int RETENTION_PERIOD_DAYS = 1;
-    @Inject
-    private CommonTestScenarioCreator commonTestScenarioCreator;
+
     @Inject
     private StreamStore streamStore;
     @Inject
     private FileSystemStreamMaintenanceService streamMaintenanceService;
     @Inject
-    private FdService feedService;
+    private FeedStore feedStore;
     @Inject
     private StreamRetentionExecutor streamRetentionExecutor;
 
     @Test
     public void testMultipleRuns() {
-        FeedDoc feed = commonTestScenarioCreator.createSimpleFeed();
+        final String feedName = FileSystemTestUtil.getUniqueTestString();
 
         final long now = System.currentTimeMillis();
         final long timeOutsideRetentionPeriod = now - TimeUnit.DAYS.toMillis(RETENTION_PERIOD_DAYS)
@@ -64,14 +64,18 @@ public class TestStreamRetentionExecutor extends AbstractCoreIntegrationTest {
         LOGGER.info("timeOutsideRetentionPeriod: {}", DateUtil.createNormalDateTimeString(timeOutsideRetentionPeriod));
 
         // save two streams, one inside retention period, one outside
-        feed.setRetentionDayAge(RETENTION_PERIOD_DAYS);
-        Stream streamInsideRetetion = Stream.createStreamForTesting(StreamType.RAW_EVENTS, feed, null, now);
+        final DocRef feedRef = feedStore.createDocument(feedName);
+        final FeedDoc feedDoc = feedStore.readDocument(feedRef);
+        feedDoc.setRetentionDayAge(RETENTION_PERIOD_DAYS);
+        feedStore.writeDocument(feedDoc);
+
+        Stream streamInsideRetetion = streamStore.createStream(StreamType.RAW_EVENTS.getName(), feedName, null, now);
         streamInsideRetetion.setStatusMs(now);
-        Stream streamOutsideRetetion = Stream.createStreamForTesting(StreamType.RAW_EVENTS, feed, null,
+        Stream streamOutsideRetetion = streamStore.createStream(StreamType.RAW_EVENTS.getName(), feedName, null,
                 timeOutsideRetentionPeriod);
         streamOutsideRetetion.setStatusMs(now);
 
-        feed = feedService.save(feed);
+        feedStore.writeDocument(feedDoc);
         streamInsideRetetion = streamMaintenanceService.save(streamInsideRetetion);
         streamOutsideRetetion = streamMaintenanceService.save(streamOutsideRetetion);
 
@@ -93,7 +97,7 @@ public class TestStreamRetentionExecutor extends AbstractCoreIntegrationTest {
         // no change to the record
         Assert.assertEquals(lastStatusMsInside, streamInsideRetetion.getStatusMs());
         // record changed
-        Assert.assertTrue(streamOutsideRetetion.getStatusMs().longValue() > lastStatusMsOutside);
+        Assert.assertTrue(streamOutsideRetetion.getStatusMs() > lastStatusMsOutside);
 
         lastStatusMsInside = streamInsideRetetion.getStatusMs();
         lastStatusMsOutside = streamOutsideRetetion.getStatusMs();

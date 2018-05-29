@@ -32,6 +32,7 @@ import stroom.streamtask.shared.TaskStatus;
 import stroom.task.SimpleTaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
+import stroom.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
 import java.time.Instant;
@@ -49,12 +50,12 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
 
     @Test
     public void testSaveAndGetAll() {
-        final FeedDoc efd = commonTestScenarioCreator.createSimpleFeed();
-        final Stream file1 = commonTestScenarioCreator.createSample2LineRawFile(efd, StreamType.RAW_EVENTS);
-        final Stream file2 = commonTestScenarioCreator.createSampleBlankProcessedFile(efd, file1);
-        final Stream file3 = commonTestScenarioCreator.createSample2LineRawFile(efd, StreamType.RAW_EVENTS);
+        final String feedName = FileSystemTestUtil.getUniqueTestString();
+        final Stream file1 = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamType.RAW_EVENTS.getName());
+        final Stream file2 = commonTestScenarioCreator.createSampleBlankProcessedFile(feedName, file1);
+        final Stream file3 = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamType.RAW_EVENTS.getName());
 
-        commonTestScenarioCreator.createBasicTranslateStreamProcessor(efd);
+        commonTestScenarioCreator.createBasicTranslateStreamProcessor(feedName);
 
         Assert.assertEquals("checking we can delete stand alone files", 1, streamStore.deleteStream(file3).intValue());
 
@@ -91,7 +92,7 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
 
     @Test
     public void testApplyAllCriteria() {
-        commonTestScenarioCreator.createSimpleFeed();
+        final String feedName = FileSystemTestUtil.getUniqueTestString();
 
         final Node testNode = new Node();
         testNode.setId(1L);
@@ -101,14 +102,14 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
         criteria.obtainNodeIdSet().add(1L);
         criteria.setSort(FindStreamTaskCriteria.FIELD_CREATE_TIME);
         criteria.obtainStreamTaskIdSet().add(1L);
-        criteria.obtainFeedIdSet().add(1L);
+        criteria.obtainFeedNameSet().add(feedName);
         criteria.obtainStreamIdSet().add(1L);
-        criteria.obtainStreamTypeIdSet().add(1L);
+        criteria.obtainStreamTypeNameSet().add(StreamType.RAW_EVENTS.getName());
         criteria.obtainStreamTaskStatusSet().add(TaskStatus.COMPLETE);
 
         criteria.setCreatePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
         criteria.setEffectivePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
-        criteria.obtainStreamTypeIdSet().add(StreamType.CONTEXT.getId());
+        criteria.obtainStreamTypeNameSet().add(StreamType.CONTEXT.getName());
 
         criteria.getFetchSet().add(Stream.ENTITY_TYPE);
         criteria.getFetchSet().add(Node.ENTITY_TYPE);
@@ -120,7 +121,7 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
 
     @Test
     public void testApplyAllCriteriaSummary() {
-        commonTestScenarioCreator.createSimpleFeed();
+        final String feedName = FileSystemTestUtil.getUniqueTestString();
 
         final Node testNode = new Node();
         testNode.setId(1L);
@@ -130,14 +131,14 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
         criteria.obtainNodeIdSet().add(1L);
         criteria.setSort(FindStreamTaskCriteria.FIELD_CREATE_TIME);
         criteria.obtainStreamTaskIdSet().add(1L);
-        criteria.obtainFeedIdSet().add(1L);
+        criteria.obtainFeedNameSet().add(feedName);
         criteria.obtainStreamIdSet().add(1L);
-        criteria.obtainStreamTypeIdSet().add(1L);
+        criteria.obtainStreamTypeNameSet().add(StreamType.RAW_EVENTS.getName());
         criteria.obtainStreamTaskStatusSet().add(TaskStatus.COMPLETE);
 
         criteria.setCreatePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
         criteria.setEffectivePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
-        criteria.obtainStreamTypeIdSet().add(StreamType.CONTEXT.getId());
+        criteria.obtainStreamTypeNameSet().add(StreamType.CONTEXT.getName());
 
     }
 

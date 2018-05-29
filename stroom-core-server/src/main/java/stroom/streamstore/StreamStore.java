@@ -23,6 +23,8 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Period;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
+import stroom.streamtask.shared.StreamProcessor;
+import stroom.streamtask.shared.StreamTask;
 
 import java.util.List;
 
@@ -42,6 +44,21 @@ import java.util.List;
  * </p>
  */
 public interface StreamStore extends FindService<Stream, FindStreamCriteria>, FindDeleteService<FindStreamCriteria> {
+    Stream createStream(String streamTypeName,
+                        String feedName,
+                        Long effectiveMs);
+
+    Stream createStream(String streamTypeName,
+                        String feedName,
+                        Long createMs,
+                        Long effectiveMs);
+
+    Stream createProcessedStream(Stream parent,
+                                 String streamTypeName,
+                                 String feedName,
+                                 StreamProcessor streamProcessor,
+                                 StreamTask streamTask);
+
     /**
      * Load a stream by id.
      *
@@ -110,7 +127,7 @@ public interface StreamStore extends FindService<Stream, FindStreamCriteria>, Fi
      * Open a existing stream source.
      * </p>
      *
-     * @param streamId        The stream id to open a stream source for.
+     * @param streamId  The stream id to open a stream source for.
      * @param anyStatus Used to specify if this method will return stream sources that
      *                  are logically deleted or locked. If false only unlocked stream
      *                  sources will be returned, null otherwise.

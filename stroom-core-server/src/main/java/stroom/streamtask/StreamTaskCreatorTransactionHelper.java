@@ -28,7 +28,6 @@ import stroom.entity.shared.IdRange;
 import stroom.entity.shared.Sort.Direction;
 import stroom.entity.util.ConnectionUtil;
 import stroom.entity.util.SqlBuilder;
-import stroom.feed.shared.FeedDoc;
 import stroom.jobsystem.ClusterLockService;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
@@ -40,13 +39,13 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.OldFindStreamCriteria;
 import stroom.streamstore.StreamStore;
+import stroom.streamstore.shared.Feed;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamtask.InclusiveRanges.InclusiveRange;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
-import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamProcessorFilterTracker;
 import stroom.streamtask.shared.StreamTask;
@@ -135,7 +134,7 @@ class StreamTaskCreatorTransactionHelper {
      * @return streams that have not yet got a stream task for a particular
      * stream processor
      */
-    public List<Stream> runSelectStreamQuery(final StreamProcessor streamProcessor, final OldFindStreamCriteria criteria,
+    public List<Stream> runSelectStreamQuery(final OldFindStreamCriteria criteria,
                                              final long minStreamId, final int max) {
         // Copy the filter
         final OldFindStreamCriteria findStreamCriteria = new OldFindStreamCriteria();
@@ -441,7 +440,7 @@ class StreamTaskCreatorTransactionHelper {
             } else {
                 final SqlBuilder sql = new SqlBuilder();
                 sql.append("SELECT DISTINCT(");
-                sql.append(FeedDoc.FOREIGN_KEY);
+                sql.append(Feed.FOREIGN_KEY);
                 sql.append("), 'A' FROM ");
                 sql.append(Stream.TABLE_NAME);
                 sql.append(" WHERE ");

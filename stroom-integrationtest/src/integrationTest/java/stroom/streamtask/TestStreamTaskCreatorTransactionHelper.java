@@ -28,11 +28,15 @@ import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.docref.DocRef;
 import stroom.streamstore.OldFindStreamCriteria;
+import stroom.streamstore.StreamStore;
+import stroom.streamstore.shared.Feed;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamTask;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
+import stroom.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
 import java.sql.Connection;
@@ -58,32 +62,38 @@ public class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrat
     private StreamTaskDeleteExecutor streamTaskDeleteExecutor;
     @Inject
     private StroomEntityManager stroomEntityManager;
+    @Inject
+    private StreamStore streamStore;
 
     @Test
     public void testBasic() {
-        final FeedDoc feed1 = commonTestScenarioCreator.createSimpleFeed();
+        final String feedName = FileSystemTestUtil.getUniqueTestString();
 
-        commonTestScenarioCreator.createSample2LineRawFile(feed1, StreamType.RAW_EVENTS);
+        commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamType.RAW_EVENTS.getName());
         Assert.assertEquals(0, commonTestControl.countEntity(StreamTask.class));
+        final List<Stream> streams = streamStore.find(new OldFindStreamCriteria());
+        Assert.assertEquals(1, streams.size());
+        final Stream stream = streams.get(0);
+        final Feed feed = stream.getFeed();
 
         OldFindStreamCriteria findStreamCriteria = new OldFindStreamCriteria();
         Assert.assertEquals(1,
-                streamTaskCreatorTransactionHelper.runSelectStreamQuery(null, findStreamCriteria, 0, 100).size());
+                streamTaskCreatorTransactionHelper.runSelectStreamQuery( findStreamCriteria, 0, 100).size());
 
         findStreamCriteria = new OldFindStreamCriteria();
-        findStreamCriteria.obtainFeeds().obtainInclude().add(feed1);
+        findStreamCriteria.obtainFeeds().obtainInclude().add(feed);
         Assert.assertEquals(1,
-                streamTaskCreatorTransactionHelper.runSelectStreamQuery(null, findStreamCriteria, 0, 100).size());
+                streamTaskCreatorTransactionHelper.runSelectStreamQuery( findStreamCriteria, 0, 100).size());
 
         findStreamCriteria = new OldFindStreamCriteria();
-        findStreamCriteria.obtainFeeds().obtainInclude().add(feed1.getId() + 1);
+        findStreamCriteria.obtainFeeds().obtainInclude().add(feed.getId() + 1);
         Assert.assertEquals(0,
-                streamTaskCreatorTransactionHelper.runSelectStreamQuery(null, findStreamCriteria, 0, 100).size());
+                streamTaskCreatorTransactionHelper.runSelectStreamQuery( findStreamCriteria, 0, 100).size());
 
         findStreamCriteria = new OldFindStreamCriteria();
         findStreamCriteria.obtainPipelineSet().add(new DocRef(PipelineDoc.DOCUMENT_TYPE, "1234"));
         Assert.assertEquals(0,
-                streamTaskCreatorTransactionHelper.runSelectStreamQuery(null, findStreamCriteria, 0, 100).size());
+                streamTaskCreatorTransactionHelper.runSelectStreamQuery( findStreamCriteria, 0, 100).size());
     }
 
     @Test

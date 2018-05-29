@@ -22,15 +22,13 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
-import stroom.entity.shared.DocRefUtil;
-import stroom.streamstore.FdService;
-import stroom.feed.shared.FeedDoc;
+import stroom.docref.DocRef;
+import stroom.feed.FeedStore;
 import stroom.guice.PipelineScopeRunnable;
 import stroom.guice.StroomBeanStore;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.docref.DocRef;
 import stroom.streamstore.shared.StreamType;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.cache.CacheManager;
@@ -49,7 +47,7 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     private final EventListBuilder builder = EventListBuilderFactory.createBuilder();
 
     @Inject
-    private FdService feedService;
+    private FeedStore feedStore;
     @Inject
     private PipelineStore pipelineStore;
     @Inject
@@ -63,21 +61,19 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     @Test
     public void testSimple() {
         pipelineScopeRunnable.scopeRunnable(() -> {
-            FeedDoc feed1 = feedService.create("TEST_FEED_1");
-            feed1.setReference(true);
-            feed1 = feedService.save(feed1);
+            final DocRef feed1 = feedStore.createDocument("TEST_FEED_1");
+//            feed1.setReference(true);
+//            feed1 = feedService.save(feed1);
 
-            FeedDoc feed2 = feedService.create("TEST_FEED_2");
-            feed2.setReference(true);
-            feed2 = feedService.save(feed2);
+            final DocRef feed2 = feedStore.createDocument("TEST_FEED_2");
+//            feed2.setReference(true);
+//            feed2 = feedService.save(feed2);
 
             final DocRef pipeline1Ref = pipelineStore.createDocument("TEST_PIPELINE_1");
             final DocRef pipeline2Ref = pipelineStore.createDocument("TEST_PIPELINE_2");
 
-            final PipelineReference pipelineReference1 = new PipelineReference(pipeline1Ref,
-                    DocRefUtil.create(feed1), StreamType.REFERENCE.getName());
-            final PipelineReference pipelineReference2 = new PipelineReference(pipeline2Ref,
-                    DocRefUtil.create(feed2), StreamType.REFERENCE.getName());
+            final PipelineReference pipelineReference1 = new PipelineReference(pipeline1Ref, feed1, StreamType.REFERENCE.getName());
+            final PipelineReference pipelineReference2 = new PipelineReference(pipeline2Ref, feed2, StreamType.REFERENCE.getName());
 
             final List<PipelineReference> pipelineReferences = new ArrayList<>();
             pipelineReferences.add(pipelineReference1);
@@ -157,12 +153,12 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     @Test
     public void testNestedMaps() {
         pipelineScopeRunnable.scopeRunnable(() -> {
-            FeedDoc feed = feedService.create("TEST_FEED_V3");
-            feed.setReference(true);
-            feed = feedService.save(feed);
+            final DocRef feed = feedStore.createDocument("TEST_FEED_V3");
+//            feed.setReference(true);
+//            feed = feedService.save(feed);
 
             final DocRef pipelineRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, "1234");
-            final PipelineReference pipelineReference = new PipelineReference(pipelineRef, DocRefUtil.create(feed), StreamType.REFERENCE.getName());
+            final PipelineReference pipelineReference = new PipelineReference(pipelineRef, feed, StreamType.REFERENCE.getName());
             final List<PipelineReference> pipelineReferences = new ArrayList<>();
             pipelineReferences.add(pipelineReference);
 

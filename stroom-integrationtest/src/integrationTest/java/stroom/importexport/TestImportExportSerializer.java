@@ -22,7 +22,8 @@ import org.junit.Test;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.streamstore.FdService;
+import stroom.feed.FeedStore;
+import stroom.streamstore.FeedService;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
@@ -56,7 +57,7 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
-    private FdService feedService;
+    private FeedStore feedStore;
     @Inject
     private XmlSchemaStore xmlSchemaStore;
     @Inject
@@ -75,9 +76,9 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
     @Test
     public void testExport() throws IOException {
         final DocRef docRef = explorerService.create(FeedDoc.DOCUMENT_TYPE, FileSystemTestUtil.getUniqueTestString(), null, null);
-        FeedDoc eventFeed = feedService.readDocument(docRef);
+        FeedDoc eventFeed = feedStore.readDocument(docRef);
         eventFeed.setDescription("Original Description");
-        feedService.save(eventFeed);
+        feedStore.writeDocument(eventFeed);
 
         commonTestControl.createRequiredXMLSchemas();
 
@@ -102,9 +103,9 @@ public class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
         Assert.assertEquals(State.EQUAL, map.get(docRef).getState());
 
-        eventFeed = feedService.readDocument(docRef);
+        eventFeed = feedStore.readDocument(docRef);
         eventFeed.setDescription("New Description");
-        feedService.save(eventFeed);
+        feedStore.writeDocument(eventFeed);
         for (final DocRef ref : allSchemas) {
             final XmlSchemaDoc xmlSchema = xmlSchemaStore.readDocument(ref);
             xmlSchema.setData("XML");

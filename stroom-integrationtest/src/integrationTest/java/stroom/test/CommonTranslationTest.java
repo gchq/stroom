@@ -19,7 +19,7 @@ package stroom.test;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.shared.FeedDoc;
+import stroom.docref.DocRef;
 import stroom.node.NodeCache;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.streamstore.StreamStore;
@@ -50,7 +50,7 @@ public class CommonTranslationTest {
             .getTestResourcesFile(DIR + "NetworkMonitoringSample.in");
     public static final Path INVALID_RESOURCE_NAME = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "Invalid.in");
 
-//    private static final Path CSV = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "CSV.ds");
+    //    private static final Path CSV = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "CSV.ds");
     private static final Path CSV_WITH_HEADING = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "CSVWithHeading.ds");
     private static final Path XSLT_HOST_NAME_TO_LOCATION = StroomPipelineTestFileUtil
             .getTestResourcesFile(DIR + "SampleRefData-HostNameToLocation.xsl");
@@ -129,15 +129,15 @@ public class CommonTranslationTest {
         // commonTestControl.setup();
 
         // Setup the feed definitions.
-        final FeedDoc hostNameToIP = storeCreationTool.addReferenceData(REFFEED_HOSTNAME_TO_IP,
+        final DocRef hostNameToIP = storeCreationTool.addReferenceData(REFFEED_HOSTNAME_TO_IP,
                 TextConverterType.DATA_SPLITTER, CSV_WITH_HEADING, XSLT_HOST_NAME_TO_IP, REFDATA_HOST_NAME_TO_IP);
-        final FeedDoc hostNameToLocation = storeCreationTool.addReferenceData(REFFEED_HOSTNAME_TO_LOCATION,
+        final DocRef hostNameToLocation = storeCreationTool.addReferenceData(REFFEED_HOSTNAME_TO_LOCATION,
                 TextConverterType.DATA_SPLITTER, CSV_WITH_HEADING, XSLT_HOST_NAME_TO_LOCATION,
                 REFDATA_HOST_NAME_TO_LOCATION);
-        final FeedDoc idToUser = storeCreationTool.addReferenceData(ID_TO_USER, TextConverterType.DATA_SPLITTER,
+        final DocRef idToUser = storeCreationTool.addReferenceData(ID_TO_USER, TextConverterType.DATA_SPLITTER,
                 CSV_WITH_HEADING, EMPLOYEE_REFERENCE_XSL, EMPLOYEE_REFERENCE_CSV);
 
-        final Set<FeedDoc> referenceFeeds = new HashSet<>();
+        final Set<DocRef> referenceFeeds = new HashSet<>();
         referenceFeeds.add(hostNameToIP);
         referenceFeeds.add(hostNameToLocation);
         referenceFeeds.add(idToUser);

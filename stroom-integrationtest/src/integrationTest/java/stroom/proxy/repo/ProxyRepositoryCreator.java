@@ -20,12 +20,12 @@ package stroom.proxy.repo;
 import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.shared.BaseResultList;
+import stroom.docref.DocRef;
+import stroom.feed.FeedNameCache;
+import stroom.feed.FeedStore;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
-import stroom.streamstore.FdService;
 import stroom.feed.shared.FeedDoc;
-import stroom.streamstore.FindFdCriteria;
 import stroom.util.date.DateUtil;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
@@ -42,6 +42,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
+import java.util.List;
+import java.util.Optional;
 
 public class ProxyRepositoryCreator {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryCreator.class);
@@ -49,11 +51,11 @@ public class ProxyRepositoryCreator {
     private static final String INPUT_EXTENSION = ".in";
     private static final String ZIP_EXTENSION = ".zip";
 
-    private final FdService feedService;
+    private final FeedNameCache feedNameCache;
     private final StroomZipRepository repository;
 
-    public ProxyRepositoryCreator(final FdService feedService, final StroomZipRepository repository) {
-        this.feedService = feedService;
+    public ProxyRepositoryCreator(final FeedNameCache feedNameCache, final StroomZipRepository repository) {
+        this.feedNameCache = feedNameCache;
         this.repository = repository;
     }
 
@@ -189,14 +191,11 @@ public class ProxyRepositoryCreator {
         }
 
         // Find the associated feed.
-        final FindFdCriteria findFeedCriteria = new FindFdCriteria();
-        findFeedCriteria.getName().setString(stem);
-        final BaseResultList<FeedDoc> list = feedService.find(findFeedCriteria);
-
-        if (list.size() == 0) {
+        final Optional<FeedDoc> optional = feedNameCache.get(stem);
+        if (!optional.isPresent()) {
             throw new RuntimeException("Feed not found \"" + stem + "\"");
         }
 
-        return list.getFirst();
+        return optional.get();
     }
 }

@@ -19,8 +19,10 @@ package stroom.streamstore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.docref.DocRef;
 import stroom.entity.shared.Period;
 import stroom.entity.util.PeriodUtil;
+import stroom.feed.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.jobsystem.ClusterLockService;
 import stroom.jobsystem.JobTrackedSchedule;
@@ -47,17 +49,17 @@ public class StreamRetentionExecutor {
     private static final String LOCK_NAME = "StreamRetentionExecutor";
     private static final int DELETE_STREAM_BATCH_SIZE = 1000;
 
-    private final FdService feedService;
+    private final FeedStore feedStore;
     private final StreamStore streamStore;
     private final TaskContext taskContext;
     private final ClusterLockService clusterLockService;
 
     @Inject
-    StreamRetentionExecutor(final FdService feedService,
+    StreamRetentionExecutor(final FeedStore feedStore,
                             final StreamStore streamStore,
                             final TaskContext taskContext,
                             final ClusterLockService clusterLockService) {
-        this.feedService = feedService;
+        this.feedStore = feedStore;
         this.streamStore = streamStore;
         this.taskContext = taskContext;
         this.clusterLockService = clusterLockService;
@@ -75,11 +77,10 @@ public class StreamRetentionExecutor {
         LOGGER.info("Stream Retention Executor - start");
         if (clusterLockService.tryLock(LOCK_NAME)) {
             try {
-                final FindFdCriteria findFeedCriteria = new FindFdCriteria();
-                final List<FeedDoc> feedList = feedService.find(findFeedCriteria);
-                for (final FeedDoc feed : feedList) {
+                final List<DocRef> feedRefs = feedStore.list();
+                for (final DocRef feedRef : feedRefs) {
                     if (!Thread.currentThread().isInterrupted()) {
-                        processFeed(feed);
+                        processFeed(feedRef);
                     }
                 }
                 LOGGER.info("Stream Retention Executor - finished in {}", logExecutionTime);
@@ -93,7 +94,9 @@ public class StreamRetentionExecutor {
         }
     }
 
-    private void processFeed(final FeedDoc feed) {
+    private void processFeed(final DocRef feedRef) {
+        final FeedDoc feed = feedStore.readDocument(feedRef);
+
         if (feed.getRetentionDayAge() == null) {
             LOGGER.info("processFeed() - {} Skipping as no retention set", feed.getName());
             return;
@@ -127,7 +130,7 @@ public class StreamRetentionExecutor {
             criteria.obtainPageRequest().setLength(DELETE_STREAM_BATCH_SIZE);
 
             long total = 0;
-            long deleted = 0;
+            long deleted;
             do {
                 final Long recordsDeleted = streamStore.findDelete(criteria);
                 if (recordsDeleted != null) {

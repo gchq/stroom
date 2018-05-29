@@ -129,7 +129,7 @@ public class StreamMetaDataProvider implements MetaDataProvider {
         return parentData.computeIfAbsent(STREAM_TYPE, k -> {
             final Stream stream = streamHolder.getStream();
             if (stream != null) {
-                return stream.getStreamType().getDisplayValue();
+                return stream.getStreamType().getName();
             }
             return null;
         });

@@ -18,13 +18,10 @@
 package stroom.headless;
 
 import stroom.docref.DocRef;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.StringCriteria;
-import stroom.streamstore.FdService;
+import stroom.feed.FeedStore;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
-import stroom.streamstore.FindFdCriteria;
 import stroom.pipeline.ErrorWriter;
 import stroom.pipeline.ErrorWriterProxy;
 import stroom.pipeline.PipelineStore;
@@ -67,7 +64,7 @@ import java.util.List;
 @TaskHandlerBean(task = CLITranslationTask.class)
 class CLITranslationTaskHandler extends AbstractTaskHandler<CLITranslationTask, VoidResult> {
     private final PipelineFactory pipelineFactory;
-    private final FdService feedService;
+    private final FeedStore feedStore;
     private final PipelineStore pipelineStore;
     private final MetaData metaData;
     private final PipelineHolder pipelineHolder;
@@ -83,7 +80,7 @@ class CLITranslationTaskHandler extends AbstractTaskHandler<CLITranslationTask, 
 
     @Inject
     CLITranslationTaskHandler(final PipelineFactory pipelineFactory,
-                              @Named("cachedFeedService") final FdService feedService,
+                              @Named("cachedFeedStore") final FeedStore feedStore,
                               @Named("cachedPipelineStore") final PipelineStore pipelineStore,
                               final MetaData metaData,
                               final PipelineHolder pipelineHolder,
@@ -97,7 +94,7 @@ class CLITranslationTaskHandler extends AbstractTaskHandler<CLITranslationTask, 
                               final StreamProcessorService streamProcessorService,
                               final Security security) {
         this.pipelineFactory = pipelineFactory;
-        this.feedService = feedService;
+        this.feedStore = feedStore;
         this.pipelineStore = pipelineStore;
         this.metaData = metaData;
         this.pipelineHolder = pipelineHolder;
@@ -163,8 +160,8 @@ class CLITranslationTaskHandler extends AbstractTaskHandler<CLITranslationTask, 
 
                 // Create the stream.
                 final Stream stream = new Stream();
-                // Set the feed.
-                stream.setFeed(feed);
+//                // Set the feed.
+//                stream.setFeed(feed);
 
                 // Set effective time.
                 try {
@@ -210,15 +207,12 @@ class CLITranslationTaskHandler extends AbstractTaskHandler<CLITranslationTask, 
             throw new RuntimeException("No feed name found in meta data");
         }
 
-        final FindFdCriteria feedCriteria = new FindFdCriteria();
-        feedCriteria.setName(new StringCriteria(feedName));
-        final BaseResultList<FeedDoc> feeds = feedService.find(feedCriteria);
-
-        if (feeds.size() == 0) {
+        final List<DocRef> docRefs = feedStore.findByName(feedName);
+        if (docRefs.size() == 0) {
             throw new RuntimeException("No configuration found for feed \"" + feedName + "\"");
         }
 
-        return feeds.getFirst();
+        return feedStore.readDocument(docRefs.get(0));
     }
 
     /**

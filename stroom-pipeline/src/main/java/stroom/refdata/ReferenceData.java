@@ -235,7 +235,7 @@ public class ReferenceData {
 
         if (hasPermission) {
             // Create a key to find a set of effective times in the pool.
-            final EffectiveStreamKey effectiveStreamKey = new EffectiveStreamKey(pipelineReference.getFeed(),
+            final EffectiveStreamKey effectiveStreamKey = new EffectiveStreamKey(pipelineReference.getFeed().getName(),
                     pipelineReference.getStreamType(), fromMs, toMs);
             // Try and fetch a tree set of effective streams for this key.
             final NavigableSet<EffectiveStream> streamSet = effectiveStreamCache.get(effectiveStreamKey);

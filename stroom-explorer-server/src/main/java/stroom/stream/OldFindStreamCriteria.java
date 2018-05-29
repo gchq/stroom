@@ -20,9 +20,10 @@ import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.IdRange;
-import stroom.entity.shared.IncludeExcludeCriteriaSet;
+import stroom.entity.shared.IncludeExcludeEntityIdSet;
 import stroom.entity.shared.Period;
 import stroom.pipeline.OldPipelineEntity;
+import stroom.streamstore.shared.Feed;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeCondition;
@@ -50,7 +51,14 @@ public class OldFindStreamCriteria extends BaseCriteria {
     private EntityIdSet<StreamProcessor> streamProcessorIdSet;
     private OldFolderIdSet folderIdSet;
 
-    private IncludeExcludeCriteriaSet<String> feeds;
+    /**
+     * You must use feeds instead this is here for compatibility with previous
+     * versions.
+     **/
+    @Deprecated
+    private EntityIdSet<Feed> feedIdSet;
+
+    private IncludeExcludeEntityIdSet<Feed> feeds;
     private EntityIdSet<OldPipelineEntity> pipelineIdSet;
     private EntityIdSet<StreamType> streamTypeIdSet;
     private EntityIdSet<Stream> streamIdSet;
@@ -111,19 +119,53 @@ public class OldFindStreamCriteria extends BaseCriteria {
         return folderIdSet;
     }
 
-    public IncludeExcludeCriteriaSet<String> getFeeds() {
+    public IncludeExcludeEntityIdSet<Feed> getFeeds() {
+        if (feedIdSet != null) {
+            feeds = new IncludeExcludeEntityIdSet<>();
+            feeds.setInclude(feedIdSet);
+            this.feedIdSet = null;
+        }
+
         return feeds;
     }
 
-    public void setFeeds(final IncludeExcludeCriteriaSet<String> feeds) {
+    public void setFeeds(final IncludeExcludeEntityIdSet<Feed> feeds) {
         this.feeds = feeds;
     }
 
-    public IncludeExcludeCriteriaSet<String> obtainFeeds() {
+    public IncludeExcludeEntityIdSet<Feed> obtainFeeds() {
+        if (feedIdSet != null) {
+            feeds = new IncludeExcludeEntityIdSet<>();
+            feeds.setInclude(feedIdSet);
+            this.feedIdSet = null;
+        }
+
         if (feeds == null) {
-            feeds = new IncludeExcludeCriteriaSet<>();
+            feeds = new IncludeExcludeEntityIdSet<>();
         }
         return feeds;
+    }
+
+    /**
+     * You must use getFeeds() instead this is here for compatibility with
+     * previous versions.
+     **/
+    @Deprecated
+    public EntityIdSet<Feed> getFeedIdSet() {
+        return feedIdSet;
+    }
+
+    /**
+     * You must use setFeeds() instead this is here for compatibility with
+     * previous versions.
+     **/
+    @Deprecated
+    public void setFeedIdSet(final EntityIdSet<Feed> feedIdSet) {
+        if (feedIdSet != null) {
+            feeds = new IncludeExcludeEntityIdSet<>();
+            feeds.setInclude(feedIdSet);
+        }
+        this.feedIdSet = null;
     }
 
     public EntityIdSet<OldPipelineEntity> getPipelineIdSet() {

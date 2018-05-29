@@ -38,12 +38,11 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.Security;
-import stroom.streamstore.FdService;
 import stroom.streamstore.StreamSource;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
-import stroom.streamstore.shared.Fd;
+import stroom.streamstore.shared.Feed;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.StreamProcessorService;
@@ -69,7 +68,6 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
     private final StreamProcessorService streamProcessorService;
     private final PipelineFactory pipelineFactory;
     private final MapStoreHolder mapStoreHolder;
-    private final FdService feedService;
     private final PipelineStore pipelineStore;
     private final PipelineHolder pipelineHolder;
     private final FeedHolder feedHolder;
@@ -89,7 +87,6 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                                  final StreamProcessorService streamProcessorService,
                                  final PipelineFactory pipelineFactory,
                                  final MapStoreHolder mapStoreHolder,
-                                 @Named("cachedFeedService") final FdService feedService,
                                  @Named("cachedPipelineStore") final PipelineStore pipelineStore,
                                  final PipelineHolder pipelineHolder,
                                  final FeedHolder feedHolder,
@@ -105,7 +102,6 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
         this.streamProcessorService = streamProcessorService;
         this.pipelineFactory = pipelineFactory;
         this.mapStoreHolder = mapStoreHolder;
-        this.feedService = feedService;
         this.pipelineStore = pipelineStore;
         this.pipelineHolder = pipelineHolder;
         this.feedHolder = feedHolder;
@@ -144,8 +140,8 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                     final Stream stream = streamSource.getStream();
                     try {
                         // Load the feed.
-                        final Fd fd = feedService.load(stream.getFeed());
-                        final String feedName = fd.getName();
+                        final Feed feed = stream.getFeed();
+                        final String feedName = feed.getName();
                         feedHolder.setFeedName(feedName);
 
                         // Setup the meta data holder.

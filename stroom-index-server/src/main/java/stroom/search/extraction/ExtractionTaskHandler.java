@@ -20,8 +20,6 @@ package stroom.search.extraction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.streamstore.FdService;
-import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -66,7 +64,6 @@ public class ExtractionTaskHandler {
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ExtractionTaskHandler.class);
 
     private final StreamStore streamStore;
-    private final FdService feedService;
     private final FeedHolder feedHolder;
     private final MetaDataHolder metaDataHolder;
     private final CurrentUserHolder currentUserHolder;
@@ -85,7 +82,6 @@ public class ExtractionTaskHandler {
 
     @Inject
     ExtractionTaskHandler(final StreamStore streamStore,
-                          final FdService feedService,
                           final FeedHolder feedHolder,
                           final MetaDataHolder metaDataHolder,
                           final CurrentUserHolder currentUserHolder,
@@ -100,7 +96,6 @@ public class ExtractionTaskHandler {
                           final Security security,
                           final SecurityContext securityContext) {
         this.streamStore = streamStore;
-        this.feedService = feedService;
         this.feedHolder = feedHolder;
         this.metaDataHolder = metaDataHolder;
         this.currentUserHolder = currentUserHolder;
@@ -258,8 +253,7 @@ public class ExtractionTaskHandler {
             try {
                 // Here we need to reload the feed as this will get the related
                 // objects Translation etc
-                final FeedDoc feed = feedService.load(source.getStream().getFeed());
-                feedHolder.setFeedName(feed.getName());
+                feedHolder.setFeedName(source.getStream().getFeed().getName());
 
                 // Setup the meta data holder.
                 metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));

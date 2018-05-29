@@ -18,23 +18,28 @@
 package stroom.streamstore;
 
 import stroom.entity.MockNamedEntityService;
+import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
-import stroom.entity.util.HqlBuilder;
-import stroom.streamstore.shared.FindStreamTypeCriteria;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.Feed;
 
 import javax.inject.Singleton;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * <p>
+ * Very simple mock that keeps everything in memory.
+ * </p>
+ * <p>
+ * <p>
+ * You can call clear at any point to clear everything down.
+ * </p>
+ */
 @Singleton
-class MockStreamTypeService extends MockNamedEntityService<StreamType, FindStreamTypeCriteria>
-        implements StreamTypeService {
-    MockStreamTypeService() {
-        for (final StreamType streamType : StreamType.initialValues()) {
-            save(streamType);
-        }
+class MockFeedService extends MockNamedEntityService<Feed, FindFeedCriteria>
+        implements FeedService {
+    public MockFeedService() {
     }
 
     /**
@@ -42,8 +47,8 @@ class MockStreamTypeService extends MockNamedEntityService<StreamType, FindStrea
      */
     @SuppressWarnings("unchecked")
     @Override
-    public StreamType get(final String name) {
-        final List<StreamType> list = map.values()
+    public Feed get(final String name) {
+        final List<Feed> list = map.values()
                 .stream()
                 .filter(st -> st.getName().equals(name))
                 .collect(Collectors.toList());
@@ -55,12 +60,12 @@ class MockStreamTypeService extends MockNamedEntityService<StreamType, FindStrea
     }
 
     @Override
-    public StreamType getOrCreate(final String name) {
-        StreamType streamType = get(name);
-        if (streamType == null) {
-            streamType = create(name);
+    public Feed getOrCreate(final String name) {
+        Feed feed = get(name);
+        if (feed == null) {
+            feed = create(name);
         }
-        return streamType;
+        return feed;
     }
 
     @Override
@@ -69,31 +74,33 @@ class MockStreamTypeService extends MockNamedEntityService<StreamType, FindStrea
     }
 
     @Override
-    public EntityIdSet<StreamType> convertNameSet(final CriteriaSet<String> streamTypes) {
-        if (streamTypes == null) {
+    public EntityIdSet<Feed> convertNameSet(final CriteriaSet<String> feeds) {
+        if (feeds == null) {
             return null;
         }
 
-        final EntityIdSet<StreamType> entityIdSet = new EntityIdSet<>();
-        entityIdSet.setMatchAll(streamTypes.getMatchAll());
-        entityIdSet.setMatchNull(streamTypes.getMatchNull());
-        streamTypes.forEach(streamTypeName -> entityIdSet.add(getId(streamTypeName)));
+        final EntityIdSet<Feed> entityIdSet = new EntityIdSet<>();
+        entityIdSet.setMatchAll(feeds.getMatchAll());
+        entityIdSet.setMatchNull(feeds.getMatchNull());
+        feeds.forEach(feedName -> entityIdSet.add(getId(feedName)));
 
         return entityIdSet;
     }
 
     @Override
-    public void clear() {
-        // Do nothing as we don't want to loose stream types set in constructor.
+    public Class<Feed> getEntityClass() {
+        return Feed.class;
     }
 
     @Override
-    public String getNamePattern() {
+    public Feed loadByName(final String name) {
+        BaseResultList<Feed> list = find(createCriteria());
+        for (final Feed feed : list) {
+            if (feed.getName().equals(name)) {
+                return feed;
+            }
+        }
+
         return null;
-    }
-
-    @Override
-    public Class<StreamType> getEntityClass() {
-        return StreamType.class;
     }
 }

@@ -18,10 +18,8 @@
 package stroom.test;
 
 import org.junit.Assert;
-import stroom.streamstore.FdService;
+import stroom.docref.DocRef;
 import stroom.feed.StroomHeaderArguments;
-import stroom.feed.shared.FeedDoc;
-import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.index.IndexStore;
 import stroom.index.IndexVolumeService;
 import stroom.index.shared.IndexDoc;
@@ -32,7 +30,6 @@ import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeUseStatus;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.streamstore.StreamStore;
@@ -47,7 +44,6 @@ import stroom.streamtask.StreamProcessorFilterService;
 import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.util.io.StreamUtil;
-import stroom.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
@@ -60,7 +56,6 @@ import java.util.Set;
  * Help class to create some basic scenarios for testing.
  */
 public class CommonTestScenarioCreator {
-    private final FdService feedService;
     private final StreamStore streamStore;
     private final StreamProcessorService streamProcessorService;
     private final StreamProcessorFilterService streamProcessorFilterService;
@@ -70,15 +65,13 @@ public class CommonTestScenarioCreator {
     private final NodeCache nodeCache;
 
     @Inject
-    CommonTestScenarioCreator(final FdService feedService,
-                              final StreamStore streamStore,
+    CommonTestScenarioCreator(final StreamStore streamStore,
                               final StreamProcessorService streamProcessorService,
                               final StreamProcessorFilterService streamProcessorFilterService,
                               final IndexStore indexStore,
                               final VolumeService volumeService,
                               final IndexVolumeService indexVolumeService,
                               final NodeCache nodeCache) {
-        this.feedService = feedService;
         this.streamStore = streamStore;
         this.streamProcessorService = streamProcessorService;
         this.streamProcessorFilterService = streamProcessorFilterService;
@@ -88,51 +81,11 @@ public class CommonTestScenarioCreator {
         this.nodeCache = nodeCache;
     }
 
-//    public DocRef getTestFolder() {
-////        Folder globalGroup = null;
-////        globalGroup = folderService.loadByName(null, "GlobalGroup");
-////        if (globalGroup == null) {
-////            globalGroup = folderService.create(null, "GlobalGroup");
-////        }
-////        return DocRef.create(globalGroup);
-//
-//        return null;
-//    }
-
-    public FeedDoc createSimpleFeed() {
-        return createSimpleFeed("Junit");
-    }
-
-    /**
-     * @return a basic feed
-     */
-    public FeedDoc createSimpleFeed(final String name) {
-        FeedDoc feed = feedService.create(FileSystemTestUtil.getUniqueTestString());
-        feed.setDescription(name);
-        feed.setStatus(FeedStatus.RECEIVE);
-        feed.setStreamType(StreamType.RAW_EVENTS);
-        feed = feedService.save(feed);
-
-        return feed;
-    }
-
-    public FeedDoc createSimpleFeed(final String name, final String uuid) {
-        FeedDoc feed = feedService.create(FileSystemTestUtil.getUniqueTestString());
-        feed.setUuid(uuid);
-        feed.setDescription(name);
-        feed.setStatus(FeedStatus.RECEIVE);
-        feed.setStreamType(StreamType.RAW_EVENTS);
-        feed = feedService.save(feed);
-
-        return feed;
-    }
-
-    public void createBasicTranslateStreamProcessor(final FeedDoc feed) {
-
+    public void createBasicTranslateStreamProcessor(final String feed) {
         final QueryData findStreamQueryData = new QueryData.Builder()
                 .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
                 .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                        .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed.getName())
+                        .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed)
                         .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
                         .build())
                 .build();
@@ -184,8 +137,8 @@ public class CommonTestScenarioCreator {
      * @param feed related
      * @return a basic raw file
      */
-    public Stream createSample2LineRawFile(final FeedDoc feed, final StreamType streamType) {
-        final Stream stream = Stream.createStream(streamType, feed, null);
+    public Stream createSample2LineRawFile(final String feed, final String streamType) {
+        final Stream stream = streamStore.createStream(streamType, feed, null);
         final StreamTarget target = streamStore.openStreamTarget(stream);
 
         final InputStream inputStream = new ByteArrayInputStream("line1\nline2".getBytes(StreamUtil.DEFAULT_CHARSET));
@@ -193,14 +146,14 @@ public class CommonTestScenarioCreator {
         final RawInputSegmentWriter writer = new RawInputSegmentWriter();
         writer.write(inputStream, new RASegmentOutputStream(target));
 
-        target.getAttributeMap().put(StroomHeaderArguments.FEED, feed.getName());
+        target.getAttributeMap().put(StroomHeaderArguments.FEED, feed);
 
         streamStore.closeStreamTarget(target);
         return target.getStream();
     }
 
-    public Stream createSampleBlankProcessedFile(final FeedDoc feed, final Stream sourceStream) {
-        final Stream stream = Stream.createProcessedStream(sourceStream, feed, StreamType.EVENTS, null, null);
+    public Stream createSampleBlankProcessedFile(final String feed, final Stream sourceStream) {
+        final Stream stream = streamStore.createProcessedStream(sourceStream, feed, StreamType.EVENTS.getName(), null, null);
 
         final StreamTarget target = streamStore.openStreamTarget(stream);
 

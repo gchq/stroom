@@ -21,8 +21,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
-import stroom.streamstore.FdService;
-import stroom.feed.shared.FeedDoc;
 import stroom.policy.DataRetentionExecutor;
 import stroom.policy.DataRetentionService;
 import stroom.query.api.v2.ExpressionOperator;
@@ -37,8 +35,8 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.CommonTestScenarioCreator;
 import stroom.util.date.DateUtil;
+import stroom.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
 import java.util.Collections;
@@ -47,14 +45,11 @@ import java.util.concurrent.TimeUnit;
 public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestDataRetentionExecutor.class);
     private static final int RETENTION_PERIOD_DAYS = 1;
-    @Inject
-    private CommonTestScenarioCreator commonTestScenarioCreator;
+
     @Inject
     private StreamStore streamStore;
     @Inject
     private FileSystemStreamMaintenanceService streamMaintenanceService;
-    @Inject
-    private FdService feedService;
     @Inject
     private DataRetentionExecutor dataRetentionExecutor;
     @Inject
@@ -62,7 +57,7 @@ public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
 
     @Test
     public void testMultipleRuns() {
-        FeedDoc feed = commonTestScenarioCreator.createSimpleFeed();
+        final String feedName = FileSystemTestUtil.getUniqueTestString();
 
         final long now = System.currentTimeMillis();
         final long timeOutsideRetentionPeriod = now - TimeUnit.DAYS.toMillis(RETENTION_PERIOD_DAYS)
@@ -73,7 +68,7 @@ public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
 
         // save two streams, one inside retention period, one outside
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(true, Op.AND);
-        builder.addTerm("Feed", Condition.EQUALS, feed.getName());
+        builder.addTerm("Feed", Condition.EQUALS, feedName);
         final DataRetentionRule rule = createRule(1, builder.build(), RETENTION_PERIOD_DAYS, stroom.streamstore.shared.TimeUnit.DAYS);
         final DataRetentionPolicy currentPolicy = dataRetentionService.load();
         final DataRetentionPolicy dataRetentionPolicy = new DataRetentionPolicy(Collections.singletonList(rule));
@@ -82,9 +77,9 @@ public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
         }
         dataRetentionService.save(dataRetentionPolicy);
 
-        Stream streamInsideRetention = Stream.createStreamForTesting(StreamType.RAW_EVENTS, feed, null, now);
+        Stream streamInsideRetention = streamStore.createStream(StreamType.RAW_EVENTS.getName(), feedName, null, now);
         streamInsideRetention.setStatusMs(now);
-        Stream streamOutsideRetention = Stream.createStreamForTesting(StreamType.RAW_EVENTS, feed, null,
+        Stream streamOutsideRetention = streamStore.createStream(StreamType.RAW_EVENTS.getName(), feedName, null,
                 timeOutsideRetentionPeriod);
         streamOutsideRetention.setStatusMs(now);
 

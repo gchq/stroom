@@ -29,11 +29,13 @@ import stroom.entity.shared.SummaryDataRow;
 import stroom.entity.util.FieldMap;
 import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
-import stroom.feed.shared.FeedDoc;
 import stroom.node.shared.Node;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
+import stroom.streamstore.FeedService;
+import stroom.streamstore.StreamTypeService;
+import stroom.streamstore.shared.Feed;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
@@ -53,12 +55,18 @@ import java.util.Set;
 public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, FindStreamTaskCriteria>
         implements StreamTaskService {
     private static final String TABLE_PREFIX_STREAM_TASK = "ST.";
+    private final FeedService feedService;
+    private final StreamTypeService streamTypeService;
     private final Security security;
 
     @Inject
     StreamTaskServiceImpl(final StroomEntityManager entityManager,
+                          final FeedService feedService,
+                          final StreamTypeService streamTypeService,
                           final Security security) {
         super(entityManager, security);
+        this.feedService = feedService;
+        this.streamTypeService = streamTypeService;
         this.security = security;
     }
 
@@ -78,7 +86,7 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
             sql.append(", SP.");
             sql.append(StreamProcessor.PIPELINE_UUID);
             sql.append(" PIPE_UUID, F.");
-            sql.append(FeedDoc.ID);
+            sql.append(Feed.ID);
             sql.append(" FEED_ID, F.");
             sql.append(SQLNameConstants.NAME);
             sql.append(" F_NAME, SPF.");
@@ -100,11 +108,11 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
             sql.append(" = ST.");
             sql.append(Stream.FOREIGN_KEY);
             sql.append(") JOIN ");
-            sql.append(FeedDoc.TABLE_NAME);
+            sql.append(Feed.TABLE_NAME);
             sql.append(" F ON (F.");
-            sql.append(FeedDoc.ID);
+            sql.append(Feed.ID);
             sql.append(" = S.");
-            sql.append(FeedDoc.FOREIGN_KEY);
+            sql.append(Feed.FOREIGN_KEY);
             sql.append(") JOIN ");
             sql.append(StreamProcessorFilter.TABLE_NAME);
             sql.append(" SPF ON (SPF.");
@@ -122,7 +130,7 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
 
             sql.appendPrimitiveValueSetQuery("S." + Stream.STATUS, criteria.getStatusSet());
             sql.appendDocRefSetQuery("SP." + StreamProcessor.PIPELINE_UUID, criteria.getPipelineSet());
-            sql.appendEntityIdSetQuery("F." + BaseEntity.ID, criteria.getFeedIdSet());
+            sql.appendEntityIdSetQuery("F." + BaseEntity.ID, feedService.convertNameSet(criteria.getFeedNameSet()));
 
             sql.append(" GROUP BY PIPE_UUID, FEED_ID, PRIORITY_1, STAT_ID1");
             sql.append(") D");
@@ -147,7 +155,7 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
         CriteriaLoggingUtil.appendEntityIdSet(items, "streamProcessorFilterIdSet", criteria.getStreamProcessorFilterIdSet());
         CriteriaLoggingUtil.appendCriteriaSet(items, "statusSet", criteria.getStatusSet());
         CriteriaLoggingUtil.appendCriteriaSet(items, "pipelineSet", criteria.getPipelineSet());
-        CriteriaLoggingUtil.appendEntityIdSet(items, "feedIdSet", criteria.getFeedIdSet());
+        CriteriaLoggingUtil.appendCriteriaSet(items, "feedNameSet", criteria.getFeedNameSet());
         CriteriaLoggingUtil.appendDateTerm(items, "createMs", criteria.getCreateMs());
         CriteriaLoggingUtil.appendRangeTerm(items, "createPeriod", criteria.getCreatePeriod());
         CriteriaLoggingUtil.appendRangeTerm(items, "effectivePeriod", criteria.getEffectivePeriod());
@@ -156,7 +164,7 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
 
     @Override
     protected QueryAppender<StreamTask, FindStreamTaskCriteria> createQueryAppender(StroomEntityManager entityManager) {
-        return new StreamTaskQueryAppender(entityManager);
+        return new StreamTaskQueryAppender(entityManager, feedService, streamTypeService);
     }
 
     @Override
@@ -179,8 +187,15 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
     }
 
     private static class StreamTaskQueryAppender extends QueryAppender<StreamTask, FindStreamTaskCriteria> {
-        StreamTaskQueryAppender(StroomEntityManager entityManager) {
+        private final FeedService feedService;
+        private final StreamTypeService streamTypeService;
+
+        StreamTaskQueryAppender(final StroomEntityManager entityManager,
+                                final FeedService feedService,
+                                final StreamTypeService streamTypeService) {
             super(entityManager);
+            this.feedService = feedService;
+            this.streamTypeService = streamTypeService;
         }
 
         @Override
@@ -201,7 +216,7 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
                 if (fetchSet.contains(Stream.ENTITY_TYPE)) {
                     sql.append(" JOIN FETCH " + alias + ".stream AS s");
                 }
-                if (fetchSet.contains(FeedDoc.DOCUMENT_TYPE)) {
+                if (fetchSet.contains(Feed.ENTITY_TYPE)) {
                     sql.append(" JOIN FETCH s.feed AS f");
                 }
                 if (fetchSet.contains(StreamType.ENTITY_TYPE)) {
@@ -211,7 +226,8 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
         }
 
         @Override
-        protected void appendBasicCriteria(final HqlBuilder sql, final String alias,
+        protected void appendBasicCriteria(final HqlBuilder sql,
+                                           final String alias,
                                            final FindStreamTaskCriteria criteria) {
             super.appendBasicCriteria(sql, alias, criteria);
 
@@ -232,7 +248,7 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
 //            if (criteria.getStatusSet() != null || criteria.getFeedIdSet() != null || criteria.getPipelineSet() != null) {
             sql.appendEntityIdSetQuery(alias + ".stream", criteria.getStreamIdSet());
 
-            sql.appendEntityIdSetQuery(alias + ".stream.streamType", criteria.getStreamTypeIdSet());
+            sql.appendEntityIdSetQuery(alias + ".stream.streamType", streamTypeService.convertNameSet(criteria.getStreamTypeNameSet()));
 
             sql.appendPrimitiveValueSetQuery(alias + ".stream.pstatus", criteria.getStatusSet());
 
@@ -242,7 +258,7 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
 //                sql.appendEntityIdSetQuery(alias + ".streamProcessorFilter.streamProcessor",
 //                        criteria.getStreamProcessorIdSet());
 
-            sql.appendEntityIdSetQuery(alias + ".stream.feed", criteria.getFeedIdSet());
+            sql.appendEntityIdSetQuery(alias + ".stream.feed", feedService.convertNameSet(criteria.getFeedNameSet()));
 
             sql.appendRangeQuery(alias + ".stream.createMs", criteria.getCreatePeriod());
             sql.appendRangeQuery(alias + ".stream.effectiveMs", criteria.getEffectivePeriod());

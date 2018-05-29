@@ -17,7 +17,7 @@
 
 package stroom.pipeline.writer;
 
-import stroom.streamstore.FdService;
+import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
 import stroom.node.NodeCache;
 import stroom.pipeline.destination.RollingDestination;
@@ -33,12 +33,9 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.StreamHolder;
-import stroom.docref.DocRef;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.StreamTarget;
-import stroom.streamstore.StreamTypeService;
 import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamType;
 import stroom.task.TaskContext;
 
 import javax.inject.Inject;
@@ -54,12 +51,10 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
 
     private final StreamStore streamStore;
     private final StreamHolder streamHolder;
-    private final FdService feedService;
-    private final StreamTypeService streamTypeService;
     private final NodeCache nodeCache;
 
     private DocRef feedRef;
-    private FeedDoc feed;
+    private String feed;
     private String streamType;
     private boolean segmentOutput = true;
 
@@ -70,14 +65,10 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
                           final TaskContext taskContext,
                           final StreamStore streamStore,
                           final StreamHolder streamHolder,
-                          final FdService feedService,
-                          final StreamTypeService streamTypeService,
                           final NodeCache nodeCache) {
         super(destinations, taskContext);
         this.streamStore = streamStore;
         this.streamHolder = streamHolder;
-        this.feedService = feedService;
-        this.streamTypeService = streamTypeService;
         this.nodeCache = nodeCache;
     }
 
@@ -86,14 +77,10 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
         if (key.getStreamType() == null) {
             throw new ProcessException("Stream type not specified");
         }
-        final StreamType st = streamTypeService.loadByName(key.getStreamType());
-        if (st == null) {
-            throw new ProcessException("Stream type not specified");
-        }
 
         // Don't set the processor or the task or else this rolling stream will be deleted automatically because the
         // system will think it is superseded output.
-        final Stream stream = Stream.createProcessedStream(streamHolder.getStream(), key.getFeed(), st,
+        final Stream stream = streamStore.createProcessedStream(streamHolder.getStream(), key.getFeed(), key.getStreamType(),
                 null, null);
 
         final String nodeName = nodeCache.getDefaultNode().getName();
@@ -120,7 +107,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     protected void validateSpecificSettings() {
         if (feed == null) {
             if (feedRef != null) {
-                feed = feedService.loadByUuid(feedRef.getUuid());
+                feed = feedRef.getName();
             } else {
                 final Stream parentStream = streamHolder.getStream();
                 if (parentStream == null) {
@@ -128,7 +115,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
                 }
 
                 // Use current feed if none other has been specified.
-                feed = feedService.load(parentStream.getFeed());
+                feed = parentStream.getFeed().getName();
             }
         }
 

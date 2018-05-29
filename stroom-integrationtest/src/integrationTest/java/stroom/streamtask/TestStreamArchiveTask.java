@@ -19,7 +19,8 @@ package stroom.streamtask;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.streamstore.FdService;
+import stroom.docref.DocRef;
+import stroom.feed.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.jobsystem.MockTask;
 import stroom.node.NodeCache;
@@ -42,6 +43,7 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.config.StroomProperties;
+import stroom.util.test.FileSystemTestUtil;
 import stroom.volume.VolumeServiceImpl;
 
 import javax.inject.Inject;
@@ -66,15 +68,9 @@ public class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
     @Inject
     private StreamMaintenanceService streamMaintenanceService;
     @Inject
-    private FdService feedService;
+    private FeedStore feedStore;
     @Inject
     private FileSystemCleanExecutor fileSystemCleanTaskExecutor;
-    @Inject
-    private TaskManager taskManager;
-    @Inject
-    private CommonTestScenarioCreator commonTestScenarioCreator;
-    @Inject
-    private CommonTestControl commonTestControl;
     @Inject
     private NodeCache nodeCache;
     @Inject
@@ -113,13 +109,15 @@ public class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
         final ZonedDateTime newDate = ZonedDateTime.now(ZoneOffset.UTC).minusDays(FIFTY);
 
         // Write a file 2 files ... on we leave locked and the other not locked
-        FeedDoc feed = commonTestScenarioCreator.createSimpleFeed();
-        feed.setRetentionDayAge(FIFTY_FIVE);
-        feed = feedService.save(feed);
+        final String feedName = FileSystemTestUtil.getUniqueTestString();
+        final DocRef feedRef = feedStore.createDocument(feedName);
+        final FeedDoc feedDoc = feedStore.readDocument(feedRef);
+        feedDoc.setRetentionDayAge(FIFTY_FIVE);
+        feedStore.writeDocument(feedDoc);
 
-        final Stream oldFile = Stream.createStreamForTesting(StreamType.RAW_EVENTS, feed, null,
+        final Stream oldFile = streamStore.createStream(StreamType.RAW_EVENTS.getName(), feedName, null,
                 oldDate.toInstant().toEpochMilli());
-        final Stream newFile = Stream.createStreamForTesting(StreamType.RAW_EVENTS, feed, null,
+        final Stream newFile = streamStore.createStream(StreamType.RAW_EVENTS.getName(), feedName, null,
                 newDate.toInstant().toEpochMilli());
 
         final StreamTarget oldFileTarget = streamStore.openStreamTarget(oldFile);

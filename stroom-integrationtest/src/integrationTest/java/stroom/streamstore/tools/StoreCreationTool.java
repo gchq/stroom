@@ -17,9 +17,9 @@
 package stroom.streamstore.tools;
 
 import org.junit.Assert;
+import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.DocRefUtil;
-import stroom.streamstore.FdService;
+import stroom.feed.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.index.IndexStore;
@@ -39,7 +39,6 @@ import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.streamstore.StreamSource;
@@ -95,7 +94,7 @@ public final class StoreCreationTool {
     private static long effectiveMsOffset = 0;
 
     private final StreamStore streamStore;
-    private final FdService feedService;
+    private final FeedStore feedStore;
     private final TextConverterStore textConverterStore;
     private final XsltStore xsltStore;
     private final PipelineStore pipelineStore;
@@ -107,7 +106,7 @@ public final class StoreCreationTool {
 
     @Inject
     public StoreCreationTool(final StreamStore streamStore,
-                             final FdService feedService,
+                             final FeedStore feedStore,
                              final TextConverterStore textConverterStore,
                              final XsltStore xsltStore,
                              final PipelineStore pipelineStore,
@@ -117,7 +116,7 @@ public final class StoreCreationTool {
                              final StreamProcessorFilterService streamProcessorFilterService,
                              final IndexStore indexStore) {
         this.streamStore = streamStore;
-        this.feedService = feedService;
+        this.feedStore = feedStore;
         this.textConverterStore = textConverterStore;
         this.xsltStore = xsltStore;
         this.pipelineStore = pipelineStore;
@@ -138,14 +137,14 @@ public final class StoreCreationTool {
      * @param dataLocation          The reference data location.
      * @return A reference feed definition.
      */
-    public FeedDoc addReferenceData(final String feedName,
-                                    final TextConverterType textConverterType,
-                                    final Path textConverterLocation,
-                                    final Path xsltLocation,
-                                    final Path dataLocation) {
+    public DocRef addReferenceData(final String feedName,
+                                   final TextConverterType textConverterType,
+                                   final Path textConverterLocation,
+                                   final Path xsltLocation,
+                                   final Path dataLocation) {
         commonTestControl.createRequiredXMLSchemas();
 
-        final FeedDoc referenceFeed = getRefFeed(feedName, textConverterType, textConverterLocation, xsltLocation);
+        final DocRef referenceFeed = getRefFeed(feedName, textConverterType, textConverterLocation, xsltLocation);
 
         // We need to ensure the reference data is older then the earliest event
         // we are going to see.
@@ -157,7 +156,7 @@ public final class StoreCreationTool {
         effectiveMs += effectiveMsOffset++;
 
         // Add the associated data to the stream store.
-        final Stream stream = Stream.createStreamForTesting(StreamType.RAW_REFERENCE, referenceFeed, effectiveMs,
+        final Stream stream = streamStore.createStream(StreamType.RAW_REFERENCE.getName(), referenceFeed.getName(), effectiveMs,
                 effectiveMs);
 
         final String data = StreamUtil.fileToString(dataLocation);
@@ -179,20 +178,24 @@ public final class StoreCreationTool {
         return referenceFeed;
     }
 
-    private FeedDoc getRefFeed(final String feedName, final TextConverterType textConverterType,
-                               final Path textConverterLocation, final Path xsltLocation) {
-        FeedDoc referenceFeed = feedService.loadByName(feedName);
+    private DocRef getRefFeed(final String feedName, final TextConverterType textConverterType,
+                              final Path textConverterLocation, final Path xsltLocation) {
+        DocRef docRef;
+        final List<DocRef> docRefs = feedStore.findByName(feedName);
+        if (docRefs.size() > 0) {
+            docRef = docRefs.get(0);
 
-        if (referenceFeed == null) {
+        } else {
             // Setup the feeds in mock feed configuration manager.
-            referenceFeed = feedService.create(feedName);
-            referenceFeed.setReference(true);
-            referenceFeed.setDescription("Description " + feedName);
-            referenceFeed.setStatus(FeedStatus.RECEIVE);
-            referenceFeed = feedService.save(referenceFeed);
+            docRef = feedStore.createDocument(feedName);
+            final FeedDoc feedDoc = feedStore.readDocument(docRef);
+            feedDoc.setReference(true);
+            feedDoc.setDescription("Description " + feedName);
+            feedDoc.setStatus(FeedStatus.RECEIVE);
+            feedStore.writeDocument(feedDoc);
 
             // Setup the pipeline.
-            final DocRef pipelineRef = getReferencePipeline(feedName, referenceFeed, textConverterType,
+            final DocRef pipelineRef = getReferencePipeline(feedName, textConverterType,
                     textConverterLocation, xsltLocation);
 
             // Setup the stream processor.
@@ -210,18 +213,20 @@ public final class StoreCreationTool {
             final QueryData findStreamQueryData = new QueryData.Builder()
                     .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
                     .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                            .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, referenceFeed.getName())
+                            .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
                             .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_REFERENCE.getName())
                             .build())
                     .build();
             streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 2, findStreamQueryData);
         }
 
-        return referenceFeed;
+        return docRef;
     }
 
-    private DocRef getReferencePipeline(final String feedName, final FeedDoc referenceFeed,
-                                        final TextConverterType textConverterType, final Path textConverterLocation, final Path xsltLocation) {
+    private DocRef getReferencePipeline(final String feedName,
+                                        final TextConverterType textConverterType,
+                                        final Path textConverterLocation,
+                                        final Path xsltLocation) {
         // Setup the pipeline.
         final String data = StreamUtil.fileToString(referenceDataPipeline);
         final DocRef pipelineRef = getPipeline(feedName, data);
@@ -236,7 +241,7 @@ public final class StoreCreationTool {
         // Setup the xslt.
         final DocRef xslt = getXSLT(feedName, xsltLocation);
         pipelineDoc.getPipelineData().addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xslt));
-        pipelineDoc.getPipelineData().addProperty(PipelineDataUtil.createProperty("storeAppender", "feed", referenceFeed));
+        pipelineDoc.getPipelineData().addProperty(PipelineDataUtil.createProperty("storeAppender", "feed", new DocRef(null, null, feedName)));
         pipelineDoc.getPipelineData()
                 .addProperty(PipelineDataUtil.createProperty("storeAppender", "streamType", StreamType.REFERENCE));
         pipelineStore.writeDocument(pipelineDoc);
@@ -255,13 +260,13 @@ public final class StoreCreationTool {
      * @return An event feed definition.
      * @throws IOException Thrown if files not found.
      */
-    public FeedDoc addEventData(final String feedName,
-                                final TextConverterType translationTextConverterType,
-                                final Path translationTextConverterLocation,
-                                final Path translationXsltLocation,
-                                final Path dataLocation,
-                                final Set<FeedDoc> referenceFeeds) throws IOException {
-        return addEventData(feedName, translationTextConverterType, translationTextConverterLocation,
+    public void addEventData(final String feedName,
+                             final TextConverterType translationTextConverterType,
+                             final Path translationTextConverterLocation,
+                             final Path translationXsltLocation,
+                             final Path dataLocation,
+                             final Set<DocRef> referenceFeeds) throws IOException {
+        addEventData(feedName, translationTextConverterType, translationTextConverterLocation,
                 translationXsltLocation, null, null, null, null, dataLocation, null, referenceFeeds);
     }
 
@@ -277,25 +282,25 @@ public final class StoreCreationTool {
      * @return An event feed definition.
      * @throws IOException Thrown if files not found.
      */
-    private FeedDoc addEventData(final String feedName,
-                                 final TextConverterType translationTextConverterType,
-                                 final Path translationTextConverterLocation,
-                                 final Path translationXsltLocation,
-                                 final TextConverterType contextTextConverterType,
-                                 final Path contextTextConverterLocation,
-                                 final Path contextXsltLocation,
-                                 final Path flatteningXsltLocation,
-                                 final Path dataLocation,
-                                 final Path contextLocation,
-                                 final Set<FeedDoc> referenceFeeds) throws IOException {
+    private void addEventData(final String feedName,
+                              final TextConverterType translationTextConverterType,
+                              final Path translationTextConverterLocation,
+                              final Path translationXsltLocation,
+                              final TextConverterType contextTextConverterType,
+                              final Path contextTextConverterLocation,
+                              final Path contextXsltLocation,
+                              final Path flatteningXsltLocation,
+                              final Path dataLocation,
+                              final Path contextLocation,
+                              final Set<DocRef> referenceFeeds) throws IOException {
         commonTestControl.createRequiredXMLSchemas();
 
-        final FeedDoc eventFeed = getEventFeed(feedName, translationTextConverterType, translationTextConverterLocation,
+        getEventFeed(feedName, translationTextConverterType, translationTextConverterLocation,
                 translationXsltLocation, contextTextConverterType, contextTextConverterLocation, contextXsltLocation,
                 flatteningXsltLocation, referenceFeeds);
 
         // Add the associated data to the stream store.
-        final Stream stream = Stream.createStreamForTesting(StreamType.RAW_EVENTS, eventFeed, null,
+        final Stream stream = streamStore.createStream(StreamType.RAW_EVENTS.getName(), feedName, null,
                 System.currentTimeMillis());
 
         final StreamTarget dataTarget = streamStore.openStreamTarget(stream);
@@ -325,43 +330,44 @@ public final class StoreCreationTool {
         final StreamSource checkSource = streamStore.openStreamSource(stream.getId());
         Assert.assertEquals(data, StreamUtil.streamToString(checkSource.getInputStream()));
         streamStore.closeStreamSource(checkSource);
-
-        return eventFeed;
     }
 
-    private FeedDoc getEventFeed(final String feedName, final TextConverterType translationTextConverterType,
-                                 final Path translationTextConverterLocation, final Path translationXsltLocation,
-                                 final TextConverterType contextTextConverterType, final Path contextTextConverterLocation,
-                                 final Path contextXsltLocation, final Path flatteningXsltLocation, final Set<FeedDoc> referenceFeeds) {
+    private DocRef getEventFeed(final String feedName, final TextConverterType translationTextConverterType,
+                                final Path translationTextConverterLocation, final Path translationXsltLocation,
+                                final TextConverterType contextTextConverterType, final Path contextTextConverterLocation,
+                                final Path contextXsltLocation, final Path flatteningXsltLocation, final Set<DocRef> referenceFeeds) {
         final List<PipelineReference> pipelineReferences = new ArrayList<>();
 
-        FeedDoc eventFeed = feedService.loadByName(feedName);
-
-        if (eventFeed == null) {
+        DocRef docRef;
+        final List<DocRef> docRefs = feedStore.findByName(feedName);
+        if (docRefs.size() > 0) {
+            docRef = docRefs.get(0);
+        } else {
             // Setup the feeds in mock feed configuration manager.
-            eventFeed = feedService.create(feedName);
-            eventFeed.setStatus(FeedStatus.RECEIVE);
-            eventFeed.setDescription("Description " + feedName);
-            eventFeed = feedService.save(eventFeed);
+            docRef = feedStore.createDocument(feedName);
+            FeedDoc feedDoc = feedStore.readDocument(docRef);
+            feedDoc.setDescription("Description " + feedName);
+            feedDoc.setStatus(FeedStatus.RECEIVE);
+            feedStore.writeDocument(feedDoc);
         }
 
         // Add context data loader pipeline.
-        final DocRef contextPipeline = getContextPipeline(eventFeed, contextTextConverterType,
+        final DocRef contextPipeline = getContextPipeline(feedName, contextTextConverterType,
                 contextTextConverterLocation, contextXsltLocation);
         pipelineReferences.add(PipelineDataUtil.createReference("translationFilter", "pipelineReference",
-                contextPipeline, DocRefUtil.create(eventFeed), StreamType.CONTEXT.getName()));
+                contextPipeline, docRef, StreamType.CONTEXT.getName()));
 
         // Add reference data loader pipelines.
         if (referenceFeeds != null && referenceFeeds.size() > 0) {
             final DocRef referenceLoaderPipeline = getReferenceLoaderPipeline();
-            for (final FeedDoc refFeed : referenceFeeds) {
+            for (final DocRef refFeed : referenceFeeds) {
                 pipelineReferences.add(PipelineDataUtil.createReference("translationFilter", "pipelineReference",
-                        referenceLoaderPipeline, DocRefUtil.create(refFeed), StreamType.REFERENCE.getName()));
+                        referenceLoaderPipeline, refFeed, StreamType.REFERENCE.getName()));
             }
         }
 
         // Create the event pipeline.
-        final DocRef pipelineRef = getEventPipeline(eventFeed, translationTextConverterType,
+        final DocRef pipelineRef = getEventPipeline(feedName, translationTextConverterType,
                 translationTextConverterLocation, translationXsltLocation, flatteningXsltLocation, pipelineReferences);
 
         StreamProcessor streamProcessor = streamProcessorService.find(new FindStreamProcessorCriteria(pipelineRef))
@@ -377,7 +383,7 @@ public final class StoreCreationTool {
             final QueryData findStreamQueryData = new QueryData.Builder()
                     .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
                     .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                            .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, eventFeed.getName())
+                            .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, docRef.getName())
                             .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
                             .build())
                     .build();
@@ -385,18 +391,18 @@ public final class StoreCreationTool {
             streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, findStreamQueryData);
         }
 
-        return eventFeed;
+        return docRef;
     }
 
-    private DocRef getContextPipeline(final FeedDoc feed, final TextConverterType textConverterType,
+    private DocRef getContextPipeline(final String feedName, final TextConverterType textConverterType,
                                       final Path contextTextConverterLocation, final Path contextXsltLocation) {
-        final DocRef contextTextConverterRef = getTextConverter(feed.getName() + "_CONTEXT", textConverterType,
+        final DocRef contextTextConverterRef = getTextConverter(feedName + "_CONTEXT", textConverterType,
                 contextTextConverterLocation);
-        final DocRef contextXSLT = getXSLT(feed.getName() + "_CONTEXT", contextXsltLocation);
+        final DocRef contextXSLT = getXSLT(feedName + "_CONTEXT", contextXsltLocation);
 
         // Setup the pipeline.
         final String data = StreamUtil.fileToString(contextDataPipeline);
-        final DocRef pipelineRef = getPipeline(feed.getName() + "_CONTEXT", data);
+        final DocRef pipelineRef = getPipeline(feedName + "_CONTEXT", data);
         final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
 
         if (contextTextConverterRef != null) {
@@ -417,19 +423,19 @@ public final class StoreCreationTool {
         return getPipeline("ReferenceLoader", StreamUtil.fileToString(referenceLoaderPipeline));
     }
 
-    private DocRef getEventPipeline(final FeedDoc feed, final TextConverterType textConverterType,
+    private DocRef getEventPipeline(final String feedName, final TextConverterType textConverterType,
                                     final Path translationTextConverterLocation, final Path translationXsltLocation,
                                     final Path flatteningXsltLocation, final List<PipelineReference> pipelineReferences) {
-        final DocRef pipelineRef = getPipeline(feed.getName(), StreamUtil.fileToString(eventDataPipeline));
+        final DocRef pipelineRef = getPipeline(feedName, StreamUtil.fileToString(eventDataPipeline));
         final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
 
         // Setup the text converter.
-        final DocRef translationTextConverterRef = getTextConverter(feed.getName(), textConverterType,
+        final DocRef translationTextConverterRef = getTextConverter(feedName, textConverterType,
                 translationTextConverterLocation);
 
         // Setup the xslt.
-        final DocRef translationXSLT = getXSLT(feed.getName(), translationXsltLocation);
-        final DocRef flatteningXSLT = getXSLT(feed.getName() + "_FLATTENING", flatteningXsltLocation);
+        final DocRef translationXSLT = getXSLT(feedName, translationXsltLocation);
+        final DocRef flatteningXSLT = getXSLT(feedName + "_FLATTENING", flatteningXsltLocation);
 
         // Read the pipeline data.
         final PipelineData pipelineData = pipelineDoc.getPipelineData();
@@ -465,7 +471,7 @@ public final class StoreCreationTool {
         // "StoreAppender", false, true);
         // final PropertyType feedPropertyType = new PropertyType(elementType,
         // "feed", "Feed", false);
-        pipelineData.addProperty(PipelineDataUtil.createProperty("storeAppender", "feed", feed));
+        pipelineData.addProperty(PipelineDataUtil.createProperty("storeAppender", "feed", new DocRef(null, null, feedName)));
 
         // final PropertyType streamTypePropertyType = new PropertyType(
         // elementType, "streamType", "StreamType", false);
@@ -520,7 +526,8 @@ public final class StoreCreationTool {
         return pipelineRef;
     }
 
-    private DocRef getTextConverter(final String name, final TextConverterType textConverterType,
+    private DocRef getTextConverter(final String name,
+                                    final TextConverterType textConverterType,
                                     final Path textConverterLocation) {
         // Try to find an existing one first.
         final List<DocRef> refs = textConverterStore.list().stream().filter(docRef -> name.equals(docRef.getName())).collect(Collectors.toList());

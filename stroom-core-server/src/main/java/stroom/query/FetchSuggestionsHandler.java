@@ -22,7 +22,7 @@ import stroom.entity.shared.FindNamedEntityCriteria;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.StringCriteria;
 import stroom.entity.shared.StringCriteria.MatchStyle;
-import stroom.streamstore.FdService;
+import stroom.streamstore.FeedService;
 import stroom.node.NodeService;
 import stroom.pipeline.PipelineStore;
 import stroom.docref.DocRef;
@@ -45,14 +45,14 @@ import java.util.stream.Collectors;
 
 @TaskHandlerBean(task = FetchSuggestionsAction.class)
 class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction, SharedList<SharedString>> {
-    private final FdService feedService;
+    private final FeedService feedService;
     private final PipelineStore pipelineStore;
     private final StreamTypeService streamTypeService;
     private final NodeService nodeService;
     private final Security security;
 
     @Inject
-    FetchSuggestionsHandler(@Named("cachedFeedService") final FdService feedService,
+    FetchSuggestionsHandler(@Named("cachedFeedService") final FeedService feedService,
                             @Named("cachedPipelineStore") final PipelineStore pipelineStore,
                             @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
                             @Named("cachedNodeService") final NodeService nodeService,

@@ -36,6 +36,7 @@ import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.DataRetentionRule;
 import stroom.security.Security;
 import stroom.streamstore.fs.FileSystemStreamTypeUtil;
+import stroom.streamstore.shared.Feed;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
@@ -68,7 +69,7 @@ import java.util.function.Supplier;
 public class StreamAttributeMapServiceImpl implements StreamAttributeMapService {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeMapServiceImpl.class);
 
-    private final FdService feedService;
+    private final FeedService feedService;
     private final PipelineStore pipelineStore;
     private final StreamTypeService streamTypeService;
     private final StreamProcessorService streamProcessorService;
@@ -81,7 +82,7 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
     private final Security security;
 
     @Inject
-    StreamAttributeMapServiceImpl(@Named("cachedFeedService") final FdService feedService,
+    StreamAttributeMapServiceImpl(@Named("cachedFeedService") final FeedService feedService,
                                   @Named("cachedPipelineStore") final PipelineStore pipelineStore,
                                   @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
                                   @Named("cachedStreamProcessorService") final StreamProcessorService streamProcessorService,
@@ -239,8 +240,8 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
 
     private void resolveRelations(final FindStreamAttributeMapCriteria criteria, final Stream stream, final Map<EntityRef, Optional<Object>> entityCache, final Map<DocRef, Optional<Object>> uuidCache) throws PermissionException {
         if (stream.getFeed() != null && criteria.getFetchSet().contains(FeedDoc.DOCUMENT_TYPE)) {
-            final EntityRef ref = new EntityRef(FeedDoc.DOCUMENT_TYPE, stream.getFeed().getId());
-            entityCache.computeIfAbsent(ref, key -> safeOptional(() -> feedService.loadById(key.id))).ifPresent(obj -> stream.setFeed((FeedDoc) obj));
+            final EntityRef ref = new EntityRef(Feed.ENTITY_TYPE, stream.getFeed().getId());
+            entityCache.computeIfAbsent(ref, key -> safeOptional(() -> feedService.loadById(key.id))).ifPresent(obj -> stream.setFeed((Feed) obj));
         }
 
         if (stream.getStreamType() != null && criteria.getFetchSet().contains(StreamType.ENTITY_TYPE)) {

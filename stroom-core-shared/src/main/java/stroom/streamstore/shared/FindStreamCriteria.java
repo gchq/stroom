@@ -103,7 +103,7 @@ public class FindStreamCriteria extends BaseCriteria implements HasIsConstrained
     @Override
     public void copyFrom(final FindStreamCriteria other) {
         super.copyFrom(other);
-        this.expression = other.expression;
+        this.expression = ExpressionUtil.copyOperator(other.expression);
         this.obtainSelectedIdSet().copyFrom(other.obtainSelectedIdSet());
         this.obtainStreamIdRange().copyFrom(other.obtainStreamIdRange());
     }

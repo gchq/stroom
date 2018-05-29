@@ -21,16 +21,14 @@ import org.hibernate.LazyInitializationException;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.IdRange;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.Period;
-import stroom.streamstore.FdService;
-import stroom.feed.shared.FeedDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.EffectiveMetaDataCriteria;
+import stroom.streamstore.FeedService;
 import stroom.streamstore.FindStreamAttributeValueCriteria;
 import stroom.streamstore.FindStreamVolumeCriteria;
 import stroom.streamstore.StreamAttributeMapService;
@@ -77,6 +75,10 @@ import java.util.Set;
 public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     private static final int N1 = 1;
     private static final int N13 = 13;
+
+    private static final String FEED1 = "FEED1";
+    private static final String FEED2 = "FEED2";
+
     @Inject
     private StreamStore streamStore;
     @Inject
@@ -86,20 +88,20 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     @Inject
     private StreamAttributeValueFlush streamAttributeValueFlush;
     @Inject
-    private FdService feedService;
+    private FeedService feedService;
     @Inject
     private StreamTaskCreator streamTaskCreator;
     @Inject
     private StreamAttributeMapService streamMDService;
 
-    private FeedDoc feed1;
-    private FeedDoc feed2;
+    //    private FeedDoc feed1;
+//    private FeedDoc feed2;
     private int initialReplicationCount = 1;
 
     @Override
     protected void onBefore() {
-        feed1 = setupFeed("FEED1");
-        feed2 = setupFeed("FEED2");
+//        feed1 = setupFeed(FEED1);
+//        feed2 = setupFeed("FEED2");
         initialReplicationCount = StroomProperties.getIntProperty(VolumeServiceImpl.PROP_RESILIENT_REPLICATION_COUNT, 1);
         StroomProperties.setIntProperty(VolumeServiceImpl.PROP_RESILIENT_REPLICATION_COUNT, 2, StroomProperties.Source.TEST);
     }
@@ -110,30 +112,30 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                 StroomProperties.Source.TEST);
     }
 
-    /**
-     * Setup some test data.
-     */
-    private FeedDoc setupFeed(final String feedName) {
-        FeedDoc sample = feedService.loadByName(feedName);
-        if (sample == null) {
-            sample = feedService.create(feedName);
-            sample.setDescription("Junit");
-            sample = feedService.save(sample);
-        }
-        return sample;
-    }
+//    /**
+//     * Setup some test data.
+//     */
+//    private FeedDoc setupFeed(final String feedName) {
+//        FeedDoc sample = feedService.loadByName(feedName);
+//        if (sample == null) {
+//            sample = feedService.create(feedName);
+//            sample.setDescription("Junit");
+//            sample = feedService.save(sample);
+//        }
+//        return sample;
+//    }
 
     @Test
     public void testBasic() throws IOException {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
                 .addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, createYearPeriod(2014))
                 .addTerm(StreamDataSource.EFFECTIVE_TIME, Condition.BETWEEN, createYearPeriod(2014))
-                .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed1.getName())
+                .addTerm(StreamDataSource.FEED, Condition.EQUALS, FEED1)
                 .addTerm(StreamDataSource.PARENT_STREAM_ID, Condition.EQUALS, "1")
                 .addTerm(StreamDataSource.STREAM_ID, Condition.EQUALS, "1")
 //                .addTerm(StreamDataSource.PIPELINE, Condition.EQUALS, "1")
 //                .addTerm(StreamDataSource.STREAM_PROCESSOR_ID, Condition.EQUALS, "1")
-                .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.RAW_EVENTS.getDisplayValue())
+                .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.RAW_EVENTS.getName())
                 .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
                 .build();
         testCriteria(new FindStreamCriteria(expression), 0);
@@ -153,8 +155,8 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     public void testFeedFindAll() throws IOException {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
                 .addOperator(new ExpressionOperator.Builder(Op.OR)
-                        .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed1.getName())
-                        .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed2.getName())
+                        .addTerm(StreamDataSource.FEED, Condition.EQUALS, FEED1)
+                        .addTerm(StreamDataSource.FEED, Condition.EQUALS, FEED2)
                         .build())
                 .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
                 .build();
@@ -165,8 +167,8 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     public void testFeedFindSome() throws IOException {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
                 .addOperator(new ExpressionOperator.Builder(Op.OR)
-                        .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed1.getName())
-                        .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed2.getName())
+                        .addTerm(StreamDataSource.FEED, Condition.EQUALS, FEED1)
+                        .addTerm(StreamDataSource.FEED, Condition.EQUALS, FEED2)
                         .build())
                 .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
                 .build();
@@ -178,9 +180,9 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     @Test
     public void testFeedFindNone() throws IOException {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed1.getName())
+                .addTerm(StreamDataSource.FEED, Condition.EQUALS, FEED1)
                 .addOperator(new ExpressionOperator.Builder(Op.NOT)
-                        .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed1.getName())
+                        .addTerm(StreamDataSource.FEED, Condition.EQUALS, FEED1)
                         .build())
                 .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
                 .build();
@@ -190,7 +192,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     @Test
     public void testFeedFindOne() throws IOException {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed2.getName())
+                .addTerm(StreamDataSource.FEED, Condition.EQUALS, FEED2)
                 .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
                 .build();
         testCriteria(new FindStreamCriteria(expression), 1);
@@ -199,8 +201,8 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     private void testCriteria(final FindStreamCriteria criteria, final int expectedStreams) throws IOException {
         streamStore.findDelete(new FindStreamCriteria());
 
-        createStream(feed1, 1L, null);
-        createStream(feed2, 1L, null);
+        createStream(FEED1, 1L, null);
+        createStream(FEED2, 1L, null);
 //        criteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
         final BaseResultList<Stream> streams = streamStore.find(criteria);
         Assert.assertEquals(expectedStreams, streams.size());
@@ -212,19 +214,21 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     public void testParentChild() throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
-        final Stream stream = Stream.createStream(StreamType.RAW_EVENTS, feed1, null);
+        final Stream stream = streamStore.createStream(StreamType.RAW_EVENTS.getName(), FEED1, null);
         final StreamTarget streamTarget = streamStore.openStreamTarget(stream);
         streamTarget.getOutputStream().write(testString.getBytes(StreamUtil.DEFAULT_CHARSET));
         streamStore.closeStreamTarget(streamTarget);
 
-        final Stream child = Stream.createProcessedStream(streamTarget.getStream(), streamTarget.getStream().getFeed(),
-                StreamType.RAW_EVENTS, null, null);
+        final Stream child = streamStore.createProcessedStream(streamTarget.getStream(),
+                streamTarget.getStream().getFeed().getName(),
+                StreamType.RAW_EVENTS.getName(), null, null);
         final StreamTarget childTarget = streamStore.openStreamTarget(child);
         childTarget.getOutputStream().write(testString.getBytes(StreamUtil.DEFAULT_CHARSET));
         streamStore.closeStreamTarget(childTarget);
 
-        final Stream grandChild = Stream.createProcessedStream(childTarget.getStream(),
-                childTarget.getStream().getFeed(), StreamType.RAW_EVENTS, null, null);
+        final Stream grandChild = streamStore.createProcessedStream(childTarget.getStream(),
+                childTarget.getStream().getFeed().getName(),
+                StreamType.RAW_EVENTS.getName(), null, null);
         final StreamTarget grandChildTarget = streamStore.openStreamTarget(grandChild);
         grandChildTarget.getOutputStream().write(testString.getBytes(StreamUtil.DEFAULT_CHARSET));
         streamStore.closeStreamTarget(grandChildTarget);
@@ -249,7 +253,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
     @Test
     public void testFindDeleteAndUndelete() throws IOException {
-        final Stream stream = createStream(feed1, 1L, null);
+        final Stream stream = createStream(FEED1, 1L, null);
 
         FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
         findStreamCriteria.obtainSelectedIdSet().add(stream.getId());
@@ -278,11 +282,11 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         Assert.assertEquals(1L, streamStore.find(findStreamCriteria).size());
     }
 
-    private Stream createStream(final FeedDoc feed, final Long streamTaskId, final Long parentStreamId)
+    private Stream createStream(final String feedName, final Long streamTaskId, final Long parentStreamId)
             throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
-        Stream stream = Stream.createStream(StreamType.RAW_EVENTS, feed, null);
+        Stream stream = streamStore.createStream(StreamType.RAW_EVENTS.getName(), feedName, null);
         stream.setStreamTaskId(streamTaskId);
         stream.setParentStreamId(parentStreamId);
 
@@ -299,12 +303,12 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                 .addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, createToDateWithOffset(System.currentTimeMillis(), 1))
                 .addTerm(StreamDataSource.EFFECTIVE_TIME, Condition.BETWEEN, createToDateWithOffset(System.currentTimeMillis(), 1))
                 .addTerm(StreamDataSource.STATUS_TIME, Condition.BETWEEN, createToDateWithOffset(System.currentTimeMillis(), 1))
-                .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed1.getName())
+                .addTerm(StreamDataSource.FEED, Condition.EQUALS, FEED1)
                 .addTerm(StreamDataSource.PARENT_STREAM_ID, Condition.EQUALS, "1")
                 .addTerm(StreamDataSource.STREAM_ID, Condition.EQUALS, "1")
 //                .addTerm(StreamDataSource.PIPELINE, Condition.EQUALS, "1")
 //                .addTerm(StreamDataSource.STREAM_PROCESSOR_ID, Condition.EQUALS, "1")
-                .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.RAW_EVENTS.getDisplayValue())
+                .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.RAW_EVENTS.getName())
                 .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
                 .build();
         final FindStreamCriteria findStreamCriteria = new FindStreamCriteria(expression);
@@ -320,7 +324,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     public void testBasicImportExportList() throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
-        final Stream stream = Stream.createStream(StreamType.RAW_EVENTS, feed1, null);
+        final Stream stream = streamStore.createStream(StreamType.RAW_EVENTS.getName(), FEED1, null);
 
         final StreamTarget streamTarget = streamStore.openStreamTarget(stream);
         streamTarget.getStream().getFeed().getName();
@@ -377,7 +381,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     private void doTestDeleteSource(final DeleteTestStyle style) throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
-        Stream stream = Stream.createStream(StreamType.RAW_EVENTS, feed1, null);
+        Stream stream = streamStore.createStream(StreamType.RAW_EVENTS.getName(), FEED1, null);
 
         final StreamTarget streamTarget = streamStore.openStreamTarget(stream);
         stream = streamTarget.getStream();
@@ -411,7 +415,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     private void doTestDeleteTarget(final DeleteTestStyle style) throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
-        Stream stream = Stream.createStream(StreamType.RAW_EVENTS, feed1, null);
+        Stream stream = streamStore.createStream(StreamType.RAW_EVENTS.getName(), FEED1, null);
 
         final StreamTarget streamTarget = streamStore.openStreamTarget(stream);
         stream = streamTarget.getStream();
@@ -491,7 +495,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     public void testFileSystem() throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
-        final Stream stream = Stream.createStream(StreamType.RAW_EVENTS, feed1, null);
+        final Stream stream = streamStore.createStream(StreamType.RAW_EVENTS.getName(), FEED1, null);
 
         final StreamTarget streamTarget = streamStore.openStreamTarget(stream);
         final Stream exactMetaData = streamTarget.getStream();
@@ -521,7 +525,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
     @Test
     public void testWriteNothing() throws IOException {
-        final Stream stream = Stream.createStream(StreamType.RAW_EVENTS, feed1, null);
+        final Stream stream = streamStore.createStream(StreamType.RAW_EVENTS.getName(), FEED1, null);
 
         final StreamTarget streamTarget = streamStore.openStreamTarget(stream);
         final Stream exactMetaData = streamTarget.getStream();
@@ -542,28 +546,28 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         final String feed2 = FileSystemTestUtil.getUniqueTestString();
         final String feed3 = FileSystemTestUtil.getUniqueTestString();
 
-        setupFeed(feed1);
-        final Stream refData1 = buildRefData(feed2, 2008, 2, StreamType.REFERENCE, false);
-        final Stream refData2 = buildRefData(feed2, 2009, 2, StreamType.REFERENCE, false);
-        final Stream refData3 = buildRefData(feed2, 2010, 2, StreamType.REFERENCE, false);
+//        setupFeed(feed1);
+        final Stream refData1 = buildRefData(feed2, 2008, 2, StreamType.REFERENCE.getName(), false);
+        final Stream refData2 = buildRefData(feed2, 2009, 2, StreamType.REFERENCE.getName(), false);
+        final Stream refData3 = buildRefData(feed2, 2010, 2, StreamType.REFERENCE.getName(), false);
 
         // These 2 should get ignored as one is locked and the other is RAW
         final HashSet<Long> invalidFeeds = new HashSet<>();
-        invalidFeeds.add(buildRefData(feed2, 2010, 2, StreamType.REFERENCE, true).getId());
+        invalidFeeds.add(buildRefData(feed2, 2010, 2, StreamType.REFERENCE.getName(), true).getId());
 
-        invalidFeeds.add(buildRefData(feed2, 2010, 2, StreamType.RAW_REFERENCE, false).getId());
+        invalidFeeds.add(buildRefData(feed2, 2010, 2, StreamType.RAW_REFERENCE.getName(), false).getId());
 
         // Build some for another feed.
-        buildRefData(feed3, 2008, 2, StreamType.REFERENCE, false);
-        buildRefData(feed3, 2009, 2, StreamType.REFERENCE, false);
-        buildRefData(feed3, 2010, 2, StreamType.REFERENCE, false);
-        buildRefData(feed3, 2011, 2, StreamType.REFERENCE, false);
+        buildRefData(feed3, 2008, 2, StreamType.REFERENCE.getName(), false);
+        buildRefData(feed3, 2009, 2, StreamType.REFERENCE.getName(), false);
+        buildRefData(feed3, 2010, 2, StreamType.REFERENCE.getName(), false);
+        buildRefData(feed3, 2011, 2, StreamType.REFERENCE.getName(), false);
 
         final EffectiveMetaDataCriteria criteria = new EffectiveMetaDataCriteria();
         criteria.setStreamType(StreamType.REFERENCE.getName());
 
         // feed2 or feed1
-        criteria.setFeed(DocRefUtil.create(feedService.loadByName(feed2)));
+        criteria.setFeed(feed2);
 //        criteria.getFeedIdSet().add(feedService.loadByName(feed1));
 
         // 2009 to 2010
@@ -602,12 +606,10 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         }
     }
 
-    private Stream buildRefData(final String feed, final int year, final int month, final StreamType type,
+    private Stream buildRefData(final String feed, final int year, final int month, final String type,
                                 final boolean lock) throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
-
-        final FeedDoc sample = setupFeed(feed);
-        final Stream stream = Stream.createStream(type, sample,
+        final Stream stream = streamStore.createStream(type, feed,
                 ZonedDateTime.of(year, month, N1, N13, 0, 0, 0, ZoneOffset.UTC).toInstant().toEpochMilli());
 
         final StreamTarget streamTarget = streamStore.openStreamTarget(stream);
@@ -624,7 +626,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
     @Test
     public void testDeleteStreamTarget() throws IOException {
-        final Stream stream = Stream.createStream(StreamType.RAW_EVENTS, feed1, null);
+        final Stream stream = streamStore.createStream(StreamType.RAW_EVENTS.getName(), FEED1, null);
         doDeleteStreamTarget(stream);
 
         try {
@@ -643,7 +645,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         final String testString5 = FileSystemTestUtil.getUniqueTestString();
         final String testString6 = FileSystemTestUtil.getUniqueTestString();
 
-        Stream stream = Stream.createStream(StreamType.RAW_EVENTS, feed1, null);
+        Stream stream = streamStore.createStream(StreamType.RAW_EVENTS.getName(), FEED1, null);
 
         StreamTarget streamTarget = streamStore.openStreamTarget(stream);
 
@@ -746,7 +748,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     public void testIOErrors() throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
-        final Stream stream = Stream.createStream(StreamType.RAW_EVENTS, feed1, null);
+        final Stream stream = streamStore.createStream(StreamType.RAW_EVENTS.getName(), FEED1, null);
         final StreamTarget streamTarget = streamStore.openStreamTarget(stream);
         streamTarget.getOutputStream().write(testString.getBytes(StreamUtil.DEFAULT_CHARSET));
         final Set<Path> dirSet = new HashSet<>();

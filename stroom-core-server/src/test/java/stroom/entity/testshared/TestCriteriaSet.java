@@ -21,7 +21,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
-import stroom.feed.shared.FeedDoc;
+import stroom.streamstore.shared.StreamType;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
@@ -47,7 +47,7 @@ public class TestCriteriaSet extends StroomUnitTest {
 
     @Test
     public void testFlags() {
-        final EntityIdSet<FeedDoc> totalFolderIdSet = new EntityIdSet<>();
+        final EntityIdSet<StreamType> totalFolderIdSet = new EntityIdSet<>();
         totalFolderIdSet.setMatchAll(false);
 
         Assert.assertTrue(totalFolderIdSet.isConstrained());
@@ -57,7 +57,7 @@ public class TestCriteriaSet extends StroomUnitTest {
 
     @Test
     public void testNullMatchs() {
-        final EntityIdSet<FeedDoc> totalFolderIdSet = new EntityIdSet<>();
+        final EntityIdSet<StreamType> totalFolderIdSet = new EntityIdSet<>();
         totalFolderIdSet.add(1L);
         Assert.assertFalse(totalFolderIdSet.isMatch((Long) null));
         totalFolderIdSet.setMatchNull(Boolean.TRUE);

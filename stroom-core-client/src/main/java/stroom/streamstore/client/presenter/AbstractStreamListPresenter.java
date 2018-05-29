@@ -389,7 +389,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
             @Override
             public String getValue(final StreamAttributeMap row) {
                 if (row != null && row.getStream() != null && row.getStream().getFeed() != null) {
-                    return row.getStream().getFeed().getDisplayValue();
+                    return row.getStream().getFeed().getName();
                 }
                 return "";
             }
@@ -403,7 +403,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
             @Override
             public String getValue(final StreamAttributeMap row) {
                 if (row != null && row.getStream() != null && row.getStream().getStreamType() != null) {
-                    return row.getStream().getStreamType().getDisplayValue();
+                    return row.getStream().getStreamType().getName();
                 }
                 return "";
             }

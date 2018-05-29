@@ -22,28 +22,23 @@ public class FeedProperties {
     }
 
     public String getDisplayClassification(final String feedName) {
-        String classification = null;
-
-        final Optional<FeedDoc> feed = feedNameCache.get(feedName);
-        if (feed.isPresent()) {
-            classification = feed.get().getClassification();
-        }
-
-        if (classification == null || classification.trim().isEmpty()) {
-            return StroomProperties.getProperty("stroom.unknownClassification");
-        }
+        final Optional<FeedDoc> optional = feedNameCache.get(feedName);
+        final String classification = optional
+                .map(FeedDoc::getClassification)
+                .filter(c -> !c.trim().isEmpty())
+                .orElse(StroomProperties.getProperty("stroom.unknownClassification"));
 
         return classification.trim().toUpperCase();
     }
 
     public String getEncoding(final String feedName, final StreamType streamType) {
-        final FeedDoc feed = feedNameCache.get(feedName);
+        final Optional<FeedDoc> optional = feedNameCache.get(feedName);
         String encoding = null;
-        if (feed != null && streamType != null) {
+        if (optional.isPresent() && streamType != null) {
             if (StreamType.CONTEXT.equals(streamType)) {
-                encoding = feed.getContextEncoding();
+                encoding = optional.get().getContextEncoding();
             } else if (streamType.isStreamTypeRaw()) {
-                encoding = feed.getEncoding();
+                encoding = optional.get().getEncoding();
             }
         }
 

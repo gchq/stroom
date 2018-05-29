@@ -25,11 +25,13 @@ public class MockStreamStoreModule extends AbstractModule {
     protected void configure() {
         bind(StreamStore.class).to(MockStreamStore.class);
         bind(StreamTypeService.class).to(MockStreamTypeService.class);
+        bind(FeedService.class).to(MockFeedService.class);
         bind(StreamAttributeKeyService.class).to(MockStreamAttributeKeyService.class);
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(MockStreamStore.class);
         clearableBinder.addBinding().to(MockStreamTypeService.class);
+        clearableBinder.addBinding().to(MockFeedService.class);
         clearableBinder.addBinding().to(MockStreamAttributeKeyService.class);
     }
     //    @Bean

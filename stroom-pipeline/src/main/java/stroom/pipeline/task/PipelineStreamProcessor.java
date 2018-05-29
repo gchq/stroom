@@ -24,7 +24,6 @@ import org.slf4j.MarkerFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.feed.FeedProperties;
-import stroom.streamstore.FdService;
 import stroom.feed.MetaMap;
 import stroom.feed.shared.FeedDoc;
 import stroom.io.StreamCloser;
@@ -55,17 +54,22 @@ import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.state.SearchIdHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
-import stroom.streamstore.OldFindStreamCriteria;
+import stroom.streamstore.FeedService;
 import stroom.streamstore.StreamSource;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.StreamTarget;
 import stroom.streamstore.fs.serializable.RASegmentInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
+import stroom.streamstore.shared.Feed;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeConstants;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.InclusiveRanges;
@@ -102,7 +106,6 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
 
     private final PipelineFactory pipelineFactory;
     private final StreamStore streamStore;
-    private final FdService feedService;
     private final PipelineStore pipelineStore;
     private final TaskContext taskContext;
     private final PipelineHolder pipelineHolder;
@@ -132,7 +135,6 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     @Inject
     PipelineStreamProcessor(final PipelineFactory pipelineFactory,
                             final StreamStore streamStore,
-                            @Named("cachedFeedService") final FdService feedService,
                             @Named("cachedPipelineStore") final PipelineStore pipelineStore,
                             final TaskContext taskContext,
                             final PipelineHolder pipelineHolder,
@@ -155,7 +157,6 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                             final InternalStatisticsReceiver internalStatisticsReceiver) {
         this.pipelineFactory = pipelineFactory;
         this.streamStore = streamStore;
-        this.feedService = feedService;
         this.pipelineStore = pipelineStore;
         this.taskContext = taskContext;
         this.pipelineHolder = pipelineHolder;
@@ -221,7 +222,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             }
 
             // Load the feed.
-            final FeedDoc feed = feedService.load(stream.getFeed());
+            final Feed feed = stream.getFeed();
             if (feed != null) {
                 feedName = feed.getName();
                 feedHolder.setFeedName(feed.getName());
@@ -304,11 +305,11 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
      * unlock it).
      */
     private void checkSuperseded(final long processStartTime) {
-        final OldFindStreamCriteria findStreamCriteria = new OldFindStreamCriteria();
-        findStreamCriteria.obtainParentStreamIdSet().add(streamSource.getStream());
-        findStreamCriteria.obtainStatusSet().setMatchAll(true);
-        findStreamCriteria.obtainStreamProcessorIdSet().add(streamProcessor);
-
+        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+                .addTerm(StreamDataSource.PARENT_STREAM_ID, Condition.EQUALS, String.valueOf(streamSource.getStream().getId()))
+                .addTerm(StreamDataSource.STREAM_PROCESSOR_ID, Condition.EQUALS, String.valueOf(streamProcessor.getId()))
+                .build();
+        final FindStreamCriteria findStreamCriteria = new FindStreamCriteria(expression);
         final List<Stream> streamList = streamStore.find(findStreamCriteria);
 
         Long latestStreamTaskId = null;
@@ -615,7 +616,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             if (processInfoOutputStream == null) {
                 // Create a processing info stream to write all processing
                 // information to.
-                final Stream errorStream = Stream.createProcessedStream(stream, stream.getFeed(), StreamType.ERROR,
+                final Stream errorStream = streamStore.createProcessedStream(stream, stream.getFeed().getName(), StreamType.ERROR.getName(),
                         streamProcessor, streamTask);
 
                 processInfoStreamTarget = streamStore.openStreamTarget(errorStream);

@@ -77,9 +77,9 @@ public abstract class AbstractBenchmark {
         Arrays.asList(args).forEach(arg -> LOGGER.info(arg.toString()));
     }
 
-    protected Stream writeData(final FeedDoc feed, final StreamType streamType, final String data) {
+    protected Stream writeData(final String feedName, final String streamTypeName, final String data) {
         // Add the associated data to the stream store.
-        final Stream stream = Stream.createStream(streamType, feed, System.currentTimeMillis());
+        final Stream stream = streamStore.createStream(streamTypeName, feedName, System.currentTimeMillis());
 
         final StreamTarget dataTarget = streamStore.openStreamTarget(stream);
 
@@ -131,9 +131,9 @@ public abstract class AbstractBenchmark {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
         builder.addTerm(StreamDataSource.FEED, Condition.EQUALS, feed.getName());
         if (feed.isReference()) {
-            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.REFERENCE.getDisplayValue());
+            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.REFERENCE.getName());
         } else {
-            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.EVENTS.getDisplayValue());
+            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.EVENTS.getName());
         }
         final FindStreamCriteria criteria = new FindStreamCriteria();
         criteria.setExpression(builder.build());
@@ -156,7 +156,7 @@ public abstract class AbstractBenchmark {
         }
     }
 
-    protected void deleteData(final FeedDoc... feeds) {
+    protected void deleteData(final String... feeds) {
         final FindStreamCriteria criteria = new FindStreamCriteria();
         criteria.setExpression(ExpressionUtil.createFeedsExpression(feeds));
         streamStore.findDelete(criteria);

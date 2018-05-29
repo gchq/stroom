@@ -1,22 +1,21 @@
 package stroom.streamstore;
 
 import stroom.dictionary.DictionaryStore;
+import stroom.docref.DocRef;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.Period;
-import stroom.feed.FeedNameCache;
-import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.common.v2.DateExpressionParser;
+import stroom.streamstore.shared.Feed;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.QueryData;
@@ -40,9 +39,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ExpressionToFindCriteria {
-    private final FdService feedService;
+    private final FeedService feedService;
     private final PipelineStore pipelineStore;
-    private final FeedNameCache feedNameCache;
     private final DictionaryStore dictionaryStore;
     private final StreamAttributeKeyService streamAttributeKeyService;
     private final StreamTypeService streamTypeService;
@@ -57,15 +55,13 @@ public class ExpressionToFindCriteria {
             String.format("%s [%s]", err, OP_STACK_DISPLAY.apply(ops));
 
     @Inject
-    public ExpressionToFindCriteria(@Named("cachedFeedService") final FdService feedService,
+    public ExpressionToFindCriteria(@Named("cachedFeedService") final FeedService feedService,
                                     @Named("cachedPipelineStore") final PipelineStore pipelineStore,
-                                    final FeedNameCache feedNameCache,
                                     final DictionaryStore dictionaryStore,
                                     final StreamAttributeKeyService streamAttributeKeyService,
                                     @Named("cachedStreamTypeService") StreamTypeService streamTypeService) {
         this.feedService = feedService;
         this.pipelineStore = pipelineStore;
-        this.feedNameCache = feedNameCache;
         this.dictionaryStore = dictionaryStore;
         this.streamAttributeKeyService = streamAttributeKeyService;
         this.streamTypeService = streamTypeService;
@@ -297,20 +293,10 @@ public class ExpressionToFindCriteria {
         });
     }
 
-    private Set<FeedDoc> findFeeds(final String field, final String value) {
-        // Try by UUID
-        try {
-            final FeedDoc feed = feedService.loadByUuid(value);
-            if (feed != null) {
-                return Collections.singleton(feed);
-            }
-        } catch (final RuntimeException e) {
-            // Ignore.
-        }
-
+    private Set<Feed> findFeeds(final String field, final String value) {
         // Try by name
         try {
-            final FeedDoc feed = feedNameCache.get(value);
+            final Feed feed = feedService.get(value);
             if (feed != null) {
                 return Collections.singleton(feed);
             }

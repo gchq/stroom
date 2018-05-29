@@ -66,7 +66,7 @@ public class Stream extends BaseEntityBig {
     /**
      * We don't eager fetch this one ... you need to call loadFeed.
      */
-    private Fd feed;
+    private Feed feed;
 
     private StreamType streamType;
 
@@ -109,82 +109,82 @@ public class Stream extends BaseEntityBig {
         return stream;
     }
 
-    public static Stream createStream(final StreamType type, final Fd feed, final Long effectiveMs) {
-        final Stream stream = new Stream();
+//    public static Stream createStream(final StreamType type, final Feed feed, final Long effectiveMs) {
+//        final Stream stream = new Stream();
+//
+//        stream.streamType = type;
+//        stream.feed = feed;
+//        stream.effectiveMs = effectiveMs;
+//
+//        // When were we created
+//        stream.createMs = System.currentTimeMillis();
+//        // Ensure an effective time.
+//        if (stream.effectiveMs == null) {
+//            stream.effectiveMs = stream.createMs;
+//        }
+//
+//        return stream;
+//    }
+//
+//    public static Stream createStreamForTesting(final StreamType type, final Feed feed, final Long effectiveMs,
+//                                                final long createMs) {
+//        final Stream stream = new Stream();
+//
+//        stream.streamType = type;
+//        stream.feed = feed;
+//        stream.effectiveMs = effectiveMs;
+//
+//        // When were we created
+//        stream.createMs = createMs;
+//        // Ensure an effective time
+//        if (stream.effectiveMs == null) {
+//            stream.effectiveMs = stream.createMs;
+//        }
+//
+//        return stream;
+//    }
+//
+//    public static Stream createProcessedStream(final Stream parent, final Feed feed, final StreamType streamType,
+//                                               final StreamProcessor streamProcessor, final StreamTask streamTask) {
+//        final Stream stream = new Stream();
+//
+//        if (parent != null) {
+//            if (parent.getEffectiveMs() != null) {
+//                stream.effectiveMs = parent.getEffectiveMs();
+//            } else {
+//                stream.effectiveMs = parent.getCreateMs();
+//            }
+//            stream.parentStreamId = parent.getId();
+//        }
+//
+//        stream.feed = feed;
+//        stream.streamType = streamType;
+//        stream.streamProcessor = streamProcessor;
+//        if (streamTask != null) {
+//            stream.streamTaskId = streamTask.getId();
+//        }
+//
+//        // When were we created
+//        stream.createMs = System.currentTimeMillis();
+//        // Ensure an effective time
+//        if (stream.effectiveMs == null) {
+//            stream.effectiveMs = stream.createMs;
+//        }
+//
+//        return stream;
+//    }
 
-        stream.streamType = type;
-        stream.feed = feed;
-        stream.effectiveMs = effectiveMs;
-
-        // When were we created
-        stream.createMs = System.currentTimeMillis();
-        // Ensure an effective time.
-        if (stream.effectiveMs == null) {
-            stream.effectiveMs = stream.createMs;
-        }
-
-        return stream;
-    }
-
-    public static Stream createStreamForTesting(final StreamType type, final Fd feed, final Long effectiveMs,
-                                                final long createMs) {
-        final Stream stream = new Stream();
-
-        stream.streamType = type;
-        stream.feed = feed;
-        stream.effectiveMs = effectiveMs;
-
-        // When were we created
-        stream.createMs = createMs;
-        // Ensure an effective time
-        if (stream.effectiveMs == null) {
-            stream.effectiveMs = stream.createMs;
-        }
-
-        return stream;
-    }
-
-    public static Stream createProcessedStream(final Stream parent, final Fd feed, final StreamType streamType,
-                                               final StreamProcessor streamProcessor, final StreamTask streamTask) {
-        final Stream stream = new Stream();
-
-        if (parent != null) {
-            if (parent.getEffectiveMs() != null) {
-                stream.effectiveMs = parent.getEffectiveMs();
-            } else {
-                stream.effectiveMs = parent.getCreateMs();
-            }
-            stream.parentStreamId = parent.getId();
-        }
-
-        stream.feed = feed;
-        stream.streamType = streamType;
-        stream.streamProcessor = streamProcessor;
-        if (streamTask != null) {
-            stream.streamTaskId = streamTask.getId();
-        }
-
-        // When were we created
-        stream.createMs = System.currentTimeMillis();
-        // Ensure an effective time
-        if (stream.effectiveMs == null) {
-            stream.effectiveMs = stream.createMs;
-        }
-
-        return stream;
-    }
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = Fd.FOREIGN_KEY)
-    public Fd getFeed() {
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = Feed.FOREIGN_KEY)
+    public Feed getFeed() {
         return feed;
     }
 
-    public void setFeed(final Fd feed) {
+    public void setFeed(final Feed feed) {
         this.feed = applySetter(this.feed, feed);
     }
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = StreamType.FOREIGN_KEY)
     public StreamType getStreamType() {
         return streamType;

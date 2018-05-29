@@ -19,7 +19,6 @@ package stroom.streamstore;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.feed.shared.FeedDoc;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
@@ -29,9 +28,9 @@ import stroom.streamstore.shared.StreamType;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.date.DateUtil;
+import stroom.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
-import java.io.IOException;
 
 public class TestStreamAttributeMapServiceImpl extends AbstractCoreIntegrationTest {
     @Inject
@@ -42,10 +41,10 @@ public class TestStreamAttributeMapServiceImpl extends AbstractCoreIntegrationTe
     private StreamAttributeMapService streamAttributeMapService;
 
     @Test
-    public void testSimple() throws IOException {
-        final FeedDoc eventFeed = commonTestScenarioCreator.createSimpleFeed();
+    public void testSimple() {
+        final String feedName = FileSystemTestUtil.getUniqueTestString();
 
-        final Stream md = commonTestScenarioCreator.createSample2LineRawFile(eventFeed, StreamType.RAW_EVENTS);
+        final Stream md = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamType.RAW_EVENTS.getName());
 
         streamAttributeValueFlush.flush();
 

@@ -50,7 +50,7 @@ public final class ExpressionUtil {
 
     public static ExpressionOperator createStreamTypeExpression(final StreamType streamType) {
         return new ExpressionOperator.Builder(Op.AND)
-                .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, streamType.getDisplayValue())
+                .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, streamType.getName())
                 .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
                 .build();
     }
@@ -127,5 +127,36 @@ public final class ExpressionUtil {
                 }
             }
         }
+    }
+
+
+    public static ExpressionOperator copyOperator(final ExpressionOperator operator) {
+        if (operator == null) {
+            return null;
+        }
+
+        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(operator.enabled(), operator.getOp());
+        operator.getChildren().forEach(item -> {
+            if (item instanceof ExpressionOperator) {
+                builder.addOperator(copyOperator((ExpressionOperator) item));
+
+            } else if (item instanceof ExpressionTerm) {
+                builder.addTerm(copyTerm((ExpressionTerm) item));
+            }
+        });
+        return builder.build();
+    }
+
+    public static ExpressionTerm copyTerm(final ExpressionTerm term) {
+        if (term == null) {
+            return null;
+        }
+
+        final ExpressionTerm.Builder builder = new ExpressionTerm.Builder();
+        builder.field(term.getField());
+        builder.condition(term.getCondition());
+        builder.value(term.getValue());
+        builder.dictionary(term.getDictionary());
+        return builder.build();
     }
 }

@@ -822,8 +822,10 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         final StreamProcessorFilterTracker updatedTracker = streamTaskTransactionHelper.saveTracker(tracker);
 
         // This will contain locked and unlocked streams
-        final List<Stream> streamList = streamTaskTransactionHelper.runSelectStreamQuery(filter.getStreamProcessor(),
-                findStreamCriteria, updatedTracker.getMinStreamId(), requiredTasks);
+        final List<Stream> streamList = streamTaskTransactionHelper.runSelectStreamQuery(
+                findStreamCriteria,
+                updatedTracker.getMinStreamId(),
+                requiredTasks);
 
         // Just create regular stream processing tasks.
         final Map<Stream, InclusiveRanges> map = new HashMap<>();

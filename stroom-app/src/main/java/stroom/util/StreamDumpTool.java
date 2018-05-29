@@ -17,17 +17,12 @@
 package stroom.util;
 
 import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.name.Names;
-import stroom.streamstore.FdService;
-import stroom.feed.shared.FeedDoc;
+import stroom.persist.PersistService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.persist.PersistService;
 import stroom.streamstore.StreamSource;
 import stroom.streamstore.StreamStore;
-import stroom.streamstore.StreamTypeService;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
@@ -119,26 +114,15 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         }
 
         final StreamStore streamStore = injector.getInstance(StreamStore.class);
-        final FdService feedService = injector.getInstance(Key.get(FdService.class, Names.named("cachedFeedService")));
-        final StreamTypeService streamTypeService = injector.getInstance(Key.get(StreamTypeService.class, Names.named("cachedStreamTypeService")));
 
-        FeedDoc definition = null;
         if (feed != null) {
-            definition = feedService.loadByName(feed);
-            if (definition == null) {
-                throw new RuntimeException("Unable to locate Feed " + feed);
-            }
-            builder.addTerm(StreamDataSource.FEED, Condition.EQUALS, definition.getName());
+            builder.addTerm(StreamDataSource.FEED, Condition.EQUALS, feed);
         }
 
         if (streamType != null) {
-            final StreamType type = streamTypeService.loadByName(streamType);
-            if (type == null) {
-                throw new RuntimeException("Unable to locate stream type " + streamType);
-            }
-            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, type.getDisplayValue());
+            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, streamType);
         } else {
-            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.RAW_EVENTS.getDisplayValue());
+            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.RAW_EVENTS.getName());
         }
 
         // Query the stream store

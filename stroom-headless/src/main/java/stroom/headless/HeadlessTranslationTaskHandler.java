@@ -17,13 +17,11 @@
 
 package stroom.headless;
 
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.StringCriteria;
-import stroom.streamstore.FdService;
+import stroom.docref.DocRef;
+import stroom.feed.FeedStore;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
-import stroom.streamstore.FindFdCriteria;
 import stroom.pipeline.ErrorWriterProxy;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -47,7 +45,6 @@ import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
-import stroom.docref.DocRef;
 import stroom.security.Security;
 import stroom.streamstore.fs.serializable.RASegmentInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
@@ -71,7 +68,7 @@ import java.util.List;
 @TaskHandlerBean(task = HeadlessTranslationTask.class)
 class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTranslationTask, VoidResult> {
     private final PipelineFactory pipelineFactory;
-    private final FdService feedService;
+    private final FeedStore feedStore;
     private final PipelineStore pipelineStore;
     private final MetaData metaData;
     private final PipelineHolder pipelineHolder;
@@ -87,7 +84,7 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
 
     @Inject
     HeadlessTranslationTaskHandler(final PipelineFactory pipelineFactory,
-                                   @Named("cachedFeedService") final FdService feedService,
+                                   @Named("cachedFeedStore") final FeedStore feedStore,
                                    @Named("cachedPipelineStore") final PipelineStore pipelineStore,
                                    final MetaData metaData,
                                    final PipelineHolder pipelineHolder,
@@ -101,7 +98,7 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
                                    final StreamProcessorService streamProcessorService,
                                    final Security security) {
         this.pipelineFactory = pipelineFactory;
-        this.feedService = feedService;
+        this.feedStore = feedStore;
         this.pipelineStore = pipelineStore;
         this.metaData = metaData;
         this.pipelineHolder = pipelineHolder;
@@ -174,8 +171,8 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
 
                 // Create the stream.
                 final Stream stream = new Stream();
-                // Set the feed.
-                stream.setFeed(feed);
+//                // Set the feed.
+//                stream.setFeed(feed);
 
                 // Set effective time.
                 try {
@@ -240,15 +237,12 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
             throw new RuntimeException("No feed name found in meta data");
         }
 
-        final FindFdCriteria feedCriteria = new FindFdCriteria();
-        feedCriteria.setName(new StringCriteria(feedName));
-        final BaseResultList<FeedDoc> feeds = feedService.find(feedCriteria);
-
-        if (feeds.size() == 0) {
+        final List<DocRef> docRefs = feedStore.findByName(feedName);
+        if (docRefs.size() == 0) {
             throw new RuntimeException("No configuration found for feed \"" + feedName + "\"");
         }
 
-        return feeds.getFirst();
+        return feedStore.readDocument(docRefs.get(0));
     }
 
     /**

@@ -15,12 +15,11 @@
  *
  */
 
-package stroom.feed;
+package stroom.streamstore;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.feed.shared.FeedDoc;
-import stroom.streamstore.FdService;
+import stroom.streamstore.shared.Feed;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.test.FileSystemTestUtil;
@@ -31,16 +30,16 @@ import javax.inject.Named;
 public class TestFeedServiceCache extends AbstractCoreIntegrationTest {
     @Inject
     @Named("cachedFeedService")
-    private FdService cachedFeedService;
+    private FeedService cachedFeedService;
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
 
     @Test
     public void testSimple() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        final FeedDoc feed = cachedFeedService.create(feedName);
+        final Feed feed = cachedFeedService.create(feedName);
 
-        FeedDoc loaded = cachedFeedService.loadByName(feedName);
+        Feed loaded = cachedFeedService.loadByName(feedName);
 
         Assert.assertNotNull(loaded);
         Assert.assertEquals(feed, loaded);

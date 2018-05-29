@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,32 +12,25 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
-package stroom.entity;
+package stroom.streamstore;
 
-import org.junit.Before;
-import org.junit.Test;
-import stroom.test.AbstractCoreIntegrationTest;
+import stroom.entity.FindService;
+import stroom.entity.NamedEntityService;
+import stroom.entity.shared.CriteriaSet;
+import stroom.entity.shared.EntityIdSet;
+import stroom.streamstore.shared.Feed;
 
-import javax.inject.Inject;
+public interface FeedService extends NamedEntityService<Feed>, FindService<Feed, FindFeedCriteria> {
+    Feed get(String name);
 
-public class TestEntityServiceImpl extends AbstractCoreIntegrationTest {
-    @Inject
-    private EntityServiceImplTestTransactionHelper helper;
+    Feed getOrCreate(String name);
 
-    @Before
-    public void init() {
-        helper.init();
-    }
+    long getId(String name);
 
-    @Test
-    public void test1() {
-        helper.test1();
-    }
+//    String getName(long id);
 
-    @Test
-    public void test2() {
-        helper.test2();
-    }
+    EntityIdSet<Feed> convertNameSet(CriteriaSet<String> feeds);
 }

@@ -22,7 +22,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceException;
 import stroom.feed.FeedProperties;
-import stroom.streamstore.FdService;
+import stroom.streamstore.FeedService;
 import stroom.feed.shared.FeedDoc;
 import stroom.guice.PipelineScopeRunnable;
 import stroom.io.StreamCloser;
@@ -88,7 +88,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
     private final boolean streamsTotalIsExact = true;
 
     private final StreamStore streamStore;
-    private final FdService feedService;
+    private final FeedService feedService;
     private final FeedProperties feedProperties;
     private final StreamProcessorService streamProcessorService;
     private final Provider<FeedHolder> feedHolderProvider;
@@ -111,7 +111,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
     private boolean pageTotalIsExact = false;
 
     AbstractFetchDataHandler(final StreamStore streamStore,
-                             final FdService feedService,
+                             final FeedService feedService,
                              final FeedProperties feedProperties,
                              final StreamProcessorService streamProcessorService,
                              final Provider<FeedHolder> feedHolderProvider,
@@ -189,9 +189,11 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                     streamCloser.add(streamSource);
                 }
 
-                // Load the feed.
-                feed = feedService.load(streamSource.getStream().getFeed());
-                final String feedName = feed.getName();
+                // Get the feed name.
+                String feedName = null;
+                if (streamSource != null && streamSource.getStream() != null && streamSource.getStream().getFeed() != null) {
+                    feedName = streamSource.getStream().getFeed().getName();
+                }
 
                 // Get the boundary and segment input streams.
                 final CompoundInputStream compoundInputStream = new CompoundInputStream(streamSource);

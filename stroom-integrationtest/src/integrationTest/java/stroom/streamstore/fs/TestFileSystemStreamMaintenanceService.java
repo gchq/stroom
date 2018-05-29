@@ -27,6 +27,7 @@ import stroom.streamstore.shared.StreamType;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.FileUtil;
+import stroom.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -46,11 +47,11 @@ public class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrat
     public void testSimple() throws IOException {
         // commonTestControl.deleteDir();
 
-        final FeedDoc eventFeed = commonTestScenarioCreator.createSimpleFeed();
+        final String feedName = FileSystemTestUtil.getUniqueTestString();
 
-        final Stream md = commonTestScenarioCreator.createSample2LineRawFile(eventFeed, StreamType.RAW_EVENTS);
+        final Stream md = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamType.RAW_EVENTS.getName());
 
-        commonTestScenarioCreator.createSampleBlankProcessedFile(eventFeed, md);
+        commonTestScenarioCreator.createSampleBlankProcessedFile(feedName, md);
 
         final List<Path> files = streamMaintenanceService.findAllStreamFile(md);
 

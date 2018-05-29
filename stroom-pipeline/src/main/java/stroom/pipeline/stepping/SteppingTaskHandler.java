@@ -23,8 +23,6 @@ import org.xml.sax.SAXException;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.feed.FeedProperties;
-import stroom.streamstore.FdService;
-import stroom.feed.shared.FeedDoc;
 import stroom.io.StreamCloser;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.PipelineStore;
@@ -59,6 +57,7 @@ import stroom.streamstore.fs.serializable.NestedInputStream;
 import stroom.streamstore.fs.serializable.RANestedInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
+import stroom.streamstore.shared.Feed;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
@@ -94,7 +93,6 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
 
     private final StreamStore streamStore;
     private final StreamCloser streamCloser;
-    private final FdService feedService;
     private final FeedProperties feedProperties;
     private final StreamTypeService streamTypeService;
     private final TaskContext taskContext;
@@ -128,7 +126,6 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     @Inject
     SteppingTaskHandler(final StreamStore streamStore,
                         final StreamCloser streamCloser,
-                        final FdService feedService,
                         final FeedProperties feedProperties,
                         @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
                         final TaskContext taskContext,
@@ -149,7 +146,6 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                         final Security security) {
         this.streamStore = streamStore;
         this.streamCloser = streamCloser;
-        this.feedService = feedService;
         this.feedProperties = feedProperties;
         this.streamTypeService = streamTypeService;
         this.taskContext = taskContext;
@@ -338,10 +334,10 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                     }
 
                     // Load the feed.
-                    final FeedDoc feed = feedService.load(streamSource.getStream().getFeed());
+                    final Feed feed = streamSource.getStream().getFeed();
 
                     // Get the stream type.
-                    final StreamType streamType = streamTypeService.load(stepSource.getType());
+                    final StreamType streamType = stepSource.getType();
 
                     // Now process the data.
                     processStream(controller, feed.getName(), streamType, stepSource);
@@ -687,10 +683,10 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                         // Skip to the appropriate stream.
                         if (inputStream.getEntry(location.getStreamNo() - 1)) {
                             // Load the feed.
-                            final FeedDoc feed = feedService.load(streamSource.getStream().getFeed());
+                            final Feed feed = streamSource.getStream().getFeed();
 
                             // Get the stream type.
-                            final StreamType streamType = streamTypeService.load(streamSource.getType());
+                            final StreamType streamType = streamSource.getType();
 
                             // Get the appropriate encoding for the stream type.
                             final String encoding = feedProperties.getEncoding(feed.getName(), streamType);

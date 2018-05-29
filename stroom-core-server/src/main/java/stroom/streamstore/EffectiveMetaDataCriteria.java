@@ -17,7 +17,6 @@
 package stroom.streamstore;
 
 import stroom.entity.shared.Period;
-import stroom.docref.DocRef;
 
 import java.io.Serializable;
 
@@ -34,14 +33,14 @@ public class EffectiveMetaDataCriteria implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private Period effectivePeriod;
-    private DocRef feed;
+    private String feed;
     private String streamType;
 
-    public DocRef getFeed() {
+    public String getFeed() {
         return feed;
     }
 
-    public void setFeed(final DocRef feed) {
+    public void setFeed(final String feed) {
         this.feed = feed;
     }
 

@@ -62,6 +62,7 @@ public class V6_2_0_16__Feed implements JdbcMigration {
                     document.setUpdateUser(updUser);
                     document.setDescription(descrip);
                     document.setStreamType(streamTypeName);
+
                     document.setClassification(classification);
                     document.setEncoding(encoding);
                     document.setContextEncoding(contextEncoding);
@@ -85,6 +86,13 @@ public class V6_2_0_16__Feed implements JdbcMigration {
                         }
                     });
                 }
+            }
+        }
+
+        final String[] cols = new String[] {"DESCRIP", "FK_STRM_TP_ID", "CLS", "ENC", "CTX_ENC", "STAT", "RETEN_DAY_AGE", "REF"};
+        for (final String col : cols) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement("ALTER TABLE FD DROP COLUMN " + col + ";")) {
+                preparedStatement.execute();
             }
         }
     }

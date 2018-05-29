@@ -18,7 +18,7 @@
 package stroom.pipeline;
 
 import stroom.feed.FeedProperties;
-import stroom.streamstore.FdService;
+import stroom.streamstore.FeedService;
 import stroom.guice.PipelineScopeRunnable;
 import stroom.logging.StreamEventLog;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -45,7 +45,7 @@ class FetchDataHandler extends AbstractFetchDataHandler<FetchDataAction> {
 
     @Inject
     FetchDataHandler(final StreamStore streamStore,
-                     final FdService feedService,
+                     final FeedService feedService,
                      final FeedProperties feedProperties,
                      final StreamProcessorService streamProcessorService,
                      final Provider<FeedHolder> feedHolderProvider,

@@ -24,30 +24,25 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
-/**
- * <p>
- * Class used hold feed definitions.
- * </p>
- */
 @Entity
 @Table(name = "FD", uniqueConstraints = @UniqueConstraint(columnNames = {SQLNameConstants.NAME}))
-public class Fd extends NamedEntity {
+public class Feed extends NamedEntity {
     public static final String TABLE_NAME = SQLNameConstants.FEED;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
     public static final String ENTITY_TYPE = "Feed";
 
     private static final long serialVersionUID = -5311839753276287820L;
 
-    public Fd() {
+    public Feed() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public Fd(final String name) {
+    public Feed(final String name) {
         setName(name);
     }
 
-    public static Fd createStub(final long pk) {
-        final Fd feed = new Fd();
+    public static Feed createStub(final long pk) {
+        final Feed feed = new Feed();
         feed.setStub(pk);
         return feed;
     }

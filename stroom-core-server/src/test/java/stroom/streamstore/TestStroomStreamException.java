@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.feed;
+package stroom.streamstore;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import stroom.datafeed.StroomStatusCode;
+import stroom.datafeed.StroomStreamException;
 import stroom.util.test.StroomJUnit4ClassRunner;
 
 import java.io.IOException;

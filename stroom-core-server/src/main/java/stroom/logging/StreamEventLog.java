@@ -154,7 +154,7 @@ public class StreamEventLog {
             object.getData().add(EventLoggingUtil.createData("Feed", feed.getName()));
         }
         if (streamType != null) {
-            object.getData().add(EventLoggingUtil.createData("StreamType", streamType.getDisplayValue()));
+            object.getData().add(EventLoggingUtil.createData("StreamType", streamType.getName()));
         }
 
         return object;

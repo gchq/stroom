@@ -19,17 +19,17 @@ package stroom.importexport;
 
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.docref.DocRef;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.ExplorerNodeService;
 import stroom.explorer.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.streamstore.FdService;
+import stroom.feed.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.shared.ImportState;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.docref.DocRef;
 import stroom.resource.ResourceStore;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
@@ -47,7 +47,7 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
     @Inject
     private PipelineStore pipelineStore;
     @Inject
-    private FdService feedService;
+    private FeedStore feedStore;
     @Inject
     private CommonTestControl commonTestControl;
     @Inject
@@ -81,21 +81,21 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
         tran2 = pipelineStore.writeDocument(tran2);
 
         final DocRef referenceFeedRef = explorerService.create(FeedDoc.DOCUMENT_TYPE, FileSystemTestUtil.getUniqueTestString(), folder1, null);
-        final FeedDoc referenceFeed = feedService.readDocument(referenceFeedRef);
+        final FeedDoc referenceFeed = feedStore.readDocument(referenceFeedRef);
         referenceFeed.setDescription("Description");
-        feedService.save(referenceFeed);
+        feedStore.writeDocument(referenceFeed);
 
         final DocRef eventFeedRef = explorerService.create(FeedDoc.DOCUMENT_TYPE, FileSystemTestUtil.getUniqueTestString(), folder2, null);
-        FeedDoc eventFeed = feedService.readDocument(eventFeedRef);
+        FeedDoc eventFeed = feedStore.readDocument(eventFeedRef);
         eventFeed.setDescription("Description");
         // eventFeed.getReferenceFeed().add(referenceFeed);
-        eventFeed = feedService.save(eventFeed);
+        eventFeed = feedStore.writeDocument(eventFeed);
 
         final DocRef eventFeedChildRef = explorerService.create(FeedDoc.DOCUMENT_TYPE, FileSystemTestUtil.getUniqueTestString(), folder2child1, null);
-        final FeedDoc eventFeedChild = feedService.readDocument(eventFeedChildRef);
+        final FeedDoc eventFeedChild = feedStore.readDocument(eventFeedChildRef);
         eventFeedChild.setDescription("Description");
         // eventFeedChild.getReferenceFeed().add(referenceFeed);
-        feedService.save(eventFeedChild);
+        feedStore.writeDocument(eventFeedChild);
 
         final int startTranslationSize = pipelineStore.list().size();
         final int startFeedSize = commonTestControl.countEntity(FeedDoc.class);
@@ -116,7 +116,7 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
         pipelineStore.deleteDocument(tran2.getUuid());
         Assert.assertEquals(startTranslationSize - 1, pipelineStore.list().size());
 
-        feedService.delete(eventFeed);
+        feedStore.deleteDocument(eventFeedRef.getUuid());
         Assert.assertEquals(startFeedSize - 1, commonTestControl.countEntity(FeedDoc.class));
 
         // Import

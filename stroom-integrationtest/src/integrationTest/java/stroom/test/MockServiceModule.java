@@ -10,7 +10,6 @@ public class MockServiceModule extends AbstractModule {
         install(new stroom.docstore.memory.MemoryPersistenceModule());
         install(new stroom.entity.MockEntityModule());
         install(new stroom.explorer.MockExplorerModule());
-        install(new stroom.feed.MockFeedModule());
         install(new stroom.guice.PipelineScopeModule());
         install(new stroom.importexport.ImportExportModule());
         install(new stroom.index.MockIndexModule());

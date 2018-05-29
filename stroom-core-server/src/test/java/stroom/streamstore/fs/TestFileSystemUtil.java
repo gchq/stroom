@@ -19,9 +19,9 @@ package stroom.streamstore.fs;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.feed.shared.FeedDoc;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
+import stroom.streamstore.shared.Feed;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.date.DateUtil;
@@ -91,9 +91,11 @@ public class TestFileSystemUtil extends StroomUnitTest {
 
     @Test
     public void testCreateRootStreamFile() throws IOException {
-        final Stream md = Stream.createStreamForTesting(StreamType.EVENTS, FeedDoc.createStub(1), null,
-                DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z"));
+        final Stream md = new Stream();
         md.setId(1001001L);
+        md.setStreamType(StreamType.EVENTS);
+        md.setFeed(Feed.createStub(1));
+        md.setEffectiveMs(DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z"));
 
         final Path rootFile = FileSystemStreamTypeUtil.createRootStreamFile(buildTestVolume(), md, StreamType.EVENTS);
 
@@ -103,9 +105,11 @@ public class TestFileSystemUtil extends StroomUnitTest {
 
     @Test
     public void testCreateChildStreamFile() throws IOException {
-        final Stream md = Stream.createStreamForTesting(StreamType.RAW_EVENTS, FeedDoc.createStub(1), null,
-                DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z"));
+        final Stream md = new Stream();
         md.setId(1001001L);
+        md.setStreamType(StreamType.RAW_EVENTS);
+        md.setFeed(Feed.createStub(1));
+        md.setEffectiveMs(DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z"));
 
         final Path rootFile = FileSystemStreamTypeUtil.createRootStreamFile(buildTestVolume(), md,
                 StreamType.RAW_EVENTS);
@@ -240,24 +244,27 @@ public class TestFileSystemUtil extends StroomUnitTest {
 
     @Test
     public void testDirPath() {
-        final Stream data1 = Stream.createStreamForTesting(StreamType.EVENTS, FeedDoc.createStub(2), null,
-                DateUtil.parseNormalDateTimeString("2008-11-18T10:00:00.000Z"));
-        data1.setId(100100L);
+        final Stream md = new Stream();
+        md.setId(1001001L);
+        md.setStreamType(StreamType.EVENTS);
+        md.setFeed(Feed.createStub(2));
+        md.setEffectiveMs(DateUtil.parseNormalDateTimeString("2008-11-18T10:00:00.000Z"));
 
-        Assert.assertEquals("EVENTS/2008/11/18/100", FileSystemStreamTypeUtil.getDirectory(data1, StreamType.EVENTS));
-        Assert.assertEquals("2=100100", FileSystemStreamTypeUtil.getBaseName(data1));
+        Assert.assertEquals("EVENTS/2008/11/18/100", FileSystemStreamTypeUtil.getDirectory(md, StreamType.EVENTS));
+        Assert.assertEquals("2=100100", FileSystemStreamTypeUtil.getBaseName(md));
     }
 
     @Test
     public void testDirPath2() {
-        final Stream data1 = Stream.createStreamForTesting(StreamType.EVENTS, FeedDoc.createStub(2), null,
-                DateUtil.parseNormalDateTimeString("2008-11-18T10:00:00.000Z"));
-
-        data1.setId(1100100L);
+        final Stream md = new Stream();
+        md.setId(1100100L);
+        md.setStreamType(StreamType.EVENTS);
+        md.setFeed(Feed.createStub(2));
+        md.setEffectiveMs(DateUtil.parseNormalDateTimeString("2008-11-18T10:00:00.000Z"));
 
         Assert.assertEquals("EVENTS/2008/11/18/001/100",
-                FileSystemStreamTypeUtil.getDirectory(data1, StreamType.EVENTS));
-        Assert.assertEquals("2=001100100", FileSystemStreamTypeUtil.getBaseName(data1));
+                FileSystemStreamTypeUtil.getDirectory(md, StreamType.EVENTS));
+        Assert.assertEquals("2=001100100", FileSystemStreamTypeUtil.getBaseName(md));
     }
 
 }

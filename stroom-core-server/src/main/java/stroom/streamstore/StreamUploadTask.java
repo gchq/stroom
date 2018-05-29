@@ -16,17 +16,16 @@
 
 package stroom.streamstore;
 
-import stroom.docref.DocRef;
-import stroom.util.shared.VoidResult;
 import stroom.task.ServerTask;
+import stroom.util.shared.VoidResult;
 
 import java.nio.file.Path;
 
 public class StreamUploadTask extends ServerTask<VoidResult> {
     private String fileName;
     private Path file;
-    private DocRef feed;
-    private DocRef streamType;
+    private String feedName;
+    private String streamTypeName;
     private Long effectiveMs;
     private String metaData;
 
@@ -34,13 +33,13 @@ public class StreamUploadTask extends ServerTask<VoidResult> {
     }
 
     public StreamUploadTask(final String userToken, final String fileName, final Path file,
-                            final DocRef feed, final DocRef streamType, final Long effectiveMs,
+                            final String feedName, final String streamTypeName, final Long effectiveMs,
                             final String metaData) {
         super(null, userToken);
         this.fileName = fileName;
         this.file = file;
-        this.feed = feed;
-        this.streamType = streamType;
+        this.feedName = feedName;
+        this.streamTypeName = streamTypeName;
         this.metaData = metaData;
         this.effectiveMs = effectiveMs;
     }
@@ -49,12 +48,12 @@ public class StreamUploadTask extends ServerTask<VoidResult> {
         return file;
     }
 
-    public DocRef getFeed() {
-        return feed;
+    public String getFeedName() {
+        return feedName;
     }
 
-    public DocRef getStreamType() {
-        return streamType;
+    public String getStreamTypeName() {
+        return streamTypeName;
     }
 
     public Long getEffectiveMs() {

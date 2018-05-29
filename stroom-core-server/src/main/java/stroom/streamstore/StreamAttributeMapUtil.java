@@ -2,7 +2,7 @@ package stroom.streamstore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.shared.FeedDoc;
+import stroom.streamstore.shared.Feed;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamDataSource;
@@ -36,9 +36,9 @@ class StreamAttributeMapUtil {
                 attributeMap.put(StreamDataSource.PARENT_STREAM_ID, stream.getParentStreamId());
             }
             if (stream.getStreamType() != null) {
-                attributeMap.put(StreamDataSource.STREAM_TYPE, stream.getStreamType().getDisplayValue());
+                attributeMap.put(StreamDataSource.STREAM_TYPE, stream.getStreamType().getName());
             }
-            final FeedDoc feed = stream.getFeed();
+            final Feed feed = stream.getFeed();
             if (feed != null) {
                 attributeMap.put(StreamDataSource.FEED, feed.getName());
             }

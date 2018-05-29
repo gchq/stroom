@@ -4,7 +4,6 @@ import com.google.inject.AbstractModule;
 import stroom.dictionary.DictionaryModule;
 import stroom.docstore.memory.MemoryPersistenceModule;
 import stroom.entity.MockEntityModule;
-import stroom.feed.MockFeedModule;
 import stroom.properties.MockPropertyModule;
 import stroom.ruleset.RulesetModule;
 import stroom.security.MockSecurityContextModule;
@@ -14,7 +13,6 @@ import stroom.streamtask.statistic.MockMetaDataStatisticModule;
 public class TestBaseModule extends AbstractModule {
     @Override
     protected void configure() {
-        install(new MockFeedModule());
         install(new MockEntityModule());
         install(new DataFeedModule());
         install(new MockSecurityContextModule());
@@ -24,6 +22,5 @@ public class TestBaseModule extends AbstractModule {
         install(new MockMetaDataStatisticModule());
         install(new MockPropertyModule());
         install(new MockStreamStoreModule());
-        install(new MockFeedModule());
     }
 }

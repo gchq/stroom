@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
 import stroom.feed.MetaMapFactory;
 import stroom.feed.StroomHeaderArguments;
-import stroom.feed.StroomStreamException;
+import stroom.datafeed.StroomStreamException;
 import stroom.pipeline.destination.ByteCountOutputStream;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
