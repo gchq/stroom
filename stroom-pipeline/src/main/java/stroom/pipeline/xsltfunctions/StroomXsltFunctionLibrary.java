@@ -26,10 +26,10 @@ import stroom.pipeline.shared.data.PipelineReference;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StroomXSLTFunctionLibrary {
+public class StroomXsltFunctionLibrary {
     private final List<DelegateExtensionFunctionCall> callsInUse = new ArrayList<>();
 
-    public StroomXSLTFunctionLibrary(final Configuration config) {
+    public StroomXsltFunctionLibrary(final Configuration config) {
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
                 .functionName("bitmap-lookup")
                 .library(this)

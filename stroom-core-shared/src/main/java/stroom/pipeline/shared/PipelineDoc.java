@@ -18,35 +18,23 @@ package stroom.pipeline.shared;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
 import stroom.pipeline.shared.data.PipelineData;
-import stroom.docref.DocRef;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.XmlType;
 import java.util.Objects;
 
 /**
  * This entity is used to persist pipeline configuration.
  */
-@XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "parentPipeline"})
-@XmlRootElement(name = "pipeline")
-@XmlType(name = "PipelineDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "parentPipeline"})
 public class PipelineDoc extends Doc {
     private static final long serialVersionUID = 4519634323788508083L;
 
     public static final String DOCUMENT_TYPE = "Pipeline";
 
-    @XmlElement(name = "description")
     private String description;
-    @XmlElement(name = "parentPipeline")
     private DocRef parentPipeline;
-    @XmlTransient
     @JsonIgnore
     private PipelineData pipelineData;
 

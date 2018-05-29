@@ -24,20 +24,13 @@ import stroom.statistics.shared.common.EventStoreTimeIntervalEnum;
 import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.shared.common.StatisticRollUpType;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "statisticType", "rollUpType", "precision", "enabled", "config"})
-@XmlRootElement(name = "stroomStatsStore")
-@XmlType(name = "StroomStatsStoreDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "statisticType", "rollUpType", "precision", "enabled", "config"})
 public class StatisticStoreDoc extends Doc implements StatisticStore {
     public static final String DOCUMENT_TYPE = "StatisticStore";
 

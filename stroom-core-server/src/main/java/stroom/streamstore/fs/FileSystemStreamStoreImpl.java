@@ -21,6 +21,7 @@ package stroom.streamstore.fs;
 import event.logging.util.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
 import stroom.entity.StroomDatabaseInfo;
 import stroom.entity.StroomEntityManager;
@@ -29,6 +30,7 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityServiceException;
+import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.Period;
 import stroom.entity.util.EntityServiceLogUtil;
@@ -37,6 +39,7 @@ import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
 import stroom.entity.util.SqlUtil;
 import stroom.feed.FeedNameCache;
+import stroom.feed.FeedStore;
 import stroom.feed.MetaMap;
 import stroom.node.NodeCache;
 import stroom.node.VolumeService;
@@ -60,6 +63,7 @@ import stroom.streamstore.StreamTarget;
 import stroom.streamstore.StreamTypeService;
 import stroom.streamstore.shared.Feed;
 import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.shared.FindStreamTypeCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeCondition;
 import stroom.streamstore.shared.StreamAttributeConstants;
@@ -84,6 +88,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -127,6 +132,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     private final NodeCache nodeCache;
     private final StreamProcessorService streamProcessorService;
     private final FeedService feedService;
+    private final FeedStore feedStore;
     private final FeedNameCache feedNameCache;
     private final StreamTypeService streamTypeService;
     private final VolumeService volumeService;
@@ -177,8 +183,9 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
                               final StroomDatabaseInfo stroomDatabaseInfo,
                               final NodeCache nodeCache,
                               @Named("cachedStreamProcessorService") final StreamProcessorService streamProcessorService,
-                              @Named("cachedFeedService") final FeedService feedService,
+                              final FeedService feedService,
                               @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
+                              final FeedStore feedStore,
                               final FeedNameCache feedNameCache,
                               final VolumeService volumeService,
                               final StreamAttributeValueFlush streamAttributeValueFlush,
@@ -191,6 +198,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         this.nodeCache = nodeCache;
         this.streamProcessorService = streamProcessorService;
         this.feedService = feedService;
+        this.feedStore = feedStore;
         this.streamTypeService = streamTypeService;
         this.feedNameCache = feedNameCache;
         this.volumeService = volumeService;
@@ -561,7 +569,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             final Set<StreamVolume> lock = obtainLockForUpdate(stream);
             if (lock != null) {
                 final Stream dbStream = lock.iterator().next().getStream();
-                final StreamType streamType = streamTypeService.load(dbStream.getStreamType());
+                final StreamType streamType = dbStream.getStreamType();
                 final FileSystemStreamTarget target = FileSystemStreamTarget.create(dbStream, lock,
                         streamType, append);
 
@@ -857,8 +865,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
                 }
             }
             if (originalCriteria.getFetchSet().contains(StreamType.ENTITY_TYPE)) {
-                StreamType streamType = stream.getStreamType();
-                streamType = streamTypeService.load(streamType);
+                final StreamType streamType = stream.getStreamType();
                 stream.setStreamType(streamType);
             }
         }
@@ -907,10 +914,14 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     }
 
     private List<Feed> getRestrictedFeeds(final String requiredPermission) {
-        final FindFeedCriteria findFeedCriteria = new FindFeedCriteria();
-        findFeedCriteria.setRequiredPermission(requiredPermission);
-        findFeedCriteria.setPageRequest(null);
-        return feedService.find(findFeedCriteria);
+        final List<DocRef> docRefs = feedStore.list();
+        final List<Feed> filtered = new ArrayList<>();
+        for (final DocRef docRef : docRefs) {
+            if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), requiredPermission)) {
+                filtered.add(Feed.createStub(feedService.getId(docRef.getName())));
+            }
+        }
+        return filtered;
     }
 
     private void buildRawSelectSQL(final OldFindStreamCriteria queryCriteria, final SqlBuilder sql) {
@@ -1541,5 +1552,29 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             throw new EntityServiceException("Unable to find streamType '" + name + "'");
         }
         return streamType;
+    }
+
+    @Override
+    public List<String> getFeeds() {
+        final List<Feed> feeds = feedService.find(new FindFeedCriteria());
+        if (feeds == null) {
+            return Collections.emptyList();
+        }
+        return feeds.stream()
+                .map(NamedEntity::getName)
+                .sorted(Comparator.naturalOrder())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<String> getStreamTypes() {
+        final List<StreamType> streamTypes = streamTypeService.find(new FindStreamTypeCriteria());
+        if (streamTypes == null) {
+            return Collections.emptyList();
+        }
+        return streamTypes.stream()
+                .map(NamedEntity::getName)
+                .sorted(Comparator.naturalOrder())
+                .collect(Collectors.toList());
     }
 }

@@ -30,7 +30,7 @@ import javax.persistence.Transient;
 
 @Entity
 @Table(name = "XSLT")
-public class OldXSLT extends DocumentEntity implements Copyable<OldXSLT>, HasData {
+public class OldXslt extends DocumentEntity implements Copyable<OldXslt>, HasData {
     public static final String TABLE_NAME = SQLNameConstants.XSLT;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
     public static final String DATA = SQLNameConstants.DATA;
@@ -74,7 +74,7 @@ public class OldXSLT extends DocumentEntity implements Copyable<OldXSLT>, HasDat
     }
 
     @Override
-    public void copyFrom(final OldXSLT other) {
+    public void copyFrom(final OldXslt other) {
         this.description = other.description;
         this.data = other.data;
 

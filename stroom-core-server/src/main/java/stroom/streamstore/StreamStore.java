@@ -212,4 +212,8 @@ public interface StreamStore extends FindService<Stream, FindStreamCriteria>, Fi
      * Return the total period of streams in the stream store
      */
     Period getCreatePeriod();
+
+    List<String> getFeeds();
+
+    List<String> getStreamTypes();
 }

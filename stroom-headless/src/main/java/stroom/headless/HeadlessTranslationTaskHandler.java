@@ -36,7 +36,7 @@ import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.filter.RecordOutputFilter;
 import stroom.pipeline.filter.SchemaFilter;
 import stroom.pipeline.filter.XMLFilter;
-import stroom.pipeline.filter.XSLTFilter;
+import stroom.pipeline.filter.XsltFilter;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.FeedHolder;
@@ -84,7 +84,7 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
 
     @Inject
     HeadlessTranslationTaskHandler(final PipelineFactory pipelineFactory,
-                                   @Named("cachedFeedStore") final FeedStore feedStore,
+                                   final FeedStore feedStore,
                                    @Named("cachedPipelineStore") final PipelineStore pipelineStore,
                                    final MetaData metaData,
                                    final PipelineHolder pipelineHolder,
@@ -219,7 +219,7 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
             filter = getLastFilter(pipeline, SchemaFilter.class);
         }
         if (filter == null) {
-            filter = getLastFilter(pipeline, XSLTFilter.class);
+            filter = getLastFilter(pipeline, XsltFilter.class);
         }
         return filter;
     }

@@ -20,23 +20,21 @@ package stroom.streamstore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dictionary.DictionaryStore;
+import stroom.docref.DocRef;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.PermissionException;
 import stroom.entity.shared.Sort.Direction;
 import stroom.entity.util.SqlBuilder;
 import stroom.feed.MetaMap;
-import stroom.feed.shared.FeedDoc;
 import stroom.node.shared.Volume;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.policy.DataRetentionService;
-import stroom.docref.DocRef;
 import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.DataRetentionRule;
 import stroom.security.Security;
 import stroom.streamstore.fs.FileSystemStreamTypeUtil;
-import stroom.streamstore.shared.Feed;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
@@ -69,7 +67,6 @@ import java.util.function.Supplier;
 public class StreamAttributeMapServiceImpl implements StreamAttributeMapService {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeMapServiceImpl.class);
 
-    private final FeedService feedService;
     private final PipelineStore pipelineStore;
     private final StreamTypeService streamTypeService;
     private final StreamProcessorService streamProcessorService;
@@ -82,8 +79,7 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
     private final Security security;
 
     @Inject
-    StreamAttributeMapServiceImpl(@Named("cachedFeedService") final FeedService feedService,
-                                  @Named("cachedPipelineStore") final PipelineStore pipelineStore,
+    StreamAttributeMapServiceImpl(@Named("cachedPipelineStore") final PipelineStore pipelineStore,
                                   @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
                                   @Named("cachedStreamProcessorService") final StreamProcessorService streamProcessorService,
                                   final StreamStore streamStore,
@@ -93,7 +89,6 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
                                   final StreamAttributeKeyService streamAttributeKeyService,
                                   final StreamMaintenanceService streamMaintenanceService,
                                   final Security security) {
-        this.feedService = feedService;
         this.pipelineStore = pipelineStore;
         this.streamTypeService = streamTypeService;
         this.streamProcessorService = streamProcessorService;
@@ -239,15 +234,15 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
     }
 
     private void resolveRelations(final FindStreamAttributeMapCriteria criteria, final Stream stream, final Map<EntityRef, Optional<Object>> entityCache, final Map<DocRef, Optional<Object>> uuidCache) throws PermissionException {
-        if (stream.getFeed() != null && criteria.getFetchSet().contains(FeedDoc.DOCUMENT_TYPE)) {
-            final EntityRef ref = new EntityRef(Feed.ENTITY_TYPE, stream.getFeed().getId());
-            entityCache.computeIfAbsent(ref, key -> safeOptional(() -> feedService.loadById(key.id))).ifPresent(obj -> stream.setFeed((Feed) obj));
-        }
-
-        if (stream.getStreamType() != null && criteria.getFetchSet().contains(StreamType.ENTITY_TYPE)) {
-            final EntityRef ref = new EntityRef(StreamType.ENTITY_TYPE, stream.getStreamType().getId());
-            entityCache.computeIfAbsent(ref, key -> safeOptional(() -> streamTypeService.loadById(key.id))).ifPresent(obj -> stream.setStreamType((StreamType) obj));
-        }
+//        if (stream.getFeed() != null && criteria.getFetchSet().contains(FeedDoc.DOCUMENT_TYPE)) {
+//            final EntityRef ref = new EntityRef(Feed.ENTITY_TYPE, stream.getFeed().getId());
+//            entityCache.computeIfAbsent(ref, key -> safeOptional(() -> feedService.loadById(key.id))).ifPresent(obj -> stream.setFeed((Feed) obj));
+//        }
+//
+//        if (stream.getStreamType() != null && criteria.getFetchSet().contains(StreamType.ENTITY_TYPE)) {
+//            final EntityRef ref = new EntityRef(StreamType.ENTITY_TYPE, stream.getStreamType().getId());
+//            entityCache.computeIfAbsent(ref, key -> safeOptional(() -> streamTypeService.loadById(key.id))).ifPresent(obj -> stream.setStreamType((StreamType) obj));
+//        }
 
         if (stream.getStreamProcessor() != null && criteria.getFetchSet().contains(StreamProcessor.ENTITY_TYPE)) {
             // We will try and load the stream processor but will ignore

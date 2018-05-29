@@ -25,40 +25,38 @@ import stroom.test.CommonTestScenarioCreator;
 import stroom.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 
 public class TestFeedServiceCache extends AbstractCoreIntegrationTest {
     @Inject
-    @Named("cachedFeedService")
-    private FeedService cachedFeedService;
+    private FeedService feedService;
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
 
     @Test
     public void testSimple() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        final Feed feed = cachedFeedService.create(feedName);
+        final Feed feed = feedService.getOrCreate(feedName);
 
-        Feed loaded = cachedFeedService.loadByName(feedName);
+        final Feed loaded = feedService.get(feedName);
 
         Assert.assertNotNull(loaded);
         Assert.assertEquals(feed, loaded);
-        Assert.assertTrue(loaded == cachedFeedService.loadByName(feedName));
-        Assert.assertTrue(loaded == cachedFeedService.loadByName(feedName));
-        Assert.assertTrue(loaded == cachedFeedService.loadByName(feedName));
+        Assert.assertTrue(loaded == feedService.get(feedName));
+        Assert.assertTrue(loaded == feedService.get(feedName));
+        Assert.assertTrue(loaded == feedService.get(feedName));
 
-        loaded = cachedFeedService.loadById(feed.getId());
-        Assert.assertNotNull(loaded);
-        Assert.assertEquals(feed, loaded);
-        Assert.assertTrue(loaded == cachedFeedService.loadById(feed.getId()));
-        Assert.assertTrue(loaded == cachedFeedService.loadById(feed.getId()));
-        Assert.assertTrue(loaded == cachedFeedService.loadById(feed.getId()));
-
-        loaded = cachedFeedService.loadById(feed.getId());
-        Assert.assertNotNull(loaded);
-        Assert.assertEquals(feed, loaded);
-        Assert.assertTrue(loaded == cachedFeedService.loadById(feed.getId(), null));
-        Assert.assertTrue(loaded == cachedFeedService.loadById(feed.getId(), null));
-        Assert.assertTrue(loaded == cachedFeedService.loadById(feed.getId(), null));
+//        loaded = cachedFeedService.loadById(feed.getId());
+//        Assert.assertNotNull(loaded);
+//        Assert.assertEquals(feed, loaded);
+//        Assert.assertTrue(loaded == cachedFeedService.loadById(feed.getId()));
+//        Assert.assertTrue(loaded == cachedFeedService.loadById(feed.getId()));
+//        Assert.assertTrue(loaded == cachedFeedService.loadById(feed.getId()));
+//
+//        loaded = cachedFeedService.loadById(feed.getId());
+//        Assert.assertNotNull(loaded);
+//        Assert.assertEquals(feed, loaded);
+//        Assert.assertTrue(loaded == cachedFeedService.loadById(feed.getId(), null));
+//        Assert.assertTrue(loaded == cachedFeedService.loadById(feed.getId(), null));
+//        Assert.assertTrue(loaded == cachedFeedService.loadById(feed.getId(), null));
     }
 }

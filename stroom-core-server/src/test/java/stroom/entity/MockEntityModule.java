@@ -34,6 +34,11 @@ public class MockEntityModule extends AbstractModule {
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
 //        clearableBinder.addBinding().to(CachingEntityManager.class);
         clearableBinder.addBinding().to(DocumentPermissionCacheImpl.class);
+
+
+        // Needed by GenericEntityServiceImpl
+        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
+
 //
 //        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
 //        taskHandlerBinder.addBinding().to(EntityReferenceFindHandler.class);

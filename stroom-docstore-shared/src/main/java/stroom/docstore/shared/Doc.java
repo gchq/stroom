@@ -17,37 +17,23 @@
 
 package stroom.docstore.shared;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.SharedObject;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
-
+@JsonInclude(Include.NON_EMPTY)
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser"})
-@XmlRootElement(name = "doc")
-@XmlType(name = "Doc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser"})
-@XmlAccessorType(XmlAccessType.FIELD)
 public class Doc implements SharedObject {
     private static final long serialVersionUID = -7268601402378907741L;
 
-    @XmlElement(name = "type")
     private String type;
-    @XmlElement(name = "uuid")
     private String uuid;
-    @XmlElement(name = "name")
     private String name;
-    @XmlElement(name = "version")
     private String version;
-    @XmlElement(name = "createTime")
     private Long createTime;
-    @XmlElement(name = "updateTime")
     private Long updateTime;
-    @XmlElement(name = "createUser")
     private String createUser;
-    @XmlElement(name = "updateUser")
     private String updateUser;
 
     public Doc() {

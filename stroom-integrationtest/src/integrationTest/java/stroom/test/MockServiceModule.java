@@ -6,6 +6,7 @@ public class MockServiceModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new stroom.cache.PipelineCacheModule());
+        install(new stroom.feed.MockFeedModule());
         install(new stroom.dictionary.MockDictionaryModule());
         install(new stroom.docstore.memory.MemoryPersistenceModule());
         install(new stroom.entity.MockEntityModule());

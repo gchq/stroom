@@ -183,7 +183,7 @@ public class FileSystemStreamMaintenanceService
 
     @SuppressWarnings("unchecked")
 //    @Override
-        // @Transactional
+    // @Transactional
     public FileArrayList findAllStreamFile(final Stream stream) {
         final FileArrayList results = new FileArrayList();
         final HqlBuilder sql = new HqlBuilder();
@@ -196,7 +196,7 @@ public class FileSystemStreamMaintenanceService
 
         for (final StreamVolume volumeMatch : volumeMatches) {
             final Path rootFile = FileSystemStreamTypeUtil.createRootStreamFile(volumeMatch.getVolume(),
-                    volumeMatch.getStream(), streamTypeService.load(volumeMatch.getStream().getStreamType()));
+                    volumeMatch.getStream(), volumeMatch.getStream().getStreamType());
             if (Files.isRegularFile(rootFile)) {
                 results.add(rootFile);
                 results.addAll(FileSystemStreamTypeUtil.findAllDescendantStreamFileList(rootFile));

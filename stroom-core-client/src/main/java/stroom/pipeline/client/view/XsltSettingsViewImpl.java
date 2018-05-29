@@ -22,16 +22,16 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.pipeline.client.presenter.XSLTSettingsPresenter.XSLTSettingsView;
+import stroom.pipeline.client.presenter.XsltSettingsPresenter.XsltSettingsView;
 import stroom.util.shared.HasReadOnly;
 
-public class XSLTSettingsViewImpl extends ViewImpl implements XSLTSettingsView, HasReadOnly {
+public class XsltSettingsViewImpl extends ViewImpl implements XsltSettingsView, HasReadOnly {
     private final Widget widget;
     @UiField
     TextArea description;
 
     @Inject
-    public XSLTSettingsViewImpl(final Binder binder) {
+    public XsltSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -55,6 +55,6 @@ public class XSLTSettingsViewImpl extends ViewImpl implements XSLTSettingsView, 
         description.setEnabled(!readOnly);
     }
 
-    public interface Binder extends UiBinder<Widget, XSLTSettingsViewImpl> {
+    public interface Binder extends UiBinder<Widget, XsltSettingsViewImpl> {
     }
 }

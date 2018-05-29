@@ -18,33 +18,21 @@ package stroom.pipeline.shared;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import stroom.docref.HasDisplayValue;
 import stroom.docstore.shared.Doc;
 import stroom.entity.shared.HasData;
-import stroom.docref.HasDisplayValue;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.XmlType;
 import java.util.Objects;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "converterType"})
-@XmlRootElement(name = "textConverter")
-@XmlType(name = "TextConverterDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "converterType"})
 public class TextConverterDoc extends Doc implements HasData {
     private static final long serialVersionUID = 4519634323788508083L;
 
     public static final String DOCUMENT_TYPE = "TextConverter";
 
-    @XmlElement(name = "description")
     private String description;
-    @XmlTransient
     @JsonIgnore
     private String data;
-    @XmlElement(name = "converterType")
     private TextConverterType converterType = TextConverterType.NONE;
 
     public String getDescription() {

@@ -31,18 +31,18 @@ import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import javax.inject.Provider;
 
-public class XSLTPresenter extends DocumentEditTabPresenter<LinkTabPanelView, XsltDoc> {
+public class XsltPresenter extends DocumentEditTabPresenter<LinkTabPanelView, XsltDoc> {
     private static final TabData SETTINGS_TAB = new TabDataImpl("Settings");
     private static final TabData XSLT_TAB = new TabDataImpl("XSLT");
 
-    private final XSLTSettingsPresenter settingsPresenter;
+    private final XsltSettingsPresenter settingsPresenter;
     private final Provider<EditorPresenter> editorPresenterProvider;
 
     private EditorPresenter codePresenter;
 
     @Inject
-    public XSLTPresenter(final EventBus eventBus, final LinkTabPanelView view,
-                         final XSLTSettingsPresenter settingsPresenter, final Provider<EditorPresenter> editorPresenterProvider,
+    public XsltPresenter(final EventBus eventBus, final LinkTabPanelView view,
+                         final XsltSettingsPresenter settingsPresenter, final Provider<EditorPresenter> editorPresenterProvider,
                          final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
         this.settingsPresenter = settingsPresenter;

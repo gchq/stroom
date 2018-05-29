@@ -4,6 +4,7 @@ import com.google.inject.AbstractModule;
 import stroom.dictionary.DictionaryModule;
 import stroom.docstore.memory.MemoryPersistenceModule;
 import stroom.entity.MockEntityModule;
+import stroom.feed.FeedModule;
 import stroom.properties.MockPropertyModule;
 import stroom.ruleset.RulesetModule;
 import stroom.security.MockSecurityContextModule;
@@ -16,6 +17,7 @@ public class TestBaseModule extends AbstractModule {
         install(new MockEntityModule());
         install(new DataFeedModule());
         install(new MockSecurityContextModule());
+        install(new FeedModule());
         install(new RulesetModule());
         install(new DictionaryModule());
         install(new MemoryPersistenceModule());

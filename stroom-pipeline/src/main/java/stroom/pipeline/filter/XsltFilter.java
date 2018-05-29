@@ -27,7 +27,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import stroom.cache.StoredXsltExecutable;
-import stroom.cache.XSLTPool;
+import stroom.cache.XsltPool;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.SupportsCodeInjection;
 import stroom.pipeline.XsltStore;
@@ -71,12 +71,12 @@ import java.util.List;
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_SIMPLE,
         PipelineElementType.VISABILITY_STEPPING, PipelineElementType.ROLE_MUTATOR,
         PipelineElementType.ROLE_HAS_CODE}, icon = ElementIcons.XSLT)
-public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjection {
-    private static final Logger LOGGER = LoggerFactory.getLogger(XSLTFilter.class);
+public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjection {
+    private static final Logger LOGGER = LoggerFactory.getLogger(XsltFilter.class);
 
     private static final int DEFAULT_MAX_ELEMENTS = 1000000;
 
-    private final XSLTPool xsltPool;
+    private final XsltPool xsltPool;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final XsltStore xsltStore;
     private final StroomPropertyService stroomPropertyService;
@@ -108,7 +108,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     private int maxElementCount;
 
     @Inject
-    public XSLTFilter(final XSLTPool xsltPool,
+    public XsltFilter(final XsltPool xsltPool,
                       final ErrorReceiverProxy errorReceiverProxy,
                       final XsltStore xsltStore,
                       final StroomPropertyService stroomPropertyService,

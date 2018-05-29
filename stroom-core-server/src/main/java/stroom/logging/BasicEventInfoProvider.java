@@ -29,25 +29,10 @@ import stroom.entity.shared.Document;
 import stroom.entity.shared.NamedEntity;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.streamstore.FeedService;
-import stroom.streamstore.StreamTypeService;
 import stroom.streamstore.shared.Stream;
-
-import javax.inject.Inject;
-import javax.inject.Named;
 
 class BasicEventInfoProvider implements EventInfoProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(BasicEventInfoProvider.class);
-
-    private final StreamTypeService streamTypeService;
-    private final FeedService feedService;
-
-    @Inject
-    BasicEventInfoProvider(@Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
-                           @Named("cachedFeedService") final FeedService feedService) {
-        this.streamTypeService = streamTypeService;
-        this.feedService = feedService;
-    }
 
     @Override
     public BaseObject createBaseObject(final java.lang.Object obj) {

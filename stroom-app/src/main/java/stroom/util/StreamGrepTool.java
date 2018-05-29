@@ -21,17 +21,14 @@ import com.google.inject.Key;
 import com.google.inject.name.Names;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.streamstore.FeedService;
-import stroom.feed.shared.FeedDoc;
+import stroom.persist.PersistService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.persist.PersistService;
 import stroom.streamstore.StreamSource;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.StreamTypeService;
 import stroom.streamstore.fs.FileSystemStreamTypeUtil;
-import stroom.streamstore.shared.Feed;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
@@ -154,7 +151,7 @@ public class StreamGrepTool extends AbstractCommandLineTool {
 
         int count = 0;
         for (final Stream stream : results) {
-            final StreamType streamType = streamTypeService.load(stream.getStreamType());
+            final StreamType streamType = stream.getStreamType();
             count++;
             LOGGER.info("processing() - " + count + "/" + results.size() + " "
                     + FileSystemStreamTypeUtil.getDirectory(stream, streamType) + " "

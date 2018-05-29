@@ -21,35 +21,20 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docstore.shared.Doc;
 import stroom.entity.shared.HasData;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.XmlType;
 import java.util.Objects;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "namespaceURI", "systemId", "deprecated", "schemaGroup"})
-@XmlRootElement(name = "xmlSchema")
-@XmlType(name = "XmlSchemaDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "namespaceURI", "systemId", "deprecated", "schemaGroup"})
 public class XmlSchemaDoc extends Doc implements HasData {
     private static final long serialVersionUID = 4519634323788508083L;
 
     public static final String DOCUMENT_TYPE = "XMLSchema";
 
-    @XmlElement(name = "description")
     private String description;
-    @XmlElement(name = "namespaceURI")
     private String namespaceURI;
-    @XmlElement(name = "systemId")
     private String systemId;
-    @XmlTransient
     @JsonIgnore
     private String data;
-    @XmlElement(name = "deprecated")
     private boolean deprecated;
-    @XmlElement(name = "schemaGroup")
     private String schemaGroup;
 
     public String getDescription() {

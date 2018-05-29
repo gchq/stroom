@@ -20,11 +20,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
+import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.Period;
 import stroom.feed.MetaMap;
 import stroom.io.SeekableInputStream;
 import stroom.streamstore.shared.Feed;
 import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.shared.FindStreamTypeCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamDataSource;
@@ -41,11 +43,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Singleton
 public class MockStreamStore implements StreamStore, Clearable {
@@ -520,6 +525,30 @@ public class MockStreamStore implements StreamStore, Clearable {
             return null;
         }
         return streamType.getId();
+    }
+
+    @Override
+    public List<String> getFeeds() {
+        final List<Feed> feeds = feedService.find(new FindFeedCriteria());
+        if (feeds == null) {
+            return Collections.emptyList();
+        }
+        return feeds.stream()
+                .map(NamedEntity::getName)
+                .sorted(Comparator.naturalOrder())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<String> getStreamTypes() {
+        final List<StreamType> streamTypes = streamTypeService.find(new FindStreamTypeCriteria());
+        if (streamTypes == null) {
+            return Collections.emptyList();
+        }
+        return streamTypes.stream()
+                .map(NamedEntity::getName)
+                .sorted(Comparator.naturalOrder())
+                .collect(Collectors.toList());
     }
 
     private static class SeekableByteArrayInputStream extends ByteArrayInputStream implements SeekableInputStream {

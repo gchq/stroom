@@ -20,24 +20,17 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
-import stroom.entity.FindService;
 import stroom.explorer.ExplorerActionHandler;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.ImportExportActionHandler;
-import stroom.streamstore.FeedService;
-import stroom.streamstore.FeedServiceImpl;
 import stroom.task.TaskHandler;
 
 public class FeedModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(FeedService.class).to(FeedServiceImpl.class);
         bind(FeedStore.class).to(FeedStoreImpl.class);
         bind(FeedNameCache.class).to(FeedNameCacheImpl.class);
         bind(RemoteFeedService.class).annotatedWith(Names.named("remoteFeedService")).to(RemoteFeedServiceImpl.class);
-
-        // TODO : @66 FIX PLACES THAT USE PIPELINE CACHING
-        bind(FeedStore.class).annotatedWith(Names.named("cachedFeedStore")).to(FeedStoreImpl.class);
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.feed.FetchSupportedEncodingsActionHandler.class);
@@ -49,10 +42,10 @@ public class FeedModule extends AbstractModule {
         importExportActionHandlerBinder.addBinding().to(FeedStoreImpl.class);
 
         final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
-        entityServiceByTypeBinder.addBinding(FeedDoc.DOCUMENT_TYPE).to(FeedServiceImpl.class);
+        entityServiceByTypeBinder.addBinding(FeedDoc.DOCUMENT_TYPE).to(FeedStoreImpl.class);
 
-        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
-        findServiceBinder.addBinding().to(FeedServiceImpl.class);
+//        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
+//        findServiceBinder.addBinding().to(FeedServiceImpl.class);
     }
 //
 //    @Provides

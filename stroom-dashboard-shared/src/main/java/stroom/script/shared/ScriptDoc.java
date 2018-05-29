@@ -18,35 +18,22 @@ package stroom.script.shared;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
 import stroom.entity.shared.HasData;
-import stroom.docref.DocRef;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.XmlType;
 import java.util.List;
 import java.util.Objects;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "dependencies"})
-@XmlRootElement(name = "script")
-@XmlType(name = "ScriptDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "dependencies"})
 public class ScriptDoc extends Doc implements HasData {
     private static final long serialVersionUID = 4519634323788508083L;
 
     public static final String DOCUMENT_TYPE = "Script";
 
-    @XmlElement(name = "description")
     private String description;
-    @XmlElementWrapper(name = "dependencies")
-    @XmlElement(name = "script")
     private List<DocRef> dependencies;
-    @XmlTransient
+
     @JsonIgnore
     private String data;
 

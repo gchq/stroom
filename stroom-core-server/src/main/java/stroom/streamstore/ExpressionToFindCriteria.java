@@ -55,7 +55,7 @@ public class ExpressionToFindCriteria {
             String.format("%s [%s]", err, OP_STACK_DISPLAY.apply(ops));
 
     @Inject
-    public ExpressionToFindCriteria(@Named("cachedFeedService") final FeedService feedService,
+    public ExpressionToFindCriteria(final FeedService feedService,
                                     @Named("cachedPipelineStore") final PipelineStore pipelineStore,
                                     final DictionaryStore dictionaryStore,
                                     final StreamAttributeKeyService streamAttributeKeyService,
@@ -248,7 +248,7 @@ public class ExpressionToFindCriteria {
                                     field,
                                     getAllValues(terms),
                                     streamTypeName -> {
-                                        final StreamType streamType = streamTypeService.loadByName(streamTypeName);
+                                        final StreamType streamType = streamTypeService.get(streamTypeName);
                                         return streamType.getId();
                                     }));
                     break;

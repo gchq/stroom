@@ -25,7 +25,7 @@ import stroom.pool.PoolItem;
 
 import java.util.List;
 
-public interface XSLTPool extends Pool<XsltDoc, StoredXsltExecutable> {
+public interface XsltPool extends Pool<XsltDoc, StoredXsltExecutable> {
     PoolItem<StoredXsltExecutable> borrowConfiguredTemplate(
             XsltDoc k, ErrorReceiver errorReceiver, LocationFactory locationFactory,
             List<PipelineReference> pipelineReferences, boolean usePool);

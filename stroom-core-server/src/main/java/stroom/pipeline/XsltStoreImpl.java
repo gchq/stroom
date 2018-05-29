@@ -166,7 +166,7 @@ class XsltStoreImpl implements XsltStore {
                         document = readDocument(docRef);
 
                     } else {
-                        final OldXSLT oldXslt = new OldXSLT();
+                        final OldXslt oldXslt = new OldXslt();
                         final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
                         legacySerialiser.performImport(oldXslt, dataMap);
 

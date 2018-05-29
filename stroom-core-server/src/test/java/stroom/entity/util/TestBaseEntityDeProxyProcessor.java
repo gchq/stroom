@@ -52,7 +52,7 @@ public class TestBaseEntityDeProxyProcessor extends StroomUnitTest {
             final Object proxy = Proxy.newProxyInstance(this.getClass().getClassLoader(),
                     new Class<?>[]{LazyInitializer.class}, (proxy1, method, args) -> {
                         if (method.getName().equals("getEntityName")) {
-                            return FeedDoc.class.getName();
+                            return StreamType.class.getName();
                         }
                         return null;
                     });

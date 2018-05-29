@@ -21,21 +21,12 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docstore.shared.Doc;
 import stroom.statistics.shared.StatisticType;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.XmlType;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "statisticType", "rollUpType", "precision", "enabled", "config"})
-@XmlRootElement(name = "stroomStatsStore")
-@XmlType(name = "StroomStatsStoreDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "statisticType", "rollUpType", "precision", "enabled", "config"})
 public class StroomStatsStoreDoc extends Doc {
     private static final long serialVersionUID = -1667372785365881297L;
 
@@ -43,17 +34,11 @@ public class StroomStatsStoreDoc extends Doc {
 
     private static final EventStoreTimeIntervalEnum DEFAULT_PRECISION_INTERVAL = EventStoreTimeIntervalEnum.HOUR;
 
-    @XmlElement(name = "description")
     private String description;
-    @XmlElement(name = "statisticType")
     private StatisticType statisticType = StatisticType.COUNT;
-    @XmlElement(name = "statisticRollUpType")
     private StatisticRollUpType statisticRollUpType = StatisticRollUpType.NONE;
-    @XmlElement(name = "precision")
     private EventStoreTimeIntervalEnum precision;
-    @XmlElement(name = "enabled")
     private Boolean enabled;
-    @XmlElement(name = "config")
     private StroomStatsStoreEntityData config;
 
     public StroomStatsStoreDoc() {
@@ -114,13 +99,11 @@ public class StroomStatsStoreDoc extends Doc {
         this.config = statisticDataSourceDataObject;
     }
 
-    @XmlTransient
     @JsonIgnore
     public int getStatisticFieldCount() {
         return config == null ? 0 : config.getStatisticFields().size();
     }
 
-    @XmlTransient
     @JsonIgnore
     public List<StatisticField> getStatisticFields() {
         if (config != null) {
@@ -130,7 +113,6 @@ public class StroomStatsStoreDoc extends Doc {
         }
     }
 
-    @XmlTransient
     @JsonIgnore
     public Set<CustomRollUpMask> getCustomRollUpMasks() {
         if (config != null) {

@@ -17,21 +17,14 @@
 package stroom.index.shared;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docstore.shared.Doc;
 import stroom.docref.HasDisplayValue;
+import stroom.docstore.shared.Doc;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "maxDocsPerShard", "partitionBy", "partitionSize", "shardsPerPartition", "retentionDayAge", "indexFields"})
-@XmlRootElement(name = "index")
-@XmlType(name = "IndexDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "maxDocsPerShard", "partitionBy", "partitionSize", "shardsPerPartition", "retentionDayAge", "indexFields"})
 public class IndexDoc extends Doc {
     private static final long serialVersionUID = 2648729644398564919L;
 

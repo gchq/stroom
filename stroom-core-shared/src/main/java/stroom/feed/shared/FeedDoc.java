@@ -16,22 +16,15 @@
 
 package stroom.feed.shared;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.HasDisplayValue;
 import stroom.docstore.shared.Doc;
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
+import stroom.streamstore.shared.StreamType;
 
-import javax.persistence.Transient;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
-
-@XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "classification", "encoding", "contextEncoding", "retentionDayAge", "reference", "streamType", "feedStatus"})
-@XmlRootElement(name = "feed")
-@XmlType(name = "FeedDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "classification", "encoding", "contextEncoding", "retentionDayAge", "reference", "streamType", "feedStatus"})
 public class FeedDoc extends Doc {
     public static final String DOCUMENT_TYPE = "Feed";
 
@@ -44,7 +37,7 @@ public class FeedDoc extends Doc {
     private Integer retentionDayAge;
     private boolean reference;
     private String streamType;
-    private FeedStatus feedStatus = FeedStatus.RECEIVE;
+    private FeedStatus feedStatus;
 
     public FeedDoc() {
         // Default constructor necessary for GWT serialisation.
@@ -63,6 +56,14 @@ public class FeedDoc extends Doc {
     }
 
     public String getStreamType() {
+        if (streamType == null) {
+            if (reference) {
+                streamType = StreamType.RAW_REFERENCE.getName();
+            } else {
+                streamType = StreamType.RAW_EVENTS.getName();
+            }
+        }
+
         return streamType;
     }
 
@@ -87,6 +88,10 @@ public class FeedDoc extends Doc {
     }
 
     public FeedStatus getStatus() {
+        if (feedStatus == null) {
+            return FeedStatus.RECEIVE;
+        }
+
         return feedStatus;
     }
 
@@ -94,7 +99,7 @@ public class FeedDoc extends Doc {
         this.feedStatus = feedStatus;
     }
 
-    @Transient
+    @JsonIgnore
     public boolean isReceive() {
         return !FeedStatus.REJECT.equals(getStatus());
     }

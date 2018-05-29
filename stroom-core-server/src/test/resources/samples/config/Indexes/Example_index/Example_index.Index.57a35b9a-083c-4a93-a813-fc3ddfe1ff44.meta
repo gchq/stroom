@@ -3,7 +3,6 @@
   "uuid" : "57a35b9a-083c-4a93-a813-fc3ddfe1ff44",
   "name" : "Example index",
   "version" : "c24135b6-74c7-443d-a2b3-77e1c8b92891",
-  "description" : "",
   "maxDocsPerShard" : 1000000000,
   "partitionBy" : "MONTH",
   "partitionSize" : 1,

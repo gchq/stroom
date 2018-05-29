@@ -20,23 +20,14 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docstore.shared.Doc;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.XmlType;
 import java.util.Objects;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser"})
-@XmlRootElement(name = "dashboard")
-@XmlType(name = "DashboardDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser"})
 public class DashboardDoc extends Doc {
     private static final long serialVersionUID = 3598996730392094523L;
 
     public static final String DOCUMENT_TYPE = "Dashboard";
 
-    @XmlTransient
     @JsonIgnore
     private DashboardConfig dashboardConfig;
 

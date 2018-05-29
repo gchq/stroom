@@ -19,6 +19,7 @@ package stroom.pipeline.factory;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.Clearable;
+import stroom.pipeline.filter.XsltFilter;
 
 public class FactoryModule extends AbstractModule {
     @Override
@@ -41,7 +42,7 @@ public class FactoryModule extends AbstractModule {
         elementBinder.addBinding().to(stroom.pipeline.filter.SchemaFilterSplit.class);
         elementBinder.addBinding().to(stroom.pipeline.filter.SplitFilter.class);
         elementBinder.addBinding().to(stroom.pipeline.filter.TestFilter.class);
-        elementBinder.addBinding().to(stroom.pipeline.filter.XSLTFilter.class);
+        elementBinder.addBinding().to(XsltFilter.class);
         elementBinder.addBinding().to(stroom.pipeline.parser.CombinedParser.class);
         elementBinder.addBinding().to(stroom.pipeline.parser.DSParser.class);
         elementBinder.addBinding().to(stroom.pipeline.parser.JSONParser.class);

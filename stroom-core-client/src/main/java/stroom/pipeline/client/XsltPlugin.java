@@ -26,16 +26,16 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.pipeline.client.presenter.XSLTPresenter;
+import stroom.pipeline.client.presenter.XsltPresenter;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.docref.DocRef;
 
-public class XSLTPlugin extends DocumentPlugin<XsltDoc> {
-    private final Provider<XSLTPresenter> editorProvider;
+public class XsltPlugin extends DocumentPlugin<XsltDoc> {
+    private final Provider<XsltPresenter> editorProvider;
 
     @Inject
-    public XSLTPlugin(final EventBus eventBus,
-                      final Provider<XSLTPresenter> editorProvider,
+    public XsltPlugin(final EventBus eventBus,
+                      final Provider<XsltPresenter> editorProvider,
                       final ClientDispatchAsync dispatcher,
                       final ContentManager contentManager,
                       final DocumentPluginEventManager entityPluginEventManager) {

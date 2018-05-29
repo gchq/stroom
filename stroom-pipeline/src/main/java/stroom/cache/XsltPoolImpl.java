@@ -31,7 +31,7 @@ import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.pipeline.xsltfunctions.StroomXSLTFunctionLibrary;
+import stroom.pipeline.xsltfunctions.StroomXsltFunctionLibrary;
 import stroom.pool.AbstractDocPool;
 import stroom.pool.PoolItem;
 import stroom.security.Security;
@@ -48,14 +48,14 @@ import javax.xml.transform.stream.StreamSource;
 import java.util.List;
 
 @Singleton
-class XSLTPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implements XSLTPool {
-    private static final Logger LOGGER = LoggerFactory.getLogger(XSLTPoolImpl.class);
+class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implements XsltPool {
+    private static final Logger LOGGER = LoggerFactory.getLogger(XsltPoolImpl.class);
 
     private final URIResolver uriResolver;
     private final StroomBeanStore beanStore;
 
     @Inject
-    XSLTPoolImpl(final CacheManager cacheManager,
+    XsltPoolImpl(final CacheManager cacheManager,
                  final DocumentPermissionCache documentPermissionCache,
                  final Security security,
                  final SecurityContext securityContext,
@@ -97,7 +97,7 @@ class XSLTPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
         }
 
         XsltExecutable xsltExecutable = null;
-        StroomXSLTFunctionLibrary functionLibrary = null;
+        StroomXsltFunctionLibrary functionLibrary = null;
         final StoredErrorReceiver errorReceiver = new StoredErrorReceiver();
         final LocationFactory locationFactory = new DefaultLocationFactory();
         final ErrorListener errorListener = new ErrorListenerAdaptor(getClass().getSimpleName(), locationFactory,
@@ -108,7 +108,7 @@ class XSLTPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
             final Processor processor = new Processor(false);
 
             // Register the Stroom XSLT extension functions.
-            functionLibrary = new StroomXSLTFunctionLibrary(processor.getUnderlyingConfiguration());
+            functionLibrary = new StroomXsltFunctionLibrary(processor.getUnderlyingConfiguration());
 
             final XsltCompiler xsltCompiler = processor.newXsltCompiler();
             xsltCompiler.setErrorListener(errorListener);

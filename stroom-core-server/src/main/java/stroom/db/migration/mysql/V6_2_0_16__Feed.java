@@ -33,7 +33,7 @@ public class V6_2_0_16__Feed implements JdbcMigration {
     public void migrate(final Connection connection) throws Exception {
         final FeedSerialiser serialiser = new FeedSerialiser();
 
-        try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT f.CRT_MS, f.CRT_USER, f.UPD_MS, f.UPD_USER, f.NAME, f.UUID, f.DESCRIP, st.NAME, f.CLS, f.ENC, f.CTX_ENC, f.STAT, f.RETEN_DAY_AGE, f.REF FROM FD f OUTER JOIN STRM_TP st ON (st.ID = f.FK_STRM_TP_ID)")) {
+        try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT f.CRT_MS, f.CRT_USER, f.UPD_MS, f.UPD_USER, f.NAME, f.UUID, f.DESCRIP, st.NAME, f.CLS, f.ENC, f.CTX_ENC, f.STAT, f.RETEN_DAY_AGE, f.REF FROM FD f LEFT OUTER JOIN STRM_TP st ON (st.ID = f.FK_STRM_TP_ID)")) {
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
                     final Long crtMs = resultSet.getLong(1);
@@ -89,6 +89,9 @@ public class V6_2_0_16__Feed implements JdbcMigration {
             }
         }
 
+        try (final PreparedStatement preparedStatement = connection.prepareStatement("ALTER TABLE FD DROP FOREIGN KEY FD_FK_STRM_TP_ID;")) {
+            preparedStatement.execute();
+        }
         final String[] cols = new String[] {"DESCRIP", "FK_STRM_TP_ID", "CLS", "ENC", "CTX_ENC", "STAT", "RETEN_DAY_AGE", "REF"};
         for (final String col : cols) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement("ALTER TABLE FD DROP COLUMN " + col + ";")) {

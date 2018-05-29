@@ -19,28 +19,18 @@ package stroom.ruleset.shared;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.datasource.api.v2.DataSourceField;
-import stroom.docstore.shared.Doc;
 import stroom.docref.SharedObject;
+import stroom.docstore.shared.Doc;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
 import java.util.List;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "fields", "rules"})
-@XmlRootElement(name = "dataReceiptPolicy")
-@XmlType(name = "DataReceiptPolicy", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "fields", "rules"})
 public class RuleSet extends Doc implements SharedObject {
     private static final long serialVersionUID = -7268301402378907741L;
 
     public static final String DOCUMENT_TYPE = "RuleSet";
 
-    @XmlElement(name = "fields")
     private List<DataSourceField> fields;
-    @XmlElement(name = "rule")
     private List<Rule> rules;
 
     public RuleSet() {

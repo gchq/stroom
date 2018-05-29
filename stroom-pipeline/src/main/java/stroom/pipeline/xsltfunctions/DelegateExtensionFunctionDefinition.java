@@ -23,7 +23,7 @@ import net.sf.saxon.value.SequenceType;
 import stroom.xml.NamespaceConstants;
 
 class DelegateExtensionFunctionDefinition extends ExtensionFunctionDefinition {
-    private transient final StroomXSLTFunctionLibrary library;
+    private transient final StroomXsltFunctionLibrary library;
     private final String functionName;
     private final int minArgs;
     private final int maxArgs;
@@ -34,7 +34,7 @@ class DelegateExtensionFunctionDefinition extends ExtensionFunctionDefinition {
 
     private DelegateExtensionFunctionCall functionCall;
 
-    DelegateExtensionFunctionDefinition(final StroomXSLTFunctionLibrary library, final String functionName,
+    DelegateExtensionFunctionDefinition(final StroomXsltFunctionLibrary library, final String functionName,
                                         final int minArgs, final int maxArgs, final SequenceType[] argTypes, final SequenceType resultType,
                                         final Class<?> delegateClass) {
         this.functionName = functionName;
@@ -88,7 +88,7 @@ class DelegateExtensionFunctionDefinition extends ExtensionFunctionDefinition {
     }
 
     public static class Builder {
-        private StroomXSLTFunctionLibrary library;
+        private StroomXsltFunctionLibrary library;
         private String functionName;
         private int minArgs = 0;
         private int maxArgs = 0;
@@ -100,7 +100,7 @@ class DelegateExtensionFunctionDefinition extends ExtensionFunctionDefinition {
 
         }
 
-        public Builder library(final StroomXSLTFunctionLibrary value) {
+        public Builder library(final StroomXsltFunctionLibrary value) {
             this.library = value;
             return this;
         }

@@ -187,8 +187,12 @@ public class FeedStoreImpl implements FeedStore {
                         document.setContextEncoding(oldFeed.getContextEncoding());
                         document.setRetentionDayAge(oldFeed.getRetentionDayAge());
                         document.setReference(oldFeed.isReference());
-                        document.setStreamType(oldFeed.getStreamType().getName());
-                        document.setStatus(FeedDoc.FeedStatus.valueOf(oldFeed.getStatus().name()));
+                        if (oldFeed.getStreamType() != null) {
+                            document.setStreamType(oldFeed.getStreamType().getName());
+                        }
+                        if (oldFeed.getStatus() != null) {
+                            document.setStatus(FeedDoc.FeedStatus.valueOf(oldFeed.getStatus().name()));
+                        }
                     }
 
                     result = serialiser.write(document);

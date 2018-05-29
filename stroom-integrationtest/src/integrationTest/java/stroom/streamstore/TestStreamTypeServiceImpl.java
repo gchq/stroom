@@ -18,6 +18,7 @@
 package stroom.streamstore;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import stroom.streamstore.shared.FindStreamTypeCriteria;
 import stroom.streamstore.shared.StreamType;
@@ -28,23 +29,24 @@ import stroom.util.test.FileSystemTestUtil;
 import javax.inject.Inject;
 import java.io.IOException;
 
+@Ignore
 public class TestStreamTypeServiceImpl extends AbstractCoreIntegrationTest {
-    @Inject
-    private StreamTypeService streamTypeService;
-
-    @Test
-    public void testSimple() throws IOException {
-        final StreamType newStreamType = new StreamType();
-        newStreamType.setName(FileSystemTestUtil.getUniqueTestString());
-        newStreamType.setPath(FileSystemTestUtil.getUniqueTestString());
-        newStreamType.setExtension(FileSystemTestUtil.getUniqueTestString());
-        newStreamType.setPurpose(Purpose.PROCESSED);
-
-        streamTypeService.save(newStreamType);
-
-        for (final StreamType streamType : streamTypeService.find(new FindStreamTypeCriteria())) {
-            final StreamType reload = streamTypeService.load(streamType);
-            Assert.assertNotNull(reload);
-        }
-    }
+//    @Inject
+//    private StreamTypeService streamTypeService;
+//
+//    @Test
+//    public void testSimple() throws IOException {
+//        final StreamType newStreamType = new StreamType();
+//        newStreamType.setName(FileSystemTestUtil.getUniqueTestString());
+//        newStreamType.setPath(FileSystemTestUtil.getUniqueTestString());
+//        newStreamType.setExtension(FileSystemTestUtil.getUniqueTestString());
+//        newStreamType.setPurpose(Purpose.PROCESSED);
+//
+//        streamTypeService.save(newStreamType);
+//
+//        for (final StreamType streamType : streamTypeService.find(new FindStreamTypeCriteria())) {
+//            final StreamType reload = streamTypeService.load(streamType);
+//            Assert.assertNotNull(reload);
+//        }
+//    }
 }

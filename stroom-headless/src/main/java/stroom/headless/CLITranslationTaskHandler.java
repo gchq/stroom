@@ -80,7 +80,7 @@ class CLITranslationTaskHandler extends AbstractTaskHandler<CLITranslationTask, 
 
     @Inject
     CLITranslationTaskHandler(final PipelineFactory pipelineFactory,
-                              @Named("cachedFeedStore") final FeedStore feedStore,
+                              final FeedStore feedStore,
                               @Named("cachedPipelineStore") final PipelineStore pipelineStore,
                               final MetaData metaData,
                               final PipelineHolder pipelineHolder,

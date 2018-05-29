@@ -229,7 +229,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
                 for (long streamId = startStreamId + 1; streamId <= endStreamId; streamId++) {
                     final Stream stream = streamStore.loadStreamById(streamId);
-                    final StreamType streamType = streamTypeService.load(stream.getStreamType());
+                    final StreamType streamType = stream.getStreamType();
                     if (streamType.isStreamTypeProcessed()) {
                         processedStreams.add(stream);
                     }

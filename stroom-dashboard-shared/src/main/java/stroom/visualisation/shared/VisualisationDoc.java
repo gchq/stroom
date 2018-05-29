@@ -18,33 +18,21 @@ package stroom.visualisation.shared;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docstore.shared.Doc;
 import stroom.docref.DocRef;
+import stroom.docstore.shared.Doc;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.XmlType;
 import java.util.Objects;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "functionName", "scriptRef"})
-@XmlRootElement(name = "visualisation")
-@XmlType(name = "VisualisationDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "functionName", "scriptRef"})
 public class VisualisationDoc extends Doc {
     private static final long serialVersionUID = 4519634323788508083L;
 
     public static final String DOCUMENT_TYPE = "Visualisation";
 
-    @XmlElement(name = "description")
     private String description;
-    @XmlElement(name = "functionName")
     private String functionName;
-    @XmlElement(name = "scriptRef")
     private DocRef scriptRef;
-    @XmlTransient
+
     @JsonIgnore
     private String settings;
 

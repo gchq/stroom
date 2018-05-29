@@ -22,7 +22,7 @@ import stroom.pipeline.filter.RecordOutputFilter;
 import stroom.pipeline.filter.SchemaFilter;
 import stroom.pipeline.filter.SchemaFilterSplit;
 import stroom.pipeline.filter.SplitFilter;
-import stroom.pipeline.filter.XSLTFilter;
+import stroom.pipeline.filter.XsltFilter;
 import stroom.pipeline.parser.CombinedParser;
 import stroom.pipeline.parser.DSParser;
 import stroom.pipeline.parser.JSONParser;
@@ -52,7 +52,7 @@ public class MockPipelineElementRegistryFactory implements ElementRegistryFactor
         elementClasses.add(XMLParser.class);
         elementClasses.add(RecordCountFilter.class);
         elementClasses.add(SplitFilter.class);
-        elementClasses.add(XSLTFilter.class);
+        elementClasses.add(XsltFilter.class);
         elementClasses.add(SchemaFilterSplit.class);
         elementClasses.add(RecordOutputFilter.class);
         elementClasses.add(XMLWriter.class);
@@ -93,8 +93,8 @@ public class MockPipelineElementRegistryFactory implements ElementRegistryFactor
             if (elementClass.equals(SplitFilter.class)) {
                 return (T) new SplitFilter();
             }
-            if (elementClass.equals(XSLTFilter.class)) {
-                return (T) new XSLTFilter(null, null, null, null, null, null, null);
+            if (elementClass.equals(XsltFilter.class)) {
+                return (T) new XsltFilter(null, null, null, null, null, null, null);
             }
             if (elementClass.equals(SchemaFilterSplit.class)) {
                 return (T) new SchemaFilterSplit(

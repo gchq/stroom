@@ -25,14 +25,14 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
-import stroom.pipeline.client.presenter.XSLTSettingsPresenter.XSLTSettingsView;
+import stroom.pipeline.client.presenter.XsltSettingsPresenter.XsltSettingsView;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.docref.DocRef;
 import stroom.security.client.ClientSecurityContext;
 
-public class XSLTSettingsPresenter extends DocumentSettingsPresenter<XSLTSettingsView, XsltDoc> {
+public class XsltSettingsPresenter extends DocumentSettingsPresenter<XsltSettingsView, XsltDoc> {
     @Inject
-    public XSLTSettingsPresenter(final EventBus eventBus, final XSLTSettingsView view,
+    public XsltSettingsPresenter(final EventBus eventBus, final XsltSettingsView view,
                                  final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
 
@@ -63,7 +63,7 @@ public class XSLTSettingsPresenter extends DocumentSettingsPresenter<XSLTSetting
         xslt.setDescription(getView().getDescription().getText().trim());
     }
 
-    public interface XSLTSettingsView extends View {
+    public interface XsltSettingsView extends View {
         TextArea getDescription();
     }
 }
