@@ -30,9 +30,10 @@ import {
 } from 'semantic-ui-react';
 
 import {
-    withNamedBoolean,
-    setNamedBoolean
-} from 'components/NamedBoolean';
+    expressionEditorCreated,
+    expressionEditorDestroyed,
+    expressionSetEditable
+} from './redux';
 
 import './ExpressionBuilder.css'
 
@@ -69,65 +70,76 @@ let lineElementCreators = {
     'downRightElbow' : downRightElbow
 }
 
-const ExpressionBuilder = ({expressionId, 
-                            dataSource, 
-                            expression, 
-                            isEditableSystemSet, 
-                            isEditableUserSet,
-                            setNamedBoolean}) => {
-                                
-    let roOperator = (
-        <ROExpressionOperator 
-            dataSource={dataSource}
-            expressionId={expressionId}
-            isRoot={true}
-            isEnabled={true}
-            operator={expression}
-            />
-    )
-
-    let editOperator = (
-        <ExpressionOperator 
-                    dataSource={dataSource}
-                    expressionId={expressionId}
-                    isRoot={true}
-                    isEnabled={true}
-                    operator={expression}  />
-    )
-
-    let theComponent;
-    if (isEditableSystemSet) {
-        theComponent = (
-            <div>
-                <Checkbox 
-                    label='Edit Mode'
-                    toggle
-                    checked={isEditableUserSet} 
-                    onChange={() => setNamedBoolean(expressionId, !isEditableUserSet)} 
-                    />
-                {isEditableUserSet ? editOperator : roOperator}
-            </div>
-        )
-    } else {
-        theComponent = roOperator;
+class ExpressionBuilder extends Component {
+    componentDidMount() {
+        this.props.expressionEditorCreated(this.props.expressionId);
     }
 
-    return (
-        <LineContainer 
-            lineContextId={'expression-lines-' + expressionId}
-            lineElementCreators={lineElementCreators}
-            >
-            {theComponent}
-        </LineContainer>
-    );
+    componentWillUnmount() {
+        this.props.expressionEditorDestroyed(this.props.expressionId);
+    }
+
+    render() {
+        let { expressionId, 
+            dataSource, 
+            expression, 
+            editor,
+            isEditableSystemSet, 
+            expressionSetEditable } = this.props;
+                                
+        let { isEditableUserSet } = editor;
+
+        let roOperator = (
+            <ROExpressionOperator 
+                expressionId={expressionId}
+                isEnabled={true}
+                operator={expression}
+                />
+        )
+
+        let editOperator = (
+            <ExpressionOperator 
+                        dataSource={dataSource}
+                        expressionId={expressionId}
+                        isRoot={true}
+                        isEnabled={true}
+                        operator={expression}  />
+        )
+
+        let theComponent;
+        if (isEditableSystemSet) {
+            theComponent = (
+                <div>
+                    <Checkbox 
+                        label='Edit Mode'
+                        toggle
+                        checked={isEditableUserSet} 
+                        onChange={() => expressionSetEditable(expressionId, !isEditableUserSet)} 
+                        />
+                    {isEditableUserSet ? editOperator : roOperator}
+                </div>
+            )
+        } else {
+            theComponent = roOperator;
+        }
+
+        return (
+            <LineContainer 
+                lineContextId={'expression-lines-' + expressionId}
+                lineElementCreators={lineElementCreators}
+                >
+                {theComponent}
+            </LineContainer>
+        );
+    }
 }
 
 ExpressionBuilder.propTypes = {
     dataSource : PropTypes.object.isRequired,
     expressionId : PropTypes.string.isRequired,
-    expression: PropTypes.object.isRequired, // expects the entire map of expressions to be available
-    isEditableSystemSet : PropTypes.bool.isRequired,
-    isEditableUserSet : PropTypes.bool.isRequired
+    expression: PropTypes.object.isRequired,
+    editor : PropTypes.object.isRequired,
+    isEditableSystemSet : PropTypes.bool.isRequired
 }
 
 ExpressionBuilder.defaultProps = {
@@ -140,7 +152,9 @@ export default connect(
     }),
     {
         // actions
-        setNamedBoolean
+        expressionSetEditable,
+        expressionEditorCreated,
+        expressionEditorDestroyed
     }
-)(withDataSource(withExpression(withNamedBoolean('expressionId', 'isEditableUserSet')(ExpressionBuilder))));
+)(withDataSource()(withExpression()(ExpressionBuilder)));
 

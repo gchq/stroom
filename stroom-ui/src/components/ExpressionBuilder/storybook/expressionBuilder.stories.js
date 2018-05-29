@@ -35,7 +35,10 @@ import {
   ExpressionBuilder
 } from '../index';
 
-import { expressionChanged } from '../redux';
+import {
+  expressionChanged,
+  expressionSetEditable
+} from '../redux';
 
 import { receiveDataSource } from 'components/DataSource';
 
@@ -43,10 +46,6 @@ import {
   receiveDocTree,
   testTree
 } from 'components/DocExplorer';
-
-import {
-  setNamedBoolean
-} from 'components/NamedBoolean';
 
 import {
   testExpression,
@@ -65,7 +64,7 @@ storiesOf('Expression Builder', module)
     store.dispatch(receiveDataSource('testDs', testDataSource));
     store.dispatch(expressionChanged('populatedExEdit', testExpression));
     store.dispatch(expressionChanged('populatedExEditInEdit', testExpression));
-    store.dispatch(setNamedBoolean('populatedExEditInEdit', true))
+    store.dispatch(expressionSetEditable('populatedExEditInEdit', true))
     store.dispatch(expressionChanged('populatedExRO', testExpression));
     store.dispatch(expressionChanged('simplestEx', simplestExpression));
   }))) // must be recorder after/outside of the test initialisation decorators

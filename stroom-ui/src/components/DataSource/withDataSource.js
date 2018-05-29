@@ -27,38 +27,40 @@ import { connect } from 'react-redux'
  * 
  * @param {React.Component} WrappedComponent 
  */
-export function withDataSource(WrappedComponent) {
-    let WithDataSource = class extends Component {
-        static propTypes = {
-            dataSourceUuid: PropTypes.string.isRequired,
-            dataSources: PropTypes.object.isRequired
-        }
+export function withDataSource() {
+    return WrappedComponent => {
+        let WithDataSource = class extends Component {
+            static propTypes = {
+                dataSourceUuid: PropTypes.string.isRequired,
+                dataSources: PropTypes.object.isRequired
+            }
 
-        state = {
-            dataSource : undefined
-        }
-    
-        static getDerivedStateFromProps(nextProps, prevState) {
-            return {
-                dataSource : nextProps.dataSources[nextProps.dataSourceUuid]
+            state = {
+                dataSource : undefined
+            }
+        
+            static getDerivedStateFromProps(nextProps, prevState) {
+                return {
+                    dataSource : nextProps.dataSources[nextProps.dataSourceUuid]
+                }
+            }
+
+            render() {
+                if (!!this.state.dataSource) {
+                    return <WrappedComponent dataSource={this.state.dataSource} {...this.props} />
+                } else {
+                    return <span>awaiting data source state</span>
+                }
             }
         }
 
-        render() {
-            if (!!this.state.dataSource) {
-                return <WrappedComponent dataSource={this.state.dataSource} {...this.props} />
-            } else {
-                return <span>awaiting data source state</span>
+        return connect(
+            (state) => ({
+                dataSources : state.dataSources
+            }),
+            {
+                // actions
             }
-        }
+        )(WithDataSource);
     }
-
-    return connect(
-        (state) => ({
-            dataSources : state.dataSources
-        }),
-        {
-            // actions
-        }
-    )(WithDataSource);
 }

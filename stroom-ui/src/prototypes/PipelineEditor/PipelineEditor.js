@@ -100,15 +100,16 @@ class PipelineEditor extends Component {
 
   renderElements() {
     const HORIZONTAL_SPACING = 150;
-    const VERTICAL_SPACING = 100;
+    const VERTICAL_SPACING = 50;
     const HORIZONTAL_START_PX = 50;
+    const VERTICAL_START_PX = 50;
     const commonStyle = {
       position: 'absolute'
     };
 
     let elementStyles = mapObject(this.props.layoutInformation, l => ({
         ...commonStyle,
-        top: `${l.verticalPos * VERTICAL_SPACING}px`,
+        top: `${VERTICAL_START_PX + (l.verticalPos * VERTICAL_SPACING)}px`,
         left: `${HORIZONTAL_START_PX + (l.horizontalPos * HORIZONTAL_SPACING)}px`,
       }));
 

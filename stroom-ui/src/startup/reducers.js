@@ -20,11 +20,14 @@ import {
   authenticationReducer as authentication,
   authorisationReducer as authorisation,
 } from 'startup/Authentication';
-import { namedBooleanReducer as namedBoolean } from 'components/NamedBoolean';
+import { modalReducer as modal } from 'components/WithModal';
 import { lineContainerReducer as lineContainer } from 'components/LineTo';
 import { explorerTreeReducer as explorerTree } from 'components/DocExplorer';
 import { dataSourceReducer as dataSources } from 'components/DataSource';
-import { expressionReducer as expressions } from 'components/ExpressionBuilder';
+import {
+  expressionReducer as expressions,
+  expressionEditorReducer as expressionEditors
+} from 'components/ExpressionBuilder';
 import { pipelineReducer as pipelines } from 'prototypes/PipelineEditor';
 import { trackerDashboardReducer as trackerDashboard } from 'sections/TrackerDashboard';
 import { errorPageReducer as errorPage } from 'sections/ErrorPage';
@@ -39,8 +42,9 @@ export default combineReducers({
   explorerTree,
   dataSources,
   expressions,
+  expressionEditors,
   pipelines,
   errorPage,
   lineContainer,
-  namedBoolean
+  modal
 });

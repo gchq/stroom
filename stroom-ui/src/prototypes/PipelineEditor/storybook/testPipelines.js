@@ -31,6 +31,10 @@ const testPipeline = {
           type: 'XMLWriter',
         },
         {
+          id: 'Bobs',
+          type: 'XMLWriter',
+        },
+        {
           id: 'stream appender 1',
           type: 'StreamAppender',
         },
@@ -115,6 +119,10 @@ const testPipeline = {
         {
           from: 'XSLT filter',
           to: 'XML writer 1',
+        },
+        {
+          from: 'XML writer 1',
+          to: 'Bobs',
         },
         {
           from: 'XML writer 1',

@@ -27,40 +27,43 @@ import { connect } from 'react-redux'
  * 
  * @param {React.Component} WrappedComponent 
  */
-export function withExpression(WrappedComponent, customIdPropertyName) {
-    let idPropertyName = customIdPropertyName || 'expressionId';
+export function withExpression() {
+    return WrappedComponent => {
+        let WithExpression = class extends Component {
+            static propTypes = {
+                expressionId: PropTypes.string.isRequired,
+                expressions: PropTypes.object.isRequired,
+                expressionEditors : PropTypes.object.isRequired
+            }
 
-    let WithExpression = class extends Component {
-        static propTypes = {
-            [idPropertyName]: PropTypes.string.isRequired,
-            expressions: PropTypes.object.isRequired
-        }
+            state = {
+                expression : undefined
+            }
+        
+            static getDerivedStateFromProps(nextProps, prevState) {
+                return {
+                    expression : nextProps.expressions[nextProps.expressionId],
+                    editor : nextProps.expressionEditors[nextProps.expressionId] || {}
+                }
+            }
 
-        state = {
-            expression : undefined
-        }
-    
-        static getDerivedStateFromProps(nextProps, prevState) {
-            return {
-                expression : nextProps.expressions[nextProps[idPropertyName]]
+            render() {
+                if (!!this.state.expression) {
+                    return <WrappedComponent expression={this.state.expression} editor={this.state.editor} {...this.props} />
+                } else {
+                    return <span>awaiting expression state</span>
+                }
             }
         }
 
-        render() {
-            if (!!this.state.expression) {
-                return <WrappedComponent expression={this.state.expression} {...this.props} />
-            } else {
-                return <span>awaiting expression state</span>
+        return connect(
+            (state) => ({
+                expressions : state.expressions,
+                expressionEditors : state.expressionEditors
+            }),
+            {
+                // actions
             }
-        }
+        )(WithExpression);
     }
-
-    return connect(
-        (state) => ({
-            expressions : state.expressions
-        }),
-        {
-            // actions
-        }
-    )(WithExpression);
 }

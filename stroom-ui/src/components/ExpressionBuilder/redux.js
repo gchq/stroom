@@ -29,8 +29,19 @@ import {
     docRefPicked
 } from 'components/DocExplorer'
 
-// Expressions
+// Expression Editors
+const expressionEditorCreated = createAction('EXPRESSION_EDITOR_CREATED',
+    (expressionId) => ({expressionId}));
+const expressionEditorDestroyed = createAction('EXPRESSION_EDITOR_DESTROYED',
+    (expressionId) => ({expressionId}));
+const expressionSetEditable = createAction('EXPRESSION_SET_EDITABLE_BY_USER',
+    (expressionId, isEditableUserSet) => ({expressionId, isEditableUserSet}));
+const requestExpressionItemDelete = createAction('REQUEST_EXPRESSION_ITEM_DELETE',
+    (expressionId, itemId) => ({expressionId, itemId}));
+const cancelExpressionItemDelete = createAction('CANCEL_EXPRESSION_ITEM_DELETE',
+    (expressionId) => ({expressionId}));
 
+// Expressions
 const expressionChanged = createAction('EXPRESSION_CHANGED',
     (expressionId, expression) => ({ expressionId, expression }));
 const expressionTermAdded = createAction('EXPRESSION_TERM_ADDED',
@@ -194,7 +205,38 @@ const expressionReducer = handleActions({
     }
 }, defaultExpressionState);
 
+// 
+const defaultEditorsState = {}
+const defaultEditorState = {
+    isEditableUserSet : false,
+
+}
+
+const expressionEditorReducer = handleActions({
+    [expressionEditorCreated]:
+    (state, action) => ({
+        [action.payload.expressionId] : defaultEditorState
+    }),
+
+    [expressionEditorDestroyed]:
+    (state, action) => ({
+        [action.payload.expressionId] : undefined
+    }),
+
+    [expressionSetEditable]:
+    (state, action) => ({
+        [action.payload.expressionId] : {
+            isEditableUserSet : action.payload.isEditableUserSet
+        }
+    })
+}, defaultEditorsState)
+
 export {
+    expressionEditorCreated,
+    expressionEditorDestroyed,
+    expressionSetEditable,
+    requestExpressionItemDelete,
+    cancelExpressionItemDelete,
     expressionChanged,
     expressionTermAdded,
     expressionOperatorAdded,
@@ -202,5 +244,6 @@ export {
     expressionItemDeleted,
     expressionItemMoved,
     expressionReducer,
+    expressionEditorReducer,
     joinDictionaryTermId
 }

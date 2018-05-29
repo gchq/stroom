@@ -16,24 +16,22 @@ import {
  */
 class ROExpressionOperator extends Component {
     static propTypes = {
-        dataSource: PropTypes.object.isRequired, // complete definition of the data source
         expressionId : PropTypes.string.isRequired, // the ID of the overall expression
         operator : PropTypes.object.isRequired, // the operator that this particular element is to represent
-        isRoot : PropTypes.bool.isRequired, // used to prevent deletion of root nodes
         isEnabled: PropTypes.bool.isRequired, // a combination of any parent enabled state, and its own
     }
 
     renderChildren() {
         return this.props.operator.children.map(c => {
             let itemElement;
+            let isEnabled = this.props.isEnabled && c.enabled;
             switch (c.type) {
                 case 'term':
                     itemElement = (
                         <div key={c.uuid} id={'expression-item' + c.uuid}>
                             <ROExpressionTerm 
-                                        dataSource={this.props.dataSource} 
                                         expressionId={this.props.expressionId}
-                                        isEnabled={this.props.isEnabled && c.enabled}
+                                        isEnabled={isEnabled}
                                         term={c} />
                         </div>
                     )
@@ -41,9 +39,8 @@ class ROExpressionOperator extends Component {
                 case 'operator':
                     itemElement = (
                         <ROExpressionOperator 
-                                    dataSource={this.props.dataSource}  
                                     expressionId={this.props.expressionId}
-                                    isEnabled={this.props.isEnabled && c.enabled}
+                                    isEnabled={isEnabled}
                                     operator={c} />
                     )
                     break;

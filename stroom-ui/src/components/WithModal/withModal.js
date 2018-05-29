@@ -19,49 +19,48 @@ import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 
 import {
-    namedBooleanCreated,
-    namedBooleanDestroyed
+    modalCreated,
+    modalDestroyed
 } from './redux';
 
 /**
  * This is a Higher Order Component
  * https://reactjs.org/docs/higher-order-components.html
  * 
- * It provides the state of a named boolean by using the given id property
- * to lookup the state in the namedBoolean redux reducer.
+ * It provides the state of a modal by using the given id property
+ * to lookup the state in the modal redux reducer.
  * 
- * This allows react components that contain named boolean elements to remain stateless.
- * Such as modals, or toggles which radically alter the state of an element.
+ * This allows react components that contain modal components to remain stateless.
  */
-export function withNamedBoolean(idPropertyName, booleanPropertyName) {
+export function withModal(idPropertyName) {
 
     return WrappedComponent => {
-        let WithNamedBoolean = class extends Component {
+        let WithModal = class extends Component {
             static propTypes = {
                 [idPropertyName]: PropTypes.string.isRequired,
-                namedBoolean: PropTypes.object.isRequired
+                modal: PropTypes.object.isRequired
             }
 
             state = {
-                [booleanPropertyName] : undefined
+                modalIsOpen : undefined
             }
 
             static getDerivedStateFromProps(nextProps, prevState) {
-                let currentValue = nextProps.namedBoolean[nextProps[idPropertyName]];
+                let currentValue = nextProps.modal[nextProps[idPropertyName]];
                 if (currentValue === undefined) {
                     currentValue = false;
                 }
                 return {
-                    [booleanPropertyName] : currentValue
+                    modalIsOpen : currentValue
                 }
             }
 
             componentDidMount() {
-                this.props.namedBooleanCreated(this.props[idPropertyName]);
+                this.props.modalCreated(this.props[idPropertyName]);
             }
 
             componentWillUnmount() {
-                this.props.namedBooleanDestroyed(this.props[idPropertyName]);
+                this.props.modalDestroyed(this.props[idPropertyName]);
             }
 
             render() {
@@ -71,13 +70,13 @@ export function withNamedBoolean(idPropertyName, booleanPropertyName) {
 
         return connect(
             (state) => ({
-                namedBoolean: state.namedBoolean
+                modal: state.modal
             }),
             {
                 // actions
-                namedBooleanCreated,
-                namedBooleanDestroyed
+                modalCreated,
+                modalDestroyed
             }
-        )(WithNamedBoolean);
+        )(WithModal);
     }
 }

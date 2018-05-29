@@ -31,9 +31,9 @@ import { docRefPicked } from './redux';
 import { withCreatedExplorer } from './withExplorer';
 import { withPickedDocRef } from './withPickedDocRef';
 import {
-    withNamedBoolean,
-    setNamedBoolean
-} from 'components/NamedBoolean';
+    withModal,
+    setModal
+} from 'components/WithModal';
 
 import DocExplorer from './DocExplorer';
 
@@ -46,17 +46,17 @@ class DocRefModalPicker extends Component {
         typeFilter : PropTypes.string,
         docRef : PropTypes.object,
         docRefPicked : PropTypes.func.isRequired,
-        modalOpen : PropTypes.bool.isRequired,
+        modalIsOpen : PropTypes.bool.isRequired,
 
-        setNamedBoolean : PropTypes.func.isRequired
+        setModal : PropTypes.func.isRequired
     }
 
     handleOpen() {
-        this.props.setNamedBoolean(this.props.pickerId, true);
+        this.props.setModal(this.props.pickerId, true);
     }
 
     handleClose() {
-        this.props.setNamedBoolean(this.props.pickerId, false);
+        this.props.setModal(this.props.pickerId, false);
     }
 
     onDocRefSelected() {
@@ -79,7 +79,7 @@ class DocRefModalPicker extends Component {
     render() {
         let {
             docRef,
-            modalOpen,
+            modalIsOpen,
             tree,
             pickerId,
             typeFilter
@@ -90,7 +90,7 @@ class DocRefModalPicker extends Component {
         return (
             <Modal
                 trigger={<Input onFocus={this.handleOpen.bind(this)} value={value + '...'}/>}
-                open={modalOpen}
+                open={modalIsOpen}
                 onClose={this.handleClose.bind(this)}
                 size='small'
                 dimmer='blurring'
@@ -120,6 +120,6 @@ export default connect(
     {
         // actions
         docRefPicked,
-        setNamedBoolean
+        setModal
     }
-)(withPickedDocRef()(withCreatedExplorer('pickerId')(withNamedBoolean('pickerId', 'modalOpen')(DocRefModalPicker))));
+)(withPickedDocRef()(withCreatedExplorer('pickerId')(withModal('pickerId')(DocRefModalPicker))));
