@@ -29,60 +29,44 @@ import {
     closePipelineElementContextMenu
 } from './redux';
 
-class ElementMenu extends Component {
-    static propTypes = {
-        pipelineId : PropTypes.string.isRequired,
-        elementId: PropTypes.string.isRequired,
-        isOpen : PropTypes.bool.isRequired,
+const ElementMenu = (props) => {
+    let {
+        pipelineId,
+        elementId,
+        isOpen,
+        closePipelineElementContextMenu,
+        requestDeletePipelineElement
+    } = props;
 
-        requestDeletePipelineElement : PropTypes.func.isRequired,
-        closePipelineElementContextMenu : PropTypes.func.isRequired
-    }
+    return (
+        <Dropdown
+            floating 
+            direction='right'
+            icon={null}
+            open={isOpen}
+            onClose={() => closePipelineElementContextMenu(pipelineId)}
+        >
+            <Dropdown.Menu>
+                <Dropdown.Item onClick={() => console.log('Add item')}>
+                    <Icon name='file' />
+                    Open
+                </Dropdown.Item>
+                <Dropdown.Item onClick={() => requestDeletePipelineElement(pipelineId, elementId)}>
+                    <Icon name='trash' />
+                    Delete
+                </Dropdown.Item>
+            </Dropdown.Menu>
+        </Dropdown>
+    )
+}
 
-    onOpenElement() {
-        console.log('Open Element ' + this.props.pipelineId + ', Element: ' + this.props.elementId);
-        this.onClose();
-    }
+ElementMenu.propTypes = {
+    pipelineId : PropTypes.string.isRequired,
+    elementId: PropTypes.string.isRequired,
+    isOpen : PropTypes.bool.isRequired,
 
-    onDeleteElement() {
-        console.log('Delete Element ' + this.props.pipelineId + ', Element: ' + this.props.elementId);
-        this.onClose();
-    }
-
-    onClose() {
-        this.props.closePipelineElementContextMenu(this.props.pipelineId)
-    }
-
-    render() {
-        let {
-            pipelineId,
-            elementId,
-            isOpen,
-            closePipelineElementContextMenu,
-            requestDeletePipelineElement
-        } = this.props;
-
-        return (
-            <Dropdown
-                floating 
-                direction='right'
-                icon={null}
-                open={isOpen}
-                onClose={this.onClose.bind(this)}
-            >
-                <Dropdown.Menu>
-                    <Dropdown.Item onClick={() => console.log('Add item')}>
-                        <Icon name='file' />
-                        Open
-                    </Dropdown.Item>
-                    <Dropdown.Item onClick={() => requestDeletePipelineElement(pipelineId, elementId)}>
-                        <Icon name='trash' />
-                        Delete
-                    </Dropdown.Item>
-                </Dropdown.Menu>
-            </Dropdown>
-        )
-    }
+    requestDeletePipelineElement : PropTypes.func.isRequired,
+    closePipelineElementContextMenu : PropTypes.func.isRequired
 }
 
 export default connect(

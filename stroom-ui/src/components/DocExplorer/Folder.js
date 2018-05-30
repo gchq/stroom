@@ -71,101 +71,99 @@ function dropCollect(connect, monitor) {
     };
 }
 
-class Folder extends Component {
-    static propTypes = {
-        // props
-        explorerId : PropTypes.string.isRequired,
-        folder : PropTypes.object.isRequired,
-
-        // state
-        explorer : PropTypes.object.isRequired,
-
-        // actions
-        toggleFolderOpen : PropTypes.func.isRequired,
-        moveExplorerItem : PropTypes.func.isRequired,
-        openDocRefContextMenu : PropTypes.func.isRequired,
-
-        // React DnD
-        connectDropTarget: PropTypes.func.isRequired,
-        isOver: PropTypes.bool.isRequired,
-        connectDragSource: PropTypes.func.isRequired,
-        isDragging: PropTypes.bool.isRequired
+const Folder = (props) => {
+    const {
+        connectDragSource,
+        isDragging,
+        connectDropTarget,
+        isOver,
+        canDrop,
+        explorerId,
+        explorer,
+        folder,
+        toggleFolderOpen,
+        moveExplorerItem,
+        openDocRefContextMenu
+    } = props;
+    let thisIsOpen = !!explorer.isFolderOpen[folder.uuid];
+    let isContextMenuOpen = !!explorer.contextMenuItemUuid && explorer.contextMenuItemUuid === folder.uuid;
+    let icon = thisIsOpen ? 'caret down' : 'caret right';
+            
+    let className = '';
+    if (isOver) {
+        className += ' folder__over';
+    }
+    if (isDragging) {
+        className += ' folder__dragging '   
+    }
+    if (isOver) {
+        if (canDrop) {
+            className += ' folder__over_can_drop';
+        } else {
+            className += ' folder__over_cannot_drop';
+        }
+    }
+    if (isContextMenuOpen) {
+        className += ' doc-ref__context-menu-open'
     }
 
-    onRightClick(e) {
-        this.props.openDocRefContextMenu(this.props.explorerId, this.props.folder);
+    let onRightClick = (e) => {
+        openDocRefContextMenu(explorerId, folder);
         e.preventDefault();
     }
 
-    renderChildren() {
-        return this.props.folder.children
-            .filter(c => !!this.props.explorer.isVisible[c.uuid])
-            .map(c => (!!c.children) ?
-                <DndFolder key={c.uuid} explorerId={this.props.explorerId} folder={c} /> :
-                <DocRef key={c.uuid} explorerId={this.props.explorerId} docRef={c} />
-            );
-    }
-
-    render() {
-        const {
-            connectDragSource,
-            isDragging,
-            connectDropTarget,
-            isOver,
-            canDrop,
-            explorerId,
-            explorer,
-            folder,
-            toggleFolderOpen
-        } = this.props;
-        let thisIsOpen = !!explorer.isFolderOpen[folder.uuid];
-        let isContextMenuOpen = !!explorer.contextMenuItemUuid && explorer.contextMenuItemUuid === folder.uuid;
-        let icon = thisIsOpen ? 'caret down' : 'caret right';
-                
-        let className = '';
-        if (isOver) {
-            className += ' folder__over';
-        }
-        if (isDragging) {
-            className += ' folder__dragging '   
-        }
-        if (isOver) {
-            if (canDrop) {
-                className += ' folder__over_can_drop';
-            } else {
-                className += ' folder__over_cannot_drop';
-            }
-        }
-        if (isContextMenuOpen) {
-            className += ' doc-ref__context-menu-open'
-        }
-
-        return (
-            <div>
-                {connectDragSource(connectDropTarget(
-                    <span className={className}
-                            onContextMenu={this.onRightClick.bind(this)}
-                            onClick={() => toggleFolderOpen(explorerId, folder)}>
-                        <FolderMenu
-                            explorerId={explorerId}
-                            docRef={folder}
-                            isOpen={isContextMenuOpen}
-                        />
-                        <span>
-                            <Icon name={icon}/>
-                            {folder.name}
-                        </span>
+    return (
+        <div>
+            {connectDragSource(connectDropTarget(
+                <span className={className}
+                        onContextMenu={onRightClick}
+                        onClick={() => toggleFolderOpen(explorerId, folder)}>
+                    <FolderMenu
+                        explorerId={explorerId}
+                        docRef={folder}
+                        isOpen={isContextMenuOpen}
+                    />
+                    <span>
+                        <Icon name={icon}/>
+                        {folder.name}
                     </span>
-                ))}
-                {thisIsOpen && 
-                    <div className='folder__children'>
-                        {this.renderChildren()}
-                    </div>
-                }
-            </div>
-        )
-    }
+                </span>
+            ))}
+            {thisIsOpen && 
+                <div className='folder__children'>
+                    {
+                        folder.children
+                            .filter(c => !!explorer.isVisible[c.uuid])
+                            .map(c => (!!c.children) ?
+                                <DndFolder key={c.uuid} explorerId={explorerId} folder={c} /> :
+                                <DocRef key={c.uuid} explorerId={explorerId} docRef={c} />
+                            )
+                    }
+                </div>
+            }
+        </div>
+    )
 }
+
+Folder.propTypes = {
+    // props
+    explorerId : PropTypes.string.isRequired,
+    folder : PropTypes.object.isRequired,
+
+    // state
+    explorer : PropTypes.object.isRequired,
+
+    // actions
+    toggleFolderOpen : PropTypes.func.isRequired,
+    moveExplorerItem : PropTypes.func.isRequired,
+    openDocRefContextMenu : PropTypes.func.isRequired,
+
+    // React DnD
+    connectDropTarget: PropTypes.func.isRequired,
+    isOver: PropTypes.bool.isRequired,
+    connectDragSource: PropTypes.func.isRequired,
+    isDragging: PropTypes.bool.isRequired
+};
 
 // We need to use this ourself, so create a variable
 const DndFolder = connect(

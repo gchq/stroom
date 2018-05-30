@@ -37,67 +37,73 @@ import { docRefPicked } from './redux'
 
 import { withPickedDocRef } from './withPickedDocRef';
 
-class DocRefDropdownPicker extends Component {
-    static propTypes = {
-        pickerId : PropTypes.string.isRequired,
-        documentTree : PropTypes.object.isRequired,
+const DocRefDropdownPicker = (props) => {
+    let {
+        pickerId,
+        documentTree,
+        typeFilter,
+        docRef,
+        docRefPicked
+    } = props;
 
-        typeFilter : PropTypes.string,
-        docRef : PropTypes.object,
-        docRefPicked : PropTypes.func.isRequired
-    }
+    let value = (!!docRef) ? docRef.uuid : '';
+    
+    let options = [];
+    iterateNodes(documentTree, (lineage, node) => {
+        // If we are filtering on type, check this now
+        if (!!typeFilter && (typeFilter !== node.type)) {
+            return; // just skip out
+        }
 
-    onDocRefSelected(event, data) {
-        let picked = findItem(this.props.documentTree, data.value);
-        this.props.docRefPicked(this.props.pickerId, picked);
-    }
-
-    render() {
-        let value = (!!this.props.docRef) ? this.props.docRef.uuid : '';
-        
-        let options = [];
-        iterateNodes(this.props.documentTree, (lineage, node) => {
-            // If we are filtering on type, check this now
-            if (!!this.props.typeFilter && (this.props.typeFilter !== node.type)) {
-                return; // just skip out
+        // Compose the data that provides the breadcrumb to this node
+        let sections = lineage.map(l => {
+            return {
+                key: l.name, 
+                content: l.name,
+                link: true
             }
+        });
 
-            // Compose the data that provides the breadcrumb to this node
-            let sections = lineage.map(l => {
-                return {
-                    key: l.name, 
-                    content: l.name,
-                    link: true
-                }
-            });
-
-            // Don't include folders as pickable items
-            if (!node.children && node.uuid) {
-                options.push({
-                    key: node.uuid,
-                    text: node.name,
-                    value: node.uuid,
-                    content : (
-                        <div style={{width: '50rem'}}>
-                            <Breadcrumb size='mini' icon='right angle' sections={sections} />
-                            <div className='doc-ref-dropdown__item-name'>{node.name}</div>
-                        </div>
-                    )
-                })
-            }
-        })
-        
-        return (
-            <Dropdown
-                selection
-                search
-                options={options}
-                value={value}
-                onChange={this.onDocRefSelected.bind(this)}
-                placeholder='Choose an option'
-                />
-        )
+        // Don't include folders as pickable items
+        if (!node.children && node.uuid) {
+            options.push({
+                key: node.uuid,
+                text: node.name,
+                value: node.uuid,
+                content : (
+                    <div style={{width: '50rem'}}>
+                        <Breadcrumb size='mini' icon='right angle' sections={sections} />
+                        <div className='doc-ref-dropdown__item-name'>{node.name}</div>
+                    </div>
+                )
+            })
+        }
+    })
+    
+    let onDocRefSelected = (event, data) => {
+        let picked = findItem(documentTree, data.value);
+        docRefPicked(pickerId, picked);
     }
+
+    return (
+        <Dropdown
+            selection
+            search
+            options={options}
+            value={value}
+            onChange={onDocRefSelected}
+            placeholder='Choose an option'
+            />
+    )
+}
+
+DocRefDropdownPicker.propTypes = {
+    pickerId : PropTypes.string.isRequired,
+    documentTree : PropTypes.object.isRequired,
+
+    typeFilter : PropTypes.string,
+    docRef : PropTypes.object,
+    docRefPicked : PropTypes.func.isRequired
 }
 
 export default connect(

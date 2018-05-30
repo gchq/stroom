@@ -36,51 +36,49 @@ import {
   cancelDeleteDocRef
 } from './redux';
 
-class DocExplorer extends Component {
-  static propTypes = {
-    explorerId: PropTypes.string.isRequired,
-    explorer: PropTypes.object.isRequired,
-    documentTree: PropTypes.object.isRequired,
+const DocExplorer = (props) => {
+  const {
+    documentTree, 
+    explorerId, 
+    explorer, 
+    searchTermChanged,
+    cancelDeleteDocRef,
+    confirmDeleteDocRef
+  } = props;
 
-    searchTermChanged: PropTypes.func.isRequired,
-    confirmDeleteDocRef : PropTypes.func.isRequired,
-    cancelDeleteDocRef : PropTypes.func.isRequired
-  };
+  const {
+    searchTerm,
+    pendingDocRefToDelete
+  } = explorer;
 
-  render() {
-    const {
-      documentTree, 
-      explorerId, 
-      explorer, 
-      searchTermChanged,
-      cancelDeleteDocRef,
-      confirmDeleteDocRef
-    } = this.props;
-
-    const {
-      searchTerm,
-      pendingDocRefToDelete
-    } = explorer;
-
-    return (
-      <div>
-        <Confirm
-                open={!!pendingDocRefToDelete}
-                content='This will delete the doc ref from the explorer, are you sure?'
-                onCancel={() => cancelDeleteDocRef(explorerId)}
-                onConfirm={() => confirmDeleteDocRef(explorerId, pendingDocRefToDelete)}
-                />
-        <Input
-          icon="search"
-          placeholder="Search..."
-          value={searchTerm}
-          onChange={e => searchTermChanged(explorerId, e.target.value)}
-        />
-        <Folder explorerId={explorerId} folder={documentTree} />
-      </div>
-    );
-  }
+  return (
+    <div>
+      <Confirm
+              open={!!pendingDocRefToDelete}
+              content='This will delete the doc ref from the explorer, are you sure?'
+              onCancel={() => cancelDeleteDocRef(explorerId)}
+              onConfirm={() => confirmDeleteDocRef(explorerId, pendingDocRefToDelete)}
+              />
+      <Input
+        icon="search"
+        placeholder="Search..."
+        value={searchTerm}
+        onChange={e => searchTermChanged(explorerId, e.target.value)}
+      />
+      <Folder explorerId={explorerId} folder={documentTree} />
+    </div>
+  );
 }
+
+DocExplorer.propTypes = {
+  explorerId: PropTypes.string.isRequired,
+  explorer: PropTypes.object.isRequired,
+  documentTree: PropTypes.object.isRequired,
+
+  searchTermChanged: PropTypes.func.isRequired,
+  confirmDeleteDocRef : PropTypes.func.isRequired,
+  cancelDeleteDocRef : PropTypes.func.isRequired
+};
 
 export default connect(
   state => ({

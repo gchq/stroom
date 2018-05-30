@@ -30,52 +30,58 @@ import {
     closeDocRefContextMenu
 } from './redux';
 
-class FolderMenu extends Component {
-    static propTypes = {
-        explorerId : PropTypes.string.isRequired,
-        docRef: PropTypes.object.isRequired,
-        isOpen : PropTypes.bool.isRequired,
+const FolderMenu = (props) => {
+    let {
+        explorerId,
+        docRef,
+        isOpen,
+        toggleFolderOpen,
+        requestDeleteDocRef,
+        closeDocRefContextMenu
+    } = props;
 
-        toggleFolderOpen : PropTypes.func.isRequired,
-        requestDeleteDocRef : PropTypes.func.isRequired,
-        closeDocRefContextMenu : PropTypes.func.isRequired
+    let onClose = () => {
+        closeDocRefContextMenu(explorerId)
     }
 
-    onOpenFolder() {
-        this.props.toggleFolderOpen(this.props.explorerId, this.props.docRef);
-        this.onClose();
+    let onOpenFolder = () => {
+        toggleFolderOpen(explorerId, docRef);
+        onClose();
     }
 
-    onRequestDeleteFolder() {
-        this.props.requestDeleteDocRef(this.props.explorerId, this.props.docRef);
-        this.onClose();
+    let onRequestDeleteFolder = () => {
+        requestDeleteDocRef(explorerId, docRef);
+        onClose();
     }
 
-    onClose() {
-        this.props.closeDocRefContextMenu(this.props.explorerId)
-    }
-
-    render() {
-
-        return (
-            <Dropdown inline icon={null}
-                open={this.props.isOpen}
-                onClose={this.onClose.bind(this)}
-            >
-                <Dropdown.Menu>
-                <Dropdown.Item onClick={this.onOpenFolder.bind(this)}>
-                    <Icon name='folder' />
-                    Open
-                </Dropdown.Item>
-                <Dropdown.Item onClick={this.onRequestDeleteFolder.bind(this)}>
-                    <Icon name='trash' />
-                    Delete
-                </Dropdown.Item>
-                </Dropdown.Menu>
-            </Dropdown>
-        )
-    }
+    return (
+        <Dropdown inline icon={null}
+            open={isOpen}
+            onClose={onClose}
+        >
+            <Dropdown.Menu>
+            <Dropdown.Item onClick={onOpenFolder}>
+                <Icon name='folder' />
+                Open
+            </Dropdown.Item>
+            <Dropdown.Item onClick={onRequestDeleteFolder}>
+                <Icon name='trash' />
+                Delete
+            </Dropdown.Item>
+            </Dropdown.Menu>
+        </Dropdown>
+    )
 }
+
+FolderMenu.propTypes = {
+    explorerId : PropTypes.string.isRequired,
+    docRef: PropTypes.object.isRequired,
+    isOpen : PropTypes.bool.isRequired,
+
+    toggleFolderOpen : PropTypes.func.isRequired,
+    requestDeleteDocRef : PropTypes.func.isRequired,
+    closeDocRefContextMenu : PropTypes.func.isRequired
+};
 
 export default connect(
     (state) => ({

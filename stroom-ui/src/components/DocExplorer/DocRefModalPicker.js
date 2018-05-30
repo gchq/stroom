@@ -37,80 +37,70 @@ import {
 
 import DocExplorer from './DocExplorer';
 
-class DocRefModalPicker extends Component {
-    static propTypes = {
-        pickerId : PropTypes.string.isRequired,
-        documentTree : PropTypes.object.isRequired,
-        explorer : PropTypes.object.isRequired,
+const DocRefModalPicker = (props) => {
+    let {
+        isSelected,
+        documentTree,
+        docRefPicked,
+        docRef,
+        modalIsOpen,
+        tree,
+        pickerId,
+        typeFilter
+    } = props;
 
-        typeFilter : PropTypes.string,
-        docRef : PropTypes.object,
-        docRefPicked : PropTypes.func.isRequired,
-        modalIsOpen : PropTypes.bool.isRequired,
+    let value = (!!docRef) ? docRef.name : '';
 
-        setModal : PropTypes.func.isRequired
-    }
+    let handleOpen = () => setModal(pickerId, true);
 
-    handleOpen() {
-        this.props.setModal(this.props.pickerId, true);
-    }
-
-    handleClose() {
-        this.props.setModal(this.props.pickerId, false);
-    }
-
-    onDocRefSelected() {
-        let {
-            isSelected,
-            documentTree,
-            pickerId,
-            explorer,
-            docRefPicked
-        } = this.props;
-
+    let handleClose = () => setModal(pickerId, false);
+        
+    let onDocRefSelected = () => {
         Object.keys(explorer.isSelected)
-            .forEach(pickedUuid => {
-                let picked = findItem(documentTree, pickedUuid);
-                docRefPicked(pickerId, picked);
-            });
-        this.handleClose();
+        .forEach(pickedUuid => {
+            let picked = findItem(documentTree, pickedUuid);
+            docRefPicked(pickerId, picked);
+        });
+    
+        handleClose();
     }
 
-    render() {
-        let {
-            docRef,
-            modalIsOpen,
-            tree,
-            pickerId,
-            typeFilter
-        } = this.props;
+    return (
+        <Modal
+            trigger={<Input onFocus={handleOpen} value={value + '...'}/>}
+            open={modalIsOpen}
+            onClose={handleClose}
+            size='small'
+            dimmer='blurring'
+        >
+            <Modal.Header>Select a Doc Ref</Modal.Header>
+            <Modal.Content scrolling>
+                <DocExplorer tree={tree}
+                            explorerId={pickerId}
+                            allowMultiSelect={false}
+                            allowDragAndDrop={false}
+                            typeFilter={typeFilter}
+                            />
+            </Modal.Content>
+            <Modal.Actions>
+                <Button negative onClick={() => setModal(pickerId, false)}>Cancel</Button>
+                <Button positive onClick={onDocRefSelected} labelPosition='right' icon='checkmark' content='Choose' />
+            </Modal.Actions>
+        </Modal>
+    )
+}
 
-        let value = (!!docRef) ? docRef.name : '';
+DocRefModalPicker.propTypes = {
+    pickerId : PropTypes.string.isRequired,
+    documentTree : PropTypes.object.isRequired,
+    explorer : PropTypes.object.isRequired,
 
-        return (
-            <Modal
-                trigger={<Input onFocus={this.handleOpen.bind(this)} value={value + '...'}/>}
-                open={modalIsOpen}
-                onClose={this.handleClose.bind(this)}
-                size='small'
-                dimmer='blurring'
-            >
-                <Modal.Header>Select a Doc Ref</Modal.Header>
-                <Modal.Content scrolling>
-                    <DocExplorer tree={tree}
-                                explorerId={pickerId}
-                                allowMultiSelect={false}
-                                allowDragAndDrop={false}
-                                typeFilter={typeFilter}
-                                />
-                </Modal.Content>
-                <Modal.Actions>
-                    <Button negative onClick={this.handleClose.bind(this)}>Cancel</Button>
-                    <Button positive onClick={this.onDocRefSelected.bind(this)} labelPosition='right' icon='checkmark' content='Choose' />
-                </Modal.Actions>
-            </Modal>
-        )
-    }
+    typeFilter : PropTypes.string,
+    docRef : PropTypes.object,
+    docRefPicked : PropTypes.func.isRequired,
+    modalIsOpen : PropTypes.bool.isRequired,
+
+    setModal : PropTypes.func.isRequired
 }
 
 export default connect(

@@ -66,15 +66,7 @@ const curve = ({lineId, fromRect, toRect}) => {
           }} />
     )
   } else {
-    // // otherwise draw a curve
-    // let from = {
-    //   x : fromRect.left + (fromRect.width / 2),
-    //   y : fromRect.bottom
-    // };
-    // let to = {
-    //   x : toRect.left,
-    //   y : toRect.top + (toRect.height / 2)
-    // };
+    // otherwise draw a curve
     let mid = {
       x : from.x + (to.x - from.x) / 2,
       y : from.y + (to.y - from.y) / 2
@@ -101,75 +93,70 @@ let lineElementCreators = {
   'curve' : curve
 }
 
-class PipelineEditor extends Component {
-  static propTypes = {
-    pipelineId: PropTypes.string.isRequired,
-    pipeline: PropTypes.object.isRequired,
-    asTree : PropTypes.object.isRequired,
-    layoutInformation : PropTypes.object.isRequired
-  };
+const HORIZONTAL_SPACING = 150;
+const VERTICAL_SPACING = 50;
+const HORIZONTAL_START_PX = 50;
+const VERTICAL_START_PX = 50;
+const COMMON_ELEMENT_STYLE = {
+  position: 'absolute'
+};
 
-  renderElements() {
-    const HORIZONTAL_SPACING = 150;
-    const VERTICAL_SPACING = 50;
-    const HORIZONTAL_START_PX = 50;
-    const VERTICAL_START_PX = 50;
-    const commonStyle = {
-      position: 'absolute'
-    };
+const PipelineEditor = (props) => {
+  const {
+    pipelineId,
+    pipeline,
+    pendingElementIdToDelete,
+    cancelDeletePipelineElement,
+    confirmDeletePipelineElement,
+    layoutInformation
+  } = props;
 
-    let elementStyles = mapObject(this.props.layoutInformation, l => ({
-        ...commonStyle,
-        top: `${VERTICAL_START_PX + (l.verticalPos * VERTICAL_SPACING)}px`,
-        left: `${HORIZONTAL_START_PX + (l.horizontalPos * HORIZONTAL_SPACING)}px`,
-      }));
+  let elementStyles = mapObject(layoutInformation, l => ({
+    ...COMMON_ELEMENT_STYLE,
+    top: `${VERTICAL_START_PX + (l.verticalPos * VERTICAL_SPACING)}px`,
+    left: `${HORIZONTAL_START_PX + (l.horizontalPos * HORIZONTAL_SPACING)}px`,
+  }));
 
-    return this.props.pipeline.elements.add.element.map(e => (
-      <div key={e.id} id={e.id} style={elementStyles[e.id]}>
-        <PipelineElement pipelineId={this.props.pipelineId} elementId={e.id} />
+  return (
+    <div className="Pipeline-editor">
+      <Confirm
+        open={!!pendingElementIdToDelete}
+        content='This will delete the element from the pipeline, are you sure?'
+        onCancel={() => cancelDeletePipelineElement(pipelineId)}
+        onConfirm={() => confirmDeletePipelineElement(pipelineId, pendingElementIdToDelete)}
+        />
+      <LineContainer 
+          className='Pipeline-editor__overview' 
+          lineContextId={`pipeline-lines-${pipelineId}`}
+          lineElementCreators={lineElementCreators}>
+        <h4>Pipeline Editor {pipelineId}</h4>
+        {
+          pipeline.elements.add.element.map(e => (
+            <div key={e.id} id={e.id} style={elementStyles[e.id]}>
+              <PipelineElement pipelineId={pipelineId} elementId={e.id} />
+            </div>
+          ))
+        }
+        {
+          pipeline.links.add.link
+            .map(l => ({ ...l, lineId: `${l.from}-${l.to}` }))
+            .map(l => <LineTo lineId={l.lineId} key={l.lineId} fromId={l.from} toId={l.to} lineType='curve'/>)
+        }
+      </LineContainer>
+
+      <div className='Pipeline-editor__settings'>
+        <PipelineElementSettings pipelineId={pipelineId} />
       </div>
-    ));
-  }
-
-  renderLines() {
-    return this.props.pipeline.links.add.link
-      .map(l => ({ ...l, lineId: `${l.from}-${l.to}` }))
-      .map(l => <LineTo lineId={l.lineId} key={l.lineId} fromId={l.from} toId={l.to} lineType='curve'/>);
-  }
-
-  render() {
-    const {
-      pipelineId,
-      pipeline,
-      pendingElementIdToDelete,
-      cancelDeletePipelineElement,
-      confirmDeletePipelineElement
-    } = this.props;
-
-    return (
-      <div className="Pipeline-editor">
-        <Confirm
-          open={!!pendingElementIdToDelete}
-          content='This will delete the element from the pipeline, are you sure?'
-          onCancel={() => cancelDeletePipelineElement(pipelineId)}
-          onConfirm={() => confirmDeletePipelineElement(pipelineId, pendingElementIdToDelete)}
-          />
-        <LineContainer 
-            className='Pipeline-editor__overview' 
-            lineContextId={`pipeline-lines-${pipelineId}`}
-            lineElementCreators={lineElementCreators}>
-          <h4>Pipeline Editor {pipelineId}</h4>
-          {this.renderElements()}
-          {this.renderLines()}
-        </LineContainer>
-
-        <div className='Pipeline-editor__settings'>
-          <PipelineElementSettings pipelineId={pipelineId} />
-        </div>
-      </div>
-    );
-  }
+    </div>
+  );
 }
+
+PipelineEditor.propTypes = {
+  pipelineId: PropTypes.string.isRequired,
+  pipeline: PropTypes.object.isRequired,
+  asTree : PropTypes.object.isRequired,
+  layoutInformation : PropTypes.object.isRequired
+};
 
 export default connect(
   state => ({

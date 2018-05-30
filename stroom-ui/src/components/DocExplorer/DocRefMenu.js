@@ -31,51 +31,58 @@ import {
     closeDocRefContextMenu
 } from './redux';
 
-class DocRefMenu extends Component {
-    static propTypes = {
-        explorerId : PropTypes.string.isRequired,
-        docRef: PropTypes.object.isRequired,
-        isOpen : PropTypes.bool.isRequired,
+const DocRefMenu = (props) => {
+    let {
+        explorerId,
+        docRef,
+        isOpen,
+        openDocRef,
+        requestDeleteDocRef,
+        closeDocRefContextMenu
+    } = props;
 
-        openDocRef : PropTypes.func.isRequired,
-        requestDeleteDocRef : PropTypes.func.isRequired,
-        closeDocRefContextMenu : PropTypes.func.isRequired
+    let onClose = () => {
+        closeDocRefContextMenu(explorerId)
     }
 
-    onOpenDocRef() {
-        this.props.openDocRef(this.props.explorerId, this.props.docRef);
-        this.onClose();
+    let onOpenDocRef = () => {
+        openDocRef(explorerId, docRef);
+        onClose();
     }
 
-    onRequestDeleteDocRef() {
-        this.props.requestDeleteDocRef(this.props.explorerId, this.props.docRef);
-        this.onClose();
+    let onRequestDeleteDocRef = () => {
+        requestDeleteDocRef(explorerId, docRef);
+        onClose();
     }
 
-    onClose() {
-        this.props.closeDocRefContextMenu(this.props.explorerId)
-    }
-
-    render() {
-        return (
-            <Dropdown inline icon={null}
-                open={this.props.isOpen}
-                onClose={this.onClose.bind(this)}
-            >
-                <Dropdown.Menu>
-                    <Dropdown.Item onClick={this.onOpenDocRef.bind(this)}>
-                        <Icon name='file' />
-                        Open
-                    </Dropdown.Item>
-                    <Dropdown.Item onClick={this.onRequestDeleteDocRef.bind(this)}>
-                        <Icon name='trash' />
-                        Delete
-                    </Dropdown.Item>
-                </Dropdown.Menu>
-            </Dropdown>
-        )
-    }
+    return (
+        <Dropdown inline icon={null}
+            open={isOpen}
+            onClose={onClose}
+        >
+            <Dropdown.Menu>
+                <Dropdown.Item onClick={onOpenDocRef}>
+                    <Icon name='file' />
+                    Open
+                </Dropdown.Item>
+                <Dropdown.Item onClick={onRequestDeleteDocRef}>
+                    <Icon name='trash' />
+                    Delete
+                </Dropdown.Item>
+            </Dropdown.Menu>
+        </Dropdown>
+    )
 }
+
+DocRefMenu.propTypes = {
+    explorerId : PropTypes.string.isRequired,
+    docRef: PropTypes.object.isRequired,
+    isOpen : PropTypes.bool.isRequired,
+
+    openDocRef : PropTypes.func.isRequired,
+    requestDeleteDocRef : PropTypes.func.isRequired,
+    closeDocRefContextMenu : PropTypes.func.isRequired
+};
 
 export default connect(
     (state) => ({

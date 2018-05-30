@@ -84,197 +84,200 @@ function dropCollect(connect, monitor) {
     };
 }
 
-class ExpressionOperator extends Component {
-    
-    static propTypes = {
-        // Props
-        dataSource: PropTypes.object.isRequired, // complete definition of the data source
-        expressionId : PropTypes.string.isRequired, // the ID of the overall expression
-        operator : PropTypes.object.isRequired, // the operator that this particular element is to represent
-        isRoot : PropTypes.bool.isRequired, // used to prevent deletion of root nodes
-        isEnabled: PropTypes.bool.isRequired, // a combination of any parent enabled state, and its own
+const ExpressionOperator = (props) => {
+    const {
+        expressionId,
+        operator,
+        isRoot,
+        isEnabled,
+        dataSource,
 
-        // Actions
-        expressionTermAdded : PropTypes.func.isRequired,
-        expressionOperatorAdded : PropTypes.func.isRequired,
-        expressionItemUpdated : PropTypes.func.isRequired,
-        requestExpressionItemDelete : PropTypes.func.isRequired,
-        expressionItemMoved : PropTypes.func.isRequired,
-        
-        // React DnD
-        connectDropTarget: PropTypes.func.isRequired,
-        isOver: PropTypes.bool.isRequired,
-        connectDragSource: PropTypes.func.isRequired,
-        isDragging: PropTypes.bool.isRequired
-    }
-    
-    static defaultProps = {
-        isRoot : false
+        expressionTermAdded,
+        expressionOperatorAdded,
+        expressionItemUpdated,
+        requestExpressionItemDelete,
+        expressionItemMoved,
+
+        connectDropTarget,
+        isOver,
+        connectDragSource,
+        isDragging
+    } = props;
+
+    let onAddOperator = () => {
+        expressionOperatorAdded(expressionId, operator.uuid);
     }
 
-    onAddOperator() {
-        this.props.expressionOperatorAdded(this.props.expressionId, this.props.operator.uuid);
+    let onAddTerm = () => {
+        expressionTermAdded(expressionId, operator.uuid);
     }
 
-    onAddTerm() {
-        this.props.expressionTermAdded(this.props.expressionId, this.props.operator.uuid);
+    let onOperatorUpdated = (updates) => {
+        expressionItemUpdated(expressionId, operator.uuid, updates);
     }
 
-    onOperatorUpdated(updates) {
-        this.props.expressionItemUpdated(this.props.expressionId, this.props.operator.uuid, updates);
-    }
-
-    onOpChange(op) {
-        this.onOperatorUpdated({
+    let onOpChange = (op) => {
+        onOperatorUpdated({
             op
         });
     }
 
-    onOperatorDelete() {
-        this.props.requestExpressionItemDelete(this.props.expressionId, this.props.operator.uuid);
+    let onOperatorDelete = () => {
+        requestExpressionItemDelete(expressionId, operator.uuid);
     }
 
-    onEnabledChange() {
-        this.onOperatorUpdated({
-            enabled: !this.props.operator.enabled
+    let onEnabledChange = () => {
+        onOperatorUpdated({
+            enabled: !operator.enabled
         });
     }
 
-    renderChildren() {
-        return this.props.operator.children.map(c => {
-            let itemElement;
-            switch (c.type) {
-                case 'term':
-                    itemElement = (
-                        <div key={c.uuid} id={'expression-item' + c.uuid}>
-                            <ExpressionTerm 
-                                        dataSource={this.props.dataSource} 
-                                        expressionId={this.props.expressionId}
-                                        isEnabled={this.props.isEnabled && c.enabled}
-                                        term={c} />
-                        </div>
-                    )
-                    break;
-                case 'operator':
-                    itemElement = (
-                        <DndExpressionOperator 
-                                    dataSource={this.props.dataSource}  
-                                    expressionId={this.props.expressionId}
-                                    isEnabled={this.props.isEnabled && c.enabled}
-                                    operator={c} />
-                    )
-                    break;
-            }
-
-            // Wrap it with a line to
-            return (
-                <div key={c.uuid}>
-                    <LineTo 
-                        lineId={c.uuid}
-                        lineType='downRightElbow'
-                        fromId={'expression-item' + this.props.operator.uuid} 
-                        toId={'expression-item' + c.uuid}
-                        />
-                    {itemElement}
-                </div>
-            )
-        }).filter(c => !!c) // null filter
+    let color = 'grey';
+    if (isOver) {
+        color= (canDrop) ? 'blue' : 'red'
+    }
+    let className = 'expression-item';
+    if (isRoot) {
+        className += ' expression-item__root'
+    }
+    if (!isEnabled) {
+        className += ' expression-item--disabled';
     }
 
-    render() {
-        const {
-            connectDragSource,
-            isDragging,
-            connectDropTarget,
-            isOver,
-            canDrop,
-            operator,
-            isRoot,
-            isEnabled
-        } = this.props;
-
-        let color = 'grey';
-        if (isOver) {
-            color= (canDrop) ? 'blue' : 'red'
-        }
-        let className = 'expression-item';
-        if (isRoot) {
-            className += ' expression-item__root'
-        }
-        if (!isEnabled) {
-            className += ' expression-item--disabled';
-        }
-
-        let enabledButton;
-        if (isRoot) {
-            enabledButton = <Button 
-                                icon='dont'
+    let enabledButton;
+    if (isRoot) {
+        enabledButton = <Button 
+                            icon='dont'
+                            compact
+                            basic
+                            />
+    } else {
+        if (operator.enabled) {
+            enabledButton = <Button icon='checkmark'
+                                compact 
+                                color='blue'
+                                onClick={onEnabledChange}
+                                /> 
+        } else {
+            enabledButton = <Button icon='checkmark'
                                 compact
                                 basic
+                                onClick={onEnabledChange}
                                 />
-        } else {
-            if (operator.enabled) {
-                enabledButton = <Button icon='checkmark'
-                                    compact 
-                                    color='blue'
-                                    onClick={this.onEnabledChange.bind(this)}
-                                    /> 
-            } else {
-                enabledButton = <Button icon='checkmark'
-                                    compact
-                                    basic
-                                    onClick={this.onEnabledChange.bind(this)}
-                                    />
-            }
         }
-
-        return (
-            <div className={className}>
-                {connectDragSource(connectDropTarget(
-                    <div>
-                        <span id={'expression-item' + operator.uuid}><Icon color={color} name='bars'/></span>
-                        
-                        <Button.Group>
-                            {LOGICAL_OPERATORS.map(l => {
-                                return (
-                                    <Button 
-                                        color='blue'
-                                        basic={(operator.op !== l)}
-                                        key={l}
-                                        compact
-                                        onClick={() => this.onOpChange(l)}
-                                        >
-                                        {l}
-                                    </Button>
-                                )
-                            })}
-                        </Button.Group>
-
-                        <Button.Group floated='right'>
-                            <Button compact onClick ={this.onAddTerm.bind(this)}>
-                                <Icon name='add' />
-                                Term
-                            </Button>
-                            <Button compact onClick={this.onAddOperator.bind(this)}>
-                                <Icon name='add' />
-                                Group
-                            </Button>
-                            {enabledButton}
-                            {!isRoot ? 
-                                <Button icon='trash' compact onClick={this.onOperatorDelete.bind(this)} />
-                                :
-                                <Button disabled icon='dont' compact />
-                            }
-                        </Button.Group>
-                    </div>
-                ))}
-                <div className='operator__children'>
-                    {(isOver && canDrop) && <div className='operator__placeholder' />}
-                    {this.renderChildren()}
-                </div>
-            </div>
-        )
     }
+
+    return (
+        <div className={className}>
+            {connectDragSource(connectDropTarget(
+                <div>
+                    <span id={'expression-item' + operator.uuid}><Icon color={color} name='bars'/></span>
+                    
+                    <Button.Group>
+                        {LOGICAL_OPERATORS.map(l => {
+                            return (
+                                <Button 
+                                    color='blue'
+                                    basic={(operator.op !== l)}
+                                    key={l}
+                                    compact
+                                    onClick={() => onOpChange(l)}
+                                    >
+                                    {l}
+                                </Button>
+                            )
+                        })}
+                    </Button.Group>
+
+                    <Button.Group floated='right'>
+                        <Button compact onClick ={onAddTerm}>
+                            <Icon name='add' />
+                            Term
+                        </Button>
+                        <Button compact onClick={onAddOperator}>
+                            <Icon name='add' />
+                            Group
+                        </Button>
+                        {enabledButton}
+                        {!isRoot ? 
+                            <Button icon='trash' compact onClick={onOperatorDelete} />
+                            :
+                            <Button disabled icon='dont' compact />
+                        }
+                    </Button.Group>
+                </div>
+            ))}
+            <div className='operator__children'>
+                {(isOver && canDrop) && <div className='operator__placeholder' />}
+                {
+                    operator.children.map(c => {
+                        let itemElement;
+                        switch (c.type) {
+                            case 'term':
+                                itemElement = (
+                                    <div key={c.uuid} id={'expression-item' + c.uuid}>
+                                        <ExpressionTerm 
+                                                    dataSource={dataSource} 
+                                                    expressionId={expressionId}
+                                                    isEnabled={isEnabled && c.enabled}
+                                                    term={c} />
+                                    </div>
+                                )
+                                break;
+                            case 'operator':
+                                itemElement = (
+                                    <DndExpressionOperator 
+                                                dataSource={dataSource}  
+                                                expressionId={expressionId}
+                                                isEnabled={isEnabled && c.enabled}
+                                                operator={c} />
+                                )
+                                break;
+                        }
+            
+                        // Wrap it with a line to
+                        return (
+                            <div key={c.uuid}>
+                                <LineTo 
+                                    lineId={c.uuid}
+                                    lineType='downRightElbow'
+                                    fromId={'expression-item' + operator.uuid} 
+                                    toId={'expression-item' + c.uuid}
+                                    />
+                                {itemElement}
+                            </div>
+                        )
+                    }).filter(c => !!c) // null filter
+                }
+            </div>
+        </div>
+    )
+}
+
+ExpressionOperator.propTypes = {
+    // Props
+    dataSource: PropTypes.object.isRequired, // complete definition of the data source
+    expressionId : PropTypes.string.isRequired, // the ID of the overall expression
+    operator : PropTypes.object.isRequired, // the operator that this particular element is to represent
+    isRoot : PropTypes.bool.isRequired, // used to prevent deletion of root nodes
+    isEnabled: PropTypes.bool.isRequired, // a combination of any parent enabled state, and its own
+
+    // Actions
+    expressionTermAdded : PropTypes.func.isRequired,
+    expressionOperatorAdded : PropTypes.func.isRequired,
+    expressionItemUpdated : PropTypes.func.isRequired,
+    requestExpressionItemDelete : PropTypes.func.isRequired,
+    expressionItemMoved : PropTypes.func.isRequired,
+    
+    // React DnD
+    connectDropTarget: PropTypes.func.isRequired,
+    isOver: PropTypes.bool.isRequired,
+    connectDragSource: PropTypes.func.isRequired,
+    isDragging: PropTypes.bool.isRequired
+}
+
+ExpressionOperator.defaultProps = {
+    isRoot : false
 }
 
 // We need to use this ourself, so create a variable

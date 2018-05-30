@@ -73,79 +73,76 @@ function dropCollect(connect, monitor) {
     };
 }
 
-class PipelineElement extends Component {
-  static propTypes = {
-    pipelineId: PropTypes.string.isRequired,
-    pipeline: PropTypes.object.isRequired,
-    asTree : PropTypes.object.isRequired,
-    elementId: PropTypes.string.isRequired,
-    contextMenuElementId : PropTypes.string,
+const PipelineElement = (props) => {
+  const {
+    connectDragSource,
+    isDragging,
+    connectDropTarget,
+    isOver,
+    canDrop, 
+    pipelineId,
+    elementId,
+    contextMenuElementId,
+    pipelineElementSelected,
+    openPipelineElementContextMenu
+  } = props;
 
-    pipelineElementSelected : PropTypes.func.isRequired
+  let isContextMenuOpen = !!contextMenuElementId && contextMenuElementId === elementId;
+
+  let className='Pipeline-element';
+  if (isOver) {
+    className += ' Pipeline-element__over';
+  }
+  if (isDragging) {
+      className += ' Pipeline-element__dragging '   
+  }
+  if (isOver) {
+      if (canDrop) {
+          className += ' Pipeline-element__over_can_drop';
+      } else {
+          className += ' Pipeline-element__over_cannot_drop';
+      }
+  }
+
+  let onSingleClick = () => pipelineElementSelected(pipelineId, elementId);
+  let onRightClick = (e) => {
+    openPipelineElementContextMenu(pipelineId, elementId);
+    e.preventDefault();
   };
 
-  onSingleClick() {
-    this.props.pipelineElementSelected(this.props.pipelineId, this.props.elementId);
-  }
-
-  onRightClick(e) {
-      this.props.openPipelineElementContextMenu(this.props.pipelineId, this.props.elementId);
-      e.preventDefault();
-  }
-
-  render() {
-    const {
-      connectDragSource,
-      isDragging,
-      connectDropTarget,
-      isOver,
-      canDrop, 
-      pipelineId,
-      elementId,
-      contextMenuElementId
-    } = this.props;
-
-    let isContextMenuOpen = !!contextMenuElementId && contextMenuElementId === elementId;
-
-    let className='Pipeline-element';
-    if (isOver) {
-      className += ' Pipeline-element__over';
-    }
-    if (isDragging) {
-        className += ' Pipeline-element__dragging '   
-    }
-    if (isOver) {
-        if (canDrop) {
-            className += ' Pipeline-element__over_can_drop';
-        } else {
-            className += ' Pipeline-element__over_cannot_drop';
-        }
-    }
-
-    return (
-      connectDragSource(
-        connectDropTarget(
-          <span>
-            <span className={className}
-              onClick={this.onSingleClick.bind(this)}
-              onContextMenu={this.onRightClick.bind(this)}
-              >
-              <img className='Pipeline-element__icon' src={streamLogo} />
-              {elementId}
-            </span>
-            <span className='Pipeline-element__context-menu'>
-              <ElementMenu 
-                pipelineId={pipelineId}
-                elementId={elementId}
-                isOpen={isContextMenuOpen}
-                />
-            </span>
+  return (
+    connectDragSource(
+      connectDropTarget(
+        <span>
+          <span className={className}
+            onClick={onSingleClick}
+            onContextMenu={onRightClick}
+            >
+            <img className='Pipeline-element__icon' src={streamLogo} />
+            {elementId}
           </span>
-        )
+          <span className='Pipeline-element__context-menu'>
+            <ElementMenu 
+              pipelineId={pipelineId}
+              elementId={elementId}
+              isOpen={isContextMenuOpen}
+              />
+          </span>
+        </span>
       )
-    );
-  }
+    )
+  );
 }
+
+PipelineElement.propTypes = {
+  pipelineId: PropTypes.string.isRequired,
+  pipeline: PropTypes.object.isRequired,
+  asTree : PropTypes.object.isRequired,
+  elementId: PropTypes.string.isRequired,
+  contextMenuElementId : PropTypes.string,
+
+  pipelineElementSelected : PropTypes.func.isRequired
+};
 
 export default connect(
   (state) => ({
