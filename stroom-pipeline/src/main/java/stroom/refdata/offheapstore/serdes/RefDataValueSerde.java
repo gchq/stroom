@@ -50,7 +50,7 @@ public class RefDataValueSerde implements
     @Override
     public void serialize(final ByteBuffer byteBuffer, final RefDataValue refDataValue) {
         byteBuffer.put((byte) refDataValue.getTypeId());
-        getSubSerde(refDataValue.getTypeId()).deserialize(byteBuffer);
+        getSubSerde(refDataValue.getTypeId()).serialize(byteBuffer, refDataValue);
         // rely on the subSerde flipping the buffer
     }
 

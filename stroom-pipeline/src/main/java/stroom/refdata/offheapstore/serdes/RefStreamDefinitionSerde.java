@@ -34,7 +34,6 @@ import java.nio.ByteBuffer;
 
 public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinition> {
 
-
     private static final Logger LOGGER = LoggerFactory.getLogger(RefStreamDefinitionSerde.class);
     private static final LambdaLogger LAMBDA_LOGGER= LambdaLoggerFactory.getLogger(RefStreamDefinitionSerde.class);
 

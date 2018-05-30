@@ -15,32 +15,30 @@
  *
  */
 
-package stroom.refdata.offheapstore.tables;
+package stroom.refdata.offheapstore.databases;
 
 import com.google.inject.assistedinject.Assisted;
 import org.lmdbjava.Env;
 import stroom.refdata.lmdb.AbstractLmdbDb;
-import stroom.refdata.offheapstore.RangeStoreKey;
-import stroom.refdata.offheapstore.serdes.RangeStoreKeySerde;
-import stroom.refdata.offheapstore.ValueStoreKey;
-import stroom.refdata.offheapstore.serdes.ValueStoreKeySerde;
+import stroom.refdata.lmdb.serde.Serde;
+import stroom.refdata.offheapstore.MapDefinition;
+import stroom.refdata.offheapstore.UID;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
 
-public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
+public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
 
-    private static final String DB_NAME = "RangeStore";
+    private static final String DB_NAME = "MapUidBackward";
 
     @Inject
-    public RangeStoreDb(@Assisted final Env<ByteBuffer> lmdbEnvironment,
-                        final RangeStoreKeySerde keySerde,
-                        final ValueStoreKeySerde valueSerde) {
-
+    public MapUidReverseDb(@Assisted final Env<ByteBuffer> lmdbEnvironment,
+                           final Serde<UID> keySerde,
+                           final Serde<MapDefinition> valueSerde) {
         super(lmdbEnvironment, keySerde, valueSerde, DB_NAME);
     }
 
     public interface Factory {
-        RangeStoreDb create(final Env<ByteBuffer> lmdbEnvironment);
+        MapUidReverseDb create(final Env<ByteBuffer> lmdbEnvironment);
     }
 }

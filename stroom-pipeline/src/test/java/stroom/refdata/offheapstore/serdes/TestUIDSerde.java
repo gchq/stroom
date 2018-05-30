@@ -17,25 +17,16 @@
 
 package stroom.refdata.offheapstore.serdes;
 
-import stroom.refdata.lmdb.serde.Deserializer;
-import stroom.refdata.lmdb.serde.Serde;
-import stroom.refdata.lmdb.serde.Serializer;
+import org.junit.Test;
 import stroom.refdata.offheapstore.UID;
 
-import java.nio.ByteBuffer;
+public class TestUIDSerde extends AbstractSerdeTest {
 
-public class UIDSerde implements Serde<UID>, Serializer<UID>, Deserializer<UID> {
+    @Test
+    public void testSerialisationDeserialisation() {
 
-    @Override
-    public UID deserialize(final ByteBuffer byteBuffer) {
-        final UID uid = UID.from(byteBuffer);
-        byteBuffer.flip();
-        return uid;
-    }
+        final UID uid = new UID(new byte[] {0, 1, 2, 3});
 
-    @Override
-    public void serialize(final ByteBuffer byteBuffer, final UID uid) {
-        byteBuffer.put(uid.getBackingArray(), uid.getOffset(), UID.length());
-        byteBuffer.flip();
+        doSerialisationDeserialisationTest(uid, UIDSerde::new);
     }
 }

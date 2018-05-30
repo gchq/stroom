@@ -15,30 +15,31 @@
  *
  */
 
-package stroom.refdata.offheapstore.tables;
+package stroom.refdata.offheapstore.databases;
 
 import com.google.inject.assistedinject.Assisted;
 import org.lmdbjava.Env;
 import stroom.refdata.lmdb.AbstractLmdbDb;
-import stroom.refdata.lmdb.serde.Serde;
-import stroom.refdata.offheapstore.MapDefinition;
-import stroom.refdata.offheapstore.UID;
+import stroom.refdata.offheapstore.RefDataValue;
+import stroom.refdata.offheapstore.serdes.RefDataValueSerde;
+import stroom.refdata.offheapstore.ValueStoreKey;
+import stroom.refdata.offheapstore.serdes.ValueStoreKeySerde;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
 
-public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
+public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
 
-    private static final String DB_NAME = "MapUidBackward";
+    private static final String DB_NAME = "ValueStore";
 
     @Inject
-    public MapUidReverseDb(@Assisted final Env<ByteBuffer> lmdbEnvironment,
-                           final Serde<UID> keySerde,
-                           final Serde<MapDefinition> valueSerde) {
+    public ValueStoreDb(@Assisted final Env<ByteBuffer> lmdbEnvironment,
+                        final ValueStoreKeySerde keySerde,
+                        final RefDataValueSerde valueSerde) {
         super(lmdbEnvironment, keySerde, valueSerde, DB_NAME);
     }
 
     public interface Factory {
-        MapUidReverseDb create(final Env<ByteBuffer> lmdbEnvironment);
+        ValueStoreDb create(final Env<ByteBuffer> lmdbEnvironment);
     }
 }

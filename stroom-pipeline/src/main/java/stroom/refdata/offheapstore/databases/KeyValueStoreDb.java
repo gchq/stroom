@@ -15,31 +15,32 @@
  *
  */
 
-package stroom.refdata.offheapstore.tables;
+package stroom.refdata.offheapstore.databases;
 
 import com.google.inject.assistedinject.Assisted;
 import org.lmdbjava.Env;
 import stroom.refdata.lmdb.AbstractLmdbDb;
-import stroom.refdata.offheapstore.RefDataValue;
-import stroom.refdata.offheapstore.serdes.RefDataValueSerde;
+import stroom.refdata.offheapstore.KeyValueStoreKey;
+import stroom.refdata.offheapstore.serdes.KeyValueStoreKeySerde;
 import stroom.refdata.offheapstore.ValueStoreKey;
 import stroom.refdata.offheapstore.serdes.ValueStoreKeySerde;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
 
-public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
+public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStoreKey> {
 
-    private static final String DB_NAME = "ValueStore";
+    private static final String DB_NAME = "KeyValueStore";
 
     @Inject
-    public ValueStoreDb(@Assisted final Env<ByteBuffer> lmdbEnvironment,
-                        final ValueStoreKeySerde keySerde,
-                        final RefDataValueSerde valueSerde) {
+    KeyValueStoreDb(@Assisted final Env<ByteBuffer> lmdbEnvironment,
+                    final KeyValueStoreKeySerde keySerde,
+                    final ValueStoreKeySerde valueSerde) {
+
         super(lmdbEnvironment, keySerde, valueSerde, DB_NAME);
     }
 
     public interface Factory {
-        ValueStoreDb create(final Env<ByteBuffer> lmdbEnvironment);
+        KeyValueStoreDb create(final Env<ByteBuffer> lmdbEnvironment);
     }
 }

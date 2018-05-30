@@ -1,4 +1,4 @@
-package stroom.refdata.offheapstore.tables;
+package stroom.refdata.offheapstore.databases;
 
 import org.lmdbjava.Env;
 import stroom.refdata.lmdb.AbstractLmdbDb;
@@ -14,8 +14,7 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
 
     public ProcessingInfoDb(final Env<ByteBuffer> lmdbEnvironment,
                             final Serde<RefStreamDefinition> keySerde,
-                            final Serde<RefDataProcessingInfo> valueSerde,
-                            final String dbName) {
+                            final Serde<RefDataProcessingInfo> valueSerde) {
 
         super(lmdbEnvironment, keySerde, valueSerde, DB_NAME);
     }

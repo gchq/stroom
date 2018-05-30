@@ -57,7 +57,7 @@ public abstract class AbstractLmdbDb<K, V> {
         return dbName;
     }
 
-    Dbi<ByteBuffer> getLmdbDbi() {
+    public Dbi<ByteBuffer> getLmdbDbi() {
         return lmdbDbi;
     }
 

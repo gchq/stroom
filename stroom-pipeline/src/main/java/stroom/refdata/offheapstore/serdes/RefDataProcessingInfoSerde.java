@@ -25,7 +25,7 @@ import stroom.refdata.offheapstore.RefDataProcessingInfo;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
-class RefDataProcessingInfoSerde implements
+public class RefDataProcessingInfoSerde implements
         Serde<RefDataProcessingInfo>,
         Serializer<RefDataProcessingInfo>,
         Deserializer<RefDataProcessingInfo> {

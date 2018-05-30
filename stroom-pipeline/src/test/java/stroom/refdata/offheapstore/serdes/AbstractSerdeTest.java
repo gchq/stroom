@@ -43,8 +43,8 @@ class AbstractSerdeTest {
 
         T object2 = serde2.deserialize(byteBuffer);
 
-        LOGGER.debug("Object 1 {}", object);
-        LOGGER.debug("Object 2 {}", object2);
+        LOGGER.debug("Object 1 [{}]", object);
+        LOGGER.debug("Object 2 [{}]", object2);
 
         Assertions.assertThat(object).isEqualTo(object2);
 

@@ -15,32 +15,28 @@
  *
  */
 
-package stroom.refdata.offheapstore.tables;
+package stroom.refdata.offheapstore.databases;
 
-import com.google.inject.assistedinject.Assisted;
 import org.lmdbjava.Env;
 import stroom.refdata.lmdb.AbstractLmdbDb;
-import stroom.refdata.offheapstore.KeyValueStoreKey;
-import stroom.refdata.offheapstore.serdes.KeyValueStoreKeySerde;
-import stroom.refdata.offheapstore.ValueStoreKey;
-import stroom.refdata.offheapstore.serdes.ValueStoreKeySerde;
+import stroom.refdata.lmdb.serde.Serde;
+import stroom.refdata.offheapstore.serdes.MapDefinitionSerde;
+import stroom.refdata.offheapstore.serdes.UIDSerde;
 
-import javax.inject.Inject;
 import java.nio.ByteBuffer;
 
-public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStoreKey> {
+public class MapUidForwardDb extends AbstractLmdbDb<MapDefinitionSerde, UIDSerde> {
 
-    private static final String DB_NAME = "KeyValueStore";
+    private static final String DB_NAME = "MapUidForward";
 
-    @Inject
-    KeyValueStoreDb(@Assisted final Env<ByteBuffer> lmdbEnvironment,
-                    final KeyValueStoreKeySerde keySerde,
-                    final ValueStoreKeySerde valueSerde) {
+    public MapUidForwardDb(final Env<ByteBuffer> lmdbEnvironment,
+                           final Serde<MapDefinitionSerde> keySerde,
+                           final Serde<UIDSerde> valueSerde) {
 
         super(lmdbEnvironment, keySerde, valueSerde, DB_NAME);
     }
 
     public interface Factory {
-        KeyValueStoreDb create(final Env<ByteBuffer> lmdbEnvironment);
+        MapUidForwardDb create(final Env<ByteBuffer> lmdbEnvironment);
     }
 }

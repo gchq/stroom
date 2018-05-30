@@ -41,12 +41,12 @@ import stroom.refdata.offheapstore.StringByteBufferConsumer;
 import stroom.refdata.offheapstore.StringValue;
 import stroom.refdata.offheapstore.serdes.RefDatValueSubSerde;
 import stroom.refdata.offheapstore.serdes.StringValueSerde;
-import stroom.refdata.offheapstore.tables.KeyValueStoreDb;
-import stroom.refdata.offheapstore.tables.MapUidForwardDb;
-import stroom.refdata.offheapstore.tables.MapUidReverseDb;
-import stroom.refdata.offheapstore.tables.ProcessingInfoDb;
-import stroom.refdata.offheapstore.tables.RangeStoreDb;
-import stroom.refdata.offheapstore.tables.ValueStoreDb;
+import stroom.refdata.offheapstore.databases.KeyValueStoreDb;
+import stroom.refdata.offheapstore.databases.MapUidForwardDb;
+import stroom.refdata.offheapstore.databases.MapUidReverseDb;
+import stroom.refdata.offheapstore.databases.ProcessingInfoDb;
+import stroom.refdata.offheapstore.databases.RangeStoreDb;
+import stroom.refdata.offheapstore.databases.ValueStoreDb;
 import stroom.security.SecurityContext;
 import stroom.task.TaskHandler;
 

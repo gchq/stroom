@@ -38,7 +38,9 @@ public class RangeStoreKeySerde extends AbstractKryoSerde<RangeStoreKey> {
     private static final Logger LOGGER = LoggerFactory.getLogger(RangeStoreKeySerde.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(RangeStoreKeySerde.class);
 
-    private static final KryoFactory kryoFactory = buildKryoFactory(RangeStoreKey.class, RangeStoreKeyKryoSerializer::new);
+    private static final KryoFactory kryoFactory = buildKryoFactory(
+            RangeStoreKey.class,
+            RangeStoreKeyKryoSerializer::new);
 
     private static final KryoPool pool = new KryoPool.Builder(kryoFactory)
             .softReferences()

@@ -26,12 +26,12 @@ import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Range;
-import stroom.refdata.offheapstore.tables.KeyValueStoreDb;
-import stroom.refdata.offheapstore.tables.MapUidForwardDb;
-import stroom.refdata.offheapstore.tables.MapUidReverseDb;
-import stroom.refdata.offheapstore.tables.ProcessingInfoDb;
-import stroom.refdata.offheapstore.tables.RangeStoreDb;
-import stroom.refdata.offheapstore.tables.ValueStoreDb;
+import stroom.refdata.offheapstore.databases.KeyValueStoreDb;
+import stroom.refdata.offheapstore.databases.MapUidForwardDb;
+import stroom.refdata.offheapstore.databases.MapUidReverseDb;
+import stroom.refdata.offheapstore.databases.ProcessingInfoDb;
+import stroom.refdata.offheapstore.databases.RangeStoreDb;
+import stroom.refdata.offheapstore.databases.ValueStoreDb;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 

@@ -63,6 +63,11 @@ public class FastInfosetValue extends RefDataValue {
         return fastInfosetBytes;
     }
 
+    @Override
+    public String toString() {
+        return ByteArrayUtils.byteArrayToHex(fastInfosetBytes);
+    }
+
 //    @Override
 //    void putValue(final ByteBuffer byteBuffer) {
 //        byteBuffer.put(fastInfosetBytes);
