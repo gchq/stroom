@@ -6,9 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
+## [v6.0-alpha.25]
 
-Uplift stroom-expression to v1.4.1
+* Issue **#779** : Fix permissions defect.
+ 
+* Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
+
+* Uplift stroom-expression to v1.4.1
 
 * Issue **#766** : Fix NullPointerExceptions when downloading table results to Excel format.
 
@@ -933,7 +937,8 @@ Uplift stroom-expression to v1.4.1
 
 * Issue **#28** : Dashboard component dependencies are now listed with the component name plus the component id in brackets rather than just the component id.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.24...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.25...6.0
+[v6.0-alpha.25]: https://github.com/gchq/stroom/compare/v6.0-alpha.24...v6.0-alpha.25
 [v6.0-alpha.24]: https://github.com/gchq/stroom/compare/v6.0-alpha.23...v6.0-alpha.24
 [v6.0-alpha.23]: https://github.com/gchq/stroom/compare/v6.0-alpha.22...v6.0-alpha.23
 [v6.0-alpha.22]: https://github.com/gchq/stroom/compare/v6.0-alpha.21...v6.0-alpha.22
