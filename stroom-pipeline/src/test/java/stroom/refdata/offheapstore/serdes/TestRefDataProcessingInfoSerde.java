@@ -35,4 +35,53 @@ public class TestRefDataProcessingInfoSerde extends AbstractSerdeTest {
 
         doSerialisationDeserialisationTest(refDataProcessingInfo, RefDataProcessingInfoSerde::new);
     }
+
+    @Test
+    public void testUpdateState() {
+        final RefDataProcessingInfo input = new RefDataProcessingInfo(
+                1,
+                1,
+                1,
+                RefDataProcessingInfo.ProcessingState.IN_PROGRESS);
+
+        final RefDataProcessingInfo expectedOutput = new RefDataProcessingInfo(
+                1,
+                1,
+                1,
+                RefDataProcessingInfo.ProcessingState.COMPLETE);
+
+        doByteBufferModificationTest(
+                input,
+                expectedOutput,
+                RefDataProcessingInfoSerde::new,
+                (serde, byteBuffer) ->
+                        ((RefDataProcessingInfoSerde)serde).updateState(
+                                byteBuffer,
+                                RefDataProcessingInfo.ProcessingState.COMPLETE));
+
+    }
+
+    @Test
+    public void testUpdateLastAccessedTime() {
+        final RefDataProcessingInfo input = new RefDataProcessingInfo(
+                1,
+                1,
+                1,
+                RefDataProcessingInfo.ProcessingState.IN_PROGRESS);
+
+        final RefDataProcessingInfo expectedOutput = new RefDataProcessingInfo(
+                1,
+                123,
+                1,
+                RefDataProcessingInfo.ProcessingState.IN_PROGRESS);
+
+        doByteBufferModificationTest(
+                input,
+                expectedOutput,
+                RefDataProcessingInfoSerde::new,
+                (serde, byteBuffer) ->
+                        ((RefDataProcessingInfoSerde)serde).updateLastAccessedTime(
+                                byteBuffer,
+                                123));
+    }
 }

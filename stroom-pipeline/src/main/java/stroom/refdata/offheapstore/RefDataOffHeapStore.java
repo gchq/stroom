@@ -216,8 +216,18 @@ public class RefDataOffHeapStore implements RefDataStore {
         return null;
     }
 
-    private void setProcessingInfo(final RefStreamDefinition refStreamDefinition, final RefDataProcessingInfo refDataProcessingInfo) {
+    private void setProcessingInfo(final Txn<ByteBuffer> writeTxn,
+                                   final RefStreamDefinition refStreamDefinition,
+                                   final RefDataProcessingInfo refDataProcessingInfo) {
 
+        processingInfoDb.put(refStreamDefinition, refDataProcessingInfo);
+    }
+
+    private void updateProcessingState(final Txn<ByteBuffer> writeTxn,
+                                       final RefStreamDefinition refStreamDefinition,
+                                       final RefDataProcessingInfo.ProcessingState newProcessingState) {
+
+//        processingInfoDb.put(refStreamDefinition, refDataProcessingInfo);
     }
 
 
@@ -230,7 +240,7 @@ public class RefDataOffHeapStore implements RefDataStore {
      */
     public static class RefDataLoaderImpl implements RefDataLoader {
 
-        private Txn<ByteBuffer> txn = null;
+        private Txn<ByteBuffer> writeTxn = null;
         private final RefDataOffHeapStore refDataOffHeapStore;
         private final Env<ByteBuffer> lmdbEnvironment;
         private boolean initialised = false;
@@ -265,6 +275,15 @@ public class RefDataOffHeapStore implements RefDataStore {
 
             beginTxn();
             this.initialised = true;
+
+            final RefDataProcessingInfo refDataProcessingInfo = new RefDataProcessingInfo(
+                    System.currentTimeMillis(),
+                    System.currentTimeMillis(),
+                    effectiveTimeMs,
+                    RefDataProcessingInfo.ProcessingState.IN_PROGRESS);
+
+
+            refDataOffHeapStore.setProcessingInfo(writeTxn, refStreamDefinition, refDataProcessingInfo);
         }
 
         public void completeProcessing() {
@@ -279,20 +298,18 @@ public class RefDataOffHeapStore implements RefDataStore {
             this.maxPutsBeforeCommit = maxPutsBeforeCommit;
         }
 
-
         private void beginTxn() {
-            if (txn != null) {
+            if (writeTxn != null) {
                 throw new RuntimeException("Transaction is already open");
             }
-            this.txn = lmdbEnvironment.txnWrite();
+            this.writeTxn = lmdbEnvironment.txnWrite();
         }
 
-
         private void commit() {
-            if (txn != null) {
+            if (writeTxn != null) {
                 try {
-                    txn.commit();
-                    txn = null;
+                    writeTxn.commit();
+                    writeTxn = null;
                 } catch (Exception e) {
                     throw new RuntimeException("Error committing write transaction", e);
                 }
@@ -344,9 +361,8 @@ public class RefDataOffHeapStore implements RefDataStore {
             }
         }
 
-
         private void beginTxnIfRequired() {
-            if (txn == null) {
+            if (writeTxn == null) {
                 beginTxn();
             }
         }
@@ -365,9 +381,9 @@ public class RefDataOffHeapStore implements RefDataStore {
 
         @Override
         public void close() throws Exception {
-            if (txn != null) {
-                txn.commit();
-                txn.close();
+            if (writeTxn != null) {
+                writeTxn.commit();
+                writeTxn.close();
             }
         }
     }

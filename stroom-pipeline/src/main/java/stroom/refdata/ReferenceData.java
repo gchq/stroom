@@ -44,9 +44,7 @@ import stroom.util.shared.Severity;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Optional;
 
@@ -60,11 +58,11 @@ public class ReferenceData {
     // Maps can be nested during the look up process e.g. "MAP1/MAP2"
     private static final String NEST_SEPARATOR = "/";
     private static final int MINIMUM_BYTE_COUNT = 10;
-    private final Map<String, CachedMapStore> nestedStreamCache = new HashMap<>();
-    private final Map<MapStoreCacheKey, MapStore> localMapStoreCache = new HashMap<>();
+//    private final Map<String, CachedMapStore> nestedStreamCache = new HashMap<>();
+//    private final Map<MapStoreCacheKey, MapStore> localMapStoreCache = new HashMap<>();
 
     private EffectiveStreamCache effectiveStreamCache;
-    private MapStoreCache mapStoreCache;
+//    private MapStoreCache mapStoreCache;
     private final FeedHolder feedHolder;
     private final StreamHolder streamHolder;
     private final ContextDataLoader contextDataLoader;
@@ -74,7 +72,7 @@ public class ReferenceData {
 
     @Inject
     ReferenceData(final EffectiveStreamCache effectiveStreamCache,
-                  final MapStoreCache mapStoreCache,
+//                  final MapStoreCache mapStoreCache,
                   final FeedHolder feedHolder,
                   final StreamHolder streamHolder,
                   final ContextDataLoader contextDataLoader,
@@ -82,7 +80,7 @@ public class ReferenceData {
                   final RefDataStore refDataStore,
                   @Named("cachedPipelineService") final PipelineService pipelineService) {
         this.effectiveStreamCache = effectiveStreamCache;
-        this.mapStoreCache = mapStoreCache;
+//        this.mapStoreCache = mapStoreCache;
         this.feedHolder = feedHolder;
         this.streamHolder = streamHolder;
         this.contextDataLoader = contextDataLoader;
@@ -398,37 +396,37 @@ public class ReferenceData {
         }
     }
 
-    private MapStore getMapStore(final MapStoreCacheKey mapStoreCacheKey) {
-        // Try the local cache first as we may have already got this map.
-        MapStore mapStore = localMapStoreCache.get(mapStoreCacheKey);
-
-        // If we didn't get a local cache then look in the pool.
-        if (mapStore == null) {
-            // Get the map store cache associated with this effective feed.
-            mapStore = mapStoreCache.get(mapStoreCacheKey);
-            // Cache this item locally for use later on.
-            localMapStoreCache.put(mapStoreCacheKey, mapStore);
-        }
-
-        return mapStore;
-    }
+//    private MapStore getMapStore(final MapStoreCacheKey mapStoreCacheKey) {
+//        // Try the local cache first as we may have already got this map.
+//        MapStore mapStore = localMapStoreCache.get(mapStoreCacheKey);
+//
+//        // If we didn't get a local cache then look in the pool.
+//        if (mapStore == null) {
+//            // Get the map store cache associated with this effective feed.
+//            mapStore = mapStoreCache.get(mapStoreCacheKey);
+//            // Cache this item locally for use later on.
+//            localMapStoreCache.put(mapStoreCacheKey, mapStore);
+//        }
+//
+//        return mapStore;
+//    }
 
     /**
      * This method puts a key value pair into the appropriate map based on a map
      * name, feed name and the date that the reference data is effective from.
      * It remains here only for test purposes.
      */
-    void put(final MapStoreCacheKey mapStoreCacheKey, final MapStore mapStore) {
-        localMapStoreCache.put(mapStoreCacheKey, mapStore);
-    }
+//    void put(final MapStoreCacheKey mapStoreCacheKey, final MapStore mapStore) {
+//        localMapStoreCache.put(mapStoreCacheKey, mapStore);
+//    }
 
     void setEffectiveStreamCache(final EffectiveStreamCache effectiveStreamcache) {
         this.effectiveStreamCache = effectiveStreamcache;
     }
 
-    void setMapStorePool(final MapStoreCache mapStorePool) {
-        this.mapStoreCache = mapStorePool;
-    }
+//    void setMapStorePool(final MapStoreCache mapStorePool) {
+//        this.mapStoreCache = mapStorePool;
+//    }
 
     private static class CachedMapStore {
         private final long streamNo;

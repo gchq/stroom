@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.serde.Serde;
 
 import java.nio.ByteBuffer;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 class AbstractSerdeTest {
@@ -30,8 +31,38 @@ class AbstractSerdeTest {
 
     private static final int BYTE_BUFFER_SIZE = 10_000;
 
-    <T> void doSerialisationDeserialisationTest(T object, Supplier<Serde<T>> serdeSupplier) {
+    <T> void doByteBufferModificationTest(final T inputObject,
+                                          final T expectedOutputObject,
+                                          final Supplier<Serde<T>> serdeSupplier,
+                                          final BiConsumer<Serde<T>, ByteBuffer> byteBufferModifier) {
 
+        // use two serde instances to be sure ser and de-ser are independent
+        final Serde<T> serde1 = serdeSupplier.get();
+        final Serde<T> serde2 = serdeSupplier.get();
+
+        // allocate a buffer size bigger than we need
+        final ByteBuffer byteBuffer = ByteBuffer.allocate(BYTE_BUFFER_SIZE);
+
+        serde1.serialize(byteBuffer, inputObject);
+
+        // modify the bytebuffer
+        byteBufferModifier.accept(serde1, byteBuffer);
+
+        T outputObject = serde2.deserialize(byteBuffer);
+
+        LOGGER.debug("inputObject [{}]", inputObject);
+        LOGGER.debug("expectedOutputObject [{}]", expectedOutputObject);
+        LOGGER.debug("outputObject [{}]", outputObject);
+
+        Assertions.assertThat(outputObject).isEqualTo(expectedOutputObject);
+
+        T outputObject2 = serde2.deserialize(byteBuffer);
+
+        // re-run the deser to ennsure the buffer is in the right position to be read from again
+        Assertions.assertThat(outputObject2).isEqualTo(expectedOutputObject);
+    }
+
+    <T> void doSerialisationDeserialisationTest(T object, Supplier<Serde<T>> serdeSupplier) {
         // use two serde instances to be sure ser and de-ser are independent
         final Serde<T> serde1 = serdeSupplier.get();
         final Serde<T> serde2 = serdeSupplier.get();
@@ -52,5 +83,6 @@ class AbstractSerdeTest {
 
         // re-run the deser to ennsure the buffer is in the right position to be read from again
         Assertions.assertThat(object).isEqualTo(object3);
+
     }
 }

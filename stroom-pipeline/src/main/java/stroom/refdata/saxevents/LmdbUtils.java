@@ -25,6 +25,7 @@ import org.lmdbjava.Stat;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.refdata.lmdb.serde.Serde;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -187,5 +188,25 @@ public class LmdbUtils {
         oneByteArr[0] = b;
         return DatatypeConverter.printHexBinary(oneByteArr);
 
+    }
+
+    /**
+     * Allocates a new direct {@link ByteBuffer} with a size equal to the max key size for the LMDB environment and
+     * serialises the object into that {@link ByteBuffer}
+     * @return The newly allocated {@link ByteBuffer}
+     */
+    public static <T> ByteBuffer buildDbKeyBuffer(final Env<ByteBuffer> lmdbEnv, final T keyObject, Serde<T> keySerde) {
+        return buildDbBuffer(keyObject, keySerde, lmdbEnv.getMaxKeySize());
+    }
+
+    /**
+     * Allocates a new direct {@link ByteBuffer} (of size bufferSize) and
+     * serialises the object into that {@link ByteBuffer}
+     * @return The newly allocated {@link ByteBuffer}
+     */
+    public static <T> ByteBuffer buildDbBuffer(final T object, Serde<T> serde, final int bufferSize) {
+        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(bufferSize);
+        serde.serialize(byteBuffer, object);
+        return byteBuffer;
     }
 }

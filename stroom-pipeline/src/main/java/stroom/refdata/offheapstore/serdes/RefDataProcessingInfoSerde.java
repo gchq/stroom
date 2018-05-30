@@ -30,6 +30,11 @@ public class RefDataProcessingInfoSerde implements
         Serializer<RefDataProcessingInfo>,
         Deserializer<RefDataProcessingInfo> {
 
+    public static final int CREATE_TIME_OFFSET = 0;
+    public static final int LAST_ACCESSED_TIME_OFFSET = CREATE_TIME_OFFSET + Long.BYTES;
+    public static final int EFFECTIVE_TIME_OFFSET = LAST_ACCESSED_TIME_OFFSET + Long.BYTES;
+    public static final int PROCESSING_STATE_OFFSET = EFFECTIVE_TIME_OFFSET + Long.BYTES;
+
     @Override
     public RefDataProcessingInfo deserialize(final ByteBuffer byteBuffer) {
         // the read order here must match the write order in serialize()
@@ -58,5 +63,21 @@ public class RefDataProcessingInfoSerde implements
         byteBuffer.putLong(refDataProcessingInfo.getEffectiveTimeEpochMs());
         byteBuffer.put(refDataProcessingInfo.getProcessingState().getId());
         byteBuffer.flip();
+    }
+
+    public void updateState(final ByteBuffer byteBuffer,
+                            final RefDataProcessingInfo.ProcessingState newProcessingState) {
+
+        // absolute put so no need to change the buffer position
+        byteBuffer.put(PROCESSING_STATE_OFFSET, newProcessingState.getId());
+    }
+
+    public void updateLastAccessedTime(final ByteBuffer byteBuffer, final long newLastAccessedTimeEpochMs) {
+        // absolute put so no need to change the buffer position
+        byteBuffer.putLong(LAST_ACCESSED_TIME_OFFSET, newLastAccessedTimeEpochMs);
+    }
+
+    public void updateLastAccessedTime(final ByteBuffer byteBuffer) {
+        updateLastAccessedTime(byteBuffer, System.currentTimeMillis());
     }
 }

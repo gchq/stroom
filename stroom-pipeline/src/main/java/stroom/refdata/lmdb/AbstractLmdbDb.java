@@ -36,11 +36,11 @@ public abstract class AbstractLmdbDb<K, V> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractLmdbDb.class);
 
-    private final Serde<K> keySerde;
-    private final Serde<V> valueSerde;
-    private final String dbName;
-    private final Dbi<ByteBuffer> lmdbDbi;
-    private final Env<ByteBuffer> lmdbEnvironment;
+    protected final Serde<K> keySerde;
+    protected final Serde<V> valueSerde;
+    protected final String dbName;
+    protected final Dbi<ByteBuffer> lmdbDbi;
+    protected final Env<ByteBuffer> lmdbEnvironment;
 
     public AbstractLmdbDb(final Env<ByteBuffer> lmdbEnvironment,
                           final Serde<K> keySerde,
@@ -61,7 +61,7 @@ public abstract class AbstractLmdbDb<K, V> {
         return lmdbDbi;
     }
 
-    Env<ByteBuffer> getLmdbEnvironment() {
+    protected Env<ByteBuffer> getLmdbEnvironment() {
         return lmdbEnvironment;
     }
 
