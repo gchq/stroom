@@ -17,17 +17,21 @@
 
 package stroom.refdata.lmdb.serde;
 
+import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.ByteBufferInputStream;
 import com.esotericsoftware.kryo.io.ByteBufferOutputStream;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import com.esotericsoftware.kryo.pool.KryoFactory;
 import com.esotericsoftware.kryo.pool.KryoPool;
+import org.objenesis.strategy.StdInstantiatorStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.util.function.Supplier;
 
 public abstract class AbstractKryoSerde<T> implements
         Serde<T>,
@@ -83,4 +87,37 @@ public abstract class AbstractKryoSerde<T> implements
 
     @Override
     public abstract void serialize(final ByteBuffer byteBuffer, final T object);
+
+
+    /**
+     * Builds a KryoFactory for an object T that uses a single custom Serializer, e.g.
+     *
+     * <pre>
+     *     private static final KryoFactory kryoFactory = buildKryoFactory(
+     *         RangeStoreKey.class,
+     *         RangeStoreKeyKryoSerializer::new);
+     * </pre>
+     */
+    protected static <T> KryoFactory buildKryoFactory(
+            final Class<T> objectType,
+            final Supplier<com.esotericsoftware.kryo.Serializer<T>> customKryoSerializerSupplier) {
+
+        return () -> {
+            Kryo kryo = new Kryo();
+            try {
+                LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("Initialising Kryo for {} on thread {}",
+                        objectType.getSimpleName(),
+                        Thread.currentThread().getName()));
+
+                kryo.setRegistrationRequired(true);
+                kryo.register(objectType, customKryoSerializerSupplier.get(), 0);
+
+                ((Kryo.DefaultInstantiatorStrategy) kryo.getInstantiatorStrategy())
+                        .setFallbackInstantiatorStrategy(new StdInstantiatorStrategy());
+            } catch (Exception e) {
+                LOGGER.error("Exception occurred configuring kryo instance", e);
+            }
+            return kryo;
+        };
+    }
 }

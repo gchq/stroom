@@ -18,12 +18,16 @@
 package stroom.refdata.offheapstore.serdes;
 
 import org.assertj.core.api.Assertions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.serde.Serde;
 
 import java.nio.ByteBuffer;
 import java.util.function.Supplier;
 
 class AbstractSerdeTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractSerdeTest.class);
+
     private static final int BYTE_BUFFER_SIZE = 10_000;
 
     <T> void doSerialisationDeserialisationTest(T object, Supplier<Serde<T>> serdeSupplier) {
@@ -39,6 +43,14 @@ class AbstractSerdeTest {
 
         T object2 = serde2.deserialize(byteBuffer);
 
+        LOGGER.debug("Object 1 {}", object);
+        LOGGER.debug("Object 2 {}", object2);
+
         Assertions.assertThat(object).isEqualTo(object2);
+
+        T object3 = serde2.deserialize(byteBuffer);
+
+        // re-run the deser to ennsure the buffer is in the right position to be read from again
+        Assertions.assertThat(object).isEqualTo(object3);
     }
 }

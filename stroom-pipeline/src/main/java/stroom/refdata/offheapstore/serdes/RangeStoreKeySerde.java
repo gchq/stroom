@@ -22,7 +22,6 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.esotericsoftware.kryo.pool.KryoFactory;
 import com.esotericsoftware.kryo.pool.KryoPool;
-import org.objenesis.strategy.StdInstantiatorStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Range;
@@ -39,21 +38,7 @@ public class RangeStoreKeySerde extends AbstractKryoSerde<RangeStoreKey> {
     private static final Logger LOGGER = LoggerFactory.getLogger(RangeStoreKeySerde.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(RangeStoreKeySerde.class);
 
-    private static final KryoFactory kryoFactory = () -> {
-        Kryo kryo = new Kryo();
-        try {
-            LAMBDA_LOGGER.debug(() -> String.format("Initialising Kryo on thread %s",
-                    Thread.currentThread().getName()));
-
-            kryo.register(RangeStoreKey.class, new RangeStoreKeyKryoSerializer());
-            ((Kryo.DefaultInstantiatorStrategy) kryo.getInstantiatorStrategy()).setFallbackInstantiatorStrategy(
-                    new StdInstantiatorStrategy());
-            kryo.setRegistrationRequired(true);
-        } catch (Exception e) {
-            LOGGER.error("Exception occurred configuring kryo instance", e);
-        }
-        return kryo;
-    };
+    private static final KryoFactory kryoFactory = buildKryoFactory(RangeStoreKey.class, RangeStoreKeyKryoSerializer::new);
 
     private static final KryoPool pool = new KryoPool.Builder(kryoFactory)
             .softReferences()

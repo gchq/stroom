@@ -22,7 +22,6 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.esotericsoftware.kryo.pool.KryoFactory;
 import com.esotericsoftware.kryo.pool.KryoPool;
-import org.objenesis.strategy.StdInstantiatorStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.serde.AbstractKryoSerde;
@@ -38,21 +37,7 @@ public class KeyValueStoreKeySerde extends AbstractKryoSerde<KeyValueStoreKey> {
     private static final Logger LOGGER = LoggerFactory.getLogger(KeyValueStoreKeySerde.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(KeyValueStoreKeySerde.class);
 
-    private static final KryoFactory kryoFactory = () -> {
-        Kryo kryo = new Kryo();
-        try {
-            LAMBDA_LOGGER.debug(() -> String.format("Initialising Kryo on thread %s",
-                    Thread.currentThread().getName()));
-
-            kryo.register(KeyValueStoreKey.class, new KeyValueStoreKeyKryoSerializer());
-            ((Kryo.DefaultInstantiatorStrategy) kryo.getInstantiatorStrategy()).setFallbackInstantiatorStrategy(
-                    new StdInstantiatorStrategy());
-            kryo.setRegistrationRequired(true);
-        } catch (Exception e) {
-            LOGGER.error("Exception occurred configuring kryo instance", e);
-        }
-        return kryo;
-    };
+    private static final KryoFactory kryoFactory = buildKryoFactory(KeyValueStoreKey.class, KeyValueStoreKeyKryoSerializer::new);
 
     private static final KryoPool pool = new KryoPool.Builder(kryoFactory)
             .softReferences()

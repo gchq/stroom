@@ -22,7 +22,6 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.esotericsoftware.kryo.pool.KryoFactory;
 import com.esotericsoftware.kryo.pool.KryoPool;
-import org.objenesis.strategy.StdInstantiatorStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.query.api.v2.DocRef;
@@ -39,21 +38,9 @@ public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinit
     private static final Logger LOGGER = LoggerFactory.getLogger(RefStreamDefinitionSerde.class);
     private static final LambdaLogger LAMBDA_LOGGER= LambdaLoggerFactory.getLogger(RefStreamDefinitionSerde.class);
 
-    private static final KryoFactory kryoFactory = () -> {
-        Kryo kryo = new Kryo();
-        try {
-            LAMBDA_LOGGER.debug(() -> String.format("Initialising Kryo on thread %s",
-                    Thread.currentThread().getName()));
-
-            kryo.register(RefStreamDefinition.class, new RefStreamDefinitionKryoSerializer());
-            ((Kryo.DefaultInstantiatorStrategy) kryo.getInstantiatorStrategy())
-                    .setFallbackInstantiatorStrategy(new StdInstantiatorStrategy());
-            kryo.setRegistrationRequired(true);
-        } catch (Exception e) {
-            LOGGER.error("Exception occurred configuring kryo instance", e);
-        }
-        return kryo;
-    };
+    private static final KryoFactory kryoFactory = buildKryoFactory(
+            RefStreamDefinition.class,
+            RefStreamDefinitionKryoSerializer::new);
 
     private static final KryoPool pool = new KryoPool.Builder(kryoFactory)
             .softReferences()
@@ -94,7 +81,7 @@ public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinit
             final long streamNo = input.readVarLong(true);
 
             return new RefStreamDefinition(
-                    new DocRef(pipelineUuid, pipelineType),
+                    new DocRef(pipelineType, pipelineUuid),
                     pipelineVersion,
                     streamId,
                     streamNo);
