@@ -64,6 +64,7 @@ ElementMenu.propTypes = {
     pipelineId : PropTypes.string.isRequired,
     elementId: PropTypes.string.isRequired,
     isOpen : PropTypes.bool.isRequired,
+    elements : PropTypes.object.isRequired,
 
     requestDeletePipelineElement : PropTypes.func.isRequired,
     closePipelineElementContextMenu : PropTypes.func.isRequired
@@ -72,6 +73,7 @@ ElementMenu.propTypes = {
 export default connect(
     (state) => ({
         // state
+        elements : state.elements.elements
     }),
     {
         closePipelineElementContextMenu,

@@ -46,7 +46,9 @@ const DocRefModalPicker = (props) => {
         modalIsOpen,
         tree,
         pickerId,
-        typeFilter
+        typeFilter,
+        setModal,
+        explorer
     } = props;
 
     let value = (!!docRef) ? docRef.name : '';

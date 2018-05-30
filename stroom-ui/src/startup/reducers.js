@@ -28,7 +28,10 @@ import {
   expressionReducer as expressions,
   expressionEditorReducer as expressionEditors
 } from 'components/ExpressionBuilder';
-import { pipelineReducer as pipelines } from 'prototypes/PipelineEditor';
+import {
+  pipelineReducer as pipelines,
+  elementReducer as elements
+} from 'prototypes/PipelineEditor';
 import { trackerDashboardReducer as trackerDashboard } from 'sections/TrackerDashboard';
 import { errorPageReducer as errorPage } from 'sections/ErrorPage';
 import config from './config';
@@ -44,6 +47,7 @@ export default combineReducers({
   expressions,
   expressionEditors,
   pipelines,
+  elements,
   errorPage,
   lineContainer,
   modal

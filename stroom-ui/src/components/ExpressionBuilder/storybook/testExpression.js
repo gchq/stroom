@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { evilTrinkets } from 'components/DocExplorer/storybook/testTree';
+import { testTree } from 'components/DocExplorer/storybook/testTree';
 
 const testExpression = {
     "type": "operator",
@@ -40,7 +40,7 @@ const testExpression = {
             "field": "colour",
             "condition": "IN_DICTIONARY",
             "value": null,
-            "dictionary": evilTrinkets,
+            "dictionary": testTree.children[0].children[0].children[1],
             "enabled": true
         },
         {

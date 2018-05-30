@@ -22,7 +22,7 @@ const ROExpressionOperator = (props) => {
         isEnabled
     } = props;
 
-    let className = 'expression-item';
+    let className = 'expression-item expression-item--readonly';
     if (isRoot) {
         className += ' expression-item__root'
     }
@@ -40,14 +40,14 @@ const ROExpressionOperator = (props) => {
                 {
                     operator.children.map(c => {
                         let itemElement;
-                        let isEnabled = isEnabled && c.enabled;
+                        let cIsEnabled = isEnabled && c.enabled;
                         switch (c.type) {
                             case 'term':
                                 itemElement = (
                                     <div key={c.uuid} id={'expression-item' + c.uuid}>
                                         <ROExpressionTerm 
                                                     expressionId={expressionId}
-                                                    isEnabled={isEnabled}
+                                                    isEnabled={cIsEnabled}
                                                     term={c} />
                                     </div>
                                 )
@@ -56,7 +56,7 @@ const ROExpressionOperator = (props) => {
                                 itemElement = (
                                     <ROExpressionOperator 
                                                 expressionId={expressionId}
-                                                isEnabled={isEnabled}
+                                                isEnabled={cIsEnabled}
                                                 operator={c} />
                                 )
                                 break;

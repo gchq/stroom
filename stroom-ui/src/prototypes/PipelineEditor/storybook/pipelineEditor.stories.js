@@ -28,14 +28,25 @@ import {
 } from '../index';
 
 import {
-    pipelineChanged
+    pipelineChanged,
+    elementsReceived,
+    elementPropertiesReceived
 } from '../redux';
 
-import { testPipeline } from './testPipelines';
+import {
+    testPipeline
+} from './testPipelines';
+
+import {
+    testElementTypes,
+    testElementProperties
+} from './testElements';
 
 storiesOf('Pipeline Editor', module)
     .addDecorator(ReduxDecoratorWithInitialisation((store) => {
         store.dispatch(pipelineChanged('testPipeline', testPipeline))
+        store.dispatch(elementsReceived(testElementTypes));
+        store.dispatch(elementPropertiesReceived(testElementProperties));
     })) // must be recorder after/outside of the test initialisation decorators
     .addDecorator(DragDropDecorator)
     .add('Pipeline Editor (test)', () => 

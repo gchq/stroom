@@ -30,8 +30,9 @@
     opacity: 0.5;
 }
 
-.expression-item--disabled .expression-item--readonly {
+.expression-item--disabled.expression-item--readonly {
     text-decoration: line-through;
+    opacity: 1.0;
 }
 
 .input-between__divider {
