@@ -4,13 +4,12 @@ import PropTypes from 'prop-types';
 /**
  * Read only expression operator
  */
-const ROExpressionTerm = (props) => {
-    const {
-        term,
-        isEnabled,
-        expressionId
-    } = props;
-
+const ROExpressionTerm = ({
+    term,
+    isEnabled,
+    expressionId
+}) => {
+    
     let className = 'expression-item expression-item--readonly';
     if (!isEnabled) {
         className += ' expression-item--disabled';

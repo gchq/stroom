@@ -125,19 +125,17 @@ let withPickedDocRef = () => {
     }
 }
 
-const ExpressionTerm = (props) => {
-    
-    const {
-        connectDragSource,
-        isDragging,
-        term,
-        isEnabled,
-        dataSource,
-        expressionId,
+const ExpressionTerm = ({
+    connectDragSource,
+    isDragging,
+    term,
+    isEnabled,
+    dataSource,
+    expressionId,
 
-        requestExpressionItemDelete,
-        expressionItemUpdated
-    } = props;
+    requestExpressionItemDelete,
+    expressionItemUpdated
+}) => {
     let pickerId = joinDictionaryTermId(expressionId, term.uuid);
 
     let onTermUpdated = (updates) => {

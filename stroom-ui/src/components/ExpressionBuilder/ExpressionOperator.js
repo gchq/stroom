@@ -85,25 +85,24 @@ function dropCollect(connect, monitor) {
     };
 }
 
-const ExpressionOperator = (props) => {
-    const {
-        expressionId,
-        operator,
-        isRoot,
-        isEnabled,
-        dataSource,
+const ExpressionOperator = ({
+    expressionId,
+    operator,
+    isRoot,
+    isEnabled,
+    dataSource,
 
-        expressionTermAdded,
-        expressionOperatorAdded,
-        expressionItemUpdated,
-        requestExpressionItemDelete,
-        expressionItemMoved,
+    expressionTermAdded,
+    expressionOperatorAdded,
+    expressionItemUpdated,
+    requestExpressionItemDelete,
+    expressionItemMoved,
 
-        connectDropTarget,
-        isOver,
-        connectDragSource,
-        isDragging
-    } = props;
+    connectDropTarget,
+    isOver,
+    connectDragSource,
+    isDragging
+}) => {
 
     let onAddOperator = () => {
         expressionOperatorAdded(expressionId, operator.uuid);

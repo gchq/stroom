@@ -102,15 +102,14 @@ const COMMON_ELEMENT_STYLE = {
   position: 'absolute'
 };
 
-const PipelineEditor = (props) => {
-  const {
-    pipelineId,
-    pipeline,
-    pendingElementIdToDelete,
-    cancelDeletePipelineElement,
-    confirmDeletePipelineElement,
-    layoutInformation
-  } = props;
+const PipelineEditor = ({
+  pipelineId,
+  pipeline,
+  pendingElementIdToDelete,
+  cancelDeletePipelineElement,
+  confirmDeletePipelineElement,
+  layoutInformation
+}) => {
 
   let elementStyles = mapObject(layoutInformation, l => ({
     ...COMMON_ELEMENT_STYLE,

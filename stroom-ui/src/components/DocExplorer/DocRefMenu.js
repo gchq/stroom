@@ -31,16 +31,14 @@ import {
     closeDocRefContextMenu
 } from './redux';
 
-const DocRefMenu = (props) => {
-    let {
-        explorerId,
-        docRef,
-        isOpen,
-        openDocRef,
-        requestDeleteDocRef,
-        closeDocRefContextMenu
-    } = props;
-
+const DocRefMenu = ({
+    explorerId,
+    docRef,
+    isOpen,
+    openDocRef,
+    requestDeleteDocRef,
+    closeDocRefContextMenu
+}) => {
     let onClose = () => {
         closeDocRefContextMenu(explorerId)
     }

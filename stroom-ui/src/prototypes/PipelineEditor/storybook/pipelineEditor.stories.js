@@ -34,13 +34,10 @@ import {
 } from '../redux';
 
 import {
-    testPipeline
-} from './testPipelines';
-
-import {
+    testPipeline,
     testElementTypes,
     testElementProperties
-} from './testElements';
+} from 'testData';
 
 storiesOf('Pipeline Editor', module)
     .addDecorator(ReduxDecoratorWithInitialisation((store) => {

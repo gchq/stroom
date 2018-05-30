@@ -37,7 +37,7 @@ import markdown from './docExplorer.md';
 import { 
     testTree,
     DOC_REF_TYPES 
-} from './testTree'
+} from 'testData'
 
 import {
     pickRandomItem

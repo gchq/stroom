@@ -38,7 +38,6 @@ import { ItemTypes } from './dragDropTypes';
 
 const streamLogo = require('images/pipeline/stream.svg');
 
-console.log('fuck', streamLogo);
 const dragSource = {
   canDrag(props) {
 		return true;
@@ -74,19 +73,18 @@ function dropCollect(connect, monitor) {
     };
 }
 
-const PipelineElement = (props) => {
-  const {
-    connectDragSource,
-    isDragging,
-    connectDropTarget,
-    isOver,
-    canDrop, 
-    pipelineId,
-    elementId,
-    contextMenuElementId,
-    pipelineElementSelected,
-    openPipelineElementContextMenu
-  } = props;
+const PipelineElement = ({
+  connectDragSource,
+  isDragging,
+  connectDropTarget,
+  isOver,
+  canDrop, 
+  pipelineId,
+  elementId,
+  contextMenuElementId,
+  pipelineElementSelected,
+  openPipelineElementContextMenu
+}) => {
 
   let isContextMenuOpen = !!contextMenuElementId && contextMenuElementId === elementId;
 

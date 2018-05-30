@@ -14,13 +14,12 @@ import {
 /**
  * Read only expression operator
  */
-const ROExpressionOperator = (props) => {
-    let {
-        expressionId,
-        operator,
-        isRoot,
-        isEnabled
-    } = props;
+const ROExpressionOperator = ({
+    expressionId,
+    operator,
+    isRoot,
+    isEnabled
+}) => {
 
     let className = 'expression-item expression-item--readonly';
     if (isRoot) {

@@ -29,15 +29,14 @@ import {
     closePipelineElementContextMenu
 } from './redux';
 
-const ElementMenu = (props) => {
-    let {
-        pipelineId,
-        elementId,
-        isOpen,
-        closePipelineElementContextMenu,
-        requestDeletePipelineElement
-    } = props;
-
+const ElementMenu = ({
+    pipelineId,
+    elementId,
+    isOpen,
+    closePipelineElementContextMenu,
+    requestDeletePipelineElement
+}) => {
+    
     return (
         <Dropdown
             floating 

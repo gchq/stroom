@@ -133,4 +133,6 @@ const testPipeline = {
   },
 };
 
-export { testPipeline };
+export {
+  testPipeline
+};

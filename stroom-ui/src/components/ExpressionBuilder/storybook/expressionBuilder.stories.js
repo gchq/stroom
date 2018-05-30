@@ -43,19 +43,20 @@ import {
 import { receiveDataSource } from 'components/DataSource';
 
 import {
-  receiveDocTree,
-  testTree
+  receiveDocTree
 } from 'components/DocExplorer';
 
 import {
+  testTree,
   testExpression,
   simplestExpression,
-  testDataSource,
-  emptyDataSource,
   testAndOperator,
   testOrOperator,
   testNotOperator,
-} from './testExpression';
+  testDataSource,
+  emptyDataSource
+} from 'testData';
+
 import markdown from './expressionBuilder.md';
 
 storiesOf('Expression Builder', module)

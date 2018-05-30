@@ -38,15 +38,13 @@ import { docRefPicked } from './redux'
 
 import { withPickedDocRef } from './withPickedDocRef';
 
-const DocRefDropdownPicker = (props) => {
-    let {
-        pickerId,
-        documentTree,
-        typeFilter,
-        docRef,
-        docRefPicked
-    } = props;
-
+const DocRefDropdownPicker = ({
+    pickerId,
+    documentTree,
+    typeFilter,
+    docRef,
+    docRefPicked
+}) => {
     let value = (!!docRef) ? docRef.uuid : '';
     
     let options = [];

@@ -33,8 +33,6 @@ import {
   explorerTreeReducer
 } from './redux';
 
-import { testTree } from './storybook/testTree';
-
 import { withExplorer } from './withExplorer';
 
 export {
@@ -57,6 +55,3 @@ export {
   explorerTreeReducer,
   withExplorer,
 };
-
-// Test exports
-export { testTree };

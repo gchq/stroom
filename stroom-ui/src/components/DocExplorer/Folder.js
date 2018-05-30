@@ -72,20 +72,19 @@ function dropCollect(connect, monitor) {
     };
 }
 
-const Folder = (props) => {
-    const {
-        connectDragSource,
-        isDragging,
-        connectDropTarget,
-        isOver,
-        canDrop,
-        explorerId,
-        explorer,
-        folder,
-        toggleFolderOpen,
-        moveExplorerItem,
-        openDocRefContextMenu
-    } = props;
+const Folder = ({
+    connectDragSource,
+    isDragging,
+    connectDropTarget,
+    isOver,
+    canDrop,
+    explorerId,
+    explorer,
+    folder,
+    toggleFolderOpen,
+    moveExplorerItem,
+    openDocRefContextMenu
+}) => {
     let thisIsOpen = !!explorer.isFolderOpen[folder.uuid];
     let isContextMenuOpen = !!explorer.contextMenuItemUuid && explorer.contextMenuItemUuid === folder.uuid;
     let icon = thisIsOpen ? 'caret down' : 'caret right';

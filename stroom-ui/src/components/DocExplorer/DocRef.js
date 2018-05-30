@@ -52,88 +52,89 @@ function dragCollect(connect, monitor) {
     }
 }
 
-class DocRef extends Component {
-    static propTypes = {
-        // Props
-        explorerId : PropTypes.string.isRequired,
-        explorer : PropTypes.object.isRequired,
-        docRef : PropTypes.object.isRequired,
-
-        // Actions
-        selectDocRef : PropTypes.func.isRequired,
-        openDocRef : PropTypes.func.isRequired,
-        openDocRefContextMenu : PropTypes.func.isRequired,
-
-        // React DnD
-        connectDragSource: PropTypes.func.isRequired,
-        isDragging: PropTypes.bool.isRequired
-    }
+const DocRef = ({
+    explorerId,
+    explorer,
+    docRef,
     
+    selectDocRef,
+    openDocRef,
+    openDocRefContextMenu,
+
+    connectDragSource,
+    isDragging
+}) => {
     // these are required to tell the difference between single/double clicks
-    timer = 0;
-    delay = 200;
-    prevent = false;
+    let timer = 0;
+    let delay = 200;
+    let prevent = false;
 
-    onSingleClick() {
-        this.timer = setTimeout(function() {
-            if (!this.prevent) {
-                this.props.selectDocRef(this.props.explorerId, this.props.docRef); 
+    let onSingleClick = () => {
+        timer = setTimeout(() => {
+            if (!prevent) {
+                selectDocRef(explorerId, docRef); 
             }
-            this.prevent = false;
-        }.bind(this), this.delay);
+            prevent = false;
+        }, delay);
     }
 
-    onDoubleClick() {
-        clearTimeout(this.timer);
-        this.prevent = true;
-        this.props.openDocRef(this.props.explorerId, this.props.docRef)
+    let onDoubleClick = () => {
+        clearTimeout(timer);
+        prevent = true;
+        openDocRef(explorerId, docRef)
     }
 
-    onRightClick(e) {
-        this.props.openDocRefContextMenu(this.props.explorerId, this.props.docRef);
+    let onRightClick = (e) => {
+        openDocRefContextMenu(explorerId, docRef);
         e.preventDefault();
     }
 
-    render() {
-        const {
-            connectDragSource,
-            isDragging,
-            explorerId,
-            explorer,
-            docRef
-        } = this.props;
+    let isSelected = explorer.isSelected[docRef.uuid];
+    let isContextMenuOpen = !!explorer.contextMenuItemUuid && explorer.contextMenuItemUuid === docRef.uuid;
 
-        let isSelected = explorer.isSelected[docRef.uuid];
-        let isContextMenuOpen = !!explorer.contextMenuItemUuid && explorer.contextMenuItemUuid === docRef.uuid;
-
-        let className = ''
-        if (isDragging) {
-            className += ' doc-ref__dragging'
-        }
-        if (isSelected) {
-            className += ' doc-ref__selected'
-        }
-        if (isContextMenuOpen) {
-            className += ' doc-ref__context-menu-open'
-        }
-
-        return connectDragSource(
-            <div className={className}
-                onContextMenu={this.onRightClick.bind(this)}
-                onDoubleClick={this.onDoubleClick.bind(this)}
-                onClick={this.onSingleClick.bind(this)}>
-                <DocRefMenu 
-                    explorerId={explorerId}
-                    docRef={docRef}
-                    isOpen={isContextMenuOpen}
-                />
-                <span>
-                    <Icon name='file outline'/>
-                    {docRef.name}
-                </span>
-            </div>
-        )
+    let className = ''
+    if (isDragging) {
+        className += ' doc-ref__dragging'
     }
+    if (isSelected) {
+        className += ' doc-ref__selected'
+    }
+    if (isContextMenuOpen) {
+        className += ' doc-ref__context-menu-open'
+    }
+
+    return connectDragSource(
+        <div className={className}
+            onContextMenu={onRightClick}
+            onDoubleClick={onDoubleClick}
+            onClick={onSingleClick}>
+            <DocRefMenu 
+                explorerId={explorerId}
+                docRef={docRef}
+                isOpen={isContextMenuOpen}
+            />
+            <span>
+                <Icon name='file outline'/>
+                {docRef.name}
+            </span>
+        </div>
+    )
+}
+
+DocRef.propTypes = {
+    // Props
+    explorerId : PropTypes.string.isRequired,
+    explorer : PropTypes.object.isRequired,
+    docRef : PropTypes.object.isRequired,
+
+    // Actions
+    selectDocRef : PropTypes.func.isRequired,
+    openDocRef : PropTypes.func.isRequired,
+    openDocRefContextMenu : PropTypes.func.isRequired,
+
+    // React DnD
+    connectDragSource: PropTypes.func.isRequired,
+    isDragging: PropTypes.bool.isRequired
 }
 
 export default compose(

@@ -56,7 +56,7 @@ export function withPipeline(customIdPropertyName) {
           asTree = getPipelineAsTree(pipeline.pipeline);
           layoutInformation = getPipelineLayoutInformation(asTree);
         }
-
+        
         return {
           ...pipeline,
           asTree,

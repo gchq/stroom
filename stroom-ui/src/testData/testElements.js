@@ -1,6 +1,8 @@
-import { ElementCategories } from '../ElementCategories';
+import {
+	ElementCategories
+} from 'prototypes/PipelineEditor/ElementCategories';
 
-export const testElementTypes = {
+const testElementTypes = {
 	"FileAppender": {
 		"type": "FileAppender",
 		"category": "DESTINATION",
@@ -182,7 +184,7 @@ export const testElementTypes = {
 	}
 }
 
-export const testElementProperties = {
+const testElementProperties = {
 	"JSONWriter": {
 		"indentOutput": {
 			"elementType": {
@@ -787,4 +789,9 @@ export const testElementProperties = {
 	},
 	"XMLParser": {},
 	"RecordOutputFilter": {}
+}
+
+export {
+	testElementTypes,
+	testElementProperties
 }

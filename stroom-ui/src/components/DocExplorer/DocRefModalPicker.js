@@ -38,20 +38,18 @@ import {
 
 import DocExplorer from './DocExplorer';
 
-const DocRefModalPicker = (props) => {
-    let {
-        isSelected,
-        documentTree,
-        docRefPicked,
-        docRef,
-        modalIsOpen,
-        tree,
-        pickerId,
-        typeFilter,
-        setModal,
-        explorer
-    } = props;
-
+const DocRefModalPicker = ({
+    isSelected,
+    documentTree,
+    docRefPicked,
+    docRef,
+    modalIsOpen,
+    tree,
+    pickerId,
+    typeFilter,
+    setModal,
+    explorer
+}) => {
     let value = (!!docRef) ? docRef.name : '';
 
     let handleOpen = () => setModal(pickerId, true);
