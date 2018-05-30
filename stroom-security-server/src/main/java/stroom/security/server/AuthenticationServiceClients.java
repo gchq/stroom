@@ -129,17 +129,24 @@ public class AuthenticationServiceClients {
             put("enabled", "true");
         }});
 
-        Optional<String> usersApiToken;
+        Optional<String> usersApiToken = Optional.empty();
         try {
             SearchResponse authSearchResponse = newApiKeyApi().search(authSearchRequest);
-            if (authSearchResponse.getTokens().isEmpty()) {
+            for(Token token : authSearchResponse.getTokens()){
+                // We're using the auth token search API to get this token. It'll be a fuzzy match so
+                // we need to make sure the userId matches exactly.
+                if(token.getUserEmail().equalsIgnoreCase(userId)){
+                    usersApiToken = Optional.of(token.getToken());
+                    break;
+                }
+            }
+
+            if(!usersApiToken.isPresent()){
                 // User doesn't have an API token and cannot make this request.
                 LOGGER.warn("Tried to get a user's API key but they don't have one! User was: " +
                         userId);
-                usersApiToken = Optional.empty();
-            } else {
-                usersApiToken = Optional.of(authSearchResponse.getTokens().get(0).getToken());
             }
+
         } catch (ApiException e) {
             String message =
                     "Unable to get the user's token from the Token service! User was: " + userId;
