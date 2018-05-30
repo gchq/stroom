@@ -21,7 +21,7 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.util.BaseEntityUtil;
 import stroom.node.shared.Node;
-import stroom.streamstore.StreamStore;
+import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.Stream;

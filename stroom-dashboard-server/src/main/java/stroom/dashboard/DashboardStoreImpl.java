@@ -18,6 +18,7 @@
 package stroom.dashboard;
 
 import stroom.dashboard.shared.DashboardDoc;
+import stroom.docref.DocRef;
 import stroom.docstore.Persistence;
 import stroom.docstore.Serialiser2;
 import stroom.docstore.Store;
@@ -25,7 +26,6 @@ import stroom.explorer.shared.DocumentType;
 import stroom.importexport.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.util.shared.Message;
@@ -158,34 +158,32 @@ class DashboardStoreImpl implements DashboardStore {
             final String uuid = docRef.getUuid();
             try {
                 final boolean exists = persistence.exists(docRef);
-                if (importState.ok(importMode)) {
-                    DashboardDoc document;
-                    if (exists) {
-                        document = readDocument(docRef);
+                DashboardDoc document;
+                if (exists) {
+                    document = readDocument(docRef);
 
-                    } else {
-                        final OldDashboard oldDashboard = new OldDashboard();
-                        final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
-                        legacySerialiser.performImport(oldDashboard, dataMap);
+                } else {
+                    final OldDashboard oldDashboard = new OldDashboard();
+                    final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
+                    legacySerialiser.performImport(oldDashboard, dataMap);
 
-                        final long now = System.currentTimeMillis();
-                        final String userId = securityContext.getUserId();
+                    final long now = System.currentTimeMillis();
+                    final String userId = securityContext.getUserId();
 
-                        document = new DashboardDoc();
-                        document.setType(docRef.getType());
-                        document.setUuid(uuid);
-                        document.setName(docRef.getName());
-                        document.setVersion(UUID.randomUUID().toString());
-                        document.setCreateTime(now);
-                        document.setUpdateTime(now);
-                        document.setCreateUser(userId);
-                        document.setUpdateUser(userId);
-                    }
+                    document = new DashboardDoc();
+                    document.setType(docRef.getType());
+                    document.setUuid(uuid);
+                    document.setName(docRef.getName());
+                    document.setVersion(UUID.randomUUID().toString());
+                    document.setCreateTime(now);
+                    document.setUpdateTime(now);
+                    document.setCreateUser(userId);
+                    document.setUpdateUser(userId);
+                }
 
-                    result = serialiser.write(document);
-                    if (dataMap.containsKey("data.xml")) {
-                        result.put("xml", dataMap.remove("data.xml"));
-                    }
+                result = serialiser.write(document);
+                if (dataMap.containsKey("data.xml")) {
+                    result.put("xml", dataMap.remove("data.xml"));
                 }
 
             } catch (final IOException | RuntimeException e) {

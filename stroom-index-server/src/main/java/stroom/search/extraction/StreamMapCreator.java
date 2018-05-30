@@ -24,7 +24,7 @@ import stroom.index.shared.IndexField;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.search.Event;
 import stroom.security.Security;
-import stroom.streamstore.StreamStore;
+import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamPermissionException;
 import stroom.util.shared.Severity;

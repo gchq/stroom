@@ -17,6 +17,7 @@
 
 package stroom.pipeline;
 
+import stroom.docref.DocRef;
 import stroom.docstore.EncodingUtil;
 import stroom.docstore.Persistence;
 import stroom.docstore.Store;
@@ -26,7 +27,6 @@ import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.util.shared.Message;
@@ -161,46 +161,44 @@ public class PipelineStoreImpl implements PipelineStore {
             final String uuid = docRef.getUuid();
             try {
                 final boolean exists = persistence.exists(docRef);
-                if (importState.ok(importMode)) {
-                    PipelineDoc document;
-                    if (exists) {
-                        document = readDocument(docRef);
+                PipelineDoc document;
+                if (exists) {
+                    document = readDocument(docRef);
 
-                    } else {
-                        final OldPipelineEntity oldPipeline = new OldPipelineEntity();
-                        final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
-                        legacySerialiser.performImport(oldPipeline, dataMap);
+                } else {
+                    final OldPipelineEntity oldPipeline = new OldPipelineEntity();
+                    final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
+                    legacySerialiser.performImport(oldPipeline, dataMap);
 
-                        final long now = System.currentTimeMillis();
-                        final String userId = securityContext.getUserId();
+                    final long now = System.currentTimeMillis();
+                    final String userId = securityContext.getUserId();
 
-                        document = new PipelineDoc();
-                        document.setType(docRef.getType());
-                        document.setUuid(uuid);
-                        document.setName(docRef.getName());
-                        document.setVersion(UUID.randomUUID().toString());
-                        document.setCreateTime(now);
-                        document.setUpdateTime(now);
-                        document.setCreateUser(userId);
-                        document.setUpdateUser(userId);
-                        document.setDescription(oldPipeline.getDescription());
+                    document = new PipelineDoc();
+                    document.setType(docRef.getType());
+                    document.setUuid(uuid);
+                    document.setName(docRef.getName());
+                    document.setVersion(UUID.randomUUID().toString());
+                    document.setCreateTime(now);
+                    document.setUpdateTime(now);
+                    document.setCreateUser(userId);
+                    document.setUpdateUser(userId);
+                    document.setDescription(oldPipeline.getDescription());
 
-                        final DocRef pipelineRef = serialiser.getDocRefFromLegacyXML(oldPipeline.getParentPipelineXML());
-                        if (pipelineRef != null) {
-                            document.setParentPipeline(pipelineRef);
-                        }
-
-                        final PipelineData pipelineData = serialiser.getPipelineDataFromXml(oldPipeline.getData());
-                        document.setPipelineData(pipelineData);
+                    final DocRef pipelineRef = serialiser.getDocRefFromLegacyXML(oldPipeline.getParentPipelineXML());
+                    if (pipelineRef != null) {
+                        document.setParentPipeline(pipelineRef);
                     }
 
-                    if (dataMap.containsKey("data.xml")) {
-                        final PipelineData pipelineData = serialiser.getPipelineDataFromXml(EncodingUtil.asString(dataMap.remove("data.xml")));
-                        document.setPipelineData(pipelineData);
-                    }
-
-                    result = serialiser.write(document);
+                    final PipelineData pipelineData = serialiser.getPipelineDataFromXml(oldPipeline.getData());
+                    document.setPipelineData(pipelineData);
                 }
+
+                if (dataMap.containsKey("data.xml")) {
+                    final PipelineData pipelineData = serialiser.getPipelineDataFromXml(EncodingUtil.asString(dataMap.remove("data.xml")));
+                    document.setPipelineData(pipelineData);
+                }
+
+                result = serialiser.write(document);
 
             } catch (final IOException | RuntimeException e) {
                 importState.addMessage(Severity.ERROR, e.getMessage());

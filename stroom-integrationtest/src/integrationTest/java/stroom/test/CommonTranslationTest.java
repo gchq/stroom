@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.node.NodeCache;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
-import stroom.streamstore.StreamStore;
+import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.tools.StoreCreationTool;
 import stroom.streamtask.StreamProcessorTask;
 import stroom.streamtask.StreamProcessorTaskExecutor;

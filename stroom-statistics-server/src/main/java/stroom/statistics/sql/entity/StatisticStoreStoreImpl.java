@@ -17,13 +17,13 @@
 
 package stroom.statistics.sql.entity;
 
+import stroom.docref.DocRef;
 import stroom.docstore.Persistence;
 import stroom.docstore.Store;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.statistics.shared.StatisticStoreDoc;
@@ -158,39 +158,37 @@ public class StatisticStoreStoreImpl implements StatisticStoreStore {
             final String uuid = docRef.getUuid();
             try {
                 final boolean exists = persistence.exists(docRef);
-                if (importState.ok(importMode)) {
-                    StatisticStoreDoc document;
-                    if (exists) {
-                        document = readDocument(docRef);
+                StatisticStoreDoc document;
+                if (exists) {
+                    document = readDocument(docRef);
 
-                    } else {
-                        final OldStatisticStoreEntity oldStatisticStore = new OldStatisticStoreEntity();
-                        final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
-                        legacySerialiser.performImport(oldStatisticStore, dataMap);
+                } else {
+                    final OldStatisticStoreEntity oldStatisticStore = new OldStatisticStoreEntity();
+                    final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
+                    legacySerialiser.performImport(oldStatisticStore, dataMap);
 
-                        final long now = System.currentTimeMillis();
-                        final String userId = securityContext.getUserId();
+                    final long now = System.currentTimeMillis();
+                    final String userId = securityContext.getUserId();
 
-                        document = new StatisticStoreDoc();
-                        document.setType(docRef.getType());
-                        document.setUuid(uuid);
-                        document.setName(docRef.getName());
-                        document.setVersion(UUID.randomUUID().toString());
-                        document.setCreateTime(now);
-                        document.setUpdateTime(now);
-                        document.setCreateUser(userId);
-                        document.setUpdateUser(userId);
+                    document = new StatisticStoreDoc();
+                    document.setType(docRef.getType());
+                    document.setUuid(uuid);
+                    document.setName(docRef.getName());
+                    document.setVersion(UUID.randomUUID().toString());
+                    document.setCreateTime(now);
+                    document.setUpdateTime(now);
+                    document.setCreateUser(userId);
+                    document.setUpdateUser(userId);
 
-                        document.setDescription(oldStatisticStore.getDescription());
-                        document.setStatisticType(oldStatisticStore.getStatisticType());
-                        document.setRollUpType(oldStatisticStore.getRollUpType());
-                        document.setPrecision(oldStatisticStore.getPrecision());
-                        document.setEnabled(oldStatisticStore.isEnabled());
+                    document.setDescription(oldStatisticStore.getDescription());
+                    document.setStatisticType(oldStatisticStore.getStatisticType());
+                    document.setRollUpType(oldStatisticStore.getRollUpType());
+                    document.setPrecision(oldStatisticStore.getPrecision());
+                    document.setEnabled(oldStatisticStore.isEnabled());
 
-                        final StatisticsDataSourceData statisticsDataSourceData = serialiser.getDataFromLegacyXML(oldStatisticStore.getData());
-                        if (statisticsDataSourceData != null) {
-                            document.setConfig(statisticsDataSourceData);
-                        }
+                    final StatisticsDataSourceData statisticsDataSourceData = serialiser.getDataFromLegacyXML(oldStatisticStore.getData());
+                    if (statisticsDataSourceData != null) {
+                        document.setConfig(statisticsDataSourceData);
                     }
 
                     result = serialiser.write(document);

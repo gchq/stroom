@@ -23,7 +23,8 @@ import org.slf4j.LoggerFactory;
 import stroom.dictionary.DictionaryStore;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Period;
-import stroom.streamstore.StreamStore;
+import stroom.streamstore.api.StreamProperties;
+import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.fs.FileSystemStreamMaintenanceService;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
@@ -66,10 +67,21 @@ public class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
             LOGGER.info("now: %s", DateUtil.createNormalDateTimeString(now));
             LOGGER.info("timeOutsideRetentionPeriod: %s", DateUtil.createNormalDateTimeString(timeOutsideRetentionPeriod));
 
-            Stream streamInsideRetention = streamStore.createStream(StreamType.RAW_EVENTS.getName(), feedName, null, now);
-            streamInsideRetention.setStatusMs(now);
-            Stream streamOutsideRetention = streamStore.createStream(StreamType.RAW_EVENTS.getName(), feedName, null, timeOutsideRetentionPeriod);
-            streamOutsideRetention.setStatusMs(now);
+            final Stream streamInsideRetention = streamStore.createStream(
+                    new StreamProperties.Builder()
+                            .feedName(feedName)
+                            .streamTypeName(StreamType.RAW_EVENTS.getName())
+                            .createMs(now)
+                            .statusMs(now)
+                            .build());
+
+            final Stream streamOutsideRetention = streamStore.createStream(
+                    new StreamProperties.Builder()
+                            .feedName(feedName)
+                            .streamTypeName(StreamType.RAW_EVENTS.getName())
+                            .createMs(timeOutsideRetentionPeriod)
+                            .statusMs(timeOutsideRetentionPeriod)
+                            .build());
 
             streamMaintenanceService.save(streamInsideRetention);
             streamMaintenanceService.save(streamOutsideRetention);

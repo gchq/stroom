@@ -41,9 +41,9 @@ public class TestFeedServiceCache extends AbstractCoreIntegrationTest {
 
         Assert.assertNotNull(loaded);
         Assert.assertEquals(feed, loaded);
-        Assert.assertTrue(loaded == feedService.get(feedName));
-        Assert.assertTrue(loaded == feedService.get(feedName));
-        Assert.assertTrue(loaded == feedService.get(feedName));
+        Assert.assertSame(loaded, feedService.get(feedName));
+        Assert.assertSame(loaded, feedService.get(feedName));
+        Assert.assertSame(loaded, feedService.get(feedName));
 
 //        loaded = cachedFeedService.loadById(feed.getId());
 //        Assert.assertNotNull(loaded);

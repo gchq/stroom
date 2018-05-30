@@ -19,7 +19,7 @@ package stroom.streamstore.fs;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.streamstore.StreamMaintenanceService;
-import stroom.streamstore.StreamStore;
+import stroom.streamstore.api.StreamStore;
 import stroom.task.TaskHandler;
 
 public class FSModule extends AbstractModule {

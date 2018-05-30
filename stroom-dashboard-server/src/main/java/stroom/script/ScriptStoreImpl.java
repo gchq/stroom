@@ -17,6 +17,7 @@
 
 package stroom.script;
 
+import stroom.docref.DocRef;
 import stroom.docstore.Persistence;
 import stroom.docstore.Store;
 import stroom.entity.shared.DocRefs;
@@ -24,7 +25,6 @@ import stroom.explorer.shared.DocumentType;
 import stroom.importexport.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.script.shared.ScriptDoc;
 import stroom.security.SecurityContext;
@@ -159,41 +159,39 @@ class ScriptStoreImpl implements ScriptStore {
             final String uuid = docRef.getUuid();
             try {
                 final boolean exists = persistence.exists(docRef);
-                if (importState.ok(importMode)) {
-                    ScriptDoc document;
-                    if (exists) {
-                        document = readDocument(docRef);
+                ScriptDoc document;
+                if (exists) {
+                    document = readDocument(docRef);
 
-                    } else {
-                        final OldScript oldScript = new OldScript();
-                        final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
-                        legacySerialiser.performImport(oldScript, dataMap);
+                } else {
+                    final OldScript oldScript = new OldScript();
+                    final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
+                    legacySerialiser.performImport(oldScript, dataMap);
 
-                        final long now = System.currentTimeMillis();
-                        final String userId = securityContext.getUserId();
+                    final long now = System.currentTimeMillis();
+                    final String userId = securityContext.getUserId();
 
-                        document = new ScriptDoc();
-                        document.setType(docRef.getType());
-                        document.setUuid(uuid);
-                        document.setName(docRef.getName());
-                        document.setVersion(UUID.randomUUID().toString());
-                        document.setCreateTime(now);
-                        document.setUpdateTime(now);
-                        document.setCreateUser(userId);
-                        document.setUpdateUser(userId);
+                    document = new ScriptDoc();
+                    document.setType(docRef.getType());
+                    document.setUuid(uuid);
+                    document.setName(docRef.getName());
+                    document.setVersion(UUID.randomUUID().toString());
+                    document.setCreateTime(now);
+                    document.setUpdateTime(now);
+                    document.setCreateUser(userId);
+                    document.setUpdateUser(userId);
 
-                        final DocRefs docRefs = serialiser.getDocRefsFromLegacyXML(oldScript.getDependenciesXML());
-                        if (docRefs != null) {
-                            final List<DocRef> dependencies = new ArrayList<>(docRefs.getDoc());
-                            dependencies.sort(DocRef::compareTo);
-                            document.setDependencies(dependencies);
-                        }
+                    final DocRefs docRefs = serialiser.getDocRefsFromLegacyXML(oldScript.getDependenciesXML());
+                    if (docRefs != null) {
+                        final List<DocRef> dependencies = new ArrayList<>(docRefs.getDoc());
+                        dependencies.sort(DocRef::compareTo);
+                        document.setDependencies(dependencies);
                     }
+                }
 
-                    result = serialiser.write(document);
-                    if (dataMap.containsKey("resource.js")) {
-                        result.put("js", dataMap.remove("resource.js"));
-                    }
+                result = serialiser.write(document);
+                if (dataMap.containsKey("resource.js")) {
+                    result.put("js", dataMap.remove("resource.js"));
                 }
 
             } catch (final IOException | RuntimeException e) {

@@ -22,7 +22,7 @@ import org.junit.Test;
 import stroom.entity.shared.Period;
 import stroom.feed.shared.FeedDoc;
 import stroom.node.shared.Node;
-import stroom.streamstore.StreamStore;
+import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.FindStreamTaskCriteria;

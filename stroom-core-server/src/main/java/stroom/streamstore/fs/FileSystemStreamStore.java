@@ -16,7 +16,7 @@
 
 package stroom.streamstore.fs;
 
-import stroom.streamstore.StreamStore;
+import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.shared.StreamVolume;
 
 import java.util.Set;

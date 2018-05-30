@@ -33,8 +33,9 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.StreamHolder;
-import stroom.streamstore.StreamStore;
-import stroom.streamstore.StreamTarget;
+import stroom.streamstore.api.StreamProperties;
+import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.shared.Stream;
 import stroom.task.TaskContext;
 
@@ -80,11 +81,14 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
 
         // Don't set the processor or the task or else this rolling stream will be deleted automatically because the
         // system will think it is superseded output.
-        final Stream stream = streamStore.createProcessedStream(streamHolder.getStream(), key.getFeed(), key.getStreamType(),
-                null, null);
+        final StreamProperties streamProperties = new StreamProperties.Builder()
+                        .feedName(key.getFeed())
+                        .streamTypeName(key.getStreamType())
+                        .parent(streamHolder.getStream())
+                        .build();
 
         final String nodeName = nodeCache.getDefaultNode().getName();
-        final StreamTarget streamTarget = streamStore.openStreamTarget(stream);
+        final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
         return new RollingStreamDestination(key,
                 getFrequency(),
                 getMaxSize(),

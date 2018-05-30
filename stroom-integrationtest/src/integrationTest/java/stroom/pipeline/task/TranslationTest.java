@@ -22,7 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
-import stroom.feed.FeedNameCache;
+import stroom.feed.FeedDocCache;
 import stroom.feed.FeedStore;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
@@ -43,9 +43,10 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.UserTokenUtil;
 import stroom.streamstore.FindFeedCriteria;
-import stroom.streamstore.StreamSource;
-import stroom.streamstore.StreamStore;
-import stroom.streamstore.StreamTarget;
+import stroom.streamstore.api.StreamProperties;
+import stroom.streamstore.api.StreamSource;
+import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.StreamTypeService;
 import stroom.streamstore.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.fs.serializable.RawInputSegmentWriter;
@@ -110,7 +111,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     @Inject
     private StreamStore streamStore;
     @Inject
-    private FeedNameCache feedNameCache;
+    private FeedDocCache feedDocCache;
     @Inject
     private StreamTypeService streamTypeService;
     @Inject
@@ -290,9 +291,12 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             }
 
             // Create the stream.
-            final Stream stream = streamStore.createStream(streamTypeName, feed.getName(), millis,
-                    millis);
-            final StreamTarget target = streamStore.openStreamTarget(stream);
+            final StreamProperties streamProperties = new StreamProperties.Builder()
+                    .feedName(feed.getName())
+                    .streamTypeName(streamTypeName)
+                    .createMs(millis)
+                    .build();
+            final StreamTarget target = streamStore.openStreamTarget(streamProperties);
 
             final InputStream inputStream = new BufferedInputStream(Files.newInputStream(file));
             final RASegmentOutputStream outputStream = new RASegmentOutputStream(target);
@@ -304,7 +308,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
             // Check that what was written to the store is the same as the
             // contents of the file.
-            final StreamSource checkSource = streamStore.openStreamSource(stream.getId());
+            final StreamSource checkSource = streamStore.openStreamSource(target.getStream().getId());
             final byte[] original = Files.readAllBytes(file);
             final byte[] stored = StreamUtil.streamToBytes(checkSource.getInputStream());
             streamStore.closeStreamSource(checkSource);
@@ -317,7 +321,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         metaMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
 
         final List<StreamTargetStroomStreamHandler> handlerList = StreamTargetStroomStreamHandler
-                .buildSingleHandlerList(streamStore, feedNameCache, null, feed.getName(), feed.getStreamType());
+                .buildSingleHandlerList(streamStore, feedDocCache, null, feed.getName(), feed.getStreamType());
 
         final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlerList, new byte[1000],
                 "DefaultDataFeedRequest-");
@@ -353,7 +357,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         final FindFeedCriteria feedCriteria = new FindFeedCriteria(feedName);
 
         // feedCriteria.setFeedType(FeedType.REFERENCE);
-        final Optional<FeedDoc> feeds = feedNameCache.get(feedName);
+        final Optional<FeedDoc> feeds = feedDocCache.get(feedName);
         Assert.assertTrue("No feeds found", feeds.isPresent());
         final List<DocRef> pipelines = pipelineStore.findByName(feedName);
         Assert.assertTrue("No pipelines found", pipelines != null && pipelines.size() > 0);

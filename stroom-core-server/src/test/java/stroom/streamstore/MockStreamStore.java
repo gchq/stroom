@@ -16,14 +16,16 @@
 
 package stroom.streamstore;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.Period;
 import stroom.feed.MetaMap;
 import stroom.io.SeekableInputStream;
+import stroom.streamstore.api.StreamProperties;
+import stroom.streamstore.api.StreamSource;
+import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.shared.Feed;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.FindStreamTypeCriteria;
@@ -31,8 +33,6 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
-import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamTask;
 import stroom.util.collections.TypedMap;
 
 import javax.inject.Inject;
@@ -54,8 +54,6 @@ import java.util.stream.Collectors;
 
 @Singleton
 public class MockStreamStore implements StreamStore, Clearable {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MockStreamStore.class);
-
     /**
      * Our stream data.
      */
@@ -75,6 +73,7 @@ public class MockStreamStore implements StreamStore, Clearable {
     private final FeedService feedService;
     private final StreamTypeService streamTypeService;
 
+    @SuppressWarnings("unused")
     @Inject
     MockStreamStore(final FeedService feedService,
                     final StreamTypeService streamTypeService) {
@@ -88,67 +87,25 @@ public class MockStreamStore implements StreamStore, Clearable {
     }
 
     @Override
-    public Stream createStream(final String streamTypeName,
-                               final String feedName,
-                               final Long effectiveMs) {
-        return createStream(streamTypeName, feedName, System.currentTimeMillis(), effectiveMs);
-    }
-
-    @Override
-    public Stream createStream(final String streamTypeName,
-                               final String feedName,
-                               final Long createMs,
-                               final Long effectiveMs) {
-        final StreamType streamType = streamTypeService.getOrCreate(streamTypeName);
-        final Feed feed = feedService.getOrCreate(feedName);
-
-        final Stream stream = new Stream();
-        stream.setStreamType(streamType);
-        stream.setFeed(feed);
-        stream.setCreateMs(createMs);
-        // Ensure an effective time.
-        if (effectiveMs != null) {
-            stream.setEffectiveMs(effectiveMs);
-        } else {
-            stream.setEffectiveMs(stream.getCreateMs());
-        }
-
-        return stream;
-    }
-
-    @Override
-    public Stream createProcessedStream(final Stream parent,
-                                        final String streamTypeName,
-                                        final String feedName,
-                                        final StreamProcessor streamProcessor,
-                                        final StreamTask streamTask) {
-        final StreamType streamType = streamTypeService.getOrCreate(streamTypeName);
-        final Feed feed = feedService.getOrCreate(feedName);
+    public Stream createStream(final StreamProperties streamProperties) {
+        final StreamType streamType = streamTypeService.getOrCreate(streamProperties.getStreamTypeName());
+        final Feed feed = feedService.getOrCreate(streamProperties.getFeedName());
 
         final Stream stream = new Stream();
 
-        if (parent != null) {
-            if (parent.getEffectiveMs() != null) {
-                stream.setEffectiveMs(parent.getEffectiveMs());
-            } else {
-                stream.setEffectiveMs(parent.getCreateMs());
-            }
-            stream.setParentStreamId(parent.getId());
+        if (streamProperties.getParent() != null) {
+            stream.setParentStreamId(streamProperties.getParent().getId());
         }
 
-        stream.setStreamType(streamType);
         stream.setFeed(feed);
-        stream.setStreamProcessor(streamProcessor);
-        if (streamTask != null) {
-            stream.setStreamTaskId(streamTask.getId());
+        stream.setStreamType(streamType);
+        stream.setStreamProcessor(streamProperties.getStreamProcessor());
+        if (streamProperties.getStreamTask() != null) {
+            stream.setStreamTaskId(streamProperties.getStreamTask().getId());
         }
-
-        // When were we created
-        stream.setCreateMs(System.currentTimeMillis());
-        // Ensure an effective time
-        if (stream.getEffectiveMs() == null) {
-            stream.setEffectiveMs(stream.getCreateMs());
-        }
+        stream.setCreateMs(streamProperties.getCreateMs());
+        stream.setEffectiveMs(streamProperties.getEffectiveMs());
+        stream.setStatusMs(streamProperties.getStatusMs());
 
         return stream;
     }
@@ -162,7 +119,7 @@ public class MockStreamStore implements StreamStore, Clearable {
      */
     @Override
     public Stream loadStreamById(final long id) {
-        return loadStreamById(id, null, false);
+        return streamMap.get(id);
     }
 
     /**
@@ -178,11 +135,7 @@ public class MockStreamStore implements StreamStore, Clearable {
      */
     @Override
     public Stream loadStreamById(final long id, final boolean anyStatus) {
-        return loadStreamById(id, null, anyStatus);
-    }
-
-    private Stream loadStreamById(final long id, final Set<String> fetchSet, final boolean anyStatus) {
-        return streamMap.get(id);
+        return loadStreamById(id);
     }
 
     /**
@@ -211,41 +164,6 @@ public class MockStreamStore implements StreamStore, Clearable {
         }
         openInputStream.remove(source.getStream());
     }
-
-    // /**
-    // * Convenience method to use the id from a pre-existing stream object to
-    // * load a stream by id.
-    // *
-    // * @param stream
-    // * The stream to load/refresh.
-    // * @return The loaded stream if it exists (has not been physically
-    // deleted)
-    // * and is not logically deleted or locked, null otherwise.
-    // */
-    // @Override
-    // public Stream loadStream(final Stream stream) {
-    // return loadStreamById(stream.getId(), null, false);
-    // }
-    //
-    // /**
-    // * Convenience method to use the id from a pre-existing stream object to
-    // * load a stream by id.
-    // *
-    // * @param stream
-    // * The stream to load/refresh.
-    // * @param anyStatus
-    // * Used to specify if this method will return streams that are
-    // * logically deleted or locked. If false only unlocked streams
-    // * will be returned, null otherwise.
-    // * @return The loaded stream if it exists (has not been physically
-    // deleted)
-    // * else null. Also returns null if one exists but is logically
-    // * deleted or locked unless <code>anyStatus</code> is true.
-    // */
-    // @Override
-    // public Stream loadStream(final Stream stream, final boolean anyStatus) {
-    // return loadStreamById(stream.getId(), null, anyStatus);
-    // }
 
     @Override
     public void closeStreamTarget(final StreamTarget target) {
@@ -299,12 +217,6 @@ public class MockStreamStore implements StreamStore, Clearable {
         return 1L;
     }
 
-    public Long deleteStreamSource(final StreamSource source) {
-        openInputStream.remove(source.getStream());
-        fileData.remove(source.getStream());
-        return 1L;
-    }
-
     @Override
     public Long deleteStreamTarget(final StreamTarget target) {
         openOutputStream.remove(target.getStream());
@@ -314,14 +226,7 @@ public class MockStreamStore implements StreamStore, Clearable {
 
     @Override
     public List<Stream> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
-        StreamType streamType = null;
-
-        for (final StreamType type : StreamType.initialValues()) {
-            if (type.getName().equals(criteria.getStreamType())) {
-                streamType = type;
-            }
-        }
-
+        final StreamType streamType = streamTypeService.getOrCreate(criteria.getStreamType());
         final ArrayList<Stream> results = new ArrayList<>();
 
         try {
@@ -393,7 +298,17 @@ public class MockStreamStore implements StreamStore, Clearable {
     }
 
     @Override
-    public StreamTarget openStreamTarget(final Stream stream) {
+    public StreamTarget openStreamTarget(final StreamProperties streamProperties) {
+        final Stream stream = createStream(streamProperties);
+        return openStreamTarget(stream);
+    }
+
+    @Override
+    public StreamTarget openExistingStreamTarget(final Stream stream) throws StreamException {
+        return openStreamTarget(stream);
+    }
+
+    private StreamTarget openStreamTarget(final Stream stream) {
         if (!stream.isPersistent()) {
             currentId++;
             stream.setId(currentId);
@@ -409,16 +324,16 @@ public class MockStreamStore implements StreamStore, Clearable {
         return new MockStreamTarget(stream);
     }
 
+    public Stream getLastStream() {
+        return lastStream;
+    }
+
     public TypedMap<Stream, TypedMap<Long, byte[]>> getFileData() {
         return fileData;
     }
 
-    protected TypedMap<Stream, TypedMap<Long, ByteArrayOutputStream>> getOpenOutputStream() {
+    private TypedMap<Stream, TypedMap<Long, ByteArrayOutputStream>> getOpenOutputStream() {
         return openOutputStream;
-    }
-
-    protected Set<Stream> getOpenInputStream() {
-        return openInputStream;
     }
 
     @Override
@@ -426,19 +341,19 @@ public class MockStreamStore implements StreamStore, Clearable {
         return openInputStream.size() + openOutputStream.size();
     }
 
-    public Map<Long, Stream> getMetaDataMap() {
-        return streamMap;
-    }
-
     @Override
     public BaseResultList<Stream> find(final FindStreamCriteria criteria) {
         final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamDataSource.getExtendedFieldMap(), null);
         final List<Stream> list = new ArrayList<>();
         for (final Stream stream : fileData.keySet()) {
-            final StreamAttributeMap streamAttributeMap = new StreamAttributeMap(stream);
-            final Map<String, Object> attributeMap = StreamAttributeMapUtil.createAttributeMap(streamAttributeMap);
-            if (expressionMatcher.match(attributeMap, criteria.getExpression())) {
-                list.add(stream);
+            try {
+                final StreamAttributeMap streamAttributeMap = new StreamAttributeMap(stream);
+                final Map<String, Object> attributeMap = StreamAttributeMapUtil.createAttributeMap(streamAttributeMap);
+                if (expressionMatcher.match(attributeMap, criteria.getExpression())) {
+                    list.add(stream);
+                }
+            } catch (final RuntimeException e) {
+                // Ignore.
             }
         }
 
@@ -483,27 +398,6 @@ public class MockStreamStore implements StreamStore, Clearable {
         }
         return sb.toString();
     }
-
-    public Stream getLastStream() {
-        return lastStream;
-    }
-
-    @Override
-    public StreamTarget openStreamTarget(final Stream stream, final boolean wipe) throws StreamException {
-        return openStreamTarget(stream);
-    }
-
-    // /**
-    // *
-    // * Overridden.
-    // *
-    // *
-    // * @see stroom.streamstore.StreamStore#deleteLocks()
-    // */
-    // @Override
-    // public void deleteLocks() {
-    // // NA for the mock.
-    // }
 
     @Override
     public Period getCreatePeriod() {
@@ -552,22 +446,22 @@ public class MockStreamStore implements StreamStore, Clearable {
     }
 
     private static class SeekableByteArrayInputStream extends ByteArrayInputStream implements SeekableInputStream {
-        public SeekableByteArrayInputStream(final byte[] bytes) {
+        SeekableByteArrayInputStream(final byte[] bytes) {
             super(bytes);
         }
 
         @Override
-        public long getPosition() throws IOException {
+        public long getPosition() {
             return pos;
         }
 
         @Override
-        public long getSize() throws IOException {
+        public long getSize() {
             return buf.length;
         }
 
         @Override
-        public void seek(final long pos) throws IOException {
+        public void seek(final long pos) {
             this.pos = (int) pos;
         }
     }
@@ -580,12 +474,12 @@ public class MockStreamStore implements StreamStore, Clearable {
         private ByteArrayOutputStream outputStream = null;
         private StreamTarget parent;
 
-        public MockStreamTarget(final Stream stream) {
+        MockStreamTarget(final Stream stream) {
             this.stream = stream;
             this.type = stream.getStreamType();
         }
 
-        public MockStreamTarget(final StreamTarget parent, final StreamType type) {
+        MockStreamTarget(final StreamTarget parent, final StreamType type) {
             this.parent = parent;
             this.stream = parent.getStream();
             this.type = type;
@@ -658,12 +552,12 @@ public class MockStreamStore implements StreamStore, Clearable {
         private InputStream inputStream = null;
         private StreamSource parent;
 
-        public MockStreamSource(final Stream stream) {
+        MockStreamSource(final Stream stream) {
             this.stream = stream;
             this.type = stream.getStreamType();
         }
 
-        public MockStreamSource(final StreamSource parent, final StreamType type) {
+        MockStreamSource(final StreamSource parent, final StreamType type) {
             this.parent = parent;
             this.stream = parent.getStream();
             this.type = type;
@@ -734,7 +628,7 @@ public class MockStreamStore implements StreamStore, Clearable {
     }
 
     private class MockBoundaryStreamSource extends MockStreamSource {
-        public MockBoundaryStreamSource(final StreamSource parent) {
+        MockBoundaryStreamSource(final StreamSource parent) {
             super(parent, StreamType.BOUNDARY_INDEX);
         }
 

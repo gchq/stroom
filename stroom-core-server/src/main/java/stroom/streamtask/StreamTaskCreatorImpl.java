@@ -35,7 +35,7 @@ import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.streamstore.ExpressionToFindCriteria;
 import stroom.streamstore.ExpressionToFindCriteria.Context;
 import stroom.streamstore.OldFindStreamCriteria;
-import stroom.streamstore.StreamStore;
+import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.shared.Limits;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.Stream;

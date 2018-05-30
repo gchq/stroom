@@ -24,9 +24,10 @@ import stroom.security.UserTokenUtil;
 import stroom.streamstore.StreamAttributeValueFlush;
 import stroom.streamstore.StreamDownloadSettings;
 import stroom.streamstore.StreamDownloadTask;
-import stroom.streamstore.StreamSource;
-import stroom.streamstore.StreamStore;
-import stroom.streamstore.StreamTarget;
+import stroom.streamstore.api.StreamProperties;
+import stroom.streamstore.api.StreamSource;
+import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.StreamUploadTask;
 import stroom.streamstore.fs.serializable.NestedStreamTarget;
 import stroom.streamstore.shared.ExpressionUtil;
@@ -106,8 +107,11 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
         final Path file = Files.createTempFile(getCurrentTestDir(), "TestStreamDownloadTaskHandler", ".zip");
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
-        final StreamTarget streamTarget = streamStore
-                .openStreamTarget(streamStore.createStream(StreamType.RAW_EVENTS.getName(), feedName, null));
+        final StreamProperties streamProperties = new StreamProperties.Builder()
+                .feedName(feedName)
+                .streamTypeName(StreamType.RAW_EVENTS.getName())
+                .build();
+        final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
 
         final NestedStreamTarget nestedStreamTarget = new NestedStreamTarget(streamTarget, true);
 

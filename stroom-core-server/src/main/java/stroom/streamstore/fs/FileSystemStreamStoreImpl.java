@@ -38,7 +38,7 @@ import stroom.entity.util.FieldMap;
 import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
 import stroom.entity.util.SqlUtil;
-import stroom.feed.FeedNameCache;
+import stroom.feed.FeedDocCache;
 import stroom.feed.FeedStore;
 import stroom.feed.MetaMap;
 import stroom.node.NodeCache;
@@ -58,8 +58,9 @@ import stroom.streamstore.FindFeedCriteria;
 import stroom.streamstore.OldFindStreamCriteria;
 import stroom.streamstore.StreamAttributeValueFlush;
 import stroom.streamstore.StreamException;
-import stroom.streamstore.StreamSource;
-import stroom.streamstore.StreamTarget;
+import stroom.streamstore.api.StreamProperties;
+import stroom.streamstore.api.StreamSource;
+import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.StreamTypeService;
 import stroom.streamstore.shared.Feed;
 import stroom.streamstore.shared.FindStreamCriteria;
@@ -77,7 +78,6 @@ import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;
 import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamTask;
 import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
@@ -133,7 +133,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     private final StreamProcessorService streamProcessorService;
     private final FeedService feedService;
     private final FeedStore feedStore;
-    private final FeedNameCache feedNameCache;
+    private final FeedDocCache feedDocCache;
     private final StreamTypeService streamTypeService;
     private final VolumeService volumeService;
     private final ExpressionToFindCriteria expressionToFindCriteria;
@@ -186,7 +186,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
                               final FeedService feedService,
                               @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
                               final FeedStore feedStore,
-                              final FeedNameCache feedNameCache,
+                              final FeedDocCache feedDocCache,
                               final VolumeService volumeService,
                               final StreamAttributeValueFlush streamAttributeValueFlush,
                               final ExpressionToFindCriteria expressionToFindCriteria,
@@ -200,7 +200,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         this.feedService = feedService;
         this.feedStore = feedStore;
         this.streamTypeService = streamTypeService;
-        this.feedNameCache = feedNameCache;
+        this.feedDocCache = feedDocCache;
         this.volumeService = volumeService;
         this.streamAttributeValueFlush = streamAttributeValueFlush;
         this.expressionToFindCriteria = expressionToFindCriteria;
@@ -256,67 +256,25 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 //    }
 
     @Override
-    public Stream createStream(final String streamTypeName,
-                               final String feedName,
-                               final Long effectiveMs) {
-        return createStream(streamTypeName, feedName, System.currentTimeMillis(), effectiveMs);
-    }
-
-    @Override
-    public Stream createStream(final String streamTypeName,
-                               final String feedName,
-                               final Long createMs,
-                               final Long effectiveMs) {
-        final StreamType streamType = streamTypeService.getOrCreate(streamTypeName);
-        final Feed feed = feedService.getOrCreate(feedName);
-
-        final Stream stream = new Stream();
-        stream.setStreamType(streamType);
-        stream.setFeed(feed);
-        stream.setCreateMs(createMs);
-        // Ensure an effective time.
-        if (effectiveMs != null) {
-            stream.setEffectiveMs(effectiveMs);
-        } else {
-            stream.setEffectiveMs(stream.getCreateMs());
-        }
-
-        return stream;
-    }
-
-    @Override
-    public Stream createProcessedStream(final Stream parent,
-                                        final String streamTypeName,
-                                        final String feedName,
-                                        final StreamProcessor streamProcessor,
-                                        final StreamTask streamTask) {
-        final StreamType streamType = streamTypeService.getOrCreate(streamTypeName);
-        final Feed feed = feedService.getOrCreate(feedName);
+    public Stream createStream(final StreamProperties streamProperties) {
+        final StreamType streamType = streamTypeService.getOrCreate(streamProperties.getStreamTypeName());
+        final Feed feed = feedService.getOrCreate(streamProperties.getFeedName());
 
         final Stream stream = new Stream();
 
-        if (parent != null) {
-            if (parent.getEffectiveMs() != null) {
-                stream.setEffectiveMs(parent.getEffectiveMs());
-            } else {
-                stream.setEffectiveMs(parent.getCreateMs());
-            }
-            stream.setParentStreamId(parent.getId());
+        if (streamProperties.getParent() != null) {
+            stream.setParentStreamId(streamProperties.getParent().getId());
         }
 
-        stream.setStreamType(streamType);
         stream.setFeed(feed);
-        stream.setStreamProcessor(streamProcessor);
-        if (streamTask != null) {
-            stream.setStreamTaskId(streamTask.getId());
+        stream.setStreamType(streamType);
+        stream.setStreamProcessor(streamProperties.getStreamProcessor());
+        if (streamProperties.getStreamTask() != null) {
+            stream.setStreamTaskId(streamProperties.getStreamTask().getId());
         }
-
-        // When were we created
-        stream.setCreateMs(System.currentTimeMillis());
-        // Ensure an effective time
-        if (stream.getEffectiveMs() == null) {
-            stream.setEffectiveMs(stream.getCreateMs());
-        }
+        stream.setCreateMs(streamProperties.getCreateMs());
+        stream.setEffectiveMs(streamProperties.getEffectiveMs());
+        stream.setStatusMs(streamProperties.getStatusMs());
 
         return stream;
     }
@@ -548,15 +506,19 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     }
 
     @Override
-//    @Secured(feature = Stream.DOCUMENT_TYPE, permission = DocumentPermissionNames.UPDATE)
-    public StreamTarget openStreamTarget(final Stream stream) {
+    public StreamTarget openStreamTarget(final StreamProperties streamProperties) {
+        final Stream stream = createStream(streamProperties);
         return openStreamTarget(stream, false);
     }
 
     @Override
+    public StreamTarget openExistingStreamTarget(final Stream stream) throws StreamException {
+        return openStreamTarget(stream, true);
+    }
+
 //    @Secured(feature = Stream.DOCUMENT_TYPE, permission = DocumentPermissionNames.UPDATE)
     @SuppressWarnings("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE")
-    public StreamTarget openStreamTarget(final Stream stream, final boolean append) {
+    private StreamTarget openStreamTarget(final Stream stream, final boolean append) {
         return entityManagerSupport.transactionResult(em -> {
             LOGGER.debug("openStreamTarget() " + stream);
 
@@ -614,7 +576,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     // /**
     // * Overridden.
     // *
-    // * @see stroom.streamstore.StreamStore#deleteLocks()
+    // * @see stroom.streamstore.api.StreamStore#deleteLocks()
     // */
     // @Override
     // public void deleteLocks() {
@@ -1540,7 +1502,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         if (name == null) {
             return null;
         }
-        return feedNameCache.get(name).map(Doc::getUuid).orElse(null);
+        return feedDocCache.get(name).map(Doc::getUuid).orElse(null);
     }
 
     private StreamType getStreamType(final String name) {

@@ -23,6 +23,7 @@ import stroom.security.MockSecurityContext;
 import stroom.security.Security;
 import stroom.streamstore.EffectiveMetaDataCriteria;
 import stroom.streamstore.MockStreamStore;
+import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.cache.CacheManager;
@@ -57,7 +58,12 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
                 long workingDate = criteria.getEffectivePeriod().getFrom();
                 while (workingDate < criteria.getEffectivePeriod().getTo()) {
                     final Stream stream = createStream(
-                            StreamType.RAW_REFERENCE.getName(), refFeedName, workingDate, workingDate);
+                            new StreamProperties.Builder()
+                                    .feedName(refFeedName)
+                                    .streamTypeName(StreamType.RAW_REFERENCE.getName())
+                                    .createMs(workingDate)
+                                    .build());
+
                     results.add(stream);
                     workingDate = Instant.ofEpochMilli(workingDate)
                             .atZone(ZoneOffset.UTC)
@@ -201,8 +207,12 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
         }
 
         void addEffectiveStream(final String feedName, long effectiveTimeMs) {
-            final Stream stream = createStream(StreamType.RAW_REFERENCE.getName(), feedName,
-                    effectiveTimeMs, effectiveTimeMs);
+            final Stream stream = createStream(
+                    new StreamProperties.Builder()
+                            .feedName(feedName)
+                            .streamTypeName(StreamType.RAW_REFERENCE.getName())
+                            .createMs(effectiveTimeMs)
+                            .build());
             streams.add(stream);
         }
 

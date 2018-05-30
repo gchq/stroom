@@ -36,7 +36,7 @@ import stroom.statistics.sql.StatisticTag;
 import stroom.statistics.sql.Statistics;
 import stroom.streamstore.FeedService;
 import stroom.streamstore.StreamAttributeMapService;
-import stroom.streamstore.StreamStore;
+import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.QueryData;

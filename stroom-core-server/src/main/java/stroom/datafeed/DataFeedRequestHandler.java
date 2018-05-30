@@ -20,7 +20,7 @@ package stroom.datafeed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.feed.FeedNameCache;
+import stroom.feed.FeedDocCache;
 import stroom.feed.MetaMap;
 import stroom.feed.MetaMapFactory;
 import stroom.feed.StroomHeaderArguments;
@@ -28,7 +28,7 @@ import stroom.feed.shared.FeedDoc;
 import stroom.properties.StroomPropertyService;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.security.Security;
-import stroom.streamstore.StreamStore;
+import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.StreamTargetStroomStreamHandler;
 import stroom.streamtask.statistic.MetaDataStatistic;
@@ -53,7 +53,7 @@ class DataFeedRequestHandler implements RequestHandler {
 
     private final Security security;
     private final StreamStore streamStore;
-    private final FeedNameCache feedNameCache;
+    private final FeedDocCache feedDocCache;
     private final MetaDataStatistic metaDataStatistics;
     private final MetaMapFilterFactory metaMapFilterFactory;
     private final StroomPropertyService stroomPropertyService;
@@ -63,13 +63,13 @@ class DataFeedRequestHandler implements RequestHandler {
     @Inject
     public DataFeedRequestHandler(final Security security,
                                   final StreamStore streamStore,
-                                  final FeedNameCache feedNameCache,
+                                  final FeedDocCache feedDocCache,
                                   final MetaDataStatistic metaDataStatistics,
                                   final MetaMapFilterFactory metaMapFilterFactory,
                                   final StroomPropertyService stroomPropertyService) {
         this.security = security;
         this.streamStore = streamStore;
-        this.feedNameCache = feedNameCache;
+        this.feedDocCache = feedDocCache;
         this.metaDataStatistics = metaDataStatistics;
         this.metaMapFilterFactory = metaMapFilterFactory;
         this.stroomPropertyService = stroomPropertyService;
@@ -94,7 +94,7 @@ class DataFeedRequestHandler implements RequestHandler {
                     throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED);
                 }
 
-                final Optional<FeedDoc> optional = feedNameCache.get(feedName);
+                final Optional<FeedDoc> optional = feedDocCache.get(feedName);
                 final String streamTypeName = optional
                         .map(FeedDoc::getStreamType)
                         .orElse(StreamType.RAW_EVENTS.getName());
@@ -109,7 +109,7 @@ class DataFeedRequestHandler implements RequestHandler {
 //                }
 
                 List<StreamTargetStroomStreamHandler> handlers = StreamTargetStroomStreamHandler.buildSingleHandlerList(streamStore,
-                        feedNameCache, metaDataStatistics, feedName, streamTypeName);
+                        feedDocCache, metaDataStatistics, feedName, streamTypeName);
 
                 final byte[] buffer = BufferFactory.create();
                 final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlers, buffer, "DataFeedRequestHandler-" + metaMap.get(StroomHeaderArguments.GUID));

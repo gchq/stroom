@@ -164,7 +164,7 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
 
     @Override
     protected QueryAppender<StreamTask, FindStreamTaskCriteria> createQueryAppender(StroomEntityManager entityManager) {
-        return new StreamTaskQueryAppender(entityManager, feedService, streamTypeService);
+        return new StreamTaskQueryAppender(entityManager);
     }
 
     @Override
@@ -186,16 +186,10 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
         return PermissionNames.MANAGE_PROCESSORS_PERMISSION;
     }
 
-    private static class StreamTaskQueryAppender extends QueryAppender<StreamTask, FindStreamTaskCriteria> {
-        private final FeedService feedService;
-        private final StreamTypeService streamTypeService;
+    private class StreamTaskQueryAppender extends QueryAppender<StreamTask, FindStreamTaskCriteria> {
 
-        StreamTaskQueryAppender(final StroomEntityManager entityManager,
-                                final FeedService feedService,
-                                final StreamTypeService streamTypeService) {
+        StreamTaskQueryAppender(final StroomEntityManager entityManager) {
             super(entityManager);
-            this.feedService = feedService;
-            this.streamTypeService = streamTypeService;
         }
 
         @Override

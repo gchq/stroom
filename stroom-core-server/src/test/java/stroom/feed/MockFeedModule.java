@@ -23,6 +23,6 @@ public class MockFeedModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(FeedStore.class).to(FeedStoreImpl.class);
-        bind(FeedNameCache.class).to(FeedNameCacheImpl.class);
+        bind(FeedDocCache.class).to(FeedDocCacheImpl.class);
     }
 }

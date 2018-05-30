@@ -20,6 +20,7 @@ package stroom.feed;
 import stroom.docref.DocRef;
 import stroom.docstore.Persistence;
 import stroom.docstore.Store;
+import stroom.entity.shared.EntityServiceException;
 import stroom.explorer.shared.DocumentType;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.LegacyXMLSerialiser;
@@ -27,6 +28,7 @@ import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
+import stroom.util.config.StroomProperties;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
@@ -66,6 +68,7 @@ public class FeedStoreImpl implements FeedStore {
 
     @Override
     public DocRef createDocument(final String name) {
+       FeedNameValidator.validateName(name);
         return store.createDocument(name);
     }
 
@@ -83,6 +86,7 @@ public class FeedStoreImpl implements FeedStore {
 
     @Override
     public DocRef renameDocument(final String uuid, final String name) {
+        FeedNameValidator.validateName(name);
         return store.renameDocument(uuid, name);
     }
 
@@ -159,40 +163,38 @@ public class FeedStoreImpl implements FeedStore {
             final String uuid = docRef.getUuid();
             try {
                 final boolean exists = persistence.exists(docRef);
-                if (importState.ok(importMode)) {
-                    FeedDoc document;
-                    if (exists) {
-                        document = readDocument(docRef);
+                FeedDoc document;
+                if (exists) {
+                    document = readDocument(docRef);
 
-                    } else {
-                        final OldFeed oldFeed = new OldFeed();
-                        final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
-                        legacySerialiser.performImport(oldFeed, dataMap);
+                } else {
+                    final OldFeed oldFeed = new OldFeed();
+                    final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
+                    legacySerialiser.performImport(oldFeed, dataMap);
 
-                        final long now = System.currentTimeMillis();
-                        final String userId = securityContext.getUserId();
+                    final long now = System.currentTimeMillis();
+                    final String userId = securityContext.getUserId();
 
-                        document = new FeedDoc();
-                        document.setType(docRef.getType());
-                        document.setUuid(uuid);
-                        document.setName(docRef.getName());
-                        document.setVersion(UUID.randomUUID().toString());
-                        document.setCreateTime(now);
-                        document.setUpdateTime(now);
-                        document.setCreateUser(userId);
-                        document.setUpdateUser(userId);
-                        document.setDescription(oldFeed.getDescription());
-                        document.setClassification(oldFeed.getClassification());
-                        document.setEncoding(oldFeed.getEncoding());
-                        document.setContextEncoding(oldFeed.getContextEncoding());
-                        document.setRetentionDayAge(oldFeed.getRetentionDayAge());
-                        document.setReference(oldFeed.isReference());
-                        if (oldFeed.getStreamType() != null) {
-                            document.setStreamType(oldFeed.getStreamType().getName());
-                        }
-                        if (oldFeed.getStatus() != null) {
-                            document.setStatus(FeedDoc.FeedStatus.valueOf(oldFeed.getStatus().name()));
-                        }
+                    document = new FeedDoc();
+                    document.setType(docRef.getType());
+                    document.setUuid(uuid);
+                    document.setName(docRef.getName());
+                    document.setVersion(UUID.randomUUID().toString());
+                    document.setCreateTime(now);
+                    document.setUpdateTime(now);
+                    document.setCreateUser(userId);
+                    document.setUpdateUser(userId);
+                    document.setDescription(oldFeed.getDescription());
+                    document.setClassification(oldFeed.getClassification());
+                    document.setEncoding(oldFeed.getEncoding());
+                    document.setContextEncoding(oldFeed.getContextEncoding());
+                    document.setRetentionDayAge(oldFeed.getRetentionDayAge());
+                    document.setReference(oldFeed.isReference());
+                    if (oldFeed.getStreamType() != null) {
+                        document.setStreamType(oldFeed.getStreamType().getName());
+                    }
+                    if (oldFeed.getStatus() != null) {
+                        document.setStatus(FeedDoc.FeedStatus.valueOf(oldFeed.getStatus().name()));
                     }
 
                     result = serialiser.write(document);

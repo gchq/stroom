@@ -32,8 +32,9 @@ import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeUseStatus;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.streamstore.StreamStore;
-import stroom.streamstore.StreamTarget;
+import stroom.streamstore.api.StreamProperties;
+import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.fs.serializable.RawInputSegmentWriter;
 import stroom.streamstore.shared.QueryData;
@@ -138,8 +139,11 @@ public class CommonTestScenarioCreator {
      * @return a basic raw file
      */
     public Stream createSample2LineRawFile(final String feed, final String streamType) {
-        final Stream stream = streamStore.createStream(streamType, feed, null);
-        final StreamTarget target = streamStore.openStreamTarget(stream);
+        final StreamProperties streamProperties = new StreamProperties.Builder()
+                .feedName(feed)
+                .streamTypeName(streamType)
+                .build();
+        final StreamTarget target = streamStore.openStreamTarget(streamProperties);
 
         final InputStream inputStream = new ByteArrayInputStream("line1\nline2".getBytes(StreamUtil.DEFAULT_CHARSET));
 
@@ -153,9 +157,13 @@ public class CommonTestScenarioCreator {
     }
 
     public Stream createSampleBlankProcessedFile(final String feed, final Stream sourceStream) {
-        final Stream stream = streamStore.createProcessedStream(sourceStream, feed, StreamType.EVENTS.getName(), null, null);
+        final StreamProperties streamProperties = new StreamProperties.Builder()
+                .feedName(feed)
+                .streamTypeName(StreamType.EVENTS.getName())
+                .parent(sourceStream)
+                .build();
 
-        final StreamTarget target = streamStore.openStreamTarget(stream);
+        final StreamTarget target = streamStore.openStreamTarget(streamProperties);
 
         final InputStream inputStream = new ByteArrayInputStream(("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 + "<Events xpath-default-namespace=\"records:2\" "

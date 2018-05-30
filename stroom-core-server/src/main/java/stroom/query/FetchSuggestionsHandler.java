@@ -27,7 +27,7 @@ import stroom.node.NodeService;
 import stroom.pipeline.PipelineStore;
 import stroom.query.shared.FetchSuggestionsAction;
 import stroom.security.Security;
-import stroom.streamstore.StreamStore;
+import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.task.AbstractTaskHandler;

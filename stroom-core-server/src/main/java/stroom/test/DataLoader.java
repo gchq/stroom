@@ -19,22 +19,17 @@ package stroom.test;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.docref.DocRef;
-import stroom.entity.shared.BaseResultList;
-import stroom.feed.FeedNameCache;
-import stroom.feed.FeedStore;
-import stroom.streamstore.FeedService;
+import stroom.feed.FeedDocCache;
 import stroom.feed.MetaMap;
 import stroom.feed.shared.FeedDoc;
-import stroom.streamstore.FindFeedCriteria;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
-import stroom.streamstore.StreamStore;
-import stroom.streamstore.StreamTarget;
+import stroom.streamstore.api.StreamProperties;
+import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.fs.serializable.RawInputSegmentWriter;
-import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.StreamTargetStroomStreamHandler;
 import stroom.util.io.AbstractFileVisitor;
@@ -50,7 +45,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Optional;
 
 public class DataLoader {
@@ -59,11 +53,11 @@ public class DataLoader {
     private static final String INPUT_EXTENSION = ".in";
     private static final String ZIP_EXTENSION = ".zip";
 
-    private final FeedNameCache feedNameCache;
+    private final FeedDocCache feedDocCache;
     private final StreamStore streamStore;
 
-    public DataLoader(final FeedNameCache feedNameCache, final StreamStore streamStore) {
-        this.feedNameCache = feedNameCache;
+    public DataLoader(final FeedDocCache feedDocCache, final StreamStore streamStore) {
+        this.feedDocCache = feedDocCache;
         this.streamStore = streamStore;
     }
 
@@ -114,8 +108,13 @@ public class DataLoader {
                 streamTypeName = StreamType.RAW_REFERENCE.getName();
             }
 
-            final Stream stream = streamStore.createStream(streamTypeName, feed.getName(), effectiveMs);
-            final StreamTarget streamTarget = streamStore.openStreamTarget(stream);
+            final StreamProperties streamProperties = new StreamProperties.Builder()
+                            .feedName(feed.getName())
+                            .streamTypeName(streamTypeName)
+                            .effectiveMs(effectiveMs)
+                            .build();
+
+            final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
 
             try {
                 final RASegmentOutputStream outputStream = new RASegmentOutputStream(streamTarget);
@@ -144,7 +143,7 @@ public class DataLoader {
                 final StroomZipFile stroomZipFile = new StroomZipFile(file);
                 final byte[] buffer = new byte[1024];
                 final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(
-                        streamStore, feedNameCache, null, feed.getName(), feed.getStreamType());
+                        streamStore, feedDocCache, null, feed.getName(), feed.getStreamType());
 
                 final MetaMap map = new MetaMap();
                 map.put("TestData", "Loaded By SetupSampleData");
@@ -196,7 +195,7 @@ public class DataLoader {
 
     public FeedDoc getFeed(final String name) {
         // Find the associated feed.
-        final Optional<FeedDoc> optional = feedNameCache.get(name);
+        final Optional<FeedDoc> optional = feedDocCache.get(name);
 
         if (!optional.isPresent()) {
             throw new RuntimeException("Feed not found \"" + name + "\"");

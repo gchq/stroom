@@ -16,7 +16,7 @@
 
 package stroom.streamstore.fs.serializable;
 
-import stroom.streamstore.StreamTarget;
+import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.CloseableUtil;
 

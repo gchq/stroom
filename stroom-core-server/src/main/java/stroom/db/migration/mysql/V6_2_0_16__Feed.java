@@ -92,7 +92,7 @@ public class V6_2_0_16__Feed implements JdbcMigration {
         try (final PreparedStatement preparedStatement = connection.prepareStatement("ALTER TABLE FD DROP FOREIGN KEY FD_FK_STRM_TP_ID;")) {
             preparedStatement.execute();
         }
-        final String[] cols = new String[] {"DESCRIP", "FK_STRM_TP_ID", "CLS", "ENC", "CTX_ENC", "STAT", "RETEN_DAY_AGE", "REF"};
+        final String[] cols = new String[] {"UUID", "DESCRIP", "FK_STRM_TP_ID", "CLS", "ENC", "CTX_ENC", "STAT", "RETEN_DAY_AGE", "REF"};
         for (final String col : cols) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement("ALTER TABLE FD DROP COLUMN " + col + ";")) {
                 preparedStatement.execute();

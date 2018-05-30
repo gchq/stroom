@@ -25,7 +25,6 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.feed.FeedProperties;
 import stroom.feed.MetaMap;
-import stroom.feed.shared.FeedDoc;
 import stroom.io.StreamCloser;
 import stroom.node.NodeCache;
 import stroom.pipeline.DefaultErrorWriter;
@@ -59,10 +58,10 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
-import stroom.streamstore.FeedService;
-import stroom.streamstore.StreamSource;
-import stroom.streamstore.StreamStore;
-import stroom.streamstore.StreamTarget;
+import stroom.streamstore.api.StreamProperties;
+import stroom.streamstore.api.StreamSource;
+import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.serializable.RASegmentInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.Feed;
@@ -616,10 +615,15 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             if (processInfoOutputStream == null) {
                 // Create a processing info stream to write all processing
                 // information to.
-                final Stream errorStream = streamStore.createProcessedStream(stream, stream.getFeed().getName(), StreamType.ERROR.getName(),
-                        streamProcessor, streamTask);
+                final StreamProperties errorStreamProperties = new StreamProperties.Builder()
+                                .feedName(stream.getFeed().getName())
+                                .streamTypeName(StreamType.ERROR.getName())
+                                .parent(stream)
+                                .streamProcessor(streamProcessor)
+                                .streamTask(streamTask)
+                                .build();
 
-                processInfoStreamTarget = streamStore.openStreamTarget(errorStream);
+                processInfoStreamTarget = streamStore.openStreamTarget(errorStreamProperties);
                 streamCloser.add(processInfoStreamTarget);
 
                 processInfoOutputStream = new WrappedOutputStream(processInfoStreamTarget.getOutputStream()) {

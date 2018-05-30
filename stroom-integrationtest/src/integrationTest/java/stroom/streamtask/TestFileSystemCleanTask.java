@@ -26,8 +26,9 @@ import stroom.node.NodeService;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.streamstore.FindStreamVolumeCriteria;
-import stroom.streamstore.StreamStore;
-import stroom.streamstore.StreamTarget;
+import stroom.streamstore.api.StreamProperties;
+import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.FileSystemCleanExecutor;
 import stroom.streamstore.fs.FileSystemStreamMaintenanceService;
 import stroom.streamstore.fs.FileSystemUtil;
@@ -81,9 +82,14 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
 
         // Write a file 2 files ... on we leave locked and the other not locked
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        final Stream lockfile1 = streamStore.createStream(StreamType.RAW_EVENTS.getName(), feedName, null);
-        final Stream nolockfile1 = streamStore.createStream(StreamType.RAW_EVENTS.getName(), feedName, null);
-
+        final StreamProperties lockfile1 = new StreamProperties.Builder()
+                .feedName(feedName)
+                .streamTypeName(StreamType.RAW_EVENTS.getName())
+                .build();
+        final StreamProperties nolockfile1 = new StreamProperties.Builder()
+                .feedName(feedName)
+                .streamTypeName(StreamType.RAW_EVENTS.getName())
+                .build();
         //
         // FILE1 LOCKED
         //
@@ -203,8 +209,12 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         final long tenMin = 1000 * 60 * 10;
         final long startTime = endTime - twoDaysTime;
         for (long time = startTime; time < endTime; time += tenMin) {
-            final Stream stream = streamStore.createStream(StreamType.RAW_EVENTS.getName(), feedName, null, time);
-            final StreamTarget t = streamStore.openStreamTarget(stream);
+            final StreamProperties streamProperties = new StreamProperties.Builder()
+                    .feedName(feedName)
+                    .streamTypeName(StreamType.RAW_EVENTS.getName())
+                    .createMs(time)
+                    .build();
+            final StreamTarget t = streamStore.openStreamTarget(streamProperties);
             t.getOutputStream().write("TEST".getBytes(StreamUtil.DEFAULT_CHARSET));
             streamStore.closeStreamTarget(t);
         }

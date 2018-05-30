@@ -25,6 +25,7 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.PermissionException;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
+import stroom.importexport.shared.ImportState.State;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -35,9 +36,11 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -228,11 +231,28 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
         final String uuid = docRef.getUuid();
         try {
             final boolean exists = persistence.exists(docRef);
-            if (exists && !securityContext.hasDocumentPermission(type, uuid, DocumentPermissionNames.UPDATE)) {
-                throw new PermissionException(securityContext.getUserId(), "You are not authorised to update this document " + docRef);
-            }
 
-            if (importState.ok(importMode)) {
+            if (ImportMode.CREATE_CONFIRMATION.equals(importMode)) {
+                // See if the new document is the same as the old one.
+                if (!exists) {
+                    importState.setState(State.NEW);
+                } else {
+                    final List<String> updatedFields = importState.getUpdatedFieldList();
+                    checkForUpdatedFields(docRef, dataMap, true, updatedFields);
+                    if (updatedFields.size() == 0) {
+                        importState.setState(State.EQUAL);
+                    }
+                }
+
+                if (exists && !securityContext.hasDocumentPermission(type, uuid, DocumentPermissionNames.UPDATE)) {
+                    throw new PermissionException(securityContext.getUserId(), "You are not authorised to update this document " + docRef);
+                }
+
+            } else if (importState.ok(importMode)) {
+                if (exists && !securityContext.hasDocumentPermission(type, uuid, DocumentPermissionNames.UPDATE)) {
+                    throw new PermissionException(securityContext.getUserId(), "You are not authorised to update this document " + docRef);
+                }
+
                 persistence.getLockFactory().lock(uuid, () -> {
                     try {
                         persistence.write(docRef, exists, dataMap);
@@ -270,10 +290,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
                 }
 
                 if (omitAuditFields) {
-                    document.setCreateTime(null);
-                    document.setCreateUser(null);
-                    document.setUpdateTime(null);
-                    document.setUpdateUser(null);
+                    removeAuditFields(document);
                 }
 
                 data = serialiser.write(document);
@@ -283,6 +300,55 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
         }
 
         return data;
+    }
+
+    private void checkForUpdatedFields(final DocRef docRef,
+                                       final Map<String, byte[]> dataMap,
+                                       final boolean omitAuditFields,
+                                       final List<String> updatedFieldList) {
+        try {
+            D existingDocument = read(docRef.getUuid());
+            if (existingDocument == null) {
+                throw new RuntimeException("Unable to read " + docRef);
+            }
+
+            final D newDocument = serialiser.read(dataMap);
+
+            if (omitAuditFields) {
+                removeAuditFields(existingDocument);
+                removeAuditFields(newDocument);
+            }
+
+            try {
+                final Method[] methods = existingDocument.getClass().getMethods();
+                for (final Method method : methods) {
+                    String field = method.getName();
+                    if (field.length() > 4 && field.startsWith("get") && method.getParameterTypes().length == 0) {
+                        final Object existingObject = method.invoke(existingDocument);
+                        final Object newObject = method.invoke(newDocument);
+                        if (!Objects.equals(existingObject, newObject)) {
+                            field = field.substring(3);
+                            field = field.substring(0, 1).toLowerCase() + field.substring(1);
+
+                            updatedFieldList.add(field);
+                        }
+                    }
+                }
+            } catch (final InvocationTargetException | IllegalAccessException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+
+
+        } catch (final RuntimeException | IOException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+    }
+
+    private void removeAuditFields(D doc) {
+        doc.setCreateTime(null);
+        doc.setCreateUser(null);
+        doc.setUpdateTime(null);
+        doc.setUpdateUser(null);
     }
 
     ////////////////////////////////////////////////////////////////////////

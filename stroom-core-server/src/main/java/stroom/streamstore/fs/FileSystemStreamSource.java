@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
 import stroom.io.StreamCloser;
-import stroom.streamstore.StreamSource;
+import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;

@@ -32,7 +32,6 @@ import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.resource.ResourceStore;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.CommonTestControl;
 import stroom.util.shared.ResourceKey;
 import stroom.util.test.FileSystemTestUtil;
 
@@ -48,8 +47,6 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
     private PipelineStore pipelineStore;
     @Inject
     private FeedStore feedStore;
-    @Inject
-    private CommonTestControl commonTestControl;
     @Inject
     private ExplorerService explorerService;
     @Inject
@@ -98,7 +95,7 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
         feedStore.writeDocument(eventFeedChild);
 
         final int startTranslationSize = pipelineStore.list().size();
-        final int startFeedSize = commonTestControl.countEntity(FeedDoc.class);
+        final int startFeedSize = feedStore.list().size();
 
         final ResourceKey file = resourceStore.createTempFile("Export.zip");
         final DocRefs docRefs = new DocRefs();
@@ -117,7 +114,7 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
         Assert.assertEquals(startTranslationSize - 1, pipelineStore.list().size());
 
         feedStore.deleteDocument(eventFeedRef.getUuid());
-        Assert.assertEquals(startFeedSize - 1, commonTestControl.countEntity(FeedDoc.class));
+        Assert.assertEquals(startFeedSize - 1, feedStore.list().size());
 
         // Import
         final List<ImportState> confirmations = importExportService
@@ -129,7 +126,7 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
 
         importExportService.performImportWithConfirmation(resourceStore.getTempFile(file), confirmations);
 
-        Assert.assertEquals(startFeedSize, commonTestControl.countEntity(FeedDoc.class));
+        Assert.assertEquals(startFeedSize, feedStore.list().size());
         Assert.assertEquals(startTranslationSize, pipelineStore.list().size());
 
         final ResourceKey fileChild = resourceStore.createTempFile("ExportChild.zip");

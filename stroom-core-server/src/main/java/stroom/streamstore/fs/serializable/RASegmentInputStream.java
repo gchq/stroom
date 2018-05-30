@@ -19,7 +19,7 @@ package stroom.streamstore.fs.serializable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.io.SeekableInputStream;
-import stroom.streamstore.StreamSource;
+import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.StreamUtil;
 

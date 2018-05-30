@@ -32,8 +32,9 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaData;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
-import stroom.streamstore.StreamStore;
-import stroom.streamstore.StreamTarget;
+import stroom.streamstore.api.StreamProperties;
+import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.shared.Stream;
 import stroom.util.io.WrappedOutputStream;
@@ -78,15 +79,25 @@ public class StreamAppender extends AbstractAppender {
     @Override
     protected OutputStream createOutputStream() {
         final Stream parentStream = streamHolder.getStream();
+
+        if (feed == null && parentStream != null && parentStream.getFeed() != null) {
+            feed = parentStream.getFeed().getName();
+        }
+
         if (streamType == null) {
             errorReceiverProxy.log(Severity.FATAL_ERROR, null, getElementId(), "Stream type not specified", null);
             throw new ProcessException("Stream type not specified");
         }
 
-        final Stream stream = streamStore.createProcessedStream(parentStream, feed, streamType,
-                streamProcessorHolder.getStreamProcessor(), streamProcessorHolder.getStreamTask());
+        final StreamProperties streamProperties = new StreamProperties.Builder()
+                        .feedName(feed)
+                        .streamTypeName(streamType)
+                        .parent(parentStream)
+                        .streamProcessor(streamProcessorHolder.getStreamProcessor())
+                        .streamTask(streamProcessorHolder.getStreamTask())
+                        .build();
 
-        streamTarget = streamStore.openStreamTarget(stream);
+        streamTarget = streamStore.openStreamTarget(streamProperties);
         OutputStream targetOutputStream;
 
         // Let the stream closer handle closing it

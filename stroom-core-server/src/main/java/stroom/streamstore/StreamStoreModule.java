@@ -42,6 +42,8 @@ public class StreamStoreModule extends AbstractModule {
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(StreamAttributeKeyServiceImpl.class);
         clearableBinder.addBinding().to(StreamAttributeValueFlushImpl.class);
+        clearableBinder.addBinding().to(FeedServiceImpl.class);
+        clearableBinder.addBinding().to(StreamTypeServiceImpl.class);
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.streamstore.DownloadDataHandler.class);

@@ -24,9 +24,10 @@ import stroom.feed.shared.FeedDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.streamstore.StreamSource;
-import stroom.streamstore.StreamStore;
-import stroom.streamstore.StreamTarget;
+import stroom.streamstore.api.StreamProperties;
+import stroom.streamstore.api.StreamSource;
+import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.fs.serializable.RawInputSegmentWriter;
 import stroom.streamstore.shared.ExpressionUtil;
@@ -79,9 +80,12 @@ public abstract class AbstractBenchmark {
 
     protected Stream writeData(final String feedName, final String streamTypeName, final String data) {
         // Add the associated data to the stream store.
-        final Stream stream = streamStore.createStream(streamTypeName, feedName, System.currentTimeMillis());
+        final StreamProperties streamProperties = new StreamProperties.Builder()
+                        .feedName(feedName)
+                        .streamTypeName(streamTypeName)
+                        .build();
 
-        final StreamTarget dataTarget = streamStore.openStreamTarget(stream);
+        final StreamTarget dataTarget = streamStore.openStreamTarget(streamProperties);
 
         final InputStream dataInputStream = StreamUtil.stringToStream(data);
 

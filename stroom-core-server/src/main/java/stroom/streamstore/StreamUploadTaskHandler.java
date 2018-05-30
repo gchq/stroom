@@ -21,15 +21,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.util.EntityServiceExceptionUtil;
-import stroom.feed.FeedNameCache;
+import stroom.feed.FeedDocCache;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.security.Security;
+import stroom.streamstore.api.StreamProperties;
+import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.serializable.NestedStreamTarget;
-import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.StreamTargetStroomStreamHandler;
 import stroom.streamtask.statistic.MetaDataStatistic;
@@ -60,19 +62,19 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
 
     private final TaskContext taskContext;
     private final StreamStore streamStore;
-    private final FeedNameCache feedNameCache;
+    private final FeedDocCache feedDocCache;
     private final MetaDataStatistic metaDataStatistics;
     private final Security security;
 
     @Inject
     StreamUploadTaskHandler(final TaskContext taskContext,
                             final StreamStore streamStore,
-                            final FeedNameCache feedNameCache,
+                            final FeedDocCache feedDocCache,
                             final MetaDataStatistic metaDataStatistics,
                             final Security security) {
         this.taskContext = taskContext;
         this.streamStore = streamStore;
-        this.feedNameCache = feedNameCache;
+        this.feedDocCache = feedDocCache;
         this.metaDataStatistics = metaDataStatistics;
         this.security = security;
     }
@@ -160,7 +162,7 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
                                   final StreamUploadTask streamUploadTask, final MetaMap metaMap) {
         try {
             final List<StreamTargetStroomStreamHandler> handlerList = StreamTargetStroomStreamHandler
-                    .buildSingleHandlerList(streamStore, feedNameCache, metaDataStatistics, task.getFeedName(), task.getStreamTypeName());
+                    .buildSingleHandlerList(streamStore, feedDocCache, metaDataStatistics, task.getFeedName(), task.getStreamTypeName());
             final byte[] buffer = BufferFactory.create();
             final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlerList,
                     buffer, "Upload");
@@ -182,9 +184,13 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
             final StreamProgressMonitor streamProgressMonitor = new StreamProgressMonitor(taskContext,
                     "Read");
 
-            final Stream stream = streamStore.createStream(task.getStreamTypeName(), task.getFeedName(), effectiveMs);
+            final StreamProperties streamProperties = new StreamProperties.Builder()
+                            .feedName(task.getFeedName())
+                            .streamTypeName(task.getStreamTypeName())
+                            .effectiveMs(effectiveMs)
+                            .build();
 
-            streamTarget = streamStore.openStreamTarget(stream);
+            streamTarget = streamStore.openStreamTarget(streamProperties);
 
             final NestedStreamTarget rawNestedStreamTarget = new NestedStreamTarget(streamTarget, true);
 

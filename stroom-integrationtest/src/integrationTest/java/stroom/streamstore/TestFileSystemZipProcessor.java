@@ -19,16 +19,17 @@ package stroom.streamstore;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.feed.FeedNameCache;
+import stroom.feed.FeedDocCache;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.proxy.repo.StroomStreamProcessor;
+import stroom.streamstore.api.StreamSource;
+import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.fs.FileSystemStreamMaintenanceService;
 import stroom.streamstore.fs.serializable.RANestedInputStream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.StreamTargetStroomStreamHandler;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.FileSystemTestUtil;
 
@@ -49,7 +50,7 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
     @Inject
     private StreamStore streamStore;
     @Inject
-    private FeedNameCache feedNameCache;
+    private FeedDocCache feedDocCache;
     @Inject
     private FileSystemStreamMaintenanceService streamMaintenanceService;
 
@@ -218,7 +219,7 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
         metaMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
 
         final List<StreamTargetStroomStreamHandler> handlerList = StreamTargetStroomStreamHandler
-                .buildSingleHandlerList(streamStore, feedNameCache, null, feedName, StreamType.RAW_EVENTS.getName());
+                .buildSingleHandlerList(streamStore, feedDocCache, null, feedName, StreamType.RAW_EVENTS.getName());
 
         final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlerList, new byte[1000],
                 "DefaultDataFeedRequest-" + metaMap.get(StroomHeaderArguments.GUID));

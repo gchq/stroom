@@ -20,7 +20,6 @@ package stroom.streamstore;
 import stroom.entity.MockNamedEntityService;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
-import stroom.entity.util.HqlBuilder;
 import stroom.streamstore.shared.FindStreamTypeCriteria;
 import stroom.streamstore.shared.StreamType;
 

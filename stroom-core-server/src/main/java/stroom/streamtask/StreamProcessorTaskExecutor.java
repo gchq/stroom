@@ -16,7 +16,7 @@
 
 package stroom.streamtask;
 
-import stroom.streamstore.StreamSource;
+import stroom.streamstore.api.StreamSource;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamTask;

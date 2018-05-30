@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
 import stroom.io.SeekableOutputStream;
 import stroom.streamstore.StreamException;
-import stroom.streamstore.StreamTarget;
+import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;

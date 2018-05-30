@@ -19,11 +19,12 @@ package stroom.streamtask;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.shared.BaseResultList;
-import stroom.feed.FeedNameCache;
+import stroom.feed.FeedDocCache;
+import stroom.feed.FeedStore;
 import stroom.io.SeekableInputStream;
 import stroom.proxy.repo.StroomZipFile;
-import stroom.streamstore.StreamSource;
-import stroom.streamstore.StreamStore;
+import stroom.streamstore.api.StreamSource;
+import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.fs.serializable.NestedInputStream;
 import stroom.streamstore.fs.serializable.RANestedInputStream;
 import stroom.streamstore.shared.ExpressionUtil;
@@ -34,7 +35,6 @@ import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.task.ExecutorProvider;
 import stroom.task.TaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ModelStringUtil;
@@ -61,7 +61,9 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     @Inject
     private StreamStore streamStore;
     @Inject
-    private FeedNameCache feedNameCache;
+    private FeedStore feedStore;
+    @Inject
+    private FeedDocCache feedDocCache;
     @Inject
     private MetaDataStatistic metaDataStatistic;
     @Inject
@@ -72,7 +74,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     private void aggregate(final String proxyDir,
                            final int maxAggregation,
                            final long maxStreamSize) {
-        final ProxyFileProcessorImpl proxyFileProcessor = new ProxyFileProcessorImpl(streamStore, feedNameCache, metaDataStatistic, maxAggregation, maxStreamSize);
+        final ProxyFileProcessorImpl proxyFileProcessor = new ProxyFileProcessorImpl(streamStore, feedDocCache, metaDataStatistic, maxAggregation, maxStreamSize);
         final ProxyAggregationExecutor proxyAggregationExecutor = new ProxyAggregationExecutor(proxyFileProcessor, taskContext, executorProvider, proxyDir, 10, maxAggregation, 10000, maxStreamSize);
         proxyAggregationExecutor.exec(new DummyTask());
     }
@@ -90,6 +92,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
         final String feedName2 = FileSystemTestUtil.getUniqueTestString();
+        createFeeds(feedName1, feedName2);
 
         Files.createDirectories(proxyDir);
 
@@ -158,6 +161,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         final Path proxyDir = getCurrentTestDir().resolve("proxy" + FileSystemTestUtil.getUniqueTestString());
 
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
+        createFeeds(feedName1);
 
         Files.createDirectory(proxyDir);
 
@@ -203,6 +207,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         final Path proxyDir = getCurrentTestDir().resolve("proxy" + FileSystemTestUtil.getUniqueTestString());
 
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
+        createFeeds(feedName1);
 
         FileUtil.mkdirs(proxyDir);
 
@@ -237,6 +242,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         final Path proxyDir = getCurrentTestDir().resolve("proxy" + FileSystemTestUtil.getUniqueTestString());
 
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
+        createFeeds(feedName1);
 
         FileUtil.mkdirs(proxyDir);
 
@@ -283,11 +289,10 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
     @Test
     public void testImportZipWithContextFiles2() throws IOException {
-        // commonTestControl.deleteAll();
-
         final Path proxyDir = getCurrentTestDir().resolve("proxy" + FileSystemTestUtil.getUniqueTestString());
 
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
+        createFeeds(feedName1);
 
         FileUtil.mkdirs(proxyDir);
 
@@ -334,7 +339,6 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         Assert.assertEquals(2, ctxNestedInputStream.getEntryCount());
         ctxNestedInputStream.close();
         streamStore.closeStreamSource(source);
-
     }
 
     private void assertContent(final String msg, final StreamSource is, final boolean hasContent) throws IOException {
@@ -443,6 +447,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         final Path proxyDir = getCurrentTestDir().resolve("proxy" + FileSystemTestUtil.getUniqueTestString());
 
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
+        createFeeds(feedName1);
 
         FileUtil.mkdirs(proxyDir);
 
@@ -465,6 +470,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         final Path proxyDir = getCurrentTestDir().resolve("proxy" + FileSystemTestUtil.getUniqueTestString());
 
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
+        createFeeds(feedName1);
 
         Files.createDirectories(proxyDir);
 
@@ -478,5 +484,12 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         final FindStreamCriteria findStreamCriteria1 = new FindStreamCriteria();
         findStreamCriteria1.setExpression(ExpressionUtil.createFeedExpression(feedName1));
         Assert.assertEquals(2, streamStore.find(findStreamCriteria1).size());
+    }
+
+    private void createFeeds(final String... feeds) {
+        feedDocCache.clear();
+        for (final String feed : feeds) {
+            feedStore.createDocument(feed);
+        }
     }
 }

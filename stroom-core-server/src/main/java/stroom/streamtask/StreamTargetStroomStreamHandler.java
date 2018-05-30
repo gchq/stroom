@@ -19,7 +19,7 @@ package stroom.streamtask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.FeedNameCache;
+import stroom.feed.FeedDocCache;
 import stroom.feed.MetaMap;
 import stroom.feed.MetaMapFactory;
 import stroom.feed.StroomHeaderArguments;
@@ -30,8 +30,9 @@ import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.proxy.repo.StroomZipNameSet;
 import stroom.streamstore.StreamFactory;
-import stroom.streamstore.StreamStore;
-import stroom.streamstore.StreamTarget;
+import stroom.streamstore.api.StreamProperties;
+import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.serializable.NestedStreamTarget;
 import stroom.streamstore.shared.Feed;
 import stroom.streamstore.shared.Stream;
@@ -69,7 +70,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamTargetStroomStreamHandler.class);
 
     private final StreamStore streamStore;
-    private final FeedNameCache feedNameCache;
+    private final FeedDocCache feedDocCache;
     private final MetaDataStatistic metaDataStatistics;
     private final HashSet<Stream> streamSet;
     private final StroomZipNameSet stroomZipNameSet;
@@ -89,12 +90,12 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     private MetaMap currentMetaMap;
 
     public StreamTargetStroomStreamHandler(final StreamStore streamStore,
-                                           final FeedNameCache feedNameCache,
+                                           final FeedDocCache feedDocCache,
                                            final MetaDataStatistic metaDataStatistics,
                                            final String feedName,
                                            final String streamTypeName) {
         this.streamStore = streamStore;
-        this.feedNameCache = feedNameCache;
+        this.feedDocCache = feedDocCache;
         this.metaDataStatistics = metaDataStatistics;
         this.currentFeedName = feedName;
         this.currentStreamTypeName = streamTypeName;
@@ -103,12 +104,12 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     }
 
     public static List<StreamTargetStroomStreamHandler> buildSingleHandlerList(final StreamStore streamStore,
-                                                                               final FeedNameCache feedNameCache,
+                                                                               final FeedDocCache feedDocCache,
                                                                                final MetaDataStatistic metaDataStatistics,
                                                                                final String feedName,
                                                                                final String streamTypeName) {
         final ArrayList<StreamTargetStroomStreamHandler> list = new ArrayList<>();
-        list.add(new StreamTargetStroomStreamHandler(streamStore, feedNameCache, metaDataStatistics, feedName, streamTypeName));
+        list.add(new StreamTargetStroomStreamHandler(streamStore, feedDocCache, metaDataStatistics, feedName, streamTypeName));
         return list;
     }
 
@@ -136,7 +137,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
 
 //    private Fd getFeed(final String name) {
 //        return feedMap.computeIfAbsent(name, k -> {
-//            final Optional<FeedDoc> feedDoc = feedNameCache.get(name);
+//            final Optional<FeedDoc> feedDoc = feedDocCache.get(name);
 //            if (feedDoc == null) {
 //                throw new RuntimeException("Unable to get feed " + k);
 //            }
@@ -194,13 +195,13 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     }
 
     private String getStreamTypeName(final String feedName) {
-        return feedNameCache.get(feedName)
+        return feedDocCache.get(feedName)
                 .map(FeedDoc::getStreamType)
                 .orElse(StreamType.RAW_EVENTS.getName());
     }
 
     private boolean isReference(final String feedName) {
-        return feedNameCache.get(feedName)
+        return feedDocCache.get(feedName)
                 .map(FeedDoc::isReference)
                 .orElse(false);
     }
@@ -312,9 +313,13 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
                 currentStreamTypeName = getStreamTypeName(currentFeedName);
             }
 
-            final Stream stream = streamStore.createStream(currentStreamTypeName, currentFeedName, effectiveMs);
+            final StreamProperties streamProperties = new StreamProperties.Builder()
+                    .feedName(currentFeedName)
+                    .streamTypeName(currentStreamTypeName)
+                    .effectiveMs(effectiveMs)
+                    .build();
 
-            final StreamTarget streamTarget = streamStore.openStreamTarget(stream);
+            final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
             feedStreamTarget.put(currentFeedName, streamTarget);
             streamSet.add(streamTarget.getStream());
             nestedStreamTarget = new NestedStreamTarget(streamTarget, false);

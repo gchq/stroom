@@ -25,8 +25,9 @@ import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.FeedStore;
 import stroom.feed.shared.FeedDoc;
+import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.StreamRetentionExecutor;
-import stroom.streamstore.StreamStore;
+import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.fs.FileSystemStreamMaintenanceService;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
@@ -69,11 +70,20 @@ public class TestStreamRetentionExecutor extends AbstractCoreIntegrationTest {
         feedDoc.setRetentionDayAge(RETENTION_PERIOD_DAYS);
         feedStore.writeDocument(feedDoc);
 
-        Stream streamInsideRetetion = streamStore.createStream(StreamType.RAW_EVENTS.getName(), feedName, null, now);
-        streamInsideRetetion.setStatusMs(now);
-        Stream streamOutsideRetetion = streamStore.createStream(StreamType.RAW_EVENTS.getName(), feedName, null,
-                timeOutsideRetentionPeriod);
-        streamOutsideRetetion.setStatusMs(now);
+        Stream streamInsideRetetion = streamStore.createStream(
+                new StreamProperties.Builder()
+                        .feedName(feedName)
+                        .streamTypeName(StreamType.RAW_EVENTS.getName())
+                        .createMs(now)
+                        .statusMs(now)
+                        .build());
+        Stream streamOutsideRetetion = streamStore.createStream(
+                new StreamProperties.Builder()
+                        .feedName(feedName)
+                        .streamTypeName(StreamType.RAW_EVENTS.getName())
+                        .createMs(timeOutsideRetentionPeriod)
+                        .statusMs(timeOutsideRetentionPeriod)
+                        .build());
 
         feedStore.writeDocument(feedDoc);
         streamInsideRetetion = streamMaintenanceService.save(streamInsideRetetion);

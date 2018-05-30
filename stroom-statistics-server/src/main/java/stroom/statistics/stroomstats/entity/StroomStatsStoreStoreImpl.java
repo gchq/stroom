@@ -17,13 +17,13 @@
 
 package stroom.statistics.stroomstats.entity;
 
+import stroom.docref.DocRef;
 import stroom.docstore.Persistence;
 import stroom.docstore.Store;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.stats.shared.StroomStatsStoreDoc;
@@ -158,43 +158,41 @@ class StroomStatsStoreStoreImpl implements StroomStatsStoreStore {
             final String uuid = docRef.getUuid();
             try {
                 final boolean exists = persistence.exists(docRef);
-                if (importState.ok(importMode)) {
-                    StroomStatsStoreDoc document;
-                    if (exists) {
-                        document = readDocument(docRef);
+                StroomStatsStoreDoc document;
+                if (exists) {
+                    document = readDocument(docRef);
 
-                    } else {
-                        final OldStroomStatsStoreEntity oldStroomStatsStore = new OldStroomStatsStoreEntity();
-                        final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
-                        legacySerialiser.performImport(oldStroomStatsStore, dataMap);
+                } else {
+                    final OldStroomStatsStoreEntity oldStroomStatsStore = new OldStroomStatsStoreEntity();
+                    final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
+                    legacySerialiser.performImport(oldStroomStatsStore, dataMap);
 
-                        final long now = System.currentTimeMillis();
-                        final String userId = securityContext.getUserId();
+                    final long now = System.currentTimeMillis();
+                    final String userId = securityContext.getUserId();
 
-                        document = new StroomStatsStoreDoc();
-                        document.setType(docRef.getType());
-                        document.setUuid(uuid);
-                        document.setName(docRef.getName());
-                        document.setVersion(UUID.randomUUID().toString());
-                        document.setCreateTime(now);
-                        document.setUpdateTime(now);
-                        document.setCreateUser(userId);
-                        document.setUpdateUser(userId);
+                    document = new StroomStatsStoreDoc();
+                    document.setType(docRef.getType());
+                    document.setUuid(uuid);
+                    document.setName(docRef.getName());
+                    document.setVersion(UUID.randomUUID().toString());
+                    document.setCreateTime(now);
+                    document.setUpdateTime(now);
+                    document.setCreateUser(userId);
+                    document.setUpdateUser(userId);
 
-                        document.setDescription(oldStroomStatsStore.getDescription());
-                        document.setStatisticType(oldStroomStatsStore.getStatisticType());
-                        document.setRollUpType(oldStroomStatsStore.getRollUpType());
-                        document.setPrecision(oldStroomStatsStore.getPrecisionAsInterval());
-                        document.setEnabled(oldStroomStatsStore.isEnabled());
+                    document.setDescription(oldStroomStatsStore.getDescription());
+                    document.setStatisticType(oldStroomStatsStore.getStatisticType());
+                    document.setRollUpType(oldStroomStatsStore.getRollUpType());
+                    document.setPrecision(oldStroomStatsStore.getPrecisionAsInterval());
+                    document.setEnabled(oldStroomStatsStore.isEnabled());
 
-                        final StroomStatsStoreEntityData stroomStatsStoreEntityData = serialiser.getDataFromLegacyXML(oldStroomStatsStore.getData());
-                        if (stroomStatsStoreEntityData != null) {
-                            document.setConfig(stroomStatsStoreEntityData);
-                        }
+                    final StroomStatsStoreEntityData stroomStatsStoreEntityData = serialiser.getDataFromLegacyXML(oldStroomStatsStore.getData());
+                    if (stroomStatsStoreEntityData != null) {
+                        document.setConfig(stroomStatsStoreEntityData);
                     }
-
-                    result = serialiser.write(document);
                 }
+
+                result = serialiser.write(document);
 
             } catch (final IOException | RuntimeException e) {
                 importState.addMessage(Severity.ERROR, e.getMessage());

@@ -17,9 +17,9 @@
 package stroom.util;
 
 import org.junit.Test;
-import stroom.streamstore.StreamStore;
-import stroom.streamstore.StreamTarget;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.api.StreamProperties;
+import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.shared.StreamType;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.io.FileUtil;
@@ -51,8 +51,11 @@ public class TestStreamDumpTool extends AbstractCoreIntegrationTest {
     }
 
     private void addData(final String feedName, final String data) throws IOException {
-        Stream stream = streamStore.createStream(StreamType.RAW_EVENTS.getName(), feedName, null, System.currentTimeMillis());
-        final StreamTarget streamTarget = streamStore.openStreamTarget(stream);
+        final StreamProperties streamProperties = new StreamProperties.Builder()
+                .feedName(feedName)
+                .streamTypeName(StreamType.RAW_EVENTS.getName())
+                .build();
+        final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
         streamTarget.getOutputStream().write(data.getBytes(StreamUtil.DEFAULT_CHARSET));
         streamStore.closeStreamTarget(streamTarget);
     }

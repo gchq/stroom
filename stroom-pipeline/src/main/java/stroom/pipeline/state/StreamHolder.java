@@ -17,7 +17,7 @@
 package stroom.pipeline.state;
 
 import stroom.io.StreamCloser;
-import stroom.streamstore.StreamSource;
+import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProviderImpl;
 import stroom.streamstore.shared.Stream;

@@ -19,13 +19,15 @@ package stroom.streamtask;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.feed.FeedNameCache;
+import stroom.docref.DocRef;
+import stroom.feed.FeedDocCache;
+import stroom.feed.FeedStore;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
+import stroom.feed.shared.FeedDoc;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.streamstore.MockStreamStore;
-import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.StreamType;
 import stroom.test.AbstractProcessIntegrationTest;
 
@@ -34,9 +36,11 @@ import java.io.IOException;
 
 public class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrationTest {
     @Inject
-    private StreamStore streamStore;
+    private MockStreamStore streamStore;
     @Inject
-    private FeedNameCache feedNameCache;
+    private FeedDocCache feedDocCache;
+    @Inject
+    private FeedStore feedStore;
 
     /**
      * This test is used to check that feeds that are set to be reference feeds
@@ -46,13 +50,19 @@ public class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrat
      */
     @Test
     public void testReferenceNonAggregation() throws IOException {
-        ((MockStreamStore) streamStore).clear();
+        streamStore.clear();
+        feedDocCache.clear();
+
+        final DocRef feedRef = feedStore.createDocument("TEST_FEED");
+        final FeedDoc feedDoc = feedStore.readDocument(feedRef);
+        feedDoc.setReference(true);
+        feedStore.writeDocument(feedDoc);
 
         final MetaMap metaMap = new MetaMap();
         metaMap.put(StroomHeaderArguments.FEED, "TEST_FEED");
 
         final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(streamStore,
-                feedNameCache, null, "TEST_FEED", StreamType.RAW_REFERENCE.getName());
+                feedDocCache, null, "TEST_FEED", StreamType.RAW_REFERENCE.getName());
         streamTargetStroomStreamHandler.handleHeader(metaMap);
         streamTargetStroomStreamHandler.handleEntryStart(new StroomZipEntry(null, "1", StroomZipFileType.Meta));
         streamTargetStroomStreamHandler.handleEntryEnd();
@@ -68,7 +78,7 @@ public class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrat
         streamTargetStroomStreamHandler.handleEntryEnd();
         streamTargetStroomStreamHandler.close();
 
-        Assert.assertEquals(2, ((MockStreamStore) streamStore).getStreamStoreCount());
+        Assert.assertEquals(2, streamStore.getStreamStoreCount());
     }
 
     /**
@@ -79,7 +89,7 @@ public class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrat
      */
     @Test
     public void testFeedChange() throws IOException {
-        ((MockStreamStore) streamStore).clear();
+        streamStore.clear();
 
         final MetaMap metaMap1 = new MetaMap();
         metaMap1.put(StroomHeaderArguments.FEED, "TEST_FEED1");
@@ -88,7 +98,7 @@ public class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrat
         metaMap2.put(StroomHeaderArguments.FEED, "TEST_FEED2");
 
         final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(streamStore,
-                feedNameCache, null, "TEST_FEED1", StreamType.RAW_EVENTS.getName());
+                feedDocCache, null, "TEST_FEED1", StreamType.RAW_EVENTS.getName());
         streamTargetStroomStreamHandler.handleHeader(metaMap1);
         streamTargetStroomStreamHandler.handleEntryStart(new StroomZipEntry(null, "1", StroomZipFileType.Meta));
         streamTargetStroomStreamHandler.handleEntryEnd();
@@ -105,7 +115,7 @@ public class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrat
         streamTargetStroomStreamHandler.handleEntryEnd();
         streamTargetStroomStreamHandler.close();
 
-        Assert.assertEquals(2, ((MockStreamStore) streamStore).getStreamStoreCount());
+        Assert.assertEquals(2, streamStore.getStreamStoreCount());
     }
 
     /**
@@ -116,13 +126,13 @@ public class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrat
      */
     @Test
     public void testFeedAggregation() throws IOException {
-        ((MockStreamStore) streamStore).clear();
+        streamStore.clear();
 
         final MetaMap metaMap = new MetaMap();
         metaMap.put(StroomHeaderArguments.FEED, "TEST_FEED");
 
         final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(streamStore,
-                feedNameCache, null, "TEST_FEED", StreamType.RAW_EVENTS.getName());
+                feedDocCache, null, "TEST_FEED", StreamType.RAW_EVENTS.getName());
         streamTargetStroomStreamHandler.handleHeader(metaMap);
         streamTargetStroomStreamHandler.handleEntryStart(new StroomZipEntry(null, "1", StroomZipFileType.Meta));
         streamTargetStroomStreamHandler.handleEntryEnd();
@@ -138,6 +148,6 @@ public class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrat
         streamTargetStroomStreamHandler.handleEntryEnd();
         streamTargetStroomStreamHandler.close();
 
-        Assert.assertEquals(1, ((MockStreamStore) streamStore).getStreamStoreCount());
+        Assert.assertEquals(1, streamStore.getStreamStoreCount());
     }
 }

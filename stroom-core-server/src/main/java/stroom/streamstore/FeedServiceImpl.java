@@ -23,6 +23,7 @@ import stroom.entity.NamedEntityServiceImpl;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.Clearable;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.util.HqlBuilder;
@@ -36,16 +37,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
-// @Transactional
-public class FeedServiceImpl extends NamedEntityServiceImpl<Feed, FindFeedCriteria> implements FeedService {
+public class FeedServiceImpl extends NamedEntityServiceImpl<Feed, FindFeedCriteria> implements FeedService, Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(FeedServiceImpl.class);
 
-    private static final String FEED_NAME_PATTERN_PROPERTY = "stroom.feedNamePattern";
-    private static final String FEED_NAME_PATTERN_VALUE = "^[A-Z0-9_\\-]{3,}$";
-
-//    private final Map<Long, String> nameCache = new ConcurrentHashMap<>();
-    private final Map<String, Long> idCache = new ConcurrentHashMap<>();
-
+    private final Map<String, Feed> cache = new ConcurrentHashMap<>();
 
     @Inject
     FeedServiceImpl(final StroomEntityManager entityManager,
@@ -53,34 +48,33 @@ public class FeedServiceImpl extends NamedEntityServiceImpl<Feed, FindFeedCriter
         super(entityManager, security);
     }
 
-//
-//
-//    @Inject
-//    StreamTypeServiceImpl(final StroomEntityManager entityManager,
-//                          final Security security) {
-//        super(entityManager, security);
-//    }
-
     /**
      * @return the feed by it's ID or null
      */
     @SuppressWarnings("unchecked")
     @Override
-    public Feed get(final String feedName) {
+    public Feed get(final String name) {
+        Feed feed = cache.get(name);
+        if (feed != null) {
+            return feed;
+        }
+
         final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT e FROM ");
         sql.append(getEntityClass().getName());
         sql.append(" AS e");
         sql.append(" WHERE e.name = ");
-        sql.arg(feedName);
+        sql.arg(name);
 
         // This should just bring back 1
         final List<Feed> results = getEntityManager().executeQueryResultList(sql);
 
-        if (results == null || results.size() == 0) {
-            return null;
+        if (results != null && results.size() > 0) {
+            feed = results.get(0);
+            cache.put(name, feed);
         }
-        return results.get(0);
+
+        return feed;
     }
 
     @Override
@@ -94,25 +88,17 @@ public class FeedServiceImpl extends NamedEntityServiceImpl<Feed, FindFeedCriter
                 LOGGER.debug(e.getMessage(), e);
                 feed = get(name);
             }
+
+            cache.put(name, feed);
         }
+
         return feed;
     }
 
     @Override
     public long getId(final String name) {
-        return idCache.computeIfAbsent(name, k -> {
-            final Feed feed = getOrCreate(name);
-            return feed.getId();
-        });
+        return getOrCreate(name).getId();
     }
-
-//    @Override
-//    public String getName(final long id) {
-//        return nameCache.computeIfAbsent(id, k ->  {
-//            final Feed feed = loadById(id);
-//            return feed.getName();
-//        });
-//    }
 
     @Override
     public EntityIdSet<Feed> convertNameSet(final CriteriaSet<String> feeds) {
@@ -153,6 +139,11 @@ public class FeedServiceImpl extends NamedEntityServiceImpl<Feed, FindFeedCriter
         return null;
     }
 
+    @Override
+    public void clear() {
+        cache.clear();
+    }
+
     private static class FeedQueryAppender extends QueryAppender<Feed, FindFeedCriteria> {
         FeedQueryAppender(final StroomEntityManager entityManager) {
             super(entityManager);
@@ -164,6 +155,7 @@ public class FeedServiceImpl extends NamedEntityServiceImpl<Feed, FindFeedCriter
 //            sql.appendPrimitiveValueSetQuery(alias + ".ppurpose", criteria.getPurpose());
 //        }
     }
+
 
 
 //

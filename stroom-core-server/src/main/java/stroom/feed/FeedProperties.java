@@ -14,15 +14,15 @@ import java.util.Optional;
 public class FeedProperties {
     private static final Logger LOGGER = LoggerFactory.getLogger(FeedProperties.class);
 
-    private final FeedNameCache feedNameCache;
+    private final FeedDocCache feedDocCache;
 
     @Inject
-    FeedProperties(final FeedNameCache feedNameCache) {
-        this.feedNameCache = feedNameCache;
+    FeedProperties(final FeedDocCache feedDocCache) {
+        this.feedDocCache = feedDocCache;
     }
 
     public String getDisplayClassification(final String feedName) {
-        final Optional<FeedDoc> optional = feedNameCache.get(feedName);
+        final Optional<FeedDoc> optional = feedDocCache.get(feedName);
         final String classification = optional
                 .map(FeedDoc::getClassification)
                 .filter(c -> !c.trim().isEmpty())
@@ -32,7 +32,7 @@ public class FeedProperties {
     }
 
     public String getEncoding(final String feedName, final StreamType streamType) {
-        final Optional<FeedDoc> optional = feedNameCache.get(feedName);
+        final Optional<FeedDoc> optional = feedDocCache.get(feedName);
         String encoding = null;
         if (optional.isPresent() && streamType != null) {
             if (StreamType.CONTEXT.equals(streamType)) {

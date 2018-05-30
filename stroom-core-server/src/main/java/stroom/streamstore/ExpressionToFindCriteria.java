@@ -248,7 +248,7 @@ public class ExpressionToFindCriteria {
                                     field,
                                     getAllValues(terms),
                                     streamTypeName -> {
-                                        final StreamType streamType = streamTypeService.get(streamTypeName);
+                                        final StreamType streamType = streamTypeService.getOrCreate(streamTypeName);
                                         return streamType.getId();
                                     }));
                     break;
@@ -276,6 +276,14 @@ public class ExpressionToFindCriteria {
                                     getAllValues(terms),
                                     Long::valueOf));
                     break;
+                case StreamDataSource.STREAM_PROCESSOR_ID:
+                    criteria.setStreamProcessorIdSet(
+                            convertEntityIdSetLongValues(
+                                    criteria.getStreamProcessorIdSet(),
+                                    field,
+                                    getAllValues(terms),
+                                    Long::valueOf));
+                    break;
                 case StreamDataSource.CREATE_TIME:
                     setPeriod(criteria.obtainCreatePeriod(), terms, context);
                     break;
@@ -296,7 +304,7 @@ public class ExpressionToFindCriteria {
     private Set<Feed> findFeeds(final String field, final String value) {
         // Try by name
         try {
-            final Feed feed = feedService.get(value);
+            final Feed feed = feedService.getOrCreate(value);
             if (feed != null) {
                 return Collections.singleton(feed);
             }
@@ -407,10 +415,12 @@ public class ExpressionToFindCriteria {
     private long getDate(final String fieldName, final String value, final Context context) {
         try {
             //empty optional will be caught below
-            return DateExpressionParser.parse(value, context.timeZoneId, context.nowEpochMilli).get().toInstant().toEpochMilli();
+            return DateExpressionParser.parse(value, context.timeZoneId, context.nowEpochMilli)
+                    .orElseThrow(() -> new EntityServiceException("Expected a standard date value for field \"" + fieldName + "\" but was given string \"" + value + "\""))
+                    .toInstant()
+                    .toEpochMilli();
         } catch (final RuntimeException e) {
-            throw new EntityServiceException("Expected a standard date value for field \"" + fieldName
-                    + "\" but was given string \"" + value + "\"");
+            throw new EntityServiceException("Expected a standard date value for field \"" + fieldName + "\" but was given string \"" + value + "\"");
         }
     }
 

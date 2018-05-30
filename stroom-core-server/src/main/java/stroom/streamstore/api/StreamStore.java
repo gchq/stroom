@@ -15,16 +15,17 @@
  *
  */
 
-package stroom.streamstore;
+package stroom.streamstore.api;
 
 import stroom.entity.FindDeleteService;
 import stroom.entity.FindService;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Period;
+import stroom.streamstore.EffectiveMetaDataCriteria;
+import stroom.streamstore.OldFindStreamCriteria;
+import stroom.streamstore.StreamException;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
-import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamTask;
 
 import java.util.List;
 
@@ -44,20 +45,22 @@ import java.util.List;
  * </p>
  */
 public interface StreamStore extends FindService<Stream, FindStreamCriteria>, FindDeleteService<FindStreamCriteria> {
-    Stream createStream(String streamTypeName,
-                        String feedName,
-                        Long effectiveMs);
+//    Stream createStream(String streamTypeName,
+//                        String feedName,
+//                        Long effectiveMs);
+//
+//    Stream createStream(String streamTypeName,
+//                        String feedName,
+//                        Long createMs,
+//                        Long effectiveMs);
+//
+//    Stream createProcessedStream(Stream parent,
+//                                 String streamTypeName,
+//                                 String feedName,
+//                                 StreamProcessor streamProcessor,
+//                                 StreamTask streamTask);
 
-    Stream createStream(String streamTypeName,
-                        String feedName,
-                        Long createMs,
-                        Long effectiveMs);
-
-    Stream createProcessedStream(Stream parent,
-                                 String streamTypeName,
-                                 String feedName,
-                                 StreamProcessor streamProcessor,
-                                 StreamTask streamTask);
+    Stream createStream(StreamProperties streamProperties);
 
     /**
      * Load a stream by id.
@@ -146,7 +149,7 @@ public interface StreamStore extends FindService<Stream, FindStreamCriteria>, Fi
      *
      * @return the stream to write to
      */
-    StreamTarget openStreamTarget(Stream stream) throws StreamException;
+    StreamTarget openStreamTarget(StreamProperties streamProperties) throws StreamException;
 
     /**
      * <p>
@@ -156,7 +159,7 @@ public interface StreamStore extends FindService<Stream, FindStreamCriteria>, Fi
      * @param append allow appending to the stream (or wipe it?)
      * @return the stream to write to
      */
-    StreamTarget openStreamTarget(Stream stream, boolean append) throws StreamException;
+    StreamTarget openExistingStreamTarget(Stream stream) throws StreamException;
 
     /**
      * <p>

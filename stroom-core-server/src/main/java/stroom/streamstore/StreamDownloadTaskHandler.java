@@ -25,6 +25,8 @@ import stroom.proxy.repo.StroomZipFileType;
 import stroom.proxy.repo.StroomZipOutputStream;
 import stroom.proxy.repo.StroomZipOutputStreamImpl;
 import stroom.security.Security;
+import stroom.streamstore.api.StreamSource;
+import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.fs.serializable.NestedInputStream;
 import stroom.streamstore.fs.serializable.RANestedInputStream;
 import stroom.streamstore.shared.FindStreamCriteria;

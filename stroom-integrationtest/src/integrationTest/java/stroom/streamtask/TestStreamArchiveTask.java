@@ -30,18 +30,15 @@ import stroom.node.shared.Node;
 import stroom.streamstore.FindStreamVolumeCriteria;
 import stroom.streamstore.StreamDeleteExecutor;
 import stroom.streamstore.StreamMaintenanceService;
+import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.StreamRetentionExecutor;
-import stroom.streamstore.StreamStore;
-import stroom.streamstore.StreamTarget;
+import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.FileSystemCleanExecutor;
-import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;
 import stroom.task.SimpleTaskContext;
-import stroom.task.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.CommonTestControl;
-import stroom.test.CommonTestScenarioCreator;
 import stroom.util.config.StroomProperties;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.volume.VolumeServiceImpl;
@@ -115,10 +112,16 @@ public class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
         feedDoc.setRetentionDayAge(FIFTY_FIVE);
         feedStore.writeDocument(feedDoc);
 
-        final Stream oldFile = streamStore.createStream(StreamType.RAW_EVENTS.getName(), feedName, null,
-                oldDate.toInstant().toEpochMilli());
-        final Stream newFile = streamStore.createStream(StreamType.RAW_EVENTS.getName(), feedName, null,
-                newDate.toInstant().toEpochMilli());
+        final StreamProperties oldFile = new StreamProperties.Builder()
+                .feedName(feedName)
+                .streamTypeName(StreamType.RAW_EVENTS.getName())
+                .createMs(oldDate.toInstant().toEpochMilli())
+                .build();
+        final StreamProperties newFile = new StreamProperties.Builder()
+                .feedName(feedName)
+                .streamTypeName(StreamType.RAW_EVENTS.getName())
+                .createMs(newDate.toInstant().toEpochMilli())
+                .build();
 
         final StreamTarget oldFileTarget = streamStore.openStreamTarget(oldFile);
         oldFileTarget.getOutputStream().write("MyTest".getBytes());

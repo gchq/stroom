@@ -26,18 +26,18 @@ import java.util.Optional;
 
 class RemoteFeedServiceImpl implements RemoteFeedService {
     private final Security security;
-    private final FeedNameCache feedNameCache;
+    private final FeedDocCache feedDocCache;
 
     @Inject
-    RemoteFeedServiceImpl(final Security security, final FeedNameCache feedNameCache) {
+    RemoteFeedServiceImpl(final Security security, final FeedDocCache feedDocCache) {
         this.security = security;
-        this.feedNameCache = feedNameCache;
+        this.feedDocCache = feedDocCache;
     }
 
     @Override
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequest request) {
         return security.asProcessingUserResult(() -> {
-            final Optional<FeedDoc> optional = feedNameCache.get(request.getFeedName());
+            final Optional<FeedDoc> optional = feedDocCache.get(request.getFeedName());
 
             if (!optional.isPresent()) {
                 return GetFeedStatusResponse.createFeedIsNotDefinedResponse();

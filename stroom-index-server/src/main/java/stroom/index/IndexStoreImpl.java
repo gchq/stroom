@@ -17,6 +17,7 @@
 
 package stroom.index;
 
+import stroom.docref.DocRef;
 import stroom.docstore.Persistence;
 import stroom.docstore.Store;
 import stroom.explorer.shared.DocumentType;
@@ -25,7 +26,6 @@ import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexFields;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.util.shared.Message;
@@ -158,48 +158,46 @@ class IndexStoreImpl implements IndexStore {
             final String uuid = docRef.getUuid();
             try {
                 final boolean exists = persistence.exists(docRef);
-                if (importState.ok(importMode)) {
-                    IndexDoc document;
-                    if (exists) {
-                        document = readDocument(docRef);
+                IndexDoc document;
+                if (exists) {
+                    document = readDocument(docRef);
 
-                    } else {
-                        final OldIndex oldIndex = new OldIndex();
-                        final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
-                        legacySerialiser.performImport(oldIndex, dataMap);
+                } else {
+                    final OldIndex oldIndex = new OldIndex();
+                    final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
+                    legacySerialiser.performImport(oldIndex, dataMap);
 
-                        final long now = System.currentTimeMillis();
-                        final String userId = securityContext.getUserId();
+                    final long now = System.currentTimeMillis();
+                    final String userId = securityContext.getUserId();
 
-                        document = new IndexDoc();
-                        document.setType(docRef.getType());
-                        document.setUuid(uuid);
-                        document.setName(docRef.getName());
-                        document.setVersion(UUID.randomUUID().toString());
-                        document.setCreateTime(now);
-                        document.setUpdateTime(now);
-                        document.setCreateUser(userId);
-                        document.setUpdateUser(userId);
-                        document.setDescription(oldIndex.getDescription());
-                        document.setMaxDocsPerShard(oldIndex.getMaxDocsPerShard());
-                        if (oldIndex.getPartitionBy() != null) {
-                            document.setPartitionBy(IndexDoc.PartitionBy.valueOf(oldIndex.getPartitionBy().name()));
-                        }
-                        document.setPartitionSize(oldIndex.getPartitionSize());
-                        document.setShardsPerPartition(oldIndex.getShardsPerPartition());
-                        document.setRetentionDayAge(oldIndex.getRetentionDayAge());
-
-                        final IndexFields indexFields = serialiser.getIndexFieldsFromLegacyXML(oldIndex.getIndexFields());
-                        if (indexFields != null) {
-                            document.setIndexFields(indexFields.getIndexFields());
-                        }
+                    document = new IndexDoc();
+                    document.setType(docRef.getType());
+                    document.setUuid(uuid);
+                    document.setName(docRef.getName());
+                    document.setVersion(UUID.randomUUID().toString());
+                    document.setCreateTime(now);
+                    document.setUpdateTime(now);
+                    document.setCreateUser(userId);
+                    document.setUpdateUser(userId);
+                    document.setDescription(oldIndex.getDescription());
+                    document.setMaxDocsPerShard(oldIndex.getMaxDocsPerShard());
+                    if (oldIndex.getPartitionBy() != null) {
+                        document.setPartitionBy(IndexDoc.PartitionBy.valueOf(oldIndex.getPartitionBy().name()));
                     }
+                    document.setPartitionSize(oldIndex.getPartitionSize());
+                    document.setShardsPerPartition(oldIndex.getShardsPerPartition());
+                    document.setRetentionDayAge(oldIndex.getRetentionDayAge());
 
-                    result = serialiser.write(document);
+                    final IndexFields indexFields = serialiser.getIndexFieldsFromLegacyXML(oldIndex.getIndexFields());
+                    if (indexFields != null) {
+                        document.setIndexFields(indexFields.getIndexFields());
+                    }
+                }
+
+                result = serialiser.write(document);
 //                    if (dataMap.containsKey("resource.js")) {
 //                        result.put("js", dataMap.remove("resource.js"));
 //                    }
-                }
 
             } catch (final IOException | RuntimeException e) {
                 importState.addMessage(Severity.ERROR, e.getMessage());

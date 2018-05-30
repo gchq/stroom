@@ -19,7 +19,9 @@ package stroom.streamstore;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.streamstore.shared.Feed;
+import stroom.streamstore.api.StreamProperties;
+import stroom.streamstore.api.StreamSource;
+import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
@@ -42,22 +44,24 @@ public class TestMockStreamStore extends StroomUnitTest {
 
         mockStreamStore.clear();
 
-        final Stream stream1 = new Stream();
-        stream1.setStreamType(StreamType.EVENTS);
-        stream1.setFeed(Feed.createStub(1L));
+        final StreamProperties streamProperties = new StreamProperties.Builder()
+                .feedName("TEST")
+                .streamTypeName(StreamType.EVENTS.getName())
+                .build();
 
-        final StreamTarget streamTarget = mockStreamStore.openStreamTarget(stream1);
+        final StreamTarget streamTarget = mockStreamStore.openStreamTarget(streamProperties);
+        final Stream stream = streamTarget.getStream();
         streamTarget.getOutputStream().write("PARENT".getBytes(StreamUtil.DEFAULT_CHARSET));
         streamTarget.addChildStream(StreamType.SEGMENT_INDEX).getOutputStream()
                 .write("CHILD".getBytes(StreamUtil.DEFAULT_CHARSET));
 
-        Assert.assertEquals(0, mockStreamStore.find(FindStreamCriteria.createWithStream(stream1)).size());
+        Assert.assertEquals(0, mockStreamStore.find(FindStreamCriteria.createWithStream(stream)).size());
 
         mockStreamStore.closeStreamTarget(streamTarget);
 
-        Assert.assertEquals(1, mockStreamStore.find(FindStreamCriteria.createWithStream(stream1)).size());
+        Assert.assertEquals(1, mockStreamStore.find(FindStreamCriteria.createWithStream(stream)).size());
 
-        final Stream reload = mockStreamStore.find(FindStreamCriteria.createWithStream(stream1)).get(0);
+        final Stream reload = mockStreamStore.find(FindStreamCriteria.createWithStream(stream)).get(0);
 
         final StreamSource streamSource = mockStreamStore.openStreamSource(reload.getId());
 

@@ -33,7 +33,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class FeedNameCacheImpl implements FeedNameCache, Clearable {
+public class FeedDocCacheImpl implements FeedDocCache, Clearable {
     private static final int MAX_CACHE_ENTRIES = 1000;
 
     private final LoadingCache<String, Optional<FeedDoc>> cache;
@@ -42,9 +42,9 @@ public class FeedNameCacheImpl implements FeedNameCache, Clearable {
 
     @Inject
     @SuppressWarnings("unchecked")
-    public FeedNameCacheImpl(final CacheManager cacheManager,
-                             final FeedStore feedStore,
-                             final Security security) {
+    public FeedDocCacheImpl(final CacheManager cacheManager,
+                            final FeedStore feedStore,
+                            final Security security) {
         this.feedStore = feedStore;
         this.security = security;
 
@@ -53,7 +53,7 @@ public class FeedNameCacheImpl implements FeedNameCache, Clearable {
                 .maximumSize(MAX_CACHE_ENTRIES)
                 .expireAfterAccess(10, TimeUnit.SECONDS);
         cache = cacheBuilder.build(cacheLoader);
-        cacheManager.registerCache("Feed Name Cache", cacheBuilder, cache);
+        cacheManager.registerCache("Feed Doc Cache", cacheBuilder, cache);
     }
 
     @Override

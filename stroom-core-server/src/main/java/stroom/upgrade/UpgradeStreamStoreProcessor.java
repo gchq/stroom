@@ -23,9 +23,9 @@ import stroom.entity.util.ConnectionUtil;
 import stroom.entity.util.PreparedStatementUtil;
 import stroom.feed.MetaMap;
 import stroom.streamstore.StreamAttributeMapService;
-import stroom.streamstore.StreamSource;
-import stroom.streamstore.StreamStore;
-import stroom.streamstore.StreamTarget;
+import stroom.streamstore.api.StreamSource;
+import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamtask.StreamProcessorTaskExecutor;
@@ -216,7 +216,7 @@ class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor {
         }
 
         if (metaMap.size() > 0) {
-            final StreamTarget streamTarget = streamStore.openStreamTarget(stream, true);
+            final StreamTarget streamTarget = streamStore.openExistingStreamTarget(stream);
             streamTarget.getAttributeMap().putAll(metaMap);
             streamStore.closeStreamTarget(streamTarget);
         } else {

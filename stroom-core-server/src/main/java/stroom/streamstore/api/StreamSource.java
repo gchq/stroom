@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamstore;
+package stroom.streamstore.api;
 
 import stroom.feed.MetaMap;
 import stroom.streamstore.shared.Stream;

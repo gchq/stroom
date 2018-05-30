@@ -34,6 +34,7 @@ import stroom.policy.DataRetentionService;
 import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.DataRetentionRule;
 import stroom.security.Security;
+import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.fs.FileSystemStreamTypeUtil;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;

@@ -28,7 +28,8 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.DataRetentionRule;
-import stroom.streamstore.StreamStore;
+import stroom.streamstore.api.StreamProperties;
+import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.fs.FileSystemStreamMaintenanceService;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
@@ -77,11 +78,21 @@ public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
         }
         dataRetentionService.save(dataRetentionPolicy);
 
-        Stream streamInsideRetention = streamStore.createStream(StreamType.RAW_EVENTS.getName(), feedName, null, now);
-        streamInsideRetention.setStatusMs(now);
-        Stream streamOutsideRetention = streamStore.createStream(StreamType.RAW_EVENTS.getName(), feedName, null,
-                timeOutsideRetentionPeriod);
-        streamOutsideRetention.setStatusMs(now);
+        Stream streamInsideRetention = streamStore.createStream(
+                new StreamProperties.Builder()
+                        .feedName(feedName)
+                        .streamTypeName(StreamType.RAW_EVENTS.getName())
+                        .createMs(now)
+                        .statusMs(now)
+                        .build());
+
+        Stream streamOutsideRetention = streamStore.createStream(
+                new StreamProperties.Builder()
+                        .feedName(feedName)
+                        .streamTypeName(StreamType.RAW_EVENTS.getName())
+                        .createMs(timeOutsideRetentionPeriod)
+                        .statusMs(timeOutsideRetentionPeriod)
+                        .build());
 
         streamInsideRetention = streamMaintenanceService.save(streamInsideRetention);
         streamOutsideRetention = streamMaintenanceService.save(streamOutsideRetention);
@@ -104,7 +115,7 @@ public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
         // no change to the record
         Assert.assertEquals(lastStatusMsInside, streamInsideRetention.getStatusMs());
         // record changed
-        Assert.assertTrue(streamOutsideRetention.getStatusMs().longValue() > lastStatusMsOutside);
+        Assert.assertTrue(streamOutsideRetention.getStatusMs() > lastStatusMsOutside);
 
         lastStatusMsInside = streamInsideRetention.getStatusMs();
         lastStatusMsOutside = streamOutsideRetention.getStatusMs();

@@ -17,13 +17,13 @@
 
 package stroom.visualisation;
 
+import stroom.docref.DocRef;
 import stroom.docstore.Persistence;
 import stroom.docstore.Store;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.util.shared.Message;
@@ -157,42 +157,40 @@ class VisualisationStoreImpl implements VisualisationStore {
             final String uuid = docRef.getUuid();
             try {
                 final boolean exists = persistence.exists(docRef);
-                if (importState.ok(importMode)) {
-                    VisualisationDoc document;
-                    if (exists) {
-                        document = readDocument(docRef);
+                VisualisationDoc document;
+                if (exists) {
+                    document = readDocument(docRef);
 
-                    } else {
-                        final OldVisualisation oldVisualisation = new OldVisualisation();
-                        final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
-                        legacySerialiser.performImport(oldVisualisation, dataMap);
+                } else {
+                    final OldVisualisation oldVisualisation = new OldVisualisation();
+                    final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
+                    legacySerialiser.performImport(oldVisualisation, dataMap);
 
-                        final long now = System.currentTimeMillis();
-                        final String userId = securityContext.getUserId();
+                    final long now = System.currentTimeMillis();
+                    final String userId = securityContext.getUserId();
 
-                        document = new VisualisationDoc();
-                        document.setType(docRef.getType());
-                        document.setUuid(uuid);
-                        document.setName(docRef.getName());
-                        document.setVersion(UUID.randomUUID().toString());
-                        document.setCreateTime(now);
-                        document.setUpdateTime(now);
-                        document.setCreateUser(userId);
-                        document.setUpdateUser(userId);
-                        document.setDescription(oldVisualisation.getDescription());
-                        document.setFunctionName(oldVisualisation.getFunctionName());
-                        document.setSettings(oldVisualisation.getSettings());
+                    document = new VisualisationDoc();
+                    document.setType(docRef.getType());
+                    document.setUuid(uuid);
+                    document.setName(docRef.getName());
+                    document.setVersion(UUID.randomUUID().toString());
+                    document.setCreateTime(now);
+                    document.setUpdateTime(now);
+                    document.setCreateUser(userId);
+                    document.setUpdateUser(userId);
+                    document.setDescription(oldVisualisation.getDescription());
+                    document.setFunctionName(oldVisualisation.getFunctionName());
+                    document.setSettings(oldVisualisation.getSettings());
 
-                        final DocRef scriptRef = serialiser.getDocRefFromLegacyXML(oldVisualisation.getScriptRefXML());
-                        if (scriptRef != null) {
-                            document.setScriptRef(scriptRef);
-                        }
+                    final DocRef scriptRef = serialiser.getDocRefFromLegacyXML(oldVisualisation.getScriptRefXML());
+                    if (scriptRef != null) {
+                        document.setScriptRef(scriptRef);
                     }
+                }
 
-                    result = serialiser.write(document);
-                    if (dataMap.containsKey("settings.json")) {
-                        result.put("json", dataMap.remove("settings.json"));
-                    }
+                result = serialiser.write(document);
+                if (dataMap.containsKey("settings.json")) {
+                    result.put("json", dataMap.remove("settings.json"));
                 }
 
             } catch (final IOException | RuntimeException e) {

@@ -22,14 +22,11 @@ import org.slf4j.LoggerFactory;
 import stroom.dashboard.DashboardStore;
 import stroom.db.migration.mysql.V6_0_0_21__Dictionary;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.NamedEntity;
 import stroom.entity.util.ConnectionUtil;
-import stroom.feed.FeedNameCache;
+import stroom.feed.FeedDocCache;
 import stroom.feed.FeedStore;
 import stroom.streamstore.FeedService;
 import stroom.feed.shared.FeedDoc;
-import stroom.feed.shared.FeedDoc.FeedStatus;
-import stroom.streamstore.FindFeedCriteria;
 import stroom.importexport.ImportExportSerializer;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.index.IndexStore;
@@ -45,7 +42,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.statistics.sql.entity.StatisticStoreStore;
 import stroom.statistics.stroomstats.entity.StroomStatsStoreStore;
 import stroom.streamstore.StreamAttributeKeyService;
-import stroom.streamstore.StreamStore;
+import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamAttributeConstants;
@@ -96,7 +93,7 @@ public final class SetupSampleDataBean {
 
     private final FeedService feedService;
     private final FeedStore feedStore;
-    private final FeedNameCache feedNameCache;
+    private final FeedDocCache feedDocCache;
     private final StreamStore streamStore;
     private final StreamAttributeKeyService streamAttributeKeyService;
     private final CommonTestControl commonTestControl;
@@ -113,7 +110,7 @@ public final class SetupSampleDataBean {
     @Inject
     SetupSampleDataBean(final FeedService feedService,
                         final FeedStore feedStore,
-                        final FeedNameCache feedNameCache,
+                        final FeedDocCache feedDocCache,
                         final StreamStore streamStore,
                         final StreamAttributeKeyService streamAttributeKeyService,
                         final CommonTestControl commonTestControl,
@@ -128,7 +125,7 @@ public final class SetupSampleDataBean {
                         final StroomStatsStoreStore stroomStatsStoreStore) {
         this.feedService = feedService;
         this.feedStore = feedStore;
-        this.feedNameCache = feedNameCache;
+        this.feedDocCache = feedDocCache;
         this.streamStore = streamStore;
         this.streamAttributeKeyService = streamAttributeKeyService;
         this.commonTestControl = commonTestControl;
@@ -332,7 +329,7 @@ public final class SetupSampleDataBean {
 
         if (Files.exists(dataDir)) {
             // Load data.
-            final DataLoader dataLoader = new DataLoader(feedNameCache, streamStore);
+            final DataLoader dataLoader = new DataLoader(feedDocCache, streamStore);
 
             // We spread the received time over 10 min intervals to help test
             // repo
@@ -397,7 +394,7 @@ public final class SetupSampleDataBean {
      * exist it will fail silently
      */
     private void generateSampleStatisticsData() {
-        final DataLoader dataLoader = new DataLoader(feedNameCache, streamStore);
+        final DataLoader dataLoader = new DataLoader(feedDocCache, streamStore);
         final long startTime = System.currentTimeMillis();
 
         //keep the big and small feeds apart in terms of their event times

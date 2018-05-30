@@ -18,10 +18,7 @@ package stroom.streamtask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.docref.DocRef;
-import stroom.feed.FeedNameCache;
-import stroom.feed.FeedStore;
-import stroom.streamstore.FeedService;
+import stroom.feed.FeedDocCache;
 import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
@@ -30,13 +27,12 @@ import stroom.properties.StroomPropertyService;
 import stroom.proxy.repo.ProxyFileHandler;
 import stroom.proxy.repo.ProxyFileProcessor;
 import stroom.proxy.repo.StroomZipRepository;
-import stroom.streamstore.StreamStore;
+import stroom.streamstore.api.StreamStore;
 import stroom.util.io.StreamProgressMonitor;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -63,7 +59,7 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
     final static long DEFAULT_MAX_STREAM_SIZE = ModelStringUtil.parseIECByteSizeString("10G");
 
     private final StreamStore streamStore;
-    private final FeedNameCache feedNameCache;
+    private final FeedDocCache feedDocCache;
     private final MetaDataStatistic metaDataStatistic;
     private final int maxAggregation;
     private final long maxStreamSize;
@@ -73,12 +69,12 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
 
     @Inject
     ProxyFileProcessorImpl(final StreamStore streamStore,
-                           final FeedNameCache feedNameCache,
+                           final FeedDocCache feedDocCache,
                            final MetaDataStatistic metaDataStatistic,
                            final StroomPropertyService propertyService) {
         this(
                 streamStore,
-                feedNameCache,
+                feedDocCache,
                 metaDataStatistic,
                 propertyService.getIntProperty("stroom.maxAggregation", DEFAULT_MAX_AGGREGATION),
                 getByteSize(propertyService.getProperty("stroom.maxStreamSize"), DEFAULT_MAX_STREAM_SIZE)
@@ -86,12 +82,12 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
     }
 
     ProxyFileProcessorImpl(final StreamStore streamStore,
-                           final FeedNameCache feedNameCache,
+                           final FeedDocCache feedDocCache,
                            final MetaDataStatistic metaDataStatistic,
                            final int maxAggregation,
                            final long maxStreamSize) {
         this.streamStore = streamStore;
-        this.feedNameCache = feedNameCache;
+        this.feedDocCache = feedDocCache;
         this.metaDataStatistic = metaDataStatistic;
         this.maxAggregation = maxAggregation;
         this.maxStreamSize = maxStreamSize;
@@ -99,7 +95,7 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
 
     @Override
     public void processFeedFiles(final StroomZipRepository stroomZipRepository, final String feedName, final List<Path> fileList) {
-        final Optional<FeedDoc> optional = feedNameCache.get(feedName);
+        final Optional<FeedDoc> optional = feedDocCache.get(feedName);
 
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         LOGGER.info("processFeedFiles() - Started {} ({} Files)", feedName, fileList.size());
@@ -176,7 +172,7 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
         final boolean oneByOne = feed.isReference() || !aggregate;
 
         final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(streamStore,
-                feedNameCache, metaDataStatistic, feed.getName(), feed.getStreamType());
+                feedDocCache, metaDataStatistic, feed.getName(), feed.getStreamType());
 
         streamTargetStroomStreamHandler.setOneByOne(oneByOne);
 

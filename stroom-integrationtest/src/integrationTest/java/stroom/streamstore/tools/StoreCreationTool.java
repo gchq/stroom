@@ -41,13 +41,13 @@ import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.streamstore.StreamSource;
-import stroom.streamstore.StreamStore;
-import stroom.streamstore.StreamTarget;
+import stroom.streamstore.api.StreamProperties;
+import stroom.streamstore.api.StreamSource;
+import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.fs.serializable.RawInputSegmentWriter;
 import stroom.streamstore.shared.QueryData;
-import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.StreamProcessorFilterService;
@@ -156,12 +156,15 @@ public final class StoreCreationTool {
         effectiveMs += effectiveMsOffset++;
 
         // Add the associated data to the stream store.
-        final Stream stream = streamStore.createStream(StreamType.RAW_REFERENCE.getName(), referenceFeed.getName(), effectiveMs,
-                effectiveMs);
+        final StreamProperties streamProperties = new StreamProperties.Builder()
+                .feedName(referenceFeed.getName())
+                .streamTypeName(StreamType.RAW_REFERENCE.getName())
+                .createMs(effectiveMs)
+                .build();
 
         final String data = StreamUtil.fileToString(dataLocation);
 
-        final StreamTarget target = streamStore.openStreamTarget(stream);
+        final StreamTarget target = streamStore.openStreamTarget(streamProperties);
 
         final InputStream inputStream = new ByteArrayInputStream(data.getBytes());
         final RASegmentOutputStream outputStream = new RASegmentOutputStream(target);
@@ -171,7 +174,7 @@ public final class StoreCreationTool {
 
         streamStore.closeStreamTarget(target);
 
-        final StreamSource checkSource = streamStore.openStreamSource(stream.getId());
+        final StreamSource checkSource = streamStore.openStreamSource(target.getStream().getId());
         Assert.assertEquals(data, StreamUtil.streamToString(checkSource.getInputStream()));
         streamStore.closeStreamSource(checkSource);
 
@@ -300,10 +303,12 @@ public final class StoreCreationTool {
                 flatteningXsltLocation, referenceFeeds);
 
         // Add the associated data to the stream store.
-        final Stream stream = streamStore.createStream(StreamType.RAW_EVENTS.getName(), feedName, null,
-                System.currentTimeMillis());
+        final StreamProperties streamProperties = new StreamProperties.Builder()
+                .feedName(feedName)
+                .streamTypeName(StreamType.RAW_EVENTS.getName())
+                .build();
 
-        final StreamTarget dataTarget = streamStore.openStreamTarget(stream);
+        final StreamTarget dataTarget = streamStore.openStreamTarget(streamProperties);
 
         final InputStream dataInputStream = Files.newInputStream(dataLocation);
 
@@ -327,7 +332,7 @@ public final class StoreCreationTool {
 
         // Check that the data was written ok.
         final String data = StreamUtil.fileToString(dataLocation);
-        final StreamSource checkSource = streamStore.openStreamSource(stream.getId());
+        final StreamSource checkSource = streamStore.openStreamSource(dataTarget.getStream().getId());
         Assert.assertEquals(data, StreamUtil.streamToString(checkSource.getInputStream()));
         streamStore.closeStreamSource(checkSource);
     }

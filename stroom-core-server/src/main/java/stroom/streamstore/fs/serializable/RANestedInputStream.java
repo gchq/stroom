@@ -18,7 +18,7 @@ package stroom.streamstore.fs.serializable;
 
 import stroom.io.SeekableInputStream;
 import stroom.io.StreamCloser;
-import stroom.streamstore.StreamSource;
+import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.shared.StreamType;
 
 import java.io.IOException;

@@ -26,7 +26,7 @@ import stroom.entity.shared.Period;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.security.Security;
 import stroom.streamstore.EffectiveMetaDataCriteria;
-import stroom.streamstore.StreamStore;
+import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.shared.Stream;
 import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheUtil;

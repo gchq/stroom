@@ -19,6 +19,7 @@ package stroom.streamstore;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.Clearable;
+import stroom.streamstore.api.StreamStore;
 
 public class MockStreamStoreModule extends AbstractModule {
     @Override
