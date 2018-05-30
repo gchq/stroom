@@ -166,7 +166,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         if (refDataLoaderHolder.getRefDataLoader() == null) {
             errorReceiverProxy.log(Severity.FATAL_ERROR, null, getElementId(), "RefDataLoader is missing", null);
         }
-        refDataLoaderHolder.getRefDataLoader().initialise();
+        refDataLoaderHolder.getRefDataLoader().initialise(overrideExistingValues);
     }
 
     /**

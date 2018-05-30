@@ -3,6 +3,7 @@ package stroom.refdata.offheapstore.databases;
 import org.lmdbjava.Cursor;
 import org.lmdbjava.Env;
 import org.lmdbjava.GetOp;
+import org.lmdbjava.PutFlags;
 import org.lmdbjava.Txn;
 import stroom.refdata.lmdb.AbstractLmdbDb;
 import stroom.refdata.offheapstore.RefDataProcessingInfo;
@@ -17,15 +18,19 @@ import java.nio.ByteBuffer;
 public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDataProcessingInfo> {
 
     private static final String DB_NAME = "ProcessingInfo";
+    private final RefStreamDefinitionSerde keySerde;
+    private final RefDataProcessingInfoSerde valueSerde;
 
     public ProcessingInfoDb(final Env<ByteBuffer> lmdbEnvironment,
                             final RefStreamDefinitionSerde keySerde,
                             final RefDataProcessingInfoSerde valueSerde) {
 
         super(lmdbEnvironment, keySerde, valueSerde, DB_NAME);
+        this.keySerde = keySerde;
+        this.valueSerde = valueSerde;
     }
 
-    void updateProcessingState(final Txn<ByteBuffer> writeTxn,
+    public void updateProcessingState(final Txn<ByteBuffer> writeTxn,
                                final RefStreamDefinition refStreamDefinition,
                                final RefDataProcessingInfo.ProcessingState newProcessingState) {
 
@@ -38,6 +43,10 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
                         "Expecting to find entry for {}", refStreamDefinition));
             }
             final ByteBuffer valueBuf = cursor.val();
+
+            valueSerde.updateState(valueBuf, newProcessingState);
+            valueSerde.updateLastAccessedTime(valueBuf);
+            cursor.put(cursor.key(), cursor.val(), PutFlags.MDB_CURRENT);
         }
     }
 

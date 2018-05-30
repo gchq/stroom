@@ -20,6 +20,7 @@ package stroom.refdata.lmdb;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
+import org.lmdbjava.PutFlags;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -106,12 +107,27 @@ public abstract class AbstractLmdbDb<K, V> {
         }
     }
 
-    public void put(final K key, final V value) {
-        try (final Txn<ByteBuffer> txn = lmdbEnvironment.txnWrite()) {
+    public boolean put(final Txn<ByteBuffer> writeTxn, final K key, final V value, final boolean overwriteExisting) {
+        try {
             ByteBuffer keyBuffer = keySerde.serialize(key);
             ByteBuffer valueBuffer = valueSerde.serialize(value);
-            lmdbDbi.put(txn, keyBuffer, valueBuffer);
-            txn.commit();
+            boolean didPutSucceed;
+            if (overwriteExisting) {
+                didPutSucceed = lmdbDbi.put(writeTxn, keyBuffer, valueBuffer);
+            } else {
+                didPutSucceed = lmdbDbi.put(writeTxn, keyBuffer, valueBuffer, PutFlags.MDB_NOOVERWRITE);
+            }
+            return didPutSucceed;
+        } catch (RuntimeException e) {
+            throw new RuntimeException(LambdaLogger.buildMessage("Error putting key {}, value {}", key, value), e);
+        }
+    }
+
+    public boolean put(final K key, final V value, final boolean overwriteExisting) {
+        try (final Txn<ByteBuffer> writeTxn = lmdbEnvironment.txnWrite()) {
+            boolean didPutSucceed = put(writeTxn, key, value, overwriteExisting);
+            writeTxn.commit();
+            return didPutSucceed;
         } catch (RuntimeException e) {
             throw new RuntimeException(LambdaLogger.buildMessage("Error putting key {}, value {}", key, value), e);
         }

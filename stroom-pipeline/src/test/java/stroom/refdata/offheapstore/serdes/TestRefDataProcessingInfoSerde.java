@@ -20,8 +20,6 @@ package stroom.refdata.offheapstore.serdes;
 import org.junit.Test;
 import stroom.refdata.offheapstore.RefDataProcessingInfo;
 
-import static org.junit.Assert.*;
-
 public class TestRefDataProcessingInfoSerde extends AbstractSerdeTest {
 
     @Test
@@ -55,7 +53,7 @@ public class TestRefDataProcessingInfoSerde extends AbstractSerdeTest {
                 expectedOutput,
                 RefDataProcessingInfoSerde::new,
                 (serde, byteBuffer) ->
-                        ((RefDataProcessingInfoSerde)serde).updateState(
+                        ((RefDataProcessingInfoSerde) serde).updateState(
                                 byteBuffer,
                                 RefDataProcessingInfo.ProcessingState.COMPLETE));
 
@@ -80,8 +78,33 @@ public class TestRefDataProcessingInfoSerde extends AbstractSerdeTest {
                 expectedOutput,
                 RefDataProcessingInfoSerde::new,
                 (serde, byteBuffer) ->
-                        ((RefDataProcessingInfoSerde)serde).updateLastAccessedTime(
+                        ((RefDataProcessingInfoSerde) serde).updateLastAccessedTime(
                                 byteBuffer,
                                 123));
+    }
+
+    @Test
+    public void testUpdateLastAccessedTimeAndState() {
+        final RefDataProcessingInfo input = new RefDataProcessingInfo(
+                1,
+                1,
+                1,
+                RefDataProcessingInfo.ProcessingState.IN_PROGRESS);
+
+        final RefDataProcessingInfo expectedOutput = new RefDataProcessingInfo(
+                1,
+                123,
+                1,
+                RefDataProcessingInfo.ProcessingState.COMPLETE);
+
+        doByteBufferModificationTest(
+                input,
+                expectedOutput,
+                RefDataProcessingInfoSerde::new,
+                (serde, byteBuffer) -> {
+                    RefDataProcessingInfoSerde refDataProcessingInfoSerde = (RefDataProcessingInfoSerde) serde;
+                    refDataProcessingInfoSerde.updateLastAccessedTime(byteBuffer, 123);
+                    refDataProcessingInfoSerde.updateState(byteBuffer, RefDataProcessingInfo.ProcessingState.COMPLETE);
+                });
     }
 }

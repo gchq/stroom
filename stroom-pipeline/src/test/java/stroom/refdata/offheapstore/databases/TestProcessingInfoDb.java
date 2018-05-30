@@ -78,8 +78,11 @@ public class TestProcessingInfoDb extends AbstractLmdbDbTest {
                 789012L,
                 RefDataProcessingInfo.ProcessingState.IN_PROGRESS);
 
-        processingInfoDb.put(refStreamDefinitionA, refDataProcessingInfoA);
-        processingInfoDb.put(refStreamDefinitionB, refDataProcessingInfoB);
+        boolean didSucceed = false;
+        didSucceed = processingInfoDb.put(refStreamDefinitionA, refDataProcessingInfoA, false);
+        assertThat(didSucceed).isTrue();
+        didSucceed = processingInfoDb.put(refStreamDefinitionB, refDataProcessingInfoB, false);
+        assertThat(didSucceed).isTrue();
 
         Map<String, String> dbInfo = LmdbUtils.getDbInfo(lmdbEnv, processingInfoDb.getLmdbDbi());
         LOGGER.debug("DB info: {}", dbInfo);
@@ -90,5 +93,40 @@ public class TestProcessingInfoDb extends AbstractLmdbDbTest {
         final RefDataProcessingInfo refDataProcessingInfoA2 = processingInfoDb.get(refStreamDefinitionA);
 
         assertThat(refDataProcessingInfoA).isEqualTo(refDataProcessingInfoA2);
+    }
+
+    @Test
+    public void updateState() {
+
+        byte version = 0;
+        final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
+                new DocRef("MyType", UUID.randomUUID().toString()),
+                version,
+                123456L,
+                1);
+
+        final RefDataProcessingInfo refDataProcessingInfoBefore = new RefDataProcessingInfo(
+                234L,
+                123L,
+                345L,
+                RefDataProcessingInfo.ProcessingState.IN_PROGRESS);
+
+        boolean didSucceed = false;
+        didSucceed = processingInfoDb.put(refStreamDefinition, refDataProcessingInfoBefore, false);
+        assertThat(didSucceed).isTrue();
+        didSucceed = processingInfoDb.put(refStreamDefinition, refDataProcessingInfoBefore, false);
+        assertThat(didSucceed).isFalse();
+        didSucceed = processingInfoDb.put(refStreamDefinition, refDataProcessingInfoBefore, true);
+        assertThat(didSucceed).isTrue();
+
+        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            processingInfoDb.updateProcessingState(writeTxn, refStreamDefinition, RefDataProcessingInfo.ProcessingState.COMPLETE);
+            writeTxn.commit();
+        });
+
+        final RefDataProcessingInfo refDataProcessingInfoAfter = processingInfoDb.get(refStreamDefinition);
+
+        assertThat(refDataProcessingInfoAfter.getProcessingState()).isEqualTo(RefDataProcessingInfo.ProcessingState.COMPLETE);
+        assertThat(refDataProcessingInfoAfter.getLastAccessedTimeEpochMs()).isGreaterThan(refDataProcessingInfoBefore.getLastAccessedTimeEpochMs());
     }
 }

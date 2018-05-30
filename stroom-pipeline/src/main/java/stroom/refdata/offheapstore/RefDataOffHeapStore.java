@@ -216,18 +216,19 @@ public class RefDataOffHeapStore implements RefDataStore {
         return null;
     }
 
-    private void setProcessingInfo(final Txn<ByteBuffer> writeTxn,
+    private boolean setProcessingInfo(final Txn<ByteBuffer> writeTxn,
                                    final RefStreamDefinition refStreamDefinition,
-                                   final RefDataProcessingInfo refDataProcessingInfo) {
+                                   final RefDataProcessingInfo refDataProcessingInfo,
+                                   final boolean overwriteExisting) {
 
-        processingInfoDb.put(refStreamDefinition, refDataProcessingInfo);
+        return processingInfoDb.put(writeTxn, refStreamDefinition, refDataProcessingInfo, overwriteExisting);
     }
 
     private void updateProcessingState(final Txn<ByteBuffer> writeTxn,
                                        final RefStreamDefinition refStreamDefinition,
                                        final RefDataProcessingInfo.ProcessingState newProcessingState) {
 
-//        processingInfoDb.put(refStreamDefinition, refDataProcessingInfo);
+        processingInfoDb.updateProcessingState(writeTxn, refStreamDefinition, newProcessingState);
     }
 
 
@@ -256,6 +257,7 @@ public class RefDataOffHeapStore implements RefDataStore {
                           final Env<ByteBuffer> lmdbEnvironment,
                           final RefStreamDefinition refStreamDefinition,
                           final long effectiveTimeMs) {
+
             this.refDataOffHeapStore = refDataOffHeapStore;
             this.lmdbEnvironment = lmdbEnvironment;
             this.refStreamDefinition = refStreamDefinition;
@@ -267,7 +269,7 @@ public class RefDataOffHeapStore implements RefDataStore {
             return refStreamDefinition;
         }
 
-        public void initialise() {
+        public void initialise(final boolean overwriteExisting) {
             throwExceptionIfAlreadyInitialised();
 
             // TODO create processed streams entry if it doesn't exist with a state of IN_PROGRESS
@@ -282,14 +284,22 @@ public class RefDataOffHeapStore implements RefDataStore {
                     effectiveTimeMs,
                     RefDataProcessingInfo.ProcessingState.IN_PROGRESS);
 
+            boolean didSetSucceed = refDataOffHeapStore.setProcessingInfo(
+                    writeTxn, refStreamDefinition, refDataProcessingInfo, overwriteExisting);
 
-            refDataOffHeapStore.setProcessingInfo(writeTxn, refStreamDefinition, refDataProcessingInfo);
+            if (!overwriteExisting && !didSetSucceed) {
+                throw new RuntimeException(LambdaLogger.buildMessage(
+                        "Unable to create processing info entry as one already exists for key {}", refStreamDefinition));
+            }
         }
 
         public void completeProcessing() {
             throwExceptionIfNotInitialised();
+            beginTxnIfRequired();
 
             // Set the processing info record to COMPLETE and update the last update time
+            refDataOffHeapStore.updateProcessingState(
+                    writeTxn, refStreamDefinition, RefDataProcessingInfo.ProcessingState.COMPLETE);
         }
 
         @Override

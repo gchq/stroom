@@ -23,7 +23,7 @@ public interface RefDataLoader extends AutoCloseable {
 
     RefStreamDefinition getRefStreamDefinition();
 
-    void initialise();
+    void initialise(final boolean overwriteExisting);
 
     void completeProcessing();
 
