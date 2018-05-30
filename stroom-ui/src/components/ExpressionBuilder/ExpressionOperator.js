@@ -16,6 +16,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types'
 
+import { compose } from 'redux';
 import { connect } from 'react-redux'
 
 import { 
@@ -281,22 +282,21 @@ ExpressionOperator.defaultProps = {
 }
 
 // We need to use this ourself, so create a variable
-const DndExpressionOperator = connect(
-    (state) => ({
-        // operators are nested, so take all their props from parent
-    }),
-    {
-        expressionTermAdded,
-        expressionOperatorAdded,
-        expressionItemUpdated,
-        expressionItemMoved,
-        requestExpressionItemDelete,
-    }
-)
-    (DragSource(ItemTypes.OPERATOR, dragSource, dragCollect)(
-        DropTarget([ItemTypes.OPERATOR, ItemTypes.TERM], dropTarget, dropCollect)(
-            ExpressionOperator
-        )
-    ));
+const DndExpressionOperator = compose(
+    connect(
+        (state) => ({
+            // operators are nested, so take all their props from parent
+        }),
+        {
+            expressionTermAdded,
+            expressionOperatorAdded,
+            expressionItemUpdated,
+            expressionItemMoved,
+            requestExpressionItemDelete,
+        }
+    ),
+    DragSource(ItemTypes.OPERATOR, dragSource, dragCollect),
+    DropTarget([ItemTypes.OPERATOR, ItemTypes.TERM], dropTarget, dropCollect)
+)(ExpressionOperator);
 
 export default DndExpressionOperator;

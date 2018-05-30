@@ -16,6 +16,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import { compose } from 'redux';
 import { connect } from 'react-redux'
 
 import {
@@ -105,13 +106,18 @@ DocRefModalPicker.propTypes = {
     setModal : PropTypes.func.isRequired
 }
 
-export default connect(
-    (state) => ({
-        documentTree : state.explorerTree.documentTree
-    }),
-    {
-        // actions
-        docRefPicked,
-        setModal
-    }
-)(withPickedDocRef()(withCreatedExplorer('pickerId')(withModal('pickerId')(DocRefModalPicker))));
+export default compose(
+    connect(
+        (state) => ({
+            documentTree : state.explorerTree.documentTree
+        }),
+        {
+            // actions
+            docRefPicked,
+            setModal
+        }
+    ),
+    withPickedDocRef(),
+    withCreatedExplorer('pickerId'),
+    withModal('pickerId')
+)(DocRefModalPicker);

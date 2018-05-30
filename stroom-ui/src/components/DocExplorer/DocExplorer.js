@@ -16,6 +16,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import { compose } from 'redux';
 import { connect } from 'react-redux';
 
 import {
@@ -80,13 +81,16 @@ DocExplorer.propTypes = {
   cancelDeleteDocRef : PropTypes.func.isRequired
 };
 
-export default connect(
-  state => ({
-    documentTree: state.explorerTree.documentTree
-  }),
-  {
-    searchTermChanged,
-    cancelDeleteDocRef,
-    confirmDeleteDocRef
-  },
-)(withCreatedExplorer()(DocExplorer));
+export default compose(
+  connect(
+    state => ({
+      documentTree: state.explorerTree.documentTree
+    }),
+    {
+      searchTermChanged,
+      cancelDeleteDocRef,
+      confirmDeleteDocRef
+    },
+  ),
+  withCreatedExplorer()
+)(DocExplorer);

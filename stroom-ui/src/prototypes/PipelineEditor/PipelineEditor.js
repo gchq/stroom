@@ -16,6 +16,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import { compose } from 'redux';
 import { connect } from 'react-redux';
 
 import {
@@ -158,12 +159,15 @@ PipelineEditor.propTypes = {
   layoutInformation : PropTypes.object.isRequired
 };
 
-export default connect(
-  state => ({
-    // state
-  }),
-  {
-    confirmDeletePipelineElement,
-    cancelDeletePipelineElement
-  },
-)(withPipeline()(PipelineEditor));
+export default compose(
+  connect(
+    state => ({
+      // state
+    }),
+    {
+      confirmDeletePipelineElement,
+      cancelDeletePipelineElement
+    },
+  ),
+  withPipeline()
+)(PipelineEditor);

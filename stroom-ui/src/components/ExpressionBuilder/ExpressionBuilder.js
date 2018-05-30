@@ -16,6 +16,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types'; 
 
+import { compose } from 'redux';
 import { connect } from 'react-redux';
 
 import ExpressionOperator from './ExpressionOperator';
@@ -151,15 +152,19 @@ ExpressionBuilder.defaultProps = {
     isEditableSystemSet : false
 }
 
-export default connect(
-    (state) => ({
-        // state
-    }),
-    {
-        // actions
-        expressionSetEditable,
-        confirmExpressionItemDeleted,
-        cancelExpressionItemDelete
-    }
-)(withDataSource()(withExpression()(ExpressionBuilder)));
+export default compose(
+    connect(
+        (state) => ({
+            // state
+        }),
+        {
+            // actions
+            expressionSetEditable,
+            confirmExpressionItemDeleted,
+            cancelExpressionItemDelete
+        }
+    ),
+    withDataSource(),
+    withExpression()
+)(ExpressionBuilder);
 

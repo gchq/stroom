@@ -16,6 +16,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import { compose } from 'redux';
 import { connect } from 'react-redux'
 
 import { ItemTypes } from './dragDropTypes';
@@ -135,14 +136,17 @@ class DocRef extends Component {
     }
 }
 
-export default connect(
-    (state) => ({
-        // state
-    }),
-    {
-        selectDocRef,
-        openDocRef,
-        openDocRefContextMenu
-    }
-)(withExistingExplorer()(
-    (DragSource(ItemTypes.DOC_REF, dragSource, dragCollect)(DocRef))));
+export default compose(
+    connect(
+        (state) => ({
+            // state
+        }),
+        {
+            selectDocRef,
+            openDocRef,
+            openDocRefContextMenu
+        }
+    ),
+    withExistingExplorer(),
+    DragSource(ItemTypes.DOC_REF, dragSource, dragCollect)
+)(DocRef);

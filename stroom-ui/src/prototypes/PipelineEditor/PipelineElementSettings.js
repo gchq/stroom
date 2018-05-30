@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import { compose } from 'redux';
+
 import { withPipeline } from './withPipeline';
 import { withSelectedPipelineElement } from './withSelectedPipelineElement';
 
@@ -24,4 +26,7 @@ class PipelineElementSettings extends Component {
     }
 }
 
-export default withPipeline()(withSelectedPipelineElement()(PipelineElementSettings));
+export default compose(
+    withPipeline(),
+    withSelectedPipelineElement()
+)(PipelineElementSettings);

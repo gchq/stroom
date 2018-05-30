@@ -16,6 +16,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import { compose } from 'redux';
 import { connect } from 'react-redux'
 
 import { canMove } from '../../lib/treeUtils';
@@ -166,20 +167,20 @@ Folder.propTypes = {
 };
 
 // We need to use this ourself, so create a variable
-const DndFolder = connect(
-    (state) => ({
-        // state
-    }),
-    {
-        moveExplorerItem,
-        toggleFolderOpen,
-        openDocRefContextMenu
-    }
-)(withExistingExplorer()(
-    (DragSource(ItemTypes.FOLDER, dragSource, dragCollect)(
-        DropTarget([ItemTypes.FOLDER, ItemTypes.DOC_REF], dropTarget, dropCollect)(
-            Folder
-        )
-    ))));
+const DndFolder = compose(
+    connect(
+        (state) => ({
+            // state
+        }),
+        {
+            moveExplorerItem,
+            toggleFolderOpen,
+            openDocRefContextMenu
+        }
+    ),
+    withExistingExplorer(),
+    DragSource(ItemTypes.FOLDER, dragSource, dragCollect),
+    DropTarget([ItemTypes.FOLDER, ItemTypes.DOC_REF], dropTarget, dropCollect)
+)(Folder);
 
 export default DndFolder;

@@ -16,6 +16,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import { compose } from 'redux';
 import { connect } from 'react-redux'
 
 import { DragSource, DropTarget } from 'react-dnd';
@@ -144,18 +145,19 @@ PipelineElement.propTypes = {
   pipelineElementSelected : PropTypes.func.isRequired
 };
 
-export default connect(
-  (state) => ({
-      // state
-  }),
-  {
-    pipelineElementSelected,
-    pipelineElementMoved,
-    openPipelineElementContextMenu,
-    closePipelineElementContextMenu
-  }
-)(withPipeline()(DragSource(ItemTypes.ELEMENT, dragSource, dragCollect)(
-  DropTarget([ItemTypes.ELEMENT], dropTarget, dropCollect)(
-    PipelineElement
-  )
-)));
+export default compose(
+  connect(
+    (state) => ({
+        // state
+    }),
+    {
+      pipelineElementSelected,
+      pipelineElementMoved,
+      openPipelineElementContextMenu,
+      closePipelineElementContextMenu
+    }
+  ),
+  withPipeline(),
+  DragSource(ItemTypes.ELEMENT, dragSource, dragCollect),
+  DropTarget([ItemTypes.ELEMENT], dropTarget, dropCollect)
+)(PipelineElement);

@@ -16,6 +16,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types'
 
+import { compose } from 'redux';
 import { connect } from 'react-redux'
 
 import {
@@ -62,64 +63,66 @@ function dragCollect(connect, monitor) {
  * Having this HOC allows the Expression Term component to be stateless functional
  * @param {Component} WrappedComponent 
  */
-let withPickedDocRef = (WrappedComponent) => {
-    let WithPickedDocRef = class extends Component {
-        static propTypes = {
-            docRefPicked : PropTypes.func.isRequired,
-            pickedDocRefs : PropTypes.object.isRequired, // picked dictionary
-            expressionId : PropTypes.string.isRequired, // the ID of the overall expression
-            term : PropTypes.object.isRequired, // the operator that this particular element is to represent
-        }
+let withPickedDocRef = () => {
+    return (WrappedComponent) => {
+        let WithPickedDocRef = class extends Component {
+            static propTypes = {
+                docRefPicked : PropTypes.func.isRequired,
+                pickedDocRefs : PropTypes.object.isRequired, // picked dictionary
+                expressionId : PropTypes.string.isRequired, // the ID of the overall expression
+                term : PropTypes.object.isRequired, // the operator that this particular element is to represent
+            }
 
-        componentDidMount() {
-            this.checkDictionary();
-        }
+            componentDidMount() {
+                this.checkDictionary();
+            }
 
-        componentDidUpdate(prevProps, prevState, snapshot) {
-            this.checkDictionary();
-        }
+            componentDidUpdate(prevProps, prevState, snapshot) {
+                this.checkDictionary();
+            }
 
-        /**
-         * This functions is used to check that the picked doc ref matches the one from the expression.
-         * If it doesn't then it triggers a docRefPicked action to ensure that it then does match.
-         * From that point on the expressions and pickedDocRefs should both be monitoring the same state.
-         */
-        checkDictionary() {
-            let {
-                expressionId,
-                term,
-                pickedDocRefs,
-                docRefPicked
-            } = this.props;
-            let pickerId = joinDictionaryTermId(expressionId, term.uuid);
+            /**
+             * This functions is used to check that the picked doc ref matches the one from the expression.
+             * If it doesn't then it triggers a docRefPicked action to ensure that it then does match.
+             * From that point on the expressions and pickedDocRefs should both be monitoring the same state.
+             */
+            checkDictionary() {
+                let {
+                    expressionId,
+                    term,
+                    pickedDocRefs,
+                    docRefPicked
+                } = this.props;
+                let pickerId = joinDictionaryTermId(expressionId, term.uuid);
 
-            if (term.condition === 'IN_DICTIONARY') {
-                // Get the current state of the picked doc refs
-                let picked = pickedDocRefs[pickerId];
+                if (term.condition === 'IN_DICTIONARY') {
+                    // Get the current state of the picked doc refs
+                    let picked = pickedDocRefs[pickerId];
 
-                // If the dictionary is set on the term, but not set or equal to the 'picked' one, update it
-                if (!!term.dictionary) {
-                    if (!picked || picked.uuid !== term.dictionary.uuid) {
-                        docRefPicked(pickerId, term.dictionary);
+                    // If the dictionary is set on the term, but not set or equal to the 'picked' one, update it
+                    if (!!term.dictionary) {
+                        if (!picked || picked.uuid !== term.dictionary.uuid) {
+                            docRefPicked(pickerId, term.dictionary);
+                        }
                     }
                 }
             }
+
+            render() {
+                return <WrappedComponent {...this.props} />
+            }
         }
 
-        render() {
-            return <WrappedComponent {...this.props} />
-        }
+        return connect(
+            (state) => ({
+                // terms are nested, so take all their props from parent
+                pickedDocRefs : state.explorerTree.pickedDocRefs
+            }),
+            {
+                docRefPicked
+            }
+        )(WithPickedDocRef)
     }
-
-    return connect(
-        (state) => ({
-            // terms are nested, so take all their props from parent
-            pickedDocRefs : state.explorerTree.pickedDocRefs
-        }),
-        {
-            docRefPicked
-        }
-    )(WithPickedDocRef)
 }
 
 const ExpressionTerm = (props) => {
@@ -361,13 +364,16 @@ ExpressionTerm.propTypes = {
     isDragging: PropTypes.bool.isRequired
 }
 
-export default connect(
-    (state) => ({
-        // state
-    }),
-    {
-        expressionItemUpdated,
-        requestExpressionItemDelete
-    }
-)
-    (DragSource(ItemTypes.TERM, dragSource, dragCollect)(withPickedDocRef(ExpressionTerm)));
+export default compose(
+    connect(
+        (state) => ({
+            // state
+        }),
+        {
+            expressionItemUpdated,
+            requestExpressionItemDelete
+        }
+    ),
+    DragSource(ItemTypes.TERM, dragSource, dragCollect),
+    withPickedDocRef()
+)(ExpressionTerm);
