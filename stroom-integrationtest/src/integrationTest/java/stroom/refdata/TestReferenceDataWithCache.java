@@ -124,22 +124,22 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
     private void addData(final ReferenceData referenceData, final PipelineEntity pipeline, final String[] mapNames) {
         MapStoreBuilder mapStoreBuilder = new MapStoreBuilderImpl(null);
         for (final String mapName : mapNames) {
-            mapStoreBuilder.setEvents(mapName, "user1", getEventsFromString("1111"), false);
-            mapStoreBuilder.setEvents(mapName, "user2", getEventsFromString("2222"), false);
+//            mapStoreBuilder.setEvents(mapName, "user1", getEventsFromString("1111"), false);
+//            mapStoreBuilder.setEvents(mapName, "user2", getEventsFromString("2222"), false);
         }
         referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipeline), 1), mapStoreBuilder.getMapStore());
 
         mapStoreBuilder = new MapStoreBuilderImpl(null);
         for (final String mapName : mapNames) {
-            mapStoreBuilder.setEvents(mapName, "user1", getEventsFromString("A1111"), false);
-            mapStoreBuilder.setEvents(mapName, "user2", getEventsFromString("A2222"), false);
+//            mapStoreBuilder.setEvents(mapName, "user1", getEventsFromString("A1111"), false);
+//            mapStoreBuilder.setEvents(mapName, "user2", getEventsFromString("A2222"), false);
         }
         referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipeline), 2), mapStoreBuilder.getMapStore());
 
         mapStoreBuilder = new MapStoreBuilderImpl(null);
         for (final String mapName : mapNames) {
-            mapStoreBuilder.setEvents(mapName, "user1", getEventsFromString("B1111"), false);
-            mapStoreBuilder.setEvents(mapName, "user2", getEventsFromString("B2222"), false);
+//            mapStoreBuilder.setEvents(mapName, "user1", getEventsFromString("B1111"), false);
+//            mapStoreBuilder.setEvents(mapName, "user2", getEventsFromString("B2222"), false);
         }
         referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipeline), 3), mapStoreBuilder.getMapStore());
     }
@@ -190,8 +190,8 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                 data.setMapStorePool(mapStoreCache);
 
                 final MapStoreBuilder mapStoreBuilder = new MapStoreBuilderImpl(null);
-                mapStoreBuilder.setEvents("CARD_NUMBER_TO_PF_NUMBER", "011111", getEventsFromString("091111"), false);
-                mapStoreBuilder.setEvents("NUMBER_TO_SID", "091111", getEventsFromString("user1"), false);
+//                mapStoreBuilder.setEvents("CARD_NUMBER_TO_PF_NUMBER", "011111", getEventsFromString("091111"), false);
+//                mapStoreBuilder.setEvents("NUMBER_TO_SID", "091111", getEventsFromString("user1"), false);
                 data.put(new MapStoreCacheKey(DocRefUtil.create(pipelineEntity), 0), mapStoreBuilder.getMapStore());
 
                 Assert.assertEquals("091111", lookup(data, pipelineReferences, 0, "CARD_NUMBER_TO_PF_NUMBER", "011111"));
@@ -229,9 +229,9 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                           final String key) {
         final ReferenceDataResult result = new ReferenceDataResult();
         data.getValue(pipelineReferences, time, mapName, key, result);
-        if (result.getEventListProxy() != null) {
-            return result.getEventListProxy().toString();
-        }
+//        if (result.getEventListProxy() != null) {
+//            return result.getEventListProxy().toString();
+//        }
 
         return null;
     }

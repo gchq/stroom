@@ -28,7 +28,7 @@ public class MapStoreTestUtil {
 
     public static MapStore createMapStore(final EventList eventList) {
         final MapStoreBuilder mapStoreBuilder = new MapStoreBuilderImpl(null);
-        mapStoreBuilder.setEvents("TEST_MAP_NAME", "TEST_KEY_NAME", eventList, false);
+//        mapStoreBuilder.setEvents("TEST_MAP_NAME", "TEST_KEY_NAME", eventList, false);
         return mapStoreBuilder.getMapStore();
     }
 

@@ -41,7 +41,22 @@ public abstract class AbstractKryoSerde<T> implements
         return kryoPool.run(kryo -> {
             ByteBufferInputStream stream = new ByteBufferInputStream(byteBuffer);
             Input input = new Input(stream);
-            return (T) kryo.readClassAndObject(input);
+
+            Object object = null;
+            try {
+                object = kryo.readClassAndObject(input);
+            } catch (Exception e) {
+                throw new RuntimeException(LambdaLogger.buildMessage("Error de-serialising bytebuffer in {}",
+                        this.getClass().getCanonicalName()), e);
+            }
+            byteBuffer.flip();
+            try {
+                T castObject = (T) object;
+                return castObject;
+            } catch (ClassCastException e) {
+                throw new RuntimeException(LambdaLogger.buildMessage("Unable to cast de-serialised object in {}",
+                        this.getClass().getCanonicalName()), e);
+            }
         });
     }
 

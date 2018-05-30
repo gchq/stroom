@@ -15,27 +15,28 @@
  *
  */
 
-package stroom.refdata.offheapstore;
+package stroom.refdata.offheapstore.serdes;
 
-import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import stroom.query.api.v2.DocRef;
+import stroom.refdata.offheapstore.MapDefinition;
+import stroom.refdata.offheapstore.RefStreamDefinition;
 
 import java.util.UUID;
 
-public class TestMapDefinition {
+public class TestMapDefinitionSerde extends AbstractSerdeTest {
 
     @Test
     public void serialize() {
-        MapDefinition def = new MapDefinition(
+        byte version = 0;
+        final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 new DocRef("MyType", UUID.randomUUID().toString()),
+                version,
                 123456L,
+                1);
+        final MapDefinition mapDefinition1 = new MapDefinition(refStreamDefinition,
                 "MyMapName");
 
-        byte[] bytes = def.serialize();
-
-        MapDefinition def2 = MapDefinition.deserialize(bytes);
-
-        Assertions.assertThat(def).isEqualTo(def2);
+        doSerialisationDeserialisationTest(mapDefinition1, MapDefinitionSerde::new);
     }
 }
