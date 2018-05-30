@@ -15,9 +15,13 @@
  */
 import expect from 'expect.js';
 
-import { getPipelineAsTree } from '../pipelineUtils';
+import {
+  getPipelineAsTree
+} from '../pipelineUtils';
 
-import { testPipeline } from '../storybook/testPipelines';
+import {
+  testPipeline
+} from 'testData';
 
 describe('Pipeline Utils', () => {
   describe('#getPipelineAsTree', () => {

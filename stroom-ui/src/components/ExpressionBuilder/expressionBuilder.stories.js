@@ -33,14 +33,16 @@ import {
   ExpressionTerm,
   ExpressionOperator,
   ExpressionBuilder
-} from '../index';
+} from './index';
 
 import {
   expressionChanged,
   expressionSetEditable
-} from '../redux';
+} from './redux';
 
-import { receiveDataSource } from 'components/DataSource';
+import {
+  receiveDataSource
+} from 'components/DataSource';
 
 import {
   receiveDocTree

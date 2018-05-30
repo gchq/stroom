@@ -25,13 +25,13 @@ import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
 import {
     PipelineEditor
-} from '../index';
+} from './index';
 
 import {
     pipelineChanged,
     elementsReceived,
     elementPropertiesReceived
-} from '../redux';
+} from './redux';
 
 import {
     testPipeline,

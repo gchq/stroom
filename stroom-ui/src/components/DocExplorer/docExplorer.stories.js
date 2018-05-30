@@ -26,12 +26,12 @@ import {
     Folder,
     DocRefModalPicker,
     DocRefDropdownPicker
-} from '../index';
+} from './index';
 
 import {
     receiveDocTree,
     docRefPicked
-} from '../redux'
+} from './redux'
 
 import markdown from './docExplorer.md';
 import { 

@@ -21,7 +21,10 @@ import TrackerDashboard from './TrackerDashboard';
 import StoryRouter from 'storybook-react-router';
 import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
 
-import { trackers, generateGenericTracker } from '../test/trackerTestData.test';
+import {
+  trackers,
+  generateGenericTracker
+} from 'testData';
 
 import { actionCreators } from '../redux';
 

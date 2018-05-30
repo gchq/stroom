@@ -39,7 +39,7 @@ import {
 import { 
     testTree, 
     DOC_REF_TYPES 
-} from '../storybook/testTree'
+} from 'testData'
 
 // Rebuilt for each test
 let store;

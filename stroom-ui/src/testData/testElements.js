@@ -2,202 +2,224 @@ import {
 	ElementCategories
 } from 'prototypes/PipelineEditor/ElementCategories';
 
-const testElementTypes = {
-	"FileAppender": {
-		"type": "FileAppender",
-		"category": "DESTINATION",
-		"roles": [
-			"destination",
-			"stepping",
-			"target"
-		],
-		"icon": "file.svg"
-	},
-	"JSONWriter": {
-		"type": "JSONWriter",
-		"category": "WRITER",
-		"roles": [
-			"writer",
-			"mutator",
-			"stepping",
-			"target"
-		],
-		"icon": "json.svg"
-	},
-	"XMLFragmentParser": {
-		"type": "XMLFragmentParser",
-		"category": "PARSER",
-		"roles": [
-			"parser",
-			"hasCode",
-			"simple",
-			"hasTargets",
-			"stepping",
-			"mutator"
-		],
-		"icon": "xml.svg"
-	},
-	"RecordCountFilter": {
-		"type": "RecordCountFilter",
-		"category": "FILTER",
-		"roles": [
-			"hasTargets",
-			"target"
-		],
-		"icon": "recordCount.svg"
-	},
-	"TextWriter": {
-		"type": "TextWriter",
-		"category": "WRITER",
-		"roles": [
-			"hasTargets",
-			"writer",
-			"mutator",
-			"stepping",
-			"target"
-		],
-		"icon": "text.svg"
-	},
-	"DSParser": {
-		"type": "DSParser",
-		"category": "PARSER",
-		"roles": [
-			"parser",
-			"hasCode",
-			"simple",
-			"hasTargets",
-			"stepping",
-			"mutator"
-		],
-		"icon": "text.svg"
-	},
-	"CombinedParser": {
-		"type": "CombinedParser",
-		"category": "PARSER",
-		"roles": [
-			"parser",
-			"hasCode",
-			"simple",
-			"hasTargets",
-			"stepping",
-			"mutator"
-		],
-		"icon": "text.svg"
-	},
-	"XMLWriter": {
-		"type": "XMLWriter",
-		"category": "WRITER",
-		"roles": [
-			"hasTargets",
-			"writer",
-			"mutator",
-			"stepping",
-			"target"
-		],
-		"icon": "xml.svg"
-	},
-	"Source": {
-		"type": "Source",
-		"category": "INTERNAL",
-		"roles": [
-			"simple",
-			"source",
-			"hasTargets"
-		],
-		"icon": "stream.svg"
-	},
-	"SchemaFilter": {
-		"type": "SchemaFilter",
-		"category": "FILTER",
-		"roles": [
-			"validator",
-			"hasTargets",
-			"stepping",
-			"target"
-		],
-		"icon": "xsd.svg"
-	},
-	"SplitFilter": {
-		"type": "SplitFilter",
-		"category": "FILTER",
-		"roles": [
-			"hasTargets",
-			"target"
-		],
-		"icon": "split.svg"
-	},
-	"XSLTFilter": {
-		"type": "XSLTFilter",
-		"category": "FILTER",
-		"roles": [
-			"hasCode",
-			"simple",
-			"hasTargets",
-			"stepping",
-			"mutator",
-			"target"
-		],
-		"icon": "xslt.svg"
-	},
-	"JSONParser": {
-		"type": "JSONParser",
-		"category": "PARSER",
-		"roles": [
-			"parser",
-			"simple",
-			"hasTargets",
-			"stepping",
-			"mutator"
-		],
-		"icon": "json.svg"
-	},
-	"StreamAppender": {
-		"type": "StreamAppender",
-		"category": "DESTINATION",
-		"roles": [
-			"destination",
-			"stepping",
-			"target"
-		],
-		"icon": "stream.svg"
-	},
-	"RecordOutputFilter": {
-		"type": "RecordOutputFilter",
-		"category": "FILTER",
-		"roles": [
-			"hasTargets",
-			"target"
-		],
-		"icon": "recordOutput.svg"
-	},
-	"XMLParser": {
-		"type": "XMLParser",
-		"category": "PARSER",
-		"roles": [
-			"parser",
-			"simple",
-			"hasTargets",
-			"stepping",
-			"mutator"
-		],
-		"icon": "xml.svg"
-	}
+const fileAppender = {
+	"type": "FileAppender",
+	"category": "DESTINATION",
+	"roles": [
+		"destination",
+		"stepping",
+		"target"
+	],
+	"icon": "file.svg"
 }
+
+const streamAppender = {
+	"type": "StreamAppender",
+	"category": "DESTINATION",
+	"roles": [
+		"destination",
+		"stepping",
+		"target"
+	],
+	"icon": "stream.svg"
+};
+
+const jsonWriter = {
+	"type": "JSONWriter",
+	"category": "WRITER",
+	"roles": [
+		"writer",
+		"mutator",
+		"stepping",
+		"target"
+	],
+	"icon": "json.svg"
+}
+
+const xmlFragmentParser = {
+	"type": "XMLFragmentParser",
+	"category": "PARSER",
+	"roles": [
+		"parser",
+		"hasCode",
+		"simple",
+		"hasTargets",
+		"stepping",
+		"mutator"
+	],
+	"icon": "xml.svg"
+};
+
+const recordCountFilter = {
+	"type": "RecordCountFilter",
+	"category": "FILTER",
+	"roles": [
+		"hasTargets",
+		"target"
+	],
+	"icon": "recordCount.svg"
+};
+
+const textWriter = {
+	"type": "TextWriter",
+	"category": "WRITER",
+	"roles": [
+		"hasTargets",
+		"writer",
+		"mutator",
+		"stepping",
+		"target"
+	],
+	"icon": "text.svg"
+};
+
+const dsParser = {
+	"type": "DSParser",
+	"category": "PARSER",
+	"roles": [
+		"parser",
+		"hasCode",
+		"simple",
+		"hasTargets",
+		"stepping",
+		"mutator"
+	],
+	"icon": "text.svg"
+};
+
+const combinedParser = {
+	"type": "CombinedParser",
+	"category": "PARSER",
+	"roles": [
+		"parser",
+		"hasCode",
+		"simple",
+		"hasTargets",
+		"stepping",
+		"mutator"
+	],
+	"icon": "text.svg"
+};
+
+const xmlWriter = {
+	"type": "XMLWriter",
+	"category": "WRITER",
+	"roles": [
+		"hasTargets",
+		"writer",
+		"mutator",
+		"stepping",
+		"target"
+	],
+	"icon": "xml.svg"
+};
+
+const source = {
+	"type": "Source",
+	"category": "INTERNAL",
+	"roles": [
+		"simple",
+		"source",
+		"hasTargets"
+	],
+	"icon": "stream.svg"
+};
+
+const schemaFilter = {
+	"type": "SchemaFilter",
+	"category": "FILTER",
+	"roles": [
+		"validator",
+		"hasTargets",
+		"stepping",
+		"target"
+	],
+	"icon": "xsd.svg"
+};
+
+const splitFilter = {
+	"type": "SplitFilter",
+	"category": "FILTER",
+	"roles": [
+		"hasTargets",
+		"target"
+	],
+	"icon": "split.svg"
+};
+
+const xsltFilter = {
+	"type": "XSLTFilter",
+	"category": "FILTER",
+	"roles": [
+		"hasCode",
+		"simple",
+		"hasTargets",
+		"stepping",
+		"mutator",
+		"target"
+	],
+	"icon": "xslt.svg"
+};
+
+const jsonParser = {
+	"type": "JSONParser",
+	"category": "PARSER",
+	"roles": [
+		"parser",
+		"simple",
+		"hasTargets",
+		"stepping",
+		"mutator"
+	],
+	"icon": "json.svg"
+};
+
+const recordOutputFilter = {
+	"type": "RecordOutputFilter",
+	"category": "FILTER",
+	"roles": [
+		"hasTargets",
+		"target"
+	],
+	"icon": "recordOutput.svg"
+};
+
+const xmlParser = {
+	"type": "XMLParser",
+	"category": "PARSER",
+	"roles": [
+		"parser",
+		"simple",
+		"hasTargets",
+		"stepping",
+		"mutator"
+	],
+	"icon": "xml.svg"
+};
+
+const testElementTypes = [
+	fileAppender,
+	jsonWriter,
+	xmlFragmentParser,
+	recordCountFilter,
+	textWriter,
+	dsParser,
+	combinedParser,
+	xmlWriter,
+	source,
+	schemaFilter,
+	splitFilter,
+	xsltFilter,
+	jsonParser,
+	streamAppender,
+	recordOutputFilter,
+	xmlParser
+].reduce((acc, next) => ({...acc, [next.type]: next}), {});
 
 const testElementProperties = {
 	"JSONWriter": {
 		"indentOutput": {
-			"elementType": {
-				"type": "JSONWriter",
-				"category": "WRITER",
-				"roles": [
-					"writer",
-					"mutator",
-					"stepping",
-					"target"
-				],
-				"icon": "json.svg"
-			},
+			"elementType": jsonWriter,
 			"name": "indentOutput",
 			"type": "boolean",
 			"description": "Should output JSON be indented and include new lines (pretty printed)?",
@@ -206,17 +228,7 @@ const testElementProperties = {
 			"docRefTypes": null
 		},
 		"encoding": {
-			"elementType": {
-				"type": "JSONWriter",
-				"category": "WRITER",
-				"roles": [
-					"writer",
-					"mutator",
-					"stepping",
-					"target"
-				],
-				"icon": "json.svg"
-			},
+			"elementType": jsonWriter,
 			"name": "encoding",
 			"type": "String",
 			"description": "The output character encoding to use.",
@@ -227,16 +239,7 @@ const testElementProperties = {
 	},
 	"FileAppender": {
 		"outputPaths": {
-			"elementType": {
-				"type": "FileAppender",
-				"category": "DESTINATION",
-				"roles": [
-					"destination",
-					"stepping",
-					"target"
-				],
-				"icon": "file.svg"
-			},
+			"elementType": fileAppender,
 			"name": "outputPaths",
 			"type": "String",
 			"description": "One or more destination paths for output files separated with commas. Replacement variables can be used in path strings such as ${feed}.",
@@ -247,19 +250,7 @@ const testElementProperties = {
 	},
 	"XMLFragmentParser": {
 		"textConverter": {
-			"elementType": {
-				"type": "XMLFragmentParser",
-				"category": "PARSER",
-				"roles": [
-					"parser",
-					"hasCode",
-					"simple",
-					"hasTargets",
-					"stepping",
-					"mutator"
-				],
-				"icon": "xml.svg"
-			},
+			"elementType": xmlFragmentParser,
 			"name": "textConverter",
 			"type": "DocRef",
 			"description": "The XML fragment wrapper that should be used to wrap the input XML.",
@@ -272,15 +263,7 @@ const testElementProperties = {
 	},
 	"RecordCountFilter": {
 		"countRead": {
-			"elementType": {
-				"type": "RecordCountFilter",
-				"category": "FILTER",
-				"roles": [
-					"hasTargets",
-					"target"
-				],
-				"icon": "recordCount.svg"
-			},
+			"elementType": recordCountFilter,
 			"name": "countRead",
 			"type": "boolean",
 			"description": "Is this filter counting records read or records written?",
@@ -291,18 +274,7 @@ const testElementProperties = {
 	},
 	"TextWriter": {
 		"footer": {
-			"elementType": {
-				"type": "TextWriter",
-				"category": "WRITER",
-				"roles": [
-					"hasTargets",
-					"writer",
-					"mutator",
-					"stepping",
-					"target"
-				],
-				"icon": "text.svg"
-			},
+			"elementType": textWriter,
 			"name": "footer",
 			"type": "String",
 			"description": "Footer text that can be added to the output at the end.",
@@ -311,18 +283,7 @@ const testElementProperties = {
 			"docRefTypes": null
 		},
 		"header": {
-			"elementType": {
-				"type": "TextWriter",
-				"category": "WRITER",
-				"roles": [
-					"hasTargets",
-					"writer",
-					"mutator",
-					"stepping",
-					"target"
-				],
-				"icon": "text.svg"
-			},
+			"elementType": textWriter,
 			"name": "header",
 			"type": "String",
 			"description": "Header text that can be added to the output at the start.",
@@ -331,18 +292,7 @@ const testElementProperties = {
 			"docRefTypes": null
 		},
 		"encoding": {
-			"elementType": {
-				"type": "TextWriter",
-				"category": "WRITER",
-				"roles": [
-					"hasTargets",
-					"writer",
-					"mutator",
-					"stepping",
-					"target"
-				],
-				"icon": "text.svg"
-			},
+			"elementType": textWriter,
 			"name": "encoding",
 			"type": "String",
 			"description": "The output character encoding to use.",
@@ -353,19 +303,7 @@ const testElementProperties = {
 	},
 	"DSParser": {
 		"textConverter": {
-			"elementType": {
-				"type": "DSParser",
-				"category": "PARSER",
-				"roles": [
-					"parser",
-					"hasCode",
-					"simple",
-					"hasTargets",
-					"stepping",
-					"mutator"
-				],
-				"icon": "text.svg"
-			},
+			"elementType": dsParser,
 			"name": "textConverter",
 			"type": "DocRef",
 			"description": "The data splitter configuration that should be used to parse the input data.",
@@ -378,19 +316,7 @@ const testElementProperties = {
 	},
 	"CombinedParser": {
 		"textConverter": {
-			"elementType": {
-				"type": "CombinedParser",
-				"category": "PARSER",
-				"roles": [
-					"parser",
-					"hasCode",
-					"simple",
-					"hasTargets",
-					"stepping",
-					"mutator"
-				],
-				"icon": "text.svg"
-			},
+			"elementType": combinedParser,
 			"name": "textConverter",
 			"type": "DocRef",
 			"description": "The text converter configuration that should be used to parse the input data.",
@@ -401,19 +327,7 @@ const testElementProperties = {
 			]
 		},
 		"fixInvalidChars": {
-			"elementType": {
-				"type": "CombinedParser",
-				"category": "PARSER",
-				"roles": [
-					"parser",
-					"hasCode",
-					"simple",
-					"hasTargets",
-					"stepping",
-					"mutator"
-				],
-				"icon": "text.svg"
-			},
+			"elementType": combinedParser,
 			"name": "fixInvalidChars",
 			"type": "boolean",
 			"description": "Fix invalid XML characters from the input stream.",
@@ -422,19 +336,7 @@ const testElementProperties = {
 			"docRefTypes": null
 		},
 		"type": {
-			"elementType": {
-				"type": "CombinedParser",
-				"category": "PARSER",
-				"roles": [
-					"parser",
-					"hasCode",
-					"simple",
-					"hasTargets",
-					"stepping",
-					"mutator"
-				],
-				"icon": "text.svg"
-			},
+			"elementType": combinedParser,
 			"name": "type",
 			"type": "String",
 			"description": "The parser type, e.g. 'JSON', 'XML', 'Data Splitter'.",
@@ -445,18 +347,7 @@ const testElementProperties = {
 	},
 	"XMLWriter": {
 		"indentOutput": {
-			"elementType": {
-				"type": "XMLWriter",
-				"category": "WRITER",
-				"roles": [
-					"hasTargets",
-					"writer",
-					"mutator",
-					"stepping",
-					"target"
-				],
-				"icon": "xml.svg"
-			},
+			"elementType": xmlWriter,
 			"name": "indentOutput",
 			"type": "boolean",
 			"description": "Should output XML be indented and include new lines (pretty printed)?",
@@ -465,18 +356,7 @@ const testElementProperties = {
 			"docRefTypes": null
 		},
 		"encoding": {
-			"elementType": {
-				"type": "XMLWriter",
-				"category": "WRITER",
-				"roles": [
-					"hasTargets",
-					"writer",
-					"mutator",
-					"stepping",
-					"target"
-				],
-				"icon": "xml.svg"
-			},
+			"elementType": xmlWriter,
 			"name": "encoding",
 			"type": "String",
 			"description": "The output character encoding to use.",
@@ -488,15 +368,7 @@ const testElementProperties = {
 	"Source": {},
 	"SplitFilter": {
 		"splitDepth": {
-			"elementType": {
-				"type": "SplitFilter",
-				"category": "FILTER",
-				"roles": [
-					"hasTargets",
-					"target"
-				],
-				"icon": "split.svg"
-			},
+			"elementType": splitFilter,
 			"name": "splitDepth",
 			"type": "int",
 			"description": "The depth of XML elements to split at.",
@@ -505,15 +377,7 @@ const testElementProperties = {
 			"docRefTypes": null
 		},
 		"splitCount": {
-			"elementType": {
-				"type": "SplitFilter",
-				"category": "FILTER",
-				"roles": [
-					"hasTargets",
-					"target"
-				],
-				"icon": "split.svg"
-			},
+			"elementType": splitFilter,
 			"name": "splitCount",
 			"type": "int",
 			"description": "The number of elements at the split depth to count before the XML is split.",
@@ -524,17 +388,7 @@ const testElementProperties = {
 	},
 	"SchemaFilter": {
 		"systemId": {
-			"elementType": {
-				"type": "SchemaFilter",
-				"category": "FILTER",
-				"roles": [
-					"validator",
-					"hasTargets",
-					"stepping",
-					"target"
-				],
-				"icon": "xsd.svg"
-			},
+			"elementType": schemaFilter,
 			"name": "systemId",
 			"type": "String",
 			"description": "Limits the schemas that can be used to validate data to those with a matching system id.",
@@ -543,17 +397,7 @@ const testElementProperties = {
 			"docRefTypes": null
 		},
 		"schemaValidation": {
-			"elementType": {
-				"type": "SchemaFilter",
-				"category": "FILTER",
-				"roles": [
-					"validator",
-					"hasTargets",
-					"stepping",
-					"target"
-				],
-				"icon": "xsd.svg"
-			},
+			"elementType": schemaFilter,
 			"name": "schemaValidation",
 			"type": "boolean",
 			"description": "Should schema validation be performed?",
@@ -562,17 +406,7 @@ const testElementProperties = {
 			"docRefTypes": null
 		},
 		"namespaceURI": {
-			"elementType": {
-				"type": "SchemaFilter",
-				"category": "FILTER",
-				"roles": [
-					"validator",
-					"hasTargets",
-					"stepping",
-					"target"
-				],
-				"icon": "xsd.svg"
-			},
+			"elementType": schemaFilter,
 			"name": "namespaceURI",
 			"type": "String",
 			"description": "Limits the schemas that can be used to validate data to those with a matching namespace URI.",
@@ -581,17 +415,7 @@ const testElementProperties = {
 			"docRefTypes": null
 		},
 		"schemaLanguage": {
-			"elementType": {
-				"type": "SchemaFilter",
-				"category": "FILTER",
-				"roles": [
-					"validator",
-					"hasTargets",
-					"stepping",
-					"target"
-				],
-				"icon": "xsd.svg"
-			},
+			"elementType": schemaFilter,
 			"name": "schemaLanguage",
 			"type": "String",
 			"description": "The schema language that the schema is written in.",
@@ -600,17 +424,7 @@ const testElementProperties = {
 			"docRefTypes": null
 		},
 		"schemaGroup": {
-			"elementType": {
-				"type": "SchemaFilter",
-				"category": "FILTER",
-				"roles": [
-					"validator",
-					"hasTargets",
-					"stepping",
-					"target"
-				],
-				"icon": "xsd.svg"
-			},
+			"elementType": schemaFilter,
 			"name": "schemaGroup",
 			"type": "String",
 			"description": "Limits the schemas that can be used to validate data to those with a matching schema group name.",
@@ -622,19 +436,7 @@ const testElementProperties = {
 	"JSONParser": {},
 	"XSLTFilter": {
 		"suppressXSLTNotFoundWarnings": {
-			"elementType": {
-				"type": "XSLTFilter",
-				"category": "FILTER",
-				"roles": [
-					"hasCode",
-					"simple",
-					"hasTargets",
-					"stepping",
-					"mutator",
-					"target"
-				],
-				"icon": "xslt.svg"
-			},
+			"elementType": xsltFilter,
 			"name": "suppressXSLTNotFoundWarnings",
 			"type": "boolean",
 			"description": "If XSLT cannot be found to match the name pattern suppress warnings.",
@@ -643,19 +445,7 @@ const testElementProperties = {
 			"docRefTypes": null
 		},
 		"usePool": {
-			"elementType": {
-				"type": "XSLTFilter",
-				"category": "FILTER",
-				"roles": [
-					"hasCode",
-					"simple",
-					"hasTargets",
-					"stepping",
-					"mutator",
-					"target"
-				],
-				"icon": "xslt.svg"
-			},
+			"elementType": xsltFilter,
 			"name": "usePool",
 			"type": "boolean",
 			"description": "Advanced: Choose whether or not you want to use cached XSLT templates to improve performance.",
@@ -664,19 +454,7 @@ const testElementProperties = {
 			"docRefTypes": null
 		},
 		"pipelineReference": {
-			"elementType": {
-				"type": "XSLTFilter",
-				"category": "FILTER",
-				"roles": [
-					"hasCode",
-					"simple",
-					"hasTargets",
-					"stepping",
-					"mutator",
-					"target"
-				],
-				"icon": "xslt.svg"
-			},
+			"elementType": xsltFilter,
 			"name": "pipelineReference",
 			"type": "PipelineReference",
 			"description": "A list of places to load reference data from if required.",
@@ -685,19 +463,7 @@ const testElementProperties = {
 			"docRefTypes": null
 		},
 		"xslt": {
-			"elementType": {
-				"type": "XSLTFilter",
-				"category": "FILTER",
-				"roles": [
-					"hasCode",
-					"simple",
-					"hasTargets",
-					"stepping",
-					"mutator",
-					"target"
-				],
-				"icon": "xslt.svg"
-			},
+			"elementType": xsltFilter,
 			"name": "xslt",
 			"type": "DocRef",
 			"description": "The XSLT to use.",
@@ -708,19 +474,7 @@ const testElementProperties = {
 			]
 		},
 		"xsltNamePattern": {
-			"elementType": {
-				"type": "XSLTFilter",
-				"category": "FILTER",
-				"roles": [
-					"hasCode",
-					"simple",
-					"hasTargets",
-					"stepping",
-					"mutator",
-					"target"
-				],
-				"icon": "xslt.svg"
-			},
+			"elementType": xsltFilter,
 			"name": "xsltNamePattern",
 			"type": "String",
 			"description": "A name pattern to load XSLT dynamically.",
@@ -731,16 +485,7 @@ const testElementProperties = {
 	},
 	"StreamAppender": {
 		"feed": {
-			"elementType": {
-				"type": "StreamAppender",
-				"category": "DESTINATION",
-				"roles": [
-					"destination",
-					"stepping",
-					"target"
-				],
-				"icon": "stream.svg"
-			},
+			"elementType": streamAppender,
 			"name": "feed",
 			"type": "DocRef",
 			"description": "The feed that output stream should be written to. If not specified the feed the input stream belongs to will be used.",
@@ -751,16 +496,7 @@ const testElementProperties = {
 			]
 		},
 		"segmentOutput": {
-			"elementType": {
-				"type": "StreamAppender",
-				"category": "DESTINATION",
-				"roles": [
-					"destination",
-					"stepping",
-					"target"
-				],
-				"icon": "stream.svg"
-			},
+			"elementType": streamAppender,
 			"name": "segmentOutput",
 			"type": "boolean",
 			"description": "Should the output stream be marked with indexed segments to allow fast access to individual records?",
@@ -769,16 +505,7 @@ const testElementProperties = {
 			"docRefTypes": null
 		},
 		"streamType": {
-			"elementType": {
-				"type": "StreamAppender",
-				"category": "DESTINATION",
-				"roles": [
-					"destination",
-					"stepping",
-					"target"
-				],
-				"icon": "stream.svg"
-			},
+			"elementType": streamAppender,
 			"name": "streamType",
 			"type": "String",
 			"description": "The stream type that the output stream should be written as. This must be specified.",
@@ -793,5 +520,21 @@ const testElementProperties = {
 
 export {
 	testElementTypes,
-	testElementProperties
+	testElementProperties,
+	fileAppender,
+	jsonWriter,
+	xmlFragmentParser,
+	recordCountFilter,
+	textWriter,
+	dsParser,
+	combinedParser,
+	xmlWriter,
+	source,
+	schemaFilter,
+	splitFilter,
+	xsltFilter,
+	jsonParser,
+	streamAppender,
+	recordOutputFilter,
+	xmlParser
 }

@@ -21,7 +21,8 @@ import { connect } from 'react-redux'
 import {
     Dropdown,
     Menu,
-    Icon
+    Icon,
+    Label,Input
 } from 'semantic-ui-react'
 
 import {
@@ -36,7 +37,6 @@ const ElementMenu = ({
     closePipelineElementContextMenu,
     requestDeletePipelineElement
 }) => {
-    
     return (
         <Dropdown
             floating 
@@ -46,9 +46,15 @@ const ElementMenu = ({
             onClose={() => closePipelineElementContextMenu(pipelineId)}
         >
             <Dropdown.Menu>
-                <Dropdown.Item onClick={() => console.log('Add item')}>
-                    <Icon name='file' />
-                    Open
+                <Dropdown.Item>
+                    <Icon name='add' />         
+                    <Dropdown simple item text='Add'>
+                        <Dropdown.Menu>
+                            <Dropdown.Item icon='edit' text='Edit Profile' />
+                            <Dropdown.Item icon='globe' text='Choose Language' />
+                            <Dropdown.Item icon='settings' text='Account Settings' />
+                        </Dropdown.Menu>
+                    </Dropdown>
                 </Dropdown.Item>
                 <Dropdown.Item onClick={() => requestDeletePipelineElement(pipelineId, elementId)}>
                     <Icon name='trash' />

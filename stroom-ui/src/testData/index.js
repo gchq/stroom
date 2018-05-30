@@ -17,8 +17,30 @@ import {
 } from './queryExpression';
 
 import {
+    trackers,
+    generateGenericTracker
+} from './tracker';
+
+import {
 	testElementTypes,
-	testElementProperties
+    testElementProperties,
+    
+	fileAppender,
+	jsonWriter,
+	xmlFragmentParser,
+	recordCountFilter,
+	textWriter,
+	dsParser,
+	combinedParser,
+	xmlWriter,
+	source,
+	schemaFilter,
+	splitFilter,
+	xsltFilter,
+	jsonParser,
+	streamAppender,
+	recordOutputFilter,
+	xmlParser
 } from './testElements';
 
 import {
@@ -40,6 +62,26 @@ export {
 
 	testElementTypes,
     testElementProperties,
+
+	fileAppender,
+	jsonWriter,
+	xmlFragmentParser,
+	recordCountFilter,
+	textWriter,
+	dsParser,
+	combinedParser,
+	xmlWriter,
+	source,
+	schemaFilter,
+	splitFilter,
+	xsltFilter,
+	jsonParser,
+	streamAppender,
+	recordOutputFilter,
+	xmlParser,
     
-    testPipeline
+    testPipeline,
+
+    trackers,
+    generateGenericTracker
 }
