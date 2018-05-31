@@ -28,15 +28,11 @@ public interface Stream extends SharedObject {
 
     String getPipelineName();
 
-//    FeedEntity getFeed();
-//
-//    StreamType getStreamType();
-
     Long getParentStreamId();
 
     Long getStreamTaskId();
 
-    StreamProcessor getStreamProcessor();
+    Long getStreamProcessorId();
 
     StreamStatus getStatus();
 

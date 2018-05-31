@@ -65,7 +65,7 @@
     <inherits name="stroom.query.Query"/>
     <inherits name="stroom.docstore.DocStore"/>
     <inherits name="stroom.ruleset.RuleSet"/>
-    <inherits name="stroom.streamstore.api.StreamStore"/>
+    <inherits name="stroom.streamstore.StreamStore"/>
     <inherits name="stroom.streamtask.StreamTask"/>
     <inherits name="stroom.task.Task"/>
     <inherits name="stroom.process.Process"/>

@@ -5,7 +5,6 @@ ext.moduleName = 'stroom.headless'
 dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-core-server')
-    compile project(':stroom-entity-shared')
     compile project(':stroom-util-shared')
     compile project(':stroom-util')
     compile project(':stroom-security-api')

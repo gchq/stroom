@@ -133,6 +133,14 @@ public class StreamEntity extends BaseEntityBig implements Stream {
         return streamProcessor.getPipelineName();
     }
 
+    @Override
+    public Long getStreamProcessorId() {
+        if (streamProcessor == null) {
+            return null;
+        }
+        return streamProcessor.getId();
+    }
+
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = FeedEntity.FOREIGN_KEY)
     public FeedEntity getFeed() {
