@@ -38,8 +38,11 @@ class UserCache implements Clearable {
     @Inject
     @SuppressWarnings("unchecked")
     UserCache(final CacheManager cacheManager,
-              final UserService userService) {
-        final CacheLoader<String, Optional<UserRef>> cacheLoader = CacheLoader.from(name -> Optional.ofNullable(userService.getUserByName(name)));
+              final UserService userService,
+              final Security security) {
+        final CacheLoader<String, Optional<UserRef>> cacheLoader = CacheLoader.from(
+                name -> security.asProcessingUserResult(
+                        () -> Optional.ofNullable(userService.getUserByName(name))));
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(MAX_CACHE_ENTRIES)
                 .expireAfterAccess(30, TimeUnit.MINUTES);
