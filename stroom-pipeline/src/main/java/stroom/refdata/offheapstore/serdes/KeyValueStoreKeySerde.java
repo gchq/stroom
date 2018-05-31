@@ -55,16 +55,22 @@ public class KeyValueStoreKeySerde extends AbstractKryoSerde<KeyValueStoreKey> {
 
     private static class KeyValueStoreKeyKryoSerializer extends com.esotericsoftware.kryo.Serializer<KeyValueStoreKey> {
 
+        private final UIDSerde.UIDKryoSerializer uidKryoSerializer;
+
+        private KeyValueStoreKeyKryoSerializer() {
+            uidKryoSerializer = new UIDSerde.UIDKryoSerializer();
+        }
+
         @Override
         public void write(final Kryo kryo, final Output output, final KeyValueStoreKey key) {
-            RefDataSerdeUtils.writeUid(output, key.getMapUid());
+            uidKryoSerializer.write(kryo, output, key.getMapUid());
             output.writeString(key.getKey());
             RefDataSerdeUtils.writeTimeMs(output, key.getEffectiveTimeEpochMs());
         }
 
         @Override
         public KeyValueStoreKey read(final Kryo kryo, final Input input, final Class<KeyValueStoreKey> type) {
-            final UID mapUid = RefDataSerdeUtils.readUid(input);
+            final UID mapUid = uidKryoSerializer.read(kryo, input, UID.class);
             final String key = input.readString();
             final long effectiveTimeEpochMs = RefDataSerdeUtils.readTimeMs(input);
             return new KeyValueStoreKey(mapUid, key, effectiveTimeEpochMs);

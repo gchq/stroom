@@ -56,12 +56,12 @@ public class TestProcessingInfoDb extends AbstractLmdbDbTest {
 
         byte version = 0;
         final RefStreamDefinition refStreamDefinitionA = new RefStreamDefinition(
-                new DocRef("MyType", UUID.randomUUID().toString()),
+                UUID.randomUUID().toString(),
                 version,
                 123456L,
                 1);
         final RefStreamDefinition refStreamDefinitionB = new RefStreamDefinition(
-                new DocRef("MyType", UUID.randomUUID().toString()),
+                UUID.randomUUID().toString(),
                 version,
                 654321L,
                 1);
@@ -100,7 +100,7 @@ public class TestProcessingInfoDb extends AbstractLmdbDbTest {
 
         byte version = 0;
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
-                new DocRef("MyType", UUID.randomUUID().toString()),
+                UUID.randomUUID().toString(),
                 version,
                 123456L,
                 1);

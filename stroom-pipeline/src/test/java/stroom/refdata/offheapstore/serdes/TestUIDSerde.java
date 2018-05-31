@@ -25,7 +25,7 @@ public class TestUIDSerde extends AbstractSerdeTest {
     @Test
     public void testSerialisationDeserialisation() {
 
-        final UID uid = new UID(new byte[] {0, 1, 2, 3});
+        final UID uid = UID.of(0, 1, 2, 3);
 
         doSerialisationDeserialisationTest(uid, UIDSerde::new);
     }

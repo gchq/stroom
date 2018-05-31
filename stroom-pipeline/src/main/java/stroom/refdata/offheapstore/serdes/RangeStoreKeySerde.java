@@ -59,9 +59,15 @@ public class RangeStoreKeySerde extends AbstractKryoSerde<RangeStoreKey> {
 
     private static class RangeStoreKeyKryoSerializer extends com.esotericsoftware.kryo.Serializer<RangeStoreKey> {
 
+        private final UIDSerde.UIDKryoSerializer uidKryoSerializer;
+
+        private RangeStoreKeyKryoSerializer() {
+            uidKryoSerializer = new UIDSerde.UIDKryoSerializer();
+        }
+
         @Override
         public void write(final Kryo kryo, final Output output, final RangeStoreKey key) {
-            RefDataSerdeUtils.writeUid(output, key.getMapUid());
+            uidKryoSerializer.write(kryo, output, key.getMapUid());
             RefDataSerdeUtils.writeTimeMs(output, key.getEffectiveTimeEpochMs());
             Range<Long> range = key.getKeyRange();
             RefDataSerdeUtils.writeTimeMs(output, range.getFrom());
@@ -70,7 +76,7 @@ public class RangeStoreKeySerde extends AbstractKryoSerde<RangeStoreKey> {
 
         @Override
         public RangeStoreKey read(final Kryo kryo, final Input input, final Class<RangeStoreKey> type) {
-            final UID mapUid = RefDataSerdeUtils.readUid(input);
+            final UID mapUid = uidKryoSerializer.read(kryo, input, UID.class);
             final long effectiveTimeEpochMs = RefDataSerdeUtils.readTimeMs(input);
             long startMs = RefDataSerdeUtils.readTimeMs(input);
             long endMs = RefDataSerdeUtils.readTimeMs(input);

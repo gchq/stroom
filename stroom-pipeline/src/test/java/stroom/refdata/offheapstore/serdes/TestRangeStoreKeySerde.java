@@ -26,7 +26,7 @@ public class TestRangeStoreKeySerde extends AbstractSerdeTest {
 
     @Test
     public void testSerialiseDeserialise() {
-        final UID uid = new UID(new byte[] {0, 1, 2, 3});
+        final UID uid = UID.of(0, 1, 2, 3);
         final Range<Long> range = new Range<>(23L, 52L);
 
         final RangeStoreKey rangeStoreKey = new RangeStoreKey(uid, 12345678L, range);

@@ -29,14 +29,6 @@ public class RefDataSerdeUtils {
     private RefDataSerdeUtils() {
     }
 
-    static void writeUid(final Output output, final UID uid) {
-        output.write(uid.getBackingArray(), uid.getOffset(), UID.length());
-    }
-
-    static UID readUid(final Input input) {
-        return UID.from(input.readBytes(UID.length()));
-    }
-
     static void writeTimeMs(final Output output, final long timeMs) {
         //TODO need to be sure this is written in correct endian-ness so lexicographical scanning works
         output.writeLong(timeMs);
