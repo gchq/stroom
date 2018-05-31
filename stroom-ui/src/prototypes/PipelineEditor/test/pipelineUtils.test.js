@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import expect from 'expect.js';
+import expect from 'expect';
 
 import {
   getPipelineAsTree
@@ -30,12 +30,12 @@ describe('Pipeline Utils', () => {
       const asTree = getPipelineAsTree(testPipeline);
 
       // Then
-      expect(asTree.uuid).to.be('CSV splitter filter');
-      expect(asTree.children[0].uuid).to.be('XSLT filter');
-      expect(asTree.children[0].children[0].uuid).to.be('XML writer 1');
-      expect(asTree.children[0].children[0].children[0].uuid).to.be('stream appender 1');
-      expect(asTree.children[0].children[1].uuid).to.be('XML writer 2');
-      expect(asTree.children[0].children[1].children[0].uuid).to.be('stream appender 2');
+      expect(asTree.uuid).toBe('CSV splitter filter');
+      expect(asTree.children[0].uuid).toBe('XSLT filter');
+      expect(asTree.children[0].children[0].uuid).toBe('XML writer 1');
+      expect(asTree.children[0].children[0].children[0].uuid).toBe('stream appender 1');
+      expect(asTree.children[0].children[1].uuid).toBe('XML writer 2');
+      expect(asTree.children[0].children[1].children[0].uuid).toBe('stream appender 2');
     });
   });
 });

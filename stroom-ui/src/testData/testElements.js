@@ -206,7 +206,7 @@ const testElementTypes = [
 	dsParser,
 	combinedParser,
 	xmlWriter,
-	source,
+	// source, - this is a special element, not something that is instantiated by the user
 	schemaFilter,
 	splitFilter,
 	xsltFilter,
