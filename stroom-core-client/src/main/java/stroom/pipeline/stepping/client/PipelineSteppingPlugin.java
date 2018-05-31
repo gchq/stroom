@@ -34,7 +34,7 @@ import stroom.pipeline.stepping.client.presenter.SteppingContentTabPresenter;
 import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamProcessor;
@@ -105,7 +105,7 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
         chooser.show();
     }
 
-    private void openEditor(final DocRef pipeline, final Stream stream, final long eventId,
+    private void openEditor(final DocRef pipeline, final StreamEntity stream, final long eventId,
                             final StreamType childStreamType) {
         final SteppingContentTabPresenter editor = editorProvider.get();
         editor.read(pipeline, stream, eventId, childStreamType);

@@ -29,7 +29,7 @@ import stroom.entity.shared.Document;
 import stroom.entity.shared.NamedEntity;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 
 class BasicEventInfoProvider implements EventInfoProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(BasicEventInfoProvider.class);
@@ -57,9 +57,9 @@ class BasicEventInfoProvider implements EventInfoProvider {
             object.setDescription(description);
 
             // Add unknown but useful data items.
-            if (entity instanceof Stream) {
+            if (entity instanceof StreamEntity) {
                 try {
-                    final Stream stream = (Stream) entity;
+                    final StreamEntity stream = (StreamEntity) entity;
                     if (stream.getFeed() != null) {
                         EventLoggingUtil.createData("Feed", stream.getFeed().getName());
                     }

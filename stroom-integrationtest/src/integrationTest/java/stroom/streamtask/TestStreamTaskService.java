@@ -23,7 +23,7 @@ import stroom.entity.shared.Period;
 import stroom.feed.shared.FeedDoc;
 import stroom.node.shared.Node;
 import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.StreamProcessor;
@@ -51,9 +51,9 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
     @Test
     public void testSaveAndGetAll() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        final Stream file1 = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamType.RAW_EVENTS.getName());
-        final Stream file2 = commonTestScenarioCreator.createSampleBlankProcessedFile(feedName, file1);
-        final Stream file3 = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamType.RAW_EVENTS.getName());
+        final StreamEntity file1 = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamType.RAW_EVENTS.getName());
+        final StreamEntity file2 = commonTestScenarioCreator.createSampleBlankProcessedFile(feedName, file1);
+        final StreamEntity file3 = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamType.RAW_EVENTS.getName());
 
         commonTestScenarioCreator.createBasicTranslateStreamProcessor(feedName);
 
@@ -69,7 +69,7 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
         streamTaskService.save(ps1);
 
         FindStreamTaskCriteria criteria = new FindStreamTaskCriteria();
-        criteria.getFetchSet().add(Stream.ENTITY_TYPE);
+        criteria.getFetchSet().add(StreamEntity.ENTITY_TYPE);
         criteria.obtainStreamTaskStatusSet().add(TaskStatus.COMPLETE);
 
         Assert.assertEquals(1, streamTaskService.find(criteria).size());
@@ -111,7 +111,7 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
         criteria.setEffectivePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
         criteria.obtainStreamTypeNameSet().add(StreamType.CONTEXT.getName());
 
-        criteria.getFetchSet().add(Stream.ENTITY_TYPE);
+        criteria.getFetchSet().add(StreamEntity.ENTITY_TYPE);
         criteria.getFetchSet().add(Node.ENTITY_TYPE);
         criteria.getFetchSet().add(FeedDoc.DOCUMENT_TYPE);
         criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);

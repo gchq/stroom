@@ -49,7 +49,7 @@ import stroom.docref.DocRef;
 import stroom.streamstore.client.presenter.ClassificationUiHandlers;
 import stroom.streamstore.client.presenter.DataPresenter;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
@@ -85,7 +85,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     private SteppingResult currentResult;
     private ButtonPanel leftButtons;
 
-    private Stream stream;
+    private StreamEntity stream;
 
     @Inject
     public SteppingPresenter(final EventBus eventBus, final SteppingView view,
@@ -273,7 +273,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         }
     }
 
-    public void read(final DocRef pipeline, final Stream stream, final long eventId,
+    public void read(final DocRef pipeline, final StreamEntity stream, final long eventId,
                      final StreamType childStreamType) {
         this.stream = stream;
 

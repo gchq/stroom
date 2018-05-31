@@ -23,7 +23,7 @@ import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.HasIsConstrained;
 import stroom.entity.shared.Period;
 import stroom.node.shared.Node;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamStatus;
 
 /**
@@ -54,7 +54,7 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
     /**
      * Find with a key
      */
-    private EntityIdSet<Stream> streamIdSet = null;
+    private EntityIdSet<StreamEntity> streamIdSet = null;
 
     /**
      * Find with a key
@@ -96,7 +96,7 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
      */
     private Long createMs = null;
 
-    public static FindStreamTaskCriteria createWithStream(final Stream stream) {
+    public static FindStreamTaskCriteria createWithStream(final StreamEntity stream) {
         final FindStreamTaskCriteria criteria = new FindStreamTaskCriteria();
         criteria.obtainStreamIdSet().add(stream.getId());
         return criteria;
@@ -155,11 +155,11 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
         return streamTaskStatusSet;
     }
 
-    public EntityIdSet<Stream> getStreamIdSet() {
+    public EntityIdSet<StreamEntity> getStreamIdSet() {
         return streamIdSet;
     }
 
-    public EntityIdSet<Stream> obtainStreamIdSet() {
+    public EntityIdSet<StreamEntity> obtainStreamIdSet() {
         if (streamIdSet == null) {
             streamIdSet = new EntityIdSet<>();
         }

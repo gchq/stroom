@@ -21,8 +21,7 @@ import org.hibernate.proxy.LazyInitializer;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.feed.shared.FeedDoc;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
@@ -35,10 +34,10 @@ public class TestBaseEntityDeProxyProcessor extends StroomUnitTest {
     public void testDeProxy() {
         final DummyStreamType streamType = new DummyStreamType();
         streamType.setId(100L);
-        final Stream stream = new Stream();
+        final StreamEntity stream = new StreamEntity();
         stream.setStreamType(streamType);
 
-        final Stream deproxy = (Stream) (new BaseEntityDeProxyProcessor(true).process(stream));
+        final StreamEntity deproxy = (StreamEntity) (new BaseEntityDeProxyProcessor(true).process(stream));
 
         Assert.assertEquals(deproxy.getStreamType().getClass(), StreamType.class);
         Assert.assertEquals(100L, deproxy.getStreamType().getId());

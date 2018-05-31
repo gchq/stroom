@@ -41,7 +41,7 @@ import stroom.streamstore.OldFindStreamCriteria;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.shared.Feed;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamtask.InclusiveRanges.InclusiveRange;
@@ -73,9 +73,9 @@ class StreamTaskCreatorTransactionHelper {
     static {
         final SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT MAX(");
-        sql.append(Stream.ID);
+        sql.append(StreamEntity.ID);
         sql.append(") FROM ");
-        sql.append(Stream.TABLE_NAME);
+        sql.append(StreamEntity.TABLE_NAME);
         MAX_STREAM_ID_SQL = sql;
     }
 
@@ -134,8 +134,8 @@ class StreamTaskCreatorTransactionHelper {
      * @return streams that have not yet got a stream task for a particular
      * stream processor
      */
-    public List<Stream> runSelectStreamQuery(final OldFindStreamCriteria criteria,
-                                             final long minStreamId, final int max) {
+    public List<StreamEntity> runSelectStreamQuery(final OldFindStreamCriteria criteria,
+                                                   final long minStreamId, final int max) {
         // Copy the filter
         final OldFindStreamCriteria findStreamCriteria = new OldFindStreamCriteria();
         findStreamCriteria.copyFrom(criteria);
@@ -218,7 +218,7 @@ class StreamTaskCreatorTransactionHelper {
     public CreatedTasks createNewTasks(final StreamProcessorFilter filter,
                                        final StreamProcessorFilterTracker tracker,
                                        final long streamQueryTime,
-                                       final Map<Stream, InclusiveRanges> streams,
+                                       final Map<StreamEntity, InclusiveRanges> streams,
                                        final Node thisNode,
                                        final StreamTaskCreatorRecentStreamDetails recentStreamInfo,
                                        final boolean reachedLimit) {
@@ -248,15 +248,15 @@ class StreamTaskCreatorTransactionHelper {
                             StreamTask.STATUS,
                             StreamTask.STATUS_MS,
                             Node.FOREIGN_KEY,
-                            Stream.FOREIGN_KEY,
+                            StreamEntity.FOREIGN_KEY,
                             StreamTask.DATA,
                             StreamProcessorFilter.FOREIGN_KEY);
 
                     final List<List<Object>> allArgs = new ArrayList<>();
 
 
-                    for (final Entry<Stream, InclusiveRanges> entry : streams.entrySet()) {
-                        final Stream stream = entry.getKey();
+                    for (final Entry<StreamEntity, InclusiveRanges> entry : streams.entrySet()) {
+                        final StreamEntity stream = entry.getKey();
                         final InclusiveRanges eventRanges = entry.getValue();
 
                         String eventRangeData = null;
@@ -442,13 +442,13 @@ class StreamTaskCreatorTransactionHelper {
                 sql.append("SELECT DISTINCT(");
                 sql.append(Feed.FOREIGN_KEY);
                 sql.append("), 'A' FROM ");
-                sql.append(Stream.TABLE_NAME);
+                sql.append(StreamEntity.TABLE_NAME);
                 sql.append(" WHERE ");
-                sql.append(Stream.ID);
+                sql.append(StreamEntity.ID);
                 sql.append(" > ");
                 sql.arg(recentStreamInfo.getRecentStreamId());
                 sql.append(" AND ");
-                sql.append(Stream.ID);
+                sql.append(StreamEntity.ID);
                 sql.append(" <= ");
                 sql.arg(recentStreamInfo.getMaxStreamId());
 

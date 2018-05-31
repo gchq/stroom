@@ -27,7 +27,7 @@ import stroom.pipeline.errorhandler.ProcessException;
 import stroom.security.Security;
 import stroom.streamstore.EffectiveMetaDataCriteria;
 import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheUtil;
 
@@ -108,12 +108,12 @@ public class EffectiveStreamCache implements Clearable {
                 criteria.setEffectivePeriod(window);
 
                 // Locate all streams that fit the supplied criteria.
-                final List<Stream> streams = streamStore.findEffectiveStream(criteria);
+                final List<StreamEntity> streams = streamStore.findEffectiveStream(criteria);
 
                 // Add all streams that we have found to the effective stream set.
                 if (streams != null && streams.size() > 0) {
                     effectiveStreamSet = new TreeSet<>();
-                    for (final Stream stream : streams) {
+                    for (final StreamEntity stream : streams) {
                         EffectiveStream effectiveStream;
 
                         if (stream.getEffectiveMs() != null) {

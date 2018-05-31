@@ -21,7 +21,7 @@ import stroom.entity.util.SqlBuilder;
 import stroom.jobsystem.ClusterLockService;
 import stroom.jobsystem.JobTrackedSchedule;
 import stroom.properties.StroomPropertyService;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamVolume;
@@ -61,36 +61,36 @@ public class StreamDeleteExecutor extends AbstractBatchDeleteExecutor {
     @Override
     protected void deleteCurrentBatch(final long total) {
         // Delete stream tasks.
-        deleteWithJoin(StreamTask.TABLE_NAME, Stream.FOREIGN_KEY, "stream tasks", total);
+        deleteWithJoin(StreamTask.TABLE_NAME, StreamEntity.FOREIGN_KEY, "stream tasks", total);
 
         // Delete stream volumes.
-        deleteWithJoin(StreamVolume.TABLE_NAME, Stream.FOREIGN_KEY, "stream volumes", total);
+        deleteWithJoin(StreamVolume.TABLE_NAME, StreamEntity.FOREIGN_KEY, "stream volumes", total);
 
         // Delete stream attribute values.
         deleteWithJoin(StreamAttributeValue.TABLE_NAME, StreamAttributeValue.STREAM_ID, "stream attribute values",
                 total);
 
         // Delete streams.
-        deleteWithJoin(Stream.TABLE_NAME, Stream.ID, "streams", total);
+        deleteWithJoin(StreamEntity.TABLE_NAME, StreamEntity.ID, "streams", total);
     }
 
     @Override
     protected SqlBuilder getTempIdSelectSql(final long age, final int batchSize) {
         final SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT ");
-        sql.append(Stream.ID);
+        sql.append(StreamEntity.ID);
         sql.append(" FROM ");
-        sql.append(Stream.TABLE_NAME);
+        sql.append(StreamEntity.TABLE_NAME);
         sql.append(" WHERE ");
         sql.append(SQLNameConstants.STATUS);
         sql.append(" = ");
         sql.arg(StreamStatus.DELETED.getPrimitiveValue());
         sql.append(" AND ");
-        sql.append(Stream.STATUS_MS);
+        sql.append(StreamEntity.STATUS_MS);
         sql.append(" < ");
         sql.arg(age);
         sql.append(" ORDER BY ");
-        sql.append(Stream.ID);
+        sql.append(StreamEntity.ID);
         sql.append(" LIMIT ");
         sql.arg(batchSize);
         return sql;

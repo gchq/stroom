@@ -25,7 +25,7 @@ import stroom.streamstore.EffectiveMetaDataCriteria;
 import stroom.streamstore.OldFindStreamCriteria;
 import stroom.streamstore.StreamException;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 
 import java.util.List;
 
@@ -44,7 +44,7 @@ import java.util.List;
  * stream to unlock the file.
  * </p>
  */
-public interface StreamStore extends FindService<Stream, FindStreamCriteria>, FindDeleteService<FindStreamCriteria> {
+public interface StreamStore extends FindService<StreamEntity, FindStreamCriteria>, FindDeleteService<FindStreamCriteria> {
 //    Stream createStream(String streamTypeName,
 //                        String feedName,
 //                        Long effectiveMs);
@@ -60,7 +60,7 @@ public interface StreamStore extends FindService<Stream, FindStreamCriteria>, Fi
 //                                 StreamProcessor streamProcessor,
 //                                 StreamTask streamTask);
 
-    Stream createStream(StreamProperties streamProperties);
+    StreamEntity createStream(StreamProperties streamProperties);
 
     /**
      * Load a stream by id.
@@ -69,7 +69,7 @@ public interface StreamStore extends FindService<Stream, FindStreamCriteria>, Fi
      * @return The loaded stream if it exists (has not been physically deleted)
      * and is not logically deleted or locked, null otherwise.
      */
-    Stream loadStreamById(long id);
+    StreamEntity loadStreamById(long id);
 
     /**
      * Load a stream by id.
@@ -82,7 +82,7 @@ public interface StreamStore extends FindService<Stream, FindStreamCriteria>, Fi
      * else null. Also returns null if one exists but is logically
      * deleted or locked unless <code>anyStatus</code> is true.
      */
-    Stream loadStreamById(long id, boolean anyStatus);
+    StreamEntity loadStreamById(long id, boolean anyStatus);
 
     // /**
     // * Convenience method to use the id from a pre-existing stream object to
@@ -159,7 +159,7 @@ public interface StreamStore extends FindService<Stream, FindStreamCriteria>, Fi
      * @param append allow appending to the stream (or wipe it?)
      * @return the stream to write to
      */
-    StreamTarget openExistingStreamTarget(Stream stream) throws StreamException;
+    StreamTarget openExistingStreamTarget(StreamEntity stream) throws StreamException;
 
     /**
      * <p>
@@ -182,9 +182,9 @@ public interface StreamStore extends FindService<Stream, FindStreamCriteria>, Fi
      *
      * @return items deleted
      */
-    Long deleteStream(Stream stream);
+    Long deleteStream(StreamEntity stream);
 
-    BaseResultList<Stream> find(OldFindStreamCriteria findStreamCriteria);
+    BaseResultList<StreamEntity> find(OldFindStreamCriteria findStreamCriteria);
 
     /**
      * <p>
@@ -204,7 +204,7 @@ public interface StreamStore extends FindService<Stream, FindStreamCriteria>, Fi
      * @param criteria the search criteria
      * @return the list of matches
      */
-    List<Stream> findEffectiveStream(EffectiveMetaDataCriteria criteria);
+    List<StreamEntity> findEffectiveStream(EffectiveMetaDataCriteria criteria);
 
     /**
      * Return the number of open locks.

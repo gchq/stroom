@@ -38,7 +38,7 @@ import stroom.streamstore.OldFindStreamCriteria;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.shared.Limits;
 import stroom.streamstore.shared.QueryData;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamtask.StreamTaskCreatorTransactionHelper.CreatedTasks;
@@ -788,7 +788,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                 tracker = streamTaskTransactionHelper.saveTracker(tracker);
 
                 // Create a task for each stream reference.
-                final Map<Stream, InclusiveRanges> map = createStreamMap(result);
+                final Map<StreamEntity, InclusiveRanges> map = createStreamMap(result);
                 final CreatedTasks createdTasks = streamTaskTransactionHelper.createNewTasks(filter, tracker,
                         streamQueryTime, map, node, recentStreamInfo, reachedLimit);
                 // Transfer the newly created (and available) tasks to the
@@ -822,14 +822,14 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         final StreamProcessorFilterTracker updatedTracker = streamTaskTransactionHelper.saveTracker(tracker);
 
         // This will contain locked and unlocked streams
-        final List<Stream> streamList = streamTaskTransactionHelper.runSelectStreamQuery(
+        final List<StreamEntity> streamList = streamTaskTransactionHelper.runSelectStreamQuery(
                 findStreamCriteria,
                 updatedTracker.getMinStreamId(),
                 requiredTasks);
 
         // Just create regular stream processing tasks.
-        final Map<Stream, InclusiveRanges> map = new HashMap<>();
-        for (final Stream stream : streamList) {
+        final Map<StreamEntity, InclusiveRanges> map = new HashMap<>();
+        for (final StreamEntity stream : streamList) {
             map.put(stream, null);
         }
 
@@ -841,13 +841,13 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         exhaustedFilterMap.put(filter.getId(), createdTasks.getTotalTasksCreated() == 0);
     }
 
-    private Map<Stream, InclusiveRanges> createStreamMap(final EventRefs eventRefs) {
+    private Map<StreamEntity, InclusiveRanges> createStreamMap(final EventRefs eventRefs) {
         final int maxRangesPerStream = 1000;
-        final Map<Stream, InclusiveRanges> streamMap = new HashMap<>();
+        final Map<StreamEntity, InclusiveRanges> streamMap = new HashMap<>();
 
         if (eventRefs != null) {
             long currentStreamId = -1;
-            Stream currentStream = null;
+            StreamEntity currentStream = null;
             InclusiveRanges ranges = null;
             boolean trimmed = false;
             for (final EventRef ref : eventRefs) {

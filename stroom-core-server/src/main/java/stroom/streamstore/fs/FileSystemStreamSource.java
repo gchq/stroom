@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
 import stroom.io.StreamCloser;
 import stroom.streamstore.api.StreamSource;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;
@@ -37,7 +37,7 @@ import java.nio.file.Path;
 public final class FileSystemStreamSource implements StreamSource {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamSource.class);
     private final StreamCloser streamCloser = new StreamCloser();
-    private Stream stream;
+    private StreamEntity stream;
     private StreamVolume volume;
     private StreamType streamType;
     private MetaMap attributeMap;
@@ -45,7 +45,7 @@ public final class FileSystemStreamSource implements StreamSource {
     private Path file;
     private FileSystemStreamSource parent;
 
-    private FileSystemStreamSource(final Stream stream, final StreamVolume volume, final StreamType streamType) {
+    private FileSystemStreamSource(final StreamEntity stream, final StreamVolume volume, final StreamType streamType) {
         this.stream = stream;
         this.volume = volume;
         this.streamType = streamType;
@@ -68,7 +68,7 @@ public final class FileSystemStreamSource implements StreamSource {
      * @return A new file system stream source or null if a file cannot be
      * created.
      */
-    public static FileSystemStreamSource create(final Stream stream, final StreamVolume volume,
+    public static FileSystemStreamSource create(final StreamEntity stream, final StreamVolume volume,
                                                 final StreamType streamType) {
         return new FileSystemStreamSource(stream, volume, streamType);
     }
@@ -115,11 +115,11 @@ public final class FileSystemStreamSource implements StreamSource {
     }
 
     @Override
-    public Stream getStream() {
+    public StreamEntity getStream() {
         return stream;
     }
 
-    public void setStream(final Stream stream) {
+    public void setStream(final StreamEntity stream) {
         this.stream = stream;
     }
 

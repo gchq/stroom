@@ -32,7 +32,7 @@ import stroom.streamstore.StreamUploadTask;
 import stroom.streamstore.fs.serializable.NestedStreamTarget;
 import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.task.TaskManager;
@@ -166,15 +166,15 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
         taskManager.exec(new StreamUploadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, "test.zip", file, feedName,
                 StreamType.RAW_EVENTS.getName(), null, extraMeta));
 
-        final List<Stream> streamList = streamStore.find(findStreamCriteria);
+        final List<StreamEntity> streamList = streamStore.find(findStreamCriteria);
 
         Assert.assertEquals(2, streamList.size());
 
-        final Stream originalStream = streamTarget.getStream();
+        final StreamEntity originalStream = streamTarget.getStream();
 
         streamAttributeValueFlush.flush();
 
-        for (final Stream stream : streamList) {
+        for (final StreamEntity stream : streamList) {
             Assert.assertEquals(StreamStatus.UNLOCKED, stream.getStatus());
             final StreamSource streamSource = streamStore.openStreamSource(stream.getId());
 

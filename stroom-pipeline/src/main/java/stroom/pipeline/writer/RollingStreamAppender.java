@@ -36,7 +36,7 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.task.TaskContext;
 
 import javax.inject.Inject;
@@ -113,7 +113,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
             if (feedRef != null) {
                 feed = feedRef.getName();
             } else {
-                final Stream parentStream = streamHolder.getStream();
+                final StreamEntity parentStream = streamHolder.getStream();
                 if (parentStream == null) {
                     throw new ProcessException("Unable to determine feed as no parent stream set");
                 }

@@ -43,7 +43,7 @@ import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamAttributeValue;
@@ -206,7 +206,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         createStream(FEED1, 1L, null);
         createStream(FEED2, 1L, null);
 //        criteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
-        final BaseResultList<Stream> streams = streamStore.find(criteria);
+        final BaseResultList<StreamEntity> streams = streamStore.find(criteria);
         Assert.assertEquals(expectedStreams, streams.size());
 
         streamStore.findDelete(new FindStreamCriteria());
@@ -243,15 +243,15 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         streamStore.closeStreamTarget(grandChildTarget);
 
         FindStreamCriteria findStreamCriteria = FindStreamCriteria.createWithStream(childTarget.getStream());
-        findStreamCriteria.getFetchSet().add(Stream.ENTITY_TYPE);
-        List<Stream> relationList = streamStore.find(findStreamCriteria);
+        findStreamCriteria.getFetchSet().add(StreamEntity.ENTITY_TYPE);
+        List<StreamEntity> relationList = streamStore.find(findStreamCriteria);
 
         Assert.assertEquals(streamTarget.getStream(), relationList.get(0));
         Assert.assertEquals(childTarget.getStream(), relationList.get(1));
         Assert.assertEquals(grandChildTarget.getStream(), relationList.get(2));
 
         findStreamCriteria = FindStreamCriteria.createWithStream(grandChildTarget.getStream());
-        findStreamCriteria.getFetchSet().add(Stream.ENTITY_TYPE);
+        findStreamCriteria.getFetchSet().add(StreamEntity.ENTITY_TYPE);
 
         relationList = streamStore.find(findStreamCriteria);
 
@@ -262,7 +262,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
     @Test
     public void testFindDeleteAndUndelete() throws IOException {
-        final Stream stream = createStream(FEED1, 1L, null);
+        final StreamEntity stream = createStream(FEED1, 1L, null);
 
         FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
         findStreamCriteria.obtainSelectedIdSet().add(stream.getId());
@@ -291,16 +291,16 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         Assert.assertEquals(1L, streamStore.find(findStreamCriteria).size());
     }
 
-    private Stream createStream(final String feedName, final Long streamTaskId, final Long parentStreamId)
+    private StreamEntity createStream(final String feedName, final Long streamTaskId, final Long parentStreamId)
             throws IOException {
         StreamTask streamTask = null;
         if (streamTaskId != null) {
             streamTask = new StreamTask();
             streamTask.setId(streamTaskId);
         }
-        Stream parent = null;
+        StreamEntity parent = null;
         if (parentStreamId != null) {
-            parent = Stream.createStub(parentStreamId);
+            parent = StreamEntity.createStub(parentStreamId);
         }
 
         final String testString = FileSystemTestUtil.getUniqueTestString();
@@ -352,7 +352,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
         streamTarget.getStream().getFeed().getName();
-        Stream exactMetaData = streamTarget.getStream();
+        StreamEntity exactMetaData = streamTarget.getStream();
         streamTarget.getOutputStream().write(testString.getBytes(StreamUtil.DEFAULT_CHARSET));
         streamStore.closeStreamTarget(streamTarget);
 
@@ -372,10 +372,10 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         // Finished
         streamStore.closeStreamSource(streamSource);
 
-        final List<Stream> list = streamStore.find(FindStreamCriteria.createWithStreamType(StreamType.RAW_EVENTS));
+        final List<StreamEntity> list = streamStore.find(FindStreamCriteria.createWithStreamType(StreamType.RAW_EVENTS));
 
         boolean foundOne = false;
-        for (final Stream result : list) {
+        for (final StreamEntity result : list) {
             Assert.assertNotNull(FileSystemStreamTypeUtil.getDirectory(result, StreamType.RAW_EVENTS));
             Assert.assertNotNull(FileSystemStreamTypeUtil.getBaseName(result));
             if (FileSystemStreamTypeUtil.getBaseName(result)
@@ -411,7 +411,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                 .build();
 
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
-        final Stream stream = streamTarget.getStream();
+        final StreamEntity stream = streamTarget.getStream();
         streamTarget.getOutputStream().write(testString.getBytes(StreamUtil.DEFAULT_CHARSET));
         streamStore.closeStreamTarget(streamTarget);
 
@@ -448,7 +448,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                 .build();
 
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
-        final Stream stream = streamTarget.getStream();
+        final StreamEntity stream = streamTarget.getStream();
 
         if (DeleteTestStyle.META.equals(style)) {
             // Finished
@@ -531,13 +531,13 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                 .build();
 
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
-        final Stream exactMetaData = streamTarget.getStream();
+        final StreamEntity exactMetaData = streamTarget.getStream();
         streamTarget.getOutputStream().write(testString.getBytes(StreamUtil.DEFAULT_CHARSET));
         streamTarget.getAttributeMap().put(StreamAttributeConstants.REC_READ, "10");
         streamTarget.getAttributeMap().put(StreamAttributeConstants.REC_WRITE, "20");
         streamStore.closeStreamTarget(streamTarget);
 
-        final Stream reloadMetaData = streamStore.find(FindStreamCriteria.createWithStream(exactMetaData)).get(0);
+        final StreamEntity reloadMetaData = streamStore.find(FindStreamCriteria.createWithStream(exactMetaData)).get(0);
 
         final StreamSource streamSource = streamStore.openStreamSource(reloadMetaData.getId());
 
@@ -564,10 +564,10 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                 .build();
 
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
-        final Stream exactMetaData = streamTarget.getStream();
+        final StreamEntity exactMetaData = streamTarget.getStream();
         streamStore.closeStreamTarget(streamTarget);
 
-        final Stream reloadMetaData = streamStore.find(FindStreamCriteria.createWithStream(exactMetaData)).get(0);
+        final StreamEntity reloadMetaData = streamStore.find(FindStreamCriteria.createWithStream(exactMetaData)).get(0);
 
         final StreamSource streamSource = streamStore.openStreamSource(reloadMetaData.getId());
         final InputStream is = streamSource.getInputStream();
@@ -583,9 +583,9 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         final String feed3 = FileSystemTestUtil.getUniqueTestString();
 
 //        setupFeed(feed1);
-        final Stream refData1 = buildRefData(feed2, 2008, 2, StreamType.REFERENCE.getName(), false);
-        final Stream refData2 = buildRefData(feed2, 2009, 2, StreamType.REFERENCE.getName(), false);
-        final Stream refData3 = buildRefData(feed2, 2010, 2, StreamType.REFERENCE.getName(), false);
+        final StreamEntity refData1 = buildRefData(feed2, 2008, 2, StreamType.REFERENCE.getName(), false);
+        final StreamEntity refData2 = buildRefData(feed2, 2009, 2, StreamType.REFERENCE.getName(), false);
+        final StreamEntity refData3 = buildRefData(feed2, 2010, 2, StreamType.REFERENCE.getName(), false);
 
         // These 2 should get ignored as one is locked and the other is RAW
         final HashSet<Long> invalidFeeds = new HashSet<>();
@@ -610,7 +610,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         criteria.setEffectivePeriod(new Period(DateUtil.parseNormalDateTimeString("2009-01-01T00:00:00.000Z"),
                 DateUtil.parseNormalDateTimeString("2010-01-01T00:00:00.000Z")));
 
-        List<Stream> list = streamStore.findEffectiveStream(criteria);
+        List<StreamEntity> list = streamStore.findEffectiveStream(criteria);
 
         // Make sure the list contains what it should.
         verifyList(list, refData1, refData2);
@@ -634,16 +634,16 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
      * @param list
      * @param expected
      */
-    private void verifyList(final List<Stream> list, final Stream... expected) {
+    private void verifyList(final List<StreamEntity> list, final StreamEntity... expected) {
         Assert.assertNotNull(list);
         Assert.assertEquals(expected.length, list.size());
-        for (final Stream stream : expected) {
+        for (final StreamEntity stream : expected) {
             Assert.assertTrue(list.contains(stream));
         }
     }
 
-    private Stream buildRefData(final String feed, final int year, final int month, final String type,
-                                final boolean lock) throws IOException {
+    private StreamEntity buildRefData(final String feed, final int year, final int month, final String type,
+                                      final boolean lock) throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
         final StreamProperties streamProperties = new StreamProperties.Builder()
@@ -680,7 +680,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         // Create tasks.
         streamTaskCreator.createTasks(new SimpleTaskContext());
 
-        Stream reloadedStream = streamStore.loadStreamById(streamTarget.getStream().getId());
+        StreamEntity reloadedStream = streamStore.loadStreamById(streamTarget.getStream().getId());
         Assert.assertNotNull(reloadedStream);
 
         try {
@@ -726,7 +726,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         streamTarget.getAttributeMap().put(StreamAttributeConstants.REC_READ, "100");
         streamStore.closeStreamTarget(streamTarget);
 
-        Stream stream = streamTarget.getStream();
+        StreamEntity stream = streamTarget.getStream();
 
         final Set<StreamVolume> volumes = ((FileSystemStreamStore) streamStore).findStreamVolume(stream.getId());
         final Set<Path> rootFile = new HashSet<>();

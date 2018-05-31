@@ -32,7 +32,7 @@ import stroom.streamstore.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.fs.serializable.RawInputSegmentWriter;
 import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
 import stroom.task.TaskContext;
@@ -78,7 +78,7 @@ public abstract class AbstractBenchmark {
         Arrays.asList(args).forEach(arg -> LOGGER.info(arg.toString()));
     }
 
-    protected Stream writeData(final String feedName, final String streamTypeName, final String data) {
+    protected StreamEntity writeData(final String feedName, final String streamTypeName, final String data) {
         // Add the associated data to the stream store.
         final StreamProperties streamProperties = new StreamProperties.Builder()
                         .feedName(feedName)
@@ -141,8 +141,8 @@ public abstract class AbstractBenchmark {
         }
         final FindStreamCriteria criteria = new FindStreamCriteria();
         criteria.setExpression(builder.build());
-        final BaseResultList<Stream> streams = streamStore.find(criteria);
-        final Stream targetStream = streams.getFirst();
+        final BaseResultList<StreamEntity> streams = streamStore.find(criteria);
+        final StreamEntity targetStream = streams.getFirst();
 
         // Get back translated result.
         final StreamSource target = streamStore.openStreamSource(targetStream.getId());

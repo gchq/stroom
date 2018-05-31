@@ -17,7 +17,7 @@
 package stroom.streamstore.fs;
 
 import stroom.node.shared.Volume;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamType.FileStoreType;
 import stroom.streamstore.shared.StreamVolume;
@@ -45,7 +45,7 @@ public class FileSystemStreamTypeUtil {
     private static final String FILE_SEPERATOR_CHAR = "=";
     private static final String STORE_NAME = "store";
 
-    private static String createFilePathBase(final Volume volume, final Stream stream, final StreamType streamType) {
+    private static String createFilePathBase(final Volume volume, final StreamEntity stream, final StreamType streamType) {
         return volume.getPath() +
                 SEPERATOR_CHAR +
                 STORE_NAME +
@@ -143,7 +143,7 @@ public class FileSystemStreamTypeUtil {
      * [feedid]_[streamid]
      * </p>
      */
-    public static String getBaseName(Stream stream) {
+    public static String getBaseName(StreamEntity stream) {
         if (!stream.isPersistent()) {
             throw new RuntimeException("Can't build a file path until the meta data is persistent");
         }
@@ -152,7 +152,7 @@ public class FileSystemStreamTypeUtil {
                 FileSystemPrefixUtil.padId(stream.getId());
     }
 
-    public static String getDirectory(Stream stream, StreamType streamType) {
+    public static String getDirectory(StreamEntity stream, StreamType streamType) {
         StringBuilder builder = new StringBuilder();
         builder.append(streamType.getPath());
         builder.append(FileSystemStreamTypeUtil.SEPERATOR_CHAR);
@@ -196,7 +196,7 @@ public class FileSystemStreamTypeUtil {
     /**
      * Return a File IO object.
      */
-    public static Path createRootStreamFile(final Volume volume, final Stream stream, final StreamType streamType) {
+    public static Path createRootStreamFile(final Volume volume, final StreamEntity stream, final StreamType streamType) {
         final String path = createFilePathBase(volume, stream, streamType) +
                 "." +
                 streamType.getExtension() +

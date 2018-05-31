@@ -29,7 +29,7 @@ import stroom.docref.DocRef;
 import stroom.streamstore.OldFindStreamCriteria;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.shared.Feed;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamTask;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -70,9 +70,9 @@ public class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrat
 
         commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamType.RAW_EVENTS.getName());
         Assert.assertEquals(0, commonTestControl.countEntity(StreamTask.class));
-        final List<Stream> streams = streamStore.find(new OldFindStreamCriteria());
+        final List<StreamEntity> streams = streamStore.find(new OldFindStreamCriteria());
         Assert.assertEquals(1, streams.size());
-        final Stream stream = streams.get(0);
+        final StreamEntity stream = streams.get(0);
         final Feed feed = stream.getFeed();
 
         OldFindStreamCriteria findStreamCriteria = new OldFindStreamCriteria();

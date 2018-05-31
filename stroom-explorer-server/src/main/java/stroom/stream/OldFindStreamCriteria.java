@@ -25,7 +25,7 @@ import stroom.entity.shared.Period;
 import stroom.pipeline.OldPipelineEntity;
 import stroom.streamstore.shared.Feed;
 import stroom.streamstore.shared.QueryData;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeCondition;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
@@ -61,10 +61,10 @@ public class OldFindStreamCriteria extends BaseCriteria {
     private IncludeExcludeEntityIdSet<Feed> feeds;
     private EntityIdSet<OldPipelineEntity> pipelineIdSet;
     private EntityIdSet<StreamType> streamTypeIdSet;
-    private EntityIdSet<Stream> streamIdSet;
+    private EntityIdSet<StreamEntity> streamIdSet;
     private CriteriaSet<StreamStatus> statusSet;
     private IdRange streamIdRange;
-    private EntityIdSet<Stream> parentStreamIdSet;
+    private EntityIdSet<StreamEntity> parentStreamIdSet;
     private Period createPeriod;
     private Period effectivePeriod;
     private Period statusPeriod;
@@ -198,15 +198,15 @@ public class OldFindStreamCriteria extends BaseCriteria {
         return streamTypeIdSet;
     }
 
-    public EntityIdSet<Stream> getStreamIdSet() {
+    public EntityIdSet<StreamEntity> getStreamIdSet() {
         return streamIdSet;
     }
 
-    public void setStreamIdSet(final EntityIdSet<Stream> streamIdSet) {
+    public void setStreamIdSet(final EntityIdSet<StreamEntity> streamIdSet) {
         this.streamIdSet = streamIdSet;
     }
 
-    public EntityIdSet<Stream> obtainStreamIdSet() {
+    public EntityIdSet<StreamEntity> obtainStreamIdSet() {
         if (streamIdSet == null) {
             streamIdSet = new EntityIdSet<>();
         }
@@ -228,15 +228,15 @@ public class OldFindStreamCriteria extends BaseCriteria {
         return streamIdRange;
     }
 
-    public EntityIdSet<Stream> getParentStreamIdSet() {
+    public EntityIdSet<StreamEntity> getParentStreamIdSet() {
         return parentStreamIdSet;
     }
 
-    public void setParentStreamIdSet(final EntityIdSet<Stream> parentStreamIdSet) {
+    public void setParentStreamIdSet(final EntityIdSet<StreamEntity> parentStreamIdSet) {
         this.parentStreamIdSet = parentStreamIdSet;
     }
 
-    public EntityIdSet<Stream> obtainParentStreamIdSet() {
+    public EntityIdSet<StreamEntity> obtainParentStreamIdSet() {
         if (parentStreamIdSet == null) {
             parentStreamIdSet = new EntityIdSet<>();
         }

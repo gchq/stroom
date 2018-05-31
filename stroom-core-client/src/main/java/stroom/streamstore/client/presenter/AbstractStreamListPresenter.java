@@ -41,7 +41,7 @@ import stroom.feed.shared.FeedDoc;
 import stroom.node.shared.Volume;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamStatus;
@@ -118,8 +118,8 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
                 equalsList = false;
             } else {
                 for (int i = 0; i < oldList.size(); i++) {
-                    final Stream oldStream = oldList.get(i).getStream();
-                    final Stream newStream = newList.get(i).getStream();
+                    final StreamEntity oldStream = oldList.get(i).getStream();
+                    final StreamEntity newStream = newList.get(i).getStream();
 
                     if (!oldStream.equalsEntityVersion(newStream)) {
                         equalsList = false;

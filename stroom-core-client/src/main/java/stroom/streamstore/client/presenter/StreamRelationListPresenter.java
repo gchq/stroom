@@ -33,7 +33,7 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamDataSource;
@@ -76,7 +76,7 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
             final FindStreamAttributeMapCriteria criteria = new FindStreamAttributeMapCriteria();
             final FindStreamCriteria findStreamCriteria = criteria.obtainFindStreamCriteria();
             findStreamCriteria.setExpression(builder.build());
-            findStreamCriteria.getFetchSet().add(Stream.ENTITY_TYPE);
+            findStreamCriteria.getFetchSet().add(StreamEntity.ENTITY_TYPE);
             findStreamCriteria.getFetchSet().add(FeedDoc.DOCUMENT_TYPE);
             findStreamCriteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
             findStreamCriteria.getFetchSet().add(StreamType.ENTITY_TYPE);
@@ -93,12 +93,12 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
         // Store streams against id.
         streamMap.clear();
         for (final StreamAttributeMap row : data) {
-            final Stream stream = row.getStream();
+            final StreamEntity stream = row.getStream();
             streamMap.put(stream.getId(), row);
         }
 
         for (final StreamAttributeMap row : data) {
-            final Stream stream = row.getStream();
+            final StreamEntity stream = row.getStream();
             streamMap.put(stream.getId(), row);
         }
 
@@ -123,7 +123,7 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
     private void addChildren(final StreamAttributeMap parent, final List<StreamAttributeMap> data,
                              final List<StreamAttributeMap> newData, final int depth) {
         for (final StreamAttributeMap row : data) {
-            final Stream stream = row.getStream();
+            final StreamEntity stream = row.getStream();
 
             if (parent == null) {
                 // Add roots.

@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.util.SqlBuilder;
 import stroom.jobsystem.ClusterLockService;
 import stroom.properties.StroomPropertyService;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.task.TaskContext;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
@@ -159,7 +159,7 @@ public abstract class AbstractBatchDeleteExecutor {
                                         final long total) {
         info("Deleting {} (total={})", type, total);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        final long count = batchIdTransactionHelper.deleteWithJoin(fromTable, fromColumn, tempIdTable, Stream.ID);
+        final long count = batchIdTransactionHelper.deleteWithJoin(fromTable, fromColumn, tempIdTable, StreamEntity.ID);
         LOGGER.debug("Deleted {} {} in {}", new Object[]{count, type, logExecutionTime});
     }
 

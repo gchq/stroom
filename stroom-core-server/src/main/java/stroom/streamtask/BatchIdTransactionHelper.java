@@ -19,7 +19,7 @@ package stroom.streamtask;
 import stroom.entity.StroomDatabaseInfo;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.util.SqlBuilder;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 
 import javax.inject.Inject;
 
@@ -63,7 +63,7 @@ public class BatchIdTransactionHelper {
         sql.append("INSERT INTO ");
         sql.append(tempIdTable);
         sql.append(" (");
-        sql.append(Stream.ID);
+        sql.append(StreamEntity.ID);
         sql.append(") ");
         sql.append(select);
 

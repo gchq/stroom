@@ -30,7 +30,7 @@ import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.fs.serializable.NestedInputStream;
 import stroom.streamstore.fs.serializable.RANestedInputStream;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskContext;
@@ -77,7 +77,7 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
 
     private StreamDownloadResult downloadData(final StreamDownloadTask task, final FindStreamCriteria findStreamCriteria,
                                               Path data, final StreamDownloadSettings settings) {
-        final BaseResultList<Stream> list = streamStore.find(findStreamCriteria);
+        final BaseResultList<StreamEntity> list = streamStore.find(findStreamCriteria);
 
         final StreamDownloadResult result = new StreamDownloadResult();
 
@@ -97,7 +97,7 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
             final LogItemProgress logItemProgress = new LogItemProgress(0, list.size());
             taskContext.info("Stream {}", logItemProgress);
 
-            for (final Stream stream : list) {
+            for (final StreamEntity stream : list) {
                 result.incrementRecordsWritten();
                 logItemProgress.incrementProgress();
 

@@ -25,7 +25,7 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.docref.DocRef;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.shared.StreamProcessor;
@@ -117,7 +117,7 @@ public class StreamMetaDataProvider implements MetaDataProvider {
 
     private String getFeed() {
         return parentData.computeIfAbsent(FEED, k -> {
-            final Stream stream = streamHolder.getStream();
+            final StreamEntity stream = streamHolder.getStream();
             if (stream != null && stream.getFeed() != null) {
                 return stream.getFeed().getName();
             }
@@ -127,7 +127,7 @@ public class StreamMetaDataProvider implements MetaDataProvider {
 
     private String getStreamType() {
         return parentData.computeIfAbsent(STREAM_TYPE, k -> {
-            final Stream stream = streamHolder.getStream();
+            final StreamEntity stream = streamHolder.getStream();
             if (stream != null) {
                 return stream.getStreamType().getName();
             }
@@ -137,7 +137,7 @@ public class StreamMetaDataProvider implements MetaDataProvider {
 
     private String getCreatedTime() {
         return parentData.computeIfAbsent(CREATED_TIME, k -> {
-            final Stream stream = streamHolder.getStream();
+            final StreamEntity stream = streamHolder.getStream();
             if (stream != null) {
                 return DateUtil.createNormalDateTimeString(stream.getCreateMs());
             }
@@ -147,7 +147,7 @@ public class StreamMetaDataProvider implements MetaDataProvider {
 
     private String getEffectiveTime() {
         return parentData.computeIfAbsent(EFFECTIVE_TIME, k -> {
-            final Stream stream = streamHolder.getStream();
+            final StreamEntity stream = streamHolder.getStream();
             if (stream != null) {
                 return DateUtil.createNormalDateTimeString(stream.getEffectiveMs());
             }
@@ -157,7 +157,7 @@ public class StreamMetaDataProvider implements MetaDataProvider {
 
     private String getPipeline() {
         return parentData.computeIfAbsent(PIPELINE, k -> {
-            final Stream stream = streamHolder.getStream();
+            final StreamEntity stream = streamHolder.getStream();
             if (stream != null && stream.getStreamProcessor() != null) {
                 final StreamProcessor streamProcessor = streamProcessorService.load(stream.getStreamProcessor(), FETCH_SET);
                 if (streamProcessor != null && streamProcessor.getPipelineUuid() != null) {

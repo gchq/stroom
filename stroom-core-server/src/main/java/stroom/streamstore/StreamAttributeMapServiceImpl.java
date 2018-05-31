@@ -38,7 +38,7 @@ import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.fs.FileSystemStreamTypeUtil;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamAttributeValue;
@@ -112,14 +112,14 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
             streamCriteria.copyFrom(criteria.getFindStreamCriteria());
             streamCriteria.setSort(StreamDataSource.CREATE_TIME, Direction.DESCENDING, false);
 
-            final boolean includeRelations = streamCriteria.getFetchSet().contains(Stream.ENTITY_TYPE);
+            final boolean includeRelations = streamCriteria.getFetchSet().contains(StreamEntity.ENTITY_TYPE);
             streamCriteria.setFetchSet(new HashSet<>());
             if (includeRelations) {
-                streamCriteria.getFetchSet().add(Stream.ENTITY_TYPE);
+                streamCriteria.getFetchSet().add(StreamEntity.ENTITY_TYPE);
             }
             streamCriteria.getFetchSet().add(StreamType.ENTITY_TYPE);
             // Share the page criteria
-            final BaseResultList<Stream> streamList = streamStore.find(streamCriteria);
+            final BaseResultList<StreamEntity> streamList = streamStore.find(streamCriteria);
 
             if (streamList.size() > 0) {
                 // We need to decorate streams with retention rules as a processing user.
@@ -156,14 +156,14 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
      * Load attributes from database
      */
     private void loadAttributeMapFromDatabase(final FindStreamAttributeMapCriteria criteria,
-                                              final List<StreamAttributeMap> streamMDList, final BaseResultList<Stream> streamList, final StreamAttributeMapRetentionRuleDecorator ruleDecorator) {
+                                              final List<StreamAttributeMap> streamMDList, final BaseResultList<StreamEntity> streamList, final StreamAttributeMapRetentionRuleDecorator ruleDecorator) {
         final Map<Long, StreamAttributeMap> streamMap = new HashMap<>();
 
         // Get a list of valid stream ids.
         final Map<EntityRef, Optional<Object>> entityCache = new HashMap<>();
         final Map<DocRef, Optional<Object>> uuidCache = new HashMap<>();
         final StringBuilder streamIds = new StringBuilder();
-        for (final Stream stream : streamList) {
+        for (final StreamEntity stream : streamList) {
             try {
                 // Resolve Relations
                 resolveRelations(criteria, stream, entityCache, uuidCache);
@@ -234,7 +234,7 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
         streamMap.values().parallelStream().forEach(ruleDecorator::addMatchingRetentionRuleInfo);
     }
 
-    private void resolveRelations(final FindStreamAttributeMapCriteria criteria, final Stream stream, final Map<EntityRef, Optional<Object>> entityCache, final Map<DocRef, Optional<Object>> uuidCache) throws PermissionException {
+    private void resolveRelations(final FindStreamAttributeMapCriteria criteria, final StreamEntity stream, final Map<EntityRef, Optional<Object>> entityCache, final Map<DocRef, Optional<Object>> uuidCache) throws PermissionException {
 //        if (stream.getFeed() != null && criteria.getFetchSet().contains(FeedDoc.DOCUMENT_TYPE)) {
 //            final EntityRef ref = new EntityRef(Feed.ENTITY_TYPE, stream.getFeed().getId());
 //            entityCache.computeIfAbsent(ref, key -> safeOptional(() -> feedService.loadById(key.id))).ifPresent(obj -> stream.setFeed((Feed) obj));
@@ -286,20 +286,20 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
     }
 
     private void loadAttributeMapFromFileSystem(final FindStreamAttributeMapCriteria criteria,
-                                                final List<StreamAttributeMap> streamMDList, final BaseResultList<Stream> streamList, final StreamAttributeMapRetentionRuleDecorator ruleDecorator) {
+                                                final List<StreamAttributeMap> streamMDList, final BaseResultList<StreamEntity> streamList, final StreamAttributeMapRetentionRuleDecorator ruleDecorator) {
         final List<StreamAttributeKey> allKeys = streamAttributeKeyService.findAll();
         final Map<String, StreamAttributeKey> keyMap = new HashMap<>();
         for (final StreamAttributeKey key : allKeys) {
             keyMap.put(key.getName(), key);
         }
 
-        final Map<Stream, StreamAttributeMap> streamMap = new HashMap<>();
+        final Map<StreamEntity, StreamAttributeMap> streamMap = new HashMap<>();
 
         final FindStreamVolumeCriteria findStreamVolumeCriteria = new FindStreamVolumeCriteria();
-        for (final Stream stream : streamList) {
+        for (final StreamEntity stream : streamList) {
             findStreamVolumeCriteria.obtainStreamIdSet().add(stream);
         }
-        findStreamVolumeCriteria.getFetchSet().add(Stream.ENTITY_TYPE);
+        findStreamVolumeCriteria.getFetchSet().add(StreamEntity.ENTITY_TYPE);
         final BaseResultList<StreamVolume> volumeList = streamMaintenanceService.find(findStreamVolumeCriteria);
 
         final Map<EntityRef, Optional<Object>> entityCache = new HashMap<>();
@@ -308,7 +308,7 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
             StreamAttributeMap streamAttributeMap = streamMap.get(streamVolume.getStream());
             if (streamAttributeMap == null) {
                 try {
-                    final Stream stream = streamVolume.getStream();
+                    final StreamEntity stream = streamVolume.getStream();
                     // Resolve Relations
                     resolveRelations(criteria, stream, entityCache, uuidCache);
 

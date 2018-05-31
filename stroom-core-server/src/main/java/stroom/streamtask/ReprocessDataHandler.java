@@ -29,7 +29,7 @@ import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.ReprocessDataInfo;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamtask.shared.ReprocessDataAction;
 import stroom.streamtask.shared.StreamProcessor;
@@ -77,7 +77,7 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
                 criteria.obtainPageRequest().setOffset(0L);
                 criteria.obtainPageRequest().setLength(MAX_STREAM_TO_REPROCESS);
 
-                final BaseResultList<Stream> streams = streamStore.find(criteria);
+                final BaseResultList<StreamEntity> streams = streamStore.find(criteria);
 
                 if (!streams.isExact()) {
                     info.add(new ReprocessDataInfo(Severity.ERROR, "Results exceed " + MAX_STREAM_TO_REPROCESS
@@ -88,13 +88,13 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
                     final StringBuilder unableListSB = new StringBuilder();
                     final StringBuilder submittedListSB = new StringBuilder();
 
-                    final Map<StreamProcessor, EntityIdSet<Stream>> streamToProcessorSet = new HashMap<>();
+                    final Map<StreamProcessor, EntityIdSet<StreamEntity>> streamToProcessorSet = new HashMap<>();
 
-                    for (final Stream stream : streams) {
+                    for (final StreamEntity stream : streams) {
                         // We can only reprocess streams that have a stream
                         // processor and a parent stream id.
                         if (stream.getStreamProcessor() != null && stream.getParentStreamId() != null) {
-                            EntityIdSet<Stream> streamSet = streamToProcessorSet.get(stream.getStreamProcessor());
+                            EntityIdSet<StreamEntity> streamSet = streamToProcessorSet.get(stream.getStreamProcessor());
                             if (streamSet == null) {
                                 streamSet = new EntityIdSet<>();
                                 streamToProcessorSet.put(stream.getStreamProcessor(), streamSet);
@@ -110,7 +110,7 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
                     list.sort(Comparator.comparing(StreamProcessor::getPipelineUuid));
 
                     for (final StreamProcessor streamProcessor : list) {
-                        final EntityIdSet<Stream> streamSet = streamToProcessorSet.get(streamProcessor);
+                        final EntityIdSet<StreamEntity> streamSet = streamToProcessorSet.get(streamProcessor);
 
                         final QueryData queryData = new QueryData();
                         final ExpressionOperator.Builder operator = new ExpressionOperator.Builder(ExpressionOperator.Op.AND);

@@ -22,7 +22,7 @@ import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.fs.serializable.RASegmentInputStream;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
 
@@ -44,7 +44,7 @@ public abstract class AbstractStreamAppenderTest extends AbstractAppenderTest {
               final String encoding) {
         super.test(pipelineRef, dir, name, type, outputReference, encoding);
 
-        final List<Stream> streams = streamStore.find(new FindStreamCriteria());
+        final List<StreamEntity> streams = streamStore.find(new FindStreamCriteria());
         Assert.assertEquals(1, streams.size());
 
         try {

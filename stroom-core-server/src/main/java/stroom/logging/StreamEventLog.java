@@ -40,7 +40,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.Security;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
 
@@ -87,7 +87,7 @@ public class StreamEventLog {
         });
     }
 
-    public void viewStream(final Stream stream, final FeedDoc feed, final StreamType streamType, final Throwable th) {
+    public void viewStream(final StreamEntity stream, final FeedDoc feed, final StreamType streamType, final Throwable th) {
         security.insecure(() -> {
             try {
                 if (stream != null) {
@@ -145,7 +145,7 @@ public class StreamEventLog {
         return null;
     }
 
-    private event.logging.Object createStreamObject(final Stream stream, final FeedDoc feed,
+    private event.logging.Object createStreamObject(final StreamEntity stream, final FeedDoc feed,
                                                     final StreamType streamType) {
         final event.logging.Object object = new event.logging.Object();
         object.setType("Stream");

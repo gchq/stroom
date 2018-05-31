@@ -24,7 +24,7 @@ import stroom.security.Security;
 import stroom.streamstore.EffectiveMetaDataCriteria;
 import stroom.streamstore.MockStreamStore;
 import stroom.streamstore.api.StreamProperties;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.cache.CacheManager;
 import stroom.util.date.DateUtil;
@@ -52,12 +52,12 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
 
         final MockStreamStore mockStreamStore = new MockStreamStore() {
             @Override
-            public List<Stream> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
+            public List<StreamEntity> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
                 findEffectiveStreamSourceCount++;
-                final ArrayList<Stream> results = new ArrayList<>();
+                final ArrayList<StreamEntity> results = new ArrayList<>();
                 long workingDate = criteria.getEffectivePeriod().getFrom();
                 while (workingDate < criteria.getEffectivePeriod().getTo()) {
-                    final Stream stream = createStream(
+                    final StreamEntity stream = createStream(
                             new StreamProperties.Builder()
                                     .feedName(refFeedName)
                                     .streamTypeName(StreamType.RAW_REFERENCE.getName())
@@ -193,10 +193,10 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
 
     private static class MockStore extends MockStreamStore {
         private long callCount = 0;
-        private final List<Stream> streams = new ArrayList<>();
+        private final List<StreamEntity> streams = new ArrayList<>();
 
         @Override
-        public List<Stream> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
+        public List<StreamEntity> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
             callCount++;
 
             return streams.stream()
@@ -207,7 +207,7 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
         }
 
         void addEffectiveStream(final String feedName, long effectiveTimeMs) {
-            final Stream stream = createStream(
+            final StreamEntity stream = createStream(
                     new StreamProperties.Builder()
                             .feedName(feedName)
                             .streamTypeName(StreamType.RAW_REFERENCE.getName())

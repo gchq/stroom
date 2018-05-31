@@ -25,7 +25,7 @@ import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.search.Event;
 import stroom.security.Security;
 import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamPermissionException;
 import stroom.util.shared.Severity;
 
@@ -45,7 +45,7 @@ public class StreamMapCreator {
     private final int eventIdIndex;
 
     private final Security security;
-    private Map<Long, Optional<Stream>> fiteredStreamCache;
+    private Map<Long, Optional<StreamEntity>> fiteredStreamCache;
 
     public StreamMapCreator(final IndexField[] storedFields,
                             final ErrorReceiver errorReceiver,
@@ -84,7 +84,7 @@ public class StreamMapCreator {
 
             if (longStreamId != null && longEventId != null) {
                 // Filter the streams by ones that should be visible to the current user.
-                final Optional<Stream> optional = getStreamById(longStreamId);
+                final Optional<StreamEntity> optional = getStreamById(longStreamId);
                 if (optional.isPresent()) {
                     storedDataMap.compute(longStreamId, (k, v) -> {
                         if (v == null) {
@@ -98,14 +98,14 @@ public class StreamMapCreator {
         });
     }
 
-    private Optional<Stream> getStreamById(final long streamId) {
+    private Optional<StreamEntity> getStreamById(final long streamId) {
         // Create a map to cache stream lookups. If we have cached more than a million streams then discard the map and start again to avoid using too much memory.
         if (fiteredStreamCache == null || fiteredStreamCache.size() > 1000000) {
             fiteredStreamCache = new HashMap<>();
         }
 
         return fiteredStreamCache.computeIfAbsent(streamId, k -> {
-            Stream stream = null;
+            StreamEntity stream = null;
 
             try {
                 // Make sure we are allowed to see this stream. If we aren't then return an empty optional.

@@ -25,7 +25,7 @@ import stroom.node.shared.Rack;
 import stroom.node.shared.Volume;
 import stroom.node.shared.VolumeState;
 import stroom.streamstore.shared.Feed;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.streamstore.shared.StreamType;
@@ -55,7 +55,7 @@ public class TableSqlTool {
             StreamProcessor.TABLE_NAME,
             StreamProcessorFilter.TABLE_NAME,
             StreamType.TABLE_NAME,
-            Stream.TABLE_NAME,
+            StreamEntity.TABLE_NAME,
             StreamAttributeKey.TABLE_NAME,
             StreamAttributeValue.TABLE_NAME,
             StreamVolume.TABLE_NAME,

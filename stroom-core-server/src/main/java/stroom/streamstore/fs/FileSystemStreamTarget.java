@@ -22,7 +22,7 @@ import stroom.feed.MetaMap;
 import stroom.io.SeekableOutputStream;
 import stroom.streamstore.StreamException;
 import stroom.streamstore.api.StreamTarget;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;
 
@@ -47,7 +47,7 @@ public final class FileSystemStreamTarget implements StreamTarget {
     private final Set<StreamVolume> metaDataVolume;
     private final StreamType streamType;
     private final List<FileSystemStreamTarget> childrenAccessed = new ArrayList<>();
-    private Stream stream;
+    private StreamEntity stream;
     private boolean closed;
     private boolean append;
     private MetaMap attributeMap;
@@ -55,7 +55,7 @@ public final class FileSystemStreamTarget implements StreamTarget {
     private Set<Path> files;
     private FileSystemStreamTarget parent;
 
-    private FileSystemStreamTarget(final Stream requestMetaData, final Set<StreamVolume> metaDataVolume,
+    private FileSystemStreamTarget(final StreamEntity requestMetaData, final Set<StreamVolume> metaDataVolume,
                                    final StreamType streamType, final boolean append) {
         this.stream = requestMetaData;
         this.metaDataVolume = metaDataVolume;
@@ -81,7 +81,7 @@ public final class FileSystemStreamTarget implements StreamTarget {
     /**
      * Creates a new file system stream target.
      */
-    public static FileSystemStreamTarget create(final Stream stream, final Set<StreamVolume> metaDataVolume,
+    public static FileSystemStreamTarget create(final StreamEntity stream, final Set<StreamVolume> metaDataVolume,
                                                 final StreamType streamType, final boolean append) {
         return new FileSystemStreamTarget(stream, metaDataVolume, streamType, append);
     }
@@ -134,7 +134,7 @@ public final class FileSystemStreamTarget implements StreamTarget {
     }
 
     @Override
-    public Stream getStream() {
+    public StreamEntity getStream() {
         return stream;
     }
 
@@ -195,7 +195,7 @@ public final class FileSystemStreamTarget implements StreamTarget {
         return outputStream;
     }
 
-    public void setMetaData(final Stream stream) {
+    public void setMetaData(final StreamEntity stream) {
         this.stream = stream;
     }
 

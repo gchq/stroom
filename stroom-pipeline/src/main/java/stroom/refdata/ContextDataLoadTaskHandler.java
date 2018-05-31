@@ -35,7 +35,7 @@ import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.Security;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.StreamProcessorService;
 import stroom.task.AbstractTaskHandler;
@@ -99,7 +99,7 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
             errorReceiverProxy.setErrorReceiver(errorReceiver);
 
             final InputStream inputStream = task.getInputStream();
-            final Stream stream = task.getStream();
+            final StreamEntity stream = task.getStream();
             final String feedName = task.getFeedName();
 
             if (inputStream != null) {

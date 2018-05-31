@@ -40,7 +40,7 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.StreamHolder;
 import stroom.docref.DocRef;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
@@ -112,7 +112,7 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
 
             // Set the stream for decoration purposes.
             final long id = (long) (Math.random() * 1000);
-            final Stream stream = Stream.createStub(id);
+            final StreamEntity stream = StreamEntity.createStub(id);
             streamHolderProvider.get().setStream(stream);
 
             // Create the pipeline.

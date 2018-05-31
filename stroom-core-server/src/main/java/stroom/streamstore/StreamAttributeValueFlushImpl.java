@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
 import stroom.jobsystem.ClusterLockService;
 import stroom.properties.StroomPropertyService;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.util.date.DateUtil;
@@ -70,7 +70,7 @@ class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush {
     }
 
     @Override
-    public void persitAttributes(final Stream stream, final boolean append, final MetaMap metaMap) {
+    public void persitAttributes(final StreamEntity stream, final boolean append, final MetaMap metaMap) {
         queue.add(new AsyncFlush(stream, append, metaMap));
     }
 
@@ -211,17 +211,17 @@ class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush {
     }
 
     public static class AsyncFlush {
-        private final Stream stream;
+        private final StreamEntity stream;
         private final boolean append;
         private final MetaMap metaMap;
 
-        public AsyncFlush(final Stream stream, final boolean append, final MetaMap metaMap) {
+        public AsyncFlush(final StreamEntity stream, final boolean append, final MetaMap metaMap) {
             this.stream = stream;
             this.append = append;
             this.metaMap = metaMap;
         }
 
-        public Stream getStream() {
+        public StreamEntity getStream() {
             return stream;
         }
 

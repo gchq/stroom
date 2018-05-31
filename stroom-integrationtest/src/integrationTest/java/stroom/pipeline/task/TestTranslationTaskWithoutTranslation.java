@@ -20,7 +20,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.node.NodeCache;
 import stroom.streamstore.MockStreamStore;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.tools.StoreCreationTool;
 import stroom.streamtask.StreamProcessorTask;
@@ -82,7 +82,7 @@ public class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegr
         final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(DIR);
         final Path outputDir = StroomPipelineTestFileUtil.getTestOutputDir().resolve(DIR);
 
-        for (final Stream stream : streamStore.getFileData().keySet()) {
+        for (final StreamEntity stream : streamStore.getFileData().keySet()) {
             if (stream.getStreamType() == StreamType.EVENTS) {
                 final byte[] data = streamStore.getFileData().get(stream).get(stream.getStreamType().getId());
 

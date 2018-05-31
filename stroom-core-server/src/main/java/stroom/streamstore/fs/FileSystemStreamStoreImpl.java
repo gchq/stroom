@@ -65,7 +65,7 @@ import stroom.streamstore.StreamTypeService;
 import stroom.streamstore.shared.Feed;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.FindStreamTypeCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeCondition;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeFieldUse;
@@ -117,7 +117,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     private static final Set<String> SOURCE_FETCH_SET;
     private static final FieldMap FIELD_MAP = new FieldMap()
             .add(OldFindStreamCriteria.FIELD_ID, BaseEntity.ID, "id")
-            .add(StreamDataSource.CREATE_TIME, Stream.CREATE_MS, "createMs");
+            .add(StreamDataSource.CREATE_TIME, StreamEntity.CREATE_MS, "createMs");
 
     static {
         final Set<String> set = new HashSet<>();
@@ -256,11 +256,11 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 //    }
 
     @Override
-    public Stream createStream(final StreamProperties streamProperties) {
+    public StreamEntity createStream(final StreamProperties streamProperties) {
         final StreamType streamType = streamTypeService.getOrCreate(streamProperties.getStreamTypeName());
         final Feed feed = feedService.getOrCreate(streamProperties.getFeedName());
 
-        final Stream stream = new Stream();
+        final StreamEntity stream = new StreamEntity();
 
         if (streamProperties.getParent() != null) {
             stream.setParentStreamId(streamProperties.getParent().getId());
@@ -287,7 +287,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
      * and is not logically deleted or locked, null otherwise.
      */
     @Override
-    public Stream loadStreamById(final long id) {
+    public StreamEntity loadStreamById(final long id) {
         return loadStreamById(id, null, false);
     }
 
@@ -303,19 +303,19 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
      * deleted or locked unless <code>anyStatus</code> is true.
      */
     @Override
-    public Stream loadStreamById(final long id, final boolean anyStatus) {
+    public StreamEntity loadStreamById(final long id, final boolean anyStatus) {
         return loadStreamById(id, null, anyStatus);
     }
 
     // @Override
     @SuppressWarnings("unchecked")
-    private Stream loadStreamById(final long id, final Set<String> fetchSet, final boolean anyStatus) {
-        Stream entity = null;
+    private StreamEntity loadStreamById(final long id, final Set<String> fetchSet, final boolean anyStatus) {
+        StreamEntity entity = null;
 
         final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT e");
         sql.append(" FROM ");
-        sql.append(Stream.class.getName());
+        sql.append(StreamEntity.class.getName());
         sql.append(" AS e");
 
         // Always fetch feed when loading an individual stream.
@@ -336,7 +336,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         sql.append(" WHERE e.id = ");
         sql.arg(id);
 
-        final List<Stream> resultList = entityManager.executeQueryResultList(sql);
+        final List<StreamEntity> resultList = entityManager.executeQueryResultList(sql);
         if (resultList != null && resultList.size() > 0) {
             entity = resultList.get(0);
             if (!anyStatus) {
@@ -397,7 +397,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     public StreamSource openStreamSource(final long streamId, final boolean anyStatus) throws StreamException {
         StreamSource streamSource = null;
 
-        final Stream stream = loadStreamById(streamId, SOURCE_FETCH_SET, anyStatus);
+        final StreamEntity stream = loadStreamById(streamId, SOURCE_FETCH_SET, anyStatus);
         if (stream != null) {
             LOGGER.debug("openStreamSource() {}", stream.getId());
 
@@ -423,7 +423,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     /**
      * Utility to lock a stream.
      */
-    private Set<StreamVolume> obtainLockForUpdate(final Stream stream) throws StreamException {
+    private Set<StreamVolume> obtainLockForUpdate(final StreamEntity stream) throws StreamException {
         LOGGER.debug("obtainLock() Entry " + stream);
         Set<StreamVolume> lock;
         try {
@@ -433,7 +433,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
                 if (lock.isEmpty()) {
                     throw new StreamException("Not all volumes are unlocked");
                 }
-                final Stream dbStream = lock.iterator().next().getStream();
+                final StreamEntity dbStream = lock.iterator().next().getStream();
                 dbStream.updateStatus(StreamStatus.LOCKED);
 
                 entityManager.saveEntity(dbStream);
@@ -481,7 +481,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 //        throw new StreamException(ex);
     }
 
-    private Stream unLock(final Stream stream, final MetaMap metaMap, final boolean append) {
+    private StreamEntity unLock(final StreamEntity stream, final MetaMap metaMap, final boolean append) {
         if (StreamStatus.UNLOCKED.equals(stream.getStatus())) {
             throw new IllegalStateException("Attempt to unlock a stream that is already unlocked");
         }
@@ -498,7 +498,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         LOGGER.debug("unlock() " + stream);
         stream.updateStatus(StreamStatus.UNLOCKED);
         // Attach object (may throw a lock exception)
-        final Stream lock = entityManager.saveEntity(stream);
+        final StreamEntity lock = entityManager.saveEntity(stream);
 
         // Flush to the DB
         entityManager.flush();
@@ -507,18 +507,18 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
     @Override
     public StreamTarget openStreamTarget(final StreamProperties streamProperties) {
-        final Stream stream = createStream(streamProperties);
+        final StreamEntity stream = createStream(streamProperties);
         return openStreamTarget(stream, false);
     }
 
     @Override
-    public StreamTarget openExistingStreamTarget(final Stream stream) throws StreamException {
+    public StreamTarget openExistingStreamTarget(final StreamEntity stream) throws StreamException {
         return openStreamTarget(stream, true);
     }
 
 //    @Secured(feature = Stream.DOCUMENT_TYPE, permission = DocumentPermissionNames.UPDATE)
     @SuppressWarnings("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE")
-    private StreamTarget openStreamTarget(final Stream stream, final boolean append) {
+    private StreamTarget openStreamTarget(final StreamEntity stream, final boolean append) {
         return entityManagerSupport.transactionResult(em -> {
             LOGGER.debug("openStreamTarget() " + stream);
 
@@ -530,7 +530,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
             final Set<StreamVolume> lock = obtainLockForUpdate(stream);
             if (lock != null) {
-                final Stream dbStream = lock.iterator().next().getStream();
+                final StreamEntity dbStream = lock.iterator().next().getStream();
                 final StreamType streamType = dbStream.getStreamType();
                 final FileSystemStreamTarget target = FileSystemStreamTarget.create(dbStream, lock,
                         streamType, append);
@@ -551,7 +551,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         });
     }
 
-    private void syncAttributes(final Stream stream, final Stream dbStream, final FileSystemStreamTarget target) {
+    private void syncAttributes(final StreamEntity stream, final StreamEntity dbStream, final FileSystemStreamTarget target) {
         updateAttribute(target, StreamAttributeConstants.STREAM_ID, String.valueOf(dbStream.getId()));
 
         if (dbStream.getParentStreamId() != null) {
@@ -586,12 +586,12 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     // }
 
     @Override
-    public Long deleteStream(final Stream stream) {
+    public Long deleteStream(final StreamEntity stream) {
         return security.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> doLogicalDeleteStream(stream, true));
     }
 
-    private Long doLogicalDeleteStream(final Stream stream, final boolean lockCheck) {
-        final Stream loaded = loadStreamById(stream.getId(), SOURCE_FETCH_SET, true);
+    private Long doLogicalDeleteStream(final StreamEntity stream, final boolean lockCheck) {
+        final StreamEntity loaded = loadStreamById(stream.getId(), SOURCE_FETCH_SET, true);
 
 //        if (stream == null || !stream.isPersistent()) {
 //            throw new IllegalArgumentException(
@@ -644,7 +644,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
         // Make sure the stream data is deleted.
         // Attach object (may throw a lock exception)
-        final Stream db = entityManager.saveEntity(target.getStream());
+        final StreamEntity db = entityManager.saveEntity(target.getStream());
         return doLogicalDeleteStream(db, false);
     }
 
@@ -724,7 +724,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     public long getLockCount() {
         final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT count(*) FROM ");
-        sql.append(Stream.class.getName());
+        sql.append(StreamEntity.class.getName());
         sql.append(" S WHERE S.pstatus = ");
         sql.arg(StreamStatus.LOCKED.getPrimitiveValue());
 
@@ -747,15 +747,15 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     }
 
     @Override
-    public BaseResultList<Stream> find(final FindStreamCriteria criteria) {
+    public BaseResultList<StreamEntity> find(final FindStreamCriteria criteria) {
         final OldFindStreamCriteria oldFindStreamCriteria = expressionToFindCriteria.convert(criteria);
         return find(oldFindStreamCriteria);
     }
 
     @Override
     // @Transactional
-    public BaseResultList<Stream> find(final OldFindStreamCriteria originalCriteria) {
-        final boolean relationshipQuery = originalCriteria.getFetchSet().contains(Stream.ENTITY_TYPE);
+    public BaseResultList<StreamEntity> find(final OldFindStreamCriteria originalCriteria) {
+        final boolean relationshipQuery = originalCriteria.getFetchSet().contains(StreamEntity.ENTITY_TYPE);
         final PageRequest pageRequest = originalCriteria.getPageRequest();
         if (relationshipQuery) {
             originalCriteria.setPageRequest(null);
@@ -771,18 +771,18 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
         // If the current user is not an admin and no feeds are readable that have been requested then return an empty array.
         if (!securityContext.isAdmin() && queryCriteria.obtainFeeds().obtainInclude().size() == 0) {
-            final List<Stream> rtnList = new ArrayList<>();
+            final List<StreamEntity> rtnList = new ArrayList<>();
             return BaseResultList.createCriterialBasedList(rtnList, originalCriteria);
         }
 
         final SqlBuilder sql = new SqlBuilder();
         buildRawSelectSQL(queryCriteria, sql);
-        List<Stream> rtnList = entityManager.executeNativeQueryResultList(sql, Stream.class);
+        List<StreamEntity> rtnList = entityManager.executeNativeQueryResultList(sql, StreamEntity.class);
 
         // Bug where union queries return back more results than we expected
         if (queryCriteria.obtainPageRequest().getLength() != null
                 && rtnList.size() > queryCriteria.obtainPageRequest().getLength() + 1) {
-            final ArrayList<Stream> limitedList = new ArrayList<>();
+            final ArrayList<StreamEntity> limitedList = new ArrayList<>();
             for (int i = 0; i <= queryCriteria.obtainPageRequest().getLength(); i++) {
                 limitedList.add(rtnList.get(i));
             }
@@ -792,13 +792,13 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         EntityServiceLogUtil.logQuery(LOGGER, "find()", logExecutionTime, rtnList, sql);
 
         // Only return back children or parents?
-        if (originalCriteria.getFetchSet().contains(Stream.ENTITY_TYPE)) {
-            final List<Stream> workingList = rtnList;
+        if (originalCriteria.getFetchSet().contains(StreamEntity.ENTITY_TYPE)) {
+            final List<StreamEntity> workingList = rtnList;
             rtnList = new ArrayList<>();
 
-            for (final Stream stream : workingList) {
-                Stream parent = stream;
-                Stream lastParent = parent;
+            for (final StreamEntity stream : workingList) {
+                StreamEntity parent = stream;
+                StreamEntity lastParent = parent;
 
                 // Walk up to the root of the tree
                 while (parent.getParentStreamId() != null && (parent = findParent(parent)) != null) {
@@ -809,7 +809,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
                 rtnList.add(lastParent);
 
                 // Add the children
-                List<Stream> children = findChildren(originalCriteria, Collections.singletonList(lastParent));
+                List<StreamEntity> children = findChildren(originalCriteria, Collections.singletonList(lastParent));
                 while (children.size() > 0) {
                     rtnList.addAll(children);
                     children = findChildren(originalCriteria, children);
@@ -817,7 +817,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             }
         }
 
-        for (final Stream stream : rtnList) {
+        for (final StreamEntity stream : rtnList) {
             if (originalCriteria.getFetchSet().contains(StreamProcessor.ENTITY_TYPE)) {
                 stream.setStreamProcessor(streamProcessorService.load(stream.getStreamProcessor()));
                 if (stream.getStreamProcessor() != null) {
@@ -929,7 +929,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     private void rawBuildSQL(final OldFindStreamCriteria criteria, final SqlBuilder sql) {
         sql.append("SELECT S.*");
         sql.append(" FROM ");
-        sql.append(Stream.TABLE_NAME);
+        sql.append(StreamEntity.TABLE_NAME);
         sql.append(" S");
 
         appendJoin(criteria, sql);
@@ -1001,7 +1001,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
                 sql.append(" SAV");
                 sql.append(i, false);
                 sql.append(" ON (S.");
-                sql.append(Stream.ID);
+                sql.append(StreamEntity.ID);
                 sql.append(" = SAV");
                 sql.append(i, false);
                 sql.append(".");
@@ -1102,19 +1102,19 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             }
         }
 
-        sql.appendRangeQuery("S." + Stream.CREATE_MS, criteria.getCreatePeriod());
+        sql.appendRangeQuery("S." + StreamEntity.CREATE_MS, criteria.getCreatePeriod());
 
-        sql.appendRangeQuery("S." + Stream.EFFECTIVE_MS, criteria.getEffectivePeriod());
+        sql.appendRangeQuery("S." + StreamEntity.EFFECTIVE_MS, criteria.getEffectivePeriod());
 
-        sql.appendRangeQuery("S." + Stream.STATUS_MS, criteria.getStatusPeriod());
+        sql.appendRangeQuery("S." + StreamEntity.STATUS_MS, criteria.getStatusPeriod());
 
-        sql.appendRangeQuery("S." + Stream.ID, criteria.getStreamIdRange());
+        sql.appendRangeQuery("S." + StreamEntity.ID, criteria.getStreamIdRange());
 
-        sql.appendEntityIdSetQuery("S." + Stream.ID, criteria.getStreamIdSet());
+        sql.appendEntityIdSetQuery("S." + StreamEntity.ID, criteria.getStreamIdSet());
 
-        sql.appendPrimitiveValueSetQuery("S." + Stream.STATUS, criteria.getStatusSet());
+        sql.appendPrimitiveValueSetQuery("S." + StreamEntity.STATUS, criteria.getStatusSet());
 
-        sql.appendEntityIdSetQuery("S." + Stream.PARENT_STREAM_ID, criteria.getParentStreamIdSet());
+        sql.appendEntityIdSetQuery("S." + StreamEntity.PARENT_STREAM_ID, criteria.getParentStreamIdSet());
         sql.appendEntityIdSetQuery("S." + StreamType.FOREIGN_KEY, criteria.getStreamTypeIdSet());
         sql.appendIncludeExcludeSetQuery("S." + Feed.FOREIGN_KEY, criteria.getFeeds());
 
@@ -1145,14 +1145,14 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     }
 
     @SuppressWarnings("unchecked")
-    private List<Stream> findChildren(final OldFindStreamCriteria fetchCriteria, final List<Stream> streamList) {
+    private List<StreamEntity> findChildren(final OldFindStreamCriteria fetchCriteria, final List<StreamEntity> streamList) {
         final CriteriaSet<Long> criteriaSet = new CriteriaSet<>();
-        for (final Stream stream : streamList) {
+        for (final StreamEntity stream : streamList) {
             criteriaSet.add(stream.getId());
         }
         final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT s FROM ");
-        sql.append(Stream.class.getName());
+        sql.append(StreamEntity.class.getName());
         sql.append(" s");
         sql.append(" WHERE 1=1");
 
@@ -1165,19 +1165,19 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     }
 
     @SuppressWarnings("unchecked")
-    private Stream findParent(final Stream stream) {
+    private StreamEntity findParent(final StreamEntity stream) {
         final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT s FROM ");
-        sql.append(Stream.class.getName());
+        sql.append(StreamEntity.class.getName());
         sql.append(" s");
         sql.append(" WHERE s.id = ");
         sql.arg(stream.getParentStreamId());
 
-        final List<Stream> parentList = entityManager.executeQueryResultList(sql);
+        final List<StreamEntity> parentList = entityManager.executeQueryResultList(sql);
         if (parentList != null && parentList.size() > 0) {
             return parentList.get(0);
         }
-        return Stream.createStub(stream.getParentStreamId());
+        return StreamEntity.createStub(stream.getParentStreamId());
     }
 
     /**
@@ -1186,14 +1186,14 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
      * </p>
      */
     @SuppressWarnings("unchecked")
-    private List<Stream> findStreamSource(final EffectiveMetaDataCriteria criteria) {
+    private List<StreamEntity> findStreamSource(final EffectiveMetaDataCriteria criteria) {
         final StreamType streamType = getStreamType(criteria.getStreamType());
         final Feed feed = getFeed(criteria.getFeed());
 
         // Build up the HQL
         final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT S FROM ");
-        sql.append(Stream.class.getName());
+        sql.append(StreamEntity.class.getName());
         sql.append(" S WHERE");
         sql.append(" S.streamType.id = ");
         sql.arg(streamType.getId());
@@ -1220,13 +1220,13 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     @Override
     @SuppressWarnings("unchecked")
     // @Transactional
-    public List<Stream> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
+    public List<StreamEntity> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
         final StreamType streamType = getStreamType(criteria.getStreamType());
 
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
         // Find meta data within effective period.
-        final ArrayList<Stream> rtnList = new ArrayList<>(findStreamSource(criteria));
+        final ArrayList<StreamEntity> rtnList = new ArrayList<>(findStreamSource(criteria));
 
         // Find the greatest effective stream time that we can that is less than
         // the from time of the effective period.
@@ -1241,7 +1241,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             // Now load just the 'best' matches up.
             final HqlBuilder sql = new HqlBuilder();
             sql.append("SELECT S FROM ");
-            sql.append(Stream.class.getName());
+            sql.append(StreamEntity.class.getName());
             sql.append(" S WHERE");
             sql.append(" S.streamType.id = ");
             sql.arg(streamType.getId());
@@ -1262,7 +1262,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             sql.append(")");
 
             final LogExecutionTime logExecutionTime2 = new LogExecutionTime();
-            final List<Stream> results = entityManager.executeQueryResultList(sql);
+            final List<StreamEntity> results = entityManager.executeQueryResultList(sql);
             EntityServiceLogUtil.logQuery(LOGGER, "findEffectiveStreamSource()", logExecutionTime2, results, sql);
 
             rtnList.addAll(results);
@@ -1276,11 +1276,11 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     public Period getCreatePeriod() {
         final SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT MIN(");
-        sql.append(Stream.CREATE_MS);
+        sql.append(StreamEntity.CREATE_MS);
         sql.append("), MAX(");
-        sql.append(Stream.CREATE_MS);
+        sql.append(StreamEntity.CREATE_MS);
         sql.append(") FROM ");
-        sql.append(Stream.TABLE_NAME);
+        sql.append(StreamEntity.TABLE_NAME);
 
         Period period = null;
 
@@ -1325,15 +1325,15 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         sql.append(feed.getId());
         sql.append(", ");
         sql.append("MAX(");
-        sql.append(Stream.EFFECTIVE_MS);
+        sql.append(StreamEntity.EFFECTIVE_MS);
         sql.append(") FROM ");
-        sql.append(Stream.TABLE_NAME);
+        sql.append(StreamEntity.TABLE_NAME);
         sql.append(" WHERE ");
-        sql.append(Stream.EFFECTIVE_MS);
+        sql.append(StreamEntity.EFFECTIVE_MS);
         sql.append(" < ");
         sql.arg(criteria.getEffectivePeriod().getFrom());
         sql.append(" AND ");
-        sql.append(Stream.STATUS);
+        sql.append(StreamEntity.STATUS);
         sql.append(" = ");
         sql.arg(StreamStatus.UNLOCKED.getPrimitiveValue());
         sql.append(" AND ");
@@ -1392,7 +1392,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         if (stroomDatabaseInfo.isMysql()) {
             // UPDATE
             sql.append("UPDATE ");
-            sql.append(Stream.TABLE_NAME);
+            sql.append(StreamEntity.TABLE_NAME);
             sql.append(" S");
 
             // JOIN
@@ -1401,18 +1401,18 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             // SET
             incrementVersion(sql, "S.");
 
-            sql.append(Stream.STATUS);
+            sql.append(StreamEntity.STATUS);
             sql.append(" = ");
             sql.arg(newStatus.getPrimitiveValue());
             sql.append(", ");
-            sql.append(Stream.STATUS_MS);
+            sql.append(StreamEntity.STATUS_MS);
             sql.append(" = ");
             sql.arg(System.currentTimeMillis());
 
             // WHERE
             sql.append(" WHERE");
             sql.append(" S.");
-            sql.append(Stream.STATUS);
+            sql.append(StreamEntity.STATUS);
             sql.append(" <> ");
             sql.arg(newStatus.getPrimitiveValue());
 
@@ -1425,17 +1425,17 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         } else {
             // UPDATE
             sql.append("UPDATE ");
-            sql.append(Stream.TABLE_NAME);
+            sql.append(StreamEntity.TABLE_NAME);
             sql.append(" US");
 
             // SET
             incrementVersion(sql, "US.");
 
-            sql.append(Stream.STATUS);
+            sql.append(StreamEntity.STATUS);
             sql.append(" = ");
             sql.arg(newStatus.getPrimitiveValue());
             sql.append(", US.");
-            sql.append(Stream.STATUS_MS);
+            sql.append(StreamEntity.STATUS_MS);
             sql.append(" = ");
             sql.arg(System.currentTimeMillis());
 
@@ -1444,9 +1444,9 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
             // SUB SELECT
             sql.append("SELECT S.");
-            sql.append(Stream.ID);
+            sql.append(StreamEntity.ID);
             sql.append(" FROM ");
-            sql.append(Stream.TABLE_NAME);
+            sql.append(StreamEntity.TABLE_NAME);
             sql.append(" S");
 
             // JOIN
@@ -1455,7 +1455,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             // WHERE
             sql.append(" WHERE");
             sql.append(" S.");
-            sql.append(Stream.STATUS);
+            sql.append(StreamEntity.STATUS);
             sql.append(" <> ");
             sql.arg(newStatus.getPrimitiveValue());
 

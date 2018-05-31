@@ -3,7 +3,7 @@ package stroom.streamstore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.streamstore.shared.Feed;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamtask.shared.StreamProcessor;
@@ -25,7 +25,7 @@ class StreamAttributeMapUtil {
     static Map<String, Object> createAttributeMap(final StreamAttributeMap streamAttributeMap) {
         final Map<String, Object> attributeMap = new HashMap<>();
 
-        final Stream stream = streamAttributeMap.getStream();
+        final StreamEntity stream = streamAttributeMap.getStream();
         if (stream != null) {
             attributeMap.put(StreamDataSource.STREAM_ID, stream.getId());
             attributeMap.put(StreamDataSource.CREATE_TIME, stream.getCreateMs());

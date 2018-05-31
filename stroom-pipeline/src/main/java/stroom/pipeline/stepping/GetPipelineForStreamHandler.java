@@ -28,7 +28,7 @@ import stroom.security.Security;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
@@ -57,7 +57,7 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
             DocRef docRef = null;
 
             // First try and get the pipeline from the selected child stream.
-            Stream childStream = getStream(action.getChildStreamId());
+            StreamEntity childStream = getStream(action.getChildStreamId());
             if (childStream != null) {
                 docRef = getPipeline(childStream);
             }
@@ -99,7 +99,7 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
         });
     }
 
-    private Stream getStream(final Long id) {
+    private StreamEntity getStream(final Long id) {
         if (id == null) {
             return null;
         }
@@ -111,7 +111,7 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
             criteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
             criteria.getFetchSet().add(FeedDoc.DOCUMENT_TYPE);
 
-            final List<Stream> streamList = streamStore.find(criteria);
+            final List<StreamEntity> streamList = streamStore.find(criteria);
             if (streamList != null && streamList.size() > 0) {
                 return streamList.get(0);
             }
@@ -120,7 +120,7 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
         });
     }
 
-    private Stream getFirstChildStream(final Long id) {
+    private StreamEntity getFirstChildStream(final Long id) {
         if (id == null) {
             return null;
         }
@@ -135,7 +135,7 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
         });
     }
 
-    private DocRef getPipeline(final Stream stream) {
+    private DocRef getPipeline(final StreamEntity stream) {
         DocRef docRef = null;
 
         // So we have got the stream so try and get the first pipeline that was

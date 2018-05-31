@@ -22,7 +22,7 @@ import org.junit.runner.RunWith;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.streamstore.shared.Feed;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
@@ -91,7 +91,7 @@ public class TestFileSystemUtil extends StroomUnitTest {
 
     @Test
     public void testCreateRootStreamFile() throws IOException {
-        final Stream md = new Stream();
+        final StreamEntity md = new StreamEntity();
         md.setId(1001001L);
         md.setStreamType(StreamType.EVENTS);
         md.setFeed(Feed.createStub(1));
@@ -105,7 +105,7 @@ public class TestFileSystemUtil extends StroomUnitTest {
 
     @Test
     public void testCreateChildStreamFile() throws IOException {
-        final Stream md = new Stream();
+        final StreamEntity md = new StreamEntity();
         md.setId(1001001L);
         md.setStreamType(StreamType.RAW_EVENTS);
         md.setFeed(Feed.createStub(1));
@@ -244,7 +244,7 @@ public class TestFileSystemUtil extends StroomUnitTest {
 
     @Test
     public void testDirPath() {
-        final Stream md = new Stream();
+        final StreamEntity md = new StreamEntity();
         md.setId(100100L);
         md.setStreamType(StreamType.EVENTS);
         md.setFeed(Feed.createStub(2));
@@ -256,7 +256,7 @@ public class TestFileSystemUtil extends StroomUnitTest {
 
     @Test
     public void testDirPath2() {
-        final Stream md = new Stream();
+        final StreamEntity md = new StreamEntity();
         md.setId(1100100L);
         md.setStreamType(StreamType.EVENTS);
         md.setFeed(Feed.createStub(2));

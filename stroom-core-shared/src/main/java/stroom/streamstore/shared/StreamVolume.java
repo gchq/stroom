@@ -38,7 +38,7 @@ public class StreamVolume extends BaseEntityBig {
             + SQLNameConstants.MS_SUFFIX;
     private static final long serialVersionUID = 6729492408680929025L;
     private Volume volume;
-    private Stream stream;
+    private StreamEntity stream;
 
     public StreamVolume() {
         // Default constructor necessary for GWT serialisation.
@@ -55,12 +55,12 @@ public class StreamVolume extends BaseEntityBig {
     }
 
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = Stream.FOREIGN_KEY)
-    public Stream getStream() {
+    @JoinColumn(name = StreamEntity.FOREIGN_KEY)
+    public StreamEntity getStream() {
         return stream;
     }
 
-    public void setStream(final Stream stream) {
+    public void setStream(final StreamEntity stream) {
         this.stream = stream;
     }
 

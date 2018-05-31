@@ -26,7 +26,7 @@ import stroom.streamstore.StreamAttributeMapService;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.streamtask.shared.StreamProcessor;
@@ -184,7 +184,7 @@ class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor {
     @Override
     public void exec(final StreamProcessor streamProcessor, final StreamProcessorFilter streamProcessorFilter,
                      final StreamTask streamTask, final StreamSource streamSource) {
-        final Stream stream = streamSource.getStream();
+        final StreamEntity stream = streamSource.getStream();
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         final String streamTime = DateUtil.createNormalDateTimeString(stream.getCreateMs());
         LOGGER.info("exec() - Processing stream {} {} - Start", stream, streamTime);

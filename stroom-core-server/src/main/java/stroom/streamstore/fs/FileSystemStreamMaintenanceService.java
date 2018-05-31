@@ -34,7 +34,7 @@ import stroom.streamstore.ScanVolumePathResult;
 import stroom.streamstore.StreamMaintenanceService;
 import stroom.streamstore.StreamRange;
 import stroom.streamstore.StreamTypeService;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamVolume;
 import stroom.util.io.FileUtil;
 
@@ -135,7 +135,7 @@ public class FileSystemStreamMaintenanceService
 
     //    @Override
 //    @Secured(feature = Stream.DOCUMENT_TYPE, permission = DocumentPermissionNames.UPDATE)
-    public Stream save(final Stream stream) {
+    public StreamEntity save(final StreamEntity stream) {
         return entityManager.saveEntity(stream);
     }
 
@@ -184,7 +184,7 @@ public class FileSystemStreamMaintenanceService
     @SuppressWarnings("unchecked")
 //    @Override
     // @Transactional
-    public FileArrayList findAllStreamFile(final Stream stream) {
+    public FileArrayList findAllStreamFile(final StreamEntity stream) {
         final FileArrayList results = new FileArrayList();
         final HqlBuilder sql = new HqlBuilder();
         sql.append("SELECT sv FROM ");

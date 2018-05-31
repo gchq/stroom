@@ -23,7 +23,7 @@ import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
@@ -50,7 +50,7 @@ public class TestMockStreamStore extends StroomUnitTest {
                 .build();
 
         final StreamTarget streamTarget = mockStreamStore.openStreamTarget(streamProperties);
-        final Stream stream = streamTarget.getStream();
+        final StreamEntity stream = streamTarget.getStream();
         streamTarget.getOutputStream().write("PARENT".getBytes(StreamUtil.DEFAULT_CHARSET));
         streamTarget.addChildStream(StreamType.SEGMENT_INDEX).getOutputStream()
                 .write("CHILD".getBytes(StreamUtil.DEFAULT_CHARSET));
@@ -61,7 +61,7 @@ public class TestMockStreamStore extends StroomUnitTest {
 
         Assert.assertEquals(1, mockStreamStore.find(FindStreamCriteria.createWithStream(stream)).size());
 
-        final Stream reload = mockStreamStore.find(FindStreamCriteria.createWithStream(stream)).get(0);
+        final StreamEntity reload = mockStreamStore.find(FindStreamCriteria.createWithStream(stream)).get(0);
 
         final StreamSource streamSource = mockStreamStore.openStreamSource(reload.getId());
 

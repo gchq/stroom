@@ -25,7 +25,7 @@ import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.shared.Severity;
 import stroom.xml.event.EventList;
@@ -189,7 +189,7 @@ public class ReferenceData {
         }
     }
 
-    private MapStore getContextData(final Stream stream,
+    private MapStore getContextData(final StreamEntity stream,
                                     final StreamSourceInputStream contextStream,
                                     final DocRef contextPipeline) {
         if (contextStream != null) {

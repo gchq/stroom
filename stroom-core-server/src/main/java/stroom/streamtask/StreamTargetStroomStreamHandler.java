@@ -35,7 +35,7 @@ import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.serializable.NestedStreamTarget;
 import stroom.streamstore.shared.Feed;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.util.io.CloseableUtil;
@@ -72,7 +72,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     private final StreamStore streamStore;
     private final FeedDocCache feedDocCache;
     private final MetaDataStatistic metaDataStatistics;
-    private final HashSet<Stream> streamSet;
+    private final HashSet<StreamEntity> streamSet;
     private final StroomZipNameSet stroomZipNameSet;
     private final Map<String, Feed> feedMap = new HashMap<>();
     private final Map<String, StreamType> streamTypeMap = new HashMap<>();
@@ -286,7 +286,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
         streamStore.closeStreamTarget(feedStreamTarget.remove(currentFeedName));
     }
 
-    public Set<Stream> getStreamSet() {
+    public Set<StreamEntity> getStreamSet() {
         return Collections.unmodifiableSet(streamSet);
     }
 

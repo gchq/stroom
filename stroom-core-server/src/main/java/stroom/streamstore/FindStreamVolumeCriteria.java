@@ -21,7 +21,7 @@ import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamStatus;
 
 public class FindStreamVolumeCriteria extends BaseCriteria {
@@ -32,9 +32,9 @@ public class FindStreamVolumeCriteria extends BaseCriteria {
     private CriteriaSet<StreamStatus> streamStatusSet = null;
     private EntityIdSet<Node> nodeIdSet = null;
     private EntityIdSet<Volume> volumeIdSet = null;
-    private EntityIdSet<Stream> streamIdSet = null;
+    private EntityIdSet<StreamEntity> streamIdSet = null;
 
-    public static FindStreamVolumeCriteria create(final Stream stream) {
+    public static FindStreamVolumeCriteria create(final StreamEntity stream) {
         FindStreamVolumeCriteria rtn = new FindStreamVolumeCriteria();
         rtn.obtainStreamIdSet().add(stream);
         return rtn;
@@ -66,11 +66,11 @@ public class FindStreamVolumeCriteria extends BaseCriteria {
         return nodeIdSet;
     }
 
-    public EntityIdSet<Stream> getStreamIdSet() {
+    public EntityIdSet<StreamEntity> getStreamIdSet() {
         return streamIdSet;
     }
 
-    public EntityIdSet<Stream> obtainStreamIdSet() {
+    public EntityIdSet<StreamEntity> obtainStreamIdSet() {
         if (streamIdSet == null) {
             streamIdSet = new EntityIdSet<>();
         }

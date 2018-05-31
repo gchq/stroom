@@ -24,7 +24,7 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.FileUtil;
@@ -128,11 +128,11 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         // Query the stream store
         final FindStreamCriteria criteria = new FindStreamCriteria();
         criteria.setExpression(builder.build());
-        final List<Stream> results = streamStore.find(criteria);
+        final List<StreamEntity> results = streamStore.find(criteria);
         System.out.println("Starting dump of " + results.size() + " streams");
 
         int count = 0;
-        for (final Stream stream : results) {
+        for (final StreamEntity stream : results) {
             count++;
             processFile(count, results.size(), streamStore, stream.getId(), dir);
         }

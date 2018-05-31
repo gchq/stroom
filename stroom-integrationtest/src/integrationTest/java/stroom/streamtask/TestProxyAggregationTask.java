@@ -29,7 +29,7 @@ import stroom.streamstore.fs.serializable.NestedInputStream;
 import stroom.streamstore.fs.serializable.RANestedInputStream;
 import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.task.ExecutorProvider;
@@ -122,7 +122,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
         final FindStreamCriteria findStreamCriteria1 = new FindStreamCriteria();
         findStreamCriteria1.setExpression(ExpressionUtil.createFeedExpression(feedName1));
-        final BaseResultList<Stream> resultList1 = streamStore.find(findStreamCriteria1);
+        final BaseResultList<StreamEntity> resultList1 = streamStore.find(findStreamCriteria1);
         Assert.assertEquals("Expecting 2 files to get merged", 1, resultList1.size());
 
         final StreamSource streamSource = streamStore.openStreamSource(resultList1.getFirst().getId());
@@ -149,7 +149,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         final FindStreamCriteria findStreamCriteria2 = new FindStreamCriteria();
         findStreamCriteria2.setExpression(ExpressionUtil.createFeedExpression(feedName2));
 
-        final BaseResultList<Stream> resultList2 = streamStore.find(findStreamCriteria2);
+        final BaseResultList<StreamEntity> resultList2 = streamStore.find(findStreamCriteria2);
 
         Assert.assertEquals("Expecting file 1 ", 1, resultList2.size());
     }
@@ -181,7 +181,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
         final FindStreamCriteria criteria = new FindStreamCriteria();
         criteria.setExpression(ExpressionUtil.createFeedExpression(feedName1));
-        final List<Stream> list = streamStore.find(criteria);
+        final List<StreamEntity> list = streamStore.find(criteria);
         Assert.assertEquals(3, list.size());
 
         StreamSource source = streamStore.openStreamSource(list.get(0).getId());
@@ -255,7 +255,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
         final FindStreamCriteria criteria = new FindStreamCriteria();
         criteria.setExpression(ExpressionUtil.createFeedExpression(feedName1));
-        final List<Stream> list = streamStore.find(criteria);
+        final List<StreamEntity> list = streamStore.find(criteria);
         Assert.assertEquals(1, list.size());
 
         StreamSource source = streamStore.openStreamSource(list.get(0).getId());
@@ -305,7 +305,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
         final FindStreamCriteria criteria = new FindStreamCriteria();
         criteria.setExpression(ExpressionUtil.createFeedExpression(feedName1));
-        final List<Stream> list = streamStore.find(criteria);
+        final List<StreamEntity> list = streamStore.find(criteria);
         Assert.assertEquals(1, list.size());
 
         StreamSource source = streamStore.openStreamSource(list.get(0).getId());

@@ -32,7 +32,7 @@ import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.FileSystemCleanExecutor;
 import stroom.streamstore.fs.FileSystemStreamMaintenanceService;
 import stroom.streamstore.fs.FileSystemUtil;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
 import stroom.task.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -161,7 +161,7 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
     public void testArchiveRemovedFile() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
-        final Stream data = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamType.RAW_EVENTS.getName());
+        final StreamEntity data = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamType.RAW_EVENTS.getName());
 
         Collection<Path> files = streamMaintenanceService.findAllStreamFile(data);
 

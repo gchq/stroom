@@ -38,7 +38,7 @@ import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.fs.serializable.RawInputSegmentWriter;
 import stroom.streamstore.shared.QueryData;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.StreamProcessorFilterService;
@@ -138,7 +138,7 @@ public class CommonTestScenarioCreator {
      * @param feed related
      * @return a basic raw file
      */
-    public Stream createSample2LineRawFile(final String feed, final String streamType) {
+    public StreamEntity createSample2LineRawFile(final String feed, final String streamType) {
         final StreamProperties streamProperties = new StreamProperties.Builder()
                 .feedName(feed)
                 .streamTypeName(streamType)
@@ -156,7 +156,7 @@ public class CommonTestScenarioCreator {
         return target.getStream();
     }
 
-    public Stream createSampleBlankProcessedFile(final String feed, final Stream sourceStream) {
+    public StreamEntity createSampleBlankProcessedFile(final String feed, final StreamEntity sourceStream) {
         final StreamProperties streamProperties = new StreamProperties.Builder()
                 .feedName(feed)
                 .streamTypeName(StreamType.EVENTS.getName())

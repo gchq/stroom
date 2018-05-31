@@ -18,7 +18,7 @@ package stroom.streamtask.shared;
 
 import stroom.entity.shared.BaseEntitySmall;
 import stroom.entity.shared.SQLNameConstants;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.persistence.Column;
@@ -36,8 +36,8 @@ public class StreamProcessorFilterTracker extends BaseEntitySmall {
             + SQLNameConstants.CREATE + SQLNameConstants.MS_SUFFIX;
     public static final String STREAM_CREATE_MS = SQLNameConstants.STREAM + SEP + SQLNameConstants.CREATE
             + SQLNameConstants.MS_SUFFIX;
-    public static final String MIN_STREAM_ID = SQLNameConstants.MIN + SEP + SQLNameConstants.STREAM + SEP + Stream.ID;
-    public static final String MIN_EVENT_ID = SQLNameConstants.MIN + SEP + SQLNameConstants.EVENT + SEP + Stream.ID;
+    public static final String MIN_STREAM_ID = SQLNameConstants.MIN + SEP + SQLNameConstants.STREAM + SEP + StreamEntity.ID;
+    public static final String MIN_EVENT_ID = SQLNameConstants.MIN + SEP + SQLNameConstants.EVENT + SEP + StreamEntity.ID;
     public static final String LAST_POLL_MS = SQLNameConstants.LAST + SEP + SQLNameConstants.POLL
             + SQLNameConstants.MS_SUFFIX;
     public static final String LAST_POLL_TASK_COUNT = SQLNameConstants.LAST + SEP + SQLNameConstants.POLL + SEP

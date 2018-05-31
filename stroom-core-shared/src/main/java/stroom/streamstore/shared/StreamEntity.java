@@ -52,7 +52,7 @@ import javax.persistence.Transient;
  * </ol>
  */
 @Entity(name = "STRM")
-public class Stream extends BaseEntityBig {
+public class StreamEntity extends BaseEntityBig {
     public static final String TABLE_NAME = SQLNameConstants.STREAM;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
     public static final String CREATE_MS = SQLNameConstants.CREATE + SQLNameConstants.MS_SUFFIX;
@@ -99,12 +99,12 @@ public class Stream extends BaseEntityBig {
      */
     private Long parentStreamId;
 
-    public Stream() {
+    public StreamEntity() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public static Stream createStub(final long pk) {
-        final Stream stream = new Stream();
+    public static StreamEntity createStub(final long pk) {
+        final StreamEntity stream = new StreamEntity();
         stream.setStub(pk);
         return stream;
     }

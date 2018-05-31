@@ -27,7 +27,7 @@ import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.fs.FileSystemStreamMaintenanceService;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -67,7 +67,7 @@ public class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
             LOGGER.info("now: %s", DateUtil.createNormalDateTimeString(now));
             LOGGER.info("timeOutsideRetentionPeriod: %s", DateUtil.createNormalDateTimeString(timeOutsideRetentionPeriod));
 
-            final Stream streamInsideRetention = streamStore.createStream(
+            final StreamEntity streamInsideRetention = streamStore.createStream(
                     new StreamProperties.Builder()
                             .feedName(feedName)
                             .streamTypeName(StreamType.RAW_EVENTS.getName())
@@ -75,7 +75,7 @@ public class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
                             .statusMs(now)
                             .build());
 
-            final Stream streamOutsideRetention = streamStore.createStream(
+            final StreamEntity streamOutsideRetention = streamStore.createStream(
                     new StreamProperties.Builder()
                             .feedName(feedName)
                             .streamTypeName(StreamType.RAW_EVENTS.getName())
@@ -98,11 +98,11 @@ public class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
     }
 
     private void dumpStreams() {
-        final BaseResultList<Stream> streams = streamStore.find(new FindStreamCriteria());
+        final BaseResultList<StreamEntity> streams = streamStore.find(new FindStreamCriteria());
 
         Assert.assertEquals(2, streams.size());
 
-        for (final Stream stream : streams) {
+        for (final StreamEntity stream : streams) {
             LOGGER.info("stream: %s, createMs: %s, statusMs: %s, status: %s", stream,
                     DateUtil.createNormalDateTimeString(stream.getCreateMs()),
                     DateUtil.createNormalDateTimeString(stream.getStatusMs()), stream.getStatus());

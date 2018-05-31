@@ -31,7 +31,7 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.docref.DocRef;
 import stroom.streamstore.client.presenter.ClassificationUiHandlers;
 import stroom.streamstore.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgIcon;
@@ -83,7 +83,7 @@ public class SteppingContentTabPresenter extends ContentTabPresenter<Classificat
         }
     }
 
-    public void read(final DocRef pipeline, final Stream stream, final long eventId,
+    public void read(final DocRef pipeline, final StreamEntity stream, final long eventId,
                      final StreamType childStreamType) {
         reading = true;
         this.pipeline = pipeline;

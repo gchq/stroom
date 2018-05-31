@@ -36,7 +36,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.streamstore.FeedService;
 import stroom.streamstore.StreamTypeService;
 import stroom.streamstore.shared.Feed;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.StreamProcessor;
@@ -102,11 +102,11 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
             sql.append(" FROM ");
             sql.append(StreamTask.TABLE_NAME);
             sql.append(" ST JOIN ");
-            sql.append(Stream.TABLE_NAME);
+            sql.append(StreamEntity.TABLE_NAME);
             sql.append(" S ON (S.");
-            sql.append(Stream.ID);
+            sql.append(StreamEntity.ID);
             sql.append(" = ST.");
-            sql.append(Stream.FOREIGN_KEY);
+            sql.append(StreamEntity.FOREIGN_KEY);
             sql.append(") JOIN ");
             sql.append(Feed.TABLE_NAME);
             sql.append(" F ON (F.");
@@ -128,7 +128,7 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
             sql.append(")");
             sql.append(" WHERE 1=1");
 
-            sql.appendPrimitiveValueSetQuery("S." + Stream.STATUS, criteria.getStatusSet());
+            sql.appendPrimitiveValueSetQuery("S." + StreamEntity.STATUS, criteria.getStatusSet());
             sql.appendDocRefSetQuery("SP." + StreamProcessor.PIPELINE_UUID, criteria.getPipelineSet());
             sql.appendEntityIdSetQuery("F." + BaseEntity.ID, feedService.convertNameSet(criteria.getFeedNameSet()));
 
@@ -207,7 +207,7 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
                 if (fetchSet.contains(StreamProcessor.ENTITY_TYPE) || fetchSet.contains(PipelineDoc.DOCUMENT_TYPE)) {
                     sql.append(" JOIN FETCH spf.streamProcessor AS sp");
                 }
-                if (fetchSet.contains(Stream.ENTITY_TYPE)) {
+                if (fetchSet.contains(StreamEntity.ENTITY_TYPE)) {
                     sql.append(" JOIN FETCH " + alias + ".stream AS s");
                 }
                 if (fetchSet.contains(Feed.ENTITY_TYPE)) {

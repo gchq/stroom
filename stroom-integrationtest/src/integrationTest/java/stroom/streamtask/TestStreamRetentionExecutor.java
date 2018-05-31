@@ -30,7 +30,7 @@ import stroom.streamstore.StreamRetentionExecutor;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.fs.FileSystemStreamMaintenanceService;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -70,14 +70,14 @@ public class TestStreamRetentionExecutor extends AbstractCoreIntegrationTest {
         feedDoc.setRetentionDayAge(RETENTION_PERIOD_DAYS);
         feedStore.writeDocument(feedDoc);
 
-        Stream streamInsideRetetion = streamStore.createStream(
+        StreamEntity streamInsideRetetion = streamStore.createStream(
                 new StreamProperties.Builder()
                         .feedName(feedName)
                         .streamTypeName(StreamType.RAW_EVENTS.getName())
                         .createMs(now)
                         .statusMs(now)
                         .build());
-        Stream streamOutsideRetetion = streamStore.createStream(
+        StreamEntity streamOutsideRetetion = streamStore.createStream(
                 new StreamProperties.Builder()
                         .feedName(feedName)
                         .streamTypeName(StreamType.RAW_EVENTS.getName())
@@ -129,11 +129,11 @@ public class TestStreamRetentionExecutor extends AbstractCoreIntegrationTest {
     }
 
     private void dumpStreams() {
-        final BaseResultList<Stream> streams = streamStore.find(new FindStreamCriteria());
+        final BaseResultList<StreamEntity> streams = streamStore.find(new FindStreamCriteria());
 
         Assert.assertEquals(2, streams.size());
 
-        for (final Stream stream : streams) {
+        for (final StreamEntity stream : streams) {
             LOGGER.info("stream: {}, createMs: {}, statusMs: {}, status: {}", stream,
                     DateUtil.createNormalDateTimeString(stream.getCreateMs()),
                     DateUtil.createNormalDateTimeString(stream.getStatusMs()), stream.getStatus());

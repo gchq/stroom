@@ -17,7 +17,7 @@
 package stroom.streamtask.shared;
 
 import stroom.entity.shared.SQLNameConstants;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -39,7 +39,7 @@ public class StreamTask extends TaskBasedEntity {
     public static final String ENTITY_TYPE = "StreamTask";
     public static final String DATA = SQLNameConstants.DATA;
     private static final long serialVersionUID = 3926403008832938745L;
-    private Stream stream;
+    private StreamEntity stream;
 
     private String data;
 
@@ -49,12 +49,12 @@ public class StreamTask extends TaskBasedEntity {
     private StreamProcessorFilter streamProcessorFilter;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = Stream.FOREIGN_KEY)
-    public Stream getStream() {
+    @JoinColumn(name = StreamEntity.FOREIGN_KEY)
+    public StreamEntity getStream() {
         return stream;
     }
 
-    public void setStream(final Stream stream) {
+    public void setStream(final StreamEntity stream) {
         this.stream = stream;
     }
 

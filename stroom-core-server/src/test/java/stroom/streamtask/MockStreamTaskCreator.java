@@ -24,7 +24,7 @@ import stroom.node.shared.Node;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.QueryData;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamTask;
@@ -71,12 +71,12 @@ public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
 
                 final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
                 findStreamCriteria.setExpression(queryData.getExpression());
-                final BaseResultList<Stream> streams = streamStore.find(findStreamCriteria);
+                final BaseResultList<StreamEntity> streams = streamStore.find(findStreamCriteria);
 
                 BaseEntityUtil.sort(streams);
 
                 if (streams != null && streams.size() > 0) {
-                    for (final Stream stream : streams) {
+                    for (final StreamEntity stream : streams) {
                         if (stream.getId() >= filter.getStreamProcessorFilterTracker().getMinStreamId()) {
                             // Only process streams with an id of 1 or more
                             // greater than this stream in future.

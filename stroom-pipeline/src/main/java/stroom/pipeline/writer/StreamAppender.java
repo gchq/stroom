@@ -36,7 +36,7 @@ import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.serializable.RASegmentOutputStream;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.util.io.WrappedOutputStream;
 import stroom.util.shared.Severity;
 
@@ -78,7 +78,7 @@ public class StreamAppender extends AbstractAppender {
 
     @Override
     protected OutputStream createOutputStream() {
-        final Stream parentStream = streamHolder.getStream();
+        final StreamEntity parentStream = streamHolder.getStream();
 
         if (feed == null && parentStream != null && parentStream.getFeed() != null) {
             feed = parentStream.getFeed().getName();

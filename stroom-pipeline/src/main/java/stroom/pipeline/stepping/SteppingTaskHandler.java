@@ -59,7 +59,7 @@ import stroom.streamstore.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.Feed;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.StreamProcessorService;
 import stroom.task.AbstractTaskHandler;
@@ -440,16 +440,16 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
             criteria.getFetchSet().add(StreamType.ENTITY_TYPE);
 
             // Find streams.
-            final List<Stream> allStreamList = streamStore.find(criteria);
+            final List<StreamEntity> allStreamList = streamStore.find(criteria);
             allStreamIdList = new ArrayList<>(allStreamList.size());
-            for (final Stream stream : allStreamList) {
+            for (final StreamEntity stream : allStreamList) {
                 allStreamIdList.add(stream.getId());
             }
 
             if (criteria.getSelectedIdSet() == null || Boolean.TRUE.equals(criteria.getSelectedIdSet().getMatchAll())) {
                 // If we are including all tasks then don't filter the list.
                 filteredList = new ArrayList<>(allStreamList.size());
-                for (final Stream stream : allStreamList) {
+                for (final StreamEntity stream : allStreamList) {
                     filteredList.add(stream.getId());
                 }
 
@@ -457,7 +457,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                     && criteria.getSelectedIdSet().getSet().size() > 0) {
                 // Otherwise filter the list to just selected tasks.
                 filteredList = new ArrayList<>(criteria.getSelectedIdSet().getSet().size());
-                for (final Stream stream : allStreamList) {
+                for (final StreamEntity stream : allStreamList) {
                     if (criteria.getSelectedIdSet().isMatch(stream.getId())) {
                         filteredList.add(stream.getId());
                     }
@@ -527,7 +527,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     private void process(final SteppingController controller, final String feedName, final StreamType streamType,
                          final StreamSource streamSource) {
         try {
-            final Stream stream = streamSource.getStream();
+            final StreamEntity stream = streamSource.getStream();
             final SteppingTask request = controller.getRequest();
             final StepType stepType = request.getStepType();
             controller.setStreamInfo(createStreamInfo(feedName, stream));
@@ -661,7 +661,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
         return pipeline;
     }
 
-    private String createStreamInfo(final String feedName, final Stream stream) {
+    private String createStreamInfo(final String feedName, final StreamEntity stream) {
         return "" +
                 "Feed: " +
                 feedName +

@@ -20,10 +20,9 @@ import com.google.common.base.Strings;
 import org.apache.commons.lang.mutable.MutableInt;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.feed.MetaMap;
-import stroom.feed.shared.FeedDoc;
 import stroom.node.shared.Volume;
 import stroom.streamstore.shared.Feed;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
@@ -424,7 +423,7 @@ public class StreamRestoreTool extends DatabaseTool {
                     if (action == 'r' && "0".equals(streamAttributes.get(DEPTH))) {
                         streamAttributes.putAll(readManifestAttributes(line));
 
-                        final Stream stream = new Stream();
+                        final StreamEntity stream = new StreamEntity();
                         stream.setId(Long.parseLong(streamAttributes.get(StreamAttributeConstants.STREAM_ID)));
                         stream.setVersion((byte) 1);
 

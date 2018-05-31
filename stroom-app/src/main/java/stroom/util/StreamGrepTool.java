@@ -30,7 +30,7 @@ import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.StreamTypeService;
 import stroom.streamstore.fs.FileSystemStreamTypeUtil;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.io.StreamUtil;
@@ -147,10 +147,10 @@ public class StreamGrepTool extends AbstractCommandLineTool {
         // Query the stream store
         final FindStreamCriteria criteria = new FindStreamCriteria();
         criteria.setExpression(builder.build());
-        final List<Stream> results = streamStore.find(criteria);
+        final List<StreamEntity> results = streamStore.find(criteria);
 
         int count = 0;
-        for (final Stream stream : results) {
+        for (final StreamEntity stream : results) {
             final StreamType streamType = stream.getStreamType();
             count++;
             LOGGER.info("processing() - " + count + "/" + results.size() + " "

@@ -24,7 +24,7 @@ import stroom.node.NodeCache;
 import stroom.security.Security;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamTask;
@@ -87,7 +87,7 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
                 // Open the stream source.
                 streamSource = streamStore.openStreamSource(streamTask.getStream().getId());
                 if (streamSource != null) {
-                    final Stream stream = streamSource.getStream();
+                    final StreamEntity stream = streamSource.getStream();
 
                     // Load lazy stuff
                     // stream.setStreamType(streamTypeService.load(stream.getStreamType()));

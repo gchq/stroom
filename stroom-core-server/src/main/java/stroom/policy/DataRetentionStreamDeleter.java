@@ -18,7 +18,7 @@ package stroom.policy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamStatus;
 
 import java.sql.Connection;
@@ -32,15 +32,15 @@ public class DataRetentionStreamDeleter implements AutoCloseable {
 
     private static final String SQL_DELETE = "" +
             "UPDATE " +
-            Stream.TABLE_NAME +
+            StreamEntity.TABLE_NAME +
             " SET " +
-            Stream.STATUS +
+            StreamEntity.STATUS +
             " = ?" +
             ", " +
-            Stream.STATUS_MS +
+            StreamEntity.STATUS_MS +
             " = ?" +
             " WHERE " +
-            Stream.ID +
+            StreamEntity.ID +
             " IN ";
 
     private final Connection connection;

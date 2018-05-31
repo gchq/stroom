@@ -49,7 +49,7 @@ import stroom.security.Security;
 import stroom.streamstore.fs.serializable.RASegmentInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.StreamProcessorService;
 import stroom.task.AbstractTaskHandler;
@@ -170,7 +170,7 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
                 task.getHeadlessFilter().changeMetaData(metaData);
 
                 // Create the stream.
-                final Stream stream = new Stream();
+                final StreamEntity stream = new StreamEntity();
 //                // Set the feed.
 //                stream.setFeed(feed);
 

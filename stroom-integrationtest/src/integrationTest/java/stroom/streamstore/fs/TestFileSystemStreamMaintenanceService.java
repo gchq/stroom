@@ -18,11 +18,10 @@ package stroom.streamstore.fs;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.feed.shared.FeedDoc;
 import stroom.jobsystem.MockTask;
 import stroom.streamstore.FindStreamVolumeCriteria;
 import stroom.streamstore.StreamRange;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
@@ -49,7 +48,7 @@ public class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrat
 
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
-        final Stream md = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamType.RAW_EVENTS.getName());
+        final StreamEntity md = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamType.RAW_EVENTS.getName());
 
         commonTestScenarioCreator.createSampleBlankProcessedFile(feedName, md);
 

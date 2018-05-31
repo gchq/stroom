@@ -23,7 +23,7 @@ import stroom.feed.MetaMap;
 import stroom.feed.shared.FeedDoc;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.date.DateUtil;
 
@@ -133,7 +133,7 @@ public final class SendStreamDataClient {
 
         final StreamSource streamSource = streamStore.openStreamSource(streamId);
         final StreamSource meta = streamSource.getChildStream(StreamType.META);
-        final Stream stream = streamSource.getStream();
+        final StreamEntity stream = streamSource.getStream();
 
         if (stream.getEffectiveMs() != null) {
             connection.addRequestProperty("effectiveTime",

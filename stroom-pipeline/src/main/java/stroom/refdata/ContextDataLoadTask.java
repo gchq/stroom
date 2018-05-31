@@ -17,21 +17,21 @@
 package stroom.refdata;
 
 import stroom.docref.DocRef;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.task.ServerTask;
 
 import java.io.InputStream;
 
 public class ContextDataLoadTask extends ServerTask<MapStore> {
     private InputStream inputStream;
-    private Stream stream;
+    private StreamEntity stream;
     private String feedName;
     private DocRef contextPipeline;
 
     public ContextDataLoadTask() {
     }
 
-    public ContextDataLoadTask(final InputStream inputStream, final Stream stream, final String feedName,
+    public ContextDataLoadTask(final InputStream inputStream, final StreamEntity stream, final String feedName,
                                final DocRef contextPipeline) {
         this.inputStream = inputStream;
         this.stream = stream;
@@ -43,7 +43,7 @@ public class ContextDataLoadTask extends ServerTask<MapStore> {
         return inputStream;
     }
 
-    public Stream getStream() {
+    public StreamEntity getStream() {
         return stream;
     }
 

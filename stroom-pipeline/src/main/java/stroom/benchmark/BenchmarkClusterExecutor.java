@@ -40,7 +40,7 @@ import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.QueryData;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamDataSource;
@@ -277,7 +277,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                 final int count = i;
                 final GenericServerTask writerTask = GenericServerTask.create("WriteBenchmarkData", "Writing benchmark data");
                 writerTask.setRunnable(() -> {
-                    final Stream stream = writeData(feedName, streamTypeName, data);
+                    final StreamEntity stream = writeData(feedName, streamTypeName, data);
 
                     rangeLock.lock();
                     try {
@@ -352,7 +352,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                     Thread.sleep(10000);
 
                     // Find out how many tasks are complete.
-                    final List<Stream> streams = streamStore.find(processedCriteria);
+                    final List<StreamEntity> streams = streamStore.find(processedCriteria);
 
                     // Things moved on ?
                     if (streams.size() > completedTaskCount) {

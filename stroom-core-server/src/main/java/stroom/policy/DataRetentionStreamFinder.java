@@ -25,13 +25,12 @@ import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
 import stroom.entity.util.PreparedStatementUtil;
 import stroom.entity.util.SqlBuilder;
-import stroom.feed.shared.FeedDoc;
 import stroom.policy.DataRetentionExecutor.ActiveRules;
 import stroom.policy.DataRetentionExecutor.Progress;
 import stroom.ruleset.shared.DataRetentionRule;
 import stroom.streamstore.ExpressionMatcher;
 import stroom.streamstore.shared.Feed;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
@@ -160,7 +159,7 @@ public class DataRetentionStreamFinder implements AutoCloseable {
         }
 
         sql.append(" FROM ");
-        sql.append(Stream.TABLE_NAME);
+        sql.append(StreamEntity.TABLE_NAME);
         sql.append(" S");
         sql.append(" USE INDEX (PRIMARY)");
 
@@ -176,10 +175,10 @@ public class DataRetentionStreamFinder implements AutoCloseable {
 //        }
 
         sql.append(" WHERE 1=1");
-        sql.appendRangeQuery("S." + Stream.CREATE_MS, ageRange);
-        sql.appendRangeQuery("S." + Stream.ID, streamIdRange);
-        sql.appendValueQuery("S." + Stream.STATUS, StreamStatus.UNLOCKED.getPrimitiveValue());
-        sql.append(" ORDER BY S." + Stream.ID);
+        sql.appendRangeQuery("S." + StreamEntity.CREATE_MS, ageRange);
+        sql.appendRangeQuery("S." + StreamEntity.ID, streamIdRange);
+        sql.appendValueQuery("S." + StreamEntity.STATUS, StreamStatus.UNLOCKED.getPrimitiveValue());
+        sql.append(" ORDER BY S." + StreamEntity.ID);
         if (limit != null) {
             sql.append(" LIMIT ");
             sql.arg(limit);

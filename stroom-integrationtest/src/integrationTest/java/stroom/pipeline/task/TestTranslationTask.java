@@ -19,7 +19,7 @@ package stroom.pipeline.task;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.streamstore.MockStreamStore;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.test.AbstractProcessIntegrationTest;
@@ -66,7 +66,7 @@ public class TestTranslationTask extends AbstractProcessIntegrationTest {
         final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(DIR);
         final Path outputDir = StroomPipelineTestFileUtil.getTestOutputDir().resolve(DIR);
 
-        for (final Stream stream : streamStore.getFileData().keySet()) {
+        for (final StreamEntity stream : streamStore.getFileData().keySet()) {
             if (stream.getStreamType().equals(StreamType.EVENTS)) {
                 final byte[] data = streamStore.getFileData().get(stream).get(stream.getStreamType().getId());
 

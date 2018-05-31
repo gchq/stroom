@@ -20,7 +20,7 @@ import stroom.io.StreamCloser;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProviderImpl;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
 import stroom.guice.PipelineScoped;
 
@@ -35,7 +35,7 @@ public class StreamHolder implements Holder {
 
     private final StreamCloser streamCloser;
 
-    private Stream stream;
+    private StreamEntity stream;
     private long streamNo;
 
     @Inject
@@ -43,11 +43,11 @@ public class StreamHolder implements Holder {
         this.streamCloser = streamCloser;
     }
 
-    public Stream getStream() {
+    public StreamEntity getStream() {
         return stream;
     }
 
-    public void setStream(final Stream stream) {
+    public void setStream(final StreamEntity stream) {
         this.stream = stream;
     }
 

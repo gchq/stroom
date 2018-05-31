@@ -22,7 +22,6 @@ import stroom.cache.StroomCacheManager;
 import stroom.dashboard.shared.QueryEntity;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
-import stroom.feed.shared.FeedDoc;
 import stroom.guice.StroomBeanStore;
 import stroom.index.IndexShardManager;
 import stroom.index.IndexShardWriterCache;
@@ -47,7 +46,7 @@ import stroom.streamstore.StreamAttributeKeyService;
 import stroom.streamstore.fs.FileSystemUtil;
 import stroom.streamstore.shared.Feed;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamAttributeValue;
@@ -92,7 +91,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
             Policy.TABLE_NAME,
             QueryEntity.TABLE_NAME,
             Rack.TABLE_NAME,
-            Stream.TABLE_NAME,
+            StreamEntity.TABLE_NAME,
             StreamAttributeKey.TABLE_NAME,
             StreamAttributeValue.TABLE_NAME,
             StreamProcessor.TABLE_NAME,

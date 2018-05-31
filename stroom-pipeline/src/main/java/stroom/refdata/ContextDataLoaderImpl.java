@@ -17,7 +17,7 @@
 package stroom.refdata;
 
 import stroom.docref.DocRef;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.task.TaskManager;
 
 import javax.inject.Inject;
@@ -32,7 +32,7 @@ public class ContextDataLoaderImpl implements ContextDataLoader {
     }
 
     @Override
-    public MapStore load(final InputStream inputStream, final Stream stream, final String feedName,
+    public MapStore load(final InputStream inputStream, final StreamEntity stream, final String feedName,
                          final DocRef contextPipeline) {
         return taskManager.exec(new ContextDataLoadTask(inputStream, stream, feedName, contextPipeline));
     }
