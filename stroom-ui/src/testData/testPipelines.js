@@ -14,42 +14,56 @@
  * limitations under the License.
  */
 
+import { elements } from './testElements';
+
+let myCsvSplitterFilter = {
+  id: 'CSV splitter filter',
+  type: elements.dsParser.type,
+};
+
+let myXsltFilter = {
+  id: 'XSLT filter',
+  type: elements.xsltFilter.type,
+};
+
+let myXmlWriter1 = {
+  id: 'XML writer 1',
+  type: elements.xmlWriter.type,
+}
+
+let myStreamAppender1 = {
+  id: 'stream appender 1',
+  type: elements.streamAppender.type,
+};
+
+let myXmlWriter2 = {
+  id: 'XML writer 2',
+  type: elements.xmlWriter.type,
+};
+
+let myStreamAppender2 = {
+  id: 'stream appender 2',
+  type: elements.streamAppender.type,
+};
+
 const testPipeline = {
   elements: {
     add: {
       element: [
-        {
-          id: 'CSV splitter filter',
-          type: 'DSParser',
-        },
-        {
-          id: 'XSLT filter',
-          type: 'XSLTFilter',
-        },
-        {
-          id: 'XML writer 1',
-          type: 'XMLWriter',
-        },
-        {
-          id: 'stream appender 1',
-          type: 'StreamAppender',
-        },
-        {
-          id: 'XML writer 2',
-          type: 'XMLWriter',
-        },
-        {
-          id: 'stream appender 2',
-          type: 'StreamAppender',
-        },
-      ],
-    },
+        myCsvSplitterFilter,
+        myXsltFilter,
+        myXmlWriter1,
+        myStreamAppender1,
+        myXmlWriter2,
+        myStreamAppender2
+      ]
+    }
   },
   properties: {
     add: {
       property: [
         {
-          element: 'CSV splitter filter',
+          element: myCsvSplitterFilter.id,
           name: 'textConverter',
           value: {
             entity: {
@@ -60,7 +74,7 @@ const testPipeline = {
           },
         },
         {
-          element: 'XSLT filter',
+          element: myXsltFilter.id,
           name: 'xslt',
           value: {
             entity: {
@@ -71,7 +85,7 @@ const testPipeline = {
           },
         },
         {
-          element: 'stream appender 1',
+          element: myStreamAppender1.id,
           name: 'feed',
           value: {
             entity: {
@@ -82,12 +96,12 @@ const testPipeline = {
           },
         },
         {
-          element: 'stream appender 1',
+          element: myStreamAppender1.id,
           name: 'streamType',
           value: { string: 'Events' },
         },
         {
-          element: 'stream appender 2',
+          element: myStreamAppender2.id,
           name: 'feed',
           value: {
             entity: {
@@ -98,7 +112,7 @@ const testPipeline = {
           },
         },
         {
-          element: 'stream appender 2',
+          element: myStreamAppender2.id,
           name: 'streamType',
           value: { string: 'Events' },
         },
@@ -109,30 +123,40 @@ const testPipeline = {
     add: {
       link: [
         {
-          from: 'CSV splitter filter',
-          to: 'XSLT filter',
+          from: myCsvSplitterFilter.id,
+          to: myXsltFilter.id,
         },
         {
-          from: 'XSLT filter',
-          to: 'XML writer 1',
+          from: myXsltFilter.id,
+          to: myXmlWriter1.id,
         },
         {
-          from: 'XML writer 1',
-          to: 'stream appender 1',
+          from: myXmlWriter1.id,
+          to: myStreamAppender1.id,
         },
         {
-          from: 'XSLT filter',
-          to: 'XML writer 2',
+          from: myXsltFilter.id,
+          to: myXmlWriter2.id,
         },
         {
-          from: 'XML writer 2',
-          to: 'stream appender 2',
+          from: myXmlWriter2.id,
+          to: myStreamAppender2.id,
         },
       ],
     },
   },
 };
 
+let testPipelineElements = {
+  myCsvSplitterFilter,
+  myXsltFilter,
+  myStreamAppender1,
+  myStreamAppender2,
+  myXmlWriter1,
+  myXmlWriter2
+}
+
 export {
-  testPipeline
+  testPipeline,
+  testPipelineElements
 };

@@ -518,9 +518,7 @@ const testElementProperties = {
 	"RecordOutputFilter": {}
 }
 
-export {
-	testElementTypes,
-	testElementProperties,
+let elements = {
 	fileAppender,
 	jsonWriter,
 	xmlFragmentParser,
@@ -537,4 +535,10 @@ export {
 	streamAppender,
 	recordOutputFilter,
 	xmlParser
+}
+
+export {
+	testElementTypes,
+	testElementProperties,
+	elements
 }

@@ -24,27 +24,12 @@ import {
 import {
 	testElementTypes,
     testElementProperties,
-    
-	fileAppender,
-	jsonWriter,
-	xmlFragmentParser,
-	recordCountFilter,
-	textWriter,
-	dsParser,
-	combinedParser,
-	xmlWriter,
-	source,
-	schemaFilter,
-	splitFilter,
-	xsltFilter,
-	jsonParser,
-	streamAppender,
-	recordOutputFilter,
-	xmlParser
+    elements
 } from './testElements';
 
 import {
-    testPipeline
+	testPipeline,
+	testPipelineElements
 } from './testPipelines';
 
 export {
@@ -62,25 +47,10 @@ export {
 
 	testElementTypes,
     testElementProperties,
-
-	fileAppender,
-	jsonWriter,
-	xmlFragmentParser,
-	recordCountFilter,
-	textWriter,
-	dsParser,
-	combinedParser,
-	xmlWriter,
-	source,
-	schemaFilter,
-	splitFilter,
-	xsltFilter,
-	jsonParser,
-	streamAppender,
-	recordOutputFilter,
-	xmlParser,
+	elements,
     
-    testPipeline,
+	testPipeline,
+	testPipelineElements,
 
     trackers,
     generateGenericTracker

@@ -16,7 +16,12 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import { compose } from 'redux';
 import { connect } from 'react-redux'
+
+import {
+    groupByCategoryFiltered
+} from './elementUtils';
 
 import {
     Dropdown,
@@ -46,20 +51,8 @@ const ElementMenu = ({
             onClose={() => closePipelineElementContextMenu(pipelineId)}
         >
             <Dropdown.Menu>
-                <Dropdown.Item>
-                    <Icon name='add' />         
-                    <Dropdown simple item text='Add'>
-                        <Dropdown.Menu>
-                            <Dropdown.Item icon='edit' text='Edit Profile' />
-                            <Dropdown.Item icon='globe' text='Choose Language' />
-                            <Dropdown.Item icon='settings' text='Account Settings' />
-                        </Dropdown.Menu>
-                    </Dropdown>
-                </Dropdown.Item>
-                <Dropdown.Item onClick={() => requestDeletePipelineElement(pipelineId, elementId)}>
-                    <Icon name='trash' />
-                    Delete
-                </Dropdown.Item>
+                <Dropdown.Item icon='add' text='Add'/>
+                <Dropdown.Item icon='trash' text='Delete' onClick={() => requestDeletePipelineElement(pipelineId, elementId)}/>
             </Dropdown.Menu>
         </Dropdown>
     )
@@ -69,19 +62,19 @@ ElementMenu.propTypes = {
     pipelineId : PropTypes.string.isRequired,
     elementId: PropTypes.string.isRequired,
     isOpen : PropTypes.bool.isRequired,
-    elements : PropTypes.object.isRequired,
-
+    
     requestDeletePipelineElement : PropTypes.func.isRequired,
     closePipelineElementContextMenu : PropTypes.func.isRequired
 }
 
-export default connect(
-    (state) => ({
-        // state
-        elements : state.elements.elements
-    }),
-    {
-        closePipelineElementContextMenu,
-        requestDeletePipelineElement
-    }
+export default compose(
+    connect(
+        (state) => ({
+            // state
+        }),
+        {
+            closePipelineElementContextMenu,
+            requestDeletePipelineElement
+        }
+    )
 )(ElementMenu)
