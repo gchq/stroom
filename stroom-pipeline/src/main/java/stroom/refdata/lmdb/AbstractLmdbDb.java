@@ -66,11 +66,11 @@ public abstract class AbstractLmdbDb<K, V> {
         return lmdbEnvironment;
     }
 
-    Serde<K> getKeySerde() {
+    public Serde<K> getKeySerde() {
         return keySerde;
     }
 
-    Serde<V> getValueSerde() {
+    public Serde<V> getValueSerde() {
         return valueSerde;
     }
 

@@ -17,6 +17,8 @@
 
 package stroom.refdata.offheapstore;
 
+import java.nio.ByteBuffer;
+
 public class UnsignedBytes {
     private static final byte[] ZERO_BYTES = new byte[0];
 
@@ -70,6 +72,18 @@ public class UnsignedBytes {
         for (int i = 0; i < len; i++) {
             final int shift = (len - i - 1) * 8;
             val = val | ((long) bytes[off + i] & 0xff) << shift;
+        }
+        return val;
+    }
+
+    public static long get(final ByteBuffer byteBuffer) {
+        long val = 0;
+        int pos = byteBuffer.position();
+        int len = byteBuffer.remaining();
+
+        for (int i = 0; i < len; i++) {
+            final int shift = (len - i - 1) * 8;
+            val = val | ((long) byteBuffer.get(pos + i) & 0xff) << shift;
         }
         return val;
     }
