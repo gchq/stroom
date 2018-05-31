@@ -1,14 +1,11 @@
 package stroom.streamstore.fs;
 
-import org.hsqldb.ExpressionOp;
 import stroom.entity.util.SqlBuilder;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.streamstore.shared.Feed;
+import stroom.streamstore.shared.FeedEntity;
 import stroom.streamstore.shared.StreamDataSource;
-
-import java.util.Set;
 
 public class ExpressionAppender {
 //    public void append(final SqlBuilder sql, final Set<ExpressionOperator> expressionSet) {
@@ -50,7 +47,7 @@ public class ExpressionAppender {
         if (term.enabled()) {
             switch (term.getField()) {
                 case StreamDataSource.FEED:
-                sql.append("S." + Feed.FOREIGN_KEY);
+                sql.append("S." + FeedEntity.FOREIGN_KEY);
                 break;
                 default: throw new IllegalArgumentException("Unknown field " + term.getField());
 

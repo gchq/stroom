@@ -42,7 +42,7 @@ import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
-import stroom.streamstore.shared.Feed;
+import stroom.streamstore.shared.FeedEntity;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.StreamProcessorService;
@@ -140,7 +140,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                     final StreamEntity stream = streamSource.getStream();
                     try {
                         // Load the feed.
-                        final Feed feed = stream.getFeed();
+                        final FeedEntity feed = stream.getFeed();
                         final String feedName = feed.getName();
                         feedHolder.setFeedName(feedName);
 

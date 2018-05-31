@@ -28,7 +28,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.docref.DocRef;
 import stroom.streamstore.OldFindStreamCriteria;
 import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.shared.Feed;
+import stroom.streamstore.shared.FeedEntity;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamTask;
@@ -73,7 +73,7 @@ public class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrat
         final List<StreamEntity> streams = streamStore.find(new OldFindStreamCriteria());
         Assert.assertEquals(1, streams.size());
         final StreamEntity stream = streams.get(0);
-        final Feed feed = stream.getFeed();
+        final FeedEntity feed = stream.getFeed();
 
         OldFindStreamCriteria findStreamCriteria = new OldFindStreamCriteria();
         Assert.assertEquals(1,

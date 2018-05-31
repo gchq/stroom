@@ -19,7 +19,7 @@ package stroom.streamstore;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.streamstore.shared.Feed;
+import stroom.streamstore.shared.FeedEntity;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.test.FileSystemTestUtil;
@@ -35,9 +35,9 @@ public class TestFeedServiceCache extends AbstractCoreIntegrationTest {
     @Test
     public void testSimple() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        final Feed feed = feedService.getOrCreate(feedName);
+        final FeedEntity feed = feedService.getOrCreate(feedName);
 
-        final Feed loaded = feedService.get(feedName);
+        final FeedEntity loaded = feedService.get(feedName);
 
         Assert.assertNotNull(loaded);
         Assert.assertEquals(feed, loaded);

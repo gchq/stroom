@@ -21,7 +21,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
-import stroom.streamstore.shared.Feed;
+import stroom.streamstore.shared.FeedEntity;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.date.DateUtil;
@@ -94,7 +94,7 @@ public class TestFileSystemUtil extends StroomUnitTest {
         final StreamEntity md = new StreamEntity();
         md.setId(1001001L);
         md.setStreamType(StreamType.EVENTS);
-        md.setFeed(Feed.createStub(1));
+        md.setFeed(FeedEntity.createStub(1));
         md.setCreateMs(DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z"));
 
         final Path rootFile = FileSystemStreamTypeUtil.createRootStreamFile(buildTestVolume(), md, StreamType.EVENTS);
@@ -108,7 +108,7 @@ public class TestFileSystemUtil extends StroomUnitTest {
         final StreamEntity md = new StreamEntity();
         md.setId(1001001L);
         md.setStreamType(StreamType.RAW_EVENTS);
-        md.setFeed(Feed.createStub(1));
+        md.setFeed(FeedEntity.createStub(1));
         md.setCreateMs(DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z"));
 
         final Path rootFile = FileSystemStreamTypeUtil.createRootStreamFile(buildTestVolume(), md,
@@ -247,7 +247,7 @@ public class TestFileSystemUtil extends StroomUnitTest {
         final StreamEntity md = new StreamEntity();
         md.setId(100100L);
         md.setStreamType(StreamType.EVENTS);
-        md.setFeed(Feed.createStub(2));
+        md.setFeed(FeedEntity.createStub(2));
         md.setCreateMs(DateUtil.parseNormalDateTimeString("2008-11-18T10:00:00.000Z"));
 
         Assert.assertEquals("EVENTS/2008/11/18/100", FileSystemStreamTypeUtil.getDirectory(md, StreamType.EVENTS));
@@ -259,7 +259,7 @@ public class TestFileSystemUtil extends StroomUnitTest {
         final StreamEntity md = new StreamEntity();
         md.setId(1100100L);
         md.setStreamType(StreamType.EVENTS);
-        md.setFeed(Feed.createStub(2));
+        md.setFeed(FeedEntity.createStub(2));
         md.setCreateMs(DateUtil.parseNormalDateTimeString("2008-11-18T10:00:00.000Z"));
 
         Assert.assertEquals("EVENTS/2008/11/18/001/100",

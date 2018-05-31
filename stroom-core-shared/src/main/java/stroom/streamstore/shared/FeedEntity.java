@@ -26,23 +26,23 @@ import javax.persistence.UniqueConstraint;
 
 @Entity
 @Table(name = "FD", uniqueConstraints = @UniqueConstraint(columnNames = {SQLNameConstants.NAME}))
-public class Feed extends NamedEntity {
+public class FeedEntity extends NamedEntity {
     public static final String TABLE_NAME = SQLNameConstants.FEED;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
     public static final String ENTITY_TYPE = "Feed";
 
     private static final long serialVersionUID = -5311839753276287820L;
 
-    public Feed() {
+    public FeedEntity() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public Feed(final String name) {
+    public FeedEntity(final String name) {
         setName(name);
     }
 
-    public static Feed createStub(final long pk) {
-        final Feed feed = new Feed();
+    public static FeedEntity createStub(final long pk) {
+        final FeedEntity feed = new FeedEntity();
         feed.setStub(pk);
         return feed;
     }

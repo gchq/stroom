@@ -27,7 +27,7 @@ import stroom.entity.shared.IncludeExcludeEntityIdSet;
 import stroom.entity.shared.Matcher;
 import stroom.entity.shared.Period;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.streamstore.shared.Feed;
+import stroom.streamstore.shared.FeedEntity;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeCondition;
 import stroom.streamstore.shared.StreamStatus;
@@ -61,9 +61,9 @@ public class OldFindStreamCriteria extends BaseCriteria
      * versions.
      **/
     @Deprecated
-    private EntityIdSet<Feed> feedIdSet;
+    private EntityIdSet<FeedEntity> feedIdSet;
 
-    private IncludeExcludeEntityIdSet<Feed> feeds;
+    private IncludeExcludeEntityIdSet<FeedEntity> feeds;
     private CriteriaSet<DocRef> pipelineSet;
     private EntityIdSet<StreamType> streamTypeIdSet;
     private EntityIdSet<StreamEntity> streamIdSet;
@@ -205,7 +205,7 @@ public class OldFindStreamCriteria extends BaseCriteria
         return statusSet;
     }
 
-    public IncludeExcludeEntityIdSet<Feed> getFeeds() {
+    public IncludeExcludeEntityIdSet<FeedEntity> getFeeds() {
         if (feedIdSet != null) {
             feeds = new IncludeExcludeEntityIdSet<>();
             feeds.setInclude(feedIdSet);
@@ -215,11 +215,11 @@ public class OldFindStreamCriteria extends BaseCriteria
         return feeds;
     }
 
-    public void setFeeds(final IncludeExcludeEntityIdSet<Feed> feeds) {
+    public void setFeeds(final IncludeExcludeEntityIdSet<FeedEntity> feeds) {
         this.feeds = feeds;
     }
 
-    public IncludeExcludeEntityIdSet<Feed> obtainFeeds() {
+    public IncludeExcludeEntityIdSet<FeedEntity> obtainFeeds() {
         if (feedIdSet != null) {
             feeds = new IncludeExcludeEntityIdSet<>();
             feeds.setInclude(feedIdSet);
@@ -237,7 +237,7 @@ public class OldFindStreamCriteria extends BaseCriteria
      * previous versions.
      **/
     @Deprecated
-    public EntityIdSet<Feed> getFeedIdSet() {
+    public EntityIdSet<FeedEntity> getFeedIdSet() {
         return feedIdSet;
     }
 
@@ -246,7 +246,7 @@ public class OldFindStreamCriteria extends BaseCriteria
      * previous versions.
      **/
     @Deprecated
-    public void setFeedIdSet(final EntityIdSet<Feed> feedIdSet) {
+    public void setFeedIdSet(final EntityIdSet<FeedEntity> feedIdSet) {
         if (feedIdSet != null) {
             feeds = new IncludeExcludeEntityIdSet<>();
             feeds.setInclude(feedIdSet);

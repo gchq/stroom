@@ -15,7 +15,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.common.v2.DateExpressionParser;
-import stroom.streamstore.shared.Feed;
+import stroom.streamstore.shared.FeedEntity;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.QueryData;
@@ -301,10 +301,10 @@ public class ExpressionToFindCriteria {
         });
     }
 
-    private Set<Feed> findFeeds(final String field, final String value) {
+    private Set<FeedEntity> findFeeds(final String field, final String value) {
         // Try by name
         try {
-            final Feed feed = feedService.getOrCreate(value);
+            final FeedEntity feed = feedService.getOrCreate(value);
             if (feed != null) {
                 return Collections.singleton(feed);
             }

@@ -18,7 +18,7 @@ package stroom.streamstore;
 
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.FindDocumentEntityCriteria;
-import stroom.streamstore.shared.Feed;
+import stroom.streamstore.shared.FeedEntity;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 
@@ -29,7 +29,7 @@ public class FindFeedCriteria extends FindDocumentEntityCriteria {
     public static final String FIELD_TYPE = "Type";
     public static final String FIELD_CLASSIFICATION = "Classification";
     private static final long serialVersionUID = 1L;
-    private EntityIdSet<Feed> feedIdSet = new EntityIdSet<>();
+    private EntityIdSet<FeedEntity> feedIdSet = new EntityIdSet<>();
 
     public FindFeedCriteria() {
         // Default constructor necessary for GWT serialisation.
@@ -39,7 +39,7 @@ public class FindFeedCriteria extends FindDocumentEntityCriteria {
         super(name);
     }
 
-    public EntityIdSet<Feed> getFeedIdSet() {
+    public EntityIdSet<FeedEntity> getFeedIdSet() {
         return feedIdSet;
     }
 

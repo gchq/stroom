@@ -57,7 +57,7 @@ import stroom.streamstore.fs.serializable.NestedInputStream;
 import stroom.streamstore.fs.serializable.RANestedInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
-import stroom.streamstore.shared.Feed;
+import stroom.streamstore.shared.FeedEntity;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
@@ -334,7 +334,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                     }
 
                     // Load the feed.
-                    final Feed feed = streamSource.getStream().getFeed();
+                    final FeedEntity feed = streamSource.getStream().getFeed();
 
                     // Get the stream type.
                     final StreamType streamType = stepSource.getType();
@@ -683,7 +683,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                         // Skip to the appropriate stream.
                         if (inputStream.getEntry(location.getStreamNo() - 1)) {
                             // Load the feed.
-                            final Feed feed = streamSource.getStream().getFeed();
+                            final FeedEntity feed = streamSource.getStream().getFeed();
 
                             // Get the stream type.
                             final StreamType streamType = streamSource.getType();

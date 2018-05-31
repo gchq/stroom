@@ -29,7 +29,7 @@ import stroom.policy.DataRetentionExecutor.ActiveRules;
 import stroom.policy.DataRetentionExecutor.Progress;
 import stroom.ruleset.shared.DataRetentionRule;
 import stroom.streamstore.ExpressionMatcher;
-import stroom.streamstore.shared.Feed;
+import stroom.streamstore.shared.FeedEntity;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
@@ -164,7 +164,7 @@ public class DataRetentionStreamFinder implements AutoCloseable {
         sql.append(" USE INDEX (PRIMARY)");
 
         if (includeFeed) {
-            sql.join(Feed.TABLE_NAME, "F", "S", Feed.FOREIGN_KEY, "F", Feed.ID);
+            sql.join(FeedEntity.TABLE_NAME, "F", "S", FeedEntity.FOREIGN_KEY, "F", FeedEntity.ID);
         }
         if (includeStreamType) {
             sql.join(StreamType.TABLE_NAME, "ST", "S", StreamType.FOREIGN_KEY, "ST", StreamType.ID);

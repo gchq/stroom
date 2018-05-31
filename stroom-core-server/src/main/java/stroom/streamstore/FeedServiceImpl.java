@@ -28,7 +28,7 @@ import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.util.HqlBuilder;
 import stroom.security.Security;
-import stroom.streamstore.shared.Feed;
+import stroom.streamstore.shared.FeedEntity;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -37,10 +37,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
-public class FeedServiceImpl extends NamedEntityServiceImpl<Feed, FindFeedCriteria> implements FeedService, Clearable {
+public class FeedServiceImpl extends NamedEntityServiceImpl<FeedEntity, FindFeedCriteria> implements FeedService, Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(FeedServiceImpl.class);
 
-    private final Map<String, Feed> cache = new ConcurrentHashMap<>();
+    private final Map<String, FeedEntity> cache = new ConcurrentHashMap<>();
 
     @Inject
     FeedServiceImpl(final StroomEntityManager entityManager,
@@ -53,8 +53,8 @@ public class FeedServiceImpl extends NamedEntityServiceImpl<Feed, FindFeedCriter
      */
     @SuppressWarnings("unchecked")
     @Override
-    public Feed get(final String name) {
-        Feed feed = cache.get(name);
+    public FeedEntity get(final String name) {
+        FeedEntity feed = cache.get(name);
         if (feed != null) {
             return feed;
         }
@@ -67,7 +67,7 @@ public class FeedServiceImpl extends NamedEntityServiceImpl<Feed, FindFeedCriter
         sql.arg(name);
 
         // This should just bring back 1
-        final List<Feed> results = getEntityManager().executeQueryResultList(sql);
+        final List<FeedEntity> results = getEntityManager().executeQueryResultList(sql);
 
         if (results != null && results.size() > 0) {
             feed = results.get(0);
@@ -78,8 +78,8 @@ public class FeedServiceImpl extends NamedEntityServiceImpl<Feed, FindFeedCriter
     }
 
     @Override
-    public Feed getOrCreate(final String name) {
-        Feed feed = get(name);
+    public FeedEntity getOrCreate(final String name) {
+        FeedEntity feed = get(name);
         if (feed == null) {
             try {
                 // Try and create.
@@ -101,12 +101,12 @@ public class FeedServiceImpl extends NamedEntityServiceImpl<Feed, FindFeedCriter
     }
 
     @Override
-    public EntityIdSet<Feed> convertNameSet(final CriteriaSet<String> feeds) {
+    public EntityIdSet<FeedEntity> convertNameSet(final CriteriaSet<String> feeds) {
         if (feeds == null) {
             return null;
         }
 
-        final EntityIdSet<Feed> entityIdSet = new EntityIdSet<>();
+        final EntityIdSet<FeedEntity> entityIdSet = new EntityIdSet<>();
         entityIdSet.setMatchAll(feeds.getMatchAll());
         entityIdSet.setMatchNull(feeds.getMatchNull());
         feeds.forEach(feedName -> entityIdSet.add(getId(feedName)));
@@ -115,13 +115,13 @@ public class FeedServiceImpl extends NamedEntityServiceImpl<Feed, FindFeedCriter
     }
 
     @Override
-    public BaseResultList<Feed> find(final FindFeedCriteria criteria) {
+    public BaseResultList<FeedEntity> find(final FindFeedCriteria criteria) {
         return super.find(criteria);
     }
 
     @Override
-    public Class<Feed> getEntityClass() {
-        return Feed.class;
+    public Class<FeedEntity> getEntityClass() {
+        return FeedEntity.class;
     }
 
     @Override
@@ -130,7 +130,7 @@ public class FeedServiceImpl extends NamedEntityServiceImpl<Feed, FindFeedCriter
     }
 
     @Override
-    protected QueryAppender<Feed, FindFeedCriteria> createQueryAppender(StroomEntityManager entityManager) {
+    protected QueryAppender<FeedEntity, FindFeedCriteria> createQueryAppender(StroomEntityManager entityManager) {
         return new FeedQueryAppender(entityManager);
     }
 
@@ -144,7 +144,7 @@ public class FeedServiceImpl extends NamedEntityServiceImpl<Feed, FindFeedCriter
         cache.clear();
     }
 
-    private static class FeedQueryAppender extends QueryAppender<Feed, FindFeedCriteria> {
+    private static class FeedQueryAppender extends QueryAppender<FeedEntity, FindFeedCriteria> {
         FeedQueryAppender(final StroomEntityManager entityManager) {
             super(entityManager);
         }

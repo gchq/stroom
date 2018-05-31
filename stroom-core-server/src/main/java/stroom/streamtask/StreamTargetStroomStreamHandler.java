@@ -34,7 +34,7 @@ import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.serializable.NestedStreamTarget;
-import stroom.streamstore.shared.Feed;
+import stroom.streamstore.shared.FeedEntity;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.statistic.MetaDataStatistic;
@@ -74,7 +74,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     private final MetaDataStatistic metaDataStatistics;
     private final HashSet<StreamEntity> streamSet;
     private final StroomZipNameSet stroomZipNameSet;
-    private final Map<String, Feed> feedMap = new HashMap<>();
+    private final Map<String, FeedEntity> feedMap = new HashMap<>();
     private final Map<String, StreamType> streamTypeMap = new HashMap<>();
     private final Map<String, NestedStreamTarget> feedNestedStreamTarget = new HashMap<>();
     private final Map<String, StreamTarget> feedStreamTarget = new HashMap<>();

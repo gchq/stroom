@@ -56,7 +56,7 @@ public class StreamDataSource {
         STREAM_FIELDS.put(STREAM_ID, StreamEntity.ID);
         STREAM_FIELDS.put(PARENT_STREAM_ID, StreamEntity.PARENT_STREAM_ID);
         STREAM_FIELDS.put(CREATE_TIME, StreamEntity.CREATE_MS);
-        FEED_FIELDS.put(FEED, Feed.NAME);
+        FEED_FIELDS.put(FEED, FeedEntity.NAME);
         STREAM_TYPE_FIELDS.put(STREAM_TYPE, StreamType.NAME);
 //        PIPELINE_FIELDS.put(PIPELINE, PipelineDoc.NAME);
 

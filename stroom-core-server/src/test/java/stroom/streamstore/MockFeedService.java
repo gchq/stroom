@@ -21,7 +21,7 @@ import stroom.entity.MockNamedEntityService;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
-import stroom.streamstore.shared.Feed;
+import stroom.streamstore.shared.FeedEntity;
 
 import javax.inject.Singleton;
 import java.util.List;
@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
  * </p>
  */
 @Singleton
-class MockFeedService extends MockNamedEntityService<Feed, FindFeedCriteria>
+class MockFeedService extends MockNamedEntityService<FeedEntity, FindFeedCriteria>
         implements FeedService {
     public MockFeedService() {
     }
@@ -47,8 +47,8 @@ class MockFeedService extends MockNamedEntityService<Feed, FindFeedCriteria>
      */
     @SuppressWarnings("unchecked")
     @Override
-    public Feed get(final String name) {
-        final List<Feed> list = map.values()
+    public FeedEntity get(final String name) {
+        final List<FeedEntity> list = map.values()
                 .stream()
                 .filter(st -> st.getName().equals(name))
                 .collect(Collectors.toList());
@@ -60,8 +60,8 @@ class MockFeedService extends MockNamedEntityService<Feed, FindFeedCriteria>
     }
 
     @Override
-    public Feed getOrCreate(final String name) {
-        Feed feed = get(name);
+    public FeedEntity getOrCreate(final String name) {
+        FeedEntity feed = get(name);
         if (feed == null) {
             feed = create(name);
         }
@@ -74,12 +74,12 @@ class MockFeedService extends MockNamedEntityService<Feed, FindFeedCriteria>
     }
 
     @Override
-    public EntityIdSet<Feed> convertNameSet(final CriteriaSet<String> feeds) {
+    public EntityIdSet<FeedEntity> convertNameSet(final CriteriaSet<String> feeds) {
         if (feeds == null) {
             return null;
         }
 
-        final EntityIdSet<Feed> entityIdSet = new EntityIdSet<>();
+        final EntityIdSet<FeedEntity> entityIdSet = new EntityIdSet<>();
         entityIdSet.setMatchAll(feeds.getMatchAll());
         entityIdSet.setMatchNull(feeds.getMatchNull());
         feeds.forEach(feedName -> entityIdSet.add(getId(feedName)));
@@ -88,14 +88,14 @@ class MockFeedService extends MockNamedEntityService<Feed, FindFeedCriteria>
     }
 
     @Override
-    public Class<Feed> getEntityClass() {
-        return Feed.class;
+    public Class<FeedEntity> getEntityClass() {
+        return FeedEntity.class;
     }
 
     @Override
-    public Feed loadByName(final String name) {
-        BaseResultList<Feed> list = find(createCriteria());
-        for (final Feed feed : list) {
+    public FeedEntity loadByName(final String name) {
+        BaseResultList<FeedEntity> list = find(createCriteria());
+        for (final FeedEntity feed : list) {
             if (feed.getName().equals(name)) {
                 return feed;
             }

@@ -19,22 +19,15 @@ package stroom.feed;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.docref.DocRef;
-import stroom.entity.shared.BaseResultList;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.PipelineStore;
-import stroom.streamstore.FeedService;
-import stroom.streamstore.FindFeedCriteria;
-import stroom.streamstore.shared.Feed;
 import stroom.streamstore.shared.StreamType;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class TestFeedStoreImpl extends AbstractCoreIntegrationTest {
     private static final int TEST_SIZE = 10;

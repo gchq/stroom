@@ -35,7 +35,7 @@ import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.streamstore.FeedService;
 import stroom.streamstore.StreamTypeService;
-import stroom.streamstore.shared.Feed;
+import stroom.streamstore.shared.FeedEntity;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
@@ -86,7 +86,7 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
             sql.append(", SP.");
             sql.append(StreamProcessor.PIPELINE_UUID);
             sql.append(" PIPE_UUID, F.");
-            sql.append(Feed.ID);
+            sql.append(FeedEntity.ID);
             sql.append(" FEED_ID, F.");
             sql.append(SQLNameConstants.NAME);
             sql.append(" F_NAME, SPF.");
@@ -108,11 +108,11 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
             sql.append(" = ST.");
             sql.append(StreamEntity.FOREIGN_KEY);
             sql.append(") JOIN ");
-            sql.append(Feed.TABLE_NAME);
+            sql.append(FeedEntity.TABLE_NAME);
             sql.append(" F ON (F.");
-            sql.append(Feed.ID);
+            sql.append(FeedEntity.ID);
             sql.append(" = S.");
-            sql.append(Feed.FOREIGN_KEY);
+            sql.append(FeedEntity.FOREIGN_KEY);
             sql.append(") JOIN ");
             sql.append(StreamProcessorFilter.TABLE_NAME);
             sql.append(" SPF ON (SPF.");
@@ -210,7 +210,7 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
                 if (fetchSet.contains(StreamEntity.ENTITY_TYPE)) {
                     sql.append(" JOIN FETCH " + alias + ".stream AS s");
                 }
-                if (fetchSet.contains(Feed.ENTITY_TYPE)) {
+                if (fetchSet.contains(FeedEntity.ENTITY_TYPE)) {
                     sql.append(" JOIN FETCH s.feed AS f");
                 }
                 if (fetchSet.contains(StreamType.ENTITY_TYPE)) {

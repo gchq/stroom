@@ -39,7 +39,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.OldFindStreamCriteria;
 import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.shared.Feed;
+import stroom.streamstore.shared.FeedEntity;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamDataSource;
@@ -440,7 +440,7 @@ class StreamTaskCreatorTransactionHelper {
             } else {
                 final SqlBuilder sql = new SqlBuilder();
                 sql.append("SELECT DISTINCT(");
-                sql.append(Feed.FOREIGN_KEY);
+                sql.append(FeedEntity.FOREIGN_KEY);
                 sql.append("), 'A' FROM ");
                 sql.append(StreamEntity.TABLE_NAME);
                 sql.append(" WHERE ");

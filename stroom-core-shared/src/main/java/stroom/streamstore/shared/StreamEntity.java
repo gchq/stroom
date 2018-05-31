@@ -52,7 +52,7 @@ import javax.persistence.Transient;
  * </ol>
  */
 @Entity(name = "STRM")
-public class StreamEntity extends BaseEntityBig {
+public class StreamEntity extends BaseEntityBig implements Stream {
     public static final String TABLE_NAME = SQLNameConstants.STREAM;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
     public static final String CREATE_MS = SQLNameConstants.CREATE + SQLNameConstants.MS_SUFFIX;
@@ -66,7 +66,7 @@ public class StreamEntity extends BaseEntityBig {
     /**
      * We don't eager fetch this one ... you need to call loadFeed.
      */
-    private Feed feed;
+    private FeedEntity feed;
 
     private StreamType streamType;
 
@@ -175,12 +175,12 @@ public class StreamEntity extends BaseEntityBig {
 //    }
 
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = Feed.FOREIGN_KEY)
-    public Feed getFeed() {
+    @JoinColumn(name = FeedEntity.FOREIGN_KEY)
+    public FeedEntity getFeed() {
         return feed;
     }
 
-    public void setFeed(final Feed feed) {
+    public void setFeed(final FeedEntity feed) {
         this.feed = applySetter(this.feed, feed);
     }
 

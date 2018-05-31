@@ -26,7 +26,7 @@ import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
-import stroom.streamstore.shared.Feed;
+import stroom.streamstore.shared.FeedEntity;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.FindStreamTypeCriteria;
 import stroom.streamstore.shared.StreamEntity;
@@ -89,7 +89,7 @@ public class MockStreamStore implements StreamStore, Clearable {
     @Override
     public StreamEntity createStream(final StreamProperties streamProperties) {
         final StreamType streamType = streamTypeService.getOrCreate(streamProperties.getStreamTypeName());
-        final Feed feed = feedService.getOrCreate(streamProperties.getFeedName());
+        final FeedEntity feed = feedService.getOrCreate(streamProperties.getFeedName());
 
         final StreamEntity stream = new StreamEntity();
 
@@ -423,7 +423,7 @@ public class MockStreamStore implements StreamStore, Clearable {
 
     @Override
     public List<String> getFeeds() {
-        final List<Feed> feeds = feedService.find(new FindFeedCriteria());
+        final List<FeedEntity> feeds = feedService.find(new FindFeedCriteria());
         if (feeds == null) {
             return Collections.emptyList();
         }
