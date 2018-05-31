@@ -21,6 +21,7 @@ import org.assertj.core.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.serde.Serde;
+import stroom.refdata.offheapstore.ByteArrayUtils;
 
 import java.nio.ByteBuffer;
 import java.util.function.BiConsumer;
@@ -71,6 +72,8 @@ class AbstractSerdeTest {
         final ByteBuffer byteBuffer = ByteBuffer.allocate(BYTE_BUFFER_SIZE);
 
         serde1.serialize(byteBuffer, object);
+
+        LOGGER.debug(ByteArrayUtils.byteBufferInfo(byteBuffer));
 
         T object2 = serde2.deserialize(byteBuffer);
 

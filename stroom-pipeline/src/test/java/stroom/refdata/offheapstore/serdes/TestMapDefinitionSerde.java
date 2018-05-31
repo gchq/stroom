@@ -30,7 +30,7 @@ public class TestMapDefinitionSerde extends AbstractSerdeTest {
     public void serialize() {
         byte version = 0;
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
-                new DocRef("MyType", UUID.randomUUID().toString()),
+                UUID.randomUUID().toString(),
                 version,
                 123456L,
                 1);
@@ -39,4 +39,5 @@ public class TestMapDefinitionSerde extends AbstractSerdeTest {
 
         doSerialisationDeserialisationTest(mapDefinition1, MapDefinitionSerde::new);
     }
+
 }

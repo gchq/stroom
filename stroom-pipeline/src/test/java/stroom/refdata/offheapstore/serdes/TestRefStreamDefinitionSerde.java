@@ -29,7 +29,7 @@ public class TestRefStreamDefinitionSerde extends AbstractSerdeTest {
     public void testSerialisationDeserialisation() {
         byte version = 0;
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
-                new DocRef("MyType", UUID.randomUUID().toString()),
+                UUID.randomUUID().toString(),
                 version,
                 123456L,
                 1);

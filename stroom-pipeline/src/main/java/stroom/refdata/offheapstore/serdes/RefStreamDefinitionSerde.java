@@ -22,8 +22,10 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.esotericsoftware.kryo.pool.KryoFactory;
 import com.esotericsoftware.kryo.pool.KryoPool;
+import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
 import stroom.refdata.lmdb.serde.AbstractKryoSerde;
 import stroom.refdata.offheapstore.RefStreamDefinition;
@@ -31,6 +33,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.util.UUID;
 
 public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinition> {
 
@@ -57,12 +60,25 @@ public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinit
 
     static class RefStreamDefinitionKryoSerializer extends com.esotericsoftware.kryo.Serializer<RefStreamDefinition> {
 
+        private final UUIDKryoSerializer uuidKryoSerializer;
+
+        RefStreamDefinitionKryoSerializer() {
+            this.uuidKryoSerializer = new UUIDKryoSerializer();
+        }
+
         @Override
         public void write(final Kryo kryo,
                           final Output output,
                           final RefStreamDefinition refStreamDefinition) {
-            output.writeString(refStreamDefinition.getPipelineDocRef().getUuid());
-            output.writeString(refStreamDefinition.getPipelineDocRef().getType());
+            Preconditions.checkArgument(refStreamDefinition.getPipelineDocRef().getType().equals(PipelineEntity.ENTITY_TYPE));
+            uuidKryoSerializer.write(kryo, output, refStreamDefinition.getPipelineDocRef().getUuid());
+
+
+
+            // We are only ever dealing with pipeline DocRefs so we don't need
+            // the type as the uuid will be unique over all pipelines. The Type is only needed
+            // if we have more than one type in there
+//            output.writeString(refStreamDefinition.getPipelineDocRef().getType());
             output.writeByte(refStreamDefinition.getPipelineVersion());
             // write as variable length bytes as we don't require fixed width
             output.writeVarLong(refStreamDefinition.getStreamId(), true);
@@ -73,14 +89,15 @@ public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinit
         public RefStreamDefinition read(final Kryo kryo,
                                         final Input input,
                                         final Class<RefStreamDefinition> type) {
-            final String pipelineUuid = input.readString();
-            final String pipelineType = input.readString();
+
+            final String pipelineUuid = uuidKryoSerializer.read(kryo, input, String.class);
+//            final String pipelineType = input.readString();
             final byte pipelineVersion = input.readByte();
             final long streamId = input.readVarLong(true);
             final long streamNo = input.readVarLong(true);
 
             return new RefStreamDefinition(
-                    new DocRef(pipelineType, pipelineUuid),
+                    pipelineUuid,
                     pipelineVersion,
                     streamId,
                     streamNo);

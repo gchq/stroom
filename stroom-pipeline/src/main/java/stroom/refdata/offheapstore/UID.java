@@ -33,13 +33,13 @@ public class UID implements Comparable<UID> {
     // migrated to the new byte array length
     public static final int UID_ARRAY_LENGTH = 4;
 
-    /**
-     * A UID byte array containing all zeros that can be used when the UID for a
-     * string cannot be found. It is CRITICAL that a UID cannot be created in
-     * the table with this byte array
-     */
-    public static final UID NOT_FOUND_UID = new UID(new byte[UID_ARRAY_LENGTH]);
-    public static final byte[] NOT_FOUND_UID_BYTES = NOT_FOUND_UID.getUidBytes();
+//    /**
+//     * A UID byte array containing all zeros that can be used when the UID for a
+//     * string cannot be found. It is CRITICAL that a UID cannot be created in
+//     * the table with this byte array
+//     */
+//    public static final UID NOT_FOUND_UID = new UID(new byte[UID_ARRAY_LENGTH]);
+//    public static final byte[] NOT_FOUND_UID_BYTES = NOT_FOUND_UID.getUidBytes();
 
     private final byte[] bytes;
     private final int offset;

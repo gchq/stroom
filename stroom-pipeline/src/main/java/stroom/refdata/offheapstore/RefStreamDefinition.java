@@ -17,6 +17,8 @@
 
 package stroom.refdata.offheapstore;
 
+import stroom.entity.shared.DocRefUtil;
+import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
 
 import java.util.Objects;
@@ -27,6 +29,16 @@ public class RefStreamDefinition {
     private final byte pipelineVersion;
     private final long streamId;
     private final long streamNo;
+
+    public RefStreamDefinition(final String pipelineUuid,
+                               final byte pipelineVersion,
+                               final long streamId,
+                               final long streamNo) {
+        this.pipelineDocRef = new DocRef(PipelineEntity.ENTITY_TYPE, pipelineUuid);
+        this.pipelineVersion = pipelineVersion;
+        this.streamId = streamId;
+        this.streamNo = streamNo;
+    }
 
     public RefStreamDefinition(final DocRef pipelineDocRef,
                                final byte pipelineVersion,
