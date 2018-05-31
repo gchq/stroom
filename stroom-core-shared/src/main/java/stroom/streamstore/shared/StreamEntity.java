@@ -109,70 +109,29 @@ public class StreamEntity extends BaseEntityBig implements Stream {
         return stream;
     }
 
-//    public static Stream createStream(final StreamType type, final Feed feed, final Long effectiveMs) {
-//        final Stream stream = new Stream();
-//
-//        stream.streamType = type;
-//        stream.feed = feed;
-//        stream.effectiveMs = effectiveMs;
-//
-//        // When were we created
-//        stream.createMs = System.currentTimeMillis();
-//        // Ensure an effective time.
-//        if (stream.effectiveMs == null) {
-//            stream.effectiveMs = stream.createMs;
-//        }
-//
-//        return stream;
-//    }
-//
-//    public static Stream createStreamForTesting(final StreamType type, final Feed feed, final Long effectiveMs,
-//                                                final long createMs) {
-//        final Stream stream = new Stream();
-//
-//        stream.streamType = type;
-//        stream.feed = feed;
-//        stream.effectiveMs = effectiveMs;
-//
-//        // When were we created
-//        stream.createMs = createMs;
-//        // Ensure an effective time
-//        if (stream.effectiveMs == null) {
-//            stream.effectiveMs = stream.createMs;
-//        }
-//
-//        return stream;
-//    }
-//
-//    public static Stream createProcessedStream(final Stream parent, final Feed feed, final StreamType streamType,
-//                                               final StreamProcessor streamProcessor, final StreamTask streamTask) {
-//        final Stream stream = new Stream();
-//
-//        if (parent != null) {
-//            if (parent.getEffectiveMs() != null) {
-//                stream.effectiveMs = parent.getEffectiveMs();
-//            } else {
-//                stream.effectiveMs = parent.getCreateMs();
-//            }
-//            stream.parentStreamId = parent.getId();
-//        }
-//
-//        stream.feed = feed;
-//        stream.streamType = streamType;
-//        stream.streamProcessor = streamProcessor;
-//        if (streamTask != null) {
-//            stream.streamTaskId = streamTask.getId();
-//        }
-//
-//        // When were we created
-//        stream.createMs = System.currentTimeMillis();
-//        // Ensure an effective time
-//        if (stream.effectiveMs == null) {
-//            stream.effectiveMs = stream.createMs;
-//        }
-//
-//        return stream;
-//    }
+    @Override
+    public String getFeedName() {
+        if (feed == null) {
+            return null;
+        }
+        return feed.getName();
+    }
+
+    @Override
+    public String getStreamTypeName() {
+        if (streamType == null) {
+            return null;
+        }
+        return streamType.getName();
+    }
+
+    @Override
+    public String getPipelineName() {
+        if (streamProcessor == null) {
+            return null;
+        }
+        return streamProcessor.getPipelineName();
+    }
 
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = FeedEntity.FOREIGN_KEY)

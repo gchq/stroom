@@ -22,9 +22,15 @@ import stroom.streamtask.shared.StreamProcessor;
 public interface Stream extends SharedObject {
     long getId();
 
-    FeedEntity getFeed();
+    String getFeedName();
 
-    StreamType getStreamType();
+    String getStreamTypeName();
+
+    String getPipelineName();
+
+//    FeedEntity getFeed();
+//
+//    StreamType getStreamType();
 
     Long getParentStreamId();
 
