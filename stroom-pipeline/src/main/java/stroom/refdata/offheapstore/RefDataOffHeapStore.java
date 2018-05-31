@@ -202,8 +202,24 @@ public class RefDataOffHeapStore implements RefDataStore {
     }
 
 
+    /**
+     * Get an instance of a {@link RefDataLoader} for bulk loading multiple entries for a given
+     * {@link RefStreamDefinition} and its associated effectiveTimeMs. The {@link RefDataLoader}
+     * should be used in a try with resources block to ensure any transactions are closed, e.g.
+     * <pre>try (RefDataLoader refDataLoader = refDataOffHeapStore.getLoader(...)) { ... }</pre>
+     */
     public RefDataLoader loader(final RefStreamDefinition refStreamDefinition, final long effectiveTimeMs) {
-        return new RefDataLoaderImpl(this, env, refStreamDefinition, effectiveTimeMs);
+        return new RefDataLoaderImpl(
+                this,
+                keyValueStoreDb,
+                rangeStoreDb,
+                valueStoreDb,
+                mapUidForwardDb,
+                mapUidReverseDb,
+                processingInfoDb,
+                env,
+                refStreamDefinition,
+                effectiveTimeMs);
     }
 
     private static Dbi<ByteBuffer> openDbi(final Env<ByteBuffer> env, final String name) {
@@ -247,6 +263,12 @@ public class RefDataOffHeapStore implements RefDataStore {
 
         private Txn<ByteBuffer> writeTxn = null;
         private final RefDataOffHeapStore refDataOffHeapStore;
+        private final KeyValueStoreDb keyValueStoreDb;
+        private final RangeStoreDb rangeStoreDb;
+        private final ValueStoreDb valueStoreDb;
+        private final MapUidForwardDb mapUidForwardDb;
+        private final MapUidReverseDb mapUidReverseDb;
+        private final ProcessingInfoDb processingInfoDb;
         private final Env<ByteBuffer> lmdbEnvironment;
         private boolean initialised = false;
         private final RefStreamDefinition refStreamDefinition;
@@ -257,12 +279,24 @@ public class RefDataOffHeapStore implements RefDataStore {
         // TODO we could just hit lmdb each time, but there may be serde costs
         private final Map<MapDefinition, UID> mapDefinitionToUIDMap = new HashMap<>();
 
-        RefDataLoaderImpl(final RefDataOffHeapStore refDataOffHeapStore,
-                          final Env<ByteBuffer> lmdbEnvironment,
-                          final RefStreamDefinition refStreamDefinition,
-                          final long effectiveTimeMs) {
+        private RefDataLoaderImpl(final RefDataOffHeapStore refDataOffHeapStore,
+                                  final KeyValueStoreDb keyValueStoreDb,
+                                  final RangeStoreDb rangeStoreDb,
+                                  final ValueStoreDb valueStoreDb,
+                                  final MapUidForwardDb mapUidForwardDb,
+                                  final MapUidReverseDb mapUidReverseDb,
+                                  final ProcessingInfoDb processingInfoDb,
+                                  final Env<ByteBuffer> lmdbEnvironment,
+                                  final RefStreamDefinition refStreamDefinition,
+                                  final long effectiveTimeMs) {
 
             this.refDataOffHeapStore = refDataOffHeapStore;
+            this.keyValueStoreDb = keyValueStoreDb;
+            this.rangeStoreDb = rangeStoreDb;
+            this.valueStoreDb = valueStoreDb;
+            this.mapUidForwardDb = mapUidForwardDb;
+            this.mapUidReverseDb = mapUidReverseDb;
+            this.processingInfoDb = processingInfoDb;
             this.lmdbEnvironment = lmdbEnvironment;
             this.refStreamDefinition = refStreamDefinition;
             this.effectiveTimeMs = effectiveTimeMs;
@@ -288,10 +322,14 @@ public class RefDataOffHeapStore implements RefDataStore {
                     effectiveTimeMs,
                     RefDataProcessingInfo.ProcessingState.IN_PROGRESS);
 
-            boolean didSetSucceed = refDataOffHeapStore.setProcessingInfo(
+            // TODO need to consider how to prevent multiple threads trying to load the same
+            // ref data set at once
+
+            // TODO do we want to overwrite the existing value or just update its state/lastAccessedTime?
+            boolean didPutSucceed = processingInfoDb.put(
                     writeTxn, refStreamDefinition, refDataProcessingInfo, overwriteExisting);
 
-            if (!overwriteExisting && !didSetSucceed) {
+            if (!overwriteExisting && !didPutSucceed) {
                 throw new RuntimeException(LambdaLogger.buildMessage(
                         "Unable to create processing info entry as one already exists for key {}", refStreamDefinition));
             }
@@ -302,7 +340,7 @@ public class RefDataOffHeapStore implements RefDataStore {
             beginTxnIfRequired();
 
             // Set the processing info record to COMPLETE and update the last update time
-            refDataOffHeapStore.updateProcessingState(
+            processingInfoDb.updateProcessingState(
                     writeTxn, refStreamDefinition, RefDataProcessingInfo.ProcessingState.COMPLETE);
         }
 
