@@ -22,7 +22,6 @@ import stroom.entity.shared.SQLNameConstants;
 import stroom.feed.MetaMap;
 import stroom.node.shared.Volume;
 import stroom.streamstore.shared.FeedEntity;
-import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
@@ -423,31 +422,22 @@ public class StreamRestoreTool extends DatabaseTool {
                     if (action == 'r' && "0".equals(streamAttributes.get(DEPTH))) {
                         streamAttributes.putAll(readManifestAttributes(line));
 
-                        final StreamEntity stream = new StreamEntity();
-                        stream.setId(Long.parseLong(streamAttributes.get(StreamAttributeConstants.STREAM_ID)));
-                        stream.setVersion((byte) 1);
-
-                        stream.setCreateMs(DateUtil
-                                .parseNormalDateTimeString(streamAttributes.get(StreamAttributeConstants.CREATE_TIME)));
+                        final long streamId = Long.parseLong(streamAttributes.get(StreamAttributeConstants.STREAM_ID));
+                        final long createMs = DateUtil.parseNormalDateTimeString(streamAttributes.get(StreamAttributeConstants.CREATE_TIME));
+                        long effectiveMs = createMs;
                         if (streamAttributes.containsKey(StreamAttributeConstants.EFFECTIVE_TIME)) {
-                            stream.setEffectiveMs(DateUtil.parseNormalDateTimeString(
-                                    streamAttributes.get(StreamAttributeConstants.EFFECTIVE_TIME)));
-                        }
-                        if (stream.getEffectiveMs() == null) {
-                            stream.setEffectiveMs(stream.getCreateMs());
+                            effectiveMs = DateUtil.parseNormalDateTimeString(streamAttributes.get(StreamAttributeConstants.EFFECTIVE_TIME));
                         }
 
+                        Long parentStreamId = null;
                         if (streamAttributes.containsKey(StreamAttributeConstants.PARENT_STREAM_ID)) {
-                            stream.setParentStreamId(
-                                    Long.valueOf(streamAttributes.get(StreamAttributeConstants.PARENT_STREAM_ID)));
+                            parentStreamId = Long.valueOf(streamAttributes.get(StreamAttributeConstants.PARENT_STREAM_ID));
                         }
-                        stream.updateStatus(StreamStatus.UNLOCKED);
-                        stream.setFeed(FeedEntity.createStub(Long.valueOf(streamAttributes.get(FEED_ID))));
-                        stream.setStreamType(
-                                StreamType.createStub(getPathStreamTypeMap().get(streamAttributes.get(STREAM_TYPE_PATH))));
+                        final long feedId = Long.valueOf(streamAttributes.get(FEED_ID));
+                        final long streamTypeId = getPathStreamTypeMap().get(streamAttributes.get(STREAM_TYPE_PATH));
 
-                        final String logInfo = Strings.padStart(String.valueOf(stream.getId()), 10, ' ') + " "
-                                + DateUtil.createNormalDateTimeString(stream.getCreateMs());
+                        final String logInfo = Strings.padStart(String.valueOf(streamId), 10, ' ') + " "
+                                + DateUtil.createNormalDateTimeString(createMs);
 
                         writeLine("Restore " + logInfo + " for file " + line);
 
@@ -457,34 +447,25 @@ public class StreamRestoreTool extends DatabaseTool {
                                         "insert into strm (id,ver, crt_ms,effect_ms, parnt_strm_id,stat, fk_fd_id,fk_strm_proc_id, fk_strm_tp_id) "
                                                 + " values (?,1, ?,?, ?,?, ?,?, ?)")) {
                                     int s1i = 1;
-                                    statement1.setLong(s1i++, stream.getId());
-
-                                    statement1.setLong(s1i++, stream.getCreateMs());
-                                    if (stream.getEffectiveMs() != null) {
-                                        statement1.setLong(s1i++, stream.getEffectiveMs());
+                                    statement1.setLong(s1i++, streamId);
+                                    statement1.setLong(s1i++, createMs);
+                                    statement1.setLong(s1i++, effectiveMs);
+                                    if (parentStreamId != null) {
+                                        statement1.setLong(s1i++, parentStreamId);
                                     } else {
                                         statement1.setNull(s1i++, Types.BIGINT);
                                     }
-
-                                    if (stream.getParentStreamId() != null) {
-                                        statement1.setLong(s1i++, stream.getParentStreamId());
-                                    } else {
-                                        statement1.setNull(s1i++, Types.BIGINT);
-                                    }
-                                    statement1.setByte(s1i++, stream.getStatus().getPrimitiveValue());
-
-                                    statement1.setLong(s1i++, stream.getFeed().getId());
+                                    statement1.setByte(s1i++, StreamStatus.UNLOCKED.getPrimitiveValue());
+                                    statement1.setLong(s1i++, feedId);
                                     statement1.setNull(s1i++, Types.BIGINT);
-
-                                    statement1.setLong(s1i++, stream.getStreamType().getId());
-
+                                    statement1.setLong(s1i++, streamTypeId);
                                     statement1.executeUpdate();
                                 }
 
                                 try (final PreparedStatement statement2 = connection.prepareStatement(
                                         "insert into strm_vol (ver, fk_strm_id,fk_vol_id) " + " values (1, ?,?)")) {
                                     int s2i = 1;
-                                    statement2.setLong(s2i++, stream.getId());
+                                    statement2.setLong(s2i++, streamId);
                                     statement2.setLong(s2i++, getPathVolumeMap().get(streamAttributes.get(VOLUME_PATH)));
                                     statement2.executeUpdate();
                                 }

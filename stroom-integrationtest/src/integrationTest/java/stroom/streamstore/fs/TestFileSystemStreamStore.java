@@ -225,7 +225,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         streamStore.closeStreamTarget(streamTarget);
 
         final StreamProperties childProperties = new StreamProperties.Builder()
-                .feedName(streamTarget.getStream().getFeed().getName())
+                .feedName(streamTarget.getStream().getFeedName())
                 .streamTypeName(StreamType.RAW_EVENTS.getName())
                 .parent(streamTarget.getStream())
                 .build();
@@ -234,7 +234,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         streamStore.closeStreamTarget(childTarget);
 
         final StreamProperties grandChildProperties = new StreamProperties.Builder()
-                .feedName(childTarget.getStream().getFeed().getName())
+                .feedName(childTarget.getStream().getFeedName())
                 .streamTypeName(StreamType.RAW_EVENTS.getName())
                 .parent(childTarget.getStream())
                 .build();
@@ -351,7 +351,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                 .build();
 
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
-        streamTarget.getStream().getFeed().getName();
+        streamTarget.getStream().getFeedName();
         StreamEntity exactMetaData = streamTarget.getStream();
         streamTarget.getOutputStream().write(testString.getBytes(StreamUtil.DEFAULT_CHARSET));
         streamStore.closeStreamTarget(streamTarget);
@@ -366,8 +366,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         Assert.assertNotNull(streamSource);
         // Must be a proxy
-        Assert.assertNotNull(streamSource.getStream().getFeed());
-        Assert.assertNotNull(streamSource.getStream().getFeed().getName());
+        Assert.assertNotNull(streamSource.getStream().getFeedName());
 
         // Finished
         streamStore.closeStreamSource(streamSource);

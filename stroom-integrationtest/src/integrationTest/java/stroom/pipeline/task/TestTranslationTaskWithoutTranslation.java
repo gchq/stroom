@@ -83,7 +83,7 @@ public class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegr
         final Path outputDir = StroomPipelineTestFileUtil.getTestOutputDir().resolve(DIR);
 
         for (final StreamEntity stream : streamStore.getFileData().keySet()) {
-            if (stream.getStreamType() == StreamType.EVENTS) {
+            if (StreamType.EVENTS.equalsEntity(stream.getStreamType())) {
                 final byte[] data = streamStore.getFileData().get(stream).get(stream.getStreamType().getId());
 
                 // Write the actual XML out.

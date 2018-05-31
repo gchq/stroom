@@ -41,9 +41,9 @@ import stroom.feed.shared.FeedDoc;
 import stroom.node.shared.Volume;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
-import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeMap;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.shared.StreamProcessor;
@@ -310,19 +310,18 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         StreamTooltipPresenterUtil.addRowDateString(html, "Effective", row.getStream().getEffectiveMs());
 
         //if (securityContext.hasAppPermission(StreamType.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
-        StreamTooltipPresenterUtil.addRowNameString(html, "Stream Type", row.getStream().getStreamType());
+        TooltipUtil.addRowData(html, "Stream Type", row.getStream().getStreamTypeName());
         //}
         //if (securityContext.hasAppPermission(Feed.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
-        StreamTooltipPresenterUtil.addRowNameString(html, "Feed", row.getStream().getFeed());
+        TooltipUtil.addRowData(html, "Feed", row.getStream().getFeedName());
         //}
 
         //if (securityContext.hasAppPermission(StreamProcessor.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
         if (row.getStream().getStreamProcessor() != null) {
-            TooltipUtil.addRowData(html, "Stream Processor Uuid", row.getStream().getStreamProcessor().getId());
+            TooltipUtil.addRowData(html, "Stream Processor Uuid", row.getStream().getStreamProcessorId());
             if (row.getStream().getStreamProcessor().getPipelineUuid() != null) {
                 //if (securityContext.hasAppPermission(PipelineEntity.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
-                TooltipUtil.addRowData(html, "Stream Processor Pipeline",
-                        row.getStream().getStreamProcessor().getPipelineName());
+                TooltipUtil.addRowData(html, "Stream Processor Pipeline", row.getStream().getPipelineName());
                 //}
             }
         }
@@ -388,8 +387,8 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         getView().addResizableColumn(new Column<StreamAttributeMap, String>(new TextCell()) {
             @Override
             public String getValue(final StreamAttributeMap row) {
-                if (row != null && row.getStream() != null && row.getStream().getFeed() != null) {
-                    return row.getStream().getFeed().getName();
+                if (row != null && row.getStream() != null && row.getStream().getFeedName() != null) {
+                    return row.getStream().getFeedName();
                 }
                 return "";
             }
@@ -402,8 +401,8 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         getView().addResizableColumn(new Column<StreamAttributeMap, String>(new TextCell()) {
             @Override
             public String getValue(final StreamAttributeMap row) {
-                if (row != null && row.getStream() != null && row.getStream().getStreamType() != null) {
-                    return row.getStream().getStreamType().getName();
+                if (row != null && row.getStream() != null && row.getStream().getStreamTypeName() != null) {
+                    return row.getStream().getStreamTypeName();
                 }
                 return "";
             }
@@ -417,8 +416,8 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
             @Override
             public String getValue(final StreamAttributeMap row) {
                 if (row.getStream().getStreamProcessor() != null) {
-                    if (row.getStream().getStreamProcessor().getPipelineName() != null) {
-                        return row.getStream().getStreamProcessor().getPipelineName();
+                    if (row.getStream().getPipelineName() != null) {
+                        return row.getStream().getPipelineName();
                     } else {
                         return "Not visible";
                     }

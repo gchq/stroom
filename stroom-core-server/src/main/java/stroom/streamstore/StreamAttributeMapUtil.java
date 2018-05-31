@@ -35,12 +35,12 @@ class StreamAttributeMapUtil {
             if (stream.getParentStreamId() != null) {
                 attributeMap.put(StreamDataSource.PARENT_STREAM_ID, stream.getParentStreamId());
             }
-            if (stream.getStreamType() != null) {
-                attributeMap.put(StreamDataSource.STREAM_TYPE, stream.getStreamType().getName());
+            if (stream.getStreamTypeName() != null) {
+                attributeMap.put(StreamDataSource.STREAM_TYPE, stream.getStreamTypeName());
             }
-            final FeedEntity feed = stream.getFeed();
-            if (feed != null) {
-                attributeMap.put(StreamDataSource.FEED, feed.getName());
+            final String feedName = stream.getFeedName();
+            if (feedName != null) {
+                attributeMap.put(StreamDataSource.FEED, feedName);
             }
             final StreamProcessor streamProcessor = stream.getStreamProcessor();
             if (streamProcessor != null) {

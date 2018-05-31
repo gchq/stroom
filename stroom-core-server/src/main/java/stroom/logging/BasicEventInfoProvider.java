@@ -60,12 +60,12 @@ class BasicEventInfoProvider implements EventInfoProvider {
             if (entity instanceof StreamEntity) {
                 try {
                     final StreamEntity stream = (StreamEntity) entity;
-                    if (stream.getFeed() != null) {
-                        EventLoggingUtil.createData("Feed", stream.getFeed().getName());
+                    if (stream.getFeedName() != null) {
+                        EventLoggingUtil.createData("Feed", stream.getFeedName());
                     }
                     // Stream type is now lazy
-                    if (stream.getStreamType() != null) {
-                        object.getData().add(EventLoggingUtil.createData("StreamType", stream.getStreamType().getName()));
+                    if (stream.getStreamTypeName() != null) {
+                        object.getData().add(EventLoggingUtil.createData("StreamType", stream.getStreamTypeName()));
                     }
                 } catch (final RuntimeException e) {
                     LOGGER.error("Unable to configure stream!", e);

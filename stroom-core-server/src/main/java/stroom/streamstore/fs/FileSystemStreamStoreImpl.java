@@ -41,6 +41,7 @@ import stroom.entity.util.SqlUtil;
 import stroom.feed.FeedDocCache;
 import stroom.feed.FeedStore;
 import stroom.feed.MetaMap;
+import stroom.feed.shared.FeedDoc;
 import stroom.node.NodeCache;
 import stroom.node.VolumeService;
 import stroom.node.shared.Volume;
@@ -58,20 +59,20 @@ import stroom.streamstore.FindFeedCriteria;
 import stroom.streamstore.OldFindStreamCriteria;
 import stroom.streamstore.StreamAttributeValueFlush;
 import stroom.streamstore.StreamException;
+import stroom.streamstore.StreamTypeService;
 import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamTarget;
-import stroom.streamstore.StreamTypeService;
 import stroom.streamstore.shared.FeedEntity;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.FindStreamTypeCriteria;
-import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeCondition;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeFieldUse;
 import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamPermissionException;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
@@ -354,8 +355,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
         // Ensure user has permission to read this stream.
         if (entity != null) {
-            final FeedEntity feed = entity.getFeed();
-            if (!securityContext.hasDocumentPermission(feed.getType(), getFeedUuid(feed.getName()), DocumentPermissionNames.READ)) {
+            if (!securityContext.hasDocumentPermission(FeedDoc.DOCUMENT_TYPE, getFeedUuid(entity.getFeedName()), DocumentPermissionNames.READ)) {
                 throw new StreamPermissionException(securityContext.getUserId(), "You do not have permission to read stream with id=" + id);
             }
         }
@@ -516,7 +516,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         return openStreamTarget(stream, true);
     }
 
-//    @Secured(feature = Stream.DOCUMENT_TYPE, permission = DocumentPermissionNames.UPDATE)
+    //    @Secured(feature = Stream.DOCUMENT_TYPE, permission = DocumentPermissionNames.UPDATE)
     @SuppressWarnings("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE")
     private StreamTarget openStreamTarget(final StreamEntity stream, final boolean append) {
         return entityManagerSupport.transactionResult(em -> {
@@ -559,8 +559,8 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
                     String.valueOf(dbStream.getParentStreamId()));
         }
 
-        updateAttribute(target, StreamAttributeConstants.FEED, dbStream.getFeed().getName());
-        updateAttribute(target, StreamAttributeConstants.STREAM_TYPE, dbStream.getStreamType().getName());
+        updateAttribute(target, StreamAttributeConstants.FEED, dbStream.getFeedName());
+        updateAttribute(target, StreamAttributeConstants.STREAM_TYPE, dbStream.getStreamTypeName());
         updateAttribute(target, StreamAttributeConstants.CREATE_TIME, DateUtil.createNormalDateTimeString(stream.getCreateMs()));
         if (stream.getEffectiveMs() != null) {
             updateAttribute(target, StreamAttributeConstants.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(stream.getEffectiveMs()));
@@ -614,8 +614,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         }
 
         // Ensure the user has permission to delete this stream.
-        final FeedEntity feed = loaded.getFeed();
-        if (!securityContext.hasDocumentPermission(feed.getType(), getFeedUuid(feed.getName()), DocumentPermissionNames.DELETE)) {
+        if (!securityContext.hasDocumentPermission(FeedDoc.DOCUMENT_TYPE, getFeedUuid(loaded.getFeedName()), DocumentPermissionNames.DELETE)) {
             throw new StreamPermissionException(securityContext.getUserId(), "You do not have permission to delete stream with id=" + loaded.getId());
         }
 

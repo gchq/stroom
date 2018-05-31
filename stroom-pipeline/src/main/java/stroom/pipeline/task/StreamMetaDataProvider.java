@@ -118,8 +118,8 @@ public class StreamMetaDataProvider implements MetaDataProvider {
     private String getFeed() {
         return parentData.computeIfAbsent(FEED, k -> {
             final StreamEntity stream = streamHolder.getStream();
-            if (stream != null && stream.getFeed() != null) {
-                return stream.getFeed().getName();
+            if (stream != null) {
+                return stream.getFeedName();
             }
             return null;
         });
@@ -129,7 +129,7 @@ public class StreamMetaDataProvider implements MetaDataProvider {
         return parentData.computeIfAbsent(STREAM_TYPE, k -> {
             final StreamEntity stream = streamHolder.getStream();
             if (stream != null) {
-                return stream.getStreamType().getName();
+                return stream.getStreamTypeName();
             }
             return null;
         });

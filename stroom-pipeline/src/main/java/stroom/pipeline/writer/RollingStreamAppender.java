@@ -119,7 +119,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
                 }
 
                 // Use current feed if none other has been specified.
-                feed = parentStream.getFeed().getName();
+                feed = parentStream.getFeedName();
             }
         }
 

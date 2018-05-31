@@ -83,8 +83,8 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
                 TooltipUtil.addRowData(html, "Parent Stream Id", row.getStream().getParentStreamId());
                 TooltipUtil.addRowData(html, "Created", toDateString(row.getStream().getCreateMs()));
                 TooltipUtil.addRowData(html, "Effective", toDateString(row.getStream().getEffectiveMs()));
-                TooltipUtil.addRowData(html, "Stream Type", toNameString(row.getStream().getStreamType()));
-                TooltipUtil.addRowData(html, "Feed", toNameString(row.getStream().getFeed()));
+                TooltipUtil.addRowData(html, "Stream Type", row.getStream().getStreamTypeName());
+                TooltipUtil.addRowData(html, "Feed", row.getStream().getFeedName());
 
                 if (row.getStreamProcessorFilter() != null) {
                     if (row.getStreamProcessorFilter().getStreamProcessor() != null) {

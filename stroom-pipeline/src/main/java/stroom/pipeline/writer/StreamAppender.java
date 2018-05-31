@@ -80,8 +80,8 @@ public class StreamAppender extends AbstractAppender {
     protected OutputStream createOutputStream() {
         final StreamEntity parentStream = streamHolder.getStream();
 
-        if (feed == null && parentStream != null && parentStream.getFeed() != null) {
-            feed = parentStream.getFeed().getName();
+        if (feed == null && parentStream != null && parentStream.getFeedName() != null) {
+            feed = parentStream.getFeedName();
         }
 
         if (streamType == null) {

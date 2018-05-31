@@ -71,7 +71,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     private boolean errorMarkerMode = true;
     private Long currentStreamId;
-    private StreamType currentStreamType;
+    private String currentStreamType;
     private StreamType currentChildStreamType;
     private OffsetRange<Long> currentStreamRange = new OffsetRange<>(0L, 1L);
     private OffsetRange<Long> currentPageRange = new OffsetRange<>(0L, 100L);
@@ -149,7 +149,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 } else {
                     // Turn off error marker mode if we are currently looking at
                     // an error and switching to the data tab.
-                    if (StreamType.ERROR.equals(currentStreamType) && errorMarkerMode) {
+                    if (StreamType.ERROR.getName().equals(currentStreamType) && errorMarkerMode) {
                         errorMarkerMode = false;
                     }
 
@@ -204,7 +204,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     public void fetchData(final StreamEntity stream) {
         this.currentStreamId = stream.getId();
-        this.currentStreamType = stream.getStreamType();
+        this.currentStreamType = stream.getStreamTypeName();
         currentStreamRange = new OffsetRange<>(0L, 1L);
         currentPageRange = new OffsetRange<>(0L, 100L);
         streamTypeOffsetRangeMap.clear();
@@ -350,7 +350,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             }
 
             // Show only applicable links.
-            hideTab(errorTab, !StreamType.ERROR.equals(currentStreamType));
+            hideTab(errorTab, !StreamType.ERROR.getName().equals(currentStreamType));
             hideTab(dataTab, false);
             if (availableChildStreamTypes != null) {
                 hideTab(metaTab, !availableChildStreamTypes.contains(StreamType.META));

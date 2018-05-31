@@ -239,7 +239,7 @@ public class MockStreamStore implements StreamStore, Clearable {
                     match = false;
                 } else if (!typeMap.containsKey(streamType.getId())) {
                     match = false;
-                } else if (!criteria.getFeed().equals(stream.getFeed().getName())) {
+                } else if (!criteria.getFeed().equals(stream.getFeedName())) {
                     match = false;
                 }
 

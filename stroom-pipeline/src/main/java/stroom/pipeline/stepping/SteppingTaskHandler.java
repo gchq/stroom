@@ -52,12 +52,10 @@ import stroom.security.UserTokenUtil;
 import stroom.security.shared.PermissionNames;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.StreamTypeService;
 import stroom.streamstore.fs.serializable.NestedInputStream;
 import stroom.streamstore.fs.serializable.RANestedInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
-import stroom.streamstore.shared.FeedEntity;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamType;
@@ -69,7 +67,6 @@ import stroom.util.date.DateUtil;
 import stroom.util.shared.Highlight;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -94,7 +91,6 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     private final StreamStore streamStore;
     private final StreamCloser streamCloser;
     private final FeedProperties feedProperties;
-    private final StreamTypeService streamTypeService;
     private final TaskContext taskContext;
     private final FeedHolder feedHolder;
     private final MetaDataHolder metaDataHolder;
@@ -127,7 +123,6 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     SteppingTaskHandler(final StreamStore streamStore,
                         final StreamCloser streamCloser,
                         final FeedProperties feedProperties,
-                        @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
                         final TaskContext taskContext,
                         final FeedHolder feedHolder,
                         final MetaDataHolder metaDataHolder,
@@ -147,7 +142,6 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
         this.streamStore = streamStore;
         this.streamCloser = streamCloser;
         this.feedProperties = feedProperties;
-        this.streamTypeService = streamTypeService;
         this.taskContext = taskContext;
         this.feedHolder = feedHolder;
         this.metaDataHolder = metaDataHolder;
@@ -334,13 +328,13 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                     }
 
                     // Load the feed.
-                    final FeedEntity feed = streamSource.getStream().getFeed();
+                    final String feedName = streamSource.getStream().getFeedName();
 
                     // Get the stream type.
                     final StreamType streamType = stepSource.getType();
 
                     // Now process the data.
-                    processStream(controller, feed.getName(), streamType, stepSource);
+                    processStream(controller, feedName, streamType, stepSource);
 
                     try {
                         // Close all open streams.
@@ -683,13 +677,13 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                         // Skip to the appropriate stream.
                         if (inputStream.getEntry(location.getStreamNo() - 1)) {
                             // Load the feed.
-                            final FeedEntity feed = streamSource.getStream().getFeed();
+                            final String feedName = streamSource.getStream().getFeedName();
 
                             // Get the stream type.
                             final StreamType streamType = streamSource.getType();
 
                             // Get the appropriate encoding for the stream type.
-                            final String encoding = feedProperties.getEncoding(feed.getName(), streamType);
+                            final String encoding = feedProperties.getEncoding(feedName, streamType);
 
                             final InputStreamReader inputStreamReader = new InputStreamReader(inputStream, encoding);
                             final BufferedReader bufferedReader = new BufferedReader(inputStreamReader);

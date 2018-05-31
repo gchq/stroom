@@ -64,11 +64,10 @@ import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.serializable.RASegmentInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
-import stroom.streamstore.shared.FeedEntity;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.InclusiveRanges;
@@ -221,11 +220,8 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             }
 
             // Load the feed.
-            final FeedEntity feed = stream.getFeed();
-            if (feed != null) {
-                feedName = feed.getName();
-                feedHolder.setFeedName(feed.getName());
-            }
+            feedName = stream.getFeedName();
+            feedHolder.setFeedName(feedName);
 
             // Setup the meta data holder.
             metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
@@ -616,12 +612,12 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                 // Create a processing info stream to write all processing
                 // information to.
                 final StreamProperties errorStreamProperties = new StreamProperties.Builder()
-                                .feedName(stream.getFeed().getName())
-                                .streamTypeName(StreamType.ERROR.getName())
-                                .parent(stream)
-                                .streamProcessor(streamProcessor)
-                                .streamTask(streamTask)
-                                .build();
+                        .feedName(stream.getFeedName())
+                        .streamTypeName(StreamType.ERROR.getName())
+                        .parent(stream)
+                        .streamProcessor(streamProcessor)
+                        .streamTask(streamTask)
+                        .build();
 
                 processInfoStreamTarget = streamStore.openStreamTarget(errorStreamProperties);
                 streamCloser.add(processInfoStreamTarget);

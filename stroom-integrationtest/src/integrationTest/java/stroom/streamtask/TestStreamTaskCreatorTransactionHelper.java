@@ -21,11 +21,12 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.docref.DocRef;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.util.ConnectionUtil;
 import stroom.entity.util.SqlBuilder;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.docref.DocRef;
+import stroom.streamstore.FeedService;
 import stroom.streamstore.OldFindStreamCriteria;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.shared.FeedEntity;
@@ -63,6 +64,8 @@ public class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrat
     private StroomEntityManager stroomEntityManager;
     @Inject
     private StreamStore streamStore;
+    @Inject
+    private FeedService feedService;
 
     @Test
     public void testBasic() {
@@ -72,27 +75,26 @@ public class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrat
         Assert.assertEquals(0, commonTestControl.countEntity(StreamTask.class));
         final List<StreamEntity> streams = streamStore.find(new OldFindStreamCriteria());
         Assert.assertEquals(1, streams.size());
-        final StreamEntity stream = streams.get(0);
-        final FeedEntity feed = stream.getFeed();
+        final FeedEntity feed = feedService.get(feedName);
 
         OldFindStreamCriteria findStreamCriteria = new OldFindStreamCriteria();
         Assert.assertEquals(1,
-                streamTaskCreatorTransactionHelper.runSelectStreamQuery( findStreamCriteria, 0, 100).size());
+                streamTaskCreatorTransactionHelper.runSelectStreamQuery(findStreamCriteria, 0, 100).size());
 
         findStreamCriteria = new OldFindStreamCriteria();
         findStreamCriteria.obtainFeeds().obtainInclude().add(feed);
         Assert.assertEquals(1,
-                streamTaskCreatorTransactionHelper.runSelectStreamQuery( findStreamCriteria, 0, 100).size());
+                streamTaskCreatorTransactionHelper.runSelectStreamQuery(findStreamCriteria, 0, 100).size());
 
         findStreamCriteria = new OldFindStreamCriteria();
         findStreamCriteria.obtainFeeds().obtainInclude().add(feed.getId() + 1);
         Assert.assertEquals(0,
-                streamTaskCreatorTransactionHelper.runSelectStreamQuery( findStreamCriteria, 0, 100).size());
+                streamTaskCreatorTransactionHelper.runSelectStreamQuery(findStreamCriteria, 0, 100).size());
 
         findStreamCriteria = new OldFindStreamCriteria();
         findStreamCriteria.obtainPipelineSet().add(new DocRef(PipelineDoc.DOCUMENT_TYPE, "1234"));
         Assert.assertEquals(0,
-                streamTaskCreatorTransactionHelper.runSelectStreamQuery( findStreamCriteria, 0, 100).size());
+                streamTaskCreatorTransactionHelper.runSelectStreamQuery(findStreamCriteria, 0, 100).size());
     }
 
     @Test

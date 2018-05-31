@@ -140,8 +140,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                     final StreamEntity stream = streamSource.getStream();
                     try {
                         // Load the feed.
-                        final FeedEntity feed = stream.getFeed();
-                        final String feedName = feed.getName();
+                        final String feedName = stream.getFeedName();
                         feedHolder.setFeedName(feedName);
 
                         // Setup the meta data holder.

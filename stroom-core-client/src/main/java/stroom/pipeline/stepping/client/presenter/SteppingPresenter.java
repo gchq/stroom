@@ -172,7 +172,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                             docRef = property.getValue().getEntity();
                         } else if (property.getName().toLowerCase().contains("pattern") && stream != null) {
                             String value = property.getValue().getString();
-                            value = replace(value, "feed", stream.getFeed().getName());
+                            value = replace(value, "feed", stream.getFeedName());
                             value = replace(value, "pipeline", action.getPipeline().getName());
 
                             if (element.getElementType().getType().equalsIgnoreCase("XSLTFilter")) {

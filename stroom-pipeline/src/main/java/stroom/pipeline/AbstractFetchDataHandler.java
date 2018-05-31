@@ -191,8 +191,8 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
 
                 // Get the feed name.
                 String feedName = null;
-                if (streamSource != null && streamSource.getStream() != null && streamSource.getStream().getFeed() != null) {
-                    feedName = streamSource.getStream().getFeed().getName();
+                if (streamSource != null && streamSource.getStream() != null && streamSource.getStream().getFeedName() != null) {
+                    feedName = streamSource.getStream().getFeedName();
                 }
 
                 // Get the boundary and segment input streams.
