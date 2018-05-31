@@ -18,7 +18,7 @@
 package stroom.refdata.offheapstore;
 
 import com.google.common.base.Preconditions;
-import stroom.refdata.saxevents.LmdbUtils;
+import stroom.refdata.lmdb.LmdbUtils;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;

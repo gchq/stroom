@@ -26,7 +26,7 @@ import stroom.refdata.offheapstore.RefDataProcessingInfo;
 import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.refdata.offheapstore.serdes.RefDataProcessingInfoSerde;
 import stroom.refdata.offheapstore.serdes.RefStreamDefinitionSerde;
-import stroom.refdata.saxevents.LmdbUtils;
+import stroom.refdata.lmdb.LmdbUtils;
 
 import java.util.Map;
 import java.util.Optional;
@@ -112,17 +112,23 @@ public class TestProcessingInfoDb extends AbstractLmdbDbTest {
                 RefDataProcessingInfo.ProcessingState.IN_PROGRESS);
 
         boolean didSucceed = false;
+
+        // initial put into empty db so will succeed
         didSucceed = processingInfoDb.put(refStreamDefinition, refDataProcessingInfoBefore, false);
         assertThat(didSucceed).isTrue();
+
+        // put the same key/value with overwrite==false so will fail
         didSucceed = processingInfoDb.put(refStreamDefinition, refDataProcessingInfoBefore, false);
         assertThat(didSucceed).isFalse();
+
+        // put the same key/value with overwrite==true so will succeed
         didSucceed = processingInfoDb.put(refStreamDefinition, refDataProcessingInfoBefore, true);
         assertThat(didSucceed).isTrue();
 
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
-            processingInfoDb.updateProcessingState(writeTxn, refStreamDefinition, RefDataProcessingInfo.ProcessingState.COMPLETE);
-            writeTxn.commit();
-        });
+        // open a write txn and mutate the value
+        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn ->
+                processingInfoDb.updateProcessingState(
+                        writeTxn, refStreamDefinition, RefDataProcessingInfo.ProcessingState.COMPLETE));
 
         final RefDataProcessingInfo refDataProcessingInfoAfter = processingInfoDb.get(refStreamDefinition);
 

@@ -83,6 +83,10 @@ public class RefDataOffHeapStore implements RefDataStore {
         this.maxSize = maxSize;
 
         LOGGER.debug("Creating LMDB environment with maxSize: {}, dbDir {}", maxSize, dbDir.toAbsolutePath().toString());
+        // By default LMDB opens with readonly mmaps so you cannot mutate the bytebuffers inside a txn.
+        // Instead you need to create a new bytebuffer for the value and put that. If you want faster writes
+        // then you can use EnvFlags.MDB_WRITEMAP in the open() call to allow mutation inside a txn but that
+        // comes with greater risk of corruption.
         env = Env.<ByteBuffer>create()
                 .setMapSize(maxSize)
                 .setMaxDbs(1)

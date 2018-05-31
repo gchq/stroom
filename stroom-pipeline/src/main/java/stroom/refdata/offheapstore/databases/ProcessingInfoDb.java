@@ -10,7 +10,7 @@ import stroom.refdata.offheapstore.RefDataProcessingInfo;
 import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.refdata.offheapstore.serdes.RefDataProcessingInfoSerde;
 import stroom.refdata.offheapstore.serdes.RefStreamDefinitionSerde;
-import stroom.refdata.saxevents.LmdbUtils;
+import stroom.refdata.lmdb.LmdbUtils;
 import stroom.util.logging.LambdaLogger;
 
 import java.nio.ByteBuffer;
@@ -44,9 +44,17 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
             }
             final ByteBuffer valueBuf = cursor.val();
 
-            valueSerde.updateState(valueBuf, newProcessingState);
-            valueSerde.updateLastAccessedTime(valueBuf);
-            cursor.put(cursor.key(), cursor.val(), PutFlags.MDB_CURRENT);
+            // We run LMDB in its default mode of read only mmaps so we cannot mutate the key/value
+            // bytebuffers.  Instead we must copy the content and put the replacement entry.
+            // We could run LMDB in MDB_WRITEMAP mode which allows mutation of the buffers (and
+            // thus avoids the buffer copy cost) but adds more risk of DB corruption. As we are not
+            // doing a high volume of value mutations read-only mode is a safer bet.
+            final ByteBuffer newValueBuf = LmdbUtils.copyDirectBuffer(valueBuf);
+
+            valueSerde.updateState(newValueBuf, newProcessingState);
+            valueSerde.updateLastAccessedTime(newValueBuf);
+
+            cursor.put(cursor.key(), newValueBuf, PutFlags.MDB_CURRENT);
         }
     }
 

@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.refdata.saxevents;
+package stroom.refdata.lmdb;
 
 import com.google.common.collect.ImmutableMap;
 import org.lmdbjava.Dbi;
@@ -84,7 +84,8 @@ public class LmdbUtils {
     }
 
     /**
-     * Do work inside a write txn then commit
+     * Do work inside a write txn then commit. work should be as short lived as possible
+     * to avoid tying up the single write txn for too long
      */
     public static void doWithWriteTxn(final Env<ByteBuffer> env, Consumer<Txn<ByteBuffer>> work) {
         try (final Txn<ByteBuffer> txn = env.txnWrite()) {
@@ -96,7 +97,6 @@ public class LmdbUtils {
     }
 
     public static Map<String, String> getDbInfo(final Env<ByteBuffer> env, Dbi<ByteBuffer> db) {
-
         return LmdbUtils.getWithReadTxn(env, txn -> {
             Stat stat = db.stat(txn);
             return convertStatToMap(stat);
@@ -208,5 +208,17 @@ public class LmdbUtils {
         ByteBuffer byteBuffer = ByteBuffer.allocateDirect(bufferSize);
         serde.serialize(byteBuffer, object);
         return byteBuffer;
+    }
+
+    /**
+     * Creates a new direct {@link ByteBuffer} from the input {@link ByteBuffer}.
+     * The bytes from position() to limit() will be copied into a newly allocated
+     * buffer. The new buffer will be flipped to set its position read for get operations
+     */
+    public static ByteBuffer copyDirectBuffer(final ByteBuffer input) {
+        ByteBuffer output = ByteBuffer.allocateDirect(input.remaining());
+        output.put(input);
+        output.flip();
+        return output;
     }
 }

@@ -18,6 +18,7 @@
 package stroom.refdata.offheapstore;
 
 import org.apache.hadoop.hbase.util.Bytes;
+import stroom.util.logging.LambdaLogger;
 
 import javax.xml.bind.DatatypeConverter;
 import java.nio.ByteBuffer;
@@ -99,6 +100,16 @@ public class ByteArrayUtils {
 
     public static String byteBufferToHex(final ByteBuffer byteBuffer) {
         return byteArrayToHex(Bytes.getBytes(byteBuffer));
+    }
+
+    public static String byteBufferInfo(final ByteBuffer byteBuffer) {
+        String value = byteArrayToHex(Bytes.getBytes(byteBuffer));
+        return LambdaLogger.buildMessage("Cap: {}, pos: {}, lim: {}, rem: {}, val [{}]",
+                byteBuffer.capacity(),
+                byteBuffer.position(),
+                byteBuffer.limit(),
+                byteBuffer.remaining(),
+                value);
     }
 
     /**
