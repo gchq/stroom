@@ -28,21 +28,9 @@ import java.util.Objects;
  * {@link ByteBuffer} MUST not be mutated.
  */
 public class UID {
-    //    public class UID implements Comparable<UID> {
-    // this is the width of the byte array used for storing the Unique ID
-    // values.
     // Changing this value would require any data stored using UIDs to be
     // migrated to the new byte array length
     public static final int UID_ARRAY_LENGTH = 4;
-
-//    /**
-//     * A UID byte array containing all zeros that can be used when the UID for a
-//     * string cannot be found. It is CRITICAL that a UID cannot be created in
-//     * the table with this byte array
-//     */
-//    public static final UID NOT_FOUND_UID = new UID(new byte[UID_ARRAY_LENGTH]);
-//    public static final byte[] NOT_FOUND_UID_BYTES = NOT_FOUND_UID.getUidBytes();
-
     private final ByteBuffer byteBuffer;
 
     private UID(final ByteBuffer byteBuffer) {
@@ -96,7 +84,6 @@ public class UID {
 
     public long getValue() {
         long val = UnsignedBytes.get(byteBuffer);
-        byteBuffer.flip();
         return val;
     }
 
@@ -105,38 +92,12 @@ public class UID {
         return UID.of(currVal + 1);
     }
 
-//    /**
-//     * Wraps a new UID around the UID section of the passed array. The array is NOT copied so must not be mutated.
-//     */
-//    public static UID from(final byte[] bytes, final int offset) {
-//        return new UID(bytes, offset);
-//    }
-
     /**
      * @return A duplicate of the backing buffer for the unique ID. The returned buffer should not be mutated.
      */
     public ByteBuffer getBackingBuffer() {
         return byteBuffer.duplicate();
     }
-
-//    /**
-//     * @return A copy of the UID part of the backing array unless the UID part is all of the array,
-//     * in which case a reference to the backing array is returned
-//     */
-//    public byte[] getUidBytes() {
-//        if (bytes.length == UID_ARRAY_LENGTH) {
-//            return bytes;
-//        } else {
-//            return Bytes.copy(bytes, offset, UID_ARRAY_LENGTH);
-//        }
-//    }
-
-//    /**
-//     * @return The offset that the UID starts at in the backing array
-//     */
-//    public int getOffset() {
-//        return offset;
-//    }
 
     /**
      * @return The length of the UID itself, rather than the backing array which may be longer
@@ -164,32 +125,6 @@ public class UID {
 
         return Objects.hash(byteBuffer);
     }
-
-    //    /**
-//     * @return The array represented in hex, decimal and 'hbase' forms. The
-//     * hbase form is mix of ascii and deciaml, so an ascii char if the
-//     * byte value exists in the ascii table
-//     */
-//    public String toAllForms() {
-//        return ByteArrayUtils.byteArrayToAllForms(bytes, offset, UID_ARRAY_LENGTH);
-//    }
-
-//    @Override
-//    public int compareTo(final UID that) {
-//        ByteBufferUtils.
-//        return Bytes.compareTo(this.bytes, this.offset, UID_ARRAY_LENGTH, that.bytes, that.offset, UID_ARRAY_LENGTH);
-//    }
-
-//    /**
-//     * Compare this UID to a portion of another array startign at a given offset
-//     *
-//     * @param otherBytes
-//     * @param otherOffset
-//     * @return
-//     */
-//    public int compareTo(final byte[] otherBytes, final int otherOffset) {
-//        return Bytes.compareTo(this.bytes, this.offset, UID_ARRAY_LENGTH, otherBytes, otherOffset, UID_ARRAY_LENGTH);
-//    }
 
     private static ByteBuffer createUidBuffer(final long id) {
         // UIDs are fixed width so we can create a buffer with the exact capacity

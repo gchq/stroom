@@ -32,9 +32,17 @@ import stroom.util.logging.LambdaLoggerFactory;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+/**
+ * An abstract class representing a generic LMDB table with understanding of how to (de)serialise
+ * keys/values into/out of the database. Provides various helper methods for interacting with the
+ * database at a higher abstraction that the raw bytes.
+ * @param <K> The class of the database keys
+ * @param <V> The class of the database values
+ */
 public abstract class AbstractLmdbDb<K, V> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractLmdbDb.class);
@@ -77,14 +85,41 @@ public abstract class AbstractLmdbDb<K, V> {
         return valueSerde;
     }
 
-    public V get(final K key) {
-        try (final Txn<ByteBuffer> txn = lmdbEnvironment.txnRead()) {
+    public Optional<V> get(Txn<ByteBuffer> txn, final K key) {
+        try {
             ByteBuffer keyBuffer = keySerde.serialize(key);
             ByteBuffer valueBuffer = lmdbDbi.get(txn, keyBuffer);
-            V value = valueSerde.deserialize(valueBuffer);
-            return value;
+            LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("Get returned value [{}] for key [{}]",
+                    ByteArrayUtils.byteBufferInfo(valueBuffer),
+                    ByteArrayUtils.byteBufferInfo(keyBuffer)));
+
+            return Optional.ofNullable(valueBuffer)
+                    .map(valueSerde::deserialize);
         } catch (RuntimeException e) {
             throw new RuntimeException(LambdaLogger.buildMessage("Error getting key {}", key), e);
+        }
+    }
+
+    public Optional<V> get(final K key) {
+        return LmdbUtils.getWithReadTxn(lmdbEnvironment, txn ->
+                get(txn, key));
+    }
+
+    /**
+     * Get the bytes of the value for the given key buffer. The returned {@link ByteBuffer} should ONLY
+     * by used while still inside the passed {@link Txn}
+     */
+    public Optional<ByteBuffer> getAsBytes(Txn<ByteBuffer> txn, final ByteBuffer keyBuffer) {
+        try {
+            ByteBuffer valueBuffer = lmdbDbi.get(txn, keyBuffer);
+            LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("Get returned value [{}] for key [{}]",
+                    ByteArrayUtils.byteBufferInfo(valueBuffer),
+                    ByteArrayUtils.byteBufferInfo(keyBuffer)));
+
+            return Optional.ofNullable(valueBuffer);
+        } catch (RuntimeException e) {
+            throw new RuntimeException(LambdaLogger.buildMessage("Error getting value for key [{}]",
+                    ByteArrayUtils.byteBufferInfo(keyBuffer)), e);
         }
     }
 
@@ -226,5 +261,18 @@ public abstract class AbstractLmdbDb<K, V> {
                 lmdbDbi,
                 byteBuffer -> keySerde.deserialize(byteBuffer).toString(),
                 byteBuffer -> valueSerde.deserialize(byteBuffer).toString());
+    }
+
+    /**
+     * Dumps all entries in the database to a single logger entry with one line per database entry.
+     * This could potentially return thousands of rows so is only intended for small scale use in
+     * testing. Entries are returned in the order they are held in the DB, e.g. a-z (unless the DB
+     * is configured with reverse keys). The keys/values are output as hex representations of the
+     * byte values.
+     */
+    public void logRawDatabaseContents() {
+        LmdbUtils.logRawDatabaseContents(
+                lmdbEnvironment,
+                lmdbDbi);
     }
 }

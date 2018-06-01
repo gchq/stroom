@@ -21,12 +21,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.query.api.v2.DocRef;
+import stroom.refdata.lmdb.LmdbUtils;
 import stroom.refdata.offheapstore.RefDataProcessingInfo;
 import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.refdata.offheapstore.serdes.RefDataProcessingInfoSerde;
 import stroom.refdata.offheapstore.serdes.RefStreamDefinitionSerde;
-import stroom.refdata.lmdb.LmdbUtils;
 
 import java.util.Map;
 import java.util.Optional;
@@ -90,7 +89,7 @@ public class TestProcessingInfoDb extends AbstractLmdbDbTest {
         int entries = Optional.ofNullable(dbInfo.get("entries")).map(Integer::parseInt).orElse(-1);
         assertThat(entries).isEqualTo(2);
 
-        final RefDataProcessingInfo refDataProcessingInfoA2 = processingInfoDb.get(refStreamDefinitionA);
+        final RefDataProcessingInfo refDataProcessingInfoA2 = processingInfoDb.get(refStreamDefinitionA).get();
 
         assertThat(refDataProcessingInfoA).isEqualTo(refDataProcessingInfoA2);
     }
@@ -130,7 +129,7 @@ public class TestProcessingInfoDb extends AbstractLmdbDbTest {
                 processingInfoDb.updateProcessingState(
                         writeTxn, refStreamDefinition, RefDataProcessingInfo.ProcessingState.COMPLETE));
 
-        final RefDataProcessingInfo refDataProcessingInfoAfter = processingInfoDb.get(refStreamDefinition);
+        final RefDataProcessingInfo refDataProcessingInfoAfter = processingInfoDb.get(refStreamDefinition).get();
 
         assertThat(refDataProcessingInfoAfter.getProcessingState()).isEqualTo(RefDataProcessingInfo.ProcessingState.COMPLETE);
         assertThat(refDataProcessingInfoAfter.getLastAccessedTimeEpochMs()).isGreaterThan(refDataProcessingInfoBefore.getLastAccessedTimeEpochMs());

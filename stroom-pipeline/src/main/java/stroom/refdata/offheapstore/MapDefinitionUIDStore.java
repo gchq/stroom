@@ -21,6 +21,13 @@ public class MapDefinitionUIDStore {
     private final MapUidReverseDb mapUidReverseDb;
     private final Env<ByteBuffer> lmdbEnv;
 
+    //TODO probably need a method to delete MapDefinition<=>UID pairs from the store
+
+    // TODO may want a background process that scans the reverse table to look for gaps
+    // in the UID sequence and add the missing ones to another table which can be used
+    // for allocating next UIDs before falling back to getting the next highest. If we don't
+    // we could end up running out of UIDs in the LONG term.
+
     MapDefinitionUIDStore(final Env<ByteBuffer> lmdbEnv,
                           final MapUidForwardDb mapUidForwardDb,
                           final MapUidReverseDb mapUidReverseDb) {
@@ -29,8 +36,22 @@ public class MapDefinitionUIDStore {
         this.mapUidReverseDb = mapUidReverseDb;
     }
 
-    Optional<UID> getId(final Txn<ByteBuffer> txn, final MapDefinition mapDefinition) {
-        return null;
+    Optional<UID> getUid(final MapDefinition mapDefinition) {
+        // The returned UID is outside the txn so must be a clone of the found one
+        return LmdbUtils.getWithReadTxn(lmdbEnv, txn ->
+                getUid(txn, mapDefinition)
+                        .flatMap(uid -> Optional.of(uid.clone())));
+    }
+
+    Optional<UID> getUid(final Txn<ByteBuffer> txn, final MapDefinition mapDefinition) {
+        return mapUidForwardDb.get(txn, mapDefinition);
+    }
+
+    public UID getOrCreateUid(final MapDefinition mapDefinition) {
+        // The returned UID is outside the txn so must be a clone of the found one
+        return LmdbUtils.getWithWriteTxn(lmdbEnv, writeTxn ->
+                getOrCreateUid(writeTxn, mapDefinition).clone());
+
     }
 
     /**
@@ -39,7 +60,7 @@ public class MapDefinitionUIDStore {
      * direct allocation {@link ByteBuffer} owned by LMDB so it may ONLY be used whilst still inside the passed
      * {@link Txn}.
      */
-    public UID getOrCreateId(final Txn<ByteBuffer> writeTxn, final MapDefinition mapDefinition) {
+    public UID getOrCreateUid(final Txn<ByteBuffer> writeTxn, final MapDefinition mapDefinition) {
         Preconditions.checkArgument(!writeTxn.isReadOnly(), "Must be a write transaction");
 
         final Serde<MapDefinition> mapDefinitionSerde = mapUidForwardDb.getKeySerde();

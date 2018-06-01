@@ -59,6 +59,7 @@ public class UIDSerde implements Serde<UID>, Serializer<UID>, Deserializer<UID> 
                 byteBuffer.put(input.readByte());
             }
             byteBuffer.flip();
+
             return UID.wrap(byteBuffer);
         }
     }

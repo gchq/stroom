@@ -280,11 +280,13 @@ public class LmdbUtils {
         LOGGER.debug(stringBuilder.toString());
 
     }
+
     /**
      * Dumps all entries in the database to a single logger entry with one line per database entry.
      * This could potentially return thousands of rows so is only intended for small scale use in
      * testing. Entries are returned in the order they are held in the DB, e.g. a-z (unless the DB
-     * is configured with reverse keys).
+     * is configured with reverse keys). The keys/values are output as hex representations of the
+     * byte values.
      */
     public static void logRawDatabaseContents(final Env<ByteBuffer> env, final Dbi<ByteBuffer> dbi) {
         logDatabaseContents(env, dbi, ByteArrayUtils::byteBufferToHex, ByteArrayUtils::byteBufferToHex);

@@ -102,12 +102,32 @@ public class ByteArrayUtils {
         return byteArrayToHex(Bytes.getBytes(byteBuffer));
     }
 
+    public static String byteBufferToHexAll(final ByteBuffer byteBuffer) {
+        final StringBuilder sb = new StringBuilder();
+        if (byteBuffer != null) {
+            int endOffsetEx = byteBuffer.limit();
+            for (int i = 0; i < endOffsetEx; i++) {
+                final byte[] oneByteArr = new byte[1];
+                if (i == byteBuffer.position()) {
+                    sb.append(">");
+                }
+                oneByteArr[0] = byteBuffer.get(i);
+                sb.append(DatatypeConverter.printHexBinary(oneByteArr));
+                if (i == byteBuffer.limit()) {
+                    sb.append("<");
+                }
+                sb.append(" ");
+            }
+        }
+        return sb.toString().replaceAll(" $", "");
+    }
+
     public static String byteBufferInfo(final ByteBuffer byteBuffer) {
         if (byteBuffer == null) {
             return "null";
         }
 
-        final String value = byteArrayToHex(Bytes.getBytes(byteBuffer));
+        final String value = byteBufferToHexAll(byteBuffer);
         return LambdaLogger.buildMessage("Cap: {}, pos: {}, lim: {}, rem: {}, val [{}]",
                 byteBuffer.capacity(),
                 byteBuffer.position(),

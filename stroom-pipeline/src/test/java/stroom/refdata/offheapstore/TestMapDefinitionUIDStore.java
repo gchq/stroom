@@ -17,6 +17,7 @@
 
 package stroom.refdata.offheapstore;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.lmdbjava.Dbi;
@@ -33,7 +34,9 @@ import stroom.refdata.offheapstore.serdes.UIDSerde;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -97,7 +100,7 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
         LmdbUtils.logRawDatabaseContents(lmdbEnv, dbi);
 
         final Long entries = LmdbUtils.getWithReadTxn(lmdbEnv, txn ->
-            dbi.stat(txn).entries);
+                dbi.stat(txn).entries);
 
         assertThat(entries).isEqualTo(1);
 
@@ -123,7 +126,7 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
                 "MyMapName");
 
         final UID uid1 = LmdbUtils.getWithWriteTxn(lmdbEnv, writeTxn -> {
-            UID uid = mapDefinitionUIDStore.getOrCreateId(writeTxn, mapDefinition);
+            UID uid = mapDefinitionUIDStore.getOrCreateUid(writeTxn, mapDefinition);
 
             assertThat(uid).isNotNull();
 
@@ -141,7 +144,7 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
 
         // now try again with the same mapDefinition, which should give the same UID
         final UID uid2 = LmdbUtils.getWithWriteTxn(lmdbEnv, writeTxn -> {
-            UID uid = mapDefinitionUIDStore.getOrCreateId(writeTxn, mapDefinition);
+            UID uid = mapDefinitionUIDStore.getOrCreateUid(writeTxn, mapDefinition);
 
             assertThat(uid).isNotNull();
 
@@ -175,12 +178,14 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
                 })
                 .collect(Collectors.toList());
 
-        final List<UID> uids = loadEntries(mapDefinitions);
+        final Map<UID, MapDefinition> loadedEntries = loadEntries(mapDefinitions);
 
-        assertThat(uids.size()).isEqualTo(mapDefinitions.size());
+        assertThat(loadedEntries.size()).isEqualTo(mapDefinitions.size());
 
-        final List<Long> values = uids.stream()
+        final List<Long> values = loadedEntries.entrySet().stream()
+                .map(Map.Entry::getKey)
                 .map(UID::getValue)
+                .sorted()
                 .collect(Collectors.toList());
 
         // convert the UIDs back to values and check we have all we expect
@@ -190,28 +195,45 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
                         .boxed()
                         .toArray(Long[]::new));
 
-        LmdbUtils.logRawDatabaseContents(lmdbEnv, mapUidForwardDb.getLmdbDbi());
-        LmdbUtils.logRawDatabaseContents(lmdbEnv, mapUidReverseDb.getLmdbDbi());
+        // now try and call get() for each mapDefinition and check it gives us the right UID
+
+        loadedEntries.entrySet().forEach(entry -> {
+            UID uidLoaded = entry.getKey();
+            MapDefinition mapDefinitionLoaded = entry.getValue();
+            UID uidFromGet = mapDefinitionUIDStore.getUid(mapDefinitionLoaded)
+                    .orElseGet(() -> {
+                        Assertions.fail("Expecting to get a value back but didn't");
+                        return null;
+                    });
+            assertThat(uidFromGet).isEqualTo(uidLoaded);
+        });
+    }
+
+    private Map<UID, MapDefinition> loadEntries(List<MapDefinition> mapDefinitions) {
+        List<UID> uids = new ArrayList<>();
+
+        Map<UID, MapDefinition> loadedEntries = new HashMap<>();
+        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            mapDefinitions.stream()
+                    .forEach(mapDefinition -> {
+                        final UID uid = mapDefinitionUIDStore.getOrCreateUid(writeTxn, mapDefinition);
+                        assertThat(uid).isNotNull();
+
+                        // we are going to leave the txn so need to clone the UIDs
+                        loadedEntries.put(uid.clone(), mapDefinition);
+                    });
+        });
+
+        // make sure we each mapDefinition has resulted in a unique UID
+        assertThat(loadedEntries.size()).isEqualTo(mapDefinitions.size());
+        assertThat(mapDefinitionUIDStore.getEntryCount()).isEqualTo(mapDefinitions.size());
 
         mapUidForwardDb.logDatabaseContents();
         mapUidReverseDb.logDatabaseContents();
-    }
 
-    private List<UID> loadEntries(List<MapDefinition> mapDefinitions) {
-        List<UID> uids = new ArrayList<>();
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
-            mapDefinitions.stream()
-                    .map(mapDefinition -> {
-                            final UID uid = mapDefinitionUIDStore.getOrCreateId(writeTxn, mapDefinition);
-                            assertThat(uid).isNotNull();
+        mapUidForwardDb.logRawDatabaseContents();
+        mapUidReverseDb.logRawDatabaseContents();
 
-                            // we are going to leave the txn so need to clone the UIDs
-                            return uid.clone();
-                    })
-                    .forEach(uids::add);
-
-        });
-        assertThat(mapDefinitionUIDStore.getEntryCount()).isEqualTo(mapDefinitions.size());
-        return uids;
+        return loadedEntries;
     }
 }
