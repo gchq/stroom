@@ -54,7 +54,7 @@ public class RefDataOffHeapStore implements RefDataStore {
     private final Path dbDir;
     private final long maxSize;
 
-    private final Env<ByteBuffer> env;
+    private final Env<ByteBuffer> lmdbEnvironment;
 
     // the DBs that make up the store
     private final KeyValueStoreDb keyValueStoreDb;
@@ -63,6 +63,7 @@ public class RefDataOffHeapStore implements RefDataStore {
     private final MapUidForwardDb mapUidForwardDb;
     private final MapUidReverseDb mapUidReverseDb;
     private final ProcessingInfoDb processingInfoDb;
+    private final MapDefinitionUIDStore mapDefinitionUIDStore;
 
     /**
      * @param dbDir   The directory the LMDB environment will be created in, it must already exist
@@ -87,18 +88,19 @@ public class RefDataOffHeapStore implements RefDataStore {
         // Instead you need to create a new bytebuffer for the value and put that. If you want faster writes
         // then you can use EnvFlags.MDB_WRITEMAP in the open() call to allow mutation inside a txn but that
         // comes with greater risk of corruption.
-        env = Env.<ByteBuffer>create()
+        lmdbEnvironment = Env.<ByteBuffer>create()
                 .setMapSize(maxSize)
                 .setMaxDbs(1)
                 .open(dbDir.toFile());
 
         // create all the databases
-        this.keyValueStoreDb = keyValueStoreDbFactory.create(env);
-        this.rangeStoreDb = rangeStoreDbFactory.create(env);
-        this.valueStoreDb = valueStoreDbFactory.create(env);
-        this.mapUidForwardDb = mapUidForwardDbFactory.create(env);
-        this.mapUidReverseDb = mapUidReverseDbFactory.create(env);
-        this.processingInfoDb = processingInfoDbFactory.create(env);
+        this.keyValueStoreDb = keyValueStoreDbFactory.create(lmdbEnvironment);
+        this.rangeStoreDb = rangeStoreDbFactory.create(lmdbEnvironment);
+        this.valueStoreDb = valueStoreDbFactory.create(lmdbEnvironment);
+        this.mapUidForwardDb = mapUidForwardDbFactory.create(lmdbEnvironment);
+        this.mapUidReverseDb = mapUidReverseDbFactory.create(lmdbEnvironment);
+        this.processingInfoDb = processingInfoDbFactory.create(lmdbEnvironment);
+        this.mapDefinitionUIDStore = new MapDefinitionUIDStore(lmdbEnvironment, mapUidForwardDb, mapUidReverseDb);
     }
 
     /**
@@ -217,7 +219,7 @@ public class RefDataOffHeapStore implements RefDataStore {
                 mapUidForwardDb,
                 mapUidReverseDb,
                 processingInfoDb,
-                env,
+                lmdbEnvironment,
                 refStreamDefinition,
                 effectiveTimeMs);
     }

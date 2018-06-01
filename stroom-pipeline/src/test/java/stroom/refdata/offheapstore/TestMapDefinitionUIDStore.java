@@ -34,9 +34,11 @@ import stroom.refdata.offheapstore.serdes.UIDSerde;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -68,9 +70,6 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
                 mapUidReverseDb);
     }
 
-    @Test
-    public void getId() {
-    }
 
     /**
      * Noddy test to verify how LMDB copes with different buffer capacities
@@ -207,6 +206,47 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
                     });
             assertThat(uidFromGet).isEqualTo(uidLoaded);
         });
+    }
+
+    @Test
+    public void testGet_notFound() {
+
+        byte version = 0;
+        String uuidStr = UUID.randomUUID().toString();
+        // each one is different by the streamNo
+        final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
+                uuidStr,
+                version,
+                123456L,
+                1);
+
+        loadEntries(Collections.singletonList(new MapDefinition(refStreamDefinition, "MyMapName")));
+
+        Optional<UID> optUid = mapDefinitionUIDStore.getUid(
+                new MapDefinition(refStreamDefinition, "DifferentMapName"));
+
+        assertThat(optUid).isEmpty();
+    }
+
+    @Test
+    public void testGet_found() {
+
+        byte version = 0;
+        String uuidStr = UUID.randomUUID().toString();
+        // each one is different by the streamNo
+        final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
+                uuidStr,
+                version,
+                123456L,
+                1);
+        MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "MyMapName");
+
+        loadEntries(Collections.singletonList(mapDefinition));
+
+        Optional<UID> optUid = mapDefinitionUIDStore.getUid(mapDefinition);
+
+        assertThat(optUid).isNotEmpty();
+        assertThat(optUid.get()).isNotNull();
     }
 
     private Map<UID, MapDefinition> loadEntries(List<MapDefinition> mapDefinitions) {
