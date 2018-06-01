@@ -17,7 +17,6 @@
 
 package stroom.refdata.offheapstore;
 
-import stroom.entity.shared.DocRefUtil;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.DocRef;
 
@@ -25,10 +24,12 @@ import java.util.Objects;
 
 public class RefStreamDefinition {
 
+    // TODO consider getting rid of DocRef and just storing the uuid
     private final DocRef pipelineDocRef;
     private final byte pipelineVersion;
     private final long streamId;
     private final long streamNo;
+    private final int hashCode;
 
     public RefStreamDefinition(final String pipelineUuid,
                                final byte pipelineVersion,
@@ -38,6 +39,7 @@ public class RefStreamDefinition {
         this.pipelineVersion = pipelineVersion;
         this.streamId = streamId;
         this.streamNo = streamNo;
+        this.hashCode = buildHashCode();
     }
 
     public RefStreamDefinition(final DocRef pipelineDocRef,
@@ -48,6 +50,7 @@ public class RefStreamDefinition {
         this.pipelineVersion = pipelineVersion;
         this.streamId = streamId;
         this.streamNo = streamNo;
+        this.hashCode = buildHashCode();
     }
 
     public DocRef getPipelineDocRef() {
@@ -89,6 +92,10 @@ public class RefStreamDefinition {
 
     @Override
     public int hashCode() {
+        return hashCode;
+    }
+
+    private int buildHashCode() {
         return Objects.hash(pipelineDocRef, pipelineVersion, streamId, streamNo);
     }
 }

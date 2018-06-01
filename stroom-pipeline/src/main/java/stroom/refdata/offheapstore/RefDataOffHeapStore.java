@@ -218,7 +218,7 @@ public class RefDataOffHeapStore implements RefDataStore {
                 valueStoreDb,
                 mapUidForwardDb,
                 mapUidReverseDb,
-                processingInfoDb,
+                mapDefinitionUIDStore, processingInfoDb,
                 lmdbEnvironment,
                 refStreamDefinition,
                 effectiveTimeMs);
@@ -239,9 +239,9 @@ public class RefDataOffHeapStore implements RefDataStore {
     }
 
     private boolean setProcessingInfo(final Txn<ByteBuffer> writeTxn,
-                                   final RefStreamDefinition refStreamDefinition,
-                                   final RefDataProcessingInfo refDataProcessingInfo,
-                                   final boolean overwriteExisting) {
+                                      final RefStreamDefinition refStreamDefinition,
+                                      final RefDataProcessingInfo refDataProcessingInfo,
+                                      final boolean overwriteExisting) {
 
         return processingInfoDb.put(writeTxn, refStreamDefinition, refDataProcessingInfo, overwriteExisting);
     }
@@ -270,6 +270,7 @@ public class RefDataOffHeapStore implements RefDataStore {
         private final ValueStoreDb valueStoreDb;
         private final MapUidForwardDb mapUidForwardDb;
         private final MapUidReverseDb mapUidReverseDb;
+        private final MapDefinitionUIDStore mapDefinitionUIDStore;
         private final ProcessingInfoDb processingInfoDb;
         private final Env<ByteBuffer> lmdbEnvironment;
         private boolean initialised = false;
@@ -287,6 +288,7 @@ public class RefDataOffHeapStore implements RefDataStore {
                                   final ValueStoreDb valueStoreDb,
                                   final MapUidForwardDb mapUidForwardDb,
                                   final MapUidReverseDb mapUidReverseDb,
+                                  final MapDefinitionUIDStore mapDefinitionUIDStore,
                                   final ProcessingInfoDb processingInfoDb,
                                   final Env<ByteBuffer> lmdbEnvironment,
                                   final RefStreamDefinition refStreamDefinition,
@@ -298,6 +300,7 @@ public class RefDataOffHeapStore implements RefDataStore {
             this.valueStoreDb = valueStoreDb;
             this.mapUidForwardDb = mapUidForwardDb;
             this.mapUidReverseDb = mapUidReverseDb;
+            this.mapDefinitionUIDStore = mapDefinitionUIDStore;
             this.processingInfoDb = processingInfoDb;
             this.lmdbEnvironment = lmdbEnvironment;
             this.refStreamDefinition = refStreamDefinition;
@@ -371,15 +374,25 @@ public class RefDataOffHeapStore implements RefDataStore {
         }
 
         @Override
-        public void put(final String key,
+        public void put(final MapDefinition mapDefinition,
+                        final String key,
                         final RefDataValue refDataValue,
                         final boolean overwriteExistingValue) {
             throwExceptionIfNotInitialised();
             beginTxnIfRequired();
 
+            // TODO we may have only just started a txn so if the UIDs in the cache wrap LMDB owned
+            // buffers bad things could happen.  We could clear the cache on commit, or put clones
+            // into the cache. Have added clone() call below, but needs testing.
 
-            //create forward+reverse map ID entries if they don't exist
-            //hold them in the mapDefinitionToUIDMap if we do create them
+            // get the UID for this mapDefinition, and as we should only have a handful of mapDefinitions
+            // per loader it makes sense to cache the MapDefinition=>UID mappings on heap for quicker access.
+            UID uid = mapDefinitionToUIDMap.computeIfAbsent(mapDefinition, mapDef -> {
+                LOGGER.debug("MapDefinition {} not found in local cache so getting it from the store");
+                // cloning the UID in case we leave the txn
+                return mapDefinitionUIDStore.getOrCreateUid(mapDef).clone();
+            });
+
 
             //see if key exists, then put value based on overwriteExistingValue
 
@@ -388,7 +401,8 @@ public class RefDataOffHeapStore implements RefDataStore {
         }
 
         @Override
-        public void put(final Range<Long> keyRange,
+        public void put(final MapDefinition mapDefinition,
+                        final Range<Long> keyRange,
                         final RefDataValue refDataValue,
                         final boolean overwriteExistingValue) {
             throwExceptionIfNotInitialised();

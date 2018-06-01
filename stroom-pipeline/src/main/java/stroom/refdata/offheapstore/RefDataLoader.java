@@ -29,11 +29,13 @@ public interface RefDataLoader extends AutoCloseable {
 
     void setCommitInterval(final int putsBeforeCommit);
 
-    void put(String key,
-             RefDataValue refDataValue,
-             boolean overwriteExistingValue);
+    void put(final MapDefinition mapDefinition,
+             final String key,
+             final RefDataValue refDataValue,
+             final boolean overwriteExistingValue);
 
-    void put(Range<Long> keyRange,
-             RefDataValue refDataValue,
-             boolean overwriteExistingValue);
+    void put(final MapDefinition mapDefinition,
+             final Range<Long> keyRange,
+             final RefDataValue refDataValue,
+             final boolean overwriteExistingValue);
 }

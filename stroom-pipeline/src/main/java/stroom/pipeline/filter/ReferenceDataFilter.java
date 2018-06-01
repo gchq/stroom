@@ -273,7 +273,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                             // to write directly to a direct byteBuffer, however we will not know the size up front
                             LOGGER.trace("Putting key {} into map {}", key, mapDefinition);
                             refDataLoaderHolder.getRefDataLoader()
-                                    .put(key, refDataValue, overrideExistingValues);
+                                    .put(mapDefinition, key, refDataValue, overrideExistingValues);
                         } else if (rangeFrom != null && rangeTo != null) {
                             if (rangeFrom > rangeTo) {
                                 errorReceiverProxy
@@ -287,7 +287,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                                 final Range<Long> range = new Range<>(rangeFrom, rangeTo + 1);
                                 LOGGER.trace("Putting range {} into map {}", range, mapDefinition);
                                 refDataLoaderHolder.getRefDataLoader()
-                                        .put(range, refDataValue, overrideExistingValues);
+                                        .put(mapDefinition, range, refDataValue, overrideExistingValues);
                             }
                         }
                     }

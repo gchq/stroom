@@ -32,10 +32,12 @@ public class MapDefinition {
 
     private final RefStreamDefinition refStreamDefinition;
     private final String mapName;
+    private final int hashCode;
 
     public MapDefinition(final RefStreamDefinition refStreamDefinition, final String mapName) {
         this.refStreamDefinition = refStreamDefinition;
         this.mapName = mapName;
+        this.hashCode = buildHashCode();
     }
 
     DocRef getPipelineDocRef() {
@@ -58,6 +60,7 @@ public class MapDefinition {
         return refStreamDefinition;
     }
 
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
@@ -69,7 +72,10 @@ public class MapDefinition {
 
     @Override
     public int hashCode() {
+        return hashCode;
+    }
 
+    private int buildHashCode() {
         return Objects.hash(refStreamDefinition, mapName);
     }
 
