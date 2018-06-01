@@ -25,8 +25,8 @@ public class MockStreamStoreModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(StreamStore.class).to(MockStreamStore.class);
-        bind(StreamTypeService.class).to(MockStreamTypeService.class);
-        bind(FeedService.class).to(MockFeedService.class);
+        bind(StreamTypeEntityService.class).to(MockStreamTypeService.class);
+        bind(FeedEntityService.class).to(MockFeedService.class);
         bind(StreamAttributeKeyService.class).to(MockStreamAttributeKeyService.class);
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);

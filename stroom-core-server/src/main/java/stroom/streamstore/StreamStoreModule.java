@@ -36,14 +36,14 @@ public class StreamStoreModule extends AbstractModule {
         bind(StreamAttributeMapService.class).to(StreamAttributeMapServiceImpl.class);
         bind(StreamAttributeValueFlush.class).to(StreamAttributeValueFlushImpl.class);
         bind(StreamAttributeValueService.class).to(StreamAttributeValueServiceImpl.class);
-        bind(FeedService.class).to(FeedServiceImpl.class);
-        bind(StreamTypeService.class).to(StreamTypeServiceImpl.class);
+        bind(FeedEntityService.class).to(FeedEntityServiceImpl.class);
+        bind(StreamTypeEntityService.class).to(StreamTypeEntityServiceImpl.class);
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(StreamAttributeKeyServiceImpl.class);
         clearableBinder.addBinding().to(StreamAttributeValueFlushImpl.class);
-        clearableBinder.addBinding().to(FeedServiceImpl.class);
-        clearableBinder.addBinding().to(StreamTypeServiceImpl.class);
+        clearableBinder.addBinding().to(FeedEntityServiceImpl.class);
+        clearableBinder.addBinding().to(StreamTypeEntityServiceImpl.class);
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.streamstore.DownloadDataHandler.class);
@@ -53,17 +53,17 @@ public class StreamStoreModule extends AbstractModule {
         taskHandlerBinder.addBinding().to(stroom.streamstore.UploadDataHandler.class);
 
         final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
-        entityServiceByTypeBinder.addBinding(StreamTypeEntity.ENTITY_TYPE).to(stroom.streamstore.StreamTypeServiceImpl.class);
+        entityServiceByTypeBinder.addBinding(StreamTypeEntity.ENTITY_TYPE).to(StreamTypeEntityServiceImpl.class);
 
         final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
-        findServiceBinder.addBinding().to(stroom.streamstore.StreamTypeServiceImpl.class);
+        findServiceBinder.addBinding().to(StreamTypeEntityServiceImpl.class);
         findServiceBinder.addBinding().to(stroom.streamstore.StreamAttributeMapServiceImpl.class);
     }
 
     @Provides
     @Named("cachedStreamTypeService")
-    public StreamTypeService cachedStreamTypeService(final CachingEntityManager entityManager,
-                                                     final Security security) {
-        return new StreamTypeServiceImpl(entityManager, security);
+    public StreamTypeEntityService cachedStreamTypeService(final CachingEntityManager entityManager,
+                                                           final Security security) {
+        return new StreamTypeEntityServiceImpl(entityManager, security);
     }
 }

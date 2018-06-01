@@ -43,7 +43,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.UserTokenUtil;
 import stroom.streamstore.FindFeedCriteria;
-import stroom.streamstore.StreamTypeService;
+import stroom.streamstore.StreamTypeEntityService;
 import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
@@ -113,7 +113,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     @Inject
     private FeedDocCache feedDocCache;
     @Inject
-    private StreamTypeService streamTypeService;
+    private StreamTypeEntityService streamTypeService;
     @Inject
     private ImportExportSerializer importExportSerializer;
     @Inject

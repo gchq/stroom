@@ -22,7 +22,7 @@ import org.junit.Test;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.streamstore.FeedService;
+import stroom.streamstore.FeedEntityService;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.shared.ImportState;
 import stroom.pipeline.PipelineStore;
@@ -47,7 +47,7 @@ public class TestImportExportServiceImpl3 extends AbstractCoreIntegrationTest {
     @Inject
     private PipelineStore pipelineStore;
     @Inject
-    private FeedService feedService;
+    private FeedEntityService feedService;
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject

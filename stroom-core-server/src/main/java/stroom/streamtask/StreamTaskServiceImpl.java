@@ -33,8 +33,8 @@ import stroom.node.shared.Node;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
-import stroom.streamstore.FeedService;
-import stroom.streamstore.StreamTypeService;
+import stroom.streamstore.FeedEntityService;
+import stroom.streamstore.StreamTypeEntityService;
 import stroom.streamstore.shared.FeedEntity;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamStatusId;
@@ -56,14 +56,14 @@ import java.util.Set;
 public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, FindStreamTaskCriteria>
         implements StreamTaskService {
     private static final String TABLE_PREFIX_STREAM_TASK = "ST.";
-    private final FeedService feedService;
-    private final StreamTypeService streamTypeService;
+    private final FeedEntityService feedService;
+    private final StreamTypeEntityService streamTypeService;
     private final Security security;
 
     @Inject
     StreamTaskServiceImpl(final StroomEntityManager entityManager,
-                          final FeedService feedService,
-                          final StreamTypeService streamTypeService,
+                          final FeedEntityService feedService,
+                          final StreamTypeEntityService streamTypeService,
                           final Security security) {
         super(entityManager, security);
         this.feedService = feedService;

@@ -26,7 +26,7 @@ import stroom.entity.StroomEntityManager;
 import stroom.entity.util.ConnectionUtil;
 import stroom.entity.util.SqlBuilder;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.streamstore.FeedService;
+import stroom.streamstore.FeedEntityService;
 import stroom.streamstore.OldFindStreamCriteria;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.shared.FeedEntity;
@@ -65,7 +65,7 @@ public class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrat
     @Inject
     private StreamStore streamStore;
     @Inject
-    private FeedService feedService;
+    private FeedEntityService feedService;
 
     @Test
     public void testBasic() {

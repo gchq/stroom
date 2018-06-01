@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
  */
 @Singleton
 class MockFeedService extends MockNamedEntityService<FeedEntity, FindFeedCriteria>
-        implements FeedService {
+        implements FeedEntityService {
     public MockFeedService() {
     }
 

@@ -28,7 +28,7 @@ import javax.inject.Inject;
 
 public class TestFeedServiceCache extends AbstractCoreIntegrationTest {
     @Inject
-    private FeedService feedService;
+    private FeedEntityService feedService;
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
 

@@ -39,11 +39,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ExpressionToFindCriteria {
-    private final FeedService feedService;
+    private final FeedEntityService feedService;
     private final PipelineStore pipelineStore;
     private final DictionaryStore dictionaryStore;
     private final StreamAttributeKeyService streamAttributeKeyService;
-    private final StreamTypeService streamTypeService;
+    private final StreamTypeEntityService streamTypeService;
 
     private static final Map<String, StreamStatus> STREAM_STATUS_MAP = Arrays.stream(StreamStatus.values())
             .collect(Collectors.toMap(StreamStatus::getDisplayValue, Function.identity()));
@@ -55,11 +55,11 @@ public class ExpressionToFindCriteria {
             String.format("%s [%s]", err, OP_STACK_DISPLAY.apply(ops));
 
     @Inject
-    public ExpressionToFindCriteria(final FeedService feedService,
+    public ExpressionToFindCriteria(final FeedEntityService feedService,
                                     @Named("cachedPipelineStore") final PipelineStore pipelineStore,
                                     final DictionaryStore dictionaryStore,
                                     final StreamAttributeKeyService streamAttributeKeyService,
-                                    @Named("cachedStreamTypeService") StreamTypeService streamTypeService) {
+                                    @Named("cachedStreamTypeService") StreamTypeEntityService streamTypeService) {
         this.feedService = feedService;
         this.pipelineStore = pipelineStore;
         this.dictionaryStore = dictionaryStore;

@@ -37,14 +37,14 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
-public class FeedServiceImpl extends NamedEntityServiceImpl<FeedEntity, FindFeedCriteria> implements FeedService, Clearable {
-    private static final Logger LOGGER = LoggerFactory.getLogger(FeedServiceImpl.class);
+public class FeedEntityServiceImpl extends NamedEntityServiceImpl<FeedEntity, FindFeedCriteria> implements FeedEntityService, Clearable {
+    private static final Logger LOGGER = LoggerFactory.getLogger(FeedEntityServiceImpl.class);
 
     private final Map<String, FeedEntity> cache = new ConcurrentHashMap<>();
 
     @Inject
-    FeedServiceImpl(final StroomEntityManager entityManager,
-                    final Security security) {
+    FeedEntityServiceImpl(final StroomEntityManager entityManager,
+                          final Security security) {
         super(entityManager, security);
     }
 

@@ -29,7 +29,7 @@ public class TestFeedServiceImpl extends AbstractCoreIntegrationTest {
     private static final int TEST_PAGE = 2;
 
     @Inject
-    private FeedService feedService;
+    private FeedEntityService feedService;
 
     /**
      * Test.

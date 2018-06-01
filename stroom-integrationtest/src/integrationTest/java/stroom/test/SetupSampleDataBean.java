@@ -25,7 +25,7 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.util.ConnectionUtil;
 import stroom.feed.FeedDocCache;
 import stroom.feed.FeedStore;
-import stroom.streamstore.FeedService;
+import stroom.streamstore.FeedEntityService;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.ImportExportSerializer;
 import stroom.importexport.shared.ImportState.ImportMode;
@@ -91,7 +91,7 @@ public final class SetupSampleDataBean {
 
     private static final int LOAD_CYCLES = 10;
 
-    private final FeedService feedService;
+    private final FeedEntityService feedService;
     private final FeedStore feedStore;
     private final FeedDocCache feedDocCache;
     private final StreamStore streamStore;
@@ -108,7 +108,7 @@ public final class SetupSampleDataBean {
     private final StroomStatsStoreStore stroomStatsStoreStore;
 
     @Inject
-    SetupSampleDataBean(final FeedService feedService,
+    SetupSampleDataBean(final FeedEntityService feedService,
                         final FeedStore feedStore,
                         final FeedDocCache feedDocCache,
                         final StreamStore streamStore,

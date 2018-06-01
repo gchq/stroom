@@ -33,7 +33,7 @@ import stroom.streamstore.FindStreamVolumeCriteria;
 import stroom.streamstore.ScanVolumePathResult;
 import stroom.streamstore.StreamMaintenanceService;
 import stroom.streamstore.StreamRange;
-import stroom.streamstore.StreamTypeService;
+import stroom.streamstore.StreamTypeEntityService;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamStatusId;
 import stroom.streamstore.shared.StreamVolume;
@@ -73,12 +73,12 @@ public class FileSystemStreamMaintenanceService
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamMaintenanceService.class);
 
     private final StroomEntityManager entityManager;
-    private final StreamTypeService streamTypeService;
+    private final StreamTypeEntityService streamTypeService;
     private final Security security;
 
     @Inject
     public FileSystemStreamMaintenanceService(final StroomEntityManager entityManager,
-                                              @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
+                                              @Named("cachedStreamTypeService") final StreamTypeEntityService streamTypeService,
                                               final Security security) {
         this.entityManager = entityManager;
         this.streamTypeService = streamTypeService;

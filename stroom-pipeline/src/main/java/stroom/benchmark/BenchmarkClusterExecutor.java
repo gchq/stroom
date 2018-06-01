@@ -34,7 +34,7 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.statistics.sql.StatisticEvent;
 import stroom.statistics.sql.StatisticTag;
 import stroom.statistics.sql.Statistics;
-import stroom.streamstore.FeedService;
+import stroom.streamstore.FeedEntityService;
 import stroom.streamstore.StreamAttributeMapService;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
@@ -84,7 +84,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     private static final String BENCHMARK_REFERENCE = "BENCHMARK-REFERENCE";
     private static final String BENCHMARK_EVENTS = "BENCHMARK-EVENTS";
 
-    private final FeedService feedService;
+    private final FeedEntityService feedService;
     private final PipelineStore pipelineStore;
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final StreamProcessorService streamProcessorService;
@@ -106,7 +106,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     private Task<?> task;
 
     @Inject
-    BenchmarkClusterExecutor(final FeedService feedService,
+    BenchmarkClusterExecutor(final FeedEntityService feedService,
                              final PipelineStore pipelineStore,
                              final StreamProcessorFilterService streamProcessorFilterService,
                              final StreamProcessorService streamProcessorService,

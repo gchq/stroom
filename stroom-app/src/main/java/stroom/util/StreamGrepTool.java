@@ -25,7 +25,7 @@ import stroom.persist.PersistService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.streamstore.StreamTypeService;
+import stroom.streamstore.StreamTypeEntityService;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.fs.FileSystemStreamTypeUtil;
@@ -132,7 +132,7 @@ public class StreamGrepTool extends AbstractCommandLineTool {
         }
 
         final StreamStore streamStore = injector.getInstance(StreamStore.class);
-        final StreamTypeService streamTypeService = injector.getInstance(Key.get(StreamTypeService.class, Names.named("cachedStreamTypeService")));
+        final StreamTypeEntityService streamTypeService = injector.getInstance(Key.get(StreamTypeEntityService.class, Names.named("cachedStreamTypeService")));
 
         if (feed != null) {
             builder.addTerm(StreamDataSource.FEED, Condition.EQUALS, feed);

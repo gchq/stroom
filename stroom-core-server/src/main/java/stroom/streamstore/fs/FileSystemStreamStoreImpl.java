@@ -54,12 +54,12 @@ import stroom.security.shared.PermissionNames;
 import stroom.streamstore.EffectiveMetaDataCriteria;
 import stroom.streamstore.ExpressionToFindCriteria;
 import stroom.streamstore.ExpressionToFindCriteria.Context;
-import stroom.streamstore.FeedService;
+import stroom.streamstore.FeedEntityService;
 import stroom.streamstore.FindFeedCriteria;
 import stroom.streamstore.OldFindStreamCriteria;
 import stroom.streamstore.StreamAttributeValueFlush;
 import stroom.streamstore.StreamException;
-import stroom.streamstore.StreamTypeService;
+import stroom.streamstore.StreamTypeEntityService;
 import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamTarget;
@@ -133,10 +133,10 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     private final StroomDatabaseInfo stroomDatabaseInfo;
     private final NodeCache nodeCache;
     private final StreamProcessorService streamProcessorService;
-    private final FeedService feedService;
+    private final FeedEntityService feedService;
     private final FeedStore feedStore;
     private final FeedDocCache feedDocCache;
-    private final StreamTypeService streamTypeService;
+    private final StreamTypeEntityService streamTypeService;
     private final VolumeService volumeService;
     private final ExpressionToFindCriteria expressionToFindCriteria;
     private final SecurityContext securityContext;
@@ -185,8 +185,8 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
                               final StroomDatabaseInfo stroomDatabaseInfo,
                               final NodeCache nodeCache,
                               @Named("cachedStreamProcessorService") final StreamProcessorService streamProcessorService,
-                              final FeedService feedService,
-                              @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
+                              final FeedEntityService feedService,
+                              @Named("cachedStreamTypeService") final StreamTypeEntityService streamTypeService,
                               final FeedStore feedStore,
                               final FeedDocCache feedDocCache,
                               final VolumeService volumeService,

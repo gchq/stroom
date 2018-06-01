@@ -71,13 +71,13 @@ public class MockStreamStore implements StreamStore, Clearable {
      */
     private long currentId;
 
-    private final FeedService feedService;
-    private final StreamTypeService streamTypeService;
+    private final FeedEntityService feedService;
+    private final StreamTypeEntityService streamTypeService;
 
     @SuppressWarnings("unused")
     @Inject
-    MockStreamStore(final FeedService feedService,
-                    final StreamTypeService streamTypeService) {
+    MockStreamStore(final FeedEntityService feedService,
+                    final StreamTypeEntityService streamTypeService) {
         this.feedService = feedService;
         this.streamTypeService = streamTypeService;
     }

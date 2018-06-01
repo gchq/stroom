@@ -28,7 +28,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.EffectiveMetaDataCriteria;
-import stroom.streamstore.FeedService;
+import stroom.streamstore.FeedEntityService;
 import stroom.streamstore.FindStreamAttributeValueCriteria;
 import stroom.streamstore.FindStreamVolumeCriteria;
 import stroom.streamstore.StreamAttributeMapService;
@@ -90,7 +90,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     @Inject
     private StreamAttributeValueFlush streamAttributeValueFlush;
     @Inject
-    private FeedService feedService;
+    private FeedEntityService feedService;
     @Inject
     private StreamTaskCreator streamTaskCreator;
     @Inject

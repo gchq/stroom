@@ -36,14 +36,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class StreamTypeServiceImpl extends NamedEntityServiceImpl<StreamTypeEntity, FindStreamTypeCriteria> implements StreamTypeService, Clearable {
-    private static final Logger LOGGER = LoggerFactory.getLogger(StreamTypeServiceImpl.class);
+public class StreamTypeEntityServiceImpl extends NamedEntityServiceImpl<StreamTypeEntity, FindStreamTypeCriteria> implements StreamTypeEntityService, Clearable {
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamTypeEntityServiceImpl.class);
 
     private final Map<String, StreamTypeEntity> cache = new ConcurrentHashMap<>();
 
     @Inject
-    StreamTypeServiceImpl(final StroomEntityManager entityManager,
-                          final Security security) {
+    StreamTypeEntityServiceImpl(final StroomEntityManager entityManager,
+                                final Security security) {
         super(entityManager, security);
     }
 

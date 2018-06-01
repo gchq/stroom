@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 
 @Singleton
 class MockStreamTypeService extends MockNamedEntityService<StreamTypeEntity, FindStreamTypeCriteria>
-        implements StreamTypeService {
+        implements StreamTypeEntityService {
     MockStreamTypeService() {
         for (final StreamTypeEntity streamType : StreamTypeEntity.initialValues()) {
             save(streamType);
