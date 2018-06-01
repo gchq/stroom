@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.HasDisplayValue;
 import stroom.docref.SharedObject;
@@ -34,12 +35,16 @@ public class TimeZone implements SharedObject {
     private static final long serialVersionUID = 1200175661441813029L;
 
     @XmlElement(name = "use")
+    @JsonProperty("use")
     private Use use;
     @XmlElement(name = "id")
+    @JsonProperty("id")
     private String id;
     @XmlElement(name = "offsetHours")
+    @JsonProperty("offsetHours")
     private Integer offsetHours;
     @XmlElement(name = "offsetMinutes")
+    @JsonProperty("offsetMinutes")
     private Integer offsetMinutes;
 
     public TimeZone() {

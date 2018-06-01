@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.EqualsBuilder;
 import stroom.docref.HasDisplayValue;
@@ -41,11 +42,14 @@ public class Format implements Serializable {
     public static List<Type> TYPES = Arrays.asList(Type.GENERAL, Type.NUMBER, Type.DATE_TIME, Type.TEXT);
 
     @XmlElement(name = "type")
+    @JsonProperty("type")
     private Type type;
     @XmlElements({@XmlElement(name = "numberFormatSettings", type = NumberFormatSettings.class),
             @XmlElement(name = "dateTimeFormatSettings", type = DateTimeFormatSettings.class)})
+    @JsonProperty("settings")
     private FormatSettings settings;
     @XmlElement(name = "wrap")
+    @JsonProperty("wrap")
     private Boolean wrap;
 
     public Format() {

@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
@@ -37,8 +38,10 @@ public class DateTimeFormatSettings implements FormatSettings {
     private static final String DEFAULT_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
 
     @XmlElement(name = "pattern")
+    @JsonProperty("pattern")
     private String pattern;
     @XmlElement(name = "timeZone")
+    @JsonProperty("timeZone")
     private TimeZone timeZone;
 
     public String getPattern() {

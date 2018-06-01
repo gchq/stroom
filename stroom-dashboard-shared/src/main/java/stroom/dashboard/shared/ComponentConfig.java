@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.SharedObject;
 
@@ -34,15 +35,19 @@ public class ComponentConfig implements SharedObject {
     private static final long serialVersionUID = -2530827581046882396L;
 
     @XmlElement(name = "type")
+    @JsonProperty("type")
     private String type;
     @XmlElement(name = "id")
+    @JsonProperty("id")
     private String id;
     @XmlElement(name = "name")
+    @JsonProperty("name")
     private String name;
     @XmlElements({@XmlElement(name = "query", type = QueryComponentSettings.class),
             @XmlElement(name = "table", type = TableComponentSettings.class),
             @XmlElement(name = "text", type = TextComponentSettings.class),
             @XmlElement(name = "vis", type = VisComponentSettings.class)})
+    @JsonProperty("settings")
     private ComponentSettings settings;
 
     public ComponentConfig() {

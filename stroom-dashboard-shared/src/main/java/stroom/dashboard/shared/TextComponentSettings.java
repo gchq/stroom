@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.DocRef;
 
@@ -33,10 +34,13 @@ public class TextComponentSettings extends ComponentSettings {
     private static final long serialVersionUID = -2530827581046882396L;
 
     @XmlElement(name = "tableId")
+    @JsonProperty("tableId")
     private String tableId;
     @XmlElement(name = "pipeline")
+    @JsonProperty("pipeline")
     private DocRef pipeline;
     @XmlElement(name = "showAsHtml")
+    @JsonProperty("showAsHtml")
     private boolean showAsHtml;
 
     public TextComponentSettings() {

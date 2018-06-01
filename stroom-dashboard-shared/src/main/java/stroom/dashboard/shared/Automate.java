@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.SharedObject;
 
@@ -33,12 +34,15 @@ public class Automate implements SharedObject {
     private static final long serialVersionUID = -2530827581046882396L;
 
     @XmlElement(name = "open")
+    @JsonProperty("open")
     private boolean open;
 
     @XmlElement(name = "refresh")
+    @JsonProperty("refresh")
     private boolean refresh;
 
     @XmlElement(name = "refreshInterval")
+    @JsonProperty("refreshInterval")
     private String refreshInterval = "10s";
 
     public Automate() {

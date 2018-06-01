@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.DocRef;
 import stroom.util.shared.EqualsBuilder;
@@ -41,18 +42,24 @@ public class TableComponentSettings extends ComponentSettings {
     public static final int[] DEFAULT_MAX_RESULTS = {1000000};
     private static final long serialVersionUID = -2530827581046882396L;
     @XmlElement(name = "queryId")
+    @JsonProperty("queryId")
     private String queryId;
     @XmlElementWrapper(name = "fields")
     @XmlElements({@XmlElement(name = "field", type = Field.class)})
+    @JsonProperty("fields")
     private List<Field> fields;
     @XmlElement(name = "extractValues")
+    @JsonProperty("extractValues")
     private Boolean extractValues;
     @XmlElement(name = "extractionPipeline")
+    @JsonProperty("extractionPipeline")
     private DocRef extractionPipeline;
     @XmlElementWrapper(name = "maxResults")
     @XmlElement(name = "level")
+    @JsonProperty("maxResults")
     private int[] maxResults = DEFAULT_MAX_RESULTS;
     @XmlElement(name = "showDetail")
+    @JsonProperty("showDetail")
     private Boolean showDetail;
 
     public TableComponentSettings() {

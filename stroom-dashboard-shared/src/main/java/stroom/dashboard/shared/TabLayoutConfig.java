@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -39,11 +40,14 @@ public class TabLayoutConfig extends LayoutConfig {
      * The preferred size of this layout in width, height.
      */
     @XmlElement(name = "preferredSize")
+    @JsonProperty("preferredSize")
     private Size preferredSize = new Size();
     @XmlElementWrapper(name = "tabs")
     @XmlElements({@XmlElement(name = "tab", type = TabConfig.class)})
+    @JsonProperty("tabs")
     private List<TabConfig> tabs;
     @XmlElement(name = "selected")
+    @JsonProperty("selected")
     private Integer selected;
 
     public TabLayoutConfig() {

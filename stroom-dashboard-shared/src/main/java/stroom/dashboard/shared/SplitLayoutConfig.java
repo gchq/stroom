@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -39,12 +40,15 @@ public class SplitLayoutConfig extends LayoutConfig {
      * The preferred size of this layout in width, height.
      */
     @XmlElement(name = "preferredSize")
+    @JsonProperty("preferredSize")
     private Size preferredSize = new Size();
     @XmlElement(name = "dimension")
+    @JsonProperty("dimension")
     private int dimension;
     @XmlElementWrapper(name = "children")
     @XmlElements({@XmlElement(name = "splitLayout", type = SplitLayoutConfig.class),
             @XmlElement(name = "tabLayout", type = TabLayoutConfig.class)})
+    @JsonProperty("children")
     private List<LayoutConfig> children;
 
     public SplitLayoutConfig() {
