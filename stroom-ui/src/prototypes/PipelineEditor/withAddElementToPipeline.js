@@ -18,45 +18,54 @@ import PropTypes from 'prop-types';
 
 import { connect } from 'react-redux';
 
-import { explorerTreeOpened, DEFAULT_EXPLORER_ID } from './redux';
+import { getPipelineAsTree, getPipelineLayoutInformation } from './pipelineUtils';
 
 /**
  * This is a Higher Order Component
  * https://reactjs.org/docs/higher-order-components.html
  *
- * It provides the picked doc ref by connecting to the redux store and using a provided
- * pickerId to look it up.
+ * It provides the pipeline by connecting to the redux store and using a provided
+ * pipelineId to look it up.
+ *
+ * @param {React.Component} WrappedComponent
  */
-export function withPickedDocRef(idPropertyName = 'pickerId') {
+export function withAddElementToPipeline() {
   return (WrappedComponent) => {
-    const WithPickedDocRef = class extends Component {
+    const WithAddElementToPipeline = class extends Component {
       static propTypes = {
-        [idPropertyName]: PropTypes.string.isRequired,
-        pickedDocRefs: PropTypes.object.isRequired,
+        pipelineId: PropTypes.string.isRequired,
+        addElementToPipeline: PropTypes.object.isRequired,
       };
 
       state = {
-        docRef: undefined,
+        isAddElementStateAvailable: false,
+        pendingElementToAddParent: undefined,
+        pendingElementToAddChildDefinition: undefined,
       };
 
       static getDerivedStateFromProps(nextProps, prevState) {
+        const addElementState = nextProps.addElementToPipeline[nextProps.pipelineId];
         return {
-          docRef: nextProps.pickedDocRefs[nextProps[idPropertyName]],
+          isAddElementStateAvailable: !!addElementState,
+          ...addElementState,
         };
       }
 
       render() {
-        return <WrappedComponent {...this.state} {...this.props} />;
+        if (this.state.isAddElementStateAvailable) {
+          return <WrappedComponent {...this.state} {...this.props} />;
+        }
+        return null;
       }
     };
 
     return connect(
       state => ({
-        pickedDocRefs: state.explorerTree.pickedDocRefs,
+        addElementToPipeline: state.addElementToPipeline,
       }),
       {
         // actions
       },
-    )(WithPickedDocRef);
+    )(WithAddElementToPipeline);
   };
 }

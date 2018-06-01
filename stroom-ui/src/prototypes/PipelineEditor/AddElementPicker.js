@@ -19,53 +19,72 @@ import PropTypes from 'prop-types';
 import { compose } from 'redux';
 import { connect } from 'react-redux';
 
-import { Dropdown, Menu, Icon, Label, Input } from 'semantic-ui-react';
+import { Dropdown, Menu, Icon, Label, Input, Modal, Header } from 'semantic-ui-react';
 
-import { requestDeletePipelineElement, closePipelineElementContextMenu } from './redux';
+import {
+  cancelAddPipelineElement,
+  choosePipelineElementToAdd,
+  addElementSearchTermChanged,
+} from './redux';
+import { withAddElementToPipeline } from './withAddElementToPipeline';
+import { withPipeline } from './withPipeline';
 import { withElement } from './withElement';
 
 const AddElementPicker = ({
   pipelineId,
-  elementId,
   pipeline,
-  thisElement,
-  elementDefinition,
+  pendingElementToAddParent,
+  pendingElementToAddChildDefinition,
+  addElementSearchTermChanged,
+  choosePipelineElementToAdd,
+  cancelAddPipelineElement,
+  element,
+  searchTerm,
   availableElements,
-  elements,
-  isOpen,
-  closePipelineElementContextMenu,
-  requestDeletePipelineElement,
 }) => (
-  <Dropdown
-    floating
-    direction="right"
-    icon={null}
-    open={isOpen}
-    onClose={() => closePipelineElementContextMenu(pipelineId)}
-  >
-    <Dropdown.Menu>
-      <Dropdown.Item icon="add" text="Add" />
-      <Dropdown.Item
-        icon="trash"
-        text="Delete"
-        onClick={() => requestDeletePipelineElement(pipelineId, elementId)}
-      />
-    </Dropdown.Menu>
-  </Dropdown>
+  <Modal open={!!element} onClose={() => cancelAddPipelineElement(pipelineId)}>
+    <Header icon="browser" content={`Choose an Element to Add to ${pendingElementToAddParent}`} />
+    <Modal.Content>
+      <Menu vertical>
+        <Menu.Item>
+          <Input
+            className="icon"
+            icon="search"
+            placeholder="Search..."
+            value={searchTerm}
+            onChange={e => addElementSearchTermChanged(pipelineId, e.target.value)}
+          />
+        </Menu.Item>
+        {Object.entries(availableElements).map(k => (
+          <Menu.Item key={k[0]}>
+            {k[0]}
+            <Menu.Menu>
+              {k[1]
+                  .filter(k => (!searchTerm && searchTerm.length === 0) || k.type.includes(searchTerm))
+                  .map(e => (
+                    <Menu.Item
+                      key={e.type}
+                      name={e.type}
+                      onClick={() => choosePipelineElementToAdd(pipelineId, e)}
+                    />
+                  ))}
+            </Menu.Menu>
+          </Menu.Item>
+          ))}
+      </Menu>
+    </Modal.Content>
+  </Modal>
 );
 
-ElementMenu.propTypes = {
+AddElementPicker.propTypes = {
   pipelineId: PropTypes.string.isRequired,
-  elementId: PropTypes.string.isRequired,
-  isOpen: PropTypes.bool.isRequired,
   pipeline: PropTypes.object.isRequired,
-  thisElement: PropTypes.object.isRequired,
-  elementDefinition: PropTypes.object.isRequired,
-  availableElements: PropTypes.object.isRequired,
-  elements: PropTypes.object.isRequired,
-
-  requestDeletePipelineElement: PropTypes.func.isRequired,
-  closePipelineElementContextMenu: PropTypes.func.isRequired,
+  element: PropTypes.object.isRequired,
+  searchTerm: PropTypes.string.isRequired,
+  pendingElementToAddParent: PropTypes.string,
+  availableElements: PropTypes.object,
+  cancelAddPipelineElement: PropTypes.func.isRequired,
+  choosePipelineElementToAdd: PropTypes.func.isRequired,
 };
 
 export default compose(
@@ -74,9 +93,13 @@ export default compose(
       // state
     }),
     {
-      closePipelineElementContextMenu,
-      requestDeletePipelineElement,
+      // actions
+      choosePipelineElementToAdd,
+      cancelAddPipelineElement,
+      addElementSearchTermChanged,
     },
   ),
-  withElement(),
+  withPipeline(),
+  withAddElementToPipeline(),
+  withElement('pendingElementToAddParent'),
 )(AddElementPicker);

@@ -108,7 +108,7 @@ const DocRef = ({
   >
     <DocRefMenu explorerId={explorerId} docRef={docRef} isOpen={isContextMenuOpen} />
     <span>
-      <Icon name="file outline" />
+      <img className="doc-ref__icon" src={require(`./images/${docRef.type}.svg`)} />
       {docRef.name}
     </span>
   </div>);
