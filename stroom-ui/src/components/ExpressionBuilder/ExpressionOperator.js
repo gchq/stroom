@@ -134,7 +134,7 @@ const ExpressionOperator = ({
 
     let color = 'grey';
     if (isOver) {
-        color= (canDrop) ? 'blue' : 'red'
+        color= (dropTarget.canDrop) ? 'blue' : 'red'
     }
     let className = 'expression-item';
     if (isRoot) {
@@ -208,7 +208,7 @@ const ExpressionOperator = ({
                 </div>
             ))}
             <div className='operator__children'>
-                {(isOver && canDrop) && <div className='operator__placeholder' />}
+                {(isOver && dropTarget.canDrop) && <div className='operator__placeholder' />}
                 {
                     operator.children.map(c => {
                         let itemElement;
