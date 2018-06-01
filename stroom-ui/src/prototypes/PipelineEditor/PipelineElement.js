@@ -39,9 +39,9 @@ import { ItemTypes } from './dragDropTypes';
 const streamLogo = require('images/pipeline/stream.svg');
 
 const dragSource = {
-  canDrag(props) { 
-		return true;
-	},
+  canDrag(props) {
+    return true;
+  },
   beginDrag(props) {
     return {
       elementId: props.elementId,

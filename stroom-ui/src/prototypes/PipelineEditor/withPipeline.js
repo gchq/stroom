@@ -18,10 +18,7 @@ import PropTypes from 'prop-types';
 
 import { connect } from 'react-redux';
 
-import {
-  getPipelineAsTree,
-  getPipelineLayoutInformation
-} from './pipelineUtils';
+import { getPipelineAsTree, getPipelineLayoutInformation } from './pipelineUtils';
 
 /**
  * This is a Higher Order Component
@@ -33,7 +30,7 @@ import {
  * @param {React.Component} WrappedComponent
  */
 export function withPipeline(customIdPropertyName) {
-  return WrappedComponent => {
+  return (WrappedComponent) => {
     const idPropertyName = customIdPropertyName || 'pipelineId';
 
     const WithPipeline = class extends Component {
@@ -44,8 +41,8 @@ export function withPipeline(customIdPropertyName) {
 
       state = {
         pipeline: undefined,
-        asTree : undefined,
-        layoutInformation : undefined
+        asTree: undefined,
+        layoutInformation: undefined,
       };
 
       static getDerivedStateFromProps(nextProps, prevState) {
@@ -56,22 +53,17 @@ export function withPipeline(customIdPropertyName) {
           asTree = getPipelineAsTree(pipeline.pipeline);
           layoutInformation = getPipelineLayoutInformation(asTree);
         }
-        
+
         return {
           ...pipeline,
           asTree,
-          layoutInformation
+          layoutInformation,
         };
       }
 
       render() {
-        if (!!this.state.pipeline) {
-          return (
-            <WrappedComponent
-              {...this.state}
-              {...this.props}
-            />
-          );
+        if (this.state.pipeline) {
+          return <WrappedComponent {...this.state} {...this.props} />;
         }
         return <span>awaiting pipeline state</span>;
       }
@@ -85,5 +77,5 @@ export function withPipeline(customIdPropertyName) {
         // actions
       },
     )(WithPipeline);
-  }
+  };
 }

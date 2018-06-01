@@ -14,5 +14,5 @@
  * limitations under the License.
  */
 export const ItemTypes = {
-    ELEMENT : 'element'
-}
+  ELEMENT: 'element',
+};
