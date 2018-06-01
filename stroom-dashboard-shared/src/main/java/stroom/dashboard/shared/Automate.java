@@ -16,6 +16,8 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.SharedObject;
@@ -28,6 +30,7 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"open", "refresh", "refreshInterval"})
+@JsonInclude(Include.NON_EMPTY)
 @XmlRootElement(name = "automate")
 @XmlType(name = "Automate", propOrder = {"open", "refresh", "refreshInterval"})
 public class Automate implements SharedObject {

@@ -16,6 +16,8 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.DocRef;
@@ -28,6 +30,7 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"tableId", "pipeline", "showAsHtml"})
+@JsonInclude(Include.NON_EMPTY)
 @XmlRootElement(name = "text")
 @XmlType(name = "TextComponentSettings", propOrder = {"tableId", "pipeline", "showAsHtml"})
 public class TextComponentSettings extends ComponentSettings {

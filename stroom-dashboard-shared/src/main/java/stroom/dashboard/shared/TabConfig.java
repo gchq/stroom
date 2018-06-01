@@ -16,6 +16,8 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.SharedObject;
@@ -29,6 +31,7 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"id", "settings"})
+@JsonInclude(Include.NON_EMPTY)
 @XmlRootElement(name = "tab")
 @XmlType(name = "TabConfig", propOrder = {"id", "settings"})
 public class TabConfig implements SharedObject {

@@ -16,6 +16,8 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.EqualsBuilder;
@@ -32,6 +34,7 @@ import java.io.Serializable;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"order", "direction"})
+@JsonInclude(Include.NON_EMPTY)
 @XmlRootElement(name = "sort")
 @XmlType(name = "Sort", propOrder = {"order", "direction"})
 public class Sort implements Serializable {

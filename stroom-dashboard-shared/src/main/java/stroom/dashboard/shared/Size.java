@@ -17,6 +17,8 @@
 package stroom.dashboard.shared;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.SharedObject;
@@ -31,6 +33,7 @@ import java.util.Arrays;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"width", "height"})
+@JsonInclude(Include.NON_EMPTY)
 @XmlRootElement(name = "size")
 @XmlType(name = "Size", propOrder = {"width", "height"})
 public class Size implements SharedObject {
