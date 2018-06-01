@@ -44,7 +44,7 @@ class JWTService {
         if (securityConfig.isAuthenticationRequired()) {
             fetchNewPublicKeys();
 
-            if (securityConfig.getAuthenticationServicesUrl() == null) {
+            if (securityConfig.getAuthServicesBaseUrl() == null) {
                 throw new SecurityException("No authentication service URL is defined");
             }
         }
