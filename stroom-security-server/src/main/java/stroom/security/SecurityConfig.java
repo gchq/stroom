@@ -5,7 +5,7 @@ public class SecurityConfig {
     private String advertisedStroomUrl;
     private boolean authenticationRequired = true;
     private String apiToken;
-    private String authenticationServicesUrl;
+    private String authServicesBaseUrl;
     private JwtConfig jwtConfig;
 
     public String getAuthenticationServiceUrl() {
@@ -40,12 +40,12 @@ public class SecurityConfig {
         this.apiToken = apiToken;
     }
 
-    public String getAuthenticationServicesUrl() {
-        return authenticationServicesUrl;
+    public String getAuthServicesBaseUrl() {
+        return authServicesBaseUrl;
     }
 
-    public void setAuthenticationServicesUrl(final String authenticationServicesUrl) {
-        this.authenticationServicesUrl = authenticationServicesUrl;
+    public void setAuthServicesBaseUrl(final String authServicesBaseUrl) {
+        this.authServicesBaseUrl = authServicesBaseUrl;
     }
 
     public JwtConfig getJwtConfig() {

@@ -16,9 +16,14 @@
 
 package stroom.statistics.shared;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import stroom.docref.SharedObject;
 import stroom.statistics.shared.common.CustomRollUpMask;
 import stroom.statistics.shared.common.StatisticField;
-import stroom.docref.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -35,6 +40,8 @@ import java.util.Set;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "data")
+@JsonPropertyOrder({"field", "customRollUpMask"})
+@JsonInclude(Include.NON_EMPTY)
 public class StatisticsDataSourceData implements SharedObject {
     private static final long serialVersionUID = -9071682094300037627L;
 
@@ -46,6 +53,7 @@ public class StatisticsDataSourceData implements SharedObject {
      */
 
     @XmlTransient
+    @JsonIgnore
     private List<StatisticField> statisticFields;
 
     /**
@@ -54,10 +62,12 @@ public class StatisticsDataSourceData implements SharedObject {
      * XMLTransient to force JAXB to use the setter
      */
     @XmlTransient
+    @JsonIgnore
     private Set<CustomRollUpMask> customRollUpMasks;
 
     // cache the positions of the
     @XmlTransient
+    @JsonIgnore
     private Map<String, Integer> fieldPositionMap = new HashMap<>();
 
     public StatisticsDataSourceData() {
@@ -79,6 +89,7 @@ public class StatisticsDataSourceData implements SharedObject {
     }
 
     @XmlElement(name = "field")
+    @JsonProperty("fields")
     public List<StatisticField> getStatisticFields() {
         return statisticFields;
     }
@@ -89,6 +100,7 @@ public class StatisticsDataSourceData implements SharedObject {
     }
 
     @XmlElement(name = "customRollUpMask")
+    @JsonProperty("customRollUpMasks")
     public Set<CustomRollUpMask> getCustomRollUpMasks() {
         return customRollUpMasks;
     }

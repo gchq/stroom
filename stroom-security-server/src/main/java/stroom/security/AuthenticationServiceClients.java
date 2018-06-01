@@ -56,13 +56,13 @@ class AuthenticationServiceClients {
                 throw new RuntimeException("Missing API key! Please configure using 'stroom.security.apiToken'");
             }
 
-            if (Strings.isNullOrEmpty(securityConfig.getAuthenticationServiceUrl())) {
+            if (Strings.isNullOrEmpty(securityConfig.getAuthServicesBaseUrl())) {
                 throw new RuntimeException("Missing auth service URL! Please configure using 'stroom.auth.services.url'");
             }
         }
 
         authServiceClient = new ApiClient();
-        authServiceClient.setBasePath(securityConfig.getAuthenticationServiceUrl());
+        authServiceClient.setBasePath(securityConfig.getAuthServicesBaseUrl());
         authServiceClient.addDefaultHeader("Authorization", "Bearer " + securityConfig.getApiToken());
     }
 

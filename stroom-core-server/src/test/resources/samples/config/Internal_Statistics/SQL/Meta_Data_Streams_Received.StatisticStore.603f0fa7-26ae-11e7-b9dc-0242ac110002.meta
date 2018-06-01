@@ -9,7 +9,7 @@
   "precision" : 3600000,
   "enabled" : true,
   "config" : {
-    "statisticFields" : [ {
+    "fields" : [ {
       "fieldName" : "feed"
     } ]
   }

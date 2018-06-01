@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -48,6 +49,7 @@ public class TabConfig implements SharedObject {
     @JsonProperty("settings")
     private ComponentSettings settings;
 
+    @JsonIgnore
     private transient TabLayoutConfig parent;
 
     public TabConfig() {
