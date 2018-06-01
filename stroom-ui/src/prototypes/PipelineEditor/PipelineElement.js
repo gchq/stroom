@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 
 import { compose } from 'redux';
-import { connect } from 'react-redux'
+import { connect } from 'react-redux';
 
 import { DragSource, DropTarget } from 'react-dnd';
 
@@ -27,7 +27,7 @@ import {
   pipelineElementSelected,
   pipelineElementMoved,
   openPipelineElementContextMenu,
-  closePipelineElementContextMenu
+  closePipelineElementContextMenu,
 } from './redux';
 
 import ElementMenu from './ElementMenu';
@@ -39,7 +39,7 @@ import { ItemTypes } from './dragDropTypes';
 const streamLogo = require('images/pipeline/stream.svg');
 
 const dragSource = {
-  canDrag(props) {
+  canDrag(props) { 
 		return true;
 	},
   beginDrag(props) {
@@ -109,10 +109,10 @@ const PipelineElement = ({
     e.preventDefault();
   };
 
-  return (
+  return ( 
     connectDragSource(
       connectDropTarget(
-        <span>
+        <div>
           <span className={className}
             onClick={onSingleClick}
             onContextMenu={onRightClick}
@@ -127,7 +127,7 @@ const PipelineElement = ({
               isOpen={isContextMenuOpen}
               />
           </span>
-        </span>
+        </div>
       )
     )
   );
