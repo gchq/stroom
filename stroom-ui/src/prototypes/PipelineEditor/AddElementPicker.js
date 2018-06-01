@@ -25,7 +25,7 @@ import { Dropdown, Menu, Icon, Label, Input } from 'semantic-ui-react';
 
 import { requestDeletePipelineElement, closePipelineElementContextMenu } from './redux';
 
-const streamLogo = require('images/pipeline/stream.svg');
+const streamLogo = require('./images/stream.svg');
 
 /**
  * Higher Order Component to lookup the full element definitions and available follow on

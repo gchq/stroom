@@ -36,7 +36,7 @@ import { canMovePipelineElement } from './pipelineUtils';
 
 import { ItemTypes } from './dragDropTypes';
 
-const streamLogo = require('images/pipeline/stream.svg');
+const streamLogo = require('./images/stream.svg');
 
 const dragSource = {
   canDrag(props) {
