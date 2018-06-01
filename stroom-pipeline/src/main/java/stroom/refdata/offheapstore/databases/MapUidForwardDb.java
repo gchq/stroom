@@ -21,8 +21,10 @@ import org.lmdbjava.Env;
 import org.lmdbjava.Txn;
 import stroom.refdata.lmdb.AbstractLmdbDb;
 import stroom.refdata.lmdb.serde.Serde;
+import stroom.refdata.offheapstore.ByteArrayUtils;
 import stroom.refdata.offheapstore.MapDefinition;
 import stroom.refdata.offheapstore.UID;
+import stroom.util.logging.LambdaLogger;
 
 import java.nio.ByteBuffer;
 import java.util.Optional;
@@ -42,6 +44,17 @@ public class MapUidForwardDb extends AbstractLmdbDb<MapDefinition, UID> {
         return Optional.ofNullable(lmdbDbi.get(txn, keyBuffer));
     }
 
+    public void putForwardEntry(final Txn<ByteBuffer> writeTxn,
+                                final ByteBuffer mapDefinitionKeyBuffer,
+                                final ByteBuffer uidValueBuffer) {
+
+        boolean didPutSuceed = put(writeTxn, mapDefinitionKeyBuffer, uidValueBuffer, false);
+        if (!didPutSuceed) {
+            throw new RuntimeException(LambdaLogger.buildMessage("Failed to put mapDefinition {}, uid {}",
+                    ByteArrayUtils.byteBufferInfo(mapDefinitionKeyBuffer),
+                    ByteArrayUtils.byteBufferInfo(uidValueBuffer)));
+        }
+    }
 
 
 

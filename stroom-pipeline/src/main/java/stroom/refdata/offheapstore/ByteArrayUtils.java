@@ -103,7 +103,11 @@ public class ByteArrayUtils {
     }
 
     public static String byteBufferInfo(final ByteBuffer byteBuffer) {
-        String value = byteArrayToHex(Bytes.getBytes(byteBuffer));
+        if (byteBuffer == null) {
+            return "null";
+        }
+
+        final String value = byteArrayToHex(Bytes.getBytes(byteBuffer));
         return LambdaLogger.buildMessage("Cap: {}, pos: {}, lim: {}, rem: {}, val [{}]",
                 byteBuffer.capacity(),
                 byteBuffer.position(),

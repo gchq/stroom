@@ -18,18 +18,22 @@
 package stroom.refdata.lmdb;
 
 import com.google.common.collect.ImmutableMap;
+import org.lmdbjava.CursorIterator;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.Env;
 import org.lmdbjava.EnvInfo;
+import org.lmdbjava.KeyRange;
 import org.lmdbjava.Stat;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.serde.Serde;
+import stroom.refdata.offheapstore.ByteArrayUtils;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.xml.bind.DatatypeConverter;
+import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -143,6 +147,17 @@ public class LmdbUtils {
                 .build();
     }
 
+    public static long getEntryCount(final Env<ByteBuffer> env, final Txn<ByteBuffer> txn, final Dbi<ByteBuffer> dbi) {
+
+        return dbi.stat(txn).entries;
+    }
+
+    public static long getEntryCount(final Env<ByteBuffer> env, final Dbi<ByteBuffer> dbi) {
+
+        return LmdbUtils.getWithReadTxn(env, txn ->
+                getEntryCount(env, txn, dbi));
+    }
+
     public static void dumpBuffer(final ByteBuffer byteBuffer, final String description) {
         StringBuilder stringBuilder = new StringBuilder();
 
@@ -196,7 +211,20 @@ public class LmdbUtils {
      * @return The newly allocated {@link ByteBuffer}
      */
     public static <T> ByteBuffer buildDbKeyBuffer(final Env<ByteBuffer> lmdbEnv, final T keyObject, Serde<T> keySerde) {
-        return buildDbBuffer(keyObject, keySerde, lmdbEnv.getMaxKeySize());
+        try {
+            return buildDbBuffer(keyObject, keySerde, lmdbEnv.getMaxKeySize());
+        } catch (BufferOverflowException e) {
+            throw new RuntimeException(LambdaLogger.buildMessage(
+                    "The serialised form of keyObject {} is too big for an LMDB key, max bytes is {}",
+                    keyObject, lmdbEnv.getMaxKeySize()), e);
+        }
+    }
+
+    /**
+     * Create an empty {@link ByteBuffer} with the appropriate capacity for an LMDB key
+     */
+    public static ByteBuffer createEmptyKeyBuffer(final Env<ByteBuffer> lmdbEnv) {
+        return ByteBuffer.allocateDirect(lmdbEnv.getMaxKeySize());
     }
 
     /**
@@ -204,7 +232,7 @@ public class LmdbUtils {
      * serialises the object into that {@link ByteBuffer}
      * @return The newly allocated {@link ByteBuffer}
      */
-    public static <T> ByteBuffer buildDbBuffer(final T object, Serde<T> serde, final int bufferSize) {
+    public static <T> ByteBuffer buildDbBuffer(final T object, final Serde<T> serde, final int bufferSize) {
         ByteBuffer byteBuffer = ByteBuffer.allocateDirect(bufferSize);
         serde.serialize(byteBuffer, object);
         return byteBuffer;
@@ -220,5 +248,45 @@ public class LmdbUtils {
         output.put(input);
         output.flip();
         return output;
+    }
+
+    /**
+     * Dumps all entries in the database to a single logger entry with one line per database entry.
+     * This could potentially return thousands of rows so is only intended for small scale use in
+     * testing. Entries are returned in the order they are held in the DB, e.g. a-z (unless the DB
+     * is configured with reverse keys). The keyToStringFunc and valueToStringFunc functions are
+     * used to convert the keys/values into string form for output to the logger.
+     */
+    public static void logDatabaseContents(final Env<ByteBuffer> env,
+                                           final Dbi<ByteBuffer> dbi,
+                                           final Function<ByteBuffer, String> keyToStringFunc,
+                                           final Function<ByteBuffer, String> valueToStringFunc) {
+
+        final StringBuilder stringBuilder = new StringBuilder();
+        doWithReadTxn(env, txn -> {
+            stringBuilder.append(LambdaLogger.buildMessage("Dumping {} entries for database [{}]",
+                    getEntryCount(env, txn, dbi), new String(dbi.getName())));
+
+            // loop over all DB entries
+            try (CursorIterator<ByteBuffer> cursorIterator = dbi.iterate(txn, KeyRange.all())) {
+                while (cursorIterator.hasNext()) {
+                    final CursorIterator.KeyVal<ByteBuffer> keyVal = cursorIterator.next();
+                    stringBuilder.append(LambdaLogger.buildMessage("\n  key: [{}] - value [{}]",
+                            keyToStringFunc.apply(keyVal.key()),
+                            valueToStringFunc.apply(keyVal.val())));
+                }
+            }
+        });
+        LOGGER.debug(stringBuilder.toString());
+
+    }
+    /**
+     * Dumps all entries in the database to a single logger entry with one line per database entry.
+     * This could potentially return thousands of rows so is only intended for small scale use in
+     * testing. Entries are returned in the order they are held in the DB, e.g. a-z (unless the DB
+     * is configured with reverse keys).
+     */
+    public static void logRawDatabaseContents(final Env<ByteBuffer> env, final Dbi<ByteBuffer> dbi) {
+        logDatabaseContents(env, dbi, ByteArrayUtils::byteBufferToHex, ByteArrayUtils::byteBufferToHex);
     }
 }

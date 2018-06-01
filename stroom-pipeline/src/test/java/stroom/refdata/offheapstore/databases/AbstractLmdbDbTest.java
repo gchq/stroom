@@ -21,7 +21,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 import org.lmdbjava.Env;
-import org.lmdbjava.EnvFlags;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.ByteSizeUnit;
@@ -37,7 +36,7 @@ public class AbstractLmdbDbTest {
     @Rule
     public final TemporaryFolder tmpDir = new TemporaryFolder();
 
-    Env<ByteBuffer> lmdbEnv = null;
+    protected Env<ByteBuffer> lmdbEnv = null;
 
     @Before
     public void setup() {
@@ -48,7 +47,7 @@ public class AbstractLmdbDbTest {
 
         lmdbEnv = Env.<ByteBuffer>create()
                 .setMapSize(DB_MAX_SIZE)
-                .setMaxDbs(1)
+                .setMaxDbs(5)
                 .open(dbDir.toFile());
     }
 }

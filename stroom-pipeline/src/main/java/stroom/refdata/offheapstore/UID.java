@@ -28,7 +28,7 @@ import java.util.Objects;
  * {@link ByteBuffer} MUST not be mutated.
  */
 public class UID {
-//    public class UID implements Comparable<UID> {
+    //    public class UID implements Comparable<UID> {
     // this is the width of the byte array used for storing the Unique ID
     // values.
     // Changing this value would require any data stored using UIDs to be
@@ -83,6 +83,28 @@ public class UID {
         return new UID(byteBuffer);
     }
 
+    public static UID of(final long value) {
+        return new UID(createUidBuffer(value));
+    }
+
+    public UID clone() {
+        ByteBuffer newBuffer = ByteBuffer.allocateDirect(UID_ARRAY_LENGTH);
+        newBuffer.put(byteBuffer);
+        newBuffer.flip();
+        return new UID(newBuffer);
+    }
+
+    public long getValue() {
+        long val = UnsignedBytes.get(byteBuffer);
+        byteBuffer.flip();
+        return val;
+    }
+
+    public UID nextUid() {
+        long currVal = getValue();
+        return UID.of(currVal + 1);
+    }
+
 //    /**
 //     * Wraps a new UID around the UID section of the passed array. The array is NOT copied so must not be mutated.
 //     */
@@ -126,7 +148,7 @@ public class UID {
 
     @Override
     public String toString() {
-        return ByteArrayUtils.byteBufferInfo(byteBuffer);
+        return ByteArrayUtils.byteBufferToHex(byteBuffer);
     }
 
     @Override
@@ -168,5 +190,17 @@ public class UID {
 //    public int compareTo(final byte[] otherBytes, final int otherOffset) {
 //        return Bytes.compareTo(this.bytes, this.offset, UID_ARRAY_LENGTH, otherBytes, otherOffset, UID_ARRAY_LENGTH);
 //    }
+
+    private static ByteBuffer createUidBuffer(final long id) {
+        // UIDs are fixed width so we can create a buffer with the exact capacity
+        final ByteBuffer byteBuffer = createEmptyUidBuffer();
+        UnsignedBytes.put(byteBuffer, UID.UID_ARRAY_LENGTH, id);
+        byteBuffer.flip();
+        return byteBuffer;
+    }
+
+    private static ByteBuffer createEmptyUidBuffer() {
+        return ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH);
+    }
 
 }

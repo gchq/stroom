@@ -25,7 +25,9 @@ import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.serde.Serde;
+import stroom.refdata.offheapstore.ByteArrayUtils;
 import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
@@ -36,6 +38,7 @@ import java.util.function.Function;
 public abstract class AbstractLmdbDb<K, V> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractLmdbDb.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(AbstractLmdbDb.class);
 
     protected final Serde<K> keySerde;
     protected final Serde<V> valueSerde;
@@ -111,13 +114,7 @@ public abstract class AbstractLmdbDb<K, V> {
         try {
             ByteBuffer keyBuffer = keySerde.serialize(key);
             ByteBuffer valueBuffer = valueSerde.serialize(value);
-            boolean didPutSucceed;
-            if (overwriteExisting) {
-                didPutSucceed = lmdbDbi.put(writeTxn, keyBuffer, valueBuffer);
-            } else {
-                didPutSucceed = lmdbDbi.put(writeTxn, keyBuffer, valueBuffer, PutFlags.MDB_NOOVERWRITE);
-            }
-            return didPutSucceed;
+            return put(writeTxn, keyBuffer, valueBuffer, overwriteExisting);
         } catch (RuntimeException e) {
             throw new RuntimeException(LambdaLogger.buildMessage("Error putting key {}, value {}", key, value), e);
         }
@@ -130,6 +127,29 @@ public abstract class AbstractLmdbDb<K, V> {
             return didPutSucceed;
         } catch (RuntimeException e) {
             throw new RuntimeException(LambdaLogger.buildMessage("Error putting key {}, value {}", key, value), e);
+        }
+    }
+
+    public boolean put(final Txn<ByteBuffer> writeTxn,
+                       final ByteBuffer keyBuffer,
+                       final ByteBuffer valueBuffer,
+                       final boolean overwriteExisting) {
+        try {
+            boolean didPutSucceed;
+            if (overwriteExisting) {
+                didPutSucceed = lmdbDbi.put(writeTxn, keyBuffer, valueBuffer);
+            } else {
+                didPutSucceed = lmdbDbi.put(writeTxn, keyBuffer, valueBuffer, PutFlags.MDB_NOOVERWRITE);
+            }
+            LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("Put returned {} for key [{}], value [{}]",
+                    didPutSucceed,
+                    ByteArrayUtils.byteBufferInfo(keyBuffer),
+                    ByteArrayUtils.byteBufferInfo(valueBuffer)));
+
+            return didPutSucceed;
+        } catch (RuntimeException e) {
+            throw new RuntimeException(LambdaLogger.buildMessage("Error putting key {}, value {}",
+                    ByteArrayUtils.byteBufferInfo(keyBuffer), ByteArrayUtils.byteBufferInfo(valueBuffer)), e);
         }
     }
 
@@ -179,5 +199,32 @@ public abstract class AbstractLmdbDb<K, V> {
     private static Dbi<ByteBuffer> openDbi(final Env<ByteBuffer> env, final String name) {
         LOGGER.debug("Opening LMDB database with name: {}", name);
         return env.openDbi(name, DbiFlags.MDB_CREATE);
+    }
+
+    public Map<String, String> getDbInfo() {
+        return LmdbUtils.getDbInfo(lmdbEnvironment, lmdbDbi);
+    }
+
+    public long getEntryCount(final Txn<ByteBuffer> txn) {
+        return lmdbDbi.stat(txn).entries;
+    }
+
+    public long getEntryCount() {
+        return LmdbUtils.getWithReadTxn(lmdbEnvironment, this::getEntryCount);
+    }
+
+    /**
+     * Dumps all entries in the database to a single logger entry with one line per database entry.
+     * This could potentially return thousands of rows so is only intended for small scale use in
+     * testing. Entries are returned in the order they are held in the DB, e.g. a-z (unless the DB
+     * is configured with reverse keys). The keys/values are de-serialised and a toString() is applied
+     * to the resulting objects.
+     */
+    public void logDatabaseContents() {
+        LmdbUtils.logDatabaseContents(
+                lmdbEnvironment,
+                lmdbDbi,
+                byteBuffer -> keySerde.deserialize(byteBuffer).toString(),
+                byteBuffer -> valueSerde.deserialize(byteBuffer).toString());
     }
 }

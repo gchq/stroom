@@ -17,6 +17,8 @@
 
 package stroom.refdata.offheapstore;
 
+import stroom.util.logging.LambdaLogger;
+
 import java.nio.ByteBuffer;
 
 public class UnsignedBytes {
@@ -35,6 +37,24 @@ public class UnsignedBytes {
     }
 
     public static void put(final byte[] bytes, final int off, final int len, final long val) {
+        validateValue(len, val);
+
+        for (int i = 0; i < len; i++) {
+            final int shift = (len - i - 1) * 8;
+            bytes[off + i] = (byte) (val >> shift);
+        }
+    }
+
+    public static void put(final ByteBuffer destByteBuffer, final int len, final long val) {
+        validateValue(len, val);
+
+        for (int i = 0; i < len; i++) {
+            final int shift = (len - i - 1) * 8;
+            destByteBuffer.put((byte) (val >> shift));
+        }
+    }
+
+    private static void validateValue(final int len, final long val) {
         if (val < 0) {
             throw new IllegalArgumentException("Negative values are not permitted.");
         }
@@ -47,23 +67,10 @@ public class UnsignedBytes {
         }
         final long max = maxValue(len);
         if (val > max) {
-            final StringBuilder sb = new StringBuilder();
-            sb.append("Value ");
-            sb.append(val);
-            sb.append(" exceeds max value of ");
-            sb.append(max);
-            sb.append(" that can be stored in ");
-            sb.append(len);
-            sb.append(" byte");
-            if (len > 1) {
-                sb.append("s");
-            }
-            throw new IllegalArgumentException(sb.toString());
-        }
-
-        for (int i = 0; i < len; i++) {
-            final int shift = (len - i - 1) * 8;
-            bytes[off + i] = (byte) (val >> shift);
+            throw new IllegalArgumentException(
+                    LambdaLogger.buildMessage(
+                            "Value {} exceeds max value of {} that can be stored in {} bytes(s)",
+                            val, max, len));
         }
     }
 

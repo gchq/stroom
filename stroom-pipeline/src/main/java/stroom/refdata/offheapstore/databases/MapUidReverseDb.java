@@ -25,22 +25,23 @@ import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.AbstractLmdbDb;
-import stroom.refdata.lmdb.LmdbUtils;
 import stroom.refdata.lmdb.serde.Serde;
+import stroom.refdata.offheapstore.ByteArrayUtils;
 import stroom.refdata.offheapstore.MapDefinition;
 import stroom.refdata.offheapstore.UID;
-import stroom.refdata.offheapstore.UnsignedBytes;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
+import java.util.Optional;
 
 public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MapUidReverseDb.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(MapUidReverseDb.class);
 
     private static final String DB_NAME = "MapUidBackward";
-
-    public static final long maxId = UnsignedBytes.maxValue(UID.UID_ARRAY_LENGTH);
 
     @Inject
     public MapUidReverseDb(@Assisted final Env<ByteBuffer> lmdbEnvironment,
@@ -49,19 +50,31 @@ public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
         super(lmdbEnvironment, keySerde, valueSerde, DB_NAME);
     }
 
-    public long getNextId(final Txn<ByteBuffer> txn) {
-        // default value if we have nothing in the DB
-        long nextId = 0;
+    public Optional<ByteBuffer> getHighestUid(final Txn<ByteBuffer> txn) {
         // scan backwards over all entries to find the first (i.e. highest) key
+        Optional<ByteBuffer> optHighestUid = Optional.empty();
         try (CursorIterator<ByteBuffer> cursorIterator = lmdbDbi.iterate(txn, KeyRange.allBackward())) {
             if (cursorIterator.hasNext()) {
-                CursorIterator.KeyVal<ByteBuffer> highestKeyVal = cursorIterator.next();
-                long highestId = UnsignedBytes.get(highestKeyVal.key());
-                LOGGER.debug("highestId: {}", highestId);
-                nextId = highestId + 1;
+                final CursorIterator.KeyVal<ByteBuffer> highestKeyVal = cursorIterator.next();
+                optHighestUid = Optional.of(highestKeyVal.key());
+                LAMBDA_LOGGER.debug(() ->
+                        LambdaLogger.buildMessage("highestKey: {}", ByteArrayUtils.byteBufferInfo(highestKeyVal.key())));
             }
         }
-        return nextId;
+        return optHighestUid;
+    }
+
+    public void putReverseEntry(final Txn<ByteBuffer> writeTxn,
+                                final ByteBuffer uidKeyBuffer,
+                                final ByteBuffer mapDefinitionValueBuffer) {
+
+        boolean didPutSuceed = put(writeTxn, uidKeyBuffer, mapDefinitionValueBuffer, false);
+        if (!didPutSuceed) {
+            throw new RuntimeException(LambdaLogger.buildMessage("Failed to put mapDefinition {}, uid {}",
+                    ByteArrayUtils.byteBufferInfo(uidKeyBuffer),
+                    ByteArrayUtils.byteBufferInfo(mapDefinitionValueBuffer)));
+        }
+
     }
 
 
