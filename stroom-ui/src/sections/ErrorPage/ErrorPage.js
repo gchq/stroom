@@ -17,10 +17,8 @@
 import React, { Component } from 'react';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
-import qs from 'qs';
-import PropTypes, { object } from 'prop-types';
 
-import { Grid, Label, Table, Progress, Button, Input, Menu, Pagination } from 'semantic-ui-react';
+import { Grid } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 
 import './ErrorPage.css';

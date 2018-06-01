@@ -13,41 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { createAction, handleActions, combineActions } from 'redux-actions';
+import { createAction, handleActions } from 'redux-actions';
 
-const modalCreated = createAction('MODAL_CREATED',
-    (modalId) => ({modalId}));
-const setModal = createAction('MODAL_SET',
-    (modalId, value) => ({modalId, value}))
-const modalDestroyed = createAction('MODAL_DESTROYED',
-    (modalId) => ({modalId}))
+const modalCreated = createAction('MODAL_CREATED', modalId => ({ modalId }));
+const setModal = createAction('MODAL_SET', (modalId, value) => ({ modalId, value }));
+const modalDestroyed = createAction('MODAL_DESTROYED', modalId => ({ modalId }));
 
 /**
  * The state will be an object, keys are modalId, values are boolean for isOpen
  */
-const defaultModalState = {}
+const defaultModalState = {};
 
-const modalReducer = handleActions({
-    [modalCreated]:
-    (state, action) => ({
-        ...state,
-        [action.payload.modalId] : false
+const modalReducer = handleActions(
+  {
+    [modalCreated]: (state, action) => ({
+      ...state,
+      [action.payload.modalId]: false,
     }),
-    [setModal]:
-    (state, action) => ({
-        ...state,
-        [action.payload.modalId] : action.payload.value
+    [setModal]: (state, action) => ({
+      ...state,
+      [action.payload.modalId]: action.payload.value,
     }),
-    [modalDestroyed]:
-    (state, action) => ({
-        ...state,
-        [action.payload.modalId] : undefined
-    })
-}, defaultModalState);
+    [modalDestroyed]: (state, action) => ({
+      ...state,
+      [action.payload.modalId]: undefined,
+    }),
+  },
+  defaultModalState,
+);
 
-export {
-    modalReducer,
-    modalCreated,
-    setModal,
-    modalDestroyed
-}
+export { modalReducer, modalCreated, setModal, modalDestroyed };

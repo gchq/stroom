@@ -13,106 +13,89 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 
 import { compose } from 'redux';
-import { connect } from 'react-redux'
+import { connect } from 'react-redux';
 
-import {
-    Button,
-    Header,
-    Icon,
-    Dropdown,
-    Breadcrumb
-} from 'semantic-ui-react'
+import { Dropdown, Breadcrumb } from 'semantic-ui-react';
 
-import DocExplorer from './DocExplorer';
+import { iterateNodes, findItem } from 'lib/treeUtils';
 
-import {
-    iterateNodes, 
-    findItem
-} from 'lib/treeUtils';
-
-import { docRefPicked } from './redux'
+import { docRefPicked } from './redux';
 
 import { withPickedDocRef } from './withPickedDocRef';
 
 const DocRefDropdownPicker = ({
-    pickerId,
-    documentTree,
-    typeFilter,
-    docRef,
-    docRefPicked
+  pickerId, documentTree, typeFilter, docRef, docRefPicked,
 }) => {
-    let value = (!!docRef) ? docRef.uuid : '';
-    
-    let options = [];
-    iterateNodes(documentTree, (lineage, node) => {
-        // If we are filtering on type, check this now
-        if (!!typeFilter && (typeFilter !== node.type)) {
-            return; // just skip out
-        }
+  const value = docRef ? docRef.uuid : '';
 
-        // Compose the data that provides the breadcrumb to this node
-        let sections = lineage.map(l => {
-            return {
-                key: l.name, 
-                content: l.name,
-                link: true
-            }
-        });
-
-        // Don't include folders as pickable items
-        if (!node.children && node.uuid) {
-            options.push({
-                key: node.uuid,
-                text: node.name,
-                value: node.uuid,
-                content : (
-                    <div style={{width: '50rem'}}>
-                        <Breadcrumb size='mini' icon='right angle' sections={sections} />
-                        <div className='doc-ref-dropdown__item-name'>{node.name}</div>
-                    </div>
-                )
-            })
-        }
-    })
-    
-    let onDocRefSelected = (event, data) => {
-        let picked = findItem(documentTree, data.value);
-        docRefPicked(pickerId, picked);
+  const options = [];
+  iterateNodes(documentTree, (lineage, node) => {
+    // If we are filtering on type, check this now
+    if (!!typeFilter && typeFilter !== node.type) {
+      return; // just skip out
     }
 
-    return (
-        <Dropdown
-            selection
-            search
-            options={options}
-            value={value}
-            onChange={onDocRefSelected}
-            placeholder='Choose an option'
-            />
-    )
-}
+    // Compose the data that provides the breadcrumb to this node
+    const sections = lineage.map(l => ({
+      key: l.name,
+      content: l.name,
+      link: true,
+    }));
+
+    // Don't include folders as pickable items
+    if (!node.children && node.uuid) {
+      options.push({
+        key: node.uuid,
+        text: node.name,
+        value: node.uuid,
+        content: (
+          <div style={{ width: '50rem' }}>
+            <Breadcrumb size="mini" icon="right angle" sections={sections} />
+            <div className="doc-ref-dropdown__item-name">{node.name}</div>
+          </div>
+        ),
+      });
+    }
+  });
+
+  const onDocRefSelected = (event, data) => {
+    const picked = findItem(documentTree, data.value);
+    docRefPicked(pickerId, picked);
+  };
+
+  return (
+    <Dropdown
+      selection
+      search
+      options={options}
+      value={value}
+      onChange={onDocRefSelected}
+      placeholder="Choose an option"
+    />
+  );
+};
 
 DocRefDropdownPicker.propTypes = {
-    pickerId : PropTypes.string.isRequired,
-    documentTree : PropTypes.object.isRequired,
+  pickerId: PropTypes.string.isRequired,
+  documentTree: PropTypes.object.isRequired,
 
-    typeFilter : PropTypes.string,
-    docRef : PropTypes.object,
-    docRefPicked : PropTypes.func.isRequired
-}
+  typeFilter: PropTypes.string,
+  docRef: PropTypes.object,
+  docRefPicked: PropTypes.func.isRequired,
+};
 
 export default compose(
-    connect(
-        (state) => ({
-            documentTree : state.explorerTree.documentTree
-        }),
-        {
-            docRefPicked
-        }
-    ),
-    withPickedDocRef()
+  connect(
+    state => ({
+      documentTree: state.explorerTree.documentTree,
+    }),
+    {
+      docRefPicked,
+    },
+  ),
+  withPickedDocRef(),
 )(DocRefDropdownPicker);

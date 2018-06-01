@@ -18,7 +18,7 @@ import { applyMiddleware, compose } from 'redux';
 import { routerMiddleware } from 'react-router-redux';
 import thunk from 'redux-thunk';
 import createHistory from 'history/createBrowserHistory';
-import storybookMiddleware from 'lib/storybook/actionsMiddleware';
+// import storybookMiddleware from 'lib/storybook/actionsMiddleware';
 import logger from 'redux-logger';
 
 const enhancers = [];

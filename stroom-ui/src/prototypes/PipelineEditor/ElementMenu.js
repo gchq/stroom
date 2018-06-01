@@ -13,68 +13,56 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 
 import { compose } from 'redux';
-import { connect } from 'react-redux'
+import { connect } from 'react-redux';
 
-import {
-    groupByCategoryFiltered
-} from './elementUtils';
+import { Dropdown } from 'semantic-ui-react';
 
-import {
-    Dropdown,
-    Menu,
-    Icon,
-    Label,Input
-} from 'semantic-ui-react'
-
-import {
-    requestDeletePipelineElement,
-    closePipelineElementContextMenu
-} from './redux';
+import { requestDeletePipelineElement, closePipelineElementContextMenu } from './redux';
 
 const ElementMenu = ({
-    pipelineId,
-    elementId,
-    isOpen,
-    closePipelineElementContextMenu,
-    requestDeletePipelineElement
-}) => {
-    return (
-        <Dropdown
-            floating 
-            direction='right'
-            icon={null}
-            open={isOpen}
-            onClose={() => closePipelineElementContextMenu(pipelineId)}
-        >
-            <Dropdown.Menu>
-                <Dropdown.Item icon='add' text='Add'/>
-                <Dropdown.Item icon='trash' text='Delete' onClick={() => requestDeletePipelineElement(pipelineId, elementId)}/>
-            </Dropdown.Menu>
-        </Dropdown>
-    )
-}
+  pipelineId,
+  elementId,
+  isOpen,
+  closePipelineElementContextMenu,
+  requestDeletePipelineElement,
+}) => (
+  <Dropdown
+    floating
+    direction="right"
+    icon={null}
+    open={isOpen}
+    onClose={() => closePipelineElementContextMenu(pipelineId)}
+  >
+    <Dropdown.Menu>
+      <Dropdown.Item icon="add" text="Add" />
+      <Dropdown.Item
+        icon="trash"
+        text="Delete"
+        onClick={() => requestDeletePipelineElement(pipelineId, elementId)}
+      />
+    </Dropdown.Menu>
+  </Dropdown>
+);
 
 ElementMenu.propTypes = {
-    pipelineId : PropTypes.string.isRequired,
-    elementId: PropTypes.string.isRequired,
-    isOpen : PropTypes.bool.isRequired,
-    
-    requestDeletePipelineElement : PropTypes.func.isRequired,
-    closePipelineElementContextMenu : PropTypes.func.isRequired
-}
+  pipelineId: PropTypes.string.isRequired,
+  elementId: PropTypes.string.isRequired,
+  isOpen: PropTypes.bool.isRequired,
 
-export default compose(
-    connect(
-        (state) => ({
-            // state
-        }),
-        {
-            closePipelineElementContextMenu,
-            requestDeletePipelineElement
-        }
-    )
-)(ElementMenu)
+  requestDeletePipelineElement: PropTypes.func.isRequired,
+  closePipelineElementContextMenu: PropTypes.func.isRequired,
+};
+
+export default compose(connect(
+  state => ({
+    // state
+  }),
+  {
+    closePipelineElementContextMenu,
+    requestDeletePipelineElement,
+  },
+))(ElementMenu);

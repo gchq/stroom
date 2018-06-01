@@ -13,141 +13,134 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 
 import { compose } from 'redux';
-import { connect } from 'react-redux'
+import { connect } from 'react-redux';
 
 import { ItemTypes } from './dragDropTypes';
 import { DragSource } from 'react-dnd';
 
-import { Icon } from 'semantic-ui-react'
+import { Icon } from 'semantic-ui-react';
 
-import {
-    selectDocRef,
-    openDocRef,
-    openDocRefContextMenu
-} from './redux';
+import { selectDocRef, openDocRef, openDocRefContextMenu } from './redux';
 
 import { withExistingExplorer } from './withExplorer';
 
 import DocRefMenu from './DocRefMenu';
 
 const dragSource = {
-	canDrag(props) {
-		return props.explorer.allowDragAndDrop;
-	},
-    beginDrag(props) {
-        return {
-            ...props.docRef
-        };
-    }
+  canDrag(props) {
+    return props.explorer.allowDragAndDrop;
+  },
+  beginDrag(props) {
+    return {
+      ...props.docRef,
+    };
+  },
 };
 
 function dragCollect(connect, monitor) {
-    return {
-        connectDragSource: connect.dragSource(),
-        isDragging: monitor.isDragging()
-    }
+  return {
+    connectDragSource: connect.dragSource(),
+    isDragging: monitor.isDragging(),
+  };
 }
 
 const DocRef = ({
-    explorerId,
-    explorer,
-    docRef,
-    
-    selectDocRef,
-    openDocRef,
-    openDocRefContextMenu,
+  explorerId,
+  explorer,
+  docRef,
 
-    connectDragSource,
-    isDragging
+  selectDocRef,
+  openDocRef,
+  openDocRefContextMenu,
+
+  connectDragSource,
+  isDragging,
 }) => {
-    // these are required to tell the difference between single/double clicks
-    let timer = 0;
-    let delay = 200;
-    let prevent = false;
+  // these are required to tell the difference between single/double clicks
+  let timer = 0;
+  const delay = 200;
+  let prevent = false;
 
-    let onSingleClick = () => {
-        timer = setTimeout(() => {
-            if (!prevent) {
-                selectDocRef(explorerId, docRef); 
-            }
-            prevent = false;
-        }, delay);
-    }
+  const onSingleClick = () => {
+    timer = setTimeout(() => {
+      if (!prevent) {
+        selectDocRef(explorerId, docRef);
+      }
+      prevent = false;
+    }, delay);
+  };
 
-    let onDoubleClick = () => {
-        clearTimeout(timer);
-        prevent = true;
-        openDocRef(explorerId, docRef)
-    }
+  const onDoubleClick = () => {
+    clearTimeout(timer);
+    prevent = true;
+    openDocRef(explorerId, docRef);
+  };
 
-    let onRightClick = (e) => {
-        openDocRefContextMenu(explorerId, docRef);
-        e.preventDefault();
-    }
+  const onRightClick = (e) => {
+    openDocRefContextMenu(explorerId, docRef);
+    e.preventDefault();
+  };
 
-    let isSelected = explorer.isSelected[docRef.uuid];
-    let isContextMenuOpen = !!explorer.contextMenuItemUuid && explorer.contextMenuItemUuid === docRef.uuid;
+  const isSelected = explorer.isSelected[docRef.uuid];
+  const isContextMenuOpen =
+    !!explorer.contextMenuItemUuid && explorer.contextMenuItemUuid === docRef.uuid;
 
-    let className = ''
-    if (isDragging) {
-        className += ' doc-ref__dragging'
-    }
-    if (isSelected) {
-        className += ' doc-ref__selected'
-    }
-    if (isContextMenuOpen) {
-        className += ' doc-ref__context-menu-open'
-    }
+  let className = '';
+  if (isDragging) {
+    className += ' doc-ref__dragging';
+  }
+  if (isSelected) {
+    className += ' doc-ref__selected';
+  }
+  if (isContextMenuOpen) {
+    className += ' doc-ref__context-menu-open';
+  }
 
-    return connectDragSource(
-        <div className={className}
-            onContextMenu={onRightClick}
-            onDoubleClick={onDoubleClick}
-            onClick={onSingleClick}>
-            <DocRefMenu 
-                explorerId={explorerId}
-                docRef={docRef}
-                isOpen={isContextMenuOpen}
-            />
-            <span>
-                <Icon name='file outline'/>
-                {docRef.name}
-            </span>
-        </div>
-    )
-}
+  return connectDragSource(<div
+    className={className}
+    onContextMenu={onRightClick}
+    onDoubleClick={onDoubleClick}
+    onClick={onSingleClick}
+  >
+    <DocRefMenu explorerId={explorerId} docRef={docRef} isOpen={isContextMenuOpen} />
+    <span>
+      <Icon name="file outline" />
+      {docRef.name}
+    </span>
+  </div>);
+};
 
 DocRef.propTypes = {
-    // Props
-    explorerId : PropTypes.string.isRequired,
-    explorer : PropTypes.object.isRequired,
-    docRef : PropTypes.object.isRequired,
+  // Props
+  explorerId: PropTypes.string.isRequired,
+  explorer: PropTypes.object.isRequired,
+  docRef: PropTypes.object.isRequired,
 
-    // Actions
-    selectDocRef : PropTypes.func.isRequired,
-    openDocRef : PropTypes.func.isRequired,
-    openDocRefContextMenu : PropTypes.func.isRequired,
+  // Actions
+  selectDocRef: PropTypes.func.isRequired,
+  openDocRef: PropTypes.func.isRequired,
+  openDocRefContextMenu: PropTypes.func.isRequired,
 
-    // React DnD
-    connectDragSource: PropTypes.func.isRequired,
-    isDragging: PropTypes.bool.isRequired
-}
+  // React DnD
+  connectDragSource: PropTypes.func.isRequired,
+  isDragging: PropTypes.bool.isRequired,
+};
 
 export default compose(
-    connect(
-        (state) => ({
-            // state
-        }),
-        {
-            selectDocRef,
-            openDocRef,
-            openDocRefContextMenu
-        }
-    ),
-    withExistingExplorer(),
-    DragSource(ItemTypes.DOC_REF, dragSource, dragCollect)
+  connect(
+    state => ({
+      // state
+    }),
+    {
+      selectDocRef,
+      openDocRef,
+      openDocRefContextMenu,
+    },
+  ),
+  withExistingExplorer(),
+  DragSource(ItemTypes.DOC_REF, dragSource, dragCollect),
 )(DocRef);

@@ -31,7 +31,6 @@ import { DragSource } from 'react-dnd';
 import { ItemTypes } from './dragDropTypes';
 import { displayValues } from './conditions';
 import {
-    DocRefDropdownPicker,
     DocRefModalPicker,
     docRefPicked
 } from '../DocExplorer';
@@ -166,7 +165,7 @@ const ExpressionTerm = ({
 
     let onFromValueChange = (event, data) => {
         let parts = term.value.split(',');
-        let existingToValue = (parts.length == 2) ? parts[1] : undefined;
+        let existingToValue = (parts.length === 2) ? parts[1] : undefined;
         let newValue = data.value + ',' + existingToValue;
 
         onTermUpdated({
@@ -176,7 +175,7 @@ const ExpressionTerm = ({
 
     let onToValueChange = (event, data) => {
         let parts = term.value.split(',');
-        let existingFromValue = (parts.length == 2) ? parts[0] : undefined;
+        let existingFromValue = (parts.length === 2) ? parts[0] : undefined;
         let newValue = existingFromValue + ',' + data.value;
 
         onTermUpdated({
@@ -268,8 +267,8 @@ const ExpressionTerm = ({
         }
         case 'BETWEEN': {
             let splitValues = term.value.split(',');
-            let fromValue = (splitValues.length == 2) ? splitValues[0] : undefined;
-            let toValue = (splitValues.length == 2) ? splitValues[1] : undefined;
+            let fromValue = (splitValues.length === 2) ? splitValues[0] : undefined;
+            let toValue = (splitValues.length === 2) ? splitValues[1] : undefined;
             valueWidget = (
                 <span>
                     <Input 

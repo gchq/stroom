@@ -13,26 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { createAction, handleActions, combineActions } from 'redux-actions';
+import { createAction, handleActions } from 'redux-actions';
 
 // Data Sources
-const receiveDataSource = createAction('RECEIVE_DATA_SOURCE',
-    (uuid, dataSource) => ({uuid, dataSource}));
+const receiveDataSource = createAction('RECEIVE_DATA_SOURCE', (uuid, dataSource) => ({
+  uuid,
+  dataSource,
+}));
 
 // data source definitions, keyed on doc ref UUID
 const defaultDataSourceState = {};
 
-const dataSourceReducer = handleActions({
-        [receiveDataSource]:
-        (state, action) => ({
-                ...state,
-                [action.payload.uuid] : action.payload.dataSource
-        }),
-    },
-    defaultDataSourceState
+const dataSourceReducer = handleActions(
+  {
+    [receiveDataSource]: (state, action) => ({
+      ...state,
+      [action.payload.uuid]: action.payload.dataSource,
+    }),
+  },
+  defaultDataSourceState,
 );
 
-export {
-    receiveDataSource,
-    dataSourceReducer
-}
+export { receiveDataSource, dataSourceReducer };

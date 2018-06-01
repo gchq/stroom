@@ -13,417 +13,434 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import _ from 'lodash'
-import { createAction, handleActions, combineActions } from 'redux-actions';
+import _ from 'lodash';
+import { createAction, handleActions } from 'redux-actions';
 
 import {
-    moveItemInTree, 
-    iterateNodes, 
-    getIsInFilteredMap,
-    deleteItemFromTree
+  moveItemInTree,
+  iterateNodes,
+  getIsInFilteredMap,
+  deleteItemFromTree,
 } from '../../lib/treeUtils';
 
 const OPEN_STATES = {
-    closed: 0,
-    byUser: 1,
-    bySearch: 2
-}
+  closed: 0,
+  byUser: 1,
+  bySearch: 2,
+};
 
 function isOpenState(openState) {
-    if (!!openState) {
-        return (openState !== OPEN_STATES.closed);
-    } else {
-        return false;
-    }
+  if (openState) {
+    return openState !== OPEN_STATES.closed;
+  }
+  return false;
 }
 
 function getToggledState(currentState, isUser) {
-    if (!!currentState) {
-        switch (currentState) {
-            case OPEN_STATES.closed:
-                return isUser ? OPEN_STATES.byUser : OPEN_STATES.bySearch;
-            case OPEN_STATES.bySearch:
-            case OPEN_STATES.byUser:
-                return OPEN_STATES.closed;
-        }
-    } else {
-        return OPEN_STATES.byUser;
+  if (currentState) {
+    switch (currentState) {
+      case OPEN_STATES.closed:
+        return isUser ? OPEN_STATES.byUser : OPEN_STATES.bySearch;
+      case OPEN_STATES.bySearch:
+      case OPEN_STATES.byUser:
+        return OPEN_STATES.closed;
     }
+  } else {
+    return OPEN_STATES.byUser;
+  }
 }
 
 const DEFAULT_EXPLORER_ID = 'default';
 
-const receiveDocTree = createAction('RECEIVE_DOC_TREE',
-    documentTree => ({ documentTree }));
-const explorerTreeOpened = createAction('EXPLORER_TREE_OPENED',
-    (explorerId, allowMultiSelect, allowDragAndDrop, typeFilter) => ({explorerId, allowMultiSelect, allowDragAndDrop, typeFilter}));
-const moveExplorerItem = createAction('MOVE_EXPLORER_ITEM',
-    (explorerId, itemToMove, destination) => ({explorerId, itemToMove, destination}));
-const toggleFolderOpen = createAction('TOGGLE_FOLDER_OPEN',
-    (explorerId, docRef) => ({explorerId, docRef}))
-const searchTermChanged = createAction('SEARCH_TERM_UPDATED',
-    (explorerId, searchTerm) => ({explorerId, searchTerm}));
-const selectDocRef = createAction('SELECT_DOC_REF',
-    (explorerId, docRef) => ({explorerId, docRef}));
-const openDocRef = createAction('OPEN_DOC_REF',
-    (explorerId, docRef) => ({explorerId, docRef}))
-const requestDeleteDocRef = createAction('REQUEST_DELETE_DOC_REF',
-    (explorerId, docRef) => ({explorerId, docRef}));
-const confirmDeleteDocRef = createAction('CONFIRM_DELETE_DOC_REF',
-    (explorerId, docRef) => ({explorerId, docRef}));
-const cancelDeleteDocRef = createAction('CANCEL_DELETE_DOC_REF',
-    (explorerId) => ({explorerId}));
-const openDocRefContextMenu = createAction('OPEN_DOC_REF_CONTEXT_MENU',
-    (explorerId, docRef) => ({explorerId, docRef}));
-const closeDocRefContextMenu = createAction('CLOSE_DOC_REF_CONTEXT_MENU',
-    (explorerId) => ({explorerId}));
-const docRefPicked = createAction('DOC_REF_PICKED',
-    (pickerId, docRef) => ({pickerId, docRef}));
+const receiveDocTree = createAction('RECEIVE_DOC_TREE', documentTree => ({ documentTree }));
+const explorerTreeOpened = createAction(
+  'EXPLORER_TREE_OPENED',
+  (explorerId, allowMultiSelect, allowDragAndDrop, typeFilter) => ({
+    explorerId,
+    allowMultiSelect,
+    allowDragAndDrop,
+    typeFilter,
+  }),
+);
+const moveExplorerItem = createAction(
+  'MOVE_EXPLORER_ITEM',
+  (explorerId, itemToMove, destination) => ({ explorerId, itemToMove, destination }),
+);
+const toggleFolderOpen = createAction('TOGGLE_FOLDER_OPEN', (explorerId, docRef) => ({
+  explorerId,
+  docRef,
+}));
+const searchTermChanged = createAction('SEARCH_TERM_UPDATED', (explorerId, searchTerm) => ({
+  explorerId,
+  searchTerm,
+}));
+const selectDocRef = createAction('SELECT_DOC_REF', (explorerId, docRef) => ({
+  explorerId,
+  docRef,
+}));
+const openDocRef = createAction('OPEN_DOC_REF', (explorerId, docRef) => ({ explorerId, docRef }));
+const requestDeleteDocRef = createAction('REQUEST_DELETE_DOC_REF', (explorerId, docRef) => ({
+  explorerId,
+  docRef,
+}));
+const confirmDeleteDocRef = createAction('CONFIRM_DELETE_DOC_REF', (explorerId, docRef) => ({
+  explorerId,
+  docRef,
+}));
+const cancelDeleteDocRef = createAction('CANCEL_DELETE_DOC_REF', explorerId => ({ explorerId }));
+const openDocRefContextMenu = createAction('OPEN_DOC_REF_CONTEXT_MENU', (explorerId, docRef) => ({
+  explorerId,
+  docRef,
+}));
+const closeDocRefContextMenu = createAction('CLOSE_DOC_REF_CONTEXT_MENU', explorerId => ({
+  explorerId,
+}));
+const docRefPicked = createAction('DOC_REF_PICKED', (pickerId, docRef) => ({ pickerId, docRef }));
 
 const defaultExplorerState = {
-    searchTerm : '',
-    isFolderOpen : {}, // in response to user actions and searches
-    isSelected : {},
-    isVisible : {}, // based on search
-    inSearch: {},
-    inTypeFilter: {},
-    contextMenuItemUuid : undefined // will be a UUID
-}
+  searchTerm: '',
+  isFolderOpen: {}, // in response to user actions and searches
+  isSelected: {},
+  isVisible: {}, // based on search
+  inSearch: {},
+  inTypeFilter: {},
+  contextMenuItemUuid: undefined, // will be a UUID
+};
 
 const defaultState = {
-    documentTree : {}, // The hierarchy of doc refs in folders
-    explorers : {},
-    pickedDocRefs : {}, // Picked Doc Refs by pickerId
-    isDocRefOpen : {}, // in response to user actions
-    allowMultiSelect : true,
-    allowDragAndDrop : true
-}
+  documentTree: {}, // The hierarchy of doc refs in folders
+  explorers: {},
+  pickedDocRefs: {}, // Picked Doc Refs by pickerId
+  isDocRefOpen: {}, // in response to user actions
+  allowMultiSelect: true,
+  allowDragAndDrop: true,
+};
 
 function getIsValidFilterTerm(filterTerm) {
-    return (!!filterTerm && filterTerm.length > 0);
+  return !!filterTerm && filterTerm.length > 0;
 }
 
 function getIsVisibleMap(documentTree, isInTypeFilterMap, isInSearchMap) {
-    let isVisible = {};
+  const isVisible = {};
 
-    iterateNodes(documentTree, (lineage, node) => {
-        let passesSearch = isInSearchMap[node.uuid];
-        let passesTypeFilter = isInTypeFilterMap[node.uuid];
-        isVisible[node.uuid] = passesSearch && passesTypeFilter;
-    })
+  iterateNodes(documentTree, (lineage, node) => {
+    const passesSearch = isInSearchMap[node.uuid];
+    const passesTypeFilter = isInTypeFilterMap[node.uuid];
+    isVisible[node.uuid] = passesSearch && passesTypeFilter;
+  });
 
-    return isVisible;
+  return isVisible;
 }
 
-function getFolderIsOpenMap(documentTree, isInTypeFilterMap, isSearching, isInSearchMap, currentIsFolderOpen) {
-    let isFolderOpen = {};
+function getFolderIsOpenMap(
+  documentTree,
+  isInTypeFilterMap,
+  isSearching,
+  isInSearchMap,
+  currentIsFolderOpen,
+) {
+  const isFolderOpen = {};
 
-    iterateNodes(documentTree, (lineage, node) => {
-        let s = currentIsFolderOpen[node.uuid]
+  iterateNodes(documentTree, (lineage, node) => {
+    const s = currentIsFolderOpen[node.uuid];
 
-        if (isSearching) {
-            if (isInSearchMap[node.uuid] && !isOpenState(s)) {
-                // If this node is not open, but is included in the search, open it
-                isFolderOpen[node.uuid] = OPEN_STATES.bySearch;
-            } else if (!isInSearchMap[node.uuid] && (s === OPEN_STATES.bySearch)) {
-                // If this node was opened by search, but no longer matches the search...close it
-                isFolderOpen[node.uuid] = OPEN_STATES.closed
-            } else {
-                // otherwise leave it as is
-                isFolderOpen[node.uuid] = s
-            }
-        } else {
-            if (s === OPEN_STATES.bySearch) {
-                // If this node was opened by search, but we aren't searching any more, close it
-                isFolderOpen[node.uuid] = OPEN_STATES.closed
-            } else {
-                // otherwise leave it as is
-                isFolderOpen[node.uuid] = s
-            }
-        }
-    })
+    if (isSearching) {
+      if (isInSearchMap[node.uuid] && !isOpenState(s)) {
+        // If this node is not open, but is included in the search, open it
+        isFolderOpen[node.uuid] = OPEN_STATES.bySearch;
+      } else if (!isInSearchMap[node.uuid] && s === OPEN_STATES.bySearch) {
+        // If this node was opened by search, but no longer matches the search...close it
+        isFolderOpen[node.uuid] = OPEN_STATES.closed;
+      } else {
+        // otherwise leave it as is
+        isFolderOpen[node.uuid] = s;
+      }
+    } else if (s === OPEN_STATES.bySearch) {
+      // If this node was opened by search, but we aren't searching any more, close it
+      isFolderOpen[node.uuid] = OPEN_STATES.closed;
+    } else {
+      // otherwise leave it as is
+      isFolderOpen[node.uuid] = s;
+    }
+  });
 
-    return isFolderOpen;
+  return isFolderOpen;
 }
 
 function getUpdatedExplorer(documentTree, optExplorer, searchTerm, typeFilter) {
-    let explorer = (!!optExplorer) ? optExplorer : defaultExplorerState;
+  const explorer = optExplorer || defaultExplorerState;
 
-    let searchRegex;
+  let searchRegex;
 
-    if (getIsValidFilterTerm(searchTerm)) {
-        searchRegex = new RegExp(_.escapeRegExp(searchTerm), 'i')
+  if (getIsValidFilterTerm(searchTerm)) {
+    searchRegex = new RegExp(_.escapeRegExp(searchTerm), 'i');
+  }
+
+  const searchFilterFunction = (lineage, node) => {
+    if (searchRegex) {
+      return searchRegex.test(node.name);
     }
+    return true;
+  };
 
-    let searchFilterFunction = (lineage, node) => {
-        if (!!searchRegex) {
-            return searchRegex.test(node.name);
-        } else {
-            return true;
-        }
+  const typeFilterFunction = (lineage, node) => {
+    if (getIsValidFilterTerm(typeFilter)) {
+      return typeFilter === node.type;
     }
+    return true;
+  };
 
-    let typeFilterFunction = (lineage, node) => {
-        if (getIsValidFilterTerm(typeFilter)) {
-            return typeFilter === node.type;
-        } else {
-            return true;
-        }
-    }
+  const isSearching = getIsValidFilterTerm(searchTerm);
+  const isInSearchMap = getIsInFilteredMap(documentTree, searchFilterFunction);
+  const isInTypeFilterMap = getIsInFilteredMap(documentTree, typeFilterFunction);
 
-    let isSearching = getIsValidFilterTerm(searchTerm);
-    let isInSearchMap = getIsInFilteredMap(documentTree, searchFilterFunction);
-    let isInTypeFilterMap = getIsInFilteredMap(documentTree, typeFilterFunction);
-
-    return {
-        ...explorer,
-        typeFilter : typeFilter,
-        searchTerm : searchTerm,
-        isVisible : getIsVisibleMap(documentTree, isInTypeFilterMap, isInSearchMap),
-        isFolderOpen : getFolderIsOpenMap(documentTree, isInTypeFilterMap, isSearching, isInSearchMap, explorer.isFolderOpen),
-        inSearch : isInSearchMap,
-        inTypeFilter : isInTypeFilterMap,
-        pendingDocRefToDelete : undefined
-    }
+  return {
+    ...explorer,
+    typeFilter,
+    searchTerm,
+    isVisible: getIsVisibleMap(documentTree, isInTypeFilterMap, isInSearchMap),
+    isFolderOpen: getFolderIsOpenMap(
+      documentTree,
+      isInTypeFilterMap,
+      isSearching,
+      isInSearchMap,
+      explorer.isFolderOpen,
+    ),
+    inSearch: isInSearchMap,
+    inTypeFilter: isInTypeFilterMap,
+    pendingDocRefToDelete: undefined,
+  };
 }
 
 function getStateAfterTreeUpdate(state, documentTree) {
-    // Update all the explorers with the new tree
-    let explorers = {};
-    Object.entries(state.explorers).forEach(k => {
-        explorers[k[0]] = getUpdatedExplorer(documentTree, k[1], k[1].searchTerm, k[1].typeFilter)
-    });
+  // Update all the explorers with the new tree
+  const explorers = {};
+  Object.entries(state.explorers).forEach((k) => {
+    explorers[k[0]] = getUpdatedExplorer(documentTree, k[1], k[1].searchTerm, k[1].typeFilter);
+  });
 
-    return {
-        ...state,
-        documentTree,
-        explorers
-    }
+  return {
+    ...state,
+    documentTree,
+    explorers,
+  };
 }
 
 const explorerTreeReducer = handleActions(
-    {
-        // Receive the current state of the explorer tree
-        [receiveDocTree] :
-        (state, action) => {
-            return getStateAfterTreeUpdate(state, action.payload.documentTree);
+  {
+    // Receive the current state of the explorer tree
+    [receiveDocTree]: (state, action) => getStateAfterTreeUpdate(state, action.payload.documentTree),
+
+    // When an explorer is opened
+    [explorerTreeOpened]: (state, action) => {
+      const {
+        explorerId, allowMultiSelect, allowDragAndDrop, typeFilter,
+      } = action.payload;
+      return {
+        ...state,
+        explorers: {
+          ...state.explorers,
+          [explorerId]: {
+            ...getUpdatedExplorer(state.documentTree, undefined, '', typeFilter),
+            allowMultiSelect,
+            allowDragAndDrop,
+          },
         },
-
-        // When an explorer is opened
-        [explorerTreeOpened]:
-        (state, action) => {
-            let { explorerId, allowMultiSelect, allowDragAndDrop, typeFilter } = action.payload;
-            return {
-                ...state,
-                explorers: {
-                    ...state.explorers,
-                    [explorerId] : {
-                        ...getUpdatedExplorer(state.documentTree, undefined, '', typeFilter),
-                        allowMultiSelect,
-                        allowDragAndDrop
-                    }
-                }
-            }
-        },
-
-        // Move Item in Explorer Tree
-        [moveExplorerItem]: 
-        (state, action) => {
-            let { itemToMove, destination } = action.payload;
-
-            let documentTree = moveItemInTree(state.documentTree, itemToMove, destination);
-
-            return getStateAfterTreeUpdate(state, documentTree);
-        },
-
-        // Folder Open Toggle
-        [toggleFolderOpen]:
-        (state, action) => {
-            let { explorerId, docRef } = action.payload;
-
-            return {
-                ...state,
-                explorers : {
-                    ...state.explorers,
-                    [explorerId] : {
-                        ...state.explorers[explorerId],
-                        isFolderOpen: {
-                            ...state.explorers[explorerId].isFolderOpen,
-                            [docRef.uuid] : getToggledState(state.explorers[explorerId].isFolderOpen[docRef.uuid], true)
-                        }
-                    }
-                }   
-            }
-        },
-
-        // Open Doc Ref Context Menu
-        [openDocRefContextMenu]:
-        (state, action) => {
-            let { explorerId, docRef } = action.payload;
-
-            return {
-                ...state,
-                explorers : {
-                    ...state.explorers,
-                    [explorerId]: {
-                        ...state.explorers[explorerId],
-                        contextMenuItemUuid : docRef.uuid
-                    }
-                }
-            }
-        },
-
-        // Close Doc Ref Context Menu
-        [closeDocRefContextMenu]:
-        (state, action) => {
-            let { explorerId, docRef } = action.payload;
-
-            return {
-                ...state,
-                explorers : {
-                    ...state.explorers,
-                    [explorerId]: {
-                        ...state.explorers[explorerId],
-                        contextMenuItemUuid : undefined
-                    }
-                }
-            }
-        },
-
-        // Search Term Changed
-        [searchTermChanged]:
-        (state, action) => {
-            let { explorerId, searchTerm } = action.payload;
-
-            let explorer = getUpdatedExplorer(state.documentTree, 
-                state.explorers[explorerId], 
-                searchTerm, 
-                state.explorers[explorerId].typeFilter);
-
-            return {
-                ...state,
-                explorers : {
-                    ...state.explorers,
-                    [explorerId] : explorer
-                }
-            }
-        },
-
-        // Select Doc Ref
-        [selectDocRef]:
-        (state, action) => {
-            let { explorerId, docRef } = action.payload;
-
-            let explorer = state.explorers[explorerId];
-            let isSelected;
-            if (explorer.allowMultiSelect) {
-                isSelected = {
-                    ...state.explorers[explorerId].isSelected,
-                    [docRef.uuid] : !state.explorers[explorerId].isSelected[docRef.uuid]
-                }
-            } else {
-                isSelected = {
-                    [docRef.uuid] : !state.explorers[explorerId].isSelected[docRef.uuid]
-                }
-            }
-
-            return {
-                ...state,
-                explorers : {
-                    ...state.explorers,
-                    [explorerId] : {
-                        ...state.explorers[explorerId],
-                        isSelected
-                    }
-                }
-            }
-        },
-
-        // Open Doc Ref
-        [openDocRef]:
-        (state, action) => {
-            let { explorerId, docRef } = action.payload;
-
-            return {
-                ...state,
-                isDocRefOpen: {
-                    ...state.isDocRefOpen,
-                    [docRef.uuid] : !state.isDocRefOpen[docRef.uuid]
-                }
-            }
-        },
-
-        // Request Delete Doc Ref
-        [requestDeleteDocRef]:
-        (state, action) => {
-            let { explorerId, docRef } = action.payload;
-
-            return {
-                ...state,
-                explorers : {
-                    ...state.explorers,
-                    [explorerId] : {
-                        ...state.explorers[explorerId],
-                        pendingDocRefToDelete : docRef
-                    }
-                }
-            }
-        },
-
-        // Cancel Delete Doc Ref
-        [cancelDeleteDocRef]:
-        (state, action) => {
-            let { explorerId } = action.payload;
-
-            return {
-                ...state,
-                explorers : {
-                    ...state.explorers,
-                    [explorerId] : {
-                        ...state.explorers[explorerId],
-                        pendingDocRefToDelete : undefined
-                    }
-                }
-            }
-        },
-
-        // Confirm Delete Doc Ref
-        [confirmDeleteDocRef]:
-        (state, action) => {
-            let { explorerId, docRef } = action.payload;
-
-            let documentTree = deleteItemFromTree(state.documentTree, docRef.uuid);
-
-            return getStateAfterTreeUpdate(state, documentTree);
-        },
-
-        // Pick Doc Ref
-        [docRefPicked]:
-        (state, action) => ({
-            ...state,
-            pickedDocRefs : {
-                ...state.pickedDocRefs,
-                [action.payload.pickerId] : action.payload.docRef
-            }
-        })
+      };
     },
-    defaultState
-)
+
+    // Move Item in Explorer Tree
+    [moveExplorerItem]: (state, action) => {
+      const { itemToMove, destination } = action.payload;
+
+      const documentTree = moveItemInTree(state.documentTree, itemToMove, destination);
+
+      return getStateAfterTreeUpdate(state, documentTree);
+    },
+
+    // Folder Open Toggle
+    [toggleFolderOpen]: (state, action) => {
+      const { explorerId, docRef } = action.payload;
+
+      return {
+        ...state,
+        explorers: {
+          ...state.explorers,
+          [explorerId]: {
+            ...state.explorers[explorerId],
+            isFolderOpen: {
+              ...state.explorers[explorerId].isFolderOpen,
+              [docRef.uuid]: getToggledState(
+                state.explorers[explorerId].isFolderOpen[docRef.uuid],
+                true,
+              ),
+            },
+          },
+        },
+      };
+    },
+
+    // Open Doc Ref Context Menu
+    [openDocRefContextMenu]: (state, action) => {
+      const { explorerId, docRef } = action.payload;
+
+      return {
+        ...state,
+        explorers: {
+          ...state.explorers,
+          [explorerId]: {
+            ...state.explorers[explorerId],
+            contextMenuItemUuid: docRef.uuid,
+          },
+        },
+      };
+    },
+
+    // Close Doc Ref Context Menu
+    [closeDocRefContextMenu]: (state, action) => {
+      const { explorerId, docRef } = action.payload;
+
+      return {
+        ...state,
+        explorers: {
+          ...state.explorers,
+          [explorerId]: {
+            ...state.explorers[explorerId],
+            contextMenuItemUuid: undefined,
+          },
+        },
+      };
+    },
+
+    // Search Term Changed
+    [searchTermChanged]: (state, action) => {
+      const { explorerId, searchTerm } = action.payload;
+
+      const explorer = getUpdatedExplorer(
+        state.documentTree,
+        state.explorers[explorerId],
+        searchTerm,
+        state.explorers[explorerId].typeFilter,
+      );
+
+      return {
+        ...state,
+        explorers: {
+          ...state.explorers,
+          [explorerId]: explorer,
+        },
+      };
+    },
+
+    // Select Doc Ref
+    [selectDocRef]: (state, action) => {
+      const { explorerId, docRef } = action.payload;
+
+      const explorer = state.explorers[explorerId];
+      let isSelected;
+      if (explorer.allowMultiSelect) {
+        isSelected = {
+          ...state.explorers[explorerId].isSelected,
+          [docRef.uuid]: !state.explorers[explorerId].isSelected[docRef.uuid],
+        };
+      } else {
+        isSelected = {
+          [docRef.uuid]: !state.explorers[explorerId].isSelected[docRef.uuid],
+        };
+      }
+
+      return {
+        ...state,
+        explorers: {
+          ...state.explorers,
+          [explorerId]: {
+            ...state.explorers[explorerId],
+            isSelected,
+          },
+        },
+      };
+    },
+
+    // Open Doc Ref
+    [openDocRef]: (state, action) => {
+      const { explorerId, docRef } = action.payload;
+
+      return {
+        ...state,
+        isDocRefOpen: {
+          ...state.isDocRefOpen,
+          [docRef.uuid]: !state.isDocRefOpen[docRef.uuid],
+        },
+      };
+    },
+
+    // Request Delete Doc Ref
+    [requestDeleteDocRef]: (state, action) => {
+      const { explorerId, docRef } = action.payload;
+
+      return {
+        ...state,
+        explorers: {
+          ...state.explorers,
+          [explorerId]: {
+            ...state.explorers[explorerId],
+            pendingDocRefToDelete: docRef,
+          },
+        },
+      };
+    },
+
+    // Cancel Delete Doc Ref
+    [cancelDeleteDocRef]: (state, action) => {
+      const { explorerId } = action.payload;
+
+      return {
+        ...state,
+        explorers: {
+          ...state.explorers,
+          [explorerId]: {
+            ...state.explorers[explorerId],
+            pendingDocRefToDelete: undefined,
+          },
+        },
+      };
+    },
+
+    // Confirm Delete Doc Ref
+    [confirmDeleteDocRef]: (state, action) => {
+      const { explorerId, docRef } = action.payload;
+
+      const documentTree = deleteItemFromTree(state.documentTree, docRef.uuid);
+
+      return getStateAfterTreeUpdate(state, documentTree);
+    },
+
+    // Pick Doc Ref
+    [docRefPicked]: (state, action) => ({
+      ...state,
+      pickedDocRefs: {
+        ...state.pickedDocRefs,
+        [action.payload.pickerId]: action.payload.docRef,
+      },
+    }),
+  },
+  defaultState,
+);
 
 export {
-    DEFAULT_EXPLORER_ID,
-    receiveDocTree,
-    explorerTreeOpened,
-    moveExplorerItem,
-    toggleFolderOpen,
-    openDocRef,
-    requestDeleteDocRef,
-    confirmDeleteDocRef,
-    cancelDeleteDocRef,
-    docRefPicked,
-    searchTermChanged,
-    selectDocRef,
-    openDocRefContextMenu,
-    closeDocRefContextMenu,
-    explorerTreeReducer
-}
+  DEFAULT_EXPLORER_ID,
+  receiveDocTree,
+  explorerTreeOpened,
+  moveExplorerItem,
+  toggleFolderOpen,
+  openDocRef,
+  requestDeleteDocRef,
+  confirmDeleteDocRef,
+  cancelDeleteDocRef,
+  docRefPicked,
+  searchTermChanged,
+  selectDocRef,
+  openDocRefContextMenu,
+  closeDocRefContextMenu,
+  explorerTreeReducer,
+};

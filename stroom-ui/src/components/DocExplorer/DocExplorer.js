@@ -13,17 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 
 import { compose } from 'redux';
 import { connect } from 'react-redux';
 
-import {
-  Input,
-  Icon,
-  Confirm
-} from 'semantic-ui-react';
+import { Input, Confirm } from 'semantic-ui-react';
 
 import './DocExplorer.css';
 
@@ -31,35 +27,28 @@ import Folder from './Folder';
 
 import { withCreatedExplorer } from './withExplorer';
 
-import {
-  searchTermChanged,
-  confirmDeleteDocRef,
-  cancelDeleteDocRef
-} from './redux';
+import { searchTermChanged, confirmDeleteDocRef, cancelDeleteDocRef } from './redux';
 
 const DocExplorer = (props) => {
   const {
-    documentTree, 
-    explorerId, 
-    explorer, 
+    documentTree,
+    explorerId,
+    explorer,
     searchTermChanged,
     cancelDeleteDocRef,
-    confirmDeleteDocRef
+    confirmDeleteDocRef,
   } = props;
 
-  const {
-    searchTerm,
-    pendingDocRefToDelete
-  } = explorer;
+  const { searchTerm, pendingDocRefToDelete } = explorer;
 
   return (
     <div>
       <Confirm
-              open={!!pendingDocRefToDelete}
-              content='This will delete the doc ref from the explorer, are you sure?'
-              onCancel={() => cancelDeleteDocRef(explorerId)}
-              onConfirm={() => confirmDeleteDocRef(explorerId, pendingDocRefToDelete)}
-              />
+        open={!!pendingDocRefToDelete}
+        content="This will delete the doc ref from the explorer, are you sure?"
+        onCancel={() => cancelDeleteDocRef(explorerId)}
+        onConfirm={() => confirmDeleteDocRef(explorerId, pendingDocRefToDelete)}
+      />
       <Input
         icon="search"
         placeholder="Search..."
@@ -69,7 +58,7 @@ const DocExplorer = (props) => {
       <Folder explorerId={explorerId} folder={documentTree} />
     </div>
   );
-}
+};
 
 DocExplorer.propTypes = {
   explorerId: PropTypes.string.isRequired,
@@ -77,20 +66,20 @@ DocExplorer.propTypes = {
   documentTree: PropTypes.object.isRequired,
 
   searchTermChanged: PropTypes.func.isRequired,
-  confirmDeleteDocRef : PropTypes.func.isRequired,
-  cancelDeleteDocRef : PropTypes.func.isRequired
+  confirmDeleteDocRef: PropTypes.func.isRequired,
+  cancelDeleteDocRef: PropTypes.func.isRequired,
 };
 
 export default compose(
   connect(
     state => ({
-      documentTree: state.explorerTree.documentTree
+      documentTree: state.explorerTree.documentTree,
     }),
     {
       searchTermChanged,
       cancelDeleteDocRef,
-      confirmDeleteDocRef
+      confirmDeleteDocRef,
     },
   ),
-  withCreatedExplorer()
+  withCreatedExplorer(),
 )(DocExplorer);

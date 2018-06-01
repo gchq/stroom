@@ -13,109 +13,108 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 
 import { compose } from 'redux';
-import { connect } from 'react-redux'
+import { connect } from 'react-redux';
 
-import {
-    Button,
-    Header,
-    Icon,
-    Modal,
-    Input
-} from 'semantic-ui-react'
+import { Button, Modal, Input } from 'semantic-ui-react';
 
 import { findItem } from 'lib/treeUtils';
 import { docRefPicked } from './redux';
 import { withCreatedExplorer } from './withExplorer';
 import { withPickedDocRef } from './withPickedDocRef';
-import {
-    withModal,
-    setModal
-} from 'components/WithModal';
+import { withModal, setModal } from 'components/WithModal';
 
 import DocExplorer from './DocExplorer';
 
 const DocRefModalPicker = ({
-    isSelected,
-    documentTree,
-    docRefPicked,
-    docRef,
-    modalIsOpen,
-    tree,
-    pickerId,
-    typeFilter,
-    setModal,
-    explorer
+  isSelected,
+  documentTree,
+  docRefPicked,
+  docRef,
+  modalIsOpen,
+  tree,
+  pickerId,
+  typeFilter,
+  setModal,
+  explorer,
 }) => {
-    let value = (!!docRef) ? docRef.name : '';
+  const value = docRef ? docRef.name : '';
 
-    let handleOpen = () => setModal(pickerId, true);
+  const handleOpen = () => setModal(pickerId, true);
 
-    let handleClose = () => setModal(pickerId, false);
-        
-    let onDocRefSelected = () => {
-        Object.keys(explorer.isSelected)
-        .forEach(pickedUuid => {
-            let picked = findItem(documentTree, pickedUuid);
-            docRefPicked(pickerId, picked);
-        });
-    
-        handleClose();
-    }
+  const handleClose = () => setModal(pickerId, false);
 
-    return (
-        <Modal
-            trigger={<Input onFocus={handleOpen} value={value + '...'}/>}
-            open={modalIsOpen}
-            onClose={handleClose}
-            size='small'
-            dimmer='blurring'
-        >
-            <Modal.Header>Select a Doc Ref</Modal.Header>
-            <Modal.Content scrolling>
-                <DocExplorer tree={tree}
-                            explorerId={pickerId}
-                            allowMultiSelect={false}
-                            allowDragAndDrop={false}
-                            typeFilter={typeFilter}
-                            />
-            </Modal.Content>
-            <Modal.Actions>
-                <Button negative onClick={() => setModal(pickerId, false)}>Cancel</Button>
-                <Button positive onClick={onDocRefSelected} labelPosition='right' icon='checkmark' content='Choose' />
-            </Modal.Actions>
-        </Modal>
-    )
-}
+  const onDocRefSelected = () => {
+    Object.keys(explorer.isSelected).forEach((pickedUuid) => {
+      const picked = findItem(documentTree, pickedUuid);
+      docRefPicked(pickerId, picked);
+    });
+
+    handleClose();
+  };
+
+  return (
+    <Modal
+      trigger={<Input onFocus={handleOpen} value={`${value}...`} />}
+      open={modalIsOpen}
+      onClose={handleClose}
+      size="small"
+      dimmer="blurring"
+    >
+      <Modal.Header>Select a Doc Ref</Modal.Header>
+      <Modal.Content scrolling>
+        <DocExplorer
+          tree={tree}
+          explorerId={pickerId}
+          allowMultiSelect={false}
+          allowDragAndDrop={false}
+          typeFilter={typeFilter}
+        />
+      </Modal.Content>
+      <Modal.Actions>
+        <Button negative onClick={() => setModal(pickerId, false)}>
+          Cancel
+        </Button>
+        <Button
+          positive
+          onClick={onDocRefSelected}
+          labelPosition="right"
+          icon="checkmark"
+          content="Choose"
+        />
+      </Modal.Actions>
+    </Modal>
+  );
+};
 
 DocRefModalPicker.propTypes = {
-    pickerId : PropTypes.string.isRequired,
-    documentTree : PropTypes.object.isRequired,
-    explorer : PropTypes.object.isRequired,
+  pickerId: PropTypes.string.isRequired,
+  documentTree: PropTypes.object.isRequired,
+  explorer: PropTypes.object.isRequired,
 
-    typeFilter : PropTypes.string,
-    docRef : PropTypes.object,
-    docRefPicked : PropTypes.func.isRequired,
-    modalIsOpen : PropTypes.bool.isRequired,
+  typeFilter: PropTypes.string,
+  docRef: PropTypes.object,
+  docRefPicked: PropTypes.func.isRequired,
+  modalIsOpen: PropTypes.bool.isRequired,
 
-    setModal : PropTypes.func.isRequired
-}
+  setModal: PropTypes.func.isRequired,
+};
 
 export default compose(
-    connect(
-        (state) => ({
-            documentTree : state.explorerTree.documentTree
-        }),
-        {
-            // actions
-            docRefPicked,
-            setModal
-        }
-    ),
-    withPickedDocRef(),
-    withCreatedExplorer('pickerId'),
-    withModal('pickerId')
+  connect(
+    state => ({
+      documentTree: state.explorerTree.documentTree,
+    }),
+    {
+      // actions
+      docRefPicked,
+      setModal,
+    },
+  ),
+  withPickedDocRef(),
+  withCreatedExplorer('pickerId'),
+  withModal('pickerId'),
 )(DocRefModalPicker);
