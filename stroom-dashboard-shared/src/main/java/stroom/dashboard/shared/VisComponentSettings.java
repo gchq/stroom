@@ -16,6 +16,10 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.DocRef;
 
@@ -28,18 +32,23 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"tableId", "visualisation", "json"})
+@JsonInclude(Include.NON_EMPTY)
 @XmlRootElement(name = "vis")
 @XmlType(name = "VisComponentSettings", propOrder = {"tableId", "visualisation", "json"})
 public class VisComponentSettings extends ComponentSettings {
     private static final long serialVersionUID = -2530827581046882396L;
 
     @XmlElement(name = "tableId")
+    @JsonProperty("tableId")
     private String tableId;
     @XmlElement(name = "visualisation")
+    @JsonProperty("visualisation")
     private DocRef visualisation;
     @XmlElement(name = "json")
+    @JsonProperty("json")
     private String json;
     @XmlTransient
+    @JsonIgnore
     private TableComponentSettings tableSettings;
 
     public VisComponentSettings() {

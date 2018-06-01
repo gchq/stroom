@@ -16,6 +16,9 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.HasDisplayValue;
 import stroom.docref.SharedObject;
@@ -31,20 +34,25 @@ import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"parameters", "components", "layout", "tabVisibility"})
+@JsonInclude(Include.NON_EMPTY)
 @XmlRootElement(name = "dashboard")
 @XmlType(name = "DashboardConfig", propOrder = {"parameters", "components", "layout", "tabVisibility"})
 public class DashboardConfig implements SharedObject {
     private static final long serialVersionUID = -2530827581046882396L;
 
     @XmlElement(name = "parameters")
+    @JsonProperty("parameters")
     private String parameters;
     @XmlElementWrapper(name = "components")
     @XmlElements({@XmlElement(name = "component", type = ComponentConfig.class)})
+    @JsonProperty("components")
     private List<ComponentConfig> components;
     @XmlElements({@XmlElement(name = "splitLayout", type = SplitLayoutConfig.class),
             @XmlElement(name = "tabLayout", type = TabLayoutConfig.class)})
+    @JsonProperty("layout")
     private LayoutConfig layout;
     @XmlElement(name = "tabVisibility")
+    @JsonProperty("tabVisibility")
     private TabVisibility tabVisibility = TabVisibility.SHOW_ALL;
 
     public String getParameters() {

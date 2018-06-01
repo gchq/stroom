@@ -14,8 +14,6 @@
     }, {
       "fieldName" : "Type"
     } ],
-    "customRollUpMasks" : [ {
-      "rolledUpTagPositions" : [ ]
-    } ]
+    "customRollUpMasks" : [ { } ]
   }
 }

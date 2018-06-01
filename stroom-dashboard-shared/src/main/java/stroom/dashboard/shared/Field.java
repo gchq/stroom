@@ -16,6 +16,9 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
@@ -30,26 +33,35 @@ import java.io.Serializable;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"name", "expression", "sort", "filter", "format", "group", "width", "visible"})
+@JsonInclude(Include.NON_EMPTY)
 @XmlRootElement(name = "field")
 @XmlType(name = "Field", propOrder = {"name", "expression", "sort", "filter", "format", "group", "width", "visible"})
 public class Field implements Serializable {
     private static final long serialVersionUID = 7327802315955158337L;
 
     @XmlElement(name = "name")
+    @JsonProperty("name")
     private String name;
     @XmlElement(name = "expression")
+    @JsonProperty("expression")
     private String expression;
     @XmlElement(name = "sort")
+    @JsonProperty("sort")
     private Sort sort;
     @XmlElement(name = "filter")
+    @JsonProperty("filter")
     private Filter filter;
     @XmlElement(name = "format")
+    @JsonProperty("format")
     private Format format;
     @XmlElement(name = "group")
+    @JsonProperty("group")
     private Integer group;
     @XmlElement(name = "width")
+    @JsonProperty("width")
     private int width = 200;
     @XmlElement(name = "visible")
+    @JsonProperty("visible")
     private boolean visible = true;
 
     public Field() {

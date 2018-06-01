@@ -16,8 +16,6 @@
     }, {
       "fieldName" : "Pipeline"
     } ],
-    "customRollUpMasks" : [ {
-      "rolledUpTagPositions" : [ ]
-    } ]
+    "customRollUpMasks" : [ { } ]
   }
 }
