@@ -57,7 +57,7 @@ ext.versions = [
 
         //------Stroom-repos---------------
 //    stroomProxyRepo: 'v5.1-beta.8',
-        eventLogging      : 'v3.2.3_schema-v3.2.4',
+        eventLogging      : 'v3.2.4_schema-v3.2.4',
         hadoopCommonShaded: 'v2.6.4-5',
         hadoopHdfsShaded  : 'v2.6.4-4',
         stroomAuth        : 'v0.1-alpha.3',

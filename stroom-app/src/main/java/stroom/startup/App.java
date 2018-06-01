@@ -45,6 +45,7 @@ import stroom.guice.AppModule;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.index.StroomIndexQueryResource;
 import stroom.lifecycle.LifecycleService;
+import stroom.persist.PersistLifecycle;
 import stroom.proxy.guice.ProxyModule;
 import stroom.proxy.repo.ProxyLifecycle;
 import stroom.proxy.servlet.ConfigServlet;
@@ -179,6 +180,9 @@ public class App extends Application<Config> {
     private void startApp(final Config configuration, final Environment environment) {
         final AppModule appModule = new AppModule();
         final Injector injector = Guice.createInjector(appModule);
+
+        // Start the persistence service. This needs to be done before anything else as other filters and services rely on it.
+        injector.getInstance(PersistLifecycle.class).startPersistence();
 
         final ServletContextHandler servletContextHandler = environment.getApplicationContext();
 

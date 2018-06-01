@@ -23,6 +23,7 @@ import stroom.entity.event.EntityEvent;
 import stroom.entity.shared.Clearable;
 import stroom.logging.EventInfoProvider;
 import stroom.properties.StroomPropertyService;
+import stroom.security.SecurityConfig.JwtConfig;
 import stroom.task.TaskHandler;
 
 public class SecurityModule extends AbstractModule {
@@ -62,11 +63,22 @@ public class SecurityModule extends AbstractModule {
     }
 
     @Provides
-    public SecurityConfig securityConfig(final StroomPropertyService stroomPropertyService) {
+    public JwtConfig jwtConfig(final StroomPropertyService stroomPropertyService) {
+        final JwtConfig jwtConfig = new JwtConfig();
+        jwtConfig.setJwtIssuer(stroomPropertyService.getProperty("stroom.auth.jwt.issuer"));
+        jwtConfig.setEnableTokenRevocationCheck(stroomPropertyService.getBooleanProperty("stroom.auth.jwt.enabletokenrevocationcheck", false));
+        return jwtConfig;
+    }
+
+    @Provides
+    public SecurityConfig securityConfig(final StroomPropertyService stroomPropertyService, final JwtConfig jwtConfig) {
         final SecurityConfig securityConfig = new SecurityConfig();
         securityConfig.setAuthenticationServiceUrl(stroomPropertyService.getProperty("stroom.auth.authentication.service.url"));
         securityConfig.setAdvertisedStroomUrl(stroomPropertyService.getProperty("stroom.advertisedUrl"));
         securityConfig.setAuthenticationRequired(stroomPropertyService.getBooleanProperty("stroom.authentication.required", true));
+        securityConfig.setApiToken(stroomPropertyService.getProperty("stroom.security.apiToken"));
+        securityConfig.setAuthenticationServicesUrl(stroomPropertyService.getProperty("stroom.auth.services.url"));
+        securityConfig.setJwtConfig(jwtConfig);
         return securityConfig;
     }
 
