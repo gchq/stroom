@@ -72,7 +72,7 @@ public final class JsonUtil {
         mapper.registerModule(module);
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-        mapper.setSerializationInclusion(Include.NON_EMPTY);
+        mapper.setSerializationInclusion(Include.NON_NULL);
         return mapper;
     }
 }

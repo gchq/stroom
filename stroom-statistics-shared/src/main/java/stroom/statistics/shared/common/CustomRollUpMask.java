@@ -16,6 +16,10 @@
 
 package stroom.statistics.shared.common;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.docref.HasDisplayValue;
 import stroom.docref.SharedObject;
@@ -30,6 +34,8 @@ import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "customRollUpMask")
+@JsonPropertyOrder({"rolledUpTagPosition"})
+@JsonInclude(Include.NON_EMPTY)
 public class CustomRollUpMask implements HasDisplayValue, SharedObject {
     private static final long serialVersionUID = 5978256629347842695L;
 
@@ -42,6 +48,7 @@ public class CustomRollUpMask implements HasDisplayValue, SharedObject {
      * correctly.
      */
     @XmlElement(name = "rolledUpTagPosition")
+    @JsonProperty("rolledUpTagPosition")
     private List<Integer> rolledUpTagPositions = new ArrayList<>();
 
     public CustomRollUpMask() {

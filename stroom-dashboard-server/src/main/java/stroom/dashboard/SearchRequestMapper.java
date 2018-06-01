@@ -396,7 +396,7 @@ public class SearchRequestMapper {
 
             ObjectMapper mapper = new ObjectMapper();
             mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            mapper.setSerializationInclusion(Include.NON_EMPTY);
+            mapper.setSerializationInclusion(Include.NON_NULL);
 
             final VisSettings visSettings = mapper.readValue(visualisation.getSettings(), VisSettings.class);
             if (visSettings != null && visSettings.getData() != null) {
@@ -486,7 +486,7 @@ public class SearchRequestMapper {
 //            ObjectMapper mapper = new ObjectMapper();
 //            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 //            mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
-//            mapper.setSerializationInclusion(Include.NON_EMPTY);
+//            mapper.setSerializationInclusion(Include.NON_NULL);
 //
 //            final VisSettings visSettings = mapper.readValue(visualisation.getSettings(), VisSettings.class);
 //            if (visSettings != null && visSettings.getData() != null) {
