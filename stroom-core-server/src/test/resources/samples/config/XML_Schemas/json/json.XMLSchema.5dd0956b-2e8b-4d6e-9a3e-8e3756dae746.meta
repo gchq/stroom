@@ -6,6 +6,5 @@
   "description" : "This is a schema for the XML representation of JSON used as the target for the XSLT 3.0 function fn:json-to-xml()",
   "namespaceURI" : "http://www.w3.org/2013/XSL/json",
   "systemId" : "json",
-  "deprecated" : false,
-  "schemaGroup" : ""
+  "deprecated" : false
 }

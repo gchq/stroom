@@ -15,7 +15,6 @@
       "fieldName" : "state"
     }, {
       "fieldName" : "user"
-    } ],
-    "customRollUpMasks" : [ ]
+    } ]
   }
 }
