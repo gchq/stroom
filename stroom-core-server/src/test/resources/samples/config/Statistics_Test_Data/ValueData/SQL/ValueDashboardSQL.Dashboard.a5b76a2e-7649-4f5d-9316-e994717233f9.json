@@ -1,0 +1,113 @@
+{
+  "components" : [ {
+    "type" : "query",
+    "id" : "query-MBSJ7",
+    "name" : "Query",
+    "settings" : {
+      "type" : "query",
+      "dataSource" : {
+        "type" : "StatisticStore",
+        "uuid" : "a5b76a2e-7689-4f5d-9316-e948140423f9",
+        "name" : "ValueStatisticSQL"
+      },
+      "expression" : {
+        "type" : "operator",
+        "op" : "AND",
+        "children" : [ {
+          "type" : "term",
+          "field" : "Date Time",
+          "condition" : "BETWEEN",
+          "value" : "2014-12-31T00:00:00.000Z,2015-01-01T00:00:00.000Z",
+          "enabled" : true
+        }, {
+          "type" : "term",
+          "field" : "user",
+          "condition" : "EQUALS",
+          "value" : "user1",
+          "enabled" : true
+        } ],
+        "enabled" : true
+      }
+    }
+  }, {
+    "type" : "table",
+    "id" : "table-7FWEO",
+    "name" : "Table",
+    "settings" : {
+      "type" : "table",
+      "queryId" : "query-MBSJ7",
+      "fields" : [ {
+        "name" : "Date Time",
+        "expression" : "${Date Time}",
+        "format" : {
+          "type" : "DATE_TIME"
+        },
+        "width" : 200,
+        "visible" : true
+      }, {
+        "name" : "user",
+        "expression" : "${user}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true
+      }, {
+        "name" : "colour",
+        "expression" : "${colour}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true
+      }, {
+        "name" : "state",
+        "expression" : "${state}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true
+      }, {
+        "name" : "StatisticValue",
+        "expression" : "${StatisticValue}",
+        "format" : {
+          "type" : "NUMBER"
+        },
+        "width" : 200,
+        "visible" : true
+      } ],
+      "maxResults" : [ 1000000 ]
+    }
+  } ],
+  "layout" : {
+    "type" : "splitLayout",
+    "preferredSize" : {
+      "width" : 200,
+      "height" : 200
+    },
+    "dimension" : 1,
+    "children" : [ {
+      "type" : "tabLayout",
+      "preferredSize" : {
+        "width" : 200,
+        "height" : 200
+      },
+      "tabs" : [ {
+        "id" : "query-MBSJ7"
+      } ],
+      "selected" : 0
+    }, {
+      "type" : "tabLayout",
+      "preferredSize" : {
+        "width" : 200,
+        "height" : 200
+      },
+      "tabs" : [ {
+        "id" : "table-7FWEO"
+      } ],
+      "selected" : 0
+    } ]
+  },
+  "tabVisibility" : "SHOW_ALL"
+}
