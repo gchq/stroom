@@ -77,7 +77,7 @@ public class SecurityModule extends AbstractModule {
         securityConfig.setAdvertisedStroomUrl(stroomPropertyService.getProperty("stroom.advertisedUrl"));
         securityConfig.setAuthenticationRequired(stroomPropertyService.getBooleanProperty("stroom.authentication.required", true));
         securityConfig.setApiToken(stroomPropertyService.getProperty("stroom.security.apiToken"));
-        securityConfig.setAuthenticationServicesUrl(stroomPropertyService.getProperty("stroom.auth.services.url"));
+        securityConfig.setAuthServicesBaseUrl(stroomPropertyService.getProperty("stroom.auth.services.url"));
         securityConfig.setJwtConfig(jwtConfig);
         return securityConfig;
     }

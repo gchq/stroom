@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import stroom.docref.SharedObject;
@@ -40,6 +41,7 @@ import javax.xml.bind.annotation.XmlType;
 public abstract class LayoutConfig implements SharedObject {
     private static final long serialVersionUID = 8743223047838956165L;
 
+    @JsonIgnore
     private transient SplitLayoutConfig parent;
 
     public abstract Size getPreferredSize();

@@ -19,6 +19,7 @@ package stroom.stats.shared;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docstore.shared.Doc;
 import stroom.statistics.shared.StatisticType;
@@ -47,16 +48,22 @@ public class StroomStatsStoreDoc extends Doc {
     private static final EventStoreTimeIntervalEnum DEFAULT_PRECISION_INTERVAL = EventStoreTimeIntervalEnum.HOUR;
 
     @XmlElement(name = "description")
+    @JsonProperty("description")
     private String description;
     @XmlElement(name = "statisticType")
+    @JsonProperty("statisticType")
     private StatisticType statisticType = StatisticType.COUNT;
     @XmlElement(name = "statisticRollUpType")
+    @JsonProperty("statisticRollUpType")
     private StatisticRollUpType statisticRollUpType = StatisticRollUpType.NONE;
     @XmlElement(name = "precision")
+    @JsonProperty("precision")
     private EventStoreTimeIntervalEnum precision;
     @XmlElement(name = "enabled")
+    @JsonProperty("enabled")
     private Boolean enabled;
     @XmlElement(name = "config")
+    @JsonProperty("config")
     private StroomStatsStoreEntityData config;
 
     public StroomStatsStoreDoc() {

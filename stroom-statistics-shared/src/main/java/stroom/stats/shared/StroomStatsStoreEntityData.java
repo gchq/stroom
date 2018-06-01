@@ -16,6 +16,11 @@
 
 package stroom.stats.shared;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -33,6 +38,8 @@ import java.util.Set;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "data")
+@JsonPropertyOrder({"field", "customRollUpMask"})
+@JsonInclude(Include.NON_EMPTY)
 public class StroomStatsStoreEntityData implements SharedObject {
 
     private static final long serialVersionUID = -2754817144611481958L;
@@ -44,6 +51,7 @@ public class StroomStatsStoreEntityData implements SharedObject {
      */
 
     @XmlTransient
+    @JsonIgnore
     private List<StatisticField> statisticFields;
 
     /**
@@ -52,10 +60,12 @@ public class StroomStatsStoreEntityData implements SharedObject {
      * XMLTransient to force JAXB to use the setter
      */
     @XmlTransient
+    @JsonIgnore
     private Set<CustomRollUpMask> customRollUpMasks;
 
     // cache the positions of the
     @XmlTransient
+    @JsonIgnore
     private Map<String, Integer> fieldPositionMap = new HashMap<>();
 
     public StroomStatsStoreEntityData() {
@@ -77,6 +87,7 @@ public class StroomStatsStoreEntityData implements SharedObject {
     }
 
     @XmlElement(name = "field")
+    @JsonProperty("fields")
     public List<StatisticField> getStatisticFields() {
         return statisticFields;
     }
@@ -87,6 +98,7 @@ public class StroomStatsStoreEntityData implements SharedObject {
     }
 
     @XmlElement(name = "customRollUpMask")
+    @JsonProperty("customRollUpMasks")
     public Set<CustomRollUpMask> getCustomRollUpMasks() {
         return customRollUpMasks;
     }
