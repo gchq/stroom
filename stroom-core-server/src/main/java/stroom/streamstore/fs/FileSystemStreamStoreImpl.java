@@ -66,6 +66,7 @@ import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.shared.FeedEntity;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.FindStreamTypeCriteria;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeCondition;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeFieldUse;
@@ -513,7 +514,8 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     }
 
     @Override
-    public StreamTarget openExistingStreamTarget(final StreamEntity stream) throws StreamException {
+    public StreamTarget openExistingStreamTarget(final long streamId) throws StreamException {
+        final StreamEntity stream = loadStreamById(streamId);
         return openStreamTarget(stream, true);
     }
 
@@ -587,12 +589,12 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     // }
 
     @Override
-    public Long deleteStream(final StreamEntity stream) {
-        return security.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> doLogicalDeleteStream(stream, true));
+    public Long deleteStream(final long streamId) {
+        return security.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> doLogicalDeleteStream(streamId, true));
     }
 
-    private Long doLogicalDeleteStream(final StreamEntity stream, final boolean lockCheck) {
-        final StreamEntity loaded = loadStreamById(stream.getId(), SOURCE_FETCH_SET, true);
+    private Long doLogicalDeleteStream(final long streamId, final boolean lockCheck) {
+        final StreamEntity loaded = loadStreamById(streamId, SOURCE_FETCH_SET, true);
 
 //        if (stream == null || !stream.isPersistent()) {
 //            throw new IllegalArgumentException(
@@ -645,7 +647,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         // Make sure the stream data is deleted.
         // Attach object (may throw a lock exception)
         final StreamEntity db = entityManager.saveEntity(target.getStream());
-        return doLogicalDeleteStream(db, false);
+        return doLogicalDeleteStream(db.getId(), false);
     }
 
     @Override
@@ -1220,13 +1222,13 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     @Override
     @SuppressWarnings("unchecked")
     // @Transactional
-    public List<StreamEntity> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
+    public List<Stream> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
         final StreamTypeEntity streamType = getStreamType(criteria.getStreamType());
 
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
         // Find meta data within effective period.
-        final ArrayList<StreamEntity> rtnList = new ArrayList<>(findStreamSource(criteria));
+        final ArrayList<Stream> rtnList = new ArrayList<>(findStreamSource(criteria));
 
         // Find the greatest effective stream time that we can that is less than
         // the from time of the effective period.

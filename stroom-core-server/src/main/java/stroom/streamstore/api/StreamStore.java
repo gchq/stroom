@@ -25,6 +25,7 @@ import stroom.streamstore.EffectiveMetaDataCriteria;
 import stroom.streamstore.OldFindStreamCriteria;
 import stroom.streamstore.StreamException;
 import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamEntity;
 
 import java.util.List;
@@ -115,7 +116,7 @@ public interface StreamStore extends FindService<StreamEntity, FindStreamCriteri
      * @param append allow appending to the stream (or wipe it?)
      * @return the stream to write to
      */
-    StreamTarget openExistingStreamTarget(StreamEntity stream) throws StreamException;
+    StreamTarget openExistingStreamTarget(long streamId) throws StreamException;
 
     /**
      * <p>
@@ -138,7 +139,7 @@ public interface StreamStore extends FindService<StreamEntity, FindStreamCriteri
      *
      * @return items deleted
      */
-    Long deleteStream(StreamEntity stream);
+    Long deleteStream(long streamId);
 
     BaseResultList<StreamEntity> find(OldFindStreamCriteria findStreamCriteria);
 
@@ -160,7 +161,7 @@ public interface StreamStore extends FindService<StreamEntity, FindStreamCriteri
      * @param criteria the search criteria
      * @return the list of matches
      */
-    List<StreamEntity> findEffectiveStream(EffectiveMetaDataCriteria criteria);
+    List<Stream> findEffectiveStream(EffectiveMetaDataCriteria criteria);
 
     /**
      * Return the number of open locks.

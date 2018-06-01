@@ -24,6 +24,7 @@ import stroom.security.Security;
 import stroom.streamstore.EffectiveMetaDataCriteria;
 import stroom.streamstore.MockStreamStore;
 import stroom.streamstore.api.StreamProperties;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.util.cache.CacheManager;
@@ -52,9 +53,9 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
 
         final MockStreamStore mockStreamStore = new MockStreamStore() {
             @Override
-            public List<StreamEntity> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
+            public List<Stream> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
                 findEffectiveStreamSourceCount++;
-                final ArrayList<StreamEntity> results = new ArrayList<>();
+                final ArrayList<Stream> results = new ArrayList<>();
                 long workingDate = criteria.getEffectivePeriod().getFrom();
                 while (workingDate < criteria.getEffectivePeriod().getTo()) {
                     final StreamEntity stream = createStream(
@@ -196,7 +197,7 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
         private final List<StreamEntity> streams = new ArrayList<>();
 
         @Override
-        public List<StreamEntity> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
+        public List<Stream> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
             callCount++;
 
             return streams.stream()

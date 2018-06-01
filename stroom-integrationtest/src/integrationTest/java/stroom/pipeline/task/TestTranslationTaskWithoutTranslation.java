@@ -39,6 +39,7 @@ import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
 
 public class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegrationTest {
     private static final String DIR = "TestTranslationTaskWithoutTranslation/";
@@ -82,9 +83,11 @@ public class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegr
         final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(DIR);
         final Path outputDir = StroomPipelineTestFileUtil.getTestOutputDir().resolve(DIR);
 
-        for (final StreamEntity stream : streamStore.getFileData().keySet()) {
+        for (final Entry<Long, StreamEntity> entry : streamStore.getStreamMap().entrySet()) {
+            final long streamId = entry.getKey();
+            final StreamEntity stream = entry.getValue();
             if (StreamTypeEntity.EVENTS.equalsEntity(stream.getStreamType())) {
-                final byte[] data = streamStore.getFileData().get(stream).get(stream.getStreamTypeName());
+                final byte[] data = streamStore.getFileData().get(streamId).get(stream.getStreamTypeName());
 
                 // Write the actual XML out.
                 final OutputStream os = StroomPipelineTestFileUtil.getOutputStream(outputDir, "TestTask.out");

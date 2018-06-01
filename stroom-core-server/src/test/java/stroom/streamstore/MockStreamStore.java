@@ -30,6 +30,7 @@ import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.shared.FeedEntity;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.FindStreamTypeCriteria;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamEntity;
@@ -58,10 +59,10 @@ public class MockStreamStore implements StreamStore, Clearable {
     /**
      * Our stream data.
      */
-    private final TypedMap<StreamEntity, TypedMap<String, byte[]>> fileData = TypedMap.fromMap(new HashMap<>());
-    private final TypedMap<StreamEntity, TypedMap<String, ByteArrayOutputStream>> openOutputStream = TypedMap
+    private final TypedMap<Long, TypedMap<String, byte[]>> fileData = TypedMap.fromMap(new HashMap<>());
+    private final TypedMap<Long, TypedMap<String, ByteArrayOutputStream>> openOutputStream = TypedMap
             .fromMap(new HashMap<>());
-    private final Set<StreamEntity> openInputStream = new HashSet<>();
+    private final Set<Long> openInputStream = new HashSet<>();
     private final Map<Long, StreamEntity> streamMap = new HashMap<>();
 
     private StreamEntity lastStream;
@@ -176,15 +177,16 @@ public class MockStreamStore implements StreamStore, Clearable {
         }
 
         final StreamEntity stream = target.getStream();
+        final long streamId = stream.getId();
 
         // Get the data map to add the stream output to.
-        TypedMap<String, byte[]> dataTypeMap = fileData.get(stream);
+        TypedMap<String, byte[]> dataTypeMap = fileData.get(streamId);
         if (dataTypeMap == null) {
             dataTypeMap = TypedMap.fromMap(new HashMap<>());
-            fileData.put(stream, dataTypeMap);
+            fileData.put(stream.getId(), dataTypeMap);
         }
 
-        final TypedMap<String, ByteArrayOutputStream> typeMap = openOutputStream.get(stream);
+        final TypedMap<String, ByteArrayOutputStream> typeMap = openOutputStream.get(streamId);
 
         if (typeMap != null) {
             // Add data from this stream to the data type map.
@@ -198,7 +200,7 @@ public class MockStreamStore implements StreamStore, Clearable {
             // Clean up the open output streams if there are no more open types
             // for this stream.
             if (typeMap.size() == 0) {
-                openOutputStream.remove(stream);
+                openOutputStream.remove(streamId);
             }
         } else {
             dataTypeMap.put(target.getStreamTypeName(), new byte[0]);
@@ -211,27 +213,29 @@ public class MockStreamStore implements StreamStore, Clearable {
     }
 
     @Override
-    public Long deleteStream(final StreamEntity stream) {
-        openInputStream.remove(stream);
-        openOutputStream.remove(stream);
-        fileData.remove(stream);
+    public Long deleteStream(final long streamId) {
+        openInputStream.remove(streamId);
+        openOutputStream.remove(streamId);
+        fileData.remove(streamId);
         return 1L;
     }
 
     @Override
     public Long deleteStreamTarget(final StreamTarget target) {
-        openOutputStream.remove(target.getStream());
-        fileData.remove(target.getStream());
+        final long streamId = target.getStream().getId();
+        openOutputStream.remove(streamId);
+        fileData.remove(streamId);
         return 1L;
     }
 
     @Override
-    public List<StreamEntity> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
-        final ArrayList<StreamEntity> results = new ArrayList<>();
+    public List<Stream> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
+        final ArrayList<Stream> results = new ArrayList<>();
 
         try {
-            for (final StreamEntity stream : fileData.keySet()) {
-                final TypedMap<String, byte[]> typeMap = fileData.get(stream);
+            for (final long streamId : fileData.keySet()) {
+                final TypedMap<String, byte[]> typeMap = fileData.get(streamId);
+                final StreamEntity stream = streamMap.get(streamId);
 
                 boolean match = true;
 
@@ -281,20 +285,8 @@ public class MockStreamStore implements StreamStore, Clearable {
         if (stream == null) {
             return null;
         }
-
-        StreamEntity actualStream = null;
-        for (final StreamEntity s : fileData.keySet()) {
-            if (s.equals(stream)) {
-                actualStream = s;
-            }
-        }
-
-        if (actualStream == null) {
-            throw new RuntimeException("Unable to find actual stream in mock");
-        }
-
-        openInputStream.add(actualStream);
-        return new MockStreamSource(actualStream);
+        openInputStream.add(streamId);
+        return new MockStreamSource(stream);
     }
 
     @Override
@@ -304,8 +296,8 @@ public class MockStreamStore implements StreamStore, Clearable {
     }
 
     @Override
-    public StreamTarget openExistingStreamTarget(final StreamEntity stream) throws StreamException {
-        return openStreamTarget(stream);
+    public StreamTarget openExistingStreamTarget(final long streamId) throws StreamException {
+        throw new UnsupportedOperationException("Not implemented");
     }
 
     private StreamTarget openStreamTarget(final StreamEntity stream) {
@@ -317,7 +309,7 @@ public class MockStreamStore implements StreamStore, Clearable {
 
         final TypedMap<String, ByteArrayOutputStream> typeMap = TypedMap.fromMap(new HashMap<>());
         typeMap.put(stream.getStreamTypeName(), new ByteArrayOutputStream());
-        openOutputStream.put(stream, typeMap);
+        openOutputStream.put(stream.getId(), typeMap);
 
         lastStream = stream;
 
@@ -328,11 +320,15 @@ public class MockStreamStore implements StreamStore, Clearable {
         return lastStream;
     }
 
-    public TypedMap<StreamEntity, TypedMap<String, byte[]>> getFileData() {
+    public TypedMap<Long, TypedMap<String, byte[]>> getFileData() {
         return fileData;
     }
 
-    private TypedMap<StreamEntity, TypedMap<String, ByteArrayOutputStream>> getOpenOutputStream() {
+    public Map<Long, StreamEntity> getStreamMap() {
+        return streamMap;
+    }
+
+    private TypedMap<Long, TypedMap<String, ByteArrayOutputStream>> getOpenOutputStream() {
         return openOutputStream;
     }
 
@@ -345,8 +341,9 @@ public class MockStreamStore implements StreamStore, Clearable {
     public BaseResultList<StreamEntity> find(final FindStreamCriteria criteria) {
         final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamDataSource.getExtendedFieldMap(), null);
         final List<StreamEntity> list = new ArrayList<>();
-        for (final StreamEntity stream : fileData.keySet()) {
+        for (final long streamId : fileData.keySet()) {
             try {
+                final StreamEntity stream = streamMap.get(streamId);
                 final StreamAttributeMap streamAttributeMap = new StreamAttributeMap(stream);
                 final Map<String, Object> attributeMap = StreamAttributeMapUtil.createAttributeMap(streamAttributeMap);
                 if (expressionMatcher.match(attributeMap, criteria.getExpression())) {
@@ -369,7 +366,8 @@ public class MockStreamStore implements StreamStore, Clearable {
     @Override
     public BaseResultList<StreamEntity> find(final OldFindStreamCriteria findStreamCriteria) {
         final List<StreamEntity> list = new ArrayList<>();
-        for (final StreamEntity stream : fileData.keySet()) {
+        for (final long streamId : fileData.keySet()) {
+            final StreamEntity stream = streamMap.get(streamId);
             if (findStreamCriteria.isMatch(stream)) {
                 list.add(stream);
             }
@@ -382,17 +380,20 @@ public class MockStreamStore implements StreamStore, Clearable {
     public String toString() {
         final StringBuilder sb = new StringBuilder();
         sb.append("Stream Store Contains:\n");
-        for (final StreamEntity stream : fileData.keySet()) {
+        for (final long streamId : fileData.keySet()) {
+            final StreamEntity stream = streamMap.get(streamId);
             sb.append(stream);
             sb.append("\n");
         }
         sb.append("\nOpen Input Streams:\n");
-        for (final StreamEntity stream : openInputStream) {
+        for (final long streamId : openInputStream) {
+            final StreamEntity stream = streamMap.get(streamId);
             sb.append(stream);
             sb.append("\n");
         }
         sb.append("\nOpen Output Streams:\n");
-        for (final StreamEntity stream : openOutputStream.keySet()) {
+        for (final long streamId : openOutputStream.keySet()) {
+            final StreamEntity stream = streamMap.get(streamId);
             sb.append(stream);
             sb.append("\n");
         }
@@ -488,7 +489,7 @@ public class MockStreamStore implements StreamStore, Clearable {
         @Override
         public OutputStream getOutputStream() {
             if (outputStream == null) {
-                final TypedMap<String, ByteArrayOutputStream> typeMap = getOpenOutputStream().get(stream);
+                final TypedMap<String, ByteArrayOutputStream> typeMap = getOpenOutputStream().get(stream.getId());
                 outputStream = typeMap.get(streamTypeName);
             }
             return outputStream;
@@ -513,7 +514,7 @@ public class MockStreamStore implements StreamStore, Clearable {
 
         @Override
         public StreamTarget addChildStream(final String streamTypeName) {
-            final TypedMap<String, ByteArrayOutputStream> typeMap = getOpenOutputStream().get(stream);
+            final TypedMap<String, ByteArrayOutputStream> typeMap = getOpenOutputStream().get(stream.getId());
             typeMap.put(streamTypeName, new ByteArrayOutputStream());
             childMap.put(streamTypeName, new MockStreamTarget(this, streamTypeName));
             return childMap.get(streamTypeName);
@@ -566,7 +567,7 @@ public class MockStreamStore implements StreamStore, Clearable {
         @Override
         public InputStream getInputStream() {
             if (inputStream == null) {
-                final TypedMap<String, byte[]> typeMap = getFileData().get(stream);
+                final TypedMap<String, byte[]> typeMap = getFileData().get(stream.getId());
                 final byte[] data = typeMap.get(streamTypeName);
 
                 if (data == null) {
@@ -599,7 +600,7 @@ public class MockStreamStore implements StreamStore, Clearable {
 
         @Override
         public StreamSource getChildStream(final String streamTypeName) {
-            final TypedMap<String, byte[]> typeMap = getFileData().get(stream);
+            final TypedMap<String, byte[]> typeMap = getFileData().get(stream.getId());
             if (typeMap.containsKey(streamTypeName)) {
                 return new MockStreamSource(this, streamTypeName);
             }

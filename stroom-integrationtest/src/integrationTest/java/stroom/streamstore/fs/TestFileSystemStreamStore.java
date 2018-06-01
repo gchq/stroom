@@ -43,6 +43,7 @@ import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamAttributeValue;
@@ -422,16 +423,16 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
             // Finished
             streamStore.closeStreamSource(streamSource);
             // This should delete it
-            streamStore.deleteStream(stream);
+            streamStore.deleteStream(stream.getId());
         }
         if (DeleteTestStyle.OPEN.equals(style)) {
-            streamStore.deleteStream(streamSource.getStream());
+            streamStore.deleteStream(streamSource.getStream().getId());
         }
         if (DeleteTestStyle.OPEN_TOUCHED_CLOSED.equals(style)) {
             streamSource.getInputStream().read();
             streamSource.getInputStream().close();
             streamSource.close();
-            streamStore.deleteStream(streamSource.getStream());
+            streamStore.deleteStream(streamSource.getStream().getId());
         }
 
         streamSource = streamStore.openStreamSource(stream.getId(), true);
@@ -453,7 +454,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
             // Finished
             streamStore.closeStreamTarget(streamTarget);
             // This should delete it
-            streamStore.deleteStream(stream);
+            streamStore.deleteStream(stream.getId());
         }
         if (DeleteTestStyle.OPEN.equals(style)) {
             streamStore.deleteStreamTarget(streamTarget);
@@ -609,7 +610,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         criteria.setEffectivePeriod(new Period(DateUtil.parseNormalDateTimeString("2009-01-01T00:00:00.000Z"),
                 DateUtil.parseNormalDateTimeString("2010-01-01T00:00:00.000Z")));
 
-        List<StreamEntity> list = streamStore.findEffectiveStream(criteria);
+        List<Stream> list = streamStore.findEffectiveStream(criteria);
 
         // Make sure the list contains what it should.
         verifyList(list, refData1, refData2);
@@ -633,7 +634,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
      * @param list
      * @param expected
      */
-    private void verifyList(final List<StreamEntity> list, final StreamEntity... expected) {
+    private void verifyList(final List<Stream> list, final StreamEntity... expected) {
         Assert.assertNotNull(list);
         Assert.assertEquals(expected.length, list.size());
         for (final StreamEntity stream : expected) {
@@ -745,7 +746,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         Assert.assertTrue(FileSystemUtil.isAllFile(manifestFile));
 
-        streamTarget = streamStore.openExistingStreamTarget(stream);
+        streamTarget = streamStore.openExistingStreamTarget(stream.getId());
         streamTarget.getAttributeMap().put(testString3, testString4);
         streamStore.closeStreamTarget(streamTarget);
         stream = streamTarget.getStream();
@@ -762,7 +763,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
             Assert.assertTrue(streamAttributeValueService.delete(value));
         }
 
-        streamTarget = streamStore.openExistingStreamTarget(stream);
+        streamTarget = streamStore.openExistingStreamTarget(stream.getId());
         streamTarget.getAttributeMap().put(testString5, testString6);
         Assert.assertNull(streamTarget.getAttributeMap().get(testString3));
         streamStore.closeStreamTarget(streamTarget);

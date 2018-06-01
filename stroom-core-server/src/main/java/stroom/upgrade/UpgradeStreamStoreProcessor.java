@@ -216,7 +216,7 @@ class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor {
         }
 
         if (metaMap.size() > 0) {
-            final StreamTarget streamTarget = streamStore.openExistingStreamTarget(stream);
+            final StreamTarget streamTarget = streamStore.openExistingStreamTarget(stream.getId());
             streamTarget.getAttributeMap().putAll(metaMap);
             streamStore.closeStreamTarget(streamTarget);
         } else {

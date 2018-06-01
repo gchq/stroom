@@ -57,7 +57,7 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
 
         commonTestScenarioCreator.createBasicTranslateStreamProcessor(feedName);
 
-        Assert.assertEquals("checking we can delete stand alone files", 1, streamStore.deleteStream(file3).intValue());
+        Assert.assertEquals("checking we can delete stand alone files", 1, streamStore.deleteStream(file3.getId()).intValue());
 
         // Create all required tasks.
         createTasks();
