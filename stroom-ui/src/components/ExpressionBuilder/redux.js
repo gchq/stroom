@@ -15,63 +15,80 @@
  */
 import { createAction, handleActions } from 'redux-actions';
 
-import { 
-    moveItemInTree,
-    iterateNodes,
-    assignRandomUuids,
-    updateItemInTree,
-    addItemToTree,
-    deleteItemFromTree,
-    stripUuids
+import {
+  moveItemInTree,
+  iterateNodes,
+  assignRandomUuids,
+  updateItemInTree,
+  addItemToTree,
+  deleteItemFromTree,
+  stripUuids,
 } from 'lib/treeUtils';
 
-import {
-    docRefPicked
-} from 'components/DocExplorer'
+import { docRefPicked } from 'components/DocExplorer';
 
 // Expression Editors
-const expressionEditorCreated = createAction('EXPRESSION_EDITOR_CREATED',
-    (expressionId) => ({expressionId}));
-const expressionEditorDestroyed = createAction('EXPRESSION_EDITOR_DESTROYED',
-    (expressionId) => ({expressionId}));
-const expressionSetEditable = createAction('EXPRESSION_SET_EDITABLE_BY_USER',
-    (expressionId, isEditableUserSet) => ({expressionId, isEditableUserSet}));
-const requestExpressionItemDelete = createAction('REQUEST_EXPRESSION_ITEM_DELETE',
-    (expressionId, itemUuid) => ({expressionId, itemUuid}));
-const cancelExpressionItemDelete = createAction('CANCEL_EXPRESSION_ITEM_DELETE',
-    (expressionId) => ({expressionId}));
+const expressionEditorCreated = createAction('EXPRESSION_EDITOR_CREATED', expressionId => ({
+  expressionId,
+}));
+const expressionEditorDestroyed = createAction('EXPRESSION_EDITOR_DESTROYED', expressionId => ({
+  expressionId,
+}));
+const expressionSetEditable = createAction(
+  'EXPRESSION_SET_EDITABLE_BY_USER',
+  (expressionId, isEditableUserSet) => ({ expressionId, isEditableUserSet }),
+);
+const requestExpressionItemDelete = createAction(
+  'REQUEST_EXPRESSION_ITEM_DELETE',
+  (expressionId, itemUuid) => ({ expressionId, itemUuid }),
+);
+const cancelExpressionItemDelete = createAction('CANCEL_EXPRESSION_ITEM_DELETE', expressionId => ({
+  expressionId,
+}));
 
 // Expressions
-const expressionChanged = createAction('EXPRESSION_CHANGED',
-    (expressionId, expression) => ({ expressionId, expression }));
-const expressionTermAdded = createAction('EXPRESSION_TERM_ADDED',
-    (expressionId, operatorId) => ({expressionId, operatorId}));
-const expressionOperatorAdded = createAction('EXPRESSION_OPERATOR_ADDED',
-    (expressionId, operatorId) => ({expressionId, operatorId}));
-const expressionItemUpdated = createAction('EXPRESSION_ITEM_UPDATED',
-    (expressionId, itemId, updates) => ({expressionId, itemId, updates}))
-const confirmExpressionItemDeleted = createAction('EXPRESSION_ITEM_DELETED',
-    (expressionId, itemId) => ({expressionId, itemId}));
-const expressionItemMoved = createAction('EXPRESSION_ITEM_MOVED',
-    (expressionId, itemToMove, destination) => ({expressionId, itemToMove, destination}));
+const expressionChanged = createAction('EXPRESSION_CHANGED', (expressionId, expression) => ({
+  expressionId,
+  expression,
+}));
+const expressionTermAdded = createAction('EXPRESSION_TERM_ADDED', (expressionId, operatorId) => ({
+  expressionId,
+  operatorId,
+}));
+const expressionOperatorAdded = createAction(
+  'EXPRESSION_OPERATOR_ADDED',
+  (expressionId, operatorId) => ({ expressionId, operatorId }),
+);
+const expressionItemUpdated = createAction(
+  'EXPRESSION_ITEM_UPDATED',
+  (expressionId, itemId, updates) => ({ expressionId, itemId, updates }),
+);
+const confirmExpressionItemDeleted = createAction(
+  'EXPRESSION_ITEM_DELETED',
+  (expressionId, itemId) => ({ expressionId, itemId }),
+);
+const expressionItemMoved = createAction(
+  'EXPRESSION_ITEM_MOVED',
+  (expressionId, itemToMove, destination) => ({ expressionId, itemToMove, destination }),
+);
 
 // expressions, keyed on ID, there may be several expressions on a page
 const defaultExpressionState = {};
 
 const NEW_TERM = {
-    "type" : "term",
-    "enabled" : true
-}
+  type: 'term',
+  enabled: true,
+};
 
 const NEW_OPERATOR = {
-    "type" : "operator",
-    "op" : "AND",
-    "enabled" : true,
-    "children": []
+  type: 'operator',
+  op: 'AND',
+  enabled: true,
+  children: [],
 };
 
 /**
- * These constants and functions are used to generate Doc Ref pickerId values 
+ * These constants and functions are used to generate Doc Ref pickerId values
  * that can carry the Dictionary choices for expression terms.
  * The Expression ID and the Term UUID must be carried inside the picker ID.
  */
@@ -90,188 +107,172 @@ const PICKER_DELIM = '_';
  *  }
  */
 const splitDictionaryTermId = (value) => {
-    let p = value.split(PICKER_DELIM);
-    let isExpressionBased = false;
-    let expressionId = null;
-    let termUuid = null;
-    if (p.length === 3 && p[0] === EXPRESSION_PREFIX) {
-        isExpressionBased = true;
-        expressionId = p[1];
-        termUuid = p[2];
-    } 
-    return {
-        isExpressionBased,
-        expressionId,
-        termUuid
-    }
-}
+  const p = value.split(PICKER_DELIM);
+  let isExpressionBased = false;
+  let expressionId = null;
+  let termUuid = null;
+  if (p.length === 3 && p[0] === EXPRESSION_PREFIX) {
+    isExpressionBased = true;
+    expressionId = p[1];
+    termUuid = p[2];
+  }
+  return {
+    isExpressionBased,
+    expressionId,
+    termUuid,
+  };
+};
 
 /**
  * Create the combined picker ID with the appropriate PREFIX and DELIMTER
  * that allow for unambiguous detection in the splitter function.
- * 
+ *
  * @param {string} expressionId The ID of the expression to which this picker belong
  * @param {string} termUuid The UUID of the term that the picker is being used to pick a value for.
  */
-const joinDictionaryTermId = (expressionId, termUuid) => 
-    (EXPRESSION_PREFIX + PICKER_DELIM + expressionId + PICKER_DELIM + termUuid)
+const joinDictionaryTermId = (expressionId, termUuid) =>
+  EXPRESSION_PREFIX + PICKER_DELIM + expressionId + PICKER_DELIM + termUuid;
 
-const expressionReducer = handleActions({
+const expressionReducer = handleActions(
+  {
     // Expression Changed
-    [expressionChanged]:
-    (state, action) => ({
-        ...state,
-        [action.payload.expressionId] : assignRandomUuids(action.payload.expression)
+    [expressionChanged]: (state, action) => ({
+      ...state,
+      [action.payload.expressionId]: assignRandomUuids(action.payload.expression),
     }),
 
     // Expression Term Added
-    [expressionTermAdded]:
-    (state, action) => ({
-        ...state,
-        [action.payload.expressionId] : addItemToTree(
-                state[action.payload.expressionId],
-                action.payload.operatorId,
-                NEW_TERM
-            )
+    [expressionTermAdded]: (state, action) => ({
+      ...state,
+      [action.payload.expressionId]: addItemToTree(
+        state[action.payload.expressionId],
+        action.payload.operatorId,
+        NEW_TERM,
+      ),
     }),
 
     // Expression Operator Added
-    [expressionOperatorAdded]:
-    (state, action) => ({
-        ...state,
-        [action.payload.expressionId] : addItemToTree(
-                state[action.payload.expressionId], 
-                action.payload.operatorId, 
-                NEW_OPERATOR
-            )
+    [expressionOperatorAdded]: (state, action) => ({
+      ...state,
+      [action.payload.expressionId]: addItemToTree(
+        state[action.payload.expressionId],
+        action.payload.operatorId,
+        NEW_OPERATOR,
+      ),
     }),
 
     // Expression Term Updated
-    [expressionItemUpdated]:
-    (state, action) => ({
-        ...state,
-        [action.payload.expressionId] : updateItemInTree(
-                state[action.payload.expressionId], 
-                action.payload.itemId, 
-                action.payload.updates
-            )
+    [expressionItemUpdated]: (state, action) => ({
+      ...state,
+      [action.payload.expressionId]: updateItemInTree(
+        state[action.payload.expressionId],
+        action.payload.itemId,
+        action.payload.updates,
+      ),
     }),
 
     // Expression Item Deleted
-    [confirmExpressionItemDeleted]:
-    (state, action) => ({
-        ...state,
-        [action.payload.expressionId] : deleteItemFromTree(
-                state[action.payload.expressionId], 
-                action.payload.itemId
-            )
+    [confirmExpressionItemDeleted]: (state, action) => ({
+      ...state,
+      [action.payload.expressionId]: deleteItemFromTree(
+        state[action.payload.expressionId],
+        action.payload.itemId,
+      ),
     }),
 
     // Expression Item Moved
-    [expressionItemMoved]:
-    (state, action) => ({
-        ...state,
-        [action.payload.expressionId] : moveItemInTree(
-                state[action.payload.expressionId],
-                action.payload.itemToMove, 
-                action.payload.destination
-            )
+    [expressionItemMoved]: (state, action) => ({
+      ...state,
+      [action.payload.expressionId]: moveItemInTree(
+        state[action.payload.expressionId],
+        action.payload.itemToMove,
+        action.payload.destination,
+      ),
     }),
 
     // Doc Ref Picked
-    [docRefPicked]:
-    (state, action) => {
-        let {
-            isExpressionBased,
-            expressionId,
-            termUuid
-        } = splitDictionaryTermId(action.payload.pickerId);
+    [docRefPicked]: (state, action) => {
+      const { isExpressionBased, expressionId, termUuid } = splitDictionaryTermId(action.payload.pickerId);
 
-        if (isExpressionBased) {
-            return {
-                ...state,
-                [expressionId] : updateItemInTree(
-                        state[expressionId], 
-                        termUuid, 
-                        {
-                            value: undefined,
-                            dictionary: action.payload.docRef
-                        }
-                    )
-            }
-        } else {
-            return state;
-        }
-    }
-}, defaultExpressionState);
+      if (isExpressionBased) {
+        return {
+          ...state,
+          [expressionId]: updateItemInTree(state[expressionId], termUuid, {
+            value: undefined,
+            dictionary: action.payload.docRef,
+          }),
+        };
+      }
+      return state;
+    },
+  },
+  defaultExpressionState,
+);
 
-// 
-const defaultEditorsState = {}
+//
+const defaultEditorsState = {};
 const defaultEditorState = {
-    isEditableUserSet : false,
-    pendingDeletionUuid : undefined
-}
+  isEditableUserSet: false,
+  pendingDeletionUuid: undefined,
+};
 
-const expressionEditorReducer = handleActions({
-    [expressionEditorCreated]:
-    (state, action) => ({
-        [action.payload.expressionId] : {
-            ...defaultEditorState,
-            ...state[action.payload.expressionId]
-        }
+const expressionEditorReducer = handleActions(
+  {
+    [expressionEditorCreated]: (state, action) => ({
+      [action.payload.expressionId]: {
+        ...defaultEditorState,
+        ...state[action.payload.expressionId],
+      },
     }),
 
-    [expressionEditorDestroyed]:
-    (state, action) => ({
-        [action.payload.expressionId] : undefined
+    [expressionEditorDestroyed]: (state, action) => ({
+      [action.payload.expressionId]: undefined,
     }),
 
-    [expressionSetEditable]:
-    (state, action) => ({
-        [action.payload.expressionId] : {
-            ...state[action.payload.expressionId],
-            isEditableUserSet : action.payload.isEditableUserSet
-        }
+    [expressionSetEditable]: (state, action) => ({
+      [action.payload.expressionId]: {
+        ...state[action.payload.expressionId],
+        isEditableUserSet: action.payload.isEditableUserSet,
+      },
     }),
 
-    [requestExpressionItemDelete]:
-    (state, action) => ({
-        [action.payload.expressionId] : {
-            ...state[action.payload.expressionId],
-            pendingDeletionUuid : action.payload.itemUuid
-        }
+    [requestExpressionItemDelete]: (state, action) => ({
+      [action.payload.expressionId]: {
+        ...state[action.payload.expressionId],
+        pendingDeletionUuid: action.payload.itemUuid,
+      },
     }),
 
-    [confirmExpressionItemDeleted]:
-    (state, action) => ({
-        [action.payload.expressionId] : {
-            ...state[action.payload.expressionId],
-            pendingDeletionUuid : undefined
-        }
+    [confirmExpressionItemDeleted]: (state, action) => ({
+      [action.payload.expressionId]: {
+        ...state[action.payload.expressionId],
+        pendingDeletionUuid: undefined,
+      },
     }),
 
-    [cancelExpressionItemDelete]:
-    (state, action) => ({
-        [action.payload.expressionId] : {
-            ...state[action.payload.expressionId],
-            pendingDeletionUuid : undefined
-        }
-    })
-}, defaultEditorsState)
+    [cancelExpressionItemDelete]: (state, action) => ({
+      [action.payload.expressionId]: {
+        ...state[action.payload.expressionId],
+        pendingDeletionUuid: undefined,
+      },
+    }),
+  },
+  defaultEditorsState,
+);
 
 export {
-    expressionEditorCreated,
-    expressionEditorDestroyed,
-    expressionSetEditable,
-    requestExpressionItemDelete,
-    cancelExpressionItemDelete,
-    expressionChanged,
-    expressionTermAdded,
-    expressionOperatorAdded,
-    expressionItemUpdated,
-    confirmExpressionItemDeleted,
-    expressionItemMoved,
-    expressionReducer,
-    expressionEditorReducer,
-    joinDictionaryTermId
-}
+  expressionEditorCreated,
+  expressionEditorDestroyed,
+  expressionSetEditable,
+  requestExpressionItemDelete,
+  cancelExpressionItemDelete,
+  expressionChanged,
+  expressionTermAdded,
+  expressionOperatorAdded,
+  expressionItemUpdated,
+  confirmExpressionItemDeleted,
+  expressionItemMoved,
+  expressionReducer,
+  expressionEditorReducer,
+  joinDictionaryTermId,
+};

@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 export const ItemTypes = {
-    DOC_REF : 'docRef',
-    FOLDER : 'folder'
-}
+  DOC_REF: 'docRef',
+  FOLDER: 'folder',
+};

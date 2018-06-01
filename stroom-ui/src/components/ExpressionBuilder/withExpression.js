@@ -14,78 +14,71 @@
  * limitations under the License.
  */
 import React, { Component } from 'react';
-import PropTypes from 'prop-types'
+import PropTypes from 'prop-types';
 
-import { connect } from 'react-redux'
+import { connect } from 'react-redux';
 
-import {
-    expressionEditorCreated,
-    expressionEditorDestroyed
-} from './redux';
+import { expressionEditorCreated, expressionEditorDestroyed } from './redux';
 
 /**
  * This is a Higher Order Component
  * https://reactjs.org/docs/higher-order-components.html
- * 
+ *
  * It provides the expression by connecting to the redux store and using a provided
  * expressionId to look it up.
- * 
- * @param {React.Component} WrappedComponent 
+ *
+ * @param {React.Component} WrappedComponent
  */
 export function withExpression() {
-    return WrappedComponent => {
-        let WithExpression = class extends Component {
-            static propTypes = {
-                expressionId: PropTypes.string.isRequired,
-                expressions: PropTypes.object.isRequired,
-                expressionEditors : PropTypes.object.isRequired,
+  return (WrappedComponent) => {
+    const WithExpression = class extends Component {
+      static propTypes = {
+        expressionId: PropTypes.string.isRequired,
+        expressions: PropTypes.object.isRequired,
+        expressionEditors: PropTypes.object.isRequired,
 
-                expressionEditorCreated : PropTypes.func.isRequired,
-                expressionEditorDestroyed : PropTypes.func.isRequired
-            }
+        expressionEditorCreated: PropTypes.func.isRequired,
+        expressionEditorDestroyed: PropTypes.func.isRequired,
+      };
 
-            state = {
-                expression : undefined,
-                editor: undefined
-            }
-        
-            static getDerivedStateFromProps(nextProps, prevState) {
-                return {
-                    expression : nextProps.expressions[nextProps.expressionId],
-                    editor : nextProps.expressionEditors[nextProps.expressionId] || {}
-                }
-            }
+      state = {
+        expression: undefined,
+        editor: undefined,
+      };
 
-            componentDidMount() {
-                this.props.expressionEditorCreated(this.props.expressionId);
-            }
+      static getDerivedStateFromProps(nextProps, prevState) {
+        return {
+          expression: nextProps.expressions[nextProps.expressionId],
+          editor: nextProps.expressionEditors[nextProps.expressionId] || {},
+        };
+      }
 
-            componentWillUnmount() {
-                this.props.expressionEditorDestroyed(this.props.expressionId);
-            }
+      componentDidMount() {
+        this.props.expressionEditorCreated(this.props.expressionId);
+      }
 
-            render() {
-                if (!!this.state.expression) {
-                    return <WrappedComponent 
-                        {...this.state}
-                        {...this.props}
-                        />
-                } else {
-                    return <span>awaiting expression state</span>
-                }
-            }
+      componentWillUnmount() {
+        this.props.expressionEditorDestroyed(this.props.expressionId);
+      }
+
+      render() {
+        if (this.state.expression) {
+          return <WrappedComponent {...this.state} {...this.props} />;
         }
+        return <span>awaiting expression state</span>;
+      }
+    };
 
-        return connect(
-            (state) => ({
-                expressions : state.expressions,
-                expressionEditors : state.expressionEditors
-            }),
-            {
-                // actions
-                expressionEditorCreated,
-                expressionEditorDestroyed,
-            }
-        )(WithExpression);
-    }
+    return connect(
+      state => ({
+        expressions: state.expressions,
+        expressionEditors: state.expressionEditors,
+      }),
+      {
+        // actions
+        expressionEditorCreated,
+        expressionEditorDestroyed,
+      },
+    )(WithExpression);
+  };
 }

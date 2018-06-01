@@ -1,18 +1,5 @@
-import {
-    modalReducer,
-    modalCreated,
-    setModal,
-    modalDestroyed
-} from './redux';
+import { modalReducer, modalCreated, setModal, modalDestroyed } from './redux';
 
-import {
-    withModal
-} from './withModal';
+import { withModal } from './withModal';
 
-export {
-    modalReducer,
-    modalCreated,
-    setModal,
-    modalDestroyed,
-    withModal
-}
+export { modalReducer, modalCreated, setModal, modalDestroyed, withModal };

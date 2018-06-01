@@ -14,60 +14,56 @@
  * limitations under the License.
  */
 import React, { Component } from 'react';
-import PropTypes from 'prop-types'
+import PropTypes from 'prop-types';
 
-import { connect } from 'react-redux'
+import { connect } from 'react-redux';
 
 import { explorerTreeOpened, DEFAULT_EXPLORER_ID } from './redux';
 
 /**
  * This is a Higher Order Component
  * https://reactjs.org/docs/higher-order-components.html
- * 
+ *
  * It provides the explorer by connecting to the redux store and using a provided
  * explorerId to look it up.
  */
 export function withExistingExplorer(customIdPropertyName) {
-    return WrappedComponent => {
-        let idPropertyName = customIdPropertyName || 'explorerId';
+  return (WrappedComponent) => {
+    const idPropertyName = customIdPropertyName || 'explorerId';
 
-        let WithExplorer = class extends Component {
-            static propTypes = {
-                [idPropertyName]: PropTypes.string.isRequired,
-                explorers: PropTypes.object.isRequired
-            }
+    const WithExplorer = class extends Component {
+      static propTypes = {
+        [idPropertyName]: PropTypes.string.isRequired,
+        explorers: PropTypes.object.isRequired,
+      };
 
-            state = {
-                explorer : undefined
-            }
+      state = {
+        explorer: undefined,
+      };
 
-            static getDerivedStateFromProps(nextProps, prevState) {
-                return {
-                    explorer : nextProps.explorers[nextProps[idPropertyName]]
-                }
-            }
+      static getDerivedStateFromProps(nextProps, prevState) {
+        return {
+          explorer: nextProps.explorers[nextProps[idPropertyName]],
+        };
+      }
 
-            render() {
-                if (!!this.state.explorer) {
-                    return <WrappedComponent 
-                        {...this.state} 
-                        {...this.props} 
-                        />
-                } else {
-                    return <span>awaiting explorer state</span>
-                }
-            }
+      render() {
+        if (this.state.explorer) {
+          return <WrappedComponent {...this.state} {...this.props} />;
         }
+        return <span>awaiting explorer state</span>;
+      }
+    };
 
-        return connect(
-            (state) => ({
-                explorers: state.explorerTree.explorers
-            }),
-            {
-                // actions
-            }
-        )(WithExplorer);
-    }
+    return connect(
+      state => ({
+        explorers: state.explorerTree.explorers,
+      }),
+      {
+        // actions
+      },
+    )(WithExplorer);
+  };
 }
 
 /**
@@ -75,50 +71,50 @@ export function withExistingExplorer(customIdPropertyName) {
  * It calls the explorerTreeOpened function on mount.
  */
 export function withCreatedExplorer(customIdPropertyName) {
-    return (WrappedComponent) => {
-        let idPropertyName = customIdPropertyName || 'explorerId';
+  return (WrappedComponent) => {
+    const idPropertyName = customIdPropertyName || 'explorerId';
 
-        // This component will want to retrieve the explorer
-        let WrappedWithExplorer = withExistingExplorer(customIdPropertyName)(WrappedComponent);
+    // This component will want to retrieve the explorer
+    const WrappedWithExplorer = withExistingExplorer(customIdPropertyName)(WrappedComponent);
 
-        let WithCreatedExplorer = class extends Component {
-            static propTypes = {
-                allowMultiSelect: PropTypes.bool.isRequired,
-                allowDragAndDrop: PropTypes.bool.isRequired,
-                typeFilter: PropTypes.string,
-            }
+    const WithCreatedExplorer = class extends Component {
+      static propTypes = {
+        allowMultiSelect: PropTypes.bool.isRequired,
+        allowDragAndDrop: PropTypes.bool.isRequired,
+        typeFilter: PropTypes.string,
+      };
 
-            static defaultProps = {
-                explorerId: DEFAULT_EXPLORER_ID,
-                [idPropertyName] : DEFAULT_EXPLORER_ID,
-                allowMultiSelect: true,
-                allowDragAndDrop: true,
-                typeFilter: undefined,
-            };
-        
-            componentDidMount() {
-                // We give these properties to the explorer state, then the nested objects can read these values from
-                // redux using the explorerId which is passed all the way down.
-                this.props.explorerTreeOpened(
-                    this.props[idPropertyName],
-                    this.props.allowMultiSelect,
-                    this.props.allowDragAndDrop,
-                    this.props.typeFilter,
-                );
-            }
+      static defaultProps = {
+        explorerId: DEFAULT_EXPLORER_ID,
+        [idPropertyName]: DEFAULT_EXPLORER_ID,
+        allowMultiSelect: true,
+        allowDragAndDrop: true,
+        typeFilter: undefined,
+      };
 
-            render() {
-                return <WrappedWithExplorer {...this.props} />
-            }
-        }
+      componentDidMount() {
+        // We give these properties to the explorer state, then the nested objects can read these values from
+        // redux using the explorerId which is passed all the way down.
+        this.props.explorerTreeOpened(
+          this.props[idPropertyName],
+          this.props.allowMultiSelect,
+          this.props.allowDragAndDrop,
+          this.props.typeFilter,
+        );
+      }
 
-        return connect(
-            (state) => ({
-                // state
-            }),
-            {
-                explorerTreeOpened
-            }
-        )(WithCreatedExplorer); 
-    }
+      render() {
+        return <WrappedWithExplorer {...this.props} />;
+      }
+    };
+
+    return connect(
+      state => ({
+        // state
+      }),
+      {
+        explorerTreeOpened,
+      },
+    )(WithCreatedExplorer);
+  };
 }

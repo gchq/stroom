@@ -20,95 +20,57 @@ import { storiesOf, addDecorator } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 import { withNotes } from '@storybook/addon-notes';
 
-import {
-    DocExplorer,
-    DocRef,
-    Folder,
-    DocRefModalPicker,
-    DocRefDropdownPicker
-} from './index';
+import { DocExplorer, DocRef, Folder, DocRefModalPicker, DocRefDropdownPicker } from './index';
 
-import {
-    receiveDocTree,
-    docRefPicked
-} from './redux'
+import { receiveDocTree, docRefPicked } from './redux';
 
 import markdown from './docExplorer.md';
-import { 
-    testTree,
-    DOC_REF_TYPES 
-} from 'testData'
+import { testTree, DOC_REF_TYPES } from 'testData';
 
-import {
-    pickRandomItem
-} from 'lib/treeUtils';
+import { pickRandomItem } from 'lib/treeUtils';
 
 import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
 
-import {
-    DragDropDecorator
-} from 'lib/storybook/DragDropDecorator';
+import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
 storiesOf('Document Explorer', module)
-    .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-        store.dispatch(receiveDocTree(testTree));
-        store.dispatch(docRefPicked('dropdown2', pickRandomItem(testTree, (l, n) => n.type === DOC_REF_TYPES.XSLT)));
-        store.dispatch(docRefPicked('modal2', pickRandomItem(testTree, (l, n) => n.type === DOC_REF_TYPES.Pipeline)));
-    }))
-    .addDecorator(DragDropDecorator)
-    .add('Explorer Tree (multi-select, dnd)', () => 
-        <DocExplorer 
-            explorerId='multi-select-dnd'
-            />
-    )
-    .add('Explorer Tree (single-select, no-dnd)', () => 
-        <DocExplorer 
-            explorerId='single-select-no-dnd'
-            allowMultiSelect={false} 
-            allowDragAndDrop={false
-            }/>
-    )
-    .add('Explorer Tree (type filter to monster)', () => 
-        <DocExplorer 
-            explorerId='filtered-xslt'
-            typeFilter={DOC_REF_TYPES.XSLT}
-            />
-    )
-    .add('Explorer Tree (type filter to dictionary)', () => 
-        <DocExplorer 
-            explorerId='filtered-dict'
-            typeFilter={DOC_REF_TYPES.DICTIONARY}
-            />
-    )
-    .add('Doc Ref Picker (dropdown, no choice made)', () => 
-        <DocRefDropdownPicker 
-            pickerId='dropdown1' 
-            />
-    )
-    .add('Doc Ref Picker (dropdown, choice made)', () => 
-        <DocRefDropdownPicker 
-            pickerId='dropdown2'
-            />
-    )
-    .add('Doc Ref Picker (dropdown, filter to dictionaries)', () => 
-        <DocRefDropdownPicker 
-            pickerId='dropdown3' 
-            typeFilter={DOC_REF_TYPES.DICTIONARY}
-            />
-    )
-    .add('Doc Ref Picker (modal, no choice made)', () => 
-        <DocRefModalPicker 
-            pickerId='modal1'  
-            />
-    )
-    .add('Doc Ref Picker (modal, choice made)', () => 
-        <DocRefModalPicker 
-            pickerId='modal2' 
-            />
-    )
-    .add('Doc Ref Picker (modal, filter to hobbits)', () => 
-        <DocRefModalPicker 
-            pickerId='modal3'  
-            typeFilter={DOC_REF_TYPES.HOBBIT}
-            />
-    )
+  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
+    store.dispatch(receiveDocTree(testTree));
+    store.dispatch(docRefPicked(
+      'dropdown2',
+      pickRandomItem(testTree, (l, n) => n.type === DOC_REF_TYPES.XSLT),
+    ));
+    store.dispatch(docRefPicked(
+      'modal2',
+      pickRandomItem(testTree, (l, n) => n.type === DOC_REF_TYPES.Pipeline),
+    ));
+  }))
+  .addDecorator(DragDropDecorator)
+  .add('Explorer Tree (multi-select, dnd)', () => <DocExplorer explorerId="multi-select-dnd" />)
+  .add('Explorer Tree (single-select, no-dnd)', () => (
+    <DocExplorer
+      explorerId="single-select-no-dnd"
+      allowMultiSelect={false}
+      allowDragAndDrop={false}
+    />
+  ))
+  .add('Explorer Tree (type filter to monster)', () => (
+    <DocExplorer explorerId="filtered-xslt" typeFilter={DOC_REF_TYPES.XSLT} />
+  ))
+  .add('Explorer Tree (type filter to dictionary)', () => (
+    <DocExplorer explorerId="filtered-dict" typeFilter={DOC_REF_TYPES.DICTIONARY} />
+  ))
+  .add('Doc Ref Picker (dropdown, no choice made)', () => (
+    <DocRefDropdownPicker pickerId="dropdown1" />
+  ))
+  .add('Doc Ref Picker (dropdown, choice made)', () => (
+    <DocRefDropdownPicker pickerId="dropdown2" />
+  ))
+  .add('Doc Ref Picker (dropdown, filter to dictionaries)', () => (
+    <DocRefDropdownPicker pickerId="dropdown3" typeFilter={DOC_REF_TYPES.DICTIONARY} />
+  ))
+  .add('Doc Ref Picker (modal, no choice made)', () => <DocRefModalPicker pickerId="modal1" />)
+  .add('Doc Ref Picker (modal, choice made)', () => <DocRefModalPicker pickerId="modal2" />)
+  .add('Doc Ref Picker (modal, filter to hobbits)', () => (
+    <DocRefModalPicker pickerId="modal3" typeFilter={DOC_REF_TYPES.HOBBIT} />
+  ));

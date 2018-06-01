@@ -229,7 +229,8 @@ function getStateAfterTreeUpdate(state, documentTree) {
 const explorerTreeReducer = handleActions(
   {
     // Receive the current state of the explorer tree
-    [receiveDocTree]: (state, action) => getStateAfterTreeUpdate(state, action.payload.documentTree),
+    [receiveDocTree]: (state, action) =>
+      getStateAfterTreeUpdate(state, action.payload.documentTree),
 
     // When an explorer is opened
     [explorerTreeOpened]: (state, action) => {

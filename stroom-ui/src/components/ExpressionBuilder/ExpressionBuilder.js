@@ -53,8 +53,7 @@ const downRightElbow = ({ lineId, fromRect, toRect }) => {
     x: toRect.left,
     y: toRect.top + toRect.height / 2,
   };
-  const pathSpec =
-    `M ${from.x} ${from.y} L ${from.x} ${to.y} L ${to.x} ${to.y}`;
+  const pathSpec = `M ${from.x} ${from.y} L ${from.x} ${to.y} L ${to.x} ${to.y}`;
   return (
     <path
       key={lineId}

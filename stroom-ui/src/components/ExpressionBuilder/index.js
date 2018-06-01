@@ -14,13 +14,6 @@
  * limitations under the License.
  */
 import ExpressionBuilder from './ExpressionBuilder';
-import {
-    expressionReducer, 
-    expressionEditorReducer
-} from './redux';
+import { expressionReducer, expressionEditorReducer } from './redux';
 
-export {
-    ExpressionBuilder,
-    expressionReducer,
-    expressionEditorReducer
-};
+export { ExpressionBuilder, expressionReducer, expressionEditorReducer };

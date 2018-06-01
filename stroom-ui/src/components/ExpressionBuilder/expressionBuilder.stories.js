@@ -16,10 +16,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import {
-  storiesOf,
-  addDecorator
-} from '@storybook/react';
+import { storiesOf, addDecorator } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 import { withNotes } from '@storybook/addon-notes';
 
@@ -29,24 +26,13 @@ import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
 
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
-import {
-  ExpressionTerm,
-  ExpressionOperator,
-  ExpressionBuilder
-} from './index';
+import { ExpressionTerm, ExpressionOperator, ExpressionBuilder } from './index';
 
-import {
-  expressionChanged,
-  expressionSetEditable
-} from './redux';
+import { expressionChanged, expressionSetEditable } from './redux';
 
-import {
-  receiveDataSource
-} from 'components/DataSource';
+import { receiveDataSource } from 'components/DataSource';
 
-import {
-  receiveDocTree
-} from 'components/DocExplorer';
+import { receiveDocTree } from 'components/DocExplorer';
 
 import {
   testTree,
@@ -56,37 +42,38 @@ import {
   testOrOperator,
   testNotOperator,
   testDataSource,
-  emptyDataSource
+  emptyDataSource,
 } from 'testData';
 
 import markdown from './expressionBuilder.md';
 
 storiesOf('Expression Builder', module)
-  .addDecorator(ReduxDecoratorWithInitialisation((store => {
+  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(receiveDocTree(testTree));
     store.dispatch(receiveDataSource('testDs', testDataSource));
     store.dispatch(expressionChanged('populatedExEdit', testExpression));
     store.dispatch(expressionChanged('populatedExEditInEdit', testExpression));
-    store.dispatch(expressionSetEditable('populatedExEditInEdit', true))
+    store.dispatch(expressionSetEditable('populatedExEditInEdit', true));
     store.dispatch(expressionChanged('populatedExRO', testExpression));
     store.dispatch(expressionChanged('simplestEx', simplestExpression));
-  }))) // must be recorder after/outside of the test initialisation decorators
+  })) // must be recorder after/outside of the test initialisation decorators
   .addDecorator(DragDropDecorator)
-  .add('Populated Editable', () => <ExpressionBuilder 
-                                      isEditableSystemSet={true}
-                                      dataSourceUuid="testDs" 
-                                      expressionId="populatedExEdit" />)
-  .add('Populated Editable (in edit)', () => <ExpressionBuilder 
-                                      isEditableSystemSet={true}
-                                      dataSourceUuid="testDs" 
-                                      expressionId="populatedExEditInEdit" />)
-  .add('Populated ReadOnly', () => <ExpressionBuilder 
-                                      dataSourceUuid="testDs"
-                                      expressionId="populatedExRO" />)
-  .add('Simplest Editable', () => <ExpressionBuilder 
-                                      isEditableSystemSet={true}
-                                      dataSourceUuid="testDs" 
-                                      expressionId="simplestEx" />)
+  .add('Populated Editable', () => (
+    <ExpressionBuilder isEditableSystemSet dataSourceUuid="testDs" expressionId="populatedExEdit" />
+  ))
+  .add('Populated Editable (in edit)', () => (
+    <ExpressionBuilder
+      isEditableSystemSet
+      dataSourceUuid="testDs"
+      expressionId="populatedExEditInEdit"
+    />
+  ))
+  .add('Populated ReadOnly', () => (
+    <ExpressionBuilder dataSourceUuid="testDs" expressionId="populatedExRO" />
+  ))
+  .add('Simplest Editable', () => (
+    <ExpressionBuilder isEditableSystemSet dataSourceUuid="testDs" expressionId="simplestEx" />
+  ))
   .add('Missing Data Source', () => (
     <ExpressionBuilder dataSourceUuid="missingDs" expressionId="simplestEx" />
   ))

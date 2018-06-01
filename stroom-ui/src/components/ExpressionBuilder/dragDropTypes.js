@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 export const ItemTypes = {
-    OPERATOR : 'operator',
-    TERM : 'term'
-}
+  OPERATOR: 'operator',
+  TERM: 'term',
+};

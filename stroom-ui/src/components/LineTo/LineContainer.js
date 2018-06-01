@@ -22,17 +22,14 @@ import LineContext from './LineContext';
 
 import { mapObject } from 'lib/treeUtils';
 
-import {
-  lineContainerCreated,
-  lineContainerDestroyed
-} from './redux';
+import { lineContainerCreated, lineContainerDestroyed } from './redux';
 
 /**
  * This function is the default line creation function.
  * It shows how such a function can be written. The first parameter is an object that must contain
  * the following
  * { lineId, fromRect, toRect}
- * 
+ *
  * @param {{ lineId, fromRect, toRect }} line details
  */
 const straightLineCreator = ({ lineId, fromRect, toRect }) => (
@@ -43,10 +40,10 @@ const straightLineCreator = ({ lineId, fromRect, toRect }) => (
     x2={toRect.left + toRect.height / 2}
     y2={toRect.top + toRect.height / 2}
     style={{
-        stroke: 'black',
-        strokeWidth: 2,
-        fill: 'none',
-      }}
+      stroke: 'black',
+      strokeWidth: 2,
+      fill: 'none',
+    }}
   />
 );
 
@@ -127,8 +124,7 @@ class LineContainer extends Component {
     // If the SVG has been scrolled, we need to translate the generated lines to cancel out that effect
     let transform;
     if (this.state.thisRect) {
-      transform =
-        `translate(${this.state.thisRect.x * -1}, ${this.state.thisRect.y * -1})`;
+      transform = `translate(${this.state.thisRect.x * -1}, ${this.state.thisRect.y * -1})`;
     }
     return (
       <LineContext.Provider value={this.props.lineContextId}>

@@ -30,7 +30,7 @@ import {
   selectDocRef,
   openDocRefContextMenu,
   closeDocRefContextMenu,
-  explorerTreeReducer
+  explorerTreeReducer,
 } from './redux';
 
 import { withExplorer } from './withExplorer';

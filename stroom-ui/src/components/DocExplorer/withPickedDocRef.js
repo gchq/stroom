@@ -14,54 +14,51 @@
  * limitations under the License.
  */
 import React, { Component } from 'react';
-import PropTypes from 'prop-types'
+import PropTypes from 'prop-types';
 
-import { connect } from 'react-redux'
+import { connect } from 'react-redux';
 
 import { explorerTreeOpened, DEFAULT_EXPLORER_ID } from './redux';
 
 /**
  * This is a Higher Order Component
  * https://reactjs.org/docs/higher-order-components.html
- * 
+ *
  * It provides the picked doc ref by connecting to the redux store and using a provided
  * pickerId to look it up.
  */
 export function withPickedDocRef(customIdPropertyName) {
-    return WrappedComponent => {
-        let idPropertyName = customIdPropertyName || 'pickerId';
+  return (WrappedComponent) => {
+    const idPropertyName = customIdPropertyName || 'pickerId';
 
-        let WithPickedDocRef = class extends Component {
-            static propTypes = {
-                [idPropertyName]: PropTypes.string.isRequired,
-                pickedDocRefs: PropTypes.object.isRequired
-            }
+    const WithPickedDocRef = class extends Component {
+      static propTypes = {
+        [idPropertyName]: PropTypes.string.isRequired,
+        pickedDocRefs: PropTypes.object.isRequired,
+      };
 
-            state = {
-                docRef : undefined
-            }
+      state = {
+        docRef: undefined,
+      };
 
-            static getDerivedStateFromProps(nextProps, prevState) {
-                return {
-                    docRef : nextProps.pickedDocRefs[nextProps[idPropertyName]]
-                }
-            }
+      static getDerivedStateFromProps(nextProps, prevState) {
+        return {
+          docRef: nextProps.pickedDocRefs[nextProps[idPropertyName]],
+        };
+      }
 
-            render() {
-                return <WrappedComponent
-                    {...this.state}
-                    {...this.props}
-                    />
-            }
-        }
+      render() {
+        return <WrappedComponent {...this.state} {...this.props} />;
+      }
+    };
 
-        return connect(
-            (state) => ({
-                pickedDocRefs: state.explorerTree.pickedDocRefs
-            }),
-            {
-                // actions
-            }
-        )(WithPickedDocRef);
-    }
+    return connect(
+      state => ({
+        pickedDocRefs: state.explorerTree.pickedDocRefs,
+      }),
+      {
+        // actions
+      },
+    )(WithPickedDocRef);
+  };
 }

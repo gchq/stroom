@@ -14,69 +14,65 @@
  * limitations under the License.
  */
 import React, { Component } from 'react';
-import PropTypes from 'prop-types'
+import PropTypes from 'prop-types';
 
-import { connect } from 'react-redux'
+import { connect } from 'react-redux';
 
-import {
-    modalCreated,
-    modalDestroyed
-} from './redux';
+import { modalCreated, modalDestroyed } from './redux';
 
 /**
  * This is a Higher Order Component
  * https://reactjs.org/docs/higher-order-components.html
- * 
+ *
  * It provides the state of a modal by using the given id property
  * to lookup the state in the modal redux reducer.
- * 
+ *
  * This allows react components that contain modal components to remain stateless.
  */
 export function withModal(idPropertyName) {
+  return (WrappedComponent) => {
+    const WithModal = class extends Component {
+      static propTypes = {
+        [idPropertyName]: PropTypes.string.isRequired,
+        modal: PropTypes.object.isRequired,
+      };
 
-    return WrappedComponent => {
-        let WithModal = class extends Component {
-            static propTypes = {
-                [idPropertyName]: PropTypes.string.isRequired,
-                modal: PropTypes.object.isRequired
-            }
+      state = {
+        modalIsOpen: undefined,
+      };
 
-            state = {
-                modalIsOpen : undefined
-            }
-
-            static getDerivedStateFromProps(nextProps, prevState) {
-                let currentValue = nextProps.modal[nextProps[idPropertyName]];
-                if (currentValue === undefined) {
-                    currentValue = false;
-                }
-                return {
-                    modalIsOpen : currentValue
-                }
-            }
-
-            componentDidMount() {
-                this.props.modalCreated(this.props[idPropertyName]);
-            }
-
-            componentWillUnmount() {
-                this.props.modalDestroyed(this.props[idPropertyName]);
-            }
-
-            render() {
-                return <WrappedComponent {...this.state} {...this.props} />
-            }
+      static getDerivedStateFromProps(nextProps, prevState) {
+        let currentValue = nextProps.modal[nextProps[idPropertyName]];
+        if (currentValue === undefined) {
+          currentValue = false;
         }
+        return {
+          modalIsOpen: currentValue,
+        };
+      }
 
-        return connect(
-            (state) => ({
-                modal: state.modal
-            }),
-            {
-                // actions
-                modalCreated,
-                modalDestroyed
-            }
-        )(WithModal);
-    }
+      componentDidMount() {
+        this.props.modalCreated(this.props[idPropertyName]);
+      }
+
+      componentWillUnmount() {
+        this.props.modalDestroyed(this.props[idPropertyName]);
+      }
+
+      render() {
+        return <WrappedComponent {...this.state} {...this.props} />;
+      }
+    };
+
+    return connect(
+      state => ({
+        modal: state.modal,
+      }),
+      {
+        // actions
+        modalCreated,
+        modalDestroyed,
+      },
+    )(WithModal);
+  };
 }
