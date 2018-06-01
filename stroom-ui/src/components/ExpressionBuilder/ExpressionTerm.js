@@ -195,7 +195,7 @@ const ExpressionTerm = ({
     text: f.name,
   }));
 
-  const field = dataSource.fields.filter(f => f.name === term.field)[0];
+  const field = dataSource.fields.find(f => f.name === term.field);
   let conditionOptions = [];
   let valueType = 'text';
   if (field) {

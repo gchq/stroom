@@ -31,6 +31,7 @@ import {
 import {
   pipelineReducer as pipelines,
   elementReducer as elements,
+  addElementToPipelineReducer as addElementToPipeline
 } from 'prototypes/PipelineEditor';
 import { trackerDashboardReducer as trackerDashboard } from 'sections/TrackerDashboard';
 import { errorPageReducer as errorPage } from 'sections/ErrorPage';
@@ -48,6 +49,7 @@ export default combineReducers({
   expressionEditors,
   pipelines,
   elements,
+  addElementToPipeline,
   errorPage,
   lineContainer,
   modal,

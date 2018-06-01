@@ -31,12 +31,12 @@ import { groupByCategoryFiltered } from './elementUtils';
  *
  * @param {React.Component} WrappedComponent
  */
-export function withElement() {
+export function withElement(customElementIdPropertyName = 'elementId') {
   return (WrappedComponent) => {
     const WithElement = class extends Component {
       static propTypes = {
         pipelineId: PropTypes.string.isRequired,
-        elementId: PropTypes.string.isRequired,
+        [customElementIdPropertyName]: PropTypes.string,
         pipelines: PropTypes.object.isRequired,
         elements: PropTypes.object.isRequired,
       };
@@ -56,7 +56,7 @@ export function withElement() {
         let availableElements;
 
         if (pipeline) {
-          element = pipeline.pipeline.elements.add.element.find(e => e.id === nextProps.elementId);
+          element = pipeline.pipeline.elements.add.element.find(e => e.id === nextProps[customElementIdPropertyName]);
           if (element) {
             elementDefinition = Object.values(nextProps.elements.elements).find(e => e.type === element.type);
           }
@@ -81,7 +81,7 @@ export function withElement() {
         if (!!this.state.pipeline && !!this.state.element) {
           return <WrappedComponent {...this.state} {...this.props} />;
         }
-        return <span>awaiting pipeline/element state</span>;
+        return null;
       }
     };
 

@@ -21,13 +21,18 @@ import { connect } from 'react-redux';
 
 import { Dropdown } from 'semantic-ui-react';
 
-import { requestDeletePipelineElement, closePipelineElementContextMenu } from './redux';
+import {
+  initiateAddPipelineElement,
+  requestDeletePipelineElement,
+  closePipelineElementContextMenu,
+} from './redux';
 
 const ElementMenu = ({
   pipelineId,
   elementId,
   isOpen,
   closePipelineElementContextMenu,
+  initiateAddPipelineElement,
   requestDeletePipelineElement,
 }) => (
   <Dropdown
@@ -38,7 +43,11 @@ const ElementMenu = ({
     onClose={() => closePipelineElementContextMenu(pipelineId)}
   >
     <Dropdown.Menu>
-      <Dropdown.Item icon="add" text="Add" />
+      <Dropdown.Item
+        icon="add"
+        text="Add"
+        onClick={() => initiateAddPipelineElement(pipelineId, elementId)}
+      />
       <Dropdown.Item
         icon="trash"
         text="Delete"
@@ -55,6 +64,7 @@ ElementMenu.propTypes = {
 
   requestDeletePipelineElement: PropTypes.func.isRequired,
   closePipelineElementContextMenu: PropTypes.func.isRequired,
+  initiateAddPipelineElement: PropTypes.func.isRequired,
 };
 
 export default compose(connect(
@@ -63,6 +73,7 @@ export default compose(connect(
   }),
   {
     closePipelineElementContextMenu,
+    initiateAddPipelineElement,
     requestDeletePipelineElement,
   },
 ))(ElementMenu);

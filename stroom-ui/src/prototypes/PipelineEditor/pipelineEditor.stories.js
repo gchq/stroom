@@ -26,6 +26,7 @@ import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 import { PipelineEditor } from './index';
 
 import PipelineElement from './PipelineElement';
+import AddElementPicker from './AddElementPicker';
 
 import { pipelineChanged, elementsReceived, elementPropertiesReceived } from './redux';
 
@@ -43,7 +44,21 @@ storiesOf('Pipeline Editor', module)
     store.dispatch(elementPropertiesReceived(testElementProperties));
   })) // must be recorder after/outside of the test initialisation decorators
   .addDecorator(DragDropDecorator)
-  .add('Pipeline Editor', () => <PipelineEditor pipelineId="testPipeline" />)
+  .add('Pipeline Editor', () => <PipelineEditor pipelineId="testPipeline" />);
+
+storiesOf('Pipeline Elements', module)
+  .addDecorator(storyFn => (
+    <div>
+      <AddElementPicker pipelineId="testPipeline" />
+      {storyFn()}
+    </div>
+  ))
+  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
+    store.dispatch(pipelineChanged('testPipeline', testPipeline));
+    store.dispatch(elementsReceived(testElementTypes));
+    store.dispatch(elementPropertiesReceived(testElementProperties));
+  })) // must be recorder after/outside of the test initialisation decorators
+  .addDecorator(DragDropDecorator)
   .add('Pipeline Element for Invalid Element ID', () => (
     <PipelineElement pipelineId="testPipeline" elementId="boohokey" />
   ))
