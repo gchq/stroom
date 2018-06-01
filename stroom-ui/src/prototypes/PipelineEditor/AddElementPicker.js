@@ -19,95 +19,10 @@ import PropTypes from 'prop-types';
 import { compose } from 'redux';
 import { connect } from 'react-redux';
 
-import { groupByCategoryFiltered } from './elementUtils';
-
 import { Dropdown, Menu, Icon, Label, Input } from 'semantic-ui-react';
 
 import { requestDeletePipelineElement, closePipelineElementContextMenu } from './redux';
-
-const streamLogo = require('images/pipeline/stream.svg');
-
-/**
- * Higher Order Component to lookup the full element definitions and available follow on
- * elements, based on the various ID's given and the current element definitions from the redux store.
- */
-const withSpecificElement = () => (WrappedComponent) => {
-  const WithSpecificElement = class extends Component {
-      static propTypes = {
-        pipelineId: PropTypes.string.isRequired,
-        elementId: PropTypes.string.isRequired,
-
-        pipelines: PropTypes.object.isRequired,
-        elements: PropTypes.object.isRequired,
-      };
-
-      state = {
-        pipeline: undefined,
-        thisElement: undefined,
-        elementDefinition: undefined,
-        availableElements: undefined,
-      };
-
-      static getDerivedStateFromProps(nextProps, prevState) {
-        const pipeline = nextProps.pipelines[nextProps.pipelineId];
-        let isOpen = false;
-        let thisElement;
-        let elementDefinition;
-        let availableElements;
-
-        if (pipeline) {
-          isOpen =
-            !!pipeline.contextMenuElementId &&
-            pipeline.contextMenuElementId === nextProps.elementId;
-          thisElement = pipeline.pipeline.elements.add.element.filter(e => e.id === nextProps.elementId)[0];
-
-          if (thisElement) {
-            elementDefinition = Object.values(nextProps.elements).filter(e => e.type === thisElement.type)[0];
-
-            if (elementDefinition) {
-              availableElements = groupByCategoryFiltered(nextProps.elements, elementDefinition, 0);
-            }
-          }
-        }
-
-        return {
-          pipeline,
-          isOpen,
-          thisElement,
-          elementDefinition,
-          availableElements,
-        };
-      }
-
-      render() {
-        if (
-          !!this.state.thisElement &&
-          !!this.state.elementDefinition &&
-          !!this.state.availableElements
-        ) {
-          return <WrappedComponent {...this.state} {...this.props} />;
-        }
-        return (
-          <span>
-              Awaiting pipeline element, thisElement: {`${!!this.state.thisElement}`},
-              elementDefinition: {`${!!this.state.elementDefinition}`}, availableElements:{' '}
-            {`${!!this.state.availableElements}`}
-          </span>
-        );
-      }
-  };
-
-  return connect(
-    state => ({
-      // terms are nested, so take all their props from parent
-      elements: state.elements.elements,
-      pipelines: state.pipelines,
-    }),
-    {
-      // actions
-    },
-  )(WithSpecificElement);
-};
+import { withElement } from './withElement';
 
 const AddElementPicker = ({
   pipelineId,
@@ -163,5 +78,5 @@ export default compose(
       requestDeletePipelineElement,
     },
   ),
-  withSpecificElement(),
+  withElement(),
 )(AddElementPicker);

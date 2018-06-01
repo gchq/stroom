@@ -15,5 +15,6 @@
  */
 import ExpressionBuilder from './ExpressionBuilder';
 import { expressionReducer, expressionEditorReducer } from './redux';
+import { dataSourceReducer } from './DataSource';
 
-export { ExpressionBuilder, expressionReducer, expressionEditorReducer };
+export { ExpressionBuilder, expressionReducer, expressionEditorReducer, dataSourceReducer };

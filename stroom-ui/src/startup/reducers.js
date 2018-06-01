@@ -23,14 +23,14 @@ import {
 import { modalReducer as modal } from 'components/WithModal';
 import { lineContainerReducer as lineContainer } from 'components/LineTo';
 import { explorerTreeReducer as explorerTree } from 'components/DocExplorer';
-import { dataSourceReducer as dataSources } from 'components/DataSource';
+import { dataSourceReducer as dataSources } from 'components/ExpressionBuilder';
 import {
   expressionReducer as expressions,
-  expressionEditorReducer as expressionEditors
+  expressionEditorReducer as expressionEditors,
 } from 'components/ExpressionBuilder';
 import {
   pipelineReducer as pipelines,
-  elementReducer as elements
+  elementReducer as elements,
 } from 'prototypes/PipelineEditor';
 import { trackerDashboardReducer as trackerDashboard } from 'sections/TrackerDashboard';
 import { errorPageReducer as errorPage } from 'sections/ErrorPage';
@@ -50,5 +50,5 @@ export default combineReducers({
   elements,
   errorPage,
   lineContainer,
-  modal
+  modal,
 });

@@ -23,7 +23,7 @@ import ExpressionOperator from './ExpressionOperator';
 import ROExpressionOperator from './ROExpressionOperator';
 import { LineContainer } from 'components/LineTo';
 
-import { withDataSource } from 'components/DataSource';
+import { withDataSource } from './DataSource';
 import { withExpression } from './withExpression';
 
 import { Checkbox, Confirm } from 'semantic-ui-react';

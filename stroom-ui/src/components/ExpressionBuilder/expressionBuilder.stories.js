@@ -30,7 +30,7 @@ import { ExpressionTerm, ExpressionOperator, ExpressionBuilder } from './index';
 
 import { expressionChanged, expressionSetEditable } from './redux';
 
-import { receiveDataSource } from 'components/DataSource';
+import { receiveDataSource } from './DataSource';
 
 import { receiveDocTree } from 'components/DocExplorer';
 

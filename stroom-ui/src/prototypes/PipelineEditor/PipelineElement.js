@@ -21,6 +21,7 @@ import { connect } from 'react-redux';
 
 import { DragSource, DropTarget } from 'react-dnd';
 
+import { withElement } from './withElement';
 import { withPipeline } from './withPipeline';
 
 import {
@@ -35,8 +36,6 @@ import ElementMenu from './ElementMenu';
 import { canMovePipelineElement } from './pipelineUtils';
 
 import { ItemTypes } from './dragDropTypes';
-
-const streamLogo = require('images/pipeline/stream.svg');
 
 const dragSource = {
   canDrag(props) {
@@ -86,6 +85,8 @@ const PipelineElement = ({
   canDrop,
   pipelineId,
   elementId,
+  element,
+  elementDefinition,
   contextMenuElementId,
   pipelineElementSelected,
   openPipelineElementContextMenu,
@@ -115,18 +116,22 @@ const PipelineElement = ({
 
   return connectDragSource(connectDropTarget(<span>
     <span className={className} onClick={onSingleClick} onContextMenu={onRightClick}>
-      <img className="Pipeline-element__icon" src={streamLogo} />
+      <img
+        className="Pipeline-element__icon"
+        src={require(`./images/${elementDefinition.icon}`)}
+      />
       {elementId}
     </span>
     <span className="Pipeline-element__context-menu">
       <ElementMenu pipelineId={pipelineId} elementId={elementId} isOpen={isContextMenuOpen} />
     </span>
-  </span>));
+                                             </span>));
 };
 
 PipelineElement.propTypes = {
   pipelineId: PropTypes.string.isRequired,
   pipeline: PropTypes.object.isRequired,
+  element: PropTypes.object.isRequired,
   asTree: PropTypes.object.isRequired,
   elementId: PropTypes.string.isRequired,
   contextMenuElementId: PropTypes.string,
@@ -147,6 +152,7 @@ export default compose(
     },
   ),
   withPipeline(),
+  withElement(),
   DragSource(ItemTypes.ELEMENT, dragSource, dragCollect),
   DropTarget([ItemTypes.ELEMENT], dropTarget, dropCollect),
 )(PipelineElement);
