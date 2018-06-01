@@ -430,7 +430,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
 
     private List<DocRef> createDocRefList() {
         final Stream<Optional<DocRef>> refs = persistence.list(type)
-                .parallelStream()
+                .stream()
                 .map(docRef -> {
                     try {
                         final D doc = read(docRef.getUuid());

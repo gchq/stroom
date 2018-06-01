@@ -346,7 +346,64 @@
       "width" : 200,
       "height" : 200
     },
-    "dimension" : 1
+    "dimension" : 1,
+    "children" : [ {
+      "type" : "tabLayout",
+      "preferredSize" : {
+        "width" : 200,
+        "height" : 192
+      },
+      "tabs" : [ {
+        "id" : "vis-WDTWU"
+      }, {
+        "id" : "table-IIO1T"
+      }, {
+        "id" : "query-JT8D7"
+      } ],
+      "selected" : 0
+    }, {
+      "type" : "tabLayout",
+      "preferredSize" : {
+        "width" : 200,
+        "height" : 183
+      },
+      "tabs" : [ {
+        "id" : "vis-QL85W"
+      }, {
+        "id" : "table-27GY6"
+      }, {
+        "id" : "query-XOG4Q"
+      } ],
+      "selected" : 0
+    }, {
+      "type" : "tabLayout",
+      "preferredSize" : {
+        "width" : 200,
+        "height" : 236
+      },
+      "tabs" : [ {
+        "id" : "vis-UNBZ5"
+      }, {
+        "id" : "table-9JDRM"
+      }, {
+        "id" : "query-HXTW8"
+      } ],
+      "selected" : 0
+    }, {
+      "type" : "tabLayout",
+      "preferredSize" : {
+        "width" : 200,
+        "height" : 200
+      },
+      "tabs" : [ {
+        "id" : "vis-QPS6W"
+      }, {
+        "id" : "table-MUX7H"
+      }, {
+        "id" : "query-GXYVJ"
+      } ],
+      "selected" : 0
+    } ]
   },
   "tabVisibility" : "SHOW_ALL"
 }

@@ -17,6 +17,8 @@
 package stroom.xmlschema.shared;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docstore.shared.Doc;
 import stroom.entity.shared.HasData;
@@ -31,6 +33,7 @@ import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "namespaceURI", "systemId", "deprecated", "schemaGroup"})
+@JsonInclude(Include.NON_EMPTY)
 @XmlRootElement(name = "xmlSchema")
 @XmlType(name = "XmlSchemaDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "namespaceURI", "systemId", "deprecated", "schemaGroup"})
 public class XmlSchemaDoc extends Doc implements HasData {

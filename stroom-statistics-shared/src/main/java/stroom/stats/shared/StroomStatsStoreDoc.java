@@ -17,6 +17,8 @@
 package stroom.stats.shared;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docstore.shared.Doc;
 import stroom.statistics.shared.StatisticType;
@@ -34,6 +36,7 @@ import java.util.Set;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "statisticType", "rollUpType", "precision", "enabled", "config"})
+@JsonInclude(Include.NON_EMPTY)
 @XmlRootElement(name = "stroomStatsStore")
 @XmlType(name = "StroomStatsStoreDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "statisticType", "rollUpType", "precision", "enabled", "config"})
 public class StroomStatsStoreDoc extends Doc {

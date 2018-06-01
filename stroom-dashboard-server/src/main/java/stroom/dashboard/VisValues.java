@@ -16,6 +16,8 @@
 
 package stroom.dashboard;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.xml.bind.annotation.XmlElement;
@@ -25,6 +27,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 
 @JsonPropertyOrder({"fields", "limit"})
+@JsonInclude(Include.NON_EMPTY)
 @XmlType(name = "VisValues", propOrder = {"fields", "limit"})
 public class VisValues implements Serializable {
     private static final long serialVersionUID = 1272545271946712570L;

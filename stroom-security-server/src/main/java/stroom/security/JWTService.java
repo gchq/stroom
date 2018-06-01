@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.auth.service.ApiException;
 import stroom.auth.service.api.ApiKeyApi;
-import stroom.properties.StroomPropertyService;
+import stroom.security.SecurityConfig.JwtConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -34,16 +34,19 @@ class JWTService {
     private final boolean checkTokenRevocation;
 
     @Inject
-    JWTService(final StroomPropertyService propertyService,
+    JWTService(final SecurityConfig securityConfig,
+               final JwtConfig jwtConfig,
                final AuthenticationServiceClients authenticationServiceClients) {
-        this.authJwtIssuer = propertyService.getProperty("stroom.auth.jwt.issuer");
+        this.authJwtIssuer = jwtConfig.getJwtIssuer();
         this.authenticationServiceClients = authenticationServiceClients;
-        this.checkTokenRevocation = propertyService.getBooleanProperty("stroom.auth.jwt.enabletokenrevocationcheck", false);
+        this.checkTokenRevocation = jwtConfig.isEnableTokenRevocationCheck();
 
-        fetchNewPublicKeys();
+        if (securityConfig.isAuthenticationRequired()) {
+            fetchNewPublicKeys();
 
-        if (propertyService.getProperty("stroom.auth.services.url") == null) {
-            throw new SecurityException("No authentication service URL is defined");
+            if (securityConfig.getAuthenticationServicesUrl() == null) {
+                throw new SecurityException("No authentication service URL is defined");
+            }
         }
     }
 

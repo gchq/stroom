@@ -8,8 +8,5 @@
   "rollUpType" : "NONE",
   "precision" : 60000,
   "enabled" : true,
-  "config" : {
-    "statisticFields" : [ ],
-    "customRollUpMasks" : [ ]
-  }
+  "config" : { }
 }

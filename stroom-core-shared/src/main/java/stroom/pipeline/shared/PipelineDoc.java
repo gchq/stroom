@@ -17,6 +17,8 @@
 package stroom.pipeline.shared;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docstore.shared.Doc;
 import stroom.pipeline.shared.data.PipelineData;
@@ -35,6 +37,7 @@ import java.util.Objects;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "parentPipeline"})
+@JsonInclude(Include.NON_EMPTY)
 @XmlRootElement(name = "pipeline")
 @XmlType(name = "PipelineDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "parentPipeline"})
 public class PipelineDoc extends Doc {

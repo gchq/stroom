@@ -83,16 +83,6 @@ public class StreamProcessorServiceImpl extends SystemEntityServiceImpl<StreamPr
         }
 
         @Override
-        protected void appendBasicJoin(final HqlBuilder sql, final String alias, final Set<String> fetchSet) {
-            super.appendBasicJoin(sql, alias, fetchSet);
-            if (fetchSet != null && fetchSet.contains(PipelineDoc.DOCUMENT_TYPE)) {
-                sql.append(" LEFT OUTER JOIN FETCH ");
-                sql.append(alias);
-                sql.append(".pipeline");
-            }
-        }
-
-        @Override
         protected void appendBasicCriteria(final HqlBuilder sql, final String entityName,
                                            final FindStreamProcessorCriteria criteria) {
             super.appendBasicCriteria(sql, entityName, criteria);
