@@ -43,13 +43,13 @@ import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamStatus;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamstore.shared.StreamVolume;
 import stroom.streamtask.StreamTaskCreator;
 import stroom.streamtask.shared.StreamTask;
@@ -137,7 +137,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                 .addTerm(StreamDataSource.STREAM_ID, Condition.EQUALS, "1")
 //                .addTerm(StreamDataSource.PIPELINE, Condition.EQUALS, "1")
 //                .addTerm(StreamDataSource.STREAM_PROCESSOR_ID, Condition.EQUALS, "1")
-                .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.RAW_EVENTS.getName())
+                .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeEntity.RAW_EVENTS.getName())
                 .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
                 .build();
         testCriteria(new FindStreamCriteria(expression), 0);
@@ -218,7 +218,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         final StreamProperties streamProperties = new StreamProperties.Builder()
                 .feedName(FEED1)
-                .streamTypeName(StreamType.RAW_EVENTS.getName())
+                .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
                 .build();
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
         streamTarget.getOutputStream().write(testString.getBytes(StreamUtil.DEFAULT_CHARSET));
@@ -226,7 +226,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         final StreamProperties childProperties = new StreamProperties.Builder()
                 .feedName(streamTarget.getStream().getFeedName())
-                .streamTypeName(StreamType.RAW_EVENTS.getName())
+                .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
                 .parent(streamTarget.getStream())
                 .build();
         final StreamTarget childTarget = streamStore.openStreamTarget(childProperties);
@@ -235,7 +235,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         final StreamProperties grandChildProperties = new StreamProperties.Builder()
                 .feedName(childTarget.getStream().getFeedName())
-                .streamTypeName(StreamType.RAW_EVENTS.getName())
+                .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
                 .parent(childTarget.getStream())
                 .build();
         final StreamTarget grandChildTarget = streamStore.openStreamTarget(grandChildProperties);
@@ -307,7 +307,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         final StreamProperties streamProperties = new StreamProperties.Builder()
                 .feedName(feedName)
-                .streamTypeName(StreamType.RAW_EVENTS.getName())
+                .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
                 .streamTask(streamTask)
                 .parent(parent)
                 .build();
@@ -329,7 +329,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                 .addTerm(StreamDataSource.STREAM_ID, Condition.EQUALS, "1")
 //                .addTerm(StreamDataSource.PIPELINE, Condition.EQUALS, "1")
 //                .addTerm(StreamDataSource.STREAM_PROCESSOR_ID, Condition.EQUALS, "1")
-                .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.RAW_EVENTS.getName())
+                .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeEntity.RAW_EVENTS.getName())
                 .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
                 .build();
         final FindStreamCriteria findStreamCriteria = new FindStreamCriteria(expression);
@@ -347,7 +347,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         final StreamProperties streamProperties = new StreamProperties.Builder()
                 .feedName(FEED1)
-                .streamTypeName(StreamType.RAW_EVENTS.getName())
+                .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
                 .build();
 
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
@@ -371,11 +371,11 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         // Finished
         streamStore.closeStreamSource(streamSource);
 
-        final List<StreamEntity> list = streamStore.find(FindStreamCriteria.createWithStreamType(StreamType.RAW_EVENTS));
+        final List<StreamEntity> list = streamStore.find(FindStreamCriteria.createWithStreamType(StreamTypeNames.RAW_EVENTS));
 
         boolean foundOne = false;
         for (final StreamEntity result : list) {
-            Assert.assertNotNull(FileSystemStreamTypeUtil.getDirectory(result, StreamType.RAW_EVENTS));
+            Assert.assertNotNull(FileSystemStreamTypeUtil.getDirectory(result, StreamTypeNames.RAW_EVENTS));
             Assert.assertNotNull(FileSystemStreamTypeUtil.getBaseName(result));
             if (FileSystemStreamTypeUtil.getBaseName(result)
                     .equals(FileSystemStreamTypeUtil.getBaseName(exactMetaData))) {
@@ -406,7 +406,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         final StreamProperties streamProperties = new StreamProperties.Builder()
                 .feedName(FEED1)
-                .streamTypeName(StreamType.RAW_EVENTS.getName())
+                .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
                 .build();
 
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
@@ -443,7 +443,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         final StreamProperties streamProperties = new StreamProperties.Builder()
                 .feedName(FEED1)
-                .streamTypeName(StreamType.RAW_EVENTS.getName())
+                .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
                 .build();
 
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
@@ -526,7 +526,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         final StreamProperties streamProperties = new StreamProperties.Builder()
                 .feedName(FEED1)
-                .streamTypeName(StreamType.RAW_EVENTS.getName())
+                .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
                 .build();
 
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
@@ -559,7 +559,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     public void testWriteNothing() throws IOException {
         final StreamProperties streamProperties = new StreamProperties.Builder()
                 .feedName(FEED1)
-                .streamTypeName(StreamType.RAW_EVENTS.getName())
+                .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
                 .build();
 
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
@@ -582,24 +582,24 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         final String feed3 = FileSystemTestUtil.getUniqueTestString();
 
 //        setupFeed(feed1);
-        final StreamEntity refData1 = buildRefData(feed2, 2008, 2, StreamType.REFERENCE.getName(), false);
-        final StreamEntity refData2 = buildRefData(feed2, 2009, 2, StreamType.REFERENCE.getName(), false);
-        final StreamEntity refData3 = buildRefData(feed2, 2010, 2, StreamType.REFERENCE.getName(), false);
+        final StreamEntity refData1 = buildRefData(feed2, 2008, 2, StreamTypeEntity.REFERENCE.getName(), false);
+        final StreamEntity refData2 = buildRefData(feed2, 2009, 2, StreamTypeEntity.REFERENCE.getName(), false);
+        final StreamEntity refData3 = buildRefData(feed2, 2010, 2, StreamTypeEntity.REFERENCE.getName(), false);
 
         // These 2 should get ignored as one is locked and the other is RAW
         final HashSet<Long> invalidFeeds = new HashSet<>();
-        invalidFeeds.add(buildRefData(feed2, 2010, 2, StreamType.REFERENCE.getName(), true).getId());
+        invalidFeeds.add(buildRefData(feed2, 2010, 2, StreamTypeEntity.REFERENCE.getName(), true).getId());
 
-        invalidFeeds.add(buildRefData(feed2, 2010, 2, StreamType.RAW_REFERENCE.getName(), false).getId());
+        invalidFeeds.add(buildRefData(feed2, 2010, 2, StreamTypeEntity.RAW_REFERENCE.getName(), false).getId());
 
         // Build some for another feed.
-        buildRefData(feed3, 2008, 2, StreamType.REFERENCE.getName(), false);
-        buildRefData(feed3, 2009, 2, StreamType.REFERENCE.getName(), false);
-        buildRefData(feed3, 2010, 2, StreamType.REFERENCE.getName(), false);
-        buildRefData(feed3, 2011, 2, StreamType.REFERENCE.getName(), false);
+        buildRefData(feed3, 2008, 2, StreamTypeEntity.REFERENCE.getName(), false);
+        buildRefData(feed3, 2009, 2, StreamTypeEntity.REFERENCE.getName(), false);
+        buildRefData(feed3, 2010, 2, StreamTypeEntity.REFERENCE.getName(), false);
+        buildRefData(feed3, 2011, 2, StreamTypeEntity.REFERENCE.getName(), false);
 
         final EffectiveMetaDataCriteria criteria = new EffectiveMetaDataCriteria();
-        criteria.setStreamType(StreamType.REFERENCE.getName());
+        criteria.setStreamType(StreamTypeEntity.REFERENCE.getName());
 
         // feed2 or feed1
         criteria.setFeed(feed2);
@@ -667,7 +667,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     public void testDeleteStreamTarget() throws IOException {
         final StreamProperties streamProperties = new StreamProperties.Builder()
                 .feedName(FEED1)
-                .streamTypeName(StreamType.RAW_EVENTS.getName())
+                .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
                 .build();
 
         final String testString = FileSystemTestUtil.getUniqueTestString();
@@ -715,7 +715,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         final StreamProperties streamProperties = new StreamProperties.Builder()
                 .feedName(FEED1)
-                .streamTypeName(StreamType.RAW_EVENTS.getName())
+                .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
                 .build();
 
         StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
@@ -732,7 +732,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         for (final StreamVolume streamVolume : volumes) {
             rootFile.add(FileSystemStreamTypeUtil.createRootStreamFile(streamVolume.getVolume(), stream,
-                    StreamType.RAW_EVENTS));
+                    StreamTypeNames.RAW_EVENTS));
         }
         Assert.assertTrue(FileSystemUtil.isAllFile(rootFile));
 
@@ -741,7 +741,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         Assert.assertEquals(testString2, streamSource.getAttributeMap().get(testString1));
         streamStore.closeStreamSource(streamSource);
 
-        final Set<Path> manifestFile = FileSystemStreamTypeUtil.createChildStreamPath(rootFile, StreamType.MANIFEST);
+        final Set<Path> manifestFile = FileSystemStreamTypeUtil.createChildStreamPath(rootFile, StreamTypeNames.MANIFEST);
 
         Assert.assertTrue(FileSystemUtil.isAllFile(manifestFile));
 
@@ -786,7 +786,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         final StreamProperties streamProperties = new StreamProperties.Builder()
                 .feedName(FEED1)
-                .streamTypeName(StreamType.RAW_EVENTS.getName())
+                .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
                 .build();
 
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);

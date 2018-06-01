@@ -17,7 +17,7 @@
 package stroom.streamstore.fs.serializable;
 
 import stroom.streamstore.api.StreamTarget;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.fs.StreamTypeNames;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -38,12 +38,12 @@ public class RANestedOutputStream extends NestedOutputStream {
      *
      * @param streamTarget to write the data to.
      */
-    public RANestedOutputStream(final StreamTarget streamTarget) throws IOException {
+    public RANestedOutputStream(final StreamTarget streamTarget) {
         segmentOutputStream = new RASegmentOutputStream(streamTarget.getOutputStream(),
-                streamTarget.addChildStream(StreamType.BOUNDARY_INDEX).getOutputStream());
+                streamTarget.addChildStream(StreamTypeNames.BOUNDARY_INDEX).getOutputStream());
     }
 
-    public RANestedOutputStream(final OutputStream dataFile, final OutputStream boundaryFile) throws IOException {
+    public RANestedOutputStream(final OutputStream dataFile, final OutputStream boundaryFile) {
         segmentOutputStream = new RASegmentOutputStream(dataFile, boundaryFile);
     }
 

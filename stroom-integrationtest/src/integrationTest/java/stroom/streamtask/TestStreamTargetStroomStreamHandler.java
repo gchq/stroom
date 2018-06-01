@@ -28,7 +28,7 @@ import stroom.feed.shared.FeedDoc;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.streamstore.MockStreamStore;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.test.AbstractProcessIntegrationTest;
 
 import javax.inject.Inject;
@@ -62,7 +62,7 @@ public class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrat
         metaMap.put(StroomHeaderArguments.FEED, "TEST_FEED");
 
         final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(streamStore,
-                feedDocCache, null, "TEST_FEED", StreamType.RAW_REFERENCE.getName());
+                feedDocCache, null, "TEST_FEED", StreamTypeEntity.RAW_REFERENCE.getName());
         streamTargetStroomStreamHandler.handleHeader(metaMap);
         streamTargetStroomStreamHandler.handleEntryStart(new StroomZipEntry(null, "1", StroomZipFileType.Meta));
         streamTargetStroomStreamHandler.handleEntryEnd();
@@ -98,7 +98,7 @@ public class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrat
         metaMap2.put(StroomHeaderArguments.FEED, "TEST_FEED2");
 
         final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(streamStore,
-                feedDocCache, null, "TEST_FEED1", StreamType.RAW_EVENTS.getName());
+                feedDocCache, null, "TEST_FEED1", StreamTypeEntity.RAW_EVENTS.getName());
         streamTargetStroomStreamHandler.handleHeader(metaMap1);
         streamTargetStroomStreamHandler.handleEntryStart(new StroomZipEntry(null, "1", StroomZipFileType.Meta));
         streamTargetStroomStreamHandler.handleEntryEnd();
@@ -132,7 +132,7 @@ public class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrat
         metaMap.put(StroomHeaderArguments.FEED, "TEST_FEED");
 
         final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(streamStore,
-                feedDocCache, null, "TEST_FEED", StreamType.RAW_EVENTS.getName());
+                feedDocCache, null, "TEST_FEED", StreamTypeEntity.RAW_EVENTS.getName());
         streamTargetStroomStreamHandler.handleHeader(metaMap);
         streamTargetStroomStreamHandler.handleEntryStart(new StroomZipEntry(null, "1", StroomZipFileType.Meta));
         streamTargetStroomStreamHandler.handleEntryEnd();

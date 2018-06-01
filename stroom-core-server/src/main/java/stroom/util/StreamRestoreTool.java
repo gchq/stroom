@@ -21,10 +21,11 @@ import org.apache.commons.lang.mutable.MutableInt;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.feed.MetaMap;
 import stroom.node.shared.Volume;
+import stroom.streamstore.fs.StreamTypePaths;
 import stroom.streamstore.shared.FeedEntity;
 import stroom.streamstore.shared.StreamAttributeConstants;
-import stroom.streamstore.shared.StreamStatus;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamStatusId;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.util.concurrent.SimpleConcurrentMap;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
@@ -124,12 +125,15 @@ public class StreamRestoreTool extends DatabaseTool {
         if (pathStreamTypeMap == null) {
             pathStreamTypeMap = new HashMap<>();
 
-            final String sql = "select " + StreamType.PATH + "," + StreamType.ID + " from " + StreamType.TABLE_NAME;
+            final String sql = "select " + StreamTypeEntity.NAME + "," + StreamTypeEntity.ID + " from " + StreamTypeEntity.TABLE_NAME;
             try (final Connection connection = getConnection()) {
                 try (final Statement statement = connection.createStatement()) {
                     try (final ResultSet resultSet = statement.executeQuery(sql)) {
                         while (resultSet.next()) {
-                            pathStreamTypeMap.put(resultSet.getString(1), resultSet.getLong(2));
+                            final String name = resultSet.getString(1);
+                            final long id = resultSet.getLong(2);
+                            final String path = StreamTypePaths.getPath(name);
+                            pathStreamTypeMap.put(path, id);
                         }
                     }
                 }
@@ -455,7 +459,7 @@ public class StreamRestoreTool extends DatabaseTool {
                                     } else {
                                         statement1.setNull(s1i++, Types.BIGINT);
                                     }
-                                    statement1.setByte(s1i++, StreamStatus.UNLOCKED.getPrimitiveValue());
+                                    statement1.setByte(s1i++, StreamStatusId.UNLOCKED);
                                     statement1.setLong(s1i++, feedId);
                                     statement1.setNull(s1i++, Types.BIGINT);
                                     statement1.setLong(s1i++, streamTypeId);

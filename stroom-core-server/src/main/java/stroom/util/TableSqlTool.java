@@ -28,7 +28,7 @@ import stroom.streamstore.shared.FeedEntity;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamAttributeValue;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamstore.shared.StreamVolume;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
@@ -44,7 +44,7 @@ public class TableSqlTool {
     private static final List<String> TABLE_CREATE_ORDER = Collections.unmodifiableList(Arrays.asList(
             Rack.TABLE_NAME,
             Node.TABLE_NAME,
-            StreamType.TABLE_NAME,
+            StreamTypeEntity.TABLE_NAME,
             ClusterLock.TABLE_NAME,
             FeedEntity.TABLE_NAME,
             Volume.TABLE_NAME,
@@ -54,7 +54,7 @@ public class TableSqlTool {
             JobNode.TABLE_NAME,
             StreamProcessor.TABLE_NAME,
             StreamProcessorFilter.TABLE_NAME,
-            StreamType.TABLE_NAME,
+            StreamTypeEntity.TABLE_NAME,
             StreamEntity.TABLE_NAME,
             StreamAttributeKey.TABLE_NAME,
             StreamAttributeValue.TABLE_NAME,

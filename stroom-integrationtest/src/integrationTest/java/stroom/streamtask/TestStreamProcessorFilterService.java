@@ -22,12 +22,11 @@ import org.junit.Test;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
-import stroom.feed.shared.FeedDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.StreamProcessor;
@@ -108,8 +107,8 @@ public class TestStreamProcessorFilterService extends AbstractCoreIntegrationTes
                                 .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feedName2)
                                 .build())
                         .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                                .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
-                                .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_REFERENCE.getName())
+                                .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeEntity.RAW_EVENTS.getName())
+                                .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeEntity.RAW_REFERENCE.getName())
                                 .build())
                         .build())
                 .build();

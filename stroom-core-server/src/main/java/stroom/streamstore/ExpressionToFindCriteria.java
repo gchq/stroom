@@ -23,7 +23,7 @@ import stroom.streamstore.shared.StreamAttributeCondition;
 import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -248,7 +248,7 @@ public class ExpressionToFindCriteria {
                                     field,
                                     getAllValues(terms),
                                     streamTypeName -> {
-                                        final StreamType streamType = streamTypeService.getOrCreate(streamTypeName);
+                                        final StreamTypeEntity streamType = streamTypeService.getOrCreate(streamTypeName);
                                         return streamType.getId();
                                     }));
                     break;

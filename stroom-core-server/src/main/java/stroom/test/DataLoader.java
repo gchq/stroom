@@ -28,9 +28,10 @@ import stroom.proxy.repo.StroomZipFileType;
 import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
+import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.fs.serializable.RawInputSegmentWriter;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamtask.StreamTargetStroomStreamHandler;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
@@ -103,9 +104,9 @@ public class DataLoader {
         if (feed.isReference() == mandateEffectiveDate) {
             LOGGER.info("Loading data: " + info);
 
-            String streamTypeName = StreamType.RAW_EVENTS.getName();
+            String streamTypeName = StreamTypeEntity.RAW_EVENTS.getName();
             if (feed.isReference()) {
-                streamTypeName = StreamType.RAW_REFERENCE.getName();
+                streamTypeName = StreamTypeEntity.RAW_REFERENCE.getName();
             }
 
             final StreamProperties streamProperties = new StreamProperties.Builder()
@@ -124,7 +125,7 @@ public class DataLoader {
                 final MetaMap map = new MetaMap();
                 map.put("TestData", "Loaded By SetupSampleData");
 
-                map.write(streamTarget.addChildStream(StreamType.META).getOutputStream(), true);
+                map.write(streamTarget.addChildStream(StreamTypeNames.META).getOutputStream(), true);
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
@@ -153,7 +154,7 @@ public class DataLoader {
                     streamTargetStroomStreamHandler
                             .handleEntryStart(new StroomZipEntry(null, baseName, StroomZipFileType.Context));
                     InputStream inputStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Context);
-                    int read = 0;
+                    int read;
                     while ((read = inputStream.read(buffer)) != -1) {
                         streamTargetStroomStreamHandler.handleEntryData(buffer, 0, read);
                     }
@@ -161,7 +162,6 @@ public class DataLoader {
 
                     streamTargetStroomStreamHandler.handleEntryStart(new StroomZipEntry(null, baseName, StroomZipFileType.Data));
                     inputStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Data);
-                    read = 0;
                     while ((read = inputStream.read(buffer)) != -1) {
                         streamTargetStroomStreamHandler.handleEntryData(buffer, 0, read);
                     }

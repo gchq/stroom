@@ -35,6 +35,7 @@ import stroom.streamstore.StreamMaintenanceService;
 import stroom.streamstore.StreamRange;
 import stroom.streamstore.StreamTypeService;
 import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.shared.StreamStatusId;
 import stroom.streamstore.shared.StreamVolume;
 import stroom.util.io.FileUtil;
 
@@ -110,7 +111,7 @@ public class FileSystemStreamMaintenanceService
             sql.appendEntityIdSetQuery("sv.volume.node", criteria.getNodeIdSet());
             sql.appendEntityIdSetQuery("sv.volume", criteria.getVolumeIdSet());
             sql.appendEntityIdSetQuery("sv.stream", criteria.getStreamIdSet());
-            sql.appendPrimitiveValueSetQuery("sv.stream.pstatus", criteria.getStreamStatusSet());
+            sql.appendPrimitiveValueSetQuery("sv.stream.pstatus", StreamStatusId.convertStatusSet(criteria.getStreamStatusSet()));
 
             if (criteria.getStreamRange() != null && criteria.getStreamRange().getStreamTypePath() != null) {
                 sql.append(" AND sv.stream.streamType.path = ");
@@ -196,7 +197,7 @@ public class FileSystemStreamMaintenanceService
 
         for (final StreamVolume volumeMatch : volumeMatches) {
             final Path rootFile = FileSystemStreamTypeUtil.createRootStreamFile(volumeMatch.getVolume(),
-                    volumeMatch.getStream(), volumeMatch.getStream().getStreamType());
+                    volumeMatch.getStream(), volumeMatch.getStream().getStreamTypeName());
             if (Files.isRegularFile(rootFile)) {
                 results.add(rootFile);
                 results.addAll(FileSystemStreamTypeUtil.findAllDescendantStreamFileList(rootFile));

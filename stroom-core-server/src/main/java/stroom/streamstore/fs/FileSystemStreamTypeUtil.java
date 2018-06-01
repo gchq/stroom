@@ -18,8 +18,7 @@ package stroom.streamstore.fs;
 
 import stroom.node.shared.Volume;
 import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamType;
-import stroom.streamstore.shared.StreamType.FileStoreType;
+import stroom.streamstore.shared.StreamTypeEntity.FileStoreType;
 import stroom.streamstore.shared.StreamVolume;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
@@ -45,12 +44,19 @@ public class FileSystemStreamTypeUtil {
     private static final String FILE_SEPERATOR_CHAR = "=";
     private static final String STORE_NAME = "store";
 
-    private static String createFilePathBase(final Volume volume, final StreamEntity stream, final StreamType streamType) {
+    private static String[] CHILD_STREAM_TYPES = new String[]{
+            StreamTypeNames.SEGMENT_INDEX,
+            StreamTypeNames.BOUNDARY_INDEX,
+            StreamTypeNames.MANIFEST,
+            StreamTypeNames.META,
+            StreamTypeNames.CONTEXT};
+
+    private static String createFilePathBase(final Volume volume, final StreamEntity stream, final String streamTypeName) {
         return volume.getPath() +
                 SEPERATOR_CHAR +
                 STORE_NAME +
                 SEPERATOR_CHAR +
-                getDirectory(stream, streamType) +
+                getDirectory(stream, streamTypeName) +
                 SEPERATOR_CHAR +
                 getBaseName(stream);
     }
@@ -58,14 +64,14 @@ public class FileSystemStreamTypeUtil {
     /**
      * Return back a input stream for a given stream type and file.
      */
-    public static InputStream getInputStream(final StreamType streamType, final Path file) throws IOException {
-        if (streamType == null) {
+    public static InputStream getInputStream(final String streamTypeName, final Path file) throws IOException {
+        if (streamTypeName == null) {
             throw new IllegalArgumentException("Must Have a non-null stream type");
         }
-        if (FileStoreType.bgz.equals(streamType.getFileStoreType())) {
+        if (FileStoreType.bgz.equals(getFileStoreType(streamTypeName))) {
             return new BlockGZIPInputFile(file);
         }
-        return new UncompressedInputStream(file, streamType.isStreamTypeLazy());
+        return new UncompressedInputStream(file, isStreamTypeLazy(streamTypeName));
     }
 
     /**
@@ -74,13 +80,11 @@ public class FileSystemStreamTypeUtil {
      * </p>
      */
     private static List<Path> findChildStreamFileList(final Path parent) {
-        List<Path> kids = new ArrayList<>();
-        for (StreamType type : StreamType.initialValues()) {
-            if (type.isStreamTypeChild()) {
-                Path child = createChildStreamFile(parent, type);
-                if (Files.isRegularFile(child)) {
-                    kids.add(child);
-                }
+        final List<Path> kids = new ArrayList<>();
+        for (final String type : CHILD_STREAM_TYPES) {
+            final Path child = createChildStreamFile(parent, type);
+            if (Files.isRegularFile(child)) {
+                kids.add(child);
             }
         }
         return kids;
@@ -89,14 +93,14 @@ public class FileSystemStreamTypeUtil {
     /**
      * Return back a output stream for a given stream type and file.
      */
-    public static OutputStream getOutputStream(final StreamType streamType, final Set<Path> fileSet)
+    public static OutputStream getOutputStream(final String streamTypeName, final Set<Path> fileSet)
             throws IOException {
-        if (streamType == null) {
+        if (streamTypeName == null) {
             throw new IllegalArgumentException("Must Have a non-null stream type");
         }
         IOException ioEx = null;
         Set<OutputStream> outputStreamSet = new HashSet<>();
-        if (FileStoreType.bgz.equals(streamType.getFileStoreType())) {
+        if (FileStoreType.bgz.equals(getFileStoreType(streamTypeName))) {
             for (Path file : fileSet) {
                 try {
                     outputStreamSet.add(new BlockGZIPOutputFile(file));
@@ -107,7 +111,7 @@ public class FileSystemStreamTypeUtil {
         } else {
             for (Path file : fileSet) {
                 try {
-                    outputStreamSet.add(new LockingFileOutputStream(file, streamType.isStreamTypeLazy()));
+                    outputStreamSet.add(new LockingFileOutputStream(file, isStreamTypeLazy(streamTypeName)));
                 } catch (IOException e) {
                     ioEx = e;
                 }
@@ -122,15 +126,15 @@ public class FileSystemStreamTypeUtil {
     /**
      * Create a child file for a parent.
      */
-    public static Path createChildStreamFile(final StreamVolume streamVolume, final StreamType streamType) {
+    public static Path createChildStreamFile(final StreamVolume streamVolume, final String streamTypeName) {
         final String path = createFilePathBase(streamVolume.getVolume(), streamVolume.getStream(),
-                streamVolume.getStream().getStreamType()) +
+                streamVolume.getStream().getStreamTypeName()) +
                 "." +
-                streamVolume.getStream().getStreamType().getExtension() +
+                StreamTypeExtensions.getExtension(streamVolume.getStream().getStreamTypeName()) +
                 "." +
-                streamType.getExtension() +
+                StreamTypeExtensions.getExtension(streamTypeName) +
                 "." +
-                String.valueOf(streamType.getFileStoreType());
+                String.valueOf(getFileStoreType(streamTypeName));
         return Paths.get(path);
     }
 
@@ -152,16 +156,16 @@ public class FileSystemStreamTypeUtil {
                 FileSystemPrefixUtil.padId(stream.getId());
     }
 
-    public static String getDirectory(StreamEntity stream, StreamType streamType) {
+    public static String getDirectory(StreamEntity stream, String streamTypeName) {
         StringBuilder builder = new StringBuilder();
-        builder.append(streamType.getPath());
+        builder.append(StreamTypePaths.getPath(streamTypeName));
         builder.append(FileSystemStreamTypeUtil.SEPERATOR_CHAR);
         String utcDate = DateUtil.createNormalDateTimeString(stream.getCreateMs());
-        builder.append(utcDate.substring(0, 4));
+        builder.append(utcDate, 0, 4);
         builder.append(FileSystemStreamTypeUtil.SEPERATOR_CHAR);
-        builder.append(utcDate.substring(5, 7));
+        builder.append(utcDate, 5, 7);
         builder.append(FileSystemStreamTypeUtil.SEPERATOR_CHAR);
-        builder.append(utcDate.substring(8, 10));
+        builder.append(utcDate, 8, 10);
         String idPath = FileSystemPrefixUtil.buildIdPath(FileSystemPrefixUtil.padId(stream.getId()));
         if (idPath != null) {
             builder.append(FileSystemStreamTypeUtil.SEPERATOR_CHAR);
@@ -173,11 +177,10 @@ public class FileSystemStreamTypeUtil {
     /**
      * Create a child file set for a parent file set.
      */
-    static Set<Path> createChildStreamPath(final Set<Path> parentSet, final StreamType streamType) {
-        Set<Path> childSet = new HashSet<>();
-        childSet.addAll(parentSet.stream().map(parent -> createChildStreamFile(parent, streamType))
-                .collect(Collectors.toList()));
-        return childSet;
+    static Set<Path> createChildStreamPath(final Set<Path> parentSet, final String streamTypeName) {
+        return parentSet.stream()
+                .map(parent -> createChildStreamFile(parent, streamTypeName))
+                .collect(Collectors.toSet());
     }
 
     /**
@@ -196,26 +199,47 @@ public class FileSystemStreamTypeUtil {
     /**
      * Return a File IO object.
      */
-    public static Path createRootStreamFile(final Volume volume, final StreamEntity stream, final StreamType streamType) {
-        final String path = createFilePathBase(volume, stream, streamType) +
+    public static Path createRootStreamFile(final Volume volume, final StreamEntity stream, final String streamTypeName) {
+        final String path = createFilePathBase(volume, stream, streamTypeName) +
                 "." +
-                streamType.getExtension() +
+                StreamTypeExtensions.getExtension(streamTypeName) +
                 "." +
-                String.valueOf(streamType.getFileStoreType());
+                String.valueOf(getFileStoreType(streamTypeName));
         return Paths.get(path);
     }
 
     /**
      * Create a child file for a parent.
      */
-    static Path createChildStreamFile(final Path parent, final StreamType streamType) {
+    static Path createChildStreamFile(final Path parent, final String streamTypeName) {
         StringBuilder builder = new StringBuilder(FileUtil.getCanonicalPath(parent));
         // Drop ".dat" or ".bgz"
         builder.setLength(builder.lastIndexOf("."));
         builder.append(".");
-        builder.append(streamType.getExtension());
+        builder.append(StreamTypeExtensions.getExtension(streamTypeName));
         builder.append(".");
-        builder.append(String.valueOf(streamType.getFileStoreType()));
+        builder.append(String.valueOf(getFileStoreType(streamTypeName)));
         return Paths.get(builder.toString());
+    }
+
+    private static FileStoreType getFileStoreType(final String streamTypeName) {
+        if (StreamTypeNames.SEGMENT_INDEX.equals(streamTypeName)) {
+            return FileStoreType.dat;
+        }
+        if (StreamTypeNames.BOUNDARY_INDEX.equals(streamTypeName)) {
+            return FileStoreType.dat;
+        }
+        if (StreamTypeNames.MANIFEST.equals(streamTypeName)) {
+            return FileStoreType.dat;
+        }
+        return FileStoreType.bgz;
+    }
+
+    static boolean isStreamTypeLazy(final String streamTypeName) {
+        return StreamTypeNames.SEGMENT_INDEX.equals(streamTypeName) || StreamTypeNames.BOUNDARY_INDEX.equals(streamTypeName);
+    }
+
+    public static boolean isStreamTypeSegment(final String streamTypeName) {
+        return StreamTypeNames.SEGMENT_INDEX.equals(streamTypeName) || StreamTypeNames.BOUNDARY_INDEX.equals(streamTypeName);
     }
 }

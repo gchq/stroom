@@ -31,8 +31,8 @@ import stroom.security.Security;
 import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
+import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.fs.serializable.NestedStreamTarget;
-import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.StreamTargetStroomStreamHandler;
 import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.task.AbstractTaskHandler;
@@ -185,10 +185,10 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
                     "Read");
 
             final StreamProperties streamProperties = new StreamProperties.Builder()
-                            .feedName(task.getFeedName())
-                            .streamTypeName(task.getStreamTypeName())
-                            .effectiveMs(effectiveMs)
-                            .build();
+                    .feedName(task.getFeedName())
+                    .streamTypeName(task.getStreamTypeName())
+                    .effectiveMs(effectiveMs)
+                    .build();
 
             streamTarget = streamStore.openStreamTarget(streamProperties);
 
@@ -235,14 +235,14 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
             if (sourceStream != null) {
                 segmentMetaMap.read(sourceStream, false);
             }
-            nestedStreamTarget.putNextEntry(StreamType.META);
-            segmentMetaMap.write(nestedStreamTarget.getOutputStream(StreamType.META), false);
-            nestedStreamTarget.closeEntry(StreamType.META);
+            nestedStreamTarget.putNextEntry(StreamTypeNames.META);
+            segmentMetaMap.write(nestedStreamTarget.getOutputStream(StreamTypeNames.META), false);
+            nestedStreamTarget.closeEntry(StreamTypeNames.META);
         }
         if (StroomZipFileType.Context.equals(stroomZipFileType)) {
-            nestedStreamTarget.putNextEntry(StreamType.CONTEXT);
-            streamToStream(sourceStream, nestedStreamTarget.getOutputStream(StreamType.CONTEXT), streamProgressMonitor);
-            nestedStreamTarget.closeEntry(StreamType.CONTEXT);
+            nestedStreamTarget.putNextEntry(StreamTypeNames.CONTEXT);
+            streamToStream(sourceStream, nestedStreamTarget.getOutputStream(StreamTypeNames.CONTEXT), streamProgressMonitor);
+            nestedStreamTarget.closeEntry(StreamTypeNames.CONTEXT);
         }
         if (sourceStream != null) {
             sourceStream.close();

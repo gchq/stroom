@@ -20,16 +20,16 @@ package stroom.pipeline.task;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
+import stroom.docref.DocRef;
 import stroom.node.NodeCache;
 import stroom.pipeline.XsltStore;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.XsltDoc;
-import stroom.docref.DocRef;
 import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.tools.StoreCreationTool;
 import stroom.streamtask.StreamProcessorTask;
 import stroom.streamtask.StreamProcessorTaskExecutor;
@@ -111,11 +111,11 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
         Assert.assertEquals(0, streamStore.getLockCount());
 
         // Check we have some raw events.
-        final List<StreamEntity> raw = streamStore.find(FindStreamCriteria.createWithStreamType(StreamType.RAW_EVENTS));
+        final List<StreamEntity> raw = streamStore.find(FindStreamCriteria.createWithStreamType(StreamTypeNames.RAW_EVENTS));
         Assert.assertEquals(NO_OF_EVENT_FILES, raw.size());
 
         // Check all passed.
-        final List<StreamEntity> cooked = streamStore.find(FindStreamCriteria.createWithStreamType(StreamType.EVENTS));
+        final List<StreamEntity> cooked = streamStore.find(FindStreamCriteria.createWithStreamType(StreamTypeNames.EVENTS));
         Assert.assertEquals(NO_OF_EVENT_FILES, cooked.size());
 
         // Check none failed.
@@ -192,11 +192,11 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
         final List<StreamProcessorTaskExecutor> results = processAll();
 
         // Check we have some raw events.
-        final List<StreamEntity> raw = streamStore.find(FindStreamCriteria.createWithStreamType(StreamType.RAW_EVENTS));
+        final List<StreamEntity> raw = streamStore.find(FindStreamCriteria.createWithStreamType(StreamTypeNames.RAW_EVENTS));
         Assert.assertEquals(NO_OF_EVENT_FILES, raw.size());
 
         // Check no output streams were written.
-        final List<StreamEntity> cooked = streamStore.find(FindStreamCriteria.createWithStreamType(StreamType.EVENTS));
+        final List<StreamEntity> cooked = streamStore.find(FindStreamCriteria.createWithStreamType(StreamTypeNames.EVENTS));
         Assert.assertEquals(0, cooked.size());
 
         // Make sure we got 13 results.
@@ -224,11 +224,11 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
         final List<StreamProcessorTaskExecutor> results = processAll();
 
         // Check we have some raw events.
-        final List<StreamEntity> raw = streamStore.find(FindStreamCriteria.createWithStreamType(StreamType.RAW_EVENTS));
+        final List<StreamEntity> raw = streamStore.find(FindStreamCriteria.createWithStreamType(StreamTypeNames.RAW_EVENTS));
         Assert.assertEquals(NO_OF_EVENT_FILES, raw.size());
 
         // Check no output streams were written.
-        final List<StreamEntity> cooked = streamStore.find(FindStreamCriteria.createWithStreamType(StreamType.EVENTS));
+        final List<StreamEntity> cooked = streamStore.find(FindStreamCriteria.createWithStreamType(StreamTypeNames.EVENTS));
         Assert.assertEquals(0, cooked.size());
 
         // Make sure we got 13 results.
@@ -248,7 +248,7 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
     @Test
     public void testInvalidXSLT() {
         // Check none passed.
-        List<StreamEntity> cooked = streamStore.find(FindStreamCriteria.createWithStreamType(StreamType.RAW_EVENTS));
+        List<StreamEntity> cooked = streamStore.find(FindStreamCriteria.createWithStreamType(StreamTypeNames.RAW_EVENTS));
         Assert.assertEquals(0, cooked.size());
 
         // Create a store.
@@ -258,11 +258,11 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
         final List<StreamProcessorTaskExecutor> results = processAll();
 
         // Check we have some raw events.
-        final List<StreamEntity> raw = streamStore.find(FindStreamCriteria.createWithStreamType(StreamType.RAW_EVENTS));
+        final List<StreamEntity> raw = streamStore.find(FindStreamCriteria.createWithStreamType(StreamTypeNames.RAW_EVENTS));
         Assert.assertEquals(NO_OF_EVENT_FILES, raw.size());
 
         // Check all failed.
-        cooked = streamStore.find(FindStreamCriteria.createWithStreamType(StreamType.EVENTS));
+        cooked = streamStore.find(FindStreamCriteria.createWithStreamType(StreamTypeNames.EVENTS));
         Assert.assertEquals(0, cooked.size());
 
         Assert.assertEquals(13, results.size());

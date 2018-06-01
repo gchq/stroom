@@ -17,7 +17,6 @@
 package stroom.pipeline.shared;
 
 import stroom.entity.shared.Action;
-import stroom.streamstore.shared.StreamType;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.Severity;
 
@@ -25,7 +24,7 @@ public class FetchDataAction extends Action<AbstractFetchDataResult> {
     private static final long serialVersionUID = -1773544031158236156L;
 
     private Long streamId;
-    private StreamType childStreamType;
+    private String childStreamType;
 
     private OffsetRange<Long> streamRange;
     private OffsetRange<Long> pageRange;
@@ -56,11 +55,11 @@ public class FetchDataAction extends Action<AbstractFetchDataResult> {
         this.streamId = streamId;
     }
 
-    public StreamType getChildStreamType() {
+    public String getChildStreamType() {
         return childStreamType;
     }
 
-    public void setChildStreamType(final StreamType childStreamType) {
+    public void setChildStreamType(final String childStreamType) {
         this.childStreamType = childStreamType;
     }
 

@@ -32,8 +32,8 @@ import stroom.streamstore.ExpressionMatcher;
 import stroom.streamstore.shared.FeedEntity;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamStatus;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamStatusId;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.task.TaskContext;
 
 import java.sql.Connection;
@@ -167,7 +167,7 @@ public class DataRetentionStreamFinder implements AutoCloseable {
             sql.join(FeedEntity.TABLE_NAME, "F", "S", FeedEntity.FOREIGN_KEY, "F", FeedEntity.ID);
         }
         if (includeStreamType) {
-            sql.join(StreamType.TABLE_NAME, "ST", "S", StreamType.FOREIGN_KEY, "ST", StreamType.ID);
+            sql.join(StreamTypeEntity.TABLE_NAME, "ST", "S", StreamTypeEntity.FOREIGN_KEY, "ST", StreamTypeEntity.ID);
         }
 //        if (includePipeline) {
 //            sql.leftOuterJoin(StreamProcessor.TABLE_NAME, "SP", "S", StreamProcessor.FOREIGN_KEY, "SP", StreamProcessor.ID);
@@ -177,7 +177,7 @@ public class DataRetentionStreamFinder implements AutoCloseable {
         sql.append(" WHERE 1=1");
         sql.appendRangeQuery("S." + StreamEntity.CREATE_MS, ageRange);
         sql.appendRangeQuery("S." + StreamEntity.ID, streamIdRange);
-        sql.appendValueQuery("S." + StreamEntity.STATUS, StreamStatus.UNLOCKED.getPrimitiveValue());
+        sql.appendValueQuery("S." + StreamEntity.STATUS, StreamStatusId.UNLOCKED);
         sql.append(" ORDER BY S." + StreamEntity.ID);
         if (limit != null) {
             sql.append(" LIMIT ");

@@ -36,7 +36,7 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.shared.Stream;
 import stroom.task.TaskContext;
 
 import javax.inject.Inject;
@@ -82,10 +82,10 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
         // Don't set the processor or the task or else this rolling stream will be deleted automatically because the
         // system will think it is superseded output.
         final StreamProperties streamProperties = new StreamProperties.Builder()
-                        .feedName(key.getFeed())
-                        .streamTypeName(key.getStreamType())
-                        .parent(streamHolder.getStream())
-                        .build();
+                .feedName(key.getFeed())
+                .streamTypeName(key.getStreamType())
+                .parent(streamHolder.getStream())
+                .build();
 
         final String nodeName = nodeCache.getDefaultNode().getName();
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
@@ -113,7 +113,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
             if (feedRef != null) {
                 feed = feedRef.getName();
             } else {
-                final StreamEntity parentStream = streamHolder.getStream();
+                final Stream parentStream = streamHolder.getStream();
                 if (parentStream == null) {
                     throw new ProcessException("Unable to determine feed as no parent stream set");
                 }
@@ -139,7 +139,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
         this.streamType = streamType;
     }
 
-    @PipelineProperty(description = "Shoud the output stream be marked with indexed segments to allow fast access to individual records?", defaultValue = "true")
+    @PipelineProperty(description = "Should the output stream be marked with indexed segments to allow fast access to individual records?", defaultValue = "true")
     public void setSegmentOutput(final boolean segmentOutput) {
         this.segmentOutput = segmentOutput;
     }

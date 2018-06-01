@@ -21,7 +21,7 @@ import org.junit.Test;
 import stroom.node.NodeCache;
 import stroom.streamstore.MockStreamStore;
 import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamstore.tools.StoreCreationTool;
 import stroom.streamtask.StreamProcessorTask;
 import stroom.streamtask.StreamProcessorTaskExecutor;
@@ -83,8 +83,8 @@ public class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegr
         final Path outputDir = StroomPipelineTestFileUtil.getTestOutputDir().resolve(DIR);
 
         for (final StreamEntity stream : streamStore.getFileData().keySet()) {
-            if (StreamType.EVENTS.equalsEntity(stream.getStreamType())) {
-                final byte[] data = streamStore.getFileData().get(stream).get(stream.getStreamType().getId());
+            if (StreamTypeEntity.EVENTS.equalsEntity(stream.getStreamType())) {
+                final byte[] data = streamStore.getFileData().get(stream).get(stream.getStreamTypeName());
 
                 // Write the actual XML out.
                 final OutputStream os = StroomPipelineTestFileUtil.getOutputStream(outputDir, "TestTask.out");

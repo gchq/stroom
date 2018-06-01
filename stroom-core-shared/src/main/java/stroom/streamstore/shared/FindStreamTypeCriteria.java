@@ -18,7 +18,7 @@ package stroom.streamstore.shared;
 
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.FindNamedEntityCriteria;
-import stroom.streamstore.shared.StreamType.Purpose;
+import stroom.streamstore.shared.StreamTypeEntity.Purpose;
 
 /**
  * <p>

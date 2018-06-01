@@ -36,14 +36,15 @@ import stroom.ruleset.shared.DataRetentionRule;
 import stroom.security.Security;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.fs.FileSystemStreamTypeUtil;
+import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamstore.shared.StreamVolume;
 import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.shared.StreamProcessor;
@@ -69,7 +70,6 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeMapServiceImpl.class);
 
     private final PipelineStore pipelineStore;
-    private final StreamTypeService streamTypeService;
     private final StreamProcessorService streamProcessorService;
     private final StreamStore streamStore;
     private final Provider<DataRetentionService> dataRetentionServiceProvider;
@@ -81,7 +81,6 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
 
     @Inject
     StreamAttributeMapServiceImpl(@Named("cachedPipelineStore") final PipelineStore pipelineStore,
-                                  @Named("cachedStreamTypeService") final StreamTypeService streamTypeService,
                                   @Named("cachedStreamProcessorService") final StreamProcessorService streamProcessorService,
                                   final StreamStore streamStore,
                                   final Provider<DataRetentionService> dataRetentionServiceProvider,
@@ -91,7 +90,6 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
                                   final StreamMaintenanceService streamMaintenanceService,
                                   final Security security) {
         this.pipelineStore = pipelineStore;
-        this.streamTypeService = streamTypeService;
         this.streamProcessorService = streamProcessorService;
         this.streamStore = streamStore;
         this.dataRetentionServiceProvider = dataRetentionServiceProvider;
@@ -117,7 +115,7 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
             if (includeRelations) {
                 streamCriteria.getFetchSet().add(StreamEntity.ENTITY_TYPE);
             }
-            streamCriteria.getFetchSet().add(StreamType.ENTITY_TYPE);
+            streamCriteria.getFetchSet().add(StreamTypeEntity.ENTITY_TYPE);
             // Share the page criteria
             final BaseResultList<StreamEntity> streamList = streamStore.find(streamCriteria);
 
@@ -323,7 +321,7 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
             }
 
             if (streamAttributeMap != null) {
-                final Path manifest = FileSystemStreamTypeUtil.createChildStreamFile(streamVolume, StreamType.MANIFEST);
+                final Path manifest = FileSystemStreamTypeUtil.createChildStreamFile(streamVolume, StreamTypeNames.MANIFEST);
 
                 if (Files.isRegularFile(manifest)) {
                     final MetaMap metaMap = new MetaMap();
@@ -346,7 +344,7 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
                 if (criteria.getFetchSet().contains(Volume.ENTITY_TYPE)) {
                     try {
                         final Path rootFile = FileSystemStreamTypeUtil.createRootStreamFile(streamVolume.getVolume(),
-                                streamVolume.getStream(), streamVolume.getStream().getStreamType());
+                                streamVolume.getStream(), streamVolume.getStream().getStreamTypeName());
 
                         final List<Path> allFiles = FileSystemStreamTypeUtil.findAllDescendantStreamFileList(rootFile);
                         streamAttributeMap.setFileNameList(new ArrayList<>());

@@ -75,7 +75,8 @@ import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamPermissionException;
 import stroom.streamstore.shared.StreamStatus;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamStatusId;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamstore.shared.StreamVolume;
 import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.shared.StreamProcessor;
@@ -123,7 +124,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     static {
         final Set<String> set = new HashSet<>();
         set.add(FeedEntity.ENTITY_TYPE);
-        set.add(StreamType.ENTITY_TYPE);
+        set.add(StreamTypeEntity.ENTITY_TYPE);
         SOURCE_FETCH_SET = set;
     }
 
@@ -258,7 +259,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
     @Override
     public StreamEntity createStream(final StreamProperties streamProperties) {
-        final StreamType streamType = streamTypeService.getOrCreate(streamProperties.getStreamTypeName());
+        final StreamTypeEntity streamType = streamTypeService.getOrCreate(streamProperties.getStreamTypeName());
         final FeedEntity feed = feedService.getOrCreate(streamProperties.getFeedName());
 
         final StreamEntity stream = new StreamEntity();
@@ -326,7 +327,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 //            if (fetchSet.contains(Feed.DOCUMENT_TYPE)) {
 //                sql.append(" INNER JOIN FETCH e.feed");
 //            }
-            if (fetchSet.contains(StreamType.ENTITY_TYPE)) {
+            if (fetchSet.contains(StreamTypeEntity.ENTITY_TYPE)) {
                 sql.append(" INNER JOIN FETCH e.streamType");
             }
             if (fetchSet.contains(StreamProcessor.ENTITY_TYPE)) {
@@ -414,7 +415,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
                 LOGGER.warn(message);
                 throw new StreamException(message);
             }
-            streamSource = FileSystemStreamSource.create(stream, volumeToUse, stream.getStreamType());
+            streamSource = FileSystemStreamSource.create(stream, volumeToUse, stream.getStreamTypeName());
         }
 
         return streamSource;
@@ -531,7 +532,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             final Set<StreamVolume> lock = obtainLockForUpdate(stream);
             if (lock != null) {
                 final StreamEntity dbStream = lock.iterator().next().getStream();
-                final StreamType streamType = dbStream.getStreamType();
+                final String streamType = dbStream.getStreamTypeName();
                 final FileSystemStreamTarget target = FileSystemStreamTarget.create(dbStream, lock,
                         streamType, append);
 
@@ -683,12 +684,12 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
                 // Are we appending?
                 if (streamTarget.isAppend()) {
                     final Set<Path> childFile = FileSystemStreamTypeUtil.createChildStreamPath(
-                            ((FileSystemStreamTarget) streamTarget).getFiles(false), StreamType.MANIFEST);
+                            ((FileSystemStreamTarget) streamTarget).getFiles(false), StreamTypeNames.MANIFEST);
 
                     // Does the manifest exist ... overwrite it
                     if (FileSystemUtil.isAllFile(childFile)) {
                         streamTarget.getAttributeMap()
-                                .write(FileSystemStreamTypeUtil.getOutputStream(StreamType.MANIFEST, childFile), true);
+                                .write(FileSystemStreamTypeUtil.getOutputStream(StreamTypeNames.MANIFEST, childFile), true);
                         doneManifest = true;
                     }
                 }
@@ -697,7 +698,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
                     // No manifest done yet ... output one if the parent dir's exist
                     if (FileSystemUtil.isAllParentDirectoryExist(((FileSystemStreamTarget) streamTarget).getFiles(false))) {
                         streamTarget.getAttributeMap()
-                                .write(streamTarget.addChildStream(StreamType.MANIFEST).getOutputStream(), true);
+                                .write(streamTarget.addChildStream(StreamTypeNames.MANIFEST).getOutputStream(), true);
                     } else {
                         LOGGER.warn("closeStreamTarget() - Closing target file with no directory present");
                     }
@@ -725,7 +726,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         sql.append("SELECT count(*) FROM ");
         sql.append(StreamEntity.class.getName());
         sql.append(" S WHERE S.pstatus = ");
-        sql.arg(StreamStatus.LOCKED.getPrimitiveValue());
+        sql.arg(StreamStatusId.LOCKED);
 
         return entityManager.executeQueryLongResult(sql);
     }
@@ -825,8 +826,8 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
                     }
                 }
             }
-            if (originalCriteria.getFetchSet().contains(StreamType.ENTITY_TYPE)) {
-                final StreamType streamType = stream.getStreamType();
+            if (originalCriteria.getFetchSet().contains(StreamTypeEntity.ENTITY_TYPE)) {
+                final StreamTypeEntity streamType = stream.getStreamType();
                 stream.setStreamType(streamType);
             }
         }
@@ -1111,10 +1112,10 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
         sql.appendEntityIdSetQuery("S." + StreamEntity.ID, criteria.getStreamIdSet());
 
-        sql.appendPrimitiveValueSetQuery("S." + StreamEntity.STATUS, criteria.getStatusSet());
+        sql.appendPrimitiveValueSetQuery("S." + StreamEntity.STATUS, StreamStatusId.convertStatusSet(criteria.getStatusSet()));
 
         sql.appendEntityIdSetQuery("S." + StreamEntity.PARENT_STREAM_ID, criteria.getParentStreamIdSet());
-        sql.appendEntityIdSetQuery("S." + StreamType.FOREIGN_KEY, criteria.getStreamTypeIdSet());
+        sql.appendEntityIdSetQuery("S." + StreamTypeEntity.FOREIGN_KEY, criteria.getStreamTypeIdSet());
         sql.appendIncludeExcludeSetQuery("S." + FeedEntity.FOREIGN_KEY, criteria.getFeeds());
 
         sql.appendDocRefSetQuery("SP." + StreamProcessor.PIPELINE_UUID, criteria.getPipelineSet());
@@ -1158,7 +1159,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         sql.appendCriteriaSetQuery("s.parentStreamId", criteriaSet);
         // Only pick up unlocked streams if set are filtering with status
         // (normal mode in GUI)
-        sql.appendPrimitiveValueSetQuery("s.pstatus", fetchCriteria.getStatusSet());
+        sql.appendPrimitiveValueSetQuery("s.pstatus", StreamStatusId.convertStatusSet(fetchCriteria.getStatusSet()));
 
         return entityManager.executeQueryResultList(sql);
     }
@@ -1186,7 +1187,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
      */
     @SuppressWarnings("unchecked")
     private List<StreamEntity> findStreamSource(final EffectiveMetaDataCriteria criteria) {
-        final StreamType streamType = getStreamType(criteria.getStreamType());
+        final StreamTypeEntity streamType = getStreamType(criteria.getStreamType());
         final FeedEntity feed = getFeed(criteria.getFeed());
 
         // Build up the HQL
@@ -1198,7 +1199,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         sql.arg(streamType.getId());
         sql.append(" AND S.pstatus = ");
         // Only find stuff that has been written
-        sql.arg(StreamStatus.UNLOCKED.getPrimitiveValue());
+        sql.arg(StreamStatusId.UNLOCKED);
         sql.appendRangeQuery("S.effectiveMs", criteria.getEffectivePeriod());
         sql.appendValueQuery("S.feed", feed);
 
@@ -1220,7 +1221,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     @SuppressWarnings("unchecked")
     // @Transactional
     public List<StreamEntity> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
-        final StreamType streamType = getStreamType(criteria.getStreamType());
+        final StreamTypeEntity streamType = getStreamType(criteria.getStreamType());
 
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
@@ -1245,7 +1246,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             sql.append(" S.streamType.id = ");
             sql.arg(streamType.getId());
             sql.append(" AND S.pstatus = ");
-            sql.arg(StreamStatus.UNLOCKED.getPrimitiveValue());
+            sql.arg(StreamStatusId.UNLOCKED);
             sql.append(" AND (");
 
             for (final Long feed : feedList) {
@@ -1293,7 +1294,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     }
 
     private Map<Long, Long> getMaxEffective(final EffectiveMetaDataCriteria criteria) {
-        final StreamType streamType = getStreamType(criteria.getStreamType());
+        final StreamTypeEntity streamType = getStreamType(criteria.getStreamType());
         final FeedEntity feed = getFeed(criteria.getFeed());
 
         final Map<Long, Long> rtnMap = new HashMap<>();
@@ -1334,9 +1335,9 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         sql.append(" AND ");
         sql.append(StreamEntity.STATUS);
         sql.append(" = ");
-        sql.arg(StreamStatus.UNLOCKED.getPrimitiveValue());
+        sql.arg(StreamStatusId.UNLOCKED);
         sql.append(" AND ");
-        sql.append(StreamType.FOREIGN_KEY);
+        sql.append(StreamTypeEntity.FOREIGN_KEY);
         sql.append(" = ");
         sql.arg(streamType.getId());
         sql.append(" AND ");
@@ -1381,9 +1382,9 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             return 0L;
         }
 
-        StreamStatus newStatus = StreamStatus.DELETED;
+        byte newStatus = StreamStatusId.DELETED;
         if (criteria.obtainStatusSet().isSingleItemMatch(StreamStatus.DELETED)) {
-            newStatus = StreamStatus.UNLOCKED;
+            newStatus = StreamStatusId.UNLOCKED;
         }
 
         final SqlBuilder sql = new SqlBuilder();
@@ -1402,7 +1403,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
             sql.append(StreamEntity.STATUS);
             sql.append(" = ");
-            sql.arg(newStatus.getPrimitiveValue());
+            sql.arg(newStatus);
             sql.append(", ");
             sql.append(StreamEntity.STATUS_MS);
             sql.append(" = ");
@@ -1413,7 +1414,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             sql.append(" S.");
             sql.append(StreamEntity.STATUS);
             sql.append(" <> ");
-            sql.arg(newStatus.getPrimitiveValue());
+            sql.arg(newStatus);
 
             appendStreamCriteria(criteria, sql);
 
@@ -1432,7 +1433,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
             sql.append(StreamEntity.STATUS);
             sql.append(" = ");
-            sql.arg(newStatus.getPrimitiveValue());
+            sql.arg(newStatus);
             sql.append(", US.");
             sql.append(StreamEntity.STATUS_MS);
             sql.append(" = ");
@@ -1456,7 +1457,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             sql.append(" S.");
             sql.append(StreamEntity.STATUS);
             sql.append(" <> ");
-            sql.arg(newStatus.getPrimitiveValue());
+            sql.arg(newStatus);
 
             appendStreamCriteria(criteria, sql);
 
@@ -1504,11 +1505,11 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         return feedDocCache.get(name).map(Doc::getUuid).orElse(null);
     }
 
-    private StreamType getStreamType(final String name) {
+    private StreamTypeEntity getStreamType(final String name) {
         if (name == null) {
             throw new NullPointerException("No name specified for steam type");
         }
-        final StreamType streamType = streamTypeService.getOrCreate(name);
+        final StreamTypeEntity streamType = streamTypeService.getOrCreate(name);
         if (streamType == null) {
             throw new EntityServiceException("Unable to find streamType '" + name + "'");
         }
@@ -1529,7 +1530,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 
     @Override
     public List<String> getStreamTypes() {
-        final List<StreamType> streamTypes = streamTypeService.find(new FindStreamTypeCriteria());
+        final List<StreamTypeEntity> streamTypes = streamTypeService.find(new FindStreamTypeCriteria());
         if (streamTypes == null) {
             return Collections.emptyList();
         }

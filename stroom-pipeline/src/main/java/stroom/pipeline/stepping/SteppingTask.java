@@ -16,13 +16,12 @@
 
 package stroom.pipeline.stepping;
 
+import stroom.docref.DocRef;
 import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.StepType;
 import stroom.pipeline.shared.SteppingFilterSettings;
 import stroom.pipeline.shared.SteppingResult;
-import stroom.docref.DocRef;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.StreamType;
 import stroom.task.ServerTask;
 
 import java.util.Map;
@@ -31,7 +30,7 @@ import java.util.Map.Entry;
 public class SteppingTask extends ServerTask<SteppingResult> {
     // This is what chooses the input to the translation.
     private FindStreamCriteria criteria;
-    private StreamType childStreamType;
+    private String childStreamType;
     private StepLocation stepLocation;
     private StepType stepType;
     private int stepSize = 1;
@@ -53,11 +52,11 @@ public class SteppingTask extends ServerTask<SteppingResult> {
         this.criteria = criteria;
     }
 
-    public StreamType getChildStreamType() {
+    public String getChildStreamType() {
         return childStreamType;
     }
 
-    public void setChildStreamType(final StreamType childStreamType) {
+    public void setChildStreamType(final String childStreamType) {
         this.childStreamType = childStreamType;
     }
 

@@ -20,18 +20,17 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import stroom.entity.shared.SharedDocRef;
-import stroom.streamstore.shared.StreamType;
 
 public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEvent.Handler> {
     private static Type<Handler> TYPE;
     private final Long streamId;
     private final Long eventId;
     private final Long childStreamId;
-    private final StreamType childStreamType;
+    private final String childStreamType;
     private final SharedDocRef pipelineRef;
 
     private BeginPipelineSteppingEvent(final Long streamId, final Long eventId, final Long childStreamId,
-                                       final StreamType childStreamType, final SharedDocRef pipelineRef) {
+                                       final String childStreamType, final SharedDocRef pipelineRef) {
         this.streamId = streamId;
         this.eventId = eventId;
         this.childStreamId = childStreamId;
@@ -40,7 +39,7 @@ public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEv
     }
 
     public static void fire(final HasHandlers source, final Long streamId, final Long eventId, final Long childStreamId,
-                            final StreamType childStreamType, final SharedDocRef pipelineRef) {
+                            final String childStreamType, final SharedDocRef pipelineRef) {
         source.fireEvent(new BeginPipelineSteppingEvent(streamId, eventId, childStreamId, childStreamType, pipelineRef));
     }
 
@@ -73,7 +72,7 @@ public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEv
         return childStreamId;
     }
 
-    public StreamType getChildStreamType() {
+    public String getChildStreamType() {
         return childStreamType;
     }
 

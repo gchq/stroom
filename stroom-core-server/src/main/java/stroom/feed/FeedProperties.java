@@ -3,7 +3,7 @@ package stroom.feed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.shared.FeedDoc;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.RawStreamTypes;
 import stroom.util.config.StroomProperties;
 import stroom.util.io.StreamUtil;
 
@@ -31,13 +31,13 @@ public class FeedProperties {
         return classification.trim().toUpperCase();
     }
 
-    public String getEncoding(final String feedName, final StreamType streamType) {
+    public String getEncoding(final String feedName, final String streamTypeName) {
         final Optional<FeedDoc> optional = feedDocCache.get(feedName);
         String encoding = null;
-        if (optional.isPresent() && streamType != null) {
-            if (StreamType.CONTEXT.equals(streamType)) {
+        if (optional.isPresent() && streamTypeName != null) {
+            if ("Context".equals(streamTypeName)) {
                 encoding = optional.get().getContextEncoding();
-            } else if (streamType.isStreamTypeRaw()) {
+            } else if (RawStreamTypes.isRawType(streamTypeName)) {
                 encoding = optional.get().getEncoding();
             }
         }

@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.io.SeekableInputStream;
 import stroom.streamstore.api.StreamSource;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.fs.StreamTypeNames;
 import stroom.util.io.StreamUtil;
 
 import java.io.IOException;
@@ -67,7 +67,7 @@ public class RASegmentInputStream extends InputStream implements SegmentInputStr
      * @param streamSource to read from
      */
     public RASegmentInputStream(final StreamSource streamSource) throws IOException {
-        this(streamSource.getInputStream(), streamSource.getChildStream(StreamType.SEGMENT_INDEX).getInputStream());
+        this(streamSource.getInputStream(), streamSource.getChildStream(StreamTypeNames.SEGMENT_INDEX).getInputStream());
     }
 
     public RASegmentInputStream(final InputStream data, final InputStream index) throws IOException {

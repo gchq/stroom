@@ -57,11 +57,11 @@ import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.ReprocessDataInfo;
-import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamStatus;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamtask.shared.ReprocessDataAction;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.svg.client.SvgPresets;
@@ -439,7 +439,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         criteria.obtainFindStreamCriteria().getFetchSet().add(FeedDoc.DOCUMENT_TYPE);
         criteria.obtainFindStreamCriteria().getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
         criteria.obtainFindStreamCriteria().getFetchSet().add(StreamProcessor.ENTITY_TYPE);
-        criteria.obtainFindStreamCriteria().getFetchSet().add(StreamType.ENTITY_TYPE);
+        criteria.obtainFindStreamCriteria().getFetchSet().add(StreamTypeEntity.ENTITY_TYPE);
         criteria.obtainFindStreamCriteria().setSort(StreamDataSource.CREATE_TIME, Direction.DESCENDING, false);
 
         return criteria;
@@ -568,7 +568,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     }
 
     @Override
-    public void beginStepping(final Long streamId, final StreamType childStreamType) {
+    public void beginStepping(final Long streamId, final String childStreamType) {
         if (streamId != null) {
             // Try and get a pipeline id to use as a starting point for
             // stepping.

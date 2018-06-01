@@ -28,7 +28,7 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.StreamHolder;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.shared.Stream;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
@@ -74,7 +74,7 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
     public void startStream() {
         try {
             if (this.streamId == null) {
-                final StreamEntity stream = streamHolder.getStream();
+                final Stream stream = streamHolder.getStream();
                 if (stream != null) {
                     streamId = String.valueOf(stream.getId());
                 } else {

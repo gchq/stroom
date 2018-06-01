@@ -27,11 +27,11 @@ import stroom.proxy.repo.StroomZipOutputStreamImpl;
 import stroom.security.Security;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.fs.serializable.NestedInputStream;
 import stroom.streamstore.fs.serializable.RANestedInputStream;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamType;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskContext;
 import stroom.task.TaskHandlerBean;
@@ -163,8 +163,8 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
 
             // Export Source
             dataSource = streamStore.openStreamSource(streamId);
-            final StreamSource metaSource = dataSource.getChildStream(StreamType.META);
-            final StreamSource contextSource = dataSource.getChildStream(StreamType.CONTEXT);
+            final StreamSource metaSource = dataSource.getChildStream(StreamTypeNames.META);
+            final StreamSource contextSource = dataSource.getChildStream(StreamTypeNames.CONTEXT);
 
             dataInputStream = new RANestedInputStream(dataSource);
             metaInputStream = null;

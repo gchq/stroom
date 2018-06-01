@@ -37,7 +37,7 @@ import stroom.node.shared.Node;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamStatus;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamTask;
@@ -242,7 +242,7 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
         final FindStreamTaskCriteria criteria = new FindStreamTaskCriteria();
         criteria.setSort(FindStreamTaskCriteria.FIELD_CREATE_TIME, Direction.DESCENDING, false);
         criteria.getFetchSet().add(StreamEntity.ENTITY_TYPE);
-        criteria.getFetchSet().add(StreamType.ENTITY_TYPE);
+        criteria.getFetchSet().add(StreamTypeEntity.ENTITY_TYPE);
         criteria.getFetchSet().add(FeedDoc.DOCUMENT_TYPE);
         criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
         criteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);

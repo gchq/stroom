@@ -23,8 +23,8 @@ import stroom.feed.MetaMap;
 import stroom.feed.shared.FeedDoc;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamType;
 import stroom.util.date.DateUtil;
 
 import javax.net.ssl.HttpsURLConnection;
@@ -132,7 +132,7 @@ public final class SendStreamDataClient {
         connection.addRequestProperty(FEED, feed.getName());
 
         final StreamSource streamSource = streamStore.openStreamSource(streamId);
-        final StreamSource meta = streamSource.getChildStream(StreamType.META);
+        final StreamSource meta = streamSource.getChildStream(StreamTypeNames.META);
         final StreamEntity stream = streamSource.getStream();
 
         if (stream.getEffectiveMs() != null) {

@@ -27,9 +27,8 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
-/**
- * List of all known stream types within the system.
- */
+/** Used for legacy migration **/
+@Deprecated
 @Entity
 @Table(name = "STRM_TP", uniqueConstraints = @UniqueConstraint(columnNames = {SQLNameConstants.NAME}))
 public class StreamType extends NamedEntity implements HasPrimitiveValue {

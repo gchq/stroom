@@ -19,7 +19,7 @@ package stroom.streamstore.fs.serializable;
 import stroom.io.SeekableInputStream;
 import stroom.io.StreamCloser;
 import stroom.streamstore.api.StreamSource;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.fs.StreamTypeNames;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,7 +37,7 @@ public class StreamSourceInputStreamProviderImpl implements StreamSourceInputStr
     private InputStream segmentIndex;
     private StreamCloser streamCloser;
 
-    public StreamSourceInputStreamProviderImpl(final StreamSource streamSource) throws IOException {
+    public StreamSourceInputStreamProviderImpl(final StreamSource streamSource) {
         this.streamSource = streamSource;
     }
 
@@ -51,7 +51,7 @@ public class StreamSourceInputStreamProviderImpl implements StreamSourceInputStr
 
     private InputStream getBoundaryIndex() {
         if (boundaryIndex == null) {
-            boundaryIndex = streamSource.getChildStream(StreamType.BOUNDARY_INDEX).getInputStream();
+            boundaryIndex = streamSource.getChildStream(StreamTypeNames.BOUNDARY_INDEX).getInputStream();
             getStreamCloser().add(boundaryIndex);
         }
         return boundaryIndex;
@@ -59,7 +59,7 @@ public class StreamSourceInputStreamProviderImpl implements StreamSourceInputStr
 
     private InputStream getSegmentIndex() {
         if (segmentIndex == null) {
-            segmentIndex = streamSource.getChildStream(StreamType.SEGMENT_INDEX).getInputStream();
+            segmentIndex = streamSource.getChildStream(StreamTypeNames.SEGMENT_INDEX).getInputStream();
             getStreamCloser().add(segmentIndex);
         }
         return segmentIndex;
@@ -99,9 +99,7 @@ public class StreamSourceInputStreamProviderImpl implements StreamSourceInputStr
         final long size = entryByteOffsetEnd - entryByteOffsetStart;
 
         // Create the wrapped input stream.
-        final StreamSourceInputStream streamSourceInputStream = new StreamSourceInputStream(segmentInputStream, size);
-
-        return streamSourceInputStream;
+        return new StreamSourceInputStream(segmentInputStream, size);
     }
 
     @Override
@@ -125,9 +123,7 @@ public class StreamSourceInputStreamProviderImpl implements StreamSourceInputStr
         final long entryByteOffsetEnd = entryByteOffsetEnd(segmentInputStream, streamNo);
         // final long size = entryByteOffsetEnd - entryByteOffsetStart;
 
-        final RASegmentInputStream child = new RASegmentInputStream(getData(), getSegmentIndex(), entryByteOffsetStart,
-                entryByteOffsetEnd);
-        return child;
+        return new RASegmentInputStream(getData(), getSegmentIndex(), entryByteOffsetStart, entryByteOffsetEnd);
     }
 
     private long entryByteOffsetStart(final RASegmentInputStream segmentInputStream, final long streamNo)
@@ -154,12 +150,8 @@ public class StreamSourceInputStreamProviderImpl implements StreamSourceInputStr
 
     @Override
     public void close() throws IOException {
-        try {
-            if (streamCloser != null) {
-                streamCloser.close();
-            }
-        } catch (final IOException e) {
-            throw e;
+        if (streamCloser != null) {
+            streamCloser.close();
         }
     }
 }

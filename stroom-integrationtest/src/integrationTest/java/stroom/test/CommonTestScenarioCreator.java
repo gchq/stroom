@@ -40,7 +40,7 @@ import stroom.streamstore.fs.serializable.RawInputSegmentWriter;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamtask.StreamProcessorFilterService;
 import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.shared.StreamProcessor;
@@ -87,7 +87,7 @@ public class CommonTestScenarioCreator {
                 .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
                 .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
                         .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed)
-                        .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
+                        .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeEntity.RAW_EVENTS.getName())
                         .build())
                 .build();
 
@@ -159,7 +159,7 @@ public class CommonTestScenarioCreator {
     public StreamEntity createSampleBlankProcessedFile(final String feed, final StreamEntity sourceStream) {
         final StreamProperties streamProperties = new StreamProperties.Builder()
                 .feedName(feed)
-                .streamTypeName(StreamType.EVENTS.getName())
+                .streamTypeName(StreamTypeEntity.EVENTS.getName())
                 .parent(sourceStream)
                 .build();
 

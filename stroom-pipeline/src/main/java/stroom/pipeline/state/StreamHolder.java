@@ -20,8 +20,7 @@ import stroom.io.StreamCloser;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProviderImpl;
-import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.Stream;
 import stroom.guice.PipelineScoped;
 
 import javax.inject.Inject;
@@ -31,11 +30,11 @@ import java.util.Map;
 
 @PipelineScoped
 public class StreamHolder implements Holder {
-    private final Map<StreamType, StreamSourceInputStreamProvider> streamProviders = new HashMap<>();
+    private final Map<String, StreamSourceInputStreamProvider> streamProviders = new HashMap<>();
 
     private final StreamCloser streamCloser;
 
-    private StreamEntity stream;
+    private Stream stream;
     private long streamNo;
 
     @Inject
@@ -43,11 +42,11 @@ public class StreamHolder implements Holder {
         this.streamCloser = streamCloser;
     }
 
-    public StreamEntity getStream() {
+    public Stream getStream() {
         return stream;
     }
 
-    public void setStream(final StreamEntity stream) {
+    public void setStream(final Stream stream) {
         this.stream = stream;
     }
 
@@ -56,19 +55,18 @@ public class StreamHolder implements Holder {
             final StreamSourceInputStreamProvider provider = new StreamSourceInputStreamProviderImpl(source);
             streamCloser.add(provider);
             streamCloser.add(source);
-            streamProviders.put(source.getType(), provider);
+            streamProviders.put(source.getStreamTypeName(), provider);
         }
     }
 
-    public void addProvider(final StreamSourceInputStreamProvider provider, final StreamType streamType)
-            throws IOException {
+    public void addProvider(final StreamSourceInputStreamProvider provider, final String streamType) {
         if (provider != null) {
             streamCloser.add(provider);
             streamProviders.put(streamType, provider);
         }
     }
 
-    public StreamSourceInputStreamProvider getProvider(final StreamType streamType) {
+    public StreamSourceInputStreamProvider getProvider(final String streamType) {
         return streamProviders.get(streamType);
     }
 

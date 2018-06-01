@@ -45,7 +45,6 @@ class FetchDataHandler extends AbstractFetchDataHandler<FetchDataAction> {
 
     @Inject
     FetchDataHandler(final StreamStore streamStore,
-                     final FeedService feedService,
                      final FeedProperties feedProperties,
                      final StreamProcessorService streamProcessorService,
                      final Provider<FeedHolder> feedHolderProvider,
@@ -60,7 +59,6 @@ class FetchDataHandler extends AbstractFetchDataHandler<FetchDataAction> {
                      final Security security,
                      final PipelineScopeRunnable pipelineScopeRunnable) {
         super(streamStore,
-                feedService,
                 feedProperties,
                 streamProcessorService,
                 feedHolderProvider,

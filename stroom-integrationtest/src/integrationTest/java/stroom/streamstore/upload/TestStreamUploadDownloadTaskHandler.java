@@ -24,17 +24,18 @@ import stroom.security.UserTokenUtil;
 import stroom.streamstore.StreamAttributeValueFlush;
 import stroom.streamstore.StreamDownloadSettings;
 import stroom.streamstore.StreamDownloadTask;
+import stroom.streamstore.StreamUploadTask;
 import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
-import stroom.streamstore.StreamUploadTask;
+import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.fs.serializable.NestedStreamTarget;
 import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamStatus;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.task.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
@@ -60,8 +61,8 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
     @Test
     public void testDownload() throws IOException {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamType.RAW_EVENTS.getName());
-        commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamType.RAW_EVENTS.getName());
+        commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeEntity.RAW_EVENTS.getName());
+        commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeEntity.RAW_EVENTS.getName());
 
         final Path file = Files.createTempFile(getCurrentTestDir(), "TestStreamDownloadTaskHandler", ".zip");
         final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
@@ -82,7 +83,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
         stroomZipFile.close();
 
         taskManager.exec(new StreamUploadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, "test.zip", file, feedName,
-                StreamType.RAW_EVENTS.getName(), null, null));
+                StreamTypeEntity.RAW_EVENTS.getName(), null, null));
 
         Assert.assertEquals(4, streamStore.find(findStreamCriteria).size());
     }
@@ -97,7 +98,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
         Files.write(file, "TEST".getBytes());
 
         taskManager.exec(new StreamUploadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, "test.dat", file, feedName,
-                StreamType.RAW_EVENTS.getName(), null, "Tom:One\nJames:Two\n"));
+                StreamTypeEntity.RAW_EVENTS.getName(), null, "Tom:One\nJames:Two\n"));
 
         Assert.assertEquals(1, streamStore.find(findStreamCriteria).size());
     }
@@ -109,7 +110,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
 
         final StreamProperties streamProperties = new StreamProperties.Builder()
                 .feedName(feedName)
-                .streamTypeName(StreamType.RAW_EVENTS.getName())
+                .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
                 .build();
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
 
@@ -119,25 +120,25 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
         nestedStreamTarget.getOutputStream().write("DATA1".getBytes(StreamUtil.DEFAULT_CHARSET));
         nestedStreamTarget.closeEntry();
 
-        nestedStreamTarget.putNextEntry(StreamType.META);
-        nestedStreamTarget.getOutputStream(StreamType.META).write("META:1\nX:1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
-        nestedStreamTarget.closeEntry(StreamType.META);
+        nestedStreamTarget.putNextEntry(StreamTypeNames.META);
+        nestedStreamTarget.getOutputStream(StreamTypeNames.META).write("META:1\nX:1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
+        nestedStreamTarget.closeEntry(StreamTypeNames.META);
 
-        nestedStreamTarget.putNextEntry(StreamType.CONTEXT);
-        nestedStreamTarget.getOutputStream(StreamType.CONTEXT).write("CONTEXT1".getBytes(StreamUtil.DEFAULT_CHARSET));
-        nestedStreamTarget.closeEntry(StreamType.CONTEXT);
+        nestedStreamTarget.putNextEntry(StreamTypeNames.CONTEXT);
+        nestedStreamTarget.getOutputStream(StreamTypeNames.CONTEXT).write("CONTEXT1".getBytes(StreamUtil.DEFAULT_CHARSET));
+        nestedStreamTarget.closeEntry(StreamTypeNames.CONTEXT);
 
         nestedStreamTarget.putNextEntry();
         nestedStreamTarget.getOutputStream().write("DATA2".getBytes(StreamUtil.DEFAULT_CHARSET));
         nestedStreamTarget.closeEntry();
 
-        nestedStreamTarget.putNextEntry(StreamType.META);
-        nestedStreamTarget.getOutputStream(StreamType.META).write("META:2\nY:2\n".getBytes(StreamUtil.DEFAULT_CHARSET));
-        nestedStreamTarget.closeEntry(StreamType.META);
+        nestedStreamTarget.putNextEntry(StreamTypeNames.META);
+        nestedStreamTarget.getOutputStream(StreamTypeNames.META).write("META:2\nY:2\n".getBytes(StreamUtil.DEFAULT_CHARSET));
+        nestedStreamTarget.closeEntry(StreamTypeNames.META);
 
-        nestedStreamTarget.putNextEntry(StreamType.CONTEXT);
-        nestedStreamTarget.getOutputStream(StreamType.CONTEXT).write("CONTEXT2".getBytes(StreamUtil.DEFAULT_CHARSET));
-        nestedStreamTarget.closeEntry(StreamType.CONTEXT);
+        nestedStreamTarget.putNextEntry(StreamTypeNames.CONTEXT);
+        nestedStreamTarget.getOutputStream(StreamTypeNames.CONTEXT).write("CONTEXT2".getBytes(StreamUtil.DEFAULT_CHARSET));
+        nestedStreamTarget.closeEntry(StreamTypeNames.CONTEXT);
 
         nestedStreamTarget.close();
 
@@ -164,7 +165,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
         final String extraMeta = "Z:ALL\n";
 
         taskManager.exec(new StreamUploadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, "test.zip", file, feedName,
-                StreamType.RAW_EVENTS.getName(), null, extraMeta));
+                StreamTypeEntity.RAW_EVENTS.getName(), null, extraMeta));
 
         final List<StreamEntity> streamList = streamStore.find(findStreamCriteria);
 
@@ -180,15 +181,15 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
 
             Assert.assertEquals("DATA1DATA2", StreamUtil.streamToString(streamSource.getInputStream(), false));
             Assert.assertEquals("CONTEXT1CONTEXT2",
-                    StreamUtil.streamToString(streamSource.getChildStream(StreamType.CONTEXT).getInputStream(), false));
+                    StreamUtil.streamToString(streamSource.getChildStream(StreamTypeNames.CONTEXT).getInputStream(), false));
 
             if (originalStream.equals(stream)) {
                 assertContains(
-                        StreamUtil.streamToString(streamSource.getChildStream(StreamType.META).getInputStream(), false),
+                        StreamUtil.streamToString(streamSource.getChildStream(StreamTypeNames.META).getInputStream(), false),
                         "META:1", "X:1", "META:2", "Y:2");
             } else {
                 assertContains(
-                        StreamUtil.streamToString(streamSource.getChildStream(StreamType.META).getInputStream(), false),
+                        StreamUtil.streamToString(streamSource.getChildStream(StreamTypeNames.META).getInputStream(), false),
                         "Compression:ZIP\n", "META:1\n", "X:1\n", "Z:ALL\n", "Compression:ZIP\n", "META:2\n", "Y:2\n",
                         "Z:ALL\n");
             }

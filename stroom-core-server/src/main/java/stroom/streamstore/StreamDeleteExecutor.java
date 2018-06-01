@@ -24,6 +24,7 @@ import stroom.properties.StroomPropertyService;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.streamstore.shared.StreamStatus;
+import stroom.streamstore.shared.StreamStatusId;
 import stroom.streamstore.shared.StreamVolume;
 import stroom.streamtask.AbstractBatchDeleteExecutor;
 import stroom.streamtask.BatchIdTransactionHelper;
@@ -84,7 +85,7 @@ public class StreamDeleteExecutor extends AbstractBatchDeleteExecutor {
         sql.append(" WHERE ");
         sql.append(SQLNameConstants.STATUS);
         sql.append(" = ");
-        sql.arg(StreamStatus.DELETED.getPrimitiveValue());
+        sql.arg(StreamStatusId.DELETED);
         sql.append(" AND ");
         sql.append(StreamEntity.STATUS_MS);
         sql.append(" < ");

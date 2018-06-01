@@ -45,7 +45,7 @@ import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamtask.StreamProcessorFilterService;
 import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.StreamProcessorTask;
@@ -213,14 +213,14 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                 final String referenceData = createReferenceData(benchmarkClusterConfig.getRecordCount());
                 final String eventData = createEventData(benchmarkClusterConfig.getRecordCount());
 
-                final Period refPeriod = writeData(BENCHMARK_REFERENCE, StreamType.RAW_REFERENCE.getName(), referenceData, benchmarkClusterConfig.getStreamCount());
+                final Period refPeriod = writeData(BENCHMARK_REFERENCE, StreamTypeEntity.RAW_REFERENCE.getName(), referenceData, benchmarkClusterConfig.getStreamCount());
 
-                processData(BENCHMARK_REFERENCE, StreamType.RAW_REFERENCE, StreamType.REFERENCE, referenceProcessor,
+                processData(BENCHMARK_REFERENCE, StreamTypeEntity.RAW_REFERENCE, StreamTypeEntity.REFERENCE, referenceProcessor,
                         refPeriod);
 
-                final Period evtPeriod = writeData(BENCHMARK_EVENTS, StreamType.RAW_EVENTS.getName(), eventData, benchmarkClusterConfig.getStreamCount());
+                final Period evtPeriod = writeData(BENCHMARK_EVENTS, StreamTypeEntity.RAW_EVENTS.getName(), eventData, benchmarkClusterConfig.getStreamCount());
 
-                processData(BENCHMARK_EVENTS, StreamType.RAW_EVENTS, StreamType.EVENTS, eventsProcessor, evtPeriod);
+                processData(BENCHMARK_EVENTS, StreamTypeEntity.RAW_EVENTS, StreamTypeEntity.EVENTS, eventsProcessor, evtPeriod);
 
                 // Probe.setPrefix("EVENTS");
                 // writeData(eventFeed, StreamType.RAW_EVENTS, eventData, node);
@@ -308,8 +308,8 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     }
 
     private void processData(final String feedName,
-                             final StreamType rawStreamType,
-                             final StreamType processedStreamType,
+                             final StreamTypeEntity rawStreamType,
+                             final StreamTypeEntity processedStreamType,
                              final StreamProcessor streamProcessor,
                              final Period createPeriod) {
         try {
@@ -463,8 +463,8 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                 .addTerm(StreamDataSource.FEED, Condition.EQUALS, feedName)
                 .addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(processPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(processPeriod.getToMs()))
                 .addOperator(new ExpressionOperator.Builder(Op.OR)
-                        .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.EVENTS.getName())
-                        .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.REFERENCE.getName())
+                        .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeEntity.EVENTS.getName())
+                        .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeEntity.REFERENCE.getName())
                         .build())
                 .build();
 

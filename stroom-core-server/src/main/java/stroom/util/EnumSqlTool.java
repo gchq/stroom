@@ -55,6 +55,6 @@ public class EnumSqlTool {
         process("JobType", JobType.values());
         process("VolumeUseStatus", VolumeUseStatus.values());
         process("VolumeType", VolumeType.values());
-        process("StreamStatus", StreamStatus.values());
+//        process("StreamStatus", StreamStatus.values());
     }
 }

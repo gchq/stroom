@@ -48,9 +48,9 @@ public final class ExpressionUtil {
         return expression;
     }
 
-    public static ExpressionOperator createStreamTypeExpression(final StreamType streamType) {
+    public static ExpressionOperator createStreamTypeExpression(final String streamTypeName) {
         return new ExpressionOperator.Builder(Op.AND)
-                .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, streamType.getName())
+                .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, streamTypeName)
                 .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
                 .build();
     }

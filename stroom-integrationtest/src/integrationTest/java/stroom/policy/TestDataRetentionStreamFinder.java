@@ -29,7 +29,7 @@ import stroom.streamstore.fs.FileSystemStreamMaintenanceService;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
 import stroom.util.test.FileSystemTestUtil;
@@ -70,7 +70,7 @@ public class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
             final StreamEntity streamInsideRetention = streamStore.createStream(
                     new StreamProperties.Builder()
                             .feedName(feedName)
-                            .streamTypeName(StreamType.RAW_EVENTS.getName())
+                            .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
                             .createMs(now)
                             .statusMs(now)
                             .build());
@@ -78,7 +78,7 @@ public class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
             final StreamEntity streamOutsideRetention = streamStore.createStream(
                     new StreamProperties.Builder()
                             .feedName(feedName)
-                            .streamTypeName(StreamType.RAW_EVENTS.getName())
+                            .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
                             .createMs(timeOutsideRetentionPeriod)
                             .statusMs(timeOutsideRetentionPeriod)
                             .build());

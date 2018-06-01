@@ -35,8 +35,8 @@ import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.Security;
-import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.fs.StreamTypeNames;
+import stroom.streamstore.shared.Stream;
 import stroom.streamtask.StreamProcessorService;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
@@ -99,7 +99,7 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
             errorReceiverProxy.setErrorReceiver(errorReceiver);
 
             final InputStream inputStream = task.getInputStream();
-            final StreamEntity stream = task.getStream();
+            final Stream stream = task.getStream();
             final String feedName = task.getFeedName();
 
             if (inputStream != null) {
@@ -133,7 +133,7 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
                     metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
 
                     // Get the appropriate encoding for the stream type.
-                    final String encoding = feedProperties.getEncoding(feedName, StreamType.CONTEXT);
+                    final String encoding = feedProperties.getEncoding(feedName, StreamTypeNames.CONTEXT);
                     mapStoreHolder.setMapStoreBuilder(mapStoreBuilder);
                     // Parse the stream.
                     pipeline.process(inputStream, encoding);

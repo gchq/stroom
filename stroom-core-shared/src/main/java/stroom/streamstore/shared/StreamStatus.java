@@ -16,8 +16,6 @@
 
 package stroom.streamstore.shared;
 
-import stroom.entity.shared.HasPrimitiveValue;
-import stroom.entity.shared.PrimitiveValueConverter;
 import stroom.docref.HasDisplayValue;
 
 /**
@@ -26,24 +24,19 @@ import stroom.docref.HasDisplayValue;
  * and unlocked.
  * </p>
  */
-public enum StreamStatus implements HasDisplayValue, HasPrimitiveValue {
-    UNLOCKED("Unlocked", 0), /**
+public enum StreamStatus implements HasDisplayValue {
+    UNLOCKED("Unlocked"), /**
      * Open exclusive lock.
      */
-    LOCKED("Locked", 1), /**
+    LOCKED("Locked"), /**
      * Logical Delete
      */
-    DELETED("Deleted", 99);
-
-    public static final PrimitiveValueConverter<StreamStatus> PRIMITIVE_VALUE_CONVERTER = new PrimitiveValueConverter<>(
-            StreamStatus.values());
+    DELETED("Deleted");
 
     private final String displayValue;
-    private final byte primitiveValue;
 
-    StreamStatus(final String displayValue, int primitiveValue) {
+    StreamStatus(final String displayValue) {
         this.displayValue = displayValue;
-        this.primitiveValue = (byte) primitiveValue;
     }
 
     /**
@@ -52,10 +45,5 @@ public enum StreamStatus implements HasDisplayValue, HasPrimitiveValue {
     @Override
     public String getDisplayValue() {
         return displayValue;
-    }
-
-    @Override
-    public byte getPrimitiveValue() {
-        return primitiveValue;
     }
 }

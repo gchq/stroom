@@ -62,6 +62,7 @@ import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
+import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.fs.serializable.RASegmentInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.FindStreamCriteria;
@@ -69,7 +70,7 @@ import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamStatus;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamtask.InclusiveRanges;
 import stroom.streamtask.InclusiveRanges.InclusiveRange;
 import stroom.streamtask.StreamProcessorService;
@@ -256,7 +257,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             // Process the streams.
             final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
             final Pipeline pipeline = pipelineFactory.create(pipelineData);
-            processNestedStreams(pipeline, stream, streamSource, feedName, stream.getStreamType());
+            processNestedStreams(pipeline, stream, streamSource, feedName, stream.getStreamTypeName());
 
             // Create processing finished message.
             final String finishedInfo = "" +
@@ -390,18 +391,18 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                                       final StreamEntity stream,
                                       final StreamSource streamSource,
                                       final String feedName,
-                                      final StreamType streamType) {
+                                      final String streamTypeName) {
         try {
             boolean startedProcessing = false;
 
             // Get the stream providers.
             streamHolder.setStream(stream);
             streamHolder.addProvider(streamSource);
-            streamHolder.addProvider(streamSource.getChildStream(StreamType.META));
-            streamHolder.addProvider(streamSource.getChildStream(StreamType.CONTEXT));
+            streamHolder.addProvider(streamSource.getChildStream(StreamTypeNames.META));
+            streamHolder.addProvider(streamSource.getChildStream(StreamTypeNames.CONTEXT));
 
             // Get the main stream provider.
-            final StreamSourceInputStreamProvider mainProvider = streamHolder.getProvider(streamType);
+            final StreamSourceInputStreamProvider mainProvider = streamHolder.getProvider(streamTypeName);
 
             try {
                 final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
@@ -434,7 +435,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                     }
 
                     // Get the appropriate encoding for the stream type.
-                    final String encoding = feedProperties.getEncoding(feedName, streamType);
+                    final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
 
                     // We want to get a preview of the input stream so we can
                     // skip it if it is effectively empty.
@@ -613,7 +614,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                 // information to.
                 final StreamProperties errorStreamProperties = new StreamProperties.Builder()
                         .feedName(stream.getFeedName())
-                        .streamTypeName(StreamType.ERROR.getName())
+                        .streamTypeName(StreamTypeEntity.ERROR.getName())
                         .parent(stream)
                         .streamProcessor(streamProcessor)
                         .streamTask(streamTask)

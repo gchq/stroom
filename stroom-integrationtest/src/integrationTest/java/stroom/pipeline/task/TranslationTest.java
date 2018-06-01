@@ -43,18 +43,18 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.UserTokenUtil;
 import stroom.streamstore.FindFeedCriteria;
+import stroom.streamstore.StreamTypeService;
 import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
-import stroom.streamstore.StreamTypeService;
 import stroom.streamstore.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.fs.serializable.RawInputSegmentWriter;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.QueryData;
-import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamtask.StreamProcessorFilterService;
 import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.StreamProcessorTask;
@@ -168,7 +168,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                 }
 
                 final String streamType = feed.isReference() ?
-                        StreamType.RAW_REFERENCE.getName() : StreamType.RAW_EVENTS.getName();
+                        StreamTypeEntity.RAW_REFERENCE.getName() : StreamTypeEntity.RAW_EVENTS.getName();
                 final QueryData findStreamQueryData = new QueryData.Builder()
                         .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
                         .expression(new ExpressionOperator.Builder(Op.AND)
@@ -230,8 +230,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
                 for (long streamId = startStreamId + 1; streamId <= endStreamId; streamId++) {
                     final StreamEntity stream = streamStore.loadStreamById(streamId);
-                    final StreamType streamType = stream.getStreamType();
-                    if (streamType.isStreamTypeProcessed()) {
+                    final String streamTypeName = stream.getStreamTypeName();
+                    if ("Events".equals(streamTypeName) || "Reference".equals(streamTypeName)) {
                         processedStreams.add(stream);
                     }
                 }
@@ -279,14 +279,14 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             String streamTypeName;
             long millis;
             if (feed.isReference()) {
-                streamTypeName = StreamType.RAW_REFERENCE.getName();
+                streamTypeName = StreamTypeEntity.RAW_REFERENCE.getName();
 
                 // We need to ensure the reference data is older then the earliest
                 // event we are going to see. In the case of these component tests
                 // we have some events from 2007.
                 millis = DateUtil.parseNormalDateTimeString("2006-01-01T00:00:00.000Z");
             } else {
-                streamTypeName = StreamType.RAW_EVENTS.getName();
+                streamTypeName = StreamTypeEntity.RAW_EVENTS.getName();
                 millis = DateUtil.parseNormalDateTimeString("2006-04-01T00:00:00.000Z");
             }
 
@@ -369,8 +369,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
                 .addTerm(StreamDataSource.FEED, Condition.EQUALS, feedName)
                 .addOperator(new ExpressionOperator.Builder(Op.OR)
-                        .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.RAW_REFERENCE.getName())
-                        .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.RAW_EVENTS.getName())
+                        .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeEntity.RAW_REFERENCE.getName())
+                        .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeEntity.RAW_EVENTS.getName())
                         .build())
                 .build();
 

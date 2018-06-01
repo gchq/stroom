@@ -22,8 +22,6 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceException;
 import stroom.feed.FeedProperties;
-import stroom.streamstore.FeedService;
-import stroom.feed.shared.FeedDoc;
 import stroom.guice.PipelineScopeRunnable;
 import stroom.io.StreamCloser;
 import stroom.logging.StreamEventLog;
@@ -53,11 +51,12 @@ import stroom.security.Security;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.fs.FileSystemUtil;
+import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.fs.serializable.CompoundInputStream;
 import stroom.streamstore.fs.serializable.RASegmentInputStream;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamStatus;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamtask.StreamProcessorService;
 import stroom.task.AbstractTaskHandler;
 import stroom.util.io.StreamUtil;
@@ -88,7 +87,6 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
     private final boolean streamsTotalIsExact = true;
 
     private final StreamStore streamStore;
-    private final FeedService feedService;
     private final FeedProperties feedProperties;
     private final StreamProcessorService streamProcessorService;
     private final Provider<FeedHolder> feedHolderProvider;
@@ -111,7 +109,6 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
     private boolean pageTotalIsExact = false;
 
     AbstractFetchDataHandler(final StreamStore streamStore,
-                             final FeedService feedService,
                              final FeedProperties feedProperties,
                              final StreamProcessorService streamProcessorService,
                              final Provider<FeedHolder> feedHolderProvider,
@@ -126,7 +123,6 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                              final Security security,
                              final PipelineScopeRunnable pipelineScopeRunnable) {
         this.streamStore = streamStore;
-        this.feedService = feedService;
         this.feedProperties = feedProperties;
         this.streamProcessorService = streamProcessorService;
         this.feedHolderProvider = feedHolderProvider;
@@ -142,15 +138,20 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
         this.pipelineScopeRunnable = pipelineScopeRunnable;
     }
 
-    protected AbstractFetchDataResult getData(final Long streamId, final StreamType childStreamType,
-                                              final OffsetRange<Long> streamsRange, final OffsetRange<Long> pageRange, final boolean markerMode,
-                                              final DocRef pipeline, final boolean showAsHtml, final Severity... expandedSeverities) {
+    protected AbstractFetchDataResult getData(final Long streamId,
+                                              final String childStreamTypeName,
+                                              final OffsetRange<Long> streamsRange,
+                                              final OffsetRange<Long> pageRange,
+                                              final boolean markerMode,
+                                              final DocRef pipeline,
+                                              final boolean showAsHtml,
+                                              final Severity... expandedSeverities) {
         // Allow users with 'Use' permission to read data, pipelines and XSLT.
         return security.useAsReadResult(() -> {
             final StreamCloser streamCloser = new StreamCloser();
-            List<StreamType> availableChildStreamTypes;
-            FeedDoc feed = null;
-            StreamType streamType = null;
+            List<String> availableChildStreamTypes;
+            String feedName = null;
+            String streamTypeName = null;
 
             StreamSource streamSource = null;
             RuntimeException exception = null;
@@ -172,25 +173,24 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                 }
 
                 streamCloser.add(streamSource);
-                streamType = streamSource.getType();
+                streamTypeName = streamSource.getStreamTypeName();
 
                 // Find out which child stream types are available.
                 availableChildStreamTypes = getAvailableChildStreamTypes(streamSource);
 
                 // Are we getting and are we able to get the child stream?
-                if (childStreamType != null) {
-                    final StreamSource childStreamSource = streamSource.getChildStream(childStreamType);
+                if (childStreamTypeName != null) {
+                    final StreamSource childStreamSource = streamSource.getChildStream(childStreamTypeName);
 
                     // If we got something then change the stream.
                     if (childStreamSource != null) {
                         streamSource = childStreamSource;
-                        streamType = childStreamType;
+                        streamTypeName = childStreamTypeName;
                     }
                     streamCloser.add(streamSource);
                 }
 
                 // Get the feed name.
-                String feedName = null;
                 if (streamSource != null && streamSource.getStream() != null && streamSource.getStream().getFeedName() != null) {
                     feedName = streamSource.getStream().getFeedName();
                 }
@@ -208,18 +208,18 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                 final RASegmentInputStream segmentInputStream = compoundInputStream.getNextInputStream(streamsOffset);
                 streamCloser.add(segmentInputStream);
 
-                writeEventLog(streamSource.getStream(), feed, streamType, null);
+                writeEventLog(streamSource.getStream(), feedName, streamTypeName, null);
 
                 // If this is an error stream and the UI is requesting markers then
                 // create a list of markers.
-                if (StreamType.ERROR.equals(streamType) && markerMode) {
-                    return createMarkerResult(feedName, streamType, segmentInputStream, pageRange, availableChildStreamTypes, expandedSeverities);
+                if (StreamTypeEntity.ERROR.getName().equals(streamTypeName) && markerMode) {
+                    return createMarkerResult(feedName, streamTypeName, segmentInputStream, pageRange, availableChildStreamTypes, expandedSeverities);
                 }
 
-                return createDataResult(feedName, streamType, segmentInputStream, pageRange, availableChildStreamTypes, pipeline, showAsHtml, streamSource);
+                return createDataResult(feedName, streamTypeName, segmentInputStream, pageRange, availableChildStreamTypes, pipeline, showAsHtml, streamSource);
 
             } catch (final IOException | RuntimeException e) {
-                writeEventLog(streamSource.getStream(), feed, streamType, e);
+                writeEventLog(streamSource.getStream(), feedName, streamTypeName, e);
 
                 if (StreamStatus.LOCKED.equals(streamSource.getStream().getStatus())) {
                     return createErrorResult("You cannot view locked streams.");
@@ -250,11 +250,11 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
         });
     }
 
-    private FetchMarkerResult createMarkerResult(final String feedName, final StreamType streamType, final RASegmentInputStream segmentInputStream, final OffsetRange<Long> pageRange, final List<StreamType> availableChildStreamTypes, final Severity... expandedSeverities) throws IOException {
+    private FetchMarkerResult createMarkerResult(final String feedName, final String streamTypeName, final RASegmentInputStream segmentInputStream, final OffsetRange<Long> pageRange, final List<String> availableChildStreamTypes, final Severity... expandedSeverities) throws IOException {
         List<Marker> markersList;
 
         // Get the appropriate encoding for the stream type.
-        final String encoding = feedProperties.getEncoding(feedName, streamType);
+        final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
 
         // Include all segments.
         segmentInputStream.includeAll();
@@ -284,20 +284,20 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                 (long) resultList.size());
         final RowCount<Long> pageRowCount = new RowCount<>((long) markersList.size(), true);
 
-        return new FetchMarkerResult(streamType, classification, resultStreamsRange,
+        return new FetchMarkerResult(streamTypeName, classification, resultStreamsRange,
                 streamsRowCount, resultPageRange, pageRowCount, availableChildStreamTypes,
                 new SharedList<>(resultList));
     }
 
-    private FetchDataResult createDataResult(final String feedName, final StreamType streamType, final RASegmentInputStream segmentInputStream, final OffsetRange<Long> pageRange, final List<StreamType> availableChildStreamTypes, final DocRef pipeline, final boolean showAsHtml, final StreamSource streamSource) throws IOException {
+    private FetchDataResult createDataResult(final String feedName, final String streamTypeName, final RASegmentInputStream segmentInputStream, final OffsetRange<Long> pageRange, final List<String> availableChildStreamTypes, final DocRef pipeline, final boolean showAsHtml, final StreamSource streamSource) throws IOException {
         // Read the input stream into a string.
         // If the input stream has multiple segments then we are going to
         // read it in segment mode.
         String rawData;
         if (segmentInputStream.count() > 1) {
-            rawData = getSegmentedData(feedName, streamType, pageRange, segmentInputStream);
+            rawData = getSegmentedData(feedName, streamTypeName, pageRange, segmentInputStream);
         } else {
-            rawData = getNonSegmentedData(feedName, streamType, pageRange, segmentInputStream);
+            rawData = getNonSegmentedData(feedName, streamTypeName, pageRange, segmentInputStream);
         }
 
         String output;
@@ -333,7 +333,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
         final RowCount<Long> streamsRowCount = new RowCount<>(streamsTotal, streamsTotalIsExact);
         final OffsetRange<Long> resultPageRange = new OffsetRange<>(pageOffset, pageLength);
         final RowCount<Long> pageRowCount = new RowCount<>(pageTotal, pageTotalIsExact);
-        return new FetchDataResult(streamType, classification, resultStreamsRange,
+        return new FetchDataResult(streamTypeName, classification, resultStreamsRange,
                 streamsRowCount, resultPageRange, pageRowCount, availableChildStreamTypes, output, showAsHtml);
     }
 
@@ -342,23 +342,23 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
         final RowCount<Long> streamsRowCount = new RowCount<>(0L, true);
         final OffsetRange<Long> resultPageRange = new OffsetRange<>(0L, 0L);
         final RowCount<Long> pageRowCount = new RowCount<>(0L, true);
-        return new FetchDataResult(StreamType.RAW_EVENTS, null, resultStreamsRange,
+        return new FetchDataResult(StreamTypeEntity.RAW_EVENTS.getName(), null, resultStreamsRange,
                 streamsRowCount, resultPageRange, pageRowCount, null, error, false);
     }
 
-    private void writeEventLog(final StreamEntity stream, final FeedDoc feed, final StreamType streamType,
+    private void writeEventLog(final StreamEntity stream, final String feedName, final String streamTypeName,
                                final Exception e) {
         try {
-            streamEventLog.viewStream(stream, feed, streamType, e);
+            streamEventLog.viewStream(stream, feedName, streamTypeName, e);
         } catch (final Exception e2) {
             LOGGER.debug(e.getMessage(), e2);
         }
     }
 
-    private String getSegmentedData(final String feedName, final StreamType streamType, final OffsetRange<Long> pageRange,
+    private String getSegmentedData(final String feedName, final String streamTypeName, final OffsetRange<Long> pageRange,
                                     final RASegmentInputStream segmentInputStream) {
         // Get the appropriate encoding for the stream type.
-        final String encoding = feedProperties.getEncoding(feedName, streamType);
+        final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
 
         // Set the page total.
         if (segmentInputStream.count() > 2) {
@@ -389,10 +389,10 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
         return StreamUtil.streamToString(segmentInputStream, Charset.forName(encoding));
     }
 
-    private String getNonSegmentedData(final String feedName, final StreamType streamType, final OffsetRange<Long> pageRange,
+    private String getNonSegmentedData(final String feedName, final String streamTypeName, final OffsetRange<Long> pageRange,
                                        final RASegmentInputStream segmentInputStream) throws IOException {
         // Get the appropriate encoding for the stream type.
-        final String encoding = feedProperties.getEncoding(feedName, streamType);
+        final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
 
         pageOffset = pageRange.getOffset();
         final long minLineNo = pageOffset;
@@ -470,8 +470,8 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                 // Get the stream providers.
                 streamHolder.setStream(streamSource.getStream());
                 streamHolder.addProvider(streamSource);
-                streamHolder.addProvider(streamSource.getChildStream(StreamType.META));
-                streamHolder.addProvider(streamSource.getChildStream(StreamType.CONTEXT));
+                streamHolder.addProvider(streamSource.getChildStream(StreamTypeNames.META));
+                streamHolder.addProvider(streamSource.getChildStream(StreamTypeNames.CONTEXT));
 
                 final PipelineData pipelineData = pipelineDataCache.get(loadedPipeline);
                 if (pipelineData == null) {
@@ -548,15 +548,15 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
         });
     }
 
-    private List<StreamType> getAvailableChildStreamTypes(final StreamSource streamSource) {
-        final List<StreamType> availableChildStreamTypes = new ArrayList<>();
-        final StreamSource metaStreamSource = streamSource.getChildStream(StreamType.META);
+    private List<String> getAvailableChildStreamTypes(final StreamSource streamSource) {
+        final List<String> availableChildStreamTypes = new ArrayList<>();
+        final StreamSource metaStreamSource = streamSource.getChildStream(StreamTypeNames.META);
         if (metaStreamSource != null) {
-            availableChildStreamTypes.add(StreamType.META);
+            availableChildStreamTypes.add(StreamTypeNames.META);
         }
-        final StreamSource contextStreamSource = streamSource.getChildStream(StreamType.CONTEXT);
+        final StreamSource contextStreamSource = streamSource.getChildStream(StreamTypeNames.CONTEXT);
         if (contextStreamSource != null) {
-            availableChildStreamTypes.add(StreamType.CONTEXT);
+            availableChildStreamTypes.add(StreamTypeNames.CONTEXT);
         }
         return availableChildStreamTypes;
     }

@@ -25,14 +25,14 @@ import stroom.persist.PersistService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.streamstore.StreamTypeService;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.StreamTypeService;
 import stroom.streamstore.fs.FileSystemStreamTypeUtil;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.util.io.StreamUtil;
 
 import java.io.IOException;
@@ -141,7 +141,7 @@ public class StreamGrepTool extends AbstractCommandLineTool {
         if (streamType != null) {
             builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, streamType);
         } else {
-            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.RAW_EVENTS.getName());
+            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeEntity.RAW_EVENTS.getName());
         }
 
         // Query the stream store
@@ -151,10 +151,10 @@ public class StreamGrepTool extends AbstractCommandLineTool {
 
         int count = 0;
         for (final StreamEntity stream : results) {
-            final StreamType streamType = stream.getStreamType();
+            final String streamTypeName = stream.getStreamTypeName();
             count++;
             LOGGER.info("processing() - " + count + "/" + results.size() + " "
-                    + FileSystemStreamTypeUtil.getDirectory(stream, streamType) + " "
+                    + FileSystemStreamTypeUtil.getDirectory(stream, streamTypeName) + " "
                     + FileSystemStreamTypeUtil.getBaseName(stream));
 
             processFile(streamStore, stream.getId(), match);

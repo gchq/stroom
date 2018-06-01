@@ -27,7 +27,7 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.docref.DocRef;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -231,13 +231,13 @@ public class TestPipelineModel {
         base.addElement(ELEM_TYPE, "test1");
         base.addElement(ELEM_TYPE, "test2");
         base.addPipelineReference(
-                PipelineDataUtil.createReference("test1", "testProp", pipeline, feed, StreamType.EVENTS.getName()));
+                PipelineDataUtil.createReference("test1", "testProp", pipeline, feed, StreamTypeEntity.EVENTS.getName()));
         base.addLink("test1", "test2");
         baseStack.add(base);
 
         final PipelineData override = new PipelineData();
         override.addPipelineReference(
-                PipelineDataUtil.createReference("test1", "testProp", pipeline, feed, StreamType.EVENTS.getName()));
+                PipelineDataUtil.createReference("test1", "testProp", pipeline, feed, StreamTypeEntity.EVENTS.getName()));
 
         test(baseStack, override, 0, 0, 0, 0, 1, 0, 0, 0);
     }
@@ -253,13 +253,13 @@ public class TestPipelineModel {
         base.addElement(ELEM_TYPE, "test1");
         base.addElement(ELEM_TYPE, "test2");
         base.addPipelineReference(
-                PipelineDataUtil.createReference("test1", "testProp", pipeline, feed, StreamType.EVENTS.getName()));
+                PipelineDataUtil.createReference("test1", "testProp", pipeline, feed, StreamTypeEntity.EVENTS.getName()));
         base.addLink("test1", "test2");
         baseStack.add(base);
 
         final PipelineData override = new PipelineData();
         override.addPipelineReference(
-                PipelineDataUtil.createReference("test1", "testProp", pipeline, feed, StreamType.REFERENCE.getName()));
+                PipelineDataUtil.createReference("test1", "testProp", pipeline, feed, StreamTypeEntity.REFERENCE.getName()));
 
         test(baseStack, override, 0, 0, 0, 0, 1, 0, 0, 0);
     }
@@ -275,13 +275,13 @@ public class TestPipelineModel {
         base.addElement(ELEM_TYPE, "test1");
         base.addElement(ELEM_TYPE, "test2");
         base.addPipelineReference(
-                PipelineDataUtil.createReference("test1", "testProp", pipeline, feed, StreamType.EVENTS.getName()));
+                PipelineDataUtil.createReference("test1", "testProp", pipeline, feed, StreamTypeEntity.EVENTS.getName()));
         base.addLink("test1", "test2");
         baseStack.add(base);
 
         final PipelineData override = new PipelineData();
         override.removePipelineReference(
-                PipelineDataUtil.createReference("test1", "testProp", pipeline, feed, StreamType.EVENTS.getName()));
+                PipelineDataUtil.createReference("test1", "testProp", pipeline, feed, StreamTypeEntity.EVENTS.getName()));
 
         test(baseStack, override, 0, 0, 0, 0, 0, 1, 0, 0);
     }

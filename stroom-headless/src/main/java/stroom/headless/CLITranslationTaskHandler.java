@@ -42,11 +42,11 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.Security;
+import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.fs.serializable.RASegmentInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.StreamProcessorService;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
@@ -177,16 +177,16 @@ class CLITranslationTaskHandler extends AbstractTaskHandler<CLITranslationTask, 
                 final BasicInputStreamProvider streamProvider = new BasicInputStreamProvider(
                         new IgnoreCloseInputStream(task.getDataStream()), task.getDataStream().available());
                 streamHolder.setStream(stream);
-                streamHolder.addProvider(streamProvider, StreamType.RAW_EVENTS);
+                streamHolder.addProvider(streamProvider, StreamTypeNames.RAW_EVENTS);
                 if (task.getMetaStream() != null) {
                     final BasicInputStreamProvider metaStreamProvider = new BasicInputStreamProvider(
                             new IgnoreCloseInputStream(task.getMetaStream()), task.getMetaStream().available());
-                    streamHolder.addProvider(metaStreamProvider, StreamType.META);
+                    streamHolder.addProvider(metaStreamProvider, StreamTypeNames.META);
                 }
                 if (task.getContextStream() != null) {
                     final BasicInputStreamProvider contextStreamProvider = new BasicInputStreamProvider(
                             new IgnoreCloseInputStream(task.getContextStream()), task.getContextStream().available());
-                    streamHolder.addProvider(contextStreamProvider, StreamType.CONTEXT);
+                    streamHolder.addProvider(contextStreamProvider, StreamTypeNames.CONTEXT);
                 }
 
                 try {

@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamStatus;
+import stroom.streamstore.shared.StreamStatusId;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -70,7 +71,7 @@ public class DataRetentionStreamDeleter implements AutoCloseable {
         }
 
         int parameterIndex = 1;
-        preparedStatement.setByte(parameterIndex++, StreamStatus.DELETED.getPrimitiveValue());
+        preparedStatement.setByte(parameterIndex++, StreamStatusId.DELETED);
         preparedStatement.setLong(parameterIndex++, System.currentTimeMillis());
         for (final long streamId : streamIds) {
             preparedStatement.setLong(parameterIndex++, streamId);

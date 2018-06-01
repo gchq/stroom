@@ -24,7 +24,7 @@ import stroom.entity.CachingEntityManager;
 import stroom.entity.FindService;
 import stroom.entity.shared.Clearable;
 import stroom.security.Security;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.task.TaskHandler;
 
 import javax.inject.Named;
@@ -53,7 +53,7 @@ public class StreamStoreModule extends AbstractModule {
         taskHandlerBinder.addBinding().to(stroom.streamstore.UploadDataHandler.class);
 
         final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
-        entityServiceByTypeBinder.addBinding(StreamType.ENTITY_TYPE).to(stroom.streamstore.StreamTypeServiceImpl.class);
+        entityServiceByTypeBinder.addBinding(StreamTypeEntity.ENTITY_TYPE).to(stroom.streamstore.StreamTypeServiceImpl.class);
 
         final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
         findServiceBinder.addBinding().to(stroom.streamstore.StreamTypeServiceImpl.class);

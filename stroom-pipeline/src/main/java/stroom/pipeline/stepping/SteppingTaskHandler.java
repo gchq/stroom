@@ -52,13 +52,14 @@ import stroom.security.UserTokenUtil;
 import stroom.security.shared.PermissionNames;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.fs.serializable.NestedInputStream;
 import stroom.streamstore.fs.serializable.RANestedInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamtask.StreamProcessorService;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskContext;
@@ -323,18 +324,18 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                 final StreamSource streamSource = streamStore.openStreamSource(streamId);
                 if (streamSource != null) {
                     StreamSource stepSource = streamSource;
-                    if (StreamType.CONTEXT.equals(request.getChildStreamType())) {
-                        stepSource = streamSource.getChildStream(StreamType.CONTEXT);
+                    if (StreamTypeNames.CONTEXT.equals(request.getChildStreamType())) {
+                        stepSource = streamSource.getChildStream(StreamTypeNames.CONTEXT);
                     }
 
                     // Load the feed.
                     final String feedName = streamSource.getStream().getFeedName();
 
                     // Get the stream type.
-                    final StreamType streamType = stepSource.getType();
+                    final String streamTypeName = stepSource.getStreamTypeName();
 
                     // Now process the data.
-                    processStream(controller, feedName, streamType, stepSource);
+                    processStream(controller, feedName, streamTypeName, stepSource);
 
                     try {
                         // Close all open streams.
@@ -431,7 +432,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                 criteria.obtainPageRequest().setLength(1000);
             }
 
-            criteria.getFetchSet().add(StreamType.ENTITY_TYPE);
+            criteria.getFetchSet().add(StreamTypeEntity.ENTITY_TYPE);
 
             // Find streams.
             final List<StreamEntity> allStreamList = streamStore.find(criteria);
@@ -478,7 +479,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
 
     private void processStream(final SteppingController controller,
                                final String feedName,
-                               final StreamType streamType,
+                               final String streamTypeName,
                                final StreamSource source) {
         // If the feed changes then destroy the last pipeline.
         if (lastFeedName != null && !lastFeedName.equals(feedName)) {
@@ -513,12 +514,12 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
             // Make sure we have had no errors before we start processing.
             if (pipeline != null && loggingErrorReceiver.isAllOk()) {
                 // Process the stream.
-                process(controller, feedName, streamType, source);
+                process(controller, feedName, streamTypeName, source);
             }
         }
     }
 
-    private void process(final SteppingController controller, final String feedName, final StreamType streamType,
+    private void process(final SteppingController controller, final String feedName, final String streamTypeName,
                          final StreamSource streamSource) {
         try {
             final StreamEntity stream = streamSource.getStream();
@@ -529,11 +530,11 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
             // Get the stream providers.
             streamHolder.setStream(stream);
             streamHolder.addProvider(streamSource);
-            streamHolder.addProvider(streamSource.getChildStream(StreamType.META));
-            streamHolder.addProvider(streamSource.getChildStream(StreamType.CONTEXT));
+            streamHolder.addProvider(streamSource.getChildStream(StreamTypeNames.META));
+            streamHolder.addProvider(streamSource.getChildStream(StreamTypeNames.CONTEXT));
 
             // Get the main stream provider.
-            final StreamSourceInputStreamProvider mainProvider = streamHolder.getProvider(streamSource.getType());
+            final StreamSourceInputStreamProvider mainProvider = streamHolder.getProvider(streamSource.getStreamTypeName());
 
             try {
                 final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
@@ -559,7 +560,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                 }
 
                 // Get the appropriate encoding for the stream type.
-                final String encoding = feedProperties.getEncoding(feedName, streamType);
+                final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
 
                 // Loop over the stream boundaries and process each
                 // sequentially. Loop over the stream boundaries and process
@@ -680,10 +681,10 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                             final String feedName = streamSource.getStream().getFeedName();
 
                             // Get the stream type.
-                            final StreamType streamType = streamSource.getType();
+                            final String streamTypeName = streamSource.getStreamTypeName();
 
                             // Get the appropriate encoding for the stream type.
-                            final String encoding = feedProperties.getEncoding(feedName, streamType);
+                            final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
 
                             final InputStreamReader inputStreamReader = new InputStreamReader(inputStream, encoding);
                             final BufferedReader bufferedReader = new BufferedReader(inputStreamReader);

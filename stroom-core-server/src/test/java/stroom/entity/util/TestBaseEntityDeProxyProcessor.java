@@ -22,7 +22,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
@@ -39,11 +39,11 @@ public class TestBaseEntityDeProxyProcessor extends StroomUnitTest {
 
         final StreamEntity deproxy = (StreamEntity) (new BaseEntityDeProxyProcessor(true).process(stream));
 
-        Assert.assertEquals(deproxy.getStreamType().getClass(), StreamType.class);
+        Assert.assertEquals(deproxy.getStreamType().getClass(), StreamTypeEntity.class);
         Assert.assertEquals(100L, deproxy.getStreamType().getId());
     }
 
-    public static class DummyStreamType extends StreamType implements HibernateProxy {
+    public static class DummyStreamType extends StreamTypeEntity implements HibernateProxy {
         private static final long serialVersionUID = -338271738308074875L;
 
         @Override
@@ -51,7 +51,7 @@ public class TestBaseEntityDeProxyProcessor extends StroomUnitTest {
             final Object proxy = Proxy.newProxyInstance(this.getClass().getClassLoader(),
                     new Class<?>[]{LazyInitializer.class}, (proxy1, method, args) -> {
                         if (method.getName().equals("getEntityName")) {
-                            return StreamType.class.getName();
+                            return StreamTypeEntity.class.getName();
                         }
                         return null;
                     });

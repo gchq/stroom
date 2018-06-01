@@ -31,7 +31,7 @@ import stroom.streamstore.shared.FeedEntity;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeCondition;
 import stroom.streamstore.shared.StreamStatus;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
@@ -65,7 +65,7 @@ public class OldFindStreamCriteria extends BaseCriteria
 
     private IncludeExcludeEntityIdSet<FeedEntity> feeds;
     private CriteriaSet<DocRef> pipelineSet;
-    private EntityIdSet<StreamType> streamTypeIdSet;
+    private EntityIdSet<StreamTypeEntity> streamTypeIdSet;
     private EntityIdSet<StreamEntity> streamIdSet;
     private CriteriaSet<StreamStatus> statusSet;
     private IdRange streamIdRange;
@@ -269,15 +269,15 @@ public class OldFindStreamCriteria extends BaseCriteria
         return pipelineSet;
     }
 
-    public EntityIdSet<StreamType> getStreamTypeIdSet() {
+    public EntityIdSet<StreamTypeEntity> getStreamTypeIdSet() {
         return streamTypeIdSet;
     }
 
-    public void setStreamTypeIdSet(final EntityIdSet<StreamType> streamTypeIdSet) {
+    public void setStreamTypeIdSet(final EntityIdSet<StreamTypeEntity> streamTypeIdSet) {
         this.streamTypeIdSet = streamTypeIdSet;
     }
 
-    public EntityIdSet<StreamType> obtainStreamTypeIdSet() {
+    public EntityIdSet<StreamTypeEntity> obtainStreamTypeIdSet() {
         if (streamTypeIdSet == null) {
             streamTypeIdSet = new EntityIdSet<>();
         }

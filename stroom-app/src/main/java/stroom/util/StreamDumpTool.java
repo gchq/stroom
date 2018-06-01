@@ -26,7 +26,7 @@ import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
@@ -122,7 +122,7 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         if (streamType != null) {
             builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, streamType);
         } else {
-            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.RAW_EVENTS.getName());
+            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeEntity.RAW_EVENTS.getName());
         }
 
         // Query the stream store

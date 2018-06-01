@@ -48,7 +48,7 @@ import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamtask.StreamProcessorFilterService;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
@@ -203,7 +203,7 @@ public final class SetupSampleDataBean {
                 final QueryData criteria = new QueryData.Builder()
                         .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
                         .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                                .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.EVENTS.getName())
+                                .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeEntity.EVENTS.getName())
                                 .build())
                         .build();
 
@@ -254,8 +254,8 @@ public final class SetupSampleDataBean {
                         .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
                                 .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed.getName())
                                 .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                                        .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
-                                        .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_REFERENCE.getName())
+                                        .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeEntity.RAW_EVENTS.getName())
+                                        .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeEntity.RAW_REFERENCE.getName())
                                         .build())
                                 .build())
                         .build();

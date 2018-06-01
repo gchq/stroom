@@ -34,7 +34,7 @@ import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.task.TaskContext;
 import stroom.util.io.StreamUtil;
 
@@ -135,9 +135,9 @@ public abstract class AbstractBenchmark {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
         builder.addTerm(StreamDataSource.FEED, Condition.EQUALS, feed.getName());
         if (feed.isReference()) {
-            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.REFERENCE.getName());
+            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeEntity.REFERENCE.getName());
         } else {
-            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.EVENTS.getName());
+            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeEntity.EVENTS.getName());
         }
         final FindStreamCriteria criteria = new FindStreamCriteria();
         criteria.setExpression(builder.build());

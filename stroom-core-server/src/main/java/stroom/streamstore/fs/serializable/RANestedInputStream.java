@@ -19,7 +19,7 @@ package stroom.streamstore.fs.serializable;
 import stroom.io.SeekableInputStream;
 import stroom.io.StreamCloser;
 import stroom.streamstore.api.StreamSource;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.fs.StreamTypeNames;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,8 +47,8 @@ public class RANestedInputStream extends NestedInputStream {
         streamCloser.add(data).add(index);
     }
 
-    public RANestedInputStream(final StreamSource streamSource) throws IOException {
-        this(streamSource.getInputStream(), streamSource.getChildStream(StreamType.BOUNDARY_INDEX).getInputStream());
+    public RANestedInputStream(final StreamSource streamSource) {
+        this(streamSource.getInputStream(), streamSource.getChildStream(StreamTypeNames.BOUNDARY_INDEX).getInputStream());
     }
 
     public void closeEntry() throws IOException {

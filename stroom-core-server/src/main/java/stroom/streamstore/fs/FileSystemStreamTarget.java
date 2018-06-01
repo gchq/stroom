@@ -23,7 +23,6 @@ import stroom.io.SeekableOutputStream;
 import stroom.streamstore.StreamException;
 import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;
 
 import java.io.IOException;
@@ -35,6 +34,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -45,7 +45,7 @@ public final class FileSystemStreamTarget implements StreamTarget {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamTarget.class);
 
     private final Set<StreamVolume> metaDataVolume;
-    private final StreamType streamType;
+    private final String streamType;
     private final List<FileSystemStreamTarget> childrenAccessed = new ArrayList<>();
     private StreamEntity stream;
     private boolean closed;
@@ -56,7 +56,7 @@ public final class FileSystemStreamTarget implements StreamTarget {
     private FileSystemStreamTarget parent;
 
     private FileSystemStreamTarget(final StreamEntity requestMetaData, final Set<StreamVolume> metaDataVolume,
-                                   final StreamType streamType, final boolean append) {
+                                   final String streamType, final boolean append) {
         this.stream = requestMetaData;
         this.metaDataVolume = metaDataVolume;
         this.streamType = streamType;
@@ -65,15 +65,16 @@ public final class FileSystemStreamTarget implements StreamTarget {
         validate();
     }
 
-    private FileSystemStreamTarget(final FileSystemStreamTarget aParent, final StreamType aStreamType,
-                                   final Set<Path> aFiles) {
-        this.stream = aParent.stream;
-        this.metaDataVolume = aParent.metaDataVolume;
-        this.parent = aParent;
-        this.append = aParent.append;
+    private FileSystemStreamTarget(final FileSystemStreamTarget parent,
+                                   final String streamType,
+                                   final Set<Path> files) {
+        this.stream = parent.stream;
+        this.metaDataVolume = parent.metaDataVolume;
+        this.parent = parent;
+        this.append = parent.append;
 
-        this.streamType = aStreamType;
-        this.files = aFiles;
+        this.streamType = streamType;
+        this.files = files;
 
         validate();
     }
@@ -81,8 +82,10 @@ public final class FileSystemStreamTarget implements StreamTarget {
     /**
      * Creates a new file system stream target.
      */
-    public static FileSystemStreamTarget create(final StreamEntity stream, final Set<StreamVolume> metaDataVolume,
-                                                final StreamType streamType, final boolean append) {
+    public static FileSystemStreamTarget create(final StreamEntity stream,
+                                                final Set<StreamVolume> metaDataVolume,
+                                                final String streamType,
+                                                final boolean append) {
         return new FileSystemStreamTarget(stream, metaDataVolume, streamType, append);
     }
 
@@ -157,7 +160,7 @@ public final class FileSystemStreamTarget implements StreamTarget {
                 }
             } else {
                 files.addAll(parent.getFiles(false).stream()
-                        .map(pFile -> FileSystemStreamTypeUtil.createChildStreamFile(pFile, getType()))
+                        .map(pFile -> FileSystemStreamTypeUtil.createChildStreamFile(pFile, getStreamTypeName()))
                         .collect(Collectors.toList()));
             }
             if (LOGGER.isDebugEnabled()) {
@@ -200,12 +203,12 @@ public final class FileSystemStreamTarget implements StreamTarget {
     }
 
     @Override
-    public StreamTarget addChildStream(final StreamType type) {
-        if (!closed && StreamType.MANIFEST.equals(type)) {
+    public StreamTarget addChildStream(final String streamTypeName) {
+        if (!closed && StreamTypeNames.MANIFEST.equals(streamTypeName)) {
             throw new RuntimeException("Stream store is responsible for the child manifest stream");
         }
-        final Set<Path> childFile = FileSystemStreamTypeUtil.createChildStreamPath(getFiles(false), type);
-        final FileSystemStreamTarget child = new FileSystemStreamTarget(this, type, childFile);
+        final Set<Path> childFile = FileSystemStreamTypeUtil.createChildStreamPath(getFiles(false), streamTypeName);
+        final FileSystemStreamTarget child = new FileSystemStreamTarget(this, streamTypeName, childFile);
         childrenAccessed.add(child);
         return child;
     }
@@ -216,14 +219,14 @@ public final class FileSystemStreamTarget implements StreamTarget {
     }
 
     @Override
-    public StreamType getType() {
+    public String getStreamTypeName() {
         return streamType;
     }
 
     @Override
-    public StreamTarget getChildStream(final StreamType type) {
+    public StreamTarget getChildStream(final String streamTypeName) {
         for (final FileSystemStreamTarget child : childrenAccessed) {
-            if (child.getType() == type) {
+            if (Objects.equals(child.getStreamTypeName(), streamTypeName)) {
                 return child;
             }
         }
@@ -244,7 +247,7 @@ public final class FileSystemStreamTarget implements StreamTarget {
             attributeMap = new MetaMap();
             if (isAppend()) {
                 final Path manifestFile = FileSystemStreamTypeUtil
-                        .createChildStreamFile(getFiles(false).iterator().next(), StreamType.MANIFEST);
+                        .createChildStreamFile(getFiles(false).iterator().next(), StreamTypeNames.MANIFEST);
                 if (Files.isRegularFile(manifestFile)) {
                     try (final InputStream inputStream = Files.newInputStream(manifestFile)) {
                         attributeMap.read(inputStream, true);

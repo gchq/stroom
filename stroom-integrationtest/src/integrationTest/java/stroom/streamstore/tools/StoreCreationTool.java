@@ -45,11 +45,12 @@ import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
+import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.fs.serializable.RawInputSegmentWriter;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamtask.StreamProcessorFilterService;
 import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
@@ -158,7 +159,7 @@ public final class StoreCreationTool {
         // Add the associated data to the stream store.
         final StreamProperties streamProperties = new StreamProperties.Builder()
                 .feedName(referenceFeed.getName())
-                .streamTypeName(StreamType.RAW_REFERENCE.getName())
+                .streamTypeName(StreamTypeEntity.RAW_REFERENCE.getName())
                 .createMs(effectiveMs)
                 .build();
 
@@ -217,7 +218,7 @@ public final class StoreCreationTool {
                     .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
                     .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
                             .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
-                            .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_REFERENCE.getName())
+                            .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeEntity.RAW_REFERENCE.getName())
                             .build())
                     .build();
             streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 2, findStreamQueryData);
@@ -246,7 +247,7 @@ public final class StoreCreationTool {
         pipelineDoc.getPipelineData().addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xslt));
         pipelineDoc.getPipelineData().addProperty(PipelineDataUtil.createProperty("storeAppender", "feed", new DocRef(null, null, feedName)));
         pipelineDoc.getPipelineData()
-                .addProperty(PipelineDataUtil.createProperty("storeAppender", "streamType", StreamType.REFERENCE));
+                .addProperty(PipelineDataUtil.createProperty("storeAppender", "streamType", StreamTypeEntity.REFERENCE));
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRef;
     }
@@ -305,7 +306,7 @@ public final class StoreCreationTool {
         // Add the associated data to the stream store.
         final StreamProperties streamProperties = new StreamProperties.Builder()
                 .feedName(feedName)
-                .streamTypeName(StreamType.RAW_EVENTS.getName())
+                .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
                 .build();
 
         final StreamTarget dataTarget = streamStore.openStreamTarget(streamProperties);
@@ -318,7 +319,7 @@ public final class StoreCreationTool {
         dataWriter.write(dataInputStream, dataOutputStream);
 
         if (contextLocation != null) {
-            final StreamTarget contextTarget = dataTarget.addChildStream(StreamType.CONTEXT);
+            final StreamTarget contextTarget = dataTarget.addChildStream(StreamTypeNames.CONTEXT);
 
             final InputStream contextInputStream = Files.newInputStream(contextLocation);
 
@@ -360,14 +361,14 @@ public final class StoreCreationTool {
         final DocRef contextPipeline = getContextPipeline(feedName, contextTextConverterType,
                 contextTextConverterLocation, contextXsltLocation);
         pipelineReferences.add(PipelineDataUtil.createReference("translationFilter", "pipelineReference",
-                contextPipeline, docRef, StreamType.CONTEXT.getName()));
+                contextPipeline, docRef, StreamTypeEntity.CONTEXT.getName()));
 
         // Add reference data loader pipelines.
         if (referenceFeeds != null && referenceFeeds.size() > 0) {
             final DocRef referenceLoaderPipeline = getReferenceLoaderPipeline();
             for (final DocRef refFeed : referenceFeeds) {
                 pipelineReferences.add(PipelineDataUtil.createReference("translationFilter", "pipelineReference",
-                        referenceLoaderPipeline, refFeed, StreamType.REFERENCE.getName()));
+                        referenceLoaderPipeline, refFeed, StreamTypeEntity.REFERENCE.getName()));
             }
         }
 
@@ -389,7 +390,7 @@ public final class StoreCreationTool {
                     .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
                     .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
                             .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, docRef.getName())
-                            .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
+                            .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeEntity.RAW_EVENTS.getName())
                             .build())
                     .build();
 
@@ -480,7 +481,7 @@ public final class StoreCreationTool {
 
         // final PropertyType streamTypePropertyType = new PropertyType(
         // elementType, "streamType", "StreamType", false);
-        pipelineData.addProperty(PipelineDataUtil.createProperty("storeAppender", "streamType", StreamType.EVENTS));
+        pipelineData.addProperty(PipelineDataUtil.createProperty("storeAppender", "streamType", StreamTypeEntity.EVENTS));
 
         // // Write the pipeline data.
         // final ByteArrayOutputStream outputStream = new
@@ -626,7 +627,7 @@ public final class StoreCreationTool {
             final QueryData findStreamQueryData = new QueryData.Builder()
                     .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
                     .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                            .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.EVENTS.getName())
+                            .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeEntity.EVENTS.getName())
                             .build())
                     .build();
             streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, findStreamQueryData);

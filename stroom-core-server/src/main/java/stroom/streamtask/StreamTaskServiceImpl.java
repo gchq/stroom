@@ -37,7 +37,8 @@ import stroom.streamstore.FeedService;
 import stroom.streamstore.StreamTypeService;
 import stroom.streamstore.shared.FeedEntity;
 import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamStatusId;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
@@ -128,7 +129,7 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
             sql.append(")");
             sql.append(" WHERE 1=1");
 
-            sql.appendPrimitiveValueSetQuery("S." + StreamEntity.STATUS, criteria.getStatusSet());
+            sql.appendPrimitiveValueSetQuery("S." + StreamEntity.STATUS, StreamStatusId.convertStatusSet(criteria.getStatusSet()));
             sql.appendDocRefSetQuery("SP." + StreamProcessor.PIPELINE_UUID, criteria.getPipelineSet());
             sql.appendEntityIdSetQuery("F." + BaseEntity.ID, feedService.convertNameSet(criteria.getFeedNameSet()));
 
@@ -213,7 +214,7 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
                 if (fetchSet.contains(FeedEntity.ENTITY_TYPE)) {
                     sql.append(" JOIN FETCH s.feed AS f");
                 }
-                if (fetchSet.contains(StreamType.ENTITY_TYPE)) {
+                if (fetchSet.contains(StreamTypeEntity.ENTITY_TYPE)) {
                     sql.append(" JOIN FETCH s.streamType AS st");
                 }
             }
@@ -244,7 +245,7 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
 
             sql.appendEntityIdSetQuery(alias + ".stream.streamType", streamTypeService.convertNameSet(criteria.getStreamTypeNameSet()));
 
-            sql.appendPrimitiveValueSetQuery(alias + ".stream.pstatus", criteria.getStatusSet());
+            sql.appendPrimitiveValueSetQuery(alias + ".stream.pstatus", StreamStatusId.convertStatusSet(criteria.getStatusSet()));
 
 //            sql.appendEntityIdSetQuery(alias + ".streamProcessorFilter.streamProcessor.pipeline",
 //                    criteria.getPipelineSet());

@@ -23,7 +23,7 @@ import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
 import stroom.streamstore.shared.FeedEntity;
 import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.test.FileSystemTestUtil;
@@ -93,11 +93,11 @@ public class TestFileSystemUtil extends StroomUnitTest {
     public void testCreateRootStreamFile() throws IOException {
         final StreamEntity md = new StreamEntity();
         md.setId(1001001L);
-        md.setStreamType(StreamType.EVENTS);
+        md.setStreamType(StreamTypeEntity.EVENTS);
         md.setFeed(FeedEntity.createStub(1));
         md.setCreateMs(DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z"));
 
-        final Path rootFile = FileSystemStreamTypeUtil.createRootStreamFile(buildTestVolume(), md, StreamType.EVENTS);
+        final Path rootFile = FileSystemStreamTypeUtil.createRootStreamFile(buildTestVolume(), md, StreamTypeNames.EVENTS);
 
         Assert.assertNotNull(rootFile);
         assertPathEndsWith(rootFile, "EVENTS/2010/01/01/001/001/1=001001001.evt.bgz");
@@ -107,24 +107,24 @@ public class TestFileSystemUtil extends StroomUnitTest {
     public void testCreateChildStreamFile() throws IOException {
         final StreamEntity md = new StreamEntity();
         md.setId(1001001L);
-        md.setStreamType(StreamType.RAW_EVENTS);
+        md.setStreamType(StreamTypeEntity.RAW_EVENTS);
         md.setFeed(FeedEntity.createStub(1));
         md.setCreateMs(DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z"));
 
         final Path rootFile = FileSystemStreamTypeUtil.createRootStreamFile(buildTestVolume(), md,
-                StreamType.RAW_EVENTS);
+                StreamTypeNames.RAW_EVENTS);
 
         touch(rootFile);
 
-        final Path child1 = FileSystemStreamTypeUtil.createChildStreamFile(rootFile, StreamType.CONTEXT);
+        final Path child1 = FileSystemStreamTypeUtil.createChildStreamFile(rootFile, StreamTypeNames.CONTEXT);
         touch(child1);
         assertPathEndsWith(child1, "EVENTS/2010/01/01/001/001/1=001001001.revt.ctx.bgz");
 
-        final Path child2 = FileSystemStreamTypeUtil.createChildStreamFile(rootFile, StreamType.SEGMENT_INDEX);
+        final Path child2 = FileSystemStreamTypeUtil.createChildStreamFile(rootFile, StreamTypeNames.SEGMENT_INDEX);
         touch(child2);
         assertPathEndsWith(child2, "EVENTS/2010/01/01/001/001/1=001001001.revt.seg.dat");
 
-        final Path child1_1 = FileSystemStreamTypeUtil.createChildStreamFile(child1, StreamType.SEGMENT_INDEX);
+        final Path child1_1 = FileSystemStreamTypeUtil.createChildStreamFile(child1, StreamTypeNames.SEGMENT_INDEX);
         touch(child1_1);
         assertPathEndsWith(child1_1, "EVENTS/2010/01/01/001/001/1=001001001.revt.ctx.seg.dat");
 
@@ -246,11 +246,11 @@ public class TestFileSystemUtil extends StroomUnitTest {
     public void testDirPath() {
         final StreamEntity md = new StreamEntity();
         md.setId(100100L);
-        md.setStreamType(StreamType.EVENTS);
+        md.setStreamType(StreamTypeEntity.EVENTS);
         md.setFeed(FeedEntity.createStub(2));
         md.setCreateMs(DateUtil.parseNormalDateTimeString("2008-11-18T10:00:00.000Z"));
 
-        Assert.assertEquals("EVENTS/2008/11/18/100", FileSystemStreamTypeUtil.getDirectory(md, StreamType.EVENTS));
+        Assert.assertEquals("EVENTS/2008/11/18/100", FileSystemStreamTypeUtil.getDirectory(md, StreamTypeNames.EVENTS));
         Assert.assertEquals("2=100100", FileSystemStreamTypeUtil.getBaseName(md));
     }
 
@@ -258,12 +258,12 @@ public class TestFileSystemUtil extends StroomUnitTest {
     public void testDirPath2() {
         final StreamEntity md = new StreamEntity();
         md.setId(1100100L);
-        md.setStreamType(StreamType.EVENTS);
+        md.setStreamType(StreamTypeEntity.EVENTS);
         md.setFeed(FeedEntity.createStub(2));
         md.setCreateMs(DateUtil.parseNormalDateTimeString("2008-11-18T10:00:00.000Z"));
 
         Assert.assertEquals("EVENTS/2008/11/18/001/100",
-                FileSystemStreamTypeUtil.getDirectory(md, StreamType.EVENTS));
+                FileSystemStreamTypeUtil.getDirectory(md, StreamTypeNames.EVENTS));
         Assert.assertEquals("2=001100100", FileSystemStreamTypeUtil.getBaseName(md));
     }
 

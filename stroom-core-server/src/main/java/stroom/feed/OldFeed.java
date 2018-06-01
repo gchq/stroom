@@ -21,7 +21,7 @@ import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
 import stroom.entity.shared.SQLNameConstants;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -64,7 +64,7 @@ public class OldFeed extends DocumentEntity {
     private String contextEncoding;
     private Integer retentionDayAge;
     private boolean reference;
-    private StreamType streamType;
+    private StreamTypeEntity streamType;
     private byte pstatus = FeedStatus.RECEIVE.getPrimitiveValue();
 
     public OldFeed() {
@@ -92,12 +92,12 @@ public class OldFeed extends DocumentEntity {
     }
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = StreamType.FOREIGN_KEY)
-    public StreamType getStreamType() {
+    @JoinColumn(name = StreamTypeEntity.FOREIGN_KEY)
+    public StreamTypeEntity getStreamType() {
         return streamType;
     }
 
-    public void setStreamType(final StreamType streamType) {
+    public void setStreamType(final StreamTypeEntity streamType) {
         this.streamType = streamType;
     }
 

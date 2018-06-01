@@ -33,7 +33,7 @@ import stroom.streamstore.fs.FileSystemCleanExecutor;
 import stroom.streamstore.fs.FileSystemStreamMaintenanceService;
 import stroom.streamstore.fs.FileSystemUtil;
 import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.task.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
@@ -84,11 +84,11 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
         final StreamProperties lockfile1 = new StreamProperties.Builder()
                 .feedName(feedName)
-                .streamTypeName(StreamType.RAW_EVENTS.getName())
+                .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
                 .build();
         final StreamProperties nolockfile1 = new StreamProperties.Builder()
                 .feedName(feedName)
-                .streamTypeName(StreamType.RAW_EVENTS.getName())
+                .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
                 .build();
         //
         // FILE1 LOCKED
@@ -161,7 +161,7 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
     public void testArchiveRemovedFile() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
-        final StreamEntity data = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamType.RAW_EVENTS.getName());
+        final StreamEntity data = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeEntity.RAW_EVENTS.getName());
 
         Collection<Path> files = streamMaintenanceService.findAllStreamFile(data);
 
@@ -211,7 +211,7 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         for (long time = startTime; time < endTime; time += tenMin) {
             final StreamProperties streamProperties = new StreamProperties.Builder()
                     .feedName(feedName)
-                    .streamTypeName(StreamType.RAW_EVENTS.getName())
+                    .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
                     .createMs(time)
                     .build();
             final StreamTarget t = streamStore.openStreamTarget(streamProperties);

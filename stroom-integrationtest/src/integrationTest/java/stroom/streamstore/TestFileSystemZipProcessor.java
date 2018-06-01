@@ -26,8 +26,9 @@ import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.fs.FileSystemStreamMaintenanceService;
+import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.fs.serializable.RANestedInputStream;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamtask.StreamTargetStroomStreamHandler;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.io.StreamUtil;
@@ -38,6 +39,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -65,10 +67,10 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
             zipOut.closeEntry();
             zipOut.close();
 
-            final HashMap<StreamType, String> expectedContent = new HashMap<>();
+            final HashMap<String, String> expectedContent = new HashMap<>();
             expectedContent.put(null, "File1\nFile1\n");
-            final HashMap<StreamType, List<String>> expectedBoundaries = new HashMap<>();
-            expectedBoundaries.put(null, Arrays.asList("File1\nFile1\n"));
+            final HashMap<String, List<String>> expectedBoundaries = new HashMap<>();
+            expectedBoundaries.put(null, Collections.singletonList("File1\nFile1\n"));
 
             doTest(file, 1, new HashSet<>(Arrays.asList("revt.bgz", "revt.meta.bgz", "revt.mf.dat")),
                     expectedContent, expectedBoundaries);
@@ -88,9 +90,9 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
             zipOut.closeEntry();
             zipOut.close();
 
-            final HashMap<StreamType, String> expectedContent = new HashMap<>();
+            final HashMap<String, String> expectedContent = new HashMap<>();
             expectedContent.put(null, "File1\nFile1\nFile1\nFile1\nFile1\nFile1\n");
-            final HashMap<StreamType, List<String>> expectedBoundaries = new HashMap<>();
+            final HashMap<String, List<String>> expectedBoundaries = new HashMap<>();
             expectedBoundaries.put(null, Arrays.asList("File1\nFile1\n", "File1\nFile1\n", "File1\nFile1\n"));
 
             doTest(file, 3, new HashSet<>(
@@ -118,15 +120,15 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
             zipOut.closeEntry();
             zipOut.close();
 
-            final HashMap<StreamType, String> expectedContent = new HashMap<>();
+            final HashMap<String, String> expectedContent = new HashMap<>();
             expectedContent.put(null, "File1\nFile1\n");
-            expectedContent.put(StreamType.CONTEXT, "Context1\nContext1\n");
-            expectedContent.put(StreamType.META, "Meta11:1\nMeta12:1\nStreamSize:12\n");
+            expectedContent.put(StreamTypeNames.CONTEXT, "Context1\nContext1\n");
+            expectedContent.put(StreamTypeNames.META, "Meta11:1\nMeta12:1\nStreamSize:12\n");
 
-            final HashMap<StreamType, List<String>> expectedBoundaries = new HashMap<>();
-            expectedBoundaries.put(null, Arrays.asList("File1\nFile1\n"));
-            expectedBoundaries.put(StreamType.CONTEXT, Arrays.asList("Context1\nContext1\n"));
-            expectedBoundaries.put(StreamType.META, Arrays.asList("Meta11:1\nMeta12:1\nStreamSize:12\n"));
+            final HashMap<String, List<String>> expectedBoundaries = new HashMap<>();
+            expectedBoundaries.put(null, Collections.singletonList("File1\nFile1\n"));
+            expectedBoundaries.put(StreamTypeNames.CONTEXT, Collections.singletonList("Context1\nContext1\n"));
+            expectedBoundaries.put(StreamTypeNames.META, Collections.singletonList("Meta11:1\nMeta12:1\nStreamSize:12\n"));
 
             doTest(file, 1,
                     new HashSet<>(Arrays.asList("revt.bgz", "revt.ctx.bgz", "revt.meta.bgz", "revt.mf.dat")),
@@ -164,15 +166,15 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
             zipOut.closeEntry();
             zipOut.close();
 
-            final HashMap<StreamType, String> expectedContent = new HashMap<>();
+            final HashMap<String, String> expectedContent = new HashMap<>();
             expectedContent.put(null, "File1\nFile1\nFile2\nFile2\n");
-            expectedContent.put(StreamType.CONTEXT, "Context1\nContext1\nContext2\nContext2\n");
-            expectedContent.put(StreamType.META, "Meta1a\nMeta1b\nStreamSize:12\nMeta2a\nMeta2b\nStreamSize:12\n");
+            expectedContent.put(StreamTypeNames.CONTEXT, "Context1\nContext1\nContext2\nContext2\n");
+            expectedContent.put(StreamTypeNames.META, "Meta1a\nMeta1b\nStreamSize:12\nMeta2a\nMeta2b\nStreamSize:12\n");
 
-            final HashMap<StreamType, List<String>> expectedBoundaries = new HashMap<>();
+            final HashMap<String, List<String>> expectedBoundaries = new HashMap<>();
             expectedBoundaries.put(null, Arrays.asList("File1\nFile1\n", "File2\nFile2\n"));
-            expectedBoundaries.put(StreamType.CONTEXT, Arrays.asList("Context1\nContext1\n", "Context2\nContext2\n"));
-            expectedBoundaries.put(StreamType.META,
+            expectedBoundaries.put(StreamTypeNames.CONTEXT, Arrays.asList("Context1\nContext1\n", "Context2\nContext2\n"));
+            expectedBoundaries.put(StreamTypeNames.META,
                     Arrays.asList("Meta1a\nMeta1b\nStreamSize:12\n", "Meta2a\nMeta2b\nStreamSize:12\n"));
 
             doTest(file, 1, new HashSet<>(Arrays.asList("revt.bgz", "revt.bdy.dat", "revt.ctx.bgz",
@@ -197,9 +199,9 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
             zipOut.closeEntry();
             zipOut.close();
 
-            final HashMap<StreamType, String> expectedContent = new HashMap<>();
+            final HashMap<String, String> expectedContent = new HashMap<>();
             expectedContent.put(null, "File1\nFile1\nFile2\nFile2\n");
-            final HashMap<StreamType, List<String>> expectedBoundaries = new HashMap<>();
+            final HashMap<String, List<String>> expectedBoundaries = new HashMap<>();
             expectedBoundaries.put(null, Arrays.asList("File1\nFile1\n", "File2\nFile2\n"));
 
             doTest(file, 1, new HashSet<>(
@@ -211,15 +213,15 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
     }
 
     private void doTest(final Path file, final int processCount, final Set<String> expectedFiles,
-                        final HashMap<StreamType, String> expectedContent,
-                        final HashMap<StreamType, List<String>> expectedBoundaries) throws IOException {
+                        final HashMap<String, String> expectedContent,
+                        final HashMap<String, List<String>> expectedBoundaries) throws IOException {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
         final MetaMap metaMap = new MetaMap();
         metaMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
 
         final List<StreamTargetStroomStreamHandler> handlerList = StreamTargetStroomStreamHandler
-                .buildSingleHandlerList(streamStore, feedDocCache, null, feedName, StreamType.RAW_EVENTS.getName());
+                .buildSingleHandlerList(streamStore, feedDocCache, null, feedName, StreamTypeEntity.RAW_EVENTS.getName());
 
         final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlerList, new byte[1000],
                 "DefaultDataFeedRequest-" + metaMap.get(StroomHeaderArguments.GUID));
@@ -247,8 +249,8 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
 
         // Test full content
         StreamSource source = streamStore.openStreamSource(handlerList.get(0).getStreamSet().iterator().next().getId());
-        for (final Entry<StreamType, String> entry : expectedContent.entrySet()) {
-            final StreamType key = entry.getKey();
+        for (final Entry<String, String> entry : expectedContent.entrySet()) {
+            final String key = entry.getKey();
             final String content = entry.getValue();
             if (key == null) {
                 Assert.assertEquals(content, StreamUtil.streamToString(source.getInputStream()));
@@ -260,8 +262,8 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
 
         // Test boundaries
         source = streamStore.openStreamSource(handlerList.get(0).getStreamSet().iterator().next().getId());
-        for (final Entry<StreamType, List<String>> entry : expectedBoundaries.entrySet()) {
-            final StreamType key = entry.getKey();
+        for (final Entry<String, List<String>> entry : expectedBoundaries.entrySet()) {
+            final String key = entry.getKey();
             final List<String> nestedContentList = entry.getValue();
             if (key == null) {
                 final RANestedInputStream inputStream = new RANestedInputStream(source);

@@ -25,12 +25,12 @@ import stroom.io.SeekableInputStream;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.fs.serializable.NestedInputStream;
 import stroom.streamstore.fs.serializable.RANestedInputStream;
 import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.task.ExecutorProvider;
 import stroom.task.TaskContext;
@@ -127,7 +127,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
         final StreamSource streamSource = streamStore.openStreamSource(resultList1.getFirst().getId());
 
-        Assert.assertNotNull(streamSource.getChildStream(StreamType.META));
+        Assert.assertNotNull(streamSource.getChildStream(StreamTypeNames.META));
 
         final NestedInputStream nestedInputStream = new RANestedInputStream(streamSource);
         Assert.assertEquals(2, nestedInputStream.getEntryCount());
@@ -138,7 +138,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         Assert.assertEquals("data3\ndata3\n", StreamUtil.streamToString(nestedInputStream, false));
         nestedInputStream.closeEntry();
 
-        final StreamSource metaSource = streamSource.getChildStream(StreamType.META);
+        final StreamSource metaSource = streamSource.getChildStream(StreamTypeNames.META);
         final NestedInputStream metaNestedInputStream = new RANestedInputStream(metaSource);
         Assert.assertEquals(2, metaNestedInputStream.getEntryCount());
 
@@ -186,8 +186,8 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
         StreamSource source = streamStore.openStreamSource(list.get(0).getId());
 
-        assertContent("expecting meta data", source.getChildStream(StreamType.META), true);
-        assertContent("expecting NO boundary data", source.getChildStream(StreamType.BOUNDARY_INDEX), true);
+        assertContent("expecting meta data", source.getChildStream(StreamTypeNames.META), true);
+        assertContent("expecting NO boundary data", source.getChildStream(StreamTypeNames.BOUNDARY_INDEX), true);
 
         streamStore.closeStreamSource(source);
         source = streamStore.openStreamSource(list.get(0).getId());
@@ -260,9 +260,9 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
         StreamSource source = streamStore.openStreamSource(list.get(0).getId());
 
-        assertContent("expecting meta data", source.getChildStream(StreamType.META), true);
-        assertContent("expecting NO boundary data", source.getChildStream(StreamType.BOUNDARY_INDEX), false);
-        assertContent("expecting context data", source.getChildStream(StreamType.CONTEXT), true);
+        assertContent("expecting meta data", source.getChildStream(StreamTypeNames.META), true);
+        assertContent("expecting NO boundary data", source.getChildStream(StreamTypeNames.BOUNDARY_INDEX), false);
+        assertContent("expecting context data", source.getChildStream(StreamTypeNames.CONTEXT), true);
 
         streamStore.closeStreamSource(source);
         source = streamStore.openStreamSource(list.get(0).getId());
@@ -272,13 +272,13 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         Assert.assertEquals(1, nestedInputStream.getEntryCount());
         nestedInputStream.close();
 
-        final NestedInputStream metaNestedInputStream = new RANestedInputStream(source.getChildStream(StreamType.META));
+        final NestedInputStream metaNestedInputStream = new RANestedInputStream(source.getChildStream(StreamTypeNames.META));
 
         Assert.assertEquals(1, metaNestedInputStream.getEntryCount());
         metaNestedInputStream.close();
 
         final NestedInputStream ctxNestedInputStream = new RANestedInputStream(
-                source.getChildStream(StreamType.CONTEXT));
+                source.getChildStream(StreamTypeNames.CONTEXT));
 
         Assert.assertEquals(1, ctxNestedInputStream.getEntryCount());
         ctxNestedInputStream.close();
@@ -310,9 +310,9 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
         StreamSource source = streamStore.openStreamSource(list.get(0).getId());
 
-        assertContent("expecting meta data", source.getChildStream(StreamType.META), true);
-        assertContent("expecting boundary data", source.getChildStream(StreamType.BOUNDARY_INDEX), true);
-        assertContent("expecting context data", source.getChildStream(StreamType.CONTEXT), true);
+        assertContent("expecting meta data", source.getChildStream(StreamTypeNames.META), true);
+        assertContent("expecting boundary data", source.getChildStream(StreamTypeNames.BOUNDARY_INDEX), true);
+        assertContent("expecting context data", source.getChildStream(StreamTypeNames.CONTEXT), true);
 
         streamStore.closeStreamSource(source);
         source = streamStore.openStreamSource(list.get(0).getId());
@@ -328,13 +328,13 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         nestedInputStream.closeEntry();
         nestedInputStream.close();
 
-        final NestedInputStream metaNestedInputStream = new RANestedInputStream(source.getChildStream(StreamType.META));
+        final NestedInputStream metaNestedInputStream = new RANestedInputStream(source.getChildStream(StreamTypeNames.META));
 
         Assert.assertEquals(2, metaNestedInputStream.getEntryCount());
         metaNestedInputStream.close();
 
         final NestedInputStream ctxNestedInputStream = new RANestedInputStream(
-                source.getChildStream(StreamType.CONTEXT));
+                source.getChildStream(StreamTypeNames.CONTEXT));
 
         Assert.assertEquals(2, ctxNestedInputStream.getEntryCount());
         ctxNestedInputStream.close();
@@ -345,7 +345,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         if (hasContent) {
             Assert.assertTrue(msg, ((SeekableInputStream) is.getInputStream()).getSize() > 0);
         } else {
-            Assert.assertTrue(msg, ((SeekableInputStream) is.getInputStream()).getSize() == 0);
+            Assert.assertEquals(msg, 0, ((SeekableInputStream) is.getInputStream()).getSize());
         }
         is.getInputStream().close();
     }

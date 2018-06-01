@@ -17,7 +17,7 @@
 package stroom.streamstore.fs.serializable;
 
 import stroom.streamstore.api.StreamSource;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.fs.StreamTypeNames;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,14 +31,14 @@ import java.io.InputStream;
 public class CompoundInputStream extends RANestedInputStream {
     InputStream segIndex;
 
-    public CompoundInputStream(InputStream data, InputStream bdyIndex, InputStream segIndex) throws IOException {
+    public CompoundInputStream(InputStream data, InputStream bdyIndex, InputStream segIndex) {
         super(data, bdyIndex);
         this.segIndex = segIndex;
     }
 
-    public CompoundInputStream(final StreamSource streamSource) throws IOException {
-        this(streamSource.getInputStream(), streamSource.getChildStream(StreamType.BOUNDARY_INDEX).getInputStream(),
-                streamSource.getChildStream(StreamType.SEGMENT_INDEX).getInputStream());
+    public CompoundInputStream(final StreamSource streamSource) {
+        this(streamSource.getInputStream(), streamSource.getChildStream(StreamTypeNames.BOUNDARY_INDEX).getInputStream(),
+                streamSource.getChildStream(StreamTypeNames.SEGMENT_INDEX).getInputStream());
     }
 
     public RASegmentInputStream getNextInputStream(final long skipCount) throws IOException {
@@ -49,9 +49,7 @@ public class CompoundInputStream extends RANestedInputStream {
 
         closeEntry();
 
-        RASegmentInputStream child = new RASegmentInputStream(data, segIndex, segmentByteOffsetStart,
-                segmentByteOffsetEnd);
-        return child;
+        return new RASegmentInputStream(data, segIndex, segmentByteOffsetStart, segmentByteOffsetEnd);
     }
 
     public long getInputStreamCount() throws IOException {

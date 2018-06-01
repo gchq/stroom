@@ -19,7 +19,6 @@ package stroom.pipeline;
 
 import stroom.entity.shared.EntityServiceException;
 import stroom.feed.FeedProperties;
-import stroom.streamstore.FeedService;
 import stroom.guice.PipelineScopeRunnable;
 import stroom.logging.StreamEventLog;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -46,7 +45,6 @@ class FetchDataWithPipelineHandler extends AbstractFetchDataHandler<FetchDataWit
 
     @Inject
     FetchDataWithPipelineHandler(final StreamStore streamStore,
-                                 final FeedService feedService,
                                  final FeedProperties feedProperties,
                                  final StreamProcessorService streamProcessorService,
                                  final Provider<FeedHolder> feedHolderProvider,
@@ -61,7 +59,6 @@ class FetchDataWithPipelineHandler extends AbstractFetchDataHandler<FetchDataWit
                                  final Security security,
                                  final PipelineScopeRunnable pipelineScopeRunnable) {
         super(streamStore,
-                feedService,
                 feedProperties,
                 streamProcessorService,
                 feedHolderProvider,

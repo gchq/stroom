@@ -24,7 +24,7 @@ import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.date.DateUtil;
@@ -44,7 +44,7 @@ public class TestStreamAttributeMapServiceImpl extends AbstractCoreIntegrationTe
     public void testSimple() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
-        final StreamEntity md = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamType.RAW_EVENTS.getName());
+        final StreamEntity md = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeEntity.RAW_EVENTS.getName());
 
         streamAttributeValueFlush.flush();
 

@@ -68,7 +68,7 @@ public class StreamEntity extends BaseEntityBig implements Stream {
      */
     private FeedEntity feed;
 
-    private StreamType streamType;
+    private StreamTypeEntity streamType;
 
     /**
      * The stream processor that was used to create this stream if relevant.
@@ -152,12 +152,12 @@ public class StreamEntity extends BaseEntityBig implements Stream {
     }
 
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = StreamType.FOREIGN_KEY)
-    public StreamType getStreamType() {
+    @JoinColumn(name = StreamTypeEntity.FOREIGN_KEY)
+    public StreamTypeEntity getStreamType() {
         return streamType;
     }
 
-    public void setStreamType(final StreamType streamType) {
+    public void setStreamType(final StreamTypeEntity streamType) {
         this.streamType = applySetter(this.streamType, streamType);
     }
 
@@ -212,11 +212,11 @@ public class StreamEntity extends BaseEntityBig implements Stream {
 
     @Transient
     public StreamStatus getStatus() {
-        return StreamStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(pstatus);
+        return StreamStatusId.getStreamStatus(pstatus);
     }
 
     public void updateStatus(final StreamStatus status) {
-        pstatus = status.getPrimitiveValue();
+        pstatus = StreamStatusId.getPrimitiveValue(status);
         statusMs = System.currentTimeMillis();
     }
 

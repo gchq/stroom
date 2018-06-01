@@ -37,7 +37,7 @@ import stroom.pipeline.structure.client.presenter.PropertyListPresenter.Source;
 import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.shared.FindStreamTypeCriteria;
-import stroom.streamstore.shared.StreamType.Purpose;
+import stroom.streamstore.shared.StreamTypeEntity.Purpose;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.valuespinner.client.ValueSpinner;
 

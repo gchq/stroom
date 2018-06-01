@@ -31,7 +31,7 @@ import stroom.streamstore.OldFindStreamCriteria;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.shared.FeedEntity;
 import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamtask.shared.StreamTask;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
@@ -71,7 +71,7 @@ public class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrat
     public void testBasic() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
-        commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamType.RAW_EVENTS.getName());
+        commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeEntity.RAW_EVENTS.getName());
         Assert.assertEquals(0, commonTestControl.countEntity(StreamTask.class));
         final List<StreamEntity> streams = streamStore.find(new OldFindStreamCriteria());
         Assert.assertEquals(1, streams.size());

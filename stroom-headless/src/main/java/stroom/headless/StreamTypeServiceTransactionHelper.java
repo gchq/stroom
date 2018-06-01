@@ -18,11 +18,10 @@ package stroom.headless;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import stroom.entity.util.SqlBuilder;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.SQLNameConstants;
-import stroom.streamstore.shared.StreamType;
+import stroom.entity.util.SqlBuilder;
+import stroom.streamstore.shared.StreamTypeEntity;
 
 import javax.inject.Inject;
 
@@ -40,34 +39,28 @@ class StreamTypeServiceTransactionHelper {
     public void doInserts() {
         final long now = System.currentTimeMillis();
 
-        for (final StreamType streamType : StreamType.initialValues()) {
+        for (final StreamTypeEntity streamType : StreamTypeEntity.initialValues()) {
             final long pk = streamType.getId();
-            if (stroomEntityManager.loadEntityById(StreamType.class, pk) == null) {
+            if (stroomEntityManager.loadEntityById(StreamTypeEntity.class, pk) == null) {
                 try {
                     // We use SQL to insert because we need a predefined key.
                     final SqlBuilder sql = new SqlBuilder();
                     sql.append("INSERT INTO ");
-                    sql.append(StreamType.TABLE_NAME);
+                    sql.append(StreamTypeEntity.TABLE_NAME);
                     sql.append(" (");
-                    sql.append(StreamType.ID);
+                    sql.append(StreamTypeEntity.ID);
                     sql.append(",");
-                    sql.append(StreamType.VERSION);
+                    sql.append(StreamTypeEntity.VERSION);
                     sql.append(",");
-                    sql.append(StreamType.UPDATE_TIME);
+                    sql.append(StreamTypeEntity.UPDATE_TIME);
                     sql.append(",");
-                    sql.append(StreamType.CREATE_TIME);
+                    sql.append(StreamTypeEntity.CREATE_TIME);
                     sql.append(",");
-                    sql.append(StreamType.UPDATE_USER);
+                    sql.append(StreamTypeEntity.UPDATE_USER);
                     sql.append(",");
-                    sql.append(StreamType.CREATE_USER);
-                    sql.append(",");
-                    sql.append(StreamType.PATH);
-                    sql.append(",");
-                    sql.append(StreamType.EXTENSION);
+                    sql.append(StreamTypeEntity.CREATE_USER);
                     sql.append(",");
                     sql.append(SQLNameConstants.NAME);
-                    sql.append(",");
-                    sql.append(SQLNameConstants.PURPOSE);
                     sql.append(") VALUES (");
                     sql.arg(streamType.getId());
                     sql.append(",");
@@ -81,13 +74,7 @@ class StreamTypeServiceTransactionHelper {
                     sql.append(",");
                     sql.arg("upgrade");
                     sql.append(",");
-                    sql.arg(streamType.getPath());
-                    sql.append(",");
-                    sql.arg(streamType.getExtension());
-                    sql.append(",");
                     sql.arg(streamType.getName());
-                    sql.append(",");
-                    sql.arg(streamType.getPpurpose());
                     sql.append(")");
                     stroomEntityManager.executeNativeUpdate(sql);
                 } catch (final RuntimeException e) {

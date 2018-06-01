@@ -44,9 +44,9 @@ public class FindStreamCriteria extends BaseCriteria implements HasIsConstrained
         return criteria;
     }
 
-    public static FindStreamCriteria createWithStreamType(final StreamType streamType) {
+    public static FindStreamCriteria createWithStreamType(final String streamTypeName) {
         final FindStreamCriteria criteria = new FindStreamCriteria();
-        criteria.setExpression(ExpressionUtil.createStreamTypeExpression(streamType));
+        criteria.setExpression(ExpressionUtil.createStreamTypeExpression(streamTypeName));
         return criteria;
     }
 

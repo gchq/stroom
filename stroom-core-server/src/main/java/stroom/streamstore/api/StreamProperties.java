@@ -1,11 +1,11 @@
 package stroom.streamstore.api;
 
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.shared.Stream;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamTask;
 
 public class StreamProperties {
-    private StreamEntity parent;
+    private Stream parent;
     private String streamTypeName;
     private String feedName;
     private StreamProcessor streamProcessor;
@@ -14,7 +14,7 @@ public class StreamProperties {
     private Long effectiveMs;
     private Long statusMs;
 
-    public StreamEntity getParent() {
+    public Stream getParent() {
         return parent;
     }
 
@@ -49,7 +49,7 @@ public class StreamProperties {
     public static class Builder {
         private StreamProperties sp = new StreamProperties();
 
-        public Builder parent(final StreamEntity parent) {
+        public Builder parent(final Stream parent) {
             sp.parent = parent;
             return this;
         }

@@ -16,17 +16,17 @@
 
 package stroom.refdata;
 
+import stroom.docref.DocRef;
 import stroom.entity.DocumentPermissionCache;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.StreamHolder;
-import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
-import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.util.shared.Severity;
 import stroom.xml.event.EventList;
 
@@ -116,7 +116,7 @@ public class ReferenceData {
             // Handle context data differently loading it from the
             // current stream context.
             if (pipelineReference.getStreamType() != null
-                    && StreamType.CONTEXT.getName().equals(pipelineReference.getStreamType())) {
+                    && StreamTypeEntity.CONTEXT.getName().equals(pipelineReference.getStreamType())) {
                 getNestedStreamEventList(pipelineReference, mapName, keyName, referenceDataResult);
             } else {
                 getExternalEventList(pipelineReference, time, mapName, keyName, referenceDataResult);
@@ -139,22 +139,15 @@ public class ReferenceData {
                                           final ReferenceDataResult result) {
         try {
             // Get nested stream.
-            final String streamTypeString = pipelineReference.getStreamType();
+            final String streamTypeName = pipelineReference.getStreamType();
             final long streamNo = streamHolder.getStreamNo();
-            CachedMapStore cachedMapStore = nestedStreamCache.get(streamTypeString);
+            CachedMapStore cachedMapStore = nestedStreamCache.get(streamTypeName);
             MapStore mapStore = null;
 
             if (cachedMapStore != null && cachedMapStore.getStreamNo() == streamNo) {
                 mapStore = cachedMapStore.getMapStore();
             } else {
-                StreamType streamType = null;
-                for (final StreamType st : StreamType.initialValues()) {
-                    if (st.getName().equals(streamTypeString)) {
-                        streamType = st;
-                        break;
-                    }
-                }
-                final StreamSourceInputStreamProvider provider = streamHolder.getProvider(streamType);
+                final StreamSourceInputStreamProvider provider = streamHolder.getProvider(streamTypeName);
                 // There may not be a provider for this stream type if we do not
                 // have any context data stream.
                 if (provider != null) {
@@ -163,7 +156,7 @@ public class ReferenceData {
                 }
 
                 cachedMapStore = new CachedMapStore(streamNo, mapStore);
-                nestedStreamCache.put(streamTypeString, cachedMapStore);
+                nestedStreamCache.put(streamTypeName, cachedMapStore);
             }
 
             if (mapStore != null) {
@@ -189,7 +182,7 @@ public class ReferenceData {
         }
     }
 
-    private MapStore getContextData(final StreamEntity stream,
+    private MapStore getContextData(final Stream stream,
                                     final StreamSourceInputStream contextStream,
                                     final DocRef contextPipeline) {
         if (contextStream != null) {

@@ -21,14 +21,14 @@ import stroom.entity.FindService;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
 import stroom.streamstore.shared.FindStreamTypeCriteria;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 
-public interface StreamTypeService extends FindService<StreamType, FindStreamTypeCriteria> {
-    StreamType get(String streamTypeName);
+public interface StreamTypeService extends FindService<StreamTypeEntity, FindStreamTypeCriteria> {
+    StreamTypeEntity get(String streamTypeName);
 
-    StreamType getOrCreate(String streamTypeName);
+    StreamTypeEntity getOrCreate(String streamTypeName);
 
     long getId(String name);
 
-    EntityIdSet<StreamType> convertNameSet(CriteriaSet<String> streamTypes);
+    EntityIdSet<StreamTypeEntity> convertNameSet(CriteriaSet<String> streamTypes);
 }

@@ -21,7 +21,7 @@ import org.junit.Test;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.PipelineStore;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.test.FileSystemTestUtil;
@@ -48,7 +48,7 @@ public class TestFeedStoreImpl extends AbstractCoreIntegrationTest {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
         DocRef feedRef = feedStore.createDocument(feedName);
         FeedDoc feedDoc = feedStore.readDocument(feedRef);
-        feedDoc.setStreamType(StreamType.RAW_EVENTS.getName());
+        feedDoc.setStreamType(StreamTypeEntity.RAW_EVENTS.getName());
         feedDoc = feedStore.writeDocument(feedDoc);
         feedStore.writeDocument(feedDoc);
 

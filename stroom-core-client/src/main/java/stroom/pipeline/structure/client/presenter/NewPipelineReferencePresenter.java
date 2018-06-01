@@ -32,7 +32,7 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.shared.FindStreamTypeCriteria;
-import stroom.streamstore.shared.StreamType.Purpose;
+import stroom.streamstore.shared.StreamTypeEntity.Purpose;
 
 public class NewPipelineReferencePresenter
         extends MyPresenterWidget<NewPipelineReferencePresenter.NewPipelineReferenceView> {

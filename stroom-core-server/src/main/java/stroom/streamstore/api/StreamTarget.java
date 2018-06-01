@@ -18,7 +18,6 @@ package stroom.streamstore.api;
 
 import stroom.feed.MetaMap;
 import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamType;
 
 import java.io.Closeable;
 import java.io.OutputStream;
@@ -34,7 +33,7 @@ public interface StreamTarget extends Closeable {
      * @return a type associated with the stream. Used to differentiate between
      * child streams ("ctx", "idx", etc).
      */
-    StreamType getType();
+    String getStreamTypeName();
 
     /**
      * @return the stream associated with this target
@@ -57,7 +56,7 @@ public interface StreamTarget extends Closeable {
      * @param type name of the child.
      * @return target to write to.
      */
-    StreamTarget addChildStream(StreamType type);
+    StreamTarget addChildStream(String streamTypeName);
 
     /**
      * Get a child stream (null if addChildStream has not been called)
@@ -65,7 +64,7 @@ public interface StreamTarget extends Closeable {
      * @param type
      * @return
      */
-    StreamTarget getChildStream(StreamType type);
+    StreamTarget getChildStream(String streamTypeName);
 
     /**
      * @return the parent stream for this child.

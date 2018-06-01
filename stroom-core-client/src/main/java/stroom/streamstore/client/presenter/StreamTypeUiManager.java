@@ -22,51 +22,34 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.EntityServiceFindAction;
 import stroom.security.client.event.CurrentUserChangedEvent;
 import stroom.streamstore.shared.FindStreamTypeCriteria;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 public class StreamTypeUiManager {
-    private List<StreamType> streamTypeList = new ArrayList<>();
+    private List<StreamTypeEntity> streamTypeList = new ArrayList<>();
 
     @Inject
     public StreamTypeUiManager(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
-        updateList(Arrays.asList(StreamType.initialValues()));
+        updateList(Arrays.asList(StreamTypeEntity.initialValues()));
 
         // We can only find out the real list when they are logged in
         eventBus.addHandler(CurrentUserChangedEvent.getType(), event -> dispatcher.exec(
-                new EntityServiceFindAction<FindStreamTypeCriteria, StreamType>(new FindStreamTypeCriteria()))
+                new EntityServiceFindAction<FindStreamTypeCriteria, StreamTypeEntity>(new FindStreamTypeCriteria()))
                 .onSuccess(this::updateList));
 
     }
 
-    private void updateList(final List<StreamType> list) {
+    private void updateList(final List<StreamTypeEntity> list) {
         streamTypeList = list;
     }
 
     public List<String> getRawStreamTypeList() {
         final List<String> rtn = new ArrayList<>();
-        for (final StreamType streamType : streamTypeList) {
-            if (streamType.isStreamTypeRaw()) {
-                rtn.add(streamType.getName());
-            }
-        }
-        rtn.sort(Comparator.naturalOrder());
-        return rtn;
-    }
-
-    public List<String> getProcessedStreamTypeList() {
-        final List<String> rtn = new ArrayList<>();
-        for (final StreamType streamType : streamTypeList) {
-            if (streamType.isStreamTypeProcessed()) {
-                rtn.add(streamType.getName());
-            }
-        }
-        rtn.sort(Comparator.naturalOrder());
+        rtn.add("Raw Events");
+        rtn.add("Raw Reference");
         return rtn;
     }
 }

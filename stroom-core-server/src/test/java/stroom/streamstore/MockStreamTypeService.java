@@ -21,17 +21,17 @@ import stroom.entity.MockNamedEntityService;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
 import stroom.streamstore.shared.FindStreamTypeCriteria;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 
 import javax.inject.Singleton;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Singleton
-class MockStreamTypeService extends MockNamedEntityService<StreamType, FindStreamTypeCriteria>
+class MockStreamTypeService extends MockNamedEntityService<StreamTypeEntity, FindStreamTypeCriteria>
         implements StreamTypeService {
     MockStreamTypeService() {
-        for (final StreamType streamType : StreamType.initialValues()) {
+        for (final StreamTypeEntity streamType : StreamTypeEntity.initialValues()) {
             save(streamType);
         }
     }
@@ -41,8 +41,8 @@ class MockStreamTypeService extends MockNamedEntityService<StreamType, FindStrea
      */
     @SuppressWarnings("unchecked")
     @Override
-    public StreamType get(final String name) {
-        final List<StreamType> list = map.values()
+    public StreamTypeEntity get(final String name) {
+        final List<StreamTypeEntity> list = map.values()
                 .stream()
                 .filter(st -> st.getName().equals(name))
                 .collect(Collectors.toList());
@@ -54,8 +54,8 @@ class MockStreamTypeService extends MockNamedEntityService<StreamType, FindStrea
     }
 
     @Override
-    public StreamType getOrCreate(final String name) {
-        StreamType streamType = get(name);
+    public StreamTypeEntity getOrCreate(final String name) {
+        StreamTypeEntity streamType = get(name);
         if (streamType == null) {
             streamType = create(name);
         }
@@ -68,12 +68,12 @@ class MockStreamTypeService extends MockNamedEntityService<StreamType, FindStrea
     }
 
     @Override
-    public EntityIdSet<StreamType> convertNameSet(final CriteriaSet<String> streamTypes) {
+    public EntityIdSet<StreamTypeEntity> convertNameSet(final CriteriaSet<String> streamTypes) {
         if (streamTypes == null) {
             return null;
         }
 
-        final EntityIdSet<StreamType> entityIdSet = new EntityIdSet<>();
+        final EntityIdSet<StreamTypeEntity> entityIdSet = new EntityIdSet<>();
         entityIdSet.setMatchAll(streamTypes.getMatchAll());
         entityIdSet.setMatchNull(streamTypes.getMatchNull());
         streamTypes.forEach(streamTypeName -> entityIdSet.add(getId(streamTypeName)));
@@ -92,7 +92,7 @@ class MockStreamTypeService extends MockNamedEntityService<StreamType, FindStrea
     }
 
     @Override
-    public Class<StreamType> getEntityClass() {
-        return StreamType.class;
+    public Class<StreamTypeEntity> getEntityClass() {
+        return StreamTypeEntity.class;
     }
 }

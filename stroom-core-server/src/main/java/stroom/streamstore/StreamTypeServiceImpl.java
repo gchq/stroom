@@ -29,17 +29,17 @@ import stroom.entity.shared.EntityIdSet;
 import stroom.entity.util.HqlBuilder;
 import stroom.security.Security;
 import stroom.streamstore.shared.FindStreamTypeCriteria;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 
 import javax.inject.Inject;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class StreamTypeServiceImpl extends NamedEntityServiceImpl<StreamType, FindStreamTypeCriteria> implements StreamTypeService, Clearable {
+public class StreamTypeServiceImpl extends NamedEntityServiceImpl<StreamTypeEntity, FindStreamTypeCriteria> implements StreamTypeService, Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamTypeServiceImpl.class);
 
-    private final Map<String, StreamType> cache = new ConcurrentHashMap<>();
+    private final Map<String, StreamTypeEntity> cache = new ConcurrentHashMap<>();
 
     @Inject
     StreamTypeServiceImpl(final StroomEntityManager entityManager,
@@ -52,8 +52,8 @@ public class StreamTypeServiceImpl extends NamedEntityServiceImpl<StreamType, Fi
      */
     @SuppressWarnings("unchecked")
     @Override
-    public StreamType get(final String name) {
-        StreamType streamType = cache.get(name);
+    public StreamTypeEntity get(final String name) {
+        StreamTypeEntity streamType = cache.get(name);
         if (streamType != null) {
             return streamType;
         }
@@ -66,7 +66,7 @@ public class StreamTypeServiceImpl extends NamedEntityServiceImpl<StreamType, Fi
         sql.arg(name);
 
         // This should just bring back 1
-        final List<StreamType> results = getEntityManager().executeQueryResultList(sql);
+        final List<StreamTypeEntity> results = getEntityManager().executeQueryResultList(sql);
 
         if (results != null && results.size() > 0) {
             streamType = results.get(0);
@@ -77,8 +77,8 @@ public class StreamTypeServiceImpl extends NamedEntityServiceImpl<StreamType, Fi
     }
 
     @Override
-    public StreamType getOrCreate(final String name) {
-        StreamType streamType = get(name);
+    public StreamTypeEntity getOrCreate(final String name) {
+        StreamTypeEntity streamType = get(name);
         if (streamType == null) {
             try {
                 // Try and create.
@@ -100,12 +100,12 @@ public class StreamTypeServiceImpl extends NamedEntityServiceImpl<StreamType, Fi
     }
 
     @Override
-    public EntityIdSet<StreamType> convertNameSet(final CriteriaSet<String> streamTypes) {
+    public EntityIdSet<StreamTypeEntity> convertNameSet(final CriteriaSet<String> streamTypes) {
         if (streamTypes == null) {
             return null;
         }
 
-        final EntityIdSet<StreamType> entityIdSet = new EntityIdSet<>();
+        final EntityIdSet<StreamTypeEntity> entityIdSet = new EntityIdSet<>();
         entityIdSet.setMatchAll(streamTypes.getMatchAll());
         entityIdSet.setMatchNull(streamTypes.getMatchNull());
         streamTypes.forEach(streamTypeName -> entityIdSet.add(getId(streamTypeName)));
@@ -114,13 +114,13 @@ public class StreamTypeServiceImpl extends NamedEntityServiceImpl<StreamType, Fi
     }
 
     @Override
-    public BaseResultList<StreamType> find(final FindStreamTypeCriteria criteria) {
+    public BaseResultList<StreamTypeEntity> find(final FindStreamTypeCriteria criteria) {
         return super.find(criteria);
     }
 
     @Override
-    public Class<StreamType> getEntityClass() {
-        return StreamType.class;
+    public Class<StreamTypeEntity> getEntityClass() {
+        return StreamTypeEntity.class;
     }
 
     @Override
@@ -129,7 +129,7 @@ public class StreamTypeServiceImpl extends NamedEntityServiceImpl<StreamType, Fi
     }
 
     @Override
-    protected QueryAppender<StreamType, FindStreamTypeCriteria> createQueryAppender(StroomEntityManager entityManager) {
+    protected QueryAppender<StreamTypeEntity, FindStreamTypeCriteria> createQueryAppender(StroomEntityManager entityManager) {
         return new StreamTypeQueryAppender(entityManager);
     }
 
@@ -143,7 +143,7 @@ public class StreamTypeServiceImpl extends NamedEntityServiceImpl<StreamType, Fi
         cache.clear();
     }
 
-    private static class StreamTypeQueryAppender extends QueryAppender<StreamType, FindStreamTypeCriteria> {
+    private static class StreamTypeQueryAppender extends QueryAppender<StreamTypeEntity, FindStreamTypeCriteria> {
         StreamTypeQueryAppender(final StroomEntityManager entityManager) {
             super(entityManager);
         }

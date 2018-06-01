@@ -22,9 +22,10 @@ import org.junit.runner.RunWith;
 import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamTarget;
+import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
@@ -46,13 +47,13 @@ public class TestMockStreamStore extends StroomUnitTest {
 
         final StreamProperties streamProperties = new StreamProperties.Builder()
                 .feedName("TEST")
-                .streamTypeName(StreamType.EVENTS.getName())
+                .streamTypeName(StreamTypeEntity.EVENTS.getName())
                 .build();
 
         final StreamTarget streamTarget = mockStreamStore.openStreamTarget(streamProperties);
         final StreamEntity stream = streamTarget.getStream();
         streamTarget.getOutputStream().write("PARENT".getBytes(StreamUtil.DEFAULT_CHARSET));
-        streamTarget.addChildStream(StreamType.SEGMENT_INDEX).getOutputStream()
+        streamTarget.addChildStream(StreamTypeNames.SEGMENT_INDEX).getOutputStream()
                 .write("CHILD".getBytes(StreamUtil.DEFAULT_CHARSET));
 
         Assert.assertEquals(0, mockStreamStore.find(FindStreamCriteria.createWithStream(stream)).size());
@@ -69,7 +70,7 @@ public class TestMockStreamStore extends StroomUnitTest {
 
         Assert.assertEquals("PARENT", testMe);
 
-        testMe = StreamUtil.streamToString(streamSource.getChildStream(StreamType.SEGMENT_INDEX).getInputStream());
+        testMe = StreamUtil.streamToString(streamSource.getChildStream(StreamTypeNames.SEGMENT_INDEX).getInputStream());
 
         Assert.assertEquals("CHILD", testMe);
     }

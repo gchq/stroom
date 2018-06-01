@@ -17,17 +17,8 @@
 
 package stroom.streamstore;
 
-import org.junit.Assert;
 import org.junit.Ignore;
-import org.junit.Test;
-import stroom.streamstore.shared.FindStreamTypeCriteria;
-import stroom.streamstore.shared.StreamType;
-import stroom.streamstore.shared.StreamType.Purpose;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.util.test.FileSystemTestUtil;
-
-import javax.inject.Inject;
-import java.io.IOException;
 
 @Ignore
 public class TestStreamTypeServiceImpl extends AbstractCoreIntegrationTest {

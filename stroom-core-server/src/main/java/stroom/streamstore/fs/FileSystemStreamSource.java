@@ -23,7 +23,6 @@ import stroom.io.StreamCloser;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamStatus;
-import stroom.streamstore.shared.StreamType;
 import stroom.streamstore.shared.StreamVolume;
 
 import java.io.IOException;
@@ -39,13 +38,13 @@ public final class FileSystemStreamSource implements StreamSource {
     private final StreamCloser streamCloser = new StreamCloser();
     private StreamEntity stream;
     private StreamVolume volume;
-    private StreamType streamType;
+    private String streamType;
     private MetaMap attributeMap;
     private InputStream inputStream;
     private Path file;
     private FileSystemStreamSource parent;
 
-    private FileSystemStreamSource(final StreamEntity stream, final StreamVolume volume, final StreamType streamType) {
+    private FileSystemStreamSource(final StreamEntity stream, final StreamVolume volume, final String streamType) {
         this.stream = stream;
         this.volume = volume;
         this.streamType = streamType;
@@ -53,7 +52,7 @@ public final class FileSystemStreamSource implements StreamSource {
         validate();
     }
 
-    private FileSystemStreamSource(final FileSystemStreamSource parent, final StreamType streamType, final Path file) {
+    private FileSystemStreamSource(final FileSystemStreamSource parent, final String streamType, final Path file) {
         this.stream = parent.stream;
         this.volume = parent.volume;
         this.parent = parent;
@@ -69,7 +68,7 @@ public final class FileSystemStreamSource implements StreamSource {
      * created.
      */
     public static FileSystemStreamSource create(final StreamEntity stream, final StreamVolume volume,
-                                                final StreamType streamType) {
+                                                final String streamType) {
         return new FileSystemStreamSource(stream, volume, streamType);
     }
 
@@ -87,9 +86,9 @@ public final class FileSystemStreamSource implements StreamSource {
     public Path getFile() {
         if (file == null) {
             if (parent == null) {
-                file = FileSystemStreamTypeUtil.createRootStreamFile(volume.getVolume(), stream, getType());
+                file = FileSystemStreamTypeUtil.createRootStreamFile(volume.getVolume(), stream, getStreamTypeName());
             } else {
-                file = FileSystemStreamTypeUtil.createChildStreamFile(parent.getFile(), getType());
+                file = FileSystemStreamTypeUtil.createChildStreamFile(parent.getFile(), getStreamTypeName());
             }
         }
         return file;
@@ -124,12 +123,17 @@ public final class FileSystemStreamSource implements StreamSource {
     }
 
     @Override
-    public StreamSource getChildStream(final StreamType type) {
-        Path childFile = FileSystemStreamTypeUtil.createChildStreamFile(getFile(), type);
-        boolean lazy = type.isStreamTypeLazy();
+    public String getStreamTypeName() {
+        return streamType;
+    }
+
+    @Override
+    public StreamSource getChildStream(final String streamTypeName) {
+        Path childFile = FileSystemStreamTypeUtil.createChildStreamFile(getFile(), streamTypeName);
+        boolean lazy = FileSystemStreamTypeUtil.isStreamTypeLazy(streamTypeName);
         boolean isFile = Files.isRegularFile(childFile);
         if (lazy || isFile) {
-            final FileSystemStreamSource child = new FileSystemStreamSource(this, type, childFile);
+            final FileSystemStreamSource child = new FileSystemStreamSource(this, streamTypeName, childFile);
             streamCloser.add(child);
             return child;
         } else {
@@ -145,7 +149,7 @@ public final class FileSystemStreamSource implements StreamSource {
         if (attributeMap == null) {
             attributeMap = new MetaMap();
             try {
-                final StreamSource streamSource = getChildStream(StreamType.MANIFEST);
+                final StreamSource streamSource = getChildStream(StreamTypeNames.MANIFEST);
                 if (streamSource != null) {
                     attributeMap.read(streamSource.getInputStream(), true);
                 }
@@ -157,16 +161,7 @@ public final class FileSystemStreamSource implements StreamSource {
     }
 
     @Override
-    public StreamType getType() {
-        return streamType;
-    }
-
-    @Override
     public StreamSource getParent() {
         return parent;
-    }
-
-    public StreamVolume getStreamVolume() {
-        return volume;
     }
 }

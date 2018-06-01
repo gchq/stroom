@@ -17,7 +17,7 @@
 package stroom.streamstore.fs.serializable;
 
 import stroom.streamstore.api.StreamTarget;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.fs.StreamTypeNames;
 import stroom.util.io.CloseableUtil;
 
 import java.io.IOException;
@@ -48,7 +48,7 @@ public class RASegmentOutputStream extends OutputStream implements SegmentOutput
      * @param streamTarget to write the data to.
      */
     public RASegmentOutputStream(final StreamTarget streamTarget) {
-        this(streamTarget.getOutputStream(), streamTarget.addChildStream(StreamType.SEGMENT_INDEX).getOutputStream());
+        this(streamTarget.getOutputStream(), streamTarget.addChildStream(StreamTypeNames.SEGMENT_INDEX).getOutputStream());
     }
 
     public RASegmentOutputStream(final OutputStream dataFile, final OutputStream indexFile) {

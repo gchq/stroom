@@ -45,7 +45,7 @@ import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamStatus;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
@@ -469,7 +469,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
 
     private void populateFetchSet(final Set<String> fetchSet, final boolean forInfo) {
         // if (securityContext.hasAppPermission(StreamType.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
-        fetchSet.add(StreamType.ENTITY_TYPE);
+        fetchSet.add(StreamTypeEntity.ENTITY_TYPE);
         // }
         // if (securityContext.hasAppPermission(Feed.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
         fetchSet.add(FeedDoc.DOCUMENT_TYPE);

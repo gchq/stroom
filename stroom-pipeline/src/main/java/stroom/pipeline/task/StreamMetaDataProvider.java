@@ -22,13 +22,11 @@ import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.state.MetaDataProvider;
 import stroom.pipeline.state.StreamHolder;
-import stroom.docref.DocRef;
+import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
-import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.Stream;
 import stroom.streamtask.StreamProcessorService;
-import stroom.streamtask.shared.StreamProcessor;
 import stroom.util.date.DateUtil;
 
 import java.io.IOException;
@@ -94,7 +92,7 @@ public class StreamMetaDataProvider implements MetaDataProvider {
                 lastMetaStreamNo = streamHolder.getStreamNo();
 
                 // Setup meta data.
-                final StreamSourceInputStreamProvider provider = streamHolder.getProvider(StreamType.META);
+                final StreamSourceInputStreamProvider provider = streamHolder.getProvider(StreamTypeNames.META);
                 if (provider != null) {
                     // Get the input stream.
                     final StreamSourceInputStream inputStream = provider.getStream(lastMetaStreamNo);
@@ -117,7 +115,7 @@ public class StreamMetaDataProvider implements MetaDataProvider {
 
     private String getFeed() {
         return parentData.computeIfAbsent(FEED, k -> {
-            final StreamEntity stream = streamHolder.getStream();
+            final Stream stream = streamHolder.getStream();
             if (stream != null) {
                 return stream.getFeedName();
             }
@@ -127,7 +125,7 @@ public class StreamMetaDataProvider implements MetaDataProvider {
 
     private String getStreamType() {
         return parentData.computeIfAbsent(STREAM_TYPE, k -> {
-            final StreamEntity stream = streamHolder.getStream();
+            final Stream stream = streamHolder.getStream();
             if (stream != null) {
                 return stream.getStreamTypeName();
             }
@@ -137,7 +135,7 @@ public class StreamMetaDataProvider implements MetaDataProvider {
 
     private String getCreatedTime() {
         return parentData.computeIfAbsent(CREATED_TIME, k -> {
-            final StreamEntity stream = streamHolder.getStream();
+            final Stream stream = streamHolder.getStream();
             if (stream != null) {
                 return DateUtil.createNormalDateTimeString(stream.getCreateMs());
             }
@@ -147,7 +145,7 @@ public class StreamMetaDataProvider implements MetaDataProvider {
 
     private String getEffectiveTime() {
         return parentData.computeIfAbsent(EFFECTIVE_TIME, k -> {
-            final StreamEntity stream = streamHolder.getStream();
+            final Stream stream = streamHolder.getStream();
             if (stream != null) {
                 return DateUtil.createNormalDateTimeString(stream.getEffectiveMs());
             }
@@ -157,16 +155,20 @@ public class StreamMetaDataProvider implements MetaDataProvider {
 
     private String getPipeline() {
         return parentData.computeIfAbsent(PIPELINE, k -> {
-            final StreamEntity stream = streamHolder.getStream();
-            if (stream != null && stream.getStreamProcessor() != null) {
-                final StreamProcessor streamProcessor = streamProcessorService.load(stream.getStreamProcessor(), FETCH_SET);
-                if (streamProcessor != null && streamProcessor.getPipelineUuid() != null) {
-                    final PipelineDoc pipelineDoc = pipelineStore.readDocument(new DocRef(PipelineDoc.DOCUMENT_TYPE, streamProcessor.getPipelineUuid()));
-                    if (pipelineDoc != null) {
-                        return pipelineDoc.getName();
-                    }
-                }
+            final Stream stream = streamHolder.getStream();
+            if (stream != null) {
+                return stream.getPipelineName();
             }
+
+//            if (stream != null && stream.getPipelineName() != null) {
+//                final StreamProcessor streamProcessor = streamProcessorService.load(stream.getStreamProcessor(), FETCH_SET);
+//                if (streamProcessor != null && streamProcessor.getPipelineUuid() != null) {
+//                    final PipelineDoc pipelineDoc = pipelineStore.readDocument(new DocRef(PipelineDoc.DOCUMENT_TYPE, streamProcessor.getPipelineUuid()));
+//                    if (pipelineDoc != null) {
+//                        return pipelineDoc.getName();
+//                    }
+//                }
+//            }
             return null;
         });
     }

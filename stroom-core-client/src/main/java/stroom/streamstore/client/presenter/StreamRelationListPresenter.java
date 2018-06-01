@@ -38,7 +38,7 @@ import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.util.shared.Expander;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 
@@ -79,7 +79,7 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
             findStreamCriteria.getFetchSet().add(StreamEntity.ENTITY_TYPE);
             findStreamCriteria.getFetchSet().add(FeedDoc.DOCUMENT_TYPE);
             findStreamCriteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
-            findStreamCriteria.getFetchSet().add(StreamType.ENTITY_TYPE);
+            findStreamCriteria.getFetchSet().add(StreamTypeEntity.ENTITY_TYPE);
             findStreamCriteria.setSort(StreamDataSource.CREATE_TIME, Direction.ASCENDING, false);
 
             setCriteria(criteria);

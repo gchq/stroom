@@ -24,7 +24,7 @@ import stroom.feed.shared.FeedDoc;
 import stroom.node.shared.Node;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamTask;
@@ -51,9 +51,9 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
     @Test
     public void testSaveAndGetAll() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        final StreamEntity file1 = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamType.RAW_EVENTS.getName());
+        final StreamEntity file1 = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeEntity.RAW_EVENTS.getName());
         final StreamEntity file2 = commonTestScenarioCreator.createSampleBlankProcessedFile(feedName, file1);
-        final StreamEntity file3 = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamType.RAW_EVENTS.getName());
+        final StreamEntity file3 = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeEntity.RAW_EVENTS.getName());
 
         commonTestScenarioCreator.createBasicTranslateStreamProcessor(feedName);
 
@@ -104,12 +104,12 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
         criteria.obtainStreamTaskIdSet().add(1L);
         criteria.obtainFeedNameSet().add(feedName);
         criteria.obtainStreamIdSet().add(1L);
-        criteria.obtainStreamTypeNameSet().add(StreamType.RAW_EVENTS.getName());
+        criteria.obtainStreamTypeNameSet().add(StreamTypeEntity.RAW_EVENTS.getName());
         criteria.obtainStreamTaskStatusSet().add(TaskStatus.COMPLETE);
 
         criteria.setCreatePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
         criteria.setEffectivePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
-        criteria.obtainStreamTypeNameSet().add(StreamType.CONTEXT.getName());
+        criteria.obtainStreamTypeNameSet().add(StreamTypeEntity.CONTEXT.getName());
 
         criteria.getFetchSet().add(StreamEntity.ENTITY_TYPE);
         criteria.getFetchSet().add(Node.ENTITY_TYPE);
@@ -133,12 +133,12 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
         criteria.obtainStreamTaskIdSet().add(1L);
         criteria.obtainFeedNameSet().add(feedName);
         criteria.obtainStreamIdSet().add(1L);
-        criteria.obtainStreamTypeNameSet().add(StreamType.RAW_EVENTS.getName());
+        criteria.obtainStreamTypeNameSet().add(StreamTypeEntity.RAW_EVENTS.getName());
         criteria.obtainStreamTaskStatusSet().add(TaskStatus.COMPLETE);
 
         criteria.setCreatePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
         criteria.setEffectivePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
-        criteria.obtainStreamTypeNameSet().add(StreamType.CONTEXT.getName());
+        criteria.obtainStreamTypeNameSet().add(StreamTypeEntity.CONTEXT.getName());
 
     }
 

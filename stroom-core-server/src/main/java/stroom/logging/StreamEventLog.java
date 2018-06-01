@@ -34,15 +34,13 @@ import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.shared.FeedDoc;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.Security;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamEntity;
 
 import javax.inject.Inject;
 import java.util.Date;
@@ -87,14 +85,14 @@ public class StreamEventLog {
         });
     }
 
-    public void viewStream(final StreamEntity stream, final FeedDoc feed, final StreamType streamType, final Throwable th) {
+    public void viewStream(final StreamEntity stream, final String feedName, final String streamTypeName, final Throwable th) {
         security.insecure(() -> {
             try {
                 if (stream != null) {
                     final Event event = eventLoggingService.createAction("View", "Viewing Stream");
                     final ObjectOutcome objectOutcome = new ObjectOutcome();
                     event.getEventDetail().setView(objectOutcome);
-                    objectOutcome.getObjects().add(createStreamObject(stream, feed, streamType));
+                    objectOutcome.getObjects().add(createStreamObject(stream, feedName, streamTypeName));
                     objectOutcome.setOutcome(EventLoggingUtil.createOutcome(th));
                     eventLoggingService.log(event);
                 }
@@ -145,16 +143,16 @@ public class StreamEventLog {
         return null;
     }
 
-    private event.logging.Object createStreamObject(final StreamEntity stream, final FeedDoc feed,
-                                                    final StreamType streamType) {
+    private event.logging.Object createStreamObject(final StreamEntity stream, final String feedName,
+                                                    final String streamTypeName) {
         final event.logging.Object object = new event.logging.Object();
         object.setType("Stream");
         object.setId(String.valueOf(stream.getId()));
-        if (feed != null) {
-            object.getData().add(EventLoggingUtil.createData("Feed", feed.getName()));
+        if (feedName != null) {
+            object.getData().add(EventLoggingUtil.createData("Feed", feedName));
         }
-        if (streamType != null) {
-            object.getData().add(EventLoggingUtil.createData("StreamType", streamType.getName()));
+        if (streamTypeName != null) {
+            object.getData().add(EventLoggingUtil.createData("StreamType", streamTypeName));
         }
 
         return object;

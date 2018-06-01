@@ -40,11 +40,10 @@ import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.Security;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
-import stroom.streamstore.shared.FeedEntity;
 import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.StreamProcessorService;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
@@ -154,7 +153,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                         final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
                         final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
-                        populateMaps(pipeline, stream, streamSource, feedName, stream.getStreamType(), mapStoreBuilder);
+                        populateMaps(pipeline, stream, streamSource, feedName, stream.getStreamTypeName(), mapStoreBuilder);
                         if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug("Finished loading reference data: " + mapStorePoolKey.toString());
                         }
@@ -181,17 +180,17 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                               final StreamEntity stream,
                               final StreamSource streamSource,
                               final String feedName,
-                              final StreamType streamType,
+                              final String streamTypeName,
                               final MapStoreBuilder mapStoreBuilder) {
         try {
             // Get the stream providers.
             streamHolder.setStream(stream);
             streamHolder.addProvider(streamSource);
-            streamHolder.addProvider(streamSource.getChildStream(StreamType.META));
-            streamHolder.addProvider(streamSource.getChildStream(StreamType.CONTEXT));
+            streamHolder.addProvider(streamSource.getChildStream(StreamTypeNames.META));
+            streamHolder.addProvider(streamSource.getChildStream(StreamTypeNames.CONTEXT));
 
             // Get the main stream provider.
-            final StreamSourceInputStreamProvider mainProvider = streamHolder.getProvider(streamSource.getType());
+            final StreamSourceInputStreamProvider mainProvider = streamHolder.getProvider(streamSource.getStreamTypeName());
 
             // Set the map store.
             mapStoreHolder.setMapStoreBuilder(mapStoreBuilder);
@@ -206,7 +205,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
 
             try {
                 // Get the appropriate encoding for the stream type.
-                final String encoding = feedProperties.getEncoding(feedName, streamType);
+                final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
 
                 final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
                 locationFactory.setLocationFactory(streamLocationFactory);

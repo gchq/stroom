@@ -45,21 +45,6 @@ import java.util.List;
  * </p>
  */
 public interface StreamStore extends FindService<StreamEntity, FindStreamCriteria>, FindDeleteService<FindStreamCriteria> {
-//    Stream createStream(String streamTypeName,
-//                        String feedName,
-//                        Long effectiveMs);
-//
-//    Stream createStream(String streamTypeName,
-//                        String feedName,
-//                        Long createMs,
-//                        Long effectiveMs);
-//
-//    Stream createProcessedStream(Stream parent,
-//                                 String streamTypeName,
-//                                 String feedName,
-//                                 StreamProcessor streamProcessor,
-//                                 StreamTask streamTask);
-
     StreamEntity createStream(StreamProperties streamProperties);
 
     /**
@@ -83,35 +68,6 @@ public interface StreamStore extends FindService<StreamEntity, FindStreamCriteri
      * deleted or locked unless <code>anyStatus</code> is true.
      */
     StreamEntity loadStreamById(long id, boolean anyStatus);
-
-    // /**
-    // * Convenience method to use the id from a pre-existing stream object to
-    // * load a stream by id.
-    // *
-    // * @param stream
-    // * The stream to load/refresh.
-    // * @return The loaded stream if it exists (has not been physically
-    // deleted)
-    // * and is not logically deleted or locked, null otherwise.
-    // */
-    // Stream loadStream(Stream stream);
-    //
-    // /**
-    // * Convenience method to use the id from a pre-existing stream object to
-    // * load a stream by id.
-    // *
-    // * @param stream
-    // * The stream to load/refresh.
-    // * @param anyStatus
-    // * Used to specify if this method will return streams that are
-    // * logically deleted or locked. If false only unlocked streams
-    // * will be returned, null otherwise.
-    // * @return The loaded stream if it exists (has not been physically
-    // deleted)
-    // * else null. Also returns null if one exists but is logically
-    // * deleted or locked unless <code>anyStatus</code> is true.
-    // */
-    // Stream loadStream(Stream stream, boolean anyStatus);
 
     /**
      * <p>

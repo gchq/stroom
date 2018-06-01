@@ -25,7 +25,7 @@ import stroom.streamstore.EffectiveMetaDataCriteria;
 import stroom.streamstore.MockStreamStore;
 import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.util.cache.CacheManager;
 import stroom.util.date.DateUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
@@ -60,7 +60,7 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
                     final StreamEntity stream = createStream(
                             new StreamProperties.Builder()
                                     .feedName(refFeedName)
-                                    .streamTypeName(StreamType.RAW_REFERENCE.getName())
+                                    .streamTypeName(StreamTypeEntity.RAW_REFERENCE.getName())
                                     .createMs(workingDate)
                                     .build());
 
@@ -88,7 +88,7 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
             long fromMs = getFromMs(time);
             long toMs = getToMs(fromMs);
             effectiveStreamPool
-                    .get(new EffectiveStreamKey(refFeedName, StreamType.REFERENCE.getName(), fromMs, toMs));
+                    .get(new EffectiveStreamKey(refFeedName, StreamTypeEntity.REFERENCE.getName(), fromMs, toMs));
             Assert.assertEquals("Database call", 1, findEffectiveStreamSourceCount);
 
             // Still in window
@@ -96,7 +96,7 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
             fromMs = getFromMs(time);
             toMs = getToMs(fromMs);
             effectiveStreamPool
-                    .get(new EffectiveStreamKey(refFeedName, StreamType.REFERENCE.getName(), fromMs, toMs));
+                    .get(new EffectiveStreamKey(refFeedName, StreamTypeEntity.REFERENCE.getName(), fromMs, toMs));
             Assert.assertEquals("Database call", 1, findEffectiveStreamSourceCount);
 
             // After window ...
@@ -104,7 +104,7 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
             fromMs = getFromMs(time);
             toMs = getToMs(fromMs);
             effectiveStreamPool
-                    .get(new EffectiveStreamKey(refFeedName, StreamType.REFERENCE.getName(), fromMs, toMs));
+                    .get(new EffectiveStreamKey(refFeedName, StreamTypeEntity.REFERENCE.getName(), fromMs, toMs));
             Assert.assertEquals("Database call", 2, findEffectiveStreamSourceCount);
 
             // Before window ...
@@ -112,7 +112,7 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
             fromMs = getFromMs(time);
             toMs = getToMs(fromMs);
             effectiveStreamPool
-                    .get(new EffectiveStreamKey(refFeedName, StreamType.REFERENCE.getName(), fromMs, toMs));
+                    .get(new EffectiveStreamKey(refFeedName, StreamTypeEntity.REFERENCE.getName(), fromMs, toMs));
             Assert.assertEquals("Database call", 3, findEffectiveStreamSourceCount);
         } catch (final RuntimeException e) {
             throw new RuntimeException(e.getMessage(), e);
@@ -139,7 +139,7 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
 
             // Make sure we've got no effective streams.
             streams = effectiveStreamCache.get(
-                    new EffectiveStreamKey(refFeedName, StreamType.REFERENCE.getName(), fromMs, toMs));
+                    new EffectiveStreamKey(refFeedName, StreamTypeEntity.REFERENCE.getName(), fromMs, toMs));
             Assert.assertEquals("Database call", 1, mockStore.getCallCount());
             Assert.assertEquals("Effective streams", 0, streams.size());
 
@@ -148,7 +148,7 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
 
             // Make sure we've still got no effective streams as we are getting from cache now.
             streams = effectiveStreamCache.get(
-                    new EffectiveStreamKey(refFeedName, StreamType.REFERENCE.getName(), fromMs, toMs));
+                    new EffectiveStreamKey(refFeedName, StreamTypeEntity.REFERENCE.getName(), fromMs, toMs));
             Assert.assertEquals("Database call", 1, mockStore.getCallCount());
             Assert.assertEquals("Effective streams", 0, streams.size());
 
@@ -157,7 +157,7 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
 
             // Make sure we get one now
             streams = effectiveStreamCache.get(
-                    new EffectiveStreamKey(refFeedName, StreamType.REFERENCE.getName(), fromMs, toMs));
+                    new EffectiveStreamKey(refFeedName, StreamTypeEntity.REFERENCE.getName(), fromMs, toMs));
             Assert.assertEquals("Database call", 2, mockStore.getCallCount());
             Assert.assertEquals("Effective streams", 1, streams.size());
 
@@ -168,7 +168,7 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
 
             // Make sure we still get one now
             streams = effectiveStreamCache.get(
-                    new EffectiveStreamKey(refFeedName, StreamType.REFERENCE.getName(), fromMs, toMs));
+                    new EffectiveStreamKey(refFeedName, StreamTypeEntity.REFERENCE.getName(), fromMs, toMs));
             Assert.assertEquals("Database call", 2, mockStore.getCallCount());
             Assert.assertEquals("Effective streams", 1, streams.size());
 
@@ -177,7 +177,7 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
 
             // Make sure we get two now
             streams = effectiveStreamCache.get(
-                    new EffectiveStreamKey(refFeedName, StreamType.REFERENCE.getName(), fromMs, toMs));
+                    new EffectiveStreamKey(refFeedName, StreamTypeEntity.REFERENCE.getName(), fromMs, toMs));
             Assert.assertEquals("Database call", 3, mockStore.getCallCount());
             Assert.assertEquals("Effective streams", 2, streams.size());
         }
@@ -210,7 +210,7 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
             final StreamEntity stream = createStream(
                     new StreamProperties.Builder()
                             .feedName(feedName)
-                            .streamTypeName(StreamType.RAW_REFERENCE.getName())
+                            .streamTypeName(StreamTypeEntity.RAW_REFERENCE.getName())
                             .createMs(effectiveTimeMs)
                             .build());
             streams.add(stream);

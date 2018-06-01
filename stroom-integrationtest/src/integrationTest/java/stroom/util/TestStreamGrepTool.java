@@ -20,7 +20,7 @@ import org.junit.Test;
 import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.FileSystemTestUtil;
@@ -53,7 +53,7 @@ public class TestStreamGrepTool extends AbstractCoreIntegrationTest {
     private void addData(final String feedName, final String data) throws IOException {
         final StreamProperties streamProperties = new StreamProperties.Builder()
                 .feedName(feedName)
-                .streamTypeName(StreamType.RAW_EVENTS.getName())
+                .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
                 .build();
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
         streamTarget.getOutputStream().write(data.getBytes(StreamUtil.DEFAULT_CHARSET));

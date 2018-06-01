@@ -18,14 +18,13 @@ package stroom.streamtask;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.feed.shared.FeedDoc;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamtask.shared.StreamTask;
 import stroom.task.SimpleTaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -57,8 +56,8 @@ public class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
         final String feedName1 = FileSystemTestUtil.getUniqueTestString();
         final String feedName2 = FileSystemTestUtil.getUniqueTestString();
 
-        commonTestScenarioCreator.createSample2LineRawFile(feedName1, StreamType.RAW_EVENTS.getName());
-        commonTestScenarioCreator.createSample2LineRawFile(feedName2, StreamType.RAW_EVENTS.getName());
+        commonTestScenarioCreator.createSample2LineRawFile(feedName1, StreamTypeEntity.RAW_EVENTS.getName());
+        commonTestScenarioCreator.createSample2LineRawFile(feedName2, StreamTypeEntity.RAW_EVENTS.getName());
 
         Assert.assertEquals(0, commonTestControl.countEntity(StreamTask.class));
 
@@ -79,7 +78,7 @@ public class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
         Assert.assertTrue(streamTaskCreator.getStreamTaskCreatorRecentStreamDetails().hasRecentDetail());
         Assert.assertEquals(4, commonTestControl.countEntity(StreamTask.class));
 
-        commonTestScenarioCreator.createSample2LineRawFile(feedName1, StreamType.RAW_EVENTS.getName());
+        commonTestScenarioCreator.createSample2LineRawFile(feedName1, StreamTypeEntity.RAW_EVENTS.getName());
         streamTaskCreator.createTasks(new SimpleTaskContext());
 
         Assert.assertEquals(6, commonTestControl.countEntity(StreamTask.class));
@@ -113,15 +112,15 @@ public class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
                                 .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feedName1)
                                 .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feedName2)
                                 .build())
-                        .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
+                        .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeEntity.RAW_EVENTS.getName())
                         .build())
                 .build();
 
         commonTestScenarioCreator.createStreamProcessor(findStreamQueryData);
 
         for (int i = 0; i < 1000; i++) {
-            commonTestScenarioCreator.createSample2LineRawFile(feedName1, StreamType.RAW_EVENTS.getName());
-            commonTestScenarioCreator.createSample2LineRawFile(feedName2, StreamType.RAW_EVENTS.getName());
+            commonTestScenarioCreator.createSample2LineRawFile(feedName1, StreamTypeEntity.RAW_EVENTS.getName());
+            commonTestScenarioCreator.createSample2LineRawFile(feedName2, StreamTypeEntity.RAW_EVENTS.getName());
         }
 
         final int initialQueueSize = StroomProperties.getIntProperty(StreamTaskCreatorImpl.STREAM_TASKS_QUEUE_SIZE_PROPERTY, 1000);
@@ -157,7 +156,7 @@ public class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
         Assert.assertEquals(0, commonTestControl.countEntity(StreamTask.class));
 
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamType.RAW_EVENTS.getName());
+        commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeEntity.RAW_EVENTS.getName());
         commonTestScenarioCreator.createBasicTranslateStreamProcessor(feedName);
 
         Assert.assertEquals(0, streamTaskCreator.getStreamTaskQueueSize());
