@@ -33,8 +33,6 @@ import PipelineElement from './PipelineElement';
 import PipelineElementSettings from './PipelineElementSettings';
 import { AddElementWizard } from './AddElementToPipeline';
 
-import './PipelineEditor.css';
-
 import lineElementCreators from './pipelineLineElementCreators';
 
 const HORIZONTAL_SPACING = 150;
@@ -61,6 +59,7 @@ const PipelineEditor = ({
 
   return (
     <div className="Pipeline-editor">
+      <AddElementWizard pipelineId={pipelineId} />
       <Confirm
         open={!!pendingElementIdToDelete}
         content="This will delete the element from the pipeline, are you sure?"
@@ -72,7 +71,6 @@ const PipelineEditor = ({
         lineContextId={`pipeline-lines-${pipelineId}`}
         lineElementCreators={lineElementCreators}
       >
-        <AddElementWizard pipelineId={pipelineId} />
         <h4>Pipeline Editor {pipelineId}</h4>
         {pipeline.elements.add.element.map(e => (
           <div key={e.id} id={e.id} style={elementStyles[e.id]}>

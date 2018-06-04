@@ -1,6 +1,10 @@
 import { createAction, handleActions } from 'redux-actions';
 
-import { moveElementInPipeline, deleteElementInPipeline } from '../pipelineUtils';
+import {
+  moveElementInPipeline,
+  deleteElementInPipeline,
+  createNewElementInPipeline,
+} from '../pipelineUtils';
 
 const pipelineChanged = createAction('PIPELINE_CHANGED', (pipelineId, pipeline) => ({
   pipelineId,
@@ -95,6 +99,18 @@ const pipelineReducer = handleActions(
       [action.payload.pipelineId]: {
         ...state[action.payload.pipelineId],
         pendingElementIdToDelete: undefined,
+      },
+    }),
+    [pipelineElementAdded]: (state, action) => ({
+      ...state,
+      [action.payload.pipelineId]: {
+        ...state[action.payload.pipelineId],
+        pipeline: createNewElementInPipeline(
+          state[action.payload.pipelineId].pipeline,
+          action.payload.parentId,
+          action.payload.childDefinition,
+          action.payload.name,
+        ),
       },
     }),
     [pipelineElementMoved]: (state, action) => ({

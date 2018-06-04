@@ -23,6 +23,8 @@ import Routes from 'startup/Routes';
 import store from 'startup/store';
 import { history } from 'startup/middleware';
 
+import './styles/main.css';
+
 ReactDOM.render(
   <Provider store={store}>
     <ConnectedRouter history={history}>

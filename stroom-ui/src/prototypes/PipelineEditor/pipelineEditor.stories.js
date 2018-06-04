@@ -30,6 +30,8 @@ import { AddElementWizard } from './AddElementToPipeline';
 
 import { pipelineChanged, elementsReceived, elementPropertiesReceived } from './redux';
 
+import 'styles/main.css';
+
 import {
   testPipeline,
   testPipelineElements,

@@ -13,9 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+.doc-ref__selected {
+  background-color: lightcyan;
+}
 
-body {
-  margin: 0;
-  padding: 0;
-  font-family: sans-serif;
+.doc-ref__dragging {
+  opacity: 0.5;
+  cursor: move;
+}
+
+.doc-ref__icon {
+  width: 0.7rem;
+  margin-right: 0.3rem;
+}
+
+.folder__children {
+  padding-left: 1rem;
+}
+
+.folder__dragging {
+  opacity: 0.5;
+}
+
+.folder__over_can_drop {
+  color: blue;
+}
+
+.folder__over_cannot_drop {
+  color: red;
+}
+
+.doc-ref-dropdown__item-name {
+  margin-top: 0.5rem;
+}
+
+.doc-ref__context-menu-open {
+  background-color: lightgreen;
 }

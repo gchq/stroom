@@ -14,13 +14,9 @@
  * limitations under the License.
  */
 
- import {
-  findItem,
-  findMatch,
-  iterateNodes
- } from 'lib/treeUtils';
+import { findItem, findMatch, iterateNodes } from 'lib/treeUtils';
 
- /**
+/**
  * This function takes the denormalised pipeline definition and creates
  * a tree like structure. The root element is the 'from' of the first link.
  * This tree structure can then be used to lay the elements out in the graphical display.
@@ -52,16 +48,16 @@ export function getPipelineAsTree(pipeline) {
 }
 
 export const ORIENTATION = {
-  horizontal : 1,
-  vertical : 2
-}
+  horizontal: 1,
+  vertical: 2,
+};
 
 /**
  * This calculates the layout information for the elements in a tree where the tree
  * must be layed out in a graphical manner.
  * The result object only indicates horizontal and vertical positions as 1-up integers.
  * A further mapping is required to convert this to specific layout pixel information.
- * 
+ *
  * @param {treeNode} asTree The pipeline information as a tree with UUID's and 'children' on nodes.
  * @return {object} An object with a key for each UUID in the tree. The values are objects with
  * the following properties {horizontalPos, verticalPos}. These position indicators are just
@@ -79,86 +75,145 @@ export function getPipelineLayoutInformation(asTree, orientation = ORIENTATION.h
       sidewayPosition += 1;
     }
     lastLineageLengthSeen = forwardPosition;
-    
+
     switch (orientation) {
       case ORIENTATION.horizontal:
         layoutInformation[node.uuid] = {
-          horizontalPos : forwardPosition,
-          verticalPos : sidewayPosition
+          horizontalPos: forwardPosition,
+          verticalPos: sidewayPosition,
         };
         break;
       case ORIENTATION.vertical:
         layoutInformation[node.uuid] = {
-          horizontalPos : sidewayPosition,
-          verticalPos : forwardPosition
+          horizontalPos: sidewayPosition,
+          verticalPos: forwardPosition,
         };
         break;
-    }    
+    }
   });
 
   return layoutInformation;
 }
 
+/**
+ *
+ *
+ *
+ * @param {pipeline} pipeline
+ * @param {string} parentId
+ * @param {element} childDefinition
+ * @param {string} name The name to give to the new element.
+ */
+export function createNewElementInPipeline(pipeline, parentId, childDefinition, name) {
+  return {
+    properties: pipeline.properties,
+    elements: {
+      add: {
+        element: pipeline.elements.add.element.concat([
+          {
+            id: name,
+            type: childDefinition.type,
+          },
+        ]),
+      },
+    },
+    links: {
+      add: {
+        link: pipeline.links.add.link
+          // add the new link
+          .concat([
+            {
+              from: parentId,
+              to: name,
+            },
+          ]),
+      },
+    },
+  };
+}
+
+/**
+ * Use to check if a pipeline element can be moved onto the destination given.
+ *
+ * @param {pipeline} pipeline
+ * @param {treeNode} pipelineAsTree
+ * @param {string} itemToMove ID of the item to move
+ * @param {string} destination ID of the destination
+ * @return {boolean} Indicate if the move is valid.
+ */
 export function canMovePipelineElement(pipeline, pipelineAsTree, itemToMove, destination) {
-  let itemToMoveNode = findItem(pipelineAsTree, itemToMove);
-  let destinationNode = findItem(pipelineAsTree, destination);
+  const itemToMoveNode = findItem(pipelineAsTree, itemToMove);
+  const destinationNode = findItem(pipelineAsTree, destination);
 
   // If the item being dropped is a folder, and is being dropped into itself
   if (findMatch(itemToMoveNode, destinationNode)) {
     return false;
   }
-  if (!!itemToMoveNode.children && (itemToMoveNode.uuid === destinationNode.uuid)) {
-      return false;
+  if (!!itemToMoveNode.children && itemToMoveNode.uuid === destinationNode.uuid) {
+    return false;
   }
 
   // Does this item appear in the destination folder already?
-  return destinationNode.children
-      .map(c => c.uuid)
-      .filter(u => u === itemToMoveNode.uuid).length === 0;
+  return (
+    destinationNode.children.map(c => c.uuid).filter(u => u === itemToMoveNode.uuid).length === 0
+  );
 }
 
+/**
+ * Used to carry out the move of elements then return the updated pipeline definition.
+ *
+ * @param {pipeline} pipeline
+ * @param {string} itemToMove Id of the element to move
+ * @param {string} destination Id of the destination
+ * @return The updated pipeline definition.
+ */
 export function moveElementInPipeline(pipeline, itemToMove, destination) {
   return {
-    properties : pipeline.properties,
-    elements : pipeline.elements,
-    links : {
-      add : {
+    properties: pipeline.properties,
+    elements: pipeline.elements,
+    links: {
+      add: {
         link: pipeline.links.add.link
-        // Remove any existing link that goes into the moving item
-        .filter(l => (l.to !== itemToMove))
-        // add the new link
-        .concat([
-          {
-            from : destination,
-            to : itemToMove
-          }
-        ])
-      }
-    }
-  }
+          // Remove any existing link that goes into the moving item
+          .filter(l => l.to !== itemToMove)
+          // add the new link
+          .concat([
+            {
+              from: destination,
+              to: itemToMove,
+            },
+          ]),
+      },
+    },
+  };
 }
 
+/**
+ * Used to delete an element from a pipeline.
+ *
+ * @param {pipeline} pipeline Pipeline definition before the deletion
+ * @param {string} itemToDelete ID of the item to delete
+ * @return The updated pipeline definition.
+ */
 export function deleteElementInPipeline(pipeline, itemToDelete) {
   return {
-    properties : {
-      add : {
-        property : pipeline.properties.add.property
-          .filter(p => p.element !== itemToDelete)
-      }
+    properties: {
+      add: {
+        property: pipeline.properties.add.property.filter(p => p.element !== itemToDelete),
+      },
     },
-    elements : {
-      add : {
-        element : pipeline.elements.add.element
-          .filter(e => e.id !== itemToDelete)
-      }
+    elements: {
+      add: {
+        element: pipeline.elements.add.element.filter(e => e.id !== itemToDelete),
+      },
     },
-    links : {
-      add : {
+    links: {
+      add: {
         link: pipeline.links.add.link
-        // Remove any existing link that goes into the deleting item
-        .filter(l => (l.to !== itemToDelete))
-        .filter(l => (l.from !== itemToDelete))
-      }
-    }
-  }
+          // Remove any existing link that goes into the deleting item
+          .filter(l => l.to !== itemToDelete)
+          .filter(l => l.from !== itemToDelete),
+      },
+    },
+  };
 }

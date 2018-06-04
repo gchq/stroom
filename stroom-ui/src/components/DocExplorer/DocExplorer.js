@@ -21,8 +21,6 @@ import { connect } from 'react-redux';
 
 import { Input, Confirm } from 'semantic-ui-react';
 
-import './DocExplorer.css';
-
 import Folder from './Folder';
 
 import { withCreatedExplorer } from './withExplorer';

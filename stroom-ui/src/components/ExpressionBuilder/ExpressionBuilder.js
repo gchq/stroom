@@ -34,8 +34,6 @@ import {
   cancelExpressionItemDelete,
 } from './redux';
 
-import './ExpressionBuilder.css';
-
 const defaultExpression = {
   uuid: 'root',
   type: 'operator',

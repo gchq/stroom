@@ -18,29 +18,34 @@ import PropTypes from 'prop-types';
 
 import { compose } from 'redux';
 import { connect } from 'react-redux';
+import { Field, reduxForm } from 'redux-form';
 
-import { Dropdown, Menu, Icon, Label, Input, Modal, Header } from 'semantic-ui-react';
+import { Modal, Header, Button, Form, Icon } from 'semantic-ui-react';
 
 import {
   cancelAddPipelineElement,
   choosePipelineElementToAdd,
   addElementSearchTermChanged,
+  restartAddPipelineElement,
   ADD_ELEMENT_STATE,
 } from './redux';
 import { pipelineElementAdded } from '../redux';
 import { withAddElementToPipeline } from './withAddElementToPipeline';
 
 import ChooseElement from './ChooseElement';
-import NameNewElement from './NameNewElement';
 
 const AddElementWizard = ({
   addElementToPipelineWizard,
   cancelAddPipelineElement,
+  restartAddPipelineElement,
   availableElements,
   pipelineElementAdded,
+  handleSubmit,
 }) => {
   let stage;
   let headerContent;
+  let goBackButton;
+  let submitButton;
 
   const submitName = (values) => {
     pipelineElementAdded(
@@ -57,20 +62,41 @@ const AddElementWizard = ({
       headerContent = `Choose an Element to Add to ${addElementToPipelineWizard.parentId}`;
       break;
     case ADD_ELEMENT_STATE.PICKING_NAME:
-      stage = <NameNewElement onSubmit={submitName} />;
+      stage = (
+        <Form>
+          <Form.Field>
+            <label>Name</label>
+            <Field name="name" component="input" type="text" placeholder="Name" />
+          </Form.Field>
+        </Form>
+      );
       headerContent = `Give the new ${addElementToPipelineWizard.childDefinition.type} a name`;
+      goBackButton = (
+        <Button icon labelPosition="left" onClick={restartAddPipelineElement}>
+          <Icon name="arrow left" />
+          Change type
+        </Button>
+      );
+      submitButton = <Button positive content="Submit" onClick={handleSubmit(submitName)} />;
       break;
   }
 
   return (
     <Modal
+      size="tiny"
       open={addElementToPipelineWizard.addElementState !== ADD_ELEMENT_STATE.NOT_ADDING}
-      onClose={() => cancelAddPipelineElement()}
+      onClose={cancelAddPipelineElement}
+      closeOnRootNodeClick={false}
     >
-      <Header icon="browser" content={headerContent} />
+      <Header content={headerContent} />
       <Modal.Content>
         <div>{stage}</div>
       </Modal.Content>
+      <Modal.Actions>
+        {goBackButton}
+        {submitButton}
+        <Button negative content="Cancel" onClick={cancelAddPipelineElement} />
+      </Modal.Actions>
     </Modal>
   );
 };
@@ -91,7 +117,9 @@ export default compose(
       // actions
       pipelineElementAdded,
       cancelAddPipelineElement,
+      restartAddPipelineElement,
     },
   ),
   withAddElementToPipeline(),
+  reduxForm({ form: 'addElementToPipeline' }),
 )(AddElementWizard);
