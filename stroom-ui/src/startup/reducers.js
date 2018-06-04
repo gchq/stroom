@@ -16,6 +16,7 @@
 
 import { combineReducers } from 'redux';
 import { routerReducer } from 'react-router-redux';
+import { reducer as formReducer } from 'redux-form';
 import {
   authenticationReducer as authentication,
   authorisationReducer as authorisation,
@@ -31,7 +32,7 @@ import {
 import {
   pipelineReducer as pipelines,
   elementReducer as elements,
-  addElementToPipelineReducer as addElementToPipeline
+  addElementToPipelineWizardReducer as addElementToPipelineWizard,
 } from 'prototypes/PipelineEditor';
 import { trackerDashboardReducer as trackerDashboard } from 'sections/TrackerDashboard';
 import { errorPageReducer as errorPage } from 'sections/ErrorPage';
@@ -39,6 +40,7 @@ import config from './config';
 
 export default combineReducers({
   routing: routerReducer,
+  form: formReducer,
   authentication,
   authorisation,
   config,
@@ -49,7 +51,7 @@ export default combineReducers({
   expressionEditors,
   pipelines,
   elements,
-  addElementToPipeline,
+  addElementToPipelineWizard,
   errorPage,
   lineContainer,
   modal,

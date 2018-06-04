@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import _ from 'lodash';
+
 import { ElementRoles } from './ElementRoles';
 
 /**
@@ -24,20 +26,30 @@ import { ElementRoles } from './ElementRoles';
 export function groupByCategory(elements) {
   return Object.entries(elements)
     .map(k => k[1])
-    .reduce((acc, next) => ({
-      ...acc,
-      [next.category]: [...(acc[next.category] || []), next],
-    }), {});
+    .reduce(
+      (acc, next) => ({
+        ...acc,
+        [next.category]: [...(acc[next.category] || []), next],
+      }),
+      {},
+    );
 }
 
-export function groupByCategoryFiltered(elements, parentType, currentChildCount) {
+export function groupByCategoryFiltered(elements, parentType, currentChildCount, searchTerm) {
+  const searchRegex =
+    !!searchTerm && searchTerm.length > 0 ? new RegExp(_.escapeRegExp(searchTerm), 'i') : undefined;
+
   return Object.entries(elements)
     .map(k => k[1])
     .filter(k => isValidChildType(parentType, k, currentChildCount))
-    .reduce((acc, next) => ({
-      ...acc,
-      [next.category]: [...(acc[next.category] || []), next],
-    }), {});
+    .filter(k => (searchRegex ? searchRegex.test(k.type) : true))
+    .reduce(
+      (acc, next) => ({
+        ...acc,
+        [next.category]: [...(acc[next.category] || []), next],
+      }),
+      {},
+    );
 }
 
 /**

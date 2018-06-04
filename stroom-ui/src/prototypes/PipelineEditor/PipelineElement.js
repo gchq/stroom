@@ -31,7 +31,7 @@ import {
   closePipelineElementContextMenu,
 } from './redux';
 
-import ElementMenu from './ElementMenu';
+import ElementContextMenu from './ElementContextMenu';
 
 import { canMovePipelineElement } from './pipelineUtils';
 
@@ -123,7 +123,7 @@ const PipelineElement = ({
       {elementId}
     </span>
     <span className="Pipeline-element__context-menu">
-      <ElementMenu pipelineId={pipelineId} elementId={elementId} isOpen={isContextMenuOpen} />
+      <ElementContextMenu pipelineId={pipelineId} elementId={elementId} isOpen={isContextMenuOpen} />
     </span>
                                              </span>));
 };

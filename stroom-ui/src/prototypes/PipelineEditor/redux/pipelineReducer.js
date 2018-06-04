@@ -17,6 +17,16 @@ const pipelineElementMoved = createAction(
   (pipelineId, itemToMove, destination) => ({ pipelineId, itemToMove, destination }),
 );
 
+const pipelineElementAdded = createAction(
+  'PIPELINE_ELEMENT_ADDED',
+  (pipelineId, parentId, childDefinition, name) => ({
+    pipelineId,
+    parentId,
+    childDefinition,
+    name,
+  }),
+);
+
 const requestDeletePipelineElement = createAction(
   'REQUEST_DELETE_PIPELINE_ELEMENT',
   (pipelineId, elementId) => ({ pipelineId, elementId }),
@@ -122,6 +132,7 @@ export {
   requestDeletePipelineElement,
   confirmDeletePipelineElement,
   cancelDeletePipelineElement,
+  pipelineElementAdded,
   pipelineElementMoved,
   openPipelineElementContextMenu,
   closePipelineElementContextMenu,

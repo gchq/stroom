@@ -1,11 +1,3 @@
-import {
-  initiateAddPipelineElement,
-  choosePipelineElementToAdd,
-  cancelAddPipelineElement,
-  addElementSearchTermChanged,
-  addElementToPipelineReducer,
-} from './addElementToPipelineReducer';
-
 import { elementsReceived, elementPropertiesReceived, elementReducer } from './elementReducer';
 
 import {
@@ -15,17 +7,13 @@ import {
   confirmDeletePipelineElement,
   cancelDeletePipelineElement,
   pipelineElementMoved,
+  pipelineElementAdded,
   openPipelineElementContextMenu,
   closePipelineElementContextMenu,
   pipelineReducer,
 } from './pipelineReducer';
 
 export {
-  initiateAddPipelineElement,
-  choosePipelineElementToAdd,
-  cancelAddPipelineElement,
-  addElementSearchTermChanged,
-  addElementToPipelineReducer,
   elementsReceived,
   elementPropertiesReceived,
   elementReducer,
@@ -35,6 +23,7 @@ export {
   confirmDeletePipelineElement,
   cancelDeletePipelineElement,
   pipelineElementMoved,
+  pipelineElementAdded,
   openPipelineElementContextMenu,
   closePipelineElementContextMenu,
   pipelineReducer,

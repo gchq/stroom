@@ -21,13 +21,11 @@ import { connect } from 'react-redux';
 
 import { Dropdown } from 'semantic-ui-react';
 
-import {
-  initiateAddPipelineElement,
-  requestDeletePipelineElement,
-  closePipelineElementContextMenu,
-} from './redux';
+import { requestDeletePipelineElement, closePipelineElementContextMenu } from './redux';
 
-const ElementMenu = ({
+import { initiateAddPipelineElement } from './AddElementToPipeline';
+
+const ElementContextMenu = ({
   pipelineId,
   elementId,
   isOpen,
@@ -57,7 +55,7 @@ const ElementMenu = ({
   </Dropdown>
 );
 
-ElementMenu.propTypes = {
+ElementContextMenu.propTypes = {
   pipelineId: PropTypes.string.isRequired,
   elementId: PropTypes.string.isRequired,
   isOpen: PropTypes.bool.isRequired,
@@ -76,4 +74,4 @@ export default compose(connect(
     initiateAddPipelineElement,
     requestDeletePipelineElement,
   },
-))(ElementMenu);
+))(ElementContextMenu);

@@ -26,7 +26,7 @@ import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 import { PipelineEditor } from './index';
 
 import PipelineElement from './PipelineElement';
-import AddElementPicker from './AddElementPicker';
+import { AddElementWizard } from './AddElementToPipeline';
 
 import { pipelineChanged, elementsReceived, elementPropertiesReceived } from './redux';
 
@@ -49,7 +49,7 @@ storiesOf('Pipeline Editor', module)
 storiesOf('Pipeline Elements', module)
   .addDecorator(storyFn => (
     <div>
-      <AddElementPicker pipelineId="testPipeline" />
+      <AddElementWizard pipelineId="testPipeline" />
       {storyFn()}
     </div>
   ))
