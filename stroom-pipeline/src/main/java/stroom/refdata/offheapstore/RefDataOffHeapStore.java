@@ -387,12 +387,13 @@ public class RefDataOffHeapStore implements RefDataStore {
 
             // get the UID for this mapDefinition, and as we should only have a handful of mapDefinitions
             // per loader it makes sense to cache the MapDefinition=>UID mappings on heap for quicker access.
-            UID uid = mapDefinitionToUIDMap.computeIfAbsent(mapDefinition, mapDef -> {
+            final UID uid = mapDefinitionToUIDMap.computeIfAbsent(mapDefinition, mapDef -> {
                 LOGGER.debug("MapDefinition {} not found in local cache so getting it from the store");
                 // cloning the UID in case we leave the txn
                 return mapDefinitionUIDStore.getOrCreateUid(mapDef).clone();
             });
 
+            //get the ValueStoreKey for the RefDataValue (creating the entry if it doesn't exist)
 
             //see if key exists, then put value based on overwriteExistingValue
 

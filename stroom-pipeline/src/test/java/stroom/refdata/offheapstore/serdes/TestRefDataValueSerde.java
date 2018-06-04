@@ -20,7 +20,6 @@ package stroom.refdata.offheapstore.serdes;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 import stroom.refdata.lmdb.serde.Serde;
-import stroom.refdata.offheapstore.FastInfoSetValueSerde;
 import stroom.refdata.offheapstore.FastInfosetValue;
 import stroom.refdata.offheapstore.RefDataValue;
 import stroom.refdata.offheapstore.StringValue;

@@ -29,7 +29,7 @@ public class ValueStoreKeySerde implements Serde<ValueStoreKey>, Serializer<Valu
     @Override
     public ValueStoreKey deserialize(final ByteBuffer byteBuffer) {
         int hashCode = byteBuffer.getInt();
-        int uniqueId = byteBuffer.getInt();
+        short uniqueId = byteBuffer.getShort();
         byteBuffer.flip();
         return new ValueStoreKey(hashCode, uniqueId);
     }
@@ -38,7 +38,7 @@ public class ValueStoreKeySerde implements Serde<ValueStoreKey>, Serializer<Valu
     public void serialize(final ByteBuffer byteBuffer, final ValueStoreKey valueStoreKey) {
         byteBuffer
                 .putInt(valueStoreKey.getValueHashCode())
-                .putInt(valueStoreKey.getUniqueId());
+                .putShort(valueStoreKey.getUniqueId());
         byteBuffer.flip();
     }
 }

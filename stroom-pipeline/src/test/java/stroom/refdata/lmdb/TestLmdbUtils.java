@@ -10,8 +10,7 @@ import stroom.refdata.offheapstore.serdes.RefDataProcessingInfoSerde;
 
 import java.nio.ByteBuffer;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestLmdbUtils {
 

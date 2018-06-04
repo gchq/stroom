@@ -39,6 +39,7 @@ import stroom.refdata.offheapstore.RefDataStoreProvider;
 import stroom.refdata.offheapstore.RefDataValue;
 import stroom.refdata.offheapstore.StringByteBufferConsumer;
 import stroom.refdata.offheapstore.StringValue;
+import stroom.refdata.offheapstore.serdes.FastInfoSetValueSerde;
 import stroom.refdata.offheapstore.serdes.RefDatValueSubSerde;
 import stroom.refdata.offheapstore.serdes.StringValueSerde;
 import stroom.refdata.offheapstore.databases.KeyValueStoreDb;
@@ -111,7 +112,7 @@ public class PipelineModule extends AbstractModule {
                 binder(), Integer.class, RefDatValueSubSerde.class);
         refDataValueSerdeBinder
                 .addBinding(FastInfosetValue.TYPE_ID)
-                .to(stroom.refdata.offheapstore.FastInfoSetValueSerde.class);
+                .to(FastInfoSetValueSerde.class);
         refDataValueSerdeBinder
                 .addBinding(StringValue.TYPE_ID)
                 .to(StringValueSerde.class);

@@ -15,9 +15,10 @@
  *
  */
 
-package stroom.refdata.offheapstore;
+package stroom.refdata.offheapstore.serdes;
 
-import stroom.refdata.offheapstore.serdes.RefDatValueSubSerde;
+import stroom.refdata.offheapstore.FastInfosetValue;
+import stroom.refdata.offheapstore.RefDataValue;
 import stroom.util.logging.LambdaLogger;
 
 import java.nio.ByteBuffer;

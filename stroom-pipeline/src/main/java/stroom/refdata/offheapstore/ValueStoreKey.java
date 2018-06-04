@@ -30,15 +30,15 @@ import java.util.Objects;
  */
 public class ValueStoreKey {
 
-    private static final int SIZE_IN_BYTES = Integer.BYTES + Integer.BYTES;
-    private static final int DEFAULT_UNIQUE_ID = 0;
-    private static final int MIN_UNIQUE_ID = DEFAULT_UNIQUE_ID;
-    private static final int MAX_UNIQUE_ID = Integer.MAX_VALUE;
+    private static final int SIZE_IN_BYTES = Integer.BYTES + Short.BYTES;
+    private static final short DEFAULT_UNIQUE_ID = 0;
+    private static final short MIN_UNIQUE_ID = DEFAULT_UNIQUE_ID;
+    private static final short MAX_UNIQUE_ID = Short.MAX_VALUE;
 
     // The hashcode of the value that this key points to
     private final int valueHashCode;
     // An ID to provide uniqueness in the event of a hash-clash
-    private final int uniqueId;
+    private final short uniqueId;
 
     /**
      * @return A key with the lowest possible uniqueId for valueHashCode
@@ -54,7 +54,7 @@ public class ValueStoreKey {
         return new ValueStoreKey(valueHashCode, MAX_UNIQUE_ID);
     }
 
-    public ValueStoreKey(final int valueHashCode, final int uniqueId) {
+    public ValueStoreKey(final int valueHashCode, final short uniqueId) {
         // Due to the way keys are sorted, negative unique ids are not supported
         Preconditions.checkArgument(uniqueId >= 0);
         this.valueHashCode = valueHashCode;
@@ -66,25 +66,25 @@ public class ValueStoreKey {
      * concurrency protection to avoid multiple keys with the same ID.
      */
     ValueStoreKey nextKey() {
-        return new ValueStoreKey(valueHashCode, uniqueId + 1);
+        return new ValueStoreKey(valueHashCode, (short) (uniqueId + 1));
     }
 
     public int getValueHashCode() {
         return valueHashCode;
     }
 
-    public int getUniqueId() {
+    public short getUniqueId() {
         return uniqueId;
     }
 
-    /**
-     * Put the key's content in the passed byteBuffer
-     */
-    ByteBuffer putContent(final ByteBuffer byteBuffer) {
-        return byteBuffer
-                .putInt(valueHashCode)
-                .putInt(uniqueId);
-    }
+//    /**
+//     * Put the key's content in the passed byteBuffer
+//     */
+//    ByteBuffer putContent(final ByteBuffer byteBuffer) {
+//        return byteBuffer
+//                .putInt(valueHashCode)
+//                .putInt(uniqueId);
+//    }
 
     @Override
     public boolean equals(final Object o) {
@@ -106,13 +106,12 @@ public class ValueStoreKey {
         return "Key{" +
                 "valueHashCode=" + valueHashCode +
                 ", uniqueId=" + uniqueId +
-                ", bytes=" + getBytesString() +
                 '}';
     }
 
-    private String getBytesString() {
-        ByteBuffer byteBuffer = ByteBuffer.allocate(SIZE_IN_BYTES);
-        putContent(byteBuffer);
-        return LmdbUtils.byteArrayToHex(byteBuffer.array());
-    }
+//    private String getBytesString() {
+//        ByteBuffer byteBuffer = ByteBuffer.allocate(SIZE_IN_BYTES);
+//        putContent(byteBuffer);
+//        return LmdbUtils.byteArrayToHex(byteBuffer.array());
+//    }
 }
