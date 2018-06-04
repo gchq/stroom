@@ -23,6 +23,9 @@ public class KeyValueStoreKey {
 
     private final UID mapUid;
     private final String key;
+
+    // TODO consider removing this as I don't think we need it as it is
+    // defined by the mapUid
     private final long effectiveTimeEpochMs;
 
     public KeyValueStoreKey(final UID mapUid, final String key, final long effectiveTimeEpochMs) {

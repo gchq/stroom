@@ -40,9 +40,8 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -380,9 +379,66 @@ public class RefDataOffHeapStore implements RefDataStore {
                         final String key,
                         final RefDataValue refDataValue,
                         final boolean overwriteExistingValue) {
+            Objects.requireNonNull(mapDefinition);
+            Objects.requireNonNull(key);
+            Objects.requireNonNull(refDataValue);
+
             throwExceptionIfNotInitialised();
             beginTxnIfRequired();
 
+            final UID mapUid = getOrCreateUid(mapDefinition);
+
+            //get the ValueStoreKey for the RefDataValue (creating the entry if it doesn't exist)
+            final ValueStoreKey valueStoreKey = valueStoreDb.getOrCreate(writeTxn, refDataValue);
+
+            final KeyValueStoreKey keyValueStoreKey = new KeyValueStoreKey(mapUid, key, effectiveTimeMs);
+
+            // assuming it is cheaper to just try the put and let LMDB handle duplicates rather than
+            // do a get then optional put.
+            boolean didPutSucceed = keyValueStoreDb.put(
+                    writeTxn, keyValueStoreKey, valueStoreKey, overwriteExistingValue);
+
+            if (!overwriteExistingValue && !didPutSucceed) {
+                throw new RuntimeException(LambdaLogger.buildMessage(
+                        "Entry already exists for key {} and overwriteExisting is false", keyValueStoreKey));
+            }
+        }
+
+
+        @Override
+        public void put(final MapDefinition mapDefinition,
+                        final Range<Long> keyRange,
+                        final RefDataValue refDataValue,
+                        final boolean overwriteExistingValue) {
+            Objects.requireNonNull(mapDefinition);
+            Objects.requireNonNull(keyRange);
+            Objects.requireNonNull(refDataValue);
+
+            throwExceptionIfNotInitialised();
+            beginTxnIfRequired();
+
+            throwExceptionIfNotInitialised();
+            beginTxnIfRequired();
+
+            final UID mapUid = getOrCreateUid(mapDefinition);
+
+            //get the ValueStoreKey for the RefDataValue (creating the entry if it doesn't exist)
+            final ValueStoreKey valueStoreKey = valueStoreDb.getOrCreate(writeTxn, refDataValue);
+
+            final RangeStoreKey rangeStoreKey = new RangeStoreKey(mapUid, effectiveTimeMs, keyRange);
+
+            // assuming it is cheaper to just try the put and let LMDB handle duplicates rather than
+            // do a get then optional put.
+            boolean didPutSucceed = rangeStoreDb.put(
+                    writeTxn, rangeStoreKey, valueStoreKey, overwriteExistingValue);
+
+            if (!overwriteExistingValue && !didPutSucceed) {
+                throw new RuntimeException(LambdaLogger.buildMessage(
+                        "Entry already exists for key {} and overwriteExisting is false", rangeStoreKey));
+            }
+        }
+
+        private UID getOrCreateUid(final MapDefinition mapDefinition) {
             // TODO we may have only just started a txn so if the UIDs in the cache wrap LMDB owned
             // buffers bad things could happen.  We could clear the cache on commit, or put clones
             // into the cache. Have added clone() call below, but needs testing.
@@ -394,34 +450,7 @@ public class RefDataOffHeapStore implements RefDataStore {
                 // cloning the UID in case we leave the txn
                 return mapDefinitionUIDStore.getOrCreateUid(mapDef).clone();
             });
-
-            //get the ValueStoreKey for the RefDataValue (creating the entry if it doesn't exist)
-
-            //see if key exists, then put value based on overwriteExistingValue
-
-            //throw exception if entry exists and overwriteExistingValue is false
-
-        }
-
-        @Override
-        public void put(final MapDefinition mapDefinition,
-                        final Range<Long> keyRange,
-                        final RefDataValue refDataValue,
-                        final boolean overwriteExistingValue) {
-            throwExceptionIfNotInitialised();
-            beginTxnIfRequired();
-
-            //create forward+reverse map ID entries if they don't exist
-            //hold them in the mapDefinitionToUIDMap if we do create them
-
-            //see if key exists, then put value based on overwriteExistingValue
-
-            //throw exception if entry exists and overwriteExistingValue is false
-
-        }
-
-        private UID getOrCrteateMapUID(final MapDefinition mapDefinition) {
-            return mapDefinitionToUIDMap.computeIfAbsent(mapDefinition, refDataOffHeapStore::createMapUID);
+            return uid;
         }
 
         private void commitIfRequired() {
