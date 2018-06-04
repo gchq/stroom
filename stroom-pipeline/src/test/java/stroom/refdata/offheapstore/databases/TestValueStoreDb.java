@@ -192,7 +192,7 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
 
         final Map<String, ValueStoreKey> valueToKeyMap = new HashMap<>();
 
-        // load three entries
+        // load entries
         LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
             valueToKeyMap.put(val1str, valueStoreDb.getOrCreate(writeTxn, StringValue.of(val1str)));
             valueToKeyMap.put(val2str, valueStoreDb.getOrCreate(writeTxn, StringValue.of(val2str)));
@@ -200,6 +200,7 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
             valueToKeyMap.put(val4str, valueStoreDb.getOrCreate(writeTxn, StringValue.of(val4str)));
         });
 
+        // should have four different id values as all have the same hashcode
         assertThat(
                 valueToKeyMap.values().stream()
                         .map(ValueStoreKey::getUniqueId)
