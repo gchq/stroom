@@ -297,7 +297,7 @@ public class LmdbUtils {
     /**
      * Only intended for use in tests as the DB could be massive and thus produce a LOT of logging
      */
-    void logContentsInRange(final Env<ByteBuffer> env,
+    public static void logContentsInRange(final Env<ByteBuffer> env,
                             final Dbi<ByteBuffer> dbi,
                             final Txn<ByteBuffer> txn,
                             final KeyRange<ByteBuffer> keyRange,
@@ -305,7 +305,7 @@ public class LmdbUtils {
                             final Function<ByteBuffer, String> valueToStringFunc) {
 
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(LambdaLogger.buildMessage("Dumping entries in range {} [{} to {}] for database [{}]",
+        stringBuilder.append(LambdaLogger.buildMessage("Dumping entries in range {} [[{}] to [{}]] for database [{}]",
                 keyRange.getType().toString(),
                 ByteArrayUtils.byteBufferToHex(keyRange.getStart()),
                 ByteArrayUtils.byteBufferToHex(keyRange.getStop()),
@@ -316,13 +316,12 @@ public class LmdbUtils {
                 stringBuilder.append(LambdaLogger.buildMessage("\n  key: [{}] - value [{}]",
                         keyToStringFunc.apply(keyVal.key()),
                         valueToStringFunc.apply(keyVal.val())));
-                stringBuilder.append(LambdaLogger.buildMessage("\n   key: {}, value: {}", keyVal.key(), keyVal.val()));
             }
         }
         LOGGER.debug(stringBuilder.toString());
     }
 
-    void logContentsInRange(final Env<ByteBuffer> env,
+    public static void logContentsInRange(final Env<ByteBuffer> env,
                             final Dbi<ByteBuffer> dbi,
                             final KeyRange<ByteBuffer> keyRange,
                             final Function<ByteBuffer, String> keyToStringFunc,
@@ -333,14 +332,14 @@ public class LmdbUtils {
 
     }
 
-    void logContentsInRange(final Env<ByteBuffer> env,
+    public static void logContentsInRange(final Env<ByteBuffer> env,
                             final Dbi<ByteBuffer> dbi,
                             final Txn<ByteBuffer> txn,
                             final KeyRange<ByteBuffer> keyRange) {
         logContentsInRange(env, dbi, txn, keyRange, ByteArrayUtils::byteBufferToHex, ByteArrayUtils::byteBufferToHex);
     }
 
-    void logContentsInRange(final Env<ByteBuffer> env,
+    public static void logContentsInRange(final Env<ByteBuffer> env,
                             final Dbi<ByteBuffer> dbi,
                             final KeyRange<ByteBuffer> keyRange) {
         doWithReadTxn(env, txn ->

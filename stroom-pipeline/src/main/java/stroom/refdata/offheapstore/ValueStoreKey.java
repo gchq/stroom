@@ -18,9 +18,8 @@
 package stroom.refdata.offheapstore;
 
 import com.google.common.base.Preconditions;
-import stroom.refdata.lmdb.LmdbUtils;
+import stroom.util.logging.LambdaLogger;
 
-import java.nio.ByteBuffer;
 import java.util.Objects;
 
 /**
@@ -66,6 +65,10 @@ public class ValueStoreKey {
      * concurrency protection to avoid multiple keys with the same ID.
      */
     public ValueStoreKey nextKey() {
+        if (uniqueId == MAX_UNIQUE_ID) {
+            throw new RuntimeException(LambdaLogger.buildMessage(
+                    "Unable to create the next key as the max ID {} has been reached", MAX_UNIQUE_ID));
+        }
         return new ValueStoreKey(valueHashCode, (short) (uniqueId + 1));
     }
 
@@ -76,15 +79,6 @@ public class ValueStoreKey {
     public short getUniqueId() {
         return uniqueId;
     }
-
-//    /**
-//     * Put the key's content in the passed byteBuffer
-//     */
-//    ByteBuffer putContent(final ByteBuffer byteBuffer) {
-//        return byteBuffer
-//                .putInt(valueHashCode)
-//                .putInt(uniqueId);
-//    }
 
     @Override
     public boolean equals(final Object o) {
@@ -100,7 +94,6 @@ public class ValueStoreKey {
         return Objects.hash(valueHashCode, uniqueId);
     }
 
-
     @Override
     public String toString() {
         return "Key{" +
@@ -108,10 +101,4 @@ public class ValueStoreKey {
                 ", uniqueId=" + uniqueId +
                 '}';
     }
-
-//    private String getBytesString() {
-//        ByteBuffer byteBuffer = ByteBuffer.allocate(SIZE_IN_BYTES);
-//        putContent(byteBuffer);
-//        return LmdbUtils.byteArrayToHex(byteBuffer.array());
-//    }
 }
