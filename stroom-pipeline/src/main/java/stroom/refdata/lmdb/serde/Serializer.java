@@ -28,7 +28,7 @@ public interface Serializer<T> {
      * those bytes.
      */
     default ByteBuffer serialize(final T object) {
-        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(DEFAULT_CAPACITY);
+        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(getBufferCapacity());
         serialize(byteBuffer, object);
         return byteBuffer;
     }
@@ -39,4 +39,11 @@ public interface Serializer<T> {
      * This method will flip the buffer after writing to it.
      */
     void serialize(final ByteBuffer byteBuffer, final T object);
+
+    /**
+     * Allows the sub-class to specify the capacity of the buffer to be used in serialisation.
+     */
+    default int getBufferCapacity() {
+        return DEFAULT_CAPACITY;
+    }
 }

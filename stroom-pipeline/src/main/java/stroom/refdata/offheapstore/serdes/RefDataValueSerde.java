@@ -36,7 +36,7 @@ public class RefDataValueSerde implements
     private final Map<Integer, Serde<RefDataValue>> typeToSerdeMap;
 
     @Inject
-    RefDataValueSerde(final Map<Integer, Serde<RefDataValue>> typeToSerdeMap) {
+    public RefDataValueSerde(final Map<Integer, Serde<RefDataValue>> typeToSerdeMap) {
         this.typeToSerdeMap = typeToSerdeMap;
     }
 

@@ -28,17 +28,13 @@ import java.util.Map;
 
 public class TestRefDataValueSerde extends AbstractSerdeTest {
 
-    private static final Map<Integer, Serde<RefDataValue>> TYPE_TO_SERDE_MAP = ImmutableMap.of(
-            FastInfosetValue.TYPE_ID, new FastInfoSetValueSerde(),
-            StringValue.TYPE_ID, new StringValueSerde());
-
     @Test
     public void testSerialisationDeserialisation_FastInfosetValue() {
 
         byte[] bytes = new byte[] {0, 1, 2, 3, 4, 5};
         final RefDataValue refDataValue = new FastInfosetValue(bytes);
 
-        final RefDataValueSerde refDataValueSerde = new RefDataValueSerde(TYPE_TO_SERDE_MAP);
+        final RefDataValueSerde refDataValueSerde = RefDataValueSerdeFactory.create();
 
         doSerialisationDeserialisationTest(refDataValue, () -> refDataValueSerde);
     }
@@ -48,7 +44,7 @@ public class TestRefDataValueSerde extends AbstractSerdeTest {
 
         final RefDataValue refDataValue = new StringValue("this is my value");
 
-        final RefDataValueSerde refDataValueSerde = new RefDataValueSerde(TYPE_TO_SERDE_MAP);
+        final RefDataValueSerde refDataValueSerde = RefDataValueSerdeFactory.create();
 
         doSerialisationDeserialisationTest(refDataValue, () -> refDataValueSerde);
     }

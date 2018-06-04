@@ -30,7 +30,6 @@ import java.util.Objects;
  */
 public class ValueStoreKey {
 
-    private static final int SIZE_IN_BYTES = Integer.BYTES + Short.BYTES;
     private static final short DEFAULT_UNIQUE_ID = 0;
     private static final short MIN_UNIQUE_ID = DEFAULT_UNIQUE_ID;
     private static final short MAX_UNIQUE_ID = Short.MAX_VALUE;
@@ -43,16 +42,17 @@ public class ValueStoreKey {
     /**
      * @return A key with the lowest possible uniqueId for valueHashCode
      */
-    static ValueStoreKey lowestKey(final int valueHashCode) {
+    public static ValueStoreKey lowestKey(final int valueHashCode) {
         return new ValueStoreKey(valueHashCode, MIN_UNIQUE_ID);
     }
 
     /**
      * @return A key with the highest possible uniqueId for valueHashCode
      */
-    static ValueStoreKey highestKey(final int valueHashCode) {
+    public static ValueStoreKey highestKey(final int valueHashCode) {
         return new ValueStoreKey(valueHashCode, MAX_UNIQUE_ID);
     }
+
 
     public ValueStoreKey(final int valueHashCode, final short uniqueId) {
         // Due to the way keys are sorted, negative unique ids are not supported
@@ -65,7 +65,7 @@ public class ValueStoreKey {
      * @return A new Key instance with the next unique ID. Should be used with some form of
      * concurrency protection to avoid multiple keys with the same ID.
      */
-    ValueStoreKey nextKey() {
+    public ValueStoreKey nextKey() {
         return new ValueStoreKey(valueHashCode, (short) (uniqueId + 1));
     }
 

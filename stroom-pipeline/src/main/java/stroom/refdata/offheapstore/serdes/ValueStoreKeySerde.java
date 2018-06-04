@@ -26,6 +26,13 @@ import java.nio.ByteBuffer;
 
 public class ValueStoreKeySerde implements Serde<ValueStoreKey>, Serializer<ValueStoreKey>, Deserializer<ValueStoreKey> {
 
+    private static final int SIZE_IN_BYTES = Integer.BYTES + Short.BYTES;
+
+    @Override
+    public int getBufferCapacity() {
+        return SIZE_IN_BYTES;
+    }
+
     @Override
     public ValueStoreKey deserialize(final ByteBuffer byteBuffer) {
         int hashCode = byteBuffer.getInt();

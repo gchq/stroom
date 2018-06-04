@@ -54,8 +54,6 @@ public class RefDataProcessingInfoSerde implements
     public void serialize(final ByteBuffer byteBuffer, final RefDataProcessingInfo refDataProcessingInfo) {
         Objects.requireNonNull(refDataProcessingInfo);
         Objects.requireNonNull(byteBuffer);
-        // TODO if we don't care about fixed widths we could use a custom kryo serialiser
-        // that uses variable width longs for storage efficiency
         // Fixed widths allow us to (de-)serialise only the bit of the object we are interested in,
         // e.g. just the lastAccessedTime
         byteBuffer.putLong(refDataProcessingInfo.getCreateTimeEpochMs());
