@@ -27,6 +27,7 @@ import java.nio.ByteBuffer;
 public class ValueStoreKeySerde implements Serde<ValueStoreKey>, Serializer<ValueStoreKey>, Deserializer<ValueStoreKey> {
 
     private static final int SIZE_IN_BYTES = Integer.BYTES + Short.BYTES;
+    public static final int ID_OFFSET = Integer.BYTES;
 
     @Override
     public int getBufferCapacity() {
@@ -47,5 +48,33 @@ public class ValueStoreKeySerde implements Serde<ValueStoreKey>, Serializer<Valu
                 .putInt(valueStoreKey.getValueHashCode())
                 .putShort(valueStoreKey.getUniqueId());
         byteBuffer.flip();
+    }
+
+    /**
+     * Creates a new directly allocated {@link ByteBuffer} from the contents of
+     * source, but with an ID value one greater than the ID value in source.
+     * This method allows for the mutation of the ID part of the {@link ByteBuffer}
+     * without having to fully de-serialise/serialise it.
+     */
+    public static ByteBuffer nextId(final ByteBuffer source) {
+        short currId = source.getShort(ID_OFFSET);
+
+        ByteBuffer output = ByteBuffer.allocateDirect(SIZE_IN_BYTES);
+
+        ByteBuffer sourceDuplicate = source.duplicate();
+        sourceDuplicate.limit(Integer.BYTES);
+        output.put(sourceDuplicate);
+        output.putShort((short) (currId + 1));
+        output.flip();
+        return output;
+    }
+
+    /**
+     * Increments the ID part of the {@link ByteBuffer} by one. Does not
+     * alter the offset/limit
+     */
+    public static void incrementId(final ByteBuffer byteBuffer) {
+        short currId = byteBuffer.getShort(ID_OFFSET);
+        byteBuffer.putShort(ID_OFFSET, (short) (currId + 1));
     }
 }

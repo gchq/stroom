@@ -97,14 +97,14 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
         // build a key range for all possible keys
         final KeyRange<ByteBuffer> keyRange = buildAllIdsForSingleHashValueKeyRange(refDataValue);
 
-        LmdbUtils.logContentsInRange(lmdbEnvironment, lmdbDbi, keyRange);
-
-        logRawDatabaseContents();
+        // these two lines are useful for debugging with small data volumes
+//        LmdbUtils.logContentsInRange(lmdbEnvironment, lmdbDbi, keyRange);
+//        logRawDatabaseContents();
 
         // Use atomics so they can be mutated and then used in lambdas
         final AtomicBoolean isValueInMap = new AtomicBoolean(false);
         final AtomicInteger valuesCount = new AtomicInteger(0);
-        ValueStoreKey lastValueStoreKey = null;
+        ByteBuffer lastKeyBufferClone = null;
 
         try (CursorIterator<ByteBuffer> cursorIterator = lmdbDbi.iterate(writeTxn, keyRange)) {
             for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
@@ -120,17 +120,26 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                         LmdbUtils.byteBufferToHex(valueBuffer),
                         LmdbUtils.byteBufferToHex(valueFromDbBuf)));
 
-                // we cannot use keyVal outside of the cursor loop so have to either
-                // deser it, copy the whole buffer or copy the bit of interest
-                lastValueStoreKey = keySerde.deserialize(keyVal.key());
+                // we cannot use keyVal outside of the cursor loop so have to
+                // copy the content
+                if (lastKeyBufferClone == null) {
+                    // make a new buffer from the cursor key content
+                    lastKeyBufferClone = LmdbUtils.copyDirectBuffer(keyVal.key());
+                } else {
+                    // copy the cursor key content into our mutable buffer
+                    lastKeyBufferClone.put(keyVal.key());
+                    lastKeyBufferClone.flip();
+                }
+
+                // see if the found value is identical to the value passed in
                 if (ByteBufferUtils.compareTo(
                         valueBuffer, valueBuffer.position(), valueBuffer.remaining(),
                         valueFromDbBuf, valueFromDbBuf.position(), valueFromDbBuf.remaining()) == 0) {
                     isValueInMap.set(true);
-                    LAMBDA_LOGGER.trace(() -> "Values are equal breaking out");
+                    LAMBDA_LOGGER.trace(() -> "Found our value so breaking out");
                     break;
                 } else {
-                    LAMBDA_LOGGER.trace(() -> "Values are not equal");
+                    LAMBDA_LOGGER.trace(() -> "Values are not equal, keep looking");
                 }
             }
         }
@@ -142,22 +151,23 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
         if (isValueInMap.get()) {
             // value is already in the map, so use its key
             LOGGER.trace("Found value");
-            valueStoreKey = lastValueStoreKey;
+            valueStoreKey = keySerde.deserialize(lastKeyBufferClone);
         } else {
             // value is not in the map so we need to add it
-            final int uniqueId;
-            if (lastValueStoreKey == null) {
+            final ByteBuffer keyBuffer;
+            if (lastKeyBufferClone == null) {
                 LOGGER.trace("no existing entry for this valueHashCode so use first uniqueId");
-                valueStoreKey = ValueStoreKey.lowestKey(refDataValue.hashCode());
+                // the start key is the first key for that hashcode so use that
+                keyBuffer = keyRange.getStart();
             } else {
-                // 1 or more entries share our valueHashCode (but with different values)
-                // so use the next uniqueId
-                valueStoreKey = lastValueStoreKey.nextKey();
-                LOGGER.trace("Incrementing key, lastValueStoreKey {}, valueStoreKey {}",
-                        lastValueStoreKey, valueStoreKey);
+                // One or more entries share our valueHashCode (but with different values)
+                // so increment the last one we saw
+                ValueStoreKeySerde.incrementId(lastKeyBufferClone);
+                keyBuffer = lastKeyBufferClone;
+                LOGGER.trace("Incrementing key, valueStoreKey {}", valueStoreKey);
 
             }
-            final ByteBuffer keyBuffer = keySerde.serialize(valueStoreKey);
+            valueStoreKey = keySerde.deserialize(keyBuffer);
             boolean didPutSucceed = put(writeTxn, keyBuffer, valueBuffer, false);
             if (!didPutSucceed) {
                 throw new RuntimeException(LambdaLogger.buildMessage("Put failed for key: {}, value {}",
@@ -170,7 +180,8 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
     }
 
     public Optional<RefDataValue> get(final Txn<ByteBuffer> txn, final ByteBuffer keyBuffer) {
-        return Optional.empty();
+        return getAsBytes(txn, keyBuffer)
+                .map(valueSerde::deserialize);
     }
 
     private KeyRange<ByteBuffer> buildAllIdsForSingleHashValueKeyRange(final RefDataValue value) {

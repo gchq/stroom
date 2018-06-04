@@ -5,12 +5,21 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.LmdbUtils;
+import stroom.refdata.offheapstore.RefDataValue;
 import stroom.refdata.offheapstore.StringValue;
 import stroom.refdata.offheapstore.ValueStoreKey;
 import stroom.refdata.offheapstore.serdes.RefDataValueSerdeFactory;
 import stroom.refdata.offheapstore.serdes.ValueStoreKeySerde;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.filter;
 
 
 public class TestValueStoreDb extends AbstractLmdbDbTest {
@@ -128,5 +137,87 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
             assertThat(valueStoreKey.getUniqueId()).isEqualTo((short) 0);
         });
         assertThat(valueStoreDb.getEntryCount()).isEqualTo(3);
+    }
+
+    @Test
+    public void testGet_simple() {
+        assertThat(valueStoreDb.getEntryCount()).isEqualTo(0);
+
+        final String val1str = "value one";
+        final String val2str = "value two";
+        final String val3str = "value three";
+
+        final Map<String, ValueStoreKey> valueToKeyMap = new HashMap<>();
+
+        // load three entries
+        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            valueToKeyMap.put(val1str, valueStoreDb.getOrCreate(writeTxn, StringValue.of(val1str)));
+            valueToKeyMap.put(val2str, valueStoreDb.getOrCreate(writeTxn, StringValue.of(val2str)));
+            valueToKeyMap.put(val3str, valueStoreDb.getOrCreate(writeTxn, StringValue.of(val3str)));
+        });
+
+        assertThat(valueStoreDb.getEntryCount()).isEqualTo(3);
+
+        ValueStoreKeySerde keySerde = new ValueStoreKeySerde();
+
+        LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
+            // lookup our three entries
+            valueToKeyMap.forEach((valueStr, valueStoreKey) -> {
+                RefDataValue val = valueStoreDb.get(txn, keySerde.serialize(valueStoreKey)).get();
+                assertThat(val).isInstanceOf(StringValue.class);
+                assertThat(((StringValue) val).getValue()).isEqualTo(valueStr);
+            });
+
+            // now try and get a value that doesn't exist
+            Optional<RefDataValue> optRefDataValue = valueStoreDb.get(
+                    txn,
+                    keySerde.serialize(new ValueStoreKey(123456, (short) 99)));
+
+            assertThat(optRefDataValue).isEmpty();
+        });
+    }
+
+    @Test
+    public void testGet_sameHashCodes() {
+        assertThat(valueStoreDb.getEntryCount()).isEqualTo(0);
+
+        String val1str = "AaAa";
+        String val2str = "BBBB";
+        String val3str = "AaBB";
+        String val4str = "BBAa";
+
+        assertThat(val1str.hashCode()).isEqualTo(val2str.hashCode());
+        assertThat(val1str.hashCode()).isEqualTo(val3str.hashCode());
+        assertThat(val1str.hashCode()).isEqualTo(val4str.hashCode());
+
+        final Map<String, ValueStoreKey> valueToKeyMap = new HashMap<>();
+
+        // load three entries
+        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            valueToKeyMap.put(val1str, valueStoreDb.getOrCreate(writeTxn, StringValue.of(val1str)));
+            valueToKeyMap.put(val2str, valueStoreDb.getOrCreate(writeTxn, StringValue.of(val2str)));
+            valueToKeyMap.put(val3str, valueStoreDb.getOrCreate(writeTxn, StringValue.of(val3str)));
+            valueToKeyMap.put(val4str, valueStoreDb.getOrCreate(writeTxn, StringValue.of(val4str)));
+        });
+
+        assertThat(
+                valueToKeyMap.values().stream()
+                        .map(ValueStoreKey::getUniqueId)
+                        .collect(Collectors.toList()))
+                .contains((short) 0, (short) 1, (short) 2, (short) 3);
+
+        assertThat(valueStoreDb.getEntryCount()).isEqualTo(valueToKeyMap.size());
+
+        ValueStoreKeySerde keySerde = new ValueStoreKeySerde();
+
+        LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
+            // lookup our entries
+            List<Integer> ids = new ArrayList<>();
+            valueToKeyMap.forEach((valueStr, valueStoreKey) -> {
+                RefDataValue val = valueStoreDb.get(txn, keySerde.serialize(valueStoreKey)).get();
+                assertThat(val).isInstanceOf(StringValue.class);
+                assertThat(((StringValue) val).getValue()).isEqualTo(valueStr);
+            });
+        });
     }
 }
