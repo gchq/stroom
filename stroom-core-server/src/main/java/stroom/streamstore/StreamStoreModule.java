@@ -28,7 +28,7 @@ import stroom.streamstore.fs.StreamVolumeService;
 import stroom.streamstore.fs.StreamVolumeServiceImpl;
 import stroom.streamstore.meta.StreamMetaService;
 import stroom.streamstore.meta.db.StreamEntityService;
-import stroom.streamstore.meta.db.StreamEntityServiceImpl;
+import stroom.streamstore.meta.db.StreamMetaServiceImpl;
 import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.task.TaskHandler;
 
@@ -44,8 +44,8 @@ public class StreamStoreModule extends AbstractModule {
         bind(FeedEntityService.class).to(FeedEntityServiceImpl.class);
         bind(StreamTypeEntityService.class).to(StreamTypeEntityServiceImpl.class);
         bind(StreamVolumeService.class).to(StreamVolumeServiceImpl.class);
-        bind(StreamMetaService.class).to(StreamEntityServiceImpl.class);
-        bind(StreamEntityService.class).to(StreamEntityServiceImpl.class);
+        bind(StreamMetaService.class).to(StreamMetaServiceImpl.class);
+        bind(StreamEntityService.class).to(StreamMetaServiceImpl.class);
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(StreamAttributeKeyServiceImpl.class);

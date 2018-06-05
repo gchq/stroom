@@ -96,13 +96,13 @@ import java.util.stream.Collectors;
  */
 @Singleton
 // @Transactional
-public class StreamEntityServiceImpl implements StreamEntityService, StreamMetaService {
+public class StreamMetaServiceImpl implements StreamEntityService, StreamMetaService {
     private static final String MYSQL_INDEX_STRM_CRT_MS_IDX = "STRM_CRT_MS_IDX";
     private static final String MYSQL_INDEX_STRM_FK_FD_ID_CRT_MS_IDX = "STRM_FK_FD_ID_CRT_MS_IDX";
     private static final String MYSQL_INDEX_STRM_EFFECT_MS_IDX = "STRM_EFFECT_MS_IDX";
     private static final String MYSQL_INDEX_STRM_PARNT_STRM_ID_IDX = "STRM_PARNT_STRM_ID_IDX";
     private static final String MYSQL_INDEX_STRM_FK_STRM_PROC_ID_CRT_MS_IDX = "STRM_FK_STRM_PROC_ID_CRT_MS_IDX";
-    private static final Logger LOGGER = LoggerFactory.getLogger(StreamEntityServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamMetaServiceImpl.class);
     private static final Set<String> SOURCE_FETCH_SET;
     private static final FieldMap FIELD_MAP = new FieldMap()
             .add(OldFindStreamCriteria.FIELD_ID, BaseEntity.ID, "id")
@@ -127,16 +127,16 @@ public class StreamEntityServiceImpl implements StreamEntityService, StreamMetaS
     private final Security security;
 
     @Inject
-    StreamEntityServiceImpl(final StroomEntityManager entityManager,
-                            final StroomDatabaseInfo stroomDatabaseInfo,
-                            final FeedEntityService feedService,
-                            @Named("cachedStreamTypeService") final StreamTypeEntityService streamTypeService,
-                            @Named("cachedStreamProcessorService") final StreamProcessorService streamProcessorService,
-                            final FeedStore feedStore,
-                            final FeedDocCache feedDocCache,
-                            final ExpressionToFindCriteria expressionToFindCriteria,
-                            final SecurityContext securityContext,
-                            final Security security) {
+    StreamMetaServiceImpl(final StroomEntityManager entityManager,
+                          final StroomDatabaseInfo stroomDatabaseInfo,
+                          final FeedEntityService feedService,
+                          @Named("cachedStreamTypeService") final StreamTypeEntityService streamTypeService,
+                          @Named("cachedStreamProcessorService") final StreamProcessorService streamProcessorService,
+                          final FeedStore feedStore,
+                          final FeedDocCache feedDocCache,
+                          final ExpressionToFindCriteria expressionToFindCriteria,
+                          final SecurityContext securityContext,
+                          final Security security) {
         this.entityManager = entityManager;
         this.stroomDatabaseInfo = stroomDatabaseInfo;
         this.feedService = feedService;

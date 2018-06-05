@@ -20,11 +20,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.Clearable;
 import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.fs.StreamVolumeService;
-import stroom.streamstore.fs.StreamVolumeServiceImpl;
 import stroom.streamstore.meta.StreamMetaService;
-import stroom.streamstore.meta.db.StreamEntityService;
-import stroom.streamstore.meta.db.StreamEntityServiceImpl;
 
 public class MockStreamStoreModule extends AbstractModule {
     @Override
