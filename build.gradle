@@ -175,7 +175,7 @@ ext.libs = [
     log4j_over_slf4j                :  "org.slf4j:log4j-over-slf4j:$versions.slf4j",
     logback_classic                 :  "ch.qos.logback:logback-classic:$versions.logback",
     logback_core                    :  "ch.qos.logback:logback-core:$versions.logback",
-    lmdbjava                        :  "org.lmdbjava:lmdbjava:0.6.0",
+    lmdbjava                        :  "org.lmdbjava:lmdbjava:0.6.1",
     lucene_analyzers_common         :  "org.apache.lucene:lucene-analyzers-common:$versions.lucene",
     lucene_core                     :  "org.apache.lucene:lucene-core:$versions.lucene",
     lucene_queryparser              :  "org.apache.lucene:lucene-queryparser:$versions.lucene",
