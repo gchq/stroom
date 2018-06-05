@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.4.2] - 2018-06-05
+
 * Issue **#782** : Fix for NPE thrown when using CountGroups when GroupKey string was null due to non grouped child rows.
 
 ## [v5.4.1] - 2018-05-25
@@ -822,7 +824,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.4.1...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.4.2...HEAD
+[v5.4.2]: https://github.com/gchq/stroom/compare/v5.4.1...v5.4.2
 [v5.4.1]: https://github.com/gchq/stroom/compare/v5.4.0...v5.4.1
 [v5.4.0]: https://github.com/gchq/stroom/compare/v5.3.4...v5.4.0
 [v5.3.4]: https://github.com/gchq/stroom/compare/v5.3.3...v5.3.4
