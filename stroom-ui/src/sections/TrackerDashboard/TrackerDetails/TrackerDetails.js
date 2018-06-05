@@ -74,7 +74,7 @@ class TrackerDetails extends Component {
 
           <Grid centered divided columns={3} className="details-grid">
             <Grid.Column textAlign="left" width={10}>
-              {selectedTracker.filterXml}
+              {selectedTracker.filter}
             </Grid.Column>
             <Grid.Column width={6}>
               <Card.Meta>This tracker:</Card.Meta>

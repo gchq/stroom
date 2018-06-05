@@ -20,13 +20,19 @@
 package stroom.streamtask.resource;
 
 import com.codahale.metrics.health.HealthCheck;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.Api;
 import org.apache.commons.lang.NotImplementedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Sort;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
+import stroom.streamstore.StreamAttributeMapServiceImpl;
+import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.StreamProcessorFilterService;
 import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
@@ -60,6 +66,8 @@ import static stroom.streamtask.resource.SearchKeywords.addFiltering;
 @Path("/streamtasks/v1")
 @Produces(MediaType.APPLICATION_JSON)
 public class StreamTaskResource implements HasHealthCheck {
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeMapServiceImpl.class);
+
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final StreamProcessorService streamProcessorService;
     private final SecurityContext securityContext;
@@ -201,8 +209,18 @@ public class StreamTaskResource implements HasHealthCheck {
 
 
         List<StreamTask> streamTasks = new ArrayList<>();
+        ObjectMapper mapper = new ObjectMapper();
         for (StreamProcessorFilter filter : streamProcessorFilters.getValues()){
             StreamTask.StreamTaskBuilder builder = StreamTask.StreamTaskBuilder.aStreamTask();
+
+            QueryData queryData = filter.getQueryData();
+            String serialisedQueryData;
+            try {
+                serialisedQueryData = mapper.writeValueAsString(queryData);
+            } catch (JsonProcessingException e) {
+                LOGGER.error("Unable to serialise query data for filter with ID {}", filter.getId());
+                serialisedQueryData = "Unable to serialise query data for filter";
+            }
 
             // Indented to make the source easier to read
             builder
@@ -215,7 +233,7 @@ public class StreamTaskResource implements HasHealthCheck {
                     .withCreatedOn(      filter.getCreateTime())
                     .withUpdateUser(     filter.getUpdateUser())
                     .withUpdatedOn(      filter.getUpdateTime())
-                    .withFilterXml(      filter.getData());
+                    .withFilter(         serialisedQueryData);
 
             if(filter.getStreamProcessorFilterTracker() != null) {
                 Integer trackerPercent = filter.getStreamProcessorFilterTracker().getTrackerStreamCreatePercentage();

@@ -15,7 +15,7 @@ class StreamTask {
     private Integer eventCount;
     private String status;
     private Boolean enabled; //TODO: Updatable?
-    private String filterXml;
+    private String filter;
 
     // Supporting data
     private Long filterId;
@@ -102,8 +102,8 @@ class StreamTask {
         return filterName;
     }
 
-    public String getFilterXml() {
-        return filterXml;
+    public String getFilter() {
+        return filter;
     }
 
     public static final class StreamTaskBuilder {
@@ -120,7 +120,7 @@ class StreamTask {
         private Integer eventCount;
         private String status;
         private Boolean enabled; //TODO: Updatable?
-        private String filterXml;
+        private String filter;
         // Supporting data
         private Long filterId;
         private String createUser;
@@ -197,8 +197,8 @@ class StreamTask {
             return this;
         }
 
-        public StreamTaskBuilder withFilterXml(String filterXml) {
-            this.filterXml = filterXml;
+        public StreamTaskBuilder withFilter(String filter) {
+            this.filter = filter;
             return this;
         }
 
@@ -256,7 +256,7 @@ class StreamTask {
             streamTask.trackerMs = this.trackerMs;
             streamTask.updateUser = this.updateUser;
             streamTask.createdOn = this.createdOn;
-            streamTask.filterXml = this.filterXml;
+            streamTask.filter = this.filter;
             streamTask.filterId = this.filterId;
             streamTask.filterName = this.filterName;
             return streamTask;
