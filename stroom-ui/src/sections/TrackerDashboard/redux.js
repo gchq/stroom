@@ -16,6 +16,8 @@
 
 import { createActions, handleActions } from 'redux-actions';
 
+import { receiveDataSource } from 'components/ExpressionBuilder';
+
 const initialState = {
   trackers: [],
   isLoading: false,
@@ -153,5 +155,12 @@ const reducers = handleActions(
   },
   initialState,
 );
+
+export const updateTrackerSelection = filterId => (dispatch, getState) => {
+  const state = getState();
+  const selectedTracker = state.trackerDashboard.trackers.find(tracker => tracker.filterId === filterId);
+  dispatch(receiveDataSource(selectedTracker.filter));
+  dispatch(actionCreators.updateTrackerSelection(filterId));
+};
 
 export default reducers;

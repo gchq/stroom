@@ -22,7 +22,7 @@ import Mousetrap from 'mousetrap';
 import { Label, Table, Progress, Button, Input, Menu, Pagination } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 
-import { actionCreators, Directions, SortByOptions } from '../redux';
+import { actionCreators, Directions, SortByOptions, updateTrackerSelection } from '../redux';
 import { fetchTrackers, TrackerSelection } from '../streamTasksResourceClient';
 import TrackerDetails from '../TrackerDetails/TrackerDetails';
 
@@ -214,7 +214,7 @@ const mapDispatchToProps = dispatch => ({
     dispatch(fetchTrackers());
   },
   onHandleTrackerSelection: (filterId) => {
-    dispatch(actionCreators.updateTrackerSelection(filterId));
+    dispatch(updateTrackerSelection(filterId));
   },
   onMoveSelection: (direction) => {
     dispatch(actionCreators.moveSelection(direction));
