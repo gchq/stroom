@@ -33,7 +33,7 @@ import {
   explorerTreeReducer,
 } from '../redux';
 
-import { testTree, DOC_REF_TYPES } from 'testData';
+import { testTree, DOC_REF_TYPES } from './documentTree.testData';
 
 // Rebuilt for each test
 let store;

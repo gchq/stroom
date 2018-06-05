@@ -19,7 +19,8 @@ import { groupByCategory, groupByCategoryFiltered, isValidChildType } from '../e
 
 import { ElementCategories } from '../ElementCategories';
 
-import { testElementTypes, testElementProperties, elements } from 'testData';
+import { testElementTypes, testElementProperties } from './pipeline.testData';
+import { elements } from './elements.testData';
 
 describe('Element Utils', () => {
   describe('#groupByCategory', () => {

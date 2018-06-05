@@ -25,7 +25,7 @@ import { DocExplorer, DocRef, Folder, DocRefModalPicker, DocRefDropdownPicker } 
 import { receiveDocTree, docRefPicked } from './redux';
 
 import markdown from './docExplorer.md';
-import { testTree, DOC_REF_TYPES } from 'testData';
+import { testTree, DOC_REF_TYPES } from './documentTree.testData';
 
 import { pickRandomItem } from 'lib/treeUtils';
 

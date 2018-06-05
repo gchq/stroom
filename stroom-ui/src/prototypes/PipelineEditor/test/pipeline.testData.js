@@ -14,34 +14,34 @@
  * limitations under the License.
  */
 
-import { elements } from './testElements';
+import { elements } from './elements.testData';
 
-let myCsvSplitterFilter = {
+const myCsvSplitterFilter = {
   id: 'CSV splitter filter',
   type: elements.dsParser.type,
 };
 
-let myXsltFilter = {
+const myXsltFilter = {
   id: 'XSLT filter',
   type: elements.xsltFilter.type,
 };
 
-let myXmlWriter1 = {
+const myXmlWriter1 = {
   id: 'XML writer 1',
   type: elements.xmlWriter.type,
-}
+};
 
-let myStreamAppender1 = {
+const myStreamAppender1 = {
   id: 'stream appender 1',
   type: elements.streamAppender.type,
 };
 
-let myXmlWriter2 = {
+const myXmlWriter2 = {
   id: 'XML writer 2',
   type: elements.xmlWriter.type,
 };
 
-let myStreamAppender2 = {
+const myStreamAppender2 = {
   id: 'stream appender 2',
   type: elements.streamAppender.type,
 };
@@ -55,9 +55,9 @@ const testPipeline = {
         myXmlWriter1,
         myStreamAppender1,
         myXmlWriter2,
-        myStreamAppender2
-      ]
-    }
+        myStreamAppender2,
+      ],
+    },
   },
   properties: {
     add: {
@@ -147,16 +147,13 @@ const testPipeline = {
   },
 };
 
-let testPipelineElements = {
+const testPipelineElements = {
   myCsvSplitterFilter,
   myXsltFilter,
   myStreamAppender1,
   myStreamAppender2,
   myXmlWriter1,
-  myXmlWriter2
-}
-
-export {
-  testPipeline,
-  testPipelineElements
+  myXmlWriter2,
 };
+
+export { testPipeline, testPipelineElements };

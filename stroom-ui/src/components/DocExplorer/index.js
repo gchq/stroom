@@ -35,6 +35,8 @@ import {
 
 import { withExplorer } from './withExplorer';
 
+import { testTree } from './documentTree.testData';
+
 export {
   DocExplorer,
   DocRefModalPicker,
@@ -54,4 +56,6 @@ export {
   closeDocRefContextMenu,
   explorerTreeReducer,
   withExplorer,
+  // Test exports
+  testTree,
 };
