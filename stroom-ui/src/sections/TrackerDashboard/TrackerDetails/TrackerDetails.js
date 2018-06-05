@@ -20,6 +20,7 @@ import 'semantic-ui-css/semantic.min.css';
 
 import { actionCreators } from '../redux';
 import { enableToggle } from '../streamTasksResourceClient';
+import { ExpressionBuilder } from 'components/ExpressionBuilder';
 
 class TrackerDetails extends Component {
   truncate(text, limit) {
@@ -74,7 +75,7 @@ class TrackerDetails extends Component {
 
           <Grid centered divided columns={3} className="details-grid">
             <Grid.Column textAlign="left" width={10}>
-              {selectedTracker.filter}
+              <ExpressionBuilder dataSourceUuid="trackerDetailsExpressionDs" expressionId="trackerDetailsExpression" />
             </Grid.Column>
             <Grid.Column width={6}>
               <Card.Meta>This tracker:</Card.Meta>

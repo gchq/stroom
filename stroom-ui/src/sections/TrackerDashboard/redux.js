@@ -159,7 +159,7 @@ const reducers = handleActions(
 export const updateTrackerSelection = filterId => (dispatch, getState) => {
   const state = getState();
   const selectedTracker = state.trackerDashboard.trackers.find(tracker => tracker.filterId === filterId);
-  dispatch(receiveDataSource(selectedTracker.filter));
+  dispatch(receiveDataSource('trackerDetailsExpressionDs', selectedTracker.filter.expression.children));
   dispatch(actionCreators.updateTrackerSelection(filterId));
 };
 
