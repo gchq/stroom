@@ -15,11 +15,12 @@
  *
  */
 
-package stroom.streamstore;
+package stroom.streamstore.meta.db;
 
 import stroom.entity.MockNamedEntityService;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
+import stroom.streamstore.meta.db.StreamTypeEntityService;
 import stroom.streamstore.shared.FindStreamTypeCriteria;
 import stroom.streamstore.shared.StreamTypeEntity;
 

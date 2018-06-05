@@ -22,7 +22,7 @@ import org.junit.runner.RunWith;
 import stroom.security.MockSecurityContext;
 import stroom.security.Security;
 import stroom.streamstore.EffectiveMetaDataCriteria;
-import stroom.streamstore.MockStreamMetaService;
+import stroom.streamstore.meta.db.MockStreamMetaService;
 import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamTypeEntity;

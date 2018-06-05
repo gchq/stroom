@@ -14,14 +14,19 @@
  * limitations under the License.
  */
 
-package stroom.streamstore;
+package stroom.streamstore.meta.db;
 
-import stroom.entity.shared.Clearable;
-import stroom.entity.shared.Flushable;
-import stroom.feed.MetaMap;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamEntity;
+import org.junit.Test;
+import stroom.test.AbstractCoreIntegrationTest;
 
-public interface StreamAttributeValueFlush extends Flushable, Clearable {
-    void persitAttributes(final Stream stream, final boolean append, final MetaMap metaMap);
+import javax.inject.Inject;
+
+public class TestStreamAttributeValueFlushImpl extends AbstractCoreIntegrationTest {
+    @Inject
+    private StreamAttributeValueDeleteExecutor streamAttributeValueDeleteExecutor;
+
+    @Test
+    public void testDelete() {
+        streamAttributeValueDeleteExecutor.exec();
+    }
 }

@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.streamstore;
+package stroom.streamstore.meta.db;
 
 import stroom.entity.MockEntityService;
 import stroom.entity.shared.BaseResultList;
@@ -25,7 +25,7 @@ import stroom.streamstore.shared.StreamAttributeKey;
 import javax.inject.Singleton;
 
 @Singleton
-public class MockStreamAttributeKeyService extends MockEntityService<StreamAttributeKey, FindStreamAttributeKeyCriteria>
+class MockStreamAttributeKeyService extends MockEntityService<StreamAttributeKey, FindStreamAttributeKeyCriteria>
         implements StreamAttributeKeyService {
     @Override
     public BaseResultList<StreamAttributeKey> findAll() {

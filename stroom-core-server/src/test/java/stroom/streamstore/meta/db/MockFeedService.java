@@ -15,12 +15,14 @@
  *
  */
 
-package stroom.streamstore;
+package stroom.streamstore.meta.db;
 
 import stroom.entity.MockNamedEntityService;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
+import stroom.streamstore.FindFeedCriteria;
+import stroom.streamstore.meta.db.FeedEntityService;
 import stroom.streamstore.shared.FeedEntity;
 
 import javax.inject.Singleton;

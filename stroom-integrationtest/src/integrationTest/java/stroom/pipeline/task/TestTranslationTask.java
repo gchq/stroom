@@ -18,9 +18,9 @@ package stroom.pipeline.task;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.streamstore.MockStreamMetaService;
 import stroom.streamstore.MockStreamStore;
 import stroom.streamstore.fs.StreamTypeNames;
+import stroom.streamstore.meta.db.MockStreamMetaService;
 import stroom.streamstore.shared.Stream;
 import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.test.AbstractProcessIntegrationTest;

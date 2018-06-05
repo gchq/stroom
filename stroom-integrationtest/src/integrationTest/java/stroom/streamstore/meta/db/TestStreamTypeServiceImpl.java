@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.streamstore;
+package stroom.streamstore.meta.db;
 
 import org.junit.Ignore;
 import stroom.test.AbstractCoreIntegrationTest;

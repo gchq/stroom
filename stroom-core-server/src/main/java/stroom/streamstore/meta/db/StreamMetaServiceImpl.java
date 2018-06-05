@@ -47,10 +47,8 @@ import stroom.security.shared.PermissionNames;
 import stroom.streamstore.EffectiveMetaDataCriteria;
 import stroom.streamstore.ExpressionToFindCriteria;
 import stroom.streamstore.ExpressionToFindCriteria.Context;
-import stroom.streamstore.FeedEntityService;
 import stroom.streamstore.FindFeedCriteria;
 import stroom.streamstore.OldFindStreamCriteria;
-import stroom.streamstore.StreamTypeEntityService;
 import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.meta.StreamMetaService;
 import stroom.streamstore.shared.FeedEntity;
@@ -95,7 +93,6 @@ import java.util.stream.Collectors;
  * </p>
  */
 @Singleton
-// @Transactional
 public class StreamMetaServiceImpl implements StreamEntityService, StreamMetaService {
     private static final String MYSQL_INDEX_STRM_CRT_MS_IDX = "STRM_CRT_MS_IDX";
     private static final String MYSQL_INDEX_STRM_FK_FD_ID_CRT_MS_IDX = "STRM_FK_FD_ID_CRT_MS_IDX";
@@ -219,11 +216,6 @@ public class StreamMetaServiceImpl implements StreamEntityService, StreamMetaSer
         stream.setPstatus(StreamStatusId.LOCKED);
 
         return save(stream);
-
-//        // Flush to the DB
-//        entityManager.flush();
-//
-//        return s;
     }
 
     @Override
@@ -252,38 +244,7 @@ public class StreamMetaServiceImpl implements StreamEntityService, StreamMetaSer
         StreamEntity streamEntity = load(id, null, true);
         streamEntity.setPstatus(StreamStatusId.getPrimitiveValue(streamStatus));
         return save(streamEntity);
-//        // Flush to the DB
-//        entityManager.flush();
-//        return streamEntity;
     }
-
-//    /**
-//     * Load a stream by id.
-//     *
-//     * @param id The stream id to load a stream for.
-//     * @return The loaded stream if it exists (has not been physically deleted)
-//     * and is not logically deleted or locked, null otherwise.
-//     */
-//    @Override
-//    public StreamEntity load(final long id) {
-//        return load(id, null, false);
-//    }
-//
-//    /**
-//     * Load a stream by id.
-//     *
-//     * @param id        The stream id to load a stream for.
-//     * @param anyStatus Used to specify if this method will return streams that are
-//     *                  logically deleted or locked. If false only unlocked streams
-//     *                  will be returned, null otherwise.
-//     * @return The loaded stream if it exists (has not been physically deleted)
-//     * else null. Also returns null if one exists but is logically
-//     * deleted or locked unless <code>anyStatus</code> is true.
-//     */
-//    @Override
-//    public StreamEntity load(final long id, final boolean anyStatus) {
-//        return load(id, null, anyStatus);
-//    }
 
     // @Override
     @SuppressWarnings("unchecked")
@@ -344,229 +305,6 @@ public class StreamMetaServiceImpl implements StreamEntityService, StreamMetaSer
         return entityManager.saveEntity(stream);
     }
 
-//    /**
-//     * <p>
-//     * Open a existing stream source.
-//     * </p>
-//     *
-//     * @param streamId the id of the stream to open.
-//     * @return The stream source if the stream can be found.
-//     * @throws StreamException in case of a IO error or stream volume not visible or non
-//     *                         existent.
-//     */
-//    @Override
-//    public StreamSource openStreamSource(final long streamId) throws StreamException {
-//        return openStreamSource(streamId, false);
-//    }
-//
-//    /**
-//     * <p>
-//     * Open a existing stream source.
-//     * </p>
-//     *
-//     * @param streamId  The stream id to open a stream source for.
-//     * @param anyStatus Used to specify if this method will return stream sources that
-//     *                  are logically deleted or locked. If false only unlocked stream
-//     *                  sources will be returned, null otherwise.
-//     * @return The loaded stream source if it exists (has not been physically
-//     * deleted) else null. Also returns null if one exists but is
-//     * logically deleted or locked unless <code>anyStatus</code> is
-//     * true.
-//     * @throws StreamException Could be thrown if no volume
-//     */
-//    @Override
-//    public StreamSource openStreamSource(final long streamId, final boolean anyStatus) throws StreamException {
-//        StreamSource streamSource = null;
-//
-//        final StreamEntity stream = load(streamId, SOURCE_FETCH_SET, anyStatus);
-//        if (stream != null) {
-//            LOGGER.debug("openStreamSource() {}", stream.getId());
-//
-//            final Set<StreamVolume> volumeSet = findStreamVolume(stream.getId());
-//            if (volumeSet.isEmpty()) {
-//                final String message = "Unable to find any volume for " + stream;
-//                LOGGER.warn(message);
-//                throw new StreamException(message);
-//            }
-//            final StreamVolume volumeToUse = StreamVolumeUtil.pickBestVolume(volumeSet, nodeCache.getDefaultNode());
-//            if (volumeToUse == null) {
-//                final String message = "Unable to access any volume for " + stream
-//                        + " perhaps the stream is on a private volume";
-//                LOGGER.warn(message);
-//                throw new StreamException(message);
-//            }
-//            streamSource = FileSystemStreamSource.create(stream, volumeToUse, stream.getStreamTypeName());
-//        }
-//
-//        return streamSource;
-//    }
-//
-//    /**
-//     * Utility to lock a stream.
-//     */
-//    private Set<StreamVolume> obtainLockForUpdate(final StreamEntity stream) throws StreamException {
-//        LOGGER.debug("obtainLock() Entry " + stream);
-//        Set<StreamVolume> lock;
-//        try {
-//            if (stream.isPersistent()) {
-//                // Lock the object
-//                lock = findStreamVolume(stream.getId());
-//                if (lock.isEmpty()) {
-//                    throw new StreamException("Not all volumes are unlocked");
-//                }
-//                final StreamEntity dbStream = lock.iterator().next().getStream();
-//                dbStream.updateStatus(StreamStatus.LOCKED);
-//
-//                entityManager.saveEntity(dbStream);
-//
-//            } else {
-//                final Set<Volume> volumeSet = volumeService.getStreamVolumeSet(nodeCache.getDefaultNode());
-//                if (volumeSet.isEmpty()) {
-//                    throw new StreamException("Failed to get lock as no writeable volumes");
-//                }
-//
-//                // First time call (no file yet exists)
-//                stream.updateStatus(StreamStatus.LOCKED);
-//                entityManager.saveEntity(stream);
-//
-//                // Flush to the DB
-//                entityManager.flush();
-//
-//                lock = new HashSet<>();
-//
-//                for (final Volume volume : volumeSet) {
-//                    StreamVolume streamVolume = new StreamVolume();
-//                    streamVolume.setStream(stream);
-//                    streamVolume.setVolume(volume);
-//                    streamVolume = entityManager.saveEntity(streamVolume);
-//
-//                    lock.add(streamVolume);
-//                }
-//            }
-//            // Flush to the DB
-//            entityManager.flush();
-//            LOGGER.debug("obtainLock() Exit " + lock);
-//            return lock;
-//        } catch (final RuntimeException e) {
-//            LOGGER.warn("Failed to get lock on " + stream, e);
-//            resolveException(e);
-//            return null;
-//        }
-//    }
-//
-//    private void resolveException(final RuntimeException e) {
-//        throw e;
-////        if (e instanceof RuntimeException) {
-////            throw (RuntimeException) ex;
-////        }
-////        throw new StreamException(ex);
-//    }
-//
-//    private StreamEntity unLock(final StreamEntity stream, final MetaMap metaMap, final boolean append) {
-//        if (StreamStatus.UNLOCKED.equals(stream.getStatus())) {
-//            throw new IllegalStateException("Attempt to unlock a stream that is already unlocked");
-//        }
-//
-//        // Write the child meta data
-//        if (!metaMap.isEmpty()) {
-//            try {
-//                streamAttributeValueFlush.persitAttributes(stream, append, metaMap);
-//            } catch (final RuntimeException e) {
-//                LOGGER.error("unLock() - Failed to persist attributes in new transaction... will ignore");
-//            }
-//        }
-//
-//        LOGGER.debug("unlock() " + stream);
-//        stream.updateStatus(StreamStatus.UNLOCKED);
-//        // Attach object (may throw a lock exception)
-//        final StreamEntity lock = entityManager.saveEntity(stream);
-//
-//        // Flush to the DB
-//        entityManager.flush();
-//        return lock;
-//    }
-//
-//    @Override
-//    public StreamTarget openStreamTarget(final StreamProperties streamProperties) {
-//        final StreamEntity stream = createStream(streamProperties);
-//        return openStreamTarget(stream, false);
-//    }
-//
-//    @Override
-//    public StreamTarget openExistingStreamTarget(final long streamId) throws StreamException {
-//        final StreamEntity stream = load(streamId);
-//        return openStreamTarget(stream, true);
-//    }
-//
-//    //    @Secured(feature = Stream.DOCUMENT_TYPE, permission = DocumentPermissionNames.UPDATE)
-//    @SuppressWarnings("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE")
-//    private StreamTarget openStreamTarget(final StreamEntity stream, final boolean append) {
-//        return entityManagerSupport.transactionResult(em -> {
-//            LOGGER.debug("openStreamTarget() " + stream);
-//
-//            if (!append && stream.isPersistent()) {
-//                throw new StreamException("Trying to create a stream target that already exists");
-//            } else if (append && !stream.isPersistent()) {
-//                throw new StreamException("Trying to append to a stream target that doesn't exist");
-//            }
-//
-//            final Set<StreamVolume> lock = obtainLockForUpdate(stream);
-//            if (lock != null) {
-//                final StreamEntity dbStream = lock.iterator().next().getStream();
-//                final String streamType = dbStream.getStreamTypeName();
-//                final FileSystemStreamTarget target = FileSystemStreamTarget.create(dbStream, lock,
-//                        streamType, append);
-//
-//                // TODO - one day allow appending to the stream (not just add child
-//                // streams)
-//                if (!append) {
-//                    // Force Creation of the files
-//                    target.getOutputStream();
-//                }
-//
-//                syncAttributes(stream, dbStream, target);
-//
-//                return target;
-//            }
-//            LOGGER.error("openStreamTarget() Failed to obtain lock");
-//            return null;
-//        });
-//    }
-//
-//    private void syncAttributes(final StreamEntity stream, final StreamEntity dbStream, final FileSystemStreamTarget target) {
-//        updateAttribute(target, StreamAttributeConstants.STREAM_ID, String.valueOf(dbStream.getId()));
-//
-//        if (dbStream.getParentStreamId() != null) {
-//            updateAttribute(target, StreamAttributeConstants.PARENT_STREAM_ID,
-//                    String.valueOf(dbStream.getParentStreamId()));
-//        }
-//
-//        updateAttribute(target, StreamAttributeConstants.FEED, dbStream.getFeedName());
-//        updateAttribute(target, StreamAttributeConstants.STREAM_TYPE, dbStream.getStreamTypeName());
-//        updateAttribute(target, StreamAttributeConstants.CREATE_TIME, DateUtil.createNormalDateTimeString(stream.getCreateMs()));
-//        if (stream.getEffectiveMs() != null) {
-//            updateAttribute(target, StreamAttributeConstants.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(stream.getEffectiveMs()));
-//        }
-//    }
-//
-//    private void updateAttribute(final StreamTarget target, final String key, final String value) {
-//        if (!target.getAttributeMap().containsKey(key)) {
-//            target.getAttributeMap().put(key, value);
-//        }
-//    }
-
-    // /**
-    // * Overridden.
-    // *
-    // * @see stroom.streamstore.api.StreamStore#deleteLocks()
-    // */
-    // @Override
-    // public void deleteLocks() {
-    // Stream stream = new Stream();
-    // meta.setStatus(StreamStatus.LOCKED);
-    // deleteStream(meta);
-    // }
-
     @Override
     public Long deleteStream(final long streamId) {
         return security.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> doLogicalDeleteStream(streamId, true));
@@ -579,16 +317,6 @@ public class StreamMetaServiceImpl implements StreamEntityService, StreamMetaSer
 
     private Long doLogicalDeleteStream(final long streamId, final boolean lockCheck) {
         final StreamEntity loaded = load(streamId, SOURCE_FETCH_SET, true);
-
-//        if (stream == null || !stream.isPersistent()) {
-//            throw new IllegalArgumentException(
-//                    "deleteStream does not support delete by example.  You must supply a real stream");
-//        }
-//
-//        if (stream.getFeed() == null || !Hibernate.isInitialized(stream.getFeed())) {
-//            throw new IllegalArgumentException(
-//                    "You can only delete streams with a loaded feed");
-//        }
 
         // Don't bother to try and set the status of deleted streams to deleted.
         if (StreamStatus.DELETED.equals(loaded.getStatus())) {
@@ -609,128 +337,7 @@ public class StreamMetaServiceImpl implements StreamEntityService, StreamMetaSer
         save(loaded);
 
         return 1L;
-
-//        final OldFindStreamCriteria findStreamCriteria = new OldFindStreamCriteria();
-//        findStreamCriteria.obtainStreamIdSet().add(stream.getId());
-//        if (lockCheck) {
-//            findStreamCriteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
-//        }
-//        return fileSystemStreamStoreTransactionHelper.updateStreamStatus(findStreamCriteria, StreamStatus.DELETED,
-//                System.currentTimeMillis());
     }
-
-//    @Override
-//    public Long deleteStreamTarget(final StreamTarget target) {
-//        // Make sure the stream is closed.
-//        try {
-//            target.close();
-//        } catch (final IOException e) {
-//            LOGGER.error("Unable to delete stream target!", e.getMessage(), e);
-//        }
-//
-//        // Make sure the stream data is deleted.
-//        // Attach object (may throw a lock exception)
-//        final StreamEntity db = entityManager.saveEntity(target.getStream());
-//        return doLogicalDeleteStream(db.getId(), false);
-//    }
-//
-//    @Override
-//    public void closeStreamSource(final StreamSource streamSource) {
-//        try {
-//            // Close the stream source.
-//            streamSource.close();
-//        } catch (final IOException e) {
-//            LOGGER.error("Unable to close stream source!", e.getMessage(), e);
-//        }
-//    }
-//
-//    @Override
-//    public void closeStreamTarget(final StreamTarget streamTarget) {
-//        entityManagerSupport.transaction(em -> {
-//            // If we get error on closing the stream we must return it to the caller
-//            IOException streamCloseException = null;
-//
-//            try {
-//                // Close the stream target.
-//                streamTarget.close();
-//            } catch (final IOException e) {
-//                LOGGER.error("closeStreamTarget() - Error on closing stream {}", streamTarget, e);
-//                streamCloseException = e;
-//            }
-//
-//            updateAttribute(streamTarget, StreamAttributeConstants.STREAM_SIZE,
-//                    String.valueOf(((FileSystemStreamTarget) streamTarget).getStreamSize()));
-//
-//            updateAttribute(streamTarget, StreamAttributeConstants.FILE_SIZE,
-//                    String.valueOf(((FileSystemStreamTarget) streamTarget).getTotalFileSize()));
-//
-//            try {
-//                boolean doneManifest = false;
-//
-//                // Are we appending?
-//                if (streamTarget.isAppend()) {
-//                    final Set<Path> childFile = FileSystemStreamTypeUtil.createChildStreamPath(
-//                            ((FileSystemStreamTarget) streamTarget).getFiles(false), StreamTypeNames.MANIFEST);
-//
-//                    // Does the manifest exist ... overwrite it
-//                    if (FileSystemUtil.isAllFile(childFile)) {
-//                        streamTarget.getAttributeMap()
-//                                .write(FileSystemStreamTypeUtil.getOutputStream(StreamTypeNames.MANIFEST, childFile), true);
-//                        doneManifest = true;
-//                    }
-//                }
-//
-//                if (!doneManifest) {
-//                    // No manifest done yet ... output one if the parent dir's exist
-//                    if (FileSystemUtil.isAllParentDirectoryExist(((FileSystemStreamTarget) streamTarget).getFiles(false))) {
-//                        streamTarget.getAttributeMap()
-//                                .write(streamTarget.addChildStream(StreamTypeNames.MANIFEST).getOutputStream(), true);
-//                    } else {
-//                        LOGGER.warn("closeStreamTarget() - Closing target file with no directory present");
-//                    }
-//
-//                }
-//            } catch (final IOException e) {
-//                LOGGER.error("closeStreamTarget() - Error on writing Manifest {}", streamTarget, e);
-//            }
-//
-//            if (streamCloseException == null) {
-//                // Unlock will update the meta data so set it back on the stream
-//                // target so the client has the up to date copy
-//                ((FileSystemStreamTarget) streamTarget).setMetaData(
-//                        unLock(streamTarget.getStream(), streamTarget.getAttributeMap(), streamTarget.isAppend()));
-//            } else {
-//                throw new UncheckedIOException(streamCloseException);
-//            }
-//        });
-//    }
-//
-//    @Override
-//    // @Transactional
-//    public long getLockCount() {
-//        final HqlBuilder sql = new HqlBuilder();
-//        sql.append("SELECT count(*) FROM ");
-//        sql.append(StreamEntity.class.getName());
-//        sql.append(" S WHERE S.pstatus = ");
-//        sql.arg(StreamStatusId.LOCKED);
-//
-//        return entityManager.executeQueryLongResult(sql);
-//    }
-//
-//    /**
-//     * Return the meta data volumes for a stream id.
-//     */
-//    @Override
-//    @SuppressWarnings("unchecked")
-//    // @Transactional
-//    public Set<StreamVolume> findStreamVolume(final Long metaDataId) {
-//        final HqlBuilder sql = new HqlBuilder();
-//        sql.append("SELECT sv FROM ");
-//        sql.append(StreamVolume.class.getName());
-//        sql.append(" sv WHERE sv.stream.id = ");
-//        sql.arg(metaDataId);
-//        return new HashSet<>(entityManager.executeQueryResultList(sql));
-//    }
 
     @Override
     public BaseResultList<Stream> find(final FindStreamCriteria criteria) {

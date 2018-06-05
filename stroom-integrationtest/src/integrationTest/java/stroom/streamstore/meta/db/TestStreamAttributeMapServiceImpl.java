@@ -15,11 +15,13 @@
  *
  */
 
-package stroom.streamstore;
+package stroom.streamstore.meta.db;
 
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.streamstore.meta.db.StreamAttributeMapService;
+import stroom.streamstore.meta.db.StreamAttributeValueFlush;
 import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.Stream;

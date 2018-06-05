@@ -25,7 +25,7 @@ import stroom.persist.PersistService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.streamstore.StreamTypeEntityService;
+import stroom.streamstore.meta.db.StreamTypeEntityService;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.fs.FileSystemStreamTypeUtil;
@@ -33,7 +33,6 @@ import stroom.streamstore.meta.StreamMetaService;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.util.io.StreamUtil;
 

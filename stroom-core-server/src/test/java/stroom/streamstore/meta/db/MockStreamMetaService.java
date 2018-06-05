@@ -1,9 +1,12 @@
-package stroom.streamstore;
+package stroom.streamstore.meta.db;
 
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.Period;
+import stroom.streamstore.EffectiveMetaDataCriteria;
+import stroom.streamstore.ExpressionMatcher;
+import stroom.streamstore.FindFeedCriteria;
 import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.meta.StreamMetaService;
 import stroom.streamstore.shared.FeedEntity;

@@ -43,7 +43,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.UserTokenUtil;
 import stroom.streamstore.FindFeedCriteria;
-import stroom.streamstore.StreamTypeEntityService;
+import stroom.streamstore.meta.db.StreamTypeEntityService;
 import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;

@@ -26,7 +26,7 @@ import stroom.entity.StroomEntityManager;
 import stroom.entity.util.ConnectionUtil;
 import stroom.entity.util.SqlBuilder;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.streamstore.FeedEntityService;
+import stroom.streamstore.meta.db.FeedEntityService;
 import stroom.streamstore.OldFindStreamCriteria;
 import stroom.streamstore.meta.db.StreamEntityService;
 import stroom.streamstore.shared.FeedEntity;

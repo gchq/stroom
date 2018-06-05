@@ -4,8 +4,11 @@ import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import stroom.dashboard.TestDashboardStoreImpl;
-import stroom.streamstore.TestFeedServiceCache;
-import stroom.streamstore.TestFeedServiceImpl;
+import stroom.streamstore.meta.db.TestFeedServiceCache;
+import stroom.streamstore.meta.db.TestFeedServiceImpl;
+import stroom.streamstore.meta.db.TestStreamAttributeMapServiceImpl;
+import stroom.streamstore.meta.db.TestStreamAttributeValueFlushImpl;
+import stroom.streamstore.meta.db.TestStreamTypeServiceImpl;
 import stroom.xmlschema.TestXMLSchemaStoreImpl;
 
 @Ignore("Don't run this test suite automatically as the tests are already run on their own")
@@ -50,9 +53,9 @@ import stroom.xmlschema.TestXMLSchemaStoreImpl;
         stroom.statistics.sql.TestSQLStatisticFlushTaskHandler.class,
         stroom.stats.TestStroomStatsStoreImportExportSerializer.class,
         stroom.streamstore.TestFileSystemZipProcessor.class,
-        stroom.streamstore.TestStreamAttributeMapServiceImpl.class,
-        stroom.streamstore.TestStreamAttributeValueFlushImpl.class,
-        stroom.streamstore.TestStreamTypeServiceImpl.class,
+        TestStreamAttributeMapServiceImpl.class,
+        TestStreamAttributeValueFlushImpl.class,
+        TestStreamTypeServiceImpl.class,
         stroom.streamstore.fs.TestFileSystemStreamMaintenanceService.class,
         stroom.streamstore.fs.TestFileSystemStreamStore.class,
         stroom.streamstore.upload.TestStreamUploadDownloadTaskHandler.class,

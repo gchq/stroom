@@ -34,7 +34,7 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.statistics.sql.StatisticEvent;
 import stroom.statistics.sql.StatisticTag;
 import stroom.statistics.sql.Statistics;
-import stroom.streamstore.StreamAttributeMapService;
+import stroom.streamstore.meta.db.StreamAttributeMapService;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.meta.StreamMetaService;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;

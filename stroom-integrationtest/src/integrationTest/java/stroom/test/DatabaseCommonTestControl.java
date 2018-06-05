@@ -42,7 +42,7 @@ import stroom.security.DocumentPermission;
 import stroom.security.Permission;
 import stroom.security.User;
 import stroom.security.UserGroupUser;
-import stroom.streamstore.StreamAttributeKeyService;
+import stroom.streamstore.meta.db.StreamAttributeKeyService;
 import stroom.streamstore.fs.FileSystemUtil;
 import stroom.streamstore.shared.FeedEntity;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;

@@ -21,7 +21,7 @@ import org.junit.Test;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.security.UserTokenUtil;
-import stroom.streamstore.StreamAttributeValueFlush;
+import stroom.streamstore.meta.db.StreamAttributeValueFlush;
 import stroom.streamstore.StreamDownloadSettings;
 import stroom.streamstore.StreamDownloadTask;
 import stroom.streamstore.StreamUploadTask;

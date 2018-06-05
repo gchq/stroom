@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.streamstore;
+package stroom.streamstore.meta.db;
 
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.streamstore.meta.db.FeedEntityService;
 import stroom.streamstore.shared.FeedEntity;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.test.FileSystemTestUtil;

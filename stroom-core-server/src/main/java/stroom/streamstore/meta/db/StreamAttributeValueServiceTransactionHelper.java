@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamstore;
+package stroom.streamstore.meta.db;
 
 import org.hsqldb.types.Types;
 import org.slf4j.Logger;

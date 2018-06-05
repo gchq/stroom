@@ -25,6 +25,7 @@ import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.meta.StreamMetaService;
+import stroom.streamstore.meta.db.MockStreamMetaService;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamTypeEntity;

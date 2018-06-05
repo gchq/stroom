@@ -56,6 +56,7 @@ public class ToolModule extends AbstractModule {
         install(new stroom.refdata.ReferenceDataModule());
         install(new stroom.resource.ResourceModule());
         install(new stroom.security.MockSecurityContextModule());
+        install(new stroom.streamstore.meta.db.StreamMetaDBModule());
         install(new stroom.streamstore.StreamStoreModule());
         install(new stroom.streamstore.fs.FSModule());
         install(new stroom.streamtask.StreamTaskModule());

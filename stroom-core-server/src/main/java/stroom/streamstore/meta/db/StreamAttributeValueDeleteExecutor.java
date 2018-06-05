@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.streamstore;
+package stroom.streamstore.meta.db;
 
 import stroom.entity.util.SqlBuilder;
 import stroom.jobsystem.ClusterLockService;

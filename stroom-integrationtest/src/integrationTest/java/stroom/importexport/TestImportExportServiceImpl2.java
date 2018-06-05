@@ -19,7 +19,7 @@ package stroom.importexport;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.streamstore.FeedEntityService;
+import stroom.streamstore.meta.db.FeedEntityService;
 import stroom.importexport.shared.ImportState;
 import stroom.pipeline.PipelineStore;
 import stroom.resource.ResourceStore;

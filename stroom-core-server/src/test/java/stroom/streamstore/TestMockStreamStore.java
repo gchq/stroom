@@ -23,6 +23,7 @@ import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.StreamTypeNames;
+import stroom.streamstore.meta.db.MockStreamMetaService;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamTypeEntity;
