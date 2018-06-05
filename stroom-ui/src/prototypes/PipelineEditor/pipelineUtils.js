@@ -89,6 +89,8 @@ export function getPipelineLayoutInformation(asTree, orientation = ORIENTATION.h
           verticalPos: forwardPosition,
         };
         break;
+      default:
+        throw new Error('Invalid orientation value: ' + orientation);
     }
   });
 

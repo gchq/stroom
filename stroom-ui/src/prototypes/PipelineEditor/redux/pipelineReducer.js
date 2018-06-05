@@ -6,7 +6,7 @@ import {
   createNewElementInPipeline,
 } from '../pipelineUtils';
 
-const pipelineChanged = createAction('PIPELINE_CHANGED', (pipelineId, pipeline) => ({
+const pipelineReceived = createAction('PIPELINE_CHANGED', (pipelineId, pipeline) => ({
   pipelineId,
   pipeline,
 }));
@@ -63,7 +63,7 @@ const defaultPipelineState = {
 
 const pipelineReducer = handleActions(
   {
-    [pipelineChanged]: (state, action) => ({
+    [pipelineReceived]: (state, action) => ({
       ...state,
       [action.payload.pipelineId]: {
         ...defaultPipelineState,
@@ -143,7 +143,7 @@ const pipelineReducer = handleActions(
 );
 
 export {
-  pipelineChanged,
+  pipelineReceived,
   pipelineElementSelected,
   requestDeletePipelineElement,
   confirmDeletePipelineElement,

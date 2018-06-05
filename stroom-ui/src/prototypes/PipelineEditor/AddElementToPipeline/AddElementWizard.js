@@ -24,8 +24,6 @@ import { Modal, Header, Button, Form, Icon } from 'semantic-ui-react';
 
 import {
   cancelAddPipelineElement,
-  choosePipelineElementToAdd,
-  addElementSearchTermChanged,
   restartAddPipelineElement,
   ADD_ELEMENT_STATE,
 } from './redux';
@@ -79,6 +77,8 @@ const AddElementWizard = ({
       );
       submitButton = <Button positive content="Submit" onClick={handleSubmit(submitName)} />;
       break;
+    default:
+      headerContent = 'Invalid picking state for new element';
   }
 
   return (

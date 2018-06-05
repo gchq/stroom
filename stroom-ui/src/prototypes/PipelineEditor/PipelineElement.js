@@ -115,7 +115,7 @@ const PipelineElement = ({
   };
 
   const dndBox = compose(connectDragSource, connectDropTarget)(<div className={className} onClick={onSingleClick} onContextMenu={onRightClick}>
-    <img className="Pipeline-element__icon" src={require(`./images/${elementDefinition.icon}`)} />
+    <img className="Pipeline-element__icon" alt='X' src={require(`./images/${elementDefinition.icon}`)} />
     {elementId}
   </div>);
 

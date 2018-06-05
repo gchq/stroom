@@ -20,7 +20,6 @@ import { connect } from 'react-redux';
 
 import { ADD_ELEMENT_STATE } from './redux';
 
-import { getPipelineAsTree, getPipelineLayoutInformation } from '../pipelineUtils';
 import { groupByCategoryFiltered } from '../elementUtils';
 
 /**

@@ -74,6 +74,25 @@ class Routes extends Component {
             }
           />
 
+          <Route
+            exact
+            path="/pipelines/:pipelineId"
+            render={
+              ({ match }) => (
+                // (this.isLoggedIn() ? (
+                <div>PIPELINES {match.params.pipelineId}</div>
+              )
+              // ) : (
+              //   <AuthenticationRequest
+              //     referrer={match.url}
+              //     uiUrl={this.props.advertisedUrl}
+              //     appClientId={this.props.appClientId}
+              //     authenticationServiceUrl={this.props.authenticationServiceUrl}
+              //   />
+              // ))
+            }
+          />
+
           <Route component={PathNotFound} />
         </Switch>
       </Router>

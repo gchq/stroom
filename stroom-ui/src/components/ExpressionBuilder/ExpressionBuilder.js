@@ -34,14 +34,6 @@ import {
   cancelExpressionItemDelete,
 } from './redux';
 
-const defaultExpression = {
-  uuid: 'root',
-  type: 'operator',
-  op: 'AND',
-  children: [],
-  enabled: true,
-};
-
 const downRightElbow = ({ lineId, fromRect, toRect }) => {
   const from = {
     x: fromRect.left + fromRect.width / 2 - 2,

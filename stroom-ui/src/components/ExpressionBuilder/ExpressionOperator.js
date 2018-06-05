@@ -208,6 +208,8 @@ const ExpressionOperator = ({
                   />
                 );
                 break;
+              default:
+                throw new Error('Invalid operator type: ' + c.type);
             }
 
             // Wrap it with a line to

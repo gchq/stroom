@@ -1,7 +1,7 @@
 import { elementsReceived, elementPropertiesReceived, elementReducer } from './elementReducer';
 
 import {
-  pipelineChanged,
+  pipelineReceived,
   pipelineElementSelected,
   requestDeletePipelineElement,
   confirmDeletePipelineElement,
@@ -17,7 +17,7 @@ export {
   elementsReceived,
   elementPropertiesReceived,
   elementReducer,
-  pipelineChanged,
+  pipelineReceived,
   pipelineElementSelected,
   requestDeletePipelineElement,
   confirmDeletePipelineElement,

@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 
 import { connect } from 'react-redux';
 
-import { Dropdown, Menu, Icon, Label, Input, Modal, Header } from 'semantic-ui-react';
+import { Menu, Input } from 'semantic-ui-react';
 
 import {
   cancelAddPipelineElement,

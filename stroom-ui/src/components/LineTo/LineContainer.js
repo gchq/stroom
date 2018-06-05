@@ -20,8 +20,6 @@ import { connect } from 'react-redux';
 
 import LineContext from './LineContext';
 
-import { mapObject } from 'lib/treeUtils';
-
 import { lineContainerCreated, lineContainerDestroyed } from './redux';
 
 /**
