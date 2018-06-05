@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#782** : Fix for NPE thrown when using CountGroups when GroupKey string was null due to non grouped child rows.
+
 ## [v5.4.1] - 2018-05-25
 
 * Issue **#778** : Fix for text selection on tooltips etc in the latest version of Chrome.
