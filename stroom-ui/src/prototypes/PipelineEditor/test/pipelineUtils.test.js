@@ -17,7 +17,7 @@ import expect from 'expect';
 
 import { getPipelineAsTree } from '../pipelineUtils';
 
-import { testPipeline } from 'testData';
+import { testPipeline } from './pipelineData.test';
 
 describe('Pipeline Utils', () => {
   describe('#getPipelineAsTree', () => {

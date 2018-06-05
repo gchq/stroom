@@ -30,12 +30,9 @@ import AddElementPicker from './AddElementPicker';
 
 import { pipelineChanged, elementsReceived, elementPropertiesReceived } from './redux';
 
-import {
-  testPipeline,
-  testPipelineElements,
-  testElementTypes,
-  testElementProperties,
-} from 'testData';
+import { testPipeline, testPipelineElements } from './test/pipelineData.test';
+
+import { testElementTypes, testElementProperties } from './test/elementsData.test';
 
 storiesOf('Pipeline Editor', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
@@ -77,6 +74,6 @@ storiesOf('Pipeline Elements', module)
   .add('Pipeline Element for Stream Appender', () => (
     <PipelineElement
       pipelineId="testPipeline"
-      elementId={testPipelineElements.myStreamAppender.id}
+      elementId={testPipelineElements.myStreamAppender1.id}
     />
   ));

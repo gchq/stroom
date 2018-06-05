@@ -10,10 +10,6 @@ import {
   testNotOperator,
 } from './queryExpression';
 
-import { testElementTypes, testElementProperties, elements } from './testElements';
-
-import { testPipeline, testPipelineElements } from './testPipelines';
-
 export {
   testDataSource,
   emptyDataSource,
@@ -24,9 +20,4 @@ export {
   testAndOperator,
   testOrOperator,
   testNotOperator,
-  testElementTypes,
-  testElementProperties,
-  elements,
-  testPipeline,
-  testPipelineElements,
 };
