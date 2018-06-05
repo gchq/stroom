@@ -18,11 +18,19 @@ import PipelineEditor from './PipelineEditor';
 import { pipelineReducer, elementReducer } from './redux';
 import { addElementToPipelineWizardReducer } from './AddElementToPipeline';
 import { withPipeline } from './withPipeline';
+import { fetchPipeline } from './pipelineResourceClient';
+import { fetchElements, fetchElementProperties } from './elementResourceClient';
+import { withPipelineFromUrl, PipelineEditorFromUrl } from './withPipelineFromUrl';
 
 export {
   PipelineEditor,
+  PipelineEditorFromUrl,
   pipelineReducer,
   elementReducer,
   addElementToPipelineWizardReducer,
   withPipeline,
+  fetchPipeline,
+  fetchElements,
+  fetchElementProperties,
+  withPipelineFromUrl,
 };

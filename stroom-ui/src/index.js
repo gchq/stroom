@@ -16,8 +16,12 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { toClass, compose } from 'recompose';
 import { Provider } from 'react-redux';
 import { ConnectedRouter } from 'react-router-redux';
+
+import { DragDropContext } from 'react-dnd';
+import HTML5Backend from 'react-dnd-html5-backend';
 
 import Routes from 'startup/Routes';
 import store from 'startup/store';
@@ -25,10 +29,12 @@ import { history } from 'startup/middleware';
 
 import './styles/main.css';
 
+const DndRoutes = compose(DragDropContext(HTML5Backend), toClass)(Routes);
+
 ReactDOM.render(
   <Provider store={store}>
     <ConnectedRouter history={history}>
-      <Routes />
+      <DndRoutes />
     </ConnectedRouter>
   </Provider>,
   document.getElementById('root'),

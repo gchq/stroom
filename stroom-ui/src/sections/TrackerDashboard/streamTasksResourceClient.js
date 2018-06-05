@@ -1,6 +1,6 @@
 import { push } from 'react-router-redux';
 
-import { HttpError } from '../../lib/ErrorTypes';
+import handleStatus from 'lib/handleStatus';
 
 import { actionCreators } from './redux';
 
@@ -119,10 +119,3 @@ const getRowsPerPage = (isDetailsVisible) => {
   }
   return rowsInViewport;
 };
-
-function handleStatus(response) {
-  if (response.status === 200) {
-    return Promise.resolve(response);
-  }
-  return Promise.reject(new HttpError(response.status, response.statusText));
-}

@@ -28,7 +28,7 @@ export function getPipelineAsTree(pipeline) {
   const elements = {};
 
   // Put all the elements into an object, keyed on id
-  pipeline.elements.add.element.forEach((e) => {
+  pipeline.elements.add.forEach((e) => {
     elements[e.id] = {
       uuid: e.id,
       type: e.type,
@@ -37,12 +37,12 @@ export function getPipelineAsTree(pipeline) {
   });
 
   // Create the tree using links
-  pipeline.links.add.link.forEach((l) => {
+  pipeline.links.add.forEach((l) => {
     elements[l.from].children.push(elements[l.to]);
   });
 
   // Figure out the root
-  const rootId = pipeline.links.add.link[0].from;
+  const rootId = pipeline.links.add[0].from;
 
   return elements[rootId];
 }
@@ -90,7 +90,7 @@ export function getPipelineLayoutInformation(asTree, orientation = ORIENTATION.h
         };
         break;
       default:
-        throw new Error('Invalid orientation value: ' + orientation);
+        throw new Error(`Invalid orientation value: ${orientation}`);
     }
   });
 
@@ -110,26 +110,22 @@ export function createNewElementInPipeline(pipeline, parentId, childDefinition, 
   return {
     properties: pipeline.properties,
     elements: {
-      add: {
-        element: pipeline.elements.add.element.concat([
-          {
-            id: name,
-            type: childDefinition.type,
-          },
-        ]),
-      },
+      add: pipeline.elements.add.concat([
+        {
+          id: name,
+          type: childDefinition.type,
+        },
+      ]),
     },
     links: {
-      add: {
-        link: pipeline.links.add.link
-          // add the new link
-          .concat([
-            {
-              from: parentId,
-              to: name,
-            },
-          ]),
-      },
+      add: pipeline.links.add
+        // add the new link
+        .concat([
+          {
+            from: parentId,
+            to: name,
+          },
+        ]),
     },
   };
 }
@@ -174,18 +170,16 @@ export function moveElementInPipeline(pipeline, itemToMove, destination) {
     properties: pipeline.properties,
     elements: pipeline.elements,
     links: {
-      add: {
-        link: pipeline.links.add.link
-          // Remove any existing link that goes into the moving item
-          .filter(l => l.to !== itemToMove)
-          // add the new link
-          .concat([
-            {
-              from: destination,
-              to: itemToMove,
-            },
-          ]),
-      },
+      add: pipeline.links.add
+        // Remove any existing link that goes into the moving item
+        .filter(l => l.to !== itemToMove)
+        // add the new link
+        .concat([
+          {
+            from: destination,
+            to: itemToMove,
+          },
+        ]),
     },
   };
 }
@@ -206,16 +200,14 @@ export function deleteElementInPipeline(pipeline, itemToDelete) {
     },
     elements: {
       add: {
-        element: pipeline.elements.add.element.filter(e => e.id !== itemToDelete),
+        element: pipeline.elements.add.filter(e => e.id !== itemToDelete),
       },
     },
     links: {
-      add: {
-        link: pipeline.links.add.link
-          // Remove any existing link that goes into the deleting item
-          .filter(l => l.to !== itemToDelete)
-          .filter(l => l.from !== itemToDelete),
-      },
+      add: pipeline.links.add
+        // Remove any existing link that goes into the deleting item
+        .filter(l => l.to !== itemToDelete)
+        .filter(l => l.from !== itemToDelete),
     },
   };
 }

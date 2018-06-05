@@ -60,7 +60,7 @@ export function withAddElementToPipeline() {
 
         if (addElementToPipelineWizard.addElementState !== ADD_ELEMENT_STATE.NOT_ADDING) {
           pipeline = pipelines[pipelineId];
-          element = pipeline.pipeline.elements.add.element.find(e => e.id === addElementToPipelineWizard.parentId);
+          element = pipeline.pipeline.elements.add.find(e => e.id === addElementToPipelineWizard.parentId);
           if (element) {
             elementDefinition = Object.values(elements.elements).find(e => e.type === element.type);
           }
