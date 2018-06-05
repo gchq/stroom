@@ -30,9 +30,9 @@ import AddElementPicker from './AddElementPicker';
 
 import { pipelineChanged, elementsReceived, elementPropertiesReceived } from './redux';
 
-import { testPipeline, testPipelineElements } from './test/pipelineData.test';
+import { testPipeline, testPipelineElements } from './test/pipeline.testData';
 
-import { testElementTypes, testElementProperties } from './test/elementsData.test';
+import { testElementTypes, testElementProperties } from './test/elements.testData';
 
 storiesOf('Pipeline Editor', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {

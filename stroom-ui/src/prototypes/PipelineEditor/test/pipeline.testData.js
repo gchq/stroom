@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { elements } from './elementsData.test';
+import { elements } from './elements.testData';
 
 const myCsvSplitterFilter = {
   id: 'CSV splitter filter',
