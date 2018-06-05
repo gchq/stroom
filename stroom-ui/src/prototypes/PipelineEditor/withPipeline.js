@@ -60,7 +60,7 @@ export function withPipeline() {
       }
 
       render() {
-        if (this.state.pipeline) {
+        if (this.state.pipeline && this.props.elements) {
           return <WrappedComponent {...this.state} {...this.props} />;
         }
         return <span>awaiting pipeline state</span>;
@@ -70,6 +70,7 @@ export function withPipeline() {
     return connect(
       state => ({
         pipelines: state.pipelines,
+        elements: state.elements.elements,
       }),
       {
         // actions

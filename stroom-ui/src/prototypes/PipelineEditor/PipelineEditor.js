@@ -16,7 +16,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose } from 'redux';
+import { compose } from 'recompose';
 import { connect } from 'react-redux';
 
 import { Confirm } from 'semantic-ui-react';
@@ -72,12 +72,12 @@ const PipelineEditor = ({
         lineElementCreators={lineElementCreators}
       >
         <h4>Pipeline Editor {pipelineId}</h4>
-        {pipeline.elements.add.element.map(e => (
+        {pipeline.elements.add.map(e => (
           <div key={e.id} id={e.id} style={elementStyles[e.id]}>
             <PipelineElement pipelineId={pipelineId} elementId={e.id} />
           </div>
         ))}
-        {pipeline.links.add.link
+        {pipeline.links.add
           .map(l => ({ ...l, lineId: `${l.from}-${l.to}` }))
           .map(l => (
             <LineTo lineId={l.lineId} key={l.lineId} fromId={l.from} toId={l.to} lineType="curve" />

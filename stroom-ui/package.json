@@ -19,6 +19,7 @@
     "react-router-dom": "^4.2.2",
     "react-router-redux": "^5.0.0-alpha.9",
     "react-scripts": "1.1.4",
+    "recompose": "^0.27.1",
     "redux": "^4.0.0",
     "redux-actions": "^2.3.2",
     "redux-form": "^7.3.0",
@@ -35,13 +36,10 @@
     "start": "npm-run-all -p watch-css start-js",
     "build-js": "react-scripts build",
     "build": "npm-run-all build-css build-js",
-    "test":
-      "NODE_PATH=./src mocha \"./src/**/test/*.test.js\" --compilers js:babel-core/register --recursive",
+    "test": "NODE_PATH=./src mocha \"./src/**/test/*.test.js\" --compilers js:babel-core/register --recursive",
     "test-single": "NODE_PATH=./src mocha --compilers js:babel-core/register --recursive",
-    "test-watch":
-      "NODE_PATH=./src mocha \"./src/**/test/*.test.js\" --watch --compilers js:babel-core/register --recursive",
-    "test-watch-single":
-      "NODE_PATH=./src mocha --watch --compilers js:babel-core/register --recursive",
+    "test-watch": "NODE_PATH=./src mocha \"./src/**/test/*.test.js\" --watch --compilers js:babel-core/register --recursive",
+    "test-watch-single": "NODE_PATH=./src mocha --watch --compilers js:babel-core/register --recursive",
     "eject": "react-scripts eject",
     "storybook-js": "start-storybook -p 9001 -c .storybook",
     "storybook": "npm-run-all -p storybook-js watch-css",

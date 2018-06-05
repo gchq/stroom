@@ -48,102 +48,96 @@ const myStreamAppender2 = {
 
 const testPipeline = {
   elements: {
-    add: {
-      element: [
-        myCsvSplitterFilter,
-        myXsltFilter,
-        myXmlWriter1,
-        myStreamAppender1,
-        myXmlWriter2,
-        myStreamAppender2,
-      ],
-    },
+    add: [
+      myCsvSplitterFilter,
+      myXsltFilter,
+      myXmlWriter1,
+      myStreamAppender1,
+      myXmlWriter2,
+      myStreamAppender2,
+    ],
   },
   properties: {
-    add: {
-      property: [
-        {
-          element: myCsvSplitterFilter.id,
-          name: 'textConverter',
-          value: {
-            entity: {
-              type: 'TextConverter',
-              uuid: '4fe46544-fbf6-4a0d-ab44-16cd0e00a0a5',
-              name: 'CSV splitter',
-            },
+    add: [
+      {
+        element: myCsvSplitterFilter.id,
+        name: 'textConverter',
+        value: {
+          entity: {
+            type: 'TextConverter',
+            uuid: '4fe46544-fbf6-4a0d-ab44-16cd0e00a0a5',
+            name: 'CSV splitter',
           },
         },
-        {
-          element: myXsltFilter.id,
-          name: 'xslt',
-          value: {
-            entity: {
-              type: 'XSLT',
-              uuid: 'efb3738b-f7f3-44b9-839e-b74b341c78ee',
-              name: 'XSLT',
-            },
+      },
+      {
+        element: myXsltFilter.id,
+        name: 'xslt',
+        value: {
+          entity: {
+            type: 'XSLT',
+            uuid: 'efb3738b-f7f3-44b9-839e-b74b341c78ee',
+            name: 'XSLT',
           },
         },
-        {
-          element: myStreamAppender1.id,
-          name: 'feed',
-          value: {
-            entity: {
-              type: 'Feed',
-              uuid: '306959c0-7125-492d-8f0d-81af248a85f2',
-              name: 'CSV_FEED',
-            },
+      },
+      {
+        element: myStreamAppender1.id,
+        name: 'feed',
+        value: {
+          entity: {
+            type: 'Feed',
+            uuid: '306959c0-7125-492d-8f0d-81af248a85f2',
+            name: 'CSV_FEED',
           },
         },
-        {
-          element: myStreamAppender1.id,
-          name: 'streamType',
-          value: { string: 'Events' },
-        },
-        {
-          element: myStreamAppender2.id,
-          name: 'feed',
-          value: {
-            entity: {
-              type: 'Feed',
-              uuid: '306959c0-7125-492d-8f0d-81af248a85f2',
-              name: 'CSV_FEED',
-            },
+      },
+      {
+        element: myStreamAppender1.id,
+        name: 'streamType',
+        value: { string: 'Events' },
+      },
+      {
+        element: myStreamAppender2.id,
+        name: 'feed',
+        value: {
+          entity: {
+            type: 'Feed',
+            uuid: '306959c0-7125-492d-8f0d-81af248a85f2',
+            name: 'CSV_FEED',
           },
         },
-        {
-          element: myStreamAppender2.id,
-          name: 'streamType',
-          value: { string: 'Events' },
-        },
-      ],
-    },
+      },
+      {
+        element: myStreamAppender2.id,
+        name: 'streamType',
+        value: { string: 'Events' },
+      },
+    ],
   },
   links: {
-    add: {
-      link: [
-        {
-          from: myCsvSplitterFilter.id,
-          to: myXsltFilter.id,
-        },
-        {
-          from: myXsltFilter.id,
-          to: myXmlWriter1.id,
-        },
-        {
-          from: myXmlWriter1.id,
-          to: myStreamAppender1.id,
-        },
-        {
-          from: myXsltFilter.id,
-          to: myXmlWriter2.id,
-        },
-        {
-          from: myXmlWriter2.id,
-          to: myStreamAppender2.id,
-        },
-      ],
-    },
+    add: [
+      {
+        from: myCsvSplitterFilter.id,
+        to: myXsltFilter.id,
+      },
+      {
+        from: myXsltFilter.id,
+        to: myXmlWriter1.id,
+      },
+      {
+        from: myXmlWriter1.id,
+        to: myStreamAppender1.id,
+      },
+      {
+        from: myXsltFilter.id,
+        to: myXmlWriter2.id,
+      },
+      {
+        from: myXmlWriter2.id,
+        to: myStreamAppender2.id,
+      },
+    ],
   },
 };
 

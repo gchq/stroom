@@ -6,7 +6,7 @@ import {
   createNewElementInPipeline,
 } from '../pipelineUtils';
 
-const pipelineReceived = createAction('PIPELINE_CHANGED', (pipelineId, pipeline) => ({
+const pipelineReceived = createAction('PIPELINE_RECEIVED', (pipelineId, pipeline) => ({
   pipelineId,
   pipeline,
 }));

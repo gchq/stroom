@@ -51,7 +51,7 @@ export function withElement() {
         let elementDefinition;
 
         if (pipeline) {
-          element = pipeline.pipeline.elements.add.element.find(e => e.id === nextProps.elementId);
+          element = pipeline.pipeline.elements.add.find(e => e.id === nextProps.elementId);
           if (element) {
             elementDefinition = Object.values(nextProps.elements.elements).find(e => e.type === element.type);
           }
