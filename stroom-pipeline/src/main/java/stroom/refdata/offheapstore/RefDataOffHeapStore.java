@@ -26,6 +26,7 @@ import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Range;
+import stroom.refdata.lmdb.LmdbUtils;
 import stroom.refdata.offheapstore.databases.KeyValueStoreDb;
 import stroom.refdata.offheapstore.databases.MapUidForwardDb;
 import stroom.refdata.offheapstore.databases.MapUidReverseDb;
@@ -45,7 +46,6 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 public class RefDataOffHeapStore implements RefDataStore {
 
@@ -124,33 +124,33 @@ public class RefDataOffHeapStore implements RefDataStore {
                 .isPresent();
     }
 
-    @Override
-    public void put(final MapDefinition mapDefinition,
-                    final String key,
-                    final Supplier<RefDataValue> refDataValueSupplier,
-                    final boolean overwriteExistingValue) {
-
-        boolean keyExists = false;
-
-        if (!overwriteExistingValue && keyExists) {
-            throw new RuntimeException("key exists");
-        }
-
-    }
-
-    @Override
-    public void put(final MapDefinition mapDefinition,
-                    final Range<Long> keyRange,
-                    final Supplier<RefDataValue> refDataValueSupplier,
-                    final boolean overwriteExistingValue) {
-
-        boolean keyExists = false;
-
-        if (!overwriteExistingValue && keyExists) {
-            throw new RuntimeException("key exists");
-        }
-
-    }
+//    @Override
+//    public void put(final MapDefinition mapDefinition,
+//                    final String key,
+//                    final Supplier<RefDataValue> refDataValueSupplier,
+//                    final boolean overwriteExistingValue) {
+//
+//        boolean keyExists = false;
+//
+//        if (!overwriteExistingValue && keyExists) {
+//            throw new RuntimeException("key exists");
+//        }
+//
+//    }
+//
+//    @Override
+//    public void put(final MapDefinition mapDefinition,
+//                    final Range<Long> keyRange,
+//                    final Supplier<RefDataValue> refDataValueSupplier,
+//                    final boolean overwriteExistingValue) {
+//
+//        boolean keyExists = false;
+//
+//        if (!overwriteExistingValue && keyExists) {
+//            throw new RuntimeException("key exists");
+//        }
+//
+//    }
 
     @Override
     public Optional<RefDataValue> getValue(final MapDefinition mapDefinition,
@@ -160,12 +160,40 @@ public class RefDataOffHeapStore implements RefDataStore {
 
     @Override
     public Optional<RefDataValue> getValue(final ValueStoreKey valueStoreKey) {
-        return Optional.empty();
+        return valueStoreDb.get(valueStoreKey);
     }
 
     @Override
     public Optional<RefDataValueProxy> getValueProxy(final MapDefinition mapDefinition, final String key) {
-        return Optional.empty();
+
+        return LmdbUtils.getWithReadTxn(lmdbEnvironment, readTxn -> {
+            final UID mapUid = mapUidForwardDb.get(readTxn, mapDefinition)
+                    .orElseThrow(() ->
+                            new RuntimeException(LambdaLogger.buildMessage(
+                                    "Could not find UID for mapDefinition {}", mapDefinition
+                            )));
+
+            //do the lookup in the kv store first
+            final KeyValueStoreKey keyValueStoreKey = new KeyValueStoreKey(mapUid, key);
+            Optional<ValueStoreKey> optValueStoreKey = keyValueStoreDb.get(readTxn, keyValueStoreKey);
+
+            if (!optValueStoreKey.isPresent()) {
+                //not found in the kv store so look in the keyrange store instead
+
+                final long keyLong;
+                try {
+                    keyLong = Long.parseLong(key);
+                } catch (NumberFormatException e) {
+                    throw new RuntimeException(LambdaLogger.buildMessage(
+                            "Key {} cannot be used with the range store as it cannot be converted to a long", key), e);
+                }
+
+                optValueStoreKey = rangeStoreDb.get(readTxn, mapUid, keyLong);
+            }
+
+            return optValueStoreKey.map(valueStoreKey ->
+                    new RefDataValueProxy(this, valueStoreKey));
+        });
     }
 
     @Override
@@ -230,29 +258,20 @@ public class RefDataOffHeapStore implements RefDataStore {
         return env.openDbi(name, DbiFlags.MDB_CREATE);
     }
 
-    private UID createMapUID(final MapDefinition mapDefinition) {
-
-        //Build a new UID based on +1 from the highest current UID
-        //create forward mapping
-        //create reverse mapping
-
-        return null;
-    }
-
-    private boolean setProcessingInfo(final Txn<ByteBuffer> writeTxn,
-                                      final RefStreamDefinition refStreamDefinition,
-                                      final RefDataProcessingInfo refDataProcessingInfo,
-                                      final boolean overwriteExisting) {
-
-        return processingInfoDb.put(writeTxn, refStreamDefinition, refDataProcessingInfo, overwriteExisting);
-    }
-
-    private void updateProcessingState(final Txn<ByteBuffer> writeTxn,
-                                       final RefStreamDefinition refStreamDefinition,
-                                       final RefDataProcessingInfo.ProcessingState newProcessingState) {
-
-        processingInfoDb.updateProcessingState(writeTxn, refStreamDefinition, newProcessingState);
-    }
+//    private boolean setProcessingInfo(final Txn<ByteBuffer> writeTxn,
+//                                      final RefStreamDefinition refStreamDefinition,
+//                                      final RefDataProcessingInfo refDataProcessingInfo,
+//                                      final boolean overwriteExisting) {
+//
+//        return processingInfoDb.put(writeTxn, refStreamDefinition, refDataProcessingInfo, overwriteExisting);
+//    }
+//
+//    private void updateProcessingState(final Txn<ByteBuffer> writeTxn,
+//                                       final RefStreamDefinition refStreamDefinition,
+//                                       final RefDataProcessingInfo.ProcessingState newProcessingState) {
+//
+//        processingInfoDb.updateProcessingState(writeTxn, refStreamDefinition, newProcessingState);
+//    }
 
 
     /**
@@ -391,7 +410,7 @@ public class RefDataOffHeapStore implements RefDataStore {
             //get the ValueStoreKey for the RefDataValue (creating the entry if it doesn't exist)
             final ValueStoreKey valueStoreKey = valueStoreDb.getOrCreate(writeTxn, refDataValue);
 
-            final KeyValueStoreKey keyValueStoreKey = new KeyValueStoreKey(mapUid, key, effectiveTimeMs);
+            final KeyValueStoreKey keyValueStoreKey = new KeyValueStoreKey(mapUid, key);
 
             // assuming it is cheaper to just try the put and let LMDB handle duplicates rather than
             // do a get then optional put.
@@ -425,7 +444,7 @@ public class RefDataOffHeapStore implements RefDataStore {
             //get the ValueStoreKey for the RefDataValue (creating the entry if it doesn't exist)
             final ValueStoreKey valueStoreKey = valueStoreDb.getOrCreate(writeTxn, refDataValue);
 
-            final RangeStoreKey rangeStoreKey = new RangeStoreKey(mapUid, effectiveTimeMs, keyRange);
+            final RangeStoreKey rangeStoreKey = new RangeStoreKey(mapUid, keyRange);
 
             // assuming it is cheaper to just try the put and let LMDB handle duplicates rather than
             // do a get then optional put.

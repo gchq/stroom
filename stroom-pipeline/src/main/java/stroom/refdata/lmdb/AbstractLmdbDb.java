@@ -248,6 +248,15 @@ public abstract class AbstractLmdbDb<K, V> {
         return LmdbUtils.getWithReadTxn(lmdbEnvironment, this::getEntryCount);
     }
 
+    public void logDatabaseContents(final Txn<ByteBuffer> txn) {
+        LmdbUtils.logDatabaseContents(
+                lmdbEnvironment,
+                lmdbDbi,
+                txn,
+                byteBuffer -> keySerde.deserialize(byteBuffer).toString(),
+                byteBuffer -> valueSerde.deserialize(byteBuffer).toString());
+    }
+
     /**
      * Dumps all entries in the database to a single logger entry with one line per database entry.
      * This could potentially return thousands of rows so is only intended for small scale use in
@@ -261,6 +270,13 @@ public abstract class AbstractLmdbDb<K, V> {
                 lmdbDbi,
                 byteBuffer -> keySerde.deserialize(byteBuffer).toString(),
                 byteBuffer -> valueSerde.deserialize(byteBuffer).toString());
+    }
+
+    public void logRawDatabaseContents(final Txn<ByteBuffer> txn) {
+        LmdbUtils.logRawDatabaseContents(
+                lmdbEnvironment,
+                lmdbDbi,
+                txn);
     }
 
     /**

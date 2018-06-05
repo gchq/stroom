@@ -29,7 +29,7 @@ public class TestRangeStoreKeySerde extends AbstractSerdeTest {
         final UID uid = UID.of(0, 1, 2, 3);
         final Range<Long> range = new Range<>(23L, 52L);
 
-        final RangeStoreKey rangeStoreKey = new RangeStoreKey(uid, 12345678L, range);
+        final RangeStoreKey rangeStoreKey = new RangeStoreKey(uid, range);
 
         doSerialisationDeserialisationTest(rangeStoreKey, RangeStoreKeySerde::new);
     }

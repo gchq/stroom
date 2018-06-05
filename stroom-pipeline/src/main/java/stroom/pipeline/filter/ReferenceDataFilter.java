@@ -43,6 +43,7 @@ import stroom.refdata.offheapstore.RefDataValue;
 import stroom.refdata.offheapstore.StringValue;
 import stroom.refdata.saxevents.OffHeapEventListInternPool;
 import stroom.util.CharBuffer;
+import stroom.util.logging.LambdaLogger;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
@@ -281,6 +282,15 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                                                 "Range from '" + rangeFrom
                                                         + "' must be less than or equal to range to '" + rangeTo + "'",
                                                 null);
+                            } else if (rangeFrom < 0 || rangeTo < 0) {
+                                // negative values cause problems for the ordering of data in LMDB so prevent their use
+                                // when using byteBuffer.putLong, -10, 0 & 10 will be stored in LMDB as 0, 10, -10
+                                errorReceiverProxy
+                                        .log(Severity.ERROR, null, getElementId(),
+                                                LambdaLogger.buildMessage(
+                                                        "Only non-negative numbers are supported (from: {}, to: {})",
+                                                        rangeFrom, rangeTo),null);
+
                             } else {
                                 // convert from inclusive rangeTo to exclusive rangeTo
                                 // if from==to we still record it as a range

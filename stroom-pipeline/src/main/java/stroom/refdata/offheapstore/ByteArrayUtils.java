@@ -99,6 +99,9 @@ public class ByteArrayUtils {
     }
 
     public static String byteBufferToHex(final ByteBuffer byteBuffer) {
+        if (byteBuffer == null) {
+            return "null";
+        }
         return byteArrayToHex(Bytes.getBytes(byteBuffer));
     }
 

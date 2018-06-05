@@ -21,7 +21,7 @@ import java.nio.ByteBuffer;
 
 public interface Serializer<T> {
 
-    static final int DEFAULT_CAPACITY = 1_000;
+    int DEFAULT_CAPACITY = 1_000;
 
     /**
      * Serialize the passed objects to bytes returning a new {@link ByteBuffer} containing

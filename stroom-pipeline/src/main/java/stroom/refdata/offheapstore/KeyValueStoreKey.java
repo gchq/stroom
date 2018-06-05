@@ -24,14 +24,9 @@ public class KeyValueStoreKey {
     private final UID mapUid;
     private final String key;
 
-    // TODO consider removing this as I don't think we need it as it is
-    // defined by the mapUid
-    private final long effectiveTimeEpochMs;
-
-    public KeyValueStoreKey(final UID mapUid, final String key, final long effectiveTimeEpochMs) {
+    public KeyValueStoreKey(final UID mapUid, final String key) {
         this.mapUid = Objects.requireNonNull(mapUid);
         this.key = Objects.requireNonNull(key);
-        this.effectiveTimeEpochMs = effectiveTimeEpochMs;
     }
 
     public UID getMapUid() {
@@ -42,24 +37,20 @@ public class KeyValueStoreKey {
         return key;
     }
 
-    public long getEffectiveTimeEpochMs() {
-        return effectiveTimeEpochMs;
-    }
 
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final KeyValueStoreKey that = (KeyValueStoreKey) o;
-        return effectiveTimeEpochMs == that.effectiveTimeEpochMs &&
-                Objects.equals(mapUid, that.mapUid) &&
+        return Objects.equals(mapUid, that.mapUid) &&
                 Objects.equals(key, that.key);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(mapUid, key, effectiveTimeEpochMs);
+        return Objects.hash(mapUid, key);
     }
 
     @Override
@@ -67,7 +58,6 @@ public class KeyValueStoreKey {
         return "KeyValueStoreKey{" +
                 "mapUid=" + mapUid +
                 ", key='" + key + '\'' +
-                ", effectiveTimeEpochMs=" + effectiveTimeEpochMs +
                 '}';
     }
 }

@@ -17,13 +17,10 @@
 
 package stroom.refdata.offheapstore;
 
-import stroom.entity.shared.Range;
-
 import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 public interface RefDataStore {
 
@@ -35,25 +32,25 @@ public interface RefDataStore {
      */
     boolean isDataLoaded(final RefStreamDefinition refStreamDefinition);
 
-    /**
-     * Performs a lookup using the passed mapDefinition and key and if not found will call the refDataValueSupplier
-     * to create a new entry for that mapDefinition, key and value. The check-and-put will be done in an atomic way
-     * so no external synchronisation is required.
-     */
-    void put(final MapDefinition mapDefinition,
-             final String key,
-             final Supplier<RefDataValue> refDataValueSupplier,
-             final boolean overwriteExistingValue);
-
-    /**
-     * Performs a lookup using the passed mapDefinition and keyRange and if not found will call the refDataValueSupplier
-     * to create a new entry for that mapDefinition, keyRange and value. The check-and-put will be done in an atomic way
-     * so no external synchronisation is required.
-     */
-    void put(final MapDefinition mapDefinition,
-             final Range<Long> keyRange,
-             final Supplier<RefDataValue> refDataValueSupplier,
-             final boolean overwriteExistingValue);
+//    /**
+//     * Performs a lookup using the passed mapDefinition and key and if not found will call the refDataValueSupplier
+//     * to create a new entry for that mapDefinition, key and value. The check-and-put will be done in an atomic way
+//     * so no external synchronisation is required.
+//     */
+//    void put(final MapDefinition mapDefinition,
+//             final String key,
+//             final Supplier<RefDataValue> refDataValueSupplier,
+//             final boolean overwriteExistingValue);
+//
+//    /**
+//     * Performs a lookup using the passed mapDefinition and keyRange and if not found will call the refDataValueSupplier
+//     * to create a new entry for that mapDefinition, keyRange and value. The check-and-put will be done in an atomic way
+//     * so no external synchronisation is required.
+//     */
+//    void put(final MapDefinition mapDefinition,
+//             final Range<Long> keyRange,
+//             final Supplier<RefDataValue> refDataValueSupplier,
+//             final boolean overwriteExistingValue);
 
     /**
      * Gets a value from the store for the passed mapDefinition and key. If not found returns an empty {@link Optional}.

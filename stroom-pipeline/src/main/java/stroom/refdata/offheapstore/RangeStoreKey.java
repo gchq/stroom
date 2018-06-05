@@ -23,18 +23,16 @@ import stroom.util.logging.LambdaLogger;
 import java.util.Objects;
 
 /**
- * <mapUid><effectiveTimeEpochMs><rangeStartInc><rangeEndExc>
+ * <mapUid><rangeStartInc><rangeEndExc>
  */
 public class RangeStoreKey {
 
     private final UID mapUid;
-    private final long effectiveTimeEpochMs;
     private final Range<Long> keyRange;
 
 
-    public RangeStoreKey(final UID mapUid, final long effectiveTimeEpochMs, final Range<Long> keyRange) {
+    public RangeStoreKey(final UID mapUid, final Range<Long> keyRange) {
         this.mapUid = Objects.requireNonNull(mapUid);
-        this.effectiveTimeEpochMs = effectiveTimeEpochMs;
         this.keyRange = Objects.requireNonNull(keyRange);
         if (!keyRange.isBounded()) {
             throw new RuntimeException(LambdaLogger.buildMessage("Only bounded ranges are supported, range: {}", keyRange));
@@ -43,10 +41,6 @@ public class RangeStoreKey {
 
     public UID getMapUid() {
         return mapUid;
-    }
-
-    public long getEffectiveTimeEpochMs() {
-        return effectiveTimeEpochMs;
     }
 
     public Range<Long> getKeyRange() {
@@ -58,22 +52,20 @@ public class RangeStoreKey {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final RangeStoreKey that = (RangeStoreKey) o;
-        return effectiveTimeEpochMs == that.effectiveTimeEpochMs &&
-                Objects.equals(mapUid, that.mapUid) &&
+        return Objects.equals(mapUid, that.mapUid) &&
                 Objects.equals(keyRange, that.keyRange);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(mapUid, effectiveTimeEpochMs, keyRange);
+        return Objects.hash(mapUid, keyRange);
     }
 
     @Override
     public String toString() {
         return "RangeStoreKey{" +
                 "mapUid=" + mapUid +
-                ", effectiveTimeEpochMs=" + effectiveTimeEpochMs +
                 ", keyRange=" + keyRange +
                 '}';
     }

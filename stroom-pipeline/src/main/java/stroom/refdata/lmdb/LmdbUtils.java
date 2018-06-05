@@ -252,6 +252,28 @@ public class LmdbUtils {
         return output;
     }
 
+    public static void logDatabaseContents(final Env<ByteBuffer> env,
+                                           final Dbi<ByteBuffer> dbi,
+                                           final Txn<ByteBuffer> txn,
+                                           final Function<ByteBuffer, String> keyToStringFunc,
+                                           final Function<ByteBuffer, String> valueToStringFunc) {
+
+        final StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(LambdaLogger.buildMessage("Dumping {} entries for database [{}]",
+                getEntryCount(env, txn, dbi), new String(dbi.getName())));
+
+        // loop over all DB entries
+        try (CursorIterator<ByteBuffer> cursorIterator = dbi.iterate(txn, KeyRange.all())) {
+            while (cursorIterator.hasNext()) {
+                final CursorIterator.KeyVal<ByteBuffer> keyVal = cursorIterator.next();
+                stringBuilder.append(LambdaLogger.buildMessage("\n  key: [{}] - value [{}]",
+                        keyToStringFunc.apply(keyVal.key()),
+                        valueToStringFunc.apply(keyVal.val())));
+            }
+        }
+        LOGGER.debug(stringBuilder.toString());
+
+    }
     /**
      * Dumps all entries in the database to a single logger entry with one line per database entry.
      * This could potentially return thousands of rows so is only intended for small scale use in
@@ -264,23 +286,8 @@ public class LmdbUtils {
                                            final Function<ByteBuffer, String> keyToStringFunc,
                                            final Function<ByteBuffer, String> valueToStringFunc) {
 
-        final StringBuilder stringBuilder = new StringBuilder();
-        doWithReadTxn(env, txn -> {
-            stringBuilder.append(LambdaLogger.buildMessage("Dumping {} entries for database [{}]",
-                    getEntryCount(env, txn, dbi), new String(dbi.getName())));
-
-            // loop over all DB entries
-            try (CursorIterator<ByteBuffer> cursorIterator = dbi.iterate(txn, KeyRange.all())) {
-                while (cursorIterator.hasNext()) {
-                    final CursorIterator.KeyVal<ByteBuffer> keyVal = cursorIterator.next();
-                    stringBuilder.append(LambdaLogger.buildMessage("\n  key: [{}] - value [{}]",
-                            keyToStringFunc.apply(keyVal.key()),
-                            valueToStringFunc.apply(keyVal.val())));
-                }
-            }
-        });
-        LOGGER.debug(stringBuilder.toString());
-
+        doWithReadTxn(env, txn ->
+                logDatabaseContents(env, dbi, txn, keyToStringFunc, valueToStringFunc));
     }
 
     /**
@@ -292,6 +299,12 @@ public class LmdbUtils {
      */
     public static void logRawDatabaseContents(final Env<ByteBuffer> env, final Dbi<ByteBuffer> dbi) {
         logDatabaseContents(env, dbi, ByteArrayUtils::byteBufferToHex, ByteArrayUtils::byteBufferToHex);
+    }
+
+    public static void logRawDatabaseContents(final Env<ByteBuffer> env,
+                                              final Dbi<ByteBuffer> dbi,
+                                              final Txn<ByteBuffer> txn) {
+        logDatabaseContents(env, dbi, txn, ByteArrayUtils::byteBufferToHex, ByteArrayUtils::byteBufferToHex);
     }
 
     /**
@@ -332,14 +345,14 @@ public class LmdbUtils {
 
     }
 
-    public static void logContentsInRange(final Env<ByteBuffer> env,
-                            final Dbi<ByteBuffer> dbi,
-                            final Txn<ByteBuffer> txn,
-                            final KeyRange<ByteBuffer> keyRange) {
+    public static void logRawContentsInRange(final Env<ByteBuffer> env,
+                                             final Dbi<ByteBuffer> dbi,
+                                             final Txn<ByteBuffer> txn,
+                                             final KeyRange<ByteBuffer> keyRange) {
         logContentsInRange(env, dbi, txn, keyRange, ByteArrayUtils::byteBufferToHex, ByteArrayUtils::byteBufferToHex);
     }
 
-    public static void logContentsInRange(final Env<ByteBuffer> env,
+    public static void logRawContentsInRange(final Env<ByteBuffer> env,
                             final Dbi<ByteBuffer> dbi,
                             final KeyRange<ByteBuffer> keyRange) {
         doWithReadTxn(env, txn ->

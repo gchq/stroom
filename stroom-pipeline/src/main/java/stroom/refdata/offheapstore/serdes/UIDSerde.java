@@ -31,15 +31,42 @@ public class UIDSerde implements Serde<UID>, Serializer<UID>, Deserializer<UID> 
 
     @Override
     public UID deserialize(final ByteBuffer byteBuffer) {
-        final UID uid = UID.wrap(byteBuffer);
-        // no need to flip as we are just wrapping the original buffer
+        UID uid = extractUid(byteBuffer);
+        byteBuffer.flip();
         return uid;
     }
 
     @Override
     public void serialize(final ByteBuffer byteBuffer, final UID uid) {
-        byteBuffer.put(uid.getBackingBuffer());
+        writeUid(byteBuffer, uid);
         byteBuffer.flip();
+    }
+
+    /**
+     * Reads a {@link UID} from the passed {@link ByteBuffer} advancing the position in
+     * the {@link ByteBuffer}. The {@link ByteBuffer} is not flipped.
+     */
+    public static UID extractUid(final ByteBuffer byteBuffer) {
+        // create a buffer that only covers the UID part, to allow for de-serialising a UID
+        // from a buffer that contains other data
+
+        final ByteBuffer dupBuffer = byteBuffer.duplicate();
+        dupBuffer.limit(dupBuffer.position() + UID.UID_ARRAY_LENGTH);
+
+        final UID uid = UID.wrap(dupBuffer);
+        // no need to flip as we are just wrapping the original buffer
+
+        //advance the position of the passed buffer now that we have read the UID from it
+        byteBuffer.position(byteBuffer.position() + UID.UID_ARRAY_LENGTH);
+        return uid;
+    }
+
+    /**
+     * Writes a {@link UID} to the passed {@link ByteBuffer}, advancing the position but
+     * not flipping it.
+     */
+    public static void writeUid(final ByteBuffer byteBuffer, final UID uid) {
+        byteBuffer.put(uid.getBackingBuffer());
     }
 
     public static class UIDKryoSerializer extends com.esotericsoftware.kryo.Serializer<UID> {

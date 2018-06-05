@@ -17,14 +17,12 @@
 
 package stroom.refdata.offheapstore.serdes;
 
-import stroom.refdata.lmdb.serde.Deserializer;
 import stroom.refdata.lmdb.serde.Serde;
-import stroom.refdata.lmdb.serde.Serializer;
 import stroom.refdata.offheapstore.ValueStoreKey;
 
 import java.nio.ByteBuffer;
 
-public class ValueStoreKeySerde implements Serde<ValueStoreKey>, Serializer<ValueStoreKey>, Deserializer<ValueStoreKey> {
+public class ValueStoreKeySerde implements Serde<ValueStoreKey> {
 
     private static final int SIZE_IN_BYTES = Integer.BYTES + Short.BYTES;
     public static final int ID_OFFSET = Integer.BYTES;

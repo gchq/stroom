@@ -80,12 +80,12 @@ class AbstractSerdeTest {
         LOGGER.debug("Object 1 [{}]", object);
         LOGGER.debug("Object 2 [{}]", object2);
 
-        Assertions.assertThat(object).isEqualTo(object2);
+        Assertions.assertThat(object2).isEqualTo(object);
 
         T object3 = serde2.deserialize(byteBuffer);
 
         // re-run the deser to ennsure the buffer is in the right position to be read from again
-        Assertions.assertThat(object).isEqualTo(object3);
+        Assertions.assertThat(object3).isEqualTo(object);
 
     }
 }

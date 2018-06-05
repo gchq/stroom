@@ -29,22 +29,19 @@ public class RefDataValueProxy {
     // for calling methods on the instance
     private final RefDataStore refDataStore;
     private final ValueStoreKey valueStoreKey;
-    // held so we know what type of value we are proxying for
-    private final Class<? extends RefDataValue> valueClazz;
 
     RefDataValueProxy(final RefDataStore refDataStore,
-                      final ValueStoreKey valueStoreKey,
-                      final Class<? extends RefDataValue> valueClazz) {
+                      final ValueStoreKey valueStoreKey) {
 
         Objects.requireNonNull(refDataStore);
         this.refDataStore = Objects.requireNonNull(refDataStore);
         this.valueStoreKey = Objects.requireNonNull(valueStoreKey);
-        this.valueClazz = valueClazz;
     }
 
     /**
-     * Materialise the value that this is proxying. The useValue() method should be preferred
+     * Materialise the value that this is proxying. The consumeValue() method should be preferred
      * as this method will involve the added cost of copying the contents of the value.
+     *
      * @return An optional value, as the value may have been evicted from the pool. Callers
      * should expect to handle this possibility.
      */
@@ -68,24 +65,19 @@ public class RefDataValueProxy {
         refDataStore.consumeBytes(valueStoreKey, bytesConsumer);
     }
 
-
-//    public Class<? extends RefDataValue> getValueClass() {
-//        return valueClazz;
-//    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final RefDataValueProxy that = (RefDataValueProxy) o;
         return Objects.equals(refDataStore, that.refDataStore) &&
-                Objects.equals(valueStoreKey, that.valueStoreKey) &&
-                Objects.equals(valueClazz, that.valueClazz);
+                Objects.equals(valueStoreKey, that.valueStoreKey);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(refDataStore, valueStoreKey, valueClazz);
+
+        return Objects.hash(refDataStore, valueStoreKey);
     }
 
     @Override
@@ -93,7 +85,6 @@ public class RefDataValueProxy {
         return "RefDataValueProxy{" +
                 "refDataStore=" + refDataStore +
                 ", valueStoreKey=" + valueStoreKey +
-                ", valueClazz=" + valueClazz +
                 '}';
     }
 }

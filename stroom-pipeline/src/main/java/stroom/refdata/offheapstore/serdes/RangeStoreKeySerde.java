@@ -17,15 +17,10 @@
 
 package stroom.refdata.offheapstore.serdes;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-import com.esotericsoftware.kryo.pool.KryoFactory;
-import com.esotericsoftware.kryo.pool.KryoPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Range;
-import stroom.refdata.lmdb.serde.AbstractKryoSerde;
+import stroom.refdata.lmdb.serde.Serde;
 import stroom.refdata.offheapstore.RangeStoreKey;
 import stroom.refdata.offheapstore.UID;
 import stroom.util.logging.LambdaLogger;
@@ -33,54 +28,78 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import java.nio.ByteBuffer;
 
-public class RangeStoreKeySerde extends AbstractKryoSerde<RangeStoreKey> {
+public class RangeStoreKeySerde implements Serde<RangeStoreKey> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RangeStoreKeySerde.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(RangeStoreKeySerde.class);
 
-    private static final KryoFactory kryoFactory = buildKryoFactory(
-            RangeStoreKey.class,
-            RangeStoreKeyKryoSerializer::new);
+    public static final int RANGE_FROM_OFFSET = UID.UID_ARRAY_LENGTH;
+    public static final int RANGE_TO_OFFSET = RANGE_FROM_OFFSET + Long.BYTES;
 
-    private static final KryoPool pool = new KryoPool.Builder(kryoFactory)
-            .softReferences()
-            .build();
+    //    private static final KryoFactory kryoFactory = buildKryoFactory(
+//            RangeStoreKey.class,
+//            RangeStoreKeyKryoSerializer::new);
+//
+//    private static final KryoPool pool = new KryoPool.Builder(kryoFactory)
+//            .softReferences()
+//            .build();
 
     @Override
     public RangeStoreKey deserialize(final ByteBuffer byteBuffer) {
-        return super.deserialize(pool, byteBuffer);
+
+        // clone it to de-couple us from a LMDB managed buffer
+        final UID mapUid = UIDSerde.extractUid(byteBuffer).clone();
+        long rangeFromInc = byteBuffer.getLong();
+        long rangeToExc = byteBuffer.getLong();
+        byteBuffer.flip();
+
+        return new RangeStoreKey(mapUid, new Range<>(rangeFromInc, rangeToExc));
     }
 
     @Override
     public void serialize(final ByteBuffer byteBuffer, final RangeStoreKey rangeStoreKey) {
-        // TODO how do we know how big the serialized form will be
-        super.serialize(pool, byteBuffer, rangeStoreKey);
+        UIDSerde.writeUid(byteBuffer, rangeStoreKey.getMapUid());
+        Range<Long> range = rangeStoreKey.getKeyRange();
+        byteBuffer.putLong(range.getFrom());
+        byteBuffer.putLong(range.getTo());
+        byteBuffer.flip();
     }
 
-    private static class RangeStoreKeyKryoSerializer extends com.esotericsoftware.kryo.Serializer<RangeStoreKey> {
+    public static boolean isKeyInRange(final ByteBuffer byteBuffer, final long key) {
+        // from = inclusive, to = exclusive
 
-        private final UIDSerde.UIDKryoSerializer uidKryoSerializer;
+        long rangeFromInc = byteBuffer.getLong(RANGE_FROM_OFFSET);
 
-        private RangeStoreKeyKryoSerializer() {
-            uidKryoSerializer = new UIDSerde.UIDKryoSerializer();
+        if (key >= rangeFromInc) {
+            final long rangeToExc = byteBuffer.getLong(RANGE_TO_OFFSET);
+            return key < rangeToExc;
         }
-
-        @Override
-        public void write(final Kryo kryo, final Output output, final RangeStoreKey key) {
-            uidKryoSerializer.write(kryo, output, key.getMapUid());
-            RefDataSerdeUtils.writeTimeMs(output, key.getEffectiveTimeEpochMs());
-            Range<Long> range = key.getKeyRange();
-            RefDataSerdeUtils.writeTimeMs(output, range.getFrom());
-            RefDataSerdeUtils.writeTimeMs(output, range.getTo());
-        }
-
-        @Override
-        public RangeStoreKey read(final Kryo kryo, final Input input, final Class<RangeStoreKey> type) {
-            final UID mapUid = uidKryoSerializer.read(kryo, input, UID.class);
-            final long effectiveTimeEpochMs = RefDataSerdeUtils.readTimeMs(input);
-            long startMs = RefDataSerdeUtils.readTimeMs(input);
-            long endMs = RefDataSerdeUtils.readTimeMs(input);
-            return new RangeStoreKey(mapUid, effectiveTimeEpochMs, new Range<>(startMs, endMs));
-        }
+        return false;
     }
+
+
+//    private static class RangeStoreKeyKryoSerializer extends com.esotericsoftware.kryo.Serializer<RangeStoreKey> {
+//
+//        private final UIDSerde.UIDKryoSerializer uidKryoSerializer;
+//
+//        private RangeStoreKeyKryoSerializer() {
+//            uidKryoSerializer = new UIDSerde.UIDKryoSerializer();
+//        }
+//
+//        @Override
+//        public void write(final Kryo kryo, final Output output, final RangeStoreKey key) {
+//            uidKryoSerializer.write(kryo, output, key.getMapUid());
+//            Range<Long> range = key.getKeyRange();
+//            output.writeLong(range.getFrom());
+//            output.writeLong(range.getTo());
+//        }
+//
+//        @Override
+//        public RangeStoreKey read(final Kryo kryo, final Input input, final Class<RangeStoreKey> type) {
+//            final UID mapUid = uidKryoSerializer.read(kryo, input, UID.class);
+//            long rangeFromInc = input.readLong();
+//            long rangeToExc = input.readLong();
+//            return new RangeStoreKey(mapUid, new Range<>(rangeFromInc, rangeToExc));
+//        }
+//    }
 }
