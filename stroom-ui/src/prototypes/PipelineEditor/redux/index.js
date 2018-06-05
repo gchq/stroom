@@ -1,40 +1,29 @@
-import {
-  initiateAddPipelineElement,
-  choosePipelineElementToAdd,
-  cancelAddPipelineElement,
-  addElementSearchTermChanged,
-  addElementToPipelineReducer,
-} from './addElementToPipelineReducer';
-
 import { elementsReceived, elementPropertiesReceived, elementReducer } from './elementReducer';
 
 import {
-  pipelineChanged,
+  pipelineReceived,
   pipelineElementSelected,
   requestDeletePipelineElement,
   confirmDeletePipelineElement,
   cancelDeletePipelineElement,
   pipelineElementMoved,
+  pipelineElementAdded,
   openPipelineElementContextMenu,
   closePipelineElementContextMenu,
   pipelineReducer,
 } from './pipelineReducer';
 
 export {
-  initiateAddPipelineElement,
-  choosePipelineElementToAdd,
-  cancelAddPipelineElement,
-  addElementSearchTermChanged,
-  addElementToPipelineReducer,
   elementsReceived,
   elementPropertiesReceived,
   elementReducer,
-  pipelineChanged,
+  pipelineReceived,
   pipelineElementSelected,
   requestDeletePipelineElement,
   confirmDeletePipelineElement,
   cancelDeletePipelineElement,
   pipelineElementMoved,
+  pipelineElementAdded,
   openPipelineElementContextMenu,
   closePipelineElementContextMenu,
   pipelineReducer,

@@ -18,42 +18,59 @@ import PropTypes from 'prop-types';
 
 import { connect } from 'react-redux';
 
+import { ADD_ELEMENT_STATE } from './redux';
+
+import { groupByCategoryFiltered } from '../elementUtils';
+
 /**
  * This is a Higher Order Component
  * https://reactjs.org/docs/higher-order-components.html
  *
- * It provides the pipeline and element definitions
- * by connecting to the redux store and using a provided
- * pipelineId and elementId to look them up.
+ * It provides the state of the process of adding an element from the redux store.
  *
  * @param {React.Component} WrappedComponent
  */
-export function withElement() {
+export function withAddElementToPipeline() {
   return (WrappedComponent) => {
-    const WithElement = class extends Component {
+    const WithAddElementToPipeline = class extends Component {
       static propTypes = {
         pipelineId: PropTypes.string.isRequired,
-        elementId: PropTypes.string,
         pipelines: PropTypes.object.isRequired,
         elements: PropTypes.object.isRequired,
+        addElementToPipelineWizard: PropTypes.object.isRequired,
       };
 
       state = {
         pipeline: undefined,
         element: undefined,
         elementDefinition: undefined,
+        availableElements: undefined,
       };
 
-      static getDerivedStateFromProps(nextProps, prevState) {
-        const pipeline = nextProps.pipelines[nextProps.pipelineId];
-
+      static getDerivedStateFromProps(
+        {
+          addElementToPipelineWizard, pipelineId, pipelines, elements,
+        },
+        prevState,
+      ) {
+        let pipeline;
         let element;
         let elementDefinition;
+        let availableElements;
 
-        if (pipeline) {
-          element = pipeline.pipeline.elements.add.element.find(e => e.id === nextProps.elementId);
+        if (addElementToPipelineWizard.addElementState !== ADD_ELEMENT_STATE.NOT_ADDING) {
+          pipeline = pipelines[pipelineId];
+          element = pipeline.pipeline.elements.add.element.find(e => e.id === addElementToPipelineWizard.parentId);
           if (element) {
-            elementDefinition = Object.values(nextProps.elements.elements).find(e => e.type === element.type);
+            elementDefinition = Object.values(elements.elements).find(e => e.type === element.type);
+          }
+          if (elementDefinition) {
+            availableElements = groupByCategoryFiltered(
+              elements.elements,
+              elementDefinition,
+              0,
+              addElementToPipelineWizard.searchTerm,
+            );
           }
         }
 
@@ -61,11 +78,14 @@ export function withElement() {
           ...pipeline,
           element,
           elementDefinition,
+          availableElements,
         };
       }
 
       render() {
-        if (!!this.state.pipeline && !!this.state.element) {
+        if (
+          this.props.addElementToPipelineWizard.addElementState !== ADD_ELEMENT_STATE.NOT_ADDING
+        ) {
           return <WrappedComponent {...this.state} {...this.props} />;
         }
         return null;
@@ -76,10 +96,11 @@ export function withElement() {
       state => ({
         pipelines: state.pipelines,
         elements: state.elements,
+        addElementToPipelineWizard: state.addElementToPipelineWizard,
       }),
       {
         // actions
       },
-    )(WithElement);
+    )(WithAddElementToPipeline);
   };
 }

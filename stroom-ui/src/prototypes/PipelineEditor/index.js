@@ -15,13 +15,14 @@
  */
 import PipelineEditor from './PipelineEditor';
 
-import { pipelineReducer, elementReducer, addElementToPipelineReducer } from './redux';
+import { pipelineReducer, elementReducer } from './redux';
+import { addElementToPipelineWizardReducer } from './AddElementToPipeline';
 import { withPipeline } from './withPipeline';
 
 export {
   PipelineEditor,
   pipelineReducer,
   elementReducer,
-  addElementToPipelineReducer,
+  addElementToPipelineWizardReducer,
   withPipeline,
 };

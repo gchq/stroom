@@ -22,8 +22,6 @@ import { connect } from 'react-redux';
 import { ItemTypes } from './dragDropTypes';
 import { DragSource } from 'react-dnd';
 
-import { Icon } from 'semantic-ui-react';
-
 import { selectDocRef, openDocRef, openDocRefContextMenu } from './redux';
 
 import { withExistingExplorer } from './withExplorer';
@@ -108,7 +106,7 @@ const DocRef = ({
   >
     <DocRefMenu explorerId={explorerId} docRef={docRef} isOpen={isContextMenuOpen} />
     <span>
-      <img className="doc-ref__icon" src={require(`./images/${docRef.type}.svg`)} />
+      <img className="doc-ref__icon" alt='X' src={require(`./images/${docRef.type}.svg`)} />
       {docRef.name}
     </span>
   </div>);

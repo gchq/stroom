@@ -1,8 +1,12 @@
 import { createAction, handleActions } from 'redux-actions';
 
-import { moveElementInPipeline, deleteElementInPipeline } from '../pipelineUtils';
+import {
+  moveElementInPipeline,
+  deleteElementInPipeline,
+  createNewElementInPipeline,
+} from '../pipelineUtils';
 
-const pipelineChanged = createAction('PIPELINE_CHANGED', (pipelineId, pipeline) => ({
+const pipelineReceived = createAction('PIPELINE_CHANGED', (pipelineId, pipeline) => ({
   pipelineId,
   pipeline,
 }));
@@ -15,6 +19,16 @@ const pipelineElementSelected = createAction(
 const pipelineElementMoved = createAction(
   'PIPELINE_ELEMENT_MOVED',
   (pipelineId, itemToMove, destination) => ({ pipelineId, itemToMove, destination }),
+);
+
+const pipelineElementAdded = createAction(
+  'PIPELINE_ELEMENT_ADDED',
+  (pipelineId, parentId, childDefinition, name) => ({
+    pipelineId,
+    parentId,
+    childDefinition,
+    name,
+  }),
 );
 
 const requestDeletePipelineElement = createAction(
@@ -49,7 +63,7 @@ const defaultPipelineState = {
 
 const pipelineReducer = handleActions(
   {
-    [pipelineChanged]: (state, action) => ({
+    [pipelineReceived]: (state, action) => ({
       ...state,
       [action.payload.pipelineId]: {
         ...defaultPipelineState,
@@ -87,6 +101,18 @@ const pipelineReducer = handleActions(
         pendingElementIdToDelete: undefined,
       },
     }),
+    [pipelineElementAdded]: (state, action) => ({
+      ...state,
+      [action.payload.pipelineId]: {
+        ...state[action.payload.pipelineId],
+        pipeline: createNewElementInPipeline(
+          state[action.payload.pipelineId].pipeline,
+          action.payload.parentId,
+          action.payload.childDefinition,
+          action.payload.name,
+        ),
+      },
+    }),
     [pipelineElementMoved]: (state, action) => ({
       ...state,
       [action.payload.pipelineId]: {
@@ -117,11 +143,12 @@ const pipelineReducer = handleActions(
 );
 
 export {
-  pipelineChanged,
+  pipelineReceived,
   pipelineElementSelected,
   requestDeletePipelineElement,
   confirmDeletePipelineElement,
   cancelDeletePipelineElement,
+  pipelineElementAdded,
   pipelineElementMoved,
   openPipelineElementContextMenu,
   closePipelineElementContextMenu,

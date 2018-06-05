@@ -31,85 +31,9 @@ import { confirmDeletePipelineElement, cancelDeletePipelineElement } from './red
 
 import PipelineElement from './PipelineElement';
 import PipelineElementSettings from './PipelineElementSettings';
+import { AddElementWizard } from './AddElementToPipeline';
 
-import './PipelineEditor.css';
-
-const curve = ({ lineId, fromRect, toRect }) => {
-  const from = {
-    x: fromRect.right,
-    y: fromRect.top + fromRect.height / 2,
-  };
-  const to = {
-    x: toRect.left,
-    y: toRect.top + toRect.height / 2,
-  };
-
-  // if they are inline with eachother, draw a straight line
-  if (fromRect.top === toRect.top) {
-    const pathSpec = `M ${from.x} ${from.y} L ${to.x} ${to.y}`;
-    return (
-      <path
-        key={lineId}
-        d={pathSpec}
-        style={{
-          stroke: 'black',
-          strokeWidth: 2,
-          fill: 'none',
-        }}
-      />
-    );
-  }
-  // otherwise draw a curve
-  const mid = {
-    x: from.x + (to.x - from.x) / 2,
-    y: from.y + (to.y - from.y) / 2,
-  };
-
-  const pathSpec =
-      `M ${
-        from.x
-      } ${
-        from.y
-      } C ${
-        from.x
-      } ${
-        from.y
-      } ${
-        mid.x
-      } ${
-        from.y
-      } ${
-        mid.x
-      } ${
-        mid.y
-      } C ${
-        mid.x
-      } ${
-        mid.y
-      } ${
-        mid.x
-      } ${
-        to.y
-      } ${
-        to.x
-      } ${
-        to.y}`;
-  return (
-    <path
-      key={lineId}
-      d={pathSpec}
-      style={{
-          stroke: 'black',
-          strokeWidth: 2,
-          fill: 'none',
-        }}
-    />
-  );
-};
-
-const lineElementCreators = {
-  curve,
-};
+import lineElementCreators from './pipelineLineElementCreators';
 
 const HORIZONTAL_SPACING = 150;
 const VERTICAL_SPACING = 50;
@@ -135,6 +59,7 @@ const PipelineEditor = ({
 
   return (
     <div className="Pipeline-editor">
+      <AddElementWizard pipelineId={pipelineId} />
       <Confirm
         open={!!pendingElementIdToDelete}
         content="This will delete the element from the pipeline, are you sure?"

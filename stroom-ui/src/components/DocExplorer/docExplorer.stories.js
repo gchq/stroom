@@ -33,6 +33,8 @@ import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
 
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
+import 'styles/main.css';
+
 storiesOf('Document Explorer', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(receiveDocTree(testTree));

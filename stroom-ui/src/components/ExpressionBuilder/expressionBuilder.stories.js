@@ -34,6 +34,8 @@ import { receiveDataSource } from './DataSource';
 
 import { receiveDocTree, testTree } from 'components/DocExplorer';
 
+import 'styles/main.css';
+
 import {
   testExpression,
   simplestExpression,

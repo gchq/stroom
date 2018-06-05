@@ -44,6 +44,8 @@ function getToggledState(currentState, isUser) {
       case OPEN_STATES.bySearch:
       case OPEN_STATES.byUser:
         return OPEN_STATES.closed;
+      default:
+        throw new Error('Invalid current state: ' + currentState);
     }
   } else {
     return OPEN_STATES.byUser;
@@ -299,7 +301,7 @@ const explorerTreeReducer = handleActions(
 
     // Close Doc Ref Context Menu
     [closeDocRefContextMenu]: (state, action) => {
-      const { explorerId, docRef } = action.payload;
+      const { explorerId } = action.payload;
 
       return {
         ...state,
@@ -364,7 +366,7 @@ const explorerTreeReducer = handleActions(
 
     // Open Doc Ref
     [openDocRef]: (state, action) => {
-      const { explorerId, docRef } = action.payload;
+      const { docRef } = action.payload;
 
       return {
         ...state,
@@ -409,7 +411,7 @@ const explorerTreeReducer = handleActions(
 
     // Confirm Delete Doc Ref
     [confirmDeleteDocRef]: (state, action) => {
-      const { explorerId, docRef } = action.payload;
+      const { docRef } = action.payload;
 
       const documentTree = deleteItemFromTree(state.documentTree, docRef.uuid);
 

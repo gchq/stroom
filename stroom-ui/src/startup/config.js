@@ -28,6 +28,7 @@ export default (state = initialState, action) => {
         authenticationServiceUrl: action.config.authenticationServiceUrl,
         authorisationServiceUrl: action.config.authorisationServiceUrl,
         streamTaskServiceUrl: action.config.streamTaskServiceUrl,
+        pipelineServiceUrl: action.config.pipelineServiceUrl,
         advertisedUrl: action.config.advertisedUrl,
         appClientId: action.config.appClientId,
       };

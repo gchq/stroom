@@ -21,6 +21,7 @@
     "react-scripts": "1.1.4",
     "redux": "^4.0.0",
     "redux-actions": "^2.3.2",
+    "redux-form": "^7.3.0",
     "redux-logger": "^3.0.6",
     "redux-thunk": "^2.2.0",
     "semantic-ui-css": "^2.3.1",
@@ -30,14 +31,17 @@
   "scripts": {
     "build-css": "node-sass-chokidar src/ -o src/",
     "watch-css": "npm run build-css && node-sass-chokidar src/ -o src/ --watch --recursive",
-    "start-js": "./config.template.sh && BROWSER=none PORT=5001 react-scripts start",
+    "start-js": "./config.template.sh && BROWSER=none PORT=3001 react-scripts start",
     "start": "npm-run-all -p watch-css start-js",
     "build-js": "react-scripts build",
     "build": "npm-run-all build-css build-js",
-    "test": "NODE_PATH=./src mocha \"./src/**/test/*.test.js\" --compilers js:babel-core/register --recursive",
+    "test":
+      "NODE_PATH=./src mocha \"./src/**/test/*.test.js\" --compilers js:babel-core/register --recursive",
     "test-single": "NODE_PATH=./src mocha --compilers js:babel-core/register --recursive",
-    "test-watch": "NODE_PATH=./src mocha \"./src/**/test/*.test.js\" --watch --compilers js:babel-core/register --recursive",
-    "test-watch-single": "NODE_PATH=./src mocha --watch --compilers js:babel-core/register --recursive",
+    "test-watch":
+      "NODE_PATH=./src mocha \"./src/**/test/*.test.js\" --watch --compilers js:babel-core/register --recursive",
+    "test-watch-single":
+      "NODE_PATH=./src mocha --watch --compilers js:babel-core/register --recursive",
     "eject": "react-scripts eject",
     "storybook-js": "start-storybook -p 9001 -c .storybook",
     "storybook": "npm-run-all -p storybook-js watch-css",

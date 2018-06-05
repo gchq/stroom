@@ -17,12 +17,10 @@ import { createAction, handleActions } from 'redux-actions';
 
 import {
   moveItemInTree,
-  iterateNodes,
   assignRandomUuids,
   updateItemInTree,
   addItemToTree,
-  deleteItemFromTree,
-  stripUuids,
+  deleteItemFromTree
 } from 'lib/treeUtils';
 
 import { docRefPicked } from 'components/DocExplorer';

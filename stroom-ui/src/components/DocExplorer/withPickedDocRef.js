@@ -18,8 +18,6 @@ import PropTypes from 'prop-types';
 
 import { connect } from 'react-redux';
 
-import { explorerTreeOpened, DEFAULT_EXPLORER_ID } from './redux';
-
 /**
  * This is a Higher Order Component
  * https://reactjs.org/docs/higher-order-components.html

@@ -31,7 +31,7 @@ import {
   closePipelineElementContextMenu,
 } from './redux';
 
-import ElementMenu from './ElementMenu';
+import ElementContextMenu from './ElementContextMenu';
 
 import { canMovePipelineElement } from './pipelineUtils';
 
@@ -114,18 +114,23 @@ const PipelineElement = ({
     e.preventDefault();
   };
 
-  return connectDragSource(connectDropTarget(<span>
-    <span className={className} onClick={onSingleClick} onContextMenu={onRightClick}>
-      <img
-        className="Pipeline-element__icon"
-        src={require(`./images/${elementDefinition.icon}`)}
-      />
-      {elementId}
+  const dndBox = compose(connectDragSource, connectDropTarget)(<div className={className} onClick={onSingleClick} onContextMenu={onRightClick}>
+    <img className="Pipeline-element__icon" alt='X' src={require(`./images/${elementDefinition.icon}`)} />
+    {elementId}
+  </div>);
+
+  return (
+    <span>
+      {dndBox}
+      <span className="Pipeline-element__context-menu">
+        <ElementContextMenu
+          pipelineId={pipelineId}
+          elementId={elementId}
+          isOpen={isContextMenuOpen}
+        />
+      </span>
     </span>
-    <span className="Pipeline-element__context-menu">
-      <ElementMenu pipelineId={pipelineId} elementId={elementId} isOpen={isContextMenuOpen} />
-    </span>
-                                             </span>));
+  );
 };
 
 PipelineElement.propTypes = {

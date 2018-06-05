@@ -26,9 +26,11 @@ import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 import { PipelineEditor } from './index';
 
 import PipelineElement from './PipelineElement';
-import AddElementPicker from './AddElementPicker';
+import { AddElementWizard } from './AddElementToPipeline';
 
-import { pipelineChanged, elementsReceived, elementPropertiesReceived } from './redux';
+import { pipelineReceived, elementsReceived, elementPropertiesReceived } from './redux';
+
+import 'styles/main.css';
 
 import { testPipeline, testPipelineElements } from './test/pipeline.testData';
 
@@ -36,7 +38,7 @@ import { testElementTypes, testElementProperties } from './test/elements.testDat
 
 storiesOf('Pipeline Editor', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(pipelineChanged('testPipeline', testPipeline));
+    store.dispatch(pipelineReceived('testPipeline', testPipeline));
     store.dispatch(elementsReceived(testElementTypes));
     store.dispatch(elementPropertiesReceived(testElementProperties));
   })) // must be recorder after/outside of the test initialisation decorators
@@ -46,12 +48,12 @@ storiesOf('Pipeline Editor', module)
 storiesOf('Pipeline Elements', module)
   .addDecorator(storyFn => (
     <div>
-      <AddElementPicker pipelineId="testPipeline" />
+      <AddElementWizard pipelineId="testPipeline" />
       {storyFn()}
     </div>
   ))
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(pipelineChanged('testPipeline', testPipeline));
+    store.dispatch(pipelineReceived('testPipeline', testPipeline));
     store.dispatch(elementsReceived(testElementTypes));
     store.dispatch(elementPropertiesReceived(testElementProperties));
   })) // must be recorder after/outside of the test initialisation decorators

@@ -215,6 +215,8 @@ const ExpressionTerm = ({
       case 'DATE_FIELD':
         valueType = 'datetime-local';
         break;
+      default:
+        throw new Error('Invalid field type: ' + field.type);
     }
   }
 
@@ -279,13 +281,11 @@ const ExpressionTerm = ({
       break;
     }
     case 'IN_DICTIONARY': {
-      let dictUuid = '';
-      if (term.dictionary) {
-        dictUuid = term.dictionary.uuid;
-      }
       valueWidget = <DocRefModalPicker pickerId={pickerId} typeFilter="dictionary" />;
       break;
     }
+    default:
+      throw new Error('Invalid condition: ' + term.condition);
   }
 
   return connectDragSource(<div className={className}>
