@@ -32,18 +32,18 @@ import { expressionChanged, expressionSetEditable } from './redux';
 
 import { receiveDataSource } from './DataSource';
 
-import { receiveDocTree } from 'components/DocExplorer';
+import { receiveDocTree, testTree } from 'components/DocExplorer';
 
 import {
-  testTree,
   testExpression,
   simplestExpression,
   testAndOperator,
   testOrOperator,
   testNotOperator,
-  testDataSource,
   emptyDataSource,
-} from 'testData';
+} from './queryExpression.testData';
+
+import { testDataSource } from './dataSource.testData';
 
 import markdown from './expressionBuilder.md';
 
