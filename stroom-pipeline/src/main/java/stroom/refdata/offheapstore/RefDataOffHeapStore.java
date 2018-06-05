@@ -180,17 +180,30 @@ public class RefDataOffHeapStore implements RefDataStore {
             if (!optValueStoreKey.isPresent()) {
                 //not found in the kv store so look in the keyrange store instead
 
-                final long keyLong;
                 try {
-                    keyLong = Long.parseLong(key);
-                } catch (NumberFormatException e) {
-                    throw new RuntimeException(LambdaLogger.buildMessage(
-                            "Key {} cannot be used with the range store as it cannot be converted to a long", key), e);
-                }
+                    // speculative lookup in the range store. At this point we don't know if we have
+                    // any ranges for this mapdef or not, but either way we need a call to LMDB so
+                    // just do the range lookup
+                    final long keyLong = Long.parseLong(key);
+                    // look up our long key in the range store to see if it is part of a range
+                    optValueStoreKey = rangeStoreDb.get(readTxn, mapUid, keyLong);
 
-                optValueStoreKey = rangeStoreDb.get(readTxn, mapUid, keyLong);
+                } catch (NumberFormatException e) {
+                    // key could not be converted to a long, either this mapdef has no ranges or
+                    // an invalid key was used. See if we have any ranges at all for this mapdef
+                    // to determine whether to error or not.
+                    boolean doesStoreContainRanges = rangeStoreDb.containsMapDefinition(readTxn, mapUid);
+                    if (doesStoreContainRanges) {
+                        // we have ranges for this map def so we would expect to be able to convert the key
+                        throw new RuntimeException(LambdaLogger.buildMessage(
+                                "Key {} cannot be used with the range store as it cannot be converted to a long", key), e);
+                    }
+                    // no ranges for this map def so the fact that we could not convert the key to a long
+                    // is not a problem. Do nothing.
+                }
             }
 
+            // return a RefDataValueProxy if we found a value.
             return optValueStoreKey.map(valueStoreKey ->
                     new RefDataValueProxy(this, valueStoreKey));
         });

@@ -55,6 +55,11 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
         super(lmdbEnvironment, keySerde, valueSerde, DB_NAME);
     }
 
+    /**
+     * Looks up the supplied mapDefinitionUid and key in the store and attempts to find a range that includes the
+     * passed key. It will scan backwards from key until it finds the first matching range. If no matching range
+     * is found an empty Optional is returned.
+     */
     public Optional<ValueStoreKey> get(final Txn<ByteBuffer> txn, final UID mapDefinitionUid, final long key) {
 
         LOGGER.trace("get called for {}, key {}", mapDefinitionUid, key);
@@ -75,6 +80,7 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
 
         try (CursorIterator<ByteBuffer> cursorIterator = lmdbDbi.iterate(txn, keyRange)) {
             int cnt = 0;
+            // loop backwards over all rows with the same mapDefinitionUid, starting at key
             for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
                 cnt++;
                 final ByteBuffer keyBuffer = keyVal.key();
@@ -88,6 +94,7 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
 
                 if (RangeStoreKeySerde.isKeyInRange(keyBuffer, key)) {
                     final UID uidOfFoundKey = UIDSerde.extractUid(keyBuffer);
+                    // double check to be sure we have the right mapDefinitionUid
                     if (!uidOfFoundKey.equals(mapDefinitionUid)) {
                         throw new RuntimeException(LambdaLogger.buildMessage(
                                 "Found a key with a different mapDefinitionUid, found: {}, expected {}",
@@ -100,6 +107,24 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
         }
         LOGGER.trace("Value not found for {}, key {}", mapDefinitionUid, key);
         return Optional.empty();
+    }
+
+    /**
+     * Returns true if the store contains at least one row with a key containing the passed mapDefinitionUid
+     */
+    public boolean containsMapDefinition(final Txn<ByteBuffer> txn, final UID mapDefinitionUid) {
+
+        LOGGER.trace("containsMapDefinition called for {}, key {}", mapDefinitionUid);
+
+        final Range<Long> startRange = new Range<>(0L, 0L);
+        final RangeStoreKey startRangeStoreKey = new RangeStoreKey(mapDefinitionUid, startRange);
+        final ByteBuffer startKeyBuf = keySerde.serialize(startRangeStoreKey);
+
+        final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(startKeyBuf);
+
+        try (CursorIterator<ByteBuffer> cursorIterator = lmdbDbi.iterate(txn, keyRange)) {
+            return cursorIterator.hasNext();
+        }
     }
 
     private KeyRange<ByteBuffer> buildKeyRange(final UID mapDefinitionUid, final long key) {

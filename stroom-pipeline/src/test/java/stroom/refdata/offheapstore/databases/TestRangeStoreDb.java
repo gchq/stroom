@@ -96,6 +96,39 @@ public class TestRangeStoreDb extends AbstractLmdbDbTest {
         });
     }
 
+    @Test
+    public void testContainsMapDefinition() {
+
+        final List<UID> uids = Arrays.asList(uid1, uid2, uid3);
+        final UID uid4 = UID.of(0, 0, 0, 4);
+
+        // Load some non-contiguous ranges for different mapDefinitionUids
+        for (int i = 0; i < uids.size(); i++) {
+            LOGGER.debug("Iteration {}, loading for UID {}", i, uids.get(i));
+            rangeStoreDb.put(key(uids.get(i), 1, 11), val((i * 10) + 1), false);
+            rangeStoreDb.put(key(uids.get(i), 11, 13), val((i * 10) + 2), false);
+            rangeStoreDb.put(key(uids.get(i), 13, 21), val((i * 10) + 3), false);
+            // gap in ranges
+            rangeStoreDb.put(key(uids.get(i), 101, 201), val((i * 10) + 4), false);
+            rangeStoreDb.put(key(uids.get(i), 201, 301), val((i * 10) + 5), false);
+        }
+
+        rangeStoreDb.logRawDatabaseContents();
+        rangeStoreDb.logDatabaseContents();
+
+        LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
+            boolean result;
+            for (int i = 0; i < uids.size(); i++) {
+                result = rangeStoreDb.containsMapDefinition(txn, uids.get(i));
+                assertThat(result).isTrue();
+            }
+
+            // no entries exist for uid4
+            result = rangeStoreDb.containsMapDefinition(txn, uid4);
+            assertThat(result).isFalse();
+        });
+    }
+
     private void getAndAssert(Txn<ByteBuffer> txn, UID uid, long key, int expectedValue) {
         LOGGER.debug("getAndAssert {}, {}, {}", uid, key, expectedValue);
         Optional<ValueStoreKey> optValueStoreKey = rangeStoreDb.get(txn, uid, key);
