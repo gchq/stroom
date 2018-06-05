@@ -63,13 +63,11 @@ public class ItemMapper extends MapperBase<Object, Val[], String, Item> {
                 final Generator generator = expression.createGenerator();
                 generator.set(values);
 
-                // Only output a value if we are at the group depth or greater
-                // for this field, or have a function.
+                // Only output a value if we are at the group depth or greater for this field, or have a function.
                 // If we are applying any grouping then maxDepth will be >= 0.
                 if (maxGroupDepth >= depth) {
-                    // We always want to output fields that have an aggregate
-                    // function or fields that are grouped at the current depth
-                    // or above.
+                    // We always want to output fields that have an aggregate function or fields that are grouped at the
+                    // current depth or above.
                     if (expression.hasAggregate()
                             || (compiledField.getGroupDepth() >= 0 && compiledField.getGroupDepth() <= depth)) {
                         // This field is grouped so output.
@@ -81,8 +79,8 @@ public class ItemMapper extends MapperBase<Object, Val[], String, Item> {
                 }
 
                 if (compiledField.getCompiledFilter() != null || compiledField.getGroupDepth() == depth) {
-                    // If we are filtering then we need to evaluate this field
-                    // now so that we can filter the resultant value.
+                    // If we are filtering then we need to evaluate this field now so that we can filter the resultant
+                    // value.
                     final Object o = generator.eval();
                     if (o != null) {
                         stringValue = o.toString();
@@ -98,8 +96,7 @@ public class ItemMapper extends MapperBase<Object, Val[], String, Item> {
                 }
             }
 
-            // If this field is being grouped at this depth then add the value
-            // to the group key for this depth.
+            // If this field is being grouped at this depth then add the value to the group key for this depth.
             if (compiledField.getGroupDepth() == depth) {
                 if (sb == null) {
                     sb = new StringBuilder();
@@ -126,11 +123,11 @@ public class ItemMapper extends MapperBase<Object, Val[], String, Item> {
             groupKey = sb.toString();
         }
 
-        // If the parent row has child group key sets then add this child group
-        // key to them.
+        // If the parent row has child group key sets then add this child group key to them.
+        final Key childKey = GroupKey.create(groupKey);
         for (final Generator parent : parentGenerators) {
             if (parent != null) {
-                parent.addChildKey(new GroupKey(groupKey));
+                parent.addChildKey(childKey);
             }
         }
 
@@ -146,8 +143,15 @@ public class ItemMapper extends MapperBase<Object, Val[], String, Item> {
     private static final class GroupKey implements Key {
         private final String string;
 
-        public GroupKey(final String string) {
+        private GroupKey(final String string) {
             this.string = string;
+        }
+
+        static Key create(final String string) {
+            if (string == null) {
+                return null;
+            }
+            return new GroupKey(string);
         }
 
         @Override
