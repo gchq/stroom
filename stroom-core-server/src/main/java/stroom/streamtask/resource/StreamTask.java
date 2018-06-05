@@ -1,5 +1,7 @@
 package stroom.streamtask.resource;
 
+import stroom.streamstore.shared.QueryData;
+
 class StreamTask {
 
     // Most important data, probably
@@ -15,7 +17,7 @@ class StreamTask {
     private Integer eventCount;
     private String status;
     private Boolean enabled; //TODO: Updatable?
-    private String filter;
+    private QueryData filter;
 
     // Supporting data
     private Long filterId;
@@ -102,7 +104,7 @@ class StreamTask {
         return filterName;
     }
 
-    public String getFilter() {
+    public QueryData getFilter() {
         return filter;
     }
 
@@ -120,7 +122,7 @@ class StreamTask {
         private Integer eventCount;
         private String status;
         private Boolean enabled; //TODO: Updatable?
-        private String filter;
+        private QueryData filter;
         // Supporting data
         private Long filterId;
         private String createUser;
@@ -197,7 +199,7 @@ class StreamTask {
             return this;
         }
 
-        public StreamTaskBuilder withFilter(String filter) {
+        public StreamTaskBuilder withFilter(QueryData filter) {
             this.filter = filter;
             return this;
         }

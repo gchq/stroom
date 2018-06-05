@@ -213,15 +213,6 @@ public class StreamTaskResource implements HasHealthCheck {
         for (StreamProcessorFilter filter : streamProcessorFilters.getValues()){
             StreamTask.StreamTaskBuilder builder = StreamTask.StreamTaskBuilder.aStreamTask();
 
-            QueryData queryData = filter.getQueryData();
-            String serialisedQueryData;
-            try {
-                serialisedQueryData = mapper.writeValueAsString(queryData);
-            } catch (JsonProcessingException e) {
-                LOGGER.error("Unable to serialise query data for filter with ID {}", filter.getId());
-                serialisedQueryData = "Unable to serialise query data for filter";
-            }
-
             // Indented to make the source easier to read
             builder
                     .withPipelineName(   filter.getStreamProcessor().getPipelineName())
@@ -233,7 +224,7 @@ public class StreamTaskResource implements HasHealthCheck {
                     .withCreatedOn(      filter.getCreateTime())
                     .withUpdateUser(     filter.getUpdateUser())
                     .withUpdatedOn(      filter.getUpdateTime())
-                    .withFilter(         serialisedQueryData);
+                    .withFilter(         filter.getQueryData());
 
             if(filter.getStreamProcessorFilterTracker() != null) {
                 Integer trackerPercent = filter.getStreamProcessorFilterTracker().getTrackerStreamCreatePercentage();
