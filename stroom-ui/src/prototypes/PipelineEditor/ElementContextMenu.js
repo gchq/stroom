@@ -41,6 +41,13 @@ const ElementContextMenu = ({
     onClose={() => closePipelineElementContextMenu(pipelineId)}
   >
     <Dropdown.Menu>
+      <Dropdown item text="Add">
+        <Dropdown.Menu>
+          <Dropdown.Item icon="edit" text="Edit Profile" />
+          <Dropdown.Item icon="globe" text="Choose Language" />
+          <Dropdown.Item icon="settings" text="Account Settings" />
+        </Dropdown.Menu>
+      </Dropdown>
       <Dropdown.Item
         icon="add"
         text="Add"
