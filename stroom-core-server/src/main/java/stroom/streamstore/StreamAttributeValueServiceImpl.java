@@ -77,7 +77,7 @@ class StreamAttributeValueServiceImpl
     @Override
     public void appendCriteria(final List<BaseAdvancedQueryItem> items,
                                final FindStreamAttributeValueCriteria criteria) {
-        CriteriaLoggingUtil.appendEntityIdSet(items, "streamIdSet", criteria.getStreamIdSet());
+        CriteriaLoggingUtil.appendCriteriaSet(items, "streamIdSet", criteria.getStreamIdSet());
         CriteriaLoggingUtil.appendRangeTerm(items, "createPeriod", criteria.getCreatePeriod());
         super.appendCriteria(items, criteria);
     }
@@ -99,7 +99,7 @@ class StreamAttributeValueServiceImpl
 
         @Override
         public void appendBasicCriteria(HqlBuilder sql, String alias, FindStreamAttributeValueCriteria criteria) {
-            sql.appendEntityIdSetQuery(alias + ".streamId", criteria.getStreamIdSet());
+            sql.appendCriteriaSetQuery(alias + ".streamId", criteria.getStreamIdSet());
         }
     }
 }

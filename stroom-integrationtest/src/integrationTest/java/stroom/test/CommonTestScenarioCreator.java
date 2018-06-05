@@ -28,8 +28,8 @@ import stroom.index.shared.IndexFields;
 import stroom.node.NodeCache;
 import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
-import stroom.node.shared.Volume;
-import stroom.node.shared.Volume.VolumeUseStatus;
+import stroom.node.shared.VolumeEntity;
+import stroom.node.shared.VolumeEntity.VolumeUseStatus;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.streamstore.api.StreamProperties;
@@ -38,7 +38,7 @@ import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.fs.serializable.RawInputSegmentWriter;
 import stroom.streamstore.shared.QueryData;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamtask.StreamProcessorFilterService;
@@ -122,7 +122,7 @@ public class CommonTestScenarioCreator {
         final FindVolumeCriteria findVolumeCriteria = new FindVolumeCriteria();
         findVolumeCriteria.getIndexStatusSet().add(VolumeUseStatus.ACTIVE);
         findVolumeCriteria.getNodeIdSet().add(nodeCache.getDefaultNode());
-        final Set<Volume> volumes = new HashSet<>(volumeService.find(findVolumeCriteria));
+        final Set<VolumeEntity> volumes = new HashSet<>(volumeService.find(findVolumeCriteria));
         indexVolumeService.setVolumesForIndex(indexRef, volumes);
 
         return indexRef;
@@ -138,7 +138,7 @@ public class CommonTestScenarioCreator {
      * @param feed related
      * @return a basic raw file
      */
-    public StreamEntity createSample2LineRawFile(final String feed, final String streamType) {
+    public Stream createSample2LineRawFile(final String feed, final String streamType) {
         final StreamProperties streamProperties = new StreamProperties.Builder()
                 .feedName(feed)
                 .streamTypeName(streamType)
@@ -156,7 +156,7 @@ public class CommonTestScenarioCreator {
         return target.getStream();
     }
 
-    public StreamEntity createSampleBlankProcessedFile(final String feed, final StreamEntity sourceStream) {
+    public Stream createSampleBlankProcessedFile(final String feed, final Stream sourceStream) {
         final StreamProperties streamProperties = new StreamProperties.Builder()
                 .feedName(feed)
                 .streamTypeName(StreamTypeEntity.EVENTS.getName())

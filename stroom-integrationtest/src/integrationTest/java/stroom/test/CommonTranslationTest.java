@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.node.NodeCache;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
-import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.meta.StreamMetaService;
 import stroom.streamstore.tools.StoreCreationTool;
 import stroom.streamtask.StreamProcessorTask;
 import stroom.streamtask.StreamProcessorTaskExecutor;
@@ -76,19 +76,19 @@ public class CommonTranslationTest {
     private final StreamTaskCreator streamTaskCreator;
     private final StoreCreationTool storeCreationTool;
     private final TaskManager taskManager;
-    private final StreamStore streamStore;
+    private final StreamMetaService streamMetaService;
 
     @Inject
     CommonTranslationTest(final NodeCache nodeCache,
                           final StreamTaskCreator streamTaskCreator,
                           final StoreCreationTool storeCreationTool,
                           final TaskManager taskManager,
-                          final StreamStore streamStore) {
+                          final StreamMetaService streamMetaService) {
         this.nodeCache = nodeCache;
         this.streamTaskCreator = streamTaskCreator;
         this.storeCreationTool = storeCreationTool;
         this.taskManager = taskManager;
-        this.streamStore = streamStore;
+        this.streamMetaService = streamMetaService;
     }
 
     public List<StreamProcessorTaskExecutor> processAll() {
@@ -109,23 +109,23 @@ public class CommonTranslationTest {
         return results;
     }
 
-    public void setup() throws IOException {
+    public void setup() {
         setup(FEED_NAME, Collections.singletonList(VALID_RESOURCE_NAME));
     }
 
-    public void setup(final Path dataLocation) throws IOException {
+    public void setup(final Path dataLocation) {
         setup(FEED_NAME, Collections.singletonList(dataLocation));
     }
 
-    public void setup(final List<Path> dataLocations) throws IOException {
+    public void setup(final List<Path> dataLocations) {
         setup(FEED_NAME, dataLocations);
     }
 
-    public void setup(final String feedName, final Path dataLocation) throws IOException {
+    public void setup(final String feedName, final Path dataLocation) {
         setup(feedName, Collections.singletonList(dataLocation));
     }
 
-    public void setup(final String feedName, final List<Path> dataLocations) throws IOException {
+    public void setup(final String feedName, final List<Path> dataLocations) {
         // commonTestControl.setup();
 
         // Setup the feed definitions.
@@ -153,6 +153,6 @@ public class CommonTranslationTest {
             }
         });
 
-        Assert.assertEquals(0, streamStore.getLockCount());
+        Assert.assertEquals(0, streamMetaService.getLockCount());
     }
 }

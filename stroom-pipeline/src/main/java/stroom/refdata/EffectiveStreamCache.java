@@ -26,7 +26,7 @@ import stroom.entity.shared.Period;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.security.Security;
 import stroom.streamstore.EffectiveMetaDataCriteria;
-import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.meta.StreamMetaService;
 import stroom.streamstore.shared.Stream;
 import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheUtil;
@@ -46,26 +46,26 @@ public class EffectiveStreamCache implements Clearable {
     private static final int MAX_CACHE_ENTRIES = 1000;
 
     private final LoadingCache<EffectiveStreamKey, NavigableSet> cache;
-    private final StreamStore streamStore;
+    private final StreamMetaService streamMetaService;
     private final EffectiveStreamInternPool internPool;
     private final Security security;
 
     @Inject
     EffectiveStreamCache(final CacheManager cacheManager,
-                         final StreamStore streamStore,
+                         final StreamMetaService streamMetaService,
                          final EffectiveStreamInternPool internPool,
                          final Security security) {
-        this(cacheManager, streamStore, internPool, security, 10, TimeUnit.MINUTES);
+        this(cacheManager, streamMetaService, internPool, security, 10, TimeUnit.MINUTES);
     }
 
     @SuppressWarnings("unchecked")
     EffectiveStreamCache(final CacheManager cacheManager,
-                         final StreamStore streamStore,
+                         final StreamMetaService streamMetaService,
                          final EffectiveStreamInternPool internPool,
                          final Security security,
                          final long duration,
                          final TimeUnit unit) {
-        this.streamStore = streamStore;
+        this.streamMetaService = streamMetaService;
         this.internPool = internPool;
         this.security = security;
 
@@ -108,7 +108,7 @@ public class EffectiveStreamCache implements Clearable {
                 criteria.setEffectivePeriod(window);
 
                 // Locate all streams that fit the supplied criteria.
-                final List<Stream> streams = streamStore.findEffectiveStream(criteria);
+                final List<Stream> streams = streamMetaService.findEffectiveStream(criteria);
 
                 // Add all streams that we have found to the effective stream set.
                 if (streams != null && streams.size() > 0) {

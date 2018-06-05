@@ -20,7 +20,7 @@ import com.google.common.base.Strings;
 import org.apache.commons.lang.mutable.MutableInt;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.feed.MetaMap;
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 import stroom.streamstore.fs.StreamTypePaths;
 import stroom.streamstore.shared.FeedEntity;
 import stroom.streamstore.shared.StreamAttributeConstants;
@@ -145,7 +145,7 @@ public class StreamRestoreTool extends DatabaseTool {
     private Map<String, Long> getPathVolumeMap() throws SQLException {
         if (pathVolumeMap == null) {
             pathVolumeMap = new HashMap<>();
-            final String sql = "select " + Volume.PATH + "," + Volume.ID + " from " + Volume.TABLE_NAME;
+            final String sql = "select " + VolumeEntity.PATH + "," + VolumeEntity.ID + " from " + VolumeEntity.TABLE_NAME;
             try (final Connection connection = getConnection()) {
                 try (final Statement statement = connection.createStatement()) {
                     try (final ResultSet resultSet = statement.executeQuery(sql)) {

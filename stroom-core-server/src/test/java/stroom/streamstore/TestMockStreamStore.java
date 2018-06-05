@@ -24,7 +24,7 @@ import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
@@ -41,7 +41,8 @@ import java.io.IOException;
 public class TestMockStreamStore extends StroomUnitTest {
     @Test
     public void testExample() throws IOException {
-        final MockStreamStore mockStreamStore = new MockStreamStore();
+        final MockStreamMetaService mockStreamMetaService = new MockStreamMetaService();
+        final MockStreamStore mockStreamStore = new MockStreamStore(mockStreamMetaService);
 
         mockStreamStore.clear();
 
@@ -51,18 +52,18 @@ public class TestMockStreamStore extends StroomUnitTest {
                 .build();
 
         final StreamTarget streamTarget = mockStreamStore.openStreamTarget(streamProperties);
-        final StreamEntity stream = streamTarget.getStream();
+        final Stream stream = streamTarget.getStream();
         streamTarget.getOutputStream().write("PARENT".getBytes(StreamUtil.DEFAULT_CHARSET));
         streamTarget.addChildStream(StreamTypeNames.SEGMENT_INDEX).getOutputStream()
                 .write("CHILD".getBytes(StreamUtil.DEFAULT_CHARSET));
 
-        Assert.assertEquals(0, mockStreamStore.find(FindStreamCriteria.createWithStream(stream)).size());
+        Assert.assertEquals(0, mockStreamMetaService.find(FindStreamCriteria.createWithStream(stream)).size());
 
         mockStreamStore.closeStreamTarget(streamTarget);
 
-        Assert.assertEquals(1, mockStreamStore.find(FindStreamCriteria.createWithStream(stream)).size());
+        Assert.assertEquals(1, mockStreamMetaService.find(FindStreamCriteria.createWithStream(stream)).size());
 
-        final StreamEntity reload = mockStreamStore.find(FindStreamCriteria.createWithStream(stream)).get(0);
+        final Stream reload = mockStreamMetaService.find(FindStreamCriteria.createWithStream(stream)).get(0);
 
         final StreamSource streamSource = mockStreamStore.openStreamSource(reload.getId());
 

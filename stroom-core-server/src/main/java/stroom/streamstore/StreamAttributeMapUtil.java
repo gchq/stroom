@@ -2,11 +2,9 @@ package stroom.streamstore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.streamstore.shared.FeedEntity;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamtask.shared.StreamProcessor;
 import stroom.util.date.DateUtil;
 
 import java.util.HashMap;
@@ -25,7 +23,7 @@ class StreamAttributeMapUtil {
     static Map<String, Object> createAttributeMap(final StreamAttributeMap streamAttributeMap) {
         final Map<String, Object> attributeMap = new HashMap<>();
 
-        final StreamEntity stream = streamAttributeMap.getStream();
+        final Stream stream = streamAttributeMap.getStream();
         if (stream != null) {
             attributeMap.put(StreamDataSource.STREAM_ID, stream.getId());
             attributeMap.put(StreamDataSource.CREATE_TIME, stream.getCreateMs());
@@ -42,13 +40,14 @@ class StreamAttributeMapUtil {
             if (feedName != null) {
                 attributeMap.put(StreamDataSource.FEED, feedName);
             }
-            final StreamProcessor streamProcessor = stream.getStreamProcessor();
-            if (streamProcessor != null) {
-                final String pipelineUuid = streamProcessor.getPipelineUuid();
-                if (pipelineUuid != null) {
-                    attributeMap.put(StreamDataSource.PIPELINE, pipelineUuid);
-                }
-            }
+            final String pipelineName = stream.getPipelineName();
+            attributeMap.put(StreamDataSource.PIPELINE, pipelineName);
+//            if (streamProcessor != null) {
+//                final String pipelineUuid = streamProcessor.getPipelineUuid();
+//                if (pipelineUuid != null) {
+//                    attributeMap.put(StreamDataSource.PIPELINE, pipelineUuid);
+//                }
+//            }
         }
 
         StreamDataSource.getExtendedFields().forEach(field -> {

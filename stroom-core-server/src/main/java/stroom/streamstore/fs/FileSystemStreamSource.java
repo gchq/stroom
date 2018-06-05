@@ -21,9 +21,8 @@ import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
 import stroom.io.StreamCloser;
 import stroom.streamstore.api.StreamSource;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamStatus;
-import stroom.streamstore.shared.StreamVolume;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,25 +35,29 @@ import java.nio.file.Path;
 public final class FileSystemStreamSource implements StreamSource {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamSource.class);
     private final StreamCloser streamCloser = new StreamCloser();
-    private StreamEntity stream;
-    private StreamVolume volume;
+    private Stream stream;
+    private String rootPath;
     private String streamType;
     private MetaMap attributeMap;
     private InputStream inputStream;
     private Path file;
     private FileSystemStreamSource parent;
 
-    private FileSystemStreamSource(final StreamEntity stream, final StreamVolume volume, final String streamType) {
+    private FileSystemStreamSource(final Stream stream,
+                                   final String rootPath,
+                                   final String streamType) {
         this.stream = stream;
-        this.volume = volume;
+        this.rootPath = rootPath;
         this.streamType = streamType;
 
         validate();
     }
 
-    private FileSystemStreamSource(final FileSystemStreamSource parent, final String streamType, final Path file) {
+    private FileSystemStreamSource(final FileSystemStreamSource parent,
+                                   final String streamType,
+                                   final Path file) {
         this.stream = parent.stream;
-        this.volume = parent.volume;
+        this.rootPath = parent.rootPath;
         this.parent = parent;
         this.streamType = streamType;
         this.file = file;
@@ -67,9 +70,10 @@ public final class FileSystemStreamSource implements StreamSource {
      * @return A new file system stream source or null if a file cannot be
      * created.
      */
-    public static FileSystemStreamSource create(final StreamEntity stream, final StreamVolume volume,
+    public static FileSystemStreamSource create(final Stream stream,
+                                                final String rootPath,
                                                 final String streamType) {
-        return new FileSystemStreamSource(stream, volume, streamType);
+        return new FileSystemStreamSource(stream, rootPath, streamType);
     }
 
     private void validate() {
@@ -86,7 +90,7 @@ public final class FileSystemStreamSource implements StreamSource {
     public Path getFile() {
         if (file == null) {
             if (parent == null) {
-                file = FileSystemStreamTypeUtil.createRootStreamFile(volume.getVolume(), stream, getStreamTypeName());
+                file = FileSystemStreamTypeUtil.createRootStreamFile(rootPath, stream, getStreamTypeName());
             } else {
                 file = FileSystemStreamTypeUtil.createChildStreamFile(parent.getFile(), getStreamTypeName());
             }
@@ -114,11 +118,11 @@ public final class FileSystemStreamSource implements StreamSource {
     }
 
     @Override
-    public StreamEntity getStream() {
+    public Stream getStream() {
         return stream;
     }
 
-    public void setStream(final StreamEntity stream) {
+    public void setStream(final Stream stream) {
         this.stream = stream;
     }
 

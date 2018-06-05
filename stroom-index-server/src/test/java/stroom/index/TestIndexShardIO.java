@@ -28,7 +28,7 @@ import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 import stroom.search.shard.IndexShardSearcher;
 import stroom.search.shard.IndexShardSearcherImpl;
 import stroom.util.io.FileUtil;
@@ -76,7 +76,7 @@ public class TestIndexShardIO extends StroomUnitTest {
 
     @Test
     public void testOpenCloseManyWrite() throws IOException {
-        final Volume volume = new Volume();
+        final VolumeEntity volume = new VolumeEntity();
         volume.setPath(FileUtil.getCanonicalPath(getCurrentTestDir()));
         final IndexDoc index = new IndexDoc();
         index.setName("Test");
@@ -109,7 +109,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         final IndexDoc index = new IndexDoc();
         index.setName("Test");
 
-        final Volume volume = new Volume();
+        final VolumeEntity volume = new VolumeEntity();
         volume.setPath(FileUtil.getCanonicalPath(getCurrentTestDir()));
         final IndexShard idx1 = new IndexShard();
         idx1.setIndexUuid(index.getUuid());
@@ -286,7 +286,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         final IndexDoc index = new IndexDoc();
         index.setName("Test");
 
-        final Volume volume = new Volume();
+        final VolumeEntity volume = new VolumeEntity();
         volume.setPath(FileUtil.getCanonicalPath(getCurrentTestDir()));
         final IndexShard idx1 = new IndexShard();
         idx1.setIndexUuid(index.getUuid());
@@ -317,7 +317,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         final IndexDoc index = new IndexDoc();
         index.setName("Test");
 
-        final Volume volume = new Volume();
+        final VolumeEntity volume = new VolumeEntity();
         volume.setPath(FileUtil.getCanonicalPath(getCurrentTestDir()));
         final IndexShard idx1 = new IndexShard();
         idx1.setIndexUuid(index.getUuid());
@@ -348,7 +348,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         final IndexDoc index = new IndexDoc();
         index.setName("Test");
 
-        final Volume volume = new Volume();
+        final VolumeEntity volume = new VolumeEntity();
         final Path testDir = getCurrentTestDir();
         volume.setPath(FileUtil.getCanonicalPath(testDir));
         FileUtil.deleteDir(testDir);

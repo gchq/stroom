@@ -22,7 +22,8 @@ import org.junit.Test;
 import stroom.entity.shared.Period;
 import stroom.feed.shared.FeedDoc;
 import stroom.node.shared.Node;
-import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.meta.StreamMetaService;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
@@ -44,20 +45,20 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
     @Inject
     private StreamTaskService streamTaskService;
     @Inject
-    private StreamStore streamStore;
+    private StreamMetaService streamMetaService;
     @Inject
     private StreamTaskCreator streamTaskCreator;
 
     @Test
     public void testSaveAndGetAll() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        final StreamEntity file1 = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeEntity.RAW_EVENTS.getName());
-        final StreamEntity file2 = commonTestScenarioCreator.createSampleBlankProcessedFile(feedName, file1);
-        final StreamEntity file3 = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeEntity.RAW_EVENTS.getName());
+        final Stream file1 = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeEntity.RAW_EVENTS.getName());
+        final Stream file2 = commonTestScenarioCreator.createSampleBlankProcessedFile(feedName, file1);
+        final Stream file3 = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeEntity.RAW_EVENTS.getName());
 
         commonTestScenarioCreator.createBasicTranslateStreamProcessor(feedName);
 
-        Assert.assertEquals("checking we can delete stand alone files", 1, streamStore.deleteStream(file3.getId()).intValue());
+        Assert.assertEquals("checking we can delete stand alone files", 1, streamMetaService.deleteStream(file3.getId()).intValue());
 
         // Create all required tasks.
         createTasks();
@@ -83,8 +84,8 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
                         Instant.ofEpochMilli(criteria.getCreatePeriod().getTo()).atZone(ZoneOffset.UTC).plusYears(100).toInstant().toEpochMilli()));
         Assert.assertEquals(0, streamTaskService.find(criteria).size());
 
-        Assert.assertNotNull(streamStore.loadStreamById(file1.getId()));
-        Assert.assertNotNull(streamStore.loadStreamById(file2.getId()));
+        Assert.assertNotNull(streamMetaService.getStream(file1.getId()));
+        Assert.assertNotNull(streamMetaService.getStream(file2.getId()));
 
         criteria = new FindStreamTaskCriteria();
         Assert.assertNotNull(streamTaskService.findSummary(criteria));

@@ -23,9 +23,9 @@ import stroom.node.shared.ClientProperties;
 import stroom.node.shared.ClientPropertiesService;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.FindVolumeCriteria;
-import stroom.node.shared.Volume;
-import stroom.node.shared.Volume.VolumeType;
-import stroom.node.shared.Volume.VolumeUseStatus;
+import stroom.node.shared.VolumeEntity;
+import stroom.node.shared.VolumeEntity.VolumeType;
+import stroom.node.shared.VolumeEntity.VolumeUseStatus;
 import stroom.node.shared.VolumeState;
 import stroom.security.Security;
 
@@ -144,8 +144,8 @@ public class StatusServlet extends HttpServlet {
         try {
             final FindVolumeCriteria criteria = new FindVolumeCriteria();
             boolean oneOKVolume = false;
-            final List<Volume> volumeList = volumeService.find(criteria);
-            for (final Volume volume : volumeList) {
+            final List<VolumeEntity> volumeList = volumeService.find(criteria);
+            for (final VolumeEntity volume : volumeList) {
                 final VolumeState state = volume.getVolumeState();
                 if (state.getPercentUsed() == null) {
                     writeErrorLine(pw, AREA_VOLUME,

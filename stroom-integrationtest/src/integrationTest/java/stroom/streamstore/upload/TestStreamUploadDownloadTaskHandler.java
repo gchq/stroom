@@ -31,9 +31,10 @@ import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.fs.serializable.NestedStreamTarget;
+import stroom.streamstore.meta.StreamMetaService;
 import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.task.TaskManager;
@@ -54,6 +55,8 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
     @Inject
     private StreamStore streamStore;
     @Inject
+    private StreamMetaService streamMetaService;
+    @Inject
     private StreamAttributeValueFlush streamAttributeValueFlush;
     @Inject
     private TaskManager taskManager;
@@ -69,11 +72,11 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
         findStreamCriteria.setExpression(ExpressionUtil.createFeedExpression(feedName));
         final StreamDownloadSettings streamDownloadSettings = new StreamDownloadSettings();
 
-        Assert.assertEquals(2, streamStore.find(findStreamCriteria).size());
+        Assert.assertEquals(2, streamMetaService.find(findStreamCriteria).size());
 
         taskManager.exec(new StreamDownloadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, findStreamCriteria, file, streamDownloadSettings));
 
-        Assert.assertEquals(2, streamStore.find(findStreamCriteria).size());
+        Assert.assertEquals(2, streamMetaService.find(findStreamCriteria).size());
 
         final StroomZipFile stroomZipFile = new StroomZipFile(file);
         Assert.assertTrue(stroomZipFile.containsEntry("001", StroomZipFileType.Manifest));
@@ -85,7 +88,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
         taskManager.exec(new StreamUploadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, "test.zip", file, feedName,
                 StreamTypeEntity.RAW_EVENTS.getName(), null, null));
 
-        Assert.assertEquals(4, streamStore.find(findStreamCriteria).size());
+        Assert.assertEquals(4, streamMetaService.find(findStreamCriteria).size());
     }
 
     @Test
@@ -100,7 +103,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
         taskManager.exec(new StreamUploadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, "test.dat", file, feedName,
                 StreamTypeEntity.RAW_EVENTS.getName(), null, "Tom:One\nJames:Two\n"));
 
-        Assert.assertEquals(1, streamStore.find(findStreamCriteria).size());
+        Assert.assertEquals(1, streamMetaService.find(findStreamCriteria).size());
     }
 
     @Test
@@ -148,7 +151,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
         findStreamCriteria.setExpression(ExpressionUtil.createFeedExpression(feedName));
         final StreamDownloadSettings streamDownloadSettings = new StreamDownloadSettings();
 
-        Assert.assertEquals(1, streamStore.find(findStreamCriteria).size());
+        Assert.assertEquals(1, streamMetaService.find(findStreamCriteria).size());
 
         taskManager.exec(new StreamDownloadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, findStreamCriteria, file, streamDownloadSettings));
 
@@ -167,15 +170,15 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
         taskManager.exec(new StreamUploadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, "test.zip", file, feedName,
                 StreamTypeEntity.RAW_EVENTS.getName(), null, extraMeta));
 
-        final List<StreamEntity> streamList = streamStore.find(findStreamCriteria);
+        final List<Stream> streamList = streamMetaService.find(findStreamCriteria);
 
         Assert.assertEquals(2, streamList.size());
 
-        final StreamEntity originalStream = streamTarget.getStream();
+        final Stream originalStream = streamTarget.getStream();
 
         streamAttributeValueFlush.flush();
 
-        for (final StreamEntity stream : streamList) {
+        for (final Stream stream : streamList) {
             Assert.assertEquals(StreamStatus.UNLOCKED, stream.getStatus());
             final StreamSource streamSource = streamStore.openStreamSource(stream.getId());
 

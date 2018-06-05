@@ -65,10 +65,11 @@ import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.fs.serializable.RASegmentInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
+import stroom.streamstore.meta.StreamMetaService;
 import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamtask.InclusiveRanges;
@@ -105,6 +106,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
 
     private final PipelineFactory pipelineFactory;
     private final StreamStore streamStore;
+    private final StreamMetaService streamMetaService;
     private final PipelineStore pipelineStore;
     private final TaskContext taskContext;
     private final PipelineHolder pipelineHolder;
@@ -134,6 +136,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     @Inject
     PipelineStreamProcessor(final PipelineFactory pipelineFactory,
                             final StreamStore streamStore,
+                            final StreamMetaService streamMetaService,
                             @Named("cachedPipelineStore") final PipelineStore pipelineStore,
                             final TaskContext taskContext,
                             final PipelineHolder pipelineHolder,
@@ -156,6 +159,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                             final InternalStatisticsReceiver internalStatisticsReceiver) {
         this.pipelineFactory = pipelineFactory;
         this.streamStore = streamStore;
+        this.streamMetaService = streamMetaService;
         this.pipelineStore = pipelineStore;
         this.taskContext = taskContext;
         this.pipelineHolder = pipelineHolder;
@@ -212,7 +216,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         PipelineDoc pipelineDoc = null;
 
         try {
-            final StreamEntity stream = streamSource.getStream();
+            final Stream stream = streamSource.getStream();
 
             // Set the search id to be the id of the stream processor filter.
             // Only do this where the task has specific data ranges that need extracting as this is only the case with a batch search.
@@ -306,13 +310,13 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                 .addTerm(StreamDataSource.STREAM_PROCESSOR_ID, Condition.EQUALS, String.valueOf(streamProcessor.getId()))
                 .build();
         final FindStreamCriteria findStreamCriteria = new FindStreamCriteria(expression);
-        final List<StreamEntity> streamList = streamStore.find(findStreamCriteria);
+        final List<Stream> streamList = streamMetaService.find(findStreamCriteria);
 
         Long latestStreamTaskId = null;
         long latestStreamCreationTime = processStartTime;
 
         // Find the latest stream task .... this one is not superseded
-        for (final StreamEntity stream : streamList) {
+        for (final Stream stream : streamList) {
             if (stream.getStreamTaskId() != null && !StreamStatus.DELETED.equals(stream.getStatus())) {
                 if (stream.getCreateMs() > latestStreamCreationTime) {
                     latestStreamCreationTime = stream.getCreateMs();
@@ -333,7 +337,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
 
         // Loop around all the streams found above looking for ones to delete
         final FindStreamCriteria findDeleteStreamCriteria = new FindStreamCriteria();
-        for (final StreamEntity stream : streamList) {
+        for (final Stream stream : streamList) {
             // If the stream is not associated with the latest stream task
             // and is not already deleted then select it for deletion.
             if ((latestStreamTaskId == null || !latestStreamTaskId.equals(stream.getStreamTaskId()))
@@ -343,7 +347,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         }
         // If we have found any to delete then delete them now.
         if (findDeleteStreamCriteria.obtainSelectedIdSet().isConstrained()) {
-            final long deleteCount = streamStore.findDelete(findDeleteStreamCriteria);
+            final long deleteCount = streamMetaService.findDelete(findDeleteStreamCriteria);
             LOGGER.info("checkSuperseded() - Removed {}", deleteCount);
         }
     }
@@ -388,7 +392,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
      * Processes a source and writes the result to a target.
      */
     private void processNestedStreams(final Pipeline pipeline,
-                                      final StreamEntity stream,
+                                      final Stream stream,
                                       final StreamSource streamSource,
                                       final String feedName,
                                       final String streamTypeName) {
@@ -575,7 +579,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         private final StreamStore streamStore;
         private final StreamCloser streamCloser;
         private final MetaData metaData;
-        private final StreamEntity stream;
+        private final Stream stream;
         private final StreamProcessor streamProcessor;
         private final StreamTask streamTask;
 
@@ -583,7 +587,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         private StreamTarget processInfoStreamTarget;
 
         ProcessInfoOutputStreamProvider(final StreamStore streamStore, final StreamCloser streamCloser,
-                                        final MetaData metaData, final StreamEntity stream, final StreamProcessor streamProcessor,
+                                        final MetaData metaData, final Stream stream, final StreamProcessor streamProcessor,
                                         final StreamTask streamTask) {
             this.streamStore = streamStore;
             this.streamCloser = streamCloser;

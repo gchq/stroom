@@ -9,20 +9,26 @@ import java.util.Map;
 public class StreamTypePaths {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamTypePaths.class);
     private static final Map<String, String> PATH_MAP = new HashMap<>();
+    private static final Map<String, String> TYPE_MAP = new HashMap<>();
 
     static {
-        PATH_MAP.put("Manifest", "MANIFEST");
-        PATH_MAP.put("Raw Events", "RAW_EVENTS");
-        PATH_MAP.put("Raw Reference", "RAW_REFERENCE");
-        PATH_MAP.put("Events", "EVENTS");
-        PATH_MAP.put("Reference", "REFERENCE");
-        PATH_MAP.put("Test Events", "TEST_EVENTS");
-        PATH_MAP.put("Test Reference", "TEST_REFERENCE");
-        PATH_MAP.put("Segment Index", "SEGMENT_INDEX");
-        PATH_MAP.put("Boundary Index", "BOUNDARY_INDEX");
-        PATH_MAP.put("Meta Data", "META");
-        PATH_MAP.put("Error", "ERROR");
-        PATH_MAP.put("Context", "CONTEXT");
+        put("Manifest", "MANIFEST");
+        put("Raw Events", "RAW_EVENTS");
+        put("Raw Reference", "RAW_REFERENCE");
+        put("Events", "EVENTS");
+        put("Reference", "REFERENCE");
+        put("Test Events", "TEST_EVENTS");
+        put("Test Reference", "TEST_REFERENCE");
+        put("Segment Index", "SEGMENT_INDEX");
+        put("Boundary Index", "BOUNDARY_INDEX");
+        put("Meta Data", "META");
+        put("Error", "ERROR");
+        put("Context", "CONTEXT");
+    }
+
+    private static void put(final String name, final String path) {
+        PATH_MAP.put(name, path);
+        TYPE_MAP.put(path, name);
     }
 
     public static String getPath(final String streamType) {
@@ -32,5 +38,13 @@ public class StreamTypePaths {
             path = "OTHER";
         }
         return path;
+    }
+
+    public static String getType(final String path) {
+        String type = TYPE_MAP.get(path);
+        if (type == null) {
+            LOGGER.error("Unknown stream type for path '"  + path + "'");
+        }
+        return type;
     }
 }

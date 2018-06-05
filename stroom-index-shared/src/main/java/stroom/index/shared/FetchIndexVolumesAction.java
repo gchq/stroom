@@ -17,11 +17,11 @@
 package stroom.index.shared;
 
 import stroom.entity.shared.Action;
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 import stroom.docref.DocRef;
 import stroom.util.shared.SharedList;
 
-public class FetchIndexVolumesAction extends Action<SharedList<Volume>> {
+public class FetchIndexVolumesAction extends Action<SharedList<VolumeEntity>> {
     private static final long serialVersionUID = -6668626615097471925L;
 
     private DocRef indexRef;

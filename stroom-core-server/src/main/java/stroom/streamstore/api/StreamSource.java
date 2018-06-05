@@ -17,6 +17,7 @@
 package stroom.streamstore.api;
 
 import stroom.feed.MetaMap;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamEntity;
 
 import java.io.Closeable;
@@ -38,7 +39,7 @@ public interface StreamSource extends Closeable {
     /**
      * @return the stream associated with this source
      */
-    StreamEntity getStream();
+    Stream getStream();
 
     /**
      * @return the real IO input stream

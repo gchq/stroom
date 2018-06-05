@@ -34,8 +34,8 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
-import stroom.node.shared.Volume;
-import stroom.node.shared.Volume.VolumeType;
+import stroom.node.shared.VolumeEntity;
+import stroom.node.shared.VolumeEntity.VolumeType;
 import stroom.util.concurrent.SimpleExecutor;
 import stroom.util.io.FileUtil;
 import stroom.util.test.StroomUnitTest;
@@ -121,7 +121,7 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
                 indexShard.setNode(node);
                 indexShard.setId(indexShardId.incrementAndGet());
                 indexShard.setVolume(
-                        Volume.create(defaultNode, FileUtil.getCanonicalPath(getCurrentTestDir()), VolumeType.PUBLIC));
+                        VolumeEntity.create(defaultNode, FileUtil.getCanonicalPath(getCurrentTestDir()), VolumeType.PUBLIC));
                 indexShard.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
                 FileUtil.deleteContents(IndexShardUtil.getIndexPath(indexShard));
                 return indexShard;

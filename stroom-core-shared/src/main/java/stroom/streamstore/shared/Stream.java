@@ -24,9 +24,15 @@ public interface Stream extends SharedObject {
 
     String getFeedName();
 
+    // TODO : @66 WE REALLY SHOULDN'T USE FEED ID AS PART OF THE FILE PATH AS THE FEED ID SHOULD REMAIN INTERNAL TO THE STREAM META STORAGE. AT SOME POINT WE OUGHT TO MIGRATE TO FEED NAME.
+    @Deprecated
+    Long getLegacyFeedId();
+
     String getStreamTypeName();
 
     String getPipelineName();
+
+    String getPipelineUuid();
 
     Long getParentStreamId();
 

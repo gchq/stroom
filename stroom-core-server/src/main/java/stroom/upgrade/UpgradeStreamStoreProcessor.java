@@ -22,11 +22,10 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.util.ConnectionUtil;
 import stroom.entity.util.PreparedStatementUtil;
 import stroom.feed.MetaMap;
-import stroom.streamstore.StreamAttributeMapService;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.streamtask.shared.StreamProcessor;
@@ -54,15 +53,12 @@ class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor {
     private static ReentrantLock lock = new ReentrantLock();
 
     private final StreamStore streamStore;
-    private final StreamAttributeMapService streamAttributeMapService;
     private final DataSource dataSource;
 
     @Inject
     UpgradeStreamStoreProcessor(final StreamStore streamStore,
-                                final StreamAttributeMapService streamAttributeMapService,
                                 final DataSource dataSource) {
         this.streamStore = streamStore;
-        this.streamAttributeMapService = streamAttributeMapService;
         this.dataSource = dataSource;
     }
 
@@ -184,7 +180,7 @@ class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor {
     @Override
     public void exec(final StreamProcessor streamProcessor, final StreamProcessorFilter streamProcessorFilter,
                      final StreamTask streamTask, final StreamSource streamSource) {
-        final StreamEntity stream = streamSource.getStream();
+        final Stream stream = streamSource.getStream();
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         final String streamTime = DateUtil.createNormalDateTimeString(stream.getCreateMs());
         LOGGER.info("exec() - Processing stream {} {} - Start", stream, streamTime);
@@ -223,7 +219,7 @@ class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor {
             LOGGER.warn("exec() - No attributes added for stream {}", stream);
         }
 
-        LOGGER.info("exec() - Processing stream {} {} - Finished in {} added {} attributes", new Object[]{stream, streamTime,
-                logExecutionTime, metaMap.size()});
+        LOGGER.info("exec() - Processing stream {} {} - Finished in {} added {} attributes", stream, streamTime,
+                logExecutionTime, metaMap.size());
     }
 }

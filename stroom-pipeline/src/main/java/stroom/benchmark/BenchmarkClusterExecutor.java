@@ -34,13 +34,13 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.statistics.sql.StatisticEvent;
 import stroom.statistics.sql.StatisticTag;
 import stroom.statistics.sql.Statistics;
-import stroom.streamstore.FeedEntityService;
 import stroom.streamstore.StreamAttributeMapService;
 import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.meta.StreamMetaService;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.QueryData;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamDataSource;
@@ -84,13 +84,12 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     private static final String BENCHMARK_REFERENCE = "BENCHMARK-REFERENCE";
     private static final String BENCHMARK_EVENTS = "BENCHMARK-EVENTS";
 
-    private final FeedEntityService feedService;
     private final PipelineStore pipelineStore;
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final StreamProcessorService streamProcessorService;
     private final ClusterDispatchAsyncHelper dispatchHelper;
     private final StreamAttributeMapService streamAttributeMapService;
-    private final StreamStore streamStore;
+    private final StreamMetaService streamMetaService;
     private final JobManager jobManager;
     private final NodeService nodeService;
     private final TaskContext taskContext;
@@ -106,26 +105,26 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     private Task<?> task;
 
     @Inject
-    BenchmarkClusterExecutor(final FeedEntityService feedService,
+    BenchmarkClusterExecutor(final StreamStore streamStore,
+                             final StreamMetaService streamMetaService,
+                             final TaskContext taskContext,
                              final PipelineStore pipelineStore,
                              final StreamProcessorFilterService streamProcessorFilterService,
                              final StreamProcessorService streamProcessorService,
                              final ClusterDispatchAsyncHelper dispatchHelper,
                              final StreamAttributeMapService streamAttributeMapService,
-                             final StreamStore streamStore,
                              final JobManager jobManager,
                              final NodeService nodeService,
-                             final TaskContext taskContext,
                              final TaskManager taskManager,
                              final Statistics statistics,
                              final BenchmarkClusterConfig benchmarkClusterConfig) {
-        this.feedService = feedService;
+        super(streamStore, streamMetaService, taskContext);
         this.pipelineStore = pipelineStore;
         this.streamProcessorFilterService = streamProcessorFilterService;
         this.streamProcessorService = streamProcessorService;
         this.dispatchHelper = dispatchHelper;
         this.streamAttributeMapService = streamAttributeMapService;
-        this.streamStore = streamStore;
+        this.streamMetaService = streamMetaService;
         this.jobManager = jobManager;
         this.nodeService = nodeService;
         this.taskContext = taskContext;
@@ -277,7 +276,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                 final int count = i;
                 final GenericServerTask writerTask = GenericServerTask.create("WriteBenchmarkData", "Writing benchmark data");
                 writerTask.setRunnable(() -> {
-                    final StreamEntity stream = writeData(feedName, streamTypeName, data);
+                    final Stream stream = writeData(feedName, streamTypeName, data);
 
                     rangeLock.lock();
                     try {
@@ -352,7 +351,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                     Thread.sleep(10000);
 
                     // Find out how many tasks are complete.
-                    final List<StreamEntity> streams = streamStore.find(processedCriteria);
+                    final List<Stream> streams = streamMetaService.find(processedCriteria);
 
                     // Things moved on ?
                     if (streams.size() > completedTaskCount) {
@@ -544,7 +543,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
         if (!duration.isBounded()) {
             return 0;
         }
-        if (duration.duration().longValue() == 0) {
+        if (duration.duration() == 0) {
             return 0;
         }
         try {

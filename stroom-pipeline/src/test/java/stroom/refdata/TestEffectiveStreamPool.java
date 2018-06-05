@@ -22,10 +22,9 @@ import org.junit.runner.RunWith;
 import stroom.security.MockSecurityContext;
 import stroom.security.Security;
 import stroom.streamstore.EffectiveMetaDataCriteria;
-import stroom.streamstore.MockStreamStore;
+import stroom.streamstore.MockStreamMetaService;
 import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.util.cache.CacheManager;
 import stroom.util.date.DateUtil;
@@ -51,14 +50,14 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
     public void testGrowingWindow() {
         final String refFeedName = "TEST_REF";
 
-        final MockStreamStore mockStreamStore = new MockStreamStore() {
+        final InnerStreamMetaService mockStreamStore = new InnerStreamMetaService() {
             @Override
             public List<Stream> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
                 findEffectiveStreamSourceCount++;
                 final ArrayList<Stream> results = new ArrayList<>();
                 long workingDate = criteria.getEffectivePeriod().getFrom();
                 while (workingDate < criteria.getEffectivePeriod().getTo()) {
-                    final StreamEntity stream = createStream(
+                    final Stream stream = createStream(
                             new StreamProperties.Builder()
                                     .feedName(refFeedName)
                                     .streamTypeName(StreamTypeEntity.RAW_REFERENCE.getName())
@@ -124,7 +123,7 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
     public void testExpiry() throws InterruptedException {
         final String refFeedName = "TEST_REF";
 
-        final MockStore mockStore = new MockStore();
+        final InnerStreamMetaService mockStore = new InnerStreamMetaService();
 
         try (CacheManager cacheManager = new CacheManager()) {
             final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(
@@ -192,9 +191,13 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
         return fromMs + APPROX_TEN_DAYS;
     }
 
-    private static class MockStore extends MockStreamStore {
+    private static class InnerStreamMetaService extends MockStreamMetaService {
         private long callCount = 0;
-        private final List<StreamEntity> streams = new ArrayList<>();
+        private final List<Stream> streams = new ArrayList<>();
+
+        InnerStreamMetaService() {
+            super();
+        }
 
         @Override
         public List<Stream> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
@@ -208,7 +211,7 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
         }
 
         void addEffectiveStream(final String feedName, long effectiveTimeMs) {
-            final StreamEntity stream = createStream(
+            final Stream stream = createStream(
                     new StreamProperties.Builder()
                             .feedName(feedName)
                             .streamTypeName(StreamTypeEntity.RAW_REFERENCE.getName())

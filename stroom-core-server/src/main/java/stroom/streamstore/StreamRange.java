@@ -18,6 +18,7 @@ package stroom.streamstore;
 
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
+import stroom.streamstore.fs.StreamTypePaths;
 import stroom.util.date.DateUtil;
 
 /**
@@ -26,7 +27,7 @@ import stroom.util.date.DateUtil;
 public class StreamRange extends Range<Long> {
     private static final long serialVersionUID = -6549930015935794660L;
     private static final long DAY_MS = 1000 * 60 * 60 * 24;
-    private String streamTypePath;
+    private String streamTypeName;
     private Period createPeriod;
     private boolean invalidPath;
 
@@ -34,7 +35,7 @@ public class StreamRange extends Range<Long> {
         final String[] parts = repoPath.split("/");
 
         if (parts.length > 0 && parts[0].length() > 0) {
-            streamTypePath = parts[0];
+            streamTypeName = StreamTypePaths.getType(parts[0]);
         }
         if (parts.length >= 4) {
             try {
@@ -85,8 +86,7 @@ public class StreamRange extends Range<Long> {
         return isBounded();
     }
 
-    public String getStreamTypePath() {
-        return streamTypePath;
+    public String getStreamTypeName() {
+        return streamTypeName;
     }
-
 }

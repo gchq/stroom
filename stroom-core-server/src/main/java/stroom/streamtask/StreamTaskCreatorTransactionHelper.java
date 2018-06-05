@@ -39,10 +39,12 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.OldFindStreamCriteria;
 import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.meta.db.StreamEntityService;
 import stroom.streamstore.shared.FeedEntity;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamtask.InclusiveRanges.InclusiveRange;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
@@ -83,7 +85,7 @@ class StreamTaskCreatorTransactionHelper {
     private final NodeCache nodeCache;
     private final ClusterLockService clusterLockService;
     private final StreamTaskService streamTaskService;
-    private final StreamStore streamStore;
+    private final StreamEntityService streamEntityService;
     private final StroomEntityManager stroomEntityManager;
     private final EntityManagerSupport entityManagerSupport;
 
@@ -91,13 +93,13 @@ class StreamTaskCreatorTransactionHelper {
     StreamTaskCreatorTransactionHelper(final NodeCache nodeCache,
                                        final ClusterLockService clusterLockService,
                                        final StreamTaskService streamTaskService,
-                                       final StreamStore streamStore,
+                                       final StreamEntityService streamEntityService,
                                        final StroomEntityManager stroomEntityManager,
                                        final EntityManagerSupport entityManagerSupport) {
         this.nodeCache = nodeCache;
         this.clusterLockService = clusterLockService;
         this.streamTaskService = streamTaskService;
-        this.streamStore = streamStore;
+        this.streamEntityService = streamEntityService;
         this.stroomEntityManager = stroomEntityManager;
         this.entityManagerSupport = entityManagerSupport;
     }
@@ -134,7 +136,7 @@ class StreamTaskCreatorTransactionHelper {
      * @return streams that have not yet got a stream task for a particular
      * stream processor
      */
-    public List<StreamEntity> runSelectStreamQuery(final OldFindStreamCriteria criteria,
+    public List<Stream> runSelectStreamQuery(final OldFindStreamCriteria criteria,
                                                    final long minStreamId, final int max) {
         // Copy the filter
         final OldFindStreamCriteria findStreamCriteria = new OldFindStreamCriteria();
@@ -146,7 +148,7 @@ class StreamTaskCreatorTransactionHelper {
         findStreamCriteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
         findStreamCriteria.obtainPageRequest().setLength(max);
 
-        return streamStore.find(findStreamCriteria);
+        return streamEntityService.find(findStreamCriteria);
     }
 
     private ExpressionOperator copyExpression(final ExpressionOperator expression) {
@@ -218,7 +220,7 @@ class StreamTaskCreatorTransactionHelper {
     public CreatedTasks createNewTasks(final StreamProcessorFilter filter,
                                        final StreamProcessorFilterTracker tracker,
                                        final long streamQueryTime,
-                                       final Map<StreamEntity, InclusiveRanges> streams,
+                                       final Map<Stream, InclusiveRanges> streams,
                                        final Node thisNode,
                                        final StreamTaskCreatorRecentStreamDetails recentStreamInfo,
                                        final boolean reachedLimit) {
@@ -255,8 +257,8 @@ class StreamTaskCreatorTransactionHelper {
                     final List<List<Object>> allArgs = new ArrayList<>();
 
 
-                    for (final Entry<StreamEntity, InclusiveRanges> entry : streams.entrySet()) {
-                        final StreamEntity stream = entry.getKey();
+                    for (final Entry<Stream, InclusiveRanges> entry : streams.entrySet()) {
+                        final Stream stream = entry.getKey();
                         final InclusiveRanges eventRanges = entry.getValue();
 
                         String eventRangeData = null;
@@ -344,8 +346,7 @@ class StreamTaskCreatorTransactionHelper {
 
                 // Anything created?
                 if (totalTasksCreated > 0) {
-                    LOGGER.debug("processStreamProcessorFilter() - Created {} tasks ({} available) in the range {}",
-                            new Object[]{totalTasksCreated, availableTasksCreated, streamIdRange});
+                    LOGGER.debug("processStreamProcessorFilter() - Created {} tasks ({} available) in the range {}", totalTasksCreated, availableTasksCreated, streamIdRange);
 
                     // If we have never created tasks before or the last poll gave
                     // us no tasks then start to report a new creation range.

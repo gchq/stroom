@@ -38,12 +38,12 @@ import stroom.entity.shared.IdSet;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.ResultList;
 import stroom.feed.shared.FeedDoc;
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeMap;
-import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamtask.shared.StreamProcessor;
@@ -118,10 +118,10 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
                 equalsList = false;
             } else {
                 for (int i = 0; i < oldList.size(); i++) {
-                    final StreamEntity oldStream = oldList.get(i).getStream();
-                    final StreamEntity newStream = newList.get(i).getStream();
+                    final Stream oldStream = oldList.get(i).getStream();
+                    final Stream newStream = newList.get(i).getStream();
 
-                    if (!oldStream.equalsEntityVersion(newStream)) {
+                    if (!oldStream.equals(newStream)) {
                         equalsList = false;
                         break;
                     }
@@ -262,26 +262,26 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
 
             @Override
             protected void showInfo(final StreamAttributeMap row, final int x, final int y) {
-                if (row.getStream().isStub()) {
-                    final StringBuilder html = new StringBuilder();
-                    TooltipUtil.addHeading(html, "Stream");
+                final FindStreamAttributeMapCriteria streamAttributeMapCriteria = new FindStreamAttributeMapCriteria();
+                streamAttributeMapCriteria.setUseCache(false);
+                streamAttributeMapCriteria.obtainFindStreamCriteria().obtainSelectedIdSet().add(row.getStream().getId());
+                populateFetchSet(streamAttributeMapCriteria.getFetchSet(), true);
 
-                    TooltipUtil.addRowData(html, "Deleted Stream Id", row.getStream().getId());
+                dispatcher.exec(
+                        new EntityServiceFindAction<FindStreamAttributeMapCriteria, StreamAttributeMap>(
+                                streamAttributeMapCriteria)).onSuccess(result -> {
+                    if (result == null) {
+                        final StringBuilder html = new StringBuilder();
 
-                    tooltipPresenter.setHTML(html.toString());
-                    final PopupPosition popupPosition = new PopupPosition(x, y);
-                    ShowPopupEvent.fire(AbstractStreamListPresenter.this, tooltipPresenter, PopupType.POPUP,
-                            popupPosition, null);
+                        TooltipUtil.addHeading(html, "Stream");
 
-                } else {
-                    final FindStreamAttributeMapCriteria streamAttributeMapCriteria = new FindStreamAttributeMapCriteria();
-                    streamAttributeMapCriteria.setUseCache(false);
-                    streamAttributeMapCriteria.obtainFindStreamCriteria().obtainSelectedIdSet().add(row.getStream().getId());
-                    populateFetchSet(streamAttributeMapCriteria.getFetchSet(), true);
+                        TooltipUtil.addRowData(html, "Deleted Stream Id", row.getStream().getId());
 
-                    dispatcher.exec(
-                            new EntityServiceFindAction<FindStreamAttributeMapCriteria, StreamAttributeMap>(
-                                    streamAttributeMapCriteria)).onSuccess(result -> {
+                        tooltipPresenter.setHTML(html.toString());
+                        final PopupPosition popupPosition = new PopupPosition(x, y);
+                        ShowPopupEvent.fire(AbstractStreamListPresenter.this, tooltipPresenter, PopupType.POPUP,
+                                popupPosition, null);
+                    } else {
                         final StreamAttributeMap streamAttributeMap = result.get(0);
                         final StringBuilder html = new StringBuilder();
 
@@ -291,8 +291,8 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
                         final PopupPosition popupPosition = new PopupPosition(x, y);
                         ShowPopupEvent.fire(AbstractStreamListPresenter.this, tooltipPresenter, PopupType.POPUP,
                                 popupPosition, null);
-                    });
-                }
+                    }
+                });
             }
         };
         getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
@@ -308,24 +308,14 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         TooltipUtil.addRowData(html, "Parent Stream Id", row.getStream().getParentStreamId());
         StreamTooltipPresenterUtil.addRowDateString(html, "Created", row.getStream().getCreateMs());
         StreamTooltipPresenterUtil.addRowDateString(html, "Effective", row.getStream().getEffectiveMs());
-
-        //if (securityContext.hasAppPermission(StreamType.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
         TooltipUtil.addRowData(html, "Stream Type", row.getStream().getStreamTypeName());
-        //}
-        //if (securityContext.hasAppPermission(Feed.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
         TooltipUtil.addRowData(html, "Feed", row.getStream().getFeedName());
-        //}
-
-        //if (securityContext.hasAppPermission(StreamProcessor.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
-        if (row.getStream().getStreamProcessor() != null) {
+        if (row.getStream().getStreamProcessorId() != null) {
             TooltipUtil.addRowData(html, "Stream Processor Uuid", row.getStream().getStreamProcessorId());
-            if (row.getStream().getStreamProcessor().getPipelineUuid() != null) {
-                //if (securityContext.hasAppPermission(PipelineEntity.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
-                TooltipUtil.addRowData(html, "Stream Processor Pipeline", row.getStream().getPipelineName());
-                //}
-            }
         }
-        //}
+        if (row.getStream().getPipelineName() != null) {
+            TooltipUtil.addRowData(html, "Stream Processor Pipeline", row.getStream().getPipelineName());
+        }
         TooltipUtil.addBreak(html);
         TooltipUtil.addHeading(html, "Attributes");
 
@@ -345,7 +335,6 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
             html.append(e.getMessage());
         }
 
-        // if (securityContext.hasAppPermission(Volume.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
         if (row.getFileNameList() != null) {
             TooltipUtil.addBreak(html);
             TooltipUtil.addHeading(html, "Files");
@@ -353,7 +342,6 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
                 TooltipUtil.addRowData(html, file);
             }
         }
-        // }
 
         TooltipUtil.addBreak(html);
         TooltipUtil.addHeading(html, "Retention");
@@ -415,7 +403,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         getView().addResizableColumn(new Column<StreamAttributeMap, String>(new TextCell()) {
             @Override
             public String getValue(final StreamAttributeMap row) {
-                if (row.getStream().getStreamProcessor() != null) {
+                if (row.getStream().getStreamProcessorId() != null) {
                     if (row.getStream().getPipelineName() != null) {
                         return row.getStream().getPipelineName();
                     } else {
@@ -468,24 +456,13 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
     }
 
     private void populateFetchSet(final Set<String> fetchSet, final boolean forInfo) {
-        // if (securityContext.hasAppPermission(StreamType.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
         fetchSet.add(StreamTypeEntity.ENTITY_TYPE);
-        // }
-        // if (securityContext.hasAppPermission(Feed.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
         fetchSet.add(FeedDoc.DOCUMENT_TYPE);
-        // }
-        // if (securityContext.hasAppPermission(StreamProcessor.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
         fetchSet.add(StreamProcessor.ENTITY_TYPE);
-        // }
-        // if (securityContext.hasAppPermission(PipelineEntity.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
         fetchSet.add(PipelineDoc.DOCUMENT_TYPE);
-        // }
 
         // For info ? load up the files
-        // if (securityContext.hasAppPermission(Volume.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
-        fetchSet.add(Volume.ENTITY_TYPE);
-        //  }
-
+        fetchSet.add(VolumeEntity.ENTITY_TYPE);
     }
 
     public void setCriteria(final FindStreamAttributeMapCriteria criteria) {

@@ -43,7 +43,7 @@ import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.shared.Stream;
 import stroom.streamtask.StreamProcessorService;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
@@ -136,7 +136,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                 // Open the stream source.
                 final StreamSource streamSource = streamStore.openStreamSource(mapStorePoolKey.getStreamId());
                 if (streamSource != null) {
-                    final StreamEntity stream = streamSource.getStream();
+                    final Stream stream = streamSource.getStream();
                     try {
                         // Load the feed.
                         final String feedName = stream.getFeedName();
@@ -177,7 +177,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
     }
 
     private void populateMaps(final Pipeline pipeline,
-                              final StreamEntity stream,
+                              final Stream stream,
                               final StreamSource streamSource,
                               final String feedName,
                               final String streamTypeName,

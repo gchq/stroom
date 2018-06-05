@@ -19,14 +19,13 @@ package stroom.index;
 
 import stroom.entity.MockEntityService;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.DocRefUtil;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.node.shared.Node;
-import stroom.node.shared.Volume;
-import stroom.node.shared.Volume.VolumeType;
+import stroom.node.shared.VolumeEntity;
+import stroom.node.shared.VolumeEntity.VolumeType;
 import stroom.docref.DocRef;
 import stroom.util.io.FileUtil;
 
@@ -41,7 +40,7 @@ public class MockIndexShardService extends MockEntityService<IndexShard, FindInd
     public IndexShard createIndexShard(final IndexShardKey indexShardKey, final Node ownerNode) {
         final IndexShard indexShard = new IndexShard();
         indexShard.setVolume(
-                Volume.create(ownerNode, FileUtil.getCanonicalPath(FileUtil.getTempDir()), VolumeType.PUBLIC));
+                VolumeEntity.create(ownerNode, FileUtil.getCanonicalPath(FileUtil.getTempDir()), VolumeType.PUBLIC));
         indexShard.setIndexUuid(indexShardKey.getIndexUuid());
         indexShard.setPartition(indexShardKey.getPartition());
         indexShard.setPartitionFromTime(indexShardKey.getPartitionFromTime());

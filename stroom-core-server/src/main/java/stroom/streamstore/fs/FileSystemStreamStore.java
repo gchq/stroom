@@ -17,9 +17,6 @@
 package stroom.streamstore.fs;
 
 import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.shared.StreamVolume;
-
-import java.util.Set;
 
 /**
  * <p>
@@ -31,5 +28,5 @@ import java.util.Set;
  * </p>
  */
 public interface FileSystemStreamStore extends StreamStore {
-    Set<StreamVolume> findStreamVolume(Long metaDataId);
+//    Set<StreamVolume> findStreamVolume(Long metaDataId);
 }

@@ -49,7 +49,7 @@ public class StreamStatusId {
                 return StreamStatus.UNLOCKED;
             case 1:
                 return StreamStatus.LOCKED;
-            case 9:
+            case 99:
                 return StreamStatus.DELETED;
             default:
                 throw new RuntimeException("Unknown stream status " + primitiveValue);

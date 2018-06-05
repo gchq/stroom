@@ -36,9 +36,9 @@ import stroom.node.NodeCache;
 import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
-import stroom.node.shared.Volume;
-import stroom.node.shared.Volume.VolumeType;
-import stroom.node.shared.Volume.VolumeUseStatus;
+import stroom.node.shared.VolumeEntity;
+import stroom.node.shared.VolumeEntity.VolumeType;
+import stroom.node.shared.VolumeEntity.VolumeUseStatus;
 import stroom.node.shared.VolumeState;
 import stroom.persist.EntityManagerSupport;
 import stroom.properties.StroomPropertyService;
@@ -77,8 +77,8 @@ import java.util.stream.Stream;
  * Implementation for the volume API.
  */
 @Singleton
-@EntityEventHandler(type = Volume.ENTITY_TYPE, action = {EntityAction.CREATE, EntityAction.DELETE})
-public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolumeCriteria>
+@EntityEventHandler(type = VolumeEntity.ENTITY_TYPE, action = {EntityAction.CREATE, EntityAction.DELETE})
+public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, FindVolumeCriteria>
         implements VolumeService, EntityEvent.Handler, Clearable {
     /**
      * How many permanent copies should we keep?
@@ -126,7 +126,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     private final NodeCache nodeCache;
     private final StroomPropertyService stroomPropertyService;
     private final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider;
-    private final AtomicReference<List<Volume>> currentVolumeState = new AtomicReference<>();
+    private final AtomicReference<List<VolumeEntity>> currentVolumeState = new AtomicReference<>();
 
     @Inject
     VolumeServiceImpl(final StroomEntityManager stroomEntityManager,
@@ -149,7 +149,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     }
 
     @Override
-    public Set<Volume> getStreamVolumeSet(final Node node) {
+    public Set<VolumeEntity> getStreamVolumeSet(final Node node) {
         return security.insecureResult(() -> {
             LocalVolumeUse localVolumeUse = null;
             if (isPreferLocalVolumes()) {
@@ -162,24 +162,24 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     }
 
     @Override
-    public Set<Volume> getIndexVolumeSet(final Node node, final Set<Volume> allowedVolumes) {
+    public Set<VolumeEntity> getIndexVolumeSet(final Node node, final Set<VolumeEntity> allowedVolumes) {
         return security.insecureResult(() -> getVolumeSet(node, null, null, VolumeUseStatus.ACTIVE, LocalVolumeUse.REQUIRED, allowedVolumes, 1));
     }
 
-    private Set<Volume> getVolumeSet(final Node node, final VolumeType volumeType, final VolumeUseStatus streamStatus,
-                                     final VolumeUseStatus indexStatus, final LocalVolumeUse localVolumeUse, final Set<Volume> allowedVolumes,
-                                     final int requiredNumber) {
+    private Set<VolumeEntity> getVolumeSet(final Node node, final VolumeType volumeType, final VolumeUseStatus streamStatus,
+                                           final VolumeUseStatus indexStatus, final LocalVolumeUse localVolumeUse, final Set<VolumeEntity> allowedVolumes,
+                                           final int requiredNumber) {
         final VolumeSelector volumeSelector = getVolumeSelector();
-        final List<Volume> allVolumeList = getCurrentState();
-        final List<Volume> freeVolumes = VolumeListUtil.removeFullVolumes(allVolumeList);
-        Set<Volume> set = Collections.emptySet();
+        final List<VolumeEntity> allVolumeList = getCurrentState();
+        final List<VolumeEntity> freeVolumes = VolumeListUtil.removeFullVolumes(allVolumeList);
+        Set<VolumeEntity> set = Collections.emptySet();
 
-        final List<Volume> filteredVolumeList = getFilteredVolumeList(freeVolumes, node, volumeType, streamStatus,
+        final List<VolumeEntity> filteredVolumeList = getFilteredVolumeList(freeVolumes, node, volumeType, streamStatus,
                 indexStatus, null, allowedVolumes);
         if (filteredVolumeList.size() > 0) {
             // Create a list of local volumes if we are set to prefer or require
             // local.
-            List<Volume> localVolumeList = null;
+            List<VolumeEntity> localVolumeList = null;
             if (localVolumeUse != null) {
                 localVolumeList = getFilteredVolumeList(freeVolumes, node, volumeType, streamStatus, indexStatus,
                         Boolean.TRUE, allowedVolumes);
@@ -201,14 +201,14 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
             } else {
                 set = new HashSet<>();
 
-                final List<Volume> remaining = new ArrayList<>(filteredVolumeList);
-                List<Volume> remainingInOtherRacks = new ArrayList<>(filteredVolumeList);
+                final List<VolumeEntity> remaining = new ArrayList<>(filteredVolumeList);
+                List<VolumeEntity> remainingInOtherRacks = new ArrayList<>(filteredVolumeList);
 
                 for (int count = 0; count < requiredNumber && remaining.size() > 0; count++) {
                     if (set.size() == 0 && localVolumeList != null && localVolumeList.size() > 0) {
                         // If we are preferring local volumes and this is the
                         // first item then add a local volume here first.
-                        final Volume volume = volumeSelector.select(localVolumeList);
+                        final VolumeEntity volume = volumeSelector.select(localVolumeList);
 
                         remaining.remove(volume);
                         remainingInOtherRacks = VolumeListUtil.removeMatchingRack(remainingInOtherRacks,
@@ -218,7 +218,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
 
                     } else if (remainingInOtherRacks.size() > 0) {
                         // Next try and get volumes in other racks.
-                        final Volume volume = volumeSelector.select(remainingInOtherRacks);
+                        final VolumeEntity volume = volumeSelector.select(remainingInOtherRacks);
 
                         remaining.remove(volume);
                         remainingInOtherRacks = VolumeListUtil.removeMatchingRack(remainingInOtherRacks,
@@ -229,7 +229,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
                     } else if (remaining.size() > 0) {
                         // Finally add any other volumes to make up the required
                         // replication count.
-                        final Volume volume = volumeSelector.select(remaining);
+                        final VolumeEntity volume = volumeSelector.select(remaining);
 
                         remaining.remove(volume);
 
@@ -247,11 +247,11 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
         return set;
     }
 
-    private List<Volume> getFilteredVolumeList(final List<Volume> allVolumes, final Node node,
-                                               final VolumeType volumeType, final VolumeUseStatus streamStatus, final VolumeUseStatus indexStatus,
-                                               final Boolean local, final Set<Volume> allowedVolumes) {
-        final List<Volume> list = new ArrayList<>();
-        for (final Volume volume : allVolumes) {
+    private List<VolumeEntity> getFilteredVolumeList(final List<VolumeEntity> allVolumes, final Node node,
+                                                     final VolumeType volumeType, final VolumeUseStatus streamStatus, final VolumeUseStatus indexStatus,
+                                                     final Boolean local, final Set<VolumeEntity> allowedVolumes) {
+        final List<VolumeEntity> list = new ArrayList<>();
+        for (final VolumeEntity volume : allVolumes) {
             if (allowedVolumes == null || allowedVolumes.contains(volume)) {
                 final Node nd = volume.getNode();
 
@@ -306,8 +306,8 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
         currentVolumeState.set(null);
     }
 
-    private List<Volume> getCurrentState() {
-        List<Volume> state = currentVolumeState.get();
+    private List<VolumeEntity> getCurrentState() {
+        List<VolumeEntity> state = currentVolumeState.get();
         if (state == null) {
             synchronized (this) {
                 state = currentVolumeState.get();
@@ -327,14 +327,14 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
         refresh();
     }
 
-    public List<Volume> refresh() {
+    public List<VolumeEntity> refresh() {
         final Node node = nodeCache.getDefaultNode();
-        final List<Volume> newState = new ArrayList<>();
+        final List<VolumeEntity> newState = new ArrayList<>();
 
         final FindVolumeCriteria findVolumeCriteria = new FindVolumeCriteria();
         findVolumeCriteria.addSort(FindVolumeCriteria.FIELD_ID, Direction.ASCENDING, false);
-        final List<Volume> volumeList = find(findVolumeCriteria);
-        for (final Volume volume : volumeList) {
+        final List<VolumeEntity> volumeList = find(findVolumeCriteria);
+        for (final VolumeEntity volume : volumeList) {
             if (volume.getNode().equals(node)) {
                 VolumeState volumeState = updateVolumeState(volume);
                 volumeState = saveVolumeState(volumeState);
@@ -349,7 +349,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
         return newState;
     }
 
-    private void recordStats(final Volume volume) {
+    private void recordStats(final VolumeEntity volume) {
         if (internalStatisticsReceiverProvider != null) {
             final InternalStatisticsReceiver receiver = internalStatisticsReceiverProvider.get();
             if (receiver != null) {
@@ -373,7 +373,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
 
     private void addStatisticEvent(final List<InternalStatisticEvent> events,
                                    final long timeMs,
-                                   final Volume volume,
+                                   final VolumeEntity volume,
                                    final String type,
                                    final Long bytes) {
         if (bytes != null) {
@@ -390,7 +390,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
         }
     }
 
-    private VolumeState updateVolumeState(final Volume volume) {
+    private VolumeState updateVolumeState(final VolumeEntity volume) {
         final VolumeState volumeState = volume.getVolumeState();
         volumeState.setStatusMs(System.currentTimeMillis());
         final Path path = Paths.get(volume.getPath());
@@ -432,7 +432,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
      * On creating a new volume create the directory Never create afterwards
      */
     @Override
-    public Volume save(final Volume entity) {
+    public VolumeEntity save(final VolumeEntity entity) {
         return entityManagerSupport.transactionResult(em -> {
             if (!entity.isPersistent()) {
                 VolumeState volumeState = entity.getVolumeState();
@@ -450,7 +450,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     }
 
     @Override
-    public Boolean delete(final Volume entity) {
+    public Boolean delete(final VolumeEntity entity) {
         if (Boolean.TRUE.equals(super.delete(entity))) {
             return stroomEntityManager.deleteEntity(entity.getVolumeState());
         }
@@ -462,8 +462,8 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     }
 
     @Override
-    public Class<Volume> getEntityClass() {
-        return Volume.class;
+    public Class<VolumeEntity> getEntityClass() {
+        return VolumeEntity.class;
     }
 
     @Override
@@ -512,7 +512,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     }
 
     @Override
-    protected QueryAppender<Volume, FindVolumeCriteria> createQueryAppender(StroomEntityManager entityManager) {
+    protected QueryAppender<VolumeEntity, FindVolumeCriteria> createQueryAppender(StroomEntityManager entityManager) {
         return new VolumeQueryAppender(entityManager);
     }
 
@@ -522,7 +522,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
         boolean isEnabled = stroomPropertyService.getBooleanProperty(PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, false);
 
         if (isEnabled) {
-            List<Volume> existingVolumes = getCurrentState();
+            List<VolumeEntity> existingVolumes = getCurrentState();
             if (existingVolumes.size() == 0) {
                 Optional<Path> optDefaultVolumePath = getDefaultVolumesPath();
 
@@ -544,7 +544,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     }
 
     private void createIndexVolume(final Path path, final Node node) {
-        final Volume vol = new Volume();
+        final VolumeEntity vol = new VolumeEntity();
         vol.setStreamStatus(VolumeUseStatus.INACTIVE);
         vol.setIndexStatus(VolumeUseStatus.ACTIVE);
         vol.setVolumeType(VolumeType.PRIVATE);
@@ -552,21 +552,21 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
     }
 
     private void createStreamVolume(final Path path, final Node node) {
-        final Volume vol = new Volume();
+        final VolumeEntity vol = new VolumeEntity();
         vol.setStreamStatus(VolumeUseStatus.ACTIVE);
         vol.setIndexStatus(VolumeUseStatus.INACTIVE);
         vol.setVolumeType(VolumeType.PUBLIC);
         createVolume(path, node, Optional.of(vol));
     }
 
-    private void createVolume(final Path path, final Node node, final Optional<Volume> optVolume) {
+    private void createVolume(final Path path, final Node node, final Optional<VolumeEntity> optVolume) {
         String pathStr = FileUtil.getCanonicalPath(path);
         try {
             Files.createDirectories(path);
             LOGGER.info("Creating volume in {} on node {}",
                     pathStr,
                     node.getName());
-            final Volume vol = optVolume.orElseGet(Volume::new);
+            final VolumeEntity vol = optVolume.orElseGet(VolumeEntity::new);
             vol.setPath(pathStr);
             vol.setNode(node);
             //set an arbitrary default limit size of 250MB on each volume to prevent the
@@ -634,7 +634,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<Volume, FindVolum
         return PermissionNames.MANAGE_VOLUMES_PERMISSION;
     }
 
-    private static class VolumeQueryAppender extends QueryAppender<Volume, FindVolumeCriteria> {
+    private static class VolumeQueryAppender extends QueryAppender<VolumeEntity, FindVolumeCriteria> {
         VolumeQueryAppender(final StroomEntityManager entityManager) {
             super(entityManager);
         }

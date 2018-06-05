@@ -17,9 +17,10 @@
 package stroom.streamstore.fs;
 
 import stroom.node.shared.Volume;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.fs.StreamVolumeService.StreamVolume;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamTypeEntity.FileStoreType;
-import stroom.streamstore.shared.StreamVolume;
+import stroom.streamstore.shared.StreamVolumeEntity;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 
@@ -51,8 +52,8 @@ public class FileSystemStreamTypeUtil {
             StreamTypeNames.META,
             StreamTypeNames.CONTEXT};
 
-    private static String createFilePathBase(final Volume volume, final StreamEntity stream, final String streamTypeName) {
-        return volume.getPath() +
+    private static String createFilePathBase(final String rootPath, final Stream stream, final String streamTypeName) {
+        return rootPath +
                 SEPERATOR_CHAR +
                 STORE_NAME +
                 SEPERATOR_CHAR +
@@ -126,11 +127,11 @@ public class FileSystemStreamTypeUtil {
     /**
      * Create a child file for a parent.
      */
-    public static Path createChildStreamFile(final StreamVolume streamVolume, final String streamTypeName) {
-        final String path = createFilePathBase(streamVolume.getVolume(), streamVolume.getStream(),
-                streamVolume.getStream().getStreamTypeName()) +
+    public static Path createChildStreamFile(final Stream stream, final StreamVolume streamVolume, final String streamTypeName) {
+        final String path = createFilePathBase(streamVolume.getVolumePath(), stream,
+                stream.getStreamTypeName()) +
                 "." +
-                StreamTypeExtensions.getExtension(streamVolume.getStream().getStreamTypeName()) +
+                StreamTypeExtensions.getExtension(stream.getStreamTypeName()) +
                 "." +
                 StreamTypeExtensions.getExtension(streamTypeName) +
                 "." +
@@ -147,16 +148,24 @@ public class FileSystemStreamTypeUtil {
      * [feedid]_[streamid]
      * </p>
      */
-    public static String getBaseName(StreamEntity stream) {
-        if (!stream.isPersistent()) {
+    public static String getBaseName(Stream stream) {
+        if (stream.getId() <= 0) {
             throw new RuntimeException("Can't build a file path until the meta data is persistent");
         }
-        return stream.getFeed().getId() +
+        // TODO : @66 WE REALLY SHOULDN'T USE FEED ID AS PART OF THE FILE PATH AS THE FEED ID SHOULD REMAIN INTERNAL TO THE STREAM META STORAGE. AT SOME POINT WE OUGHT TO MIGRATE TO FEED NAME.
+        final Long feedId = stream.getLegacyFeedId();
+        if (feedId != null) {
+            return feedId +
+                    FILE_SEPERATOR_CHAR +
+                    FileSystemPrefixUtil.padId(stream.getId());
+        }
+
+        return stream.getFeedName() +
                 FILE_SEPERATOR_CHAR +
                 FileSystemPrefixUtil.padId(stream.getId());
     }
 
-    public static String getDirectory(StreamEntity stream, String streamTypeName) {
+    public static String getDirectory(Stream stream, String streamTypeName) {
         StringBuilder builder = new StringBuilder();
         builder.append(StreamTypePaths.getPath(streamTypeName));
         builder.append(FileSystemStreamTypeUtil.SEPERATOR_CHAR);
@@ -199,8 +208,8 @@ public class FileSystemStreamTypeUtil {
     /**
      * Return a File IO object.
      */
-    public static Path createRootStreamFile(final Volume volume, final StreamEntity stream, final String streamTypeName) {
-        final String path = createFilePathBase(volume, stream, streamTypeName) +
+    public static Path createRootStreamFile(final String rootPath, final Stream stream, final String streamTypeName) {
+        final String path = createFilePathBase(rootPath, stream, streamTypeName) +
                 "." +
                 StreamTypeExtensions.getExtension(streamTypeName) +
                 "." +

@@ -20,19 +20,26 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.Clearable;
 import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.fs.StreamVolumeService;
+import stroom.streamstore.fs.StreamVolumeServiceImpl;
+import stroom.streamstore.meta.StreamMetaService;
+import stroom.streamstore.meta.db.StreamEntityService;
+import stroom.streamstore.meta.db.StreamEntityServiceImpl;
 
 public class MockStreamStoreModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(StreamStore.class).to(MockStreamStore.class);
-        bind(StreamTypeEntityService.class).to(MockStreamTypeService.class);
-        bind(FeedEntityService.class).to(MockFeedService.class);
         bind(StreamAttributeKeyService.class).to(MockStreamAttributeKeyService.class);
+        bind(FeedEntityService.class).to(MockFeedService.class);
+        bind(StreamTypeEntityService.class).to(MockStreamTypeService.class);
+        bind(StreamMetaService.class).to(MockStreamMetaService.class);
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(MockStreamStore.class);
         clearableBinder.addBinding().to(MockStreamTypeService.class);
         clearableBinder.addBinding().to(MockFeedService.class);
+        clearableBinder.addBinding().to(MockStreamMetaService.class);
         clearableBinder.addBinding().to(MockStreamAttributeKeyService.class);
     }
     //    @Bean

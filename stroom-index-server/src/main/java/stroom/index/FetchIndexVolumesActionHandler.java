@@ -17,7 +17,7 @@
 package stroom.index;
 
 import stroom.index.shared.FetchIndexVolumesAction;
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
@@ -26,7 +26,7 @@ import stroom.util.shared.SharedList;
 import javax.inject.Inject;
 
 @TaskHandlerBean(task = FetchIndexVolumesAction.class)
-class FetchIndexVolumesActionHandler extends AbstractTaskHandler<FetchIndexVolumesAction, SharedList<Volume>> {
+class FetchIndexVolumesActionHandler extends AbstractTaskHandler<FetchIndexVolumesAction, SharedList<VolumeEntity>> {
     private final Security security;
     private final IndexVolumeService indexVolumeService;
 
@@ -38,7 +38,7 @@ class FetchIndexVolumesActionHandler extends AbstractTaskHandler<FetchIndexVolum
     }
 
     @Override
-    public SharedList<Volume> exec(final FetchIndexVolumesAction action) {
+    public SharedList<VolumeEntity> exec(final FetchIndexVolumesAction action) {
         return security.secureResult(() -> new SharedList<>(indexVolumeService.getVolumesForIndex(action.getIndexRef())));
     }
 }

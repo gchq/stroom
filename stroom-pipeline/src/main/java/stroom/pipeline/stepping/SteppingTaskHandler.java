@@ -57,8 +57,9 @@ import stroom.streamstore.fs.serializable.NestedInputStream;
 import stroom.streamstore.fs.serializable.RANestedInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
+import stroom.streamstore.meta.StreamMetaService;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamtask.StreamProcessorService;
 import stroom.task.AbstractTaskHandler;
@@ -90,6 +91,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     }
 
     private final StreamStore streamStore;
+    private final StreamMetaService streamMetaService;
     private final StreamCloser streamCloser;
     private final FeedProperties feedProperties;
     private final TaskContext taskContext;
@@ -122,6 +124,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
 
     @Inject
     SteppingTaskHandler(final StreamStore streamStore,
+                        final StreamMetaService streamMetaService,
                         final StreamCloser streamCloser,
                         final FeedProperties feedProperties,
                         final TaskContext taskContext,
@@ -141,6 +144,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                         final PipelineContext pipelineContext,
                         final Security security) {
         this.streamStore = streamStore;
+        this.streamMetaService = streamMetaService;
         this.streamCloser = streamCloser;
         this.feedProperties = feedProperties;
         this.taskContext = taskContext;
@@ -435,16 +439,16 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
             criteria.getFetchSet().add(StreamTypeEntity.ENTITY_TYPE);
 
             // Find streams.
-            final List<StreamEntity> allStreamList = streamStore.find(criteria);
+            final List<Stream> allStreamList = streamMetaService.find(criteria);
             allStreamIdList = new ArrayList<>(allStreamList.size());
-            for (final StreamEntity stream : allStreamList) {
+            for (final Stream stream : allStreamList) {
                 allStreamIdList.add(stream.getId());
             }
 
             if (criteria.getSelectedIdSet() == null || Boolean.TRUE.equals(criteria.getSelectedIdSet().getMatchAll())) {
                 // If we are including all tasks then don't filter the list.
                 filteredList = new ArrayList<>(allStreamList.size());
-                for (final StreamEntity stream : allStreamList) {
+                for (final Stream stream : allStreamList) {
                     filteredList.add(stream.getId());
                 }
 
@@ -452,7 +456,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                     && criteria.getSelectedIdSet().getSet().size() > 0) {
                 // Otherwise filter the list to just selected tasks.
                 filteredList = new ArrayList<>(criteria.getSelectedIdSet().getSet().size());
-                for (final StreamEntity stream : allStreamList) {
+                for (final Stream stream : allStreamList) {
                     if (criteria.getSelectedIdSet().isMatch(stream.getId())) {
                         filteredList.add(stream.getId());
                     }
@@ -522,7 +526,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     private void process(final SteppingController controller, final String feedName, final String streamTypeName,
                          final StreamSource streamSource) {
         try {
-            final StreamEntity stream = streamSource.getStream();
+            final Stream stream = streamSource.getStream();
             final SteppingTask request = controller.getRequest();
             final StepType stepType = request.getStepType();
             controller.setStreamInfo(createStreamInfo(feedName, stream));
@@ -656,7 +660,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
         return pipeline;
     }
 
-    private String createStreamInfo(final String feedName, final StreamEntity stream) {
+    private String createStreamInfo(final String feedName, final Stream stream) {
         return "" +
                 "Feed: " +
                 feedName +

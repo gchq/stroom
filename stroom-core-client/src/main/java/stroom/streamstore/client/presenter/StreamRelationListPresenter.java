@@ -33,10 +33,11 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.util.shared.Expander;
@@ -93,12 +94,12 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
         // Store streams against id.
         streamMap.clear();
         for (final StreamAttributeMap row : data) {
-            final StreamEntity stream = row.getStream();
+            final Stream stream = row.getStream();
             streamMap.put(stream.getId(), row);
         }
 
         for (final StreamAttributeMap row : data) {
-            final StreamEntity stream = row.getStream();
+            final Stream stream = row.getStream();
             streamMap.put(stream.getId(), row);
         }
 
@@ -123,7 +124,7 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
     private void addChildren(final StreamAttributeMap parent, final List<StreamAttributeMap> data,
                              final List<StreamAttributeMap> newData, final int depth) {
         for (final StreamAttributeMap row : data) {
-            final StreamEntity stream = row.getStream();
+            final Stream stream = row.getStream();
 
             if (parent == null) {
                 // Add roots.

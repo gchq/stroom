@@ -35,7 +35,7 @@ import stroom.index.shared.SaveIndexVolumesAction;
 import stroom.node.client.presenter.VolumeListPresenter;
 import stroom.node.client.presenter.VolumeStatusListPresenter;
 import stroom.node.client.view.WrapperView;
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 import stroom.docref.DocRef;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
@@ -61,7 +61,7 @@ public class IndexVolumeListPresenter extends MyPresenterWidget<WrapperView>
     private final ButtonView removeButton;
 
     private DocRef docRef;
-    private List<Volume> volumes;
+    private List<VolumeEntity> volumes;
 
     @Inject
     public IndexVolumeListPresenter(final EventBus eventBus,
@@ -92,7 +92,7 @@ public class IndexVolumeListPresenter extends MyPresenterWidget<WrapperView>
         registerHandler(addButton.addClickHandler(this::onAdd));
         registerHandler(removeButton.addClickHandler(this::onRemove));
         registerHandler(volumeListPresenter.getSelectionModel().addSelectionHandler(event -> {
-            final MultiSelectionModel<Volume> selectionModel = volumeListPresenter.getSelectionModel();
+            final MultiSelectionModel<VolumeEntity> selectionModel = volumeListPresenter.getSelectionModel();
             removeButton.setEnabled(selectionModel.getSelectedItems().size() > 0);
         }));
         registerHandler(volumeStatusListPresenter.getSelectionModel().addSelectionHandler(event -> {
@@ -117,7 +117,7 @@ public class IndexVolumeListPresenter extends MyPresenterWidget<WrapperView>
 
         final PopupSize popupSize = new PopupSize(600, 400, true);
         volumeStatusListPresenter.refresh();
-        final MultiSelectionModel<Volume> selectionModel = volumeStatusListPresenter.getSelectionModel();
+        final MultiSelectionModel<VolumeEntity> selectionModel = volumeStatusListPresenter.getSelectionModel();
         selectionModel.clear();
         ShowPopupEvent.fire(this, volumeStatusListPresenter, PopupType.OK_CANCEL_DIALOG, null, popupSize,
                 "Add Volume To Index", popupUiHandlers, true);
@@ -125,10 +125,10 @@ public class IndexVolumeListPresenter extends MyPresenterWidget<WrapperView>
 
     private void addVolume(final boolean ok) {
         if (ok) {
-            final MultiSelectionModel<Volume> selectionModel = volumeStatusListPresenter.getSelectionModel();
-            final List<Volume> selected = selectionModel.getSelectedItems();
+            final MultiSelectionModel<VolumeEntity> selectionModel = volumeStatusListPresenter.getSelectionModel();
+            final List<VolumeEntity> selected = selectionModel.getSelectedItems();
             if (selected != null && selected.size() > 0) {
-                for (final Volume vol : selected) {
+                for (final VolumeEntity vol : selected) {
                     if (vol != null && !volumes.contains(vol)) {
                         volumes.add(vol);
                         sortVolumes();
@@ -143,8 +143,8 @@ public class IndexVolumeListPresenter extends MyPresenterWidget<WrapperView>
     }
 
     private void onRemove(final ClickEvent event) {
-        final MultiSelectionModel<Volume> selectionModel = volumeListPresenter.getSelectionModel();
-        final List<Volume> selected = selectionModel.getSelectedItems();
+        final MultiSelectionModel<VolumeEntity> selectionModel = volumeListPresenter.getSelectionModel();
+        final List<VolumeEntity> selected = selectionModel.getSelectedItems();
         if (selected != null && selected.size() > 0) {
             String message = "Are you sure you want to remove this volume as a possible destination for this index?";
             if (selected.size() > 1) {
@@ -178,12 +178,12 @@ public class IndexVolumeListPresenter extends MyPresenterWidget<WrapperView>
     }
 
     private void sortVolumes() {
-        volumes.sort(Comparator.comparing(Volume::getPath));
+        volumes.sort(Comparator.comparing(VolumeEntity::getPath));
     }
 
     @Override
     public void write(final IndexDoc index) {
-        final Set<Volume> set = new HashSet<>(volumes);
+        final Set<VolumeEntity> set = new HashSet<>(volumes);
         dispatcher.exec(new SaveIndexVolumesAction(docRef, set));
     }
 

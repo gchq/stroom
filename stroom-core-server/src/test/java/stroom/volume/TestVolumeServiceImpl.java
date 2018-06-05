@@ -28,8 +28,8 @@ import stroom.node.NodeCache;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
-import stroom.node.shared.Volume;
-import stroom.node.shared.Volume.VolumeType;
+import stroom.node.shared.VolumeEntity;
+import stroom.node.shared.VolumeEntity.VolumeType;
 import stroom.node.shared.VolumeState;
 import stroom.persist.EntityManagerSupport;
 import stroom.properties.MockStroomPropertyService;
@@ -69,13 +69,13 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
     private final Node node1c = Node.create(rack1, "1c");
     private final Node node2a = Node.create(rack2, "2a");
     private final Node node2b = Node.create(rack2, "2b");
-    private final Volume public1a = Volume.create(node1a, FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_1A")), VolumeType.PUBLIC,
+    private final VolumeEntity public1a = VolumeEntity.create(node1a, FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_1A")), VolumeType.PUBLIC,
             VolumeState.create(0, 1000));
-    private final Volume public1b = Volume.create(node1b, FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_1B")), VolumeType.PUBLIC,
+    private final VolumeEntity public1b = VolumeEntity.create(node1b, FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_1B")), VolumeType.PUBLIC,
             VolumeState.create(0, 1000));
-    private final Volume public2a = Volume.create(node2a, FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_2A")), VolumeType.PUBLIC,
+    private final VolumeEntity public2a = VolumeEntity.create(node2a, FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_2A")), VolumeType.PUBLIC,
             VolumeState.create(0, 1000));
-    private final Volume public2b = Volume.create(node2b, FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_2B")), VolumeType.PUBLIC,
+    private final VolumeEntity public2b = VolumeEntity.create(node2b, FileUtil.getCanonicalPath(FileUtil.getTempDir().resolve("PUBLIC_2B")), VolumeType.PUBLIC,
             VolumeState.create(0, 1000));
 
     private MockVolumeService volumeServiceImpl = null;
@@ -91,7 +91,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
         MockitoAnnotations.initMocks(this);
         deleteDefaultVolumesDir();
 
-        final List<Volume> volumeList = new ArrayList<>();
+        final List<VolumeEntity> volumeList = new ArrayList<>();
         volumeList.add(public1a);
         volumeList.add(public1b);
         volumeList.add(public2a);
@@ -105,8 +105,8 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
 
     @Test
     public void testNode1aNodeWithCacheAndSomePuckerLocalStorage() {
-        final Set<Volume> call1 = volumeServiceImpl.getStreamVolumeSet(node1a);
-        final Set<Volume> call2 = volumeServiceImpl.getStreamVolumeSet(node1a);
+        final Set<VolumeEntity> call1 = volumeServiceImpl.getStreamVolumeSet(node1a);
+        final Set<VolumeEntity> call2 = volumeServiceImpl.getStreamVolumeSet(node1a);
         Assert.assertEquals(2, call1.size());
         Assert.assertEquals(2, call2.size());
 
@@ -124,8 +124,8 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
 
     @Test
     public void testNode1cNodeWithNoStorage() {
-        final Set<Volume> call1 = volumeServiceImpl.getStreamVolumeSet(node1c);
-        final Set<Volume> call2 = volumeServiceImpl.getStreamVolumeSet(node1c);
+        final Set<VolumeEntity> call1 = volumeServiceImpl.getStreamVolumeSet(node1c);
+        final Set<VolumeEntity> call2 = volumeServiceImpl.getStreamVolumeSet(node1c);
         Assert.assertEquals(2, call1.size());
         Assert.assertEquals(2, call2.size());
 
@@ -144,8 +144,8 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
 
     @Test
     public void testNode2aNodeWithNoCache() {
-        final Set<Volume> call1 = volumeServiceImpl.getStreamVolumeSet(node2a);
-        final Set<Volume> call2 = volumeServiceImpl.getStreamVolumeSet(node2a);
+        final Set<VolumeEntity> call1 = volumeServiceImpl.getStreamVolumeSet(node2a);
+        final Set<VolumeEntity> call2 = volumeServiceImpl.getStreamVolumeSet(node2a);
         Assert.assertEquals(2, call1.size());
         Assert.assertEquals(2, call2.size());
 
@@ -191,7 +191,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
         Assert.assertTrue(volumeServiceImpl.saveCalled);
         //make sure both paths have been saved
         Assert.assertEquals(2, volumeServiceImpl.savedVolumes.stream()
-                .map(Volume::getPath)
+                .map(VolumeEntity::getPath)
                 .filter(path -> path.equals(FileUtil.getCanonicalPath(DEFAULT_INDEX_VOLUME_PATH)) ||
                         path.equals(FileUtil.getCanonicalPath(DEFAULT_STREAM_VOLUME_PATH)))
                 .count());
@@ -206,9 +206,9 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
     }
 
     private static class MockVolumeService extends VolumeServiceImpl {
-        private List<Volume> volumeList = null;
+        private List<VolumeEntity> volumeList = null;
         private boolean saveCalled;
-        private List<Volume> savedVolumes = new ArrayList<>();
+        private List<VolumeEntity> savedVolumes = new ArrayList<>();
 
         MockVolumeService(final StroomEntityManager stroomEntityManager,
                           final Security security,
@@ -225,7 +225,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
         }
 
         @Override
-        public BaseResultList<Volume> find(final FindVolumeCriteria criteria) {
+        public BaseResultList<VolumeEntity> find(final FindVolumeCriteria criteria) {
             return BaseResultList.createUnboundedList(volumeList);
         }
 
@@ -235,7 +235,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
         }
 
         @Override
-        public Volume save(Volume entity) {
+        public VolumeEntity save(VolumeEntity entity) {
             super.save(entity);
             saveCalled = true;
             savedVolumes.add(entity);

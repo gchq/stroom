@@ -27,8 +27,8 @@ import stroom.guice.PipelineScopeRunnable;
 import stroom.importexport.ImportExportService;
 import stroom.node.NodeCache;
 import stroom.node.VolumeService;
-import stroom.node.shared.Volume;
-import stroom.node.shared.Volume.VolumeType;
+import stroom.node.shared.VolumeEntity;
+import stroom.node.shared.VolumeEntity.VolumeType;
 import stroom.persist.PersistService;
 import stroom.pipeline.filter.SafeXMLFilter;
 import stroom.proxy.repo.StroomZipFile;
@@ -308,7 +308,7 @@ public class Headless extends AbstractCommandLineTool {
         final NodeCache nodeCache = injector.getInstance(NodeCache.class);
         final VolumeService volumeService = injector.getInstance(VolumeService.class);
         volumeService
-                .save(Volume.create(nodeCache.getDefaultNode(), FileUtil.getCanonicalPath(tmpDir) + "/cvol", VolumeType.PUBLIC));
+                .save(VolumeEntity.create(nodeCache.getDefaultNode(), FileUtil.getCanonicalPath(tmpDir) + "/cvol", VolumeType.PUBLIC));
     }
 
     private Injector createInjector() {

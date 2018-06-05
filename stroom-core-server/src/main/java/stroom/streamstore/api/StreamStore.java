@@ -45,30 +45,28 @@ import java.util.List;
  * stream to unlock the file.
  * </p>
  */
-public interface StreamStore extends FindService<StreamEntity, FindStreamCriteria>, FindDeleteService<FindStreamCriteria> {
-    StreamEntity createStream(StreamProperties streamProperties);
-
-    /**
-     * Load a stream by id.
-     *
-     * @param id The stream id to load a stream for.
-     * @return The loaded stream if it exists (has not been physically deleted)
-     * and is not logically deleted or locked, null otherwise.
-     */
-    StreamEntity loadStreamById(long id);
-
-    /**
-     * Load a stream by id.
-     *
-     * @param id        The stream id to load a stream for.
-     * @param anyStatus Used to specify if this method will return streams that are
-     *                  logically deleted or locked. If false only unlocked streams
-     *                  will be returned, null otherwise.
-     * @return The loaded stream if it exists (has not been physically deleted)
-     * else null. Also returns null if one exists but is logically
-     * deleted or locked unless <code>anyStatus</code> is true.
-     */
-    StreamEntity loadStreamById(long id, boolean anyStatus);
+public interface StreamStore {
+//    /**
+//     * Load a stream by id.
+//     *
+//     * @param id The stream id to load a stream for.
+//     * @return The loaded stream if it exists (has not been physically deleted)
+//     * and is not logically deleted or locked, null otherwise.
+//     */
+//    StreamEntity loadStreamById(long id);
+//
+//    /**
+//     * Load a stream by id.
+//     *
+//     * @param id        The stream id to load a stream for.
+//     * @param anyStatus Used to specify if this method will return streams that are
+//     *                  logically deleted or locked. If false only unlocked streams
+//     *                  will be returned, null otherwise.
+//     * @return The loaded stream if it exists (has not been physically deleted)
+//     * else null. Also returns null if one exists but is logically
+//     * deleted or locked unless <code>anyStatus</code> is true.
+//     */
+//    StreamEntity loadStreamById(long id, boolean anyStatus);
 
     /**
      * <p>
@@ -132,16 +130,16 @@ public interface StreamStore extends FindService<StreamEntity, FindStreamCriteri
      */
     void closeStreamTarget(StreamTarget streamTarget);
 
-    /**
-     * <p>
-     * Delete a stream.
-     * </p>
-     *
-     * @return items deleted
-     */
-    Long deleteStream(long streamId);
-
-    BaseResultList<StreamEntity> find(OldFindStreamCriteria findStreamCriteria);
+//    /**
+//     * <p>
+//     * Delete a stream.
+//     * </p>
+//     *
+//     * @return items deleted
+//     */
+//    Long deleteStream(long streamId);
+//
+//    BaseResultList<StreamEntity> find(OldFindStreamCriteria findStreamCriteria);
 
     /**
      * <p>
@@ -152,28 +150,28 @@ public interface StreamStore extends FindService<StreamEntity, FindStreamCriteri
      */
     Long deleteStreamTarget(StreamTarget target);
 
-    /**
-     * <p>
-     * Return back a list of streams that are effective for a period in
-     * question. This API is only really applicable for reference data searches.
-     * </p>
-     *
-     * @param criteria the search criteria
-     * @return the list of matches
-     */
-    List<Stream> findEffectiveStream(EffectiveMetaDataCriteria criteria);
-
-    /**
-     * Return the number of open locks.
-     */
-    long getLockCount();
-
-    /**
-     * Return the total period of streams in the stream store
-     */
-    Period getCreatePeriod();
-
-    List<String> getFeeds();
-
-    List<String> getStreamTypes();
+//    /**
+//     * <p>
+//     * Return back a list of streams that are effective for a period in
+//     * question. This API is only really applicable for reference data searches.
+//     * </p>
+//     *
+//     * @param criteria the search criteria
+//     * @return the list of matches
+//     */
+//    List<Stream> findEffectiveStream(EffectiveMetaDataCriteria criteria);
+//
+//    /**
+//     * Return the number of open locks.
+//     */
+//    long getLockCount();
+//
+//    /**
+//     * Return the total period of streams in the stream store
+//     */
+//    Period getCreatePeriod();
+//
+//    List<String> getFeeds();
+//
+//    List<String> getStreamTypes();
 }

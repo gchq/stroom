@@ -18,9 +18,10 @@ package stroom.pipeline.task;
 
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.streamstore.MockStreamMetaService;
 import stroom.streamstore.MockStreamStore;
-import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamTypeEntity;
+import stroom.streamstore.fs.StreamTypeNames;
+import stroom.streamstore.shared.Stream;
 import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.CommonTranslationTest;
@@ -41,6 +42,8 @@ public class TestTranslationTask extends AbstractProcessIntegrationTest {
 
     private static final String DIR = "TestTranslationTask/";
 
+    @Inject
+    private MockStreamMetaService streamMetaService;
     @Inject
     private MockStreamStore streamStore;
     @Inject
@@ -67,10 +70,10 @@ public class TestTranslationTask extends AbstractProcessIntegrationTest {
         final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(DIR);
         final Path outputDir = StroomPipelineTestFileUtil.getTestOutputDir().resolve(DIR);
 
-        for (final Entry<Long, StreamEntity> entry : streamStore.getStreamMap().entrySet()) {
+        for (final Entry<Long, Stream> entry : streamMetaService.getStreamMap().entrySet()) {
             final long streamId = entry.getKey();
-            final StreamEntity stream = entry.getValue();
-            if (stream.getStreamType().equals(StreamTypeEntity.EVENTS)) {
+            final Stream stream = entry.getValue();
+            if (StreamTypeNames.EVENTS.equals(stream.getStreamTypeName())) {
                 final byte[] data = streamStore.getFileData().get(streamId).get(stream.getStreamTypeName());
 
                 // Write the actual XML out.
@@ -94,7 +97,7 @@ public class TestTranslationTask extends AbstractProcessIntegrationTest {
      * @throws IOException Could be thrown.
      */
     @Test
-    public void testInvalidResource() throws IOException {
+    public void testInvalidResource() {
         commonPipelineTest.setup(CommonTranslationTest.FEED_NAME, CommonTranslationTest.INVALID_RESOURCE_NAME);
 
         final List<StreamProcessorTaskExecutor> results = commonPipelineTest.processAll();

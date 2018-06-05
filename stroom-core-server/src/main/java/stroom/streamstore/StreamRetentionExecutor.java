@@ -29,7 +29,7 @@ import stroom.jobsystem.JobTrackedSchedule;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.meta.StreamMetaService;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
@@ -51,17 +51,17 @@ public class StreamRetentionExecutor {
     private static final int DELETE_STREAM_BATCH_SIZE = 1000;
 
     private final FeedStore feedStore;
-    private final StreamStore streamStore;
+    private final StreamMetaService streamMetaService;
     private final TaskContext taskContext;
     private final ClusterLockService clusterLockService;
 
     @Inject
     StreamRetentionExecutor(final FeedStore feedStore,
-                            final StreamStore streamStore,
+                            final StreamMetaService streamMetaService,
                             final TaskContext taskContext,
                             final ClusterLockService clusterLockService) {
         this.feedStore = feedStore;
-        this.streamStore = streamStore;
+        this.streamMetaService = streamMetaService;
         this.taskContext = taskContext;
         this.clusterLockService = clusterLockService;
     }
@@ -133,7 +133,7 @@ public class StreamRetentionExecutor {
             long total = 0;
             long deleted;
             do {
-                final Long recordsDeleted = streamStore.findDelete(criteria);
+                final Long recordsDeleted = streamMetaService.findDelete(criteria);
                 if (recordsDeleted != null) {
                     deleted = recordsDeleted;
                     total += deleted;

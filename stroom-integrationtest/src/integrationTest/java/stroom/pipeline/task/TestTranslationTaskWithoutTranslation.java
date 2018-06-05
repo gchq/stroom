@@ -19,9 +19,10 @@ package stroom.pipeline.task;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.node.NodeCache;
+import stroom.streamstore.MockStreamMetaService;
 import stroom.streamstore.MockStreamStore;
-import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamTypeEntity;
+import stroom.streamstore.fs.StreamTypeNames;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.tools.StoreCreationTool;
 import stroom.streamtask.StreamProcessorTask;
 import stroom.streamtask.StreamProcessorTaskExecutor;
@@ -49,6 +50,8 @@ public class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegr
     @Inject
     private MockStreamStore streamStore;
     @Inject
+    private MockStreamMetaService streamMetaService;
+    @Inject
     private NodeCache nodeCache;
     @Inject
     private StreamTaskCreator streamTaskCreator;
@@ -65,7 +68,7 @@ public class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegr
     @Test
     public void test() throws IOException {
         setup(FEED_NAME, RESOURCE_NAME);
-        Assert.assertEquals(0, streamStore.getLockCount());
+        Assert.assertEquals(0, streamMetaService.getLockCount());
 
         final List<StreamProcessorTaskExecutor> results = processAll();
         Assert.assertEquals(1, results.size());
@@ -83,10 +86,10 @@ public class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegr
         final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(DIR);
         final Path outputDir = StroomPipelineTestFileUtil.getTestOutputDir().resolve(DIR);
 
-        for (final Entry<Long, StreamEntity> entry : streamStore.getStreamMap().entrySet()) {
+        for (final Entry<Long, Stream> entry : streamMetaService.getStreamMap().entrySet()) {
             final long streamId = entry.getKey();
-            final StreamEntity stream = entry.getValue();
-            if (StreamTypeEntity.EVENTS.equalsEntity(stream.getStreamType())) {
+            final Stream stream = entry.getValue();
+            if (StreamTypeNames.EVENTS.equals(stream.getStreamTypeName())) {
                 final byte[] data = streamStore.getFileData().get(streamId).get(stream.getStreamTypeName());
 
                 // Write the actual XML out.

@@ -26,7 +26,7 @@ import java.util.Set;
 public class StreamAttributeMap implements SharedObject {
     private static final long serialVersionUID = -8198186456924478908L;
 
-    private StreamEntity stream;
+    private Stream stream;
     private List<String> fileNameList;
     private Map<StreamAttributeKey, String> attributeMap = new HashMap<>();
     private Map<String, String> nameValueMap = new HashMap<>();
@@ -36,15 +36,15 @@ public class StreamAttributeMap implements SharedObject {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public StreamAttributeMap(StreamEntity stream) {
+    public StreamAttributeMap(Stream stream) {
         setStream(stream);
     }
 
-    public StreamEntity getStream() {
+    public Stream getStream() {
         return stream;
     }
 
-    public void setStream(StreamEntity stream) {
+    public void setStream(Stream stream) {
         this.stream = stream;
     }
 

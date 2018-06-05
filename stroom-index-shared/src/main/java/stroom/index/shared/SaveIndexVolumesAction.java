@@ -17,9 +17,8 @@
 package stroom.index.shared;
 
 import stroom.entity.shared.Action;
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 import stroom.docref.DocRef;
-import stroom.util.shared.SharedList;
 import stroom.util.shared.VoidResult;
 
 import java.util.Set;
@@ -28,14 +27,14 @@ public class SaveIndexVolumesAction extends Action<VoidResult> {
     private static final long serialVersionUID = -6668626615097471925L;
 
     private DocRef indexRef;
-    private Set<Volume> volumes;
+    private Set<VolumeEntity> volumes;
 
     public SaveIndexVolumesAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
     public SaveIndexVolumesAction(final DocRef indexRef,
-                                  final Set<Volume> volumes) {
+                                  final Set<VolumeEntity> volumes) {
         this.indexRef = indexRef;
         this.volumes = volumes;
     }
@@ -44,7 +43,7 @@ public class SaveIndexVolumesAction extends Action<VoidResult> {
         return indexRef;
     }
 
-    public Set<Volume> getVolumes() {
+    public Set<VolumeEntity> getVolumes() {
         return volumes;
     }
 

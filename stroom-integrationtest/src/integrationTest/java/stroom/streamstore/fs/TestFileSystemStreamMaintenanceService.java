@@ -21,6 +21,7 @@ import org.junit.Test;
 import stroom.jobsystem.MockTask;
 import stroom.streamstore.FindStreamVolumeCriteria;
 import stroom.streamstore.StreamRange;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -38,6 +39,8 @@ public class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrat
     @Inject
     private FileSystemStreamMaintenanceService streamMaintenanceService;
     @Inject
+    private StreamVolumeService streamVolumeService;
+    @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
     private FileSystemCleanExecutor fileSystemCleanTaskExecutor;
@@ -48,7 +51,7 @@ public class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrat
 
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
-        final StreamEntity md = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeEntity.RAW_EVENTS.getName());
+        final Stream md = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeEntity.RAW_EVENTS.getName());
 
         commonTestScenarioCreator.createSampleBlankProcessedFile(feedName, md);
 
@@ -62,7 +65,7 @@ public class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrat
         final StreamRange streamRange = new StreamRange(volPath);
         final FindStreamVolumeCriteria findStreamVolumeCriteria = new FindStreamVolumeCriteria();
         findStreamVolumeCriteria.setStreamRange(streamRange);
-        Assert.assertTrue(streamMaintenanceService.find(findStreamVolumeCriteria).size() > 0);
+        Assert.assertTrue(streamVolumeService.find(findStreamVolumeCriteria).size() > 0);
 
         final Path dir = files.iterator().next().getParent();
 

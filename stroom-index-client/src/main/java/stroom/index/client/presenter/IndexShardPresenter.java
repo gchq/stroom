@@ -44,7 +44,7 @@ import stroom.index.shared.FlushIndexShardAction;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.node.shared.Node;
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 import stroom.docref.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -357,11 +357,11 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     public void read(final DocRef docRef, final IndexDoc index) {
         selectionCriteria.getIndexSet().add(docRef);
         selectionCriteria.getFetchSet().add(Node.ENTITY_TYPE);
-        selectionCriteria.getFetchSet().add(Volume.ENTITY_TYPE);
+        selectionCriteria.getFetchSet().add(VolumeEntity.ENTITY_TYPE);
 
         queryCriteria.getIndexSet().add(docRef);
         queryCriteria.getFetchSet().add(Node.ENTITY_TYPE);
-        queryCriteria.getFetchSet().add(Volume.ENTITY_TYPE);
+        queryCriteria.getFetchSet().add(VolumeEntity.ENTITY_TYPE);
 
         if (dataProvider == null) {
             final EntityServiceFindAction<FindIndexShardCriteria, IndexShard> findAction = new EntityServiceFindAction<>(

@@ -57,6 +57,7 @@ import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.ReprocessDataInfo;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamEntity;
@@ -170,7 +171,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         return findStreamCriteria;
     }
 
-    private static StreamEntity getStream(final AbstractStreamListPresenter streamListPresenter, final long id) {
+    private static Stream getStream(final AbstractStreamListPresenter streamListPresenter, final long id) {
         final ResultList<StreamAttributeMap> list = streamListPresenter.getResultList();
         if (list != null) {
             if (list.getValues() != null) {
@@ -201,7 +202,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         }
 
         for (final Long id : selectedIdSet.getSet()) {
-            final StreamEntity stream = getStream(streamListPresenter, id);
+            final Stream stream = getStream(streamListPresenter, id);
             if (stream == null || !statusList.contains(stream.getStatus())) {
                 return false;
             }
@@ -400,7 +401,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
 
 
     private void showData() {
-        final StreamEntity stream = getSelectedStream();
+        final Stream stream = getSelectedStream();
         if (stream == null) {
             dataPresenter.clear();
         } else {
@@ -479,7 +480,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         streamRelationListPresenter.setCriteria(null);
     }
 
-    private StreamEntity getSelectedStream() {
+    private Stream getSelectedStream() {
         StreamAttributeMap selectedStream = streamListPresenter.getSelectedStream();
         if (streamRelationListPresenter.getSelectedStream() != null) {
             selectedStream = streamRelationListPresenter.getSelectedStream();
@@ -590,7 +591,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
             Long childStreamId = null;
             final StreamAttributeMap map = streamListPresenter.getSelectedStream();
             if (map != null && map.getStream() != null) {
-                final StreamEntity childStream = map.getStream();
+                final Stream childStream = map.getStream();
                 // If the top list has a raw stream selected or isn't a child of
                 // the selected stream then this is't the child stream we are
                 // looking for.

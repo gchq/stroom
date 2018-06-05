@@ -18,13 +18,12 @@ package stroom.index.shared;
 
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.CriteriaSet;
-import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.Range;
 import stroom.entity.shared.StringCriteria;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.node.shared.Node;
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 import stroom.docref.DocRef;
 
 public class FindIndexShardCriteria extends BaseCriteria {
@@ -32,7 +31,7 @@ public class FindIndexShardCriteria extends BaseCriteria {
     private static final long serialVersionUID = 3552286394659242683L;
     private Range<Integer> documentCountRange = new Range<>();
     private EntityIdSet<Node> nodeIdSet = new EntityIdSet<>();
-    private EntityIdSet<Volume> volumeIdSet = new EntityIdSet<>();
+    private EntityIdSet<VolumeEntity> volumeIdSet = new EntityIdSet<>();
     private CriteriaSet<DocRef> indexSet = new CriteriaSet<>();
     private EntityIdSet<IndexShard> indexShardSet = new EntityIdSet<>();
     private CriteriaSet<IndexShardStatus> indexShardStatusSet = new CriteriaSet<>();
@@ -77,7 +76,7 @@ public class FindIndexShardCriteria extends BaseCriteria {
         return nodeIdSet;
     }
 
-    public EntityIdSet<Volume> getVolumeIdSet() {
+    public EntityIdSet<VolumeEntity> getVolumeIdSet() {
         return volumeIdSet;
     }
 

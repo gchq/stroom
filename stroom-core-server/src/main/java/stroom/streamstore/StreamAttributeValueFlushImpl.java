@@ -19,22 +19,20 @@ package stroom.streamstore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import stroom.feed.MetaMap;
 import stroom.jobsystem.ClusterLockService;
 import stroom.properties.StroomPropertyService;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.util.date.DateUtil;
-import stroom.util.logging.LogExecutionTime;
-import stroom.util.shared.ModelStringUtil;
 import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.lifecycle.StroomShutdown;
+import stroom.util.logging.LogExecutionTime;
+import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -70,7 +68,7 @@ class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush {
     }
 
     @Override
-    public void persitAttributes(final StreamEntity stream, final boolean append, final MetaMap metaMap) {
+    public void persitAttributes(final Stream stream, final boolean append, final MetaMap metaMap) {
         queue.add(new AsyncFlush(stream, append, metaMap));
     }
 
@@ -117,7 +115,7 @@ class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush {
             AsyncFlush item;
             while ((item = queue.poll()) != null && batchInsert.size() < BATCH_SIZE) {
                 batchInsert.add(item);
-                criteria.obtainStreamIdSet().add(item.getStream());
+                criteria.obtainStreamIdSet().add(item.getStream().getId());
 
             }
             if (batchInsert.size() < BATCH_SIZE) {
@@ -176,7 +174,7 @@ class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush {
 
                                 } else {
                                     dirty = true;
-                                    streamAttributeValue = new StreamAttributeValue(asyncFlush.getStream(), streamMDKey,
+                                    streamAttributeValue = new StreamAttributeValue(asyncFlush.getStream().getId(), streamMDKey,
                                             newValue);
                                 }
 
@@ -200,28 +198,26 @@ class StreamAttributeValueFlushImpl implements StreamAttributeValueFlush {
                 }
 
                 if (logExecutionTime.getDuration() > 1000) {
-                    LOGGER.warn("flush() - Saved {} updates, skipped {}, queue size is {}, completed in {}",
-                            new Object[]{batchUpdate.size(), skipCount, queue.size(), logExecutionTime});
+                    LOGGER.warn("flush() - Saved {} updates, skipped {}, queue size is {}, completed in {}", batchUpdate.size(), skipCount, queue.size(), logExecutionTime);
                 } else {
-                    LOGGER.debug("flush() - Saved {} updates, skipped {}, queue size is {}, completed in {}",
-                            new Object[]{batchUpdate.size(), skipCount, queue.size(), logExecutionTime});
+                    LOGGER.debug("flush() - Saved {} updates, skipped {}, queue size is {}, completed in {}", batchUpdate.size(), skipCount, queue.size(), logExecutionTime);
                 }
             }
         }
     }
 
     public static class AsyncFlush {
-        private final StreamEntity stream;
+        private final Stream stream;
         private final boolean append;
         private final MetaMap metaMap;
 
-        public AsyncFlush(final StreamEntity stream, final boolean append, final MetaMap metaMap) {
+        public AsyncFlush(final Stream stream, final boolean append, final MetaMap metaMap) {
             this.stream = stream;
             this.append = append;
             this.metaMap = metaMap;
         }
 
-        public StreamEntity getStream() {
+        public Stream getStream() {
             return stream;
         }
 

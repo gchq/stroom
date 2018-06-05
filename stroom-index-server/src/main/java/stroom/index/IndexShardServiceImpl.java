@@ -34,7 +34,7 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.node.VolumeService;
 import stroom.node.shared.Node;
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 import stroom.docref.DocRef;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
@@ -78,17 +78,17 @@ public class IndexShardServiceImpl
     public IndexShard createIndexShard(final IndexShardKey indexShardKey, final Node ownerNode) {
         final IndexConfig indexConfig = indexConfigCache.get(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
         final IndexDoc index = indexConfig.getIndex();
-        final Set<Volume> allowedVolumes = indexVolumeService.getVolumesForIndex(DocRefUtil.create(index));
+        final Set<VolumeEntity> allowedVolumes = indexVolumeService.getVolumesForIndex(DocRefUtil.create(index));
         if (allowedVolumes == null || allowedVolumes.size() == 0) {
             LOGGER.debug(VOLUME_ERROR);
             throw new IndexException(VOLUME_ERROR);
         }
 
-        final Set<Volume> volumes = volumeService.getIndexVolumeSet(ownerNode, allowedVolumes);
+        final Set<VolumeEntity> volumes = volumeService.getIndexVolumeSet(ownerNode, allowedVolumes);
 
         // The first set should be a set of cache volumes unless no caches have
         // been defined or they are full.
-        Volume volume = null;
+        VolumeEntity volume = null;
 
         if (volumes != null && volumes.size() > 0) {
             volume = volumes.iterator().next();
@@ -171,7 +171,7 @@ public class IndexShardServiceImpl
                 if (fetchSet.contains(Node.ENTITY_TYPE)) {
                     sql.append(" INNER JOIN FETCH " + alias + ".node");
                 }
-                if (fetchSet.contains(Volume.ENTITY_TYPE)) {
+                if (fetchSet.contains(VolumeEntity.ENTITY_TYPE)) {
                     sql.append(" INNER JOIN FETCH " + alias + ".volume");
                 }
             }

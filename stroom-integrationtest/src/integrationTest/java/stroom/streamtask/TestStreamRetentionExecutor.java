@@ -25,12 +25,11 @@ import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.FeedStore;
 import stroom.feed.shared.FeedDoc;
-import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.StreamRetentionExecutor;
-import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.fs.FileSystemStreamMaintenanceService;
+import stroom.streamstore.api.StreamProperties;
+import stroom.streamstore.meta.StreamMetaService;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -45,9 +44,7 @@ public class TestStreamRetentionExecutor extends AbstractCoreIntegrationTest {
     private static final int RETENTION_PERIOD_DAYS = 1;
 
     @Inject
-    private StreamStore streamStore;
-    @Inject
-    private FileSystemStreamMaintenanceService streamMaintenanceService;
+    private StreamMetaService streamMetaService;
     @Inject
     private FeedStore feedStore;
     @Inject
@@ -70,14 +67,14 @@ public class TestStreamRetentionExecutor extends AbstractCoreIntegrationTest {
         feedDoc.setRetentionDayAge(RETENTION_PERIOD_DAYS);
         feedStore.writeDocument(feedDoc);
 
-        StreamEntity streamInsideRetetion = streamStore.createStream(
+        Stream streamInsideRetention = streamMetaService.createStream(
                 new StreamProperties.Builder()
                         .feedName(feedName)
                         .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
                         .createMs(now)
                         .statusMs(now)
                         .build());
-        StreamEntity streamOutsideRetetion = streamStore.createStream(
+        Stream streamOutsideRetention = streamMetaService.createStream(
                 new StreamProperties.Builder()
                         .feedName(feedName)
                         .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
@@ -85,55 +82,57 @@ public class TestStreamRetentionExecutor extends AbstractCoreIntegrationTest {
                         .statusMs(timeOutsideRetentionPeriod)
                         .build());
 
+        // Streams are locked initially so unlock.
+        streamMetaService.updateStatus(streamInsideRetention.getId(), StreamStatus.UNLOCKED);
+        streamMetaService.updateStatus(streamOutsideRetention.getId(), StreamStatus.UNLOCKED);
+
         feedStore.writeDocument(feedDoc);
-        streamInsideRetetion = streamMaintenanceService.save(streamInsideRetetion);
-        streamOutsideRetetion = streamMaintenanceService.save(streamOutsideRetetion);
 
         dumpStreams();
 
-        Long lastStatusMsInside = streamInsideRetetion.getStatusMs();
-        Long lastStatusMsOutside = streamOutsideRetetion.getStatusMs();
+        Long lastStatusMsInside = streamInsideRetention.getStatusMs();
+        Long lastStatusMsOutside = streamOutsideRetention.getStatusMs();
 
         // run the stream retention task which should 'delete' one stream
         streamRetentionExecutor.exec();
 
-        streamInsideRetetion = streamStore.loadStreamById(streamInsideRetetion.getId(), true);
-        streamOutsideRetetion = streamStore.loadStreamById(streamOutsideRetetion.getId(), true);
+        streamInsideRetention = streamMetaService.getStream(streamInsideRetention.getId(), true);
+        streamOutsideRetention = streamMetaService.getStream(streamOutsideRetention.getId(), true);
 
         dumpStreams();
 
-        Assert.assertEquals(StreamStatus.UNLOCKED, streamInsideRetetion.getStatus());
-        Assert.assertEquals(StreamStatus.DELETED, streamOutsideRetetion.getStatus());
+        Assert.assertEquals(StreamStatus.UNLOCKED, streamInsideRetention.getStatus());
+        Assert.assertEquals(StreamStatus.DELETED, streamOutsideRetention.getStatus());
         // no change to the record
-        Assert.assertEquals(lastStatusMsInside, streamInsideRetetion.getStatusMs());
+        Assert.assertEquals(lastStatusMsInside, streamInsideRetention.getStatusMs());
         // record changed
-        Assert.assertTrue(streamOutsideRetetion.getStatusMs() > lastStatusMsOutside);
+        Assert.assertTrue(streamOutsideRetention.getStatusMs() > lastStatusMsOutside);
 
-        lastStatusMsInside = streamInsideRetetion.getStatusMs();
-        lastStatusMsOutside = streamOutsideRetetion.getStatusMs();
+        lastStatusMsInside = streamInsideRetention.getStatusMs();
+        lastStatusMsOutside = streamOutsideRetention.getStatusMs();
 
         // run the task again, but this time no changes should be made as the
         // one outside the retention period is already 'deleted'
         streamRetentionExecutor.exec();
 
-        streamInsideRetetion = streamStore.loadStreamById(streamInsideRetetion.getId(), true);
-        streamOutsideRetetion = streamStore.loadStreamById(streamOutsideRetetion.getId(), true);
+        streamInsideRetention = streamMetaService.getStream(streamInsideRetention.getId(), true);
+        streamOutsideRetention = streamMetaService.getStream(streamOutsideRetention.getId(), true);
 
         dumpStreams();
 
-        Assert.assertEquals(StreamStatus.UNLOCKED, streamInsideRetetion.getStatus());
-        Assert.assertEquals(StreamStatus.DELETED, streamOutsideRetetion.getStatus());
+        Assert.assertEquals(StreamStatus.UNLOCKED, streamInsideRetention.getStatus());
+        Assert.assertEquals(StreamStatus.DELETED, streamOutsideRetention.getStatus());
         // no change to the records
-        Assert.assertEquals(lastStatusMsInside, streamInsideRetetion.getStatusMs());
-        Assert.assertEquals(lastStatusMsOutside, streamOutsideRetetion.getStatusMs());
+        Assert.assertEquals(lastStatusMsInside, streamInsideRetention.getStatusMs());
+        Assert.assertEquals(lastStatusMsOutside, streamOutsideRetention.getStatusMs());
     }
 
     private void dumpStreams() {
-        final BaseResultList<StreamEntity> streams = streamStore.find(new FindStreamCriteria());
+        final BaseResultList<Stream> streams = streamMetaService.find(new FindStreamCriteria());
 
         Assert.assertEquals(2, streams.size());
 
-        for (final StreamEntity stream : streams) {
+        for (final Stream stream : streams) {
             LOGGER.info("stream: {}, createMs: {}, statusMs: {}, status: {}", stream,
                     DateUtil.createNormalDateTimeString(stream.getCreateMs()),
                     DateUtil.createNormalDateTimeString(stream.getStatusMs()), stream.getStatus());

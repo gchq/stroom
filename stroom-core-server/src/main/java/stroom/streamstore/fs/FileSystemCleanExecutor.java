@@ -23,7 +23,7 @@ import stroom.jobsystem.JobTrackedSchedule;
 import stroom.node.NodeCache;
 import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 import stroom.properties.StroomPropertyService;
 import stroom.task.AsyncTaskHelper;
 import stroom.task.TaskCallbackAdaptor;
@@ -118,8 +118,8 @@ public class FileSystemCleanExecutor {
     }
 
     public void clean(final Task<?> task, final long nodeId) {
-        final Map<Volume, FileSystemCleanProgress> taskProgressMap = new HashMap<>();
-        final Map<Volume, PrintWriter> printWriterMap = new HashMap<>();
+        final Map<VolumeEntity, FileSystemCleanProgress> taskProgressMap = new HashMap<>();
+        final Map<VolumeEntity, PrintWriter> printWriterMap = new HashMap<>();
 
         // Load the node.
         asyncTaskHelper = new AsyncTaskHelper<>(null, taskContext, taskManager, batchSize);
@@ -130,13 +130,13 @@ public class FileSystemCleanExecutor {
 
         final FindVolumeCriteria criteria = new FindVolumeCriteria();
         criteria.getNodeIdSet().add(nodeId);
-        final List<Volume> volumeList = volumeService.find(criteria);
+        final List<VolumeEntity> volumeList = volumeService.find(criteria);
 
         try {
             if (volumeList != null && volumeList.size() > 0) {
                 // Add to the task steps remaining.
 
-                for (final Volume volume : volumeList) {
+                for (final VolumeEntity volume : volumeList) {
                     final FileSystemCleanProgress taskProgress = new FileSystemCleanProgress();
                     if (deleteOut) {
                         final Path dir = Paths.get(volume.getPath());
@@ -185,7 +185,7 @@ public class FileSystemCleanExecutor {
 
                     final StringBuilder trace = new StringBuilder();
 
-                    for (final Volume volume : volumeList) {
+                    for (final VolumeEntity volume : volumeList) {
                         final FileSystemCleanProgress taskProgress = taskProgressMap.get(volume);
 
                         trace.append(volume.getPath());

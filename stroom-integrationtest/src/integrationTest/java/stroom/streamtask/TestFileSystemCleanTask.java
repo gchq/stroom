@@ -32,7 +32,9 @@ import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.FileSystemCleanExecutor;
 import stroom.streamstore.fs.FileSystemStreamMaintenanceService;
 import stroom.streamstore.fs.FileSystemUtil;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.fs.StreamVolumeService;
+import stroom.streamstore.meta.StreamMetaService;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.task.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -60,6 +62,8 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
     private StreamStore streamStore;
     @Inject
     private FileSystemStreamMaintenanceService streamMaintenanceService;
+    @Inject
+    private StreamVolumeService streamVolumeService;
     @Inject
     private FileSystemCleanExecutor fileSystemCleanTaskExecutor;
     @Inject
@@ -101,7 +105,7 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         lockstreamTarget1.close();
         final Collection<Path> lockedFiles = streamMaintenanceService.findAllStreamFile(lockstreamTarget1.getStream());
         FileSystemUtil.updateLastModified(lockedFiles, oldDate.toInstant().toEpochMilli());
-        streamMaintenanceService.find(FindStreamVolumeCriteria.create(lockstreamTarget1.getStream()));
+        streamVolumeService.find(FindStreamVolumeCriteria.create(lockstreamTarget1.getStream()));
         // // Hack making the last access time quite old
         // for (StreamVolume volume : volumeList) {
         // volume.setLastAccessMs(oldDate.toDate().getTime());
@@ -161,31 +165,31 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
     public void testArchiveRemovedFile() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
-        final StreamEntity data = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeEntity.RAW_EVENTS.getName());
+        final Stream stream = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeEntity.RAW_EVENTS.getName());
 
-        Collection<Path> files = streamMaintenanceService.findAllStreamFile(data);
+        Collection<Path> files = streamMaintenanceService.findAllStreamFile(stream);
 
         for (final Path file : files) {
             Assert.assertTrue(FileUtil.delete(file));
         }
 
         final FindStreamVolumeCriteria streamVolumeCriteria = new FindStreamVolumeCriteria();
-        streamVolumeCriteria.obtainStreamIdSet().add(data);
+        streamVolumeCriteria.obtainStreamIdSet().add(stream.getId());
 
         Assert.assertTrue("Must be saved to at least one volume",
-                streamMaintenanceService.find(streamVolumeCriteria).size() >= 1);
+                streamVolumeService.find(streamVolumeCriteria).size() >= 1);
 
         final List<Node> nodeList = nodeService.find(new FindNodeCriteria());
         for (final Node node : nodeList) {
             fileSystemCleanTaskExecutor.clean(new MockTask("Test"), node.getId());
         }
 
-        files = streamMaintenanceService.findAllStreamFile(data);
+        files = streamMaintenanceService.findAllStreamFile(stream);
 
         Assert.assertEquals("Files have been deleted above", 0, files.size());
 
         Assert.assertTrue("Volumes should still exist as they are new",
-                streamMaintenanceService.find(streamVolumeCriteria).size() >= 1);
+                streamVolumeService.find(streamVolumeCriteria).size() >= 1);
 
         for (final Node node : nodeList) {
             fileSystemCleanTaskExecutor.clean(new MockTask("Test"), node.getId());

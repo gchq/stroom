@@ -29,10 +29,9 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.DataRetentionRule;
 import stroom.streamstore.api.StreamProperties;
-import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.fs.FileSystemStreamMaintenanceService;
+import stroom.streamstore.meta.StreamMetaService;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -48,9 +47,7 @@ public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
     private static final int RETENTION_PERIOD_DAYS = 1;
 
     @Inject
-    private StreamStore streamStore;
-    @Inject
-    private FileSystemStreamMaintenanceService streamMaintenanceService;
+    private StreamMetaService streamMetaService;
     @Inject
     private DataRetentionExecutor dataRetentionExecutor;
     @Inject
@@ -78,7 +75,7 @@ public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
         }
         dataRetentionService.save(dataRetentionPolicy);
 
-        StreamEntity streamInsideRetention = streamStore.createStream(
+        Stream streamInsideRetention = streamMetaService.createStream(
                 new StreamProperties.Builder()
                         .feedName(feedName)
                         .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
@@ -86,7 +83,7 @@ public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
                         .statusMs(now)
                         .build());
 
-        StreamEntity streamOutsideRetention = streamStore.createStream(
+        Stream streamOutsideRetention = streamMetaService.createStream(
                 new StreamProperties.Builder()
                         .feedName(feedName)
                         .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
@@ -94,8 +91,9 @@ public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
                         .statusMs(timeOutsideRetentionPeriod)
                         .build());
 
-        streamInsideRetention = streamMaintenanceService.save(streamInsideRetention);
-        streamOutsideRetention = streamMaintenanceService.save(streamOutsideRetention);
+        // Streams are locked initially so unlock.
+        streamMetaService.updateStatus(streamInsideRetention.getId(), StreamStatus.UNLOCKED);
+        streamMetaService.updateStatus(streamOutsideRetention.getId(), StreamStatus.UNLOCKED);
 
         dumpStreams();
 
@@ -105,8 +103,8 @@ public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
         // run the stream retention task which should 'delete' one stream
         dataRetentionExecutor.exec();
 
-        streamInsideRetention = streamStore.loadStreamById(streamInsideRetention.getId(), true);
-        streamOutsideRetention = streamStore.loadStreamById(streamOutsideRetention.getId(), true);
+        streamInsideRetention = streamMetaService.getStream(streamInsideRetention.getId(), true);
+        streamOutsideRetention = streamMetaService.getStream(streamOutsideRetention.getId(), true);
 
         dumpStreams();
 
@@ -124,8 +122,8 @@ public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
         // one outside the retention period is already 'deleted'
         dataRetentionExecutor.exec();
 
-        streamInsideRetention = streamStore.loadStreamById(streamInsideRetention.getId(), true);
-        streamOutsideRetention = streamStore.loadStreamById(streamOutsideRetention.getId(), true);
+        streamInsideRetention = streamMetaService.getStream(streamInsideRetention.getId(), true);
+        streamOutsideRetention = streamMetaService.getStream(streamOutsideRetention.getId(), true);
 
         dumpStreams();
 
@@ -141,11 +139,11 @@ public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
     }
 
     private void dumpStreams() {
-        final BaseResultList<StreamEntity> streams = streamStore.find(new FindStreamCriteria());
+        final BaseResultList<Stream> streams = streamMetaService.find(new FindStreamCriteria());
 
         Assert.assertEquals(2, streams.size());
 
-        for (final StreamEntity stream : streams) {
+        for (final Stream stream : streams) {
             LOGGER.info("stream: %s, createMs: %s, statusMs: %s, status: %s", stream,
                     DateUtil.createNormalDateTimeString(stream.getCreateMs()),
                     DateUtil.createNormalDateTimeString(stream.getStatusMs()), stream.getStatus());

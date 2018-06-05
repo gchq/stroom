@@ -34,7 +34,7 @@ import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 import stroom.node.shared.VolumeState;
 import stroom.ruleset.shared.Policy;
 import stroom.security.AppPermission;
@@ -50,7 +50,7 @@ import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamAttributeValue;
-import stroom.streamstore.shared.StreamVolume;
+import stroom.streamstore.shared.StreamVolumeEntity;
 import stroom.streamtask.StreamTaskCreator;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
@@ -98,10 +98,10 @@ public class DatabaseCommonTestControl implements CommonTestControl {
             StreamProcessorFilter.TABLE_NAME,
             StreamProcessorFilterTracker.TABLE_NAME,
             StreamTask.TABLE_NAME,
-            StreamVolume.TABLE_NAME,
+            StreamVolumeEntity.TABLE_NAME,
             User.TABLE_NAME,
             UserGroupUser.TABLE_NAME,
-            Volume.TABLE_NAME,
+            VolumeEntity.TABLE_NAME,
             VolumeState.TABLE_NAME);
 
     private final VolumeService volumeService;
@@ -165,8 +165,8 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         indexShardManager.deleteFromDisk();
 
         // Delete the contents of all volumes.
-        final List<Volume> volumes = volumeService.find(new FindVolumeCriteria());
-        for (final Volume volume : volumes) {
+        final List<VolumeEntity> volumes = volumeService.find(new FindVolumeCriteria());
+        for (final VolumeEntity volume : volumes) {
             // The parent will also pick up the index shard (as well as the
             // store)
             FileUtil.deleteContents(FileSystemUtil.createFileTypeRoot(volume).getParent());

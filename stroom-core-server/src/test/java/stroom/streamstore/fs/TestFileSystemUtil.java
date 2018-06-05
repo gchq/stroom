@@ -20,7 +20,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import stroom.node.shared.Node;
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 import stroom.streamstore.shared.FeedEntity;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamTypeEntity;
@@ -46,8 +46,8 @@ public class TestFileSystemUtil extends StroomUnitTest {
     private static final String NO_WRITE_DIR1 = "/usr/bin/username";
     private static final String NO_WRITE_DIR2 = "/unable/to/create/this";
 
-    private Volume buildTestVolume() throws IOException {
-        final Volume config = new Volume();
+    private VolumeEntity buildTestVolume() throws IOException {
+        final VolumeEntity config = new VolumeEntity();
         config.setPath(FileUtil.getCanonicalPath(getCurrentTestDir()));
         config.setNode(buildTestNode());
         return config;
@@ -97,7 +97,7 @@ public class TestFileSystemUtil extends StroomUnitTest {
         md.setFeed(FeedEntity.createStub(1));
         md.setCreateMs(DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z"));
 
-        final Path rootFile = FileSystemStreamTypeUtil.createRootStreamFile(buildTestVolume(), md, StreamTypeNames.EVENTS);
+        final Path rootFile = FileSystemStreamTypeUtil.createRootStreamFile(buildTestVolume().getPath(), md, StreamTypeNames.EVENTS);
 
         Assert.assertNotNull(rootFile);
         assertPathEndsWith(rootFile, "EVENTS/2010/01/01/001/001/1=001001001.evt.bgz");
@@ -111,7 +111,7 @@ public class TestFileSystemUtil extends StroomUnitTest {
         md.setFeed(FeedEntity.createStub(1));
         md.setCreateMs(DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z"));
 
-        final Path rootFile = FileSystemStreamTypeUtil.createRootStreamFile(buildTestVolume(), md,
+        final Path rootFile = FileSystemStreamTypeUtil.createRootStreamFile(buildTestVolume().getPath(), md,
                 StreamTypeNames.RAW_EVENTS);
 
         touch(rootFile);

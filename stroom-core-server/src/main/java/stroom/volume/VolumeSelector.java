@@ -16,12 +16,12 @@
 
 package stroom.volume;
 
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 
 import java.util.List;
 
 public interface VolumeSelector {
     String getName();
 
-    Volume select(List<Volume> list);
+    VolumeEntity select(List<VolumeEntity> list);
 }

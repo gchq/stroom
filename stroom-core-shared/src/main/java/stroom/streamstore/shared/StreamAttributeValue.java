@@ -50,8 +50,8 @@ public class StreamAttributeValue extends BaseEntityBig {
     public StreamAttributeValue() {
     }
 
-    public StreamAttributeValue(final StreamEntity stream, final StreamAttributeKey streamAttributeKey, final String value) {
-        this.streamId = stream.getId();
+    public StreamAttributeValue(final long streamId, final StreamAttributeKey streamAttributeKey, final String value) {
+        this.streamId = streamId;
         this.streamAttributeKeyId = streamAttributeKey.getId();
         if (streamAttributeKey.getFieldType().isNumeric()) {
             this.valueNumber = Long.parseLong(value);

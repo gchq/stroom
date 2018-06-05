@@ -20,8 +20,8 @@ import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
 import stroom.node.shared.Node;
-import stroom.node.shared.Volume;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.node.shared.VolumeEntity;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamStatus;
 
 public class FindStreamVolumeCriteria extends BaseCriteria {
@@ -31,12 +31,12 @@ public class FindStreamVolumeCriteria extends BaseCriteria {
 
     private CriteriaSet<StreamStatus> streamStatusSet = null;
     private EntityIdSet<Node> nodeIdSet = null;
-    private EntityIdSet<Volume> volumeIdSet = null;
-    private EntityIdSet<StreamEntity> streamIdSet = null;
+    private EntityIdSet<VolumeEntity> volumeIdSet = null;
+    private CriteriaSet<Long> streamIdSet = null;
 
-    public static FindStreamVolumeCriteria create(final StreamEntity stream) {
+    public static FindStreamVolumeCriteria create(final Stream stream) {
         FindStreamVolumeCriteria rtn = new FindStreamVolumeCriteria();
-        rtn.obtainStreamIdSet().add(stream);
+        rtn.obtainStreamIdSet().add(stream.getId());
         return rtn;
     }
 
@@ -66,22 +66,22 @@ public class FindStreamVolumeCriteria extends BaseCriteria {
         return nodeIdSet;
     }
 
-    public EntityIdSet<StreamEntity> getStreamIdSet() {
+    public CriteriaSet<Long> getStreamIdSet() {
         return streamIdSet;
     }
 
-    public EntityIdSet<StreamEntity> obtainStreamIdSet() {
+    public CriteriaSet<Long> obtainStreamIdSet() {
         if (streamIdSet == null) {
-            streamIdSet = new EntityIdSet<>();
+            streamIdSet = new CriteriaSet<>();
         }
         return streamIdSet;
     }
 
-    public EntityIdSet<Volume> getVolumeIdSet() {
+    public EntityIdSet<VolumeEntity> getVolumeIdSet() {
         return volumeIdSet;
     }
 
-    public EntityIdSet<Volume> obtainVolumeIdSet() {
+    public EntityIdSet<VolumeEntity> obtainVolumeIdSet() {
         if (volumeIdSet == null) {
             volumeIdSet = new EntityIdSet<>();
         }

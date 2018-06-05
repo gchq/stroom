@@ -22,40 +22,29 @@ import event.logging.util.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.docstore.shared.Doc;
 import stroom.entity.StroomDatabaseInfo;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.EntityServiceException;
-import stroom.entity.shared.NamedEntity;
 import stroom.entity.shared.PageRequest;
-import stroom.entity.shared.Period;
-import stroom.entity.util.EntityServiceLogUtil;
 import stroom.entity.util.FieldMap;
 import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
-import stroom.entity.util.SqlUtil;
 import stroom.feed.FeedDocCache;
 import stroom.feed.FeedStore;
 import stroom.feed.MetaMap;
-import stroom.feed.shared.FeedDoc;
 import stroom.node.NodeCache;
 import stroom.node.VolumeService;
-import stroom.node.shared.Volume;
+import stroom.node.shared.Node;
+import stroom.node.shared.VolumeEntity;
 import stroom.persist.EntityManagerSupport;
-import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
-import stroom.security.shared.DocumentPermissionNames;
-import stroom.security.shared.PermissionNames;
 import stroom.streamstore.EffectiveMetaDataCriteria;
 import stroom.streamstore.ExpressionToFindCriteria;
-import stroom.streamstore.ExpressionToFindCriteria.Context;
 import stroom.streamstore.FeedEntityService;
-import stroom.streamstore.FindFeedCriteria;
 import stroom.streamstore.OldFindStreamCriteria;
 import stroom.streamstore.StreamAttributeValueFlush;
 import stroom.streamstore.StreamException;
@@ -63,9 +52,9 @@ import stroom.streamstore.StreamTypeEntityService;
 import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamTarget;
+import stroom.streamstore.fs.StreamVolumeService.StreamVolume;
+import stroom.streamstore.meta.StreamMetaService;
 import stroom.streamstore.shared.FeedEntity;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.FindStreamTypeCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeCondition;
 import stroom.streamstore.shared.StreamAttributeConstants;
@@ -74,14 +63,11 @@ import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamPermissionException;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamStatusId;
 import stroom.streamstore.shared.StreamTypeEntity;
-import stroom.streamstore.shared.StreamVolume;
 import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.shared.StreamProcessor;
-import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -90,12 +76,8 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -129,6 +111,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         SOURCE_FETCH_SET = set;
     }
 
+    private final StreamMetaService streamMetaService;
     private final StroomEntityManager entityManager;
     private final EntityManagerSupport entityManagerSupport;
     private final StroomDatabaseInfo stroomDatabaseInfo;
@@ -142,6 +125,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     private final ExpressionToFindCriteria expressionToFindCriteria;
     private final SecurityContext securityContext;
     private final Security security;
+    private final StreamVolumeService streamVolumeService;
 
     // /**
     // * Convenience method to use the id from a pre-existing stream object to
@@ -181,7 +165,8 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     private final StreamAttributeValueFlush streamAttributeValueFlush;
 
     @Inject
-    FileSystemStreamStoreImpl(final StroomEntityManager entityManager,
+    FileSystemStreamStoreImpl(final StreamMetaService streamMetaService,
+                              final StroomEntityManager entityManager,
                               final EntityManagerSupport entityManagerSupport,
                               final StroomDatabaseInfo stroomDatabaseInfo,
                               final NodeCache nodeCache,
@@ -194,7 +179,9 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
                               final StreamAttributeValueFlush streamAttributeValueFlush,
                               final ExpressionToFindCriteria expressionToFindCriteria,
                               final SecurityContext securityContext,
+                              final StreamVolumeService streamVolumeService,
                               final Security security) {
+        this.streamMetaService = streamMetaService;
         this.entityManager = entityManager;
         this.entityManagerSupport = entityManagerSupport;
         this.stroomDatabaseInfo = stroomDatabaseInfo;
@@ -209,6 +196,7 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         this.expressionToFindCriteria = expressionToFindCriteria;
         this.securityContext = securityContext;
         this.security = security;
+        this.streamVolumeService = streamVolumeService;
     }
 
 //    public static void main(final String[] args) {
@@ -258,112 +246,112 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
 //        System.out.println(sql2.toString());
 //    }
 
-    @Override
-    public StreamEntity createStream(final StreamProperties streamProperties) {
-        final StreamTypeEntity streamType = streamTypeService.getOrCreate(streamProperties.getStreamTypeName());
-        final FeedEntity feed = feedService.getOrCreate(streamProperties.getFeedName());
-
-        final StreamEntity stream = new StreamEntity();
-
-        if (streamProperties.getParent() != null) {
-            stream.setParentStreamId(streamProperties.getParent().getId());
-        }
-
-        stream.setFeed(feed);
-        stream.setStreamType(streamType);
-        stream.setStreamProcessor(streamProperties.getStreamProcessor());
-        if (streamProperties.getStreamTask() != null) {
-            stream.setStreamTaskId(streamProperties.getStreamTask().getId());
-        }
-        stream.setCreateMs(streamProperties.getCreateMs());
-        stream.setEffectiveMs(streamProperties.getEffectiveMs());
-        stream.setStatusMs(streamProperties.getStatusMs());
-
-        return stream;
-    }
-
-    /**
-     * Load a stream by id.
-     *
-     * @param id The stream id to load a stream for.
-     * @return The loaded stream if it exists (has not been physically deleted)
-     * and is not logically deleted or locked, null otherwise.
-     */
-    @Override
-    public StreamEntity loadStreamById(final long id) {
-        return loadStreamById(id, null, false);
-    }
-
-    /**
-     * Load a stream by id.
-     *
-     * @param id        The stream id to load a stream for.
-     * @param anyStatus Used to specify if this method will return streams that are
-     *                  logically deleted or locked. If false only unlocked streams
-     *                  will be returned, null otherwise.
-     * @return The loaded stream if it exists (has not been physically deleted)
-     * else null. Also returns null if one exists but is logically
-     * deleted or locked unless <code>anyStatus</code> is true.
-     */
-    @Override
-    public StreamEntity loadStreamById(final long id, final boolean anyStatus) {
-        return loadStreamById(id, null, anyStatus);
-    }
-
-    // @Override
-    @SuppressWarnings("unchecked")
-    private StreamEntity loadStreamById(final long id, final Set<String> fetchSet, final boolean anyStatus) {
-        StreamEntity entity = null;
-
-        final HqlBuilder sql = new HqlBuilder();
-        sql.append("SELECT e");
-        sql.append(" FROM ");
-        sql.append(StreamEntity.class.getName());
-        sql.append(" AS e");
-
-        // Always fetch feed when loading an individual stream.
-        sql.append(" INNER JOIN FETCH e.feed");
-
-        if (fetchSet != null) {
-//            if (fetchSet.contains(Feed.DOCUMENT_TYPE)) {
-//                sql.append(" INNER JOIN FETCH e.feed");
+//    @Override
+//    public StreamEntity createStream(final StreamProperties streamProperties) {
+//        final StreamTypeEntity streamType = streamTypeService.getOrCreate(streamProperties.getStreamTypeName());
+//        final FeedEntity feed = feedService.getOrCreate(streamProperties.getFeedName());
+//
+//        final StreamEntity stream = new StreamEntity();
+//
+//        if (streamProperties.getParent() != null) {
+//            stream.setParentStreamId(streamProperties.getParent().getId());
+//        }
+//
+//        stream.setFeed(feed);
+//        stream.setStreamType(streamType);
+//        stream.setStreamProcessor(streamProperties.getStreamProcessor());
+//        if (streamProperties.getStreamTask() != null) {
+//            stream.setStreamTaskId(streamProperties.getStreamTask().getId());
+//        }
+//        stream.setCreateMs(streamProperties.getCreateMs());
+//        stream.setEffectiveMs(streamProperties.getEffectiveMs());
+//        stream.setStatusMs(streamProperties.getStatusMs());
+//
+//        return stream;
+//    }
+//
+//    /**
+//     * Load a stream by id.
+//     *
+//     * @param id The stream id to load a stream for.
+//     * @return The loaded stream if it exists (has not been physically deleted)
+//     * and is not logically deleted or locked, null otherwise.
+//     */
+//    @Override
+//    public StreamEntity loadStreamById(final long id) {
+//        return loadStreamById(id, null, false);
+//    }
+//
+//    /**
+//     * Load a stream by id.
+//     *
+//     * @param id        The stream id to load a stream for.
+//     * @param anyStatus Used to specify if this method will return streams that are
+//     *                  logically deleted or locked. If false only unlocked streams
+//     *                  will be returned, null otherwise.
+//     * @return The loaded stream if it exists (has not been physically deleted)
+//     * else null. Also returns null if one exists but is logically
+//     * deleted or locked unless <code>anyStatus</code> is true.
+//     */
+//    @Override
+//    public StreamEntity loadStreamById(final long id, final boolean anyStatus) {
+//        return loadStreamById(id, null, anyStatus);
+//    }
+//
+//    // @Override
+//    @SuppressWarnings("unchecked")
+//    private StreamEntity loadStreamById(final long id, final Set<String> fetchSet, final boolean anyStatus) {
+//        StreamEntity entity = null;
+//
+//        final HqlBuilder sql = new HqlBuilder();
+//        sql.append("SELECT e");
+//        sql.append(" FROM ");
+//        sql.append(StreamEntity.class.getName());
+//        sql.append(" AS e");
+//
+//        // Always fetch feed when loading an individual stream.
+//        sql.append(" INNER JOIN FETCH e.feed");
+//
+//        if (fetchSet != null) {
+////            if (fetchSet.contains(Feed.DOCUMENT_TYPE)) {
+////                sql.append(" INNER JOIN FETCH e.feed");
+////            }
+//            if (fetchSet.contains(StreamTypeEntity.ENTITY_TYPE)) {
+//                sql.append(" INNER JOIN FETCH e.streamType");
 //            }
-            if (fetchSet.contains(StreamTypeEntity.ENTITY_TYPE)) {
-                sql.append(" INNER JOIN FETCH e.streamType");
-            }
-            if (fetchSet.contains(StreamProcessor.ENTITY_TYPE)) {
-                sql.append(" INNER JOIN FETCH e.streamProcessor");
-            }
-        }
-
-        sql.append(" WHERE e.id = ");
-        sql.arg(id);
-
-        final List<StreamEntity> resultList = entityManager.executeQueryResultList(sql);
-        if (resultList != null && resultList.size() > 0) {
-            entity = resultList.get(0);
-            if (!anyStatus) {
-                switch (entity.getStatus()) {
-                    case LOCKED:
-                        entity = null;
-                        break;
-                    case DELETED:
-                        entity = null;
-                        break;
-                    case UNLOCKED:
-                }
-            }
-        }
-
-        // Ensure user has permission to read this stream.
-        if (entity != null) {
-            if (!securityContext.hasDocumentPermission(FeedDoc.DOCUMENT_TYPE, getFeedUuid(entity.getFeedName()), DocumentPermissionNames.READ)) {
-                throw new StreamPermissionException(securityContext.getUserId(), "You do not have permission to read stream with id=" + id);
-            }
-        }
-
-        return entity;
-    }
+//            if (fetchSet.contains(StreamProcessor.ENTITY_TYPE)) {
+//                sql.append(" INNER JOIN FETCH e.streamProcessor");
+//            }
+//        }
+//
+//        sql.append(" WHERE e.id = ");
+//        sql.arg(id);
+//
+//        final List<StreamEntity> resultList = entityManager.executeQueryResultList(sql);
+//        if (resultList != null && resultList.size() > 0) {
+//            entity = resultList.get(0);
+//            if (!anyStatus) {
+//                switch (entity.getStatus()) {
+//                    case LOCKED:
+//                        entity = null;
+//                        break;
+//                    case DELETED:
+//                        entity = null;
+//                        break;
+//                    case UNLOCKED:
+//                }
+//            }
+//        }
+//
+//        // Ensure user has permission to read this stream.
+//        if (entity != null) {
+//            if (!securityContext.hasDocumentPermission(FeedDoc.DOCUMENT_TYPE, getFeedUuid(entity.getFeedName()), DocumentPermissionNames.READ)) {
+//                throw new StreamPermissionException(securityContext.getUserId(), "You do not have permission to read stream with id=" + id);
+//            }
+//        }
+//
+//        return entity;
+//    }
 
     /**
      * <p>
@@ -399,91 +387,60 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     public StreamSource openStreamSource(final long streamId, final boolean anyStatus) throws StreamException {
         StreamSource streamSource = null;
 
-        final StreamEntity stream = loadStreamById(streamId, SOURCE_FETCH_SET, anyStatus);
+        final Stream stream = streamMetaService.getStream(streamId, anyStatus);
         if (stream != null) {
             LOGGER.debug("openStreamSource() {}", stream.getId());
 
-            final Set<StreamVolume> volumeSet = findStreamVolume(stream.getId());
+            final Set<StreamVolume> volumeSet = streamVolumeService.findStreamVolume(stream.getId());
             if (volumeSet.isEmpty()) {
                 final String message = "Unable to find any volume for " + stream;
                 LOGGER.warn(message);
                 throw new StreamException(message);
             }
-            final StreamVolume volumeToUse = StreamVolumeUtil.pickBestVolume(volumeSet, nodeCache.getDefaultNode());
-            if (volumeToUse == null) {
+            final Node node = nodeCache.getDefaultNode();
+            final StreamVolume streamVolume = streamVolumeService.pickBestVolume(volumeSet, node.getId(), node.getRack().getId());
+            if (streamVolume == null) {
                 final String message = "Unable to access any volume for " + stream
                         + " perhaps the stream is on a private volume";
                 LOGGER.warn(message);
                 throw new StreamException(message);
             }
-            streamSource = FileSystemStreamSource.create(stream, volumeToUse, stream.getStreamTypeName());
+            streamSource = FileSystemStreamSource.create(stream, streamVolume.getVolumePath(), stream.getStreamTypeName());
         }
 
         return streamSource;
     }
 
-    /**
-     * Utility to lock a stream.
-     */
-    private Set<StreamVolume> obtainLockForUpdate(final StreamEntity stream) throws StreamException {
-        LOGGER.debug("obtainLock() Entry " + stream);
-        Set<StreamVolume> lock;
-        try {
-            if (stream.isPersistent()) {
-                // Lock the object
-                lock = findStreamVolume(stream.getId());
-                if (lock.isEmpty()) {
-                    throw new StreamException("Not all volumes are unlocked");
-                }
-                final StreamEntity dbStream = lock.iterator().next().getStream();
-                dbStream.updateStatus(StreamStatus.LOCKED);
-
-                entityManager.saveEntity(dbStream);
-
-            } else {
-                final Set<Volume> volumeSet = volumeService.getStreamVolumeSet(nodeCache.getDefaultNode());
-                if (volumeSet.isEmpty()) {
-                    throw new StreamException("Failed to get lock as no writeable volumes");
-                }
-
-                // First time call (no file yet exists)
-                stream.updateStatus(StreamStatus.LOCKED);
-                entityManager.saveEntity(stream);
-
-                // Flush to the DB
-                entityManager.flush();
-
-                lock = new HashSet<>();
-
-                for (final Volume volume : volumeSet) {
-                    StreamVolume streamVolume = new StreamVolume();
-                    streamVolume.setStream(stream);
-                    streamVolume.setVolume(volume);
-                    streamVolume = entityManager.saveEntity(streamVolume);
-
-                    lock.add(streamVolume);
-                }
-            }
-            // Flush to the DB
-            entityManager.flush();
-            LOGGER.debug("obtainLock() Exit " + lock);
-            return lock;
-        } catch (final RuntimeException e) {
-            LOGGER.warn("Failed to get lock on " + stream, e);
-            resolveException(e);
-            return null;
-        }
-    }
-
-    private void resolveException(final RuntimeException e) {
-        throw e;
-//        if (e instanceof RuntimeException) {
-//            throw (RuntimeException) ex;
+//    /**
+//     * Utility to lock a stream.
+//     */
+//    private Set<StreamVolume> obtainLockForUpdate(final Stream stream) throws StreamException {
+//        LOGGER.debug("obtainLock() Entry " + stream);
+//        Set<SVol> lock;
+//        try {
+//
+//
+//            }
+//            // Flush to the DB
+//            entityManager.flush();
+//            LOGGER.debug("obtainLock() Exit " + lock);
+//            return lock;
+//        } catch (final RuntimeException e) {
+//            LOGGER.warn("Failed to get lock on " + stream, e);
+//            resolveException(e);
+//            return null;
 //        }
-//        throw new StreamException(ex);
-    }
+//    }
+//
+//    private void resolveException(final RuntimeException e) {
+//        throw e;
+////        if (e instanceof RuntimeException) {
+////            throw (RuntimeException) ex;
+////        }
+////        throw new StreamException(ex);
+//    }
 
-    private StreamEntity unLock(final StreamEntity stream, final MetaMap metaMap, final boolean append) {
+    private Stream unLock(final Stream stream, final MetaMap metaMap, final boolean append) {
         if (StreamStatus.UNLOCKED.equals(stream.getStatus())) {
             throw new IllegalStateException("Attempt to unlock a stream that is already unlocked");
         }
@@ -498,63 +455,96 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         }
 
         LOGGER.debug("unlock() " + stream);
-        stream.updateStatus(StreamStatus.UNLOCKED);
-        // Attach object (may throw a lock exception)
-        final StreamEntity lock = entityManager.saveEntity(stream);
-
-        // Flush to the DB
-        entityManager.flush();
-        return lock;
+        return streamMetaService.updateStatus(stream.getId(), StreamStatus.UNLOCKED);
     }
 
     @Override
     public StreamTarget openStreamTarget(final StreamProperties streamProperties) {
-        final StreamEntity stream = createStream(streamProperties);
-        return openStreamTarget(stream, false);
+//        return entityManagerSupport.transactionResult(em -> {
+            LOGGER.debug("openStreamTarget() " + streamProperties);
+
+            final Set<VolumeEntity> volumeSet = volumeService.getStreamVolumeSet(nodeCache.getDefaultNode());
+            if (volumeSet.isEmpty()) {
+                throw new StreamException("Failed to get lock as no writeable volumes");
+            }
+
+            // First time call (no file yet exists)
+            final Stream stream = streamMetaService.createStream(streamProperties);
+//            streamMetaService.updateStatus(stream.getId(), StreamStatus.LOCKED);
+
+            final Set<StreamVolume> streamVolumes = streamVolumeService.createStreamVolumes(stream.getId(), volumeSet);
+            final Set<String> rootPaths = streamVolumes.stream().map(StreamVolume::getVolumePath).collect(Collectors.toSet());
+            final String streamType = stream.getStreamTypeName();
+            final FileSystemStreamTarget target = FileSystemStreamTarget.create(stream, rootPaths, streamType, false);
+
+            // Force Creation of the files
+            target.getOutputStream();
+
+            syncAttributes(stream, stream, target);
+
+            return target;
+//        });
     }
 
     @Override
     public StreamTarget openExistingStreamTarget(final long streamId) throws StreamException {
-        final StreamEntity stream = loadStreamById(streamId);
-        return openStreamTarget(stream, true);
+//        return entityManagerSupport.transactionResult(em -> {
+            LOGGER.debug("openExistingStreamTarget() " + streamId);
+
+            // Lock the object
+            final Set<StreamVolume> streamVolumes = streamVolumeService.findStreamVolume(streamId);
+            if (streamVolumes.isEmpty()) {
+                throw new StreamException("Not all volumes are unlocked");
+            }
+            final Stream stream = streamMetaService.updateStatus(streamId, StreamStatus.LOCKED);
+            final Set<String> rootPaths = streamVolumes.stream().map(StreamVolume::getVolumePath).collect(Collectors.toSet());
+
+            final String streamType = stream.getStreamTypeName();
+            final FileSystemStreamTarget target = FileSystemStreamTarget.create(stream, rootPaths,
+                    streamType, true);
+
+            syncAttributes(stream, stream, target);
+
+            return target;
+//        });
     }
 
-    //    @Secured(feature = Stream.DOCUMENT_TYPE, permission = DocumentPermissionNames.UPDATE)
-    @SuppressWarnings("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE")
-    private StreamTarget openStreamTarget(final StreamEntity stream, final boolean append) {
-        return entityManagerSupport.transactionResult(em -> {
-            LOGGER.debug("openStreamTarget() " + stream);
+//    //    @Secured(feature = Stream.DOCUMENT_TYPE, permission = DocumentPermissionNames.UPDATE)
+//    @SuppressWarnings("RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE")
+//    private StreamTarget openStreamTarget(final StreamEntity stream, final boolean append) {
+//        return entityManagerSupport.transactionResult(em -> {
+//            LOGGER.debug("openStreamTarget() " + stream);
+//
+//            if (!append && stream.isPersistent()) {
+//                throw new StreamException("Trying to create a stream target that already exists");
+//            } else if (append && !stream.isPersistent()) {
+//                throw new StreamException("Trying to append to a stream target that doesn't exist");
+//            }
+//
+//            final Set<StreamVolume> lock = obtainLockForUpdate(stream);
+//            if (lock != null) {
+//                final StreamEntity dbStream = lock.iterator().next().getStream();
+//                final String streamType = dbStream.getStreamTypeName();
+//                final FileSystemStreamTarget target = FileSystemStreamTarget.create(dbStream, lock,
+//                        streamType, append);
+//
+//                // TODO - one day allow appending to the stream (not just add child
+//                // streams)
+//                if (!append) {
+//                    // Force Creation of the files
+//                    target.getOutputStream();
+//                }
+//
+//                syncAttributes(stream, dbStream, target);
+//
+//                return target;
+//            }
+//            LOGGER.error("openStreamTarget() Failed to obtain lock");
+//            return null;
+//        });
+//    }
 
-            if (!append && stream.isPersistent()) {
-                throw new StreamException("Trying to create a stream target that already exists");
-            } else if (append && !stream.isPersistent()) {
-                throw new StreamException("Trying to append to a stream target that doesn't exist");
-            }
-
-            final Set<StreamVolume> lock = obtainLockForUpdate(stream);
-            if (lock != null) {
-                final StreamEntity dbStream = lock.iterator().next().getStream();
-                final String streamType = dbStream.getStreamTypeName();
-                final FileSystemStreamTarget target = FileSystemStreamTarget.create(dbStream, lock,
-                        streamType, append);
-
-                // TODO - one day allow appending to the stream (not just add child
-                // streams)
-                if (!append) {
-                    // Force Creation of the files
-                    target.getOutputStream();
-                }
-
-                syncAttributes(stream, dbStream, target);
-
-                return target;
-            }
-            LOGGER.error("openStreamTarget() Failed to obtain lock");
-            return null;
-        });
-    }
-
-    private void syncAttributes(final StreamEntity stream, final StreamEntity dbStream, final FileSystemStreamTarget target) {
+    private void syncAttributes(final Stream stream, final Stream dbStream, final FileSystemStreamTarget target) {
         updateAttribute(target, StreamAttributeConstants.STREAM_ID, String.valueOf(dbStream.getId()));
 
         if (dbStream.getParentStreamId() != null) {
@@ -588,52 +578,52 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
     // deleteStream(meta);
     // }
 
-    @Override
-    public Long deleteStream(final long streamId) {
-        return security.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> doLogicalDeleteStream(streamId, true));
-    }
-
-    private Long doLogicalDeleteStream(final long streamId, final boolean lockCheck) {
-        final StreamEntity loaded = loadStreamById(streamId, SOURCE_FETCH_SET, true);
-
-//        if (stream == null || !stream.isPersistent()) {
-//            throw new IllegalArgumentException(
-//                    "deleteStream does not support delete by example.  You must supply a real stream");
+//    @Override
+//    public Long deleteStream(final long streamId) {
+//        return security.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> doLogicalDeleteStream(streamId, true));
+//    }
+//
+//    private Long doLogicalDeleteStream(final long streamId, final boolean lockCheck) {
+//        final StreamEntity loaded = loadStreamById(streamId, SOURCE_FETCH_SET, true);
+//
+////        if (stream == null || !stream.isPersistent()) {
+////            throw new IllegalArgumentException(
+////                    "deleteStream does not support delete by example.  You must supply a real stream");
+////        }
+////
+////        if (stream.getFeed() == null || !Hibernate.isInitialized(stream.getFeed())) {
+////            throw new IllegalArgumentException(
+////                    "You can only delete streams with a loaded feed");
+////        }
+//
+//        // Don't bother to try and set the status of deleted streams to deleted.
+//        if (StreamStatus.DELETED.equals(loaded.getStatus())) {
+//            return 0L;
 //        }
 //
-//        if (stream.getFeed() == null || !Hibernate.isInitialized(stream.getFeed())) {
-//            throw new IllegalArgumentException(
-//                    "You can only delete streams with a loaded feed");
+//        // Don't delete if the stream is not unlocked and we are checking for unlocked.
+//        if (lockCheck && !StreamStatus.UNLOCKED.equals(loaded.getStatus())) {
+//            return 0L;
 //        }
-
-        // Don't bother to try and set the status of deleted streams to deleted.
-        if (StreamStatus.DELETED.equals(loaded.getStatus())) {
-            return 0L;
-        }
-
-        // Don't delete if the stream is not unlocked and we are checking for unlocked.
-        if (lockCheck && !StreamStatus.UNLOCKED.equals(loaded.getStatus())) {
-            return 0L;
-        }
-
-        // Ensure the user has permission to delete this stream.
-        if (!securityContext.hasDocumentPermission(FeedDoc.DOCUMENT_TYPE, getFeedUuid(loaded.getFeedName()), DocumentPermissionNames.DELETE)) {
-            throw new StreamPermissionException(securityContext.getUserId(), "You do not have permission to delete stream with id=" + loaded.getId());
-        }
-
-        loaded.updateStatus(StreamStatus.DELETED);
-        entityManager.saveEntity(loaded);
-
-        return 1L;
-
-//        final OldFindStreamCriteria findStreamCriteria = new OldFindStreamCriteria();
-//        findStreamCriteria.obtainStreamIdSet().add(stream.getId());
-//        if (lockCheck) {
-//            findStreamCriteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
+//
+//        // Ensure the user has permission to delete this stream.
+//        if (!securityContext.hasDocumentPermission(FeedDoc.DOCUMENT_TYPE, getFeedUuid(loaded.getFeedName()), DocumentPermissionNames.DELETE)) {
+//            throw new StreamPermissionException(securityContext.getUserId(), "You do not have permission to delete stream with id=" + loaded.getId());
 //        }
-//        return fileSystemStreamStoreTransactionHelper.updateStreamStatus(findStreamCriteria, StreamStatus.DELETED,
-//                System.currentTimeMillis());
-    }
+//
+//        loaded.updateStatus(StreamStatus.DELETED);
+//        entityManager.saveEntity(loaded);
+//
+//        return 1L;
+//
+////        final OldFindStreamCriteria findStreamCriteria = new OldFindStreamCriteria();
+////        findStreamCriteria.obtainStreamIdSet().add(stream.getId());
+////        if (lockCheck) {
+////            findStreamCriteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
+////        }
+////        return fileSystemStreamStoreTransactionHelper.updateStreamStatus(findStreamCriteria, StreamStatus.DELETED,
+////                System.currentTimeMillis());
+//    }
 
     @Override
     public Long deleteStreamTarget(final StreamTarget target) {
@@ -644,10 +634,10 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             LOGGER.error("Unable to delete stream target!", e.getMessage(), e);
         }
 
-        // Make sure the stream data is deleted.
-        // Attach object (may throw a lock exception)
-        final StreamEntity db = entityManager.saveEntity(target.getStream());
-        return doLogicalDeleteStream(db.getId(), false);
+//        // Make sure the stream data is deleted.
+//        // Attach object (may throw a lock exception)
+//        final StreamEntity db = entityManager.saveEntity(target.getStream());
+        return streamMetaService.deleteStream(target.getStream().getId(), false);
     }
 
     @Override
@@ -720,139 +710,112 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
             }
         });
     }
-
-    @Override
-    // @Transactional
-    public long getLockCount() {
-        final HqlBuilder sql = new HqlBuilder();
-        sql.append("SELECT count(*) FROM ");
-        sql.append(StreamEntity.class.getName());
-        sql.append(" S WHERE S.pstatus = ");
-        sql.arg(StreamStatusId.LOCKED);
-
-        return entityManager.executeQueryLongResult(sql);
-    }
-
-    /**
-     * Return the meta data volumes for a stream id.
-     */
-    @Override
-    @SuppressWarnings("unchecked")
-    // @Transactional
-    public Set<StreamVolume> findStreamVolume(final Long metaDataId) {
-        final HqlBuilder sql = new HqlBuilder();
-        sql.append("SELECT sv FROM ");
-        sql.append(StreamVolume.class.getName());
-        sql.append(" sv WHERE sv.stream.id = ");
-        sql.arg(metaDataId);
-        return new HashSet<>(entityManager.executeQueryResultList(sql));
-    }
-
-    @Override
-    public BaseResultList<StreamEntity> find(final FindStreamCriteria criteria) {
-        final OldFindStreamCriteria oldFindStreamCriteria = expressionToFindCriteria.convert(criteria);
-        return find(oldFindStreamCriteria);
-    }
-
-    @Override
-    // @Transactional
-    public BaseResultList<StreamEntity> find(final OldFindStreamCriteria originalCriteria) {
-        final boolean relationshipQuery = originalCriteria.getFetchSet().contains(StreamEntity.ENTITY_TYPE);
-        final PageRequest pageRequest = originalCriteria.getPageRequest();
-        if (relationshipQuery) {
-            originalCriteria.setPageRequest(null);
-        }
-
-        final LogExecutionTime logExecutionTime = new LogExecutionTime();
-
-        final OldFindStreamCriteria queryCriteria = new OldFindStreamCriteria();
-        queryCriteria.copyFrom(originalCriteria);
-
-        // Ensure that included feeds are restricted to ones the user can read.
-        restrictCriteriaByFeedPermissions(queryCriteria, DocumentPermissionNames.READ);
-
-        // If the current user is not an admin and no feeds are readable that have been requested then return an empty array.
-        if (!securityContext.isAdmin() && queryCriteria.obtainFeeds().obtainInclude().size() == 0) {
-            final List<StreamEntity> rtnList = new ArrayList<>();
-            return BaseResultList.createCriterialBasedList(rtnList, originalCriteria);
-        }
-
-        final SqlBuilder sql = new SqlBuilder();
-        buildRawSelectSQL(queryCriteria, sql);
-        List<StreamEntity> rtnList = entityManager.executeNativeQueryResultList(sql, StreamEntity.class);
-
-        // Bug where union queries return back more results than we expected
-        if (queryCriteria.obtainPageRequest().getLength() != null
-                && rtnList.size() > queryCriteria.obtainPageRequest().getLength() + 1) {
-            final ArrayList<StreamEntity> limitedList = new ArrayList<>();
-            for (int i = 0; i <= queryCriteria.obtainPageRequest().getLength(); i++) {
-                limitedList.add(rtnList.get(i));
-            }
-            rtnList = limitedList;
-        }
-
-        EntityServiceLogUtil.logQuery(LOGGER, "find()", logExecutionTime, rtnList, sql);
-
-        // Only return back children or parents?
-        if (originalCriteria.getFetchSet().contains(StreamEntity.ENTITY_TYPE)) {
-            final List<StreamEntity> workingList = rtnList;
-            rtnList = new ArrayList<>();
-
-            for (final StreamEntity stream : workingList) {
-                StreamEntity parent = stream;
-                StreamEntity lastParent = parent;
-
-                // Walk up to the root of the tree
-                while (parent.getParentStreamId() != null && (parent = findParent(parent)) != null) {
-                    lastParent = parent;
-                }
-
-                // Add the match
-                rtnList.add(lastParent);
-
-                // Add the children
-                List<StreamEntity> children = findChildren(originalCriteria, Collections.singletonList(lastParent));
-                while (children.size() > 0) {
-                    rtnList.addAll(children);
-                    children = findChildren(originalCriteria, children);
-                }
-            }
-        }
-
-        for (final StreamEntity stream : rtnList) {
-            if (originalCriteria.getFetchSet().contains(StreamProcessor.ENTITY_TYPE)) {
-                stream.setStreamProcessor(streamProcessorService.load(stream.getStreamProcessor()));
-                if (stream.getStreamProcessor() != null) {
-                    if (originalCriteria.getFetchSet().contains(PipelineDoc.DOCUMENT_TYPE)) {
-                        stream.getStreamProcessor().setPipelineUuid(stream.getStreamProcessor().getPipelineUuid());
-                    }
-                }
-            }
-            if (originalCriteria.getFetchSet().contains(StreamTypeEntity.ENTITY_TYPE)) {
-                final StreamTypeEntity streamType = stream.getStreamType();
-                stream.setStreamType(streamType);
-            }
-        }
-
-        if (relationshipQuery) {
-            final long maxSize = rtnList.size();
-            if (pageRequest != null && pageRequest.getOffset() != null) {
-                // Move by an offset?
-                if (pageRequest.getOffset() > 0) {
-                    rtnList = rtnList.subList(pageRequest.getOffset().intValue(), rtnList.size());
-                }
-            }
-            if (pageRequest != null && pageRequest.getLength() != null) {
-                if (rtnList.size() > pageRequest.getLength()) {
-                    rtnList = rtnList.subList(0, pageRequest.getLength() + 1);
-                }
-            }
-            originalCriteria.setPageRequest(pageRequest);
-            return BaseResultList.createCriterialBasedList(rtnList, originalCriteria, maxSize);
-        } else {
-            return BaseResultList.createCriterialBasedList(rtnList, originalCriteria);
-        }
-    }
+//
+//    @Override
+//    public BaseResultList<StreamEntity> find(final FindStreamCriteria criteria) {
+//        final OldFindStreamCriteria oldFindStreamCriteria = expressionToFindCriteria.convert(criteria);
+//        return find(oldFindStreamCriteria);
+//    }
+//
+//    @Override
+//    // @Transactional
+//    public BaseResultList<StreamEntity> find(final OldFindStreamCriteria originalCriteria) {
+//        final boolean relationshipQuery = originalCriteria.getFetchSet().contains(StreamEntity.ENTITY_TYPE);
+//        final PageRequest pageRequest = originalCriteria.getPageRequest();
+//        if (relationshipQuery) {
+//            originalCriteria.setPageRequest(null);
+//        }
+//
+//        final LogExecutionTime logExecutionTime = new LogExecutionTime();
+//
+//        final OldFindStreamCriteria queryCriteria = new OldFindStreamCriteria();
+//        queryCriteria.copyFrom(originalCriteria);
+//
+//        // Ensure that included feeds are restricted to ones the user can read.
+//        restrictCriteriaByFeedPermissions(queryCriteria, DocumentPermissionNames.READ);
+//
+//        // If the current user is not an admin and no feeds are readable that have been requested then return an empty array.
+//        if (!securityContext.isAdmin() && queryCriteria.obtainFeeds().obtainInclude().size() == 0) {
+//            final List<StreamEntity> rtnList = new ArrayList<>();
+//            return BaseResultList.createCriterialBasedList(rtnList, originalCriteria);
+//        }
+//
+//        final SqlBuilder sql = new SqlBuilder();
+//        buildRawSelectSQL(queryCriteria, sql);
+//        List<StreamEntity> rtnList = entityManager.executeNativeQueryResultList(sql, StreamEntity.class);
+//
+//        // Bug where union queries return back more results than we expected
+//        if (queryCriteria.obtainPageRequest().getLength() != null
+//                && rtnList.size() > queryCriteria.obtainPageRequest().getLength() + 1) {
+//            final ArrayList<StreamEntity> limitedList = new ArrayList<>();
+//            for (int i = 0; i <= queryCriteria.obtainPageRequest().getLength(); i++) {
+//                limitedList.add(rtnList.get(i));
+//            }
+//            rtnList = limitedList;
+//        }
+//
+//        EntityServiceLogUtil.logQuery(LOGGER, "find()", logExecutionTime, rtnList, sql);
+//
+//        // Only return back children or parents?
+//        if (originalCriteria.getFetchSet().contains(StreamEntity.ENTITY_TYPE)) {
+//            final List<StreamEntity> workingList = rtnList;
+//            rtnList = new ArrayList<>();
+//
+//            for (final StreamEntity stream : workingList) {
+//                StreamEntity parent = stream;
+//                StreamEntity lastParent = parent;
+//
+//                // Walk up to the root of the tree
+//                while (parent.getParentStreamId() != null && (parent = findParent(parent)) != null) {
+//                    lastParent = parent;
+//                }
+//
+//                // Add the match
+//                rtnList.add(lastParent);
+//
+//                // Add the children
+//                List<StreamEntity> children = findChildren(originalCriteria, Collections.singletonList(lastParent));
+//                while (children.size() > 0) {
+//                    rtnList.addAll(children);
+//                    children = findChildren(originalCriteria, children);
+//                }
+//            }
+//        }
+//
+//        for (final StreamEntity stream : rtnList) {
+//            if (originalCriteria.getFetchSet().contains(StreamProcessor.ENTITY_TYPE)) {
+//                stream.setStreamProcessor(streamProcessorService.load(stream.getStreamProcessor()));
+//                if (stream.getStreamProcessor() != null) {
+//                    if (originalCriteria.getFetchSet().contains(PipelineDoc.DOCUMENT_TYPE)) {
+//                        stream.getStreamProcessor().setPipelineUuid(stream.getStreamProcessor().getPipelineUuid());
+//                    }
+//                }
+//            }
+//            if (originalCriteria.getFetchSet().contains(StreamTypeEntity.ENTITY_TYPE)) {
+//                final StreamTypeEntity streamType = stream.getStreamType();
+//                stream.setStreamType(streamType);
+//            }
+//        }
+//
+//        if (relationshipQuery) {
+//            final long maxSize = rtnList.size();
+//            if (pageRequest != null && pageRequest.getOffset() != null) {
+//                // Move by an offset?
+//                if (pageRequest.getOffset() > 0) {
+//                    rtnList = rtnList.subList(pageRequest.getOffset().intValue(), rtnList.size());
+//                }
+//            }
+//            if (pageRequest != null && pageRequest.getLength() != null) {
+//                if (rtnList.size() > pageRequest.getLength()) {
+//                    rtnList = rtnList.subList(0, pageRequest.getLength() + 1);
+//                }
+//            }
+//            originalCriteria.setPageRequest(pageRequest);
+//            return BaseResultList.createCriterialBasedList(rtnList, originalCriteria, maxSize);
+//        } else {
+//            return BaseResultList.createCriterialBasedList(rtnList, originalCriteria);
+//        }
+//    }
 
     private void restrictCriteriaByFeedPermissions(final OldFindStreamCriteria findStreamCriteria, final String requiredPermission) {
         // We only need to restrict data by feed for non admins.
@@ -1210,284 +1173,284 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         return entityManager.executeQueryResultList(sql);
     }
 
-    /**
-     * <p>
-     * We do 3 queries to find this:<br/>
-     * 1) Find matches within the range 2) Find the date of the best match
-     * outside the range 3) Find the matches based on the best date match.
-     * </p>
-     *
-     * @return the list of good matches
-     */
-    @Override
-    @SuppressWarnings("unchecked")
-    // @Transactional
-    public List<Stream> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
-        final StreamTypeEntity streamType = getStreamType(criteria.getStreamType());
-
-        final LogExecutionTime logExecutionTime = new LogExecutionTime();
-
-        // Find meta data within effective period.
-        final ArrayList<Stream> rtnList = new ArrayList<>(findStreamSource(criteria));
-
-        // Find the greatest effective stream time that we can that is less than
-        // the from time of the effective period.
-        final Map<Long, Long> maxMatch = getMaxEffective(criteria);
-
-        // Found any 'best' matches.
-        if (maxMatch.size() > 0) {
-            // Sort the returned feed matches by id.
-            final List<Long> feedList = new ArrayList<>(maxMatch.keySet());
-            Collections.sort(feedList);
-
-            // Now load just the 'best' matches up.
-            final HqlBuilder sql = new HqlBuilder();
-            sql.append("SELECT S FROM ");
-            sql.append(StreamEntity.class.getName());
-            sql.append(" S WHERE");
-            sql.append(" S.streamType.id = ");
-            sql.arg(streamType.getId());
-            sql.append(" AND S.pstatus = ");
-            sql.arg(StreamStatusId.UNLOCKED);
-            sql.append(" AND (");
-
-            for (final Long feed : feedList) {
-                sql.append("(S.effectiveMs = ");
-                sql.arg(maxMatch.get(feed));
-                sql.append(" AND S.feed.id = ");
-                sql.arg(feed);
-                sql.append(") OR ");
-            }
-
-            // remove last OR
-            sql.setLength(sql.length() - " OR ".length());
-            sql.append(")");
-
-            final LogExecutionTime logExecutionTime2 = new LogExecutionTime();
-            final List<StreamEntity> results = entityManager.executeQueryResultList(sql);
-            EntityServiceLogUtil.logQuery(LOGGER, "findEffectiveStreamSource()", logExecutionTime2, results, sql);
-
-            rtnList.addAll(results);
-        }
-
-        EntityServiceLogUtil.logQuery(LOGGER, "findEffectiveStream()", logExecutionTime, rtnList, null);
-        return rtnList;
-    }
-
-    @Override
-    public Period getCreatePeriod() {
-        final SqlBuilder sql = new SqlBuilder();
-        sql.append("SELECT MIN(");
-        sql.append(StreamEntity.CREATE_MS);
-        sql.append("), MAX(");
-        sql.append(StreamEntity.CREATE_MS);
-        sql.append(") FROM ");
-        sql.append(StreamEntity.TABLE_NAME);
-
-        Period period = null;
-
-        @SuppressWarnings("unchecked") final List<Object[]> rows = entityManager.executeNativeQueryResultList(sql);
-
-        if (rows != null && rows.size() > 0) {
-            period = new Period(((Number) rows.get(0)[0]).longValue(), ((Number) rows.get(0)[1]).longValue());
-        }
-
-        return period;
-    }
-
-    private Map<Long, Long> getMaxEffective(final EffectiveMetaDataCriteria criteria) {
-        final StreamTypeEntity streamType = getStreamType(criteria.getStreamType());
-        final FeedEntity feed = getFeed(criteria.getFeed());
-
-        final Map<Long, Long> rtnMap = new HashMap<>();
-
-        // Find best match otherwise.
-        final SqlBuilder sql = new SqlBuilder();
-//        if (!stroomDatabaseInfo.isMysql() && criteria.getFeed() != null) {
-//            final EntityIdSet<Feed> originalFeedSet = new EntityIdSet<>();
-//            originalFeedSet.copyFrom(criteria.getFeedIdSet());
+//    /**
+//     * <p>
+//     * We do 3 queries to find this:<br/>
+//     * 1) Find matches within the range 2) Find the date of the best match
+//     * outside the range 3) Find the matches based on the best date match.
+//     * </p>
+//     *
+//     * @return the list of good matches
+//     */
+//    @Override
+//    @SuppressWarnings("unchecked")
+//    // @Transactional
+//    public List<Stream> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
+//        final StreamTypeEntity streamType = getStreamType(criteria.getStreamType());
 //
-//            for (final Long feedId : originalFeedSet) {
-//                criteria.getFeedIdSet().clear();
-//                criteria.getFeedIdSet().add(feedId);
-//                rtnMap.putAll(getMaxEffective(criteria));
+//        final LogExecutionTime logExecutionTime = new LogExecutionTime();
+//
+//        // Find meta data within effective period.
+//        final ArrayList<Stream> rtnList = new ArrayList<>(findStreamSource(criteria));
+//
+//        // Find the greatest effective stream time that we can that is less than
+//        // the from time of the effective period.
+//        final Map<Long, Long> maxMatch = getMaxEffective(criteria);
+//
+//        // Found any 'best' matches.
+//        if (maxMatch.size() > 0) {
+//            // Sort the returned feed matches by id.
+//            final List<Long> feedList = new ArrayList<>(maxMatch.keySet());
+//            Collections.sort(feedList);
+//
+//            // Now load just the 'best' matches up.
+//            final HqlBuilder sql = new HqlBuilder();
+//            sql.append("SELECT S FROM ");
+//            sql.append(StreamEntity.class.getName());
+//            sql.append(" S WHERE");
+//            sql.append(" S.streamType.id = ");
+//            sql.arg(streamType.getId());
+//            sql.append(" AND S.pstatus = ");
+//            sql.arg(StreamStatusId.UNLOCKED);
+//            sql.append(" AND (");
+//
+//            for (final Long feed : feedList) {
+//                sql.append("(S.effectiveMs = ");
+//                sql.arg(maxMatch.get(feed));
+//                sql.append(" AND S.feed.id = ");
+//                sql.arg(feed);
+//                sql.append(") OR ");
 //            }
-//            criteria.getFeedIdSet().clear();
-//            criteria.getFeedIdSet().copyFrom(originalFeedSet);
-//            return rtnMap;
 //
+//            // remove last OR
+//            sql.setLength(sql.length() - " OR ".length());
+//            sql.append(")");
+//
+//            final LogExecutionTime logExecutionTime2 = new LogExecutionTime();
+//            final List<StreamEntity> results = entityManager.executeQueryResultList(sql);
+//            EntityServiceLogUtil.logQuery(LOGGER, "findEffectiveStreamSource()", logExecutionTime2, results, sql);
+//
+//            rtnList.addAll(results);
 //        }
+//
+//        EntityServiceLogUtil.logQuery(LOGGER, "findEffectiveStream()", logExecutionTime, rtnList, null);
+//        return rtnList;
+//    }
 
-//        boolean doneOne = false;
-//        for (final Long feedId : criteria.getFeedIdSet()) {
-//            if (doneOne) {
-//                sql.append(" UNION");
+//    @Override
+//    public Period getCreatePeriod() {
+//        final SqlBuilder sql = new SqlBuilder();
+//        sql.append("SELECT MIN(");
+//        sql.append(StreamEntity.CREATE_MS);
+//        sql.append("), MAX(");
+//        sql.append(StreamEntity.CREATE_MS);
+//        sql.append(") FROM ");
+//        sql.append(StreamEntity.TABLE_NAME);
+//
+//        Period period = null;
+//
+//        @SuppressWarnings("unchecked") final List<Object[]> rows = entityManager.executeNativeQueryResultList(sql);
+//
+//        if (rows != null && rows.size() > 0) {
+//            period = new Period(((Number) rows.get(0)[0]).longValue(), ((Number) rows.get(0)[1]).longValue());
+//        }
+//
+//        return period;
+//    }
+//
+//    private Map<Long, Long> getMaxEffective(final EffectiveMetaDataCriteria criteria) {
+//        final StreamTypeEntity streamType = getStreamType(criteria.getStreamType());
+//        final FeedEntity feed = getFeed(criteria.getFeed());
+//
+//        final Map<Long, Long> rtnMap = new HashMap<>();
+//
+//        // Find best match otherwise.
+//        final SqlBuilder sql = new SqlBuilder();
+////        if (!stroomDatabaseInfo.isMysql() && criteria.getFeed() != null) {
+////            final EntityIdSet<Feed> originalFeedSet = new EntityIdSet<>();
+////            originalFeedSet.copyFrom(criteria.getFeedIdSet());
+////
+////            for (final Long feedId : originalFeedSet) {
+////                criteria.getFeedIdSet().clear();
+////                criteria.getFeedIdSet().add(feedId);
+////                rtnMap.putAll(getMaxEffective(criteria));
+////            }
+////            criteria.getFeedIdSet().clear();
+////            criteria.getFeedIdSet().copyFrom(originalFeedSet);
+////            return rtnMap;
+////
+////        }
+//
+////        boolean doneOne = false;
+////        for (final Long feedId : criteria.getFeedIdSet()) {
+////            if (doneOne) {
+////                sql.append(" UNION");
+////            }
+//        sql.append(" (SELECT ");
+//        sql.append(feed.getId());
+//        sql.append(", ");
+//        sql.append("MAX(");
+//        sql.append(StreamEntity.EFFECTIVE_MS);
+//        sql.append(") FROM ");
+//        sql.append(StreamEntity.TABLE_NAME);
+//        sql.append(" WHERE ");
+//        sql.append(StreamEntity.EFFECTIVE_MS);
+//        sql.append(" < ");
+//        sql.arg(criteria.getEffectivePeriod().getFrom());
+//        sql.append(" AND ");
+//        sql.append(StreamEntity.STATUS);
+//        sql.append(" = ");
+//        sql.arg(StreamStatusId.UNLOCKED);
+//        sql.append(" AND ");
+//        sql.append(StreamTypeEntity.FOREIGN_KEY);
+//        sql.append(" = ");
+//        sql.arg(streamType.getId());
+//        sql.append(" AND ");
+//        sql.append(FeedEntity.FOREIGN_KEY);
+//        sql.append(" = ");
+//        sql.arg(feed.getId());
+//        sql.append(")");
+////
+////            doneOne = true;
+////        }
+//
+//        @SuppressWarnings("unchecked") final List<Object[]> resultSet = entityManager.executeNativeQueryResultList(sql);
+//
+//        for (final Object[] row : resultSet) {
+//            final Long feedId = SqlUtil.getLong(row, 0);
+//            final Long effectiveMs = SqlUtil.getLong(row, 1);
+//
+//            if (feedId != null && effectiveMs != null) {
+//                rtnMap.put(feedId, effectiveMs);
 //            }
-        sql.append(" (SELECT ");
-        sql.append(feed.getId());
-        sql.append(", ");
-        sql.append("MAX(");
-        sql.append(StreamEntity.EFFECTIVE_MS);
-        sql.append(") FROM ");
-        sql.append(StreamEntity.TABLE_NAME);
-        sql.append(" WHERE ");
-        sql.append(StreamEntity.EFFECTIVE_MS);
-        sql.append(" < ");
-        sql.arg(criteria.getEffectivePeriod().getFrom());
-        sql.append(" AND ");
-        sql.append(StreamEntity.STATUS);
-        sql.append(" = ");
-        sql.arg(StreamStatusId.UNLOCKED);
-        sql.append(" AND ");
-        sql.append(StreamTypeEntity.FOREIGN_KEY);
-        sql.append(" = ");
-        sql.arg(streamType.getId());
-        sql.append(" AND ");
-        sql.append(FeedEntity.FOREIGN_KEY);
-        sql.append(" = ");
-        sql.arg(feed.getId());
-        sql.append(")");
-//
-//            doneOne = true;
 //        }
+//
+//        return rtnMap;
+//    }
 
-        @SuppressWarnings("unchecked") final List<Object[]> resultSet = entityManager.executeNativeQueryResultList(sql);
-
-        for (final Object[] row : resultSet) {
-            final Long feedId = SqlUtil.getLong(row, 0);
-            final Long effectiveMs = SqlUtil.getLong(row, 1);
-
-            if (feedId != null && effectiveMs != null) {
-                rtnMap.put(feedId, effectiveMs);
-            }
-        }
-
-        return rtnMap;
-    }
-
-    @Override
-    // @Transactional
-    public Long findDelete(final FindStreamCriteria criteria) {
-        return security.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> {
-            final Context context = new Context(null, System.currentTimeMillis());
-            final OldFindStreamCriteria oldFindStreamCriteria = expressionToFindCriteria.convert(criteria, context);
-            return findDelete(oldFindStreamCriteria);
-        });
-    }
-
-    private Long findDelete(final OldFindStreamCriteria criteria) {
-        // Ensure that included feeds are restricted to ones the user can delete.
-        restrictCriteriaByFeedPermissions(criteria, DocumentPermissionNames.DELETE);
-
-        // If the current user is not an admin and no feeds are readable that have been requested then return an empty array.
-        if (!securityContext.isAdmin() && criteria.obtainFeeds().obtainInclude().size() == 0) {
-            return 0L;
-        }
-
-        byte newStatus = StreamStatusId.DELETED;
-        if (criteria.obtainStatusSet().isSingleItemMatch(StreamStatus.DELETED)) {
-            newStatus = StreamStatusId.UNLOCKED;
-        }
-
-        final SqlBuilder sql = new SqlBuilder();
-
-        if (stroomDatabaseInfo.isMysql()) {
-            // UPDATE
-            sql.append("UPDATE ");
-            sql.append(StreamEntity.TABLE_NAME);
-            sql.append(" S");
-
-            // JOIN
-            appendJoin(criteria, sql);
-
-            // SET
-            incrementVersion(sql, "S.");
-
-            sql.append(StreamEntity.STATUS);
-            sql.append(" = ");
-            sql.arg(newStatus);
-            sql.append(", ");
-            sql.append(StreamEntity.STATUS_MS);
-            sql.append(" = ");
-            sql.arg(System.currentTimeMillis());
-
-            // WHERE
-            sql.append(" WHERE");
-            sql.append(" S.");
-            sql.append(StreamEntity.STATUS);
-            sql.append(" <> ");
-            sql.arg(newStatus);
-
-            appendStreamCriteria(criteria, sql);
-
-            // Append order by criteria.
-//            sql.appendOrderBy(sql, false, criteria, "S");
-            sql.applyRestrictionCriteria(criteria);
-
-        } else {
-            // UPDATE
-            sql.append("UPDATE ");
-            sql.append(StreamEntity.TABLE_NAME);
-            sql.append(" US");
-
-            // SET
-            incrementVersion(sql, "US.");
-
-            sql.append(StreamEntity.STATUS);
-            sql.append(" = ");
-            sql.arg(newStatus);
-            sql.append(", US.");
-            sql.append(StreamEntity.STATUS_MS);
-            sql.append(" = ");
-            sql.arg(System.currentTimeMillis());
-
-            // WHERE
-            sql.append(" WHERE US.ID IN (");
-
-            // SUB SELECT
-            sql.append("SELECT S.");
-            sql.append(StreamEntity.ID);
-            sql.append(" FROM ");
-            sql.append(StreamEntity.TABLE_NAME);
-            sql.append(" S");
-
-            // JOIN
-            appendJoin(criteria, sql);
-
-            // WHERE
-            sql.append(" WHERE");
-            sql.append(" S.");
-            sql.append(StreamEntity.STATUS);
-            sql.append(" <> ");
-            sql.arg(newStatus);
-
-            appendStreamCriteria(criteria, sql);
-
-            // Append order by criteria.
-//            sql.appendOrderBy(sql, false, criteria, "S");
-            sql.applyRestrictionCriteria(criteria);
-
-            sql.append(")");
-        }
-
-        return entityManager.executeNativeUpdate(sql);
-    }
-
-    private void incrementVersion(final SqlBuilder sql, final String prefix) {
-        sql.append(" SET ");
-        sql.append(prefix);
-        sql.append(BaseEntity.VERSION);
-        sql.append(" = ");
-        sql.append(prefix);
-        sql.append(BaseEntity.VERSION);
-        sql.append(" + 1, ");
-        sql.append(prefix);
-    }
-
-    @Override
-    public FindStreamCriteria createCriteria() {
-        return new FindStreamCriteria();
-    }
+//    @Override
+//    // @Transactional
+//    public Long findDelete(final FindStreamCriteria criteria) {
+//        return security.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> {
+//            final Context context = new Context(null, System.currentTimeMillis());
+//            final OldFindStreamCriteria oldFindStreamCriteria = expressionToFindCriteria.convert(criteria, context);
+//            return findDelete(oldFindStreamCriteria);
+//        });
+//    }
+//
+//    private Long findDelete(final OldFindStreamCriteria criteria) {
+//        // Ensure that included feeds are restricted to ones the user can delete.
+//        restrictCriteriaByFeedPermissions(criteria, DocumentPermissionNames.DELETE);
+//
+//        // If the current user is not an admin and no feeds are readable that have been requested then return an empty array.
+//        if (!securityContext.isAdmin() && criteria.obtainFeeds().obtainInclude().size() == 0) {
+//            return 0L;
+//        }
+//
+//        byte newStatus = StreamStatusId.DELETED;
+//        if (criteria.obtainStatusSet().isSingleItemMatch(StreamStatus.DELETED)) {
+//            newStatus = StreamStatusId.UNLOCKED;
+//        }
+//
+//        final SqlBuilder sql = new SqlBuilder();
+//
+//        if (stroomDatabaseInfo.isMysql()) {
+//            // UPDATE
+//            sql.append("UPDATE ");
+//            sql.append(StreamEntity.TABLE_NAME);
+//            sql.append(" S");
+//
+//            // JOIN
+//            appendJoin(criteria, sql);
+//
+//            // SET
+//            incrementVersion(sql, "S.");
+//
+//            sql.append(StreamEntity.STATUS);
+//            sql.append(" = ");
+//            sql.arg(newStatus);
+//            sql.append(", ");
+//            sql.append(StreamEntity.STATUS_MS);
+//            sql.append(" = ");
+//            sql.arg(System.currentTimeMillis());
+//
+//            // WHERE
+//            sql.append(" WHERE");
+//            sql.append(" S.");
+//            sql.append(StreamEntity.STATUS);
+//            sql.append(" <> ");
+//            sql.arg(newStatus);
+//
+//            appendStreamCriteria(criteria, sql);
+//
+//            // Append order by criteria.
+////            sql.appendOrderBy(sql, false, criteria, "S");
+//            sql.applyRestrictionCriteria(criteria);
+//
+//        } else {
+//            // UPDATE
+//            sql.append("UPDATE ");
+//            sql.append(StreamEntity.TABLE_NAME);
+//            sql.append(" US");
+//
+//            // SET
+//            incrementVersion(sql, "US.");
+//
+//            sql.append(StreamEntity.STATUS);
+//            sql.append(" = ");
+//            sql.arg(newStatus);
+//            sql.append(", US.");
+//            sql.append(StreamEntity.STATUS_MS);
+//            sql.append(" = ");
+//            sql.arg(System.currentTimeMillis());
+//
+//            // WHERE
+//            sql.append(" WHERE US.ID IN (");
+//
+//            // SUB SELECT
+//            sql.append("SELECT S.");
+//            sql.append(StreamEntity.ID);
+//            sql.append(" FROM ");
+//            sql.append(StreamEntity.TABLE_NAME);
+//            sql.append(" S");
+//
+//            // JOIN
+//            appendJoin(criteria, sql);
+//
+//            // WHERE
+//            sql.append(" WHERE");
+//            sql.append(" S.");
+//            sql.append(StreamEntity.STATUS);
+//            sql.append(" <> ");
+//            sql.arg(newStatus);
+//
+//            appendStreamCriteria(criteria, sql);
+//
+//            // Append order by criteria.
+////            sql.appendOrderBy(sql, false, criteria, "S");
+//            sql.applyRestrictionCriteria(criteria);
+//
+//            sql.append(")");
+//        }
+//
+//        return entityManager.executeNativeUpdate(sql);
+//    }
+//
+//    private void incrementVersion(final SqlBuilder sql, final String prefix) {
+//        sql.append(" SET ");
+//        sql.append(prefix);
+//        sql.append(BaseEntity.VERSION);
+//        sql.append(" = ");
+//        sql.append(prefix);
+//        sql.append(BaseEntity.VERSION);
+//        sql.append(" + 1, ");
+//        sql.append(prefix);
+//    }
+//
+//    @Override
+//    public FindStreamCriteria createCriteria() {
+//        return new FindStreamCriteria();
+//    }
 
     private FeedEntity getFeed(final String name) {
         if (name == null) {
@@ -1499,13 +1462,13 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         }
         return feed;
     }
-
-    private String getFeedUuid(final String name) {
-        if (name == null) {
-            return null;
-        }
-        return feedDocCache.get(name).map(Doc::getUuid).orElse(null);
-    }
+//
+//    private String getFeedUuid(final String name) {
+//        if (name == null) {
+//            return null;
+//        }
+//        return feedDocCache.get(name).map(Doc::getUuid).orElse(null);
+//    }
 
     private StreamTypeEntity getStreamType(final String name) {
         if (name == null) {
@@ -1518,27 +1481,27 @@ public class FileSystemStreamStoreImpl implements FileSystemStreamStore {
         return streamType;
     }
 
-    @Override
-    public List<String> getFeeds() {
-        final List<FeedEntity> feeds = feedService.find(new FindFeedCriteria());
-        if (feeds == null) {
-            return Collections.emptyList();
-        }
-        return feeds.stream()
-                .map(NamedEntity::getName)
-                .sorted(Comparator.naturalOrder())
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<String> getStreamTypes() {
-        final List<StreamTypeEntity> streamTypes = streamTypeService.find(new FindStreamTypeCriteria());
-        if (streamTypes == null) {
-            return Collections.emptyList();
-        }
-        return streamTypes.stream()
-                .map(NamedEntity::getName)
-                .sorted(Comparator.naturalOrder())
-                .collect(Collectors.toList());
-    }
+//    @Override
+//    public List<String> getFeeds() {
+//        final List<FeedEntity> feeds = feedService.find(new FindFeedCriteria());
+//        if (feeds == null) {
+//            return Collections.emptyList();
+//        }
+//        return feeds.stream()
+//                .map(NamedEntity::getName)
+//                .sorted(Comparator.naturalOrder())
+//                .collect(Collectors.toList());
+//    }
+//
+//    @Override
+//    public List<String> getStreamTypes() {
+//        final List<StreamTypeEntity> streamTypes = streamTypeService.find(new FindStreamTypeCriteria());
+//        if (streamTypes == null) {
+//            return Collections.emptyList();
+//        }
+//        return streamTypes.stream()
+//                .map(NamedEntity::getName)
+//                .sorted(Comparator.naturalOrder())
+//                .collect(Collectors.toList());
+//    }
 }

@@ -24,7 +24,7 @@ import stroom.node.NodeCache;
 import stroom.security.Security;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.shared.Stream;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamTask;
@@ -87,11 +87,7 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
                 // Open the stream source.
                 streamSource = streamStore.openStreamSource(streamTask.getStream().getId());
                 if (streamSource != null) {
-                    final StreamEntity stream = streamSource.getStream();
-
-                    // Load lazy stuff
-                    // stream.setStreamType(streamTypeService.load(stream.getStreamType()));
-                    final StreamProcessor sourceStreamProcessor = streamProcessorService.load(stream.getStreamProcessor());
+                    final Stream stream = streamSource.getStream();
 
                     StreamProcessor destStreamProcessor = null;
                     StreamProcessorFilter destStreamProcessorFilter = null;
@@ -118,10 +114,10 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
                     }
 
                     // Don't process any streams that we have already created
-                    if (sourceStreamProcessor != null && sourceStreamProcessor.equals(destStreamProcessor)) {
+                    if (stream.getStreamProcessorId() != null && stream.getStreamProcessorId() == destStreamProcessor.getId()) {
                         complete = true;
                         LOGGER.warn("Skipping stream that we seem to have created (avoid processing forever) {} {}", stream,
-                                sourceStreamProcessor);
+                                destStreamProcessor);
 
                     } else {
                         // Change the task status.... and save

@@ -30,8 +30,9 @@ import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.fs.serializable.NestedInputStream;
 import stroom.streamstore.fs.serializable.RANestedInputStream;
+import stroom.streamstore.meta.StreamMetaService;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.shared.Stream;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskContext;
 import stroom.task.TaskHandlerBean;
@@ -56,14 +57,17 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
 
     private final TaskContext taskContext;
     private final StreamStore streamStore;
+    private final StreamMetaService streamMetaService;
     private final Security security;
 
     @Inject
     StreamDownloadTaskHandler(final TaskContext taskContext,
                               final StreamStore streamStore,
+                              final StreamMetaService streamMetaService,
                               final Security security) {
         this.taskContext = taskContext;
         this.streamStore = streamStore;
+        this.streamMetaService = streamMetaService;
         this.security = security;
     }
 
@@ -77,7 +81,7 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
 
     private StreamDownloadResult downloadData(final StreamDownloadTask task, final FindStreamCriteria findStreamCriteria,
                                               Path data, final StreamDownloadSettings settings) {
-        final BaseResultList<StreamEntity> list = streamStore.find(findStreamCriteria);
+        final BaseResultList<Stream> list = streamMetaService.find(findStreamCriteria);
 
         final StreamDownloadResult result = new StreamDownloadResult();
 
@@ -97,7 +101,7 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
             final LogItemProgress logItemProgress = new LogItemProgress(0, list.size());
             taskContext.info("Stream {}", logItemProgress);
 
-            for (final StreamEntity stream : list) {
+            for (final Stream stream : list) {
                 result.incrementRecordsWritten();
                 logItemProgress.incrementProgress();
 

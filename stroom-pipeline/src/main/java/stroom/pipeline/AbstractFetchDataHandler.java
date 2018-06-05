@@ -54,6 +54,7 @@ import stroom.streamstore.fs.FileSystemUtil;
 import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.fs.serializable.CompoundInputStream;
 import stroom.streamstore.fs.serializable.RASegmentInputStream;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamTypeEntity;
@@ -346,7 +347,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                 streamsRowCount, resultPageRange, pageRowCount, null, error, false);
     }
 
-    private void writeEventLog(final StreamEntity stream, final String feedName, final String streamTypeName,
+    private void writeEventLog(final Stream stream, final String feedName, final String streamTypeName,
                                final Exception e) {
         try {
             streamEventLog.viewStream(stream, feedName, streamTypeName, e);

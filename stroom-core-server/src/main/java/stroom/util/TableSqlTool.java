@@ -22,14 +22,14 @@ import stroom.jobsystem.shared.JobNode;
 import stroom.node.shared.GlobalProperty;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 import stroom.node.shared.VolumeState;
 import stroom.streamstore.shared.FeedEntity;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.streamstore.shared.StreamTypeEntity;
-import stroom.streamstore.shared.StreamVolume;
+import stroom.streamstore.shared.StreamVolumeEntity;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamTask;
@@ -47,7 +47,7 @@ public class TableSqlTool {
             StreamTypeEntity.TABLE_NAME,
             ClusterLock.TABLE_NAME,
             FeedEntity.TABLE_NAME,
-            Volume.TABLE_NAME,
+            VolumeEntity.TABLE_NAME,
             VolumeState.TABLE_NAME,
             GlobalProperty.TABLE_NAME,
             Job.TABLE_NAME,
@@ -58,7 +58,7 @@ public class TableSqlTool {
             StreamEntity.TABLE_NAME,
             StreamAttributeKey.TABLE_NAME,
             StreamAttributeValue.TABLE_NAME,
-            StreamVolume.TABLE_NAME,
+            StreamVolumeEntity.TABLE_NAME,
             StreamTask.TABLE_NAME));
 
     public static void main(final String[] args) {

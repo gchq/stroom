@@ -18,9 +18,8 @@ package stroom.util;
 
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.jobsystem.shared.JobNode.JobType;
-import stroom.node.shared.Volume.VolumeType;
-import stroom.node.shared.Volume.VolumeUseStatus;
-import stroom.streamstore.shared.StreamStatus;
+import stroom.node.shared.VolumeEntity.VolumeType;
+import stroom.node.shared.VolumeEntity.VolumeUseStatus;
 import stroom.streamtask.shared.TaskStatus;
 
 public class EnumSqlTool {

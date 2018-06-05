@@ -3,7 +3,7 @@ package stroom.index;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.util.SqlBuilder;
 import stroom.node.VolumeService;
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 import stroom.persist.EntityManagerSupport;
 import stroom.docref.DocRef;
 
@@ -28,7 +28,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService {
     }
 
     @SuppressWarnings("unchecked")
-    public Set<Volume> getVolumesForIndex(final DocRef indexRef) {
+    public Set<VolumeEntity> getVolumesForIndex(final DocRef indexRef) {
         final SqlBuilder builder = new SqlBuilder();
         builder.append("SELECT FK_VOL_ID FROM IDX_VOL WHERE IDX_UUID = ");
         builder.arg(indexRef.getUuid());
@@ -40,7 +40,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService {
                 .collect(Collectors.toSet());
     }
 
-    public void setVolumesForIndex(final DocRef indexRef, final Set<Volume> volumes) {
+    public void setVolumesForIndex(final DocRef indexRef, final Set<VolumeEntity> volumes) {
         entityManagerSupport.transaction(em -> {
             final SqlBuilder builder = new SqlBuilder();
             builder.append("DELETE FROM IDX_VOL WHERE IDX_UUID = ");

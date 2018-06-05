@@ -37,7 +37,7 @@ public class FindStreamCriteria extends BaseCriteria implements HasIsConstrained
         this.expression = expression;
     }
 
-    public static FindStreamCriteria createWithStream(final StreamEntity stream) {
+    public static FindStreamCriteria createWithStream(final Stream stream) {
         final FindStreamCriteria criteria = new FindStreamCriteria();
         criteria.setExpression(ExpressionUtil.createSimpleExpression());
         criteria.obtainSelectedIdSet().add(stream.getId());

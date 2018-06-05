@@ -19,11 +19,11 @@ package stroom.streamtask;
 
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
-import stroom.entity.util.BaseEntityUtil;
 import stroom.node.shared.Node;
-import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.meta.StreamMetaService;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.QueryData;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.StreamProcessorFilter;
@@ -35,17 +35,18 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 @Singleton
 public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
-    private final StreamStore streamStore;
+    private final StreamMetaService streamMetaService;
     private final StreamProcessorFilterService streamProcessorFilterService;
 
     @Inject
-    MockStreamTaskCreator(final StreamStore streamStore,
+    MockStreamTaskCreator(final StreamMetaService streamMetaService,
                           final StreamProcessorFilterService streamProcessorFilterService) {
-        this.streamStore = streamStore;
+        this.streamMetaService = streamMetaService;
         this.streamProcessorFilterService = streamProcessorFilterService;
     }
 
@@ -62,7 +63,7 @@ public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
                 .find(criteria);
         if (streamProcessorFilters != null && streamProcessorFilters.size() > 0) {
             // Sort by priority.
-            Collections.sort(streamProcessorFilters, (o1, o2) -> o2.getPriority() - o1.getPriority());
+            streamProcessorFilters.sort((o1, o2) -> o2.getPriority() - o1.getPriority());
 
             // Get tasks for each filter.
             taskList = new ArrayList<>();
@@ -71,19 +72,19 @@ public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
 
                 final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
                 findStreamCriteria.setExpression(queryData.getExpression());
-                final BaseResultList<StreamEntity> streams = streamStore.find(findStreamCriteria);
+                final BaseResultList<Stream> streams = streamMetaService.find(findStreamCriteria);
 
-                BaseEntityUtil.sort(streams);
+                streams.sort(Comparator.comparing(Stream::getId));
 
-                if (streams != null && streams.size() > 0) {
-                    for (final StreamEntity stream : streams) {
+                if (streams.size() > 0) {
+                    for (final Stream stream : streams) {
                         if (stream.getId() >= filter.getStreamProcessorFilterTracker().getMinStreamId()) {
                             // Only process streams with an id of 1 or more
                             // greater than this stream in future.
                             filter.getStreamProcessorFilterTracker().setMinStreamId(stream.getId() + 1);
 
                             final StreamTask streamTask = new StreamTask();
-                            streamTask.setStream(stream);
+                            streamTask.setStream((StreamEntity) stream);
                             streamTask.setStreamProcessorFilter(filter);
                             streamTask.setNode(node);
                             streamTask.setStatus(TaskStatus.ASSIGNED);

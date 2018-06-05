@@ -17,47 +17,16 @@
 
 package stroom.streamstore;
 
-import stroom.entity.FindService;
-import stroom.node.shared.Volume;
-import stroom.streamstore.shared.StreamVolume;
+import stroom.node.shared.VolumeEntity;
 
 /**
  * Low level API to manage the stream store.
  */
-public interface StreamMaintenanceService extends FindService<StreamVolume, FindStreamVolumeCriteria> {
-//    /**
-//     * Delete the files on a volume and then the StreamVolume record.
-//     *
-//     * @return count of delete
-//     */
-//    Long deleteStreamVolume(StreamVolume streamVolume);
-//
-//    /**
-//     * Save a stream volume.
-//     *
-//     * @return updated object.
-//     */
-//    StreamVolume save(StreamVolume streamVolume);
-//
-//    /**
-//     * Save a stream.
-//     *
-//     * @return updated object.
-//     */
-//    Stream save(Stream stream);
-//
-//    /**
-//     * Used in tests. Find all files related to this stream.
-//     *
-//     * @param stream to search for
-//     * @return is of real IO files.
-//     */
-//    FileArrayList findAllStreamFile(Stream stream);
-
+public interface StreamMaintenanceService {
     /**
      * Scan a directory deleting old stuff and building an index of what is
      * there. Return back a list of sub dir's to nest into.
      */
-    ScanVolumePathResult scanVolumePath(Volume volume, boolean doDelete, String path, long oldFileAge);
+    ScanVolumePathResult scanVolumePath(VolumeEntity volume, boolean doDelete, String path, long oldFileAge);
 
 }

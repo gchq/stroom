@@ -23,7 +23,7 @@ import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.node.shared.Node;
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 import stroom.docref.HasDisplayValue;
 import stroom.util.shared.ModelStringUtil;
 
@@ -81,7 +81,7 @@ public class IndexShard extends AuditedEntity {
     /**
      * Volume the indexUuid is on
      */
-    private Volume volume;
+    private VolumeEntity volume;
     /**
      * The owner of the indexUuid (the writer)
      */
@@ -143,13 +143,13 @@ public class IndexShard extends AuditedEntity {
     }
 
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = Volume.FOREIGN_KEY)
+    @JoinColumn(name = VolumeEntity.FOREIGN_KEY)
     @Fetch(FetchMode.SELECT)
-    public Volume getVolume() {
+    public VolumeEntity getVolume() {
         return volume;
     }
 
-    public void setVolume(final Volume volume) {
+    public void setVolume(final VolumeEntity volume) {
         this.volume = volume;
     }
 

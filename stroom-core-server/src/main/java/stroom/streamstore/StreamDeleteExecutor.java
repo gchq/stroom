@@ -23,9 +23,8 @@ import stroom.jobsystem.JobTrackedSchedule;
 import stroom.properties.StroomPropertyService;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeValue;
-import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamStatusId;
-import stroom.streamstore.shared.StreamVolume;
+import stroom.streamstore.shared.StreamVolumeEntity;
 import stroom.streamtask.AbstractBatchDeleteExecutor;
 import stroom.streamtask.BatchIdTransactionHelper;
 import stroom.streamtask.shared.StreamTask;
@@ -65,7 +64,7 @@ public class StreamDeleteExecutor extends AbstractBatchDeleteExecutor {
         deleteWithJoin(StreamTask.TABLE_NAME, StreamEntity.FOREIGN_KEY, "stream tasks", total);
 
         // Delete stream volumes.
-        deleteWithJoin(StreamVolume.TABLE_NAME, StreamEntity.FOREIGN_KEY, "stream volumes", total);
+        deleteWithJoin(StreamVolumeEntity.TABLE_NAME, StreamEntity.FOREIGN_KEY, "stream volumes", total);
 
         // Delete stream attribute values.
         deleteWithJoin(StreamAttributeValue.TABLE_NAME, StreamAttributeValue.STREAM_ID, "stream attribute values",

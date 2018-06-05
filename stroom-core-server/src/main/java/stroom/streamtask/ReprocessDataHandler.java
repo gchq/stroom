@@ -19,17 +19,17 @@ package stroom.streamtask;
 
 import com.google.common.base.Strings;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.EntityIdSet;
+import stroom.entity.shared.CriteriaSet;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
-import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.meta.StreamMetaService;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.ReprocessDataInfo;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamtask.shared.ReprocessDataAction;
 import stroom.streamtask.shared.StreamProcessor;
@@ -49,16 +49,19 @@ import java.util.Map;
 class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, SharedList<ReprocessDataInfo>> {
     private static final int MAX_STREAM_TO_REPROCESS = 1000;
 
+    private final StreamProcessorService streamProcessorService;
     private final StreamProcessorFilterService streamProcessorFilterService;
-    private final StreamStore streamStore;
+    private final StreamMetaService streamMetaService;
     private final Security security;
 
     @Inject
-    ReprocessDataHandler(final StreamProcessorFilterService streamProcessorFilterService,
-                         final StreamStore streamStore,
+    ReprocessDataHandler(final StreamProcessorService streamProcessorService,
+                         final StreamProcessorFilterService streamProcessorFilterService,
+                         final StreamMetaService streamMetaService,
                          final Security security) {
+        this.streamProcessorService = streamProcessorService;
         this.streamProcessorFilterService = streamProcessorFilterService;
-        this.streamStore = streamStore;
+        this.streamMetaService = streamMetaService;
         this.security = security;
     }
 
@@ -77,7 +80,7 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
                 criteria.obtainPageRequest().setOffset(0L);
                 criteria.obtainPageRequest().setLength(MAX_STREAM_TO_REPROCESS);
 
-                final BaseResultList<StreamEntity> streams = streamStore.find(criteria);
+                final BaseResultList<Stream> streams = streamMetaService.find(criteria);
 
                 if (!streams.isExact()) {
                     info.add(new ReprocessDataInfo(Severity.ERROR, "Results exceed " + MAX_STREAM_TO_REPROCESS
@@ -88,19 +91,14 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
                     final StringBuilder unableListSB = new StringBuilder();
                     final StringBuilder submittedListSB = new StringBuilder();
 
-                    final Map<StreamProcessor, EntityIdSet<StreamEntity>> streamToProcessorSet = new HashMap<>();
+                    final Map<StreamProcessor, CriteriaSet<Long>> streamToProcessorSet = new HashMap<>();
 
-                    for (final StreamEntity stream : streams) {
+                    for (final Stream stream : streams) {
                         // We can only reprocess streams that have a stream
                         // processor and a parent stream id.
-                        if (stream.getStreamProcessor() != null && stream.getParentStreamId() != null) {
-                            EntityIdSet<StreamEntity> streamSet = streamToProcessorSet.get(stream.getStreamProcessor());
-                            if (streamSet == null) {
-                                streamSet = new EntityIdSet<>();
-                                streamToProcessorSet.put(stream.getStreamProcessor(), streamSet);
-                            }
-
-                            streamSet.add(stream.getParentStreamId());
+                        if (stream.getStreamProcessorId() != null && stream.getParentStreamId() != null) {
+                            final StreamProcessor streamProcessor = streamProcessorService.loadByIdInsecure(stream.getStreamProcessorId());
+                            streamToProcessorSet.computeIfAbsent(streamProcessor, k -> new CriteriaSet<>()).add(stream.getParentStreamId());
                         } else {
                             skippingCount++;
                         }
@@ -110,13 +108,13 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
                     list.sort(Comparator.comparing(StreamProcessor::getPipelineUuid));
 
                     for (final StreamProcessor streamProcessor : list) {
-                        final EntityIdSet<StreamEntity> streamSet = streamToProcessorSet.get(streamProcessor);
+                        final CriteriaSet<Long> streamIdSet = streamToProcessorSet.get(streamProcessor);
 
                         final QueryData queryData = new QueryData();
                         final ExpressionOperator.Builder operator = new ExpressionOperator.Builder(ExpressionOperator.Op.AND);
 
                         final ExpressionOperator.Builder streamIdTerms = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
-                        streamSet.forEach(streamId -> streamIdTerms.addTerm(StreamDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(streamId)));
+                        streamIdSet.forEach(streamId -> streamIdTerms.addTerm(StreamDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(streamId)));
                         operator.addOperator(streamIdTerms.build());
 
                         queryData.setDataSource(StreamDataSource.STREAM_STORE_DOC_REF);
@@ -130,7 +128,7 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
                             final String padded = Strings.padEnd(streamProcessor.getPipelineUuid(), 40, ' ');
                             submittedListSB.append(padded);
                             submittedListSB.append("\t");
-                            submittedListSB.append(streamSet.size());
+                            submittedListSB.append(streamIdSet.size());
                             submittedListSB.append(" streams\n");
 
                             streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 10, queryData);

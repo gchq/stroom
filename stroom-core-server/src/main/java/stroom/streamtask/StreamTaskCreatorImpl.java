@@ -35,10 +35,10 @@ import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.streamstore.ExpressionToFindCriteria;
 import stroom.streamstore.ExpressionToFindCriteria.Context;
 import stroom.streamstore.OldFindStreamCriteria;
-import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.meta.StreamMetaService;
 import stroom.streamstore.shared.Limits;
 import stroom.streamstore.shared.QueryData;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamtask.StreamTaskCreatorTransactionHelper.CreatedTasks;
@@ -105,7 +105,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     private final StreamTaskHelper streamTaskHelper;
     private final StroomPropertyService propertyService;
     private final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider;
-    private final StreamStore streamStore;
+    private final StreamMetaService streamMetaService;
     private final Security security;
     private final ExpressionToFindCriteria expressionToFindCriteria;
 
@@ -157,7 +157,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                           final StreamTaskHelper streamTaskHelper,
                           final StroomPropertyService propertyService,
                           final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider,
-                          final StreamStore streamStore,
+                          final StreamMetaService streamMetaService,
                           final Security security,
                           final ExpressionToFindCriteria expressionToFindCriteria) {
 
@@ -169,7 +169,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         this.streamTaskHelper = streamTaskHelper;
         this.propertyService = propertyService;
         this.internalStatisticsReceiverProvider = internalStatisticsReceiverProvider;
-        this.streamStore = streamStore;
+        this.streamMetaService = streamMetaService;
         this.security = security;
         this.expressionToFindCriteria = expressionToFindCriteria;
     }
@@ -788,7 +788,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                 tracker = streamTaskTransactionHelper.saveTracker(tracker);
 
                 // Create a task for each stream reference.
-                final Map<StreamEntity, InclusiveRanges> map = createStreamMap(result);
+                final Map<Stream, InclusiveRanges> map = createStreamMap(result);
                 final CreatedTasks createdTasks = streamTaskTransactionHelper.createNewTasks(filter, tracker,
                         streamQueryTime, map, node, recentStreamInfo, reachedLimit);
                 // Transfer the newly created (and available) tasks to the
@@ -822,14 +822,14 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         final StreamProcessorFilterTracker updatedTracker = streamTaskTransactionHelper.saveTracker(tracker);
 
         // This will contain locked and unlocked streams
-        final List<StreamEntity> streamList = streamTaskTransactionHelper.runSelectStreamQuery(
+        final List<Stream> streamList = streamTaskTransactionHelper.runSelectStreamQuery(
                 findStreamCriteria,
                 updatedTracker.getMinStreamId(),
                 requiredTasks);
 
         // Just create regular stream processing tasks.
-        final Map<StreamEntity, InclusiveRanges> map = new HashMap<>();
-        for (final StreamEntity stream : streamList) {
+        final Map<Stream, InclusiveRanges> map = new HashMap<>();
+        for (final Stream stream : streamList) {
             map.put(stream, null);
         }
 
@@ -841,13 +841,13 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         exhaustedFilterMap.put(filter.getId(), createdTasks.getTotalTasksCreated() == 0);
     }
 
-    private Map<StreamEntity, InclusiveRanges> createStreamMap(final EventRefs eventRefs) {
+    private Map<Stream, InclusiveRanges> createStreamMap(final EventRefs eventRefs) {
         final int maxRangesPerStream = 1000;
-        final Map<StreamEntity, InclusiveRanges> streamMap = new HashMap<>();
+        final Map<Stream, InclusiveRanges> streamMap = new HashMap<>();
 
         if (eventRefs != null) {
             long currentStreamId = -1;
-            StreamEntity currentStream = null;
+            Stream currentStream = null;
             InclusiveRanges ranges = null;
             boolean trimmed = false;
             for (final EventRef ref : eventRefs) {
@@ -867,7 +867,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                         }
 
                         currentStreamId = ref.getStreamId();
-                        currentStream = streamStore.loadStreamById(currentStreamId);
+                        currentStream = streamMetaService.getStream(currentStreamId);
                         ranges = new InclusiveRanges();
                     }
 
@@ -898,7 +898,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         if (l2 == null) {
             return l1;
         }
-        if (l1.longValue() > l2.longValue()) {
+        if (l1 > l2) {
             return l2;
         } else {
             return l1;

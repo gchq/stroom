@@ -21,8 +21,9 @@ import stroom.docref.DocRef;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.fs.serializable.RASegmentInputStream;
+import stroom.streamstore.meta.StreamMetaService;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.shared.Stream;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
 
@@ -35,6 +36,8 @@ import java.util.List;
 public abstract class AbstractStreamAppenderTest extends AbstractAppenderTest {
     @Inject
     private StreamStore streamStore;
+    @Inject
+    private StreamMetaService streamMetaService;
 
     void test(final DocRef pipelineRef,
               final String dir,
@@ -44,7 +47,7 @@ public abstract class AbstractStreamAppenderTest extends AbstractAppenderTest {
               final String encoding) {
         super.test(pipelineRef, dir, name, type, outputReference, encoding);
 
-        final List<StreamEntity> streams = streamStore.find(new FindStreamCriteria());
+        final List<Stream> streams = streamMetaService.find(new FindStreamCriteria());
         Assert.assertEquals(1, streams.size());
 
         try {

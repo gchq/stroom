@@ -28,9 +28,9 @@ import stroom.entity.util.SqlBuilder;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.streamstore.FeedEntityService;
 import stroom.streamstore.OldFindStreamCriteria;
-import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.meta.db.StreamEntityService;
 import stroom.streamstore.shared.FeedEntity;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamtask.shared.StreamTask;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -63,7 +63,7 @@ public class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrat
     @Inject
     private StroomEntityManager stroomEntityManager;
     @Inject
-    private StreamStore streamStore;
+    private StreamEntityService streamEntityService;
     @Inject
     private FeedEntityService feedService;
 
@@ -73,7 +73,7 @@ public class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrat
 
         commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeEntity.RAW_EVENTS.getName());
         Assert.assertEquals(0, commonTestControl.countEntity(StreamTask.class));
-        final List<StreamEntity> streams = streamStore.find(new OldFindStreamCriteria());
+        final List<Stream> streams = streamEntityService.find(new OldFindStreamCriteria());
         Assert.assertEquals(1, streams.size());
         final FeedEntity feed = feedService.get(feedName);
 

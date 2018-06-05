@@ -48,12 +48,14 @@ import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
+import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.fs.serializable.RawInputSegmentWriter;
+import stroom.streamstore.meta.StreamMetaService;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.QueryData;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamtask.StreamProcessorFilterService;
 import stroom.streamtask.StreamProcessorService;
@@ -110,6 +112,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     private StreamProcessorFilterService streamProcessorFilterService;
     @Inject
     private StreamStore streamStore;
+    @Inject
+    private StreamMetaService streamMetaService;
     @Inject
     private FeedDocCache feedDocCache;
     @Inject
@@ -226,12 +230,12 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             final long endStreamId = getLatestStreamId();
 
             if (compareOutput) {
-                final List<StreamEntity> processedStreams = new ArrayList<>();
+                final List<Stream> processedStreams = new ArrayList<>();
 
                 for (long streamId = startStreamId + 1; streamId <= endStreamId; streamId++) {
-                    final StreamEntity stream = streamStore.loadStreamById(streamId);
+                    final Stream stream = streamMetaService.getStream(streamId);
                     final String streamTypeName = stream.getStreamTypeName();
-                    if ("Events".equals(streamTypeName) || "Reference".equals(streamTypeName)) {
+                    if (!StreamTypeNames.ERROR.equals(streamTypeName)) {
                         processedStreams.add(stream);
                     }
                 }
@@ -243,7 +247,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
                 // Copy the contents of the latest written stream to the output.
                 int i = 1;
-                for (final StreamEntity processedStream : processedStreams) {
+                for (final Stream processedStream : processedStreams) {
                     String num = "";
                     // If we are going to output more than one file then number
                     // them.
@@ -279,14 +283,14 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             String streamTypeName;
             long millis;
             if (feed.isReference()) {
-                streamTypeName = StreamTypeEntity.RAW_REFERENCE.getName();
+                streamTypeName = StreamTypeNames.RAW_REFERENCE;
 
                 // We need to ensure the reference data is older then the earliest
                 // event we are going to see. In the case of these component tests
                 // we have some events from 2007.
                 millis = DateUtil.parseNormalDateTimeString("2006-01-01T00:00:00.000Z");
             } else {
-                streamTypeName = StreamTypeEntity.RAW_EVENTS.getName();
+                streamTypeName = StreamTypeNames.RAW_EVENTS;
                 millis = DateUtil.parseNormalDateTimeString("2006-04-01T00:00:00.000Z");
             }
 
@@ -522,16 +526,16 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     }
 
     private long getLatestStreamId() {
-        final BaseResultList<StreamEntity> list = streamStore.find(new FindStreamCriteria());
+        final BaseResultList<Stream> list = streamMetaService.find(new FindStreamCriteria());
         if (list == null || list.size() == 0) {
             return 0;
         }
-        Collections.sort(list);
-        final StreamEntity latest = list.get(list.size() - 1);
+        list.sort(Comparator.comparing(Stream::getId));
+        final Stream latest = list.get(list.size() - 1);
         return latest.getId();
     }
 
-    private void copyStream(final StreamEntity stream, final OutputStream outputStream) {
+    private void copyStream(final Stream stream, final OutputStream outputStream) {
         final StreamSource streamSource = streamStore.openStreamSource(stream.getId());
         StreamUtil.streamToStream(streamSource.getInputStream(), outputStream, false);
         streamStore.closeStreamSource(streamSource);

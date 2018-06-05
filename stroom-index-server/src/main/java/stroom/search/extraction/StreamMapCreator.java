@@ -24,35 +24,32 @@ import stroom.index.shared.IndexField;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.search.Event;
 import stroom.security.Security;
-import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamPermissionException;
+import stroom.streamstore.meta.StreamMetaService;
 import stroom.util.shared.Severity;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 public class StreamMapCreator {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamMapCreator.class);
 
     private final ErrorReceiver errorReceiver;
-    private final StreamStore streamStore;
+    private final StreamMetaService streamMetaService;
 
     private final int streamIdIndex;
     private final int eventIdIndex;
 
     private final Security security;
-    private Map<Long, Optional<StreamEntity>> fiteredStreamCache;
+    private Map<Long, Boolean> fiteredStreamCache;
 
     public StreamMapCreator(final IndexField[] storedFields,
                             final ErrorReceiver errorReceiver,
-                            final StreamStore streamStore,
+                            final StreamMetaService streamMetaService,
                             final Security security) {
         this.errorReceiver = errorReceiver;
-        this.streamStore = streamStore;
+        this.streamMetaService = streamMetaService;
         this.security = security;
 
         // First get the index in the stored data of the stream and event id fields.
@@ -84,8 +81,7 @@ public class StreamMapCreator {
 
             if (longStreamId != null && longEventId != null) {
                 // Filter the streams by ones that should be visible to the current user.
-                final Optional<StreamEntity> optional = getStreamById(longStreamId);
-                if (optional.isPresent()) {
+                if (canRead(longStreamId)) {
                     storedDataMap.compute(longStreamId, (k, v) -> {
                         if (v == null) {
                             v = new ArrayList<>();
@@ -98,27 +94,15 @@ public class StreamMapCreator {
         });
     }
 
-    private Optional<StreamEntity> getStreamById(final long streamId) {
+    private Boolean canRead(final long streamId) {
         // Create a map to cache stream lookups. If we have cached more than a million streams then discard the map and start again to avoid using too much memory.
         if (fiteredStreamCache == null || fiteredStreamCache.size() > 1000000) {
             fiteredStreamCache = new HashMap<>();
         }
 
         return fiteredStreamCache.computeIfAbsent(streamId, k -> {
-            StreamEntity stream = null;
-
-            try {
-                // Make sure we are allowed to see this stream. If we aren't then return an empty optional.
-
-                // See if we can load the stream. We might get a StreamPermissionException if we aren't allowed to read from this stream.
-                stream = streamStore.loadStreamById(streamId);
-            } catch (final StreamPermissionException e) {
-                LOGGER.debug(e.getMessage(), e);
-            } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
-            }
-
-            return Optional.ofNullable(stream);
+            // See if we can read the stream.
+            return streamMetaService.canReadStream(streamId);
         });
     }
 

@@ -22,8 +22,7 @@ import stroom.feed.MetaMap;
 import stroom.io.SeekableOutputStream;
 import stroom.streamstore.StreamException;
 import stroom.streamstore.api.StreamTarget;
-import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamVolume;
+import stroom.streamstore.shared.Stream;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,10 +43,10 @@ import java.util.stream.Collectors;
 public final class FileSystemStreamTarget implements StreamTarget {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamTarget.class);
 
-    private final Set<StreamVolume> metaDataVolume;
+    private final Set<String> volumePaths;
     private final String streamType;
     private final List<FileSystemStreamTarget> childrenAccessed = new ArrayList<>();
-    private StreamEntity stream;
+    private Stream stream;
     private boolean closed;
     private boolean append;
     private MetaMap attributeMap;
@@ -55,10 +54,12 @@ public final class FileSystemStreamTarget implements StreamTarget {
     private Set<Path> files;
     private FileSystemStreamTarget parent;
 
-    private FileSystemStreamTarget(final StreamEntity requestMetaData, final Set<StreamVolume> metaDataVolume,
-                                   final String streamType, final boolean append) {
+    private FileSystemStreamTarget(final Stream requestMetaData,
+                                   final Set<String> volumePaths,
+                                   final String streamType,
+                                   final boolean append) {
         this.stream = requestMetaData;
-        this.metaDataVolume = metaDataVolume;
+        this.volumePaths = volumePaths;
         this.streamType = streamType;
         this.append = append;
 
@@ -69,7 +70,7 @@ public final class FileSystemStreamTarget implements StreamTarget {
                                    final String streamType,
                                    final Set<Path> files) {
         this.stream = parent.stream;
-        this.metaDataVolume = parent.metaDataVolume;
+        this.volumePaths = parent.volumePaths;
         this.parent = parent;
         this.append = parent.append;
 
@@ -82,11 +83,11 @@ public final class FileSystemStreamTarget implements StreamTarget {
     /**
      * Creates a new file system stream target.
      */
-    public static FileSystemStreamTarget create(final StreamEntity stream,
-                                                final Set<StreamVolume> metaDataVolume,
+    public static FileSystemStreamTarget create(final Stream stream,
+                                                final Set<String> volumePaths,
                                                 final String streamType,
                                                 final boolean append) {
-        return new FileSystemStreamTarget(stream, metaDataVolume, streamType, append);
+        return new FileSystemStreamTarget(stream, volumePaths, streamType, append);
     }
 
     private void validate() {
@@ -137,7 +138,7 @@ public final class FileSystemStreamTarget implements StreamTarget {
     }
 
     @Override
-    public StreamEntity getStream() {
+    public Stream getStream() {
         return stream;
     }
 
@@ -145,11 +146,11 @@ public final class FileSystemStreamTarget implements StreamTarget {
         if (files == null) {
             files = new HashSet<>();
             if (parent == null) {
-                for (final StreamVolume smVolume : metaDataVolume) {
-                    final Path aFile = FileSystemStreamTypeUtil.createRootStreamFile(smVolume.getVolume(), stream,
+                for (final String rootPath : volumePaths) {
+                    final Path aFile = FileSystemStreamTypeUtil.createRootStreamFile(rootPath, stream,
                             streamType);
                     if (createPath) {
-                        final Path rootDir = Paths.get(smVolume.getVolume().getPath());
+                        final Path rootDir = Paths.get(rootPath);
                         if (!FileSystemUtil.mkdirs(rootDir, aFile.getParent())) {
                             // Unable to create path
                             throw new StreamException("Unable to create directory for file " + aFile);
@@ -198,7 +199,7 @@ public final class FileSystemStreamTarget implements StreamTarget {
         return outputStream;
     }
 
-    public void setMetaData(final StreamEntity stream) {
+    public void setMetaData(final Stream stream) {
         this.stream = stream;
     }
 

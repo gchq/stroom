@@ -29,14 +29,14 @@ import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.streamstore.FindStreamVolumeCriteria;
 import stroom.streamstore.StreamDeleteExecutor;
-import stroom.streamstore.StreamMaintenanceService;
-import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.StreamRetentionExecutor;
+import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.FileSystemCleanExecutor;
+import stroom.streamstore.fs.StreamVolumeService;
+import stroom.streamstore.fs.StreamVolumeService.StreamVolume;
 import stroom.streamstore.shared.StreamTypeEntity;
-import stroom.streamstore.shared.StreamVolume;
 import stroom.task.SimpleTaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.config.StroomProperties;
@@ -63,7 +63,7 @@ public class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
     @Inject
     private StreamStore streamStore;
     @Inject
-    private StreamMaintenanceService streamMaintenanceService;
+    private StreamVolumeService streamVolumeService;
     @Inject
     private FeedStore feedStore;
     @Inject
@@ -139,11 +139,11 @@ public class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
         // streams that have no task associated with them.
         streamTaskCreator.createTasks(new SimpleTaskContext());
 
-        List<StreamVolume> oldVolumeList = streamMaintenanceService
+        List<StreamVolume> oldVolumeList = streamVolumeService
                 .find(FindStreamVolumeCriteria.create(oldFileTarget.getStream()));
         Assert.assertEquals("Expecting 2 stream volumes", HIGHER_REPLICATION_COUNT, oldVolumeList.size());
 
-        List<StreamVolume> newVolumeList = streamMaintenanceService
+        List<StreamVolume> newVolumeList = streamVolumeService
                 .find(FindStreamVolumeCriteria.create(newFileTarget.getStream()));
         Assert.assertEquals("Expecting 2 stream volumes", HIGHER_REPLICATION_COUNT, newVolumeList.size());
 
@@ -151,16 +151,16 @@ public class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
         streamDeleteExecutor.delete(System.currentTimeMillis());
 
         // Test Again
-        oldVolumeList = streamMaintenanceService.find(FindStreamVolumeCriteria.create(oldFileTarget.getStream()));
+        oldVolumeList = streamVolumeService.find(FindStreamVolumeCriteria.create(oldFileTarget.getStream()));
         Assert.assertEquals("Expecting 0 stream volumes", 0, oldVolumeList.size());
 
-        newVolumeList = streamMaintenanceService.find(FindStreamVolumeCriteria.create(newFileTarget.getStream()));
+        newVolumeList = streamVolumeService.find(FindStreamVolumeCriteria.create(newFileTarget.getStream()));
         Assert.assertEquals("Expecting 2 stream volumes", HIGHER_REPLICATION_COUNT, newVolumeList.size());
 
         // Test they are
-        oldVolumeList = streamMaintenanceService.find(FindStreamVolumeCriteria.create(oldFileTarget.getStream()));
+        oldVolumeList = streamVolumeService.find(FindStreamVolumeCriteria.create(oldFileTarget.getStream()));
         Assert.assertEquals("Expecting 0 stream volumes", 0, oldVolumeList.size());
-        newVolumeList = streamMaintenanceService.find(FindStreamVolumeCriteria.create(newFileTarget.getStream()));
+        newVolumeList = streamVolumeService.find(FindStreamVolumeCriteria.create(newFileTarget.getStream()));
         Assert.assertEquals("Expecting 2 stream volumes", HIGHER_REPLICATION_COUNT, newVolumeList.size());
     }
 }

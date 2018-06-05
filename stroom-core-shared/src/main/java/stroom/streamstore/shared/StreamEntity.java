@@ -110,6 +110,7 @@ public class StreamEntity extends BaseEntityBig implements Stream {
     }
 
     @Override
+    @Transient
     public String getFeedName() {
         if (feed == null) {
             return null;
@@ -117,7 +118,19 @@ public class StreamEntity extends BaseEntityBig implements Stream {
         return feed.getName();
     }
 
+    // TODO : @66 WE REALLY SHOULDN'T USE FEED ID AS PART OF THE FILE PATH AS THE FEED ID SHOULD REMAIN INTERNAL TO THE STREAM META STORAGE. AT SOME POINT WE OUGHT TO MIGRATE TO FEED NAME.
+    @Deprecated
     @Override
+    @Transient
+    public Long getLegacyFeedId() {
+        if (feed == null) {
+            return null;
+        }
+        return feed.getId();
+    }
+
+    @Override
+    @Transient
     public String getStreamTypeName() {
         if (streamType == null) {
             return null;
@@ -126,6 +139,7 @@ public class StreamEntity extends BaseEntityBig implements Stream {
     }
 
     @Override
+    @Transient
     public String getPipelineName() {
         if (streamProcessor == null) {
             return null;
@@ -134,6 +148,16 @@ public class StreamEntity extends BaseEntityBig implements Stream {
     }
 
     @Override
+    @Transient
+    public String getPipelineUuid() {
+        if (streamProcessor == null) {
+            return null;
+        }
+        return streamProcessor.getPipelineUuid();
+    }
+
+    @Override
+    @Transient
     public Long getStreamProcessorId() {
         if (streamProcessor == null) {
             return null;

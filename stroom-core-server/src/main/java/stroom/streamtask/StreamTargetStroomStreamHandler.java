@@ -35,9 +35,7 @@ import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.fs.serializable.NestedStreamTarget;
-import stroom.streamstore.shared.FeedEntity;
-import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamTypeEntity;
+import stroom.streamstore.shared.Stream;
 import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.util.io.CloseableUtil;
 
@@ -73,10 +71,8 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     private final StreamStore streamStore;
     private final FeedDocCache feedDocCache;
     private final MetaDataStatistic metaDataStatistics;
-    private final HashSet<StreamEntity> streamSet;
+    private final HashSet<Stream> streamSet;
     private final StroomZipNameSet stroomZipNameSet;
-    private final Map<String, FeedEntity> feedMap = new HashMap<>();
-    private final Map<String, StreamTypeEntity> streamTypeMap = new HashMap<>();
     private final Map<String, NestedStreamTarget> feedNestedStreamTarget = new HashMap<>();
     private final Map<String, StreamTarget> feedStreamTarget = new HashMap<>();
     private final ByteArrayOutputStream currentHeaderByteArrayOutputStream = new ByteArrayOutputStream();
@@ -198,7 +194,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     private String getStreamTypeName(final String feedName) {
         return feedDocCache.get(feedName)
                 .map(FeedDoc::getStreamType)
-                .orElse(StreamTypeEntity.RAW_EVENTS.getName());
+                .orElse(StreamTypeNames.RAW_EVENTS);
     }
 
     private boolean isReference(final String feedName) {
@@ -287,7 +283,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
         streamStore.closeStreamTarget(feedStreamTarget.remove(currentFeedName));
     }
 
-    public Set<StreamEntity> getStreamSet() {
+    public Set<Stream> getStreamSet() {
         return Collections.unmodifiableSet(streamSet);
     }
 

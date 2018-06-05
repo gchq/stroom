@@ -17,9 +17,9 @@
 package stroom.streamstore;
 
 import stroom.entity.shared.BaseCriteria;
-import stroom.entity.shared.EntityIdSet;
+import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.Period;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.shared.Stream;
 
 /**
  * <p>
@@ -30,30 +30,30 @@ import stroom.streamstore.shared.StreamEntity;
 public class FindStreamAttributeValueCriteria extends BaseCriteria {
     private static final long serialVersionUID = -4777723504698304778L;
 
-    private EntityIdSet<StreamEntity> streamIdSet = null;
+    private CriteriaSet<Long> streamIdSet = null;
     private Period createPeriod = null;
 
     public FindStreamAttributeValueCriteria() {
         // GWT
     }
 
-    public static FindStreamAttributeValueCriteria create(StreamEntity stream) {
+    public static FindStreamAttributeValueCriteria create(Stream stream) {
         FindStreamAttributeValueCriteria criteria = new FindStreamAttributeValueCriteria();
-        criteria.obtainStreamIdSet().add(stream);
+        criteria.obtainStreamIdSet().add(stream.getId());
         return criteria;
     }
 
-    public EntityIdSet<StreamEntity> getStreamIdSet() {
+    public CriteriaSet<Long> getStreamIdSet() {
         return streamIdSet;
     }
 
-    public void setStreamIdSet(EntityIdSet<StreamEntity> streamIdSet) {
+    public void setStreamIdSet(CriteriaSet<Long> streamIdSet) {
         this.streamIdSet = streamIdSet;
     }
 
-    public EntityIdSet<StreamEntity> obtainStreamIdSet() {
+    public CriteriaSet<Long> obtainStreamIdSet() {
         if (streamIdSet == null) {
-            streamIdSet = new EntityIdSet<>();
+            streamIdSet = new CriteriaSet<>();
         }
         return streamIdSet;
     }
@@ -73,5 +73,4 @@ public class FindStreamAttributeValueCriteria extends BaseCriteria {
         return createPeriod;
 
     }
-
 }

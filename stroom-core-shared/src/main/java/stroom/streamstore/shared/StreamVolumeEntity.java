@@ -18,7 +18,7 @@ package stroom.streamstore.shared;
 
 import stroom.entity.shared.BaseEntityBig;
 import stroom.entity.shared.SQLNameConstants;
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -30,27 +30,27 @@ import javax.persistence.Transient;
  * Link table for which streams live on which volumes.
  */
 @Entity(name = "STRM_VOL")
-public class StreamVolume extends BaseEntityBig {
+public class StreamVolumeEntity extends BaseEntityBig {
     public static final String TABLE_NAME = SQLNameConstants.STREAM + SEP + SQLNameConstants.VOLUME;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
     public static final String ENTITY_TYPE = "StreamVolume";
     public static final String LAST_ACCESS_MS = SQLNameConstants.LAST + SEP + SQLNameConstants.ACCESS
             + SQLNameConstants.MS_SUFFIX;
     private static final long serialVersionUID = 6729492408680929025L;
-    private Volume volume;
+    private VolumeEntity volume;
     private StreamEntity stream;
 
-    public StreamVolume() {
+    public StreamVolumeEntity() {
         // Default constructor necessary for GWT serialisation.
     }
 
     @ManyToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = Volume.FOREIGN_KEY)
-    public Volume getVolume() {
+    @JoinColumn(name = VolumeEntity.FOREIGN_KEY)
+    public VolumeEntity getVolume() {
         return volume;
     }
 
-    public void setVolume(final Volume volume) {
+    public void setVolume(final VolumeEntity volume) {
         this.volume = volume;
     }
 

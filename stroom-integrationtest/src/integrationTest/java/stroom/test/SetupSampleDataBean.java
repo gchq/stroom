@@ -34,7 +34,7 @@ import stroom.index.IndexVolumeService;
 import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 import stroom.pipeline.PipelineStore;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
@@ -181,10 +181,10 @@ public final class SetupSampleDataBean {
 
 
         // Add volumes to all indexes.
-        final BaseResultList<Volume> volumeList = volumeService.find(new FindVolumeCriteria());
+        final BaseResultList<VolumeEntity> volumeList = volumeService.find(new FindVolumeCriteria());
         final List<DocRef> indexList = indexStore.list();
         logDocRefs(indexList, "indexes");
-        final Set<Volume> volumeSet = new HashSet<>(volumeList);
+        final Set<VolumeEntity> volumeSet = new HashSet<>(volumeList);
 
         for (final DocRef indexRef : indexList) {
             indexVolumeService.setVolumesForIndex(indexRef, volumeSet);
@@ -315,7 +315,7 @@ public final class SetupSampleDataBean {
 //            }
 
             LOGGER.info("Node count = " + commonTestControl.countEntity(Node.class));
-            LOGGER.info("Volume count = " + commonTestControl.countEntity(Volume.class));
+            LOGGER.info("Volume count = " + commonTestControl.countEntity(VolumeEntity.class));
             LOGGER.info("Feed count = " + commonTestControl.countEntity(FeedDoc.class));
             LOGGER.info("StreamAttributeKey count = " + commonTestControl.countEntity(StreamAttributeKey.class));
             LOGGER.info("Dashboard count = " + dashboardStore.list().size());

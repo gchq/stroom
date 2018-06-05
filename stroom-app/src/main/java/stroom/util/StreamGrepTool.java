@@ -29,7 +29,9 @@ import stroom.streamstore.StreamTypeEntityService;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.fs.FileSystemStreamTypeUtil;
+import stroom.streamstore.meta.StreamMetaService;
 import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamTypeEntity;
@@ -131,6 +133,7 @@ public class StreamGrepTool extends AbstractCommandLineTool {
             builder.addTerm(StreamDataSource.CREATE_TIME, Condition.LESS_THAN_OR_EQUAL_TO, createPeriodTo);
         }
 
+        final StreamMetaService streamMetaService = injector.getInstance(StreamMetaService.class);
         final StreamStore streamStore = injector.getInstance(StreamStore.class);
         final StreamTypeEntityService streamTypeService = injector.getInstance(Key.get(StreamTypeEntityService.class, Names.named("cachedStreamTypeService")));
 
@@ -147,10 +150,10 @@ public class StreamGrepTool extends AbstractCommandLineTool {
         // Query the stream store
         final FindStreamCriteria criteria = new FindStreamCriteria();
         criteria.setExpression(builder.build());
-        final List<StreamEntity> results = streamStore.find(criteria);
+        final List<Stream> results = streamMetaService.find(criteria);
 
         int count = 0;
-        for (final StreamEntity stream : results) {
+        for (final Stream stream : results) {
             final String streamTypeName = stream.getStreamTypeName();
             count++;
             LOGGER.info("processing() - " + count + "/" + results.size() + " "

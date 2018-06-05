@@ -24,7 +24,7 @@ import stroom.entity.util.BaseEntityUtil;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 import stroom.node.shared.VolumeState;
 import stroom.util.config.StroomProperties;
 
@@ -70,8 +70,8 @@ public class NodeConfigForTesting implements NodeConfig {
         return nodes;
     }
 
-    private List<Volume> getInitialVolumeList() {
-        final List<Volume> volumes = new ArrayList<>();
+    private List<VolumeEntity> getInitialVolumeList() {
+        final List<VolumeEntity> volumes = new ArrayList<>();
         volumes.add(createVolume("${stroom.temp}/rack1/node1a/v1", node1a));
         volumes.add(createVolume("${stroom.temp}/rack1/node1a/v2", node1a));
         volumes.add(createVolume("${stroom.temp}/rack2/node2a/v1", node2a));
@@ -92,8 +92,8 @@ public class NodeConfigForTesting implements NodeConfig {
         return node;
     }
 
-    private Volume createVolume(final String path, final Node node) {
-        final Volume vol = new Volume();
+    private VolumeEntity createVolume(final String path, final Node node) {
+        final VolumeEntity vol = new VolumeEntity();
         final String p = StroomProperties.replaceProperties(path);
         vol.setPath(p);
         vol.setNode(node);
@@ -105,7 +105,7 @@ public class NodeConfigForTesting implements NodeConfig {
         try {
             final List<Rack> initialRackList = getInitialRackList();
             final List<Node> initialNodeList = getInitialNodeList();
-            final List<Volume> initialVolumeList = getInitialVolumeList();
+            final List<VolumeEntity> initialVolumeList = getInitialVolumeList();
 
             final List<Rack> realRackList = new ArrayList<>();
             final List<Node> realNodeList = new ArrayList<>();
@@ -129,10 +129,10 @@ public class NodeConfigForTesting implements NodeConfig {
                 realNodeList.add(realNode);
             }
 
-            final List<Volume> existingVolumes = volumeService.find(new FindVolumeCriteria());
-            for (final Volume volume : initialVolumeList) {
+            final List<VolumeEntity> existingVolumes = volumeService.find(new FindVolumeCriteria());
+            for (final VolumeEntity volume : initialVolumeList) {
                 boolean found = false;
-                for (final Volume existingVolume : existingVolumes) {
+                for (final VolumeEntity existingVolume : existingVolumes) {
                     if (existingVolume.getNode().getName().equals(volume.getNode().getName())
                             && existingVolume.getPath().equals(volume.getPath())) {
                         found = true;
@@ -148,7 +148,7 @@ public class NodeConfigForTesting implements NodeConfig {
                     VolumeState volumeState = new VolumeState();
                     volumeState = stroomEntityManager.saveEntity(volumeState);
 
-                    final Volume realVolume = volume.copy();
+                    final VolumeEntity realVolume = volume.copy();
                     realVolume.setNode(node);
                     realVolume.setVolumeState(volumeState);
 

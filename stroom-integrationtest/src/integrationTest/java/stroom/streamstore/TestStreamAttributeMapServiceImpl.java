@@ -22,7 +22,7 @@ import org.junit.Test;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -44,7 +44,7 @@ public class TestStreamAttributeMapServiceImpl extends AbstractCoreIntegrationTe
     public void testSimple() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
-        final StreamEntity md = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeEntity.RAW_EVENTS.getName());
+        final Stream md = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeEntity.RAW_EVENTS.getName());
 
         streamAttributeValueFlush.flush();
 

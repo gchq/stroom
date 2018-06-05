@@ -17,18 +17,19 @@
 
 package stroom.pipeline.stepping;
 
+import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.SharedDocRef;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;
-import stroom.docref.DocRef;
 import stroom.security.Security;
 import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.meta.StreamMetaService;
 import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.shared.Stream;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
@@ -39,14 +40,17 @@ import java.util.List;
 @TaskHandlerBean(task = GetPipelineForStreamAction.class)
 class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStreamAction, SharedDocRef> {
     private final StreamStore streamStore;
+    private final StreamMetaService streamMetaService;
     private final PipelineStore pipelineStore;
     private final Security security;
 
     @Inject
     GetPipelineForStreamHandler(final StreamStore streamStore,
+                                final StreamMetaService streamMetaService,
                                 final PipelineStore pipelineStore,
                                 final Security security) {
         this.streamStore = streamStore;
+        this.streamMetaService = streamMetaService;
         this.pipelineStore = pipelineStore;
         this.security = security;
     }
@@ -57,7 +61,7 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
             DocRef docRef = null;
 
             // First try and get the pipeline from the selected child stream.
-            StreamEntity childStream = getStream(action.getChildStreamId());
+            Stream childStream = getStream(action.getChildStreamId());
             if (childStream != null) {
                 docRef = getPipeline(childStream);
             }
@@ -99,7 +103,7 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
         });
     }
 
-    private StreamEntity getStream(final Long id) {
+    private Stream getStream(final Long id) {
         if (id == null) {
             return null;
         }
@@ -111,7 +115,7 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
             criteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
             criteria.getFetchSet().add(FeedDoc.DOCUMENT_TYPE);
 
-            final List<StreamEntity> streamList = streamStore.find(criteria);
+            final List<Stream> streamList = streamMetaService.find(criteria);
             if (streamList != null && streamList.size() > 0) {
                 return streamList.get(0);
             }
@@ -120,7 +124,7 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
         });
     }
 
-    private StreamEntity getFirstChildStream(final Long id) {
+    private Stream getFirstChildStream(final Long id) {
         if (id == null) {
             return null;
         }
@@ -131,26 +135,23 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
             criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
             criteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
 
-            return streamStore.find(criteria).getFirst();
+            return streamMetaService.find(criteria).getFirst();
         });
     }
 
-    private DocRef getPipeline(final StreamEntity stream) {
+    private DocRef getPipeline(final Stream stream) {
         DocRef docRef = null;
 
         // So we have got the stream so try and get the first pipeline that was
         // used to produce children for this stream.
-        final StreamProcessor streamProcessor = stream.getStreamProcessor();
-        if (streamProcessor != null) {
-            String pipelineUuid = streamProcessor.getPipelineUuid();
-            if (pipelineUuid != null) {
-                try {
-                    // Ensure the current user is allowed to load this pipeline.
-                    final PipelineDoc pipelineDoc = pipelineStore.readDocument(new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid));
-                    docRef = DocRefUtil.create(pipelineDoc);
-                } catch (final RuntimeException e) {
-                    // Ignore.
-                }
+        String pipelineUuid = stream.getPipelineUuid();
+        if (pipelineUuid != null) {
+            try {
+                // Ensure the current user is allowed to load this pipeline.
+                final PipelineDoc pipelineDoc = pipelineStore.readDocument(new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid));
+                docRef = DocRefUtil.create(pipelineDoc);
+            } catch (final RuntimeException e) {
+                // Ignore.
             }
         }
 

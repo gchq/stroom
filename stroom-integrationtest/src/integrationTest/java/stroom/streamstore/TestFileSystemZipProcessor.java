@@ -233,7 +233,7 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
 
         stroomStreamProcessor.closeHandlers();
 
-        final FileArrayList files = streamMaintenanceService
+        final List<Path> files = streamMaintenanceService
                 .findAllStreamFile(handlerList.get(0).getStreamSet().iterator().next());
 
         final HashSet<String> foundFiles = new HashSet<>();

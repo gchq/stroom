@@ -16,10 +16,7 @@
 
 package stroom.streamstore;
 
-import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
-import stroom.entity.shared.NamedEntity;
-import stroom.entity.shared.Period;
 import stroom.feed.MetaMap;
 import stroom.io.SeekableInputStream;
 import stroom.streamstore.api.StreamProperties;
@@ -27,13 +24,9 @@ import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.StreamTypeNames;
-import stroom.streamstore.shared.FeedEntity;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.FindStreamTypeCriteria;
+import stroom.streamstore.meta.StreamMetaService;
 import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamAttributeMap;
-import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.util.collections.TypedMap;
 
@@ -44,15 +37,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Singleton
 public class MockStreamStore implements StreamStore, Clearable {
@@ -63,82 +51,73 @@ public class MockStreamStore implements StreamStore, Clearable {
     private final TypedMap<Long, TypedMap<String, ByteArrayOutputStream>> openOutputStream = TypedMap
             .fromMap(new HashMap<>());
     private final Set<Long> openInputStream = new HashSet<>();
-    private final Map<Long, StreamEntity> streamMap = new HashMap<>();
 
-    private StreamEntity lastStream;
+    private Stream lastStream;
 
-    /**
-     * This id is used to emulate the primary key on the database.
-     */
-    private long currentId;
 
-    private final FeedEntityService feedService;
-    private final StreamTypeEntityService streamTypeService;
+    private final StreamMetaService streamMetaService;
 
     @SuppressWarnings("unused")
     @Inject
-    MockStreamStore(final FeedEntityService feedService,
-                    final StreamTypeEntityService streamTypeService) {
-        this.feedService = feedService;
-        this.streamTypeService = streamTypeService;
+    MockStreamStore(final StreamMetaService streamMetaService) {
+        this.streamMetaService = streamMetaService;
     }
 
     public MockStreamStore() {
-        this.feedService = new MockFeedService();
-        this.streamTypeService = new MockStreamTypeService();
+        this.streamMetaService = new MockStreamMetaService();
     }
 
-    @Override
-    public StreamEntity createStream(final StreamProperties streamProperties) {
-        final StreamTypeEntity streamType = streamTypeService.getOrCreate(streamProperties.getStreamTypeName());
-        final FeedEntity feed = feedService.getOrCreate(streamProperties.getFeedName());
+////    @Override
+//    public StreamEntity createStream(final StreamProperties streamProperties) {
+//        final StreamTypeEntity streamType = streamTypeService.getOrCreate(streamProperties.getStreamTypeName());
+//        final FeedEntity feed = feedService.getOrCreate(streamProperties.getFeedName());
+//
+//        final StreamEntity stream = new StreamEntity();
+//
+//        if (streamProperties.getParent() != null) {
+//            stream.setParentStreamId(streamProperties.getParent().getId());
+//        }
+//
+//        stream.setFeed(feed);
+//        stream.setStreamType(streamType);
+//        stream.setStreamProcessor(streamProperties.getStreamProcessor());
+//        if (streamProperties.getStreamTask() != null) {
+//            stream.setStreamTaskId(streamProperties.getStreamTask().getId());
+//        }
+//        stream.setCreateMs(streamProperties.getCreateMs());
+//        stream.setEffectiveMs(streamProperties.getEffectiveMs());
+//        stream.setStatusMs(streamProperties.getStatusMs());
+//
+//        return stream;
+//    }
 
-        final StreamEntity stream = new StreamEntity();
-
-        if (streamProperties.getParent() != null) {
-            stream.setParentStreamId(streamProperties.getParent().getId());
-        }
-
-        stream.setFeed(feed);
-        stream.setStreamType(streamType);
-        stream.setStreamProcessor(streamProperties.getStreamProcessor());
-        if (streamProperties.getStreamTask() != null) {
-            stream.setStreamTaskId(streamProperties.getStreamTask().getId());
-        }
-        stream.setCreateMs(streamProperties.getCreateMs());
-        stream.setEffectiveMs(streamProperties.getEffectiveMs());
-        stream.setStatusMs(streamProperties.getStatusMs());
-
-        return stream;
-    }
-
-    /**
-     * Load a stream by id.
-     *
-     * @param id The stream id to load a stream for.
-     * @return The loaded stream if it exists (has not been physically deleted)
-     * and is not logically deleted or locked, null otherwise.
-     */
-    @Override
-    public StreamEntity loadStreamById(final long id) {
-        return streamMap.get(id);
-    }
-
-    /**
-     * Load a stream by id.
-     *
-     * @param id        The stream id to load a stream for.
-     * @param anyStatus Used to specify if this method will return streams that are
-     *                  logically deleted or locked. If false only unlocked streams
-     *                  will be returned, null otherwise.
-     * @return The loaded stream if it exists (has not been physically deleted)
-     * else null. Also returns null if one exists but is logically
-     * deleted or locked unless <code>anyStatus</code> is true.
-     */
-    @Override
-    public StreamEntity loadStreamById(final long id, final boolean anyStatus) {
-        return loadStreamById(id);
-    }
+//    /**
+//     * Load a stream by id.
+//     *
+//     * @param id The stream id to load a stream for.
+//     * @return The loaded stream if it exists (has not been physically deleted)
+//     * and is not logically deleted or locked, null otherwise.
+//     */
+//    @Override
+//    public StreamEntity loadStreamById(final long id) {
+//        return streamMap.get(id);
+//    }
+//
+//    /**
+//     * Load a stream by id.
+//     *
+//     * @param id        The stream id to load a stream for.
+//     * @param anyStatus Used to specify if this method will return streams that are
+//     *                  logically deleted or locked. If false only unlocked streams
+//     *                  will be returned, null otherwise.
+//     * @return The loaded stream if it exists (has not been physically deleted)
+//     * else null. Also returns null if one exists but is logically
+//     * deleted or locked unless <code>anyStatus</code> is true.
+//     */
+//    @Override
+//    public StreamEntity loadStreamById(final long id, final boolean anyStatus) {
+//        return loadStreamById(id);
+//    }
 
     /**
      * Class this API to clear down things.
@@ -148,8 +127,7 @@ public class MockStreamStore implements StreamStore, Clearable {
         fileData.clear();
         openOutputStream.clear();
         openInputStream.clear();
-        streamMap.clear();
-        currentId = 0;
+        ((MockStreamMetaService) streamMetaService).clear();
     }
 
     public int getStreamStoreCount() {
@@ -176,7 +154,7 @@ public class MockStreamStore implements StreamStore, Clearable {
             throw new StreamException(e.getMessage());
         }
 
-        final StreamEntity stream = target.getStream();
+        final Stream stream = target.getStream();
         final long streamId = stream.getId();
 
         // Get the data map to add the stream output to.
@@ -210,15 +188,18 @@ public class MockStreamStore implements StreamStore, Clearable {
         for (final String childType : ((MockStreamTarget) target).childMap.keySet()) {
             closeStreamTarget(target.getChildStream(childType));
         }
+
+        // Set the status of the stream to be unlocked.
+        streamMetaService.updateStatus(stream.getId(), StreamStatus.UNLOCKED);
     }
 
-    @Override
-    public Long deleteStream(final long streamId) {
-        openInputStream.remove(streamId);
-        openOutputStream.remove(streamId);
-        fileData.remove(streamId);
-        return 1L;
-    }
+//    @Override
+//    public Long deleteStream(final long streamId) {
+//        openInputStream.remove(streamId);
+//        openOutputStream.remove(streamId);
+//        fileData.remove(streamId);
+//        return 1L;
+//    }
 
     @Override
     public Long deleteStreamTarget(final StreamTarget target) {
@@ -227,37 +208,37 @@ public class MockStreamStore implements StreamStore, Clearable {
         fileData.remove(streamId);
         return 1L;
     }
-
-    @Override
-    public List<Stream> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
-        final ArrayList<Stream> results = new ArrayList<>();
-
-        try {
-            for (final long streamId : fileData.keySet()) {
-                final TypedMap<String, byte[]> typeMap = fileData.get(streamId);
-                final StreamEntity stream = streamMap.get(streamId);
-
-                boolean match = true;
-
-                if (typeMap == null) {
-                    match = false;
-                } else if (!typeMap.containsKey(criteria.getStreamType())) {
-                    match = false;
-                } else if (!criteria.getFeed().equals(stream.getFeedName())) {
-                    match = false;
-                }
-
-                if (match) {
-                    results.add(stream);
-                }
-            }
-        } catch (final RuntimeException e) {
-            System.out.println(e.getMessage());
-            // Ignore ... just a mock
-        }
-
-        return BaseResultList.createUnboundedList(results);
-    }
+//
+//    @Override
+//    public List<Stream> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
+//        final ArrayList<Stream> results = new ArrayList<>();
+//
+//        try {
+//            for (final long streamId : fileData.keySet()) {
+//                final TypedMap<String, byte[]> typeMap = fileData.get(streamId);
+//                final StreamEntity stream = streamMap.get(streamId);
+//
+//                boolean match = true;
+//
+//                if (typeMap == null) {
+//                    match = false;
+//                } else if (!typeMap.containsKey(criteria.getStreamType())) {
+//                    match = false;
+//                } else if (!criteria.getFeed().equals(stream.getFeedName())) {
+//                    match = false;
+//                }
+//
+//                if (match) {
+//                    results.add(stream);
+//                }
+//            }
+//        } catch (final RuntimeException e) {
+//            System.out.println(e.getMessage());
+//            // Ignore ... just a mock
+//        }
+//
+//        return BaseResultList.createUnboundedList(results);
+//    }
 
     @Override
     public StreamSource openStreamSource(final long streamId) throws StreamException {
@@ -281,7 +262,7 @@ public class MockStreamStore implements StreamStore, Clearable {
      */
     @Override
     public StreamSource openStreamSource(final long streamId, final boolean anyStatus) throws StreamException {
-        final StreamEntity stream = loadStreamById(streamId, anyStatus);
+        final Stream stream = streamMetaService.getStream(streamId, anyStatus);
         if (stream == null) {
             return null;
         }
@@ -291,21 +272,8 @@ public class MockStreamStore implements StreamStore, Clearable {
 
     @Override
     public StreamTarget openStreamTarget(final StreamProperties streamProperties) {
-        final StreamEntity stream = createStream(streamProperties);
-        return openStreamTarget(stream);
-    }
-
-    @Override
-    public StreamTarget openExistingStreamTarget(final long streamId) throws StreamException {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    private StreamTarget openStreamTarget(final StreamEntity stream) {
-        if (!stream.isPersistent()) {
-            currentId++;
-            stream.setId(currentId);
-            streamMap.put(stream.getId(), stream);
-        }
+        final Stream stream = streamMetaService.createStream(streamProperties);
+        streamMetaService.updateStatus(stream.getId(), StreamStatus.LOCKED);
 
         final TypedMap<String, ByteArrayOutputStream> typeMap = TypedMap.fromMap(new HashMap<>());
         typeMap.put(stream.getStreamTypeName(), new ByteArrayOutputStream());
@@ -316,7 +284,20 @@ public class MockStreamStore implements StreamStore, Clearable {
         return new MockStreamTarget(stream);
     }
 
-    public StreamEntity getLastStream() {
+    @Override
+    public StreamTarget openExistingStreamTarget(final long streamId) throws StreamException {
+        final Stream stream = streamMetaService.getStream(streamId);
+
+        final TypedMap<String, ByteArrayOutputStream> typeMap = TypedMap.fromMap(new HashMap<>());
+        typeMap.put(stream.getStreamTypeName(), new ByteArrayOutputStream());
+        openOutputStream.put(stream.getId(), typeMap);
+
+        lastStream = stream;
+
+        return new MockStreamTarget(stream);
+    }
+
+    public Stream getLastStream() {
         return lastStream;
     }
 
@@ -324,126 +305,70 @@ public class MockStreamStore implements StreamStore, Clearable {
         return fileData;
     }
 
-    public Map<Long, StreamEntity> getStreamMap() {
-        return streamMap;
-    }
+//    public Map<Long, StreamEntity> getStreamMap() {
+//        return streamMap;
+//    }
 
     private TypedMap<Long, TypedMap<String, ByteArrayOutputStream>> getOpenOutputStream() {
         return openOutputStream;
     }
 
-    @Override
-    public long getLockCount() {
-        return openInputStream.size() + openOutputStream.size();
-    }
-
-    @Override
-    public BaseResultList<StreamEntity> find(final FindStreamCriteria criteria) {
-        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamDataSource.getExtendedFieldMap(), null);
-        final List<StreamEntity> list = new ArrayList<>();
-        for (final long streamId : fileData.keySet()) {
-            try {
-                final StreamEntity stream = streamMap.get(streamId);
-                final StreamAttributeMap streamAttributeMap = new StreamAttributeMap(stream);
-                final Map<String, Object> attributeMap = StreamAttributeMapUtil.createAttributeMap(streamAttributeMap);
-                if (expressionMatcher.match(attributeMap, criteria.getExpression())) {
-                    list.add(stream);
-                }
-            } catch (final RuntimeException e) {
-                // Ignore.
-            }
-        }
-
-        return BaseResultList.createUnboundedList(list);
-    }
-
-    /**
-     * Overridden.
-     *
-     * @param findStreamCriteria NA
-     * @return NA
-     */
-    @Override
-    public BaseResultList<StreamEntity> find(final OldFindStreamCriteria findStreamCriteria) {
-        final List<StreamEntity> list = new ArrayList<>();
-        for (final long streamId : fileData.keySet()) {
-            final StreamEntity stream = streamMap.get(streamId);
-            if (findStreamCriteria.isMatch(stream)) {
-                list.add(stream);
-            }
-        }
-
-        return BaseResultList.createUnboundedList(list);
-    }
+//    @Override
+//    public long getLockCount() {
+//        return openInputStream.size() + openOutputStream.size();
+//    }
+//
+//
+//
+//    /**
+//     * Overridden.
+//     *
+//     * @param findStreamCriteria NA
+//     * @return NA
+//     */
+//    @Override
+//    public BaseResultList<StreamEntity> find(final OldFindStreamCriteria findStreamCriteria) {
+//        final List<StreamEntity> list = new ArrayList<>();
+//        for (final long streamId : fileData.keySet()) {
+//            final StreamEntity stream = streamMap.get(streamId);
+//            if (findStreamCriteria.isMatch(stream)) {
+//                list.add(stream);
+//            }
+//        }
+//
+//        return BaseResultList.createUnboundedList(list);
+//    }
 
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
         sb.append("Stream Store Contains:\n");
         for (final long streamId : fileData.keySet()) {
-            final StreamEntity stream = streamMap.get(streamId);
+            final Stream stream = streamMetaService.getStream(streamId);
             sb.append(stream);
             sb.append("\n");
         }
         sb.append("\nOpen Input Streams:\n");
         for (final long streamId : openInputStream) {
-            final StreamEntity stream = streamMap.get(streamId);
+            final Stream stream = streamMetaService.getStream(streamId);
             sb.append(stream);
             sb.append("\n");
         }
         sb.append("\nOpen Output Streams:\n");
         for (final long streamId : openOutputStream.keySet()) {
-            final StreamEntity stream = streamMap.get(streamId);
+            final Stream stream = streamMetaService.getStream(streamId);
             sb.append(stream);
             sb.append("\n");
         }
         return sb.toString();
     }
 
-    @Override
-    public Period getCreatePeriod() {
-        return new Period(0L, Long.MAX_VALUE);
-    }
-
-    @Override
-    public Long findDelete(final FindStreamCriteria criteria) {
-        return null;
-    }
-
-    @Override
-    public FindStreamCriteria createCriteria() {
-        return new FindStreamCriteria();
-    }
 
     private Long getStreamTypeId(final StreamTypeEntity streamType) {
         if (streamType == null) {
             return null;
         }
         return streamType.getId();
-    }
-
-    @Override
-    public List<String> getFeeds() {
-        final List<FeedEntity> feeds = feedService.find(new FindFeedCriteria());
-        if (feeds == null) {
-            return Collections.emptyList();
-        }
-        return feeds.stream()
-                .map(NamedEntity::getName)
-                .sorted(Comparator.naturalOrder())
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<String> getStreamTypes() {
-        final List<StreamTypeEntity> streamTypes = streamTypeService.find(new FindStreamTypeCriteria());
-        if (streamTypes == null) {
-            return Collections.emptyList();
-        }
-        return streamTypes.stream()
-                .map(NamedEntity::getName)
-                .sorted(Comparator.naturalOrder())
-                .collect(Collectors.toList());
     }
 
     private static class SeekableByteArrayInputStream extends ByteArrayInputStream implements SeekableInputStream {
@@ -468,14 +393,14 @@ public class MockStreamStore implements StreamStore, Clearable {
     }
 
     private class MockStreamTarget implements StreamTarget {
-        private final StreamEntity stream;
+        private final Stream stream;
         private final String streamTypeName;
         private final MetaMap attributeMap = new MetaMap();
         private final Map<String, MockStreamTarget> childMap = new HashMap<>();
         private ByteArrayOutputStream outputStream = null;
         private StreamTarget parent;
 
-        MockStreamTarget(final StreamEntity stream) {
+        MockStreamTarget(final Stream stream) {
             this.stream = stream;
             this.streamTypeName = stream.getStreamTypeName();
         }
@@ -508,7 +433,7 @@ public class MockStreamStore implements StreamStore, Clearable {
         }
 
         @Override
-        public StreamEntity getStream() {
+        public Stream getStream() {
             return stream;
         }
 
@@ -547,13 +472,13 @@ public class MockStreamStore implements StreamStore, Clearable {
     }
 
     private class MockStreamSource implements StreamSource {
-        private final StreamEntity stream;
+        private final Stream stream;
         private final String streamTypeName;
         private final MetaMap attributeMap = new MetaMap();
         private InputStream inputStream = null;
         private StreamSource parent;
 
-        MockStreamSource(final StreamEntity stream) {
+        MockStreamSource(final Stream stream) {
             this.stream = stream;
             this.streamTypeName = stream.getStreamTypeName();
         }
@@ -594,7 +519,7 @@ public class MockStreamStore implements StreamStore, Clearable {
         }
 
         @Override
-        public StreamEntity getStream() {
+        public Stream getStream() {
             return stream;
         }
 
