@@ -45,9 +45,13 @@ const ElementContextMenu = ({
   >
     <Dropdown.Menu>
       <Dropdown item text="Add">
-        <Dropdown.Menu>
+        <Dropdown.Menu className="Context-menu__add-menu">
+          <Dropdown.Header icon="tags" content="Filter by tag" />
+
           <Dropdown.Item icon="edit" text="Edit Profile" />
           <Dropdown.Item icon="globe" text="Choose Language" />
+          <Dropdown.Header icon="tags" content="Filter by soemthing else" />
+
           <Dropdown.Item icon="settings" text="Account Settings" />
         </Dropdown.Menu>
       </Dropdown>

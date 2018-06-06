@@ -63,7 +63,7 @@ public class DBPersistence implements Persistence {
         }
 
         if (data.size() == 0) {
-            throw new RuntimeException("Document not found " + docRef);
+            throw new DocumentNotFoundException(docRef);
         }
 
         return data;

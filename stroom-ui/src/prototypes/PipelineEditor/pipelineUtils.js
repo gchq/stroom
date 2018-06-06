@@ -41,8 +41,12 @@ export function getPipelineAsTree(pipeline) {
     elements[l.from].children.push(elements[l.to]);
   });
 
-  // Figure out the root
-  const rootId = pipeline.links.add[0].from;
+  // Figure out the root -- if a link doesn't have anything going to it then it's the root.
+  const roots = pipeline.links.add.filter((fromLink) => {
+    const toLinks = pipeline.links.add.filter(l => fromLink.from === l.to);
+    return toLinks.length === 0;
+  });
+  const rootId = roots[0].from;
 
   return elements[rootId];
 }
@@ -192,18 +196,41 @@ export function moveElementInPipeline(pipeline, itemToMove, destination) {
  * @return The updated pipeline definition.
  */
 export function deleteElementInPipeline(pipeline, itemToDelete) {
+  const children = getChildren(pipeline, itemToDelete);
+
   return {
     properties: {
-      add: pipeline.properties.add.filter(p => p.element !== itemToDelete),
+      add: pipeline.properties.add
+        .filter(p => p.element !== itemToDelete)
+        .filter(p => !children.includes(p.element)),
     },
     elements: {
-      add: pipeline.elements.add.filter(e => e.id !== itemToDelete),
+      add: pipeline.elements.add
+        .filter(e => e.id !== itemToDelete)
+        .filter(e => !children.includes(e.id)),
     },
     links: {
       add: pipeline.links.add
         // Remove any existing link that goes into the deleting item
         .filter(l => l.to !== itemToDelete)
-        .filter(l => l.from !== itemToDelete),
+        .filter(l => l.from !== itemToDelete)
+        .filter(l => !children.includes(l.to)),
     },
   };
+}
+
+function getChildren(pipeline, parent) {
+  let allChildren = [];
+
+  const getAllChildren = (pipeline, element) => {
+    const thisElementsChildren = pipeline.links.add.filter(p => p.from === element).map(p => p.to);
+    allChildren = allChildren.concat(thisElementsChildren);
+    for (const childIndex in thisElementsChildren) {
+      getAllChildren(pipeline, thisElementsChildren[childIndex]);
+    }
+  };
+
+  getAllChildren(pipeline, parent);
+
+  return allChildren;
 }
