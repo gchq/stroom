@@ -42,19 +42,26 @@ export function getPipelineAsTree(pipeline) {
   });
 
   // Figure out the root -- if a link doesn't have anything going to it then it's the root.
-  const roots = pipeline.links.add.filter((fromLink) => {
+  const rootLinks = pipeline.links.add.filter((fromLink) => {
     const toLinks = pipeline.links.add.filter(l => fromLink.from === l.to);
     return toLinks.length === 0;
   });
+
   let rootId;
-  if (roots.length === 0) {
+  if (rootLinks.length === 0) {
     // Maybe there's only one thing and therefore no links?
-    rootId = pipeline.elements.add[0].id;
+    if (pipeline.elements.add.length !== 0) {
+      // If there're no links then we can use the first element.
+      rootId = pipeline.elements.add[0].id;
+    } else {
+      // If there are no elements then we can't have a root node.
+      rootId = undefined;
+    }
   } else {
-  rootId = roots[0].from;
+    rootId = rootLinks[0].from;
   }
 
-  return elements[rootId];
+  return rootId ? elements[rootId] : undefined;
 }
 
 export const ORIENTATION = {
