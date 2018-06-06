@@ -16,7 +16,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose } from 'recompose';
+import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
 
 import { Button, Modal, Input } from 'semantic-ui-react';
@@ -25,29 +25,30 @@ import { findItem } from 'lib/treeUtils';
 import { actionCreators } from './redux';
 import { withCreatedExplorer } from './withExplorer';
 import { withPickedDocRef } from './withPickedDocRef';
-import { withModal, setModal } from 'components/WithModal';
 
 import DocExplorer from './DocExplorer';
 
 const { docRefPicked } = actionCreators;
+
+const withModal = withState('isOpen', 'setIsOpen', false);
 
 const DocRefModalPicker = ({
   isSelected,
   documentTree,
   docRefPicked,
   docRef,
-  modalIsOpen,
+  isOpen,
   tree,
   pickerId,
   typeFilter,
-  setModal,
+  setIsOpen,
   explorer,
 }) => {
   const value = docRef ? docRef.name : '';
 
-  const handleOpen = () => setModal(pickerId, true);
+  const handleOpen = () => setIsOpen(true);
 
-  const handleClose = () => setModal(pickerId, false);
+  const handleClose = () => setIsOpen(false);
 
   const onDocRefSelected = () => {
     Object.keys(explorer.isSelected).forEach((pickedUuid) => {
@@ -61,7 +62,7 @@ const DocRefModalPicker = ({
   return (
     <Modal
       trigger={<Input onFocus={handleOpen} value={`${value}...`} />}
-      open={modalIsOpen}
+      open={isOpen}
       onClose={handleClose}
       size="small"
       dimmer="blurring"
@@ -77,7 +78,7 @@ const DocRefModalPicker = ({
         />
       </Modal.Content>
       <Modal.Actions>
-        <Button negative onClick={() => setModal(pickerId, false)}>
+        <Button negative onClick={() => setIsOpen(false)}>
           Cancel
         </Button>
         <Button
@@ -100,9 +101,9 @@ DocRefModalPicker.propTypes = {
   typeFilter: PropTypes.string,
   docRef: PropTypes.object,
   docRefPicked: PropTypes.func.isRequired,
-  modalIsOpen: PropTypes.bool.isRequired,
+  isOpen: PropTypes.bool.isRequired,
 
-  setModal: PropTypes.func.isRequired,
+  setIsOpen: PropTypes.func.isRequired,
 };
 
 export default compose(
@@ -113,10 +114,9 @@ export default compose(
     {
       // actions
       docRefPicked,
-      setModal,
     },
   ),
   withPickedDocRef(),
   withCreatedExplorer('pickerId'),
-  withModal('pickerId'),
+  withModal,
 )(DocRefModalPicker);

@@ -20,15 +20,17 @@ import { connect } from 'react-redux';
 
 import { Menu, Input } from 'semantic-ui-react';
 
-import {
+import { actionCreators } from './redux';
+
+const {
   cancelAddPipelineElement,
   choosePipelineElementToAdd,
-  addElementsearchTermUpdated,
-} from './redux';
+  addElementSearchTermChanged,
+} = actionCreators;
 
 const ChooseElement = ({
   addElementToPipelineWizard,
-  addElementsearchTermUpdated,
+  addElementSearchTermChanged,
   choosePipelineElementToAdd,
   availableElements,
 }) => (
@@ -39,7 +41,7 @@ const ChooseElement = ({
         icon="search"
         placeholder="Search..."
         value={addElementToPipelineWizard.searchTerm}
-        onChange={e => addElementsearchTermUpdated(e.target.value)}
+        onChange={e => addElementSearchTermChanged(e.target.value)}
       />
     </Menu.Item>
     {Object.entries(availableElements).map(k => (
@@ -59,7 +61,7 @@ ChooseElement.propTypes = {
   addElementToPipelineWizard: PropTypes.object.isRequired,
   availableElements: PropTypes.object.isRequired,
   choosePipelineElementToAdd: PropTypes.func.isRequired,
-  addElementsearchTermUpdated: PropTypes.func.isRequired,
+  addElementSearchTermChanged: PropTypes.func.isRequired,
 };
 
 export default connect(
@@ -69,6 +71,6 @@ export default connect(
   {
     cancelAddPipelineElement,
     choosePipelineElementToAdd,
-    addElementsearchTermUpdated,
+    addElementSearchTermChanged,
   },
 )(ChooseElement);

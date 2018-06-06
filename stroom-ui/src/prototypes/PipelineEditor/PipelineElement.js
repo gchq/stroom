@@ -24,18 +24,20 @@ import { DragSource, DropTarget } from 'react-dnd';
 import { withElement } from './withElement';
 import { withPipeline } from './withPipeline';
 
-import {
-  pipelineElementSelected,
-  pipelineElementMoved,
-  openPipelineElementContextMenu,
-  closePipelineElementContextMenu,
-} from './redux';
+import { actionCreators } from './redux';
 
 import ElementContextMenu from './ElementContextMenu';
 
 import { canMovePipelineElement } from './pipelineUtils';
 
 import { ItemTypes } from './dragDropTypes';
+
+const {
+  pipelineElementSelected,
+  pipelineElementMoved,
+  openPipelineElementContextMenu,
+  closePipelineElementContextMenu,
+} = actionCreators;
 
 const dragSource = {
   canDrag(props) {

@@ -1,21 +1,20 @@
-import { createAction, handleActions } from 'redux-actions';
+import { createActions, handleActions } from 'redux-actions';
 
 const defaultElementState = {};
 
-const elementsReceived = createAction('ELEMENTS_RECEIVED', elements => ({ elements }));
-const elementPropertiesReceived = createAction(
-  'ELEMENT_PROPERTIES_RECEIVED',
-  elementProperties => ({ elementProperties }),
-);
+const actionCreators = createActions({
+  ELEMENTS_RECEIVED: elements => ({ elements }),
+  ELEMENT_PROPERTIES_RECEIVED: elementProperties => ({ elementProperties }),
+});
 
 const elementReducer = handleActions(
   {
-    [elementsReceived]: (state, action) => ({
+    ELEMENTS_RECEIVED: (state, action) => ({
       ...state,
       elements: action.payload.elements,
     }),
 
-    [elementPropertiesReceived]: (state, action) => ({
+    ELEMENT_PROPERTIES_RECEIVED: (state, action) => ({
       ...state,
       elementProperties: action.payload.elementProperties,
     }),
@@ -23,4 +22,4 @@ const elementReducer = handleActions(
   defaultElementState,
 );
 
-export { elementsReceived, elementPropertiesReceived, elementReducer };
+export { actionCreators, elementReducer };

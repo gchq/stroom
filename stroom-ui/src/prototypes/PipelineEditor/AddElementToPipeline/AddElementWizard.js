@@ -22,15 +22,14 @@ import { Field, reduxForm } from 'redux-form';
 
 import { Modal, Header, Button, Form, Icon } from 'semantic-ui-react';
 
-import {
-  cancelAddPipelineElement,
-  restartAddPipelineElement,
-  ADD_ELEMENT_STATE,
-} from './redux';
-import { pipelineElementAdded } from '../redux';
+import { actionCreators as addElementActionCreators, ADD_ELEMENT_STATE } from './redux';
+import { actionCreators as pipelineActionCreators } from '../redux';
 import { withAddElementToPipeline } from './withAddElementToPipeline';
 
 import ChooseElement from './ChooseElement';
+
+const { pipelineElementAdded } = pipelineActionCreators;
+const { cancelAddPipelineElement, restartAddPipelineElement } = addElementActionCreators;
 
 const AddElementWizard = ({
   addElementToPipelineWizard,
