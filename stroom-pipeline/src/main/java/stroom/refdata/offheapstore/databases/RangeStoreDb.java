@@ -78,8 +78,8 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
 //                buf -> keySerde.deserialize(buf).toString(),
 //                buf -> valueSerde.deserialize(buf).toString());
 
+        int cnt = 0;
         try (CursorIterator<ByteBuffer> cursorIterator = lmdbDbi.iterate(txn, keyRange)) {
-            int cnt = 0;
             // loop backwards over all rows with the same mapDefinitionUid, starting at key
             for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
                 cnt++;
@@ -105,7 +105,7 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
                 }
             }
         }
-        LOGGER.trace("Value not found for {}, key {}", mapDefinitionUid, key);
+        LOGGER.trace("Value not found for {}, key {}, iterations {}", mapDefinitionUid, key, cnt);
         return Optional.empty();
     }
 

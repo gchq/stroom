@@ -20,6 +20,7 @@ package stroom.refdata;
 import com.google.inject.AbstractModule;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
+import stroom.properties.StroomPropertyService;
 import stroom.refdata.offheapstore.AbstractByteBufferConsumer;
 import stroom.refdata.offheapstore.FastInfosetByteBufferConsumer;
 import stroom.refdata.offheapstore.FastInfosetValue;
@@ -41,6 +42,9 @@ import stroom.refdata.offheapstore.serdes.StringValueSerde;
 public class RefDataModule extends AbstractModule {
     @Override
     protected void configure() {
+        //deps from other modules
+        requireBinding(StroomPropertyService.class);
+
         bind(RefDataStore.class).toProvider(RefDataStoreProvider.class);
 
 //        final Multibinder<RefDataValue> refDataValueBinder = Multibinder.newSetBinder(binder(), RefDataValue.class);

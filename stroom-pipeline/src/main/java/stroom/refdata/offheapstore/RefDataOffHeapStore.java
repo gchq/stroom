@@ -299,6 +299,20 @@ public class RefDataOffHeapStore implements RefDataStore {
 
 
     /**
+     * For use in testing at SMALL scale. Dumps the content of each DB to the logger.
+     */
+    void logAllContents() {
+        processingInfoDb.logDatabaseContents();
+        mapUidForwardDb.logDatabaseContents();
+        mapUidReverseDb.logDatabaseContents();
+        keyValueStoreDb.logDatabaseContents();
+        rangeStoreDb.logDatabaseContents();
+        valueStoreDb.logDatabaseContents();
+    }
+
+
+
+    /**
      * Class for adding multiple items to the {@link RefDataOffHeapStore} within a single
      * write transaction.  Must be used inside a try-with-resources block to ensure the transaction
      * is closed, e.g.
@@ -388,6 +402,7 @@ public class RefDataOffHeapStore implements RefDataStore {
             throwExceptionIfNotInitialised();
             beginTxnIfRequired();
 
+            LOGGER.trace("Completing processing (put count {})", putsCounter);
             // Set the processing info record to COMPLETE and update the last update time
             processingInfoDb.updateProcessingState(
                     writeTxn, refStreamDefinition, RefDataProcessingInfo.ProcessingState.COMPLETE);
@@ -403,12 +418,14 @@ public class RefDataOffHeapStore implements RefDataStore {
             if (writeTxn != null) {
                 throw new RuntimeException("Transaction is already open");
             }
+            LOGGER.trace("Beginning write transaction");
             this.writeTxn = lmdbEnvironment.txnWrite();
         }
 
         private void commit() {
             if (writeTxn != null) {
                 try {
+                    LOGGER.trace("Committing (put count {})", putsCounter);
                     writeTxn.commit();
                     writeTxn = null;
                 } catch (Exception e) {
@@ -440,6 +457,8 @@ public class RefDataOffHeapStore implements RefDataStore {
             // do a get then optional put.
             boolean didPutSucceed = keyValueStoreDb.put(
                     writeTxn, keyValueStoreKey, valueStoreKey, overwriteExistingValue);
+
+            commitIfRequired();
 
             if (!overwriteExistingValue && !didPutSucceed) {
                 throw new RuntimeException(LambdaLogger.buildMessage(
@@ -475,6 +494,8 @@ public class RefDataOffHeapStore implements RefDataStore {
             boolean didPutSucceed = rangeStoreDb.put(
                     writeTxn, rangeStoreKey, valueStoreKey, overwriteExistingValue);
 
+            commitIfRequired();
+
             if (!overwriteExistingValue && !didPutSucceed) {
                 throw new RuntimeException(LambdaLogger.buildMessage(
                         "Entry already exists for key {} and overwriteExisting is false", rangeStoreKey));
@@ -491,15 +512,17 @@ public class RefDataOffHeapStore implements RefDataStore {
             final UID uid = mapDefinitionToUIDMap.computeIfAbsent(mapDefinition, mapDef -> {
                 LOGGER.debug("MapDefinition {} not found in local cache so getting it from the store");
                 // cloning the UID in case we leave the txn
-                return mapDefinitionUIDStore.getOrCreateUid(mapDef).clone();
+                return mapDefinitionUIDStore.getOrCreateUid(writeTxn, mapDef).clone();
             });
             return uid;
         }
 
+        /**
+         * To be called after each put
+         */
         private void commitIfRequired() {
             putsCounter++;
-            if (putsCounter >= maxPutsBeforeCommit) {
-                //
+            if (putsCounter % maxPutsBeforeCommit == 0) {
                 commit();
             }
         }
@@ -523,8 +546,10 @@ public class RefDataOffHeapStore implements RefDataStore {
         }
 
         @Override
-        public void close() throws Exception {
+        public void close() {
+            LOGGER.trace("Close called");
             if (writeTxn != null) {
+                LOGGER.trace("Committing transaction (put count {})", putsCounter);
                 writeTxn.commit();
                 writeTxn.close();
             }
