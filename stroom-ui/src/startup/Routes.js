@@ -78,19 +78,17 @@ class Routes extends Component {
           <Route
             exact
             path="/pipelines/:pipelineId"
-            render={
-              ({ match }) => (
-                // (this.isLoggedIn() ? (
+            render={({ match }) =>
+              (this.isLoggedIn() ? (
                 <PipelineEditorFromUrl pipelineId={match.params.pipelineId} />
-              )
-              // ) : (
-              //   <AuthenticationRequest
-              //     referrer={match.url}
-              //     uiUrl={this.props.advertisedUrl}
-              //     appClientId={this.props.appClientId}
-              //     authenticationServiceUrl={this.props.authenticationServiceUrl}
-              //   />
-              // ))
+              ) : (
+                <AuthenticationRequest
+                  referrer={match.url}
+                  uiUrl={this.props.advertisedUrl}
+                  appClientId={this.props.appClientId}
+                  authenticationServiceUrl={this.props.authenticationServiceUrl}
+                />
+              ))
             }
           />
 
