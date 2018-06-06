@@ -26,12 +26,30 @@ describe('Pipeline Utils', () => {
       const asTree = getPipelineAsTree(testPipeline);
 
       // Then
-      expect(asTree.uuid).toBe('CSV splitter filter');
-      expect(asTree.children[0].uuid).toBe('XSLT filter');
-      expect(asTree.children[0].children[0].uuid).toBe('XML writer 1');
-      expect(asTree.children[0].children[0].children[0].uuid).toBe('stream appender 1');
-      expect(asTree.children[0].children[1].uuid).toBe('XML writer 2');
-      expect(asTree.children[0].children[1].children[0].uuid).toBe('stream appender 2');
+      expectsForTestPipeline(asTree);
+    });
+
+    it('should convert a pipeline to a tree and detect the correct root', () => {
+      // Given
+      // Swap some entities over -- it shouldn't matter if they're not in the correct order
+      const first = testPipeline.links.add[0];
+      testPipeline.links.add[0] = testPipeline.links.add[2];
+      testPipeline.links.add[2] = first;
+
+      // When
+      const asTree = getPipelineAsTree(testPipeline);
+
+      // Then
+      expectsForTestPipeline(asTree);
     });
   });
 });
+
+function expectsForTestPipeline(asTree) {
+  expect(asTree.uuid).toBe('CSV splitter filter');
+  expect(asTree.children[0].uuid).toBe('XSLT filter');
+  expect(asTree.children[0].children[0].uuid).toBe('XML writer 1');
+  expect(asTree.children[0].children[0].children[0].uuid).toBe('stream appender 1');
+  expect(asTree.children[0].children[1].uuid).toBe('XML writer 2');
+  expect(asTree.children[0].children[1].children[0].uuid).toBe('stream appender 2');
+}
