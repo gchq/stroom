@@ -194,14 +194,10 @@ export function moveElementInPipeline(pipeline, itemToMove, destination) {
 export function deleteElementInPipeline(pipeline, itemToDelete) {
   return {
     properties: {
-      add: {
-        property: pipeline.properties.add.property.filter(p => p.element !== itemToDelete),
-      },
+      add: pipeline.properties.add.filter(p => p.element !== itemToDelete),
     },
     elements: {
-      add: {
-        element: pipeline.elements.add.filter(e => e.id !== itemToDelete),
-      },
+      add: pipeline.elements.add.filter(e => e.id !== itemToDelete),
     },
     links: {
       add: pipeline.links.add
