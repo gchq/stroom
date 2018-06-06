@@ -22,11 +22,13 @@ import { connect } from 'react-redux';
 import { ItemTypes } from './dragDropTypes';
 import { DragSource } from 'react-dnd';
 
-import { selectDocRef, openDocRef, openDocRefContextMenu } from './redux';
+import { actionCreators } from './redux';
 
 import { withExistingExplorer } from './withExplorer';
 
 import DocRefMenu from './DocRefMenu';
+
+const { selectDocRef, openDocRef, openDocRefContextMenu } = actionCreators;
 
 const dragSource = {
   canDrag(props) {

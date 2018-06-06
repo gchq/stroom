@@ -22,7 +22,7 @@ import { withNotes } from '@storybook/addon-notes';
 
 import { DocExplorer, DocRef, Folder, DocRefModalPicker, DocRefDropdownPicker } from './index';
 
-import { receiveDocTree, docRefPicked } from './redux';
+import { actionCreators } from './redux';
 
 import markdown from './docExplorer.md';
 import { testTree, DOC_REF_TYPES } from './documentTree.testData';
@@ -30,10 +30,11 @@ import { testTree, DOC_REF_TYPES } from './documentTree.testData';
 import { pickRandomItem } from 'lib/treeUtils';
 
 import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
-
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
 import 'styles/main.css';
+
+const { receiveDocTree, docRefPicked } = actionCreators;
 
 storiesOf('Document Explorer', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
@@ -73,6 +74,6 @@ storiesOf('Document Explorer', module)
   ))
   .add('Doc Ref Picker (modal, no choice made)', () => <DocRefModalPicker pickerId="modal1" />)
   .add('Doc Ref Picker (modal, choice made)', () => <DocRefModalPicker pickerId="modal2" />)
-  .add('Doc Ref Picker (modal, filter to hobbits)', () => (
-    <DocRefModalPicker pickerId="modal3" typeFilter={DOC_REF_TYPES.HOBBIT} />
+  .add('Doc Ref Picker (modal, filter to annotations)', () => (
+    <DocRefModalPicker pickerId="modal3" typeFilter={DOC_REF_TYPES.AnnotationsIndex} />
   ));

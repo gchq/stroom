@@ -18,7 +18,8 @@ import PropTypes from 'prop-types';
 
 import { connect } from 'react-redux';
 
-import { expressionEditorCreated, expressionEditorDestroyed } from './redux';
+import { actionCreators } from './redux';
+const { expressionEditorCreated, expressionEditorDestroyed } = actionCreators;
 
 /**
  * This is a Higher Order Component

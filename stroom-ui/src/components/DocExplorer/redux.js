@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import _ from 'lodash';
-import { createAction, handleActions } from 'redux-actions';
+import { createActions, handleActions } from 'redux-actions';
 
 import {
   moveItemInTree,
@@ -54,50 +54,46 @@ function getToggledState(currentState, isUser) {
 
 const DEFAULT_EXPLORER_ID = 'default';
 
-const receiveDocTree = createAction('RECEIVE_DOC_TREE', documentTree => ({ documentTree }));
-const explorerTreeOpened = createAction(
-  'EXPLORER_TREE_OPENED',
-  (explorerId, allowMultiSelect, allowDragAndDrop, typeFilter) => ({
+const actionCreators = createActions({
+  RECEIVE_DOC_TREE: documentTree => ({ documentTree }),
+  EXPLORER_TREE_OPENED: (explorerId, allowMultiSelect, allowDragAndDrop, typeFilter) => ({
     explorerId,
     allowMultiSelect,
     allowDragAndDrop,
     typeFilter,
   }),
-);
-const moveExplorerItem = createAction(
-  'MOVE_EXPLORER_ITEM',
-  (explorerId, itemToMove, destination) => ({ explorerId, itemToMove, destination }),
-);
-const toggleFolderOpen = createAction('TOGGLE_FOLDER_OPEN', (explorerId, docRef) => ({
-  explorerId,
-  docRef,
-}));
-const searchTermChanged = createAction('SEARCH_TERM_UPDATED', (explorerId, searchTerm) => ({
-  explorerId,
-  searchTerm,
-}));
-const selectDocRef = createAction('SELECT_DOC_REF', (explorerId, docRef) => ({
-  explorerId,
-  docRef,
-}));
-const openDocRef = createAction('OPEN_DOC_REF', (explorerId, docRef) => ({ explorerId, docRef }));
-const requestDeleteDocRef = createAction('REQUEST_DELETE_DOC_REF', (explorerId, docRef) => ({
-  explorerId,
-  docRef,
-}));
-const confirmDeleteDocRef = createAction('CONFIRM_DELETE_DOC_REF', (explorerId, docRef) => ({
-  explorerId,
-  docRef,
-}));
-const cancelDeleteDocRef = createAction('CANCEL_DELETE_DOC_REF', explorerId => ({ explorerId }));
-const openDocRefContextMenu = createAction('OPEN_DOC_REF_CONTEXT_MENU', (explorerId, docRef) => ({
-  explorerId,
-  docRef,
-}));
-const closeDocRefContextMenu = createAction('CLOSE_DOC_REF_CONTEXT_MENU', explorerId => ({
-  explorerId,
-}));
-const docRefPicked = createAction('DOC_REF_PICKED', (pickerId, docRef) => ({ pickerId, docRef }));
+  MOVE_EXPLORER_ITEM: (explorerId, itemToMove, destination) => ({ explorerId, itemToMove, destination }),
+  TOGGLE_FOLDER_OPEN: (explorerId, docRef) => ({
+    explorerId,
+    docRef,
+  }),
+  SEARCH_TERM_UPDATED: (explorerId, searchTerm) => ({
+    explorerId,
+    searchTerm,
+  }),
+  SELECT_DOC_REF:(explorerId, docRef) => ({
+    explorerId,
+    docRef,
+  }),
+  OPEN_DOC_REF: (explorerId, docRef) => ({ explorerId, docRef }),
+  REQUEST_DELETE_DOC_REF: (explorerId, docRef) => ({
+    explorerId,
+    docRef,
+  }),
+  CONFIRM_DELETE_DOC_REF:  (explorerId, docRef) => ({
+    explorerId,
+    docRef,
+  }),
+  CANCEL_DELETE_DOC_REF: explorerId => ({ explorerId }),
+  OPEN_DOC_REF_CONTEXT_MENU: (explorerId, docRef) => ({
+    explorerId,
+    docRef,
+  }),
+  CLOSE_DOC_REF_CONTEXT_MENU: explorerId => ({
+    explorerId,
+  }),
+  DOC_REF_PICKED: (pickerId, docRef) => ({ pickerId, docRef })
+})
 
 const defaultExplorerState = {
   searchTerm: '',
@@ -231,11 +227,11 @@ function getStateAfterTreeUpdate(state, documentTree) {
 const explorerTreeReducer = handleActions(
   {
     // Receive the current state of the explorer tree
-    [receiveDocTree]: (state, action) =>
+    RECEIVE_DOC_TREE: (state, action) =>
       getStateAfterTreeUpdate(state, action.payload.documentTree),
 
     // When an explorer is opened
-    [explorerTreeOpened]: (state, action) => {
+    EXPLORER_TREE_OPENED: (state, action) => {
       const {
         explorerId, allowMultiSelect, allowDragAndDrop, typeFilter,
       } = action.payload;
@@ -253,7 +249,7 @@ const explorerTreeReducer = handleActions(
     },
 
     // Move Item in Explorer Tree
-    [moveExplorerItem]: (state, action) => {
+    MOVE_EXPLORER_ITEM: (state, action) => {
       const { itemToMove, destination } = action.payload;
 
       const documentTree = moveItemInTree(state.documentTree, itemToMove, destination);
@@ -262,7 +258,7 @@ const explorerTreeReducer = handleActions(
     },
 
     // Folder Open Toggle
-    [toggleFolderOpen]: (state, action) => {
+    TOGGLE_FOLDER_OPEN: (state, action) => {
       const { explorerId, docRef } = action.payload;
 
       return {
@@ -284,7 +280,7 @@ const explorerTreeReducer = handleActions(
     },
 
     // Open Doc Ref Context Menu
-    [openDocRefContextMenu]: (state, action) => {
+    OPEN_DOC_REF_CONTEXT_MENU: (state, action) => {
       const { explorerId, docRef } = action.payload;
 
       return {
@@ -300,7 +296,7 @@ const explorerTreeReducer = handleActions(
     },
 
     // Close Doc Ref Context Menu
-    [closeDocRefContextMenu]: (state, action) => {
+    CLOSE_DOC_REF_CONTEXT_MENU: (state, action) => {
       const { explorerId } = action.payload;
 
       return {
@@ -316,7 +312,7 @@ const explorerTreeReducer = handleActions(
     },
 
     // Search Term Changed
-    [searchTermChanged]: (state, action) => {
+    SEARCH_TERM_UPDATED: (state, action) => {
       const { explorerId, searchTerm } = action.payload;
 
       const explorer = getUpdatedExplorer(
@@ -336,7 +332,7 @@ const explorerTreeReducer = handleActions(
     },
 
     // Select Doc Ref
-    [selectDocRef]: (state, action) => {
+    SELECT_DOC_REF: (state, action) => {
       const { explorerId, docRef } = action.payload;
 
       const explorer = state.explorers[explorerId];
@@ -365,7 +361,7 @@ const explorerTreeReducer = handleActions(
     },
 
     // Open Doc Ref
-    [openDocRef]: (state, action) => {
+    OPEN_DOC_REF: (state, action) => {
       const { docRef } = action.payload;
 
       return {
@@ -378,7 +374,7 @@ const explorerTreeReducer = handleActions(
     },
 
     // Request Delete Doc Ref
-    [requestDeleteDocRef]: (state, action) => {
+    REQUEST_DELETE_DOC_REF: (state, action) => {
       const { explorerId, docRef } = action.payload;
 
       return {
@@ -394,7 +390,7 @@ const explorerTreeReducer = handleActions(
     },
 
     // Cancel Delete Doc Ref
-    [cancelDeleteDocRef]: (state, action) => {
+    CANCEL_DELETE_DOC_REF: (state, action) => {
       const { explorerId } = action.payload;
 
       return {
@@ -410,7 +406,7 @@ const explorerTreeReducer = handleActions(
     },
 
     // Confirm Delete Doc Ref
-    [confirmDeleteDocRef]: (state, action) => {
+    CONFIRM_DELETE_DOC_REF: (state, action) => {
       const { docRef } = action.payload;
 
       const documentTree = deleteItemFromTree(state.documentTree, docRef.uuid);
@@ -419,7 +415,7 @@ const explorerTreeReducer = handleActions(
     },
 
     // Pick Doc Ref
-    [docRefPicked]: (state, action) => ({
+    DOC_REF_PICKED: (state, action) => ({
       ...state,
       pickedDocRefs: {
         ...state.pickedDocRefs,
@@ -432,18 +428,6 @@ const explorerTreeReducer = handleActions(
 
 export {
   DEFAULT_EXPLORER_ID,
-  receiveDocTree,
-  explorerTreeOpened,
-  moveExplorerItem,
-  toggleFolderOpen,
-  openDocRef,
-  requestDeleteDocRef,
-  confirmDeleteDocRef,
-  cancelDeleteDocRef,
-  docRefPicked,
-  searchTermChanged,
-  selectDocRef,
-  openDocRefContextMenu,
-  closeDocRefContextMenu,
+  actionCreators,
   explorerTreeReducer,
 };

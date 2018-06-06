@@ -16,7 +16,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose } from 'recompose';
+import { compose } from 'redux';
 import { connect } from 'react-redux';
 
 import { canMove } from '../../lib/treeUtils';
@@ -31,7 +31,8 @@ import FolderMenu from './FolderMenu';
 
 import { withExistingExplorer } from './withExplorer';
 
-import { moveExplorerItem, toggleFolderOpen, openDocRefContextMenu } from './redux';
+import { actionCreators } from './redux';
+const { moveExplorerItem, toggleFolderOpen, openDocRefContextMenu } = actionCreators;
 
 const dragSource = {
   canDrag(props) {

@@ -30,7 +30,7 @@ const choosePipelineElementToAdd = createAction(
   }),
 );
 
-const addElementSearchTermChanged = createAction('ADD_ELEMENT_SEARCH_TERM_CHANGED', searchTerm => ({
+const addElementsearchTermUpdated = createAction('ADD_ELEMENT_SEARCH_TERM_CHANGED', searchTerm => ({
   searchTerm,
 }));
 
@@ -49,7 +49,7 @@ const addElementToPipelineWizardReducer = handleActions(
       ...state,
       addElementState: ADD_ELEMENT_STATE.PICKING_ELEMENT_DEFINITION,
     }),
-    [addElementSearchTermChanged]: (state, action) => ({
+    [addElementsearchTermUpdated]: (state, action) => ({
       ...state,
       searchTerm: action.payload.searchTerm,
     }),
@@ -68,7 +68,7 @@ export {
   ADD_ELEMENT_STATE,
   initiateAddPipelineElement,
   restartAddPipelineElement,
-  addElementSearchTermChanged,
+  addElementsearchTermUpdated,
   choosePipelineElementToAdd,
   cancelAddPipelineElement,
   addElementToPipelineWizardReducer,

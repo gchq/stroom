@@ -2,7 +2,7 @@ import {
   initiateAddPipelineElement,
   choosePipelineElementToAdd,
   cancelAddPipelineElement,
-  addElementSearchTermChanged,
+  addElementsearchTermUpdated,
   addElementToPipelineWizardReducer,
   ADD_ELEMENT_STATE,
 } from './redux';
@@ -15,7 +15,7 @@ export {
   initiateAddPipelineElement,
   choosePipelineElementToAdd,
   cancelAddPipelineElement,
-  addElementSearchTermChanged,
+  addElementsearchTermUpdated,
   addElementToPipelineWizardReducer,
   ADD_ELEMENT_STATE,
   withAddElementToPipeline,

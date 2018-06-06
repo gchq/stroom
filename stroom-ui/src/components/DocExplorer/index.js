@@ -16,22 +16,7 @@
 import DocExplorer from './DocExplorer';
 import DocRefModalPicker from './DocRefModalPicker';
 import DocRefDropdownPicker from './DocRefDropdownPicker';
-import {
-  receiveDocTree,
-  explorerTreeOpened,
-  moveExplorerItem,
-  toggleFolderOpen,
-  openDocRef,
-  requestDeleteDocRef,
-  confirmDeleteDocRef,
-  cancelDeleteDocRef,
-  docRefPicked,
-  searchTermChanged,
-  selectDocRef,
-  openDocRefContextMenu,
-  closeDocRefContextMenu,
-  explorerTreeReducer,
-} from './redux';
+import { actionCreators, explorerTreeReducer } from './redux';
 
 import { withExplorer } from './withExplorer';
 
@@ -41,19 +26,7 @@ export {
   DocExplorer,
   DocRefModalPicker,
   DocRefDropdownPicker,
-  receiveDocTree,
-  explorerTreeOpened,
-  moveExplorerItem,
-  toggleFolderOpen,
-  openDocRef,
-  requestDeleteDocRef,
-  confirmDeleteDocRef,
-  cancelDeleteDocRef,
-  docRefPicked,
-  searchTermChanged,
-  selectDocRef,
-  openDocRefContextMenu,
-  closeDocRefContextMenu,
+  actionCreators,
   explorerTreeReducer,
   withExplorer,
   // Test exports

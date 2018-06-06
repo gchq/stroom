@@ -26,7 +26,7 @@ import {
   moveExplorerItem,
   toggleFolderOpen,
   openDocRef,
-  searchTermChanged,
+  searchTermUpdated,
   selectDocRef,
   openDocRefContextMenu,
   closeDocRefContextMenu,
@@ -130,8 +130,8 @@ describe('Doc Explorer Reducer', () => {
       // When
       store.dispatch(receiveDocTree(testTree));
       store.dispatch(explorerTreeOpened(explorerId, allowMultiSelect, allowDragAndDrop, typeFilter),);
-      store.dispatch(searchTermChanged(explorerId, searchTerm));
-      store.dispatch(searchTermChanged(explorerId, undefined));
+      store.dispatch(searchTermUpdated(explorerId, searchTerm));
+      store.dispatch(searchTermUpdated(explorerId, undefined));
 
       // Then
       const state = store.getState();
@@ -162,8 +162,8 @@ describe('Doc Explorer Reducer', () => {
       // When
       store.dispatch(receiveDocTree(subTree));
       store.dispatch(explorerTreeOpened(explorerId, allowMultiSelect, allowDragAndDrop, typeFilter),);
-      store.dispatch(searchTermChanged(explorerId, searchTerm));
-      store.dispatch(searchTermChanged(explorerId, undefined));
+      store.dispatch(searchTermUpdated(explorerId, searchTerm));
+      store.dispatch(searchTermUpdated(explorerId, undefined));
 
       // Then
       const state = store.getState();

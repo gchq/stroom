@@ -16,7 +16,8 @@
 
 import { createActions, handleActions } from 'redux-actions';
 
-import { receiveDataSource } from 'components/ExpressionBuilder';
+import { dataSourceActionCreators } from 'components/ExpressionBuilder';
+const { receiveDataSource } = dataSourceActionCreators;
 
 const initialState = {
   trackers: [],

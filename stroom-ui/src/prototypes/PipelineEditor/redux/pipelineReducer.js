@@ -55,11 +55,7 @@ const closePipelineElementContextMenu = createAction(
 );
 
 // pipelines, keyed on ID, there may be several expressions on a page
-const defaultPipelineState = {
-  selectedElementId: undefined,
-  pendingElementIdToDelete: undefined,
-  contextMenuElementId: undefined,
-};
+const defaultPipelineState = {};
 
 const pipelineReducer = handleActions(
   {

@@ -22,12 +22,14 @@ import { connect } from 'react-redux';
 import { Button, Modal, Input } from 'semantic-ui-react';
 
 import { findItem } from 'lib/treeUtils';
-import { docRefPicked } from './redux';
+import { actionCreators } from './redux';
 import { withCreatedExplorer } from './withExplorer';
 import { withPickedDocRef } from './withPickedDocRef';
 import { withModal, setModal } from 'components/WithModal';
 
 import DocExplorer from './DocExplorer';
+
+const { docRefPicked } = actionCreators;
 
 const DocRefModalPicker = ({
   isSelected,
