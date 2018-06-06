@@ -134,4 +134,36 @@ public class TestProcessingInfoDb extends AbstractLmdbDbTest {
         assertThat(refDataProcessingInfoAfter.getProcessingState()).isEqualTo(RefDataProcessingInfo.ProcessingState.COMPLETE);
         assertThat(refDataProcessingInfoAfter.getLastAccessedTimeEpochMs()).isGreaterThan(refDataProcessingInfoBefore.getLastAccessedTimeEpochMs());
     }
+
+    @Test
+    public void testUpdateLastAccessTime() {
+
+        byte version = 0;
+        final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
+                UUID.randomUUID().toString(),
+                version,
+                123456L,
+                1);
+
+        final RefDataProcessingInfo refDataProcessingInfoBefore = new RefDataProcessingInfo(
+                234L,
+                123L,
+                345L,
+                RefDataProcessingInfo.ProcessingState.IN_PROGRESS);
+
+        boolean didSucceed = false;
+
+        // initial put into empty db so will succeed
+        didSucceed = processingInfoDb.put(refStreamDefinition, refDataProcessingInfoBefore, false);
+        assertThat(didSucceed).isTrue();
+
+        processingInfoDb.updateLastAccessedTime(refStreamDefinition);
+
+        final RefDataProcessingInfo refDataProcessingInfoAfter = processingInfoDb.get(refStreamDefinition).get();
+
+        assertThat(refDataProcessingInfoAfter.getProcessingState())
+                .isEqualTo(refDataProcessingInfoBefore.getProcessingState());
+        assertThat(refDataProcessingInfoAfter.getLastAccessedTimeEpochMs())
+                .isGreaterThan(refDataProcessingInfoBefore.getLastAccessedTimeEpochMs());
+    }
 }

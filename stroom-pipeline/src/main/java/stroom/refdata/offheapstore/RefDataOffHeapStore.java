@@ -18,6 +18,7 @@
 package stroom.refdata.offheapstore;
 
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.Striped;
 import com.google.inject.assistedinject.Assisted;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
@@ -39,10 +40,13 @@ import stroom.util.logging.LambdaLoggerFactory;
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.Semaphore;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -51,6 +55,8 @@ public class RefDataOffHeapStore implements RefDataStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RefDataOffHeapStore.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(RefDataOffHeapStore.class);
+
+    public static final long PROCESSING_INFO_UPDATE_DELAY_MS = Duration.of(1, ChronoUnit.HOURS).toMillis();
 
     private final Path dbDir;
     private final long maxSize;
@@ -65,6 +71,9 @@ public class RefDataOffHeapStore implements RefDataStore {
     private final MapUidReverseDb mapUidReverseDb;
     private final ProcessingInfoDb processingInfoDb;
     private final MapDefinitionUIDStore mapDefinitionUIDStore;
+
+    // For synchronising access to the data belonging to a MapDefinition
+    private final Striped<Semaphore> stripedSemaphore;
 
     /**
      * @param dbDir   The directory the LMDB environment will be created in, it must already exist
@@ -91,7 +100,7 @@ public class RefDataOffHeapStore implements RefDataStore {
         // comes with greater risk of corruption.
         lmdbEnvironment = Env.<ByteBuffer>create()
                 .setMapSize(maxSize)
-                .setMaxDbs(1)
+                .setMaxDbs(7)
                 .open(dbDir.toFile());
 
         // create all the databases
@@ -102,6 +111,8 @@ public class RefDataOffHeapStore implements RefDataStore {
         this.mapUidReverseDb = mapUidReverseDbFactory.create(lmdbEnvironment);
         this.processingInfoDb = processingInfoDbFactory.create(lmdbEnvironment);
         this.mapDefinitionUIDStore = new MapDefinitionUIDStore(lmdbEnvironment, mapUidForwardDb, mapUidReverseDb);
+
+        this.stripedSemaphore = Striped.lazyWeakSemaphore(100, 1);
     }
 
     /**
@@ -110,7 +121,19 @@ public class RefDataOffHeapStore implements RefDataStore {
      */
     @Override
     public Optional<RefDataProcessingInfo> getProcessingInfo(final RefStreamDefinition refStreamDefinition) {
-        return Optional.empty();
+        // get the current processing info
+        final Optional<RefDataProcessingInfo> optProcessingInfo = processingInfoDb.get(refStreamDefinition);
+
+        // update the last access time, but only do it if it has been a while since we last did it to avoid
+        // opening writeTxn all the time. The last accessed time is not critical as far as accuracy goes. As long
+        // as it is reasonably accurate we can use it for purging old data.
+        optProcessingInfo.ifPresent(processingInfo -> {
+            long timeSinceLastAccessedTimeMs = System.currentTimeMillis() - processingInfo.getLastAccessedTimeEpochMs();
+            if (timeSinceLastAccessedTimeMs > PROCESSING_INFO_UPDATE_DELAY_MS) {
+                processingInfoDb.updateLastAccessedTime(refStreamDefinition);
+            }
+        });
+        return optProcessingInfo;
     }
 
     @Override
@@ -123,34 +146,6 @@ public class RefDataOffHeapStore implements RefDataStore {
                 .filter(Predicate.isEqual(RefDataProcessingInfo.ProcessingState.COMPLETE))
                 .isPresent();
     }
-
-//    @Override
-//    public void put(final MapDefinition mapDefinition,
-//                    final String key,
-//                    final Supplier<RefDataValue> refDataValueSupplier,
-//                    final boolean overwriteExistingValue) {
-//
-//        boolean keyExists = false;
-//
-//        if (!overwriteExistingValue && keyExists) {
-//            throw new RuntimeException("key exists");
-//        }
-//
-//    }
-//
-//    @Override
-//    public void put(final MapDefinition mapDefinition,
-//                    final Range<Long> keyRange,
-//                    final Supplier<RefDataValue> refDataValueSupplier,
-//                    final boolean overwriteExistingValue) {
-//
-//        boolean keyExists = false;
-//
-//        if (!overwriteExistingValue && keyExists) {
-//            throw new RuntimeException("key exists");
-//        }
-//
-//    }
 
     @Override
     public Optional<RefDataValue> getValue(final MapDefinition mapDefinition,
@@ -269,6 +264,22 @@ public class RefDataOffHeapStore implements RefDataStore {
     private static Dbi<ByteBuffer> openDbi(final Env<ByteBuffer> env, final String name) {
         LOGGER.debug("Opening LMDB database with name: {}", name);
         return env.openDbi(name, DbiFlags.MDB_CREATE);
+    }
+
+    private void doSynchronisedWork(final RefStreamDefinition refStreamDefinition, final Runnable work) {
+        final Semaphore semaphore = stripedSemaphore.get(refStreamDefinition);
+        try {
+            semaphore.acquire();
+            try {
+                // now we have sole access to this RefStreamDefinition so perform the work on it
+                work.run();
+            } finally {
+                semaphore.release();
+            }
+        } catch(final InterruptedException e) {
+            LOGGER.warn("Thread interrupted waiting to acquire semaphore for {}", refStreamDefinition);
+            Thread.currentThread().interrupt();
+        }
     }
 
 //    private boolean setProcessingInfo(final Txn<ByteBuffer> writeTxn,

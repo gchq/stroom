@@ -1,9 +1,7 @@
 package stroom.refdata.offheapstore.serdes;
 
 import com.google.common.collect.ImmutableMap;
-import stroom.refdata.lmdb.serde.Serde;
 import stroom.refdata.offheapstore.FastInfosetValue;
-import stroom.refdata.offheapstore.RefDataValue;
 import stroom.refdata.offheapstore.StringValue;
 
 import java.util.Map;
@@ -16,7 +14,7 @@ public class RefDataValueSerdeFactory {
     private RefDataValueSerdeFactory() {
     }
 
-    private static final Map<Integer, Serde<RefDataValue>> TYPE_TO_SERDE_MAP = ImmutableMap.of(
+    private static final Map<Integer, RefDatValueSubSerde> TYPE_TO_SERDE_MAP = ImmutableMap.of(
             FastInfosetValue.TYPE_ID, new FastInfoSetValueSerde(),
             StringValue.TYPE_ID, new StringValueSerde());
 

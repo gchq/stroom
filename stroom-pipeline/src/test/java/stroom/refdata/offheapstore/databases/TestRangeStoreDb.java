@@ -17,6 +17,10 @@
 
 package stroom.refdata.offheapstore.databases;
 
+import com.google.common.util.concurrent.Striped;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
+import org.apache.hadoop.util.ThreadUtil;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -34,7 +38,16 @@ import stroom.refdata.offheapstore.serdes.ValueStoreKeySerde;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -222,5 +235,68 @@ public class TestRangeStoreDb extends AbstractLmdbDbTest {
         return new ValueStoreKey(val, (short) val);
     }
 
+    @Ignore // a bit of manual testing of a Striped Semaphore
+    @Test
+    public void testStripedSemaphore() throws InterruptedException {
 
+        final List<String> keys = Arrays.asList(
+                "one",
+                "two",
+                "three",
+                "four");
+
+        final Map<String, AtomicInteger> map = keys.stream()
+                .map(k ->
+                    Tuple.of(k, new AtomicInteger())
+                )
+                .collect(Collectors.toMap(Tuple2::_1, Tuple2::_2));
+
+        final Striped<Semaphore> stripedSemaphore = Striped.semaphore(10, 1);
+
+        final ExecutorService executorService = Executors.newFixedThreadPool(6);
+
+        IntStream.rangeClosed(1,1000000)
+                .forEach(i -> {
+                    executorService.submit(() -> {
+                        String key = keys.get(new Random().nextInt(keys.size()));
+                        LOGGER.debug("Using key {} on thread {}", key, Thread.currentThread().getName());
+                        Semaphore semaphore = stripedSemaphore.get(key);
+
+                        try {
+                            try {
+                                semaphore.acquire();
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            AtomicInteger atomicInteger = map.get(key);
+                            boolean success = atomicInteger.compareAndSet(0, 1);
+                            if (!success) {
+                                throw new RuntimeException("compare and set failed");
+                            }
+                            ThreadUtil.sleepAtLeastIgnoreInterrupts(500);
+
+                            success = atomicInteger.compareAndSet(1, 0);
+                            if (!success) {
+                                throw new RuntimeException("compare and set failed");
+                            }
+                        } finally {
+                            semaphore.release();
+
+                        }
+                    });
+                });
+
+        executorService.awaitTermination(20, TimeUnit.SECONDS);
+    }
+
+    private static class Obj {
+        private String key;
+        private AtomicInteger atomicInteger = new AtomicInteger();
+
+        Obj(final String key) {
+            this.key = key;
+        }
+
+
+    }
 }

@@ -31,7 +31,7 @@ import java.nio.file.Path;
 public class AbstractLmdbDbTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractLmdbDbTest.class);
-    private static final long DB_MAX_SIZE = ByteSizeUnit.KIBIBYTE.longBytes(100);
+    private static final long DB_MAX_SIZE = ByteSizeUnit.KIBIBYTE.longBytes(1000);
 
     @Rule
     public final TemporaryFolder tmpDir = new TemporaryFolder();
@@ -47,7 +47,7 @@ public class AbstractLmdbDbTest {
 
         lmdbEnv = Env.<ByteBuffer>create()
                 .setMapSize(DB_MAX_SIZE)
-                .setMaxDbs(5)
+                .setMaxDbs(10)
                 .open(dbDir.toFile());
     }
 }

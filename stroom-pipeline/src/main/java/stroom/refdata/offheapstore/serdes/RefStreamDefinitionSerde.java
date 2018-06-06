@@ -26,14 +26,12 @@ import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.pipeline.shared.PipelineEntity;
-import stroom.query.api.v2.DocRef;
 import stroom.refdata.lmdb.serde.AbstractKryoSerde;
 import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import java.nio.ByteBuffer;
-import java.util.UUID;
 
 public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinition> {
 
@@ -73,16 +71,15 @@ public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinit
             Preconditions.checkArgument(refStreamDefinition.getPipelineDocRef().getType().equals(PipelineEntity.ENTITY_TYPE));
             uuidKryoSerializer.write(kryo, output, refStreamDefinition.getPipelineDocRef().getUuid());
 
-
-
             // We are only ever dealing with pipeline DocRefs so we don't need
             // the type as the uuid will be unique over all pipelines. The Type is only needed
             // if we have more than one type in there
 //            output.writeString(refStreamDefinition.getPipelineDocRef().getType());
             output.writeByte(refStreamDefinition.getPipelineVersion());
-            // write as variable length bytes as we don't require fixed width
-            output.writeVarLong(refStreamDefinition.getStreamId(), true);
-            output.writeVarLong(refStreamDefinition.getStreamNo(), true);
+            // write as fixed length bytes so we can scan down the mapUidForwardDb looking for keys
+            // with the same RefStreamDefinition
+            output.writeLong(refStreamDefinition.getStreamId(), true);
+            output.writeLong(refStreamDefinition.getStreamNo(), true);
         }
 
         @Override
@@ -93,8 +90,8 @@ public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinit
             final String pipelineUuid = uuidKryoSerializer.read(kryo, input, String.class);
 //            final String pipelineType = input.readString();
             final byte pipelineVersion = input.readByte();
-            final long streamId = input.readVarLong(true);
-            final long streamNo = input.readVarLong(true);
+            final long streamId = input.readLong(true);
+            final long streamNo = input.readLong(true);
 
             return new RefStreamDefinition(
                     pipelineUuid,

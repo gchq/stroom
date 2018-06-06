@@ -25,10 +25,11 @@ import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.AbstractLmdbDb;
-import stroom.refdata.lmdb.serde.Serde;
 import stroom.refdata.offheapstore.ByteArrayUtils;
 import stroom.refdata.offheapstore.MapDefinition;
 import stroom.refdata.offheapstore.UID;
+import stroom.refdata.offheapstore.serdes.MapDefinitionSerde;
+import stroom.refdata.offheapstore.serdes.UIDSerde;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -45,8 +46,8 @@ public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
 
     @Inject
     public MapUidReverseDb(@Assisted final Env<ByteBuffer> lmdbEnvironment,
-                           final Serde<UID> keySerde,
-                           final Serde<MapDefinition> valueSerde) {
+                           final UIDSerde keySerde,
+                           final MapDefinitionSerde valueSerde) {
         super(lmdbEnvironment, keySerde, valueSerde, DB_NAME);
     }
 

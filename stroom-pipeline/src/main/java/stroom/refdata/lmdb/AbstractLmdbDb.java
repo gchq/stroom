@@ -17,9 +17,12 @@
 
 package stroom.refdata.lmdb;
 
+import com.google.common.base.Preconditions;
+import org.lmdbjava.Cursor;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
+import org.lmdbjava.GetOp;
 import org.lmdbjava.PutFlags;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
@@ -203,6 +206,50 @@ public abstract class AbstractLmdbDb<K, V> {
         } catch (RuntimeException e) {
             throw new RuntimeException(LambdaLogger.buildMessage("Error putting {} entries", entries.size()), e);
         }
+    }
+
+    /**
+     * Updates the value associated with the passed key using the valueBufferConsumer. A new {@link ByteBuffer}
+     * will be created from the current value and passed to valueBufferConsumer to mutate. This mutated buffer
+     * should be left in a state ready to be read, i.e. flipped.
+     * This method is intended for cases where you want to modify the value based on its current value, or
+     * you only want to modify part of it without (de)serialising the whole.
+     */
+    public void updateValue(final Txn<ByteBuffer> writeTxn,
+                            final K key,
+                            final Consumer<ByteBuffer> valueBufferConsumer) {
+        Preconditions.checkArgument(!writeTxn.isReadOnly());
+
+        final ByteBuffer keyBuf = LmdbUtils.buildDbKeyBuffer(lmdbEnvironment, key, keySerde);
+            try (Cursor<ByteBuffer> cursor = lmdbDbi.openCursor(writeTxn)) {
+
+                boolean isFound = cursor.get(keyBuf, GetOp.MDB_SET_KEY);
+                if (!isFound) {
+                    throw new RuntimeException(LambdaLogger.buildMessage(
+                            "Expecting to find entry for {}", key));
+                }
+                final ByteBuffer valueBuf = cursor.val();
+
+                // We run LMDB in its default mode of read only mmaps so we cannot mutate the key/value
+                // bytebuffers.  Instead we must copy the content and put the replacement entry.
+                // We could run LMDB in MDB_WRITEMAP mode which allows mutation of the buffers (and
+                // thus avoids the buffer copy cost) but adds more risk of DB corruption. As we are not
+                // doing a high volume of value mutations read-only mode is a safer bet.
+                final ByteBuffer newValueBuf = LmdbUtils.copyDirectBuffer(valueBuf);
+
+                // update the buffer
+                valueBufferConsumer.accept(newValueBuf);
+
+                cursor.put(cursor.key(), newValueBuf, PutFlags.MDB_CURRENT);
+            }
+    }
+
+    /**
+     * @see AbstractLmdbDb#updateValue(Txn, Object, Consumer)
+     */
+    public void updateValue(final K key, final Consumer<ByteBuffer> valueBufferConsumer) {
+        LmdbUtils.doWithWriteTxn(lmdbEnvironment, writeTxn ->
+                updateValue(writeTxn, key, valueBufferConsumer));
     }
 
     public void delete(final K key) {

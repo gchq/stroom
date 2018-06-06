@@ -33,10 +33,11 @@ public class RefDataValueSerde implements
         Serializer<RefDataValue>,
         Deserializer<RefDataValue> {
 
-    private final Map<Integer, Serde<RefDataValue>> typeToSerdeMap;
+    private final Map<Integer, RefDatValueSubSerde> typeToSerdeMap;
 
     @Inject
-    public RefDataValueSerde(final Map<Integer, Serde<RefDataValue>> typeToSerdeMap) {
+    public RefDataValueSerde(final Map<Integer, RefDatValueSubSerde> typeToSerdeMap) {
+//    public RefDataValueSerde(final Map<Integer, Serde<RefDataValue>> typeToSerdeMap) {
         this.typeToSerdeMap = typeToSerdeMap;
     }
 

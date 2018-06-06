@@ -18,7 +18,6 @@ package stroom.pipeline;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.CachingEntityManager;
@@ -30,24 +29,7 @@ import stroom.persist.EntityManagerSupport;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.XSLT;
-import stroom.refdata.offheapstore.AbstractByteBufferConsumer;
-import stroom.refdata.offheapstore.FastInfosetByteBufferConsumer;
-import stroom.refdata.offheapstore.FastInfosetValue;
-import stroom.refdata.offheapstore.RefDataOffHeapStore;
-import stroom.refdata.offheapstore.RefDataStore;
-import stroom.refdata.offheapstore.RefDataStoreProvider;
-import stroom.refdata.offheapstore.RefDataValue;
-import stroom.refdata.offheapstore.StringByteBufferConsumer;
-import stroom.refdata.offheapstore.StringValue;
-import stroom.refdata.offheapstore.serdes.FastInfoSetValueSerde;
-import stroom.refdata.offheapstore.serdes.RefDatValueSubSerde;
-import stroom.refdata.offheapstore.serdes.StringValueSerde;
-import stroom.refdata.offheapstore.databases.KeyValueStoreDb;
-import stroom.refdata.offheapstore.databases.MapUidForwardDb;
-import stroom.refdata.offheapstore.databases.MapUidReverseDb;
-import stroom.refdata.offheapstore.databases.ProcessingInfoDb;
-import stroom.refdata.offheapstore.databases.RangeStoreDb;
-import stroom.refdata.offheapstore.databases.ValueStoreDb;
+import stroom.refdata.RefDataModule;
 import stroom.security.SecurityContext;
 import stroom.task.TaskHandler;
 
@@ -57,13 +39,15 @@ import javax.xml.transform.URIResolver;
 public class PipelineModule extends AbstractModule {
     @Override
     protected void configure() {
+        // install sub-modules
+        install(new RefDataModule());
+
         bind(PipelineService.class).to(PipelineServiceImpl.class);
         bind(XSLTService.class).to(XSLTServiceImpl.class);
         bind(TextConverterService.class).to(TextConverterServiceImpl.class);
         bind(TextConverterService.class).to(TextConverterServiceImpl.class);
         bind(URIResolver.class).to(CustomURIResolver.class);
         bind(LocationFactory.class).to(LocationFactoryProxy.class);
-        bind(RefDataStore.class).toProvider(RefDataStoreProvider.class);
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.pipeline.FetchDataHandler.class);
@@ -102,42 +86,6 @@ public class PipelineModule extends AbstractModule {
         findServiceBinder.addBinding().to(stroom.pipeline.PipelineServiceImpl.class);
         findServiceBinder.addBinding().to(stroom.pipeline.TextConverterServiceImpl.class);
         findServiceBinder.addBinding().to(stroom.pipeline.XSLTServiceImpl.class);
-
-        final Multibinder<RefDataValue> refDataValueBinder = Multibinder.newSetBinder(binder(), RefDataValue.class);
-        refDataValueBinder.addBinding().to(stroom.refdata.offheapstore.FastInfosetValue.class);
-        refDataValueBinder.addBinding().to(stroom.refdata.offheapstore.StringValue.class);
-
-        // bind the various RefDataValue impls into a map keyed on their ID
-        final MapBinder<Integer, RefDatValueSubSerde> refDataValueSerdeBinder = MapBinder.newMapBinder(
-                binder(), Integer.class, RefDatValueSubSerde.class);
-        refDataValueSerdeBinder
-                .addBinding(FastInfosetValue.TYPE_ID)
-                .to(FastInfoSetValueSerde.class);
-        refDataValueSerdeBinder
-                .addBinding(StringValue.TYPE_ID)
-                .to(StringValueSerde.class);
-
-        // bind the various RefDataValue ByteBuffer consumer factories into a map keyed on their ID
-        final MapBinder<Integer, AbstractByteBufferConsumer.Factory> refDataValueByteBufferConsumerBinder = MapBinder.newMapBinder(
-                binder(), Integer.class, AbstractByteBufferConsumer.Factory.class);
-        refDataValueByteBufferConsumerBinder
-                .addBinding(FastInfosetValue.TYPE_ID)
-                .to(FastInfosetByteBufferConsumer.Factory.class);
-        refDataValueByteBufferConsumerBinder
-                .addBinding(StringValue.TYPE_ID)
-                .to(StringByteBufferConsumer.Factory.class);
-
-        // bind all the reference data off heap tables
-        install(new FactoryModuleBuilder().build(KeyValueStoreDb.Factory.class));
-        install(new FactoryModuleBuilder().build(RangeStoreDb.Factory.class));
-        install(new FactoryModuleBuilder().build(ValueStoreDb.Factory.class));
-        install(new FactoryModuleBuilder().build(MapUidForwardDb.Factory.class));
-        install(new FactoryModuleBuilder().build(MapUidReverseDb.Factory.class));
-        install(new FactoryModuleBuilder().build(ProcessingInfoDb.Factory.class));
-
-        install(new FactoryModuleBuilder()
-                .implement(RefDataStore.class, RefDataOffHeapStore.class)
-                .build(RefDataOffHeapStore.Factory.class));
 
     }
 

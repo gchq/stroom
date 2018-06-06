@@ -17,15 +17,18 @@
 
 package stroom.refdata.offheapstore.databases;
 
+import com.google.inject.assistedinject.Assisted;
 import org.lmdbjava.Env;
 import org.lmdbjava.Txn;
 import stroom.refdata.lmdb.AbstractLmdbDb;
-import stroom.refdata.lmdb.serde.Serde;
 import stroom.refdata.offheapstore.ByteArrayUtils;
 import stroom.refdata.offheapstore.MapDefinition;
 import stroom.refdata.offheapstore.UID;
+import stroom.refdata.offheapstore.serdes.MapDefinitionSerde;
+import stroom.refdata.offheapstore.serdes.UIDSerde;
 import stroom.util.logging.LambdaLogger;
 
+import javax.inject.Inject;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 
@@ -33,9 +36,10 @@ public class MapUidForwardDb extends AbstractLmdbDb<MapDefinition, UID> {
 
     private static final String DB_NAME = "MapUidForward";
 
-    public MapUidForwardDb(final Env<ByteBuffer> lmdbEnvironment,
-                           final Serde<MapDefinition> keySerde,
-                           final Serde<UID> valueSerde) {
+    @Inject
+    public MapUidForwardDb(@Assisted final Env<ByteBuffer> lmdbEnvironment,
+                           final MapDefinitionSerde keySerde,
+                           final UIDSerde valueSerde) {
 
         super(lmdbEnvironment, keySerde, valueSerde, DB_NAME);
     }
