@@ -141,6 +141,30 @@ const testPipeline = {
   },
 };
 
+const singleElementTestPipeline = {
+  elements: {
+    add: [myCsvSplitterFilter],
+  },
+  properties: {
+    add: [
+      {
+        element: myCsvSplitterFilter.id,
+        name: 'textConverter',
+        value: {
+          entity: {
+            type: 'TextConverter',
+            uuid: '4fe46544-fbf6-4a0d-ab44-16cd0e00a0a5',
+            name: 'CSV splitter',
+          },
+        },
+      },
+    ],
+  },
+  links: {
+    add: [],
+  },
+};
+
 const testPipelineElements = {
   myCsvSplitterFilter,
   myXsltFilter,
@@ -150,4 +174,4 @@ const testPipelineElements = {
   myXmlWriter2,
 };
 
-export { testPipeline, testPipelineElements };
+export { testPipeline, singleElementTestPipeline, testPipelineElements };

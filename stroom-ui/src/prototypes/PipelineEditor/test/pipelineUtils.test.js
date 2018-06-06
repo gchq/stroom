@@ -21,7 +21,7 @@ import { getPipelineAsTree, deleteElementInPipeline } from '../pipelineUtils';
 const pipelineUtils = rewire('../pipelineUtils');
 const getChildren = pipelineUtils.__get__('getChildren');
 
-import { testPipeline } from './pipeline.testData';
+import { testPipeline, singleElementTestPipeline } from './pipeline.testData';
 
 describe('Pipeline Utils', () => {
   describe('#getPipelineAsTree', () => {
@@ -44,6 +44,14 @@ describe('Pipeline Utils', () => {
 
       // Then
       expectsForTestPipeline(asTree);
+    });
+
+    it('should convert a pipeline to a single node tree -- tests edge case of no links', () => {
+      // When
+      const asTree = getPipelineAsTree(singleElementTestPipeline);
+
+      // Then
+      expect(asTree.uuid).toBe('CSV splitter filter');
     });
   });
 

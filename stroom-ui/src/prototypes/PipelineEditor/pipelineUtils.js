@@ -46,7 +46,13 @@ export function getPipelineAsTree(pipeline) {
     const toLinks = pipeline.links.add.filter(l => fromLink.from === l.to);
     return toLinks.length === 0;
   });
-  const rootId = roots[0].from;
+  let rootId;
+  if (roots.length === 0) {
+    // Maybe there's only one thing and therefore no links?
+    rootId = pipeline.elements.add[0].id;
+  } else {
+  rootId = roots[0].from;
+  }
 
   return elements[rootId];
 }
