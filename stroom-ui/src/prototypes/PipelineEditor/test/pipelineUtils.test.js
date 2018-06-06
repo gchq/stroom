@@ -16,7 +16,7 @@
 import expect from 'expect';
 import rewire from 'rewire';
 
-import { getPipelineAsTree } from '../pipelineUtils';
+import { getPipelineAsTree, deleteElementInPipeline } from '../pipelineUtils';
 
 const pipelineUtils = rewire('../pipelineUtils');
 const getChildren = pipelineUtils.__get__('getChildren');
@@ -75,7 +75,77 @@ describe('Pipeline Utils', () => {
       expect(children.includes('stream appender 1')).toBeTruthy();
     });
   });
+
+  describe('#deleteElementInPipeline', () => {
+    it('should delete element and everything after', () => {
+      const itemToDelete = 'XML writer 1';
+      const childToBeDeleted = 'stream appender 1';
+      const parentToBePresent = 'CSV splitter filter';
+
+      // When
+      // TODO change name to `getAllChildren` or something similar.
+      const newPipeline = deleteElementInPipeline(testPipeline, itemToDelete);
+
+      // Then...
+      // ... for properties
+      expect(newPipeline.properties.add.length).toBe(4);
+      expect(newPipeline.properties.add[0].element).toBe(parentToBePresent);
+      expectMissing(newPipeline, 'properties', 'element', childToBeDeleted);
+      expectMissing(newPipeline, 'properties', 'element', itemToDelete);
+
+      // ... for elements
+      expect(newPipeline.elements.add.length).toBe(4);
+      expect(newPipeline.elements.add[0].id).toBe(parentToBePresent);
+      expectMissing(newPipeline, 'elements', 'id', childToBeDeleted);
+      expectMissing(newPipeline, 'elements', 'id', itemToDelete);
+
+      // ... for links
+      expect(newPipeline.links.add.length).toBe(3);
+      expect(newPipeline.links.add[0].from).toBe(parentToBePresent);
+      expectMissing(newPipeline, 'links', 'from', childToBeDeleted);
+      expectMissing(newPipeline, 'links', 'from', itemToDelete);
+    });
+    it('should delete element and everything after #1', () => {
+      const itemToDelete = 'XSLT filter';
+      const childToBeDeleted1 = 'stream appender 1';
+      const childToBeDeleted2 = 'stream appender 2';
+      const childToBeDeleted3 = 'XML writer 1';
+      const childToBeDeleted4 = 'XML writer 2';
+      const parentToBePresent = 'CSV splitter filter';
+
+      // When
+      // TODO change name to `getAllChildren` or something similar.
+      const newPipeline = deleteElementInPipeline(testPipeline, itemToDelete);
+
+      // Then...
+      // ... for properties
+      expect(newPipeline.properties.add.length).toBe(1);
+      expect(newPipeline.properties.add[0].element).toBe(parentToBePresent);
+      expectMissing(newPipeline, 'properties', 'element', childToBeDeleted1);
+      expectMissing(newPipeline, 'properties', 'element', childToBeDeleted2);
+      expectMissing(newPipeline, 'properties', 'element', childToBeDeleted3);
+      expectMissing(newPipeline, 'properties', 'element', childToBeDeleted4);
+      expectMissing(newPipeline, 'properties', 'element', itemToDelete);
+
+      // ... for elements
+      expect(newPipeline.elements.add.length).toBe(1);
+      expect(newPipeline.elements.add[0].id).toBe(parentToBePresent);
+      expectMissing(newPipeline, 'elements', 'id', childToBeDeleted1);
+      expectMissing(newPipeline, 'elements', 'id', childToBeDeleted2);
+      expectMissing(newPipeline, 'elements', 'id', childToBeDeleted3);
+      expectMissing(newPipeline, 'elements', 'id', childToBeDeleted4);
+      expectMissing(newPipeline, 'elements', 'id', itemToDelete);
+
+      // ... for links
+      expect(newPipeline.links.add.length).toBe(0);
+    });
+  });
 });
+
+function expectMissing(pipeline, list, elementProperty, elementName) {
+  const shouldBeEmpty = pipeline[list].add.filter(p => p[elementProperty] === elementName);
+  expect(shouldBeEmpty.length).toBe(0);
+}
 
 function expectsForTestPipeline(asTree) {
   expect(asTree.uuid).toBe('CSV splitter filter');
