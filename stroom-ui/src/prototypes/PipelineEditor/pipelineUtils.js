@@ -41,8 +41,12 @@ export function getPipelineAsTree(pipeline) {
     elements[l.from].children.push(elements[l.to]);
   });
 
-  // Figure out the root
-  const rootId = pipeline.links.add[0].from;
+  // Figure out the root -- if a link doesn't have anything going to it then it's the root.
+  const roots = pipeline.links.add.filter((fromLink) => {
+    const toLinks = pipeline.links.add.filter(l => fromLink.from === l.to);
+    return toLinks.length === 0;
+  });
+  const rootId = roots[0].from;
 
   return elements[rootId];
 }
