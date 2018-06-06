@@ -27,13 +27,15 @@ import { mapObject } from 'lib/treeUtils';
 
 import { withPipeline } from './withPipeline';
 
-import { confirmDeletePipelineElement, cancelDeletePipelineElement } from './redux';
+import { actionCreators } from './redux';
 
 import PipelineElement from './PipelineElement';
 import PipelineElementSettings from './PipelineElementSettings';
 import { AddElementWizard } from './AddElementToPipeline';
 
 import lineElementCreators from './pipelineLineElementCreators';
+
+const { confirmDeletePipelineElement, cancelDeletePipelineElement } = actionCreators;
 
 const HORIZONTAL_SPACING = 150;
 const VERTICAL_SPACING = 50;

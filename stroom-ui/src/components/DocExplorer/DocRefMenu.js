@@ -20,7 +20,8 @@ import { connect } from 'react-redux';
 
 import { Dropdown, Icon } from 'semantic-ui-react';
 
-import { openDocRef, requestDeleteDocRef, closeDocRefContextMenu } from './redux';
+import { actionCreators } from './redux';
+const { openDocRef, requestDeleteDocRef, closeDocRefContextMenu } = actionCreators;
 
 const DocRefMenu = ({
   explorerId,

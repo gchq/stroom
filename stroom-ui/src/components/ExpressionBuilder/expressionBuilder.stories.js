@@ -28,11 +28,13 @@ import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
 import { ExpressionTerm, ExpressionOperator, ExpressionBuilder } from './index';
 
-import { expressionChanged, expressionSetEditable } from './redux';
+import { actionCreators as expressionActionCreators } from './redux';
+import { actionCreators as dataSourceActionCreators } from './DataSource';
+import { actionCreators as docExplorerActionCreators, testTree } from 'components/DocExplorer';
 
-import { receiveDataSource } from './DataSource';
-
-import { receiveDocTree, testTree } from 'components/DocExplorer';
+const { expressionChanged, expressionSetEditableByUser } = expressionActionCreators;
+const { receiveDataSource } = dataSourceActionCreators;
+const { receiveDocTree } = docExplorerActionCreators;
 
 import 'styles/main.css';
 
@@ -55,7 +57,7 @@ storiesOf('Expression Builder', module)
     store.dispatch(receiveDataSource('testDs', testDataSource));
     store.dispatch(expressionChanged('populatedExEdit', testExpression));
     store.dispatch(expressionChanged('populatedExEditInEdit', testExpression));
-    store.dispatch(expressionSetEditable('populatedExEditInEdit', true));
+    store.dispatch(expressionSetEditableByUser('populatedExEditInEdit', true));
     store.dispatch(expressionChanged('populatedExRO', testExpression));
     store.dispatch(expressionChanged('simplestEx', simplestExpression));
   })) // must be recorder after/outside of the test initialisation decorators

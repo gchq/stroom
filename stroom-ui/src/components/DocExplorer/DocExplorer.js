@@ -25,14 +25,16 @@ import Folder from './Folder';
 
 import { withCreatedExplorer } from './withExplorer';
 
-import { searchTermChanged, confirmDeleteDocRef, cancelDeleteDocRef } from './redux';
+import { actionCreators } from './redux';
+
+const { searchTermUpdated, confirmDeleteDocRef, cancelDeleteDocRef } = actionCreators;
 
 const DocExplorer = (props) => {
   const {
     documentTree,
     explorerId,
     explorer,
-    searchTermChanged,
+    searchTermUpdated,
     cancelDeleteDocRef,
     confirmDeleteDocRef,
   } = props;
@@ -51,7 +53,7 @@ const DocExplorer = (props) => {
         icon="search"
         placeholder="Search..."
         value={searchTerm}
-        onChange={e => searchTermChanged(explorerId, e.target.value)}
+        onChange={e => searchTermUpdated(explorerId, e.target.value)}
       />
       <Folder explorerId={explorerId} folder={documentTree} />
     </div>
@@ -63,7 +65,7 @@ DocExplorer.propTypes = {
   explorer: PropTypes.object.isRequired,
   documentTree: PropTypes.object.isRequired,
 
-  searchTermChanged: PropTypes.func.isRequired,
+  searchTermUpdated: PropTypes.func.isRequired,
   confirmDeleteDocRef: PropTypes.func.isRequired,
   cancelDeleteDocRef: PropTypes.func.isRequired,
 };
@@ -74,7 +76,7 @@ export default compose(
       documentTree: state.explorerTree.documentTree,
     }),
     {
-      searchTermChanged,
+      searchTermUpdated,
       cancelDeleteDocRef,
       confirmDeleteDocRef,
     },

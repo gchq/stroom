@@ -1,6 +1,8 @@
-import { createAction, handleActions } from 'redux-actions';
+import { createActions, handleActions } from 'redux-actions';
 
-import { pipelineElementAdded } from '../redux';
+import { actionCreators as pipelineActionCreators } from '../redux';
+
+const { pipelineElementAdded } = pipelineActionCreators;
 
 const ADD_ELEMENT_STATE = {
   NOT_ADDING: 0,
@@ -16,60 +18,44 @@ const defaultAddElementToPipelineState = {
   searchTerm: '',
 };
 
-const initiateAddPipelineElement = createAction(
-  'INITIATE_ADD_PIPELINE_ELEMENT',
-  (pipelineId, elementId) => ({ pipelineId, elementId }),
-);
-
-const restartAddPipelineElement = createAction('ADD_PIPELINE_ELEMENT_BACK_TO_CHOOSE');
-
-const choosePipelineElementToAdd = createAction(
-  'CHOOSE_PIPELINE_ELEMENT_TO_ADD',
-  childDefinition => ({
+const actionCreators = createActions({
+  INITIATE_ADD_PIPELINE_ELEMENT: (pipelineId, elementId) => ({ pipelineId, elementId }),
+  RESTART_ADD_PIPELINE_ELEMENT: () => {},
+  CHOOSE_PIPELINE_ELEMENT_TO_ADD: childDefinition => ({
     childDefinition,
   }),
-);
-
-const addElementSearchTermChanged = createAction('ADD_ELEMENT_SEARCH_TERM_CHANGED', searchTerm => ({
-  searchTerm,
-}));
-
-const cancelAddPipelineElement = createAction('CANCEL_ADD_PIPELINE_ELEMENT');
+  ADD_ELEMENT_SEARCH_TERM_CHANGED: searchTerm => ({
+    searchTerm,
+  }),
+  CANCEL_ADD_PIPELINE_ELEMENT: () => {},
+});
 
 const addElementToPipelineWizardReducer = handleActions(
   {
-    [initiateAddPipelineElement]: (state, action) => ({
+    INITIATE_ADD_PIPELINE_ELEMENT: (state, action) => ({
       addElementState: ADD_ELEMENT_STATE.PICKING_ELEMENT_DEFINITION,
       pipelineId: action.payload.pipelineId,
       parentId: action.payload.elementId,
       childDefinition: undefined,
       searchTerm: '',
     }),
-    [restartAddPipelineElement]: (state, action) => ({
+    RESTART_ADD_PIPELINE_ELEMENT: (state, action) => ({
       ...state,
       addElementState: ADD_ELEMENT_STATE.PICKING_ELEMENT_DEFINITION,
     }),
-    [addElementSearchTermChanged]: (state, action) => ({
+    ADD_ELEMENT_SEARCH_TERM_CHANGED: (state, action) => ({
       ...state,
       searchTerm: action.payload.searchTerm,
     }),
-    [choosePipelineElementToAdd]: (state, action) => ({
+    CHOOSE_PIPELINE_ELEMENT_TO_ADD: (state, action) => ({
       ...state,
       addElementState: ADD_ELEMENT_STATE.PICKING_NAME,
       childDefinition: action.payload.childDefinition,
     }),
-    [cancelAddPipelineElement]: (state, action) => defaultAddElementToPipelineState,
+    CANCEL_ADD_PIPELINE_ELEMENT: (state, action) => defaultAddElementToPipelineState,
     [pipelineElementAdded]: (state, action) => defaultAddElementToPipelineState,
   },
   defaultAddElementToPipelineState,
 );
 
-export {
-  ADD_ELEMENT_STATE,
-  initiateAddPipelineElement,
-  restartAddPipelineElement,
-  addElementSearchTermChanged,
-  choosePipelineElementToAdd,
-  cancelAddPipelineElement,
-  addElementToPipelineWizardReducer,
-};
+export { ADD_ELEMENT_STATE, actionCreators, addElementToPipelineWizardReducer };

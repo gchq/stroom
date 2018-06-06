@@ -21,7 +21,6 @@ import {
   authenticationReducer as authentication,
   authorisationReducer as authorisation,
 } from 'startup/Authentication';
-import { modalReducer as modal } from 'components/WithModal';
 import { lineContainerReducer as lineContainer } from 'components/LineTo';
 import { explorerTreeReducer as explorerTree } from 'components/DocExplorer';
 import { dataSourceReducer as dataSources } from 'components/ExpressionBuilder';
@@ -54,5 +53,4 @@ export default combineReducers({
   addElementToPipelineWizard,
   errorPage,
   lineContainer,
-  modal,
 });

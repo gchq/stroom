@@ -1,8 +1,4 @@
-import { dataSourceReducer, receiveDataSource } from './redux';
+import { dataSourceReducer, actionCreators } from './redux';
 import { withDataSource } from './withDataSource';
 
-export {
-    dataSourceReducer,
-    receiveDataSource,
-    withDataSource
-};
+export { dataSourceReducer, actionCreators, withDataSource };

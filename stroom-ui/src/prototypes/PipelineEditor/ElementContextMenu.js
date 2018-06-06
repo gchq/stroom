@@ -21,9 +21,12 @@ import { connect } from 'react-redux';
 
 import { Dropdown } from 'semantic-ui-react';
 
-import { requestDeletePipelineElement, closePipelineElementContextMenu } from './redux';
+import { actionCreators } from './redux';
+import { actionCreators as addElementActionCreators } from './AddElementToPipeline';
 
-import { initiateAddPipelineElement } from './AddElementToPipeline';
+const { requestDeletePipelineElement, closePipelineElementContextMenu } = actionCreators;
+
+const { initiateAddPipelineElement } = addElementActionCreators;
 
 const ElementContextMenu = ({
   pipelineId,

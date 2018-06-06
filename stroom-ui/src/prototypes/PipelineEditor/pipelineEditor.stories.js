@@ -28,13 +28,14 @@ import { PipelineEditor } from './index';
 import PipelineElement from './PipelineElement';
 import { AddElementWizard } from './AddElementToPipeline';
 
-import { pipelineReceived, elementsReceived, elementPropertiesReceived } from './redux';
+import { actionCreators } from './redux';
 
 import 'styles/main.css';
 
 import { testPipeline, testPipelineElements } from './test/pipeline.testData';
-
 import { testElementTypes, testElementProperties } from './test/elements.testData';
+
+const { pipelineReceived, elementsReceived, elementPropertiesReceived } = actionCreators;
 
 storiesOf('Pipeline Editor', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {

@@ -23,9 +23,11 @@ import { Dropdown, Breadcrumb } from 'semantic-ui-react';
 
 import { iterateNodes, findItem } from 'lib/treeUtils';
 
-import { docRefPicked } from './redux';
+import { actionCreators } from './redux';
 
 import { withPickedDocRef } from './withPickedDocRef';
+
+const { docRefPicked } = actionCreators;
 
 const DocRefDropdownPicker = ({
   pickerId, documentTree, typeFilter, docRef, docRefPicked,

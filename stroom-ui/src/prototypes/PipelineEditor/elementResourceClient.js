@@ -1,6 +1,6 @@
 import { push } from 'react-router-redux';
 
-import { elementsReceived, elementPropertiesReceived } from './redux';
+import { actionCreators } from './redux';
 
 import {
   setErrorMessageAction,
@@ -9,6 +9,8 @@ import {
 } from 'sections/ErrorPage';
 
 import handleStatus from 'lib/handleStatus';
+
+const { elementsReceived, elementPropertiesReceived } = actionCreators;
 
 const fetch = window.fetch;
 

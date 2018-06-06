@@ -20,11 +20,13 @@ import { connect } from 'react-redux';
 
 import { Menu, Input } from 'semantic-ui-react';
 
-import {
+import { actionCreators } from './redux';
+
+const {
   cancelAddPipelineElement,
   choosePipelineElementToAdd,
   addElementSearchTermChanged,
-} from './redux';
+} = actionCreators;
 
 const ChooseElement = ({
   addElementToPipelineWizard,

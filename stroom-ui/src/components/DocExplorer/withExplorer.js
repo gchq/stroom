@@ -18,7 +18,9 @@ import PropTypes from 'prop-types';
 
 import { connect } from 'react-redux';
 
-import { explorerTreeOpened, DEFAULT_EXPLORER_ID } from './redux';
+import { DEFAULT_EXPLORER_ID, actionCreators } from './redux';
+
+const { explorerTreeOpened } = actionCreators;
 
 /**
  * This is a Higher Order Component

@@ -1,4 +1,4 @@
-import { createAction, handleActions } from 'redux-actions';
+import { createActions, handleActions } from 'redux-actions';
 
 import {
   moveElementInPipeline,
@@ -6,85 +6,55 @@ import {
   createNewElementInPipeline,
 } from '../pipelineUtils';
 
-const pipelineReceived = createAction('PIPELINE_RECEIVED', (pipelineId, pipeline) => ({
-  pipelineId,
-  pipeline,
-}));
-
-const pipelineElementSelected = createAction(
-  'PIPELINE_ELEMENT_SELECTED',
-  (pipelineId, elementId) => ({ pipelineId, elementId }),
-);
-
-const pipelineElementMoved = createAction(
-  'PIPELINE_ELEMENT_MOVED',
-  (pipelineId, itemToMove, destination) => ({ pipelineId, itemToMove, destination }),
-);
-
-const pipelineElementAdded = createAction(
-  'PIPELINE_ELEMENT_ADDED',
-  (pipelineId, parentId, childDefinition, name) => ({
+const actionCreators = createActions({
+  PIPELINE_RECEIVED:(pipelineId, pipeline) => ({
+    pipelineId,
+    pipeline,
+  }),
+  PIPELINE_ELEMENT_SELECTED:(pipelineId, elementId) => ({ pipelineId, elementId }),
+  PIPELINE_ELEMENT_MOVED:(pipelineId, itemToMove, destination) => ({ pipelineId, itemToMove, destination }),
+  PIPELINE_ELEMENT_ADDED:(pipelineId, parentId, childDefinition, name) => ({
     pipelineId,
     parentId,
     childDefinition,
     name,
   }),
-);
-
-const requestDeletePipelineElement = createAction(
-  'REQUEST_DELETE_PIPELINE_ELEMENT',
-  (pipelineId, elementId) => ({ pipelineId, elementId }),
-);
-
-const confirmDeletePipelineElement = createAction(
-  'CONFIRM_DELETE_PIPELINE_ELEMENT',
-  (pipelineId, elementId) => ({ pipelineId, elementId }),
-);
-
-const cancelDeletePipelineElement = createAction('CANCEL_DELETE_PIPELINE_ELEMENT', pipelineId => ({
-  pipelineId,
-}));
-
-const openPipelineElementContextMenu = createAction(
-  'OPEN_PIPELINE_ELEMENT_CONTEXT_MENU',
-  (pipelineId, elementId) => ({ pipelineId, elementId }),
-);
-const closePipelineElementContextMenu = createAction(
-  'CLOSE_PIPELINE_ELEMENT_CONTEXT_MENU',
-  (pipelineId, elementId) => ({ pipelineId, elementId }),
-);
+  REQUEST_DELETE_PIPELINE_ELEMENT:(pipelineId, elementId) => ({ pipelineId, elementId }),
+  CONFIRM_DELETE_PIPELINE_ELEMENT:(pipelineId, elementId) => ({ pipelineId, elementId }),
+  CANCEL_DELETE_PIPELINE_ELEMENT:pipelineId => ({
+    pipelineId,
+  }),
+  OPEN_PIPELINE_ELEMENT_CONTEXT_MENU:(pipelineId, elementId) => ({ pipelineId, elementId }),
+  CLOSE_PIPELINE_ELEMENT_CONTEXT_MENU:(pipelineId, elementId) => ({ pipelineId, elementId }),
+})
 
 // pipelines, keyed on ID, there may be several expressions on a page
-const defaultPipelineState = {
-  selectedElementId: undefined,
-  pendingElementIdToDelete: undefined,
-  contextMenuElementId: undefined,
-};
+const defaultPipelineState = {};
 
 const pipelineReducer = handleActions(
   {
-    [pipelineReceived]: (state, action) => ({
+    PIPELINE_RECEIVED: (state, action) => ({
       ...state,
       [action.payload.pipelineId]: {
         ...defaultPipelineState,
         pipeline: action.payload.pipeline,
       },
     }),
-    [pipelineElementSelected]: (state, action) => ({
+    PIPELINE_ELEMENT_SELECTED: (state, action) => ({
       ...state,
       [action.payload.pipelineId]: {
         ...state[action.payload.pipelineId],
         selectedElementId: action.payload.elementId,
       },
     }),
-    [requestDeletePipelineElement]: (state, action) => ({
+    REQUEST_DELETE_PIPELINE_ELEMENT: (state, action) => ({
       ...state,
       [action.payload.pipelineId]: {
         ...state[action.payload.pipelineId],
         pendingElementIdToDelete: action.payload.elementId,
       },
     }),
-    [confirmDeletePipelineElement]: (state, action) => ({
+    CONFIRM_DELETE_PIPELINE_ELEMENT: (state, action) => ({
       ...state,
       [action.payload.pipelineId]: {
         pipeline: deleteElementInPipeline(
@@ -94,14 +64,14 @@ const pipelineReducer = handleActions(
         pendingElementIdToDelete: undefined,
       },
     }),
-    [cancelDeletePipelineElement]: (state, action) => ({
+    CANCEL_DELETE_PIPELINE_ELEMENT: (state, action) => ({
       ...state,
       [action.payload.pipelineId]: {
         ...state[action.payload.pipelineId],
         pendingElementIdToDelete: undefined,
       },
     }),
-    [pipelineElementAdded]: (state, action) => ({
+    PIPELINE_ELEMENT_ADDED: (state, action) => ({
       ...state,
       [action.payload.pipelineId]: {
         ...state[action.payload.pipelineId],
@@ -113,7 +83,7 @@ const pipelineReducer = handleActions(
         ),
       },
     }),
-    [pipelineElementMoved]: (state, action) => ({
+    PIPELINE_ELEMENT_MOVED: (state, action) => ({
       ...state,
       [action.payload.pipelineId]: {
         ...state[action.payload.pipelineId],
@@ -124,14 +94,14 @@ const pipelineReducer = handleActions(
         ),
       },
     }),
-    [openPipelineElementContextMenu]: (state, action) => ({
+    OPEN_PIPELINE_ELEMENT_CONTEXT_MENU: (state, action) => ({
       ...state,
       [action.payload.pipelineId]: {
         ...state[action.payload.pipelineId],
         contextMenuElementId: action.payload.elementId,
       },
     }),
-    [closePipelineElementContextMenu]: (state, action) => ({
+    CLOSE_PIPELINE_ELEMENT_CONTEXT_MENU: (state, action) => ({
       ...state,
       [action.payload.pipelineId]: {
         ...state[action.payload.pipelineId],
@@ -143,14 +113,6 @@ const pipelineReducer = handleActions(
 );
 
 export {
-  pipelineReceived,
-  pipelineElementSelected,
-  requestDeletePipelineElement,
-  confirmDeletePipelineElement,
-  cancelDeletePipelineElement,
-  pipelineElementAdded,
-  pipelineElementMoved,
-  openPipelineElementContextMenu,
-  closePipelineElementContextMenu,
+  actionCreators,
   pipelineReducer,
 };

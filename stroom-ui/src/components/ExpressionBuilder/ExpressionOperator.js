@@ -28,15 +28,17 @@ import { ItemTypes } from './dragDropTypes';
 
 import ExpressionTerm from './ExpressionTerm';
 
-import {
+import { actionCreators } from './redux';
+
+import { LineTo } from 'components/LineTo';
+
+const {
   expressionTermAdded,
   expressionOperatorAdded,
   expressionItemUpdated,
   expressionItemMoved,
   requestExpressionItemDelete,
-} from './redux';
-
-import { LineTo } from 'components/LineTo';
+} = actionCreators;
 
 const LOGICAL_OPERATORS = ['NOT', 'AND', 'OR'];
 

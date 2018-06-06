@@ -1,30 +1,10 @@
-import { elementsReceived, elementPropertiesReceived, elementReducer } from './elementReducer';
+import { actionCreators as elementActionCreators, elementReducer } from './elementReducer';
 
-import {
-  pipelineReceived,
-  pipelineElementSelected,
-  requestDeletePipelineElement,
-  confirmDeletePipelineElement,
-  cancelDeletePipelineElement,
-  pipelineElementMoved,
-  pipelineElementAdded,
-  openPipelineElementContextMenu,
-  closePipelineElementContextMenu,
-  pipelineReducer,
-} from './pipelineReducer';
+import { actionCreators as pipelineActionCreators, pipelineReducer } from './pipelineReducer';
 
-export {
-  elementsReceived,
-  elementPropertiesReceived,
-  elementReducer,
-  pipelineReceived,
-  pipelineElementSelected,
-  requestDeletePipelineElement,
-  confirmDeletePipelineElement,
-  cancelDeletePipelineElement,
-  pipelineElementMoved,
-  pipelineElementAdded,
-  openPipelineElementContextMenu,
-  closePipelineElementContextMenu,
-  pipelineReducer,
+const actionCreators = {
+  ...elementActionCreators,
+  ...pipelineActionCreators,
 };
+
+export { actionCreators, elementReducer, pipelineReducer };

@@ -28,11 +28,13 @@ import { withExpression } from './withExpression';
 
 import { Checkbox, Confirm } from 'semantic-ui-react';
 
-import {
-  expressionSetEditable,
+import { actionCreators } from './redux';
+
+const {
+  expressionSetEditableByUser,
   confirmExpressionItemDeleted,
   cancelExpressionItemDelete,
-} from './redux';
+} = actionCreators;
 
 const downRightElbow = ({ lineId, fromRect, toRect }) => {
   const from = {
@@ -67,7 +69,7 @@ const ExpressionBuilder = ({
   expression,
   editor,
   isEditableSystemSet,
-  expressionSetEditable,
+  expressionSetEditableByUser,
   confirmExpressionItemDeleted,
   cancelExpressionItemDelete,
 }) => {
@@ -95,7 +97,7 @@ const ExpressionBuilder = ({
           label="Edit Mode"
           toggle
           checked={isEditableUserSet}
-          onChange={() => expressionSetEditable(expressionId, !isEditableUserSet)}
+          onChange={() => expressionSetEditableByUser(expressionId, !isEditableUserSet)}
         />
         {isEditableUserSet ? editOperator : roOperator}
       </div>
@@ -143,7 +145,7 @@ export default compose(
     }),
     {
       // actions
-      expressionSetEditable,
+      expressionSetEditableByUser,
       confirmExpressionItemDeleted,
       cancelExpressionItemDelete,
     },
