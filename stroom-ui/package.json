@@ -69,6 +69,7 @@
     "prettier-eslint": "^8.8.1",
     "react-test-renderer": "^16.3.2",
     "redux-mock-store": "^1.5.1",
+    "rewire": "^4.0.1",
     "standard": "^11.0.1",
     "storybook-react-router": "^1.0.1"
   }
