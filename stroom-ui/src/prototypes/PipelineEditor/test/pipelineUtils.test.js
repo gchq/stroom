@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 import expect from 'expect';
+import rewire from 'rewire';
 
 import { getPipelineAsTree } from '../pipelineUtils';
+
+const pipelineUtils = rewire('../pipelineUtils');
+const getChildren = pipelineUtils.__get__('getChildren');
 
 import { testPipeline } from './pipeline.testData';
 
@@ -41,6 +45,16 @@ describe('Pipeline Utils', () => {
 
       // Then
       expectsForTestPipeline(asTree);
+    });
+  });
+  describe('#getChildren', () => {
+    it('should return all children (recursively) of an element', () => {
+      // When
+      // TODO change name to `getAllChildren` or something similar.
+      const children = getChildren(testPipeline, 'CSV splitter');
+
+      // Then
+      // TODO do some tests
     });
   });
 });
