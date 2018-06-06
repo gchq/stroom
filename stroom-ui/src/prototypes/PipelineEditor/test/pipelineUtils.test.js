@@ -32,7 +32,6 @@ describe('Pipeline Utils', () => {
       // Then
       expectsForTestPipeline(asTree);
     });
-
     it('should convert a pipeline to a tree and detect the correct root', () => {
       // Given
       // Swap some entities over -- it shouldn't matter if they're not in the correct order
@@ -47,14 +46,33 @@ describe('Pipeline Utils', () => {
       expectsForTestPipeline(asTree);
     });
   });
+
   describe('#getChildren', () => {
-    it('should return all children (recursively) of an element', () => {
+    it('should recursively return children #1', () => {
       // When
       // TODO change name to `getAllChildren` or something similar.
-      const children = getChildren(testPipeline, 'CSV splitter');
+      const children = getChildren(testPipeline, 'XSLT filter');
 
       // Then
-      // TODO do some tests
+      expect(children.length).toBe(4);
+      expectsForGetChildren(children);
+    });
+    it('should recursively return children #2', () => {
+      // When
+      const children = getChildren(testPipeline, 'CSV splitter filter');
+
+      // Then
+      expect(children.length).toBe(5);
+      expectsForGetChildren(children);
+      expect(children.includes('XSLT filter')).toBeTruthy();
+    });
+    it('should recursively return children #3', () => {
+      // When
+      const children = getChildren(testPipeline, 'XML writer 1');
+
+      // Then
+      expect(children.length).toBe(1);
+      expect(children.includes('stream appender 1')).toBeTruthy();
     });
   });
 });
@@ -66,4 +84,11 @@ function expectsForTestPipeline(asTree) {
   expect(asTree.children[0].children[0].children[0].uuid).toBe('stream appender 1');
   expect(asTree.children[0].children[1].uuid).toBe('XML writer 2');
   expect(asTree.children[0].children[1].children[0].uuid).toBe('stream appender 2');
+}
+
+function expectsForGetChildren(children) {
+  expect(children.includes('XML writer 1')).toBeTruthy();
+  expect(children.includes('XML writer 2')).toBeTruthy();
+  expect(children.includes('stream appender 1')).toBeTruthy();
+  expect(children.includes('stream appender 2')).toBeTruthy();
 }
