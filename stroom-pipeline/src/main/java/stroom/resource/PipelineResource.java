@@ -4,6 +4,7 @@ import com.codahale.metrics.health.HealthCheck;
 import io.swagger.annotations.Api;
 import org.eclipse.jetty.http.HttpStatus;
 import stroom.docref.DocRef;
+import stroom.docstore.db.DocumentNotFoundException;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
@@ -44,7 +45,7 @@ public class PipelineResource implements HasHealthCheck  {
                     .orElseThrow(() -> new NotFoundException("Pipeline Data was Missing"));
 
             return Response.ok(pipelineData).build();
-        } catch (NotFoundException e) {
+        } catch (NotFoundException | DocumentNotFoundException e) {
             return Response.status(HttpStatus.NOT_FOUND_404).build();
         }
     }
