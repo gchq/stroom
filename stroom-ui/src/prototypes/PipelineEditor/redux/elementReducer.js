@@ -1,5 +1,7 @@
 import { createActions, handleActions } from 'redux-actions';
 
+import { groupByCategory } from '../elementUtils';
+
 const defaultElementState = {};
 
 const actionCreators = createActions({
@@ -12,6 +14,7 @@ const elementReducer = handleActions(
     ELEMENTS_RECEIVED: (state, action) => ({
       ...state,
       elements: action.payload.elements,
+      byCategory: groupByCategory(action.payload.elements),
     }),
 
     ELEMENT_PROPERTIES_RECEIVED: (state, action) => ({
