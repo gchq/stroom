@@ -20,8 +20,6 @@ package stroom.refdata.offheapstore;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Striped;
 import com.google.inject.assistedinject.Assisted;
-import org.lmdbjava.Dbi;
-import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
@@ -93,11 +91,19 @@ public class RefDataOffHeapStore implements RefDataStore {
         this.dbDir = dbDir;
         this.maxSize = maxSize;
 
-        LOGGER.debug("Creating LMDB environment with maxSize: {}, dbDir {}", maxSize, dbDir.toAbsolutePath().toString());
+        LOGGER.debug("Creating LMDB environment with maxSize: {}, dbDir {}",
+                maxSize, dbDir.toAbsolutePath().toString());
+
         // By default LMDB opens with readonly mmaps so you cannot mutate the bytebuffers inside a txn.
         // Instead you need to create a new bytebuffer for the value and put that. If you want faster writes
         // then you can use EnvFlags.MDB_WRITEMAP in the open() call to allow mutation inside a txn but that
         // comes with greater risk of corruption.
+
+        // NOTE on setMapSize() from LMDB author found on https://groups.google.com/forum/#!topic/caffe-users/0RKsTTYRGpQ
+        // On Windows the OS sets the filesize equal to the mapsize. (MacOS requires that too, and allocates
+        // all of the physical space up front, it doesn't support sparse files.) The mapsize should not be
+        // hardcoded into software, it needs to be reconfigurable. On Windows and MacOS you really shouldn't
+        // set it larger than the amount of free space on the filesystem.
         lmdbEnvironment = Env.<ByteBuffer>create()
                 .setMapSize(maxSize)
                 .setMaxDbs(7)
@@ -110,6 +116,7 @@ public class RefDataOffHeapStore implements RefDataStore {
         this.mapUidForwardDb = mapUidForwardDbFactory.create(lmdbEnvironment);
         this.mapUidReverseDb = mapUidReverseDbFactory.create(lmdbEnvironment);
         this.processingInfoDb = processingInfoDbFactory.create(lmdbEnvironment);
+
         this.mapDefinitionUIDStore = new MapDefinitionUIDStore(lmdbEnvironment, mapUidForwardDb, mapUidReverseDb);
 
         this.stripedSemaphore = Striped.lazyWeakSemaphore(100, 1);
@@ -253,17 +260,11 @@ public class RefDataOffHeapStore implements RefDataStore {
                 keyValueStoreDb,
                 rangeStoreDb,
                 valueStoreDb,
-                mapUidForwardDb,
-                mapUidReverseDb,
-                mapDefinitionUIDStore, processingInfoDb,
+                mapDefinitionUIDStore,
+                processingInfoDb,
                 lmdbEnvironment,
                 refStreamDefinition,
                 effectiveTimeMs);
-    }
-
-    private static Dbi<ByteBuffer> openDbi(final Env<ByteBuffer> env, final String name) {
-        LOGGER.debug("Opening LMDB database with name: {}", name);
-        return env.openDbi(name, DbiFlags.MDB_CREATE);
     }
 
     private void doSynchronisedWork(final RefStreamDefinition refStreamDefinition, final Runnable work) {
@@ -282,22 +283,6 @@ public class RefDataOffHeapStore implements RefDataStore {
         }
     }
 
-//    private boolean setProcessingInfo(final Txn<ByteBuffer> writeTxn,
-//                                      final RefStreamDefinition refStreamDefinition,
-//                                      final RefDataProcessingInfo refDataProcessingInfo,
-//                                      final boolean overwriteExisting) {
-//
-//        return processingInfoDb.put(writeTxn, refStreamDefinition, refDataProcessingInfo, overwriteExisting);
-//    }
-//
-//    private void updateProcessingState(final Txn<ByteBuffer> writeTxn,
-//                                       final RefStreamDefinition refStreamDefinition,
-//                                       final RefDataProcessingInfo.ProcessingState newProcessingState) {
-//
-//        processingInfoDb.updateProcessingState(writeTxn, refStreamDefinition, newProcessingState);
-//    }
-
-
     /**
      * For use in testing at SMALL scale. Dumps the content of each DB to the logger.
      */
@@ -311,6 +296,7 @@ public class RefDataOffHeapStore implements RefDataStore {
     }
 
 
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     /**
      * Class for adding multiple items to the {@link RefDataOffHeapStore} within a single
@@ -326,8 +312,6 @@ public class RefDataOffHeapStore implements RefDataStore {
         private final KeyValueStoreDb keyValueStoreDb;
         private final RangeStoreDb rangeStoreDb;
         private final ValueStoreDb valueStoreDb;
-        private final MapUidForwardDb mapUidForwardDb;
-        private final MapUidReverseDb mapUidReverseDb;
         private final MapDefinitionUIDStore mapDefinitionUIDStore;
         private final ProcessingInfoDb processingInfoDb;
         private final Env<ByteBuffer> lmdbEnvironment;
@@ -344,8 +328,6 @@ public class RefDataOffHeapStore implements RefDataStore {
                                   final KeyValueStoreDb keyValueStoreDb,
                                   final RangeStoreDb rangeStoreDb,
                                   final ValueStoreDb valueStoreDb,
-                                  final MapUidForwardDb mapUidForwardDb,
-                                  final MapUidReverseDb mapUidReverseDb,
                                   final MapDefinitionUIDStore mapDefinitionUIDStore,
                                   final ProcessingInfoDb processingInfoDb,
                                   final Env<ByteBuffer> lmdbEnvironment,
@@ -356,8 +338,6 @@ public class RefDataOffHeapStore implements RefDataStore {
             this.keyValueStoreDb = keyValueStoreDb;
             this.rangeStoreDb = rangeStoreDb;
             this.valueStoreDb = valueStoreDb;
-            this.mapUidForwardDb = mapUidForwardDb;
-            this.mapUidReverseDb = mapUidReverseDb;
             this.mapDefinitionUIDStore = mapDefinitionUIDStore;
             this.processingInfoDb = processingInfoDb;
             this.lmdbEnvironment = lmdbEnvironment;
@@ -371,6 +351,7 @@ public class RefDataOffHeapStore implements RefDataStore {
         }
 
         public void initialise(final boolean overwriteExisting) {
+            LOGGER.debug("initialise called, overwriteExisting: {}", overwriteExisting);
             throwExceptionIfAlreadyInitialised();
 
             // TODO create processed streams entry if it doesn't exist with a state of IN_PROGRESS
@@ -399,10 +380,10 @@ public class RefDataOffHeapStore implements RefDataStore {
         }
 
         public void completeProcessing() {
+            LOGGER.trace("Completing processing (put count {})", putsCounter);
             throwExceptionIfNotInitialised();
             beginTxnIfRequired();
 
-            LOGGER.trace("Completing processing (put count {})", putsCounter);
             // Set the processing info record to COMPLETE and update the last update time
             processingInfoDb.updateProcessingState(
                     writeTxn, refStreamDefinition, RefDataProcessingInfo.ProcessingState.COMPLETE);
@@ -412,26 +393,6 @@ public class RefDataOffHeapStore implements RefDataStore {
         public void setCommitInterval(final int maxPutsBeforeCommit) {
             Preconditions.checkArgument(maxPutsBeforeCommit >= 1);
             this.maxPutsBeforeCommit = maxPutsBeforeCommit;
-        }
-
-        private void beginTxn() {
-            if (writeTxn != null) {
-                throw new RuntimeException("Transaction is already open");
-            }
-            LOGGER.trace("Beginning write transaction");
-            this.writeTxn = lmdbEnvironment.txnWrite();
-        }
-
-        private void commit() {
-            if (writeTxn != null) {
-                try {
-                    LOGGER.trace("Committing (put count {})", putsCounter);
-                    writeTxn.commit();
-                    writeTxn = null;
-                } catch (Exception e) {
-                    throw new RuntimeException("Error committing write transaction", e);
-                }
-            }
         }
 
         @Override
@@ -460,12 +421,12 @@ public class RefDataOffHeapStore implements RefDataStore {
 
             commitIfRequired();
 
+            // TODO change to return didPutSucceed and not throw exception
             if (!overwriteExistingValue && !didPutSucceed) {
                 throw new RuntimeException(LambdaLogger.buildMessage(
                         "Entry already exists for key {} and overwriteExisting is false", keyValueStoreKey));
             }
         }
-
 
         @Override
         public void put(final MapDefinition mapDefinition,
@@ -496,9 +457,40 @@ public class RefDataOffHeapStore implements RefDataStore {
 
             commitIfRequired();
 
+            // TODO change to return didPutSucceed and not throw exception
             if (!overwriteExistingValue && !didPutSucceed) {
                 throw new RuntimeException(LambdaLogger.buildMessage(
                         "Entry already exists for key {} and overwriteExisting is false", rangeStoreKey));
+            }
+        }
+
+        @Override
+        public void close() {
+            LOGGER.trace("Close called");
+            if (writeTxn != null) {
+                LOGGER.trace("Committing transaction (put count {})", putsCounter);
+                writeTxn.commit();
+                writeTxn.close();
+            }
+        }
+
+        private void beginTxn() {
+            if (writeTxn != null) {
+                throw new RuntimeException("Transaction is already open");
+            }
+            LOGGER.trace("Beginning write transaction");
+            this.writeTxn = lmdbEnvironment.txnWrite();
+        }
+
+        private void commit() {
+            if (writeTxn != null) {
+                try {
+                    LOGGER.trace("Committing (put count {})", putsCounter);
+                    writeTxn.commit();
+                    writeTxn = null;
+                } catch (Exception e) {
+                    throw new RuntimeException("Error committing write transaction", e);
+                }
             }
         }
 
@@ -544,20 +536,9 @@ public class RefDataOffHeapStore implements RefDataStore {
                 throw new RuntimeException("Loader is already initialised");
             }
         }
-
-        @Override
-        public void close() {
-            LOGGER.trace("Close called");
-            if (writeTxn != null) {
-                LOGGER.trace("Committing transaction (put count {})", putsCounter);
-                writeTxn.commit();
-                writeTxn.close();
-            }
-        }
     }
 
     public interface Factory {
         RefDataStore create(final Path dbDir, final long maxSize);
     }
-
 }

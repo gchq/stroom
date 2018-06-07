@@ -72,7 +72,7 @@ public class MapDefinitionUIDStore {
 
         // see if we already have a UID for this mapDefinition, if not create the pair
         // of entries
-        return mapUidForwardDb.getUID(writeTxn, mapDefinitionBuffer)
+        return mapUidForwardDb.getAsBytes(writeTxn, mapDefinitionBuffer)
                 .map(uidBuffer -> {
                     LAMBDA_LOGGER.debug(() ->
                             LambdaLogger.buildMessage("Found existing UID {}", ByteArrayUtils.byteBufferInfo(uidBuffer)));

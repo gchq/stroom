@@ -88,11 +88,14 @@ public abstract class AbstractLmdbDb<K, V> {
         return valueSerde;
     }
 
+    /**
+     * Gets the de-serialised value (if found) for the passed key
+     */
     public Optional<V> get(Txn<ByteBuffer> txn, final K key) {
         try {
             ByteBuffer keyBuffer = keySerde.serialize(key);
             ByteBuffer valueBuffer = lmdbDbi.get(txn, keyBuffer);
-            LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("Get returned value [{}] for key [{}]",
+            LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Get returned value [{}] for key [{}]",
                     ByteArrayUtils.byteBufferInfo(valueBuffer),
                     ByteArrayUtils.byteBufferInfo(keyBuffer)));
 
@@ -103,6 +106,9 @@ public abstract class AbstractLmdbDb<K, V> {
         }
     }
 
+    /**
+     * Gets the de-serialised value (if found) for the passed key using  a read txn
+     */
     public Optional<V> get(final K key) {
         return LmdbUtils.getWithReadTxn(lmdbEnvironment, txn ->
                 get(txn, key));
@@ -110,12 +116,13 @@ public abstract class AbstractLmdbDb<K, V> {
 
     /**
      * Get the bytes of the value for the given key buffer. The returned {@link ByteBuffer} should ONLY
-     * by used while still inside the passed {@link Txn}
+     * by used while still inside the passed {@link Txn}, so if you need its contents outside of the
+     * txn you MUST copy it.
      */
     public Optional<ByteBuffer> getAsBytes(Txn<ByteBuffer> txn, final ByteBuffer keyBuffer) {
         try {
             ByteBuffer valueBuffer = lmdbDbi.get(txn, keyBuffer);
-            LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("Get returned value [{}] for key [{}]",
+            LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Get returned value [{}] for key [{}]",
                     ByteArrayUtils.byteBufferInfo(valueBuffer),
                     ByteArrayUtils.byteBufferInfo(keyBuffer)));
 
@@ -179,7 +186,7 @@ public abstract class AbstractLmdbDb<K, V> {
             } else {
                 didPutSucceed = lmdbDbi.put(writeTxn, keyBuffer, valueBuffer, PutFlags.MDB_NOOVERWRITE);
             }
-            LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("Put returned {} for key [{}], value [{}]",
+            LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Put returned {} for key [{}], value [{}]",
                     didPutSucceed,
                     ByteArrayUtils.byteBufferInfo(keyBuffer),
                     ByteArrayUtils.byteBufferInfo(valueBuffer)));
@@ -280,7 +287,11 @@ public abstract class AbstractLmdbDb<K, V> {
 
     private static Dbi<ByteBuffer> openDbi(final Env<ByteBuffer> env, final String name) {
         LOGGER.debug("Opening LMDB database with name: {}", name);
-        return env.openDbi(name, DbiFlags.MDB_CREATE);
+        try {
+            return env.openDbi(name, DbiFlags.MDB_CREATE);
+        } catch (Exception e) {
+            throw new RuntimeException(LambdaLogger.buildMessage("Error opening LMDB daatabase {}", name), e);
+        }
     }
 
     public Map<String, String> getDbInfo() {
@@ -295,6 +306,10 @@ public abstract class AbstractLmdbDb<K, V> {
         return LmdbUtils.getWithReadTxn(lmdbEnvironment, this::getEntryCount);
     }
 
+    /**
+     * Dumps the contents of this database to the logger using the key/value
+     * serdes to de-serialise the data. Only for use at SMALL scale in tests.
+     */
     public void logDatabaseContents(final Txn<ByteBuffer> txn) {
         LmdbUtils.logDatabaseContents(
                 lmdbEnvironment,
