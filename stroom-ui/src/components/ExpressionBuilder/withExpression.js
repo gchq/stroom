@@ -19,7 +19,6 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 
 import { actionCreators } from './redux';
-const { expressionEditorCreated, expressionEditorDestroyed } = actionCreators;
 
 /**
  * This is a Higher Order Component
@@ -36,30 +35,16 @@ export function withExpression() {
       static propTypes = {
         expressionId: PropTypes.string.isRequired,
         expressions: PropTypes.object.isRequired,
-        expressionEditors: PropTypes.object.isRequired,
-
-        expressionEditorCreated: PropTypes.func.isRequired,
-        expressionEditorDestroyed: PropTypes.func.isRequired,
       };
 
       state = {
         expression: undefined,
-        editor: undefined,
       };
 
       static getDerivedStateFromProps(nextProps, prevState) {
         return {
           expression: nextProps.expressions[nextProps.expressionId],
-          editor: nextProps.expressionEditors[nextProps.expressionId] || {},
         };
-      }
-
-      componentDidMount() {
-        this.props.expressionEditorCreated(this.props.expressionId);
-      }
-
-      componentWillUnmount() {
-        this.props.expressionEditorDestroyed(this.props.expressionId);
       }
 
       render() {
@@ -73,12 +58,9 @@ export function withExpression() {
     return connect(
       state => ({
         expressions: state.expressions,
-        expressionEditors: state.expressionEditors,
       }),
       {
         // actions
-        expressionEditorCreated,
-        expressionEditorDestroyed,
       },
     )(WithExpression);
   };

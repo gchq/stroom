@@ -16,68 +16,80 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import { withState, compose } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Dropdown, Icon } from 'semantic-ui-react';
+import { Dropdown, Icon, Confirm } from 'semantic-ui-react';
 
 import { actionCreators } from './redux';
-const { openDocRef, requestDeleteDocRef, closeDocRefContextMenu } = actionCreators;
+
+const { docRefOpened, docRefDeleted } = actionCreators;
+
+const withPendingDeletion = withState('pendingDeletion', 'setPendingDeletion', false);
 
 const DocRefMenu = ({
   explorerId,
   docRef,
   isOpen,
-  openDocRef,
-  requestDeleteDocRef,
-  closeDocRefContextMenu,
-}) => {
-  const onClose = () => {
-    closeDocRefContextMenu(explorerId);
-  };
-
-  const onOpenDocRef = () => {
-    openDocRef(explorerId, docRef);
-    onClose();
-  };
-
-  const onRequestDeleteDocRef = () => {
-    requestDeleteDocRef(explorerId, docRef);
-    onClose();
-  };
-
-  return (
-    <Dropdown inline icon={null} open={isOpen} onClose={onClose}>
+  docRefOpened,
+  docRefDeleted,
+  closeContextMenu,
+  pendingDeletion,
+  setPendingDeletion,
+}) => (
+  <span>
+    <Confirm
+      open={!!pendingDeletion}
+      content="This will delete the doc ref, are you sure?"
+      onCancel={() => setPendingDeletion(false)}
+      onConfirm={() => {
+        docRefDeleted(explorerId, docRef);
+        setPendingDeletion(false);
+      }}
+    />
+    <Dropdown inline icon={null} open={isOpen} onClose={() => closeContextMenu()}>
       <Dropdown.Menu>
-        <Dropdown.Item onClick={onOpenDocRef}>
+        <Dropdown.Item
+          onClick={() => {
+            docRefOpened(explorerId, docRef);
+            closeContextMenu();
+          }}
+        >
           <Icon name="file" />
           Open
         </Dropdown.Item>
-        <Dropdown.Item onClick={onRequestDeleteDocRef}>
+        <Dropdown.Item onClick={() => setPendingDeletion(true)}>
           <Icon name="trash" />
           Delete
         </Dropdown.Item>
       </Dropdown.Menu>
     </Dropdown>
-  );
-};
+  </span>
+);
 
 DocRefMenu.propTypes = {
   explorerId: PropTypes.string.isRequired,
   docRef: PropTypes.object.isRequired,
   isOpen: PropTypes.bool.isRequired,
 
-  openDocRef: PropTypes.func.isRequired,
-  requestDeleteDocRef: PropTypes.func.isRequired,
-  closeDocRefContextMenu: PropTypes.func.isRequired,
+  docRefOpened: PropTypes.func.isRequired,
+  docRefDeleted: PropTypes.func.isRequired,
+  closeContextMenu: PropTypes.func.isRequired,
+
+  // withPendingDeletion
+  pendingDeletion: PropTypes.bool.isRequired,
+  setPendingDeletion: PropTypes.func.isRequired,
 };
 
-export default connect(
-  state => ({
-    // state
-  }),
-  {
-    openDocRef,
-    requestDeleteDocRef,
-    closeDocRefContextMenu,
-  },
+export default compose(
+  connect(
+    state => ({
+      // state
+    }),
+    {
+      docRefOpened,
+      docRefDeleted,
+    },
+  ),
+  withPendingDeletion,
 )(DocRefMenu);

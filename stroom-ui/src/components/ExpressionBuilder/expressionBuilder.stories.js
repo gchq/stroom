@@ -32,9 +32,9 @@ import { actionCreators as expressionActionCreators } from './redux';
 import { actionCreators as dataSourceActionCreators } from './DataSource';
 import { actionCreators as docExplorerActionCreators, testTree } from 'components/DocExplorer';
 
-const { expressionChanged, expressionSetEditableByUser } = expressionActionCreators;
+const { expressionChanged } = expressionActionCreators;
 const { receiveDataSource } = dataSourceActionCreators;
-const { receiveDocTree } = docExplorerActionCreators;
+const { receivedDocTree } = docExplorerActionCreators;
 
 import 'styles/main.css';
 
@@ -53,24 +53,15 @@ import markdown from './expressionBuilder.md';
 
 storiesOf('Expression Builder', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(receiveDocTree(testTree));
+    store.dispatch(receivedDocTree(testTree));
     store.dispatch(receiveDataSource('testDs', testDataSource));
     store.dispatch(expressionChanged('populatedExEdit', testExpression));
-    store.dispatch(expressionChanged('populatedExEditInEdit', testExpression));
-    store.dispatch(expressionSetEditableByUser('populatedExEditInEdit', true));
     store.dispatch(expressionChanged('populatedExRO', testExpression));
     store.dispatch(expressionChanged('simplestEx', simplestExpression));
   })) // must be recorder after/outside of the test initialisation decorators
   .addDecorator(DragDropDecorator)
   .add('Populated Editable', () => (
     <ExpressionBuilder isEditableSystemSet dataSourceUuid="testDs" expressionId="populatedExEdit" />
-  ))
-  .add('Populated Editable (in edit)', () => (
-    <ExpressionBuilder
-      isEditableSystemSet
-      dataSourceUuid="testDs"
-      expressionId="populatedExEditInEdit"
-    />
   ))
   .add('Populated ReadOnly', () => (
     <ExpressionBuilder dataSourceUuid="testDs" expressionId="populatedExRO" />

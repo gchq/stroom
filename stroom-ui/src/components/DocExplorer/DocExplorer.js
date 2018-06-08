@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Input, Confirm } from 'semantic-ui-react';
+import { Input } from 'semantic-ui-react';
 
 import Folder from './Folder';
 
@@ -27,28 +27,17 @@ import { withCreatedExplorer } from './withExplorer';
 
 import { actionCreators } from './redux';
 
-const { searchTermUpdated, confirmDeleteDocRef, cancelDeleteDocRef } = actionCreators;
+const { searchTermUpdated } = actionCreators;
 
 const DocExplorer = (props) => {
   const {
-    documentTree,
-    explorerId,
-    explorer,
-    searchTermUpdated,
-    cancelDeleteDocRef,
-    confirmDeleteDocRef,
+    documentTree, explorerId, explorer, searchTermUpdated,
   } = props;
 
   const { searchTerm, pendingDocRefToDelete } = explorer;
 
   return (
     <div>
-      <Confirm
-        open={!!pendingDocRefToDelete}
-        content="This will delete the doc ref from the explorer, are you sure?"
-        onCancel={() => cancelDeleteDocRef(explorerId)}
-        onConfirm={() => confirmDeleteDocRef(explorerId, pendingDocRefToDelete)}
-      />
       <Input
         icon="search"
         placeholder="Search..."
@@ -66,8 +55,6 @@ DocExplorer.propTypes = {
   documentTree: PropTypes.object.isRequired,
 
   searchTermUpdated: PropTypes.func.isRequired,
-  confirmDeleteDocRef: PropTypes.func.isRequired,
-  cancelDeleteDocRef: PropTypes.func.isRequired,
 };
 
 export default compose(
@@ -77,8 +64,6 @@ export default compose(
     }),
     {
       searchTermUpdated,
-      cancelDeleteDocRef,
-      confirmDeleteDocRef,
     },
   ),
   withCreatedExplorer(),

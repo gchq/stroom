@@ -16,68 +16,80 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import { withState, compose } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Dropdown, Icon } from 'semantic-ui-react';
+import { Dropdown, Icon, Confirm } from 'semantic-ui-react';
 
 import { actionCreators } from './redux';
-const { toggleFolderOpen, requestDeleteDocRef, closeDocRefContextMenu } = actionCreators;
+
+const { folderOpenToggled, docRefDeleted } = actionCreators;
+
+const withPendingDeletion = withState('pendingDeletion', 'setPendingDeletion', false);
 
 const FolderMenu = ({
   explorerId,
   docRef,
   isOpen,
-  toggleFolderOpen,
-  requestDeleteDocRef,
-  closeDocRefContextMenu,
-}) => {
-  const onClose = () => {
-    closeDocRefContextMenu(explorerId);
-  };
-
-  const onOpenFolder = () => {
-    toggleFolderOpen(explorerId, docRef);
-    onClose();
-  };
-
-  const onRequestDeleteFolder = () => {
-    requestDeleteDocRef(explorerId, docRef);
-    onClose();
-  };
-
-  return (
-    <Dropdown inline icon={null} open={isOpen} onClose={onClose}>
+  pendingDeletion,
+  setPendingDeletion,
+  folderOpenToggled,
+  docRefDeleted,
+  closeContextMenu,
+}) => (
+  <span>
+    <Confirm
+      open={!!pendingDeletion}
+      content="This will delete the doc ref, are you sure?"
+      onCancel={() => setPendingDeletion(false)}
+      onConfirm={() => {
+        docRefDeleted(explorerId, docRef);
+        setPendingDeletion(false);
+      }}
+    />
+    <Dropdown inline icon={null} open={isOpen} onClose={() => closeContextMenu()}>
       <Dropdown.Menu>
-        <Dropdown.Item onClick={onOpenFolder}>
+        <Dropdown.Item
+          onClick={() => {
+            folderOpenToggled(explorerId, docRef);
+            closeContextMenu();
+          }}
+        >
           <Icon name="folder" />
           Open
         </Dropdown.Item>
-        <Dropdown.Item onClick={onRequestDeleteFolder}>
+        <Dropdown.Item onClick={() => setPendingDeletion(true)}>
           <Icon name="trash" />
           Delete
         </Dropdown.Item>
       </Dropdown.Menu>
     </Dropdown>
-  );
-};
+  </span>
+);
 
 FolderMenu.propTypes = {
   explorerId: PropTypes.string.isRequired,
   docRef: PropTypes.object.isRequired,
   isOpen: PropTypes.bool.isRequired,
 
-  toggleFolderOpen: PropTypes.func.isRequired,
-  requestDeleteDocRef: PropTypes.func.isRequired,
-  closeDocRefContextMenu: PropTypes.func.isRequired,
+  folderOpenToggled: PropTypes.func.isRequired,
+  docRefDeleted: PropTypes.func.isRequired,
+  closeContextMenu: PropTypes.func.isRequired,
+
+  // withPendingDeletion
+  setPendingDeletion: PropTypes.func.isRequired,
+  pendingDeletion: PropTypes.bool.isRequired,
 };
 
-export default connect(
-  state => ({
-    // state
-  }),
-  {
-    toggleFolderOpen,
-    requestDeleteDocRef,
-    closeDocRefContextMenu,
-  },
+export default compose(
+  connect(
+    state => ({
+      // state
+    }),
+    {
+      folderOpenToggled,
+      docRefDeleted,
+    },
+  ),
+  withPendingDeletion,
 )(FolderMenu);

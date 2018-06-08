@@ -16,7 +16,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose } from 'recompose';
+import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
 
 import { ItemTypes } from './dragDropTypes';
@@ -28,7 +28,9 @@ import { withExistingExplorer } from './withExplorer';
 
 import DocRefMenu from './DocRefMenu';
 
-const { selectDocRef, openDocRef, openDocRefContextMenu } = actionCreators;
+const { docRefSelected, docRefOpened } = actionCreators;
+
+const withContextMenu = withState('isContextMenuOpen', 'setContextMenuOpen', false);
 
 const dragSource = {
   canDrag(props) {
@@ -53,9 +55,11 @@ const DocRef = ({
   explorer,
   docRef,
 
-  selectDocRef,
-  openDocRef,
-  openDocRefContextMenu,
+  docRefSelected,
+  docRefOpened,
+
+  isContextMenuOpen,
+  setContextMenuOpen,
 
   connectDragSource,
   isDragging,
@@ -68,7 +72,7 @@ const DocRef = ({
   const onSingleClick = () => {
     timer = setTimeout(() => {
       if (!prevent) {
-        selectDocRef(explorerId, docRef);
+        docRefSelected(explorerId, docRef);
       }
       prevent = false;
     }, delay);
@@ -77,17 +81,15 @@ const DocRef = ({
   const onDoubleClick = () => {
     clearTimeout(timer);
     prevent = true;
-    openDocRef(explorerId, docRef);
+    docRefOpened(explorerId, docRef);
   };
 
   const onRightClick = (e) => {
-    openDocRefContextMenu(explorerId, docRef);
+    setContextMenuOpen(true);
     e.preventDefault();
   };
 
   const isSelected = explorer.isSelected[docRef.uuid];
-  const isContextMenuOpen =
-    !!explorer.contextMenuItemUuid && explorer.contextMenuItemUuid === docRef.uuid;
 
   let className = '';
   if (isDragging) {
@@ -106,9 +108,14 @@ const DocRef = ({
     onDoubleClick={onDoubleClick}
     onClick={onSingleClick}
   >
-    <DocRefMenu explorerId={explorerId} docRef={docRef} isOpen={isContextMenuOpen} />
+    <DocRefMenu
+      explorerId={explorerId}
+      docRef={docRef}
+      isOpen={isContextMenuOpen}
+      closeContextMenu={() => setContextMenuOpen(false)}
+    />
     <span>
-      <img className="doc-ref__icon" alt='X' src={require(`./images/${docRef.type}.svg`)} />
+      <img className="doc-ref__icon" alt="X" src={require(`./images/${docRef.type}.svg`)} />
       {docRef.name}
     </span>
   </div>);
@@ -121,9 +128,12 @@ DocRef.propTypes = {
   docRef: PropTypes.object.isRequired,
 
   // Actions
-  selectDocRef: PropTypes.func.isRequired,
-  openDocRef: PropTypes.func.isRequired,
-  openDocRefContextMenu: PropTypes.func.isRequired,
+  docRefSelected: PropTypes.func.isRequired,
+  docRefOpened: PropTypes.func.isRequired,
+
+  // withContextMenu
+  isContextMenuOpen: PropTypes.bool.isRequired,
+  setContextMenuOpen: PropTypes.func.isRequired,
 
   // React DnD
   connectDragSource: PropTypes.func.isRequired,
@@ -136,11 +146,11 @@ export default compose(
       // state
     }),
     {
-      selectDocRef,
-      openDocRef,
-      openDocRefContextMenu,
+      docRefSelected,
+      docRefOpened,
     },
   ),
   withExistingExplorer(),
+  withContextMenu,
   DragSource(ItemTypes.DOC_REF, dragSource, dragCollect),
 )(DocRef);

@@ -16,7 +16,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose } from 'recompose';
+import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
 
 import { DragSource, DropTarget } from 'react-dnd';
@@ -35,9 +35,9 @@ import { ItemTypes } from './dragDropTypes';
 const {
   pipelineElementSelected,
   pipelineElementMoved,
-  openPipelineElementContextMenu,
-  closePipelineElementContextMenu,
 } = actionCreators;
+
+const withContextMenu = withState('isContextMenuOpen', 'setContextMenuOpen', false);
 
 const dragSource = {
   canDrag(props) {
@@ -89,12 +89,11 @@ const PipelineElement = ({
   elementId,
   element,
   elementDefinition,
-  contextMenuElementId,
   pipelineElementSelected,
-  openPipelineElementContextMenu,
-}) => {
-  const isContextMenuOpen = !!contextMenuElementId && contextMenuElementId === elementId;
 
+  isContextMenuOpen,
+  setContextMenuOpen,
+}) => {
   let className = 'Pipeline-element';
   if (isOver) {
     className += ' Pipeline-element__over';
@@ -112,7 +111,7 @@ const PipelineElement = ({
 
   const onSingleClick = () => pipelineElementSelected(pipelineId, elementId);
   const onRightClick = (e) => {
-    openPipelineElementContextMenu(pipelineId, elementId);
+    setContextMenuOpen(true);
     e.preventDefault();
   };
 
@@ -129,6 +128,7 @@ const PipelineElement = ({
           pipelineId={pipelineId}
           elementId={elementId}
           isOpen={isContextMenuOpen}
+          closeContextMenu={() => setContextMenuOpen(false)}
         />
       </span>
     </span>
@@ -136,14 +136,22 @@ const PipelineElement = ({
 };
 
 PipelineElement.propTypes = {
+  // Set by container
   pipelineId: PropTypes.string.isRequired,
-  pipeline: PropTypes.object.isRequired,
-  element: PropTypes.object.isRequired,
-  asTree: PropTypes.object.isRequired,
   elementId: PropTypes.string.isRequired,
-  contextMenuElementId: PropTypes.string,
 
+  // withPipeline
+  pipeline: PropTypes.object.isRequired,
+  asTree: PropTypes.object.isRequired,
   pipelineElementSelected: PropTypes.func.isRequired,
+
+  // withElement
+  element: PropTypes.object.isRequired,
+  
+  // withContextMenu
+  isContextMenuOpen: PropTypes.bool.isRequired,
+  setContextMenuOpen: PropTypes.func.isRequired,
+
 };
 
 export default compose(
@@ -153,13 +161,12 @@ export default compose(
     }),
     {
       pipelineElementSelected,
-      pipelineElementMoved,
-      openPipelineElementContextMenu,
-      closePipelineElementContextMenu,
+      pipelineElementMoved
     },
   ),
   withPipeline(),
   withElement(),
+  withContextMenu,
   DragSource(ItemTypes.ELEMENT, dragSource, dragCollect),
   DropTarget([ItemTypes.ELEMENT], dropTarget, dropCollect),
 )(PipelineElement);

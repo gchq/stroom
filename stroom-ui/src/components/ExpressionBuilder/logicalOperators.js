@@ -13,13 +13,4 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import ExpressionBuilder from './ExpressionBuilder';
-import { expressionReducer } from './redux';
-import { dataSourceReducer, actionCreators as dataSourceActionCreators } from './DataSource';
-
-export {
-  ExpressionBuilder,
-  expressionReducer,
-  dataSourceReducer,
-  dataSourceActionCreators,
-};
+export const LOGICAL_OPERATORS = ['AND', 'OR', 'NOT'];

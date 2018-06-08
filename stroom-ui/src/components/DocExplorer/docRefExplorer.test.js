@@ -24,15 +24,15 @@ import { testTree, DOC_REF_TYPES } from './documentTree.testData';
 import { explorerTreeReducer, DEFAULT_EXPLORER_ID } from './redux';
 
 const {
-  receiveDocTree,
+  receivedDocTree,
   explorerTreeOpened,
   moveExplorerItem,
-  toggleFolderOpen,
-  openDocRef,
+  folderOpenToggled,
+  docRefOpened,
   searchTermUpdated,
-  selectDocRef,
-  openDocRefContextMenu,
-  closeDocRefContextMenu,
+  docRefSelected,
+  docRefOpenedContextMenu,
+  closeContextMenu,
 } = actionCreators;
 
 // Rebuilt for each test
@@ -45,7 +45,7 @@ describe('Doc Explorer Reducer', () => {
 
   describe('Explorer Tree', () => {
     it('should contain the test tree', () => {
-      store.dispatch(receiveDocTree(testTree));
+      store.dispatch(receivedDocTree(testTree));
 
       const state = store.getState();
       expect(state).toHaveProperty('documentTree');
@@ -59,7 +59,7 @@ describe('Doc Explorer Reducer', () => {
       let typeFilter;
 
       // When
-      store.dispatch(receiveDocTree(testTree));
+      store.dispatch(receivedDocTree(testTree));
       store.dispatch(explorerTreeOpened(explorerId, allowMultiSelect, allowDragAndDrop, typeFilter));
 
       // Then
@@ -81,7 +81,7 @@ describe('Doc Explorer Reducer', () => {
       let typeFilter;
 
       // When
-      store.dispatch(receiveDocTree(testTree));
+      store.dispatch(receivedDocTree(testTree));
       store.dispatch(explorerTreeOpened(explorerId, allowMultiSelect, allowDragAndDrop, typeFilter));
       const state = store.getState();
       const explorer = state.explorers[explorerId];
@@ -99,7 +99,7 @@ describe('Doc Explorer Reducer', () => {
       const typeFilter = DOC_REF_TYPES.XSLT;
 
       // When
-      store.dispatch(receiveDocTree(testTree));
+      store.dispatch(receivedDocTree(testTree));
       store.dispatch(explorerTreeOpened(explorerId, allowMultiSelect, allowDragAndDrop, typeFilter));
 
       // Then
@@ -128,7 +128,7 @@ describe('Doc Explorer Reducer', () => {
       const searchTerm = testTree.children[0].children[1].children[0].name;
 
       // When
-      store.dispatch(receiveDocTree(testTree));
+      store.dispatch(receivedDocTree(testTree));
       store.dispatch(explorerTreeOpened(explorerId, allowMultiSelect, allowDragAndDrop, typeFilter));
       store.dispatch(searchTermUpdated(explorerId, searchTerm));
       store.dispatch(searchTermUpdated(explorerId, undefined));
@@ -160,7 +160,7 @@ describe('Doc Explorer Reducer', () => {
       const searchTerm = subTree.children[0].children[3].name;
 
       // When
-      store.dispatch(receiveDocTree(subTree));
+      store.dispatch(receivedDocTree(subTree));
       store.dispatch(explorerTreeOpened(explorerId, allowMultiSelect, allowDragAndDrop, typeFilter));
       store.dispatch(searchTermUpdated(explorerId, searchTerm));
       store.dispatch(searchTermUpdated(explorerId, undefined));

@@ -17,9 +17,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import { compose } from 'recompose';
-import { connect } from 'react-redux';
-
-import { Confirm } from 'semantic-ui-react';
 
 import { LineContainer, LineTo } from 'components/LineTo';
 
@@ -32,10 +29,9 @@ import { actionCreators } from './redux';
 import PipelineElement from './PipelineElement';
 import PipelineElementSettings from './PipelineElementSettings';
 import { AddElementWizard } from './AddElementToPipeline';
+import { ElementPallete } from './ElementPallete';
 
 import lineElementCreators from './pipelineLineElementCreators';
-
-const { confirmDeletePipelineElement, cancelDeletePipelineElement } = actionCreators;
 
 const HORIZONTAL_SPACING = 150;
 const VERTICAL_SPACING = 50;
@@ -49,8 +45,6 @@ const PipelineEditor = ({
   pipelineId,
   pipeline,
   pendingElementIdToDelete,
-  cancelDeletePipelineElement,
-  confirmDeletePipelineElement,
   layoutInformation,
 }) => {
   const elementStyles = mapObject(layoutInformation, l => ({
@@ -61,13 +55,7 @@ const PipelineEditor = ({
 
   return (
     <div className="Pipeline-editor">
-      <AddElementWizard pipelineId={pipelineId} />
-      <Confirm
-        open={!!pendingElementIdToDelete}
-        content="This will delete the element from the pipeline, are you sure?"
-        onCancel={() => cancelDeletePipelineElement(pipelineId)}
-        onConfirm={() => confirmDeletePipelineElement(pipelineId, pendingElementIdToDelete)}
-      />
+      <ElementPallete />
       <LineContainer
         className="Pipeline-editor__overview"
         lineContextId={`pipeline-lines-${pipelineId}`}
@@ -101,14 +89,5 @@ PipelineEditor.propTypes = {
 };
 
 export default compose(
-  connect(
-    state => ({
-      // state
-    }),
-    {
-      confirmDeletePipelineElement,
-      cancelDeletePipelineElement,
-    },
-  ),
   withPipeline(),
 )(PipelineEditor);

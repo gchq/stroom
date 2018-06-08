@@ -55,7 +55,7 @@ function getToggledState(currentState, isUser) {
 const DEFAULT_EXPLORER_ID = 'default';
 
 const actionCreators = createActions({
-  RECEIVE_DOC_TREE: documentTree => ({ documentTree }),
+  RECEIVED_DOC_TREE: documentTree => ({ documentTree }),
   EXPLORER_TREE_OPENED: (explorerId, allowMultiSelect, allowDragAndDrop, typeFilter) => ({
     explorerId,
     allowMultiSelect,
@@ -63,7 +63,7 @@ const actionCreators = createActions({
     typeFilter,
   }),
   MOVE_EXPLORER_ITEM: (explorerId, itemToMove, destination) => ({ explorerId, itemToMove, destination }),
-  TOGGLE_FOLDER_OPEN: (explorerId, docRef) => ({
+  FOLDER_OPEN_TOGGLED: (explorerId, docRef) => ({
     explorerId,
     docRef,
   }),
@@ -71,26 +71,14 @@ const actionCreators = createActions({
     explorerId,
     searchTerm,
   }),
-  SELECT_DOC_REF:(explorerId, docRef) => ({
+  DOC_REF_SELECTED:(explorerId, docRef) => ({
     explorerId,
     docRef,
   }),
-  OPEN_DOC_REF: (explorerId, docRef) => ({ explorerId, docRef }),
-  REQUEST_DELETE_DOC_REF: (explorerId, docRef) => ({
+  DOC_REF_OPENED: (explorerId, docRef) => ({ explorerId, docRef }),
+  DOC_REF_DELETED:  (explorerId, docRef) => ({
     explorerId,
     docRef,
-  }),
-  CONFIRM_DELETE_DOC_REF:  (explorerId, docRef) => ({
-    explorerId,
-    docRef,
-  }),
-  CANCEL_DELETE_DOC_REF: explorerId => ({ explorerId }),
-  OPEN_DOC_REF_CONTEXT_MENU: (explorerId, docRef) => ({
-    explorerId,
-    docRef,
-  }),
-  CLOSE_DOC_REF_CONTEXT_MENU: explorerId => ({
-    explorerId,
   }),
   DOC_REF_PICKED: (pickerId, docRef) => ({ pickerId, docRef })
 })
@@ -102,7 +90,6 @@ const defaultExplorerState = {
   isVisible: {}, // based on search
   inSearch: {},
   inTypeFilter: {},
-  contextMenuItemUuid: undefined, // will be a UUID
 };
 
 const defaultState = {
@@ -205,8 +192,7 @@ function getUpdatedExplorer(documentTree, optExplorer, searchTerm, typeFilter) {
       explorer.isFolderOpen,
     ),
     inSearch: isInSearchMap,
-    inTypeFilter: isInTypeFilterMap,
-    pendingDocRefToDelete: undefined,
+    inTypeFilter: isInTypeFilterMap
   };
 }
 
@@ -227,7 +213,7 @@ function getStateAfterTreeUpdate(state, documentTree) {
 const explorerTreeReducer = handleActions(
   {
     // Receive the current state of the explorer tree
-    RECEIVE_DOC_TREE: (state, action) =>
+    RECEIVED_DOC_TREE: (state, action) =>
       getStateAfterTreeUpdate(state, action.payload.documentTree),
 
     // When an explorer is opened
@@ -258,7 +244,7 @@ const explorerTreeReducer = handleActions(
     },
 
     // Folder Open Toggle
-    TOGGLE_FOLDER_OPEN: (state, action) => {
+    FOLDER_OPEN_TOGGLED: (state, action) => {
       const { explorerId, docRef } = action.payload;
 
       return {
@@ -274,38 +260,6 @@ const explorerTreeReducer = handleActions(
                 true,
               ),
             },
-          },
-        },
-      };
-    },
-
-    // Open Doc Ref Context Menu
-    OPEN_DOC_REF_CONTEXT_MENU: (state, action) => {
-      const { explorerId, docRef } = action.payload;
-
-      return {
-        ...state,
-        explorers: {
-          ...state.explorers,
-          [explorerId]: {
-            ...state.explorers[explorerId],
-            contextMenuItemUuid: docRef.uuid,
-          },
-        },
-      };
-    },
-
-    // Close Doc Ref Context Menu
-    CLOSE_DOC_REF_CONTEXT_MENU: (state, action) => {
-      const { explorerId } = action.payload;
-
-      return {
-        ...state,
-        explorers: {
-          ...state.explorers,
-          [explorerId]: {
-            ...state.explorers[explorerId],
-            contextMenuItemUuid: undefined,
           },
         },
       };
@@ -332,7 +286,7 @@ const explorerTreeReducer = handleActions(
     },
 
     // Select Doc Ref
-    SELECT_DOC_REF: (state, action) => {
+    DOC_REF_SELECTED: (state, action) => {
       const { explorerId, docRef } = action.payload;
 
       const explorer = state.explorers[explorerId];
@@ -361,7 +315,7 @@ const explorerTreeReducer = handleActions(
     },
 
     // Open Doc Ref
-    OPEN_DOC_REF: (state, action) => {
+    DOC_REF_OPENED: (state, action) => {
       const { docRef } = action.payload;
 
       return {
@@ -373,40 +327,8 @@ const explorerTreeReducer = handleActions(
       };
     },
 
-    // Request Delete Doc Ref
-    REQUEST_DELETE_DOC_REF: (state, action) => {
-      const { explorerId, docRef } = action.payload;
-
-      return {
-        ...state,
-        explorers: {
-          ...state.explorers,
-          [explorerId]: {
-            ...state.explorers[explorerId],
-            pendingDocRefToDelete: docRef,
-          },
-        },
-      };
-    },
-
-    // Cancel Delete Doc Ref
-    CANCEL_DELETE_DOC_REF: (state, action) => {
-      const { explorerId } = action.payload;
-
-      return {
-        ...state,
-        explorers: {
-          ...state.explorers,
-          [explorerId]: {
-            ...state.explorers[explorerId],
-            pendingDocRefToDelete: undefined,
-          },
-        },
-      };
-    },
-
     // Confirm Delete Doc Ref
-    CONFIRM_DELETE_DOC_REF: (state, action) => {
+    DOC_REF_DELETED: (state, action) => {
       const { docRef } = action.payload;
 
       const documentTree = deleteItemFromTree(state.documentTree, docRef.uuid);
