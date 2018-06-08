@@ -37,6 +37,8 @@ public class FindStreamProcessorFilterCriteria extends BaseCriteria {
     private Boolean streamProcessorEnabled = null;
     private Boolean streamProcessorFilterEnabled = null;
     private String createUser;
+    private String pipelineNameFilter;
+    private String status;
 
     public FindStreamProcessorFilterCriteria() {
         // Default constructor necessary for GWT serialisation.
@@ -133,4 +135,21 @@ public class FindStreamProcessorFilterCriteria extends BaseCriteria {
     public void setCreateUser(String createUser) {
         this.createUser = createUser;
     }
+
+    public String getPipelineNameFilter() {
+        return pipelineNameFilter;
+    }
+
+    public void setPipelineNameFilter(String pipelineNameFilter) {
+        this.pipelineNameFilter = pipelineNameFilter;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
 }

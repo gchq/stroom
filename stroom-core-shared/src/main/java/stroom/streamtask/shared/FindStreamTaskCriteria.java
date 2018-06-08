@@ -47,6 +47,7 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
     public static final String FIELD_STATUS = "Status";
     public static final String FIELD_COUNT = "Count";
     public static final String FIELD_NODE = "Node";
+    public static final String FIELD_POLL_AGE = "Poll Age";
     private static final long serialVersionUID = 5031936548305751911L;
     /**
      * Look for stream tasks with a certain status.

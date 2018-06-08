@@ -23,6 +23,7 @@ import stroom.core.client.gin.PluginModule;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.elastic.client.ElasticPlugin;
 import stroom.help.client.HelpPlugin;
+import stroom.trackers.client.TrackersPlugin;
 import stroom.users.client.UsersPlugin;
 
 public class PluginsModule extends PluginModule {
@@ -35,5 +36,6 @@ public class PluginsModule extends PluginModule {
         bindPlugin(ElasticPlugin.class);
         bindPlugin(UsersPlugin.class);
         bindPlugin(ApiKeysPlugin.class);
+        bindPlugin(TrackersPlugin.class);
     }
 }

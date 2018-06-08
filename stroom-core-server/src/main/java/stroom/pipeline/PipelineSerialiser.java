@@ -42,9 +42,14 @@ public class PipelineSerialiser extends JsonSerialiser2<PipelineDoc> {
         final Map<String, byte[]> data = super.write(document);
 
         PipelineData pipelineData = document.getPipelineData();
-        if (pipelineData != null) {
-            data.put(XML, EncodingUtil.asBytes(getXmlFromPipelineData(pipelineData)));
+
+        // If the pipeline doesn't have data, it may be a new pipeline, create a blank one.
+        if (pipelineData == null) {
+            pipelineData = new PipelineData();
         }
+
+        data.put(XML, EncodingUtil.asBytes(getXmlFromPipelineData(pipelineData)));
+
         return data;
     }
 

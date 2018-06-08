@@ -1,11 +1,12 @@
 package stroom.security;
 
+import com.google.common.base.Strings;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import stroom.security.SecurityContext;
 
 import javax.inject.Inject;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -52,11 +53,33 @@ public class AuthorisationResource {
                 .build();
     }
 
+    /**
+     * @Deprecated: use hasAppPermission() instead. The route is anachronistic but removing the route would break the API
+     * for some clients.
+     */
+    @Deprecated
     @POST
     @Path("canManageUsers")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response canManageUsers(UserPermissionRequest userPermissionRequest) {
+        // TODO what happens if the permission is bad? What's the result of this method call and how should we handle it?
+        boolean result = securityContext.hasAppPermission(userPermissionRequest.getPermission());
+        // The user here will be the one logged in by the JWT.
+        return result ? Response.ok().build() : Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+
+    /**
+     * Added alongside canManagerUsers so that this endpoint still keeps working.
+     */
+    @POST
+    @Path("hasAppPermission")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response hasAppPermission(@NotNull UserPermissionRequest userPermissionRequest) {
+        if(Strings.isNullOrEmpty(userPermissionRequest.getPermission())){
+            return Response.status(Response.Status.BAD_REQUEST).entity("Please supply a permission.").build();
+        }
         // TODO what happens if the permission is bad? What's the result of this method call and how should we handle it?
         boolean result = securityContext.hasAppPermission(userPermissionRequest.getPermission());
         // The user here will be the one logged in by the JWT.
