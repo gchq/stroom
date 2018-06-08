@@ -1,35 +1,35 @@
-import React from "react";
-import TrackerDetails from "../TrackerDetails";
-import TrackerDashboard from "../../TrackerDashboard/TrackerDashboard";
+import React from 'react';
+import TrackerDetails from '../TrackerDetails';
+import TrackerDashboard from '../../TrackerDashboard/TrackerDashboard';
 
-import renderer from "react-test-renderer";
+import renderer from 'react-test-renderer';
 
-import configureMockStore from "redux-mock-store";
-import thunk from "redux-thunk";
-import fetchMock from "fetch-mock";
+import configureMockStore from 'redux-mock-store';
+import thunk from 'redux-thunk';
+import fetchMock from 'fetch-mock';
 
-import { fetchTrackers } from "../../streamTasksResourceClient";
+import { fetchTrackers } from '../../streamTasksResourceClient';
 
-const middlewares = [thunk];
-const mockStore = configureMockStore(middlewares);
+const middleware = [thunk];
+const mockStore = configureMockStore(middleware);
 
-describe("test", () => {
+describe('test', () => {
   afterEach(() => {
     fetchMock.reset();
     fetchMock.restore();
   });
 
-  test("creates trackers when fetching trackers has been done", () => {
-    fetchMock.getOnce("/trackers", {
-      body: { streamTrackers: ["tracker"] },
-      headers: { "content-type": "application/json" }
+  test('creates trackers when fetching trackers has been done', () => {
+    fetchMock.getOnce('/trackers', {
+      body: { streamTrackers: ['tracker'] },
+      headers: { 'content-type': 'application/json' },
     });
 
-    const expectedActions = [{ type: "UPDATE_TRACKERS" }];
+    const expectedActions = [{ type: 'UPDATE_TRACKERS' }];
     const store = mockStore({
       trackerDashboard: { trackers: [], selectedTrackerId: 1 },
-      authentication: { idToken: "dummyToken" },
-      config: {streamTaskServiceUrl: 'http://doesntmatter.com'}
+      authentication: { idToken: 'dummyToken' },
+      config: { streamTaskServiceUrl: 'http://doesntmatter.com' },
     });
 
     return store.dispatch(fetchTrackers()).then(() => {
