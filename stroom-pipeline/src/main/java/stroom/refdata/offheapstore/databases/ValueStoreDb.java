@@ -53,12 +53,12 @@ import java.util.concurrent.atomic.AtomicInteger;
  * multiple reference data keys are associated with the same reference data value then we only need
  * to store the value one in this table and each key then stores a pointer to it (the {@link ValueStoreKey}.)
  * <p>
- * key (hash|id)    | value
- * -------------------------
- * (1234|00)        | 363838
- * (1234|01)        | 857489
- * (4567|00)        | 263673
- * (7890|00)        | 689390
+ * key (hash|id)    | value (type|referenceCount|valueBytes)
+ * ---------------------------------------------------------
+ * (1234|00)        | 0|0001|363838
+ * (1234|01)        | 0|0001|857489
+ * (4567|00)        | 0|0001|263673
+ * (7890|00)        | 0|0001|689390
  */
 public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
 
@@ -137,6 +137,17 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                         valueFromDbBuf, valueFromDbBuf.position(), valueFromDbBuf.remaining()) == 0) {
                     isValueInMap.set(true);
                     LAMBDA_LOGGER.trace(() -> "Found our value so breaking out");
+
+
+
+
+
+                    //TODO we want to copy the value buffer and increment the ref count
+                    // as we have a new association with it
+                    
+
+
+
                     break;
                 } else {
                     LAMBDA_LOGGER.trace(() -> "Values are not equal, keep looking");

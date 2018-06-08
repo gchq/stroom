@@ -58,6 +58,7 @@ public class ValueReferenceCountDb extends AbstractLmdbDb<ValueStoreKey, Integer
      */
     public void incrementReferenceCount(final Txn<ByteBuffer> writeTxn, final ByteBuffer keyBuffer) {
 
+        //TODO move this method to ValueStoreDb
         updateValue(writeTxn, keyBuffer, valueSerde::increment);
     }
 
@@ -66,6 +67,7 @@ public class ValueReferenceCountDb extends AbstractLmdbDb<ValueStoreKey, Integer
      */
     public void decrementReferenceCount(final Txn<ByteBuffer> writeTxn, final ByteBuffer keyBuffer) {
 
+        //TODO move this method to ValueStoreDb
         updateValue(writeTxn, keyBuffer, valueSerde::decrement);
     }
 
