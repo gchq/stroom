@@ -87,8 +87,6 @@ public class RefDataOffHeapStore implements RefDataStore {
     /**
      * @param dbDir                 The directory the LMDB environment will be created in, it must already exist
      * @param maxSize               The max size in bytes of the environment. This should be less than the available
-     * @param valueReferenceCountDb
-     * @param stroomPropertyService
      */
     @Inject
     RefDataOffHeapStore(
