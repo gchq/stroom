@@ -8,11 +8,13 @@ import ElementCategory from './ElementCategory';
 
 const ElementPallete = ({ elementsByCategory }) => (
   <div className="element-pallete">
-    <Header as="h2">Element Pallete</Header>
+    <h2 className="element-pallete__title">Elements</h2>
 
-    {Object.entries(elementsByCategory).map(k => (
-      <ElementCategory key={k[0]} category={k[0]} elements={k[1]} />
-    ))}
+    <div className="element-pallete__categories">
+      {Object.entries(elementsByCategory).map(k => (
+        <ElementCategory key={k[0]} category={k[0]} elements={k[1]} />
+      ))}
+    </div>
   </div>
 );
 
