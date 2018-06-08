@@ -27,6 +27,11 @@ public class FastInfosetValue extends RefDataValue {
     private final byte[] fastInfosetBytes;
 
     public FastInfosetValue(final byte[] fastInfosetBytes) {
+        this(0, fastInfosetBytes);
+    }
+
+    public FastInfosetValue(final int referenceCount, final byte[] fastInfosetBytes) {
+        super(referenceCount);
         this.fastInfosetBytes = fastInfosetBytes;
     }
 
@@ -50,13 +55,17 @@ public class FastInfosetValue extends RefDataValue {
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
         final FastInfosetValue that = (FastInfosetValue) o;
         return Arrays.equals(fastInfosetBytes, that.fastInfosetBytes);
     }
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(fastInfosetBytes);
+
+        int result = super.hashCode();
+        result = 31 * result + Arrays.hashCode(fastInfosetBytes);
+        return result;
     }
 
     public byte[] getValueBytes() {
@@ -67,6 +76,7 @@ public class FastInfosetValue extends RefDataValue {
     public String toString() {
         return "FastInfosetValue{" +
                 "fastInfosetBytes=" + Arrays.toString(fastInfosetBytes) +
+                ", referenceCount=" + referenceCount +
                 '}';
     }
 }

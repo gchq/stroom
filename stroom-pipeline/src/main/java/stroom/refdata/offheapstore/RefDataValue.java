@@ -17,21 +17,46 @@
 
 package stroom.refdata.offheapstore;
 
+import java.util.Objects;
+
 public abstract class RefDataValue {
 
-    public abstract boolean equals(Object obj);
+    protected final int referenceCount;
 
-    public abstract int hashCode();
+    RefDataValue(final int referenceCount) {
+        this.referenceCount = referenceCount;
+    }
+
+//    public abstract boolean equals(Object obj);
+//
+//    public abstract int hashCode();
 
     /**
      * @return A code to represent the class of this, unique within all sub-classes of {@link RefDataValue}
      */
     public abstract int getTypeId();
 
-//    /**
-//     * Puts the objects value in byte serialized form into the passed {@link ByteBuffer}. The position of the
-//     * buffer after putValue will be after the put value.
-//     */
-//    abstract void putValue(final ByteBuffer byteBuffer);
+    public int getReferenceCount() {
+        return referenceCount;
+    }
 
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final RefDataValue that = (RefDataValue) o;
+        return referenceCount == that.referenceCount;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(referenceCount);
+    }
+
+    @Override
+    public String toString() {
+        return "RefDataValue{" +
+                "referenceCount=" + referenceCount +
+                '}';
+    }
 }

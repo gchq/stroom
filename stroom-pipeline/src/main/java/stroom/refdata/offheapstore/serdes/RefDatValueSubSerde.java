@@ -20,6 +20,17 @@ package stroom.refdata.offheapstore.serdes;
 import stroom.refdata.lmdb.serde.Serde;
 import stroom.refdata.offheapstore.RefDataValue;
 
+import java.nio.ByteBuffer;
+
 public interface RefDatValueSubSerde extends Serde<RefDataValue> {
+
+
+    default int extractReferenceCount(ByteBuffer byteBuffer) {
+        return byteBuffer.getInt();
+    }
+
+    default void putReferenceCount(final RefDataValue refDataValue, final ByteBuffer byteBuffer) {
+        byteBuffer.putInt(refDataValue.getReferenceCount());
+    }
 
 }

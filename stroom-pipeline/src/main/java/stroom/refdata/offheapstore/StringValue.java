@@ -26,6 +26,11 @@ public class StringValue extends RefDataValue {
     private final String value;
 
     public StringValue(final String value) {
+        this(0, value);
+    }
+
+    public StringValue(final int referenceCount, final String value) {
+        super(referenceCount);
         this.value = value;
     }
 
@@ -41,13 +46,15 @@ public class StringValue extends RefDataValue {
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
         final StringValue that = (StringValue) o;
         return Objects.equals(value, that.value);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(value);
+
+        return Objects.hash(super.hashCode(), value);
     }
 
     @Override
@@ -68,6 +75,7 @@ public class StringValue extends RefDataValue {
     public String toString() {
         return "StringValue{" +
                 "value='" + value + '\'' +
+                ", referenceCount=" + referenceCount +
                 '}';
     }
 }

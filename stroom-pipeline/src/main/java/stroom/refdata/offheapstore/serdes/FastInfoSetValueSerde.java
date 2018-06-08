@@ -27,19 +27,21 @@ public class FastInfoSetValueSerde implements RefDatValueSubSerde {
 
     @Override
     public RefDataValue deserialize(final ByteBuffer byteBuffer) {
+        int referenceCount = extractReferenceCount(byteBuffer);
         byte[] bytes = new byte[byteBuffer.remaining()];
         byteBuffer.get(bytes);
         byteBuffer.flip();
-        return new FastInfosetValue(bytes);
+        return new FastInfosetValue(referenceCount, bytes);
     }
 
     @Override
-    public void serialize(final ByteBuffer byteBuffer, final RefDataValue object) {
+    public void serialize(final ByteBuffer byteBuffer, final RefDataValue refDataValue) {
         try {
-            byteBuffer.put(((FastInfosetValue)object).getValueBytes());
+            putReferenceCount(refDataValue, byteBuffer);
+            byteBuffer.put(((FastInfosetValue) refDataValue).getValueBytes());
         } catch (ClassCastException e) {
             throw new RuntimeException(LambdaLogger.buildMessage("Unable to cast {} to {}",
-                    object.getClass().getCanonicalName(), FastInfosetValue.class.getCanonicalName()), e);
+                    refDataValue.getClass().getCanonicalName(), FastInfosetValue.class.getCanonicalName()), e);
         }
         byteBuffer.flip();
     }

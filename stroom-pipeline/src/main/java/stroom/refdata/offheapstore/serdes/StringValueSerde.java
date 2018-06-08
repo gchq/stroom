@@ -29,20 +29,22 @@ public class StringValueSerde implements RefDatValueSubSerde {
 
     @Override
     public RefDataValue deserialize(final ByteBuffer byteBuffer) {
+        int referenceCount = extractReferenceCount(byteBuffer);
         String str = StandardCharsets.UTF_8.decode(byteBuffer).toString();
         byteBuffer.flip();
-        return new StringValue(str);
+        return new StringValue(referenceCount, str);
     }
 
     @Override
-    public void serialize(final ByteBuffer byteBuffer, final RefDataValue object) {
+    public void serialize(final ByteBuffer byteBuffer, final RefDataValue refDataValue) {
         try {
-            final StringValue stringValue = (StringValue) object;
+            putReferenceCount(refDataValue, byteBuffer);
+            final StringValue stringValue = (StringValue) refDataValue;
             byteBuffer.put(stringValue.getValue().getBytes(StandardCharsets.UTF_8));
             byteBuffer.flip();
         } catch (ClassCastException e) {
             throw new RuntimeException(LambdaLogger.buildMessage("Unable to cast {} to {}",
-                    object.getClass().getCanonicalName(), FastInfosetValue.class.getCanonicalName()), e);
+                    refDataValue.getClass().getCanonicalName(), FastInfosetValue.class.getCanonicalName()), e);
         }
     }
 }
