@@ -753,8 +753,6 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
     }
 
     protected void doSelect(final R selection, final SelectionType selectionType) {
-        final List<R> initialSelection = selectionModel.getSelectedItems();
-
         if (selection == null) {
             multiSelectStart = null;
             selectionModel.clear();
@@ -788,21 +786,7 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
             selectionModel.setSelected(selection);
         }
 
-        // Only fire a selection event if the selection has really been modified.
-        final List<R> finalSelection = selectionModel.getSelectedItems();
-        if (initialSelection.size() != finalSelection.size()) {
-            MultiSelectEvent.fire(dataGrid, selectionType);
-        } else {
-            for (final R item : initialSelection) {
-                finalSelection.remove(item);
-            }
-            for (final R item : finalSelection) {
-                initialSelection.remove(item);
-            }
-            if (initialSelection.size() == 0 && finalSelection.size() == 0) {
-                MultiSelectEvent.fire(dataGrid, selectionType);
-            }
-        }
+        MultiSelectEvent.fire(dataGrid, selectionType);
     }
 
     @Override
