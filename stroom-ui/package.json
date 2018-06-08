@@ -62,19 +62,24 @@
     "prettier-eslint": "^8.8.1",
     "react-test-renderer": "^16.3.2",
     "redux-mock-store": "^1.5.1",
-    "rewire": "^4.0.1",
     "standard": "^11.0.1",
     "storybook-react-router": "^1.0.1"
   },
   "jest": {
     "moduleNameMapper": {
-      "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$":
-        "<rootDir>/__mocks__/fileMock.js",
+      "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/__mocks__/fileMock.js",
       "\\.(css|sass)$": "<rootDir>/__mocks__/styleMock.js"
     },
-    "modulePaths": ["./src/"],
+    "modulePaths": [
+      "./src/"
+    ],
     "automock": false,
-    "setupFiles": ["./setupJest.js"],
-    "testPathIgnorePatterns": ["docker", "testIgnore"]
+    "setupFiles": [
+      "./setupJest.js"
+    ],
+    "testPathIgnorePatterns": [
+      "docker",
+      "testIgnore"
+    ]
   }
 }

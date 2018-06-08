@@ -13,12 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import rewire from 'rewire';
-
-import { getPipelineAsTree, deleteElementInPipeline } from '../pipelineUtils';
-
-const pipelineUtils = rewire('../pipelineUtils');
-const getChildren = pipelineUtils.__get__('getChildren');
+import { getPipelineAsTree, deleteElementInPipeline, getChildren } from '../pipelineUtils';
 
 import { testPipeline, singleElementTestPipeline } from './pipeline.testData';
 
@@ -45,16 +40,13 @@ describe('Pipeline Utils', () => {
       expectsForTestPipeline(asTree);
     });
 
-    test(
-      'should convert a pipeline to a single node tree -- tests edge case of no links',
-      () => {
-        // When
-        const asTree = getPipelineAsTree(singleElementTestPipeline);
+    test('should convert a pipeline to a single node tree -- tests edge case of no links', () => {
+      // When
+      const asTree = getPipelineAsTree(singleElementTestPipeline);
 
-        // Then
-        expect(asTree.uuid).toBe('CSV splitter filter');
-      }
-    );
+      // Then
+      expect(asTree.uuid).toBe('CSV splitter filter');
+    });
   });
 
   describe('#getChildren', () => {
