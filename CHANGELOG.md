@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#783** : Reverted code that ignored duplicate selection to fix double click in tables.
+
 ## [v5.4.2] - 2018-06-05
 
 * Issue **#782** : Fix for NPE thrown when using CountGroups when GroupKey string was null due to non grouped child rows.
