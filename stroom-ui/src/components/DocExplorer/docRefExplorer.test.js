@@ -48,8 +48,8 @@ describe('Doc Explorer Reducer', () => {
       store.dispatch(receiveDocTree(testTree));
 
       const state = store.getState();
-      expect(state).to.have.property('documentTree');
-      expect(state.documentTree).to.be(testTree);
+      expect(state).toHaveProperty('documentTree');
+      expect(state.documentTree).toBe(testTree);
     });
     it('should create a new explorer state for given ID', () => {
       // Given
@@ -64,11 +64,11 @@ describe('Doc Explorer Reducer', () => {
 
       // Then
       const state = store.getState();
-      expect(state.explorers).to.have.property(explorerId);
+      expect(state.explorers).toHaveProperty(explorerId);
       const explorer = state.explorers[explorerId];
-      expect(explorer.typeFilter).to.be(undefined);
-      expect(explorer.allowMultiSelect).to.be(true);
-      expect(explorer.allowDragAndDrop).to.be(true);
+      expect(explorer.typeFilter).toBe(undefined);
+      expect(explorer.allowMultiSelect).toBe(true);
+      expect(explorer.allowDragAndDrop).toBe(true);
     });
   });
 
@@ -88,7 +88,7 @@ describe('Doc Explorer Reducer', () => {
 
       // Then
       iterateNodes(state.documentTree, (lineage, node) => {
-        expect(explorer.isVisible[node.uuid]).to.be(true);
+        expect(explorer.isVisible[node.uuid]).toBe(true);
       });
     });
     it('should only make doc refs matching type filter visible', () => {
@@ -104,20 +104,20 @@ describe('Doc Explorer Reducer', () => {
 
       // Then
       const state = store.getState();
-      expect(state.explorers).to.have.property(explorerId);
+      expect(state.explorers).toHaveProperty(explorerId);
       const explorer = state.explorers[explorerId];
 
       // Check a folder that contains a match
-      expect(explorer.isVisible[testTree.children[0].uuid]).to.be(true);
+      expect(explorer.isVisible[testTree.children[0].uuid]).toBe(true);
 
       // Check a matching doc
-      expect(explorer.isVisible[testTree.children[0].children[0].children[2].uuid]).to.be(true);
+      expect(explorer.isVisible[testTree.children[0].children[0].children[2].uuid]).toBe(true);
 
       // Check a folder that doesn't contain a matching
-      expect(explorer.isVisible[testTree.children[1].children[1].uuid]).to.be(false);
+      expect(explorer.isVisible[testTree.children[1].children[1].uuid]).toBe(false);
 
       // Check a non matching doc
-      expect(explorer.isVisible[testTree.children[0].children[0].children[1].uuid]).to.be(false);
+      expect(explorer.isVisible[testTree.children[0].children[0].children[1].uuid]).toBe(false);
     });
     it('should combine search terms and type filters correctly', () => {
       // Given
@@ -135,20 +135,20 @@ describe('Doc Explorer Reducer', () => {
 
       // Then
       const state = store.getState();
-      expect(state.explorers).to.have.property(explorerId);
+      expect(state.explorers).toHaveProperty(explorerId);
       const explorer = state.explorers[explorerId];
 
       // Check a matching folder
-      expect(explorer.isVisible[testTree.children[0].children[1].uuid]).to.be(true);
+      expect(explorer.isVisible[testTree.children[0].children[1].uuid]).toBe(true);
 
       // Check a matching doc
-      expect(explorer.isVisible[testTree.children[0].children[1].children[0].uuid]).to.be(true);
+      expect(explorer.isVisible[testTree.children[0].children[1].children[0].uuid]).toBe(true);
 
       // Check a folder that doesn't contain a matching
-      expect(explorer.isVisible[testTree.children[2].children[0].uuid]).to.be(false);
+      expect(explorer.isVisible[testTree.children[2].children[0].uuid]).toBe(false);
 
       // Check a non matching doc
-      expect(explorer.isVisible[testTree.children[3].uuid]).to.be(false);
+      expect(explorer.isVisible[testTree.children[3].uuid]).toBe(false);
     });
     it('should combine search terms and type filters correctly', () => {
       // Given
@@ -167,17 +167,17 @@ describe('Doc Explorer Reducer', () => {
 
       // Then
       const state = store.getState();
-      expect(state.explorers).to.have.property(explorerId);
+      expect(state.explorers).toHaveProperty(explorerId);
       const explorer = state.explorers[explorerId];
 
       // Check the matching doc
-      expect(explorer.isVisible[subTree.children[0].children[3].uuid]).to.be(true);
+      expect(explorer.isVisible[subTree.children[0].children[3].uuid]).toBe(true);
 
       // Check not matching docs
-      expect(explorer.isVisible[subTree.children[0].children[5].uuid]).to.be(false);
+      expect(explorer.isVisible[subTree.children[0].children[5].uuid]).toBe(false);
 
       // Check matching folder
-      expect(explorer.isVisible[subTree.children[0].uuid]).to.be(true);
+      expect(explorer.isVisible[subTree.children[0].uuid]).toBe(true);
     });
   });
 });
