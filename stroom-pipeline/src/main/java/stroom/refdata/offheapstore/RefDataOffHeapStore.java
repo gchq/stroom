@@ -33,6 +33,7 @@ import stroom.refdata.offheapstore.databases.MapUidForwardDb;
 import stroom.refdata.offheapstore.databases.MapUidReverseDb;
 import stroom.refdata.offheapstore.databases.ProcessingInfoDb;
 import stroom.refdata.offheapstore.databases.RangeStoreDb;
+import stroom.refdata.offheapstore.databases.ValueReferenceCountDb;
 import stroom.refdata.offheapstore.databases.ValueStoreDb;
 import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.logging.LambdaLogger;
@@ -75,6 +76,8 @@ public class RefDataOffHeapStore implements RefDataStore {
     private final MapUidForwardDb mapUidForwardDb;
     private final MapUidReverseDb mapUidReverseDb;
     private final ProcessingInfoDb processingInfoDb;
+    private final ValueReferenceCountDb valueReferenceCountDb;
+
     private final MapDefinitionUIDStore mapDefinitionUIDStore;
     private final StroomPropertyService stroomPropertyService;
 
@@ -84,6 +87,7 @@ public class RefDataOffHeapStore implements RefDataStore {
     /**
      * @param dbDir                 The directory the LMDB environment will be created in, it must already exist
      * @param maxSize               The max size in bytes of the environment. This should be less than the available
+     * @param valueReferenceCountDb
      * @param stroomPropertyService
      */
     @Inject
@@ -96,6 +100,7 @@ public class RefDataOffHeapStore implements RefDataStore {
             final MapUidForwardDb.Factory mapUidForwardDbFactory,
             final MapUidReverseDb.Factory mapUidReverseDbFactory,
             final ProcessingInfoDb.Factory processingInfoDbFactory,
+            final ValueReferenceCountDb.Factory valueReferenceCountDbFactory,
             final StroomPropertyService stroomPropertyService) {
 
         this.dbDir = dbDir;
@@ -126,6 +131,8 @@ public class RefDataOffHeapStore implements RefDataStore {
         this.mapUidForwardDb = mapUidForwardDbFactory.create(lmdbEnvironment);
         this.mapUidReverseDb = mapUidReverseDbFactory.create(lmdbEnvironment);
         this.processingInfoDb = processingInfoDbFactory.create(lmdbEnvironment);
+        this.valueReferenceCountDb = valueReferenceCountDbFactory.create(lmdbEnvironment);
+
         this.mapDefinitionUIDStore = new MapDefinitionUIDStore(lmdbEnvironment, mapUidForwardDb, mapUidReverseDb);
         this.stroomPropertyService = stroomPropertyService;
 
@@ -274,7 +281,7 @@ public class RefDataOffHeapStore implements RefDataStore {
                 valueStoreDb,
                 mapDefinitionUIDStore,
                 processingInfoDb,
-                lmdbEnvironment,
+                valueReferenceCountDb, lmdbEnvironment,
                 refStreamDefinition,
                 effectiveTimeMs);
     }
@@ -392,11 +399,14 @@ public class RefDataOffHeapStore implements RefDataStore {
 
         private Txn<ByteBuffer> writeTxn = null;
         private final RefDataOffHeapStore refDataOffHeapStore;
+
         private final KeyValueStoreDb keyValueStoreDb;
         private final RangeStoreDb rangeStoreDb;
         private final ValueStoreDb valueStoreDb;
         private final MapDefinitionUIDStore mapDefinitionUIDStore;
         private final ProcessingInfoDb processingInfoDb;
+        private final ValueReferenceCountDb valueReferenceCountDb;
+
         private final Env<ByteBuffer> lmdbEnvironment;
         private final RefStreamDefinition refStreamDefinition;
         private final long effectiveTimeMs;
@@ -423,6 +433,7 @@ public class RefDataOffHeapStore implements RefDataStore {
                                   final ValueStoreDb valueStoreDb,
                                   final MapDefinitionUIDStore mapDefinitionUIDStore,
                                   final ProcessingInfoDb processingInfoDb,
+                                  final ValueReferenceCountDb valueReferenceCountDb,
                                   final Env<ByteBuffer> lmdbEnvironment,
                                   final RefStreamDefinition refStreamDefinition,
                                   final long effectiveTimeMs) {
@@ -431,8 +442,10 @@ public class RefDataOffHeapStore implements RefDataStore {
             this.keyValueStoreDb = keyValueStoreDb;
             this.rangeStoreDb = rangeStoreDb;
             this.valueStoreDb = valueStoreDb;
-            this.mapDefinitionUIDStore = mapDefinitionUIDStore;
             this.processingInfoDb = processingInfoDb;
+            this.valueReferenceCountDb = valueReferenceCountDb;
+
+            this.mapDefinitionUIDStore = mapDefinitionUIDStore;
             this.lmdbEnvironment = lmdbEnvironment;
             this.refStreamDefinition = refStreamDefinition;
             this.effectiveTimeMs = effectiveTimeMs;

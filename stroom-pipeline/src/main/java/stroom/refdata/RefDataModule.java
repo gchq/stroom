@@ -34,6 +34,7 @@ import stroom.refdata.offheapstore.databases.MapUidForwardDb;
 import stroom.refdata.offheapstore.databases.MapUidReverseDb;
 import stroom.refdata.offheapstore.databases.ProcessingInfoDb;
 import stroom.refdata.offheapstore.databases.RangeStoreDb;
+import stroom.refdata.offheapstore.databases.ValueReferenceCountDb;
 import stroom.refdata.offheapstore.databases.ValueStoreDb;
 import stroom.refdata.offheapstore.serdes.FastInfoSetValueSerde;
 import stroom.refdata.offheapstore.serdes.RefDatValueSubSerde;
@@ -46,10 +47,6 @@ public class RefDataModule extends AbstractModule {
         requireBinding(StroomPropertyService.class);
 
         bind(RefDataStore.class).toProvider(RefDataStoreProvider.class);
-
-//        final Multibinder<RefDataValue> refDataValueBinder = Multibinder.newSetBinder(binder(), RefDataValue.class);
-//        refDataValueBinder.addBinding().to(stroom.refdata.offheapstore.FastInfosetValue.class);
-//        refDataValueBinder.addBinding().to(stroom.refdata.offheapstore.StringValue.class);
 
         // bind the various RefDataValue impls into a map keyed on their ID
         final MapBinder<Integer, RefDatValueSubSerde> refDataValueSerdeBinder = MapBinder.newMapBinder(
@@ -74,6 +71,7 @@ public class RefDataModule extends AbstractModule {
         install(new FactoryModuleBuilder().build(MapUidForwardDb.Factory.class));
         install(new FactoryModuleBuilder().build(MapUidReverseDb.Factory.class));
         install(new FactoryModuleBuilder().build(ProcessingInfoDb.Factory.class));
+        install(new FactoryModuleBuilder().build(ValueReferenceCountDb.Factory.class));
 
         install(new FactoryModuleBuilder()
                 .implement(RefDataStore.class, RefDataOffHeapStore.class)

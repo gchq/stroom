@@ -225,15 +225,28 @@ public abstract class AbstractLmdbDb<K, V> {
     public void updateValue(final Txn<ByteBuffer> writeTxn,
                             final K key,
                             final Consumer<ByteBuffer> valueBufferConsumer) {
+        final ByteBuffer keyBuf = LmdbUtils.buildDbKeyBuffer(lmdbEnvironment, key, keySerde);
+        updateValue(writeTxn, keyBuf, valueBufferConsumer);
+
+    }
+    /**
+     * Updates the value associated with the passed key using the valueBufferConsumer. A new {@link ByteBuffer}
+     * will be created from the current value and passed to valueBufferConsumer to mutate. This mutated buffer
+     * should be left in a state ready to be read, i.e. flipped.
+     * This method is intended for cases where you want to modify the value based on its current value, or
+     * you only want to modify part of it without (de)serialising the whole.
+     */
+    public void updateValue(final Txn<ByteBuffer> writeTxn,
+                            final ByteBuffer keyBuffer,
+                            final Consumer<ByteBuffer> valueBufferConsumer) {
         Preconditions.checkArgument(!writeTxn.isReadOnly());
 
-        final ByteBuffer keyBuf = LmdbUtils.buildDbKeyBuffer(lmdbEnvironment, key, keySerde);
             try (Cursor<ByteBuffer> cursor = lmdbDbi.openCursor(writeTxn)) {
 
-                boolean isFound = cursor.get(keyBuf, GetOp.MDB_SET_KEY);
+                boolean isFound = cursor.get(keyBuffer, GetOp.MDB_SET_KEY);
                 if (!isFound) {
                     throw new RuntimeException(LambdaLogger.buildMessage(
-                            "Expecting to find entry for {}", key));
+                            "Expecting to find entry for {}", ByteArrayUtils.byteBufferInfo(keyBuffer)));
                 }
                 final ByteBuffer valueBuf = cursor.val();
 
