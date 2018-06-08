@@ -232,7 +232,9 @@ export function deleteElementInPipeline(pipeline, itemToDelete) {
   };
 }
 
-function getChildren(pipeline, parent) {
+// TODO This was previously not exported -- it doesn't need to be. But moving from Mocha
+// to Jest broke rewire. Exporting until we have a solution to this.
+export function getChildren(pipeline, parent) {
   let allChildren = [];
 
   const getAllChildren = (pipeline, element) => {
