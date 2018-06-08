@@ -17,23 +17,18 @@
 
 package stroom.refdata.offheapstore;
 
-import stroom.entity.shared.Range;
+import org.assertj.core.api.Assertions;
+import org.junit.Test;
 
-public interface RefDataLoader extends AutoCloseable {
+public class TestRefDataProcessingInfo {
 
-    RefStreamDefinition getRefStreamDefinition();
+    @Test
+    public void testProcessingStateFromBytes() {
 
-    boolean initialise(final boolean overwriteExisting);
-
-    void completeProcessing();
-
-    void setCommitInterval(final int putsBeforeCommit);
-
-    boolean put(final MapDefinition mapDefinition,
-                final String key,
-                final RefDataValue refDataValue);
-
-    boolean put(final MapDefinition mapDefinition,
-                final Range<Long> keyRange,
-                final RefDataValue refDataValue);
+        for (RefDataProcessingInfo.ProcessingState state : RefDataProcessingInfo.ProcessingState.values()) {
+            byte id = state.getId();
+            RefDataProcessingInfo.ProcessingState outputState = RefDataProcessingInfo.ProcessingState.fromByte(id);
+            Assertions.assertThat(outputState).isEqualTo(state);
+        }
+    }
 }

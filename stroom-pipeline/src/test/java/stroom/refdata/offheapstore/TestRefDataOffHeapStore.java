@@ -45,6 +45,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -108,6 +109,114 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     }
 
     @Test
+    public void testOverwrite_doOverwrite() throws Exception {
+        StringValue value1 = StringValue.of("myValue1");
+        StringValue value2 = StringValue.of("myValue2");
+
+        // overwriting so value changes to value2
+        StringValue expectedFinalValue = value2;
+
+        doKeyValueOverwriteTest(true, value1, value2, expectedFinalValue);
+        doKeyRangeValueOverwriteTest(true, value1, value2, expectedFinalValue);
+    }
+
+    @Test
+    public void testOverwrite_doNotOverwrite() throws Exception {
+        StringValue value1 = StringValue.of("myValue1");
+        StringValue value2 = StringValue.of("myValue2");
+
+        // no overwriting so value stays as value1
+        StringValue expectedFinalValue = value1;
+
+        doKeyValueOverwriteTest(false, value1, value2, expectedFinalValue);
+    }
+
+    private void doKeyValueOverwriteTest(final boolean overwriteExisting,
+                                         final StringValue value1,
+                                         final StringValue value2,
+                                         final StringValue expectedFinalValue) throws Exception {
+
+        final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
+                UUID.randomUUID().toString(),
+                (byte) 0,
+                123456L,
+                1);
+        long effectiveTimeMs = System.currentTimeMillis();
+        MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "map1");
+        String key = "myKey";
+
+        assertThat(refDataStore.getKeyValueEntryCount()).isEqualTo(0);
+
+        boolean didPutSucceed = false;
+        try (RefDataLoader loader = refDataStore.loader(refStreamDefinition, effectiveTimeMs)) {
+            loader.initialise(overwriteExisting);
+            didPutSucceed = loader.put(mapDefinition, key, value1);
+            assertThat(didPutSucceed).isTrue();
+            loader.completeProcessing();
+        }
+
+        ((RefDataOffHeapStore) refDataStore).logAllContents();
+        assertThat((StringValue) refDataStore.getValue(mapDefinition, key).get()).isEqualTo(value1);
+
+        assertThat(refDataStore.getKeyValueEntryCount()).isEqualTo(1);
+
+        try (RefDataLoader loader = refDataStore.loader(refStreamDefinition, effectiveTimeMs)) {
+            loader.initialise(overwriteExisting);
+            didPutSucceed = loader.put(mapDefinition, key, value2);
+            assertThat(didPutSucceed).isEqualTo(overwriteExisting);
+            loader.completeProcessing();
+        }
+
+        ((RefDataOffHeapStore) refDataStore).logAllContents();
+        assertThat((StringValue) refDataStore.getValue(mapDefinition, key).get()).isEqualTo(expectedFinalValue);
+
+        assertThat(refDataStore.getKeyValueEntryCount()).isEqualTo(1);
+    }
+
+    private void doKeyRangeValueOverwriteTest(final boolean overwriteExisting,
+                                              final StringValue value1,
+                                              final StringValue value2,
+                                              final StringValue expectedFinalValue) throws Exception {
+
+        final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
+                UUID.randomUUID().toString(),
+                (byte) 0,
+                123456L,
+                1);
+        long effectiveTimeMs = System.currentTimeMillis();
+        MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "map1");
+        Range<Long> range = new Range<>(1L,100L);
+        String key = "50";
+
+        assertThat(refDataStore.getKeyRangeValueEntryCount()).isEqualTo(0);
+
+        boolean didPutSucceed = false;
+        try (RefDataLoader loader = refDataStore.loader(refStreamDefinition, effectiveTimeMs)) {
+            loader.initialise(overwriteExisting);
+            didPutSucceed = loader.put(mapDefinition, range, value1);
+            assertThat(didPutSucceed).isTrue();
+            loader.completeProcessing();
+        }
+
+        ((RefDataOffHeapStore) refDataStore).logAllContents();
+        assertThat((StringValue) refDataStore.getValue(mapDefinition, key).get()).isEqualTo(value1);
+
+        assertThat(refDataStore.getKeyRangeValueEntryCount()).isEqualTo(1);
+
+        try (RefDataLoader loader = refDataStore.loader(refStreamDefinition, effectiveTimeMs)) {
+            loader.initialise(overwriteExisting);
+            didPutSucceed = loader.put(mapDefinition, key, value2);
+            assertThat(didPutSucceed).isEqualTo(overwriteExisting);
+            loader.completeProcessing();
+        }
+
+        ((RefDataOffHeapStore) refDataStore).logAllContents();
+        assertThat((StringValue) refDataStore.getValue(mapDefinition, key).get()).isEqualTo(expectedFinalValue);
+
+        assertThat(refDataStore.getKeyRangeValueEntryCount()).isEqualTo(1);
+    }
+
+    @Test
     public void loader_noOverwriteBigCommitInterval() throws Exception {
         boolean overwriteExisting = false;
         int commitInterval = Integer.MAX_VALUE;
@@ -123,7 +232,43 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         bulkLoadAndAssert(overwriteExisting, commitInterval);
     }
 
-    private void bulkLoadAndAssert(final boolean overwriteExisting, final int commitInterval) {
+    @Test
+    public void loader_noOverwriteWithDuplicateData() throws Exception {
+        int commitInterval = Integer.MAX_VALUE;
+
+        RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
+                UUID.randomUUID().toString(),
+                (byte) 0,
+                123456L,
+                1);
+
+        // same refStreamDefinition twice to imitate a re-load
+        List<RefStreamDefinition> refStreamDefinitions = Arrays.asList(
+                refStreamDefinition, refStreamDefinition);
+
+        bulkLoadAndAssert(refStreamDefinitions, false, commitInterval);
+    }
+
+    @Test
+    public void loader_overwriteWithDuplicateData() throws Exception {
+        int commitInterval = Integer.MAX_VALUE;
+
+        RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
+                UUID.randomUUID().toString(),
+                (byte) 0,
+                123456L,
+                1);
+
+        // same refStreamDefinition twice to imitate a re-load
+        List<RefStreamDefinition> refStreamDefinitions = Arrays.asList(
+                refStreamDefinition, refStreamDefinition);
+
+        bulkLoadAndAssert(refStreamDefinitions, true, commitInterval);
+    }
+
+    private void bulkLoadAndAssert(final boolean overwriteExisting,
+                                   final int commitInterval) {
+        // two different ref stream definitions
         List<RefStreamDefinition> refStreamDefinitions = Arrays.asList(
                 new RefStreamDefinition(
                         UUID.randomUUID().toString(),
@@ -136,17 +281,39 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                         123456L,
                         1));
 
+        bulkLoadAndAssert(refStreamDefinitions, overwriteExisting, commitInterval);
+    }
+
+
+    private void bulkLoadAndAssert(final List<RefStreamDefinition> refStreamDefinitions,
+                                   final boolean overwriteExisting,
+                                   final int commitInterval) {
+
+
         long effectiveTimeMs = System.currentTimeMillis();
+        AtomicInteger counter = new AtomicInteger();
 
         List<String> mapNames = Arrays.asList("map1", "map2");
 
-        AtomicInteger counter = new AtomicInteger();
         List<Tuple3<MapDefinition, String, StringValue>> keyValueLoadedData = new ArrayList<>();
         List<Tuple3<MapDefinition, Range<Long>, StringValue>> keyRangeValueLoadedData = new ArrayList<>();
 
+        final AtomicReference<RefStreamDefinition> lastRefStreamDefinition = new AtomicReference<>(null);
+        final AtomicInteger lastCounterStartVal = new AtomicInteger();
+
         refStreamDefinitions.forEach(refStreamDefinition -> {
             try {
-                loadData(refStreamDefinition,
+                final Tuple2<Long, Long> startEntryCounts = Tuple.of(
+                        refDataStore.getKeyValueEntryCount(),
+                        refDataStore.getKeyRangeValueEntryCount());
+
+                //Same stream def as last time so
+                if (refStreamDefinition.equals(lastRefStreamDefinition.get())) {
+                    counter.set(lastCounterStartVal.get());
+                }
+                lastCounterStartVal.set(counter.get());
+
+                int putAttempts = loadData(refStreamDefinition,
                         effectiveTimeMs,
                         commitInterval,
                         mapNames,
@@ -154,11 +321,29 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                         counter,
                         keyValueLoadedData,
                         keyRangeValueLoadedData);
+
+
+                final Tuple2<Long, Long> endEntryCounts = Tuple.of(
+                        refDataStore.getKeyValueEntryCount(),
+                        refDataStore.getKeyRangeValueEntryCount());
+
+                int expectedNewEntries;
+                if (refStreamDefinition.equals(lastRefStreamDefinition.get())) {
+                    expectedNewEntries = 0;
+                } else {
+                    expectedNewEntries = putAttempts;
+                }
+
+                assertThat(endEntryCounts._1).isEqualTo(startEntryCounts._1 + expectedNewEntries);
+                assertThat(endEntryCounts._2).isEqualTo(startEntryCounts._2 + expectedNewEntries);
+
+                lastRefStreamDefinition.set(refStreamDefinition);
+
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
 
-            ((RefDataOffHeapStore) refDataStore).logAllContents();
+//            ((RefDataOffHeapStore) refDataStore).logAllContents();
 
             RefDataProcessingInfo refDataProcessingInfo = refDataStore.getProcessingInfo(refStreamDefinition).get();
 
@@ -241,7 +426,7 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         });
     }
 
-    private void loadData(
+    private int loadData(
             final RefStreamDefinition refStreamDefinition,
             final long effectiveTimeMs,
             final int commitInterval,
@@ -251,11 +436,13 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
             final List<Tuple3<MapDefinition, String, StringValue>> keyValueLoadedData,
             final List<Tuple3<MapDefinition, Range<Long>, StringValue>> keyRangeValueLoadedData) throws Exception {
 
+
+        final int entriesPerMapDef = 1;
         try (RefDataLoader loader = refDataStore.loader(refStreamDefinition, effectiveTimeMs)) {
             loader.initialise(overwriteExisting);
             loader.setCommitInterval(commitInterval);
 
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < entriesPerMapDef; i++) {
                 // put key/values into two mapDefs
                 mapNames.stream()
                         .map(name -> new MapDefinition(refStreamDefinition, name))
@@ -264,7 +451,7 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                             String key = "key" + cnt;
                             StringValue value = StringValue.of("value" + cnt);
                             LOGGER.debug("Putting cnt {}, key {}, value {}", cnt, key, value);
-                            loader.put(mapDefinition, key, value, overwriteExisting);
+                            loader.put(mapDefinition, key, value);
 
                             keyValueLoadedData.add(Tuple.of(mapDefinition, key, value));
                         });
@@ -277,12 +464,21 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                             Range<Long> keyRange = new Range<>((long) (cnt * 10), (long) ((cnt * 10) + 10));
                             StringValue value = StringValue.of("value" + cnt);
                             LOGGER.debug("Putting cnt {}, key-range {}, value {}", cnt, keyRange, value);
-                            loader.put(mapDefinition, keyRange, value, overwriteExisting);
+                            loader.put(mapDefinition, keyRange, value);
                             keyRangeValueLoadedData.add(Tuple.of(mapDefinition, keyRange, value));
                         });
             }
 
             loader.completeProcessing();
         }
+
+        RefDataProcessingInfo processingInfo = refDataStore.getProcessingInfo(refStreamDefinition).get();
+
+        assertThat(processingInfo.getProcessingState()).isEqualTo(RefDataProcessingInfo.ProcessingState.COMPLETE);
+
+        boolean isDataLoaded = refDataStore.isDataLoaded(refStreamDefinition);
+        assertThat(isDataLoaded).isTrue();
+
+        return entriesPerMapDef * mapNames.size();
     }
 }

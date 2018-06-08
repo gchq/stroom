@@ -1315,6 +1315,13 @@ public class DefaultProperties {
                 .description("The maximum size in bytes for the ref loader off heap store. There must be available space on the disk to accommodate this size.")
                 .editable(false)
                 .build());
+
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.refloader.offheapstore.deleteAge")
+                .value("30d")
+                .description("The time to retain reference data for in the off heap store. The time is taken from the time that the reference stream was last accessed, e.g. a lookup was made against it.")
+                .editable(true)
+                .build());
         // ========================================END===========================================
 
         return Collections.unmodifiableList(list);

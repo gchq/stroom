@@ -17,29 +17,25 @@
 package stroom.pipeline.filter;
 
 import com.sun.xml.fastinfoset.sax.SAXDocumentSerializer;
-import io.vavr.Tuple3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Range;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
-import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
-import stroom.query.api.v2.DocRef;
 import stroom.refdata.MapStoreHolder;
 import stroom.refdata.RefDataLoaderHolder;
 import stroom.refdata.offheapstore.FastInfosetValue;
 import stroom.refdata.offheapstore.MapDefinition;
 import stroom.refdata.offheapstore.RefDataLoader;
 import stroom.refdata.offheapstore.RefDataValue;
+import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.refdata.offheapstore.StringValue;
 import stroom.refdata.saxevents.OffHeapEventListInternPool;
 import stroom.util.CharBuffer;
@@ -49,8 +45,6 @@ import stroom.util.shared.Severity;
 import javax.inject.Inject;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -107,19 +101,12 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     private static final String TO_ELEMENT = "to";
     private static final String VALUE_ELEMENT = "value";
 
-    private final MapStoreHolder mapStoreHolder;
-    private final StreamHolder streamHolder;
-    private final PipelineHolder pipelineHolder;
-    private final EventListInternPool internPool;
-    private final OffHeapEventListInternPool offHeapEventListInternPool;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final RefDataLoaderHolder refDataLoaderHolder;
 
     private final SAXDocumentSerializer saxDocumentSerializer = new SAXDocumentSerializer();
     private final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     private final CharBuffer contentBuffer = new CharBuffer(20);
-    private final List<Tuple3> keyValueEntries = new ArrayList<>();
-    private final List<Tuple3> rangeValueEntries = new ArrayList<>();
 
     private String mapName;
     private String key;
@@ -139,18 +126,12 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     @Inject
     public ReferenceDataFilter(final MapStoreHolder mapStoreHolder,
                                final StreamHolder streamHolder,
-                               final PipelineHolder pipelineHolder,
                                final EventListInternPool internPool,
                                final ErrorReceiverProxy errorReceiverProxy,
                                final OffHeapEventListInternPool offHeapEventListInternPool,
                                final RefDataLoaderHolder refDataLoaderHolder) {
-        this.mapStoreHolder = mapStoreHolder;
-        this.streamHolder = streamHolder;
-        this.pipelineHolder = pipelineHolder;
-        this.internPool = internPool;
         this.errorReceiverProxy = errorReceiverProxy;
-        this.offHeapEventListInternPool = offHeapEventListInternPool;
-        this.refDataLoaderHolder =refDataLoaderHolder;
+        this.refDataLoaderHolder = refDataLoaderHolder;
     }
 
 
@@ -158,8 +139,6 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     public void startStream() {
         super.startStream();
         // build the definition of the stream that is being processed
-        final PipelineEntity pipelineEntity = Objects.requireNonNull(pipelineHolder.getPipeline());
-        final DocRef pipelineDocRef = DocRefUtil.create(pipelineEntity);
         contentBuffer.clear();
         byteArrayOutputStream.reset();
         saxDocumentSerializer.reset();
@@ -167,7 +146,16 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         if (refDataLoaderHolder.getRefDataLoader() == null) {
             errorReceiverProxy.log(Severity.FATAL_ERROR, null, getElementId(), "RefDataLoader is missing", null);
         }
-        refDataLoaderHolder.getRefDataLoader().initialise(overrideExistingValues);
+        boolean didInitSucceed = refDataLoaderHolder.getRefDataLoader().initialise(overrideExistingValues);
+        if (!didInitSucceed) {
+            RefStreamDefinition refStreamDefinition = refDataLoaderHolder.getRefDataLoader().getRefStreamDefinition();
+            errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
+                    LambdaLogger.buildMessage("A processing info entry already exists for this reference pipeline {}, version {}, streamId {}, stream No {}",
+                            refStreamDefinition.getPipelineDocRef(),
+                            refStreamDefinition.getPipelineVersion(),
+                            refStreamDefinition.getStreamId(),
+                            refStreamDefinition.getStreamNo()), null);
+        }
     }
 
     /**
@@ -273,31 +261,42 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                             // TODO we may be able to pass a Consumer<ByteBuffer> and then use a ByteBufferOutputStream
                             // to write directly to a direct byteBuffer, however we will not know the size up front
                             LOGGER.trace("Putting key {} into map {}", key, mapDefinition);
-                            refDataLoaderHolder.getRefDataLoader()
-                                    .put(mapDefinition, key, refDataValue, overrideExistingValues);
+                            boolean didPutSucceed = refDataLoaderHolder.getRefDataLoader()
+                                    .put(mapDefinition, key, refDataValue);
+                            if (!didPutSucceed) {
+                                errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
+                                        LambdaLogger.buildMessage(
+                                                "Unable to load entry for key [{}] as an entry already exists in the store",
+                                                key), null);
+
+                            }
                         } else if (rangeFrom != null && rangeTo != null) {
                             if (rangeFrom > rangeTo) {
-                                errorReceiverProxy
-                                        .log(Severity.ERROR, null, getElementId(),
-                                                "Range from '" + rangeFrom
-                                                        + "' must be less than or equal to range to '" + rangeTo + "'",
-                                                null);
+                                errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
+                                        "Range from '" + rangeFrom
+                                                + "' must be less than or equal to range to '" + rangeTo + "'",
+                                        null);
                             } else if (rangeFrom < 0 || rangeTo < 0) {
                                 // negative values cause problems for the ordering of data in LMDB so prevent their use
                                 // when using byteBuffer.putLong, -10, 0 & 10 will be stored in LMDB as 0, 10, -10
-                                errorReceiverProxy
-                                        .log(Severity.ERROR, null, getElementId(),
-                                                LambdaLogger.buildMessage(
-                                                        "Only non-negative numbers are supported (from: {}, to: {})",
-                                                        rangeFrom, rangeTo),null);
+                                errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
+                                        LambdaLogger.buildMessage(
+                                                "Only non-negative numbers are supported (from: {}, to: {})",
+                                                rangeFrom, rangeTo), null);
 
                             } else {
                                 // convert from inclusive rangeTo to exclusive rangeTo
                                 // if from==to we still record it as a range
                                 final Range<Long> range = new Range<>(rangeFrom, rangeTo + 1);
                                 LOGGER.trace("Putting range {} into map {}", range, mapDefinition);
-                                refDataLoaderHolder.getRefDataLoader()
-                                        .put(mapDefinition, range, refDataValue, overrideExistingValues);
+                                boolean didPutSucceed = refDataLoaderHolder.getRefDataLoader()
+                                        .put(mapDefinition, range, refDataValue);
+                                if (!didPutSucceed) {
+                                    errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
+                                            LambdaLogger.buildMessage(
+                                                    "Unable to load entry for range [{}] to [{}] as an entry already exists in the store",
+                                                    rangeFrom, rangeTo), null);
+                                }
                             }
                         }
                     }

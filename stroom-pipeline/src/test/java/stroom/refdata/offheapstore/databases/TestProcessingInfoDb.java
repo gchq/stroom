@@ -75,7 +75,7 @@ public class TestProcessingInfoDb extends AbstractLmdbDbTest {
                 34567890L,
                 5678901L,
                 789012L,
-                RefDataProcessingInfo.ProcessingState.IN_PROGRESS);
+                RefDataProcessingInfo.ProcessingState.LOAD_IN_PROGRESS);
 
         boolean didSucceed = false;
         didSucceed = processingInfoDb.put(refStreamDefinitionA, refDataProcessingInfoA, false);
@@ -108,7 +108,7 @@ public class TestProcessingInfoDb extends AbstractLmdbDbTest {
                 234L,
                 123L,
                 345L,
-                RefDataProcessingInfo.ProcessingState.IN_PROGRESS);
+                RefDataProcessingInfo.ProcessingState.LOAD_IN_PROGRESS);
 
         boolean didSucceed = false;
 
@@ -149,7 +149,7 @@ public class TestProcessingInfoDb extends AbstractLmdbDbTest {
                 234L,
                 123L,
                 345L,
-                RefDataProcessingInfo.ProcessingState.IN_PROGRESS);
+                RefDataProcessingInfo.ProcessingState.LOAD_IN_PROGRESS);
 
         boolean didSucceed = false;
 

@@ -25,6 +25,8 @@ import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Range;
+import stroom.jobsystem.JobTrackedSchedule;
+import stroom.properties.StroomPropertyService;
 import stroom.refdata.lmdb.LmdbUtils;
 import stroom.refdata.offheapstore.databases.KeyValueStoreDb;
 import stroom.refdata.offheapstore.databases.MapUidForwardDb;
@@ -32,6 +34,7 @@ import stroom.refdata.offheapstore.databases.MapUidReverseDb;
 import stroom.refdata.offheapstore.databases.ProcessingInfoDb;
 import stroom.refdata.offheapstore.databases.RangeStoreDb;
 import stroom.refdata.offheapstore.databases.ValueStoreDb;
+import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -39,7 +42,9 @@ import javax.inject.Inject;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -56,6 +61,8 @@ public class RefDataOffHeapStore implements RefDataStore {
 
     public static final long PROCESSING_INFO_UPDATE_DELAY_MS = Duration.of(1, ChronoUnit.HOURS).toMillis();
 
+    private static final String DATA_RETENTION_AGE_PROP_KEY = "stroom.refloader.offheapstore.deleteAge";
+
     private final Path dbDir;
     private final long maxSize;
 
@@ -69,14 +76,15 @@ public class RefDataOffHeapStore implements RefDataStore {
     private final MapUidReverseDb mapUidReverseDb;
     private final ProcessingInfoDb processingInfoDb;
     private final MapDefinitionUIDStore mapDefinitionUIDStore;
+    private final StroomPropertyService stroomPropertyService;
 
     // For synchronising access to the data belonging to a MapDefinition
     private final Striped<Semaphore> stripedSemaphore;
 
     /**
-     * @param dbDir   The directory the LMDB environment will be created in, it must already exist
-     * @param maxSize The max size in bytes of the environment. This should be less than the available
-     *                disk space for dbDir. This size covers all DBs created in this environment.
+     * @param dbDir                 The directory the LMDB environment will be created in, it must already exist
+     * @param maxSize               The max size in bytes of the environment. This should be less than the available
+     * @param stroomPropertyService
      */
     @Inject
     RefDataOffHeapStore(
@@ -87,7 +95,9 @@ public class RefDataOffHeapStore implements RefDataStore {
             final RangeStoreDb.Factory rangeStoreDbFactory,
             final MapUidForwardDb.Factory mapUidForwardDbFactory,
             final MapUidReverseDb.Factory mapUidReverseDbFactory,
-            final ProcessingInfoDb.Factory processingInfoDbFactory) {
+            final ProcessingInfoDb.Factory processingInfoDbFactory,
+            final StroomPropertyService stroomPropertyService) {
+
         this.dbDir = dbDir;
         this.maxSize = maxSize;
 
@@ -116,8 +126,8 @@ public class RefDataOffHeapStore implements RefDataStore {
         this.mapUidForwardDb = mapUidForwardDbFactory.create(lmdbEnvironment);
         this.mapUidReverseDb = mapUidReverseDbFactory.create(lmdbEnvironment);
         this.processingInfoDb = processingInfoDbFactory.create(lmdbEnvironment);
-
         this.mapDefinitionUIDStore = new MapDefinitionUIDStore(lmdbEnvironment, mapUidForwardDb, mapUidReverseDb);
+        this.stroomPropertyService = stroomPropertyService;
 
         this.stripedSemaphore = Striped.lazyWeakSemaphore(100, 1);
     }
@@ -157,7 +167,8 @@ public class RefDataOffHeapStore implements RefDataStore {
     @Override
     public Optional<RefDataValue> getValue(final MapDefinition mapDefinition,
                                            final String key) {
-        return Optional.empty();
+        return getValueProxy(mapDefinition, key)
+                .flatMap(RefDataValueProxy::supplyValue);
     }
 
     @Override
@@ -254,6 +265,7 @@ public class RefDataOffHeapStore implements RefDataStore {
      * should be used in a try with resources block to ensure any transactions are closed, e.g.
      * <pre>try (RefDataLoader refDataLoader = refDataOffHeapStore.getLoader(...)) { ... }</pre>
      */
+    @Override
     public RefDataLoader loader(final RefStreamDefinition refStreamDefinition, final long effectiveTimeMs) {
         return new RefDataLoaderImpl(
                 this,
@@ -267,6 +279,77 @@ public class RefDataOffHeapStore implements RefDataStore {
                 effectiveTimeMs);
     }
 
+    @Override
+    public long getKeyValueEntryCount() {
+        return keyValueStoreDb.getEntryCount();
+    }
+
+    @Override
+    public long getKeyRangeValueEntryCount() {
+        return rangeStoreDb.getEntryCount();
+    }
+
+    @StroomSimpleCronSchedule(cron = "2 * *") // 02:00 every day
+    @JobTrackedSchedule(
+            jobName = "Ref Data Store Purge",
+            description = "Purge old reference data form the off heap store, as defined by " + DATA_RETENTION_AGE_PROP_KEY)
+    public void purgeOldData() {
+
+        //TODO
+
+        //open a write txn
+        //open a cursor on the process info table to scan all records
+        //subtract purge age prop val from current time to give purge cut off ms
+        //for each proc info record one test the last access time against the cut off time (without de-serialising to long)
+        //if it is older than cut off date then change its state to PURGE_IN_PROGRESS
+        //open a ranged cursor on the map forward table to scan all map defs for that stream def
+        //for each map def get the map uid
+        //open a cursor on key/value store scanning over all record for this map uid
+        //for each one get the valueStoreKey
+        //look up the valueStoreKey in the references DB and establish if this is the last ref for this value
+        //if it is, delete the value entry
+        //now delete the key/value entry
+        //do the same for the keyrange/value DB
+        //commit every N key/value or keyrange/value entries
+        //now delete the mapdef<=>uid pair
+        //now delete the proc info entry
+
+        //process needs to be idempotent so we can continue a part finished purge. A new txn MUST always check the
+        //processing info state to ensure it is still PURGE_IN_PROGRESS in case another txn has started a load, in which
+        //case we won't purge. A purge txn must wrap at least the deletion of the key(range)/entry, the value (if no other
+        //refs). The deletion of the mapdef<=>uid paiur must be done in a txn to ensure consistency.
+        //Each processing info entry should be be fetched with a read txn, then get a StripedSemaphore for the streamdef
+        //then open the write txn. This should stop any conflict with load jobs for that stream.
+
+        //when overwrites happen we may have two values that had an association with same mapDef + key.  The above process
+        //will only remove the currently associated value.  We would have to scan the whole value table to look for
+
+
+        // streamDef => mapDefs
+        // mapDef => mapUID
+        // mapUID => ValueKeys
+        // ValueKey => value
+
+        // <pipe uuid 16><pipe ver 1><stream id 8><stream no 8> => <create time 8><last access time 8><effective time 8><state 1>
+        // <pipe uuid 16><pipe ver 1><stream id 8><stream no 8><map name ?> => <mapUID 4>
+        // <mapUID 4> => <pipe uuid 16><pipe ver 1><stream id 8><stream no 8><map name ?>
+        // <mapUID 4><string Key ?> => <valueHash 4><id 2>
+        // <mapUID 4><range start 8><range end 8> => <valueHash 4><id 2>
+        // <valueHash 4><id 2> => <value type 1><value bytes ?>
+        // <valueHash 4><id 2> => <reference count 4>
+
+        // increment ref count when
+        // - putting new key(Range)/Value entry + new value entry (set initial ref count at 1)
+        // - putting new key(Range)/Value entry with existing value entry
+        // - overwrite key(Range)/Value entry (+1 on new value key)
+
+        // decrement ref count when
+        // - overwrite key(Range)/Value entry (-1 on old value key)
+        // - delete key(Range)/Value entry
+
+        // change to ref counter MUST be done in same txn as the thing that is making it change, e.g the KV entry removal
+    }
+
     private void doSynchronisedWork(final RefStreamDefinition refStreamDefinition, final Runnable work) {
         final Semaphore semaphore = stripedSemaphore.get(refStreamDefinition);
         try {
@@ -277,7 +360,7 @@ public class RefDataOffHeapStore implements RefDataStore {
             } finally {
                 semaphore.release();
             }
-        } catch(final InterruptedException e) {
+        } catch (final InterruptedException e) {
             LOGGER.warn("Thread interrupted waiting to acquire semaphore for {}", refStreamDefinition);
             Thread.currentThread().interrupt();
         }
@@ -315,14 +398,24 @@ public class RefDataOffHeapStore implements RefDataStore {
         private final MapDefinitionUIDStore mapDefinitionUIDStore;
         private final ProcessingInfoDb processingInfoDb;
         private final Env<ByteBuffer> lmdbEnvironment;
-        private boolean initialised = false;
         private final RefStreamDefinition refStreamDefinition;
         private final long effectiveTimeMs;
         private int maxPutsBeforeCommit = Integer.MAX_VALUE;
         private int putsCounter = 0;
+        private int successfulPutsCounter = 0;
+        private boolean overwriteExisting = false;
+        private Instant startTime = Instant.EPOCH;
+        private LoaderState currentLoaderState = LoaderState.NEW;
 
         // TODO we could just hit lmdb each time, but there may be serde costs
         private final Map<MapDefinition, UID> mapDefinitionToUIDMap = new HashMap<>();
+
+        private enum LoaderState {
+            NEW,
+            INITIALISED,
+            COMPLETED,
+            CLOSED
+        }
 
         private RefDataLoaderImpl(final RefDataOffHeapStore refDataOffHeapStore,
                                   final KeyValueStoreDb keyValueStoreDb,
@@ -350,21 +443,24 @@ public class RefDataOffHeapStore implements RefDataStore {
             return refStreamDefinition;
         }
 
-        public void initialise(final boolean overwriteExisting) {
+        @Override
+        public boolean initialise(final boolean overwriteExisting) {
             LOGGER.debug("initialise called, overwriteExisting: {}", overwriteExisting);
-            throwExceptionIfAlreadyInitialised();
+            checkCurrentState(LoaderState.NEW);
+
+            startTime = Instant.now();
 
             // TODO create processed streams entry if it doesn't exist with a state of IN_PROGRESS
             // TODO if it does exist update the update time
 
             beginTxn();
-            this.initialised = true;
+            this.overwriteExisting = overwriteExisting;
 
             final RefDataProcessingInfo refDataProcessingInfo = new RefDataProcessingInfo(
                     System.currentTimeMillis(),
                     System.currentTimeMillis(),
                     effectiveTimeMs,
-                    RefDataProcessingInfo.ProcessingState.IN_PROGRESS);
+                    RefDataProcessingInfo.ProcessingState.LOAD_IN_PROGRESS);
 
             // TODO need to consider how to prevent multiple threads trying to load the same
             // ref data set at once
@@ -373,20 +469,25 @@ public class RefDataOffHeapStore implements RefDataStore {
             boolean didPutSucceed = processingInfoDb.put(
                     writeTxn, refStreamDefinition, refDataProcessingInfo, overwriteExisting);
 
-            if (!overwriteExisting && !didPutSucceed) {
-                throw new RuntimeException(LambdaLogger.buildMessage(
-                        "Unable to create processing info entry as one already exists for key {}", refStreamDefinition));
-            }
+
+            currentLoaderState = LoaderState.INITIALISED;
+            return didPutSucceed;
         }
 
+        @Override
         public void completeProcessing() {
             LOGGER.trace("Completing processing (put count {})", putsCounter);
-            throwExceptionIfNotInitialised();
+            checkCurrentState(LoaderState.INITIALISED);
             beginTxnIfRequired();
 
             // Set the processing info record to COMPLETE and update the last update time
             processingInfoDb.updateProcessingState(
                     writeTxn, refStreamDefinition, RefDataProcessingInfo.ProcessingState.COMPLETE);
+
+            final Duration loadDuration = Duration.between(startTime, Instant.now());
+            LOGGER.info("Successfully Loaded {} entries out of {} attempts in {} for {}",
+                    successfulPutsCounter, putsCounter, loadDuration, refStreamDefinition);
+            currentLoaderState = LoaderState.COMPLETED;
         }
 
         @Override
@@ -396,51 +497,50 @@ public class RefDataOffHeapStore implements RefDataStore {
         }
 
         @Override
-        public void put(final MapDefinition mapDefinition,
-                        final String key,
-                        final RefDataValue refDataValue,
-                        final boolean overwriteExistingValue) {
+        public boolean put(final MapDefinition mapDefinition,
+                           final String key,
+                           final RefDataValue refDataValue) {
+
             Objects.requireNonNull(mapDefinition);
             Objects.requireNonNull(key);
             Objects.requireNonNull(refDataValue);
 
-            throwExceptionIfNotInitialised();
+            checkCurrentState(LoaderState.INITIALISED);
             beginTxnIfRequired();
 
             final UID mapUid = getOrCreateUid(mapDefinition);
 
             //get the ValueStoreKey for the RefDataValue (creating the entry if it doesn't exist)
             final ValueStoreKey valueStoreKey = valueStoreDb.getOrCreate(writeTxn, refDataValue);
+
+            // TODO once the reference table is in will need to add an entry to the references DB
+            // to link this mapDef to the value record.
 
             final KeyValueStoreKey keyValueStoreKey = new KeyValueStoreKey(mapUid, key);
 
             // assuming it is cheaper to just try the put and let LMDB handle duplicates rather than
             // do a get then optional put.
             boolean didPutSucceed = keyValueStoreDb.put(
-                    writeTxn, keyValueStoreKey, valueStoreKey, overwriteExistingValue);
+                    writeTxn, keyValueStoreKey, valueStoreKey, overwriteExisting);
+
+            if (didPutSucceed) {
+                successfulPutsCounter++;
+            }
 
             commitIfRequired();
 
-            // TODO change to return didPutSucceed and not throw exception
-            if (!overwriteExistingValue && !didPutSucceed) {
-                throw new RuntimeException(LambdaLogger.buildMessage(
-                        "Entry already exists for key {} and overwriteExisting is false", keyValueStoreKey));
-            }
+            return didPutSucceed;
         }
 
         @Override
-        public void put(final MapDefinition mapDefinition,
-                        final Range<Long> keyRange,
-                        final RefDataValue refDataValue,
-                        final boolean overwriteExistingValue) {
+        public boolean put(final MapDefinition mapDefinition,
+                           final Range<Long> keyRange,
+                           final RefDataValue refDataValue) {
             Objects.requireNonNull(mapDefinition);
             Objects.requireNonNull(keyRange);
             Objects.requireNonNull(refDataValue);
 
-            throwExceptionIfNotInitialised();
-            beginTxnIfRequired();
-
-            throwExceptionIfNotInitialised();
+            checkCurrentState(LoaderState.INITIALISED);
             beginTxnIfRequired();
 
             final UID mapUid = getOrCreateUid(mapDefinition);
@@ -448,30 +548,37 @@ public class RefDataOffHeapStore implements RefDataStore {
             //get the ValueStoreKey for the RefDataValue (creating the entry if it doesn't exist)
             final ValueStoreKey valueStoreKey = valueStoreDb.getOrCreate(writeTxn, refDataValue);
 
+            // TODO once the reference table is in will need to add an entry to the references DB
+            // to link this mapDef to the value record.
+
             final RangeStoreKey rangeStoreKey = new RangeStoreKey(mapUid, keyRange);
 
             // assuming it is cheaper to just try the put and let LMDB handle duplicates rather than
             // do a get then optional put.
             boolean didPutSucceed = rangeStoreDb.put(
-                    writeTxn, rangeStoreKey, valueStoreKey, overwriteExistingValue);
+                    writeTxn, rangeStoreKey, valueStoreKey, overwriteExisting);
 
-            commitIfRequired();
-
-            // TODO change to return didPutSucceed and not throw exception
-            if (!overwriteExistingValue && !didPutSucceed) {
-                throw new RuntimeException(LambdaLogger.buildMessage(
-                        "Entry already exists for key {} and overwriteExisting is false", rangeStoreKey));
+            if (didPutSucceed) {
+                successfulPutsCounter++;
             }
+            commitIfRequired();
+            return didPutSucceed;
         }
 
         @Override
         public void close() {
             LOGGER.trace("Close called");
+
+            if (currentLoaderState.equals(LoaderState.INITIALISED)) {
+                LOGGER.warn(LambdaLogger.buildMessage("Reference data loader for {} was initialised but then closed before being completed",
+                        refStreamDefinition));
+            }
             if (writeTxn != null) {
                 LOGGER.trace("Committing transaction (put count {})", putsCounter);
                 writeTxn.commit();
                 writeTxn.close();
             }
+            currentLoaderState = LoaderState.CLOSED;
         }
 
         private void beginTxn() {
@@ -525,15 +632,17 @@ public class RefDataOffHeapStore implements RefDataStore {
             }
         }
 
-        private void throwExceptionIfNotInitialised() {
-            if (!initialised) {
-                throw new RuntimeException("Loader not initialised");
+        private void checkCurrentState(final LoaderState... validStates) {
+            boolean isCurrentStateValid = false;
+            for (LoaderState loaderState : validStates) {
+                if (currentLoaderState.equals(loaderState)) {
+                    isCurrentStateValid = true;
+                    break;
+                }
             }
-        }
-
-        private void throwExceptionIfAlreadyInitialised() {
-            if (initialised) {
-                throw new RuntimeException("Loader is already initialised");
+            if (!isCurrentStateValid) {
+                throw new IllegalStateException(LambdaLogger.buildMessage("Current loader state: {}, valid states: {}",
+                        currentLoaderState, Arrays.toString(validStates)));
             }
         }
     }

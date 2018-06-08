@@ -17,8 +17,6 @@
 
 package stroom.refdata.offheapstore;
 
-import stroom.util.logging.LambdaLogger;
-
 import java.util.Objects;
 
 public class RefDataProcessingInfo {
@@ -89,10 +87,21 @@ public class RefDataProcessingInfo {
 
     public enum ProcessingState {
 
-        IN_PROGRESS((byte)0),
-        COMPLETE((byte)1);
+        // byte values must be unique obviously
+        LOAD_IN_PROGRESS((byte)0),
+        PURGE_IN_PROGRESS((byte)1),
+        COMPLETE((byte)2);
 
         private final byte id;
+
+        private static ProcessingState[] states = new ProcessingState[ProcessingState.values().length];
+
+        static {
+            for (ProcessingState state : ProcessingState.values()) {
+                int idx = state.getId();
+                states[idx] = state;
+            }
+        }
 
         ProcessingState(final byte id) {
             this.id = id;
@@ -103,13 +112,14 @@ public class RefDataProcessingInfo {
         }
 
         public static ProcessingState fromByte(final byte id) {
-            for (ProcessingState processingState : ProcessingState.values()) {
-                if (id == processingState.id) {
-                    return processingState;
-                }
-            }
-            throw new RuntimeException(
-                    LambdaLogger.buildMessage("Unable to find ProcessingState for id {}", Byte.toString(id)));
+            return states[id];
+//            for (ProcessingState processingState : ProcessingState.values()) {
+//                if (id == processingState.id) {
+//                    return processingState;
+//                }
+//            }
+//            throw new RuntimeException(
+//                    LambdaLogger.buildMessage("Unable to find ProcessingState for id {}", Byte.toString(id)));
         }
     }
 

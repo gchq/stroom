@@ -40,7 +40,7 @@ public class TestRefDataProcessingInfoSerde extends AbstractSerdeTest {
                 1,
                 1,
                 1,
-                RefDataProcessingInfo.ProcessingState.IN_PROGRESS);
+                RefDataProcessingInfo.ProcessingState.LOAD_IN_PROGRESS);
 
         final RefDataProcessingInfo expectedOutput = new RefDataProcessingInfo(
                 1,
@@ -65,13 +65,13 @@ public class TestRefDataProcessingInfoSerde extends AbstractSerdeTest {
                 1,
                 1,
                 1,
-                RefDataProcessingInfo.ProcessingState.IN_PROGRESS);
+                RefDataProcessingInfo.ProcessingState.LOAD_IN_PROGRESS);
 
         final RefDataProcessingInfo expectedOutput = new RefDataProcessingInfo(
                 1,
                 123,
                 1,
-                RefDataProcessingInfo.ProcessingState.IN_PROGRESS);
+                RefDataProcessingInfo.ProcessingState.LOAD_IN_PROGRESS);
 
         doByteBufferModificationTest(
                 input,
@@ -89,7 +89,7 @@ public class TestRefDataProcessingInfoSerde extends AbstractSerdeTest {
                 1,
                 1,
                 1,
-                RefDataProcessingInfo.ProcessingState.IN_PROGRESS);
+                RefDataProcessingInfo.ProcessingState.LOAD_IN_PROGRESS);
 
         final RefDataProcessingInfo expectedOutput = new RefDataProcessingInfo(
                 1,

@@ -32,6 +32,7 @@ public class MapDefinition {
 
     private final RefStreamDefinition refStreamDefinition;
     private final String mapName;
+
     private final int hashCode;
 
     public MapDefinition(final RefStreamDefinition refStreamDefinition, final String mapName) {

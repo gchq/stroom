@@ -29,6 +29,7 @@ public class RefStreamDefinition {
     private final byte pipelineVersion;
     private final long streamId;
     private final long streamNo;
+
     private final int hashCode;
 
     public RefStreamDefinition(final String pipelineUuid,

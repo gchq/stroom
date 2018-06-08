@@ -99,4 +99,9 @@ public interface RefDataStore {
                              final Function<ByteBuffer, T> valueMapper);
 
     RefDataLoader loader(final RefStreamDefinition refStreamDefinition, final long effectiveTimeMs);
+
+    long getKeyValueEntryCount();
+
+    long getKeyRangeValueEntryCount();
+
 }
