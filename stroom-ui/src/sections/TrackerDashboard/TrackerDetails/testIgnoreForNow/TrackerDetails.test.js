@@ -7,7 +7,6 @@ import renderer from "react-test-renderer";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import fetchMock from "fetch-mock";
-import expect from "expect"; // You can use any testing library
 
 import { fetchTrackers } from "../../streamTasksResourceClient";
 
@@ -20,7 +19,7 @@ describe("test", () => {
     fetchMock.restore();
   });
 
-  it("creates trackers when fetching trackers has been done", () => {
+  test("creates trackers when fetching trackers has been done", () => {
     fetchMock.getOnce("/trackers", {
       body: { streamTrackers: ["tracker"] },
       headers: { "content-type": "application/json" }

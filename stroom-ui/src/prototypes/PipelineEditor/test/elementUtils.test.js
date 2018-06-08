@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import expect from 'expect';
-
 import { groupByCategory, groupByCategoryFiltered, isValidChildType } from '../elementUtils';
 
 import { ElementCategories } from '../ElementCategories';
@@ -23,7 +21,7 @@ import { elements, testElementTypes, testElementProperties } from './elements.te
 
 describe('Element Utils', () => {
   describe('#groupByCategory', () => {
-    it('should map by category', () => {
+    test('should map by category', () => {
       // When
       const byCategory = groupByCategory(testElementTypes);
 
@@ -41,15 +39,18 @@ describe('Element Utils', () => {
   });
 
   describe('#groupByCategoryFiltered', () => {
-    it('should present the parsers and destinations for a parent of source', () => {
-      const byCategory = groupByCategoryFiltered(testElementTypes, elements.source, 0);
+    test(
+      'should present the parsers and destinations for a parent of source',
+      () => {
+        const byCategory = groupByCategoryFiltered(testElementTypes, elements.source, 0);
 
-      expect(byCategory).toHaveProperty('DESTINATION');
-      expect(byCategory).toHaveProperty('PARSER');
-      expect(Object.keys(byCategory).length).toBe(2);
-    });
+        expect(byCategory).toHaveProperty('DESTINATION');
+        expect(byCategory).toHaveProperty('PARSER');
+        expect(Object.keys(byCategory).length).toBe(2);
+      }
+    );
 
-    it('should present filters and writers for a parent of parser', () => {
+    test('should present filters and writers for a parent of parser', () => {
       const byCategory = groupByCategoryFiltered(testElementTypes, elements.dsParser, 0);
 
       expect(byCategory).toHaveProperty('FILTER');
@@ -58,7 +59,7 @@ describe('Element Utils', () => {
       expect(Object.keys(byCategory).length).toBe(2);
     });
 
-    it('should present filters and writers for a parent of filter', () => {
+    test('should present filters and writers for a parent of filter', () => {
       const byCategory = groupByCategoryFiltered(testElementTypes, elements.splitFilter, 0);
 
       expect(byCategory).toHaveProperty('FILTER');
@@ -67,47 +68,59 @@ describe('Element Utils', () => {
       expect(Object.keys(byCategory).length).toBe(2);
     });
 
-    it('should present no options if the parent is a writer, with an existing child', () => {
-      const byCategory = groupByCategoryFiltered(testElementTypes, elements.xmlWriter, 1);
-      expect(byCategory).toEqual({});
-    });
+    test(
+      'should present no options if the parent is a writer, with an existing child',
+      () => {
+        const byCategory = groupByCategoryFiltered(testElementTypes, elements.xmlWriter, 1);
+        expect(byCategory).toEqual({});
+      }
+    );
 
-    it('should present destinations for a parent of writer, with no existing child', () => {
-      const byCategory = groupByCategoryFiltered(testElementTypes, elements.xmlWriter);
+    test(
+      'should present destinations for a parent of writer, with no existing child',
+      () => {
+        const byCategory = groupByCategoryFiltered(testElementTypes, elements.xmlWriter);
 
-      expect(byCategory).toHaveProperty('DESTINATION');
-      expect(byCategory.DESTINATION).toContain(elements.fileAppender);
-      expect(byCategory.DESTINATION).toContain(elements.streamAppender);
-    });
+        expect(byCategory).toHaveProperty('DESTINATION');
+        expect(byCategory.DESTINATION).toContain(elements.fileAppender);
+        expect(byCategory.DESTINATION).toContain(elements.streamAppender);
+      }
+    );
   });
 
   describe('#isValidChildType', () => {
     describe('writer', () => {
-      it('should allow a writer with no children to connect to a destination', () => {
-        const allowed1 = isValidChildType(elements.jsonWriter, elements.streamAppender, 0);
-        expect(allowed1).toBe(true);
+      test(
+        'should allow a writer with no children to connect to a destination',
+        () => {
+          const allowed1 = isValidChildType(elements.jsonWriter, elements.streamAppender, 0);
+          expect(allowed1).toBe(true);
 
-        const allowed2 = isValidChildType(elements.jsonWriter, elements.fileAppender, 0);
-        expect(allowed2).toBe(true);
-      });
-      it('should prevent a writer with a child from connecting to a destination', () => {
-        const allowed1 = isValidChildType(elements.jsonWriter, elements.streamAppender, 1);
-        expect(allowed1).toBe(false);
+          const allowed2 = isValidChildType(elements.jsonWriter, elements.fileAppender, 0);
+          expect(allowed2).toBe(true);
+        }
+      );
+      test(
+        'should prevent a writer with a child from connecting to a destination',
+        () => {
+          const allowed1 = isValidChildType(elements.jsonWriter, elements.streamAppender, 1);
+          expect(allowed1).toBe(false);
 
-        const allowed2 = isValidChildType(elements.jsonWriter, elements.fileAppender, 1);
-        expect(allowed2).toBe(false);
-      });
-      it('should prevent a writer being connected to a filter', () => {
+          const allowed2 = isValidChildType(elements.jsonWriter, elements.fileAppender, 1);
+          expect(allowed2).toBe(false);
+        }
+      );
+      test('should prevent a writer being connected to a filter', () => {
         const allowed = isValidChildType(elements.jsonWriter, elements.recordCountFilter, 0);
         expect(allowed).toBe(false);
       });
-      it('should prevent a writer being connected to a parser', () => {
+      test('should prevent a writer being connected to a parser', () => {
         const allowed = isValidChildType(elements.jsonWriter, elements.dsParser, 0);
         expect(allowed).toBe(false);
       });
     });
     describe('destination', () => {
-      it('should prevent a destination being connected onto anything', () => {
+      test('should prevent a destination being connected onto anything', () => {
         const allowed1 = isValidChildType(elements.fileAppender, elements.dsParser, 0);
         expect(allowed1).toBe(false);
         const allowed2 = isValidChildType(elements.streamAppender, elements.dsParser, 0);
@@ -115,57 +128,60 @@ describe('Element Utils', () => {
       });
     });
     describe('source', () => {
-      it('should allow a source to connect to a destination', () => {
+      test('should allow a source to connect to a destination', () => {
         const allowed = isValidChildType(elements.source, elements.fileAppender, 0);
         expect(allowed).toBe(true);
       });
-      it('should allow a source to connect to a parser', () => {
+      test('should allow a source to connect to a parser', () => {
         const allowed = isValidChildType(elements.source, elements.dsParser, 0);
         expect(allowed).toBe(true);
       });
-      it('should prevent a source being connected to a filter', () => {
+      test('should prevent a source being connected to a filter', () => {
         const allowed = isValidChildType(elements.source, elements.schemaFilter, 0);
         expect(allowed).toBe(false);
       });
     });
     describe('parser', () => {
-      it('should prevent a parser from connecting to a destination', () => {
+      test('should prevent a parser from connecting to a destination', () => {
         const allowed = isValidChildType(elements.dsParser, elements.fileAppender, 0);
         expect(allowed).toBe(false);
       });
-      it('should prevent a parser from connecting to a parser', () => {
+      test('should prevent a parser from connecting to a parser', () => {
         const allowed = isValidChildType(elements.dsParser, elements.jsonParser, 0);
         expect(allowed).toBe(false);
       });
-      it('should allow a parser to connect to a filter', () => {
+      test('should allow a parser to connect to a filter', () => {
         const allowed = isValidChildType(elements.jsonParser, elements.schemaFilter, 0);
         expect(allowed).toBe(true);
       });
     });
     describe('target+writer', () => {
-      it('should prevent a target+writer from connecting to a parser', () => {
+      test('should prevent a target+writer from connecting to a parser', () => {
         const allowed = isValidChildType(elements.jsonWriter, elements.jsonParser, 0);
         expect(allowed).toBe(false);
       });
-      it('should prevent a target+writer to connect to a filter', () => {
+      test('should prevent a target+writer to connect to a filter', () => {
         const allowed = isValidChildType(elements.jsonWriter, elements.schemaFilter, 0);
         expect(allowed).toBe(false);
       });
-      it('should allow a target+writer to connect to a destination', () => {
+      test('should allow a target+writer to connect to a destination', () => {
         const allowed = isValidChildType(elements.jsonWriter, elements.streamAppender, 0);
         expect(allowed).toBe(true);
       });
     });
     describe('target (not writer)', () => {
-      it('should prevent a non writing target from connecting to a parser', () => {
+      test('should prevent a non writing target from connecting to a parser', () => {
         const allowed = isValidChildType(elements.recordCountFilter, elements.jsonParser, 0);
         expect(allowed).toBe(false);
       });
-      it('should prevent a non writing target from connecting to a destination', () => {
-        const allowed = isValidChildType(elements.recordCountFilter, elements.streamAppender, 0);
-        expect(allowed).toBe(false);
-      });
-      it('should allow a non writing target to connect to a filter', () => {
+      test(
+        'should prevent a non writing target from connecting to a destination',
+        () => {
+          const allowed = isValidChildType(elements.recordCountFilter, elements.streamAppender, 0);
+          expect(allowed).toBe(false);
+        }
+      );
+      test('should allow a non writing target to connect to a filter', () => {
         const allowed = isValidChildType(elements.recordCountFilter, elements.schemaFilter, 0);
         expect(allowed).toBe(true);
       });
