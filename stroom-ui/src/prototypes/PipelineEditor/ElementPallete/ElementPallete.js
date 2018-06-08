@@ -13,7 +13,7 @@ const withIsOpen = withState('isOpen', 'setIsOpen', false);
 const ElementPallete = ({ elementsByCategory, isOpen, setIsOpen }) => (
   <div className="element-pallete">
     <Button onClick={() => setIsOpen(!isOpen)}>Add New Element</Button>
-    <Transition animation="fly right" visible={isOpen} duration={500}>
+    <Transition animation="fade right" visible={isOpen} duration={500}>
       <div>
         <h2 className="element-pallete__title">Elements</h2>
 

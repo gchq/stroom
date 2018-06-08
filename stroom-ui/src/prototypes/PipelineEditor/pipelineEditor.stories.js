@@ -54,38 +54,3 @@ storiesOf('Element Pallete', module)
   })) // must be recorder after/outside of the test initialisation decorators
   .addDecorator(DragDropDecorator)
   .add('Element Pallete', () => <ElementPallete />);
-
-storiesOf('Pipeline Elements', module)
-  .addDecorator(storyFn => (
-    <div>
-      <AddElementWizard pipelineId="testPipeline" />
-      {storyFn()}
-    </div>
-  ))
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(pipelineReceived('testPipeline', testPipeline));
-    store.dispatch(elementsReceived(testElementTypes));
-    store.dispatch(elementPropertiesReceived(testElementProperties));
-  })) // must be recorder after/outside of the test initialisation decorators
-  .addDecorator(DragDropDecorator)
-  .add('Pipeline Element for Invalid Element ID', () => (
-    <PipelineElement pipelineId="testPipeline" elementId="boohokey" />
-  ))
-  .add('Pipeline Element for CSV Splitter', () => (
-    <PipelineElement
-      pipelineId="testPipeline"
-      elementId={testPipelineElements.myCsvSplitterFilter.id}
-    />
-  ))
-  .add('Pipeline Element for XSLT Filter', () => (
-    <PipelineElement pipelineId="testPipeline" elementId={testPipelineElements.myXsltFilter.id} />
-  ))
-  .add('Pipeline Element for XML Writer', () => (
-    <PipelineElement pipelineId="testPipeline" elementId={testPipelineElements.myXmlWriter1.id} />
-  ))
-  .add('Pipeline Element for Stream Appender', () => (
-    <PipelineElement
-      pipelineId="testPipeline"
-      elementId={testPipelineElements.myStreamAppender1.id}
-    />
-  ));

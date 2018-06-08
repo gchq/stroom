@@ -16,14 +16,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import{ Header } from 'semantic-ui-react';
+
 import { compose } from 'recompose';
-
 import { LineContainer, LineTo } from 'components/LineTo';
-
 import { mapObject } from 'lib/treeUtils';
-
 import { withPipeline } from './withPipeline';
-
 import { actionCreators } from './redux';
 
 import PipelineElement from './PipelineElement';
@@ -42,10 +40,7 @@ const COMMON_ELEMENT_STYLE = {
 };
 
 const PipelineEditor = ({
-  pipelineId,
-  pipeline,
-  pendingElementIdToDelete,
-  layoutInformation,
+  pipelineId, pipeline, pendingElementIdToDelete, layoutInformation,
 }) => {
   const elementStyles = mapObject(layoutInformation, l => ({
     ...COMMON_ELEMENT_STYLE,
@@ -55,13 +50,11 @@ const PipelineEditor = ({
 
   return (
     <div className="Pipeline-editor">
-      <ElementPallete />
       <LineContainer
-        className="Pipeline-editor__overview"
         lineContextId={`pipeline-lines-${pipelineId}`}
         lineElementCreators={lineElementCreators}
       >
-        <h4>Pipeline Editor {pipelineId}</h4>
+        <Header as='h4'>Pipeline Editor {pipelineId}</Header>
         {pipeline.elements.add.map(e => (
           <div key={e.id} id={e.id} style={elementStyles[e.id]}>
             <PipelineElement pipelineId={pipelineId} elementId={e.id} />
@@ -73,10 +66,6 @@ const PipelineEditor = ({
             <LineTo lineId={l.lineId} key={l.lineId} fromId={l.from} toId={l.to} lineType="curve" />
           ))}
       </LineContainer>
-
-      <div className="Pipeline-editor__settings">
-        <PipelineElementSettings pipelineId={pipelineId} />
-      </div>
     </div>
   );
 };
@@ -88,6 +77,4 @@ PipelineEditor.propTypes = {
   layoutInformation: PropTypes.object.isRequired,
 };
 
-export default compose(
-  withPipeline(),
-)(PipelineEditor);
+export default compose(withPipeline())(PipelineEditor);

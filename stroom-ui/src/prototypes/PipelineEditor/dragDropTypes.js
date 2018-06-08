@@ -16,4 +16,5 @@
 export const ItemTypes = {
   ELEMENT: 'element',
   PALLETE_ELEMENT: 'palleteElement',
+  RECYCLE_BIN: 'recycleBin',
 };
