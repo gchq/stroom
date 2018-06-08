@@ -15,4 +15,5 @@
  */
 export const ItemTypes = {
   ELEMENT: 'element',
+  PALLETE_ELEMENT: 'palleteElement',
 };
