@@ -27,7 +27,6 @@ import { actionCreators } from './redux';
 
 import PipelineElement from './PipelineElement';
 import PipelineElementSettings from './PipelineElementSettings';
-import { AddElementWizard } from './AddElementToPipeline';
 import { ElementPalette } from './ElementPalette';
 
 import lineElementCreators from './pipelineLineElementCreators';

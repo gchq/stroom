@@ -24,13 +24,10 @@ import {
 import { lineContainerReducer as lineContainer } from 'components/LineTo';
 import { explorerTreeReducer as explorerTree } from 'components/DocExplorer';
 import { dataSourceReducer as dataSources } from 'components/ExpressionBuilder';
-import {
-  expressionReducer as expressions,
-} from 'components/ExpressionBuilder';
+import { expressionReducer as expressions } from 'components/ExpressionBuilder';
 import {
   pipelineReducer as pipelines,
   elementReducer as elements,
-  addElementToPipelineWizardReducer as addElementToPipelineWizard,
 } from 'prototypes/PipelineEditor';
 import { trackerDashboardReducer as trackerDashboard } from 'sections/TrackerDashboard';
 import { errorPageReducer as errorPage } from 'sections/ErrorPage';
@@ -48,7 +45,6 @@ export default combineReducers({
   expressions,
   pipelines,
   elements,
-  addElementToPipelineWizard,
   errorPage,
   lineContainer,
 });

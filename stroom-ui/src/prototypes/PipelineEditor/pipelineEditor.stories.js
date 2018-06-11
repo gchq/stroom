@@ -27,7 +27,6 @@ import { PipelineEditor } from './index';
 
 import PipelineElement from './PipelineElement';
 import { ElementPalette } from './ElementPalette';
-import { AddElementWizard } from './AddElementToPipeline';
 
 import { actionCreators } from './redux';
 
