@@ -16,7 +16,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose } from 'recompose';
+import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
 
 import { DragSource, DropTarget } from 'react-dnd';
@@ -26,18 +26,13 @@ import { withPipeline } from './withPipeline';
 
 import { actionCreators } from './redux';
 
-import ElementContextMenu from './ElementContextMenu';
-
 import { canMovePipelineElement } from './pipelineUtils';
 
 import { ItemTypes } from './dragDropTypes';
 
-const {
-  pipelineElementSelected,
-  pipelineElementMoved,
-  openPipelineElementContextMenu,
-  closePipelineElementContextMenu,
-} = actionCreators;
+const { pipelineElementSelected, pipelineElementMoved } = actionCreators;
+
+const withContextMenu = withState('isContextMenuOpen', 'setContextMenuOpen', false);
 
 const dragSource = {
   canDrag(props) {
@@ -89,12 +84,11 @@ const PipelineElement = ({
   elementId,
   element,
   elementDefinition,
-  contextMenuElementId,
   pipelineElementSelected,
-  openPipelineElementContextMenu,
-}) => {
-  const isContextMenuOpen = !!contextMenuElementId && contextMenuElementId === elementId;
 
+  isContextMenuOpen,
+  setContextMenuOpen,
+}) => {
   let className = 'Pipeline-element';
   if (isOver) {
     className += ' Pipeline-element__over';
@@ -110,40 +104,39 @@ const PipelineElement = ({
     }
   }
 
-  const onSingleClick = () => pipelineElementSelected(pipelineId, elementId);
-  const onRightClick = (e) => {
-    openPipelineElementContextMenu(pipelineId, elementId);
-    e.preventDefault();
-  };
-
-  const dndBox = compose(connectDragSource, connectDropTarget)(<div className={className} onClick={onSingleClick} onContextMenu={onRightClick}>
-    <img className="Pipeline-element__icon" alt='X' src={require(`./images/${elementDefinition.icon}`)} />
+  return compose(connectDragSource, connectDropTarget)(<div
+    className={className}
+    onClick={() => pipelineElementSelected(pipelineId, elementId)}
+    onContextMenu={(e) => {
+        setContextMenuOpen(true);
+        e.preventDefault();
+      }}
+  >
+    <img
+      className="Pipeline-element__icon"
+      alt="X"
+      src={require(`./images/${elementDefinition.icon}`)}
+    />
     {elementId}
   </div>);
-
-  return (
-    <span>
-      {dndBox}
-      <span className="Pipeline-element__context-menu">
-        <ElementContextMenu
-          pipelineId={pipelineId}
-          elementId={elementId}
-          isOpen={isContextMenuOpen}
-        />
-      </span>
-    </span>
-  );
 };
 
 PipelineElement.propTypes = {
+  // Set by container
   pipelineId: PropTypes.string.isRequired,
-  pipeline: PropTypes.object.isRequired,
-  element: PropTypes.object.isRequired,
-  asTree: PropTypes.object.isRequired,
   elementId: PropTypes.string.isRequired,
-  contextMenuElementId: PropTypes.string,
 
+  // withPipeline
+  pipeline: PropTypes.object.isRequired,
+  asTree: PropTypes.object.isRequired,
   pipelineElementSelected: PropTypes.func.isRequired,
+
+  // withElement
+  element: PropTypes.object.isRequired,
+
+  // withContextMenu
+  isContextMenuOpen: PropTypes.bool.isRequired,
+  setContextMenuOpen: PropTypes.func.isRequired,
 };
 
 export default compose(
@@ -154,12 +147,11 @@ export default compose(
     {
       pipelineElementSelected,
       pipelineElementMoved,
-      openPipelineElementContextMenu,
-      closePipelineElementContextMenu,
     },
   ),
   withPipeline(),
   withElement(),
+  withContextMenu,
   DragSource(ItemTypes.ELEMENT, dragSource, dragCollect),
   DropTarget([ItemTypes.ELEMENT], dropTarget, dropCollect),
 )(PipelineElement);

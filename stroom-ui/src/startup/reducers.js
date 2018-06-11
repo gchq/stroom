@@ -26,7 +26,6 @@ import { explorerTreeReducer as explorerTree } from 'components/DocExplorer';
 import { dataSourceReducer as dataSources } from 'components/ExpressionBuilder';
 import {
   expressionReducer as expressions,
-  expressionEditorReducer as expressionEditors,
 } from 'components/ExpressionBuilder';
 import {
   pipelineReducer as pipelines,
@@ -47,7 +46,6 @@ export default combineReducers({
   explorerTree,
   dataSources,
   expressions,
-  expressionEditors,
   pipelines,
   elements,
   addElementToPipelineWizard,

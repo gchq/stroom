@@ -16,10 +16,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose } from 'recompose';
+import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Icon, Button } from 'semantic-ui-react';
+import { Icon, Button, Confirm } from 'semantic-ui-react';
 
 import { DragSource, DropTarget } from 'react-dnd';
 
@@ -32,15 +32,17 @@ import { actionCreators } from './redux';
 
 import { LineTo } from 'components/LineTo';
 
+import { LOGICAL_OPERATORS } from './logicalOperators';
+
 const {
   expressionTermAdded,
   expressionOperatorAdded,
   expressionItemUpdated,
   expressionItemMoved,
-  requestExpressionItemDelete,
+  expressionItemDeleted,
 } = actionCreators;
 
-const LOGICAL_OPERATORS = ['NOT', 'AND', 'OR'];
+const withPendingDeletion = withState('pendingDeletion', 'setPendingDeletion', false);
 
 const dragSource = {
   canDrag(props) {
@@ -87,8 +89,11 @@ const ExpressionOperator = ({
   expressionTermAdded,
   expressionOperatorAdded,
   expressionItemUpdated,
-  requestExpressionItemDelete,
+  expressionItemDeleted,
   expressionItemMoved,
+
+  pendingDeletion,
+  setPendingDeletion,
 
   connectDropTarget,
   isOver,
@@ -113,8 +118,16 @@ const ExpressionOperator = ({
     });
   };
 
-  const onOperatorDelete = () => {
-    requestExpressionItemDelete(expressionId, operator.uuid);
+  const onDeleteOperator = () => {
+    expressionItemDeleted(expressionId, operator.uuid);
+  };
+
+  const onCancelDeleteOperator = () => {
+    setPendingDeletion(false);
+  };
+
+  const onRequestDeleteOperator = () => {
+    setPendingDeletion(true);
   };
 
   const onEnabledChange = () => {
@@ -150,6 +163,12 @@ const ExpressionOperator = ({
         <span id={`expression-item${operator.uuid}`}>
           <Icon color={color} name="bars" />
         </span>
+        <Confirm
+          open={!!pendingDeletion}
+          content="This will delete the term, are you sure?"
+          onCancel={onCancelDeleteOperator}
+          onConfirm={onDeleteOperator}
+        />
 
         <Button.Group>
           {LOGICAL_OPERATORS.map(l => (
@@ -162,7 +181,7 @@ const ExpressionOperator = ({
             >
               {l}
             </Button>
-                ))}
+              ))}
         </Button.Group>
 
         <Button.Group floated="right">
@@ -176,12 +195,12 @@ const ExpressionOperator = ({
           </Button>
           {enabledButton}
           {!isRoot ? (
-            <Button icon="trash" compact onClick={onOperatorDelete} />
+            <Button icon="trash" compact onClick={onRequestDeleteOperator} />
               ) : (
                 <Button disabled icon="dont" compact />
               )}
         </Button.Group>
-                                           </div>))}
+      </div>))}
       <div className="operator__children">
         {isOver && dropTarget.canDrop && <div className="operator__placeholder" />}
         {operator.children
@@ -211,7 +230,7 @@ const ExpressionOperator = ({
                 );
                 break;
               default:
-                throw new Error('Invalid operator type: ' + c.type);
+                throw new Error(`Invalid operator type: ${c.type}`);
             }
 
             // Wrap it with a line to
@@ -246,8 +265,12 @@ ExpressionOperator.propTypes = {
   expressionTermAdded: PropTypes.func.isRequired,
   expressionOperatorAdded: PropTypes.func.isRequired,
   expressionItemUpdated: PropTypes.func.isRequired,
-  requestExpressionItemDelete: PropTypes.func.isRequired,
+  expressionItemDeleted: PropTypes.func.isRequired,
   expressionItemMoved: PropTypes.func.isRequired,
+
+  // withPendingDeletion
+  pendingDeletion: PropTypes.bool.isRequired,
+  setPendingDeletion: PropTypes.func.isRequired,
 
   // React DnD
   connectDropTarget: PropTypes.func.isRequired,
@@ -271,11 +294,12 @@ const DndExpressionOperator = compose(
       expressionOperatorAdded,
       expressionItemUpdated,
       expressionItemMoved,
-      requestExpressionItemDelete,
+      expressionItemDeleted,
     },
   ),
   DragSource(ItemTypes.OPERATOR, dragSource, dragCollect),
   DropTarget([ItemTypes.OPERATOR, ItemTypes.TERM], dropTarget, dropCollect),
+  withPendingDeletion,
 )(ExpressionOperator);
 
 export default DndExpressionOperator;

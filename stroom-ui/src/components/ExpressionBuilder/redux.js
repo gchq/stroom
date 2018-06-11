@@ -39,10 +39,6 @@ const actionCreators = createActions({
     expressionId,
     isEditableUserSet,
   }),
-  REQUEST_EXPRESSION_ITEM_DELETE: (expressionId, itemUuid) => ({ expressionId, itemUuid }),
-  CANCEL_EXPRESSION_ITEM_DELETE: expressionId => ({
-    expressionId,
-  }),
   EXPRESSION_CHANGED: (expressionId, expression) => ({
     expressionId,
     expression,
@@ -53,7 +49,7 @@ const actionCreators = createActions({
   }),
   EXPRESSION_OPERATOR_ADDED: (expressionId, operatorId) => ({ expressionId, operatorId }),
   EXPRESSION_ITEM_UPDATED: (expressionId, itemId, updates) => ({ expressionId, itemId, updates }),
-  CONFIRM_EXPRESSION_ITEM_DELETED: (expressionId, itemId) => ({ expressionId, itemId }),
+  EXPRESSION_ITEM_DELETED: (expressionId, itemId) => ({ expressionId, itemId }),
   EXPRESSION_ITEM_MOVED: (expressionId, itemToMove, destination) => ({
     expressionId,
     itemToMove,
@@ -161,7 +157,7 @@ const expressionReducer = handleActions(
     }),
 
     // Expression Item Deleted
-    CONFIRM_EXPRESSION_ITEM_DELETED: (state, action) => ({
+    EXPRESSION_ITEM_DELETED: (state, action) => ({
       ...state,
       [action.payload.expressionId]: deleteItemFromTree(
         state[action.payload.expressionId],
@@ -198,55 +194,4 @@ const expressionReducer = handleActions(
   defaultExpressionState,
 );
 
-//
-const defaultEditorsState = {};
-const defaultEditorState = {
-  isEditableUserSet: false,
-  pendingDeletionUuid: undefined,
-};
-
-const expressionEditorReducer = handleActions(
-  {
-    EXPRESSION_EDITOR_CREATED: (state, action) => ({
-      [action.payload.expressionId]: {
-        ...defaultEditorState,
-        ...state[action.payload.expressionId],
-      },
-    }),
-
-    EXPRESSION_EDITOR_DESTROYED: (state, action) => ({
-      [action.payload.expressionId]: undefined,
-    }),
-
-    EXPRESSION_SET_EDITABLE_BY_USER: (state, action) => ({
-      [action.payload.expressionId]: {
-        ...state[action.payload.expressionId],
-        isEditableUserSet: action.payload.isEditableUserSet,
-      },
-    }),
-
-    REQUEST_EXPRESSION_ITEM_DELETE: (state, action) => ({
-      [action.payload.expressionId]: {
-        ...state[action.payload.expressionId],
-        pendingDeletionUuid: action.payload.itemUuid,
-      },
-    }),
-
-    CONFIRM_EXPRESSION_ITEM_DELETED: (state, action) => ({
-      [action.payload.expressionId]: {
-        ...state[action.payload.expressionId],
-        pendingDeletionUuid: undefined,
-      },
-    }),
-
-    CANCEL_EXPRESSION_ITEM_DELETE: (state, action) => ({
-      [action.payload.expressionId]: {
-        ...state[action.payload.expressionId],
-        pendingDeletionUuid: undefined,
-      },
-    }),
-  },
-  defaultEditorsState,
-);
-
-export { actionCreators, expressionReducer, expressionEditorReducer, joinDictionaryTermId };
+export { actionCreators, expressionReducer, joinDictionaryTermId };

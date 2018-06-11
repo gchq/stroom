@@ -34,11 +34,11 @@ import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
 import 'styles/main.css';
 
-const { receiveDocTree, docRefPicked } = actionCreators;
+const { receivedDocTree, docRefPicked } = actionCreators;
 
 storiesOf('Document Explorer', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(receiveDocTree(testTree));
+    store.dispatch(receivedDocTree(testTree));
     store.dispatch(docRefPicked(
       'dropdown2',
       pickRandomItem(testTree, (l, n) => n.type === DOC_REF_TYPES.XSLT),

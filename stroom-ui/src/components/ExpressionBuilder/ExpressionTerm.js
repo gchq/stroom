@@ -16,10 +16,10 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import { compose } from 'recompose';
+import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Input, Button, Icon, Dropdown } from 'semantic-ui-react';
+import { Input, Button, Icon, Dropdown, Confirm } from 'semantic-ui-react';
 
 import { DragSource } from 'react-dnd';
 
@@ -29,7 +29,9 @@ import { DocRefModalPicker, actionCreators as docExplorerActionCreators } from '
 import { actionCreators, joinDictionaryTermId } from './redux';
 
 const { docRefPicked } = docExplorerActionCreators;
-const { expressionItemUpdated, requestExpressionItemDelete } = actionCreators;
+const { expressionItemUpdated, expressionItemDeleted } = actionCreators;
+
+const withPendingDeletion = withState('pendingDeletion', 'setPendingDeletion', false);
 
 const dragSource = {
   beginDrag(props) {
@@ -117,7 +119,10 @@ const ExpressionTerm = ({
   dataSource,
   expressionId,
 
-  requestExpressionItemDelete,
+  pendingDeletion,
+  setPendingDeletion,
+
+  expressionItemDeleted,
   expressionItemUpdated,
 }) => {
   const pickerId = joinDictionaryTermId(expressionId, term.uuid);
@@ -127,7 +132,16 @@ const ExpressionTerm = ({
   };
 
   const onDeleteTerm = () => {
-    requestExpressionItemDelete(expressionId, term.uuid);
+    expressionItemDeleted(expressionId, term.uuid);
+    setPendingDeletion(false);
+  }
+
+  const onCancelDeleteTerm = () => {
+    setPendingDeletion(false);
+  }
+
+  const onRequestDeleteTerm = () => {
+    setPendingDeletion(true);
   };
 
   const onEnabledChange = () => {
@@ -235,7 +249,7 @@ const ExpressionTerm = ({
           placeholder="value"
           type={valueType}
           value={term.value || ''}
-          onChange={onSingleValueChange.bind(this)}
+          onChange={onSingleValueChange}
         />
       ); // some single selection
       break;
@@ -250,14 +264,14 @@ const ExpressionTerm = ({
             placeholder="from"
             type={valueType}
             value={fromValue}
-            onChange={onFromValueChange.bind(this)}
+            onChange={onFromValueChange}
           />
           <span className="input-between__divider">to</span>
           <Input
             placeholder="to"
             type={valueType}
             value={toValue}
-            onChange={onToValueChange.bind(this)}
+            onChange={onToValueChange}
           />
         </span>
       ); // some between selection
@@ -277,7 +291,7 @@ const ExpressionTerm = ({
           placeholder="type multiple values"
           search={(options, query) => [{ key: query, value: query, text: query }]}
           selection
-          onChange={onMultipleValueChange.bind(this)}
+          onChange={onMultipleValueChange}
         />
       );
       break;
@@ -294,24 +308,30 @@ const ExpressionTerm = ({
     <span>
       <Icon color="grey" name="bars" />
     </span>
+    <Confirm
+      open={!!pendingDeletion}
+      content="This will delete the term, are you sure?"
+      onCancel={onCancelDeleteTerm}
+      onConfirm={onDeleteTerm}
+    />
     <Dropdown
       placeholder="field"
       selection
       options={fieldOptions}
-      onChange={onFieldChange.bind(this)}
+      onChange={onFieldChange}
       value={term.field}
     />
     <Dropdown
       placeholder="condition"
       selection
       options={conditionOptions}
-      onChange={onConditionChange.bind(this)}
+      onChange={onConditionChange}
       value={term.condition}
     />
     {valueWidget}
     <Button.Group floated="right">
       {enabledButton}
-      <Button compact icon="trash" onClick={onDeleteTerm.bind(this)} />
+      <Button compact icon="trash" onClick={onRequestDeleteTerm} />
     </Button.Group>
                            </div>);
 };
@@ -324,8 +344,12 @@ ExpressionTerm.propTypes = {
 
   // Actions
   expressionItemUpdated: PropTypes.func.isRequired,
-  requestExpressionItemDelete: PropTypes.func.isRequired,
+  expressionItemDeleted: PropTypes.func.isRequired,
 
+  // withPendingDeletion
+  pendingDeletion: PropTypes.bool.isRequired,
+  setPendingDeletion: PropTypes.func.isRequired,
+  
   // React DnD
   connectDragSource: PropTypes.func.isRequired,
   isDragging: PropTypes.bool.isRequired,
@@ -338,9 +362,10 @@ export default compose(
     }),
     {
       expressionItemUpdated,
-      requestExpressionItemDelete,
+      expressionItemDeleted,
     },
   ),
   DragSource(ItemTypes.TERM, dragSource, dragCollect),
   withPickedDocRef(),
+  withPendingDeletion
 )(ExpressionTerm);

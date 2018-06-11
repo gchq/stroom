@@ -13,14 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import expect from 'expect';
-
-import { 
-    guid, 
-    findMatch,
-    canMove,
-    findItem
-} from '../treeUtils';
+import { guid, findMatch, canMove, findItem } from '../treeUtils';
 
 // Denormalised so I can refer to individual elements in the tree.
 const oneOne = {
@@ -118,7 +111,7 @@ const testTree = {
 
 describe('Tree Utils', () => {
     describe('#guid()', () => {
-        it('should create distinct values 1000 times', () => {
+        test('should create distinct values 1000 times', () => {
             const numberValues = 1000;
             const set1 = new Set([]);
 
@@ -130,63 +123,63 @@ describe('Tree Utils', () => {
         })
     })
     describe('#findMatch()', () => {
-        it('should find a match when is root', () => {
+        test('should find a match when is root', () => {
             let found = findMatch(testTree, testTree);
             expect(found).toBe(true);
         });
-        it('should find a match when present within children', () => {
+        test('should find a match when present within children', () => {
             let found = findMatch(testTree, oneTwo);
             expect(found).toBe(true);
         });
-        it('should find a match when present within grand-children', () => {
+        test('should find a match when present within grand-children', () => {
             let found = findMatch(testTree, oneThreeOne);
             expect(found).toBe(true);
         });
-        it('should not find a match when missing', () => {
+        test('should not find a match when missing', () => {
             let found = findMatch(testTree, {uuid:'fifty'});
             expect(found).toBe(false);
         })
     });
     describe('#canMove()', () => {
-        it('should allow moving files to other directories', () => {
+        test('should allow moving files to other directories', () => {
             let allowed = canMove(oneFourTwo, oneThree);
             expect(allowed).toBe(true);
         });
-        it('should prevent moving file into folder its already in', () => {
+        test('should prevent moving file into folder its already in', () => {
             let allowed = canMove(oneFourTwo, oneFour);
             expect(allowed).toBe(false);
         });
-        it('should allow moving folder to other directories not inside self', () => {
+        test('should allow moving folder to other directories not inside self', () => {
             let allowed = canMove(oneFour, oneThree);
             expect(allowed).toBe(true);
         });
-        it('should prevent moving folder into one of its own children', () => {
+        test('should prevent moving folder into one of its own children', () => {
             let allowed = canMove(oneFive, oneFiveOne)
             expect(allowed).toBe(false);
         });
-        it('should prevent moving folder into one of its own grand-children', () => {
+        test('should prevent moving folder into one of its own grand-children', () => {
             let allowed = canMove(testTree, oneFiveOne)
             expect(allowed).toBe(false);
         });
-        it('should prevent moving folder into itself', () => {
+        test('should prevent moving folder into itself', () => {
             let allowed = canMove(oneFive, oneFive)
             expect(allowed).toBe(false);
         });
     });
     describe('#findItem()', () => {
-        it('should find a match when is root', () => {
+        test('should find a match when is root', () => {
             let found = findItem(testTree, testTree.uuid);
             expect(found).toBe(testTree);
         });
-        it('should find a match when present within children', () => {
+        test('should find a match when present within children', () => {
             let found = findItem(testTree, oneTwo.uuid);
             expect(found).toBe(oneTwo);
         });
-        it('should find a match when present within grand-children', () => {
+        test('should find a match when present within grand-children', () => {
             let found = findItem(testTree, oneThreeOne.uuid);
             expect(found).toBe(oneThreeOne);
         });
-        it('should not find a match when missing', () => {
+        test('should not find a match when missing', () => {
             let found = findItem(testTree, {uuid:'fifty'});
             expect(found).toBe(undefined);
         })

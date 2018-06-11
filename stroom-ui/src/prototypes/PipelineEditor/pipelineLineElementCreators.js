@@ -3,11 +3,11 @@ import React from 'react';
 const curve = ({ lineId, fromRect, toRect }) => {
   const from = {
     x: fromRect.right,
-    y: fromRect.top + fromRect.height / 3, // bit of a fiddle to get into the middle
+    y: fromRect.top + fromRect.height / 2, // bit of a fiddle to get into the middle
   };
   const to = {
     x: toRect.left,
-    y: toRect.top + toRect.height / 3,
+    y: toRect.top + toRect.height / 2,
   };
 
   // if they are inline with eachother, draw a straight line

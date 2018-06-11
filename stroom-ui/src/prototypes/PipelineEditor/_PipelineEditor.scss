@@ -1,8 +1,9 @@
 @import "./ElementPallete/ElementPallete";
 
 .Pipeline-editor {
-  display: flex;
-  flex-direction: column;
+  height: 80vh;
+  width: 100%;
+  position: relative;
 }
 
 .Pipeline-element {
@@ -44,18 +45,4 @@
 .Pipeline-element__context-menu {
   top: -2.4rem;
   position: relative;
-}
-
-.Pipeline-editor__overview {
-  padding: 2rem;
-  height: 20rem;
-  background-color: azure;
-}
-
-.Pipeline-editor__settings {
-  height: auto;
-}
-
-.Context-menu__add-menu {
-  left: 108% !important;
 }

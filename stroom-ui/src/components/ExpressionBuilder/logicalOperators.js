@@ -13,8 +13,4 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-export const ItemTypes = {
-  ELEMENT: 'element',
-  PALLETE_ELEMENT: 'palleteElement',
-  RECYCLE_BIN: 'recycleBin',
-};
+export const LOGICAL_OPERATORS = ['AND', 'OR', 'NOT'];

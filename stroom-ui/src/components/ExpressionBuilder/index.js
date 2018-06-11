@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 import ExpressionBuilder from './ExpressionBuilder';
-import { expressionReducer, expressionEditorReducer } from './redux';
+import { expressionReducer } from './redux';
 import { dataSourceReducer, actionCreators as dataSourceActionCreators } from './DataSource';
 
 export {
   ExpressionBuilder,
   expressionReducer,
-  expressionEditorReducer,
   dataSourceReducer,
   dataSourceActionCreators,
 };

@@ -36,13 +36,7 @@
     "start": "npm-run-all -p watch-css start-js",
     "build-js": "react-scripts build",
     "build": "npm-run-all build-css build-js",
-    "test":
-      "NODE_PATH=./src mocha \"./src/**/test/*.test.js\" --compilers js:babel-core/register --recursive",
-    "test-single": "NODE_PATH=./src mocha --compilers js:babel-core/register --recursive",
-    "test-watch":
-      "NODE_PATH=./src mocha \"./src/**/test/*.test.js\" --watch --compilers js:babel-core/register --recursive",
-    "test-watch-single":
-      "NODE_PATH=./src mocha --watch --compilers js:babel-core/register --recursive",
+    "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
     "storybook-js": "start-storybook -p 9001 -c .storybook",
     "storybook": "npm-run-all -p storybook-js watch-css",
@@ -64,13 +58,13 @@
     "expect": "^22.4.3",
     "fetch-mock": "^6.4.2",
     "jest": "^20.0.3",
+    "jest-fetch-mock": "^1.6.3",
     "lorem-ipsum": "^1.0.4",
-    "mocha": "^5.1.1",
     "prettier-eslint": "^8.8.1",
     "react-test-renderer": "^16.3.2",
     "redux-mock-store": "^1.5.1",
-    "rewire": "^4.0.1",
     "standard": "^11.0.1",
     "storybook-react-router": "^1.0.1"
-  }
+  },
+  "jest": {}
 }

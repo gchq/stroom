@@ -16,7 +16,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose } from 'recompose';
+import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
 
 import ExpressionOperator from './ExpressionOperator';
@@ -26,55 +26,24 @@ import { LineContainer } from 'components/LineTo';
 import { withDataSource } from './DataSource';
 import { withExpression } from './withExpression';
 
-import { Checkbox, Confirm } from 'semantic-ui-react';
+import { Checkbox } from 'semantic-ui-react';
 
 import { actionCreators } from './redux';
 
-const {
-  expressionSetEditableByUser,
-  confirmExpressionItemDeleted,
-  cancelExpressionItemDelete,
-} = actionCreators;
+import lineElementCreators from './expressionLineCreators';
 
-const downRightElbow = ({ lineId, fromRect, toRect }) => {
-  const from = {
-    x: fromRect.left + fromRect.width / 2 - 2,
-    y: fromRect.bottom,
-  };
-  const to = {
-    x: toRect.left,
-    y: toRect.top + toRect.height / 2,
-  };
-  const pathSpec = `M ${from.x} ${from.y} L ${from.x} ${to.y} L ${to.x} ${to.y}`;
-  return (
-    <path
-      key={lineId}
-      d={pathSpec}
-      style={{
-        stroke: 'grey',
-        strokeWidth: 2,
-        fill: 'none',
-      }}
-    />
-  );
-};
-
-const lineElementCreators = {
-  downRightElbow,
-};
+const withSetEditableByUser = withState('editableByUser', 'setEditableByUser', false);
 
 const ExpressionBuilder = ({
   expressionId,
   dataSource,
   expression,
-  editor,
   isEditableSystemSet,
-  expressionSetEditableByUser,
-  confirmExpressionItemDeleted,
-  cancelExpressionItemDelete,
-}) => {
-  const { isEditableUserSet, pendingDeletionUuid } = editor;
 
+  // withSetEditableByUser
+  editableByUser,
+  setEditableByUser,
+}) => {
   const roOperator = (
     <ROExpressionOperator expressionId={expressionId} isEnabled operator={expression} />
   );
@@ -96,10 +65,10 @@ const ExpressionBuilder = ({
         <Checkbox
           label="Edit Mode"
           toggle
-          checked={isEditableUserSet}
-          onChange={() => expressionSetEditableByUser(expressionId, !isEditableUserSet)}
+          checked={editableByUser}
+          onChange={() => setEditableByUser(!editableByUser)}
         />
-        {isEditableUserSet ? editOperator : roOperator}
+        {editableByUser ? editOperator : roOperator}
       </div>
     );
   } else {
@@ -111,45 +80,29 @@ const ExpressionBuilder = ({
       lineContextId={`expression-lines-${expressionId}`}
       lineElementCreators={lineElementCreators}
     >
-      <Confirm
-        open={!!pendingDeletionUuid}
-        content="This will delete the item from the expression, are you sure?"
-        onCancel={() => cancelExpressionItemDelete(expressionId)}
-        onConfirm={() => confirmExpressionItemDeleted(expressionId, pendingDeletionUuid)}
-      />
       {theComponent}
     </LineContainer>
   );
 };
 
 ExpressionBuilder.propTypes = {
-  dataSource: PropTypes.object.isRequired,
+  // Set by container
   expressionId: PropTypes.string.isRequired,
-  expression: PropTypes.object.isRequired,
-  editor: PropTypes.object.isRequired,
   isEditableSystemSet: PropTypes.bool.isRequired,
-  pendingDeletionUuid: PropTypes.string,
 
-  confirmExpressionItemDeleted: PropTypes.func.isRequired,
-  cancelExpressionItemDelete: PropTypes.func.isRequired,
+  // withDataSource
+  dataSource: PropTypes.object.isRequired,
+
+  // withExpression
+  expression: PropTypes.object.isRequired,
+
+  // withSetEditableByUser
+  setEditableByUser: PropTypes.func.isRequired,
+  editableByUser: PropTypes.bool.isRequired,
 };
 
 ExpressionBuilder.defaultProps = {
   isEditableSystemSet: false,
 };
 
-export default compose(
-  connect(
-    state => ({
-      // state
-    }),
-    {
-      // actions
-      expressionSetEditableByUser,
-      confirmExpressionItemDeleted,
-      cancelExpressionItemDelete,
-    },
-  ),
-  withDataSource(),
-  withExpression(),
-)(ExpressionBuilder);
+export default compose(withDataSource(), withExpression(), withSetEditableByUser)(ExpressionBuilder);

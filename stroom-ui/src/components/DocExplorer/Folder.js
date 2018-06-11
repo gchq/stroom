@@ -16,7 +16,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose } from 'redux';
+import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
 
 import { canMove } from '../../lib/treeUtils';
@@ -32,7 +32,10 @@ import FolderMenu from './FolderMenu';
 import { withExistingExplorer } from './withExplorer';
 
 import { actionCreators } from './redux';
-const { moveExplorerItem, toggleFolderOpen, openDocRefContextMenu } = actionCreators;
+
+const { moveExplorerItem, folderOpenToggled } = actionCreators;
+
+const withContextMenu = withState('isContextMenuOpen', 'setContextMenuOpen', false);
 
 const dragSource = {
   canDrag(props) {
@@ -78,13 +81,12 @@ const Folder = ({
   explorerId,
   explorer,
   folder,
-  toggleFolderOpen,
+  folderOpenToggled,
   moveExplorerItem,
-  openDocRefContextMenu,
+  isContextMenuOpen,
+  setContextMenuOpen,
 }) => {
   const thisIsOpen = !!explorer.isFolderOpen[folder.uuid];
-  const isContextMenuOpen =
-    !!explorer.contextMenuItemUuid && explorer.contextMenuItemUuid === folder.uuid;
   const icon = thisIsOpen ? 'caret down' : 'caret right';
 
   let className = '';
@@ -106,7 +108,7 @@ const Folder = ({
   }
 
   const onRightClick = (e) => {
-    openDocRefContextMenu(explorerId, folder);
+    setContextMenuOpen(true);
     e.preventDefault();
   };
 
@@ -115,14 +117,19 @@ const Folder = ({
       {connectDragSource(connectDropTarget(<span
         className={className}
         onContextMenu={onRightClick}
-        onClick={() => toggleFolderOpen(explorerId, folder)}
+        onClick={() => folderOpenToggled(explorerId, folder)}
       >
-        <FolderMenu explorerId={explorerId} docRef={folder} isOpen={isContextMenuOpen} />
+        <FolderMenu
+          explorerId={explorerId}
+          docRef={folder}
+          isOpen={isContextMenuOpen}
+          closeContextMenu={() => setContextMenuOpen(false)}
+        />
         <span>
           <Icon name={icon} />
           {folder.name}
         </span>
-                                           </span>))}
+      </span>))}
       {thisIsOpen && (
         <div className="folder__children">
           {folder.children
@@ -148,9 +155,12 @@ Folder.propTypes = {
   explorer: PropTypes.object.isRequired,
 
   // actions
-  toggleFolderOpen: PropTypes.func.isRequired,
+  folderOpenToggled: PropTypes.func.isRequired,
   moveExplorerItem: PropTypes.func.isRequired,
-  openDocRefContextMenu: PropTypes.func.isRequired,
+
+  // withContextMenu
+  isContextMenuOpen: PropTypes.bool.isRequired,
+  setContextMenuOpen: PropTypes.func.isRequired,
 
   // React DnD
   connectDropTarget: PropTypes.func.isRequired,
@@ -167,11 +177,11 @@ const DndFolder = compose(
     }),
     {
       moveExplorerItem,
-      toggleFolderOpen,
-      openDocRefContextMenu,
+      folderOpenToggled,
     },
   ),
   withExistingExplorer(),
+  withContextMenu,
   DragSource(ItemTypes.FOLDER, dragSource, dragCollect),
   DropTarget([ItemTypes.FOLDER, ItemTypes.DOC_REF], dropTarget, dropCollect),
 )(Folder);

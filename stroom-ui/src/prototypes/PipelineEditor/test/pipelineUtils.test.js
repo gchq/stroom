@@ -13,26 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import expect from 'expect';
-import rewire from 'rewire';
-
-import { getPipelineAsTree, deleteElementInPipeline } from '../pipelineUtils';
-
-const pipelineUtils = rewire('../pipelineUtils');
-const getChildren = pipelineUtils.__get__('getChildren');
+import { getPipelineAsTree, deleteElementInPipeline, getChildren } from '../pipelineUtils';
 
 import { testPipeline, singleElementTestPipeline } from './pipeline.testData';
 
 describe('Pipeline Utils', () => {
   describe('#getPipelineAsTree', () => {
-    it('should convert a pipeline to a tree', () => {
+    test('should convert a pipeline to a tree', () => {
       // When
       const asTree = getPipelineAsTree(testPipeline);
 
       // Then
       expectsForTestPipeline(asTree);
     });
-    it('should convert a pipeline to a tree and detect the correct root', () => {
+    test('should convert a pipeline to a tree and detect the correct root', () => {
       // Given
       // Swap some entities over -- it shouldn't matter if they're not in the correct order
       const first = testPipeline.links.add[0];
@@ -46,7 +40,7 @@ describe('Pipeline Utils', () => {
       expectsForTestPipeline(asTree);
     });
 
-    it('should convert a pipeline to a single node tree -- tests edge case of no links', () => {
+    test('should convert a pipeline to a single node tree -- tests edge case of no links', () => {
       // When
       const asTree = getPipelineAsTree(singleElementTestPipeline);
 
@@ -56,7 +50,7 @@ describe('Pipeline Utils', () => {
   });
 
   describe('#getChildren', () => {
-    it('should recursively return children #1', () => {
+    test('should recursively return children #1', () => {
       // When
       // TODO change name to `getAllChildren` or something similar.
       const children = getChildren(testPipeline, 'XSLT filter');
@@ -65,7 +59,7 @@ describe('Pipeline Utils', () => {
       expect(children.length).toBe(4);
       expectsForGetChildren(children);
     });
-    it('should recursively return children #2', () => {
+    test('should recursively return children #2', () => {
       // When
       const children = getChildren(testPipeline, 'CSV splitter filter');
 
@@ -74,7 +68,7 @@ describe('Pipeline Utils', () => {
       expectsForGetChildren(children);
       expect(children.includes('XSLT filter')).toBeTruthy();
     });
-    it('should recursively return children #3', () => {
+    test('should recursively return children #3', () => {
       // When
       const children = getChildren(testPipeline, 'XML writer 1');
 
@@ -85,7 +79,7 @@ describe('Pipeline Utils', () => {
   });
 
   describe('#deleteElementInPipeline', () => {
-    it('should delete element and everything after', () => {
+    test('should delete element and everything after', () => {
       const itemToDelete = 'XML writer 1';
       const childToBeDeleted = 'stream appender 1';
       const parentToBePresent = 'CSV splitter filter';
@@ -113,7 +107,7 @@ describe('Pipeline Utils', () => {
       expectMissing(newPipeline, 'links', 'from', childToBeDeleted);
       expectMissing(newPipeline, 'links', 'from', itemToDelete);
     });
-    it('should delete element and everything after #1', () => {
+    test('should delete element and everything after #1', () => {
       const itemToDelete = 'XSLT filter';
       const childToBeDeleted1 = 'stream appender 1';
       const childToBeDeleted2 = 'stream appender 2';
