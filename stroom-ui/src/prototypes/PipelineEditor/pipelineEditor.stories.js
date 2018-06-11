@@ -58,9 +58,9 @@ stories
 // Add story for a pipeline copied from setupSampleData
 stories
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(pipelineReceived('testPipeline', pipeline01));
+    store.dispatch(pipelineReceived('pipeline01', pipeline01));
   })) // must be recorder after/outside of the test initialisation decorators
-  .add('setupSampleData -- pipeline01', () => <PipelineEditor pipelineId="testPipeline" />);
+  .add('setupSampleData -- pipeline01', () => <PipelineEditor pipelineId="pipeline01" />);
 
 storiesOf('Element Palette', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
