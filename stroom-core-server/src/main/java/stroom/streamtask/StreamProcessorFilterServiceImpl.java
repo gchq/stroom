@@ -213,14 +213,16 @@ class StreamProcessorFilterServiceImpl
     private BaseResultList<StreamProcessorFilter> withPipelineName(BaseResultList<StreamProcessorFilter> streamProcessorFilters){
         final Map<DocRef, Optional<Object>> uuids = new HashMap<>();
         for (StreamProcessorFilter streamProcessorFilter : streamProcessorFilters) {
-            String pipelineUuid = streamProcessorFilter.getStreamProcessor().getPipelineUuid();
+            StreamProcessor streamProcessor = streamProcessorService.load(streamProcessorFilter.getStreamProcessor());
+            streamProcessorFilter.setStreamProcessor(streamProcessor);
+            String pipelineUuid = streamProcessor.getPipelineUuid();
             if (pipelineUuid != null) {
                 uuids
                         .computeIfAbsent(
                                 new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid),
                                 innerKey -> Optional.ofNullable(pipelineStore.readDocument(innerKey)))
                         .ifPresent(obj ->
-                                streamProcessorFilter.getStreamProcessor().setPipelineName(((PipelineDoc) obj).getName()));
+                                streamProcessor.setPipelineName(((PipelineDoc) obj).getName()));
             }
         }
         return streamProcessorFilters;
