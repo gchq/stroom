@@ -25,11 +25,8 @@ import { DragSource, DropTarget } from 'react-dnd';
 
 import { withElement } from './withElement';
 import { withPipeline } from './withPipeline';
-
 import { actionCreators } from './redux';
-
 import { canMovePipelineElement } from './pipelineUtils';
-
 import { ItemTypes } from './dragDropTypes';
 
 const { pipelineElementSelected, pipelineElementMoved, pipelineElementAdded } = actionCreators;

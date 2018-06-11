@@ -28,6 +28,7 @@ import { actionCreators } from './redux';
 import PipelineElement from './PipelineElement';
 import PipelineElementSettings from './PipelineElementSettings';
 import { ElementPalette } from './ElementPalette';
+import RecycleBin from './RecycleBin';
 
 import lineElementCreators from './pipelineLineElementCreators';
 
@@ -59,18 +60,6 @@ const PipelineEditor = ({
     top: `${VERTICAL_START_PX + l.verticalPos * VERTICAL_SPACING}px`,
     left: `${HORIZONTAL_START_PX + l.horizontalPos * HORIZONTAL_SPACING}px`,
   }));
-
-  const handleKeyPress = (e) => {
-    const k = e.key;
-    switch (k) {
-      case 'x':
-        toggleRecycleBin();
-        break;
-      case 'e':
-        togglePaletteOpen();
-        break;
-    }
-  };
 
   let className = 'Pipeline-editor';
 
@@ -114,6 +103,9 @@ const PipelineEditor = ({
                 lineType="curve"
               />
             ))}
+        </div>
+        <div className="Pipeline-editor__recycle-bin">
+          <RecycleBin pipelineId={pipelineId} />
         </div>
       </LineContainer>
     </div>

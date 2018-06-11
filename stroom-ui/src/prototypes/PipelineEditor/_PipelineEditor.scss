@@ -1,4 +1,5 @@
 @import "./ElementPalette/ElementPalette";
+@import "./PipelineElement";
 
 $palette-width: 19rem;
 
@@ -61,38 +62,8 @@ $palette-width: 19rem;
   position: relative;
 }
 
-.Pipeline-element {
-  padding: 0.5rem;
-  width: 8rem;
-  font-size: 0.8rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  border-style: solid;
-  border-width: thin;
-  border-radius: 5px;
-  background-color: white;
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-}
-
-.Pipeline-element__icon {
-  width: 0.7rem;
-  margin-right: 0.3rem;
-}
-
-.Pipeline-element__over {
-  border-color: blue;
-}
-
-.Pipeline-element__over_can_drop {
-  background-color: greenyellow;
-}
-
-.Pipeline-element__over_cannot_drop {
-  background-color: red;
-}
-
-.Pipeline-element__dragging {
-  border-style: dotted;
-  opacity: 0.5;
+.Pipeline-editor__recycle-bin {
+  position: absolute;
+  left: 2rem;
+  bottom: 2rem;
 }
