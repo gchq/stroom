@@ -20,7 +20,7 @@ import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
 import { Field, reduxForm } from 'redux-form';
 
-import { Modal, Header, Button, Form, Icon } from 'semantic-ui-react';
+import { Modal, Header, Button, Form } from 'semantic-ui-react';
 import { DragSource, DropTarget } from 'react-dnd';
 
 import { withElement } from './withElement';
@@ -60,10 +60,9 @@ const dropTarget = {
         return canMovePipelineElement(pipeline, asTree, newElementId, elementId);
       case ItemTypes.PALLETE_ELEMENT:
         return true;
-        break;
+      default:
+        return false;
     }
-
-    return false;
   },
   drop(props, monitor) {
     switch (monitor.getItemType()) {
@@ -76,6 +75,8 @@ const dropTarget = {
         const newElementDefinition = monitor.getItem().element;
         const { setNewElementDefinition } = props;
         setNewElementDefinition(newElementDefinition);
+        break;
+      default:
         break;
     }
   },
@@ -165,7 +166,6 @@ PipelineElement.propTypes = {
   // withPipeline
   pipeline: PropTypes.object.isRequired,
   asTree: PropTypes.object.isRequired,
-  pipelineElementSelected: PropTypes.func.isRequired,
 
   // withElement
   element: PropTypes.object.isRequired,

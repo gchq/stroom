@@ -17,7 +17,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import { compose, withState } from 'recompose';
-import { connect } from 'react-redux';
 
 import ExpressionOperator from './ExpressionOperator';
 import ROExpressionOperator from './ROExpressionOperator';
@@ -27,8 +26,6 @@ import { withDataSource } from './DataSource';
 import { withExpression } from './withExpression';
 
 import { Checkbox } from 'semantic-ui-react';
-
-import { actionCreators } from './redux';
 
 import lineElementCreators from './expressionLineCreators';
 

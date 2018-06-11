@@ -4,8 +4,6 @@ import PropTypes from 'prop-types';
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Header, Button } from 'semantic-ui-react';
-
 import ElementCategory from './ElementCategory';
 
 const ElementPalette = ({ elementsByCategory }) => (

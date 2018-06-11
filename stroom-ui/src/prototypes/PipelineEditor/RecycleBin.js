@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
-import { DragSource, DropTarget } from 'react-dnd';
+import { DropTarget } from 'react-dnd';
 import { Icon } from 'semantic-ui-react';
 
 import { ItemTypes } from './dragDropTypes';

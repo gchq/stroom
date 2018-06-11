@@ -16,17 +16,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { Header, Button, Icon, Image, Input } from 'semantic-ui-react';
+import { Header } from 'semantic-ui-react';
 
 import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
 import { LineContainer, LineTo } from 'components/LineTo';
 import { mapObject } from 'lib/treeUtils';
 import { withPipeline } from './withPipeline';
-import { actionCreators } from './redux';
 
 import PipelineElement from './PipelineElement';
-import PipelineElementSettings from './PipelineElementSettings';
 import { ElementPalette } from './ElementPalette';
 import RecycleBin from './RecycleBin';
 
