@@ -32,6 +32,8 @@ import { ElementPalette } from './ElementPalette';
 
 import lineElementCreators from './pipelineLineElementCreators';
 
+import { isActive } from './pipelineUtils';
+
 const HORIZONTAL_SPACING = 150;
 const VERTICAL_SPACING = 50;
 const HORIZONTAL_START_PX = 50;
@@ -95,7 +97,7 @@ const PipelineEditor = ({
       >
         <Header as="h4">Pipeline Editor {pipelineId}</Header>
         <div className="Pipeline-editor__elements">
-          {pipeline.elements.add.map(e => (
+          {pipeline.elements.add.filter(element => isActive(pipeline, element)).map(e => (
             <div key={e.id} id={e.id} style={elementStyles[e.id]}>
               <PipelineElement pipelineId={pipelineId} elementId={e.id} />
             </div>

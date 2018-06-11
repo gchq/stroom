@@ -171,4 +171,129 @@ const pipeline01 = {
   },
 };
 
-export { pipeline01 };
+const pipeline02 = {
+  elements: {
+    add: [
+      {
+        elementType: null,
+        source: null,
+        id: 'combinedParser',
+        type: 'CombinedParser',
+      },
+      {
+        elementType: null,
+        source: null,
+        id: 'readRecordCountFilter',
+        type: 'RecordCountFilter',
+      },
+      {
+        elementType: null,
+        source: null,
+        id: 'splitFilter',
+        type: 'SplitFilter',
+      },
+      {
+        elementType: null,
+        source: null,
+        id: 'translationFilter',
+        type: 'XSLTFilter',
+      },
+      {
+        elementType: null,
+        source: null,
+        id: 'flattenFilter',
+        type: 'XSLTFilter',
+      },
+      {
+        elementType: null,
+        source: null,
+        id: 'xmlWriter',
+        type: 'XMLWriter',
+      },
+      {
+        elementType: null,
+        source: null,
+        id: 'textWriter',
+        type: 'TextWriter',
+      },
+      {
+        elementType: null,
+        source: null,
+        id: 'fileAppender',
+        type: 'FileAppender',
+      },
+    ],
+    remove: [],
+  },
+  properties: {
+    add: [
+      {
+        propertyType: null,
+        source: null,
+        element: 'readRecordCountFilter',
+        name: 'countRead',
+        value: {
+          string: null,
+          integer: null,
+          entity: null,
+          boolean: true,
+          long: null,
+        },
+      },
+      {
+        propertyType: null,
+        source: null,
+        element: 'splitFilter',
+        name: 'splitDepth',
+        value: {
+          string: null,
+          integer: 1,
+          entity: null,
+          boolean: null,
+          long: null,
+        },
+      },
+      {
+        propertyType: null,
+        source: null,
+        element: 'splitFilter',
+        name: 'splitCount',
+        value: {
+          string: null,
+          integer: 100,
+          entity: null,
+          boolean: null,
+          long: null,
+        },
+      },
+      {
+        propertyType: null,
+        source: null,
+        element: 'fileAppender',
+        name: 'outputPaths',
+        value: {
+          string: '${stroom.temp}/search/${searchId}/${streamId}_${feed}-${uuid}.out',
+          integer: null,
+          entity: null,
+          boolean: null,
+          long: null,
+        },
+      },
+    ],
+    remove: [],
+  },
+  pipelineReferences: { add: [], remove: [] },
+  links: {
+    add: [
+      { source: null, from: 'combinedParser', to: 'readRecordCountFilter' },
+      { source: null, from: 'readRecordCountFilter', to: 'splitFilter' },
+      { source: null, from: 'splitFilter', to: 'translationFilter' },
+      { source: null, from: 'translationFilter', to: 'flattenFilter' },
+      { source: null, from: 'flattenFilter', to: 'textWriter' },
+      { source: null, from: 'textWriter', to: 'fileAppender' },
+    ],
+    remove: [],
+  },
+};
+
+export { pipeline01, pipeline02 };

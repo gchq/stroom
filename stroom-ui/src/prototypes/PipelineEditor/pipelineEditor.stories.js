@@ -35,7 +35,7 @@ import 'styles/main.css';
 
 import { testPipeline, testPipelineElements } from './test/pipeline.testData';
 import { testElementTypes, testElementProperties } from './test/elements.testData';
-import { pipeline01 } from './test/setupSampleDataPipelines.testData';
+import { pipeline01, pipeline02 } from './test/setupSampleDataPipelines.testData';
 
 const { pipelineReceived, elementsReceived, elementPropertiesReceived } = actionCreators;
 
@@ -60,7 +60,18 @@ stories
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(pipelineReceived('pipeline01', pipeline01));
   })) // must be recorder after/outside of the test initialisation decorators
-  .add('setupSampleData -- pipeline01', () => <PipelineEditor pipelineId="pipeline01" />);
+  .add('setupSampleData -- pipeline01 - is a long pipeline', () => (
+    <PipelineEditor pipelineId="pipeline01" />
+  ));
+
+// Add story for a pipeline copied from setupSampleData
+stories
+  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
+    store.dispatch(pipelineReceived('pipeline02', pipeline02));
+  })) // must be recorder after/outside of the test initialisation decorators
+  .add('setupSampleData -- pipeline02 - contains a deleted element', () => (
+    <PipelineEditor pipelineId="pipeline02" />
+  ));
 
 storiesOf('Element Palette', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
