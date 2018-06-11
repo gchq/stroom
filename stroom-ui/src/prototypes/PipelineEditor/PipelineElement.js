@@ -18,7 +18,9 @@ import PropTypes from 'prop-types';
 
 import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
+import { Field, reduxForm } from 'redux-form';
 
+import { Modal, Header, Button, Form, Icon } from 'semantic-ui-react';
 import { DragSource, DropTarget } from 'react-dnd';
 
 import { withElement } from './withElement';
@@ -30,9 +32,9 @@ import { canMovePipelineElement } from './pipelineUtils';
 
 import { ItemTypes } from './dragDropTypes';
 
-const { pipelineElementSelected, pipelineElementMoved } = actionCreators;
+const { pipelineElementSelected, pipelineElementMoved, pipelineElementAdded } = actionCreators;
 
-const withContextMenu = withState('isContextMenuOpen', 'setContextMenuOpen', false);
+const withNameNewElementModal = withState('newElementDefinition', 'setNewElementDefinition', undefined);
 
 const dragSource = {
   canDrag(props) {
@@ -75,7 +77,8 @@ const dropTarget = {
         break;
       case ItemTypes.PALLETE_ELEMENT:
         const newElementDefinition = monitor.getItem().element;
-        console.log('Dropping New Element', newElementDefinition);
+        const { setNewElementDefinition } = props;
+        setNewElementDefinition(newElementDefinition);
         break;
     }
   },
@@ -100,9 +103,11 @@ const PipelineElement = ({
   element,
   elementDefinition,
   pipelineElementSelected,
+  pipelineElementAdded,
 
-  isContextMenuOpen,
-  setContextMenuOpen,
+  newElementForm,
+  newElementDefinition,
+  setNewElementDefinition
 }) => {
   let className = 'Pipeline-element';
   if (isOver) {
@@ -120,12 +125,32 @@ const PipelineElement = ({
   }
 
   const onClick = () => pipelineElementSelected(pipelineId, elementId);
-  const onRightClick = (e) => {
-    setContextMenuOpen(true);
-    e.preventDefault();
-  };
+  const onConfirmNewElement = () => {
+    pipelineElementAdded(pipelineId, elementId, newElementDefinition, newElementForm.values.name);
+    setNewElementDefinition(undefined);
+  }
+  const onCancelNewElement = () => setNewElementDefinition(undefined);
 
-  return compose(connectDragSource, connectDropTarget)(<div className={className} onClick={onClick} onContextMenu={onRightClick}>
+  return compose(connectDragSource, connectDropTarget)(<div className={className} onClick={onClick}>
+    <Modal
+      size="tiny"
+      open={!!newElementDefinition}
+      onClose={onCancelNewElement}
+    >
+      <Header content='Add New Element' />
+      <Modal.Content>
+        <Form>
+          <Form.Field>
+            <label>Name</label>
+            <Field name="name" component="input" type="text" placeholder="Name" />
+          </Form.Field>
+        </Form>
+      </Modal.Content>
+      <Modal.Actions>
+        <Button positive content="Submit" onClick={onConfirmNewElement} />
+        <Button negative content="Cancel" onClick={onCancelNewElement} />
+      </Modal.Actions>
+    </Modal>
     <img
       className="Pipeline-element__icon"
       alt="X"
@@ -148,28 +173,35 @@ PipelineElement.propTypes = {
   // withElement
   element: PropTypes.object.isRequired,
 
+  // redux form
+  newElementForm: PropTypes.object.isRequired,
+
   // Redux actions
   pipelineElementSelected: PropTypes.func.isRequired,
   pipelineElementMoved: PropTypes.func.isRequired,
+  pipelineElementAdded: PropTypes.func.isRequired,
 
-  // withContextMenu
-  isContextMenuOpen: PropTypes.bool.isRequired,
-  setContextMenuOpen: PropTypes.func.isRequired,
+  // withNameNewElementModal
+  newElementDefinition: PropTypes.object.isRequired,
+  setNewElementDefinition: PropTypes.func.isRequired,
 };
 
 export default compose(
   connect(
     state => ({
       // state
+      newElementForm : state.form.newElementName
     }),
     {
       pipelineElementSelected,
       pipelineElementMoved,
+      pipelineElementAdded
     },
   ),
   withPipeline(),
   withElement(),
-  withContextMenu,
+  withNameNewElementModal,
   DragSource(ItemTypes.ELEMENT, dragSource, dragCollect),
   DropTarget([ItemTypes.ELEMENT, ItemTypes.PALLETE_ELEMENT], dropTarget, dropCollect),
+  reduxForm({ form: 'newElementName' }),
 )(PipelineElement);
