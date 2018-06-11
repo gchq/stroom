@@ -1,6 +1,6 @@
 @import "./ElementPalette/ElementPalette";
 
-$palette-width: 18rem;
+$palette-width: 20rem;
 
 .Pipeline-editor {
   height: 100vh;
@@ -45,6 +45,9 @@ $palette-width: 18rem;
 .Pipeline-editor__element-palette {
   max-width: $palette-width;
   position: relative;
+  overflow: scroll;
+  overflow-y: scroll;
+  overflow-x: hidden;
 }
 
 .Pipeline-editor__palette-toggle {
