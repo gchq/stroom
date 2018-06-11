@@ -35,17 +35,32 @@ import 'styles/main.css';
 
 import { testPipeline, testPipelineElements } from './test/pipeline.testData';
 import { testElementTypes, testElementProperties } from './test/elements.testData';
+import { pipeline01 } from './test/setupSampleDataPipelines.testData';
 
 const { pipelineReceived, elementsReceived, elementPropertiesReceived } = actionCreators;
 
-storiesOf('Pipeline Editor', module)
+// Set up Pipeline Editor stories. The stories here are split up into different lines
+// because each story needs to dispatch it's own data, and a chained sequence of
+// dispatches and adds reads awkwardly.
+const stories = storiesOf('Pipeline Editor', module).addDecorator(ReduxDecoratorWithInitialisation((store) => {
+  store.dispatch(elementsReceived(testElementTypes));
+  store.dispatch(elementPropertiesReceived(testElementProperties));
+}));
+
+// Add storyfor a simple pipeline
+stories
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(pipelineReceived('testPipeline', testPipeline));
-    store.dispatch(elementsReceived(testElementTypes));
-    store.dispatch(elementPropertiesReceived(testElementProperties));
   })) // must be recorder after/outside of the test initialisation decorators
   .addDecorator(DragDropDecorator)
-  .add('Pipeline Editor', () => <PipelineEditor pipelineId="testPipeline" />);
+  .add('Simple pipeline', () => <PipelineEditor pipelineId="testPipeline" />);
+
+// Add story for a pipeline copied from setupSampleData
+stories
+  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
+    store.dispatch(pipelineReceived('pipeline01', pipeline01));
+  })) // must be recorder after/outside of the test initialisation decorators
+  .add('setupSampleData -- pipeline01', () => <PipelineEditor pipelineId="pipeline01" />);
 
 storiesOf('Element Palette', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
