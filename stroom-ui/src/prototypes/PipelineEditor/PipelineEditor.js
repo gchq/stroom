@@ -27,8 +27,9 @@ import { actionCreators } from './redux';
 
 import PipelineElement from './PipelineElement';
 import PipelineElementSettings from './PipelineElementSettings';
+import PaletteElement from './PaletteElement';
 import { AddElementWizard } from './AddElementToPipeline';
-import { ElementPallete } from './ElementPallete';
+import { ElementPalette } from './ElementPalette';
 
 import lineElementCreators from './pipelineLineElementCreators';
 
@@ -40,7 +41,7 @@ const COMMON_ELEMENT_STYLE = {
   position: 'absolute',
 };
 
-const withPalletteOpen = withState('isPalletteOpen', 'setPalletteOpen', false);
+const withPaletteOpen = withState('isPaletteOpen', 'setPaletteOpen', false);
 const withRecycleBinOpen = withState('isRecycleBinOpen', 'setRecycleBinOpen', false);
 
 const PipelineEditor = ({
@@ -48,15 +49,15 @@ const PipelineEditor = ({
   pipeline,
   pendingElementIdToDelete,
   layoutInformation,
-  isPalletteOpen,
-  setPalletteOpen,
+  isPaletteOpen,
+  setPaletteOpen,
 
   isRecycleBinOpen,
   setRecycleBinOpen,
 
   elementsByCategory,
 }) => {
-  const togglePalleteOpen = () => setPalletteOpen(!isPalletteOpen);
+  const togglePaletteOpen = () => setPaletteOpen(!isPaletteOpen);
   const toggleRecycleBin = () => setRecycleBinOpen(!isRecycleBinOpen);
 
   const elementStyles = mapObject(layoutInformation, l => ({
@@ -72,7 +73,7 @@ const PipelineEditor = ({
         toggleRecycleBin();
         break;
       case 'e':
-        togglePalleteOpen();
+        togglePaletteOpen();
         break;
     }
   };
@@ -83,36 +84,20 @@ const PipelineEditor = ({
         as={Menu}
         animation="push"
         width="thin"
-        visible={isPalletteOpen}
+        visible={isPaletteOpen}
         icon="labeled"
         vertical
       >
         {Object.entries(elementsByCategory).map(k => (
-          <Menu.Item key={k[0]}>
+          <Menu.Item key={k[0].toString()}>
             <Menu.Header header>{k[0]}</Menu.Header>
-            <Menu.Menu>
-              {k[1].map(e => (
-                <Menu.Item key={e.type} name={e.type}>
-                  <Icon>
-                    <Image size="mini" src={require(`./images/${e.icon}`)} />
-                  </Icon>
-                  <button className="Pipeline-editor__element-button">{e.type}</button>
-                </Menu.Item>
-              ))}
-            </Menu.Menu>
+            <Menu.Menu>{k[1].map(e => <PaletteElement key={e.type} element={e} />)}</Menu.Menu>
           </Menu.Item>
         ))}
       </Sidebar>
       <Sidebar.Pusher>
         <Sidebar.Pushable as={Segment}>
-          <Sidebar
-            as={Menu}
-            animation="push"
-            direction="right"
-            width="thin"
-            visible={isRecycleBinOpen}
-            vertical
-          >
+          <Sidebar as={Menu} animation="push" direction="bottom" visible={isRecycleBinOpen}>
             <Menu.Item name="home">
               <Icon name="home" />
               Home
@@ -133,10 +118,8 @@ const PipelineEditor = ({
                 lineElementCreators={lineElementCreators}
               >
                 <Header as="h4">Pipeline Editor {pipelineId}</Header>
-                <Button onClick={togglePalleteOpen}>Elements</Button>
-                <Button onClick={toggleRecycleBin} floated="right">
-                  Recycle Bin
-                </Button>
+                <Button onClick={togglePaletteOpen}>Elements</Button>
+                <Button onClick={toggleRecycleBin}>Recycle Bin</Button>
                 {pipeline.elements.add.map(e => (
                   <div key={e.id} id={e.id} style={elementStyles[e.id]}>
                     <PipelineElement pipelineId={pipelineId} elementId={e.id} />
@@ -169,9 +152,9 @@ PipelineEditor.propTypes = {
   layoutInformation: PropTypes.object.isRequired,
   elementsByCategory: PropTypes.object.isRequired,
 
-  // withPalletteOpen
-  isPalletteOpen: PropTypes.bool.isRequired,
-  setPalletteOpen: PropTypes.func.isRequired,
+  // withPaletteOpen
+  isPaletteOpen: PropTypes.bool.isRequired,
+  setPaletteOpen: PropTypes.func.isRequired,
 
   // withRecycleBinOpen
   isRecycleBinOpen: PropTypes.bool.isRequired,
@@ -188,6 +171,6 @@ export default compose(
     },
   ),
   withPipeline(),
-  withPalletteOpen,
+  withPaletteOpen,
   withRecycleBinOpen,
 )(PipelineEditor);

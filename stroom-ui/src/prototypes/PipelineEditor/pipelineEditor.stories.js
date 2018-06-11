@@ -26,7 +26,7 @@ import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 import { PipelineEditor } from './index';
 
 import PipelineElement from './PipelineElement';
-import { ElementPallete } from './ElementPallete';
+import { ElementPalette } from './ElementPalette';
 import { AddElementWizard } from './AddElementToPipeline';
 
 import { actionCreators } from './redux';
@@ -47,10 +47,10 @@ storiesOf('Pipeline Editor', module)
   .addDecorator(DragDropDecorator)
   .add('Pipeline Editor', () => <PipelineEditor pipelineId="testPipeline" />);
 
-storiesOf('Element Pallete', module)
+storiesOf('Element Palette', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(elementsReceived(testElementTypes));
     store.dispatch(elementPropertiesReceived(testElementProperties));
   })) // must be recorder after/outside of the test initialisation decorators
   .addDecorator(DragDropDecorator)
-  .add('Element Pallete', () => <ElementPallete />);
+  .add('Element Palette', () => <ElementPalette />);

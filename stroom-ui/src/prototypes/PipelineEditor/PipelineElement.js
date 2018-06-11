@@ -54,15 +54,30 @@ function dragCollect(connect, monitor) {
 
 const dropTarget = {
   canDrop(props, monitor) {
-    return canMovePipelineElement(
-      props.pipeline,
-      props.asTree,
-      monitor.getItem().elementId,
-      props.elementId,
-    );
+    switch (monitor.getItemType()) {
+      case ItemTypes.ELEMENT:
+        const newElementId = monitor.getItem().elementId;
+        const { pipeline, asTree, elementId } = props;
+        return canMovePipelineElement(pipeline, asTree, newElementId, elementId);
+      case ItemTypes.PALLETE_ELEMENT:
+        return true;
+        break;
+    }
+
+    return false;
   },
   drop(props, monitor) {
-    props.pipelineElementMoved(props.pipelineId, monitor.getItem().elementId, props.elementId);
+    switch (monitor.getItemType()) {
+      case ItemTypes.ELEMENT:
+        const newElementId = monitor.getItem().elementId;
+        const { elementId, pipelineId, pipelineElementMoved } = props;
+        pipelineElementMoved(pipelineId, newElementId, elementId);
+        break;
+      case ItemTypes.PALLETE_ELEMENT:
+        const newElementDefinition = monitor.getItem().element;
+        console.log('Dropping New Element', newElementDefinition);
+        break;
+    }
   },
 };
 
@@ -104,14 +119,13 @@ const PipelineElement = ({
     }
   }
 
-  return compose(connectDragSource, connectDropTarget)(<div
-    className={className}
-    onClick={() => pipelineElementSelected(pipelineId, elementId)}
-    onContextMenu={(e) => {
-        setContextMenuOpen(true);
-        e.preventDefault();
-      }}
-  >
+  const onClick = () => pipelineElementSelected(pipelineId, elementId);
+  const onRightClick = (e) => {
+    setContextMenuOpen(true);
+    e.preventDefault();
+  };
+
+  return compose(connectDragSource, connectDropTarget)(<div className={className} onClick={onClick} onContextMenu={onRightClick}>
     <img
       className="Pipeline-element__icon"
       alt="X"
@@ -134,6 +148,10 @@ PipelineElement.propTypes = {
   // withElement
   element: PropTypes.object.isRequired,
 
+  // Redux actions
+  pipelineElementSelected: PropTypes.func.isRequired,
+  pipelineElementMoved: PropTypes.func.isRequired,
+
   // withContextMenu
   isContextMenuOpen: PropTypes.bool.isRequired,
   setContextMenuOpen: PropTypes.func.isRequired,
@@ -153,5 +171,5 @@ export default compose(
   withElement(),
   withContextMenu,
   DragSource(ItemTypes.ELEMENT, dragSource, dragCollect),
-  DropTarget([ItemTypes.ELEMENT], dropTarget, dropCollect),
+  DropTarget([ItemTypes.ELEMENT, ItemTypes.PALLETE_ELEMENT], dropTarget, dropCollect),
 )(PipelineElement);
