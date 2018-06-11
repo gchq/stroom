@@ -109,6 +109,12 @@ public abstract class BaseCriteria implements SharedObject {
         sortList.add(sort);
     }
 
+    public void removeSorts() {
+        if (sortList != null) {
+            sortList.clear();
+        }
+    }
+
     public List<Sort> getSortList() {
         return sortList;
     }

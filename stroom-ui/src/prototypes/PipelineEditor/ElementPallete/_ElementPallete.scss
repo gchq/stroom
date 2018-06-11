@@ -1,0 +1,24 @@
+.element-pallete {
+  background-color: lightblue;
+  max-width: 20rem;
+}
+
+.element-pallete__category {
+}
+
+.element-pallete_icon {
+  width: 1.5rem;
+}
+
+.element-pallete__category__elements {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.element-pallete__element {
+  margin: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
