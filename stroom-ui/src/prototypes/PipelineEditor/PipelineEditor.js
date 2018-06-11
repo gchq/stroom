@@ -56,14 +56,29 @@ const PipelineEditor = ({
 
   elementsByCategory,
 }) => {
+  const togglePalleteOpen = () => setPalletteOpen(!isPalletteOpen);
+  const toggleRecycleBin = () => setRecycleBinOpen(!isRecycleBinOpen);
+
   const elementStyles = mapObject(layoutInformation, l => ({
     ...COMMON_ELEMENT_STYLE,
     top: `${VERTICAL_START_PX + l.verticalPos * VERTICAL_SPACING}px`,
     left: `${HORIZONTAL_START_PX + l.horizontalPos * HORIZONTAL_SPACING}px`,
   }));
 
+  const handleKeyPress = (e) => {
+    const k = e.key;
+    switch (k) {
+      case 'x':
+        toggleRecycleBin();
+        break;
+      case 'e':
+        togglePalleteOpen();
+        break;
+    }
+  };
+
   return (
-    <Sidebar.Pushable as={Segment}>
+    <Sidebar.Pushable as={Segment} tabIndex={0} onKeyPress={handleKeyPress}>
       <Sidebar
         as={Menu}
         animation="push"
@@ -81,7 +96,7 @@ const PipelineEditor = ({
                   <Icon>
                     <Image size="mini" src={require(`./images/${e.icon}`)} />
                   </Icon>
-                  {e.type}
+                  <button className="Pipeline-editor__element-button">{e.type}</button>
                 </Menu.Item>
               ))}
             </Menu.Menu>
@@ -93,9 +108,10 @@ const PipelineEditor = ({
           <Sidebar
             as={Menu}
             animation="push"
-            direction="bottom"
+            direction="right"
+            width="thin"
             visible={isRecycleBinOpen}
-            inverted
+            vertical
           >
             <Menu.Item name="home">
               <Icon name="home" />
@@ -117,8 +133,10 @@ const PipelineEditor = ({
                 lineElementCreators={lineElementCreators}
               >
                 <Header as="h4">Pipeline Editor {pipelineId}</Header>
-                <Button onClick={() => setPalletteOpen(!isPalletteOpen)}>Elements</Button>
-                <Button onClick={() => setRecycleBinOpen(!isRecycleBinOpen)}>Recycle Bin</Button>
+                <Button onClick={togglePalleteOpen}>Elements</Button>
+                <Button onClick={toggleRecycleBin} floated="right">
+                  Recycle Bin
+                </Button>
                 {pipeline.elements.add.map(e => (
                   <div key={e.id} id={e.id} style={elementStyles[e.id]}>
                     <PipelineElement pipelineId={pipelineId} elementId={e.id} />
