@@ -56,6 +56,11 @@ $palette-width: 19rem;
   position: relative;
   height: 100%;
   float: left;
+  border-left: none;
+  border-top: none;
+  border-bottom: none;
+  border-right: solid thin black;
+  background-color: lightgrey;
 }
 
 .Pipeline-editor__graph {
@@ -67,7 +72,7 @@ $palette-width: 19rem;
 }
 
 .Pipeline-editor__recycle-bin {
-  position: absolute;
-  left: 2rem;
+  position: fixed;
+  left: 3rem;
   bottom: 2rem;
 }
