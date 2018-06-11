@@ -82,6 +82,9 @@ const PipelineEditor = ({
         lineElementCreators={lineElementCreators}
       >
         <Header as="h4">Pipeline Editor {pipelineId}</Header>
+        <div className="Pipeline-editor__recycle-bin">
+          <RecycleBin pipelineId={pipelineId} />
+        </div>
         <div className="Pipeline-editor__elements">
           {pipeline.elements.add.filter(element => isActive(pipeline, element)).map(e => (
             <div key={e.id} id={e.id} style={elementStyles[e.id]}>
@@ -101,9 +104,6 @@ const PipelineEditor = ({
                 lineType="curve"
               />
             ))}
-        </div>
-        <div className="Pipeline-editor__recycle-bin">
-          <RecycleBin pipelineId={pipelineId} />
         </div>
       </LineContainer>
     </div>

@@ -160,6 +160,11 @@ export function canMovePipelineElement(pipeline, pipelineAsTree, itemToMove, des
   const itemToMoveNode = findItem(pipelineAsTree, itemToMove);
   const destinationNode = findItem(pipelineAsTree, destination);
 
+  // If either node cannot be found...bad times
+  if (!itemToMoveNode || !destinationNode) {
+    return false;
+  }
+
   // If the item being dropped is a folder, and is being dropped into itself
   if (findMatch(itemToMoveNode, destinationNode)) {
     return false;

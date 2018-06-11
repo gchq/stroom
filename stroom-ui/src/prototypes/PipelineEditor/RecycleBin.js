@@ -1,15 +1,21 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose } from 'recompose';
+import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
 import { DropTarget } from 'react-dnd';
-import { Icon } from 'semantic-ui-react';
+import { Icon, Confirm } from 'semantic-ui-react';
 
 import { ItemTypes } from './dragDropTypes';
 import { actionCreators } from './redux';
 
 const { pipelineElementDeleted } = actionCreators;
+
+const withPendingDeletion = withState(
+  'pendingElementToDelete',
+  'setPendingElementToDelete',
+  undefined,
+);
 
 const dropTarget = {
   canDrop(props, monitor) {
@@ -17,8 +23,8 @@ const dropTarget = {
   },
   drop(props, monitor) {
     const { elementId } = monitor.getItem();
-    const { pipelineId, pipelineElementDeleted } = props;
-    pipelineElementDeleted(pipelineId, elementId);
+    const { setPendingElementToDelete } = props;
+    setPendingElementToDelete(elementId);
   },
 };
 
@@ -29,15 +35,40 @@ function dropCollect(connect, monitor) {
   };
 }
 
-const RecycleBin = ({ connectDropTarget, isOver }) => {
+const RecycleBin = ({
+  connectDropTarget,
+  isOver,
+  pendingElementToDelete,
+  setPendingElementToDelete,
+  pipelineElementDeleted,
+  pipelineId,
+}) => {
   let color = 'black';
   if (isOver) {
     color = 'red';
   }
 
+  const onCancelDelete = () => setPendingElementToDelete(undefined);
+
+  const onConfirmDelete = () => {
+    pipelineElementDeleted(pipelineId, pendingElementToDelete);
+    setPendingElementToDelete(undefined);
+  };
+
+  let confirmDeleteContent;
+  if (pendingElementToDelete) {
+    confirmDeleteContent = `Delete ${pendingElementToDelete} from pipeline?`;
+  }
+
   return connectDropTarget(<div>
+    <Confirm
+      open={!!pendingElementToDelete}
+      content={confirmDeleteContent}
+      onCancel={onCancelDelete}
+      onConfirm={onConfirmDelete}
+    />
     <Icon color={color} size="huge" name="trash" />
-  </div>);
+                           </div>);
 };
 
 RecycleBin.propTypes = {
@@ -50,9 +81,14 @@ RecycleBin.propTypes = {
 
   // Redux action
   pipelineElementDeleted: PropTypes.func.isRequired,
+
+  // withPendingDeletion
+  pendingElementToDelete: PropTypes.string,
+  setPendingElementToDelete: PropTypes.func.isRequired,
 };
 
 export default compose(
   connect(state => ({}), { pipelineElementDeleted }),
+  withPendingDeletion,
   DropTarget([ItemTypes.ELEMENT], dropTarget, dropCollect),
 )(RecycleBin);
