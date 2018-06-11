@@ -16,7 +16,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { Header, Button, Sidebar, Menu, Icon, Segment, Image, Input } from 'semantic-ui-react';
+import { Header, Button, Icon, Image, Input } from 'semantic-ui-react';
 
 import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
@@ -27,7 +27,6 @@ import { actionCreators } from './redux';
 
 import PipelineElement from './PipelineElement';
 import PipelineElementSettings from './PipelineElementSettings';
-import PaletteElement from './PaletteElement';
 import { AddElementWizard } from './AddElementToPipeline';
 import { ElementPalette } from './ElementPalette';
 
@@ -42,7 +41,6 @@ const COMMON_ELEMENT_STYLE = {
 };
 
 const withPaletteOpen = withState('isPaletteOpen', 'setPaletteOpen', false);
-const withRecycleBinOpen = withState('isRecycleBinOpen', 'setRecycleBinOpen', false);
 
 const PipelineEditor = ({
   pipelineId,
@@ -51,14 +49,9 @@ const PipelineEditor = ({
   layoutInformation,
   isPaletteOpen,
   setPaletteOpen,
-
-  isRecycleBinOpen,
-  setRecycleBinOpen,
-
   elementsByCategory,
 }) => {
   const togglePaletteOpen = () => setPaletteOpen(!isPaletteOpen);
-  const toggleRecycleBin = () => setRecycleBinOpen(!isRecycleBinOpen);
 
   const elementStyles = mapObject(layoutInformation, l => ({
     ...COMMON_ELEMENT_STYLE,
@@ -78,70 +71,51 @@ const PipelineEditor = ({
     }
   };
 
+  let className = 'Pipeline-editor';
+
+  if (isPaletteOpen) {
+    className += ' Pipeline-editor--palette-open';
+  } else {
+    className += ' Pipeline-editor--palette-close';
+  }
+
   return (
-    <Sidebar.Pushable as={Segment} tabIndex={0} onKeyPress={handleKeyPress}>
-      <Sidebar
-        as={Menu}
-        animation="push"
-        width="thin"
-        visible={isPaletteOpen}
-        icon="labeled"
-        vertical
+    <div className={className}>
+      <div className="Pipeline-editor__element-palette">
+        <ElementPalette />
+      </div>
+      <button className="Pipeline-editor__palette-toggle" onClick={togglePaletteOpen}>
+        {isPaletteOpen ? '<' : '>'}
+      </button>
+
+      <LineContainer
+        className="Pipeline-editor__graph"
+        lineContextId={`pipeline-lines-${pipelineId}`}
+        lineElementCreators={lineElementCreators}
       >
-        {Object.entries(elementsByCategory).map(k => (
-          <Menu.Item key={k[0].toString()}>
-            <Menu.Header header>{k[0]}</Menu.Header>
-            <Menu.Menu>{k[1].map(e => <PaletteElement key={e.type} element={e} />)}</Menu.Menu>
-          </Menu.Item>
-        ))}
-      </Sidebar>
-      <Sidebar.Pusher>
-        <Sidebar.Pushable as={Segment}>
-          <Sidebar as={Menu} animation="push" direction="bottom" visible={isRecycleBinOpen}>
-            <Menu.Item name="home">
-              <Icon name="home" />
-              Home
-            </Menu.Item>
-            <Menu.Item name="gamepad">
-              <Icon name="gamepad" />
-              Games
-            </Menu.Item>
-            <Menu.Item name="camera">
-              <Icon name="camera" />
-              Channels
-            </Menu.Item>
-          </Sidebar>
-          <Sidebar.Pusher>
-            <div className="Pipeline-editor">
-              <LineContainer
-                lineContextId={`pipeline-lines-${pipelineId}`}
-                lineElementCreators={lineElementCreators}
-              >
-                <Header as="h4">Pipeline Editor {pipelineId}</Header>
-                <Button onClick={togglePaletteOpen}>Elements</Button>
-                <Button onClick={toggleRecycleBin}>Recycle Bin</Button>
-                {pipeline.elements.add.map(e => (
-                  <div key={e.id} id={e.id} style={elementStyles[e.id]}>
-                    <PipelineElement pipelineId={pipelineId} elementId={e.id} />
-                  </div>
-                ))}
-                {pipeline.links.add
-                  .map(l => ({ ...l, lineId: `${l.from}-${l.to}` }))
-                  .map(l => (
-                    <LineTo
-                      lineId={l.lineId}
-                      key={l.lineId}
-                      fromId={l.from}
-                      toId={l.to}
-                      lineType="curve"
-                    />
-                  ))}
-              </LineContainer>
+        <Header as="h4">Pipeline Editor {pipelineId}</Header>
+        <div className="Pipeline-editor__elements">
+          {pipeline.elements.add.map(e => (
+            <div key={e.id} id={e.id} style={elementStyles[e.id]}>
+              <PipelineElement pipelineId={pipelineId} elementId={e.id} />
             </div>
-          </Sidebar.Pusher>
-        </Sidebar.Pushable>
-      </Sidebar.Pusher>
-    </Sidebar.Pushable>
+          ))}
+        </div>
+        <div className="Pipeline-editor__lines">
+          {pipeline.links.add
+            .map(l => ({ ...l, lineId: `${l.from}-${l.to}` }))
+            .map(l => (
+              <LineTo
+                lineId={l.lineId}
+                key={l.lineId}
+                fromId={l.from}
+                toId={l.to}
+                lineType="curve"
+              />
+            ))}
+        </div>
+      </LineContainer>
+    </div>
   );
 };
 
@@ -155,10 +129,6 @@ PipelineEditor.propTypes = {
   // withPaletteOpen
   isPaletteOpen: PropTypes.bool.isRequired,
   setPaletteOpen: PropTypes.func.isRequired,
-
-  // withRecycleBinOpen
-  isRecycleBinOpen: PropTypes.bool.isRequired,
-  setRecycleBinOpen: PropTypes.func.isRequired,
 };
 
 export default compose(
@@ -172,5 +142,4 @@ export default compose(
   ),
   withPipeline(),
   withPaletteOpen,
-  withRecycleBinOpen,
 )(PipelineEditor);

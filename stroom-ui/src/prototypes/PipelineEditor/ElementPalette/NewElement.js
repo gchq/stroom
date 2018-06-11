@@ -1,9 +1,31 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 import { Button } from 'semantic-ui-react';
+import { DragSource } from 'react-dnd';
 
-const NewElement = ({ element }) => (
-  <div className="element-palette-element">
+import { ItemTypes } from '../dragDropTypes';
+
+const dragSource = {
+  canDrag(props) {
+    return true;
+  },
+  beginDrag(props) {
+    return {
+      element: props.element,
+    };
+  },
+};
+
+function dragCollect(connect, monitor) {
+  return {
+    connectDragSource: connect.dragSource(),
+    isDragging: monitor.isDragging(),
+  };
+}
+
+const NewElement = ({ connectDragSource, isDragging, element }) =>
+  connectDragSource(<div className="element-palette-element">
     <Button basic>
       <div className="element-palette-element__button-contents">
         <img
@@ -14,7 +36,10 @@ const NewElement = ({ element }) => (
         <div className="element-palette-element__type">{element.type}</div>
       </div>
     </Button>
-  </div>
-);
+                    </div>);
 
-export default NewElement;
+NewElement.propTypes = {
+  element: PropTypes.object.isRequired,
+};
+
+export default DragSource(ItemTypes.PALLETE_ELEMENT, dragSource, dragCollect)(NewElement);

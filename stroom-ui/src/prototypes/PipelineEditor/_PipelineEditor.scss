@@ -1,8 +1,60 @@
 @import "./ElementPalette/ElementPalette";
 
+$palette-width: 18rem;
+
 .Pipeline-editor {
-  height: 80vh;
+  height: 100vh;
   width: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: row;
+}
+
+/* The animation code */
+@keyframes open-pallete {
+  from {
+    left: -$palette-width;
+  }
+  to {
+    left: 0;
+  }
+}
+
+.Pipeline-editor--palette-open {
+  left: 0;
+  animation-name: open-pallete;
+  animation-duration: 0.3s;
+}
+
+/* The animation code */
+@keyframes close-pallete {
+  from {
+    left: 0;
+  }
+  to {
+    left: -$palette-width;
+  }
+}
+
+.Pipeline-editor--palette-close {
+  left: -$palette-width;
+  animation-name: close-pallete;
+  animation-duration: 0.3s;
+}
+
+.Pipeline-editor__element-palette {
+  max-width: $palette-width;
+  position: relative;
+}
+
+.Pipeline-editor__palette-toggle {
+  position: relative;
+  height: 100%;
+  float: left;
+}
+
+.Pipeline-editor__graph {
+  flex: 1;
   position: relative;
 }
 
@@ -40,13 +92,4 @@
 .Pipeline-element__dragging {
   border-style: dotted;
   opacity: 0.5;
-}
-
-.Pipeline-element__context-menu {
-  top: -2.4rem;
-  position: relative;
-}
-
-.Pipeline-editor__element-button {
-  border: none;
 }

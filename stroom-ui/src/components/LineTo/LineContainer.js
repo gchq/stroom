@@ -129,8 +129,8 @@ class LineContainer extends Component {
         <div className={this.props.className}>
           <svg
             id={this.props.lineContextId}
-            width="1000px"
-            height="1000px"
+            width="100hw"
+            height="100vh"
             style={{
               pointerEvents: 'none',
               position: 'absolute',
