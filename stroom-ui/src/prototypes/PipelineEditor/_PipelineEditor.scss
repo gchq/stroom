@@ -5,7 +5,6 @@ $palette-width: 19rem;
 
 .Pipeline-editor {
   height: 100vh;
-  width: 100%;
   position: relative;
   display: flex;
   flex-direction: row;
@@ -23,6 +22,7 @@ $palette-width: 19rem;
 
 .Pipeline-editor--palette-open {
   left: 0;
+  width: 100%;
   animation-name: open-pallete;
   animation-duration: 0.3s;
 }
@@ -39,6 +39,7 @@ $palette-width: 19rem;
 
 .Pipeline-editor--palette-close {
   left: -$palette-width;
+  width: calc(100% + #{$palette-width});
   animation-name: close-pallete;
   animation-duration: 0.3s;
 }
@@ -60,6 +61,9 @@ $palette-width: 19rem;
 .Pipeline-editor__graph {
   flex: 1;
   position: relative;
+  overflow: scroll;
+  overflow-y: scroll;
+  overflow-x: auto;
 }
 
 .Pipeline-editor__recycle-bin {
