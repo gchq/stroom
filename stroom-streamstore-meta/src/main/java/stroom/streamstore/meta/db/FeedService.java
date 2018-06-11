@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,21 +12,17 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
-package stroom.streamstore.fs;
+package stroom.streamstore.meta.db;
 
-import stroom.streamstore.api.StreamStore;
+import java.util.List;
 
-/**
- * <p>
- * A file system stream store.
- * </p>
- * <p>
- * <p>
- * Stores streams in the stream store indexed by some meta data.
- * </p>
- */
-public interface FileSystemStreamStore extends StreamStore {
-//    Set<StreamVolume> findStreamVolume(Long metaDataId);
+interface FeedService {
+//    Integer get(String name);
+
+    Integer getOrCreate(String name);
+
+    List<String> list();
 }
