@@ -32,6 +32,12 @@ import stroom.util.logging.LambdaLoggerFactory;
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
 
+// TODO this was created to hold the value reference counter but then that counter was
+// included in the value of the ValueStoreDb. It is debatable whether it is better
+// to mutate the ValueStoreDb value (which will involve copying all of the value bytes
+// into a new buffer and some values could be large) or use this table which would be a
+// cheaper update but would incur an additional cursor lookup.
+// Leaving it in in case perf testing reveals the cost of copying value bytes is too high.
 public class ValueReferenceCountDb extends AbstractLmdbDb<ValueStoreKey, Integer> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ValueReferenceCountDb.class);

@@ -21,18 +21,23 @@ import java.util.Objects;
 
 public abstract class RefDataValue {
 
+    // A count of the number of KeyValueStoreDb or RangeValueStoreDb keys that are associated
+    // with this value. This count should not form part of the equals or hashcode
     protected final int referenceCount;
 
     RefDataValue(final int referenceCount) {
         this.referenceCount = referenceCount;
     }
 
-//    public abstract boolean equals(Object obj);
-//
-//    public abstract int hashCode();
+    /**
+     * @return The hashcode of just the underlying value that this object wraps
+     * rather than hashcode of the whole object.
+     */
+    public abstract int valueHashCode();
 
     /**
-     * @return A code to represent the class of this, unique within all sub-classes of {@link RefDataValue}
+     * @return A code to represent the class of the implementation,
+     * unique within all sub-classes of {@link RefDataValue}
      */
     public abstract int getTypeId();
 

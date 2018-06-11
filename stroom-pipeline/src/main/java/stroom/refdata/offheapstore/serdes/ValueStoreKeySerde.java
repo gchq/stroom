@@ -75,4 +75,20 @@ public class ValueStoreKeySerde implements Serde<ValueStoreKey> {
         short currId = byteBuffer.getShort(ID_OFFSET);
         byteBuffer.putShort(ID_OFFSET, (short) (currId + 1));
     }
+
+    /**
+     * Updates the ID part of the {@link ByteBuffer} by one. Does not
+     * alter the offset/limit
+     */
+    public static void updateId(final ByteBuffer byteBuffer, final short newId) {
+        byteBuffer.putShort(ID_OFFSET, newId);
+    }
+
+    /**
+     * Extracts the ID part of the {@link ByteBuffer} by one. Does not
+     * alter the offset/limit
+     */
+    public static short extractId(final ByteBuffer byteBuffer) {
+        return byteBuffer.getShort(ID_OFFSET);
+    }
 }

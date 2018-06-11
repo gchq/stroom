@@ -27,7 +27,7 @@ public class TestValueStoreKeySerde extends AbstractSerdeTest {
 
         ByteBuffer originalBuffer = serde.serialize(originalValueStoreKey);
 
-        ByteBuffer mutatedBuffer = serde.nextId(originalBuffer);
+        ByteBuffer mutatedBuffer = ValueStoreKeySerde.nextId(originalBuffer);
 
         ValueStoreKey newValueStoreKey = serde.deserialize(mutatedBuffer);
 
@@ -43,12 +43,41 @@ public class TestValueStoreKeySerde extends AbstractSerdeTest {
 
         ByteBuffer byteBuffer = serde.serialize(originalValueStoreKey);
 
-        serde.incrementId(byteBuffer);
+        ValueStoreKeySerde.incrementId(byteBuffer);
 
         ValueStoreKey newValueStoreKey = serde.deserialize(byteBuffer);
 
         assertThat(newValueStoreKey.getValueHashCode()).isEqualTo(originalValueStoreKey.getValueHashCode());
         assertThat(newValueStoreKey.getUniqueId()).isEqualTo((short) (originalValueStoreKey.getUniqueId() + 1));
+    }
 
+    @Test
+    public void testUpdateId() {
+        ValueStoreKey originalValueStoreKey = new ValueStoreKey(1234567, (short) 123);
+
+        ValueStoreKeySerde serde = new ValueStoreKeySerde();
+
+        ByteBuffer byteBuffer = serde.serialize(originalValueStoreKey);
+
+        ValueStoreKeySerde.updateId(byteBuffer, (short) 456);
+
+        ValueStoreKey newValueStoreKey = serde.deserialize(byteBuffer);
+
+        assertThat(newValueStoreKey.getValueHashCode()).isEqualTo(originalValueStoreKey.getValueHashCode());
+        assertThat(newValueStoreKey.getUniqueId()).isEqualTo((short) 456);
+    }
+
+    @Test
+    public void testExtractId() {
+        short id = 123;
+        ValueStoreKey originalValueStoreKey = new ValueStoreKey(1234567, id);
+
+        ValueStoreKeySerde serde = new ValueStoreKeySerde();
+
+        ByteBuffer byteBuffer = serde.serialize(originalValueStoreKey);
+
+        short extractedId = ValueStoreKeySerde.extractId(byteBuffer);
+
+        assertThat(extractedId).isEqualTo(id);
     }
 }

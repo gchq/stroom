@@ -33,11 +33,13 @@ public class RefDataValueSerde implements
         Serializer<RefDataValue>,
         Deserializer<RefDataValue> {
 
+    public static final int TYPE_ID_OFFSET = 0;
+    public static final int TYPE_ID_BYTES = 1;
+
     private final Map<Integer, RefDatValueSubSerde> typeToSerdeMap;
 
     @Inject
     public RefDataValueSerde(final Map<Integer, RefDatValueSubSerde> typeToSerdeMap) {
-//    public RefDataValueSerde(final Map<Integer, Serde<RefDataValue>> typeToSerdeMap) {
         this.typeToSerdeMap = typeToSerdeMap;
     }
 
@@ -55,18 +57,29 @@ public class RefDataValueSerde implements
         // rely on the subSerde flipping the buffer
     }
 
-    private Serde<RefDataValue> getSubSerde(int typeId) {
+    private RefDatValueSubSerde getSubSerde(int typeId) {
         return Optional.ofNullable(typeToSerdeMap.get(typeId))
                 .orElseThrow(() -> new RuntimeException(LambdaLogger.buildMessage("Unexpected typeId value {}", typeId)));
     }
 
-//    public static Class<? extends RefDataValue> determineType(final byte bTypeId) {
-//        if (bTypeId == FastInfosetValue.TYPE_ID) {
-//            return FastInfosetValue.class;
-//        } else if (bTypeId == StringValue.TYPE_ID){
-//            return StringValue.class;
-//        } else {
-//            throw new RuntimeException(LambdaLogger.buildMessage("Unexpected typeId value {}", Byte.toString(bTypeId)));
-//        }
-//    }
+    /**
+     * Compares the value portion of each of the passed {@link ByteBuffer} instances.
+     * @return True if the bytes of the value portion of each buffer are equal
+     */
+    public boolean areValuesEqual(final ByteBuffer thisValue, final ByteBuffer thatValue) {
+        final int thisTypeId = thisValue.get(TYPE_ID_OFFSET);
+        final int thatTypeId = thatValue.get(TYPE_ID_OFFSET);
+        if (thisTypeId != thatTypeId) {
+            throw new RuntimeException(LambdaLogger.buildMessage("Type IDs do not match, this {}, that {}",
+                    thisTypeId, thatTypeId));
+        }
+        return getSubSerde(thisTypeId).areValuesEqual(thisValue, thatValue);
+    }
+
+    public int updateReferenceCount(final ByteBuffer valueBuffer, int referenceCountDelta) {
+        int typeId = valueBuffer.get(TYPE_ID_OFFSET);
+        return getSubSerde(typeId).updateReferenceCount(valueBuffer, referenceCountDelta);
+    }
+
+
 }

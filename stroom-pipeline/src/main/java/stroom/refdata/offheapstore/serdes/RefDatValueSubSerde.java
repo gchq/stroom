@@ -17,6 +17,10 @@
 
 package stroom.refdata.offheapstore.serdes;
 
+import org.apache.hadoop.hbase.util.ByteBufferUtils;
+import org.jboss.netty.util.internal.ByteBufferUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.serde.Serde;
 import stroom.refdata.offheapstore.RefDataValue;
 
@@ -24,6 +28,11 @@ import java.nio.ByteBuffer;
 
 public interface RefDatValueSubSerde extends Serde<RefDataValue> {
 
+    Logger LOGGER = LoggerFactory.getLogger(RefDatValueSubSerde.class);
+
+    int REFERENCE_COUNT_OFFSET = RefDataValueSerde.TYPE_ID_OFFSET + RefDataValueSerde.TYPE_ID_BYTES;
+    int REFERENCE_COUNT_BYTES = Integer.BYTES;
+    int VALUE_OFFSET = REFERENCE_COUNT_OFFSET + REFERENCE_COUNT_BYTES;
 
     default int extractReferenceCount(ByteBuffer byteBuffer) {
         return byteBuffer.getInt();
@@ -33,4 +42,23 @@ public interface RefDatValueSubSerde extends Serde<RefDataValue> {
         byteBuffer.putInt(refDataValue.getReferenceCount());
     }
 
+    /**
+     * Compares the value portion of each of the passed {@link ByteBuffer} instances.
+     * @return True if the bytes of the value portion of each buffer are equal
+     */
+    default boolean areValuesEqual(final ByteBuffer thisValue, final ByteBuffer thatValue) {
+        final int ignoredBytes = RefDataValueSerde.TYPE_ID_BYTES + REFERENCE_COUNT_BYTES;
+        int result = ByteBufferUtils.compareTo(
+                thisValue, VALUE_OFFSET, thisValue.limit() - ignoredBytes - 1,
+                thatValue, VALUE_OFFSET, thatValue.limit() - ignoredBytes - 1);
+        return result == 0;
+    }
+
+    default int updateReferenceCount(final ByteBuffer valueBuffer, int referenceCountDelta) {
+        int currRefCount = valueBuffer.getInt(REFERENCE_COUNT_OFFSET);
+        int newRefCount = currRefCount + referenceCountDelta;
+        valueBuffer.putInt(REFERENCE_COUNT_OFFSET, newRefCount);
+        LOGGER.trace("Changing ref count from {} to {}", currRefCount, newRefCount);
+        return newRefCount;
+    }
 }

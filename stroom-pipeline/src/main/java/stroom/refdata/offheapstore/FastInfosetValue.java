@@ -46,6 +46,7 @@ public class FastInfosetValue extends RefDataValue {
         return new FastInfosetValue(bytes);
     }
 
+
     @Override
     public int getTypeId() {
         return TYPE_ID;
@@ -58,6 +59,11 @@ public class FastInfosetValue extends RefDataValue {
         if (!super.equals(o)) return false;
         final FastInfosetValue that = (FastInfosetValue) o;
         return Arrays.equals(fastInfosetBytes, that.fastInfosetBytes);
+    }
+
+    @Override
+    public int valueHashCode() {
+        return Arrays.hashCode(fastInfosetBytes);
     }
 
     @Override

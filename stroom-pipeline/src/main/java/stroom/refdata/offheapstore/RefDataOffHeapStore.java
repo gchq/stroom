@@ -381,6 +381,7 @@ public class RefDataOffHeapStore implements RefDataStore {
         keyValueStoreDb.logDatabaseContents();
         rangeStoreDb.logDatabaseContents();
         valueStoreDb.logDatabaseContents();
+        valueReferenceCountDb.logDatabaseContents();
     }
 
 
@@ -520,18 +521,53 @@ public class RefDataOffHeapStore implements RefDataStore {
             beginTxnIfRequired();
 
             final UID mapUid = getOrCreateUid(mapDefinition);
+            final KeyValueStoreKey keyValueStoreKey = new KeyValueStoreKey(mapUid, key);
+
+            // see if we have a value already for this key
+            // if overwrite == false, we can just drop out here
+            // if overwrite == true we need to de-reference the value (and maybe delete)
+            // then create a new value, assuming they are different
+            Optional<ValueStoreKey> optCurrentValueStoreKey = keyValueStoreDb.get(keyValueStoreKey);
+
+            boolean didPutSucceed;
+            if (!overwriteExisting && optCurrentValueStoreKey.isPresent()) {
+                // already have an entry for this key so drop out here
+                didPutSucceed = false;
+            } else if (overwriteExisting && optCurrentValueStoreKey.isPresent()) {
+                // overwriting and we already have a value so see if the old and
+                // new values are the same.
+                ValueStoreKey currentValueStoreKey = optCurrentValueStoreKey.get();
+
+                boolean areValuesEqual = valueStoreDb.areValuesEqual(
+                        writeTxn, currentValueStoreKey, refDataValue);
+                if (areValuesEqual) {
+                    // value is the same as the existing value so nothing to do
+                    didPutSucceed = true;
+                } else {
+                    // value is different so we need to de-reference the old one
+                    // and getOrCreate the new one
+                    valueStoreDb.deReferenceValue(writeTxn, currentValueStoreKey);
+
+                }
+
+
+
+            } else {
+
+            }
+
 
             //get the ValueStoreKey for the RefDataValue (creating the entry if it doesn't exist)
-            final ValueStoreKey valueStoreKey = valueStoreDb.getOrCreate(writeTxn, refDataValue);
+            final ValueStoreKey valueStoreKey = valueStoreDb.getOrCreate(
+                    writeTxn, refDataValue, overwriteExisting);
 
             // TODO once the reference table is in will need to add an entry to the references DB
             // to link this mapDef to the value record.
 
-            final KeyValueStoreKey keyValueStoreKey = new KeyValueStoreKey(mapUid, key);
 
             // assuming it is cheaper to just try the put and let LMDB handle duplicates rather than
             // do a get then optional put.
-            boolean didPutSucceed = keyValueStoreDb.put(
+            didPutSucceed = keyValueStoreDb.put(
                     writeTxn, keyValueStoreKey, valueStoreKey, overwriteExisting);
 
             if (didPutSucceed) {
@@ -557,7 +593,7 @@ public class RefDataOffHeapStore implements RefDataStore {
             final UID mapUid = getOrCreateUid(mapDefinition);
 
             //get the ValueStoreKey for the RefDataValue (creating the entry if it doesn't exist)
-            final ValueStoreKey valueStoreKey = valueStoreDb.getOrCreate(writeTxn, refDataValue);
+            final ValueStoreKey valueStoreKey = valueStoreDb.getOrCreate(writeTxn, refDataValue, overwriteExisting);
 
             // TODO once the reference table is in will need to add an entry to the references DB
             // to link this mapDef to the value record.
