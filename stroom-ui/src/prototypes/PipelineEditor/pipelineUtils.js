@@ -249,3 +249,8 @@ export function getChildren(pipeline, parent) {
 
   return allChildren;
 }
+
+export function isActive(pipeline, elementToCheck) {
+  const linksInvolvingElement = pipeline.links.add.filter(element => elementToCheck.id === element.from || elementToCheck.id === element.to);
+  return linksInvolvingElement.length > 0;
+}
