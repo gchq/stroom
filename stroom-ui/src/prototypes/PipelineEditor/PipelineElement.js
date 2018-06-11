@@ -102,7 +102,7 @@ const PipelineElement = ({
   elementDefinition,
   pipelineElementSelected,
   pipelineElementAdded,
-
+  selectedElementId,
   newElementForm,
   newElementDefinition,
   setNewElementDefinition
@@ -120,6 +120,9 @@ const PipelineElement = ({
     } else {
       className += ' Pipeline-element__over_cannot_drop';
     }
+  }
+  if(selectedElementId === elementId){
+    className += ' Pipeline-element__selected'
   }
 
   const onClick = () => pipelineElementSelected(pipelineId, elementId);
@@ -162,6 +165,8 @@ PipelineElement.propTypes = {
   // Set by container
   pipelineId: PropTypes.string.isRequired,
   elementId: PropTypes.string.isRequired,
+
+  selectedElementId: PropTypes.string,
 
   // withPipeline
   pipeline: PropTypes.object.isRequired,
