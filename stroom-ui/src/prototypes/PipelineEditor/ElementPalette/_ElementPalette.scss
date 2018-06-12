@@ -14,17 +14,26 @@
 }
 
 .element-palette-element {
+  //Copied from PipelineELement TODO: don't do this!
   margin-bottom: 0.5rem;
-}
-
-.element-palette-element__button-contents {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  padding: 0.5rem;
+  width: 8rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-style: solid;
+  border-width: thin;
+  border-radius: 5px;
+  background-color: white; // Two possible shadow looks -- darker and lighter.
+  // box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.1), 0 6px 20px 0 rgba(0, 0, 0, 0.1); //End copied from PipelineELement
+  margin-right: 3px;
 }
 
 .element-palette-element__icon {
-  width: 1.5rem;
+  width: 0.7rem;
+  margin-right: 0.3rem;
 }
 
 .element-palette-element__type {

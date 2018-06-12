@@ -132,33 +132,34 @@ const PipelineElement = ({
   }
   const onCancelNewElement = () => setNewElementDefinition(undefined);
 
-  return compose(connectDragSource, connectDropTarget)(<div className={className} onClick={onClick}>
-    <Modal
-      size="tiny"
-      open={!!newElementDefinition}
-      onClose={onCancelNewElement}
-    >
-      <Header content='Add New Element' />
-      <Modal.Content>
-        <Form>
-          <Form.Field>
-            <label>Name</label>
-            <Field name="name" component="input" type="text" placeholder="Name" />
-          </Form.Field>
-        </Form>
-      </Modal.Content>
-      <Modal.Actions>
-        <Button positive content="Submit" onClick={onConfirmNewElement} />
-        <Button negative content="Cancel" onClick={onCancelNewElement} />
-      </Modal.Actions>
-    </Modal>
-    <img
-      className="Pipeline-element__icon"
-      alt="X"
-      src={require(`./images/${elementDefinition.icon}`)}
-    />
-    {elementId}
-  </div>);
+  return compose(connectDragSource, connectDropTarget)(
+    <div className={className} onClick={onClick}>
+      <Modal
+        size="tiny"
+        open={!!newElementDefinition}
+        onClose={onCancelNewElement}
+      >
+        <Header content='Add New Element' />
+        <Modal.Content>
+          <Form>
+            <Form.Field>
+              <label>Name</label>
+              <Field name="name" component="input" type="text" placeholder="Name" />
+            </Form.Field>
+          </Form>
+        </Modal.Content>
+        <Modal.Actions>
+          <Button positive content="Submit" onClick={onConfirmNewElement} />
+          <Button negative content="Cancel" onClick={onCancelNewElement} />
+        </Modal.Actions>
+      </Modal>
+      <img
+        className="Pipeline-element__icon"
+        alt="X"
+        src={require(`./images/${elementDefinition.icon}`)}
+      />
+      {elementId}
+    </div>);
 };
 
 PipelineElement.propTypes = {

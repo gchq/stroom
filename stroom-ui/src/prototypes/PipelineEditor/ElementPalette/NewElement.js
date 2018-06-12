@@ -26,16 +26,14 @@ function dragCollect(connect, monitor) {
 
 const NewElement = ({ connectDragSource, isDragging, element }) =>
   connectDragSource(<div className="element-palette-element">
-    <Button basic>
-      <div className="element-palette-element__button-contents">
-        <img
-          className="element-palette-element__icon"
-          alt="X"
-          src={require(`../images/${element.icon}`)}
-        />
-        <div className="element-palette-element__type">{element.type}</div>
-      </div>
-    </Button>
+    <div className="element-palette-element__button-contents">
+      <img
+        className="element-palette-element__icon"
+        alt="X"
+        src={require(`../images/${element.icon}`)}
+      />
+      {element.type}
+    </div>
                     </div>);
 
 NewElement.propTypes = {
