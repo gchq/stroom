@@ -21,6 +21,8 @@ import { connect } from 'react-redux';
 
 import { DragSource, DropTarget } from 'react-dnd';
 
+import { Image } from 'semantic-ui-react';
+
 import AddElementModal from './AddElementModal';
 import { withElement } from './withElement';
 import { withPipeline } from './withPipeline';
@@ -96,6 +98,7 @@ function dropCollect(connect, monitor) {
     connectDropTarget: connect.dropTarget(),
     isOver: monitor.isOver(),
     canDrop: monitor.canDrop(),
+    dndIsHappening: (monitor.getItem() !== null)
   };
 }
 
@@ -113,8 +116,10 @@ const PipelineElement = ({
   selectedElementId,
   newElementForm,
   newElementDefinition,
-  setNewElementDefinition
+  setNewElementDefinition,
+  dndIsHappening
 }) => {
+  let isIconDisabled = false;
   let className = 'Pipeline-element';
   if (isOver) {
     className += ' Pipeline-element__over';
@@ -126,9 +131,20 @@ const PipelineElement = ({
     if (canDrop) {
       className += ' Pipeline-element__over_can_drop';
     } else {
-      className += ' Pipeline-element__over_cannot_drop';
+      isIconDisabled = true;
+      className += ' Pipeline-element__cannot_drop';
     }
   }
+  else {
+    if(canDrop){
+      className += ' Pipeline-element__not_over_can_drop';
+    }
+    else if (dndIsHappening){
+      isIconDisabled = true;
+      className += ' Pipeline-element__cannot_drop';
+    }
+  }
+
   if(selectedElementId === elementId){
     className += ' Pipeline-element__selected'
   }
@@ -138,10 +154,11 @@ const PipelineElement = ({
   return compose(connectDragSource, connectDropTarget)(
     <div className={className} onClick={onClick}>
       <AddElementModal {...{setNewElementDefinition, newElementDefinition, pipelineId, elementId}}  />
-      <img
+      <Image
         className="Pipeline-element__icon"
         alt="X"
         src={require(`./images/${elementDefinition.icon}`)}
+        disabled={isIconDisabled}
       />
       <button className='Pipeline-element__type'>
       {elementId}

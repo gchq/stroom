@@ -1,7 +1,7 @@
 @import "./Element";
-
 .Pipeline-element {
   @extend %element-shared;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.1), 0 6px 20px 0 rgba(0, 0, 0, 0.1);
 }
 
 .Pipeline-element__type {
@@ -14,6 +14,7 @@
 
 .Pipeline-element__icon {
   @extend %element-shared__icon;
+  display: inline !important;
 }
 
 .Pipeline-element:hover {
@@ -21,15 +22,21 @@
 }
 
 .Pipeline-element__over {
-  border-color: blue;
+  // No common styles for a straight-forward hover at the moment
 }
 
 .Pipeline-element__over_can_drop {
-  background-color: greenyellow;
+  border-color: rgb(30, 136, 229);
+  background-color: $selected-item-colour;
 }
 
-.Pipeline-element__over_cannot_drop {
-  background-color: red;
+.Pipeline-element__cannot_drop {
+  border-color: lightgrey;
+  color: lightgray;
+}
+
+.Pipeline-element__not_over_can_drop {
+  // Not currently highlighting compatible targets -- disabling incompatible instead
 }
 
 .Pipeline-element__dragging {
