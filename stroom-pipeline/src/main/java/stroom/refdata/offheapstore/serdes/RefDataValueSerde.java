@@ -81,5 +81,13 @@ public class RefDataValueSerde implements
         return getSubSerde(typeId).updateReferenceCount(valueBuffer, referenceCountDelta);
     }
 
+    public int incrementReferenceCount(final ByteBuffer valueBuffer) {
+        return updateReferenceCount(valueBuffer, 1);
+    }
+
+    public int decrementReferenceCount(final ByteBuffer valueBuffer) {
+        return updateReferenceCount(valueBuffer, -1);
+    }
+
 
 }

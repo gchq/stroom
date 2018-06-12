@@ -27,7 +27,7 @@ public class FastInfosetValue extends RefDataValue {
     private final byte[] fastInfosetBytes;
 
     public FastInfosetValue(final byte[] fastInfosetBytes) {
-        this(0, fastInfosetBytes);
+        this(1, fastInfosetBytes);
     }
 
     public FastInfosetValue(final int referenceCount, final byte[] fastInfosetBytes) {
@@ -46,6 +46,9 @@ public class FastInfosetValue extends RefDataValue {
         return new FastInfosetValue(bytes);
     }
 
+    public FastInfosetValue cloneWithNewReferenceCount(int referenceCount) {
+        return new FastInfosetValue(referenceCount, fastInfosetBytes);
+    }
 
     @Override
     public int getTypeId() {

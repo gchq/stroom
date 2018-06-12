@@ -109,7 +109,7 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void testOverwrite_doOverwrite() throws Exception {
+    public void testOverwrite_doOverwrite_keyValueStore() throws Exception {
         StringValue value1 = StringValue.of("myValue1");
         StringValue value2 = StringValue.of("myValue2");
 
@@ -117,11 +117,21 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         StringValue expectedFinalValue = value2;
 
         doKeyValueOverwriteTest(true, value1, value2, expectedFinalValue);
+    }
+
+    @Test
+    public void testOverwrite_doOverwrite_rangeValueStore() throws Exception {
+        StringValue value1 = StringValue.of("myValue1");
+        StringValue value2 = StringValue.of("myValue2");
+
+        // overwriting so value changes to value2
+        StringValue expectedFinalValue = value2;
+
         doKeyRangeValueOverwriteTest(true, value1, value2, expectedFinalValue);
     }
 
     @Test
-    public void testOverwrite_doNotOverwrite() throws Exception {
+    public void testOverwrite_doNotOverwrite_keyValueStore() throws Exception {
         StringValue value1 = StringValue.of("myValue1");
         StringValue value2 = StringValue.of("myValue2");
 
@@ -129,6 +139,17 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         StringValue expectedFinalValue = value1;
 
         doKeyValueOverwriteTest(false, value1, value2, expectedFinalValue);
+    }
+
+    @Test
+    public void testOverwrite_doNotOverwrite_rangeValueStore() throws Exception {
+        StringValue value1 = StringValue.of("myValue1");
+        StringValue value2 = StringValue.of("myValue2");
+
+        // no overwriting so value stays as value1
+        StringValue expectedFinalValue = value1;
+
+        doKeyRangeValueOverwriteTest(false, value1, value2, expectedFinalValue);
     }
 
     private void doKeyValueOverwriteTest(final boolean overwriteExisting,
@@ -156,6 +177,7 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         }
 
         ((RefDataOffHeapStore) refDataStore).logAllContents();
+
         assertThat((StringValue) refDataStore.getValue(mapDefinition, key).get()).isEqualTo(value1);
 
         assertThat(refDataStore.getKeyValueEntryCount()).isEqualTo(1);
@@ -205,7 +227,7 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
         try (RefDataLoader loader = refDataStore.loader(refStreamDefinition, effectiveTimeMs)) {
             loader.initialise(overwriteExisting);
-            didPutSucceed = loader.put(mapDefinition, key, value2);
+            didPutSucceed = loader.put(mapDefinition, range, value2);
             assertThat(didPutSucceed).isEqualTo(overwriteExisting);
             loader.completeProcessing();
         }

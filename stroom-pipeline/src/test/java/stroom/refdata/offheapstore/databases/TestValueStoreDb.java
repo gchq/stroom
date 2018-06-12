@@ -2,15 +2,18 @@ package stroom.refdata.offheapstore.databases;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.LmdbUtils;
 import stroom.refdata.offheapstore.RefDataValue;
 import stroom.refdata.offheapstore.StringValue;
 import stroom.refdata.offheapstore.ValueStoreKey;
+import stroom.refdata.offheapstore.serdes.RefDataValueSerde;
 import stroom.refdata.offheapstore.serdes.RefDataValueSerdeFactory;
 import stroom.refdata.offheapstore.serdes.ValueStoreKeySerde;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,7 +22,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.filter;
 
 
 public class TestValueStoreDb extends AbstractLmdbDbTest {
@@ -27,6 +29,9 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestValueStoreDb.class);
 
     private ValueStoreDb valueStoreDb = null;
+
+    //TODO should really spin up guice rather than use this factory class
+    private final RefDataValueSerde refDataValueSerde = RefDataValueSerdeFactory.create();
 
     @Before
     @Override
@@ -36,7 +41,7 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
         valueStoreDb = new ValueStoreDb(
                 lmdbEnv,
                 new ValueStoreKeySerde(),
-                RefDataValueSerdeFactory.create());
+                refDataValueSerde);
     }
 
 //    @Test
@@ -77,6 +82,7 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
 
             assertThat(valueStoreKey).isNotNull();
             assertThat(valueStoreKey.getUniqueId()).isEqualTo((short) 0);
+            assertRefCount(writeTxn, valueStoreKey, 1);
         });
         assertThat(valueStoreDb.getEntryCount()).isEqualTo(1);
 
@@ -89,6 +95,9 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
 
             assertThat(valueStoreKey).isNotNull();
             assertThat(valueStoreKey.getUniqueId()).isEqualTo((short) 0);
+
+            // ref count increases as two things have an interest in the value
+            assertRefCount(writeTxn, valueStoreKey, 2);
         });
         assertThat(valueStoreDb.getEntryCount()).isEqualTo(1);
 
@@ -101,6 +110,7 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
 
             assertThat(valueStoreKey).isNotNull();
             assertThat(valueStoreKey.getUniqueId()).isEqualTo((short) 1);
+            assertRefCount(writeTxn, valueStoreKey, 1);
         });
         assertThat(valueStoreDb.getEntryCount()).isEqualTo(2);
 
@@ -112,6 +122,8 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
 
             assertThat(valueStoreKey).isNotNull();
             assertThat(valueStoreKey.getUniqueId()).isEqualTo((short) 1);
+            // ref count increases as two things have an interest in the value
+            assertRefCount(writeTxn, valueStoreKey, 2);
         });
         assertThat(valueStoreDb.getEntryCount()).isEqualTo(2);
 
@@ -124,6 +136,7 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
 
             assertThat(valueStoreKey).isNotNull();
             assertThat(valueStoreKey.getUniqueId()).isEqualTo((short) 0);
+            assertRefCount(writeTxn, valueStoreKey, 1);
         });
         assertThat(valueStoreDb.getEntryCount()).isEqualTo(3);
 
@@ -135,8 +148,16 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
 
             assertThat(valueStoreKey).isNotNull();
             assertThat(valueStoreKey.getUniqueId()).isEqualTo((short) 0);
+            // ref count increases as two things have an interest in the value
+            assertRefCount(writeTxn, valueStoreKey, 2);
         });
         assertThat(valueStoreDb.getEntryCount()).isEqualTo(3);
+    }
+
+    private void assertRefCount(Txn<ByteBuffer> txn, final ValueStoreKey valueStoreKey, final int expectedRefCount) {
+        final RefDataValue refDataValue = valueStoreDb.get(txn, valueStoreKey).get();
+        int foundRefCount = refDataValue.getReferenceCount();
+        assertThat(foundRefCount).isEqualTo(expectedRefCount);
     }
 
     @Test
@@ -219,6 +240,34 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
                 assertThat(val).isInstanceOf(StringValue.class);
                 assertThat(((StringValue) val).getValue()).isEqualTo(valueStr);
             });
+        });
+    }
+
+    @Test
+    public void testAreValueEqual_twoEqualValues() {
+        doAreValuesEqualAssert(StringValue.of("value1"), StringValue.of("value1"), true);
+    }
+
+    @Test
+    public void testAreValueEqual_twoDifferentValues() {
+        doAreValuesEqualAssert(StringValue.of("value1"), StringValue.of("value2"), false);
+    }
+
+    @Test
+    public void testAreValueEqual_notFound() {
+        StringValue value2 = StringValue.of("value2");
+        ValueStoreKey unknownValueStoreKey = new ValueStoreKey(123, (short) 0);
+        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            boolean areValuesEqual = valueStoreDb.areValuesEqual(writeTxn, unknownValueStoreKey, value2);
+            assertThat(areValuesEqual).isFalse();
+        });
+    }
+
+    private void doAreValuesEqualAssert(final StringValue value1, final StringValue value2, final boolean expectedResult) {
+        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            ValueStoreKey valueStoreKey1 = valueStoreDb.getOrCreate(writeTxn, value1);
+            boolean areValuesEqual = valueStoreDb.areValuesEqual(writeTxn, valueStoreKey1, value2);
+            assertThat(areValuesEqual).isEqualTo(expectedResult);
         });
     }
 }

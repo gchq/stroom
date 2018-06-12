@@ -21,18 +21,48 @@ import stroom.entity.shared.Range;
 
 public interface RefDataLoader extends AutoCloseable {
 
+    /**
+     * @return The {@link RefStreamDefinition} that this loader is loading data for
+     */
     RefStreamDefinition getRefStreamDefinition();
 
+    /**
+     * Creates the initial ProcessingInfo entry to mark this stream definition
+     * as having a load in progress.
+     */
     boolean initialise(final boolean overwriteExisting);
 
+    /**
+     * Completes the load, committing any outstanding work and marking the ProcessingInfo
+     * entry as complete for this stream definition
+     */
     void completeProcessing();
 
+    /**
+     * Set the number of puts to perform before committing the operations so far
+     */
     void setCommitInterval(final int putsBeforeCommit);
 
+    /**
+     * Put an entry into the key/value store. The overwriteExisting setting of the loader
+     * will govern how duplicates are handled.
+     * @param mapDefinition The {@link MapDefinition} that this entry is associated with
+     * @param key The key
+     * @param refDataValue The value
+     * @return True if the entry was put into the store
+     */
     boolean put(final MapDefinition mapDefinition,
                 final String key,
                 final RefDataValue refDataValue);
 
+    /**
+     * Put an entry into the range/value store. The overwriteExisting setting of the loader
+     * will govern how duplicates are handled.
+     * @param mapDefinition The {@link MapDefinition} that this entry is associated with
+     * @param keyRange The key range that the value is associate with
+     * @param refDataValue The value
+     * @return True if the entry was put into the store
+     */
     boolean put(final MapDefinition mapDefinition,
                 final Range<Long> keyRange,
                 final RefDataValue refDataValue);

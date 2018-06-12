@@ -26,7 +26,7 @@ public class StringValue extends RefDataValue {
     private final String value;
 
     public StringValue(final String value) {
-        this(0, value);
+        this(1, value);
     }
 
     public StringValue(final int referenceCount, final String value) {
@@ -40,6 +40,10 @@ public class StringValue extends RefDataValue {
 
     public String getValue() {
         return value;
+    }
+
+    public StringValue cloneWithNewReferenceCount(int referenceCount) {
+        return new StringValue(referenceCount, value);
     }
 
     @Override

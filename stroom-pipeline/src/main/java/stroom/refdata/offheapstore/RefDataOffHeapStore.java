@@ -85,8 +85,8 @@ public class RefDataOffHeapStore implements RefDataStore {
     private final Striped<Semaphore> stripedSemaphore;
 
     /**
-     * @param dbDir                 The directory the LMDB environment will be created in, it must already exist
-     * @param maxSize               The max size in bytes of the environment. This should be less than the available
+     * @param dbDir   The directory the LMDB environment will be created in, it must already exist
+     * @param maxSize The max size in bytes of the environment. This should be less than the available
      */
     @Inject
     RefDataOffHeapStore(
@@ -530,45 +530,51 @@ public class RefDataOffHeapStore implements RefDataStore {
             Optional<ValueStoreKey> optCurrentValueStoreKey = keyValueStoreDb.get(keyValueStoreKey);
 
             boolean didPutSucceed;
-            if (!overwriteExisting && optCurrentValueStoreKey.isPresent()) {
-                // already have an entry for this key so drop out here
-                didPutSucceed = false;
-            } else if (overwriteExisting && optCurrentValueStoreKey.isPresent()) {
-                // overwriting and we already have a value so see if the old and
-                // new values are the same.
-                ValueStoreKey currentValueStoreKey = optCurrentValueStoreKey.get();
-
-                boolean areValuesEqual = valueStoreDb.areValuesEqual(
-                        writeTxn, currentValueStoreKey, refDataValue);
-                if (areValuesEqual) {
-                    // value is the same as the existing value so nothing to do
-                    didPutSucceed = true;
+            if (optCurrentValueStoreKey.isPresent()) {
+                if (!overwriteExisting) {
+                    // already have an entry for this key so drop out here
+                    // with nothing to do as we can't overwrite anything
+                    didPutSucceed = false;
                 } else {
-                    // value is different so we need to de-reference the old one
-                    // and getOrCreate the new one
-                    valueStoreDb.deReferenceValue(writeTxn, currentValueStoreKey);
+                    // overwriting and we already have a value so see if the old and
+                    // new values are the same.
+                    ValueStoreKey currentValueStoreKey = optCurrentValueStoreKey.get();
 
+//                    RefDataValue currentValueStoreValue = valueStoreDb.get(writeTxn, currentValueStoreKey)
+//                            .orElseThrow(() -> new RuntimeException("Should have a value at this point"));
+
+                    boolean areValuesEqual = valueStoreDb.areValuesEqual(
+                            writeTxn, currentValueStoreKey, refDataValue);
+                    if (areValuesEqual) {
+                        // value is the same as the existing value so nothing to do
+                        // and no ref counts to change
+                        didPutSucceed = true;
+                    } else {
+                        // value is different so we need to de-reference the old one
+                        // and getOrCreate the new one
+                        valueStoreDb.deReferenceValue(writeTxn, currentValueStoreKey);
+
+                        //get the ValueStoreKey for the RefDataValue (creating the entry if it doesn't exist)
+                        final ValueStoreKey valueStoreKey = valueStoreDb.getOrCreate(
+                                writeTxn, refDataValue, overwriteExisting);
+
+                        // assuming it is cheaper to just try the put and let LMDB handle duplicates rather than
+                        // do a get then optional put.
+                        didPutSucceed = keyValueStoreDb.put(
+                                writeTxn, keyValueStoreKey, valueStoreKey, overwriteExisting);
+                    }
                 }
-
-
-
             } else {
+                // no existing valueStoreKey so create the entries
+                //get the ValueStoreKey for the RefDataValue (creating the entry if it doesn't exist)
+                final ValueStoreKey valueStoreKey = valueStoreDb.getOrCreate(
+                        writeTxn, refDataValue, overwriteExisting);
 
+                // assuming it is cheaper to just try the put and let LMDB handle duplicates rather than
+                // do a get then optional put.
+                didPutSucceed = keyValueStoreDb.put(
+                        writeTxn, keyValueStoreKey, valueStoreKey, overwriteExisting);
             }
-
-
-            //get the ValueStoreKey for the RefDataValue (creating the entry if it doesn't exist)
-            final ValueStoreKey valueStoreKey = valueStoreDb.getOrCreate(
-                    writeTxn, refDataValue, overwriteExisting);
-
-            // TODO once the reference table is in will need to add an entry to the references DB
-            // to link this mapDef to the value record.
-
-
-            // assuming it is cheaper to just try the put and let LMDB handle duplicates rather than
-            // do a get then optional put.
-            didPutSucceed = keyValueStoreDb.put(
-                    writeTxn, keyValueStoreKey, valueStoreKey, overwriteExisting);
 
             if (didPutSucceed) {
                 successfulPutsCounter++;
@@ -591,19 +597,61 @@ public class RefDataOffHeapStore implements RefDataStore {
             beginTxnIfRequired();
 
             final UID mapUid = getOrCreateUid(mapDefinition);
-
-            //get the ValueStoreKey for the RefDataValue (creating the entry if it doesn't exist)
-            final ValueStoreKey valueStoreKey = valueStoreDb.getOrCreate(writeTxn, refDataValue, overwriteExisting);
-
-            // TODO once the reference table is in will need to add an entry to the references DB
-            // to link this mapDef to the value record.
-
             final RangeStoreKey rangeStoreKey = new RangeStoreKey(mapUid, keyRange);
 
-            // assuming it is cheaper to just try the put and let LMDB handle duplicates rather than
-            // do a get then optional put.
-            boolean didPutSucceed = rangeStoreDb.put(
-                    writeTxn, rangeStoreKey, valueStoreKey, overwriteExisting);
+
+
+
+
+            // see if we have a value already for this key
+            // if overwrite == false, we can just drop out here
+            // if overwrite == true we need to de-reference the value (and maybe delete)
+            // then create a new value, assuming they are different
+            Optional<ValueStoreKey> optCurrentValueStoreKey = rangeStoreDb.get(rangeStoreKey);
+
+            boolean didPutSucceed;
+            if (optCurrentValueStoreKey.isPresent()) {
+                if (!overwriteExisting) {
+                    // already have an entry for this key so drop out here
+                    // with nothing to do as we can't overwrite anything
+                    didPutSucceed = false;
+                } else {
+                    // overwriting and we already have a value so see if the old and
+                    // new values are the same.
+                    ValueStoreKey currentValueStoreKey = optCurrentValueStoreKey.get();
+
+                    boolean areValuesEqual = valueStoreDb.areValuesEqual(
+                            writeTxn, currentValueStoreKey, refDataValue);
+                    if (areValuesEqual) {
+                        // value is the same as the existing value so nothing to do
+                        // and no ref counts to change
+                        didPutSucceed = true;
+                    } else {
+                        // value is different so we need to de-reference the old one
+                        // and getOrCreate the new one
+                        valueStoreDb.deReferenceValue(writeTxn, currentValueStoreKey);
+
+                        //get the ValueStoreKey for the RefDataValue (creating the entry if it doesn't exist)
+                        final ValueStoreKey valueStoreKey = valueStoreDb.getOrCreate(
+                                writeTxn, refDataValue, overwriteExisting);
+
+                        // assuming it is cheaper to just try the put and let LMDB handle duplicates rather than
+                        // do a get then optional put.
+                        didPutSucceed = rangeStoreDb.put(
+                                writeTxn, rangeStoreKey, valueStoreKey, overwriteExisting);
+                    }
+                }
+            } else {
+                // no existing valueStoreKey so create the entries
+                //get the ValueStoreKey for the RefDataValue (creating the entry if it doesn't exist)
+                final ValueStoreKey valueStoreKey = valueStoreDb.getOrCreate(
+                        writeTxn, refDataValue, overwriteExisting);
+
+                // assuming it is cheaper to just try the put and let LMDB handle duplicates rather than
+                // do a get then optional put.
+                didPutSucceed = rangeStoreDb.put(
+                        writeTxn, rangeStoreKey, valueStoreKey, overwriteExisting);
+            }
 
             if (didPutSucceed) {
                 successfulPutsCounter++;

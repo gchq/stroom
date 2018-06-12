@@ -17,13 +17,18 @@
 
 package stroom.refdata.offheapstore.serdes;
 
+import org.apache.hadoop.hbase.util.ByteBufferUtils;
 import stroom.refdata.lmdb.serde.Serde;
+import stroom.refdata.offheapstore.ByteArrayUtils;
 import stroom.refdata.offheapstore.ValueStoreKey;
+import stroom.util.logging.LambdaLogger;
 
 import java.nio.ByteBuffer;
 
 public class ValueStoreKeySerde implements Serde<ValueStoreKey> {
 
+    public static final int VALUE_HASH_CODE_OFFSET = 0;
+    public static final int VALUE_HASH_CODE_BYTES = Integer.BYTES;
     private static final int SIZE_IN_BYTES = Integer.BYTES + Short.BYTES;
     public static final int ID_OFFSET = Integer.BYTES;
 
@@ -90,5 +95,20 @@ public class ValueStoreKeySerde implements Serde<ValueStoreKey> {
      */
     public static short extractId(final ByteBuffer byteBuffer) {
         return byteBuffer.getShort(ID_OFFSET);
+    }
+
+    /**
+     * Compare the valueHashCode part of both byte buffers, comparing in byte form
+     */
+    public static int compareValueHashCode(final ByteBuffer thisBuffer, final ByteBuffer thatBuffer) {
+        try {
+            return ByteBufferUtils.compareTo(
+                    thisBuffer, VALUE_HASH_CODE_OFFSET, VALUE_HASH_CODE_BYTES,
+                    thatBuffer, VALUE_HASH_CODE_OFFSET, VALUE_HASH_CODE_BYTES);
+        } catch (Exception e) {
+            throw new RuntimeException(LambdaLogger.buildMessage("Error comparing [{}] & [{}]",
+                    ByteArrayUtils.byteBufferInfo(thisBuffer),
+                    ByteArrayUtils.byteBufferInfo(thatBuffer)), e);
+        }
     }
 }
