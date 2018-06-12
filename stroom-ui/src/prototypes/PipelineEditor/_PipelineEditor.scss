@@ -1,8 +1,6 @@
 @import "./ElementPalette/ElementPalette";
 @import "./PipelineElement";
-
 $palette-width: 19rem;
-
 .Pipeline-editor {
   height: 100vh;
   position: relative;
@@ -11,6 +9,7 @@ $palette-width: 19rem;
 }
 
 /* The animation code */
+
 @keyframes open-pallete {
   from {
     left: -$palette-width;
@@ -28,6 +27,7 @@ $palette-width: 19rem;
 }
 
 /* The animation code */
+
 @keyframes close-pallete {
   from {
     left: 0;
@@ -56,11 +56,9 @@ $palette-width: 19rem;
   position: relative;
   height: 100%;
   float: left;
-  border-left: none;
-  border-top: none;
-  border-bottom: none;
-  border-right: solid thin black;
+  border: 0;
   background-color: lightgrey;
+  outline: none;
 }
 
 .Pipeline-editor__graph {
