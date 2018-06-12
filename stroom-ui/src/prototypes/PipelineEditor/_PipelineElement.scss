@@ -21,11 +21,12 @@
 }
 
 .Pipeline-element__over {
-  border-color: blue;
+  // No common styles for a straight-forward hover at the moment
 }
 
 .Pipeline-element__over_can_drop {
-  background-color: greenyellow;
+  border-color: rgb(30, 136, 229);
+  background-color: $selected-item-colour;
 }
 
 .Pipeline-element__cannot_drop {
@@ -34,7 +35,7 @@
 }
 
 .Pipeline-element__not_over_can_drop {
-  border-color: greenyellow;
+  // Not currently highlighting compatible targets -- disabling incompatible instead
 }
 
 .Pipeline-element__dragging {
