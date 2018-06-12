@@ -27,12 +27,16 @@
   background-color: greenyellow;
 }
 
+.Pipeline-element__over_cannot_drop {
+  background-color: red;
+}
+
 .Pipeline-element__not_over_can_drop {
   border-color: greenyellow;
 }
 
-.Pipeline-element__over_cannot_drop {
-  background-color: red;
+.Pipeline-element__not_over_cannot_drop {
+  border-color: red;
 }
 
 .Pipeline-element__dragging {

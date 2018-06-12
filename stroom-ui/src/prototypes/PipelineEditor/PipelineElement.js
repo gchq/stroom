@@ -96,6 +96,7 @@ function dropCollect(connect, monitor) {
     connectDropTarget: connect.dropTarget(),
     isOver: monitor.isOver(),
     canDrop: monitor.canDrop(),
+    dndIsHappening: (monitor.getItem() !== null)
   };
 }
 
@@ -113,7 +114,8 @@ const PipelineElement = ({
   selectedElementId,
   newElementForm,
   newElementDefinition,
-  setNewElementDefinition
+  setNewElementDefinition,
+  dndIsHappening
 }) => {
   let className = 'Pipeline-element';
   if (isOver) {
@@ -132,6 +134,9 @@ const PipelineElement = ({
   else {
     if(canDrop){
       className += ' Pipeline-element__not_over_can_drop';
+    }
+    else if (dndIsHappening){
+      className += ' Pipeline-element__not_over_cannot_drop';
     }
   }
 
