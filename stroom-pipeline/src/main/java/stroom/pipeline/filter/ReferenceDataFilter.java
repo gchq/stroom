@@ -28,8 +28,6 @@ import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.pipeline.state.StreamHolder;
-import stroom.refdata.MapStoreHolder;
 import stroom.refdata.RefDataLoaderHolder;
 import stroom.refdata.offheapstore.FastInfosetValue;
 import stroom.refdata.offheapstore.MapDefinition;
@@ -37,7 +35,6 @@ import stroom.refdata.offheapstore.RefDataLoader;
 import stroom.refdata.offheapstore.RefDataValue;
 import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.refdata.offheapstore.StringValue;
-import stroom.refdata.saxevents.OffHeapEventListInternPool;
 import stroom.util.CharBuffer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.shared.Severity;
@@ -124,11 +121,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     private ValueElementType valueElementType = null;
 
     @Inject
-    public ReferenceDataFilter(final MapStoreHolder mapStoreHolder,
-                               final StreamHolder streamHolder,
-                               final EventListInternPool internPool,
-                               final ErrorReceiverProxy errorReceiverProxy,
-                               final OffHeapEventListInternPool offHeapEventListInternPool,
+    public ReferenceDataFilter(final ErrorReceiverProxy errorReceiverProxy,
                                final RefDataLoaderHolder refDataLoaderHolder) {
         this.errorReceiverProxy = errorReceiverProxy;
         this.refDataLoaderHolder = refDataLoaderHolder;
