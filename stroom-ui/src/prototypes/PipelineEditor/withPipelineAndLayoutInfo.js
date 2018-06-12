@@ -16,50 +16,48 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import { connect } from 'react-redux';
+import { getPipelineLayoutInformation } from './pipelineUtils';
+
+import { withPipeline } from './withPipeline';
 
 /**
  * This is a Higher Order Component
  * https://reactjs.org/docs/higher-order-components.html
  *
- * It provides the pipeline by connecting to the redux store and using a provided
- * pipelineId to look it up.
+ * It provides the pipeline layout information by using the pipeline provided by withPipeline
  *
  * @param {React.Component} WrappedComponent
  */
-export function withPipeline() {
+export function withPipelineAndLayoutInfo() {
   return (WrappedComponent) => {
-    const WithPipeline = class extends Component {
+    const WithPipelineAndLayoutInfo = class extends Component {
       static propTypes = {
-        pipelineId: PropTypes.string.isRequired,
-        pipelines: PropTypes.object.isRequired,
+        asTree: PropTypes.object.isRequired,
       };
 
       state = {
-        pipeline: undefined
+        layoutInformation: undefined,
       };
 
       static getDerivedStateFromProps(nextProps, prevState) {
+        let layoutInformation;
+        if (nextProps.asTree) {
+          layoutInformation = getPipelineLayoutInformation(nextProps.asTree);
+        }
+
         return {
-          pipeline : nextProps.pipelines[nextProps.pipelineId]
+          layoutInformation,
         };
       }
 
       render() {
-        if (this.state.pipeline) {
-          return <WrappedComponent {...this.state.pipeline} {...this.props} />;
+        if (this.state.layoutInformation) {
+          return <WrappedComponent {...this.state} {...this.props} />;
         }
-        return <span>awaiting pipeline state</span>;
+        return <span>awaiting pipeline tree state</span>;
       }
     };
 
-    return connect(
-      state => ({
-        pipelines: state.pipelines,
-      }),
-      {
-        // actions
-      },
-    )(WithPipeline);
+    return withPipeline()(WithPipelineAndLayoutInfo);
   };
 }
