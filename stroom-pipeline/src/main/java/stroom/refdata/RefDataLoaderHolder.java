@@ -19,10 +19,18 @@ package stroom.refdata;
 
 import stroom.guice.PipelineScoped;
 import stroom.refdata.offheapstore.RefDataLoader;
+import stroom.refdata.offheapstore.RefStreamDefinition;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @PipelineScoped
 public class RefDataLoaderHolder {
     private RefDataLoader refDataLoader;
+
+    // Set to keep track of which ref streams have been loaded, re-loaded or confirmed
+    // to be already loaded within this pipeline processing instance
+    private Set<RefStreamDefinition> loadedRefStreamDefinitions = new HashSet<>();
 
     RefDataLoaderHolder(final RefDataLoader refDataLoader) {
         this.refDataLoader = refDataLoader;
@@ -34,5 +42,13 @@ public class RefDataLoaderHolder {
 
     public void setRefDataLoader(final RefDataLoader refDataLoader) {
         this.refDataLoader = refDataLoader;
+    }
+
+    public void markRefStreamAsLoaded(final RefStreamDefinition refStreamDefinition) {
+        loadedRefStreamDefinitions.add(refStreamDefinition);
+    }
+
+    public boolean isRefStreamLoaded(final RefStreamDefinition refStreamDefinition) {
+        return loadedRefStreamDefinitions.contains(refStreamDefinition);
     }
 }

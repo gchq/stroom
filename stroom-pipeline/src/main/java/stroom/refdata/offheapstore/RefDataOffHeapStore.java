@@ -50,7 +50,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -83,7 +83,7 @@ public class RefDataOffHeapStore implements RefDataStore {
     private final StroomPropertyService stroomPropertyService;
 
     // For synchronising access to the data belonging to a MapDefinition
-    private final Striped<Semaphore> refStreamDefStripedSemaphore;
+    private final Striped<Lock> refStreamDefStripedReentrantLock;
 
     /**
      * @param dbDir   The directory the LMDB environment will be created in, it must already exist
@@ -138,7 +138,7 @@ public class RefDataOffHeapStore implements RefDataStore {
         this.mapDefinitionUIDStore = new MapDefinitionUIDStore(lmdbEnvironment, mapUidForwardDb, mapUidReverseDb);
         this.stroomPropertyService = stroomPropertyService;
 
-        this.refStreamDefStripedSemaphore = Striped.lazyWeakSemaphore(100, 1);
+        this.refStreamDefStripedReentrantLock = Striped.lazyWeakLock(100);
     }
 
     /**
@@ -278,7 +278,7 @@ public class RefDataOffHeapStore implements RefDataStore {
     public RefDataLoader loader(final RefStreamDefinition refStreamDefinition, final long effectiveTimeMs) {
         return new RefDataLoaderImpl(
                 this,
-                refStreamDefStripedSemaphore,
+                refStreamDefStripedReentrantLock,
                 keyValueStoreDb,
                 rangeStoreDb,
                 valueStoreDb,
@@ -362,18 +362,18 @@ public class RefDataOffHeapStore implements RefDataStore {
         // change to ref counter MUST be done in same txn as the thing that is making it change, e.g the KV entry removal
     }
 
-    private void doSynchronisedWork(final RefStreamDefinition refStreamDefinition, final Runnable work) {
-        final Semaphore semaphore = refStreamDefStripedSemaphore.get(refStreamDefinition);
+    public void doWithRefStreamDefinitionLock(final RefStreamDefinition refStreamDefinition, final Runnable work) {
+        final Lock lock = refStreamDefStripedReentrantLock.get(refStreamDefinition);
         try {
-            semaphore.acquire();
+            lock.lockInterruptibly();
             try {
                 // now we have sole access to this RefStreamDefinition so perform the work on it
                 work.run();
             } finally {
-                semaphore.release();
+                lock.unlock();
             }
         } catch (final InterruptedException e) {
-            LOGGER.warn("Thread interrupted waiting to acquire semaphore for {}", refStreamDefinition);
+            LOGGER.warn("Thread interrupted waiting to acquire lock for {}", refStreamDefinition);
             Thread.currentThread().interrupt();
         }
     }
@@ -405,7 +405,7 @@ public class RefDataOffHeapStore implements RefDataStore {
 
         private Txn<ByteBuffer> writeTxn = null;
         private final RefDataOffHeapStore refDataOffHeapStore;
-        private final Semaphore refStreamDefSemaphore;
+        private final Lock refStreamDefReentrantLock;
 
         private final KeyValueStoreDb keyValueStoreDb;
         private final RangeStoreDb rangeStoreDb;
@@ -435,7 +435,7 @@ public class RefDataOffHeapStore implements RefDataStore {
         }
 
         private RefDataLoaderImpl(final RefDataOffHeapStore refDataOffHeapStore,
-                                  final Striped<Semaphore> refStreamDefStripedSemaphore,
+                                  final Striped<Lock> refStreamDefStripedReentrantLock,
                                   final KeyValueStoreDb keyValueStoreDb,
                                   final RangeStoreDb rangeStoreDb,
                                   final ValueStoreDb valueStoreDb,
@@ -458,21 +458,21 @@ public class RefDataOffHeapStore implements RefDataStore {
             this.refStreamDefinition = refStreamDefinition;
             this.effectiveTimeMs = effectiveTimeMs;
 
-            // Get the permit for this refStreamDefinition
+            // Get the lock for this refStreamDefinition
             // This will make any other threads trying to load the same refStreamDefinition block and wait for us
 
-            this.refStreamDefSemaphore = refStreamDefStripedSemaphore.get(refStreamDefinition);
+            this.refStreamDefReentrantLock = refStreamDefStripedReentrantLock.get(refStreamDefinition);
             LAMBDA_LOGGER.logDurationIfDebugEnabled(
                     () -> {
                         try {
-                            LOGGER.debug("Acquiring permit");
-                            refStreamDefSemaphore.acquire();
+                            LOGGER.debug("Acquiring lock");
+                            refStreamDefReentrantLock.lockInterruptibly();
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
                             throw new RuntimeException("Load aborted due to thread interruption");
                         }
                     },
-                    () -> LambdaLogger.buildMessage("Acquiring semaphore permit for {}", refStreamDefinition));
+                    () -> LambdaLogger.buildMessage("Acquiring lock for {}", refStreamDefinition));
         }
 
         @Override
@@ -712,7 +712,7 @@ public class RefDataOffHeapStore implements RefDataStore {
             currentLoaderState = LoaderState.CLOSED;
 
             LOGGER.debug("Releasing semaphore permit for {}", refStreamDefinition);
-            refStreamDefSemaphore.release();
+            refStreamDefReentrantLock.unlock();
         }
 
         private void beginTxn() {

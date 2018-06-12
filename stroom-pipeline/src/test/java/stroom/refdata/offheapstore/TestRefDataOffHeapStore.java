@@ -79,7 +79,7 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         mockStroomPropertyService.setProperty(RefDataStoreProvider.OFF_HEAP_STORE_DIR_PROP_KEY,
                 dbDir.toAbsolutePath().toString());
         mockStroomPropertyService.setProperty(RefDataStoreProvider.MAX_STORE_SIZE_BYTES_PROP_KEY,
-                Long.toString(ByteSizeUnit.KIBIBYTE.longBytes(100000)));
+                Long.toString(ByteSizeUnit.KIBIBYTE.longBytes(1000)));
 
         final Injector injector = Guice.createInjector(
                 new AbstractModule() {
@@ -318,8 +318,8 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
             try {
                 try (RefDataLoader loader = refDataStore.loader(refStreamDefinition, effectiveTimeMs)) {
 
-                    //TODO rechck state
                     if (!refDataStore.isDataLoaded(refStreamDefinition)) {
+                        loader.setCommitInterval(200);
                         loader.initialise(false);
 
                         long rangeStartInc = 0;
@@ -379,6 +379,25 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
             }
         });
         LOGGER.debug("Finished all");
+    }
+
+
+    @Test
+    public void testDoWithRefStreamDefinitionLock() {
+
+        final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
+                UUID.randomUUID().toString(),
+                (byte) 0,
+                123456L,
+                1);
+
+        // ensure reentrance works
+        refDataStore.doWithRefStreamDefinitionLock(refStreamDefinition, () -> {
+            LOGGER.debug("Got lock");
+            refDataStore.doWithRefStreamDefinitionLock(refStreamDefinition, () -> {
+                LOGGER.debug("Got inner lock");
+            });
+        });
     }
 
     private void bulkLoadAndAssert(final boolean overwriteExisting,

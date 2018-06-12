@@ -70,6 +70,7 @@ public class ReferenceData {
     private final DocumentPermissionCache documentPermissionCache;
     private final ReferenceDataLoader referenceDataLoader;
     private final RefDataStore refDataStore;
+    private final RefDataLoaderHolder refDataLoaderHolder;
     private final PipelineService pipelineService;
     private final Security security;
 
@@ -81,6 +82,7 @@ public class ReferenceData {
                   final DocumentPermissionCache documentPermissionCache,
                   final ReferenceDataLoader referenceDataLoader,
                   final RefDataStore refDataStore,
+                  final RefDataLoaderHolder refDataLoaderHolder,
                   final Security security,
                   @Named("cachedPipelineService") final PipelineService pipelineService) {
 
@@ -91,6 +93,7 @@ public class ReferenceData {
         this.documentPermissionCache = documentPermissionCache;
         this.referenceDataLoader = referenceDataLoader;
         this.refDataStore = refDataStore;
+        this.refDataLoaderHolder = refDataLoaderHolder;
         this.pipelineService = pipelineService;
         this.security = security;
     }
@@ -197,6 +200,8 @@ public class ReferenceData {
                     pipelineEntity.getVersion(),
                     streamHolder.getStream().getParentStreamId(), streamNo);
 
+
+
             // TODO we may want to implement some sort of on-heap store that fronts our off-heap store
             // Thus all writes/reads go through the on-heap store first and only data that is deemed
             // too big for the on-heap store gets passed down to the off-heap store. This would reduce
@@ -227,6 +232,7 @@ public class ReferenceData {
                 }
             }
 
+            // TODO do we need to look this up now? Why not just look up the value at the tinybuilder stage
             // do the lookup to get the proxy for the value
             final Optional<RefDataValueProxy> optRefDataValueProxy = refDataStore.getValueProxy(
                     new MapDefinition(refStreamDefinition, mapName),
@@ -384,19 +390,30 @@ public class ReferenceData {
                             pipelineEntity.getVersion(),
                             effectiveStream.getStreamId(), streamNo);
 
-                    // establish if we have the data for the effective stream in the store
-                    final boolean isEffectiveStreamDataLoaded = refDataStore.isDataLoaded(refStreamDefinition);
+                    if (refDataLoaderHolder.isRefStreamLoaded(refStreamDefinition)) {
+                        // we have already loaded or confirmed the load state for this refStream in this
+                        // pipeline process so no need to try again
+                    } else {
+                        // we don't know what the load state is for this refStreamDefinition so need to find out
 
-                    //TODO what happens if we need to overwrite?
-                    if (!isEffectiveStreamDataLoaded) {
-                        // we don't have the data so kick off a process to load it all in
-                        LOGGER.debug("Loading effective stream {}", refStreamDefinition);
+                        // establish if we have the data for the effective stream in the store
+                        final boolean isEffectiveStreamDataLoaded = refDataStore.isDataLoaded(refStreamDefinition);
 
-                        // initiate a load of the ref data for this stream
-                        security.asProcessingUser(() ->
-                                referenceDataLoader.load(refStreamDefinition));
+                        //TODO what happens if we need to overwrite?
+                        // ideally we want to check the overwrite status of the refFilter here so we don't have to set
+                        // up the whole pipeline before discovering overwrite is false.
+
+                        if (!isEffectiveStreamDataLoaded) {
+                            // we don't have the data so kick off a process to load it all in
+                            LOGGER.debug("Loading effective stream {}", refStreamDefinition);
+
+                            // initiate a load of the ref data for this stream
+                            security.asProcessingUser(() ->
+                                    referenceDataLoader.load(refStreamDefinition));
+                        }
                     }
 
+                    //TODO do we need to do this here?
                     // now we have the data so just do the lookup
                     final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
                     final Optional<RefDataValueProxy> optRefDataValueProxy = refDataStore.getValueProxy(mapDefinition, keyName);

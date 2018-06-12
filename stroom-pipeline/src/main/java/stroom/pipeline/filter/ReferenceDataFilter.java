@@ -140,6 +140,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
             errorReceiverProxy.log(Severity.FATAL_ERROR, null, getElementId(), "RefDataLoader is missing", null);
         }
         boolean didInitSucceed = refDataLoaderHolder.getRefDataLoader().initialise(overrideExistingValues);
+
         if (!didInitSucceed) {
             RefStreamDefinition refStreamDefinition = refDataLoaderHolder.getRefDataLoader().getRefStreamDefinition();
             errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
