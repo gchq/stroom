@@ -43,9 +43,10 @@ const RecycleBin = ({
   pipelineElementDeleted,
   pipelineId,
 }) => {
-  let color = 'black';
+  let className = 'recycle-bin__icon';
+  const color = 'black';
   if (isOver) {
-    color = 'red';
+    className = 'recycle-bin__icon__hover';
   }
 
   const onCancelDelete = () => setPendingElementToDelete(undefined);
@@ -67,8 +68,8 @@ const RecycleBin = ({
       onCancel={onCancelDelete}
       onConfirm={onConfirmDelete}
     />
-    <Icon color={color} size="huge" name="trash" />
-                           </div>);
+    <Icon className={className} size="huge" name="trash" />
+  </div>);
 };
 
 RecycleBin.propTypes = {

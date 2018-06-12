@@ -1,5 +1,6 @@
 @import "./ElementPalette/ElementPalette";
 @import "./PipelineElement";
+@import "./RecycleBin";
 $palette-width: 10rem;
 .Pipeline-editor {
   height: 100vh;
