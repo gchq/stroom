@@ -1,5 +1,4 @@
 @import "../Element";
-
 .element-palette {
   padding: 0.5rem;
 }
@@ -19,6 +18,10 @@
   @extend %element-shared;
   margin-bottom: 0.5rem;
   margin-right: 3px;
+}
+
+.element-palette-element:hover {
+  background-color: $hover-item-colour;
 }
 
 .element-palette__icon {
