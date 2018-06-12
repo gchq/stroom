@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { getPipelineAsTree, deleteElementInPipeline, getChildren } from '../pipelineUtils';
+import { getPipelineAsTree, deleteElementInPipeline, getDescendants } from '../pipelineUtils';
 
 import { testPipeline, singleElementTestPipeline } from './pipeline.testData';
 
@@ -49,28 +49,28 @@ describe('Pipeline Utils', () => {
     });
   });
 
-  describe('#getChildren', () => {
+  describe('#getDescendants', () => {
     test('should recursively return children #1', () => {
       // When
       // TODO change name to `getAllChildren` or something similar.
-      const children = getChildren(testPipeline, 'XSLT filter');
+      const children = getDescendants(testPipeline, 'XSLT filter');
 
       // Then
       expect(children.length).toBe(4);
-      expectsForGetChildren(children);
+      expectsForGetDescendants(children);
     });
     test('should recursively return children #2', () => {
       // When
-      const children = getChildren(testPipeline, 'CSV splitter filter');
+      const children = getDescendants(testPipeline, 'CSV splitter filter');
 
       // Then
       expect(children.length).toBe(5);
-      expectsForGetChildren(children);
+      expectsForGetDescendants(children);
       expect(children.includes('XSLT filter')).toBeTruthy();
     });
     test('should recursively return children #3', () => {
       // When
-      const children = getChildren(testPipeline, 'XML writer 1');
+      const children = getDescendants(testPipeline, 'XML writer 1');
 
       // Then
       expect(children.length).toBe(1);
@@ -158,7 +158,7 @@ function expectsForTestPipeline(asTree) {
   expect(asTree.children[0].children[1].children[0].uuid).toBe('stream appender 2');
 }
 
-function expectsForGetChildren(children) {
+function expectsForGetDescendants(children) {
   expect(children.includes('XML writer 1')).toBeTruthy();
   expect(children.includes('XML writer 2')).toBeTruthy();
   expect(children.includes('stream appender 1')).toBeTruthy();
