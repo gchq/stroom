@@ -240,10 +240,13 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                 // see if the found value is identical to the value passed in
                 if (valueSerde.areValuesEqual(valueBuffer, valueFromDbBuf)) {
                     isValueInDb.set(true);
-                    LAMBDA_LOGGER.trace(() -> "Found our value so breaking out");
+                    LAMBDA_LOGGER.trace(() -> "Found our value so incrementing its ref count and breaking out");
 
+                    // TODO this copy could be expensive as some of the value can be many hundreds of bytes
+                    // May be preferable to hold the ref count in a separate table (ValueReferenceCountDb)
+                    // as the copy/put of those 4 bytes will be cheaper but at the expense of an extra cursor get op
                     final ByteBuffer valueBufClone = LmdbUtils.copyDirectBuffer(valueFromDbBuf);
-                    // we hav an interest in this value so increment the reference count
+                    // we have an interest in this value so increment the reference count
                     int newRefCount = valueSerde.incrementReferenceCount(valueBufClone);
 
                     LOGGER.trace("newRefCount is {}", newRefCount);
@@ -257,9 +260,6 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                                 ByteArrayUtils.byteBufferInfo(keyFromDbBuf),
                                 ByteArrayUtils.byteBufferInfo(valueBufClone)), e);
                     }
-                    //TODO we want to copy the value buffer and increment the ref count
-                    // as we have a new association with it
-
 
                     break;
                 } else {
@@ -295,7 +295,6 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                 }
                 keyBuffer = lastKeyBufferClone;
                 LOGGER.trace("Incrementing key, valueStoreKey {}", valueStoreKey);
-
             }
             valueStoreKey = keySerde.deserialize(keyBuffer);
             boolean didPutSucceed = put(writeTxn, keyBuffer, valueBuffer, false);
