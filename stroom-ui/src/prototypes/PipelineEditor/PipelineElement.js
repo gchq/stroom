@@ -28,6 +28,7 @@ import { withPipeline } from './withPipeline';
 import { actionCreators } from './redux';
 import { canMovePipelineElement } from './pipelineUtils';
 import { ItemTypes } from './dragDropTypes';
+import { isValidChildType } from './elementUtils'
 
 const { pipelineElementSelected, pipelineElementMoved, pipelineElementAdded } = actionCreators;
 
@@ -53,13 +54,22 @@ function dragCollect(connect, monitor) {
 
 const dropTarget = {
   canDrop(props, monitor) {
+    const newElementId = monitor.getItem().elementId;
+    const newElementDefinition = monitor.getItem().element;
+    const { pipeline, asTree, elementId } = props;
     switch (monitor.getItemType()) {
       case ItemTypes.ELEMENT:
-        const newElementId = monitor.getItem().elementId;
-        const { pipeline, asTree, elementId } = props;
         return canMovePipelineElement(pipeline, asTree, newElementId, elementId);
       case ItemTypes.PALLETE_ELEMENT:
-        return true;
+        if(newElementDefinition){
+          const targetElement = pipeline.elements.add.filter(element => element.id === elementId)[0];
+          const typeOfTargetElement = props.elements.elements[targetElement.type]
+          const isValid = isValidChildType(newElementDefinition, typeOfTargetElement, 0)
+          return isValid;
+        }
+        else{ 
+          return true; 
+        }
       default:
         return false;
     }
