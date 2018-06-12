@@ -6,6 +6,8 @@ import {
   createNewElementInPipeline,
 } from '../pipelineUtils';
 
+import { getPipelineAsTree } from '../pipelineUtils';
+
 const actionCreators = createActions({
   PIPELINE_RECEIVED: (pipelineId, pipeline) => ({
     pipelineId,
@@ -29,13 +31,18 @@ const actionCreators = createActions({
 // pipelines, keyed on ID, there may be several expressions on a page
 const defaultPipelineState = {};
 
+const updatePipeline = pipeline => ({
+  pipeline,
+  asTree: getPipelineAsTree(pipeline),
+});
+
 const pipelineReducer = handleActions(
   {
     PIPELINE_RECEIVED: (state, action) => ({
       ...state,
       [action.payload.pipelineId]: {
         ...defaultPipelineState,
-        pipeline: action.payload.pipeline,
+        ...updatePipeline(action.payload.pipeline),
       },
     }),
     PIPELINE_ELEMENT_SELECTED: (state, action) => ({
@@ -48,33 +55,33 @@ const pipelineReducer = handleActions(
     PIPELINE_ELEMENT_DELETED: (state, action) => ({
       ...state,
       [action.payload.pipelineId]: {
-        pipeline: deleteElementInPipeline(
+        ...updatePipeline(deleteElementInPipeline(
           state[action.payload.pipelineId].pipeline,
           action.payload.elementId,
-        ),
+        )),
       },
     }),
     PIPELINE_ELEMENT_ADDED: (state, action) => ({
       ...state,
       [action.payload.pipelineId]: {
         ...state[action.payload.pipelineId],
-        pipeline: createNewElementInPipeline(
+        ...updatePipeline(createNewElementInPipeline(
           state[action.payload.pipelineId].pipeline,
           action.payload.parentId,
           action.payload.childDefinition,
           action.payload.name,
-        ),
+        )),
       },
     }),
     PIPELINE_ELEMENT_MOVED: (state, action) => ({
       ...state,
       [action.payload.pipelineId]: {
         ...state[action.payload.pipelineId],
-        pipeline: moveElementInPipeline(
+        ...updatePipeline(moveElementInPipeline(
           state[action.payload.pipelineId].pipeline,
           action.payload.itemToMove,
           action.payload.destination,
-        ),
+        )),
       },
     }),
   },

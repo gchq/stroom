@@ -22,7 +22,7 @@ import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
 import { LineContainer, LineTo } from 'components/LineTo';
 import { mapObject } from 'lib/treeUtils';
-import { withPipeline } from './withPipeline';
+import { withPipelineAndLayoutInfo } from './withPipelineAndLayoutInfo';
 
 import PipelineElement from './PipelineElement';
 import { ElementPalette } from './ElementPalette';
@@ -130,6 +130,6 @@ export default compose(
       // actions
     },
   ),
-  withPipeline(),
+  withPipelineAndLayoutInfo(),
   withPaletteOpen,
 )(PipelineEditor);

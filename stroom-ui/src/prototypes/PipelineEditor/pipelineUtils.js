@@ -115,6 +115,55 @@ export function getPipelineLayoutInformation(asTree, orientation = ORIENTATION.h
 }
 
 /**
+ * Use this function to retrieve all element names from the pipeline.
+ *
+ * @param {pipeline} pipeline The pipeline from with to extract names
+ */
+export function getAllElementNames(pipeline) {
+  const names = [];
+
+  pipeline.elements.add
+    .map(e => e.id)
+    .map(id => id.toLowerCase())
+    .forEach(id => names.push(id));
+
+  return names;
+}
+
+// We have to 'cache' the unique name function or the redux form remounts every time the value changes.
+let memoizedUniqueName;
+let namesForMemoizedFunction;
+
+const listsOfStringsAreEquals = (list1, list2) => {
+  if (list1.length !== list2.length) {
+    return false;
+  }
+
+  return JSON.stringify(list1) === JSON.stringify(list2);
+};
+
+export const uniqueElementName = (pipeline) => {
+  // If we already had a names list
+  if (namesForMemoizedFunction) {
+    const namesNow = getAllElementNames(pipeline);
+
+    // Has it changed?
+    if (!listsOfStringsAreEquals(namesForMemoizedFunction, namesNow)) {
+      namesForMemoizedFunction = namesNow;
+      memoizedUniqueName = value =>
+        (namesForMemoizedFunction.includes(value) ? 'must be unique name' : undefined);
+    }
+  } else {
+    // Create a new memoized function
+    namesForMemoizedFunction = getAllElementNames(pipeline);
+    memoizedUniqueName = value =>
+      (namesForMemoizedFunction.includes(value) ? 'must be unique name' : undefined);
+  }
+
+  return memoizedUniqueName;
+};
+
+/**
  *
  *
  *

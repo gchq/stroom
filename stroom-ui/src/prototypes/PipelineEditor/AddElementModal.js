@@ -9,21 +9,42 @@ import { Modal, Header, Form, Button } from 'semantic-ui-react';
 
 import { actionCreators } from './redux';
 
+import { uniqueElementName } from './pipelineUtils';
+import { withPipeline } from './withPipeline';
+import { required, minLength2, renderField } from 'lib/reduxFormUtils';
+
 const { pipelineElementAdded } = actionCreators;
 
 const AddElementModal = ({
+  // Set by container
   pipelineId,
   elementId,
-  newElementDefinition,
+
+  // withPipeline
+  pipeline,
+
+  // Redux actions
   pipelineElementAdded,
+
+  // withNewElementDefinition from container
+  newElementDefinition,
   setNewElementDefinition,
+
+  // Redux form
   newElementForm,
+  invalid,
+  submitting,
+  reset,
 }) => {
   const onConfirmNewElement = () => {
     pipelineElementAdded(pipelineId, elementId, newElementDefinition, newElementForm.values.name);
     setNewElementDefinition(undefined);
+    reset();
   };
-  const onCancelNewElement = () => setNewElementDefinition(undefined);
+  const onCancelNewElement = () => {
+    setNewElementDefinition(undefined);
+    reset();
+  };
 
   return (
     <Modal size="tiny" open={!!newElementDefinition} onClose={onCancelNewElement}>
@@ -32,12 +53,23 @@ const AddElementModal = ({
         <Form>
           <Form.Field>
             <label>Name</label>
-            <Field name="name" component="input" type="text" placeholder="Name" />
+            <Field
+              name="name"
+              component={renderField}
+              type="text"
+              placeholder="Name"
+              validate={[required, minLength2, uniqueElementName(pipeline)]}
+            />
           </Form.Field>
         </Form>
       </Modal.Content>
       <Modal.Actions>
-        <Button positive content="Submit" onClick={onConfirmNewElement} />
+        <Button
+          positive
+          content="Submit"
+          disabled={invalid || submitting}
+          onClick={onConfirmNewElement}
+        />
         <Button negative content="Cancel" onClick={onCancelNewElement} />
       </Modal.Actions>
     </Modal>
@@ -48,6 +80,9 @@ AddElementModal.propTypes = {
   // Set by container
   pipelineId: PropTypes.string.isRequired,
   elementId: PropTypes.string.isRequired,
+
+  // withPipeline
+  pipeline: PropTypes.object.isRequired,
 
   // With New Element Definition from Container
   newElementDefinition: PropTypes.object,
@@ -69,4 +104,5 @@ export default compose(
     { pipelineElementAdded },
   ),
   reduxForm({ form: 'newElementName' }),
+  withPipeline(),
 )(AddElementModal);
