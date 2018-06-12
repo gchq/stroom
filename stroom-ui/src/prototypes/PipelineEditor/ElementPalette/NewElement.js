@@ -27,12 +27,8 @@ function dragCollect(connect, monitor) {
 const NewElement = ({ connectDragSource, isDragging, element }) =>
   connectDragSource(<div className="element-palette-element">
     <div className="element-palette-element__button-contents">
-      <img
-        className="element-palette-element__icon"
-        alt="X"
-        src={require(`../images/${element.icon}`)}
-      />
-      {element.type}
+      <img className="element-palette__icon" alt="X" src={require(`../images/${element.icon}`)} />
+      <span className="element-palette__type">{element.type}</span>
     </div>
                     </div>);
 

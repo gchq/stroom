@@ -158,7 +158,9 @@ const PipelineElement = ({
         alt="X"
         src={require(`./images/${elementDefinition.icon}`)}
       />
+      <span className='Pipeline-element__type'>
       {elementId}
+      </span>
     </div>);
 };
 
@@ -177,7 +179,7 @@ PipelineElement.propTypes = {
   element: PropTypes.object.isRequired,
 
   // redux form
-  newElementForm: PropTypes.object.isRequired,
+  newElementForm: PropTypes.object,
 
   // Redux actions
   pipelineElementSelected: PropTypes.func.isRequired,

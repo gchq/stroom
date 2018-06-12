@@ -1,3 +1,5 @@
+@import "../Element";
+
 .element-palette {
   padding: 0.5rem;
 }
@@ -14,29 +16,15 @@
 }
 
 .element-palette-element {
-  //Copied from PipelineELement TODO: don't do this!
+  @extend %element-shared;
   margin-bottom: 0.5rem;
-  padding: 0.5rem;
-  width: 8rem;
-  font-size: 0.8rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  border-style: solid;
-  border-width: thin;
-  border-radius: 5px;
-  background-color: white; // Two possible shadow looks -- darker and lighter.
-  // box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.1), 0 6px 20px 0 rgba(0, 0, 0, 0.1); //End copied from PipelineELement
   margin-right: 3px;
 }
 
-.element-palette-element__icon {
-  width: 0.7rem;
-  margin-right: 0.3rem;
+.element-palette__icon {
+  @extend %element-shared__icon;
 }
 
-.element-palette-element__type {
-  padding-top: 0.5rem;
-  font-size: 80%;
+.element-palette__type {
+  @extend %element-shared__type;
 }
