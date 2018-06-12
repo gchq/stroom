@@ -308,6 +308,12 @@ export function getDescendants(pipeline, parent) {
   return allChildren;
 }
 
+/**
+ * Checks whether the give element is active in the pipeline. I.e. does anything link to it.
+ * 
+ * @param {pipeline} pipeline Pipeline definition
+ * @param {element} elementToCheck The element to check for activity
+ */
 export function isActive(pipeline, elementToCheck) {
   const linksInvolvingElement = pipeline.links.add.filter(element => elementToCheck.id === element.from || elementToCheck.id === element.to);
   return linksInvolvingElement.length > 0;
