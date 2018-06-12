@@ -21,5 +21,6 @@ import stroom.pool.InternPool;
 import javax.inject.Singleton;
 
 @Singleton
+@Deprecated
 class MapStoreInternPool extends InternPool<MapStore> {
 }

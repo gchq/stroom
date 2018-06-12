@@ -32,6 +32,7 @@ import stroom.refdata.offheapstore.RefDataValue;
 import stroom.refdata.offheapstore.RefDataValueProxy;
 import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.refdata.offheapstore.StringValue;
+import stroom.security.Security;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
@@ -62,31 +63,36 @@ public class ReferenceData {
 //    private final Map<MapStoreCacheKey, MapStore> localMapStoreCache = new HashMap<>();
 
     private EffectiveStreamCache effectiveStreamCache;
-//    private MapStoreCache mapStoreCache;
+    //    private MapStoreCache mapStoreCache;
     private final FeedHolder feedHolder;
     private final StreamHolder streamHolder;
     private final ContextDataLoader contextDataLoader;
     private final DocumentPermissionCache documentPermissionCache;
+    private final ReferenceDataLoader referenceDataLoader;
     private final RefDataStore refDataStore;
     private final PipelineService pipelineService;
+    private final Security security;
 
     @Inject
     ReferenceData(final EffectiveStreamCache effectiveStreamCache,
-//                  final MapStoreCache mapStoreCache,
                   final FeedHolder feedHolder,
                   final StreamHolder streamHolder,
                   final ContextDataLoader contextDataLoader,
                   final DocumentPermissionCache documentPermissionCache,
+                  final ReferenceDataLoader referenceDataLoader,
                   final RefDataStore refDataStore,
+                  final Security security,
                   @Named("cachedPipelineService") final PipelineService pipelineService) {
+
         this.effectiveStreamCache = effectiveStreamCache;
-//        this.mapStoreCache = mapStoreCache;
         this.feedHolder = feedHolder;
         this.streamHolder = streamHolder;
         this.contextDataLoader = contextDataLoader;
         this.documentPermissionCache = documentPermissionCache;
+        this.referenceDataLoader = referenceDataLoader;
         this.refDataStore = refDataStore;
         this.pipelineService = pipelineService;
+        this.security = security;
     }
 
     /**
@@ -200,6 +206,8 @@ public class ReferenceData {
             // Establish if we have the data for the context stream in the store
             final boolean isEffectiveStreamDataLoaded = refDataStore.isDataLoaded(refStreamDefinition);
 
+            //TODO what happens if we need to overwrite?
+
             if (!isEffectiveStreamDataLoaded) {
                 // data is not in the store so load it
 
@@ -229,8 +237,8 @@ public class ReferenceData {
                 result.log(Severity.INFO, () -> "Found value for context data");
             } else {
                 result.log(Severity.WARNING, () -> LambdaLogger.buildMessage(
-                            "No value proxy found when we have just loaded it, map {}, key {}",
-                            mapName, keyName));
+                        "No value proxy found when we have just loaded it, map {}, key {}",
+                        mapName, keyName));
             }
 
             // the data is now in the store so get the value proxy
@@ -332,17 +340,28 @@ public class ReferenceData {
         // Make sure the reference feed is persistent otherwise lookups will
         // fail as the equals method will only test for feeds that are the
         // same object instance rather than id.
-        assert pipelineReference.getFeed() != null &&
-                pipelineReference.getFeed().getUuid() != null &&
-                pipelineReference.getFeed().getUuid().length() > 0 &&
-                pipelineReference.getStreamType() != null &&
-                pipelineReference.getStreamType().length() > 0;
+        if (pipelineReference.getFeed() == null ||
+                pipelineReference.getFeed().getUuid() == null ||
+                pipelineReference.getFeed().getUuid().isEmpty()  ||
+                pipelineReference.getStreamType() == null ||
+                pipelineReference.getStreamType().isEmpty()) {
+            result.log(Severity.ERROR, () ->
+                    LambdaLogger.buildMessage("pipelineReference is not fully formed, {}", pipelineReference));
+        }
 
         // Check that the current user has permission to read the stream.
-        if (documentPermissionCache == null || documentPermissionCache.hasDocumentPermission(Feed.ENTITY_TYPE, pipelineReference.getFeed().getUuid(), DocumentPermissionNames.USE)) {
+        if (documentPermissionCache == null || documentPermissionCache.hasDocumentPermission(
+                Feed.ENTITY_TYPE,
+                pipelineReference.getFeed().getUuid(),
+                DocumentPermissionNames.USE)) {
+
             // Create a key to find a set of effective times in the pool.
-            final EffectiveStreamKey effectiveStreamKey = new EffectiveStreamKey(pipelineReference.getFeed(),
-                    pipelineReference.getStreamType(), fromMs, toMs);
+            final EffectiveStreamKey effectiveStreamKey = new EffectiveStreamKey(
+                    pipelineReference.getFeed(),
+                    pipelineReference.getStreamType(),
+                    fromMs,
+                    toMs);
+
             // Try and fetch a tree set of effective streams for this key.
             final NavigableSet<EffectiveStream> streamSet = effectiveStreamCache.get(effectiveStreamKey);
 
@@ -368,9 +387,14 @@ public class ReferenceData {
                     // establish if we have the data for the effective stream in the store
                     final boolean isEffectiveStreamDataLoaded = refDataStore.isDataLoaded(refStreamDefinition);
 
+                    //TODO what happens if we need to overwrite?
                     if (!isEffectiveStreamDataLoaded) {
                         // we don't have the data so kick off a process to load it all in
                         LOGGER.debug("Loading effective stream {}", refStreamDefinition);
+
+                        // initiate a load of the ref data for this stream
+                        security.asProcessingUser(() ->
+                                referenceDataLoader.load(refStreamDefinition));
                     }
 
                     // now we have the data so just do the lookup

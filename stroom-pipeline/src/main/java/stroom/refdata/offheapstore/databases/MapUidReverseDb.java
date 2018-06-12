@@ -58,7 +58,7 @@ public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
             if (cursorIterator.hasNext()) {
                 final CursorIterator.KeyVal<ByteBuffer> highestKeyVal = cursorIterator.next();
                 optHighestUid = Optional.of(highestKeyVal.key());
-                LAMBDA_LOGGER.debug(() ->
+                LAMBDA_LOGGER.trace(() ->
                         LambdaLogger.buildMessage("highestKey: {}", ByteArrayUtils.byteBufferInfo(highestKeyVal.key())));
             }
         }

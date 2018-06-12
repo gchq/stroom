@@ -16,6 +16,7 @@
 
 package stroom.refdata;
 
+@Deprecated
 public class MapStoreKey {
     private final String mapName;
     private final String keyName;

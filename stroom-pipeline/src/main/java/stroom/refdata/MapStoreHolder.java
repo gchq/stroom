@@ -20,6 +20,7 @@ import stroom.pipeline.state.Holder;
 import stroom.guice.PipelineScoped;
 
 @PipelineScoped
+@Deprecated
 public class MapStoreHolder implements Holder {
     private MapStoreBuilder mapStoreBuilder;
 

@@ -174,11 +174,11 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                     refDataValue.getReferenceCount()));
         }
 
-        LOGGER.debug("getOrCreate called for refDataValue: {}, isOverwrite", refDataValue, isOverwrite);
+        LOGGER.trace("getOrCreate called for refDataValue: {}, isOverwrite", refDataValue, isOverwrite);
 
         final ByteBuffer valueBuffer = valueSerde.serialize(refDataValue);
 
-        LAMBDA_LOGGER.debug(() ->
+        LAMBDA_LOGGER.trace(() ->
                 LambdaLogger.buildMessage("valueBuffer: {}", ByteArrayUtils.byteBufferInfo(valueBuffer)));
 
         ValueStoreKey valueStoreKey = null;

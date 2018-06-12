@@ -16,19 +16,18 @@
 
 package stroom.refdata;
 
+import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.task.ServerTask;
 
 public class ReferenceDataLoadTask extends ServerTask<MapStore> {
-    private MapStoreCacheKey mapStorePoolKey;
 
-    public ReferenceDataLoadTask() {
+    private RefStreamDefinition refStreamDefinition;
+
+    public ReferenceDataLoadTask(final RefStreamDefinition refStreamDefinition) {
+        this.refStreamDefinition = refStreamDefinition;
     }
 
-    public ReferenceDataLoadTask(final MapStoreCacheKey mapStorePoolKey) {
-        this.mapStorePoolKey = mapStorePoolKey;
-    }
-
-    public MapStoreCacheKey getMapStorePoolKey() {
-        return mapStorePoolKey;
+    RefStreamDefinition getRefStreamDefinition() {
+        return refStreamDefinition;
     }
 }

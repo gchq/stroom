@@ -35,7 +35,10 @@ public class RefDataStoreProvider implements Provider<RefDataStore> {
 
     public static final String OFF_HEAP_STORE_DIR_PROP_KEY = "stroom.refloader.offheapstore.localDir";
     public static final String MAX_STORE_SIZE_BYTES_PROP_KEY = "stroom.refloader.offheapstore.maxStoreSize";
+    public static final String MAX_READERS_PROP_KEY = "stroom.refloader.offheapstore.maxReaders";
+
     private static final long MAX_STORE_SIZE_BYTES_DEFAULT = ByteSizeUnit.GIBIBYTE.longBytes(10);
+    private static final int MAX_READERS_DEFAULT = 100;
 
     private final StroomPropertyService stroomPropertyService;
     private final RefDataStore refDataStore;
@@ -51,7 +54,9 @@ public class RefDataStoreProvider implements Provider<RefDataStore> {
         long maxStoreSizeBytes = stroomPropertyService.getLongProperty(
                 MAX_STORE_SIZE_BYTES_PROP_KEY, MAX_STORE_SIZE_BYTES_DEFAULT);
 
-        this.refDataStore = refDataOffHeapStoreFactory.create(storeDir, maxStoreSizeBytes);
+        int maxReaders = stroomPropertyService.getIntProperty(MAX_READERS_PROP_KEY, MAX_READERS_DEFAULT);
+
+        this.refDataStore = refDataOffHeapStoreFactory.create(storeDir, maxStoreSizeBytes, maxReaders);
     }
 
     @Override

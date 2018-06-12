@@ -36,6 +36,7 @@ import java.util.concurrent.TimeUnit;
  * </p>
  */
 @Singleton
+@Deprecated
 public final class MapStoreCache implements Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(MapStoreCache.class);
 
@@ -78,7 +79,7 @@ public final class MapStoreCache implements Clearable {
                 }
 
                 // Load the data into the map store.
-                mapStore = referenceDataLoader.load(mapStoreCacheKey);
+//                mapStore = referenceDataLoader.load(ref);
                 // Intern the map store so we only have one identical copy in
                 // memory.
                 if (internPool != null) {

@@ -16,6 +16,7 @@
 
 package stroom.refdata;
 
+import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.task.TaskManager;
 
 import javax.inject.Inject;
@@ -29,7 +30,7 @@ public class ReferenceDataLoaderImpl implements ReferenceDataLoader {
     }
 
     @Override
-    public MapStore load(final MapStoreCacheKey effectiveFeed) {
-        return taskManager.exec(new ReferenceDataLoadTask(effectiveFeed));
+    public void load(final RefStreamDefinition refStreamDefinition) {
+        taskManager.exec(new ReferenceDataLoadTask(refStreamDefinition));
     }
 }

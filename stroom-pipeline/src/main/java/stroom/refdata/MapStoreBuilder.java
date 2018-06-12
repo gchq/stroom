@@ -20,6 +20,7 @@ import stroom.entity.shared.Range;
 import stroom.refdata.saxevents.EventListValue;
 import stroom.refdata.saxevents.ValueProxy;
 
+@Deprecated
 public interface MapStoreBuilder {
     void setEvents(String mapName, String keyName, ValueProxy<EventListValue> eventListProxy, boolean overrideExistingValues);
 

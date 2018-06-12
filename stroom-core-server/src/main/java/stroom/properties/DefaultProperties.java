@@ -1322,6 +1322,12 @@ public class DefaultProperties {
                 .description("The time to retain reference data for in the off heap store. The time is taken from the time that the reference stream was last accessed, e.g. a lookup was made against it.")
                 .editable(true)
                 .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.refloader.offheapstore.maxReaders")
+                .value("100")
+                .description("The maximum number of concurrent readers/threads that can use the offheapstore.")
+                .editable(true)
+                .build());
         // ========================================END===========================================
 
         return Collections.unmodifiableList(list);

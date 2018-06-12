@@ -28,6 +28,7 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+@Deprecated
 public class MapStoreImpl implements MapStore {
     private static final String EQUALS = " = ";
     private static final String NEW_LINE = "\n";

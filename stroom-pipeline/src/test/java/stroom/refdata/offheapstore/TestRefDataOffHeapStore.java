@@ -37,20 +37,30 @@ import stroom.refdata.RefDataModule;
 import stroom.refdata.offheapstore.databases.AbstractLmdbDbTest;
 import stroom.refdata.offheapstore.serdes.StringValueSerde;
 import stroom.util.ByteSizeUnit;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestRefDataOffHeapStore.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(TestRefDataOffHeapStore.class);
 
     @Rule
     public final TemporaryFolder tmpDir = new TemporaryFolder();
@@ -69,7 +79,7 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         mockStroomPropertyService.setProperty(RefDataStoreProvider.OFF_HEAP_STORE_DIR_PROP_KEY,
                 dbDir.toAbsolutePath().toString());
         mockStroomPropertyService.setProperty(RefDataStoreProvider.MAX_STORE_SIZE_BYTES_PROP_KEY,
-                Long.toString(ByteSizeUnit.KIBIBYTE.longBytes(100)));
+                Long.toString(ByteSizeUnit.KIBIBYTE.longBytes(100000)));
 
         final Injector injector = Guice.createInjector(
                 new AbstractModule() {
@@ -207,7 +217,7 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                 1);
         long effectiveTimeMs = System.currentTimeMillis();
         MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "map1");
-        Range<Long> range = new Range<>(1L,100L);
+        Range<Long> range = new Range<>(1L, 100L);
         String key = "50";
 
         assertThat(refDataStore.getKeyRangeValueEntryCount()).isEqualTo(0);
@@ -286,6 +296,89 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                 refStreamDefinition, refStreamDefinition);
 
         bulkLoadAndAssert(refStreamDefinitions, true, commitInterval);
+    }
+
+
+    @Test
+    public void testLoaderConcurrency() {
+
+        final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
+                UUID.randomUUID().toString(),
+                (byte) 0,
+                123456L,
+                1);
+        final long effectiveTimeMs = System.currentTimeMillis();
+
+        final MapDefinition mapDefinitionKey = new MapDefinition(refStreamDefinition, "MyKeyMap");
+        final MapDefinition mapDefinitionRange = new MapDefinition(refStreamDefinition, "MyRangeMap");
+        final int recCount = 1_000;
+
+        Runnable loadTask = () -> {
+            LOGGER.debug("Running loadTask on thread {}", Thread.currentThread().getName());
+            try {
+                try (RefDataLoader loader = refDataStore.loader(refStreamDefinition, effectiveTimeMs)) {
+
+                    //TODO rechck state
+                    if (!refDataStore.isDataLoaded(refStreamDefinition)) {
+                        loader.initialise(false);
+
+                        long rangeStartInc = 0;
+                        long rangeEndExc;
+                        for (int i = 0; i < recCount; i++) {
+                            loader.put(mapDefinitionKey, "key" + i, StringValue.of("Value" + i));
+
+                            rangeEndExc = rangeStartInc + 10;
+                            Range<Long> range = new Range<>(rangeStartInc, rangeEndExc);
+                            rangeStartInc = rangeEndExc;
+                            loader.put(mapDefinitionRange, range, StringValue.of("Value" + i));
+    //                        ThreadUtil.sleepAtLeastIgnoreInterrupts(50);
+                        }
+                        loader.completeProcessing();
+                        LOGGER.debug("Finished loading data");
+                    } else {
+                        LOGGER.debug("Data is already loaded");
+                    }
+                }
+
+                LOGGER.debug("Getting values");
+                LAMBDA_LOGGER.logDurationIfDebugEnabled(() -> {
+                    IntStream.range(0, recCount)
+                            .boxed()
+                            .sorted(Comparator.reverseOrder())
+                            .forEach(i -> {
+                                Optional<RefDataValue> optValue = refDataStore.getValue(mapDefinitionKey, "key" + i);
+                                assertThat(optValue.isPresent());
+
+                                optValue = refDataStore.getValue(mapDefinitionKey, Integer.toString((i*10) + 5));
+                                assertThat(optValue.isPresent());
+                            });
+                }, () -> LambdaLogger.buildMessage("Getting {} entries, twice", recCount));
+
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            LOGGER.debug("Finished running loadTask on thread {}", Thread.currentThread().getName());
+        };
+
+        ExecutorService executorService = Executors.newFixedThreadPool(6);
+        List<CompletableFuture<Void>> futures = IntStream.rangeClosed(1, 10)
+                .boxed()
+                .map(i -> {
+                    LOGGER.debug("Running async task on thread {}", Thread.currentThread().getName());
+                    final CompletableFuture<Void> future = CompletableFuture.runAsync(loadTask, executorService);
+                    LOGGER.debug("Got future");
+                    return future;
+                })
+                .collect(Collectors.toList());
+
+        futures.forEach(voidCompletableFuture -> {
+            try {
+                voidCompletableFuture.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        LOGGER.debug("Finished all");
     }
 
     private void bulkLoadAndAssert(final boolean overwriteExisting,

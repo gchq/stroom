@@ -156,7 +156,7 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
         final RangeStoreKey endRangeStoreKey = new RangeStoreKey(mapDefinitionUid, endRange);
         final ByteBuffer endKeyBuf = keySerde.serialize(endRangeStoreKey);
 
-        LOGGER.debug("Using range [{}] to [{}]", endRangeStoreKey, startRangeStoreKey);
+        LOGGER.trace("Using range [{}] to [{}]", endRangeStoreKey, startRangeStoreKey);
         // we want to scan backward from (and including, if found) our start key
         return KeyRange.closedBackward(startKeyBuf, endKeyBuf);
     }

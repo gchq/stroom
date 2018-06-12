@@ -74,7 +74,7 @@ public class MapDefinitionUIDStore {
         // of entries
         return mapUidForwardDb.getAsBytes(writeTxn, mapDefinitionBuffer)
                 .map(uidBuffer -> {
-                    LAMBDA_LOGGER.debug(() ->
+                    LAMBDA_LOGGER.trace(() ->
                             LambdaLogger.buildMessage("Found existing UID {}", ByteArrayUtils.byteBufferInfo(uidBuffer)));
                     return uidSerde.deserialize(uidBuffer);
                 })
@@ -97,7 +97,7 @@ public class MapDefinitionUIDStore {
         // this is all done in a write txn so we can be sure of consistency between the forward and reverse DBs
 
 
-        LAMBDA_LOGGER.debug(() ->
+        LAMBDA_LOGGER.trace(() ->
                 LambdaLogger.buildMessage("Creating UID mappings for mapDefinition {}",
                         ByteArrayUtils.byteBufferInfo(mapDefinitionBuffer)));
 
@@ -112,9 +112,9 @@ public class MapDefinitionUIDStore {
                 );
 
         // put the reverse entry
-        LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage(
+        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage(
                 "nextUidKeyBuffer {}", ByteArrayUtils.byteBufferInfo(nextUidKeyBuffer)));
-        LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage(
+        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage(
                 "mapDefinitionBuffer {}", ByteArrayUtils.byteBufferInfo(mapDefinitionBuffer)));
         mapUidReverseDb.putReverseEntry(writeTxn, nextUidKeyBuffer, mapDefinitionBuffer);
 
@@ -122,16 +122,16 @@ public class MapDefinitionUIDStore {
         final ByteBuffer mapDefinitionKeyBuffer = LmdbUtils.copyDirectBuffer(mapDefinitionBuffer);
         final ByteBuffer nextUidValueBuffer = LmdbUtils.copyDirectBuffer(nextUidKeyBuffer);
 
-        LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage(
+        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage(
                 "mapDefinitionKeyBuffer {}", ByteArrayUtils.byteBufferInfo(mapDefinitionKeyBuffer)));
-        LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage(
+        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage(
                 "nextUidValueBuffer {}", ByteArrayUtils.byteBufferInfo(nextUidValueBuffer)));
 
         // put the forward entry
         mapUidForwardDb.putForwardEntry(writeTxn, mapDefinitionKeyBuffer, nextUidValueBuffer);
 
         // this buffer is 'owned' by LMDB now but we are still in a txn so can pass it back
-        LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage(
+        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage(
                 "nextUidValueBuffer {}", ByteArrayUtils.byteBufferInfo(nextUidValueBuffer)));
 
         return UID.wrap(nextUidValueBuffer);

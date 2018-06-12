@@ -24,6 +24,7 @@ import stroom.util.shared.HashCodeBuilder;
  * This class stores a relationship between a stream and a pipeline for loading
  * purposes;
  */
+@Deprecated
 public class MapStoreCacheKey {
     private final DocRef pipeline;
     private final long streamId;

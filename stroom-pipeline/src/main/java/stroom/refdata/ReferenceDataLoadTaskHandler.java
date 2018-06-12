@@ -41,6 +41,7 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.query.api.v2.DocRef;
 import stroom.refdata.offheapstore.RefDataLoader;
 import stroom.refdata.offheapstore.RefDataStore;
+import stroom.refdata.offheapstore.RefDataStoreProvider;
 import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.security.Security;
 import stroom.streamstore.StreamSource;
@@ -98,7 +99,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                                  final FeedHolder feedHolder,
                                  final StreamHolder streamHolder,
                                  final RefDataLoaderHolder refDataLoaderHolder,
-                                 final RefDataStore refDataStore,
+                                 final RefDataStoreProvider refDataStoreProvider,
                                  final LocationFactoryProxy locationFactory,
                                  final StreamCloser streamCloser,
                                  final ErrorReceiverProxy errorReceiverProxy,
@@ -112,7 +113,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
         this.pipelineService = pipelineService;
         this.pipelineHolder = pipelineHolder;
         this.feedHolder = feedHolder;
-        this.refDataStore = refDataStore;
+        this.refDataStore = refDataStoreProvider.get();
         this.locationFactory = locationFactory;
         this.streamHolder = streamHolder;
         this.refDataLoaderHolder = refDataLoaderHolder;
@@ -136,14 +137,13 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
             errorReceiverProxy.setErrorReceiver(errorReceiver);
 
             try {
-                final MapStoreCacheKey mapStorePoolKey = task.getMapStorePoolKey();
+//                final MapStoreCacheKey mapStorePoolKey = task.getMapStorePoolKey();
+                final RefStreamDefinition refStreamDefinition = task.getRefStreamDefinition();
 
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Loading reference data: " + mapStorePoolKey.toString());
-                }
+                LOGGER.debug("Loading reference data: {}", refStreamDefinition);
 
                 // Open the stream source.
-                final StreamSource streamSource = streamStore.openStreamSource(mapStorePoolKey.getStreamId());
+                final StreamSource streamSource = streamStore.openStreamSource(refStreamDefinition.getStreamId());
                 if (streamSource != null) {
                     final Stream stream = streamSource.getStream();
                     try {
@@ -153,7 +153,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
 
                         // Set the pipeline so it can be used by a filter if needed.
                         final PipelineEntity pipelineEntity = pipelineService
-                                .loadByUuid(mapStorePoolKey.getPipeline().getUuid());
+                                .loadByUuid(refStreamDefinition.getPipelineDocRef().getUuid());
                         pipelineHolder.setPipeline(pipelineEntity);
 
                         // Create the parser.
@@ -161,9 +161,8 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                         final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
                         populateMaps(pipeline, stream, streamSource, feed, stream.getStreamType(), mapStoreBuilder);
-                        if (LOGGER.isDebugEnabled()) {
-                            LOGGER.debug("Finished loading reference data: " + mapStorePoolKey.toString());
-                        }
+
+                        LOGGER.debug("Finished loading reference data: {}", refStreamDefinition);
                     } finally {
                         try {
                             // Close all open streams.
@@ -234,6 +233,8 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                             streamNo);
 
                     try (RefDataLoader refDataLoader = refDataStore.loader(refStreamDefinition, stream.getEffectiveMs())) {
+                        // we are now blocking any other thread loading the same refStreamDefinition
+                        // so recheck the load state
                         refDataLoaderHolder.setRefDataLoader(refDataLoader);
                         // Process the boundary.
                         try {

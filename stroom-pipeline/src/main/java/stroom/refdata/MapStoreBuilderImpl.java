@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+@Deprecated
 public class MapStoreBuilderImpl implements MapStoreBuilder {
     private final StoredErrorReceiver storedErrorReceiver;
 

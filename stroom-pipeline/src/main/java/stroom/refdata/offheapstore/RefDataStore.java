@@ -104,4 +104,5 @@ public interface RefDataStore {
 
     long getKeyRangeValueEntryCount();
 
+    void purgeOldData();
 }

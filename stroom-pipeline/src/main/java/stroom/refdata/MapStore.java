@@ -24,6 +24,7 @@ import stroom.refdata.saxevents.ValueProxy;
  * Stores and retrieves a list of XML events that are found in reference data
  * for specified map and key names.
  */
+@Deprecated
 public interface MapStore {
 
     ValueProxy<EventListValue> getEventListProxy(String mapName, String keyName);

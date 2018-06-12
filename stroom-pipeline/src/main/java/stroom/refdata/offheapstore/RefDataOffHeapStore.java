@@ -66,6 +66,7 @@ public class RefDataOffHeapStore implements RefDataStore {
 
     private final Path dbDir;
     private final long maxSize;
+    private final int maxReaders;
 
     private final Env<ByteBuffer> lmdbEnvironment;
 
@@ -82,7 +83,7 @@ public class RefDataOffHeapStore implements RefDataStore {
     private final StroomPropertyService stroomPropertyService;
 
     // For synchronising access to the data belonging to a MapDefinition
-    private final Striped<Semaphore> stripedSemaphore;
+    private final Striped<Semaphore> refStreamDefStripedSemaphore;
 
     /**
      * @param dbDir   The directory the LMDB environment will be created in, it must already exist
@@ -92,6 +93,7 @@ public class RefDataOffHeapStore implements RefDataStore {
     RefDataOffHeapStore(
             @Assisted final Path dbDir,
             @Assisted final long maxSize,
+            @Assisted final int maxReaders,
             final KeyValueStoreDb.Factory keyValueStoreDbFactory,
             final ValueStoreDb.Factory valueStoreDbFactory,
             final RangeStoreDb.Factory rangeStoreDbFactory,
@@ -103,9 +105,10 @@ public class RefDataOffHeapStore implements RefDataStore {
 
         this.dbDir = dbDir;
         this.maxSize = maxSize;
+        this.maxReaders = maxReaders;
 
-        LOGGER.debug("Creating LMDB environment with maxSize: {}, dbDir {}",
-                maxSize, dbDir.toAbsolutePath().toString());
+        LOGGER.debug("Creating LMDB environment with maxSize: {}, dbDir {}, maxReaders {}",
+                maxSize, dbDir.toAbsolutePath().toString(), maxReaders);
 
         // By default LMDB opens with readonly mmaps so you cannot mutate the bytebuffers inside a txn.
         // Instead you need to create a new bytebuffer for the value and put that. If you want faster writes
@@ -118,8 +121,9 @@ public class RefDataOffHeapStore implements RefDataStore {
         // hardcoded into software, it needs to be reconfigurable. On Windows and MacOS you really shouldn't
         // set it larger than the amount of free space on the filesystem.
         lmdbEnvironment = Env.<ByteBuffer>create()
+                .setMaxReaders(maxReaders)
                 .setMapSize(maxSize)
-                .setMaxDbs(7)
+                .setMaxDbs(7) //should equal the number of DBs we create which is fixed at compile time
                 .open(dbDir.toFile());
 
         // create all the databases
@@ -134,7 +138,7 @@ public class RefDataOffHeapStore implements RefDataStore {
         this.mapDefinitionUIDStore = new MapDefinitionUIDStore(lmdbEnvironment, mapUidForwardDb, mapUidReverseDb);
         this.stroomPropertyService = stroomPropertyService;
 
-        this.stripedSemaphore = Striped.lazyWeakSemaphore(100, 1);
+        this.refStreamDefStripedSemaphore = Striped.lazyWeakSemaphore(100, 1);
     }
 
     /**
@@ -274,6 +278,7 @@ public class RefDataOffHeapStore implements RefDataStore {
     public RefDataLoader loader(final RefStreamDefinition refStreamDefinition, final long effectiveTimeMs) {
         return new RefDataLoaderImpl(
                 this,
+                refStreamDefStripedSemaphore,
                 keyValueStoreDb,
                 rangeStoreDb,
                 valueStoreDb,
@@ -294,11 +299,13 @@ public class RefDataOffHeapStore implements RefDataStore {
         return rangeStoreDb.getEntryCount();
     }
 
+    @Override
     @StroomSimpleCronSchedule(cron = "2 * *") // 02:00 every day
     @JobTrackedSchedule(
             jobName = "Ref Data Store Purge",
             description = "Purge old reference data form the off heap store, as defined by " + DATA_RETENTION_AGE_PROP_KEY)
     public void purgeOldData() {
+
 
         //TODO
 
@@ -356,7 +363,7 @@ public class RefDataOffHeapStore implements RefDataStore {
     }
 
     private void doSynchronisedWork(final RefStreamDefinition refStreamDefinition, final Runnable work) {
-        final Semaphore semaphore = stripedSemaphore.get(refStreamDefinition);
+        final Semaphore semaphore = refStreamDefStripedSemaphore.get(refStreamDefinition);
         try {
             semaphore.acquire();
             try {
@@ -398,6 +405,7 @@ public class RefDataOffHeapStore implements RefDataStore {
 
         private Txn<ByteBuffer> writeTxn = null;
         private final RefDataOffHeapStore refDataOffHeapStore;
+        private final Semaphore refStreamDefSemaphore;
 
         private final KeyValueStoreDb keyValueStoreDb;
         private final RangeStoreDb rangeStoreDb;
@@ -427,6 +435,7 @@ public class RefDataOffHeapStore implements RefDataStore {
         }
 
         private RefDataLoaderImpl(final RefDataOffHeapStore refDataOffHeapStore,
+                                  final Striped<Semaphore> refStreamDefStripedSemaphore,
                                   final KeyValueStoreDb keyValueStoreDb,
                                   final RangeStoreDb rangeStoreDb,
                                   final ValueStoreDb valueStoreDb,
@@ -448,6 +457,22 @@ public class RefDataOffHeapStore implements RefDataStore {
             this.lmdbEnvironment = lmdbEnvironment;
             this.refStreamDefinition = refStreamDefinition;
             this.effectiveTimeMs = effectiveTimeMs;
+
+            // Get the permit for this refStreamDefinition
+            // This will make any other threads trying to load the same refStreamDefinition block and wait for us
+
+            this.refStreamDefSemaphore = refStreamDefStripedSemaphore.get(refStreamDefinition);
+            LAMBDA_LOGGER.logDurationIfDebugEnabled(
+                    () -> {
+                        try {
+                            LOGGER.debug("Acquiring permit");
+                            refStreamDefSemaphore.acquire();
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            throw new RuntimeException("Load aborted due to thread interruption");
+                        }
+                    },
+                    () -> LambdaLogger.buildMessage("Acquiring semaphore permit for {}", refStreamDefinition));
         }
 
         @Override
@@ -457,6 +482,8 @@ public class RefDataOffHeapStore implements RefDataStore {
 
         @Override
         public boolean initialise(final boolean overwriteExisting) {
+            //TODO we could do all this in the ctor?
+
             LOGGER.debug("initialise called, overwriteExisting: {}", overwriteExisting);
             checkCurrentState(LoaderState.NEW);
 
@@ -465,8 +492,17 @@ public class RefDataOffHeapStore implements RefDataStore {
             // TODO create processed streams entry if it doesn't exist with a state of IN_PROGRESS
             // TODO if it does exist update the update time
 
-            beginTxn();
+//            beginTxn();
             this.overwriteExisting = overwriteExisting;
+
+
+            // TODO once inside the protection of the semaphore we need to (somewhere) recheck the
+            //processing info state to see if we need to continue.  Prob outside here.
+
+
+//            if (!overwriteExisting) {
+//                final RefDataProcessingInfo currentRefDataProcessingInfo = processingInfoDb.get(refStreamDefinition);
+//            }
 
             final RefDataProcessingInfo refDataProcessingInfo = new RefDataProcessingInfo(
                     System.currentTimeMillis(),
@@ -478,9 +514,9 @@ public class RefDataOffHeapStore implements RefDataStore {
             // ref data set at once
 
             // TODO do we want to overwrite the existing value or just update its state/lastAccessedTime?
+            // use its own short live txn just to set the value so other readers can see it.
             boolean didPutSucceed = processingInfoDb.put(
-                    writeTxn, refStreamDefinition, refDataProcessingInfo, overwriteExisting);
-
+                    refStreamDefinition, refDataProcessingInfo, overwriteExisting);
 
             currentLoaderState = LoaderState.INITIALISED;
             return didPutSucceed;
@@ -528,6 +564,9 @@ public class RefDataOffHeapStore implements RefDataStore {
             // if overwrite == true we need to de-reference the value (and maybe delete)
             // then create a new value, assuming they are different
             Optional<ValueStoreKey> optCurrentValueStoreKey = keyValueStoreDb.get(keyValueStoreKey);
+
+            // TODO May be able to create direct buffer for reuse over all write ops to save the cost
+            // of buffer allocation, see info here https://github.com/lmdbjava/lmdbjava/issues/81
 
             boolean didPutSucceed;
             if (optCurrentValueStoreKey.isPresent()) {
@@ -600,9 +639,6 @@ public class RefDataOffHeapStore implements RefDataStore {
             final RangeStoreKey rangeStoreKey = new RangeStoreKey(mapUid, keyRange);
 
 
-
-
-
             // see if we have a value already for this key
             // if overwrite == false, we can just drop out here
             // if overwrite == true we need to de-reference the value (and maybe delete)
@@ -662,7 +698,7 @@ public class RefDataOffHeapStore implements RefDataStore {
 
         @Override
         public void close() {
-            LOGGER.trace("Close called");
+            LOGGER.trace("Close called for {}", refStreamDefinition);
 
             if (currentLoaderState.equals(LoaderState.INITIALISED)) {
                 LOGGER.warn(LambdaLogger.buildMessage("Reference data loader for {} was initialised but then closed before being completed",
@@ -674,6 +710,9 @@ public class RefDataOffHeapStore implements RefDataStore {
                 writeTxn.close();
             }
             currentLoaderState = LoaderState.CLOSED;
+
+            LOGGER.debug("Releasing semaphore permit for {}", refStreamDefinition);
+            refStreamDefSemaphore.release();
         }
 
         private void beginTxn() {
@@ -704,8 +743,9 @@ public class RefDataOffHeapStore implements RefDataStore {
             // get the UID for this mapDefinition, and as we should only have a handful of mapDefinitions
             // per loader it makes sense to cache the MapDefinition=>UID mappings on heap for quicker access.
             final UID uid = mapDefinitionToUIDMap.computeIfAbsent(mapDefinition, mapDef -> {
-                LOGGER.debug("MapDefinition {} not found in local cache so getting it from the store");
+                LOGGER.trace("MapDefinition {} not found in local cache so getting it from the store");
                 // cloning the UID in case we leave the txn
+                beginTxnIfRequired();
                 return mapDefinitionUIDStore.getOrCreateUid(writeTxn, mapDef).clone();
             });
             return uid;
@@ -743,6 +783,6 @@ public class RefDataOffHeapStore implements RefDataStore {
     }
 
     public interface Factory {
-        RefDataStore create(final Path dbDir, final long maxSize);
+        RefDataStore create(final Path dbDir, final long maxSize, final int maxReaders);
     }
 }

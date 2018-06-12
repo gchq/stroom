@@ -10,7 +10,7 @@
 
     <logger name="stroom" level="info" />
 
-    <logger name="stroom.refdata" level="trace" />
+    <logger name="stroom.refdata" level="debug" />
 
     <root level="error">
         <appender-ref ref="STDOUT" />
