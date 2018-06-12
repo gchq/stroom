@@ -1,5 +1,4 @@
 %element-shared {
-  //Copied from PipelineELement TODO: don't do this!
   padding: 0.5rem;
   width: 8rem;
   font-size: 0.8rem;
@@ -7,8 +6,7 @@
   border-width: thin;
   border-radius: 5px;
   overflow: hidden;
-  background-color: white; // Two possible shadow looks -- darker and lighter.
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.1), 0 6px 20px 0 rgba(0, 0, 0, 0.1); //End copied from PipelineELement
+  background-color: white;
 }
 
 %element-shared__icon {
