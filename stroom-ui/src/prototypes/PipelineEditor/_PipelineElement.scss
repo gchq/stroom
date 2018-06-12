@@ -1,5 +1,4 @@
 @import "./Element";
-
 .Pipeline-element {
   @extend %element-shared;
 }
@@ -26,6 +25,10 @@
 
 .Pipeline-element__over_can_drop {
   background-color: greenyellow;
+}
+
+.Pipeline-element__not_over_can_drop {
+  border-color: greenyellow;
 }
 
 .Pipeline-element__over_cannot_drop {

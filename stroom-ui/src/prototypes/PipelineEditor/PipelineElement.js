@@ -129,6 +129,12 @@ const PipelineElement = ({
       className += ' Pipeline-element__over_cannot_drop';
     }
   }
+  else {
+    if(canDrop){
+      className += ' Pipeline-element__not_over_can_drop';
+    }
+  }
+
   if(selectedElementId === elementId){
     className += ' Pipeline-element__selected'
   }
