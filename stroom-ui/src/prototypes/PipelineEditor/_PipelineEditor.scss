@@ -59,6 +59,15 @@ $palette-width: 19rem;
   border: 0;
   background-color: rgb(229, 231, 234);
   outline: none;
+  padding: 0px;
+}
+
+.Pipeline-editor__palette-toggle:hover {
+  background-color: rgb(220, 222, 227);
+}
+
+.Pipeline-editor__palette-toggle .icon {
+  padding-left: 2px;
 }
 
 .Pipeline-editor__graph {

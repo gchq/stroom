@@ -16,7 +16,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { Header } from 'semantic-ui-react';
+import { Header, Icon } from 'semantic-ui-react';
 
 import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
@@ -73,7 +73,7 @@ const PipelineEditor = ({
         <ElementPalette />
       </div>
       <button className="Pipeline-editor__palette-toggle" onClick={togglePaletteOpen}>
-        {isPaletteOpen ? '<' : '>'}
+        {isPaletteOpen ? <Icon name="caret left" /> : <Icon name="caret right" />}
       </button>
 
       <LineContainer
