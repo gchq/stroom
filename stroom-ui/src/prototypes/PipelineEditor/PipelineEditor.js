@@ -16,7 +16,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { Header, Icon } from 'semantic-ui-react';
+import { Icon } from 'semantic-ui-react';
 
 import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
@@ -40,7 +40,7 @@ const COMMON_ELEMENT_STYLE = {
   position: 'absolute',
 };
 
-const withPaletteOpen = withState('isPaletteOpen', 'setPaletteOpen', false);
+const withPaletteOpen = withState('isPaletteOpen', 'setPaletteOpen', true);
 
 const PipelineEditor = ({
   pipelineId,
@@ -81,7 +81,6 @@ const PipelineEditor = ({
         lineContextId={`pipeline-lines-${pipelineId}`}
         lineElementCreators={lineElementCreators}
       >
-        <Header as="h4">Pipeline Editor {pipelineId}</Header>
         <div className="Pipeline-editor__recycle-bin">
           <RecycleBin pipelineId={pipelineId} />
         </div>

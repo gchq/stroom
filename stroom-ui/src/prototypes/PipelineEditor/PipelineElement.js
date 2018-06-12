@@ -18,11 +18,10 @@ import PropTypes from 'prop-types';
 
 import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
-import { Field, reduxForm } from 'redux-form';
 
-import { Modal, Header, Button, Form } from 'semantic-ui-react';
 import { DragSource, DropTarget } from 'react-dnd';
 
+import AddElementModal from './AddElementModal';
 import { withElement } from './withElement';
 import { withPipeline } from './withPipeline';
 import { actionCreators } from './redux';
@@ -30,7 +29,7 @@ import { canMovePipelineElement } from './pipelineUtils';
 import { ItemTypes } from './dragDropTypes';
 import { isValidChildType } from './elementUtils'
 
-const { pipelineElementSelected, pipelineElementMoved, pipelineElementAdded } = actionCreators;
+const { pipelineElementSelected, pipelineElementMoved } = actionCreators;
 
 const withNameNewElementModal = withState('newElementDefinition', 'setNewElementDefinition', undefined);
 
@@ -111,7 +110,6 @@ const PipelineElement = ({
   element,
   elementDefinition,
   pipelineElementSelected,
-  pipelineElementAdded,
   selectedElementId,
   newElementForm,
   newElementDefinition,
@@ -136,33 +134,10 @@ const PipelineElement = ({
   }
 
   const onClick = () => pipelineElementSelected(pipelineId, elementId);
-  const onConfirmNewElement = () => {
-    pipelineElementAdded(pipelineId, elementId, newElementDefinition, newElementForm.values.name);
-    setNewElementDefinition(undefined);
-  }
-  const onCancelNewElement = () => setNewElementDefinition(undefined);
 
   return compose(connectDragSource, connectDropTarget)(
     <div className={className} onClick={onClick}>
-      <Modal
-        size="tiny"
-        open={!!newElementDefinition}
-        onClose={onCancelNewElement}
-      >
-        <Header content='Add New Element' />
-        <Modal.Content>
-          <Form>
-            <Form.Field>
-              <label>Name</label>
-              <Field name="name" component="input" type="text" placeholder="Name" />
-            </Form.Field>
-          </Form>
-        </Modal.Content>
-        <Modal.Actions>
-          <Button positive content="Submit" onClick={onConfirmNewElement} />
-          <Button negative content="Cancel" onClick={onCancelNewElement} />
-        </Modal.Actions>
-      </Modal>
+      <AddElementModal {...{setNewElementDefinition, newElementDefinition, pipelineId, elementId}}  />
       <img
         className="Pipeline-element__icon"
         alt="X"
@@ -188,13 +163,9 @@ PipelineElement.propTypes = {
   // withElement
   element: PropTypes.object.isRequired,
 
-  // redux form
-  newElementForm: PropTypes.object,
-
   // Redux actions
   pipelineElementSelected: PropTypes.func.isRequired,
   pipelineElementMoved: PropTypes.func.isRequired,
-  pipelineElementAdded: PropTypes.func.isRequired,
 
   // withNameNewElementModal
   newElementDefinition: PropTypes.object,
@@ -205,12 +176,11 @@ export default compose(
   connect(
     state => ({
       // state
-      newElementForm : state.form.newElementName
     }),
     {
+      // actions
       pipelineElementSelected,
-      pipelineElementMoved,
-      pipelineElementAdded
+      pipelineElementMoved
     },
   ),
   withPipeline(),
@@ -218,5 +188,4 @@ export default compose(
   withNameNewElementModal,
   DragSource(ItemTypes.ELEMENT, dragSource, dragCollect),
   DropTarget([ItemTypes.ELEMENT, ItemTypes.PALLETE_ELEMENT], dropTarget, dropCollect),
-  reduxForm({ form: 'newElementName' }),
 )(PipelineElement);
