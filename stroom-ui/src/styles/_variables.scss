@@ -1,6 +1,8 @@
-// These variables are lighter version of the Stroom blue. 
+// These variables are lighter version of the Stroom blue.
 // We might need additional colours, e.g. border colour
 //    The main colour of an item when selected.
 $selected-item-colour: rgb(224, 240, 255);
 //    The hover colour of an item that might be selecter.
 $hover-item-colour: rgb(247, 251, 255);
+
+$animation-duration: 0.3s;

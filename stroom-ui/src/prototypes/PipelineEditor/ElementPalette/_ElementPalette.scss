@@ -3,15 +3,32 @@
   padding: 0.5rem;
 }
 
-.element-palette-category {
+.ui.header.closed {
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+%element-palette-category--shared {
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
 }
 
-.element-palette-category__elements {
+%element-palette-category__elements--shared {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
+  overflow: hidden;
+  justify-content: flex-end;
+}
+
+.element-palette-category__elements--open {
+  @extend %element-palette-category__elements--shared;
+  max-height: none;
+}
+
+.element-palette-category__elements--closed {
+  @extend %element-palette-category__elements--shared;
+  max-height: 0;
 }
 
 .element-palette-element {

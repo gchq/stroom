@@ -1,11 +1,12 @@
 @import "./ElementPalette/ElementPalette";
 @import "./PipelineElement";
-$palette-width: 10rem;
+$palette-width: 12rem;
 .Pipeline-editor {
   height: 100vh;
   position: relative;
   display: flex;
   flex-direction: row;
+  align-content: center;
 }
 
 /* The animation code */
@@ -23,7 +24,7 @@ $palette-width: 10rem;
   left: 0;
   width: 100%;
   animation-name: open-pallete;
-  animation-duration: 0.3s;
+  animation-duration: $animation-duration;
 }
 
 /* The animation code */
@@ -41,7 +42,7 @@ $palette-width: 10rem;
   left: -$palette-width;
   width: calc(100% + #{$palette-width});
   animation-name: close-pallete;
-  animation-duration: 0.3s;
+  animation-duration: $animation-duration;
 }
 
 .Pipeline-editor__element-palette {

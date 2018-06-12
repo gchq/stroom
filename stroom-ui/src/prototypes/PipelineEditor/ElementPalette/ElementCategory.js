@@ -1,16 +1,30 @@
 import React from 'react';
 
-import NewElement from './NewElement';
+import { compose, withState } from 'recompose';
 
+import { Header, Icon } from 'semantic-ui-react';
+
+import NewElement from './NewElement';
 import { ElementCategories } from '../ElementCategories';
 
-const ElementCategory = ({ category, elements }) => (
+const withCategoryIsOpen = withState('isOpen', 'setIsOpen', true);
+
+const ElementCategory = ({
+  category, elements, isOpen, setIsOpen,
+}) => (
   <div className="element-palette-category">
-    <h3 className="element-palette-category__title">{ElementCategories[category].displayName}</h3>
-    <div className="element-palette-category__elements">
+    <Header
+      icon={`caret ${isOpen ? 'down' : 'right'}`}
+      as="h3"
+      onClick={() => setIsOpen(!isOpen)}
+      className={isOpen ? 'open' : 'closed'}
+      content={ElementCategories[category].displayName}
+    />
+
+    <div className={`element-palette-category__elements--${isOpen ? 'open' : 'closed'}`}>
       {elements.map(e => <NewElement key={e.type} element={e} />)}
     </div>
   </div>
 );
 
-export default ElementCategory;
+export default compose(withCategoryIsOpen)(ElementCategory);
