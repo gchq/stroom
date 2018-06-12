@@ -15,6 +15,7 @@ import stroom.refdata.offheapstore.serdes.ValueStoreKeySerde;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -152,6 +153,98 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
             assertRefCount(writeTxn, valueStoreKey, 2);
         });
         assertThat(valueStoreDb.getEntryCount()).isEqualTo(3);
+    }
+
+    @Test
+    public void testGetOrCreateSparseIds() {
+        final List<String> stringsWithSameHash = generateHashClashes(10);
+
+        final List<RefDataValue> refDataValues = stringsWithSameHash.stream()
+                .map(StringValue::of)
+                .collect(Collectors.toList());
+
+        final Map<Integer, ValueStoreKey> valueStoreKeysMap = new HashMap<>();
+
+        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            ValueStoreKey valueStoreKey;
+
+            // insert the first five values, all have same hash so should get increasing
+            // id values.
+            for (int i = 0; i < 5; i++) {
+                valueStoreKey = valueStoreDb.getOrCreate(writeTxn, refDataValues.get(i));
+                valueStoreKeysMap.put(i, valueStoreKey);
+                assertThat(valueStoreKey.getUniqueId()).isEqualTo((short) i);
+            }
+        });
+        assertThat(valueStoreDb.getEntryCount()).isEqualTo(5);
+        valueStoreDb.logDatabaseContents();
+
+        // delete values 1,2,3, leaving ids 0 and 5
+        for (int i = 1; i < 4; i++) {
+            valueStoreDb.delete(valueStoreKeysMap.get(i));
+        }
+        assertThat(valueStoreDb.getEntryCount()).isEqualTo(2);
+        valueStoreDb.logDatabaseContents();
+
+        // now put the remaining 5 values
+        // they should fill up the gaps in the ID sequence
+        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            ValueStoreKey valueStoreKey;
+            for (int i = 5; i < 10; i++) {
+                valueStoreKey = valueStoreDb.getOrCreate(writeTxn, refDataValues.get(i));
+                valueStoreKeysMap.put(i, valueStoreKey);
+            }
+        });
+        assertThat(valueStoreDb.getEntryCount()).isEqualTo(5 - 3 + 5);
+        valueStoreDb.logDatabaseContents();
+
+        // check the ID value for each of our original values in insertion order
+        assertThat(valueStoreKeysMap.get(0).getUniqueId()).isEqualTo((short)0);
+        assertThat(valueStoreKeysMap.get(1).getUniqueId()).isEqualTo((short)1); //since deleted
+        assertThat(valueStoreKeysMap.get(2).getUniqueId()).isEqualTo((short)2); //since deleted
+        assertThat(valueStoreKeysMap.get(3).getUniqueId()).isEqualTo((short)3); //since deleted
+        assertThat(valueStoreKeysMap.get(4).getUniqueId()).isEqualTo((short)4);
+        assertThat(valueStoreKeysMap.get(5).getUniqueId()).isEqualTo((short)1); //used empty space after delete
+        assertThat(valueStoreKeysMap.get(6).getUniqueId()).isEqualTo((short)2); //used empty space after delete
+        assertThat(valueStoreKeysMap.get(7).getUniqueId()).isEqualTo((short)3); //used empty space after delete
+        assertThat(valueStoreKeysMap.get(8).getUniqueId()).isEqualTo((short)5);
+        assertThat(valueStoreKeysMap.get(9).getUniqueId()).isEqualTo((short)6);
+    }
+
+    /**
+     * Generate a list (of size desiredRecords) of strings that all share the same hashcode
+     * Adapted from https://gist.github.com/vaskoz/5703423
+     */
+    public List<String> generateHashClashes(final int desiredRecords) {
+
+        List<String> strings = new ArrayList<>(Arrays.asList("Aa", "BB"));
+        List<String> temp = new ArrayList<>();
+
+        complete:
+        for (int i = 0; i < 5; i++) {
+            int size = strings.size();
+            temp = new ArrayList<>(size * size);
+            int count = 0;
+            for (String s : strings) {
+                for (String t : strings) {
+                    if (count == desiredRecords) {
+                        break complete;
+                    }
+                    temp.add(s + t);
+                    count++;
+                }
+            }
+            strings = temp;
+        }
+        strings = temp;
+
+        //dbl check all have same hash
+        assertThat(strings.stream()
+                .map(String::hashCode)
+                .distinct()
+                .count()).isEqualTo(1);
+
+        return strings;
     }
 
     private void assertRefCount(Txn<ByteBuffer> txn, final ValueStoreKey valueStoreKey, final int expectedRefCount) {
