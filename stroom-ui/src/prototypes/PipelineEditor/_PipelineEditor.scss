@@ -57,7 +57,7 @@ $palette-width: 19rem;
   height: 100%;
   float: left;
   border: 0;
-  background-color: lightgrey;
+  background-color: rgb(229, 231, 234);
   outline: none;
 }
 
@@ -73,4 +73,8 @@ $palette-width: 19rem;
   position: fixed;
   left: 3rem;
   bottom: 2rem;
+}
+
+.LineContainer-svg {
+  width: calc(100% + #{$palette-width} + 1em) !important;
 }
