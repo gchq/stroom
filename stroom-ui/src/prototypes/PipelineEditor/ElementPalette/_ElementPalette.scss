@@ -27,4 +27,9 @@
 
 .element-palette__type {
   @extend %element-shared__type;
+  box-sizing: border-box;
+}
+
+.element-palette__type:focus {
+  @extend %element-shared__type--focus;
 }

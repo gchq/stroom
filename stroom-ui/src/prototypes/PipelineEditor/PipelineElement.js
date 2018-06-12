@@ -158,9 +158,9 @@ const PipelineElement = ({
         alt="X"
         src={require(`./images/${elementDefinition.icon}`)}
       />
-      <span className='Pipeline-element__type'>
+      <button className='Pipeline-element__type'>
       {elementId}
-      </span>
+      </button>
     </div>);
 };
 
@@ -187,7 +187,7 @@ PipelineElement.propTypes = {
   pipelineElementAdded: PropTypes.func.isRequired,
 
   // withNameNewElementModal
-  newElementDefinition: PropTypes.object.isRequired,
+  newElementDefinition: PropTypes.object,
   setNewElementDefinition: PropTypes.func.isRequired,
 };
 

@@ -8,6 +8,10 @@
   @extend %element-shared__type;
 }
 
+.Pipeline-element__type:focus {
+  @extend %element-shared__type--focus;
+}
+
 .Pipeline-element__icon {
   @extend %element-shared__icon;
 }
