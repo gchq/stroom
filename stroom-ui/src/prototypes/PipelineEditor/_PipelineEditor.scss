@@ -1,9 +1,7 @@
 @import "./ElementPalette/ElementPalette";
 @import "./PipelineElement";
 @import "./RecycleBin";
-
 $palette-width: 12rem;
-
 .Pipeline-editor {
   height: 100vh;
   position: relative;
@@ -61,13 +59,13 @@ $palette-width: 12rem;
   height: 100%;
   float: left;
   border: 0;
-  background-color: $low-priority-component-color;
+  background-color: rgb(229, 231, 234);
   outline: none;
   padding: 0px;
 }
 
 .Pipeline-editor__palette-toggle:hover {
-  background-color: $low-priority-component-color-hover;
+  background-color: rgb(220, 222, 227);
 }
 
 .Pipeline-editor__palette-toggle .icon {
