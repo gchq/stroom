@@ -25,6 +25,7 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.DataRetentionRule;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.TimeUnit;
 
 import javax.xml.bind.JAXBContext;
@@ -35,8 +36,8 @@ public class TestDataRetentionPolicySerialisation {
     @Test
     public void test() throws Exception {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(true, Op.AND);
-        builder.addTerm("StreamType", Condition.EQUALS, "Raw Events");
-        builder.addTerm("Feed", Condition.EQUALS, "TEST_FEED");
+        builder.addTerm(StreamDataSource.STREAM_TYPE_NAME, Condition.EQUALS, "Raw Events");
+        builder.addTerm(StreamDataSource.FEED_NAME, Condition.EQUALS, "TEST_FEED");
         final ExpressionOperator expression = builder.build();
 
         final List<DataRetentionRule> list = new ArrayList<>();
