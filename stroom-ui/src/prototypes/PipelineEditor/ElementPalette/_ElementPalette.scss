@@ -33,7 +33,6 @@
 
 .element-palette-element {
   @extend %element-shared;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1), 0 2px 2px 0 rgba(0, 0, 0, 0.1);
   margin-bottom: 0.5rem;
   margin-right: 3px;
 }
