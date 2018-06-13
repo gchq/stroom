@@ -20,7 +20,6 @@ import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.node.shared.VolumeEntity;
-import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.util.io.FileUtil;
 import stroom.util.io.FileUtilException;
 
@@ -84,22 +83,14 @@ public final class FileSystemUtil {
      * Create a root path.
      */
     public static Path createFileTypeRoot(final VolumeEntity volume) {
-        return createFileTypeRoot(volume, null);
-    }
-
-    /**
-     * Create a root path.
-     */
-    public static Path createFileTypeRoot(final VolumeEntity volume, final StreamTypeEntity streamType) {
-        StringBuilder builder = new StringBuilder();
-        builder.append(volume.getPath());
-        builder.append(SEPERATOR_CHAR);
-        builder.append(STORE_NAME);
-        if (streamType != null) {
-            builder.append(SEPERATOR_CHAR);
-            builder.append(streamType.toString());
-        }
-        return Paths.get(builder.toString());
+        //        if (streamType != null) {
+//            builder.append(SEPERATOR_CHAR);
+//            builder.append(streamType.toString());
+//        }
+        final String path = volume.getPath() +
+                SEPERATOR_CHAR +
+                STORE_NAME;
+        return Paths.get(path);
     }
 
     public static String encodeFileName(String fileName) {

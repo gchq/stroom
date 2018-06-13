@@ -19,7 +19,7 @@ package stroom.streamstore.meta.db;
 
 import stroom.entity.FindService;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
-import stroom.streamstore.shared.StreamAttributeMap;
+import stroom.streamstore.shared.StreamDataRow;
 
-public interface StreamAttributeMapService extends FindService<StreamAttributeMap, FindStreamAttributeMapCriteria> {
+public interface StreamAttributeMapService extends FindService<StreamDataRow, FindStreamAttributeMapCriteria> {
 }

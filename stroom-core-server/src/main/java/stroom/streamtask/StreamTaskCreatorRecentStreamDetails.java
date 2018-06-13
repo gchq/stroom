@@ -16,8 +16,8 @@
 
 package stroom.streamtask;
 
-import stroom.streamstore.OldFindStreamCriteria;
-import stroom.streamtask.shared.StreamProcessorFilter;
+import stroom.streamstore.shared.QueryData;
+import stroom.streamtask.shared.ProcessorFilter;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -86,30 +86,32 @@ public class StreamTaskCreatorRecentStreamDetails {
     /**
      * Given this RecentStreamInfo will this filter criteria pick anything up?
      */
-    public boolean isApplicable(final StreamProcessorFilter filter, final OldFindStreamCriteria findStreamCriteria) {
-        // No history so yes
-        if (earliestStreamId == null || recentStreamId == null) {
-            return true;
-        }
-        // Filter before what we think is recent.
-        if (filter.getStreamProcessorFilterTracker().getMinStreamId() <= earliestStreamId.longValue()) {
-            return true;
-        }
-        // Not filtered by feed ?
-        if (findStreamCriteria.getFeeds() == null || !findStreamCriteria.getFeeds().isConstrained()) {
-            return true;
-        }
-        if (findStreamCriteria.getFeeds().getInclude() == null
-                || !findStreamCriteria.getFeeds().getInclude().isConstrained()) {
-            return true;
-        }
+    public boolean isApplicable(final ProcessorFilter filter, final QueryData findStreamCriteria) {
+        return true;
 
-        for (final Long feedId : findStreamCriteria.getFeeds().getInclude()) {
-            if (recentFeedIdSet.contains(feedId)) {
-                return true;
-            }
-        }
-        return false;
+//        // No history so yes
+//        if (earliestStreamId == null || recentStreamId == null) {
+//            return true;
+//        }
+//        // Filter before what we think is recent.
+//        if (filter.getStreamProcessorFilterTracker().getMinStreamId() <= earliestStreamId.longValue()) {
+//            return true;
+//        }
+//        // Not filtered by feed ?
+//        if (findStreamCriteria.getFeeds() == null || !findStreamCriteria.getFeeds().isConstrained()) {
+//            return true;
+//        }
+//        if (findStreamCriteria.getFeeds().getInclude() == null
+//                || !findStreamCriteria.getFeeds().getInclude().isConstrained()) {
+//            return true;
+//        }
+//
+//        for (final Long feedId : findStreamCriteria.getFeeds().getInclude()) {
+//            if (recentFeedIdSet.contains(feedId)) {
+//                return true;
+//            }
+//        }
+//        return false;
     }
 
     @Override

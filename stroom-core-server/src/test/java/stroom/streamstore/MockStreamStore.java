@@ -19,16 +19,15 @@ package stroom.streamstore;
 import stroom.entity.shared.Clearable;
 import stroom.feed.MetaMap;
 import stroom.io.SeekableInputStream;
-import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
-import stroom.streamstore.fs.StreamTypeNames;
-import stroom.streamstore.meta.StreamMetaService;
-import stroom.streamstore.meta.db.MockStreamMetaService;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamStatus;
-import stroom.streamstore.shared.StreamTypeEntity;
+import stroom.streamstore.shared.StreamTypeNames;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.meta.api.StreamMetaService;
+import stroom.streamstore.meta.api.StreamProperties;
+import stroom.streamstore.meta.api.StreamStatus;
+import stroom.streamstore.meta.impl.mock.MockStreamMetaService;
 import stroom.util.collections.TypedMap;
 
 import javax.inject.Inject;
@@ -54,7 +53,6 @@ public class MockStreamStore implements StreamStore, Clearable {
     private final Set<Long> openInputStream = new HashSet<>();
 
     private Stream lastStream;
-
 
     private final StreamMetaService streamMetaService;
 
@@ -203,11 +201,11 @@ public class MockStreamStore implements StreamStore, Clearable {
 //    }
 
     @Override
-    public Long deleteStreamTarget(final StreamTarget target) {
+    public int deleteStreamTarget(final StreamTarget target) {
         final long streamId = target.getStream().getId();
         openOutputStream.remove(streamId);
         fileData.remove(streamId);
-        return 1L;
+        return 1;
     }
 //
 //    @Override
@@ -298,6 +296,11 @@ public class MockStreamStore implements StreamStore, Clearable {
         return new MockStreamTarget(stream);
     }
 
+    @Override
+    public Map<String, String> getStoredMeta(final Stream stream) {
+        return null;
+    }
+
     public Stream getLastStream() {
         return lastStream;
     }
@@ -362,14 +365,6 @@ public class MockStreamStore implements StreamStore, Clearable {
             sb.append("\n");
         }
         return sb.toString();
-    }
-
-
-    private Long getStreamTypeId(final StreamTypeEntity streamType) {
-        if (streamType == null) {
-            return null;
-        }
-        return streamType.getId();
     }
 
     private static class SeekableByteArrayInputStream extends ByteArrayInputStream implements SeekableInputStream {

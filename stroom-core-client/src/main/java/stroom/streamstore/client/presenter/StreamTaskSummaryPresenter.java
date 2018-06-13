@@ -33,7 +33,7 @@ import stroom.entity.shared.ResultList;
 import stroom.entity.shared.SummaryDataRow;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.streamstore.shared.StreamStatus;
+import stroom.streamstore.meta.api.StreamStatus;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.TaskStatus;
 import stroom.util.shared.ModelStringUtil;
@@ -147,9 +147,9 @@ public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<S
     }
 
     private void setFeedCriteria(final String feedName) {
-        final FindStreamTaskCriteria criteria = initCriteria();
-        criteria.obtainFeedNameSet().add(feedName);
-        dataProvider.setCriteria(criteria);
+//        final FindStreamTaskCriteria criteria = initCriteria();
+//        criteria.obtainFeedNameSet().add(feedName);
+//        dataProvider.setCriteria(criteria);
     }
 
     private void setPipelineCriteria(final DocRef pipelineRef) {

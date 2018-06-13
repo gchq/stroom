@@ -66,6 +66,7 @@ dependencies {
     compile project(':stroom-explorer-api')
     compile project(':stroom-explorer-server')
     compile project(':stroom-security-server')
+    compile project(':stroom-security-impl-mock')
     permitUnusedDeclared project(':stroom-security-server') //not clear why it thinks this is unused
     compile project(':stroom-index-server')
     compile project(':stroom-statistics-api')

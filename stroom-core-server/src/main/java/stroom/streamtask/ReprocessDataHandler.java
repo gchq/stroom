@@ -25,14 +25,14 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
-import stroom.streamstore.meta.StreamMetaService;
-import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.meta.api.FindStreamCriteria;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.meta.api.StreamMetaService;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.ReprocessDataInfo;
-import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamtask.shared.Processor;
 import stroom.streamtask.shared.ReprocessDataAction;
-import stroom.streamtask.shared.StreamProcessor;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.Severity;
@@ -73,7 +73,7 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
             try {
                 final FindStreamCriteria criteria = action.getCriteria();
 
-                criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
+                criteria.getFetchSet().add(Processor.ENTITY_TYPE);
                 criteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
                 // We only want 1000 streams to be
                 // reprocessed at a maximum.
@@ -91,23 +91,23 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
                     final StringBuilder unableListSB = new StringBuilder();
                     final StringBuilder submittedListSB = new StringBuilder();
 
-                    final Map<StreamProcessor, CriteriaSet<Long>> streamToProcessorSet = new HashMap<>();
+                    final Map<Processor, CriteriaSet<Long>> streamToProcessorSet = new HashMap<>();
 
                     for (final Stream stream : streams) {
                         // We can only reprocess streams that have a stream
                         // processor and a parent stream id.
                         if (stream.getStreamProcessorId() != null && stream.getParentStreamId() != null) {
-                            final StreamProcessor streamProcessor = streamProcessorService.loadByIdInsecure(stream.getStreamProcessorId());
+                            final Processor streamProcessor = streamProcessorService.loadByIdInsecure(stream.getStreamProcessorId());
                             streamToProcessorSet.computeIfAbsent(streamProcessor, k -> new CriteriaSet<>()).add(stream.getParentStreamId());
                         } else {
                             skippingCount++;
                         }
                     }
 
-                    final List<StreamProcessor> list = new ArrayList<>(streamToProcessorSet.keySet());
-                    list.sort(Comparator.comparing(StreamProcessor::getPipelineUuid));
+                    final List<Processor> list = new ArrayList<>(streamToProcessorSet.keySet());
+                    list.sort(Comparator.comparing(Processor::getPipelineUuid));
 
-                    for (final StreamProcessor streamProcessor : list) {
+                    for (final Processor streamProcessor : list) {
                         final CriteriaSet<Long> streamIdSet = streamToProcessorSet.get(streamProcessor);
 
                         final QueryData queryData = new QueryData();

@@ -2,8 +2,7 @@ package stroom.streamstore.meta.db;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamAttributeMap;
+import stroom.streamstore.meta.api.Stream;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.util.date.DateUtil;
 
@@ -20,10 +19,9 @@ class StreamAttributeMapUtil {
     /**
      * Turns a stream attribute map object into a generic map of attributes for use by an expression filter.
      */
-    static Map<String, Object> createAttributeMap(final StreamAttributeMap streamAttributeMap) {
+    static Map<String, Object> createAttributeMap(final Stream stream, final Map<String, String> metaMap) {
         final Map<String, Object> attributeMap = new HashMap<>();
 
-        final Stream stream = streamAttributeMap.getStream();
         if (stream != null) {
             attributeMap.put(StreamDataSource.STREAM_ID, stream.getId());
             attributeMap.put(StreamDataSource.CREATE_TIME, stream.getCreateMs());
@@ -40,7 +38,7 @@ class StreamAttributeMapUtil {
             if (feedName != null) {
                 attributeMap.put(StreamDataSource.FEED, feedName);
             }
-            final String pipelineName = stream.getPipelineName();
+            final String pipelineName = stream.getPipelineUuid();
             attributeMap.put(StreamDataSource.PIPELINE, pipelineName);
 //            if (streamProcessor != null) {
 //                final String pipelineUuid = streamProcessor.getPipelineUuid();
@@ -51,7 +49,7 @@ class StreamAttributeMapUtil {
         }
 
         StreamDataSource.getExtendedFields().forEach(field -> {
-            final String value = streamAttributeMap.getAttributeValue(field.getName());
+            final String value = metaMap.get(field.getName());
             if (value != null) {
                 try {
                     switch (field.getType()) {

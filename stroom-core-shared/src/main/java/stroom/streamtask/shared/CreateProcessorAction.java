@@ -18,11 +18,10 @@ package stroom.streamtask.shared;
 
 import stroom.entity.shared.Action;
 import stroom.docref.DocRef;
-import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.meta.api.FindStreamCriteria;
 import stroom.streamstore.shared.QueryData;
-import stroom.streamtask.shared.StreamProcessorFilter;
 
-public class CreateProcessorAction extends Action<StreamProcessorFilter> {
+public class CreateProcessorAction extends Action<ProcessorFilter> {
     private static final long serialVersionUID = -1773544031158236156L;
 
     private DocRef pipeline;

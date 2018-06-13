@@ -26,20 +26,16 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
 import stroom.entity.shared.Sort.Direction;
-import stroom.feed.shared.FeedDoc;
-import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.streamstore.meta.api.FindStreamCriteria;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.meta.api.StreamStatus;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeConstants;
-import stroom.streamstore.shared.StreamAttributeMap;
+import stroom.streamstore.shared.StreamDataRow;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamStatus;
-import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.util.shared.Expander;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 
@@ -49,10 +45,10 @@ import java.util.List;
 import java.util.Map;
 
 public class StreamRelationListPresenter extends AbstractStreamListPresenter {
-    private final Map<Long, StreamAttributeMap> streamMap = new HashMap<>();
+    private final Map<Long, StreamDataRow> streamMap = new HashMap<>();
     private int maxDepth = -1;
 
-    private Column<StreamAttributeMap, Expander> expanderColumn;
+    private Column<StreamDataRow, Expander> expanderColumn;
 
     @Inject
     public StreamRelationListPresenter(final EventBus eventBus,
@@ -62,7 +58,7 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
         dataProvider.setAllowNoConstraint(false);
     }
 
-    public void setSelectedStream(final StreamAttributeMap streamAttributeMap, final boolean fireEvents,
+    public void setSelectedStream(final StreamDataRow streamAttributeMap, final boolean fireEvents,
                                   final boolean showSystemFiles) {
         if (streamAttributeMap == null) {
             setCriteria(null);
@@ -77,10 +73,6 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
             final FindStreamAttributeMapCriteria criteria = new FindStreamAttributeMapCriteria();
             final FindStreamCriteria findStreamCriteria = criteria.obtainFindStreamCriteria();
             findStreamCriteria.setExpression(builder.build());
-            findStreamCriteria.getFetchSet().add(StreamEntity.ENTITY_TYPE);
-            findStreamCriteria.getFetchSet().add(FeedDoc.DOCUMENT_TYPE);
-            findStreamCriteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
-            findStreamCriteria.getFetchSet().add(StreamTypeEntity.ENTITY_TYPE);
             findStreamCriteria.setSort(StreamDataSource.CREATE_TIME, Direction.ASCENDING, false);
 
             setCriteria(criteria);
@@ -90,22 +82,22 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
     }
 
     @Override
-    protected ResultList<StreamAttributeMap> onProcessData(final ResultList<StreamAttributeMap> data) {
+    protected ResultList<StreamDataRow> onProcessData(final ResultList<StreamDataRow> data) {
         // Store streams against id.
         streamMap.clear();
-        for (final StreamAttributeMap row : data) {
+        for (final StreamDataRow row : data) {
             final Stream stream = row.getStream();
             streamMap.put(stream.getId(), row);
         }
 
-        for (final StreamAttributeMap row : data) {
+        for (final StreamDataRow row : data) {
             final Stream stream = row.getStream();
             streamMap.put(stream.getId(), row);
         }
 
         // Now use the root streams and attach child streams to them.
         maxDepth = -1;
-        final List<StreamAttributeMap> newData = new ArrayList<>();
+        final List<StreamDataRow> newData = new ArrayList<>();
         addChildren(null, data, newData, 0);
 
         // Set the width of the expander column so that all expanders
@@ -116,14 +108,14 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
             getView().setColumnWidth(expanderColumn, 0, Unit.PX);
         }
 
-        final ResultList<StreamAttributeMap> processed = new BaseResultList<>(newData,
+        final ResultList<StreamDataRow> processed = new BaseResultList<>(newData,
                 (long) data.getStart(), (long) data.getSize(), data.isExact());
         return super.onProcessData(processed);
     }
 
-    private void addChildren(final StreamAttributeMap parent, final List<StreamAttributeMap> data,
-                             final List<StreamAttributeMap> newData, final int depth) {
-        for (final StreamAttributeMap row : data) {
+    private void addChildren(final StreamDataRow parent, final List<StreamDataRow> data,
+                             final List<StreamDataRow> newData, final int depth) {
+        for (final StreamDataRow row : data) {
             final Stream stream = row.getStream();
 
             if (parent == null) {
@@ -139,7 +131,7 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
             } else {
                 // Add children.
                 if (stream.getParentStreamId() != null) {
-                    final StreamAttributeMap thisParent = streamMap.get(stream.getParentStreamId());
+                    final StreamDataRow thisParent = streamMap.get(stream.getParentStreamId());
                     if (thisParent != null && thisParent.equals(parent)) {
                         newData.add(row);
                         addChildren(row, data, newData, depth + 1);
@@ -157,9 +149,9 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
     protected void addColumns(final boolean allowSelectAll) {
         addSelectedColumn(allowSelectAll);
 
-        expanderColumn = new Column<StreamAttributeMap, Expander>(new ExpanderCell()) {
+        expanderColumn = new Column<StreamDataRow, Expander>(new ExpanderCell()) {
             @Override
-            public Expander getValue(final StreamAttributeMap row) {
+            public Expander getValue(final StreamDataRow row) {
                 return buildExpander(row);
             }
         };
@@ -185,17 +177,17 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
         getView().addEndColumn(new EndColumn<>());
     }
 
-    private Expander buildExpander(final StreamAttributeMap row) {
+    private Expander buildExpander(final StreamDataRow row) {
         return new Expander(getDepth(row), true, true);
     }
 
-    private int getDepth(final StreamAttributeMap row) {
+    private int getDepth(final StreamDataRow row) {
         int depth = 0;
         Long parentId = row.getStream().getParentStreamId();
         while (parentId != null) {
             depth++;
 
-            final StreamAttributeMap parentRow = streamMap.get(parentId);
+            final StreamDataRow parentRow = streamMap.get(parentId);
             if (parentRow == null) {
                 parentId = null;
             } else {

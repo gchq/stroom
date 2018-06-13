@@ -52,15 +52,14 @@ import stroom.security.UserTokenUtil;
 import stroom.security.shared.PermissionNames;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.fs.StreamTypeNames;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamstore.fs.serializable.NestedInputStream;
 import stroom.streamstore.fs.serializable.RANestedInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
-import stroom.streamstore.meta.StreamMetaService;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamTypeEntity;
+import stroom.streamstore.meta.api.StreamMetaService;
+import stroom.streamstore.meta.api.FindStreamCriteria;
+import stroom.streamstore.meta.api.Stream;
 import stroom.streamtask.StreamProcessorService;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskContext;
@@ -98,7 +97,6 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     private final FeedHolder feedHolder;
     private final MetaDataHolder metaDataHolder;
     private final PipelineHolder pipelineHolder;
-    private final StreamProcessorService streamProcessorService;
     private final StreamHolder streamHolder;
     private final LocationFactoryProxy locationFactory;
     private final CurrentUserHolder currentUserHolder;
@@ -131,7 +129,6 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                         final FeedHolder feedHolder,
                         final MetaDataHolder metaDataHolder,
                         final PipelineHolder pipelineHolder,
-                        final StreamProcessorService streamProcessorService,
                         final StreamHolder streamHolder,
                         final LocationFactoryProxy locationFactory,
                         final CurrentUserHolder currentUserHolder,
@@ -151,7 +148,6 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
         this.feedHolder = feedHolder;
         this.metaDataHolder = metaDataHolder;
         this.pipelineHolder = pipelineHolder;
-        this.streamProcessorService = streamProcessorService;
         this.streamHolder = streamHolder;
         this.locationFactory = locationFactory;
         this.currentUserHolder = currentUserHolder;
@@ -436,8 +432,6 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
                 criteria.obtainPageRequest().setLength(1000);
             }
 
-            criteria.getFetchSet().add(StreamTypeEntity.ENTITY_TYPE);
-
             // Find streams.
             final List<Stream> allStreamList = streamMetaService.find(criteria);
             allStreamIdList = new ArrayList<>(allStreamList.size());
@@ -641,7 +635,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
             feedHolder.setFeedName(feedName);
 
             // Setup the meta data holder.
-            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
+            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, pipelineStore));
 
             pipelineHolder.setPipeline(DocRefUtil.create(pipelineDoc));
             pipelineContext.setStepping(true);

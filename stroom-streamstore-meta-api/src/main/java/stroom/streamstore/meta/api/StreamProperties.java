@@ -1,7 +1,7 @@
 package stroom.streamstore.meta.api;
 
 public class StreamProperties {
-    private Stream parent;
+    private Long parentId;
     private String streamTypeName;
     private String feedName;
     private Integer streamProcessorId;
@@ -11,15 +11,8 @@ public class StreamProperties {
     private Long effectiveMs;
     private Long statusMs;
 
-    public Stream getParent() {
-        return parent;
-    }
-
     public Long getParentId() {
-        if (parent == null) {
-            return null;
-        }
-        return parent.getId();
+        return parentId;
     }
 
     public String getStreamTypeName() {
@@ -57,8 +50,32 @@ public class StreamProperties {
     public static class Builder {
         private StreamProperties sp = new StreamProperties();
 
+        /**
+         * This is a utility method to perform common parent association behaviour, e.g. setting the effective time from the parent.
+         *
+         * @param parent The parent to set.
+         * @return The builder.
+         */
         public Builder parent(final Stream parent) {
-            sp.parent = parent;
+            // Set effective time from the parent stream.
+            if (parent != null) {
+                sp.parentId = parent.getId();
+                if (sp.effectiveMs == null) {
+                    if (parent.getEffectiveMs() != null) {
+                        sp.effectiveMs = parent.getEffectiveMs();
+                    } else {
+                        sp.effectiveMs = parent.getCreateMs();
+                    }
+                }
+            } else {
+                sp.parentId = null;
+            }
+
+            return this;
+        }
+
+        public Builder parentId(final Long parentId) {
+            sp.parentId = parentId;
             return this;
         }
 
@@ -104,7 +121,7 @@ public class StreamProperties {
 
         public StreamProperties build() {
             final StreamProperties streamProperties = new StreamProperties();
-            streamProperties.parent = sp.parent;
+            streamProperties.parentId = sp.parentId;
             streamProperties.streamTypeName = sp.streamTypeName;
             streamProperties.feedName = sp.feedName;
             streamProperties.streamProcessorId = sp.streamProcessorId;
@@ -113,15 +130,6 @@ public class StreamProperties {
             streamProperties.createMs = sp.createMs;
             streamProperties.effectiveMs = sp.effectiveMs;
             streamProperties.statusMs = sp.statusMs;
-
-            // Set effective time from the parent stream.
-            if (streamProperties.getParent() != null) {
-                if (streamProperties.getParent().getEffectiveMs() != null) {
-                    streamProperties.effectiveMs = streamProperties.getParent().getEffectiveMs();
-                } else {
-                    streamProperties.effectiveMs = streamProperties.getParent().getCreateMs();
-                }
-            }
 
             // When were we created
             if (streamProperties.createMs == null) {

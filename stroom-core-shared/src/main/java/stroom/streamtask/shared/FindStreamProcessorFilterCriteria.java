@@ -21,7 +21,6 @@ import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
-import stroom.pipeline.shared.PipelineDoc;
 import stroom.docref.DocRef;
 
 public class FindStreamProcessorFilterCriteria extends BaseCriteria {
@@ -32,7 +31,7 @@ public class FindStreamProcessorFilterCriteria extends BaseCriteria {
      */
     private Range<Integer> priorityRange = null;
     private Period lastPollPeriod = null;
-    private EntityIdSet<StreamProcessor> streamProcessorIdSet = null;
+    private EntityIdSet<Processor> streamProcessorIdSet = null;
     private CriteriaSet<DocRef> pipelineSet = null;
     private Boolean streamProcessorEnabled = null;
     private Boolean streamProcessorFilterEnabled = null;
@@ -46,7 +45,7 @@ public class FindStreamProcessorFilterCriteria extends BaseCriteria {
         obtainPipelineSet().add(pipeline);
     }
 
-    public FindStreamProcessorFilterCriteria(final StreamProcessor streamProcessor) {
+    public FindStreamProcessorFilterCriteria(final Processor streamProcessor) {
         obtainStreamProcessorIdSet().add(streamProcessor);
     }
 
@@ -95,15 +94,15 @@ public class FindStreamProcessorFilterCriteria extends BaseCriteria {
         return pipelineSet;
     }
 
-    public EntityIdSet<StreamProcessor> getStreamProcessorIdSet() {
+    public EntityIdSet<Processor> getStreamProcessorIdSet() {
         return streamProcessorIdSet;
     }
 
-    public void setStreamProcessorIdSet(EntityIdSet<StreamProcessor> streamProcessorIdSet) {
+    public void setStreamProcessorIdSet(EntityIdSet<Processor> streamProcessorIdSet) {
         this.streamProcessorIdSet = streamProcessorIdSet;
     }
 
-    public EntityIdSet<StreamProcessor> obtainStreamProcessorIdSet() {
+    public EntityIdSet<Processor> obtainStreamProcessorIdSet() {
         if (streamProcessorIdSet == null) {
             streamProcessorIdSet = new EntityIdSet<>();
         }

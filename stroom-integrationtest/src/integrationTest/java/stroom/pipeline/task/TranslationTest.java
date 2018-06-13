@@ -42,28 +42,25 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.UserTokenUtil;
-import stroom.streamstore.FindFeedCriteria;
-import stroom.streamstore.meta.db.StreamTypeEntityService;
-import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
-import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.fs.serializable.RawInputSegmentWriter;
-import stroom.streamstore.meta.StreamMetaService;
-import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.meta.api.FindStreamCriteria;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.meta.api.StreamMetaService;
+import stroom.streamstore.meta.api.StreamProperties;
 import stroom.streamstore.shared.QueryData;
-import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamTypeEntity;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamProcessorFilterService;
 import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.StreamProcessorTask;
 import stroom.streamtask.StreamTargetStroomStreamHandler;
 import stroom.streamtask.StreamTaskCreator;
-import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamTask;
+import stroom.streamtask.shared.Processor;
+import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.task.SimpleTaskContext;
 import stroom.task.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -117,8 +114,6 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     @Inject
     private FeedDocCache feedDocCache;
     @Inject
-    private StreamTypeEntityService streamTypeService;
-    @Inject
     private ImportExportSerializer importExportSerializer;
     @Inject
     private ContentImportService contentImportService;
@@ -161,7 +156,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             final FeedDoc feedDoc = feed;
 
             if (feedDoc != null && feedDoc.isReference() == reference) {
-                StreamProcessor streamProcessor = new StreamProcessor();
+                Processor streamProcessor = new Processor();
                 streamProcessor.setPipelineUuid(pipelineRef.getUuid());
                 streamProcessor.setEnabled(true);
                 streamProcessor = streamProcessorService.save(streamProcessor);
@@ -172,7 +167,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                 }
 
                 final String streamType = feed.isReference() ?
-                        StreamTypeEntity.RAW_REFERENCE.getName() : StreamTypeEntity.RAW_EVENTS.getName();
+                        StreamTypeNames.RAW_REFERENCE : StreamTypeNames.RAW_EVENTS;
                 final QueryData findStreamQueryData = new QueryData.Builder()
                         .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
                         .expression(new ExpressionOperator.Builder(Op.AND)
@@ -342,10 +337,10 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     private List<StreamProcessorTask> getTasks() {
         List<StreamProcessorTask> streamProcessorTasks = Collections.emptyList();
 
-        List<StreamTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getDefaultNode(), 100);
+        List<ProcessorFilterTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getDefaultNode(), 100);
         while (streamTasks.size() > 0) {
             streamProcessorTasks = new ArrayList<>(streamTasks.size());
-            for (final StreamTask streamTask : streamTasks) {
+            for (final ProcessorFilterTask streamTask : streamTasks) {
                 streamProcessorTasks.add(new StreamProcessorTask(streamTask));
             }
             streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getDefaultNode(), 100);
@@ -356,9 +351,6 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
     protected void testSteppingTask(final String feedName, final Path dir) throws IOException {
         final List<Exception> exceptions = new ArrayList<>();
-
-        // We first need to get all of the feeds from the DB.
-        final FindFeedCriteria feedCriteria = new FindFeedCriteria(feedName);
 
         // feedCriteria.setFeedType(FeedType.REFERENCE);
         final Optional<FeedDoc> feeds = feedDocCache.get(feedName);
@@ -373,8 +365,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
                 .addTerm(StreamDataSource.FEED, Condition.EQUALS, feedName)
                 .addOperator(new ExpressionOperator.Builder(Op.OR)
-                        .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeEntity.RAW_REFERENCE.getName())
-                        .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeEntity.RAW_EVENTS.getName())
+                        .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
+                        .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                         .build())
                 .build();
 

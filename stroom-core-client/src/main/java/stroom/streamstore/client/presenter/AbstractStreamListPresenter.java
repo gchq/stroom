@@ -33,20 +33,14 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.EntityServiceFindActionDataProvider;
-import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.IdSet;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.ResultList;
-import stroom.feed.shared.FeedDoc;
-import stroom.node.shared.VolumeEntity;
-import stroom.pipeline.shared.PipelineDoc;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.meta.api.StreamStatus;
+import stroom.streamstore.shared.FetchFullStreamInfoAction;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamAttributeConstants;
-import stroom.streamstore.shared.StreamAttributeMap;
-import stroom.streamstore.shared.StreamStatus;
-import stroom.streamstore.shared.StreamTypeEntity;
-import stroom.streamtask.shared.StreamProcessor;
+import stroom.streamstore.shared.StreamDataRow;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
@@ -58,19 +52,17 @@ import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public abstract class AbstractStreamListPresenter extends MyPresenterWidget<DataGridView<StreamAttributeMap>> implements HasDataSelectionHandlers<IdSet>, Refreshable {
+public abstract class AbstractStreamListPresenter extends MyPresenterWidget<DataGridView<StreamDataRow>> implements HasDataSelectionHandlers<IdSet>, Refreshable {
     private final TooltipPresenter tooltipPresenter;
 
     private final IdSet entityIdSet = new IdSet();
     private final ClientDispatchAsync dispatcher;
-    protected EntityServiceFindActionDataProvider<FindStreamAttributeMapCriteria, StreamAttributeMap> dataProvider;
-    private ResultList<StreamAttributeMap> resultList = null;
+    protected EntityServiceFindActionDataProvider<FindStreamAttributeMapCriteria, StreamDataRow> dataProvider;
+    private ResultList<StreamDataRow> resultList = null;
 
     AbstractStreamListPresenter(final EventBus eventBus,
                                 final ClientDispatchAsync dispatcher,
@@ -84,20 +76,20 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
 
         addColumns(allowSelectAll);
 
-        this.dataProvider = new EntityServiceFindActionDataProvider<FindStreamAttributeMapCriteria, StreamAttributeMap>(
+        this.dataProvider = new EntityServiceFindActionDataProvider<FindStreamAttributeMapCriteria, StreamDataRow>(
                 dispatcher, getView()) {
             @Override
-            protected ResultList<StreamAttributeMap> processData(final ResultList<StreamAttributeMap> data) {
+            protected ResultList<StreamDataRow> processData(final ResultList<StreamDataRow> data) {
                 return onProcessData(data);
             }
         };
     }
 
-    public EntityServiceFindActionDataProvider<FindStreamAttributeMapCriteria, StreamAttributeMap> getDataProvider() {
+    public EntityServiceFindActionDataProvider<FindStreamAttributeMapCriteria, StreamDataRow> getDataProvider() {
         return dataProvider;
     }
 
-    protected ResultList<StreamAttributeMap> onProcessData(final ResultList<StreamAttributeMap> data) {
+    protected ResultList<StreamDataRow> onProcessData(final ResultList<StreamDataRow> data) {
         boolean equalsList = true;
 
         // We compare the old and new lists to see if we need to do
@@ -111,8 +103,8 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
             equalsList = false;
         }
         if (data != null && resultList != null) {
-            final List<StreamAttributeMap> oldList = resultList.getValues();
-            final List<StreamAttributeMap> newList = data.getValues();
+            final List<StreamDataRow> oldList = resultList.getValues();
+            final List<StreamDataRow> newList = data.getValues();
 
             if (oldList.size() != newList.size()) {
                 equalsList = false;
@@ -151,7 +143,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
                 entityIdSet.clear();
                 entityIdSet.setMatchAll(oldMatchAll);
                 if (data != null) {
-                    for (final StreamAttributeMap map : data) {
+                    for (final StreamDataRow map : data) {
                         final long id = map.getStream().getId();
                         if (oldIdSet.contains(id)) {
                             entityIdSet.add(id);
@@ -163,7 +155,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
             DataSelectionEvent.fire(AbstractStreamListPresenter.this, entityIdSet, false);
         }
 
-        StreamAttributeMap selected = getView().getSelectionModel().getSelected();
+        StreamDataRow selected = getView().getSelectionModel().getSelected();
         if (selected != null) {
             if (!resultList.contains(selected)) {
                 getView().getSelectionModel().setSelected(selected, false);
@@ -179,10 +171,10 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         final TickBoxCell.MarginAppearance tickBoxAppearance = GWT.create(TickBoxCell.MarginAppearance.class);
 
         // Select Column
-        final Column<StreamAttributeMap, TickBoxState> column = new Column<StreamAttributeMap, TickBoxState>(
+        final Column<StreamDataRow, TickBoxState> column = new Column<StreamDataRow, TickBoxState>(
                 TickBoxCell.create(tickBoxAppearance, false, false)) {
             @Override
-            public TickBoxState getValue(final StreamAttributeMap object) {
+            public TickBoxState getValue(final StreamDataRow object) {
                 return TickBoxState.fromBoolean(entityIdSet.isMatch(object.getStream().getId()));
             }
         };
@@ -240,7 +232,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         });
     }
 
-    private SvgPreset getInfoCellState(final StreamAttributeMap object) {
+    private SvgPreset getInfoCellState(final StreamDataRow object) {
         // Should only show unlocked ones by default
         if (StreamStatus.UNLOCKED.equals(object.getStream().getStatus())) {
             return SvgPresets.INFO;
@@ -254,107 +246,90 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
 
     void addInfoColumn() {
         // Info column.
-        final InfoColumn<StreamAttributeMap> infoColumn = new InfoColumn<StreamAttributeMap>() {
+        final InfoColumn<StreamDataRow> infoColumn = new InfoColumn<StreamDataRow>() {
             @Override
-            public SvgPreset getValue(final StreamAttributeMap object) {
+            public SvgPreset getValue(final StreamDataRow object) {
                 return getInfoCellState(object);
             }
 
             @Override
-            protected void showInfo(final StreamAttributeMap row, final int x, final int y) {
-                final FindStreamAttributeMapCriteria streamAttributeMapCriteria = new FindStreamAttributeMapCriteria();
-                streamAttributeMapCriteria.setUseCache(false);
-                streamAttributeMapCriteria.obtainFindStreamCriteria().obtainSelectedIdSet().add(row.getStream().getId());
-                populateFetchSet(streamAttributeMapCriteria.getFetchSet(), true);
+            protected void showInfo(final StreamDataRow row, final int x, final int y) {
+                final FetchFullStreamInfoAction action = new FetchFullStreamInfoAction(row.getStream());
+                dispatcher.exec(action).onSuccess(result -> {
+                    final StringBuilder html = new StringBuilder();
 
-                dispatcher.exec(
-                        new EntityServiceFindAction<FindStreamAttributeMapCriteria, StreamAttributeMap>(
-                                streamAttributeMapCriteria)).onSuccess(result -> {
-                    if (result == null) {
-                        final StringBuilder html = new StringBuilder();
+                    result.getSections().forEach(section -> {
+                        TooltipUtil.addHeading(html, section.getTitle());
+                        section.getEntries().forEach(entry -> TooltipUtil.addRowData(html, entry.getKey(), entry.getValue()));
+                    });
 
-                        TooltipUtil.addHeading(html, "Stream");
-
-                        TooltipUtil.addRowData(html, "Deleted Stream Id", row.getStream().getId());
-
-                        tooltipPresenter.setHTML(html.toString());
-                        final PopupPosition popupPosition = new PopupPosition(x, y);
-                        ShowPopupEvent.fire(AbstractStreamListPresenter.this, tooltipPresenter, PopupType.POPUP,
-                                popupPosition, null);
-                    } else {
-                        final StreamAttributeMap streamAttributeMap = result.get(0);
-                        final StringBuilder html = new StringBuilder();
-
-                        buildTipText(streamAttributeMap, html);
-
-                        tooltipPresenter.setHTML(html.toString());
-                        final PopupPosition popupPosition = new PopupPosition(x, y);
-                        ShowPopupEvent.fire(AbstractStreamListPresenter.this, tooltipPresenter, PopupType.POPUP,
-                                popupPosition, null);
-                    }
+                    tooltipPresenter.setHTML(html.toString());
+                    final PopupPosition popupPosition = new PopupPosition(x, y);
+                    ShowPopupEvent.fire(AbstractStreamListPresenter.this, tooltipPresenter, PopupType.POPUP,
+                            popupPosition, null);
                 });
             }
         };
         getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
     }
 
-    private void buildTipText(final StreamAttributeMap row, final StringBuilder html) {
-        TooltipUtil.addHeading(html, "Stream");
-
-        TooltipUtil.addRowData(html, "Stream Id", row.getStream().getId());
-        TooltipUtil.addRowData(html, "Status", row.getStream().getStatus());
-        StreamTooltipPresenterUtil.addRowDateString(html, "Status Ms", row.getStream().getStatusMs());
-        TooltipUtil.addRowData(html, "Stream Task Id", row.getStream().getStreamTaskId());
-        TooltipUtil.addRowData(html, "Parent Stream Id", row.getStream().getParentStreamId());
-        StreamTooltipPresenterUtil.addRowDateString(html, "Created", row.getStream().getCreateMs());
-        StreamTooltipPresenterUtil.addRowDateString(html, "Effective", row.getStream().getEffectiveMs());
-        TooltipUtil.addRowData(html, "Stream Type", row.getStream().getStreamTypeName());
-        TooltipUtil.addRowData(html, "Feed", row.getStream().getFeedName());
-        if (row.getStream().getStreamProcessorId() != null) {
-            TooltipUtil.addRowData(html, "Stream Processor Uuid", row.getStream().getStreamProcessorId());
-        }
-        if (row.getStream().getPipelineName() != null) {
-            TooltipUtil.addRowData(html, "Stream Processor Pipeline", row.getStream().getPipelineName());
-        }
-        TooltipUtil.addBreak(html);
-        TooltipUtil.addHeading(html, "Attributes");
-
-        try {
-            final List<String> keys = new ArrayList<>(row.getAttributeKeySet());
-
-            Collections.sort(keys);
-
-            for (final String key : keys) {
-                if (!key.equals(StreamAttributeConstants.RETENTION_AGE) &&
-                        !key.equals(StreamAttributeConstants.RETENTION_UNTIL) &&
-                        !key.equals(StreamAttributeConstants.RETENTION_RULE)) {
-                    TooltipUtil.addRowData(html, key, row.formatAttribute(key));
-                }
-            }
-        } catch (final RuntimeException e) {
-            html.append(e.getMessage());
-        }
-
-        if (row.getFileNameList() != null) {
-            TooltipUtil.addBreak(html);
-            TooltipUtil.addHeading(html, "Files");
-            for (final String file : row.getFileNameList()) {
-                TooltipUtil.addRowData(html, file);
-            }
-        }
-
-        TooltipUtil.addBreak(html);
-        TooltipUtil.addHeading(html, "Retention");
-        TooltipUtil.addRowData(html, StreamAttributeConstants.RETENTION_AGE, row.getAttributeValue(StreamAttributeConstants.RETENTION_AGE));
-        TooltipUtil.addRowData(html, StreamAttributeConstants.RETENTION_UNTIL, row.getAttributeValue(StreamAttributeConstants.RETENTION_UNTIL));
-        TooltipUtil.addRowData(html, StreamAttributeConstants.RETENTION_RULE, row.getAttributeValue(StreamAttributeConstants.RETENTION_RULE));
-    }
+//    private void buildTipText(final StreamAttributeMap row, final StringBuilder html) {
+//        TooltipUtil.addHeading(html, "Stream");
+//
+//        TooltipUtil.addRowData(html, "Stream Id", row.getStream().getId());
+//        TooltipUtil.addRowData(html, "Status", row.getStream().getStatus());
+//        StreamTooltipPresenterUtil.addRowDateString(html, "Status Ms", row.getStream().getStatusMs());
+//        TooltipUtil.addRowData(html, "Stream Task Id", row.getStream().getStreamTaskId());
+//        TooltipUtil.addRowData(html, "Parent Stream Id", row.getStream().getParentStreamId());
+//        StreamTooltipPresenterUtil.addRowDateString(html, "Created", row.getStream().getCreateMs());
+//        StreamTooltipPresenterUtil.addRowDateString(html, "Effective", row.getStream().getEffectiveMs());
+//        TooltipUtil.addRowData(html, "Stream Type", row.getStream().getStreamTypeName());
+//        TooltipUtil.addRowData(html, "Feed", row.getStream().getFeedName());
+//        if (row.getStream().getStreamProcessorId() != null) {
+//            TooltipUtil.addRowData(html, "Stream Processor Id", row.getStream().getStreamProcessorId());
+//        }
+//        if (row.getStream().getPipelineUuid() != null) {
+//            TooltipUtil.addRowData(html, "Stream Processor Pipeline", row.getStream().getPipelineUuid());
+//        }
+//        TooltipUtil.addBreak(html);
+//        TooltipUtil.addHeading(html, "Attributes");
+//
+//        try {
+//            final List<String> keys = new ArrayList<>(row.getAttributeKeySet());
+//
+//            Collections.sort(keys);
+//
+//            for (final String key : keys) {
+//                if (!key.equals(StreamAttributeConstants.RETENTION_AGE) &&
+//                        !key.equals(StreamAttributeConstants.RETENTION_UNTIL) &&
+//                        !key.equals(StreamAttributeConstants.RETENTION_RULE)) {
+//                    TooltipUtil.addRowData(html, key, row.formatAttribute(key));
+//                }
+//            }
+//        } catch (final RuntimeException e) {
+//            html.append(e.getMessage());
+//        }
+//
+//        if (row.getFileNameList() != null) {
+//            TooltipUtil.addBreak(html);
+//            TooltipUtil.addHeading(html, "Files");
+//            for (final String file : row.getFileNameList()) {
+//                TooltipUtil.addRowData(html, file);
+//            }
+//        }
+//
+//        TooltipUtil.addBreak(html);
+//        TooltipUtil.addHeading(html, "Retention");
+//        TooltipUtil.addRowData(html, StreamAttributeConstants.RETENTION_AGE, row.getAttributeValue(StreamAttributeConstants.RETENTION_AGE));
+//        TooltipUtil.addRowData(html, StreamAttributeConstants.RETENTION_UNTIL, row.getAttributeValue(StreamAttributeConstants.RETENTION_UNTIL));
+//        TooltipUtil.addRowData(html, StreamAttributeConstants.RETENTION_RULE, row.getAttributeValue(StreamAttributeConstants.RETENTION_RULE));
+//    }
 
     void addCreatedColumn() {
         // Created.
-        getView().addResizableColumn(new Column<StreamAttributeMap, String>(new TextCell()) {
+        getView().addResizableColumn(new Column<StreamDataRow, String>(new TextCell()) {
             @Override
-            public String getValue(final StreamAttributeMap row) {
+            public String getValue(final StreamDataRow row) {
                 return ClientDateUtil.toISOString(row.getStream().getCreateMs());
             }
         }, "Created", ColumnSizeConstants.DATE_COL);
@@ -372,9 +347,9 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
 
     void addFeedColumn() {
         // if (securityContext.hasAppPermission(Feed.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
-        getView().addResizableColumn(new Column<StreamAttributeMap, String>(new TextCell()) {
+        getView().addResizableColumn(new Column<StreamDataRow, String>(new TextCell()) {
             @Override
-            public String getValue(final StreamAttributeMap row) {
+            public String getValue(final StreamDataRow row) {
                 if (row != null && row.getStream() != null && row.getStream().getFeedName() != null) {
                     return row.getStream().getFeedName();
                 }
@@ -386,9 +361,9 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
 
     void addStreamTypeColumn() {
         // if (securityContext.hasAppPermission(StreamType.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
-        getView().addResizableColumn(new Column<StreamAttributeMap, String>(new TextCell()) {
+        getView().addResizableColumn(new Column<StreamDataRow, String>(new TextCell()) {
             @Override
-            public String getValue(final StreamAttributeMap row) {
+            public String getValue(final StreamDataRow row) {
                 if (row != null && row.getStream() != null && row.getStream().getStreamTypeName() != null) {
                     return row.getStream().getStreamTypeName();
                 }
@@ -400,12 +375,12 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
 
     void addPipelineColumn() {
         // if (securityContext.hasAppPermission(PipelineEntity.DOCUMENT_TYPE, DocumentPermissionNames.READ)) {
-        getView().addResizableColumn(new Column<StreamAttributeMap, String>(new TextCell()) {
+        getView().addResizableColumn(new Column<StreamDataRow, String>(new TextCell()) {
             @Override
-            public String getValue(final StreamAttributeMap row) {
+            public String getValue(final StreamDataRow row) {
                 if (row.getStream().getStreamProcessorId() != null) {
-                    if (row.getStream().getPipelineName() != null) {
-                        return row.getStream().getPipelineName();
+                    if (row.getStream().getPipelineUuid() != null) {
+                        return row.getStream().getPipelineUuid();
                     } else {
                         return "Not visible";
                     }
@@ -417,7 +392,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         // }
     }
 
-    protected MultiSelectionModel<StreamAttributeMap> getSelectionModel() {
+    protected MultiSelectionModel<StreamDataRow> getSelectionModel() {
         return getView().getSelectionModel();
     }
 
@@ -428,7 +403,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
     private Set<Long> getResultStreamIdSet() {
         final HashSet<Long> rtn = new HashSet<>();
         if (resultList != null) {
-            for (final StreamAttributeMap e : resultList) {
+            for (final StreamDataRow e : resultList) {
                 rtn.add(e.getStream().getId());
             }
         }
@@ -436,15 +411,15 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
 
     }
 
-    ResultList<StreamAttributeMap> getResultList() {
+    ResultList<StreamDataRow> getResultList() {
         return resultList;
     }
 
     void addAttributeColumn(final String name, final String attribute, final int size) {
-        final Column<StreamAttributeMap, String> column = new Column<StreamAttributeMap, String>(new TextCell()) {
+        final Column<StreamDataRow, String> column = new Column<StreamDataRow, String>(new TextCell()) {
             @Override
-            public String getValue(final StreamAttributeMap row) {
-                return row.formatAttribute(attribute);
+            public String getValue(final StreamDataRow row) {
+                return row.getAttributeValue(attribute);
             }
         };
         getView().addResizableColumn(column, name, size);
@@ -455,26 +430,14 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         dataProvider.refresh();
     }
 
-    private void populateFetchSet(final Set<String> fetchSet, final boolean forInfo) {
-        fetchSet.add(StreamTypeEntity.ENTITY_TYPE);
-        fetchSet.add(FeedDoc.DOCUMENT_TYPE);
-        fetchSet.add(StreamProcessor.ENTITY_TYPE);
-        fetchSet.add(PipelineDoc.DOCUMENT_TYPE);
-
-        // For info ? load up the files
-        fetchSet.add(VolumeEntity.ENTITY_TYPE);
-    }
-
     public void setCriteria(final FindStreamAttributeMapCriteria criteria) {
         if (criteria != null) {
             criteria.obtainPageRequest().setLength(PageRequest.DEFAULT_PAGE_SIZE);
-            populateFetchSet(criteria.getFetchSet(), false);
-            populateFetchSet(criteria.obtainFindStreamCriteria().getFetchSet(), false);
         }
         dataProvider.setCriteria(criteria);
     }
 
-    StreamAttributeMap getSelectedStream() {
+    StreamDataRow getSelectedStream() {
         return getView().getSelectionModel().getSelected();
     }
 

@@ -17,7 +17,7 @@
 package stroom.streamtask.shared;
 
 import stroom.entity.shared.Action;
-import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.meta.api.FindStreamCriteria;
 import stroom.streamstore.shared.ReprocessDataInfo;
 import stroom.util.shared.SharedList;
 

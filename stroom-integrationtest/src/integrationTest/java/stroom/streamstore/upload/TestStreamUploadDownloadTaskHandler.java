@@ -21,22 +21,21 @@ import org.junit.Test;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.security.UserTokenUtil;
-import stroom.streamstore.meta.db.StreamAttributeValueFlush;
 import stroom.streamstore.StreamDownloadSettings;
 import stroom.streamstore.StreamDownloadTask;
 import stroom.streamstore.StreamUploadTask;
-import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
-import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.fs.serializable.NestedStreamTarget;
-import stroom.streamstore.meta.StreamMetaService;
+import stroom.streamstore.meta.api.FindStreamCriteria;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.meta.api.StreamMetaService;
+import stroom.streamstore.meta.api.StreamProperties;
+import stroom.streamstore.meta.api.StreamStatus;
+import stroom.streamstore.meta.db.StreamAttributeValueFlush;
 import stroom.streamstore.shared.ExpressionUtil;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamStatus;
-import stroom.streamstore.shared.StreamTypeEntity;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
@@ -64,8 +63,8 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
     @Test
     public void testDownload() throws IOException {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeEntity.RAW_EVENTS.getName());
-        commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeEntity.RAW_EVENTS.getName());
+        commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
+        commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
 
         final Path file = Files.createTempFile(getCurrentTestDir(), "TestStreamDownloadTaskHandler", ".zip");
         final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
@@ -86,7 +85,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
         stroomZipFile.close();
 
         taskManager.exec(new StreamUploadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, "test.zip", file, feedName,
-                StreamTypeEntity.RAW_EVENTS.getName(), null, null));
+                StreamTypeNames.RAW_EVENTS, null, null));
 
         Assert.assertEquals(4, streamMetaService.find(findStreamCriteria).size());
     }
@@ -101,7 +100,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
         Files.write(file, "TEST".getBytes());
 
         taskManager.exec(new StreamUploadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, "test.dat", file, feedName,
-                StreamTypeEntity.RAW_EVENTS.getName(), null, "Tom:One\nJames:Two\n"));
+                StreamTypeNames.RAW_EVENTS, null, "Tom:One\nJames:Two\n"));
 
         Assert.assertEquals(1, streamMetaService.find(findStreamCriteria).size());
     }
@@ -113,7 +112,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
 
         final StreamProperties streamProperties = new StreamProperties.Builder()
                 .feedName(feedName)
-                .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
+                .streamTypeName(StreamTypeNames.RAW_EVENTS)
                 .build();
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
 
@@ -168,7 +167,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
         final String extraMeta = "Z:ALL\n";
 
         taskManager.exec(new StreamUploadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, "test.zip", file, feedName,
-                StreamTypeEntity.RAW_EVENTS.getName(), null, extraMeta));
+                StreamTypeNames.RAW_EVENTS, null, extraMeta));
 
         final List<Stream> streamList = streamMetaService.find(findStreamCriteria);
 

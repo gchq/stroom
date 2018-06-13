@@ -17,7 +17,7 @@
 package stroom.refdata;
 
 import stroom.docref.DocRef;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.meta.api.Stream;
 import stroom.task.ServerTask;
 
 import java.io.InputStream;

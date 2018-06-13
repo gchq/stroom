@@ -29,14 +29,28 @@ import stroom.entity.shared.Document;
 import stroom.entity.shared.NamedEntity;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.meta.api.Stream;
 
 class BasicEventInfoProvider implements EventInfoProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(BasicEventInfoProvider.class);
 
     @Override
     public BaseObject createBaseObject(final java.lang.Object obj) {
-        if (obj instanceof BaseEntity) {
+        if (obj instanceof Stream) {
+            final Stream stream = (Stream) obj;
+
+            final Object object = new Object();
+            object.setType("Stream");
+            object.setId(String.valueOf(stream.getId()));
+            if (stream.getFeedName() != null) {
+                EventLoggingUtil.createData("Feed", stream.getFeedName());
+            }
+            if (stream.getStreamTypeName() != null) {
+                object.getData().add(EventLoggingUtil.createData("StreamType", stream.getStreamTypeName()));
+            }
+            return object;
+
+        } else if (obj instanceof BaseEntity) {
             final BaseEntity entity = (BaseEntity) obj;
 
             final String type = getObjectType(entity);
@@ -55,22 +69,6 @@ class BasicEventInfoProvider implements EventInfoProvider {
             object.setId(id);
             object.setName(name);
             object.setDescription(description);
-
-            // Add unknown but useful data items.
-            if (entity instanceof StreamEntity) {
-                try {
-                    final StreamEntity stream = (StreamEntity) entity;
-                    if (stream.getFeedName() != null) {
-                        EventLoggingUtil.createData("Feed", stream.getFeedName());
-                    }
-                    // Stream type is now lazy
-                    if (stream.getStreamTypeName() != null) {
-                        object.getData().add(EventLoggingUtil.createData("StreamType", stream.getStreamTypeName()));
-                    }
-                } catch (final RuntimeException e) {
-                    LOGGER.error("Unable to configure stream!", e);
-                }
-            }
 
             return object;
 

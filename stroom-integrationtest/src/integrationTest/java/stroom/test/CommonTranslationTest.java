@@ -22,12 +22,12 @@ import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.node.NodeCache;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
-import stroom.streamstore.meta.StreamMetaService;
+import stroom.streamstore.meta.api.StreamMetaService;
 import stroom.streamstore.tools.StoreCreationTool;
 import stroom.streamtask.StreamProcessorTask;
 import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.streamtask.StreamTaskCreator;
-import stroom.streamtask.shared.StreamTask;
+import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.task.SimpleTaskContext;
 import stroom.task.TaskManager;
 import stroom.util.io.FileUtil;
@@ -96,9 +96,9 @@ public class CommonTranslationTest {
         streamTaskCreator.createTasks(new SimpleTaskContext());
 
         final List<StreamProcessorTaskExecutor> results = new ArrayList<>();
-        List<StreamTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getDefaultNode(), 100);
+        List<ProcessorFilterTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getDefaultNode(), 100);
         while (streamTasks.size() > 0) {
-            for (final StreamTask streamTask : streamTasks) {
+            for (final ProcessorFilterTask streamTask : streamTasks) {
                 final StreamProcessorTask task = new StreamProcessorTask(streamTask);
                 taskManager.exec(task);
                 results.add(task.getStreamProcessorTaskExecutor());

@@ -88,8 +88,8 @@ public class StreamAttributeKey extends AuditedEntity implements HasName, HasDis
         pfieldType = fieldType.getPrimitiveValue();
     }
 
-    public String format(final StreamAttributeMap map, final StreamAttributeKey key) {
-        String valueString = map.getAttributeValue(key);
+    public String format(final StreamDataRow map, final StreamAttributeKey key) {
+        String valueString = map.getAttributeValue(key.getName());
 
         if (valueString == null) {
             return null;

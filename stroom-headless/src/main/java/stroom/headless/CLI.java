@@ -204,10 +204,6 @@ public class CLI extends AbstractCommandLineTool {
     }
 
     private void process(final Injector injector) {
-        // Because we use HSQLDB for headless we need to insert stream types this way for now.
-        final StreamTypeServiceTransactionHelper streamTypeServiceTransactionHelper = injector.getInstance(StreamTypeServiceTransactionHelper.class);
-        streamTypeServiceTransactionHelper.doInserts();
-
         // Set the content directory.
         final FSPersistenceConfig fsPersistenceConfig = injector.getInstance(FSPersistenceConfig.class);
         fsPersistenceConfig.setPath(contentDir.toAbsolutePath().toString());

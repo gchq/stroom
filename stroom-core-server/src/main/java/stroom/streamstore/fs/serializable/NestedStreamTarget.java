@@ -19,8 +19,8 @@ package stroom.streamstore.fs.serializable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.streamstore.api.StreamTarget;
-import stroom.streamstore.fs.FileSystemStreamTypeUtil;
-import stroom.streamstore.fs.StreamTypeNames;
+import stroom.streamstore.fs.FileSystemStreamPathHelper;
+import stroom.streamstore.shared.StreamTypeNames;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -114,7 +114,7 @@ public class NestedStreamTarget implements Closeable {
     public OutputStream getOutputStream(String streamType) throws IOException {
         OutputStream outputStream = outputStreamMap.get(streamType);
         if (outputStream == null) {
-            if (!FileSystemStreamTypeUtil.isStreamTypeSegment(streamType)) {
+            if (!FileSystemStreamPathHelper.isStreamTypeSegment(streamType)) {
                 outputStream = getRANestedOutputStream(streamType);
             } else {
                 RANestedOutputStream nestedOutputStream = getRANestedOutputStream(streamType);

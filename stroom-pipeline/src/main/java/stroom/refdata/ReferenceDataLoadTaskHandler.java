@@ -40,10 +40,10 @@ import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.Security;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.fs.StreamTypeNames;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.meta.api.Stream;
 import stroom.streamtask.StreamProcessorService;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
@@ -64,7 +64,6 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
     private static final Logger LOGGER = LoggerFactory.getLogger(ReferenceDataLoadTaskHandler.class);
 
     private final StreamStore streamStore;
-    private final StreamProcessorService streamProcessorService;
     private final PipelineFactory pipelineFactory;
     private final MapStoreHolder mapStoreHolder;
     private final PipelineStore pipelineStore;
@@ -83,7 +82,6 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
 
     @Inject
     ReferenceDataLoadTaskHandler(final StreamStore streamStore,
-                                 final StreamProcessorService streamProcessorService,
                                  final PipelineFactory pipelineFactory,
                                  final MapStoreHolder mapStoreHolder,
                                  @Named("cachedPipelineStore") final PipelineStore pipelineStore,
@@ -98,7 +96,6 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                                  final PipelineDataCache pipelineDataCache,
                                  final Security security) {
         this.streamStore = streamStore;
-        this.streamProcessorService = streamProcessorService;
         this.pipelineFactory = pipelineFactory;
         this.mapStoreHolder = mapStoreHolder;
         this.pipelineStore = pipelineStore;
@@ -143,7 +140,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                         feedHolder.setFeedName(feedName);
 
                         // Setup the meta data holder.
-                        metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
+                        metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, pipelineStore));
 
                         // Set the pipeline so it can be used by a filter if needed.
                         final PipelineDoc pipelineDoc = pipelineStore.readDocument(mapStorePoolKey.getPipeline());

@@ -17,6 +17,7 @@
 package stroom.pipeline.structure.client.presenter;
 
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -31,26 +32,25 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.streamstore.shared.FindStreamTypeCriteria;
-import stroom.streamstore.shared.StreamTypeEntity.Purpose;
 
 public class NewPipelineReferencePresenter
         extends MyPresenterWidget<NewPipelineReferencePresenter.NewPipelineReferenceView> {
     private final EntityDropDownPresenter pipelinePresenter;
     private final EntityDropDownPresenter feedPresenter;
-    private final ClientDispatchAsync dispatcher;
-    private final StringListBox streamTypesWidget;
+//    private final ClientDispatchAsync dispatcher;
+    private final TextBox streamTypesWidget;
     private boolean dirty;
-    private boolean initialised;
+//    private boolean initialised;
 
     @Inject
-    public NewPipelineReferencePresenter(final EventBus eventBus, final NewPipelineReferenceView view,
-                                         final EntityDropDownPresenter pipelinePresenter, final EntityDropDownPresenter feedPresenter,
-                                         final ClientDispatchAsync dispatcher) {
+    public NewPipelineReferencePresenter(final EventBus eventBus,
+                                         final NewPipelineReferenceView view,
+                                         final EntityDropDownPresenter pipelinePresenter,
+                                         final EntityDropDownPresenter feedPresenter) {
         super(eventBus, view);
         this.pipelinePresenter = pipelinePresenter;
         this.feedPresenter = feedPresenter;
-        this.dispatcher = dispatcher;
+//        this.dispatcher = dispatcher;
 
         pipelinePresenter.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
         pipelinePresenter.setRequiredPermissions(DocumentPermissionNames.USE);
@@ -63,7 +63,7 @@ public class NewPipelineReferencePresenter
         feedPresenter.getWidget().getElement().getStyle().setMarginBottom(0, Unit.PX);
         getView().setFeedView(feedPresenter.getView());
 
-        streamTypesWidget = new StringListBox();
+        streamTypesWidget = new TextBox();
         streamTypesWidget.getElement().getStyle().setMarginBottom(0, Unit.PX);
         getView().setStreamTypeWidget(streamTypesWidget);
     }
@@ -73,66 +73,66 @@ public class NewPipelineReferencePresenter
 
         pipelinePresenter.setSelectedEntityReference(pipelineReference.getPipeline());
         feedPresenter.setSelectedEntityReference(pipelineReference.getFeed());
-        updateStreamTypes(pipelineReference.getStreamType());
+//        updateStreamTypes(pipelineReference.getStreamType());
 
         pipelinePresenter.addDataSelectionHandler(event -> {
-            if (initialised) {
+//            if (initialised) {
                 final DocRef selection = pipelinePresenter.getSelectedEntityReference();
                 if ((pipelineReference.getPipeline() == null && selection != null)
                         || (pipelineReference.getPipeline() != null
                         && !pipelineReference.getPipeline().equals(selection))) {
                     setDirty(true);
                 }
-            }
+//            }
         });
         feedPresenter.addDataSelectionHandler(event -> {
-            if (initialised) {
+//            if (initialised) {
                 final DocRef selection = feedPresenter.getSelectedEntityReference();
                 if ((pipelineReference.getFeed() == null && selection != null)
                         || (pipelineReference.getFeed() != null && !pipelineReference.getFeed().equals(selection))) {
                     setDirty(true);
                 }
-            }
+//            }
         });
         streamTypesWidget.addChangeHandler(event -> {
-            if (initialised) {
-                final String selection = streamTypesWidget.getSelected();
-                if ((pipelineReference.getStreamType() == null && selection != null)
-                        || (pipelineReference.getStreamType() != null
-                        && !pipelineReference.getStreamType().equals(selection))) {
+//            if (initialised) {
+//                final String selection = streamTypesWidget.getSelected();
+//                if ((pipelineReference.getStreamType() == null && selection != null)
+//                        || (pipelineReference.getStreamType() != null
+//                        && !pipelineReference.getStreamType().equals(selection))) {
                     setDirty(true);
-                }
-            }
+//                }
+//            }
         });
     }
 
     public void write(final PipelineReference pipelineReference) {
         pipelineReference.setPipeline(pipelinePresenter.getSelectedEntityReference());
         pipelineReference.setFeed(feedPresenter.getSelectedEntityReference());
-        pipelineReference.setStreamType(streamTypesWidget.getSelected());
+        pipelineReference.setStreamType(streamTypesWidget.getText());
     }
 
-    private void updateStreamTypes(final String selectedStreamType) {
-        streamTypesWidget.clear();
-
-        final FindStreamTypeCriteria findStreamTypeCriteria = new FindStreamTypeCriteria();
-        findStreamTypeCriteria.obtainPurpose().add(Purpose.RAW);
-        findStreamTypeCriteria.obtainPurpose().add(Purpose.PROCESSED);
-        findStreamTypeCriteria.obtainPurpose().add(Purpose.CONTEXT);
-        dispatcher.exec(new EntityReferenceFindAction<>(findStreamTypeCriteria)).onSuccess(result -> {
-            if (result != null && result.size() > 0) {
-                for (final DocRef docRef : result) {
-                    streamTypesWidget.addItem(docRef.getName());
-                }
-            }
-
-            if (selectedStreamType != null) {
-                streamTypesWidget.setSelected(selectedStreamType);
-            }
-
-            initialised = true;
-        });
-    }
+//    private void updateStreamTypes(final String selectedStreamType) {
+//        streamTypesWidget.clear();
+//
+//        final FindStreamTypeCriteria findStreamTypeCriteria = new FindStreamTypeCriteria();
+//        findStreamTypeCriteria.obtainPurpose().add(Purpose.RAW);
+//        findStreamTypeCriteria.obtainPurpose().add(Purpose.PROCESSED);
+//        findStreamTypeCriteria.obtainPurpose().add(Purpose.CONTEXT);
+//        dispatcher.exec(new EntityReferenceFindAction<>(findStreamTypeCriteria)).onSuccess(result -> {
+//            if (result != null && result.size() > 0) {
+//                for (final DocRef docRef : result) {
+//                    streamTypesWidget.addItem(docRef.getName());
+//                }
+//            }
+//
+//            if (selectedStreamType != null) {
+//                streamTypesWidget.setSelected(selectedStreamType);
+//            }
+//
+//            initialised = true;
+//        });
+//    }
 
     public boolean isDirty() {
         return dirty;

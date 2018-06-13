@@ -33,11 +33,10 @@ import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.pipeline.stepping.client.presenter.SteppingContentTabPresenter;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.streamstore.meta.api.Stream;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamAttributeMap;
-import stroom.streamstore.shared.StreamTypeEntity;
-import stroom.streamtask.shared.StreamProcessor;
+import stroom.streamstore.shared.StreamDataRow;
+import stroom.streamtask.shared.Processor;
 
 public class PipelineSteppingPlugin extends Plugin implements BeginPipelineSteppingEvent.Handler {
     private final Provider<EntityChooser> pipelineSelection;
@@ -87,13 +86,13 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
                 final FindStreamAttributeMapCriteria streamAttributeMapCriteria = new FindStreamAttributeMapCriteria();
                 streamAttributeMapCriteria.obtainFindStreamCriteria().obtainSelectedIdSet().add(streamId);
                 streamAttributeMapCriteria.getFetchSet().add(FeedDoc.DOCUMENT_TYPE);
-                streamAttributeMapCriteria.getFetchSet().add(StreamTypeEntity.ENTITY_TYPE);
-                streamAttributeMapCriteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
+//                streamAttributeMapCriteria.getFetchSet().add(StreamTypeEntity.ENTITY_TYPE);
+                streamAttributeMapCriteria.getFetchSet().add(Processor.ENTITY_TYPE);
                 streamAttributeMapCriteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
 
-                dispatcher.exec(new EntityServiceFindAction<FindStreamAttributeMapCriteria, StreamAttributeMap>(streamAttributeMapCriteria)).onSuccess(result -> {
+                dispatcher.exec(new EntityServiceFindAction<FindStreamAttributeMapCriteria, StreamDataRow>(streamAttributeMapCriteria)).onSuccess(result -> {
                     if (result != null && result.size() == 1) {
-                        final StreamAttributeMap row = result.get(0);
+                        final StreamDataRow row = result.get(0);
                         openEditor(pipeline, row.getStream(), eventId, childStreamType);
                     }
                 });

@@ -29,7 +29,7 @@ import stroom.properties.StroomPropertyService;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.security.Security;
 import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.shared.StreamTypeEntity;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamTargetStroomStreamHandler;
 import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.util.thread.BufferFactory;
@@ -97,7 +97,7 @@ class DataFeedRequestHandler implements RequestHandler {
                 final Optional<FeedDoc> optional = feedDocCache.get(feedName);
                 final String streamTypeName = optional
                         .map(FeedDoc::getStreamType)
-                        .orElse(StreamTypeEntity.RAW_EVENTS.getName());
+                        .orElse(StreamTypeNames.RAW_EVENTS);
 
 //                final String feedName = metaMap.get(StroomHeaderArguments.FEED);
 //                if (feedName == null) {

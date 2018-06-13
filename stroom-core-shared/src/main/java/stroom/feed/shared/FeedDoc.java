@@ -22,7 +22,7 @@ import stroom.docref.HasDisplayValue;
 import stroom.docstore.shared.Doc;
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
-import stroom.streamstore.shared.StreamTypeEntity;
+import stroom.streamstore.shared.StreamTypeNames;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "classification", "encoding", "contextEncoding", "retentionDayAge", "reference", "streamType", "feedStatus"})
 public class FeedDoc extends Doc {
@@ -58,9 +58,9 @@ public class FeedDoc extends Doc {
     public String getStreamType() {
         if (streamType == null) {
             if (reference) {
-                streamType = StreamTypeEntity.RAW_REFERENCE.getName();
+                streamType = StreamTypeNames.RAW_REFERENCE;
             } else {
-                streamType = StreamTypeEntity.RAW_EVENTS.getName();
+                streamType = StreamTypeNames.RAW_EVENTS;
             }
         }
 

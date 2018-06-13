@@ -35,12 +35,10 @@ import stroom.entity.shared.Sort.Direction;
 import stroom.feed.shared.FeedDoc;
 import stroom.node.shared.Node;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamStatus;
-import stroom.streamstore.shared.StreamTypeEntity;
+import stroom.streamstore.meta.api.StreamStatus;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
-import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamTask;
+import stroom.streamtask.shared.Processor;
+import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -50,8 +48,8 @@ import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
 import java.util.ArrayList;
 
-public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<StreamTask>> implements HasDocumentRead<SharedObject> {
-    private final EntityServiceFindActionDataProvider<FindStreamTaskCriteria, StreamTask> dataProvider;
+public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<ProcessorFilterTask>> implements HasDocumentRead<SharedObject> {
+    private final EntityServiceFindActionDataProvider<FindStreamTaskCriteria, ProcessorFilterTask> dataProvider;
 
     @Inject
     public StreamTaskListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
@@ -59,9 +57,9 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
         super(eventBus, new DataGridViewImpl<>(false));
 
         // Info column.
-        getView().addColumn(new InfoColumn<StreamTask>() {
+        getView().addColumn(new InfoColumn<ProcessorFilterTask>() {
             @Override
-            protected void showInfo(final StreamTask row, final int x, final int y) {
+            protected void showInfo(final ProcessorFilterTask row, final int x, final int y) {
                 final StringBuilder html = new StringBuilder();
                 TooltipUtil.addHeading(html, "Stream Task");
                 TooltipUtil.addRowData(html, "Stream Task Id", row.getId());
@@ -76,15 +74,17 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
                 TooltipUtil.addRowData(html, "End Time", toDateString(row.getEndTimeMs()));
                 TooltipUtil.addRowData(html, "Node", toNameString(row.getNode()));
 
-                TooltipUtil.addBreak(html);
-                TooltipUtil.addHeading(html, "Stream");
-                TooltipUtil.addRowData(html, "Stream Id", row.getStream().getId());
-                TooltipUtil.addRowData(html, "Status", row.getStream().getStatus().getDisplayValue());
-                TooltipUtil.addRowData(html, "Parent Stream Id", row.getStream().getParentStreamId());
-                TooltipUtil.addRowData(html, "Created", toDateString(row.getStream().getCreateMs()));
-                TooltipUtil.addRowData(html, "Effective", toDateString(row.getStream().getEffectiveMs()));
-                TooltipUtil.addRowData(html, "Stream Type", row.getStream().getStreamTypeName());
-                TooltipUtil.addRowData(html, "Feed", row.getStream().getFeedName());
+                // TODO : @66 REINSTATE STREAM DETAILS FOR A TASK
+
+//                TooltipUtil.addBreak(html);
+//                TooltipUtil.addHeading(html, "Stream");
+//                TooltipUtil.addRowData(html, "Stream Id", row.getStream().getId());
+//                TooltipUtil.addRowData(html, "Status", row.getStream().getStatus().getDisplayValue());
+//                TooltipUtil.addRowData(html, "Parent Stream Id", row.getStream().getParentStreamId());
+//                TooltipUtil.addRowData(html, "Created", toDateString(row.getStream().getCreateMs()));
+//                TooltipUtil.addRowData(html, "Effective", toDateString(row.getStream().getEffectiveMs()));
+//                TooltipUtil.addRowData(html, "Stream Type", row.getStream().getStreamTypeName());
+//                TooltipUtil.addRowData(html, "Feed", row.getStream().getFeedName());
 
                 if (row.getStreamProcessorFilter() != null) {
                     if (row.getStreamProcessorFilter().getStreamProcessor() != null) {
@@ -112,25 +112,25 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
         }, "<br/>", ColumnSizeConstants.ICON_COL);
 
         getView().addResizableColumn(
-                new OrderByColumn<StreamTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_CREATE_TIME, false) {
+                new OrderByColumn<ProcessorFilterTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_CREATE_TIME, false) {
                     @Override
-                    public String getValue(final StreamTask row) {
+                    public String getValue(final ProcessorFilterTask row) {
                         return ClientDateUtil.toISOString(row.getCreateMs());
                     }
                 }, "Create", ColumnSizeConstants.DATE_COL);
 
         getView().addResizableColumn(
-                new OrderByColumn<StreamTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_STATUS, false) {
+                new OrderByColumn<ProcessorFilterTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_STATUS, false) {
                     @Override
-                    public String getValue(final StreamTask row) {
+                    public String getValue(final ProcessorFilterTask row) {
                         return row.getStatus().getDisplayValue();
                     }
                 }, "Status", 80);
 
         getView()
-                .addColumn(new OrderByColumn<StreamTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_NODE, true) {
+                .addColumn(new OrderByColumn<ProcessorFilterTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_NODE, true) {
                     @Override
-                    public String getValue(final StreamTask row) {
+                    public String getValue(final ProcessorFilterTask row) {
                         if (row.getNode() != null) {
                             return row.getNode().getName();
                         } else {
@@ -138,9 +138,9 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
                         }
                     }
                 }, "Node", 100);
-        getView().addColumn(new OrderByColumn<StreamTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_PRIORITY, false) {
+        getView().addColumn(new OrderByColumn<ProcessorFilterTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_PRIORITY, false) {
             @Override
-            public String getValue(final StreamTask row) {
+            public String getValue(final ProcessorFilterTask row) {
                 if (row.getStreamProcessorFilter() != null) {
                     return String.valueOf(row.getStreamProcessorFilter().getPriority());
                 }
@@ -149,9 +149,9 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
             }
         }, "Priority", 100);
         getView().addResizableColumn(
-                new OrderByColumn<StreamTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_PIPELINE_NAME, true) {
+                new OrderByColumn<ProcessorFilterTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_PIPELINE_NAME, true) {
                     @Override
-                    public String getValue(final StreamTask row) {
+                    public String getValue(final ProcessorFilterTask row) {
                         if (row.getStreamProcessorFilter() != null) {
                             if (row.getStreamProcessorFilter().getStreamProcessor() != null) {
                                 if (row.getStreamProcessorFilter().getStreamProcessor().getPipelineUuid() != null) {
@@ -164,16 +164,16 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
                     }
                 }, "Pipeline", 200);
         getView().addResizableColumn(
-                new OrderByColumn<StreamTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_START_TIME, false) {
+                new OrderByColumn<ProcessorFilterTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_START_TIME, false) {
                     @Override
-                    public String getValue(final StreamTask row) {
+                    public String getValue(final ProcessorFilterTask row) {
                         return ClientDateUtil.toISOString(row.getStartTimeMs());
                     }
                 }, "Start Time", ColumnSizeConstants.DATE_COL);
         getView().addResizableColumn(
-                new OrderByColumn<StreamTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_END_TIME_DATE, false) {
+                new OrderByColumn<ProcessorFilterTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_END_TIME_DATE, false) {
                     @Override
-                    public String getValue(final StreamTask row) {
+                    public String getValue(final ProcessorFilterTask row) {
                         return ClientDateUtil.toISOString(row.getEndTimeMs());
                     }
                 }, "End Time", ColumnSizeConstants.DATE_COL);
@@ -200,7 +200,7 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
         }
     }
 
-    public EntityServiceFindActionDataProvider<FindStreamTaskCriteria, StreamTask> getDataProvider() {
+    public EntityServiceFindActionDataProvider<FindStreamTaskCriteria, ProcessorFilterTask> getDataProvider() {
         return dataProvider;
     }
 
@@ -241,19 +241,19 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
     private FindStreamTaskCriteria initCriteria(final String feedName, final DocRef pipelineRef) {
         final FindStreamTaskCriteria criteria = new FindStreamTaskCriteria();
         criteria.setSort(FindStreamTaskCriteria.FIELD_CREATE_TIME, Direction.DESCENDING, false);
-        criteria.getFetchSet().add(StreamEntity.ENTITY_TYPE);
-        criteria.getFetchSet().add(StreamTypeEntity.ENTITY_TYPE);
+//        criteria.getFetchSet().add(StreamEntity.ENTITY_TYPE);
+//        criteria.getFetchSet().add(StreamTypeEntity.ENTITY_TYPE);
         criteria.getFetchSet().add(FeedDoc.DOCUMENT_TYPE);
-        criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
+        criteria.getFetchSet().add(Processor.ENTITY_TYPE);
         criteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
         criteria.getFetchSet().add(Node.ENTITY_TYPE);
         criteria.obtainStreamTaskStatusSet().setMatchAll(Boolean.FALSE);
         // Only show unlocked stuff
         criteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
 
-        if (feedName != null) {
-            criteria.obtainFeedNameSet().add(feedName);
-        }
+//        if (feedName != null) {
+//            criteria.obtainFeedNameSet().add(feedName);
+//        }
         if (pipelineRef != null) {
             criteria.obtainPipelineSet().add(pipelineRef);
         }

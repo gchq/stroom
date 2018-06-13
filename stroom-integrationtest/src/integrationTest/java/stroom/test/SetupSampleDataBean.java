@@ -21,11 +21,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.DashboardStore;
 import stroom.db.migration.mysql.V6_0_0_21__Dictionary;
+import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.util.ConnectionUtil;
 import stroom.feed.FeedDocCache;
 import stroom.feed.FeedStore;
-import stroom.streamstore.meta.db.FeedEntityService;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.ImportExportSerializer;
 import stroom.importexport.shared.ImportState.ImportMode;
@@ -36,19 +36,18 @@ import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.VolumeEntity;
 import stroom.pipeline.PipelineStore;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.statistics.sql.entity.StatisticStoreStore;
 import stroom.statistics.stroomstats.entity.StroomStatsStoreStore;
-import stroom.streamstore.meta.db.StreamAttributeKeyService;
 import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.meta.db.StreamAttributeKeyService;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamTypeEntity;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamProcessorFilterService;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
@@ -91,7 +90,6 @@ public final class SetupSampleDataBean {
 
     private static final int LOAD_CYCLES = 10;
 
-    private final FeedEntityService feedService;
     private final FeedStore feedStore;
     private final FeedDocCache feedDocCache;
     private final StreamStore streamStore;
@@ -108,8 +106,7 @@ public final class SetupSampleDataBean {
     private final StroomStatsStoreStore stroomStatsStoreStore;
 
     @Inject
-    SetupSampleDataBean(final FeedEntityService feedService,
-                        final FeedStore feedStore,
+    SetupSampleDataBean(final FeedStore feedStore,
                         final FeedDocCache feedDocCache,
                         final StreamStore streamStore,
                         final StreamAttributeKeyService streamAttributeKeyService,
@@ -123,7 +120,6 @@ public final class SetupSampleDataBean {
                         final IndexVolumeService indexVolumeService,
                         final StatisticStoreStore statisticStoreStore,
                         final StroomStatsStoreStore stroomStatsStoreStore) {
-        this.feedService = feedService;
         this.feedStore = feedStore;
         this.feedDocCache = feedDocCache;
         this.streamStore = streamStore;
@@ -203,7 +199,7 @@ public final class SetupSampleDataBean {
                 final QueryData criteria = new QueryData.Builder()
                         .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
                         .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                                .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeEntity.EVENTS.getName())
+                                .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
                                 .build())
                         .build();
 
@@ -254,8 +250,8 @@ public final class SetupSampleDataBean {
                         .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
                                 .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed.getName())
                                 .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                                        .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeEntity.RAW_EVENTS.getName())
-                                        .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeEntity.RAW_REFERENCE.getName())
+                                        .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                                        .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
                                         .build())
                                 .build())
                         .build();

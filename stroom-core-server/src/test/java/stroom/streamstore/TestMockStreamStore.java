@@ -19,14 +19,13 @@ package stroom.streamstore;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamTarget;
-import stroom.streamstore.fs.StreamTypeNames;
-import stroom.streamstore.meta.db.MockStreamMetaService;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamTypeEntity;
+import stroom.streamstore.shared.StreamTypeNames;
+import stroom.streamstore.meta.api.FindStreamCriteria;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.meta.api.StreamProperties;
+import stroom.streamstore.meta.impl.mock.MockStreamMetaService;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
@@ -49,7 +48,7 @@ public class TestMockStreamStore extends StroomUnitTest {
 
         final StreamProperties streamProperties = new StreamProperties.Builder()
                 .feedName("TEST")
-                .streamTypeName(StreamTypeEntity.EVENTS.getName())
+                .streamTypeName(StreamTypeNames.EVENTS)
                 .build();
 
         final StreamTarget streamTarget = mockStreamStore.openStreamTarget(streamProperties);

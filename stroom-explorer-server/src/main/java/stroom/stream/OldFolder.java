@@ -21,6 +21,7 @@ import stroom.entity.shared.DocumentEntity;
 
 import javax.persistence.Transient;
 
+@Deprecated
 public class OldFolder extends DocumentEntity {
     public static final String ENTITY_TYPE = "Folder";
     private static final long serialVersionUID = -4208920620555926044L;

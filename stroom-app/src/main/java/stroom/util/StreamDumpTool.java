@@ -23,11 +23,11 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.meta.StreamMetaService;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.meta.api.FindStreamCriteria;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.meta.api.StreamMetaService;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamTypeEntity;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
@@ -124,7 +124,7 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         if (streamType != null) {
             builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, streamType);
         } else {
-            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeEntity.RAW_EVENTS.getName());
+            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS);
         }
 
         // Query the stream store

@@ -22,7 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.node.shared.Node;
 import stroom.persist.EntityManagerSupport;
-import stroom.streamtask.shared.StreamTask;
+import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.streamtask.shared.TaskStatus;
 
 import javax.inject.Inject;
@@ -42,13 +42,13 @@ class StreamTaskHelper {
         this.entityManagerSupport = entityManagerSupport;
     }
 
-    StreamTask changeTaskStatus(final StreamTask streamTask, final Node node, final TaskStatus status,
-                                final Long startTime, final Long endTime) {
+    ProcessorFilterTask changeTaskStatus(final ProcessorFilterTask streamTask, final Node node, final TaskStatus status,
+                                         final Long startTime, final Long endTime) {
         return entityManagerSupport.transactionResult(em -> {
             LOGGER.debug("changeTaskStatus() - Changing task status of {} to node={}, status={}", streamTask, node, status);
             final long now = System.currentTimeMillis();
 
-            StreamTask result = null;
+            ProcessorFilterTask result = null;
 
             try {
                 try {
@@ -72,7 +72,7 @@ class StreamTaskHelper {
                                 LOGGER.warn("changeTaskStatus() - Task has changed, attempting reload {}", streamTask);
                             }
 
-                            final StreamTask loaded = streamTaskService.load(streamTask);
+                            final ProcessorFilterTask loaded = streamTaskService.load(streamTask);
                             if (loaded == null) {
                                 LOGGER.warn("changeTaskStatus() - Failed to reload task {}", streamTask);
                             } else if (TaskStatus.DELETED.equals(loaded.getStatus())) {
@@ -107,7 +107,7 @@ class StreamTaskHelper {
         });
     }
 
-    private void modify(final StreamTask streamTask, final Node node, final TaskStatus status, final Long statusMs,
+    private void modify(final ProcessorFilterTask streamTask, final Node node, final TaskStatus status, final Long statusMs,
                         final Long startTimeMs, final Long endTimeMs) {
         streamTask.setNode(node);
         streamTask.setStatus(status);

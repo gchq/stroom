@@ -21,9 +21,9 @@ import stroom.docref.DocRef;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.fs.serializable.RASegmentInputStream;
-import stroom.streamstore.meta.StreamMetaService;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.meta.api.StreamMetaService;
+import stroom.streamstore.meta.api.FindStreamCriteria;
+import stroom.streamstore.meta.api.Stream;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
 

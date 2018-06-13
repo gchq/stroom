@@ -42,20 +42,18 @@ import stroom.security.DocumentPermission;
 import stroom.security.Permission;
 import stroom.security.User;
 import stroom.security.UserGroupUser;
-import stroom.streamstore.meta.db.StreamAttributeKeyService;
 import stroom.streamstore.fs.FileSystemUtil;
-import stroom.streamstore.shared.FeedEntity;
+import stroom.streamstore.meta.db.StreamAttributeKeyService;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
-import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.streamstore.shared.StreamVolumeEntity;
 import stroom.streamtask.StreamTaskCreator;
-import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamProcessorFilter;
-import stroom.streamtask.shared.StreamProcessorFilterTracker;
-import stroom.streamtask.shared.StreamTask;
+import stroom.streamtask.shared.Processor;
+import stroom.streamtask.shared.ProcessorFilter;
+import stroom.streamtask.shared.ProcessorFilterTask;
+import stroom.streamtask.shared.ProcessorFilterTracker;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
@@ -81,7 +79,6 @@ public class DatabaseCommonTestControl implements CommonTestControl {
             DocumentPermission.TABLE_NAME,
             "explorerTreeNode",
             "explorerTreePath",
-            FeedEntity.TABLE_NAME,
             "IDX_VOL", //link table between IDX and VOL so no entity of its own
             IndexShard.TABLE_NAME,
             Job.TABLE_NAME,
@@ -91,13 +88,18 @@ public class DatabaseCommonTestControl implements CommonTestControl {
             Policy.TABLE_NAME,
             QueryEntity.TABLE_NAME,
             Rack.TABLE_NAME,
-            StreamEntity.TABLE_NAME,
+
+            "STRM",
+            "STRM_FEED",
+            "STRM_TYPE",
+            "STRM_PROCESSOR",
             StreamAttributeKey.TABLE_NAME,
             StreamAttributeValue.TABLE_NAME,
-            StreamProcessor.TABLE_NAME,
-            StreamProcessorFilter.TABLE_NAME,
-            StreamProcessorFilterTracker.TABLE_NAME,
-            StreamTask.TABLE_NAME,
+
+            Processor.TABLE_NAME,
+            ProcessorFilter.TABLE_NAME,
+            ProcessorFilterTracker.TABLE_NAME,
+            ProcessorFilterTask.TABLE_NAME,
             StreamVolumeEntity.TABLE_NAME,
             User.TABLE_NAME,
             UserGroupUser.TABLE_NAME,

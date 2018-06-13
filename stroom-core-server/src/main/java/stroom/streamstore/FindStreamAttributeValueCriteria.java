@@ -19,7 +19,7 @@ package stroom.streamstore;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.Period;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.meta.api.Stream;
 
 /**
  * <p>

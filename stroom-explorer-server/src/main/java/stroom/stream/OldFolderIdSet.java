@@ -20,6 +20,7 @@ import stroom.entity.shared.EntityIdSet;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 
+@Deprecated
 public class OldFolderIdSet extends EntityIdSet<OldFolder> {
     private static final long serialVersionUID = -470516763097779743L;
     private boolean deep = true;

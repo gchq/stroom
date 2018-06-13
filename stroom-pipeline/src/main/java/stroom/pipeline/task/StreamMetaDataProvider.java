@@ -17,23 +17,21 @@
 
 package stroom.pipeline.task;
 
+import stroom.docref.DocRef;
 import stroom.feed.MetaMap;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.state.MetaDataProvider;
 import stroom.pipeline.state.StreamHolder;
-import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
-import stroom.streamstore.shared.Stream;
-import stroom.streamtask.StreamProcessorService;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.date.DateUtil;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class StreamMetaDataProvider implements MetaDataProvider {
@@ -44,10 +42,7 @@ public class StreamMetaDataProvider implements MetaDataProvider {
     private static final String EFFECTIVE_TIME = "EffectiveTime";
     private static final String PIPELINE = "Pipeline";
 
-    private static final Set<String> FETCH_SET = Collections.singleton(PipelineDoc.DOCUMENT_TYPE);
-
     private final StreamHolder streamHolder;
-    private final StreamProcessorService streamProcessorService;
     private final PipelineStore pipelineStore;
 
     private Map<String, String> parentData = new ConcurrentHashMap<>();
@@ -55,10 +50,8 @@ public class StreamMetaDataProvider implements MetaDataProvider {
     private long lastMetaStreamNo;
 
     public StreamMetaDataProvider(final StreamHolder streamHolder,
-                                  final StreamProcessorService streamProcessorService,
                                   final PipelineStore pipelineStore) {
         this.streamHolder = streamHolder;
-        this.streamProcessorService = streamProcessorService;
         this.pipelineStore = pipelineStore;
     }
 
@@ -156,19 +149,19 @@ public class StreamMetaDataProvider implements MetaDataProvider {
     private String getPipeline() {
         return parentData.computeIfAbsent(PIPELINE, k -> {
             final Stream stream = streamHolder.getStream();
-            if (stream != null) {
-                return stream.getPipelineName();
-            }
+//            if (stream != null) {
+//                return stream.getPipelineName();
+//            }
 
-//            if (stream != null && stream.getPipelineName() != null) {
+            if (stream != null && stream.getPipelineUuid() != null) {
 //                final StreamProcessor streamProcessor = streamProcessorService.load(stream.getStreamProcessor(), FETCH_SET);
 //                if (streamProcessor != null && streamProcessor.getPipelineUuid() != null) {
-//                    final PipelineDoc pipelineDoc = pipelineStore.readDocument(new DocRef(PipelineDoc.DOCUMENT_TYPE, streamProcessor.getPipelineUuid()));
-//                    if (pipelineDoc != null) {
-//                        return pipelineDoc.getName();
-//                    }
+                final PipelineDoc pipelineDoc = pipelineStore.readDocument(new DocRef(PipelineDoc.DOCUMENT_TYPE, stream.getPipelineUuid()));
+                if (pipelineDoc != null) {
+                    return pipelineDoc.getName();
+                }
 //                }
-//            }
+            }
             return null;
         });
     }

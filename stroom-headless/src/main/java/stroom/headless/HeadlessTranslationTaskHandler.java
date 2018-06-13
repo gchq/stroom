@@ -46,12 +46,11 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.Security;
-import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.fs.serializable.RASegmentInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
-import stroom.streamstore.shared.StreamEntity;
-import stroom.streamtask.StreamProcessorService;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.date.DateUtil;
@@ -79,7 +78,6 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
     private final RecordErrorReceiver recordErrorReceiver;
     private final PipelineDataCache pipelineDataCache;
     private final StreamHolder streamHolder;
-    private final StreamProcessorService streamProcessorService;
     private final Security security;
 
     @Inject
@@ -95,7 +93,6 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
                                    final RecordErrorReceiver recordErrorReceiver,
                                    final PipelineDataCache pipelineDataCache,
                                    final StreamHolder streamHolder,
-                                   final StreamProcessorService streamProcessorService,
                                    final Security security) {
         this.pipelineFactory = pipelineFactory;
         this.feedStore = feedStore;
@@ -109,7 +106,6 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
         this.recordErrorReceiver = recordErrorReceiver;
         this.pipelineDataCache = pipelineDataCache;
         this.streamHolder = streamHolder;
-        this.streamProcessorService = streamProcessorService;
         this.security = security;
     }
 
@@ -138,7 +134,7 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
                 feedHolder.setFeedName(feedName);
 
                 // Setup the meta data holder.
-                metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
+                metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, pipelineStore));
 
                 // Set the pipeline so it can be used by a filter if needed.
                 final List<DocRef> pipelines = pipelineStore.findByName(feedName);
@@ -169,20 +165,22 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
                 this.metaData.putAll(metaData);
                 task.getHeadlessFilter().changeMetaData(metaData);
 
-                // Create the stream.
-                final StreamEntity stream = new StreamEntity();
-//                // Set the feed.
-//                stream.setFeed(feed);
-
                 // Set effective time.
+                Long effectiveMs = null;
                 try {
                     final String effectiveTime = metaData.get(StroomHeaderArguments.EFFECTIVE_TIME);
                     if (effectiveTime != null && !effectiveTime.isEmpty()) {
-                        stream.setEffectiveMs(DateUtil.parseNormalDateTimeString(effectiveTime));
+                        effectiveMs = DateUtil.parseNormalDateTimeString(effectiveTime);
                     }
                 } catch (final RuntimeException e) {
                     outputError(e);
                 }
+
+                // Create the stream.
+                final Stream stream = new StreamImpl.Builder()
+                        .effectiveMs(effectiveMs)
+                        .feedName(feedName)
+                        .build();
 
                 // Add stream providers for lookups etc.
                 final BasicInputStreamProvider streamProvider = new BasicInputStreamProvider(

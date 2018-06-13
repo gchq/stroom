@@ -11,7 +11,7 @@ public class CoreTestModule extends AbstractModule {
         install(new stroom.resource.ResourceModule());
         install(new stroom.cluster.MockClusterModule());
         install(new stroom.node.NodeTestConfigModule());
-        install(new stroom.security.MockSecurityContextModule());
+        install(new stroom.security.impl.mock.MockSecurityContextModule());
         install(new stroom.statistics.internal.MockInternalStatisticsModule());
         install(new stroom.streamtask.statistic.MockMetaDataStatisticModule());
         install(new stroom.test.DatabaseTestControlModule());

@@ -19,16 +19,16 @@ package stroom.streamtask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.streamstore.api.StreamSource;
-import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamProcessorFilter;
-import stroom.streamtask.shared.StreamTask;
+import stroom.streamtask.shared.Processor;
+import stroom.streamtask.shared.ProcessorFilter;
+import stroom.streamtask.shared.ProcessorFilterTask;
 
 public class StreamProcessorTaskTester implements StreamProcessorTaskExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamProcessorTaskTester.class);
 
     @Override
-    public void exec(final StreamProcessor streamProcessor, final StreamProcessorFilter streamProcessorFilter,
-                     final StreamTask streamTask, final StreamSource streamSource) {
+    public void exec(final Processor streamProcessor, final ProcessorFilter streamProcessorFilter,
+                     final ProcessorFilterTask streamTask, final StreamSource streamSource) {
         LOGGER.info("exec() - Processing stream {}", streamSource.getStream());
     }
 }

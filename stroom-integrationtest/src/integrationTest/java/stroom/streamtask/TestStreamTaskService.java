@@ -20,15 +20,13 @@ package stroom.streamtask;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.shared.Period;
-import stroom.feed.shared.FeedDoc;
 import stroom.node.shared.Node;
-import stroom.streamstore.meta.StreamMetaService;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamTypeEntity;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.meta.api.StreamMetaService;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
-import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamTask;
+import stroom.streamtask.shared.Processor;
+import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.streamtask.shared.TaskStatus;
 import stroom.task.SimpleTaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -52,25 +50,25 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
     @Test
     public void testSaveAndGetAll() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        final Stream file1 = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeEntity.RAW_EVENTS.getName());
+        final Stream file1 = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
         final Stream file2 = commonTestScenarioCreator.createSampleBlankProcessedFile(feedName, file1);
-        final Stream file3 = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeEntity.RAW_EVENTS.getName());
+        final Stream file3 = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
 
         commonTestScenarioCreator.createBasicTranslateStreamProcessor(feedName);
 
-        Assert.assertEquals("checking we can delete stand alone files", 1, streamMetaService.deleteStream(file3.getId()).intValue());
+        Assert.assertEquals("checking we can delete stand alone files", 1, streamMetaService.deleteStream(file3.getId()));
 
         // Create all required tasks.
         createTasks();
 
-        final StreamTask ps1 = streamTaskService.find(FindStreamTaskCriteria.createWithStream(file1)).getFirst();
+        final ProcessorFilterTask ps1 = streamTaskService.find(FindStreamTaskCriteria.createWithStream(file1)).getFirst();
         Assert.assertNotNull(ps1);
         ps1.setStatus(TaskStatus.COMPLETE);
 
         streamTaskService.save(ps1);
 
         FindStreamTaskCriteria criteria = new FindStreamTaskCriteria();
-        criteria.getFetchSet().add(StreamEntity.ENTITY_TYPE);
+//        criteria.getFetchSet().add(StreamEntity.ENTITY_TYPE);
         criteria.obtainStreamTaskStatusSet().add(TaskStatus.COMPLETE);
 
         Assert.assertEquals(1, streamTaskService.find(criteria).size());
@@ -103,19 +101,19 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
         criteria.obtainNodeIdSet().add(1L);
         criteria.setSort(FindStreamTaskCriteria.FIELD_CREATE_TIME);
         criteria.obtainStreamTaskIdSet().add(1L);
-        criteria.obtainFeedNameSet().add(feedName);
+//        criteria.obtainFeedNameSet().add(feedName);
         criteria.obtainStreamIdSet().add(1L);
-        criteria.obtainStreamTypeNameSet().add(StreamTypeEntity.RAW_EVENTS.getName());
+//        criteria.obtainStreamTypeNameSet().add(StreamTypeNames.RAW_EVENTS);
         criteria.obtainStreamTaskStatusSet().add(TaskStatus.COMPLETE);
 
         criteria.setCreatePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
         criteria.setEffectivePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
-        criteria.obtainStreamTypeNameSet().add(StreamTypeEntity.CONTEXT.getName());
+//        criteria.obtainStreamTypeNameSet().add(StreamTypeNames.CONTEXT);
 
-        criteria.getFetchSet().add(StreamEntity.ENTITY_TYPE);
+//        criteria.getFetchSet().add(StreamEntity.ENTITY_TYPE);
         criteria.getFetchSet().add(Node.ENTITY_TYPE);
-        criteria.getFetchSet().add(FeedDoc.DOCUMENT_TYPE);
-        criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
+//        criteria.getFetchSet().add(FeedDoc.DOCUMENT_TYPE);
+        criteria.getFetchSet().add(Processor.ENTITY_TYPE);
 
         Assert.assertEquals(0, streamTaskService.find(criteria).size());
     }
@@ -132,14 +130,14 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
         criteria.obtainNodeIdSet().add(1L);
         criteria.setSort(FindStreamTaskCriteria.FIELD_CREATE_TIME);
         criteria.obtainStreamTaskIdSet().add(1L);
-        criteria.obtainFeedNameSet().add(feedName);
+//        criteria.obtainFeedNameSet().add(feedName);
         criteria.obtainStreamIdSet().add(1L);
-        criteria.obtainStreamTypeNameSet().add(StreamTypeEntity.RAW_EVENTS.getName());
+//        criteria.obtainStreamTypeNameSet().add(StreamTypeNames.RAW_EVENTS);
         criteria.obtainStreamTaskStatusSet().add(TaskStatus.COMPLETE);
 
         criteria.setCreatePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
         criteria.setEffectivePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
-        criteria.obtainStreamTypeNameSet().add(StreamTypeEntity.CONTEXT.getName());
+//        criteria.obtainStreamTypeNameSet().add(StreamTypeNames.CONTEXT);
 
     }
 

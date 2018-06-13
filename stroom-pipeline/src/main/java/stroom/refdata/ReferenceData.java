@@ -25,8 +25,8 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamTypeEntity;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.shared.Severity;
 import stroom.xml.event.EventList;
 
@@ -116,7 +116,7 @@ public class ReferenceData {
             // Handle context data differently loading it from the
             // current stream context.
             if (pipelineReference.getStreamType() != null
-                    && StreamTypeEntity.CONTEXT.getName().equals(pipelineReference.getStreamType())) {
+                    && StreamTypeNames.CONTEXT.equals(pipelineReference.getStreamType())) {
                 getNestedStreamEventList(pipelineReference, mapName, keyName, referenceDataResult);
             } else {
                 getExternalEventList(pipelineReference, time, mapName, keyName, referenceDataResult);

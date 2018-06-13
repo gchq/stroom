@@ -19,16 +19,22 @@ package stroom.streamstore.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.PageRequest;
 import stroom.node.shared.VolumeEntity;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.streamstore.FindStreamVolumeCriteria;
 import stroom.streamstore.ScanVolumePathResult;
 import stroom.streamstore.StreamMaintenanceService;
-import stroom.streamstore.StreamRange;
 import stroom.streamstore.fs.StreamVolumeService.StreamVolume;
-import stroom.streamstore.meta.StreamMetaService;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.meta.api.FindStreamCriteria;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.meta.api.StreamMetaService;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
@@ -37,7 +43,10 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,20 +57,22 @@ import java.util.Set;
  * API used by the tasks to interface to the stream store under the bonnet.
  */
 @Singleton
-// @Transactional
 public class FileSystemStreamMaintenanceService
         implements StreamMaintenanceService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamMaintenanceService.class);
 
+    private final FileSystemStreamPathHelper fileSystemStreamPathHelper;
     private final StreamVolumeService streamVolumeService;
     private final StreamMetaService streamMetaService;
     private final Security security;
 
     @Inject
-    public FileSystemStreamMaintenanceService(final StreamVolumeService streamVolumeService,
+    public FileSystemStreamMaintenanceService(final FileSystemStreamPathHelper fileSystemStreamPathHelper,
+                                              final StreamVolumeService streamVolumeService,
                                               final StreamMetaService streamMetaService,
                                               final Security security) {
+        this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.streamVolumeService = streamVolumeService;
         this.streamMetaService = streamMetaService;
         this.security = security;
@@ -74,11 +85,11 @@ public class FileSystemStreamMaintenanceService
         final Set<StreamVolume> streamVolumes = streamVolumeService.findStreamVolume(stream.getId());
         final List<Path> results = new ArrayList<>();
         for (final StreamVolume streamVolume : streamVolumes) {
-            final Path rootFile = FileSystemStreamTypeUtil.createRootStreamFile(streamVolume.getVolumePath(),
+            final Path rootFile = fileSystemStreamPathHelper.createRootStreamFile(streamVolume.getVolumePath(),
                     stream, stream.getStreamTypeName());
             if (Files.isRegularFile(rootFile)) {
                 results.add(rootFile);
-                results.addAll(FileSystemStreamTypeUtil.findAllDescendantStreamFileList(rootFile));
+                results.addAll(fileSystemStreamPathHelper.findAllDescendantStreamFileList(rootFile));
             }
         }
 
@@ -146,25 +157,116 @@ public class FileSystemStreamMaintenanceService
     private void buildStreamsKeyedByBaseName(final VolumeEntity volume,
                                              final String repoPath,
                                              final Map<String, StreamVolume> streamsKeyedByBaseName) {
-        // OK we have build up a list of files located in the directory
-        // Now see what is there as per the database.
-        final FindStreamVolumeCriteria criteria = new FindStreamVolumeCriteria();
+        try {
+            // We need to find streams that match the repo path.
+            final BaseResultList<Stream> matchingStreams = findMatchingStreams(repoPath);
 
-        // Skip the first dir separator
-        criteria.setStreamRange(new StreamRange(repoPath));
-        criteria.obtainVolumeIdSet().add(volume);
+            // If we haven't found any streams then give up.
+            if (matchingStreams.size() > 0) {
+                // OK we have build up a list of files located in the directory
+                // Now see what is there as per the database.
+                final FindStreamVolumeCriteria criteria = new FindStreamVolumeCriteria();
 
-        // Only process the dir if it is a location that can have files
-        if (criteria.getStreamRange().isFileLocation() && !criteria.getStreamRange().isInvalidPath()) {
-            final List<StreamVolume> matches = streamVolumeService.find(criteria);
+                matchingStreams.forEach(stream -> criteria.obtainStreamIdSet().add(stream.getId()));
+                criteria.obtainVolumeIdSet().add(volume.getId());
 
-            for (final StreamVolume streamVolume : matches) {
-                final Stream stream = streamMetaService.getStream(streamVolume.getStreamId(), true);
-                if (stream != null) {
-                    streamsKeyedByBaseName.put(FileSystemStreamTypeUtil.getBaseName(stream), streamVolume);
+                final List<StreamVolume> matches = streamVolumeService.find(criteria);
+
+                for (final StreamVolume streamVolume : matches) {
+                    final Stream stream = streamMetaService.getStream(streamVolume.getStreamId(), true);
+                    if (stream != null) {
+                        streamsKeyedByBaseName.put(fileSystemStreamPathHelper.getBaseName(stream), streamVolume);
+                    }
                 }
             }
+        } catch (final RuntimeException e) {
+            LOGGER.warn(e.getMessage(), e);
         }
+    }
+
+    /**
+     * Find streams in the stream meta service that are relevant to the supplied repository path.
+     *
+     * @param repoPath The repository path to find relevant streams for.
+     * @return A list of streams that are relevant to the supplied repository path.
+     */
+    private BaseResultList<Stream> findMatchingStreams(final String repoPath) {
+        try {
+            // We need to find streams that match the repo path.
+            final ExpressionOperator expression = pathToStreamExpression(repoPath);
+            final FindStreamCriteria criteria = new FindStreamCriteria(expression);
+            criteria.setPageRequest(new PageRequest(0L, 1000));
+            return streamMetaService.find(criteria);
+        } catch (final RuntimeException e) {
+            LOGGER.warn(e.getMessage(), e);
+        }
+
+        return BaseResultList.createUnboundedList(Collections.emptyList());
+    }
+
+    /**
+     * Turn a repository path into an expression to find matching streams.
+     *
+     * @param repoPath The repository path to create the expression from.
+     * @return An expression that can be used to query the stream meta service.
+     */
+    private ExpressionOperator pathToStreamExpression(final String repoPath) {
+        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
+
+        final String[] parts = repoPath.split("/");
+
+        if (parts.length > 0 && parts[0].length() > 0) {
+            // TODO : @66 THIS IS REALLY DANGEROUS AS THERE IS NO REAL LINK BETWEEN FS PATH AND STREAM TYPE
+            final String streamTypeName = FileSystemStreamTypePaths.getType(parts[0]);
+            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, streamTypeName);
+        }
+        if (parts.length >= 4) {
+            try {
+                final String fromDateString = parts[1] + "-" + parts[2] + "-" + parts[3];
+                final LocalDateTime localDateTime = LocalDateTime.parse(fromDateString, DateTimeFormatter.ISO_DATE);
+                final String toDateString = localDateTime.plusDays(1).format(DateTimeFormatter.ISO_DATE);
+
+                builder.addTerm(StreamDataSource.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, fromDateString);
+                builder.addTerm(StreamDataSource.CREATE_TIME, Condition.LESS_THAN, toDateString);
+
+            } catch (final RuntimeException e) {
+                // Not a stream path
+                throw new RuntimeException("Not a valid repository path");
+            }
+        }
+
+        final StringBuilder numberPart = new StringBuilder();
+        for (int i = 4; i < parts.length; i++) {
+            numberPart.append(parts[i]);
+        }
+
+        long fromId = 1L;
+
+
+//        if (parts.length == 4) {
+//            init(1L, 1000L);
+//        }
+
+        if (numberPart.length() > 0) {
+            try {
+                final long dirNumber = Long.valueOf(numberPart.toString());
+
+                // E.g. 001/110 would contain numbers 1,110,000 to 1,110,999
+                // 001/111 would contain numbers 1,111,000 to 1,111,999
+                fromId = dirNumber * 1000L;
+
+            } catch (final RuntimeException e) {
+                // Not a stream path
+                throw new RuntimeException("Not a valid repository path");
+            }
+        }
+
+        long toId = fromId + 1000L;
+
+        builder.addTerm(StreamDataSource.STREAM_ID, Condition.GREATER_THAN_OR_EQUAL_TO, String.valueOf(fromId));
+        builder.addTerm(StreamDataSource.CREATE_TIME, Condition.LESS_THAN, String.valueOf(toId));
+
+        return builder.build();
     }
 
     private void buildFilesKeyedByBaseName(final ScanVolumePathResult result,
@@ -227,10 +329,10 @@ public class FileSystemStreamMaintenanceService
         }
     }
 
-    private void checkEmptyDirectory(final ScanVolumePathResult result, final boolean doDeleete, final Path directory,
+    private void checkEmptyDirectory(final ScanVolumePathResult result, final boolean doDelete, final Path directory,
                                      final long oldFileTime, final List<String> kids) {
         if (kids == null || kids.size() == 0) {
-            tryDelete(result, doDeleete, directory, oldFileTime);
+            tryDelete(result, doDelete, directory, oldFileTime);
         }
     }
 

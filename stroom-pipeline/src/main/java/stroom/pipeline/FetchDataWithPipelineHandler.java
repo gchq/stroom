@@ -46,7 +46,6 @@ class FetchDataWithPipelineHandler extends AbstractFetchDataHandler<FetchDataWit
     @Inject
     FetchDataWithPipelineHandler(final StreamStore streamStore,
                                  final FeedProperties feedProperties,
-                                 final StreamProcessorService streamProcessorService,
                                  final Provider<FeedHolder> feedHolderProvider,
                                  final Provider<MetaDataHolder> metaDataHolderProvider,
                                  final Provider<PipelineHolder> pipelineHolderProvider,
@@ -60,7 +59,6 @@ class FetchDataWithPipelineHandler extends AbstractFetchDataHandler<FetchDataWit
                                  final PipelineScopeRunnable pipelineScopeRunnable) {
         super(streamStore,
                 feedProperties,
-                streamProcessorService,
                 feedHolderProvider,
                 metaDataHolderProvider,
                 pipelineHolderProvider,

@@ -16,35 +16,26 @@
 
 package stroom.streamstore.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.EntityServiceFindAction;
-import stroom.security.client.event.CurrentUserChangedEvent;
-import stroom.streamstore.shared.FindStreamTypeCriteria;
-import stroom.streamstore.shared.StreamTypeEntity;
-
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class StreamTypeUiManager {
-    private List<StreamTypeEntity> streamTypeList = new ArrayList<>();
-
-    @Inject
-    public StreamTypeUiManager(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
-        updateList(Arrays.asList(StreamTypeEntity.initialValues()));
-
-        // We can only find out the real list when they are logged in
-        eventBus.addHandler(CurrentUserChangedEvent.getType(), event -> dispatcher.exec(
-                new EntityServiceFindAction<FindStreamTypeCriteria, StreamTypeEntity>(new FindStreamTypeCriteria()))
-                .onSuccess(this::updateList));
-
-    }
-
-    private void updateList(final List<StreamTypeEntity> list) {
-        streamTypeList = list;
-    }
+//    private List<StreamTypeEntity> streamTypeList = new ArrayList<>();
+//
+//    @Inject
+//    public StreamTypeUiManager(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
+//        updateList(Arrays.asList(StreamTypeEntity.initialValues()));
+//
+//        // We can only find out the real list when they are logged in
+//        eventBus.addHandler(CurrentUserChangedEvent.getType(), event -> dispatcher.exec(
+//                new EntityServiceFindAction<FindStreamTypeCriteria, StreamTypeEntity>(new FindStreamTypeCriteria()))
+//                .onSuccess(this::updateList));
+//
+//    }
+//
+//    private void updateList(final List<StreamTypeEntity> list) {
+//        streamTypeList = list;
+//    }
 
     public List<String> getRawStreamTypeList() {
         final List<String> rtn = new ArrayList<>();

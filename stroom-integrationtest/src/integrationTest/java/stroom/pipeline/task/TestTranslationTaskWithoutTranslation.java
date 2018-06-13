@@ -20,14 +20,14 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.node.NodeCache;
 import stroom.streamstore.MockStreamStore;
-import stroom.streamstore.fs.StreamTypeNames;
-import stroom.streamstore.meta.db.MockStreamMetaService;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.meta.impl.mock.MockStreamMetaService;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamstore.tools.StoreCreationTool;
 import stroom.streamtask.StreamProcessorTask;
 import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.streamtask.StreamTaskCreator;
-import stroom.streamtask.shared.StreamTask;
+import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.task.TaskManager;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.ComparisonHelper;
@@ -113,9 +113,9 @@ public class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegr
      */
     private List<StreamProcessorTaskExecutor> processAll() {
         final List<StreamProcessorTaskExecutor> results = new ArrayList<>();
-        List<StreamTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getDefaultNode(), 100);
+        List<ProcessorFilterTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getDefaultNode(), 100);
         while (streamTasks.size() > 0) {
-            for (final StreamTask streamTask : streamTasks) {
+            for (final ProcessorFilterTask streamTask : streamTasks) {
                 final StreamProcessorTask task = new StreamProcessorTask(streamTask);
                 taskManager.exec(task);
                 results.add(task.getStreamProcessorTaskExecutor());

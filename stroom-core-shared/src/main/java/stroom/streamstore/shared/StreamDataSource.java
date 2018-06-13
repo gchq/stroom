@@ -24,9 +24,9 @@ public class StreamDataSource {
     private static final Map<String, DataSourceField> FIELD_MAP;
     private static final List<DataSourceField> EXTENDED_FIELDS = new ArrayList<>();
     private static final Map<String, DataSourceField> EXTENDED_FIELD_MAP;
-    private static final Map<String, String> STREAM_FIELDS = new HashMap<>();
-    private static final Map<String, String> FEED_FIELDS = new HashMap<>();
-    private static final Map<String, String> STREAM_TYPE_FIELDS = new HashMap<>();
+//    private static final Map<String, String> STREAM_FIELDS = new HashMap<>();
+//    private static final Map<String, String> FEED_FIELDS = new HashMap<>();
+//    private static final Map<String, String> STREAM_TYPE_FIELDS = new HashMap<>();
 //    private static final Map<String, String> PIPELINE_FIELDS = new HashMap<>();
 
     public static final String FEED = "Feed";
@@ -52,12 +52,16 @@ public class StreamDataSource {
     public static final String FILE_SIZE = "FileSize";
     public static final String STREAM_SIZE = "StreamSize";
 
+    // Legacy or hidden fields.
+    public static final String FEED_ID = "Feed Id";
+    public static final String STREAM_TASK_ID = "Stream Task Id";
+
     static {
-        STREAM_FIELDS.put(STREAM_ID, StreamEntity.ID);
-        STREAM_FIELDS.put(PARENT_STREAM_ID, StreamEntity.PARENT_STREAM_ID);
-        STREAM_FIELDS.put(CREATE_TIME, StreamEntity.CREATE_MS);
-        FEED_FIELDS.put(FEED, FeedEntity.NAME);
-        STREAM_TYPE_FIELDS.put(STREAM_TYPE, StreamTypeEntity.NAME);
+//        STREAM_FIELDS.put(STREAM_ID, StreamEntity.ID);
+//        STREAM_FIELDS.put(PARENT_STREAM_ID, StreamEntity.PARENT_STREAM_ID);
+//        STREAM_FIELDS.put(CREATE_TIME, StreamEntity.CREATE_MS);
+//        FEED_FIELDS.put(FEED, FeedEntity.NAME);
+//        STREAM_TYPE_FIELDS.put(STREAM_TYPE, StreamTypeEntity.NAME);
 //        PIPELINE_FIELDS.put(PIPELINE, PipelineDoc.NAME);
 
         FIELDS.add(createStringField(FEED));
@@ -148,17 +152,17 @@ public class StreamDataSource {
         return EXTENDED_FIELD_MAP;
     }
 
-    public static Map<String, String> getStreamFields() {
-        return STREAM_FIELDS;
-    }
-
-    public static Map<String, String> getFeedFields() {
-        return FEED_FIELDS;
-    }
-
-    public static Map<String, String> getStreamTypeFields() {
-        return STREAM_TYPE_FIELDS;
-    }
+//    public static Map<String, String> getStreamFields() {
+//        return STREAM_FIELDS;
+//    }
+//
+//    public static Map<String, String> getFeedFields() {
+//        return FEED_FIELDS;
+//    }
+//
+//    public static Map<String, String> getStreamTypeFields() {
+//        return STREAM_TYPE_FIELDS;
+//    }
 
 //    public static Map<String, String> getPipelineFields() {
 //        return PIPELINE_FIELDS;

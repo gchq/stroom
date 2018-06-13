@@ -19,7 +19,7 @@ package stroom.streamtask.testshared;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.streamtask.shared.StreamProcessorFilterTracker;
+import stroom.streamtask.shared.ProcessorFilterTracker;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
@@ -27,7 +27,7 @@ import stroom.util.test.StroomUnitTest;
 public class TestStreamProcessorFilterTracker extends StroomUnitTest {
     @Test
     public void testPercent() {
-        final StreamProcessorFilterTracker track = new StreamProcessorFilterTracker();
+        final ProcessorFilterTracker track = new ProcessorFilterTracker();
         track.setMinStreamCreateMs(0L);
         track.setMaxStreamCreateMs(100L);
         track.setStreamCreateMs(50L);
@@ -37,7 +37,7 @@ public class TestStreamProcessorFilterTracker extends StroomUnitTest {
 
     @Test
     public void testPercentReal() {
-        final StreamProcessorFilterTracker track = new StreamProcessorFilterTracker();
+        final ProcessorFilterTracker track = new ProcessorFilterTracker();
         track.setMinStreamCreateMs(1413456996578L);
         track.setMaxStreamCreateMs(1413553741788L);
         track.setStreamCreateMs(1413553752020L);

@@ -16,7 +16,7 @@
 
 package stroom.streamstore;
 
-import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.meta.api.FindStreamCriteria;
 import stroom.task.ServerTask;
 
 import java.nio.file.Path;

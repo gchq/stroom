@@ -38,12 +38,11 @@ import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.Security;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.meta.api.FindStreamCriteria;
+import stroom.streamstore.meta.api.Stream;
 import stroom.streamstore.shared.StreamDataSource;
 
 import javax.inject.Inject;
-import java.util.Date;
 import java.util.List;
 
 public class StreamEventLog {

@@ -26,11 +26,11 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;
 import stroom.security.Security;
 import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.meta.StreamMetaService;
+import stroom.streamstore.meta.api.StreamMetaService;
 import stroom.streamstore.shared.ExpressionUtil;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
-import stroom.streamtask.shared.StreamProcessor;
+import stroom.streamstore.meta.api.FindStreamCriteria;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamtask.shared.Processor;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 
@@ -111,7 +111,7 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
         return security.asProcessingUserResult(() -> {
             final FindStreamCriteria criteria = new FindStreamCriteria();
             criteria.setExpression(ExpressionUtil.createStreamExpression(id));
-            criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
+            criteria.getFetchSet().add(Processor.ENTITY_TYPE);
             criteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
             criteria.getFetchSet().add(FeedDoc.DOCUMENT_TYPE);
 
@@ -132,7 +132,7 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
         return security.asProcessingUserResult(() -> {
             final FindStreamCriteria criteria = new FindStreamCriteria();
             criteria.setExpression(ExpressionUtil.createParentStreamExpression(id));
-            criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
+            criteria.getFetchSet().add(Processor.ENTITY_TYPE);
             criteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
 
             return streamMetaService.find(criteria).getFirst();

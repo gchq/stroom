@@ -8,7 +8,7 @@ import stroom.node.shared.VolumeEntity;
 import stroom.node.shared.VolumeEntity.VolumeType;
 import stroom.streamstore.FindStreamVolumeCriteria;
 import stroom.streamstore.fs.StreamVolumeService.StreamVolume;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.meta.api.Stream;
 
 import java.util.Set;
 
@@ -76,28 +76,28 @@ public interface StreamVolumeService extends FindService<StreamVolume, FindStrea
         }
     }
 
-    interface StreamAndVolumes extends SharedObject {
-        Stream getStream();
-
-        Set<Volume> getVolumes();
-    }
-
-    class StreamAndVolumesImpl implements StreamAndVolumes {
-        private final Stream stream;
-        private final Set<Volume> volumes;
-
-        StreamAndVolumesImpl(final Stream stream,
-                             final Set<Volume> volumes) {
-            this.stream = stream;
-            this.volumes = volumes;
-        }
-
-        public Stream getStream() {
-            return stream;
-        }
-
-        public Set<Volume> getVolumes() {
-            return volumes;
-        }
-    }
+//    interface StreamAndVolumes extends SharedObject {
+//        Stream getStream();
+//
+//        Set<Volume> getVolumes();
+//    }
+//
+//    class StreamAndVolumesImpl implements StreamAndVolumes {
+//        private final Stream stream;
+//        private final Set<Volume> volumes;
+//
+//        StreamAndVolumesImpl(final Stream stream,
+//                             final Set<Volume> volumes) {
+//            this.stream = stream;
+//            this.volumes = volumes;
+//        }
+//
+//        public Stream getStream() {
+//            return stream;
+//        }
+//
+//        public Set<Volume> getVolumes() {
+//            return volumes;
+//        }
+//    }
 }

@@ -23,7 +23,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.QueryData;
-import stroom.streamtask.shared.StreamProcessorFilter;
+import stroom.streamtask.shared.ProcessorFilter;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
@@ -52,7 +52,7 @@ public class TestXMLMarshallUtil extends StroomUnitTest {
                 .build();
 
         // Test Writing
-        StreamProcessorFilter streamProcessorFilter = new StreamProcessorFilter();
+        ProcessorFilter streamProcessorFilter = new ProcessorFilter();
         streamProcessorFilter.setQueryData(queryData1);
         streamProcessorFilter = MARSHALLER.marshal(streamProcessorFilter);
         final String xml1 = streamProcessorFilter.getData();
@@ -67,7 +67,7 @@ public class TestXMLMarshallUtil extends StroomUnitTest {
 
     @Test
     public void testShort() {
-        StreamProcessorFilter streamProcessorFilter = new StreamProcessorFilter();
+        ProcessorFilter streamProcessorFilter = new ProcessorFilter();
         streamProcessorFilter.setData(
                 "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><QueryData></QueryData>");
         streamProcessorFilter = MARSHALLER.unmarshal(streamProcessorFilter);

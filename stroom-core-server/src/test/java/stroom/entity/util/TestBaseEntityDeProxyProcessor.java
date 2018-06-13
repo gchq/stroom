@@ -16,51 +16,45 @@
 
 package stroom.entity.util;
 
-import org.hibernate.proxy.HibernateProxy;
-import org.hibernate.proxy.LazyInitializer;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.Ignore;
 import org.junit.runner.RunWith;
-import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
-import java.lang.reflect.Proxy;
-
 @RunWith(StroomJUnit4ClassRunner.class)
+@Ignore
 public class TestBaseEntityDeProxyProcessor extends StroomUnitTest {
-    @Test
-    public void testDeProxy() {
-        final DummyStreamType streamType = new DummyStreamType();
-        streamType.setId(100L);
-        final StreamEntity stream = new StreamEntity();
-        stream.setStreamType(streamType);
-
-        final StreamEntity deproxy = (StreamEntity) (new BaseEntityDeProxyProcessor(true).process(stream));
-
-        Assert.assertEquals(deproxy.getStreamType().getClass(), StreamTypeEntity.class);
-        Assert.assertEquals(100L, deproxy.getStreamType().getId());
-    }
-
-    public static class DummyStreamType extends StreamTypeEntity implements HibernateProxy {
-        private static final long serialVersionUID = -338271738308074875L;
-
-        @Override
-        public LazyInitializer getHibernateLazyInitializer() {
-            final Object proxy = Proxy.newProxyInstance(this.getClass().getClassLoader(),
-                    new Class<?>[]{LazyInitializer.class}, (proxy1, method, args) -> {
-                        if (method.getName().equals("getEntityName")) {
-                            return StreamTypeEntity.class.getName();
-                        }
-                        return null;
-                    });
-            return (LazyInitializer) proxy;
-        }
-
-        @Override
-        public Object writeReplace() {
-            return null;
-        }
-    }
+//    @Test
+//    public void testDeProxy() {
+//        final DummyStreamType streamType = new DummyStreamType();
+//        streamType.setId(100L);
+//        final StreamEntity stream = new StreamEntity();
+//        stream.setStreamType(streamType);
+//
+//        final StreamEntity deproxy = (StreamEntity) (new BaseEntityDeProxyProcessor(true).process(stream));
+//
+//        Assert.assertEquals(deproxy.getStreamType().getClass(), StreamTypeEntity.class);
+//        Assert.assertEquals(100L, deproxy.getStreamType().getId());
+//    }
+//
+//    public static class DummyStreamType extends StreamTypeEntity implements HibernateProxy {
+//        private static final long serialVersionUID = -338271738308074875L;
+//
+//        @Override
+//        public LazyInitializer getHibernateLazyInitializer() {
+//            final Object proxy = Proxy.newProxyInstance(this.getClass().getClassLoader(),
+//                    new Class<?>[]{LazyInitializer.class}, (proxy1, method, args) -> {
+//                        if (method.getName().equals("getEntityName")) {
+//                            return StreamTypeEntity.class.getName();
+//                        }
+//                        return null;
+//                    });
+//            return (LazyInitializer) proxy;
+//        }
+//
+//        @Override
+//        public Object writeReplace() {
+//            return null;
+//        }
+//    }
 }

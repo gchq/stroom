@@ -18,7 +18,7 @@ package stroom.pipeline.shared;
 
 import stroom.docref.DocRef;
 import stroom.entity.shared.Action;
-import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.meta.api.FindStreamCriteria;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -25,13 +25,12 @@ import stroom.feed.shared.FeedDoc;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
-import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
-import stroom.streamstore.fs.StreamTypeNames;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamstore.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.fs.serializable.RawInputSegmentWriter;
-import stroom.streamstore.shared.StreamTypeEntity;
+import stroom.streamstore.meta.api.StreamProperties;
 import stroom.streamtask.StreamTargetStroomStreamHandler;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
@@ -104,16 +103,16 @@ public class DataLoader {
         if (feed.isReference() == mandateEffectiveDate) {
             LOGGER.info("Loading data: " + info);
 
-            String streamTypeName = StreamTypeEntity.RAW_EVENTS.getName();
+            String streamTypeName = StreamTypeNames.RAW_EVENTS;
             if (feed.isReference()) {
-                streamTypeName = StreamTypeEntity.RAW_REFERENCE.getName();
+                streamTypeName = StreamTypeNames.RAW_REFERENCE;
             }
 
             final StreamProperties streamProperties = new StreamProperties.Builder()
-                            .feedName(feed.getName())
-                            .streamTypeName(streamTypeName)
-                            .effectiveMs(effectiveMs)
-                            .build();
+                    .feedName(feed.getName())
+                    .streamTypeName(streamTypeName)
+                    .effectiveMs(effectiveMs)
+                    .build();
 
             final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
 

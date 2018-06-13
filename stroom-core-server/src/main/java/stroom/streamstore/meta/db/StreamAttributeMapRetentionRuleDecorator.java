@@ -21,8 +21,8 @@ import stroom.dictionary.DictionaryStore;
 import stroom.ruleset.shared.DataRetentionRule;
 import stroom.streamstore.DataRetentionAgeUtil;
 import stroom.streamstore.ExpressionMatcher;
+import stroom.streamstore.meta.api.Stream;
 import stroom.streamstore.shared.StreamAttributeConstants;
-import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.util.date.DateUtil;
 
@@ -41,23 +41,23 @@ public class StreamAttributeMapRetentionRuleDecorator {
         expressionMatcher = new ExpressionMatcher(StreamDataSource.getFieldMap(), dictionaryStore);
     }
 
-    public void addMatchingRetentionRuleInfo(final StreamAttributeMap streamAttributeMap) {
+    public void addMatchingRetentionRuleInfo(final Stream stream, final Map<String, String> metaMap) {
         int index = -1;
 
         // If there are no active rules then we aren't going to process anything.
         if (rules.size() > 0) {
             // Create an attribute map we can match on.
-            final Map<String, Object> attributeMap = StreamAttributeMapUtil.createAttributeMap(streamAttributeMap);
+            final Map<String, Object> attributeMap = StreamAttributeMapUtil.createAttributeMap(stream, metaMap);
             index = findMatchingRuleIndex(attributeMap);
         }
 
         if (index != -1) {
             final DataRetentionRule rule = rules.get(index);
-            streamAttributeMap.addAttribute(StreamAttributeConstants.RETENTION_AGE, rule.getAgeString());
+            metaMap.put(StreamAttributeConstants.RETENTION_AGE, rule.getAgeString());
 
             String keepUntil = DataRetentionRule.FOREVER;
-            if (streamAttributeMap.getStream() != null) {
-                final long millis = streamAttributeMap.getStream().getCreateMs();
+            if (stream != null) {
+                final long millis = stream.getCreateMs();
                 final LocalDateTime createTime = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC).toLocalDateTime();
                 final Long ms = DataRetentionAgeUtil.plus(createTime, rule);
                 if (ms != null) {
@@ -65,12 +65,12 @@ public class StreamAttributeMapRetentionRuleDecorator {
                 }
             }
 
-            streamAttributeMap.addAttribute(StreamAttributeConstants.RETENTION_UNTIL, keepUntil);
-            streamAttributeMap.addAttribute(StreamAttributeConstants.RETENTION_RULE, rule.toString());
+            metaMap.put(StreamAttributeConstants.RETENTION_UNTIL, keepUntil);
+            metaMap.put(StreamAttributeConstants.RETENTION_RULE, rule.toString());
         } else {
-            streamAttributeMap.addAttribute(StreamAttributeConstants.RETENTION_AGE, DataRetentionRule.FOREVER);
-            streamAttributeMap.addAttribute(StreamAttributeConstants.RETENTION_UNTIL, DataRetentionRule.FOREVER);
-            streamAttributeMap.addAttribute(StreamAttributeConstants.RETENTION_RULE, "None");
+            metaMap.put(StreamAttributeConstants.RETENTION_AGE, DataRetentionRule.FOREVER);
+            metaMap.put(StreamAttributeConstants.RETENTION_UNTIL, DataRetentionRule.FOREVER);
+            metaMap.put(StreamAttributeConstants.RETENTION_RULE, "None");
         }
     }
 

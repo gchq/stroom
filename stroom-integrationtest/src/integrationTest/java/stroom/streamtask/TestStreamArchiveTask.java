@@ -30,13 +30,13 @@ import stroom.node.shared.Node;
 import stroom.streamstore.FindStreamVolumeCriteria;
 import stroom.streamstore.StreamDeleteExecutor;
 import stroom.streamstore.StreamRetentionExecutor;
-import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.FileSystemCleanExecutor;
 import stroom.streamstore.fs.StreamVolumeService;
 import stroom.streamstore.fs.StreamVolumeService.StreamVolume;
-import stroom.streamstore.shared.StreamTypeEntity;
+import stroom.streamstore.meta.api.StreamProperties;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.SimpleTaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.config.StroomProperties;
@@ -114,12 +114,12 @@ public class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
 
         final StreamProperties oldFile = new StreamProperties.Builder()
                 .feedName(feedName)
-                .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
+                .streamTypeName(StreamTypeNames.RAW_EVENTS)
                 .createMs(oldDate.toInstant().toEpochMilli())
                 .build();
         final StreamProperties newFile = new StreamProperties.Builder()
                 .feedName(feedName)
-                .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
+                .streamTypeName(StreamTypeNames.RAW_EVENTS)
                 .createMs(newDate.toInstant().toEpochMilli())
                 .build();
 

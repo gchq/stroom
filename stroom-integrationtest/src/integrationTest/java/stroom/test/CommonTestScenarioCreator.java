@@ -32,18 +32,18 @@ import stroom.node.shared.VolumeEntity;
 import stroom.node.shared.VolumeEntity.VolumeUseStatus;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.fs.serializable.RawInputSegmentWriter;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.meta.api.StreamProperties;
 import stroom.streamstore.shared.QueryData;
-import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamTypeEntity;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamProcessorFilterService;
 import stroom.streamtask.StreamProcessorService;
-import stroom.streamtask.shared.StreamProcessor;
+import stroom.streamtask.shared.Processor;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
@@ -87,7 +87,7 @@ public class CommonTestScenarioCreator {
                 .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
                 .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
                         .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed)
-                        .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeEntity.RAW_EVENTS.getName())
+                        .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                         .build())
                 .build();
 
@@ -95,7 +95,7 @@ public class CommonTestScenarioCreator {
     }
 
     public void createStreamProcessor(final QueryData queryData) {
-        StreamProcessor streamProcessor = new StreamProcessor();
+        Processor streamProcessor = new Processor();
         streamProcessor.setEnabled(true);
         streamProcessor = streamProcessorService.save(streamProcessor);
 
@@ -159,7 +159,7 @@ public class CommonTestScenarioCreator {
     public Stream createSampleBlankProcessedFile(final String feed, final Stream sourceStream) {
         final StreamProperties streamProperties = new StreamProperties.Builder()
                 .feedName(feed)
-                .streamTypeName(StreamTypeEntity.EVENTS.getName())
+                .streamTypeName(StreamTypeNames.EVENTS)
                 .parent(sourceStream)
                 .build();
 

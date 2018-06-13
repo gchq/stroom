@@ -27,12 +27,12 @@ import stroom.proxy.repo.StroomZipOutputStreamImpl;
 import stroom.security.Security;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.fs.StreamTypeNames;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamstore.fs.serializable.NestedInputStream;
 import stroom.streamstore.fs.serializable.RANestedInputStream;
-import stroom.streamstore.meta.StreamMetaService;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.meta.api.FindStreamCriteria;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.meta.api.StreamMetaService;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskContext;
 import stroom.task.TaskHandlerBean;
@@ -79,8 +79,10 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
         });
     }
 
-    private StreamDownloadResult downloadData(final StreamDownloadTask task, final FindStreamCriteria findStreamCriteria,
-                                              Path data, final StreamDownloadSettings settings) {
+    private StreamDownloadResult downloadData(final StreamDownloadTask task,
+                                              final FindStreamCriteria findStreamCriteria,
+                                              Path data,
+                                              final StreamDownloadSettings settings) {
         final BaseResultList<Stream> list = streamMetaService.find(findStreamCriteria);
 
         final StreamDownloadResult result = new StreamDownloadResult();

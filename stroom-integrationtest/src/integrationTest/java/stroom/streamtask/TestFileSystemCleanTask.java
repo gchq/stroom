@@ -26,16 +26,15 @@ import stroom.node.NodeService;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.streamstore.FindStreamVolumeCriteria;
-import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.FileSystemCleanExecutor;
 import stroom.streamstore.fs.FileSystemStreamMaintenanceService;
 import stroom.streamstore.fs.FileSystemUtil;
 import stroom.streamstore.fs.StreamVolumeService;
-import stroom.streamstore.meta.StreamMetaService;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamTypeEntity;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.meta.api.StreamProperties;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
@@ -88,11 +87,11 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
         final StreamProperties lockfile1 = new StreamProperties.Builder()
                 .feedName(feedName)
-                .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
+                .streamTypeName(StreamTypeNames.RAW_EVENTS)
                 .build();
         final StreamProperties nolockfile1 = new StreamProperties.Builder()
                 .feedName(feedName)
-                .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
+                .streamTypeName(StreamTypeNames.RAW_EVENTS)
                 .build();
         //
         // FILE1 LOCKED
@@ -165,7 +164,7 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
     public void testArchiveRemovedFile() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
-        final Stream stream = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeEntity.RAW_EVENTS.getName());
+        final Stream stream = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
 
         Collection<Path> files = streamMaintenanceService.findAllStreamFile(stream);
 
@@ -215,7 +214,7 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         for (long time = startTime; time < endTime; time += tenMin) {
             final StreamProperties streamProperties = new StreamProperties.Builder()
                     .feedName(feedName)
-                    .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
+                    .streamTypeName(StreamTypeNames.RAW_EVENTS)
                     .createMs(time)
                     .build();
             final StreamTarget t = streamStore.openStreamTarget(streamProperties);

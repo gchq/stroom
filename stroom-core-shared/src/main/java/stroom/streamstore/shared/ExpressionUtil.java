@@ -6,6 +6,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.streamstore.meta.api.StreamStatus;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -86,7 +87,7 @@ public final class ExpressionUtil {
                 .build();
     }
 
-    static int termCount(final ExpressionOperator expressionOperator) {
+    public static int termCount(final ExpressionOperator expressionOperator) {
         return terms(expressionOperator, null).size();
     }
 

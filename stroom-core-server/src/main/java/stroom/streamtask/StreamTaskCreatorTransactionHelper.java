@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.CriteriaSet;
-import stroom.entity.shared.IdRange;
 import stroom.entity.shared.Sort.Direction;
 import stroom.entity.util.ConnectionUtil;
 import stroom.entity.util.SqlBuilder;
@@ -32,25 +31,19 @@ import stroom.jobsystem.ClusterLockService;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.persist.EntityManagerSupport;
-import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.streamstore.OldFindStreamCriteria;
-import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.meta.db.StreamEntityService;
-import stroom.streamstore.shared.FeedEntity;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.meta.api.FindStreamCriteria;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.meta.api.StreamMetaService;
+import stroom.streamstore.meta.api.StreamStatus;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamStatus;
 import stroom.streamtask.InclusiveRanges.InclusiveRange;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
-import stroom.streamtask.shared.StreamProcessorFilter;
-import stroom.streamtask.shared.StreamProcessorFilterTracker;
-import stroom.streamtask.shared.StreamTask;
+import stroom.streamtask.shared.ProcessorFilter;
+import stroom.streamtask.shared.ProcessorFilterTask;
+import stroom.streamtask.shared.ProcessorFilterTracker;
 import stroom.streamtask.shared.TaskStatus;
 
 import javax.inject.Inject;
@@ -64,28 +57,27 @@ import java.util.Map.Entry;
 /**
  * Class used to do the transactional aspects of stream task creation
  */
-// @Transactional
 class StreamTaskCreatorTransactionHelper {
     private static final int RECENT_STREAM_ID_LIMIT = 10000;
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamTaskCreatorTransactionHelper.class);
 
     private static final String LOCK_NAME = "StreamTaskCreator";
-    private static final SqlBuilder MAX_STREAM_ID_SQL;
-
-    static {
-        final SqlBuilder sql = new SqlBuilder();
-        sql.append("SELECT MAX(");
-        sql.append(StreamEntity.ID);
-        sql.append(") FROM ");
-        sql.append(StreamEntity.TABLE_NAME);
-        MAX_STREAM_ID_SQL = sql;
-    }
+//    private static final SqlBuilder MAX_STREAM_ID_SQL;
+//
+//    static {
+//        final SqlBuilder sql = new SqlBuilder();
+//        sql.append("SELECT MAX(");
+//        sql.append(StreamEntity.ID);
+//        sql.append(") FROM ");
+//        sql.append(StreamEntity.TABLE_NAME);
+//        MAX_STREAM_ID_SQL = sql;
+//    }
 
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
     private final NodeCache nodeCache;
     private final ClusterLockService clusterLockService;
     private final StreamTaskService streamTaskService;
-    private final StreamEntityService streamEntityService;
+    private final StreamMetaService streamMetaService;
     private final StroomEntityManager stroomEntityManager;
     private final EntityManagerSupport entityManagerSupport;
 
@@ -93,13 +85,13 @@ class StreamTaskCreatorTransactionHelper {
     StreamTaskCreatorTransactionHelper(final NodeCache nodeCache,
                                        final ClusterLockService clusterLockService,
                                        final StreamTaskService streamTaskService,
-                                       final StreamEntityService streamEntityService,
+                                       final StreamMetaService streamMetaService,
                                        final StroomEntityManager stroomEntityManager,
                                        final EntityManagerSupport entityManagerSupport) {
         this.nodeCache = nodeCache;
         this.clusterLockService = clusterLockService;
         this.streamTaskService = streamTaskService;
-        this.streamEntityService = streamEntityService;
+        this.streamMetaService = streamMetaService;
         this.stroomEntityManager = stroomEntityManager;
         this.entityManagerSupport = entityManagerSupport;
     }
@@ -110,9 +102,9 @@ class StreamTaskCreatorTransactionHelper {
     public void releaseOwnedTasks() {
         final SqlBuilder sql = new SqlBuilder();
         sql.append("UPDATE ");
-        sql.append(StreamTask.TABLE_NAME);
+        sql.append(ProcessorFilterTask.TABLE_NAME);
         sql.append(" SET ");
-        sql.append(StreamTask.STATUS);
+        sql.append(ProcessorFilterTask.STATUS);
         sql.append(" = ");
         sql.arg(TaskStatus.UNPROCESSED.getPrimitiveValue());
         sql.append(", ");
@@ -123,7 +115,7 @@ class StreamTaskCreatorTransactionHelper {
         sql.arg(nodeCache.getDefaultNode().getId());
         final CriteriaSet<TaskStatus> criteriaSet = new CriteriaSet<>();
         criteriaSet.addAll(Arrays.asList(TaskStatus.UNPROCESSED, TaskStatus.ASSIGNED, TaskStatus.PROCESSING));
-        sql.appendPrimitiveValueSetQuery(StreamTask.STATUS, criteriaSet);
+        sql.appendPrimitiveValueSetQuery(ProcessorFilterTask.STATUS, criteriaSet);
 
         final long results = stroomEntityManager.executeNativeUpdate(sql);
 
@@ -136,65 +128,71 @@ class StreamTaskCreatorTransactionHelper {
      * @return streams that have not yet got a stream task for a particular
      * stream processor
      */
-    public List<Stream> runSelectStreamQuery(final OldFindStreamCriteria criteria,
-                                                   final long minStreamId, final int max) {
+    public List<Stream> runSelectStreamQuery(final ExpressionOperator expression,
+                                             final long minStreamId,
+                                             final int max) {
+        final ExpressionOperator streamIdExpression = new ExpressionOperator.Builder(Op.AND)
+                .addOperator(expression)
+                .addTerm(StreamDataSource.STREAM_ID, Condition.GREATER_THAN_OR_EQUAL_TO, String.valueOf(minStreamId))
+                .build();
+
         // Copy the filter
-        final OldFindStreamCriteria findStreamCriteria = new OldFindStreamCriteria();
-        findStreamCriteria.copyFrom(criteria);
+        final FindStreamCriteria findStreamCriteria = new FindStreamCriteria(streamIdExpression);
+//        findStreamCriteria.copyFrom(criteria);
         findStreamCriteria.setSort(FindStreamCriteria.FIELD_ID, Direction.ASCENDING, false);
-        findStreamCriteria.setStreamIdRange(new IdRange(minStreamId, null));
-        // Don't care about status
-        findStreamCriteria.obtainStatusSet().add(StreamStatus.LOCKED);
-        findStreamCriteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
+//        findStreamCriteria.setStreamIdRange(new IdRange(minStreamId, null));
+//        // Don't care about status
+//        findStreamCriteria.obtainStatusSet().add(StreamStatus.LOCKED);
+//        findStreamCriteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
         findStreamCriteria.obtainPageRequest().setLength(max);
 
-        return streamEntityService.find(findStreamCriteria);
+        return streamMetaService.find(findStreamCriteria);
     }
 
-    private ExpressionOperator copyExpression(final ExpressionOperator expression) {
-        ExpressionOperator.Builder builder;
-
-        if (expression != null) {
-            builder = new ExpressionOperator.Builder(expression.getOp());
-
-            if (expression.enabled() && expression.getChildren() != null) {
-                addChildren(builder, expression);
-            }
-
-        } else {
-            builder = new ExpressionOperator.Builder(Op.AND);
-        }
-
-        final ExpressionOperator.Builder or = new ExpressionOperator.Builder(Op.OR)
-                .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.LOCKED.getDisplayValue())
-                .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue());
-        builder.addOperator(or.build());
-        return builder.build();
-    }
-
-    private void addChildren(final ExpressionOperator.Builder builder, final ExpressionOperator parent) {
-        for (final ExpressionItem item : parent.getChildren()) {
-            if (item.enabled()) {
-                if (item instanceof ExpressionOperator) {
-                    final ExpressionOperator expressionOperator = (ExpressionOperator) item;
-                    final ExpressionOperator.Builder child = new ExpressionOperator.Builder(Op.OR);
-                    addChildren(child, expressionOperator);
-                    builder.addOperator(child.build());
-                } else if (item instanceof ExpressionTerm) {
-                    final ExpressionTerm expressionTerm = (ExpressionTerm) item;
-
-                    // Don't copy stream status terms as we are going to set them later.
-                    if (!StreamDataSource.STATUS.equals(expressionTerm.getField())) {
-                        if (Condition.IN_DICTIONARY.equals(expressionTerm.getCondition())) {
-                            builder.addDictionaryTerm(expressionTerm.getField(), expressionTerm.getCondition(), expressionTerm.getDictionary());
-                        } else {
-                            builder.addTerm(expressionTerm.getField(), expressionTerm.getCondition(), expressionTerm.getValue());
-                        }
-                    }
-                }
-            }
-        }
-    }
+//    private ExpressionOperator copyExpression(final ExpressionOperator expression) {
+//        ExpressionOperator.Builder builder;
+//
+//        if (expression != null) {
+//            builder = new ExpressionOperator.Builder(expression.getOp());
+//
+//            if (expression.enabled() && expression.getChildren() != null) {
+//                addChildren(builder, expression);
+//            }
+//
+//        } else {
+//            builder = new ExpressionOperator.Builder(Op.AND);
+//        }
+//
+//        final ExpressionOperator.Builder or = new ExpressionOperator.Builder(Op.OR)
+//                .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.LOCKED.getDisplayValue())
+//                .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue());
+//        builder.addOperator(or.build());
+//        return builder.build();
+//    }
+//
+//    private void addChildren(final ExpressionOperator.Builder builder, final ExpressionOperator parent) {
+//        for (final ExpressionItem item : parent.getChildren()) {
+//            if (item.enabled()) {
+//                if (item instanceof ExpressionOperator) {
+//                    final ExpressionOperator expressionOperator = (ExpressionOperator) item;
+//                    final ExpressionOperator.Builder child = new ExpressionOperator.Builder(Op.OR);
+//                    addChildren(child, expressionOperator);
+//                    builder.addOperator(child.build());
+//                } else if (item instanceof ExpressionTerm) {
+//                    final ExpressionTerm expressionTerm = (ExpressionTerm) item;
+//
+//                    // Don't copy stream status terms as we are going to set them later.
+//                    if (!StreamDataSource.STATUS.equals(expressionTerm.getField())) {
+//                        if (Condition.IN_DICTIONARY.equals(expressionTerm.getCondition())) {
+//                            builder.addDictionaryTerm(expressionTerm.getField(), expressionTerm.getCondition(), expressionTerm.getDictionary());
+//                        } else {
+//                            builder.addTerm(expressionTerm.getField(), expressionTerm.getCondition(), expressionTerm.getValue());
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     /**
      * Create new tasks for the specified filter and add them to the queue.
@@ -207,8 +205,6 @@ class StreamTaskCreatorTransactionHelper {
      * @param streams          The map of streams and optional event ranges to create stream
      *                         tasks for.
      * @param thisNode         This node, the node that will own the created tasks.
-     * @param recentStreamInfo Information we have about streams that have been recently
-     *                         created.
      * @param reachedLimit     For search based stream task creation this indicates if we
      *                         have reached the limit of stream tasks created for a single
      *                         search. This limit is imposed to stop search based task
@@ -217,15 +213,14 @@ class StreamTaskCreatorTransactionHelper {
      * node and available to be handed to workers (i.e. their associated
      * streams are not locked).
      */
-    public CreatedTasks createNewTasks(final StreamProcessorFilter filter,
-                                       final StreamProcessorFilterTracker tracker,
+    public CreatedTasks createNewTasks(final ProcessorFilter filter,
+                                       final ProcessorFilterTracker tracker,
                                        final long streamQueryTime,
                                        final Map<Stream, InclusiveRanges> streams,
                                        final Node thisNode,
-                                       final StreamTaskCreatorRecentStreamDetails recentStreamInfo,
                                        final boolean reachedLimit) {
         return entityManagerSupport.transactionResult(em -> {
-            List<StreamTask> availableTaskList = Collections.emptyList();
+            List<ProcessorFilterTask> availableTaskList = Collections.emptyList();
             int availableTasksCreated = 0;
             int totalTasksCreated = 0;
             long eventCount = 0;
@@ -246,13 +241,13 @@ class StreamTaskCreatorTransactionHelper {
 
                     final List<String> columnNames = Arrays.asList(
                             BaseEntity.VERSION,
-                            StreamTask.CREATE_MS,
-                            StreamTask.STATUS,
-                            StreamTask.STATUS_MS,
+                            ProcessorFilterTask.CREATE_MS,
+                            ProcessorFilterTask.STATUS,
+                            ProcessorFilterTask.STATUS_MS,
                             Node.FOREIGN_KEY,
-                            StreamEntity.FOREIGN_KEY,
-                            StreamTask.DATA,
-                            StreamProcessorFilter.FOREIGN_KEY);
+                            ProcessorFilterTask.STREAM_ID,
+                            ProcessorFilterTask.DATA,
+                            ProcessorFilter.FOREIGN_KEY);
 
                     final List<List<Object>> allArgs = new ArrayList<>();
 
@@ -314,7 +309,7 @@ class StreamTaskCreatorTransactionHelper {
                         try {
                             try (final ConnectionUtil.MultiInsertExecutor multiInsertExecutor = new ConnectionUtil.MultiInsertExecutor(
                                     connection,
-                                    StreamTask.TABLE_NAME,
+                                    ProcessorFilterTask.TABLE_NAME,
                                     columnNames)) {
 
                                 multiInsertExecutor.execute(allArgs);
@@ -329,7 +324,7 @@ class StreamTaskCreatorTransactionHelper {
 
                     // Select them back
                     final FindStreamTaskCriteria findStreamTaskCriteria = new FindStreamTaskCriteria();
-                    findStreamTaskCriteria.obtainNodeIdSet().add(thisNode);
+                    findStreamTaskCriteria.obtainNodeIdSet().add(thisNode.getId());
                     findStreamTaskCriteria.setCreateMs(streamTaskCreateMs);
                     findStreamTaskCriteria.obtainStreamTaskStatusSet().add(TaskStatus.UNPROCESSED);
                     findStreamTaskCriteria.obtainStreamProcessorFilterIdSet().add(filter.getId());
@@ -379,7 +374,9 @@ class StreamTaskCreatorTransactionHelper {
                     // Only create tasks for streams with an id 1 or more greater
                     // than the current max stream id in future as we didn't manage
                     // to create any tasks.
-                    tracker.setMinStreamId(recentStreamInfo.getMaxStreamId() + 1);
+//                    tracker.setMinStreamId(recentStreamInfo.getMaxStreamId() + 1);
+
+                    tracker.setMinStreamId(streamIdRange.getMax() + 1);
                     tracker.setMinEventId(0L);
                 }
 
@@ -407,7 +404,7 @@ class StreamTaskCreatorTransactionHelper {
                 if (tracker.getMaxStreamCreateMs() != null && tracker.getStreamCreateMs() != null
                         && tracker.getStreamCreateMs() > tracker.getMaxStreamCreateMs()) {
                     LOGGER.info("processStreamProcessorFilter() - Finished task creation for bounded filter {}", filter);
-                    tracker.setStatus(StreamProcessorFilterTracker.COMPLETE);
+                    tracker.setStatus(ProcessorFilterTracker.COMPLETE);
                 }
 
                 // Save the tracker state.
@@ -421,7 +418,7 @@ class StreamTaskCreatorTransactionHelper {
         });
     }
 
-    public StreamProcessorFilterTracker saveTracker(final StreamProcessorFilterTracker tracker) {
+    ProcessorFilterTracker saveTracker(final ProcessorFilterTracker tracker) {
         return stroomEntityManager.saveEntity(tracker);
     }
 
@@ -429,60 +426,60 @@ class StreamTaskCreatorTransactionHelper {
         clusterLockService.lock(LOCK_NAME);
     }
 
-    public StreamTaskCreatorRecentStreamDetails getRecentStreamInfo(
-            final StreamTaskCreatorRecentStreamDetails lastRecent) {
-        StreamTaskCreatorRecentStreamDetails recentStreamInfo = new StreamTaskCreatorRecentStreamDetails(lastRecent,
-                getMaxStreamId());
-        if (recentStreamInfo.hasRecentDetail()) {
-            // Only do this check if not that many streams have come in.
-            if (recentStreamInfo.getRecentStreamCount() > RECENT_STREAM_ID_LIMIT) {
-                // Forget the history and start again.
-                recentStreamInfo = new StreamTaskCreatorRecentStreamDetails(null, recentStreamInfo.getMaxStreamId());
-            } else {
-                final SqlBuilder sql = new SqlBuilder();
-                sql.append("SELECT DISTINCT(");
-                sql.append(FeedEntity.FOREIGN_KEY);
-                sql.append("), 'A' FROM ");
-                sql.append(StreamEntity.TABLE_NAME);
-                sql.append(" WHERE ");
-                sql.append(StreamEntity.ID);
-                sql.append(" > ");
-                sql.arg(recentStreamInfo.getRecentStreamId());
-                sql.append(" AND ");
-                sql.append(StreamEntity.ID);
-                sql.append(" <= ");
-                sql.arg(recentStreamInfo.getMaxStreamId());
-
-                // Find out about feeds that have come in recently
-                @SuppressWarnings("unchecked") final List<Object[]> resultSet = stroomEntityManager.executeNativeQueryResultList(sql);
-
-                for (final Object[] row : resultSet) {
-                    recentStreamInfo.addRecentFeedId(((Number) row[0]).longValue());
-                }
-            }
-        }
-        return recentStreamInfo;
-    }
-
-    private long getMaxStreamId() {
-        return stroomEntityManager.executeNativeQueryLongResult(MAX_STREAM_ID_SQL);
-    }
+//    public StreamTaskCreatorRecentStreamDetails getRecentStreamInfo(
+//            final StreamTaskCreatorRecentStreamDetails lastRecent) {
+//        StreamTaskCreatorRecentStreamDetails recentStreamInfo = new StreamTaskCreatorRecentStreamDetails(lastRecent,
+//                getMaxStreamId());
+//        if (recentStreamInfo.hasRecentDetail()) {
+//            // Only do this check if not that many streams have come in.
+//            if (recentStreamInfo.getRecentStreamCount() > RECENT_STREAM_ID_LIMIT) {
+//                // Forget the history and start again.
+//                recentStreamInfo = new StreamTaskCreatorRecentStreamDetails(null, recentStreamInfo.getMaxStreamId());
+//            } else {
+//                final SqlBuilder sql = new SqlBuilder();
+//                sql.append("SELECT DISTINCT(");
+//                sql.append(FeedEntity.FOREIGN_KEY);
+//                sql.append("), 'A' FROM ");
+//                sql.append(StreamEntity.TABLE_NAME);
+//                sql.append(" WHERE ");
+//                sql.append(StreamEntity.ID);
+//                sql.append(" > ");
+//                sql.arg(recentStreamInfo.getRecentStreamId());
+//                sql.append(" AND ");
+//                sql.append(StreamEntity.ID);
+//                sql.append(" <= ");
+//                sql.arg(recentStreamInfo.getMaxStreamId());
+//
+//                // Find out about feeds that have come in recently
+//                @SuppressWarnings("unchecked") final List<Object[]> resultSet = stroomEntityManager.executeNativeQueryResultList(sql);
+//
+//                for (final Object[] row : resultSet) {
+//                    recentStreamInfo.addRecentFeedId(((Number) row[0]).longValue());
+//                }
+//            }
+//        }
+//        return recentStreamInfo;
+//    }
+//
+//    private long getMaxStreamId() {
+//        return stroomEntityManager.executeNativeQueryLongResult(MAX_STREAM_ID_SQL);
+//    }
 
     public static class CreatedTasks {
-        private final List<StreamTask> availableTaskList;
+        private final List<ProcessorFilterTask> availableTaskList;
         private final int availableTasksCreated;
         private final int totalTasksCreated;
         private final long eventCount;
 
-        public CreatedTasks(final List<StreamTask> availableTaskList, final int availableTasksCreated,
-                            final int totalTasksCreated, final long eventCount) {
+        CreatedTasks(final List<ProcessorFilterTask> availableTaskList, final int availableTasksCreated,
+                     final int totalTasksCreated, final long eventCount) {
             this.availableTaskList = availableTaskList;
             this.availableTasksCreated = availableTasksCreated;
             this.totalTasksCreated = totalTasksCreated;
             this.eventCount = eventCount;
         }
 
-        public List<StreamTask> getAvailableTaskList() {
+        List<ProcessorFilterTask> getAvailableTaskList() {
             return availableTaskList;
         }
 
@@ -490,7 +487,7 @@ class StreamTaskCreatorTransactionHelper {
             return availableTasksCreated;
         }
 
-        public int getTotalTasksCreated() {
+        int getTotalTasksCreated() {
             return totalTasksCreated;
         }
 

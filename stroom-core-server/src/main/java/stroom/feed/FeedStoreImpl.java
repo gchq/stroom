@@ -20,7 +20,6 @@ package stroom.feed;
 import stroom.docref.DocRef;
 import stroom.docstore.Persistence;
 import stroom.docstore.Store;
-import stroom.entity.shared.EntityServiceException;
 import stroom.explorer.shared.DocumentType;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.LegacyXMLSerialiser;
@@ -28,7 +27,6 @@ import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
-import stroom.util.config.StroomProperties;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
@@ -68,7 +66,7 @@ public class FeedStoreImpl implements FeedStore {
 
     @Override
     public DocRef createDocument(final String name) {
-       FeedNameValidator.validateName(name);
+        FeedNameValidator.validateName(name);
         return store.createDocument(name);
     }
 

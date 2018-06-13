@@ -20,14 +20,13 @@ package stroom.streamtask;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.node.shared.Node;
-import stroom.streamstore.meta.StreamMetaService;
-import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.meta.api.FindStreamCriteria;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.meta.api.StreamMetaService;
 import stroom.streamstore.shared.QueryData;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamEntity;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
-import stroom.streamtask.shared.StreamProcessorFilter;
-import stroom.streamtask.shared.StreamTask;
+import stroom.streamtask.shared.ProcessorFilter;
+import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.streamtask.shared.TaskStatus;
 import stroom.task.TaskContext;
 
@@ -56,10 +55,10 @@ public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
     }
 
     @Override
-    public List<StreamTask> assignStreamTasks(final Node node, final int count) {
-        List<StreamTask> taskList = Collections.emptyList();
+    public List<ProcessorFilterTask> assignStreamTasks(final Node node, final int count) {
+        List<ProcessorFilterTask> taskList = Collections.emptyList();
         final FindStreamProcessorFilterCriteria criteria = new FindStreamProcessorFilterCriteria();
-        final BaseResultList<StreamProcessorFilter> streamProcessorFilters = streamProcessorFilterService
+        final BaseResultList<ProcessorFilter> streamProcessorFilters = streamProcessorFilterService
                 .find(criteria);
         if (streamProcessorFilters != null && streamProcessorFilters.size() > 0) {
             // Sort by priority.
@@ -67,7 +66,7 @@ public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
 
             // Get tasks for each filter.
             taskList = new ArrayList<>();
-            for (final StreamProcessorFilter filter : streamProcessorFilters) {
+            for (final ProcessorFilter filter : streamProcessorFilters) {
                 final QueryData queryData = filter.getQueryData();
 
                 final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
@@ -83,8 +82,8 @@ public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
                             // greater than this stream in future.
                             filter.getStreamProcessorFilterTracker().setMinStreamId(stream.getId() + 1);
 
-                            final StreamTask streamTask = new StreamTask();
-                            streamTask.setStream((StreamEntity) stream);
+                            final ProcessorFilterTask streamTask = new ProcessorFilterTask();
+                            streamTask.setStream(stream.getId());
                             streamTask.setStreamProcessorFilter(filter);
                             streamTask.setNode(node);
                             streamTask.setStatus(TaskStatus.ASSIGNED);
@@ -122,7 +121,7 @@ public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
     }
 
     @Override
-    public void abandonStreamTasks(final Node node, final List<StreamTask> tasks) {
+    public void abandonStreamTasks(final Node node, final List<ProcessorFilterTask> tasks) {
         // NA
     }
 }

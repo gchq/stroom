@@ -17,6 +17,7 @@
 package stroom.streamstore.shared;
 
 import stroom.entity.shared.Action;
+import stroom.streamstore.meta.api.FindStreamCriteria;
 import stroom.util.shared.ResourceGeneration;
 
 public class DownloadDataAction extends Action<ResourceGeneration> {

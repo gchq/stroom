@@ -24,6 +24,12 @@ include 'stroom-proxy'
 include 'stroom-util-shared'
 include 'stroom-entity-shared'
 
+// Stream meta data projects
+include 'stroom-streamstore-meta-api'
+include 'stroom-streamstore-meta-impl-db'
+include 'stroom-streamstore-meta-impl-db-gen'
+include 'stroom-streamstore-meta-impl-mock'
+
 // API projects
 include 'stroom-security-api'
 include 'stroom-explorer-api'
@@ -64,6 +70,7 @@ include 'stroom-docstore-server'
 include 'stroom-explorer-server'
 include 'stroom-pipeline'
 include 'stroom-security-server'
+include 'stroom-security-impl-mock'
 include 'stroom-index-server'
 include 'stroom-statistics-server'
 include 'stroom-dashboard-server'

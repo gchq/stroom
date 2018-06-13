@@ -29,7 +29,7 @@ import stroom.guice.StroomBeanStore;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.streamstore.shared.StreamTypeEntity;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.cache.CacheManager;
 import stroom.util.date.DateUtil;
@@ -72,8 +72,8 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
             final DocRef pipeline1Ref = pipelineStore.createDocument("TEST_PIPELINE_1");
             final DocRef pipeline2Ref = pipelineStore.createDocument("TEST_PIPELINE_2");
 
-            final PipelineReference pipelineReference1 = new PipelineReference(pipeline1Ref, feed1, StreamTypeEntity.REFERENCE.getName());
-            final PipelineReference pipelineReference2 = new PipelineReference(pipeline2Ref, feed2, StreamTypeEntity.REFERENCE.getName());
+            final PipelineReference pipelineReference1 = new PipelineReference(pipeline1Ref, feed1, StreamTypeNames.REFERENCE);
+            final PipelineReference pipelineReference2 = new PipelineReference(pipeline2Ref, feed2, StreamTypeNames.REFERENCE);
 
             final List<PipelineReference> pipelineReferences = new ArrayList<>();
             pipelineReferences.add(pipelineReference1);
@@ -158,7 +158,7 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
 //            feed = feedService.save(feed);
 
             final DocRef pipelineRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, "1234");
-            final PipelineReference pipelineReference = new PipelineReference(pipelineRef, feed, StreamTypeEntity.REFERENCE.getName());
+            final PipelineReference pipelineReference = new PipelineReference(pipelineRef, feed, StreamTypeNames.REFERENCE);
             final List<PipelineReference> pipelineReferences = new ArrayList<>();
             pipelineReferences.add(pipelineReference);
 

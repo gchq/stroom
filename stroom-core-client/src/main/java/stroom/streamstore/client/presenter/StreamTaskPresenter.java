@@ -68,8 +68,8 @@ public class StreamTaskPresenter extends MyPresenterWidget<StreamTaskPresenter.S
                     findStreamTaskCriteria.obtainPipelineSet().add(new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid));
                 }
 
-                findStreamTaskCriteria.obtainFeedNameSet().clear();
-                findStreamTaskCriteria.obtainFeedNameSet().add(row.getLabel().get(FindStreamTaskCriteria.SUMMARY_POS_FEED));
+//                findStreamTaskCriteria.obtainFeedNameSet().clear();
+//                findStreamTaskCriteria.obtainFeedNameSet().add(row.getLabel().get(FindStreamTaskCriteria.SUMMARY_POS_FEED));
 
                 findStreamTaskCriteria.obtainStreamTaskStatusSet().clear();
                 findStreamTaskCriteria.obtainStreamTaskStatusSet()

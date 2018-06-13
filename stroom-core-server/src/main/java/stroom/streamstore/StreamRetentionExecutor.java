@@ -29,10 +29,10 @@ import stroom.jobsystem.JobTrackedSchedule;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.streamstore.meta.StreamMetaService;
-import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.meta.api.FindStreamCriteria;
+import stroom.streamstore.meta.api.StreamMetaService;
+import stroom.streamstore.meta.api.StreamStatus;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamStatus;
 import stroom.task.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.lifecycle.StroomSimpleCronSchedule;
@@ -131,15 +131,10 @@ public class StreamRetentionExecutor {
             criteria.obtainPageRequest().setLength(DELETE_STREAM_BATCH_SIZE);
 
             long total = 0;
-            long deleted;
+            int deleted;
             do {
-                final Long recordsDeleted = streamMetaService.findDelete(criteria);
-                if (recordsDeleted != null) {
-                    deleted = recordsDeleted;
-                    total += deleted;
-                } else {
-                    deleted = 0;
-                }
+                deleted = streamMetaService.findDelete(criteria);
+                total += deleted;
             } while (deleted >= DELETE_STREAM_BATCH_SIZE);
 
             LOGGER.info("processFeed() - {} Deleted {}", feed.getName(), total);

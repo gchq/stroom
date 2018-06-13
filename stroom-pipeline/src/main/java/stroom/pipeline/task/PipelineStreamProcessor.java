@@ -42,7 +42,6 @@ import stroom.pipeline.factory.AbstractElement;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
-import stroom.pipeline.factory.Processor;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.FeedHolder;
@@ -58,27 +57,26 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
-import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
-import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.fs.serializable.RASegmentInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
-import stroom.streamstore.meta.StreamMetaService;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.meta.api.FindStreamCriteria;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.meta.api.StreamMetaService;
+import stroom.streamstore.meta.api.StreamProperties;
+import stroom.streamstore.meta.api.StreamStatus;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamStatus;
-import stroom.streamstore.shared.StreamTypeEntity;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.InclusiveRanges;
 import stroom.streamtask.InclusiveRanges.InclusiveRange;
 import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.StreamProcessorTaskExecutor;
-import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamProcessorFilter;
-import stroom.streamtask.shared.StreamTask;
+import stroom.streamtask.shared.Processor;
+import stroom.streamtask.shared.ProcessorFilter;
+import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.task.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.io.PreviewInputStream;
@@ -128,9 +126,9 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     private final PipelineDataCache pipelineDataCache;
     private final InternalStatisticsReceiver internalStatisticsReceiver;
 
-    private StreamProcessor streamProcessor;
-    private StreamProcessorFilter streamProcessorFilter;
-    private StreamTask streamTask;
+    private Processor streamProcessor;
+    private ProcessorFilter streamProcessorFilter;
+    private ProcessorFilterTask streamTask;
     private StreamSource streamSource;
 
     @Inject
@@ -183,8 +181,8 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     }
 
     @Override
-    public void exec(final StreamProcessor streamProcessor, final StreamProcessorFilter streamProcessorFilter,
-                     final StreamTask streamTask, final StreamSource streamSource) {
+    public void exec(final Processor streamProcessor, final ProcessorFilter streamProcessorFilter,
+                     final ProcessorFilterTask streamTask, final StreamSource streamSource) {
         try {
             this.streamProcessor = streamProcessor;
             this.streamProcessorFilter = streamProcessorFilter;
@@ -229,7 +227,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             feedHolder.setFeedName(feedName);
 
             // Setup the meta data holder.
-            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
+            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, pipelineStore));
 
             // Set the pipeline so it can be used by a filter if needed.
             pipelineDoc = pipelineStore.readDocument(new DocRef(PipelineDoc.DOCUMENT_TYPE, streamProcessor.getPipelineUuid()));
@@ -317,6 +315,8 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
 
         // Find the latest stream task .... this one is not superseded
         for (final Stream stream : streamList) {
+            // TODO : @66 REMOVE STREAM TASK ID FROM STREAM AND QUERY THE STREAM PROCESSOR SERVICE TO FIND THE LATEST TASK ID FOR THE CURRENT INPUT STREAM AND PROCESSOR
+
             if (stream.getStreamTaskId() != null && !StreamStatus.DELETED.equals(stream.getStatus())) {
                 if (stream.getCreateMs() > latestStreamCreationTime) {
                     latestStreamCreationTime = stream.getCreateMs();
@@ -580,15 +580,15 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         private final StreamCloser streamCloser;
         private final MetaData metaData;
         private final Stream stream;
-        private final StreamProcessor streamProcessor;
-        private final StreamTask streamTask;
+        private final Processor streamProcessor;
+        private final ProcessorFilterTask streamTask;
 
         private OutputStream processInfoOutputStream;
         private StreamTarget processInfoStreamTarget;
 
         ProcessInfoOutputStreamProvider(final StreamStore streamStore, final StreamCloser streamCloser,
-                                        final MetaData metaData, final Stream stream, final StreamProcessor streamProcessor,
-                                        final StreamTask streamTask) {
+                                        final MetaData metaData, final Stream stream, final Processor streamProcessor,
+                                        final ProcessorFilterTask streamTask) {
             this.streamStore = streamStore;
             this.streamCloser = streamCloser;
             this.metaData = metaData;
@@ -614,14 +614,27 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         @Override
         public OutputStream getOutputStream(final byte[] header, final byte[] footer) {
             if (processInfoOutputStream == null) {
+                Integer processorId = null;
+                String pipelineUuid = null;
+                Long streamTaskId = null;
+
+                if (streamProcessor != null) {
+                    processorId = (int) streamProcessor.getId();
+                    pipelineUuid = streamProcessor.getPipelineUuid();
+                }
+                if (streamTask != null) {
+                    streamTaskId = streamTask.getId();
+                }
+
                 // Create a processing info stream to write all processing
                 // information to.
                 final StreamProperties errorStreamProperties = new StreamProperties.Builder()
                         .feedName(stream.getFeedName())
-                        .streamTypeName(StreamTypeEntity.ERROR.getName())
+                        .streamTypeName(StreamTypeNames.ERROR)
                         .parent(stream)
-                        .streamProcessor(streamProcessor)
-                        .streamTask(streamTask)
+                        .streamProcessorId(processorId)
+                        .pipelineUuid(pipelineUuid)
+                        .streamTaskId(streamTaskId)
                         .build();
 
                 processInfoStreamTarget = streamStore.openStreamTarget(errorStreamProperties);
@@ -650,7 +663,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         }
 
         @Override
-        public List<Processor> createProcessors() {
+        public List<stroom.pipeline.factory.Processor> createProcessors() {
             return Collections.emptyList();
         }
     }

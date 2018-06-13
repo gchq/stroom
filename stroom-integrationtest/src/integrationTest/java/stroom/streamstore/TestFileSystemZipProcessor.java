@@ -26,9 +26,8 @@ import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.fs.FileSystemStreamMaintenanceService;
-import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.fs.serializable.RANestedInputStream;
-import stroom.streamstore.shared.StreamTypeEntity;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamTargetStroomStreamHandler;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.io.StreamUtil;
@@ -221,7 +220,7 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
         metaMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
 
         final List<StreamTargetStroomStreamHandler> handlerList = StreamTargetStroomStreamHandler
-                .buildSingleHandlerList(streamStore, feedDocCache, null, feedName, StreamTypeEntity.RAW_EVENTS.getName());
+                .buildSingleHandlerList(streamStore, feedDocCache, null, feedName, StreamTypeNames.RAW_EVENTS);
 
         final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlerList, new byte[1000],
                 "DefaultDataFeedRequest-" + metaMap.get(StroomHeaderArguments.GUID));

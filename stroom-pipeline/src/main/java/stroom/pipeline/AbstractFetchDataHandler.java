@@ -51,14 +51,11 @@ import stroom.security.Security;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.fs.FileSystemUtil;
-import stroom.streamstore.fs.StreamTypeNames;
 import stroom.streamstore.fs.serializable.CompoundInputStream;
 import stroom.streamstore.fs.serializable.RASegmentInputStream;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamStatus;
-import stroom.streamstore.shared.StreamTypeEntity;
-import stroom.streamtask.StreamProcessorService;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.meta.api.StreamStatus;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.AbstractTaskHandler;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Marker;
@@ -89,7 +86,6 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
 
     private final StreamStore streamStore;
     private final FeedProperties feedProperties;
-    private final StreamProcessorService streamProcessorService;
     private final Provider<FeedHolder> feedHolderProvider;
     private final Provider<MetaDataHolder> metaDataHolderProvider;
     private final Provider<PipelineHolder> pipelineHolderProvider;
@@ -111,7 +107,6 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
 
     AbstractFetchDataHandler(final StreamStore streamStore,
                              final FeedProperties feedProperties,
-                             final StreamProcessorService streamProcessorService,
                              final Provider<FeedHolder> feedHolderProvider,
                              final Provider<MetaDataHolder> metaDataHolderProvider,
                              final Provider<PipelineHolder> pipelineHolderProvider,
@@ -125,7 +120,6 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                              final PipelineScopeRunnable pipelineScopeRunnable) {
         this.streamStore = streamStore;
         this.feedProperties = feedProperties;
-        this.streamProcessorService = streamProcessorService;
         this.feedHolderProvider = feedHolderProvider;
         this.metaDataHolderProvider = metaDataHolderProvider;
         this.pipelineHolderProvider = pipelineHolderProvider;
@@ -213,7 +207,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
 
                 // If this is an error stream and the UI is requesting markers then
                 // create a list of markers.
-                if (StreamTypeEntity.ERROR.getName().equals(streamTypeName) && markerMode) {
+                if (StreamTypeNames.ERROR.equals(streamTypeName) && markerMode) {
                     return createMarkerResult(feedName, streamTypeName, segmentInputStream, pageRange, availableChildStreamTypes, expandedSeverities);
                 }
 
@@ -343,7 +337,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
         final RowCount<Long> streamsRowCount = new RowCount<>(0L, true);
         final OffsetRange<Long> resultPageRange = new OffsetRange<>(0L, 0L);
         final RowCount<Long> pageRowCount = new RowCount<>(0L, true);
-        return new FetchDataResult(StreamTypeEntity.RAW_EVENTS.getName(), null, resultStreamsRange,
+        return new FetchDataResult(StreamTypeNames.RAW_EVENTS, null, resultStreamsRange,
                 streamsRowCount, resultPageRange, pageRowCount, null, error, false);
     }
 
@@ -466,7 +460,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
 
                 feedHolder.setFeedName(feedName);
                 // Setup the meta data holder.
-                metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
+                metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, pipelineStore));
                 pipelineHolder.setPipeline(DocRefUtil.create(loadedPipeline));
                 // Get the stream providers.
                 streamHolder.setStream(streamSource.getStream());

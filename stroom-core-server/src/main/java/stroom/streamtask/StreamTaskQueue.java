@@ -16,20 +16,20 @@
 
 package stroom.streamtask;
 
-import stroom.streamtask.shared.StreamTask;
+import stroom.streamtask.shared.ProcessorFilterTask;
 
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class StreamTaskQueue {
-    private final LinkedBlockingQueue<StreamTask> queue = new LinkedBlockingQueue<>();
+    private final LinkedBlockingQueue<ProcessorFilterTask> queue = new LinkedBlockingQueue<>();
     private final AtomicBoolean filling = new AtomicBoolean();
 
-    public StreamTask poll() {
+    public ProcessorFilterTask poll() {
         return queue.poll();
     }
 
-    public void add(final StreamTask streamTask) {
+    public void add(final ProcessorFilterTask streamTask) {
         queue.add(streamTask);
     }
 

@@ -20,13 +20,11 @@ package stroom.streamstore.meta.db;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.streamstore.meta.db.StreamAttributeMapService;
-import stroom.streamstore.meta.db.StreamAttributeValueFlush;
+import stroom.streamstore.meta.api.Stream;
 import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
-import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamTypeEntity;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.date.DateUtil;
@@ -46,7 +44,7 @@ public class TestStreamAttributeMapServiceImpl extends AbstractCoreIntegrationTe
     public void testSimple() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
-        final Stream md = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeEntity.RAW_EVENTS.getName());
+        final Stream md = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
 
         streamAttributeValueFlush.flush();
 

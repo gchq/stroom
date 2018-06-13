@@ -27,7 +27,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
-import stroom.streamtask.shared.StreamProcessor;
+import stroom.streamtask.shared.Processor;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Set;
 
 @Singleton
-public class StreamProcessorServiceImpl extends SystemEntityServiceImpl<StreamProcessor, FindStreamProcessorCriteria>
+public class StreamProcessorServiceImpl extends SystemEntityServiceImpl<Processor, FindStreamProcessorCriteria>
         implements StreamProcessorService {
     private final Security security;
 
@@ -47,13 +47,13 @@ public class StreamProcessorServiceImpl extends SystemEntityServiceImpl<StreamPr
     }
 
     @Override
-    public StreamProcessor loadByIdInsecure(final long id) {
+    public Processor loadByIdInsecure(final long id) {
         return security.insecureResult(() -> loadById(id));
     }
 
     @Override
-    public Class<StreamProcessor> getEntityClass() {
-        return StreamProcessor.class;
+    public Class<Processor> getEntityClass() {
+        return Processor.class;
     }
 
     @Override
@@ -77,7 +77,7 @@ public class StreamProcessorServiceImpl extends SystemEntityServiceImpl<StreamPr
         return PermissionNames.MANAGE_PROCESSORS_PERMISSION;
     }
 
-    private static class StreamProcessorQueryAppender extends QueryAppender<StreamProcessor, FindStreamProcessorCriteria> {
+    private static class StreamProcessorQueryAppender extends QueryAppender<Processor, FindStreamProcessorCriteria> {
         StreamProcessorQueryAppender(StroomEntityManager entityManager) {
             super(entityManager);
         }

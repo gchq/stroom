@@ -4,8 +4,6 @@ import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import stroom.dashboard.TestDashboardStoreImpl;
-import stroom.streamstore.meta.db.TestFeedServiceCache;
-import stroom.streamstore.meta.db.TestFeedServiceImpl;
 import stroom.streamstore.meta.db.TestStreamAttributeMapServiceImpl;
 import stroom.streamstore.meta.db.TestStreamAttributeValueFlushImpl;
 import stroom.streamstore.meta.db.TestStreamTypeServiceImpl;
@@ -17,8 +15,6 @@ import stroom.xmlschema.TestXMLSchemaStoreImpl;
         TestDashboardStoreImpl.class,
         stroom.docstore.db.TestDBPersistence.class,
         stroom.explorer.TestExplorerTree.class,
-        TestFeedServiceCache.class,
-        TestFeedServiceImpl.class,
         stroom.importexport.TestImportExportDashboards.class,
         stroom.importexport.TestImportExportSerializer.class,
         stroom.importexport.TestImportExportServiceImpl.class,

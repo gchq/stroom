@@ -20,10 +20,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.jobsystem.MockTask;
 import stroom.streamstore.FindStreamVolumeCriteria;
-import stroom.streamstore.StreamRange;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamTypeEntity;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.FileUtil;
@@ -51,7 +49,7 @@ public class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrat
 
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
-        final Stream md = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeEntity.RAW_EVENTS.getName());
+        final Stream md = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
 
         commonTestScenarioCreator.createSampleBlankProcessedFile(feedName, md);
 
@@ -59,12 +57,12 @@ public class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrat
 
         Assert.assertTrue(files.size() > 0);
 
-        final String path = FileUtil.getCanonicalPath(files.get(0).getParent());
-        final String volPath = path.substring(path.indexOf("RAW_EVENTS"));
-
-        final StreamRange streamRange = new StreamRange(volPath);
+//        final String path = FileUtil.getCanonicalPath(files.get(0).getParent());
+//        final String volPath = path.substring(path.indexOf("RAW_EVENTS"));
+//
+//        final StreamRange streamRange = new StreamRange(volPath);
         final FindStreamVolumeCriteria findStreamVolumeCriteria = new FindStreamVolumeCriteria();
-        findStreamVolumeCriteria.setStreamRange(streamRange);
+//        findStreamVolumeCriteria.setStreamRange(streamRange);
         Assert.assertTrue(streamVolumeService.find(findStreamVolumeCriteria).size() > 0);
 
         final Path dir = files.iterator().next().getParent();

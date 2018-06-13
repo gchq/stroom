@@ -16,20 +16,17 @@
 
 package stroom.streamstore;
 
-import stroom.entity.shared.SQLNameConstants;
 import stroom.entity.util.SqlBuilder;
 import stroom.jobsystem.ClusterLockService;
 import stroom.jobsystem.JobTrackedSchedule;
 import stroom.properties.StroomPropertyService;
-import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeValue;
-import stroom.streamstore.shared.StreamStatusId;
 import stroom.streamstore.shared.StreamVolumeEntity;
 import stroom.streamtask.AbstractBatchDeleteExecutor;
 import stroom.streamtask.BatchIdTransactionHelper;
-import stroom.streamtask.shared.StreamTask;
-import stroom.util.lifecycle.StroomSimpleCronSchedule;
+import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.task.TaskContext;
+import stroom.util.lifecycle.StroomSimpleCronSchedule;
 
 import javax.inject.Inject;
 
@@ -61,38 +58,47 @@ public class StreamDeleteExecutor extends AbstractBatchDeleteExecutor {
     @Override
     protected void deleteCurrentBatch(final long total) {
         // Delete stream tasks.
-        deleteWithJoin(StreamTask.TABLE_NAME, StreamEntity.FOREIGN_KEY, "stream tasks", total);
+        deleteWithJoin(ProcessorFilterTask.TABLE_NAME, "FK_STRM_ID", "stream tasks", total);
 
         // Delete stream volumes.
-        deleteWithJoin(StreamVolumeEntity.TABLE_NAME, StreamEntity.FOREIGN_KEY, "stream volumes", total);
+        deleteWithJoin(StreamVolumeEntity.TABLE_NAME, "FK_STRM_ID", "stream volumes", total);
+
+
+        // TODO : @66 MOVE THIS CODE INTO THE STREAM STORE META SERVICE
 
         // Delete stream attribute values.
         deleteWithJoin(StreamAttributeValue.TABLE_NAME, StreamAttributeValue.STREAM_ID, "stream attribute values",
                 total);
 
-        // Delete streams.
-        deleteWithJoin(StreamEntity.TABLE_NAME, StreamEntity.ID, "streams", total);
+        // TODO : @66 MOVE THIS CODE INTO THE STREAM STORE META SERVICE
+
+//        // Delete streams.
+//        deleteWithJoin(StreamEntity.TABLE_NAME, StreamEntity.ID, "streams", total);
     }
 
     @Override
     protected SqlBuilder getTempIdSelectSql(final long age, final int batchSize) {
+
+
+        // TODO : @66 CHANGE THIS CODE SO THAT STREAM ID'S ARE RETRIEVED FROM THE STREAM META SERVICE.
+
         final SqlBuilder sql = new SqlBuilder();
-        sql.append("SELECT ");
-        sql.append(StreamEntity.ID);
-        sql.append(" FROM ");
-        sql.append(StreamEntity.TABLE_NAME);
-        sql.append(" WHERE ");
-        sql.append(SQLNameConstants.STATUS);
-        sql.append(" = ");
-        sql.arg(StreamStatusId.DELETED);
-        sql.append(" AND ");
-        sql.append(StreamEntity.STATUS_MS);
-        sql.append(" < ");
-        sql.arg(age);
-        sql.append(" ORDER BY ");
-        sql.append(StreamEntity.ID);
-        sql.append(" LIMIT ");
-        sql.arg(batchSize);
+//        sql.append("SELECT ");
+//        sql.append(StreamEntity.ID);
+//        sql.append(" FROM ");
+//        sql.append(StreamEntity.TABLE_NAME);
+//        sql.append(" WHERE ");
+//        sql.append(SQLNameConstants.STATUS);
+//        sql.append(" = ");
+//        sql.arg(StreamStatusId.DELETED);
+//        sql.append(" AND ");
+//        sql.append(StreamEntity.STATUS_MS);
+//        sql.append(" < ");
+//        sql.arg(age);
+//        sql.append(" ORDER BY ");
+//        sql.append(StreamEntity.ID);
+//        sql.append(" LIMIT ");
+//        sql.arg(batchSize);
         return sql;
     }
 }

@@ -20,24 +20,16 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.FindService;
 import stroom.entity.shared.Clearable;
-import stroom.streamstore.meta.StreamMetaService;
 
 public class StreamMetaDBModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(FeedEntityService.class).to(FeedEntityServiceImpl.class);
-        bind(StreamTypeEntityService.class).to(StreamTypeEntityServiceImpl.class);
-        bind(StreamMetaService.class).to(StreamMetaServiceImpl.class);
-        bind(StreamEntityService.class).to(StreamMetaServiceImpl.class);
-
         bind(StreamAttributeKeyService.class).to(StreamAttributeKeyServiceImpl.class);
         bind(StreamAttributeMapService.class).to(StreamAttributeMapServiceImpl.class);
         bind(StreamAttributeValueFlush.class).to(StreamAttributeValueFlushImpl.class);
         bind(StreamAttributeValueService.class).to(StreamAttributeValueServiceImpl.class);
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-        clearableBinder.addBinding().to(FeedEntityServiceImpl.class);
-        clearableBinder.addBinding().to(StreamTypeEntityServiceImpl.class);
         clearableBinder.addBinding().to(StreamAttributeKeyServiceImpl.class);
         clearableBinder.addBinding().to(StreamAttributeValueFlushImpl.class);
 

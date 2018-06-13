@@ -19,8 +19,7 @@ package stroom.streamstore.meta.db;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Flushable;
 import stroom.feed.MetaMap;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.meta.api.Stream;
 
 public interface StreamAttributeValueFlush extends Flushable, Clearable {
     void persitAttributes(final Stream stream, final boolean append, final MetaMap metaMap);

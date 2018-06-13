@@ -18,20 +18,17 @@ package stroom.streamstore;
 
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.CriteriaSet;
-import stroom.entity.shared.EntityIdSet;
-import stroom.node.shared.Node;
-import stroom.node.shared.VolumeEntity;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamStatus;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.meta.api.StreamStatus;
 
 public class FindStreamVolumeCriteria extends BaseCriteria {
     private static final long serialVersionUID = 3528656425356870590L;
 
-    private StreamRange streamRange;
-
-    private CriteriaSet<StreamStatus> streamStatusSet = null;
-    private EntityIdSet<Node> nodeIdSet = null;
-    private EntityIdSet<VolumeEntity> volumeIdSet = null;
+//    private StreamRange streamRange;
+//
+//    private CriteriaSet<StreamStatus> streamStatusSet = null;
+    private CriteriaSet<Long> nodeIdSet = null;
+    private CriteriaSet<Long> volumeIdSet = null;
     private CriteriaSet<Long> streamIdSet = null;
 
     public static FindStreamVolumeCriteria create(final Stream stream) {
@@ -44,24 +41,25 @@ public class FindStreamVolumeCriteria extends BaseCriteria {
         if (streamIdSet != null && streamIdSet.isConstrained()) {
             return true;
         }
-        return streamRange != null && streamRange.isFileLocation();
+        return false;
+//        return streamRange != null && streamRange.isFileLocation();
     }
 
-    public StreamRange getStreamRange() {
-        return streamRange;
-    }
+//    public StreamRange getStreamRange() {
+//        return streamRange;
+//    }
+//
+//    public void setStreamRange(StreamRange streamRange) {
+//        this.streamRange = streamRange;
+//    }
 
-    public void setStreamRange(StreamRange streamRange) {
-        this.streamRange = streamRange;
-    }
-
-    public EntityIdSet<Node> getNodeIdSet() {
+    public CriteriaSet<Long> getNodeIdSet() {
         return nodeIdSet;
     }
 
-    public EntityIdSet<Node> obtainNodeIdSet() {
+    public CriteriaSet<Long> obtainNodeIdSet() {
         if (nodeIdSet == null) {
-            nodeIdSet = new EntityIdSet<>();
+            nodeIdSet = new CriteriaSet<>();
         }
         return nodeIdSet;
     }
@@ -77,26 +75,25 @@ public class FindStreamVolumeCriteria extends BaseCriteria {
         return streamIdSet;
     }
 
-    public EntityIdSet<VolumeEntity> getVolumeIdSet() {
+    public CriteriaSet<Long> getVolumeIdSet() {
         return volumeIdSet;
     }
 
-    public EntityIdSet<VolumeEntity> obtainVolumeIdSet() {
+    public CriteriaSet<Long> obtainVolumeIdSet() {
         if (volumeIdSet == null) {
-            volumeIdSet = new EntityIdSet<>();
+            volumeIdSet = new CriteriaSet<>();
         }
         return volumeIdSet;
     }
 
-    public CriteriaSet<StreamStatus> getStreamStatusSet() {
-        return streamStatusSet;
-    }
-
-    public CriteriaSet<StreamStatus> obtainStreamStatusSet() {
-        if (streamStatusSet == null) {
-            streamStatusSet = new CriteriaSet<>();
-        }
-        return streamStatusSet;
-    }
-
+//    public CriteriaSet<StreamStatus> getStreamStatusSet() {
+//        return streamStatusSet;
+//    }
+//
+//    public CriteriaSet<StreamStatus> obtainStreamStatusSet() {
+//        if (streamStatusSet == null) {
+//            streamStatusSet = new CriteriaSet<>();
+//        }
+//        return streamStatusSet;
+//    }
 }

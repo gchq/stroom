@@ -26,7 +26,6 @@ public class FSModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(StreamMaintenanceService.class).to(FileSystemStreamMaintenanceService.class);
-        bind(FileSystemStreamStore.class).to(FileSystemStreamStoreImpl.class);
         bind(StreamStore.class).to(FileSystemStreamStoreImpl.class);
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);

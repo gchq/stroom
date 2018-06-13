@@ -20,14 +20,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.jobsystem.DistributedTask;
 import stroom.node.shared.Node;
-import stroom.streamtask.shared.StreamTask;
+import stroom.streamtask.shared.ProcessorFilterTask;
 
 import java.util.List;
 
 public class TaskStatusTraceLog {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskStatusTraceLog.class);
 
-    public void createdTasks(final Class<?> clazz, final List<StreamTask> streamTasks) {
+    public void createdTasks(final Class<?> clazz, final List<ProcessorFilterTask> streamTasks) {
         if (LOGGER.isTraceEnabled() && streamTasks.size() > 0) {
             final StringBuilder sb = new StringBuilder();
             sb.append("Master created ");
@@ -38,7 +38,7 @@ public class TaskStatusTraceLog {
         }
     }
 
-    public void addUnownedTasks(final Class<?> clazz, final List<StreamTask> streamTasks) {
+    public void addUnownedTasks(final Class<?> clazz, final List<ProcessorFilterTask> streamTasks) {
         if (LOGGER.isTraceEnabled() && streamTasks.size() > 0) {
             final StringBuilder sb = new StringBuilder();
             sb.append("Master adding ");
@@ -50,7 +50,7 @@ public class TaskStatusTraceLog {
         }
     }
 
-    public void assignTasks(final Class<?> clazz, final List<StreamTask> streamTasks, final Node node) {
+    public void assignTasks(final Class<?> clazz, final List<ProcessorFilterTask> streamTasks, final Node node) {
         if (LOGGER.isTraceEnabled() && streamTasks.size() > 0) {
             final StringBuilder sb = new StringBuilder();
             sb.append("Master assigned ");
@@ -63,7 +63,7 @@ public class TaskStatusTraceLog {
         }
     }
 
-    public void abandonTasks(final Class<?> clazz, final List<StreamTask> streamTasks, final Node node) {
+    public void abandonTasks(final Class<?> clazz, final List<ProcessorFilterTask> streamTasks, final Node node) {
         if (LOGGER.isTraceEnabled() && streamTasks.size() > 0) {
             final StringBuilder sb = new StringBuilder();
             sb.append("Master abandoned ");
@@ -125,9 +125,9 @@ public class TaskStatusTraceLog {
         }
     }
 
-    private void appendStreamTaskList(final StringBuilder sb, final List<StreamTask> streamTasks) {
+    private void appendStreamTaskList(final StringBuilder sb, final List<ProcessorFilterTask> streamTasks) {
         sb.append(" ( ");
-        for (final StreamTask task : streamTasks) {
+        for (final ProcessorFilterTask task : streamTasks) {
             sb.append(task.getId());
             sb.append(" ");
         }

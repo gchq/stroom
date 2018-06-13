@@ -21,8 +21,9 @@ import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
 import stroom.io.StreamCloser;
 import stroom.streamstore.api.StreamSource;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamStatus;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.meta.api.StreamStatus;
+import stroom.streamstore.shared.StreamTypeNames;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,6 +35,8 @@ import java.nio.file.Path;
  */
 public final class FileSystemStreamSource implements StreamSource {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamSource.class);
+
+    private final FileSystemStreamPathHelper fileSystemStreamPathHelper;
     private final StreamCloser streamCloser = new StreamCloser();
     private Stream stream;
     private String rootPath;
@@ -43,9 +46,11 @@ public final class FileSystemStreamSource implements StreamSource {
     private Path file;
     private FileSystemStreamSource parent;
 
-    private FileSystemStreamSource(final Stream stream,
+    private FileSystemStreamSource(final FileSystemStreamPathHelper fileSystemStreamPathHelper,
+                                   final Stream stream,
                                    final String rootPath,
                                    final String streamType) {
+        this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.stream = stream;
         this.rootPath = rootPath;
         this.streamType = streamType;
@@ -53,9 +58,11 @@ public final class FileSystemStreamSource implements StreamSource {
         validate();
     }
 
-    private FileSystemStreamSource(final FileSystemStreamSource parent,
+    private FileSystemStreamSource(final FileSystemStreamPathHelper fileSystemStreamPathHelper,
+                                   final FileSystemStreamSource parent,
                                    final String streamType,
                                    final Path file) {
+        this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.stream = parent.stream;
         this.rootPath = parent.rootPath;
         this.parent = parent;
@@ -70,10 +77,11 @@ public final class FileSystemStreamSource implements StreamSource {
      * @return A new file system stream source or null if a file cannot be
      * created.
      */
-    public static FileSystemStreamSource create(final Stream stream,
-                                                final String rootPath,
-                                                final String streamType) {
-        return new FileSystemStreamSource(stream, rootPath, streamType);
+    static FileSystemStreamSource create(final FileSystemStreamPathHelper fileSystemStreamPathHelper,
+                                         final Stream stream,
+                                         final String rootPath,
+                                         final String streamType) {
+        return new FileSystemStreamSource(fileSystemStreamPathHelper, stream, rootPath, streamType);
     }
 
     private void validate() {
@@ -90,9 +98,9 @@ public final class FileSystemStreamSource implements StreamSource {
     public Path getFile() {
         if (file == null) {
             if (parent == null) {
-                file = FileSystemStreamTypeUtil.createRootStreamFile(rootPath, stream, getStreamTypeName());
+                file = fileSystemStreamPathHelper.createRootStreamFile(rootPath, stream, getStreamTypeName());
             } else {
-                file = FileSystemStreamTypeUtil.createChildStreamFile(parent.getFile(), getStreamTypeName());
+                file = fileSystemStreamPathHelper.createChildStreamFile(parent.getFile(), getStreamTypeName());
             }
         }
         return file;
@@ -103,7 +111,7 @@ public final class FileSystemStreamSource implements StreamSource {
         // First Call?
         if (inputStream == null) {
             try {
-                inputStream = FileSystemStreamTypeUtil.getInputStream(streamType, getFile());
+                inputStream = fileSystemStreamPathHelper.getInputStream(streamType, getFile());
                 streamCloser.add(inputStream);
             } catch (IOException ioEx) {
                 // Don't log this as an error if we expect this stream to have been deleted or be locked.
@@ -133,11 +141,11 @@ public final class FileSystemStreamSource implements StreamSource {
 
     @Override
     public StreamSource getChildStream(final String streamTypeName) {
-        Path childFile = FileSystemStreamTypeUtil.createChildStreamFile(getFile(), streamTypeName);
-        boolean lazy = FileSystemStreamTypeUtil.isStreamTypeLazy(streamTypeName);
+        Path childFile = fileSystemStreamPathHelper.createChildStreamFile(getFile(), streamTypeName);
+        boolean lazy = fileSystemStreamPathHelper.isStreamTypeLazy(streamTypeName);
         boolean isFile = Files.isRegularFile(childFile);
         if (lazy || isFile) {
-            final FileSystemStreamSource child = new FileSystemStreamSource(this, streamTypeName, childFile);
+            final FileSystemStreamSource child = new FileSystemStreamSource(fileSystemStreamPathHelper, this, streamTypeName, childFile);
             streamCloser.add(child);
             return child;
         } else {

@@ -29,6 +29,7 @@ public class StreamStoreModule extends AbstractModule {
         bind(StreamVolumeService.class).to(StreamVolumeServiceImpl.class);
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
+        taskHandlerBinder.addBinding().to(stroom.streamstore.DeleteStreamHandler.class);
         taskHandlerBinder.addBinding().to(stroom.streamstore.DownloadDataHandler.class);
         taskHandlerBinder.addBinding().to(stroom.streamstore.FetchFieldsHandler.class);
         taskHandlerBinder.addBinding().to(stroom.streamstore.StreamDownloadTaskHandler.class);

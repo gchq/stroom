@@ -27,10 +27,9 @@ import stroom.node.NodeService;
 import stroom.pipeline.PipelineStore;
 import stroom.query.shared.FetchSuggestionsAction;
 import stroom.security.Security;
-import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.meta.StreamMetaService;
+import stroom.streamstore.meta.api.StreamMetaService;
+import stroom.streamstore.meta.api.StreamStatus;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamStatus;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.SharedList;
@@ -80,7 +79,7 @@ class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction
                     }
 
                     if (task.getField().getName().equals(StreamDataSource.STREAM_TYPE)) {
-                        return createStreamTypeList( task.getText());
+                        return createStreamTypeList(task.getText());
                     }
 
                     if (task.getField().getName().equals(StreamDataSource.STATUS)) {

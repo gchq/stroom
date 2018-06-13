@@ -44,7 +44,6 @@ import stroom.security.SecurityContext;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.fs.serializable.RASegmentInputStream;
-import stroom.streamtask.StreamProcessorService;
 import stroom.task.TaskContext;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
@@ -69,7 +68,6 @@ public class ExtractionTaskHandler {
     private final CurrentUserHolder currentUserHolder;
     private final StreamHolder streamHolder;
     private final PipelineHolder pipelineHolder;
-    private final StreamProcessorService streamProcessorService;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final PipelineFactory pipelineFactory;
     private final PipelineStore pipelineStore;
@@ -87,7 +85,6 @@ public class ExtractionTaskHandler {
                           final CurrentUserHolder currentUserHolder,
                           final StreamHolder streamHolder,
                           final PipelineHolder pipelineHolder,
-                          final StreamProcessorService streamProcessorService,
                           final ErrorReceiverProxy errorReceiverProxy,
                           final PipelineFactory pipelineFactory,
                           @Named("cachedPipelineStore") final PipelineStore pipelineStore,
@@ -101,7 +98,6 @@ public class ExtractionTaskHandler {
         this.currentUserHolder = currentUserHolder;
         this.streamHolder = streamHolder;
         this.pipelineHolder = pipelineHolder;
-        this.streamProcessorService = streamProcessorService;
         this.errorReceiverProxy = errorReceiverProxy;
         this.pipelineFactory = pipelineFactory;
         this.pipelineStore = pipelineStore;
@@ -256,7 +252,7 @@ public class ExtractionTaskHandler {
                 feedHolder.setFeedName(source.getStream().getFeedName());
 
                 // Setup the meta data holder.
-                metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
+                metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, pipelineStore));
 
                 streamHolder.setStream(source.getStream());
                 pipelineHolder.setPipeline(pipelineRef);

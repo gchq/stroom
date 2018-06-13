@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.io.SeekableInputStream;
 import stroom.streamstore.api.StreamSource;
-import stroom.streamstore.fs.StreamTypeNames;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.io.StreamUtil;
 
 import java.io.IOException;

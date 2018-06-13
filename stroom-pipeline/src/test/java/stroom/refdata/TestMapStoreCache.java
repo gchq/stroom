@@ -21,7 +21,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.security.MockSecurityContext;
+import stroom.security.impl.mock.MockSecurityContext;
 import stroom.security.Security;
 import stroom.util.cache.CacheManager;
 import stroom.util.test.StroomJUnit4ClassRunner;

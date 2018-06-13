@@ -11,8 +11,6 @@ import stroom.node.shared.VolumeEntity.VolumeType;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.streamstore.FindStreamVolumeCriteria;
-import stroom.streamstore.StreamRange;
-import stroom.streamstore.shared.StreamStatusId;
 import stroom.util.concurrent.AtomicSequence;
 
 import javax.inject.Inject;
@@ -30,13 +28,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class StreamVolumeServiceImpl implements StreamVolumeService {
-    public static final String TINYINT_UNSIGNED = "TINYINT";
-    public static final String SMALLINT_UNSIGNED = "SMALLINT";
-    public static final String INT_UNSIGNED = "INT";
-    public static final String BIGINT_UNSIGNED = "BIGINT";
     // Shame HSQLDB does not like keys smaller than int.
-    public static final String NORMAL_KEY_DEF = INT_UNSIGNED;
-    public static final String BIG_KEY_DEF = BIGINT_UNSIGNED;
     public static final String VERSION = "VER";
     public static final String ID = "ID";
     protected static final String FK_PREFIX = "FK_";
@@ -44,7 +36,6 @@ public class StreamVolumeServiceImpl implements StreamVolumeService {
     protected static final String SEP = "_";
     public static final String TABLE_NAME = SQLNameConstants.STREAM + SEP + SQLNameConstants.VOLUME;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
-    public static final String LAST_ACCESS_MS = SQLNameConstants.LAST + SEP + SQLNameConstants.ACCESS + SQLNameConstants.MS_SUFFIX;
 
     private final DataSource dataSource;
     private final Security security;
@@ -105,9 +96,9 @@ public class StreamVolumeServiceImpl implements StreamVolumeService {
                 throw new IllegalArgumentException("Not enough criteria to run");
             }
 
-            final StreamRange streamRange = criteria.getStreamRange();
-            final boolean joinStreamType = streamRange != null && streamRange.getStreamTypeName() != null;
-            final boolean joinStream = (streamRange != null && streamRange.getCreatePeriod() != null) || (criteria.getStreamStatusSet() != null && criteria.getStreamStatusSet().isConstrained());
+//            final StreamRange streamRange = criteria.getStreamRange();
+//            final boolean joinStreamType = streamRange != null && streamRange.getStreamTypeName() != null;
+//            final boolean joinStream = (streamRange != null && streamRange.getCreatePeriod() != null) || (criteria.getStreamStatusSet() != null && criteria.getStreamStatusSet().isConstrained());
 
             final SqlBuilder sql = new SqlBuilder();
             sql.append("SELECT");
@@ -117,31 +108,31 @@ public class StreamVolumeServiceImpl implements StreamVolumeService {
             sql.append(" sv");
             sql.append(" JOIN VOL v ON (v.ID = sv.FK_VOL_ID)");
             sql.append(" JOIN ND n ON (n.ID = v.FK_ND_ID)");
-            if (joinStream) {
-                sql.append(" JOIN STRM s ON (s.ID = sv.FK_STRM_ID)");
-            }
-            if (joinStreamType) {
-                sql.append(" JOIN STRM_TP st ON (st.ID = s.FK_STRM_TP_ID)");
-            }
+//            if (joinStream) {
+//                sql.append(" JOIN STRM s ON (s.ID = sv.FK_STRM_ID)");
+//            }
+//            if (joinStreamType) {
+//                sql.append(" JOIN STRM_TP st ON (st.ID = s.FK_STRM_TP_ID)");
+//            }
             sql.append(" WHERE 1=1");
 
-            sql.appendEntityIdSetQuery("v.FK_ND_ID", criteria.getNodeIdSet());
-            sql.appendEntityIdSetQuery("sv.FK_VOL_ID", criteria.getVolumeIdSet());
+            sql.appendCriteriaSetQuery("v.FK_ND_ID", criteria.getNodeIdSet());
+            sql.appendCriteriaSetQuery("sv.FK_VOL_ID", criteria.getVolumeIdSet());
             sql.appendCriteriaSetQuery("sv.FK_STRM_ID", criteria.getStreamIdSet());
-            sql.appendPrimitiveValueSetQuery("s.STAT", StreamStatusId.convertStatusSet(criteria.getStreamStatusSet()));
-
-            if (streamRange != null) {
-                if (joinStreamType) {
-                    sql.append(" AND st.NAME = ");
-                    sql.arg(streamRange.getStreamTypeName());
-                }
-                if (streamRange.isFileLocation()) {
-                    sql.appendRangeQuery("sv.FK_STRM_ID", streamRange);
-                }
-                if (joinStream) {
-                    sql.appendRangeQuery("s.CRT_MS", streamRange.getCreatePeriod());
-                }
-            }
+//            sql.appendPrimitiveValueSetQuery("s.STAT", StreamStatusId.convertStatusSet(criteria.getStreamStatusSet()));
+//
+//            if (streamRange != null) {
+//                if (joinStreamType) {
+//                    sql.append(" AND st.NAME = ");
+//                    sql.arg(streamRange.getStreamTypeName());
+//                }
+//                if (streamRange.isFileLocation()) {
+//                    sql.appendRangeQuery("sv.FK_STRM_ID", streamRange);
+//                }
+//                if (joinStream) {
+//                    sql.appendRangeQuery("s.CRT_MS", streamRange.getCreatePeriod());
+//                }
+//            }
 
             sql.applyRestrictionCriteria(criteria);
 
@@ -344,10 +335,10 @@ public class StreamVolumeServiceImpl implements StreamVolumeService {
 
     @Override
     public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindStreamVolumeCriteria criteria) {
-        CriteriaLoggingUtil.appendRangeTerm(items, "streamRange", criteria.getStreamRange());
-        CriteriaLoggingUtil.appendCriteriaSet(items, "streamStatusSet", criteria.getStreamStatusSet());
-        CriteriaLoggingUtil.appendEntityIdSet(items, "nodeIdSet", criteria.getNodeIdSet());
-        CriteriaLoggingUtil.appendEntityIdSet(items, "volumeIdSet", criteria.getVolumeIdSet());
+//        CriteriaLoggingUtil.appendRangeTerm(items, "streamRange", criteria.getStreamRange());
+//        CriteriaLoggingUtil.appendCriteriaSet(items, "streamStatusSet", criteria.getStreamStatusSet());
+        CriteriaLoggingUtil.appendCriteriaSet(items, "nodeIdSet", criteria.getNodeIdSet());
+        CriteriaLoggingUtil.appendCriteriaSet(items, "volumeIdSet", criteria.getVolumeIdSet());
         CriteriaLoggingUtil.appendCriteriaSet(items, "streamIdSet", criteria.getStreamIdSet());
         CriteriaLoggingUtil.appendPageRequest(items, criteria.getPageRequest());
     }

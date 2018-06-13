@@ -19,7 +19,7 @@ package stroom.streamtask;
 import stroom.jobsystem.DistributedTaskFactory;
 import stroom.jobsystem.DistributedTaskFactoryBean;
 import stroom.node.shared.Node;
-import stroom.streamtask.shared.StreamTask;
+import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
@@ -38,24 +38,24 @@ public class StreamProcessorTaskFactory implements DistributedTaskFactory<Stream
 
     @Override
     public List<StreamProcessorTask> fetch(final Node node, final int count) {
-        final List<StreamTask> streamTasks = streamTaskCreator.assignStreamTasks(node, count);
+        final List<ProcessorFilterTask> streamTasks = streamTaskCreator.assignStreamTasks(node, count);
         return wrap(streamTasks);
     }
 
     @Override
     public void abandon(final Node node, final List<StreamProcessorTask> tasks) {
-        final List<StreamTask> streamTasks = unwrap(tasks);
+        final List<ProcessorFilterTask> streamTasks = unwrap(tasks);
         streamTaskCreator.abandonStreamTasks(node, streamTasks);
     }
 
     /**
      * Wrap stream tasks with stream processor tasks.
      */
-    private List<StreamProcessorTask> wrap(final List<StreamTask> in) {
+    private List<StreamProcessorTask> wrap(final List<ProcessorFilterTask> in) {
         List<StreamProcessorTask> out = Collections.emptyList();
         if (in != null && in.size() > 0) {
             out = new ArrayList<>(in.size());
-            for (final StreamTask task : in) {
+            for (final ProcessorFilterTask task : in) {
                 out.add(new StreamProcessorTask(task));
             }
         }
@@ -65,8 +65,8 @@ public class StreamProcessorTaskFactory implements DistributedTaskFactory<Stream
     /**
      * Unwrap stream processor tasks and get a list of stream tasks.
      */
-    private List<StreamTask> unwrap(final List<StreamProcessorTask> in) {
-        List<StreamTask> out = Collections.emptyList();
+    private List<ProcessorFilterTask> unwrap(final List<StreamProcessorTask> in) {
+        List<ProcessorFilterTask> out = Collections.emptyList();
         if (in != null && in.size() > 0) {
             out = new ArrayList<>(in.size());
             for (final StreamProcessorTask task : in) {

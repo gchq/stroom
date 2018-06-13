@@ -29,7 +29,7 @@ public class FindStreamCriteria extends BaseCriteria implements HasIsConstrained
 
     private ExpressionOperator expression;
     private IdSet selectedIdSet;
-    private IdRange streamIdRange;
+//    private IdRange streamIdRange;
 
     public FindStreamCriteria() {
     }
@@ -81,24 +81,24 @@ public class FindStreamCriteria extends BaseCriteria implements HasIsConstrained
         return selectedIdSet;
     }
 
-    public IdRange getStreamIdRange() {
-        return streamIdRange;
-    }
-
-    public void setStreamIdRange(final IdRange streamIdRange) {
-        this.streamIdRange = streamIdRange;
-    }
-
-    public IdRange obtainStreamIdRange() {
-        if (streamIdRange == null) {
-            streamIdRange = new IdRange();
-        }
-        return streamIdRange;
-    }
+//    public IdRange getStreamIdRange() {
+//        return streamIdRange;
+//    }
+//
+//    public void setStreamIdRange(final IdRange streamIdRange) {
+//        this.streamIdRange = streamIdRange;
+//    }
+//
+//    public IdRange obtainStreamIdRange() {
+//        if (streamIdRange == null) {
+//            streamIdRange = new IdRange();
+//        }
+//        return streamIdRange;
+//    }
 
     @Override
     public boolean isConstrained() {
-        return (selectedIdSet != null && selectedIdSet.isConstrained()) || (streamIdRange != null && streamIdRange.isConstrained()) || ExpressionUtil.termCount(expression) > 0;
+        return (selectedIdSet != null && selectedIdSet.isConstrained())|| ExpressionUtil.termCount(expression) > 0;
     }
 
     @Override
@@ -106,6 +106,6 @@ public class FindStreamCriteria extends BaseCriteria implements HasIsConstrained
         super.copyFrom(other);
         this.expression = ExpressionUtil.copyOperator(other.expression);
         this.obtainSelectedIdSet().copyFrom(other.obtainSelectedIdSet());
-        this.obtainStreamIdRange().copyFrom(other.obtainStreamIdRange());
+//        this.obtainStreamIdRange().copyFrom(other.obtainStreamIdRange());
     }
 }

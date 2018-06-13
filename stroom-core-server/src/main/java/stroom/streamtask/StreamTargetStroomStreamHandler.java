@@ -30,12 +30,12 @@ import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.proxy.repo.StroomZipNameSet;
 import stroom.streamstore.StreamFactory;
-import stroom.streamstore.api.StreamProperties;
+import stroom.streamstore.meta.api.StreamProperties;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
-import stroom.streamstore.fs.StreamTypeNames;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamstore.fs.serializable.NestedStreamTarget;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.meta.api.Stream;
 import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.util.io.CloseableUtil;
 

@@ -17,18 +17,11 @@
 
 package stroom.streamstore.api;
 
-import stroom.entity.FindDeleteService;
-import stroom.entity.FindService;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.Period;
-import stroom.streamstore.EffectiveMetaDataCriteria;
-import stroom.streamstore.OldFindStreamCriteria;
 import stroom.streamstore.StreamException;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamEntity;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.meta.api.StreamProperties;
 
-import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -46,27 +39,40 @@ import java.util.List;
  * </p>
  */
 public interface StreamStore {
-//    /**
-//     * Load a stream by id.
-//     *
-//     * @param id The stream id to load a stream for.
-//     * @return The loaded stream if it exists (has not been physically deleted)
-//     * and is not logically deleted or locked, null otherwise.
-//     */
-//    StreamEntity loadStreamById(long id);
-//
-//    /**
-//     * Load a stream by id.
-//     *
-//     * @param id        The stream id to load a stream for.
-//     * @param anyStatus Used to specify if this method will return streams that are
-//     *                  logically deleted or locked. If false only unlocked streams
-//     *                  will be returned, null otherwise.
-//     * @return The loaded stream if it exists (has not been physically deleted)
-//     * else null. Also returns null if one exists but is logically
-//     * deleted or locked unless <code>anyStatus</code> is true.
-//     */
-//    StreamEntity loadStreamById(long id, boolean anyStatus);
+    /**
+     * <p>
+     * Open a new stream (i.e. new file) based on some meta data
+     * </p>
+     *
+     * @return the stream to write to
+     */
+    StreamTarget openStreamTarget(StreamProperties streamProperties) throws StreamException;
+
+    /**
+     * <p>
+     * Open a new stream (i.e. new file) based on some meta data
+     * </p>
+     *
+     * @param append allow appending to the stream (or wipe it?)
+     * @return the stream to write to
+     */
+    StreamTarget openExistingStreamTarget(long streamId) throws StreamException;
+
+    /**
+     * <p>
+     * Close a open stream target so it can be read by someone else.
+     * </p>
+     */
+    void closeStreamTarget(StreamTarget streamTarget);
+
+    /**
+     * <p>
+     * Delete a open stream.
+     * </p>
+     *
+     * @return items deleted
+     */
+    int deleteStreamTarget(StreamTarget target);
 
     /**
      * <p>
@@ -97,24 +103,6 @@ public interface StreamStore {
      */
     StreamSource openStreamSource(long streamId, boolean anyStatus) throws StreamException;
 
-    /**
-     * <p>
-     * Open a new stream (i.e. new file) based on some meta data
-     * </p>
-     *
-     * @return the stream to write to
-     */
-    StreamTarget openStreamTarget(StreamProperties streamProperties) throws StreamException;
-
-    /**
-     * <p>
-     * Open a new stream (i.e. new file) based on some meta data
-     * </p>
-     *
-     * @param append allow appending to the stream (or wipe it?)
-     * @return the stream to write to
-     */
-    StreamTarget openExistingStreamTarget(long streamId) throws StreamException;
 
     /**
      * <p>
@@ -124,54 +112,10 @@ public interface StreamStore {
     void closeStreamSource(StreamSource streamSource);
 
     /**
-     * <p>
-     * Close a open stream target so it can be read by someone else.
-     * </p>
-     */
-    void closeStreamTarget(StreamTarget streamTarget);
-
-//    /**
-//     * <p>
-//     * Delete a stream.
-//     * </p>
-//     *
-//     * @return items deleted
-//     */
-//    Long deleteStream(long streamId);
-//
-//    BaseResultList<StreamEntity> find(OldFindStreamCriteria findStreamCriteria);
-
-    /**
-     * <p>
-     * Delete a open stream.
-     * </p>
+     * Gets the meta data that was stored in the stream store against the supplied stream id.
      *
-     * @return items deleted
+     * @param streamId
+     * @return
      */
-    Long deleteStreamTarget(StreamTarget target);
-
-//    /**
-//     * <p>
-//     * Return back a list of streams that are effective for a period in
-//     * question. This API is only really applicable for reference data searches.
-//     * </p>
-//     *
-//     * @param criteria the search criteria
-//     * @return the list of matches
-//     */
-//    List<Stream> findEffectiveStream(EffectiveMetaDataCriteria criteria);
-//
-//    /**
-//     * Return the number of open locks.
-//     */
-//    long getLockCount();
-//
-//    /**
-//     * Return the total period of streams in the stream store
-//     */
-//    Period getCreatePeriod();
-//
-//    List<String> getFeeds();
-//
-//    List<String> getStreamTypes();
+    Map<String, String> getStoredMeta(Stream stream);
 }

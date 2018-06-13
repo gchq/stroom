@@ -37,7 +37,6 @@ import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.docref.DocRef;
 import stroom.docref.SharedObject;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.shared.EntityServiceFindDeleteAction;
 import stroom.entity.shared.IdSet;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.ResultList;
@@ -52,19 +51,18 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.meta.api.StreamStatus;
+import stroom.streamstore.shared.DeleteStreamAction;
 import stroom.streamstore.shared.DownloadDataAction;
 import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
-import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.streamstore.meta.api.FindStreamCriteria;
 import stroom.streamstore.shared.ReprocessDataInfo;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamAttributeMap;
+import stroom.streamstore.shared.StreamDataRow;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamEntity;
-import stroom.streamstore.shared.StreamStatus;
-import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamtask.shared.ReprocessDataAction;
-import stroom.streamtask.shared.StreamProcessor;
+import stroom.streamtask.shared.Processor;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -172,10 +170,10 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     }
 
     private static Stream getStream(final AbstractStreamListPresenter streamListPresenter, final long id) {
-        final ResultList<StreamAttributeMap> list = streamListPresenter.getResultList();
+        final ResultList<StreamDataRow> list = streamListPresenter.getResultList();
         if (list != null) {
             if (list.getValues() != null) {
-                for (final StreamAttributeMap streamAttributeMap : list.getValues()) {
+                for (final StreamDataRow streamAttributeMap : list.getValues()) {
                     if (streamAttributeMap.getStream().getId() == id) {
                         return streamAttributeMap.getStream();
                     }
@@ -439,8 +437,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
 
         criteria.obtainFindStreamCriteria().getFetchSet().add(FeedDoc.DOCUMENT_TYPE);
         criteria.obtainFindStreamCriteria().getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
-        criteria.obtainFindStreamCriteria().getFetchSet().add(StreamProcessor.ENTITY_TYPE);
-        criteria.obtainFindStreamCriteria().getFetchSet().add(StreamTypeEntity.ENTITY_TYPE);
+        criteria.obtainFindStreamCriteria().getFetchSet().add(Processor.ENTITY_TYPE);
         criteria.obtainFindStreamCriteria().setSort(StreamDataSource.CREATE_TIME, Direction.DESCENDING, false);
 
         return criteria;
@@ -481,7 +478,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     }
 
     private Stream getSelectedStream() {
-        StreamAttributeMap selectedStream = streamListPresenter.getSelectedStream();
+        StreamDataRow selectedStream = streamListPresenter.getSelectedStream();
         if (streamRelationListPresenter.getSelectedStream() != null) {
             selectedStream = streamRelationListPresenter.getSelectedStream();
         }
@@ -589,7 +586,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
             // in the top screen and then chooses the raw stream in the middle
             // pane to step through.
             Long childStreamId = null;
-            final StreamAttributeMap map = streamListPresenter.getSelectedStream();
+            final StreamDataRow map = streamListPresenter.getSelectedStream();
             if (map != null && map.getStream() != null) {
                 final Stream childStream = map.getStream();
                 // If the top list has a raw stream selected or isn't a child of
@@ -754,7 +751,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         }
 
         void doDelete(final FindStreamCriteria criteria, final ClientDispatchAsync dispatcher) {
-            dispatcher.exec(new EntityServiceFindDeleteAction<FindStreamCriteria, StreamEntity>(criteria)).onSuccess(result -> {
+            dispatcher.exec(new DeleteStreamAction(criteria)).onSuccess(result -> {
                 getStreamListPresenter().getSelectedEntityIdSet().clear();
                 getStreamListPresenter().getSelectedEntityIdSet().setMatchAll(false);
 
@@ -765,7 +762,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     }
 
     private static class ProcessStreamClickHandler extends AbstractStreamClickHandler {
-        public ProcessStreamClickHandler(final StreamPresenter streamPresenter,
+        ProcessStreamClickHandler(final StreamPresenter streamPresenter,
                                          final AbstractStreamListPresenter streamListPresenter, final boolean useCriteria,
                                          final ClientDispatchAsync dispatcher) {
             super(streamPresenter, streamListPresenter, useCriteria, dispatcher);

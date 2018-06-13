@@ -25,12 +25,12 @@ import stroom.feed.MetaMap;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.meta.api.Stream;
 import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamtask.StreamProcessorTaskExecutor;
-import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamProcessorFilter;
-import stroom.streamtask.shared.StreamTask;
+import stroom.streamtask.shared.Processor;
+import stroom.streamtask.shared.ProcessorFilter;
+import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
 
@@ -178,8 +178,8 @@ class UpgradeStreamStoreProcessor implements StreamProcessorTaskExecutor {
     }
 
     @Override
-    public void exec(final StreamProcessor streamProcessor, final StreamProcessorFilter streamProcessorFilter,
-                     final StreamTask streamTask, final StreamSource streamSource) {
+    public void exec(final Processor streamProcessor, final ProcessorFilter streamProcessorFilter,
+                     final ProcessorFilterTask streamTask, final StreamSource streamSource) {
         final Stream stream = streamSource.getStream();
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         final String streamTime = DateUtil.createNormalDateTimeString(stream.getCreateMs());

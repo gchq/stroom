@@ -32,11 +32,12 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaData;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
-import stroom.streamstore.api.StreamProperties;
+import stroom.streamstore.meta.api.StreamProperties;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.serializable.RASegmentOutputStream;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamtask.shared.Processor;
 import stroom.util.io.WrappedOutputStream;
 import stroom.util.shared.Severity;
 
@@ -89,12 +90,26 @@ public class StreamAppender extends AbstractAppender {
             throw new ProcessException("Stream type not specified");
         }
 
+        Integer processorId = null;
+        String pipelineUuid = null;
+        Long streamTaskId = null;
+
+        final Processor processor = streamProcessorHolder.getStreamProcessor();
+        if (processor != null) {
+            processorId = (int) processor.getId();
+            pipelineUuid = processor.getPipelineUuid();
+        }
+        if (streamProcessorHolder.getStreamTask() != null) {
+            streamTaskId = streamProcessorHolder.getStreamTask().getId();
+        }
+
         final StreamProperties streamProperties = new StreamProperties.Builder()
                 .feedName(feed)
                 .streamTypeName(streamType)
                 .parent(parentStream)
-                .streamProcessor(streamProcessorHolder.getStreamProcessor())
-                .streamTask(streamProcessorHolder.getStreamTask())
+                .streamProcessorId(processorId)
+                .pipelineUuid(pipelineUuid)
+                .streamTaskId(streamTaskId)
                 .build();
 
         streamTarget = streamStore.openStreamTarget(streamProperties);

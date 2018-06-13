@@ -24,7 +24,7 @@ import stroom.index.shared.IndexField;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.search.Event;
 import stroom.security.Security;
-import stroom.streamstore.meta.StreamMetaService;
+import stroom.streamstore.meta.api.StreamMetaService;
 import stroom.util.shared.Severity;
 
 import java.util.ArrayList;

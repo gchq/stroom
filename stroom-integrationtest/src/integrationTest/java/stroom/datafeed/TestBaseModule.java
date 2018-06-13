@@ -7,7 +7,7 @@ import stroom.entity.MockEntityModule;
 import stroom.feed.FeedModule;
 import stroom.properties.MockPropertyModule;
 import stroom.ruleset.RulesetModule;
-import stroom.security.MockSecurityContextModule;
+import stroom.security.impl.mock.MockSecurityContextModule;
 import stroom.streamstore.MockStreamStoreModule;
 import stroom.streamtask.statistic.MockMetaDataStatisticModule;
 

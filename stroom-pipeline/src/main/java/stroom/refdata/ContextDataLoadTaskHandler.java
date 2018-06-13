@@ -35,9 +35,8 @@ import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.Security;
-import stroom.streamstore.fs.StreamTypeNames;
-import stroom.streamstore.shared.Stream;
-import stroom.streamtask.StreamProcessorService;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.Severity;
@@ -58,7 +57,6 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
     private final MetaDataHolder metaDataHolder;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final PipelineStore pipelineStore;
-    private final StreamProcessorService streamProcessorService;
     private final StreamHolder streamHolder;
     private final PipelineDataCache pipelineDataCache;
     private final Security security;
@@ -73,7 +71,6 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
                                final MetaDataHolder metaDataHolder,
                                final ErrorReceiverProxy errorReceiverProxy,
                                @Named("cachedPipelineStore") final PipelineStore pipelineStore,
-                               final StreamProcessorService streamProcessorService,
                                final StreamHolder streamHolder,
                                final PipelineDataCache pipelineDataCache,
                                final Security security) {
@@ -84,7 +81,6 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
         this.metaDataHolder = metaDataHolder;
         this.errorReceiverProxy = errorReceiverProxy;
         this.pipelineStore = pipelineStore;
-        this.streamProcessorService = streamProcessorService;
         this.streamHolder = streamHolder;
         this.pipelineDataCache = pipelineDataCache;
         this.security = security;
@@ -130,7 +126,7 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
                     feedHolder.setFeedName(feedName);
 
                     // Setup the meta data holder.
-                    metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
+                    metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, pipelineStore));
 
                     // Get the appropriate encoding for the stream type.
                     final String encoding = feedProperties.getEncoding(feedName, StreamTypeNames.CONTEXT);

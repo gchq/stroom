@@ -26,12 +26,12 @@ import stroom.entity.shared.BaseResultList;
 import stroom.feed.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.streamstore.StreamRetentionExecutor;
-import stroom.streamstore.api.StreamProperties;
-import stroom.streamstore.meta.StreamMetaService;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamStatus;
-import stroom.streamstore.shared.StreamTypeEntity;
+import stroom.streamstore.meta.api.FindStreamCriteria;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.meta.api.StreamMetaService;
+import stroom.streamstore.meta.api.StreamProperties;
+import stroom.streamstore.meta.api.StreamStatus;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
 import stroom.util.test.FileSystemTestUtil;
@@ -70,14 +70,14 @@ public class TestStreamRetentionExecutor extends AbstractCoreIntegrationTest {
         Stream streamInsideRetention = streamMetaService.createStream(
                 new StreamProperties.Builder()
                         .feedName(feedName)
-                        .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
+                        .streamTypeName(StreamTypeNames.RAW_EVENTS)
                         .createMs(now)
                         .statusMs(now)
                         .build());
         Stream streamOutsideRetention = streamMetaService.createStream(
                 new StreamProperties.Builder()
                         .feedName(feedName)
-                        .streamTypeName(StreamTypeEntity.RAW_EVENTS.getName())
+                        .streamTypeName(StreamTypeNames.RAW_EVENTS)
                         .createMs(timeOutsideRetentionPeriod)
                         .statusMs(timeOutsideRetentionPeriod)
                         .build());

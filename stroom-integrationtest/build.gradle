@@ -13,6 +13,7 @@ dependencies {
     compile project(':stroom-index-server')
     permitUnusedDeclared project(':stroom-index-server')
     compile project(':stroom-security-server')
+    compile project(':stroom-security-impl-mock')
     permitUnusedDeclared project(':stroom-security-server')
     compile project(':stroom-statistics-server')
     permitUnusedDeclared project(':stroom-statistics-server')
@@ -33,6 +34,8 @@ dependencies {
     integrationTestCompile project(':stroom-test-common')
     integrationTestCompile project(':stroom-util')
     integrationTestCompile project(path: ':stroom-util', configuration: 'testArtifacts')
+    integrationTestCompile project(':stroom-security-impl-mock')
+    integrationTestCompile project(':stroom-streamstore-meta-impl-mock')
 
     integrationTestCompile libs.slf4j_api
     integrationTestCompile libs.junit

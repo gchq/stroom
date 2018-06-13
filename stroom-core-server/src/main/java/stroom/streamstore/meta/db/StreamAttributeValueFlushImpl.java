@@ -23,7 +23,7 @@ import stroom.feed.MetaMap;
 import stroom.jobsystem.ClusterLockService;
 import stroom.properties.StroomPropertyService;
 import stroom.streamstore.FindStreamAttributeValueCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.meta.api.Stream;
 import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.util.date.DateUtil;

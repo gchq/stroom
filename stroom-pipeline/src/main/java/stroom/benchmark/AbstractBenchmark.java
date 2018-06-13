@@ -24,18 +24,18 @@ import stroom.feed.shared.FeedDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.streamstore.api.StreamProperties;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.fs.serializable.RawInputSegmentWriter;
-import stroom.streamstore.meta.StreamMetaService;
+import stroom.streamstore.meta.api.FindStreamCriteria;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.meta.api.StreamMetaService;
+import stroom.streamstore.meta.api.StreamProperties;
 import stroom.streamstore.shared.ExpressionUtil;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamTypeEntity;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.TaskContext;
 import stroom.util.io.StreamUtil;
 
@@ -142,9 +142,9 @@ public abstract class AbstractBenchmark {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
         builder.addTerm(StreamDataSource.FEED, Condition.EQUALS, feed.getName());
         if (feed.isReference()) {
-            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeEntity.REFERENCE.getName());
+            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeNames.REFERENCE);
         } else {
-            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeEntity.EVENTS.getName());
+            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeNames.EVENTS);
         }
         final FindStreamCriteria criteria = new FindStreamCriteria();
         criteria.setExpression(builder.build());

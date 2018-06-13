@@ -26,18 +26,14 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.EntityReferenceFindAction;
+import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.item.client.ItemListBox;
-import stroom.item.client.StringListBox;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.structure.client.presenter.PropertyListPresenter.Source;
-import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.streamstore.shared.FindStreamTypeCriteria;
-import stroom.streamstore.shared.StreamTypeEntity.Purpose;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
@@ -63,9 +59,9 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
     private boolean textBoxInitialised;
     private TextBox textBox;
 
-    private String currentStreamType;
-    private boolean streamTypePresenterInitialised;
-    private StringListBox streamTypesWidget;
+    //    private String currentStreamType;
+//    private boolean streamTypePresenterInitialised;
+//    private StringListBox streamTypesWidget;
     private boolean entityPresenterInitialised;
     private DocRef currentEntity;
 
@@ -122,9 +118,12 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
     private void startEdit(final PipelineProperty property) {
         final PipelinePropertyType propertyType = property.getPropertyType();
 
-        if ("streamType".equals(propertyType.getName())) {
-            enterStreamTypeMode(property);
-        } else if ("boolean".equals(propertyType.getType())) {
+//        if ("streamType".equals(propertyType.getName())) {
+//            enterStreamTypeMode(property);
+//        } else
+
+
+        if ("boolean".equals(propertyType.getType())) {
             enterBooleanMode(property);
         } else if ("int".equals(propertyType.getType())) {
             enterIntegerMode(property);
@@ -146,9 +145,12 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
     public void write(final PipelineProperty property) {
         final PipelinePropertyType propertyType = property.getPropertyType();
 
-        if ("streamType".equals(propertyType.getName())) {
-            property.setValue(new PipelinePropertyValue(streamTypesWidget.getSelected()));
-        } else if ("boolean".equals(propertyType.getType())) {
+//        if ("streamType".equals(propertyType.getName())) {
+//            property.setValue(new PipelinePropertyValue(streamTypesWidget.getSelected()));
+//        } else
+
+
+        if ("boolean".equals(propertyType.getType())) {
             final String value = listBox.getItemText(listBox.getSelectedIndex());
             property.setValue(new PipelinePropertyValue(Boolean.valueOf(value)));
         } else if ("int".equals(propertyType.getType())) {
@@ -278,42 +280,42 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
         textBox.setText(currentText);
     }
 
-    private void enterStreamTypeMode(final PipelineProperty property) {
-        if (!streamTypePresenterInitialised) {
-            streamTypesWidget = new StringListBox();
-
-            // Load stream types.
-            final FindStreamTypeCriteria findStreamTypeCriteria = new FindStreamTypeCriteria();
-            findStreamTypeCriteria.obtainPurpose().add(Purpose.PROCESSED);
-            dispatcher.exec(new EntityReferenceFindAction<>(findStreamTypeCriteria)).onSuccess(result -> {
-                for (final DocRef streamType : result) {
-                    streamTypesWidget.addItem(streamType.getName());
-                }
-                streamTypesWidget.setSelected(currentStreamType);
-            });
-
-            streamTypesWidget.addChangeHandler(event -> {
-                final String streamType = streamTypesWidget.getSelected();
-                if (!EqualsUtil.isEquals(currentStreamType, streamType)) {
-                    setDirty(true);
-                }
-            });
-
-            final Widget widget = streamTypesWidget;
-            widget.getElement().getStyle().setWidth(100, Unit.PCT);
-            widget.getElement().getStyle().setMarginBottom(0, Unit.PX);
-            getView().setValueWidget(widget);
-
-            streamTypePresenterInitialised = true;
-        }
-
-        currentStreamType = null;
-        if (property.getValue() != null && property.getValue().getString() != null) {
-            currentStreamType = property.getValue().toString();
-        }
-
-        streamTypesWidget.setSelected(currentStreamType);
-    }
+//    private void enterStreamTypeMode(final PipelineProperty property) {
+//        if (!streamTypePresenterInitialised) {
+//            streamTypesWidget = new StringListBox();
+//
+//            // Load stream types.
+//            final FindStreamTypeCriteria findStreamTypeCriteria = new FindStreamTypeCriteria();
+//            findStreamTypeCriteria.obtainPurpose().add(Purpose.PROCESSED);
+//            dispatcher.exec(new EntityReferenceFindAction<>(findStreamTypeCriteria)).onSuccess(result -> {
+//                for (final DocRef streamType : result) {
+//                    streamTypesWidget.addItem(streamType.getName());
+//                }
+//                streamTypesWidget.setSelected(currentStreamType);
+//            });
+//
+//            streamTypesWidget.addChangeHandler(event -> {
+//                final String streamType = streamTypesWidget.getSelected();
+//                if (!EqualsUtil.isEquals(currentStreamType, streamType)) {
+//                    setDirty(true);
+//                }
+//            });
+//
+//            final Widget widget = streamTypesWidget;
+//            widget.getElement().getStyle().setWidth(100, Unit.PCT);
+//            widget.getElement().getStyle().setMarginBottom(0, Unit.PX);
+//            getView().setValueWidget(widget);
+//
+//            streamTypePresenterInitialised = true;
+//        }
+//
+//        currentStreamType = null;
+//        if (property.getValue() != null && property.getValue().getString() != null) {
+//            currentStreamType = property.getValue().toString();
+//        }
+//
+//        streamTypesWidget.setSelected(currentStreamType);
+//    }
 
     private void enterEntityMode(final PipelineProperty property) {
         if (!entityPresenterInitialised) {

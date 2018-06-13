@@ -18,6 +18,7 @@ package stroom.streamstore.shared;
 
 import stroom.entity.shared.FindNamedEntityCriteria;
 import stroom.entity.shared.PageRequest;
+import stroom.streamstore.meta.api.FindStreamCriteria;
 
 /**
  * <p>
@@ -29,7 +30,6 @@ public class FindStreamAttributeMapCriteria extends FindNamedEntityCriteria {
     private static final long serialVersionUID = -4777723504698304778L;
 
     private FindStreamCriteria findStreamCriteria = null;
-    private boolean useCache = true;
 
     public FindStreamAttributeMapCriteria() {
         findStreamCriteria = new FindStreamCriteria();
@@ -45,14 +45,6 @@ public class FindStreamAttributeMapCriteria extends FindNamedEntityCriteria {
             findStreamCriteria = new FindStreamCriteria();
         }
         return findStreamCriteria;
-    }
-
-    public boolean isUseCache() {
-        return useCache;
-    }
-
-    public void setUseCache(boolean useCache) {
-        this.useCache = useCache;
     }
 
     @Override

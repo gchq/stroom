@@ -24,7 +24,6 @@ import stroom.entity.FindService;
 import stroom.jobsystem.DistributedTaskFactory;
 import stroom.persist.EntityManagerSupport;
 import stroom.security.Security;
-import stroom.streamstore.ExpressionToFindCriteria;
 import stroom.task.TaskHandler;
 
 import javax.inject.Named;
@@ -56,9 +55,8 @@ public class StreamTaskModule extends AbstractModule {
     public StreamProcessorFilterService cachedStreamProcessorFilterService(final CachingEntityManager entityManager,
                                                                            final Security security,
                                                                            final EntityManagerSupport entityManagerSupport,
-                                                                           final StreamProcessorService streamProcessorService,
-                                                                           final ExpressionToFindCriteria expressionToFindCriteria) {
-        return new StreamProcessorFilterServiceImpl(entityManager, security, entityManagerSupport, streamProcessorService, expressionToFindCriteria);
+                                                                           final StreamProcessorService streamProcessorService) {
+        return new StreamProcessorFilterServiceImpl(entityManager, security, entityManagerSupport, streamProcessorService);
     }
 
     @Provides

@@ -21,7 +21,7 @@ import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.StringValue;
 import stroom.pipeline.state.StreamHolder;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.meta.api.Stream;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;

@@ -22,7 +22,8 @@ import stroom.feed.MetaMap;
 import stroom.io.SeekableOutputStream;
 import stroom.streamstore.StreamException;
 import stroom.streamstore.api.StreamTarget;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.shared.StreamTypeNames;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,6 +44,7 @@ import java.util.stream.Collectors;
 public final class FileSystemStreamTarget implements StreamTarget {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamTarget.class);
 
+    private final FileSystemStreamPathHelper fileSystemStreamPathHelper;
     private final Set<String> volumePaths;
     private final String streamType;
     private final List<FileSystemStreamTarget> childrenAccessed = new ArrayList<>();
@@ -54,10 +56,12 @@ public final class FileSystemStreamTarget implements StreamTarget {
     private Set<Path> files;
     private FileSystemStreamTarget parent;
 
-    private FileSystemStreamTarget(final Stream requestMetaData,
+    private FileSystemStreamTarget(final FileSystemStreamPathHelper fileSystemStreamPathHelper,
+                                   final Stream requestMetaData,
                                    final Set<String> volumePaths,
                                    final String streamType,
                                    final boolean append) {
+        this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.stream = requestMetaData;
         this.volumePaths = volumePaths;
         this.streamType = streamType;
@@ -66,9 +70,11 @@ public final class FileSystemStreamTarget implements StreamTarget {
         validate();
     }
 
-    private FileSystemStreamTarget(final FileSystemStreamTarget parent,
+    private FileSystemStreamTarget(final FileSystemStreamPathHelper fileSystemStreamPathHelper,
+                                   final FileSystemStreamTarget parent,
                                    final String streamType,
                                    final Set<Path> files) {
+        this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.stream = parent.stream;
         this.volumePaths = parent.volumePaths;
         this.parent = parent;
@@ -83,11 +89,12 @@ public final class FileSystemStreamTarget implements StreamTarget {
     /**
      * Creates a new file system stream target.
      */
-    public static FileSystemStreamTarget create(final Stream stream,
+    static FileSystemStreamTarget create(final FileSystemStreamPathHelper fileSystemStreamPathHelper,
+                                                final Stream stream,
                                                 final Set<String> volumePaths,
                                                 final String streamType,
                                                 final boolean append) {
-        return new FileSystemStreamTarget(stream, volumePaths, streamType, append);
+        return new FileSystemStreamTarget(fileSystemStreamPathHelper, stream, volumePaths, streamType, append);
     }
 
     private void validate() {
@@ -147,7 +154,7 @@ public final class FileSystemStreamTarget implements StreamTarget {
             files = new HashSet<>();
             if (parent == null) {
                 for (final String rootPath : volumePaths) {
-                    final Path aFile = FileSystemStreamTypeUtil.createRootStreamFile(rootPath, stream,
+                    final Path aFile = fileSystemStreamPathHelper.createRootStreamFile(rootPath, stream,
                             streamType);
                     if (createPath) {
                         final Path rootDir = Paths.get(rootPath);
@@ -161,7 +168,7 @@ public final class FileSystemStreamTarget implements StreamTarget {
                 }
             } else {
                 files.addAll(parent.getFiles(false).stream()
-                        .map(pFile -> FileSystemStreamTypeUtil.createChildStreamFile(pFile, getStreamTypeName()))
+                        .map(pFile -> fileSystemStreamPathHelper.createChildStreamFile(pFile, getStreamTypeName()))
                         .collect(Collectors.toList()));
             }
             if (LOGGER.isDebugEnabled()) {
@@ -188,7 +195,7 @@ public final class FileSystemStreamTarget implements StreamTarget {
                     throw new StreamException("Unable to delete existing files for new stream target " + files);
                 }
 
-                outputStream = FileSystemStreamTypeUtil.getOutputStream(streamType, files);
+                outputStream = fileSystemStreamPathHelper.getOutputStream(streamType, files);
             } catch (final IOException ioEx) {
                 LOGGER.error("getOutputStream() - " + ioEx.getMessage());
                 // No reason to get a IO on opening the out stream .... fail in
@@ -208,8 +215,8 @@ public final class FileSystemStreamTarget implements StreamTarget {
         if (!closed && StreamTypeNames.MANIFEST.equals(streamTypeName)) {
             throw new RuntimeException("Stream store is responsible for the child manifest stream");
         }
-        final Set<Path> childFile = FileSystemStreamTypeUtil.createChildStreamPath(getFiles(false), streamTypeName);
-        final FileSystemStreamTarget child = new FileSystemStreamTarget(this, streamTypeName, childFile);
+        final Set<Path> childFile = fileSystemStreamPathHelper.createChildStreamPath(getFiles(false), streamTypeName);
+        final FileSystemStreamTarget child = new FileSystemStreamTarget(fileSystemStreamPathHelper, this, streamTypeName, childFile);
         childrenAccessed.add(child);
         return child;
     }
@@ -247,7 +254,7 @@ public final class FileSystemStreamTarget implements StreamTarget {
         if (attributeMap == null) {
             attributeMap = new MetaMap();
             if (isAppend()) {
-                final Path manifestFile = FileSystemStreamTypeUtil
+                final Path manifestFile = fileSystemStreamPathHelper
                         .createChildStreamFile(getFiles(false).iterator().next(), StreamTypeNames.MANIFEST);
                 if (Files.isRegularFile(manifestFile)) {
                     try (final InputStream inputStream = Files.newInputStream(manifestFile)) {

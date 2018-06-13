@@ -20,7 +20,7 @@ import stroom.io.StreamCloser;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProviderImpl;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.meta.api.Stream;
 import stroom.guice.PipelineScoped;
 
 import javax.inject.Inject;

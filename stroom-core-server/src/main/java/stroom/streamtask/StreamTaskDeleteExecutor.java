@@ -25,9 +25,9 @@ import stroom.jobsystem.ClusterLockService;
 import stroom.jobsystem.JobTrackedSchedule;
 import stroom.properties.StroomPropertyService;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
-import stroom.streamtask.shared.StreamProcessorFilter;
-import stroom.streamtask.shared.StreamProcessorFilterTracker;
-import stroom.streamtask.shared.StreamTask;
+import stroom.streamtask.shared.ProcessorFilter;
+import stroom.streamtask.shared.ProcessorFilterTracker;
+import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.streamtask.shared.TaskStatus;
 import stroom.util.date.DateUtil;
 import stroom.util.lifecycle.StroomFrequencySchedule;
@@ -95,31 +95,31 @@ class StreamTaskDeleteExecutor extends AbstractBatchDeleteExecutor {
     @Override
     protected void deleteCurrentBatch(final long total) {
         // Delete stream tasks.
-        deleteWithJoin(StreamTask.TABLE_NAME, StreamTask.ID, "stream tasks", total);
+        deleteWithJoin(ProcessorFilterTask.TABLE_NAME, ProcessorFilterTask.ID, "stream tasks", total);
     }
 
     @Override
     protected SqlBuilder getTempIdSelectSql(final long age, final int batchSize) {
         final SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT ");
-        sql.append(StreamTask.ID);
+        sql.append(ProcessorFilterTask.ID);
         sql.append(" FROM ");
-        sql.append(StreamTask.TABLE_NAME);
+        sql.append(ProcessorFilterTask.TABLE_NAME);
         sql.append(" WHERE ");
-        sql.append(StreamTask.STATUS);
+        sql.append(ProcessorFilterTask.STATUS);
         sql.append(" IN (");
         sql.append(TaskStatus.COMPLETE.getPrimitiveValue());
         sql.append(", ");
         sql.append(TaskStatus.FAILED.getPrimitiveValue());
         sql.append(") AND (");
-        sql.append(StreamTask.CREATE_MS);
+        sql.append(ProcessorFilterTask.CREATE_MS);
         sql.append(" IS NULL OR ");
-        sql.append(StreamTask.CREATE_MS);
+        sql.append(ProcessorFilterTask.CREATE_MS);
         sql.append(" < ");
         sql.arg(age);
         sql.append(")");
         sql.append(" ORDER BY ");
-        sql.append(StreamTask.ID);
+        sql.append(ProcessorFilterTask.ID);
         sql.append(" LIMIT ");
         sql.arg(batchSize);
         return sql;
@@ -130,11 +130,11 @@ class StreamTaskDeleteExecutor extends AbstractBatchDeleteExecutor {
             // Get all filters that have not been polled for a while.
             final FindStreamProcessorFilterCriteria criteria = new FindStreamProcessorFilterCriteria();
             criteria.setLastPollPeriod(new Period(null, age));
-            final List<StreamProcessorFilter> filters = streamProcessorFilterService.find(criteria);
-            for (final StreamProcessorFilter filter : filters) {
-                final StreamProcessorFilterTracker tracker = filter.getStreamProcessorFilterTracker();
+            final List<ProcessorFilter> filters = streamProcessorFilterService.find(criteria);
+            for (final ProcessorFilter filter : filters) {
+                final ProcessorFilterTracker tracker = filter.getStreamProcessorFilterTracker();
 
-                if (tracker != null && StreamProcessorFilterTracker.COMPLETE.equals(tracker.getStatus())) {
+                if (tracker != null && ProcessorFilterTracker.COMPLETE.equals(tracker.getStatus())) {
                     // The tracker thinks that no more tasks will ever be
                     // created for this filter so we can delete it if there are
                     // no remaining tasks for this filter.

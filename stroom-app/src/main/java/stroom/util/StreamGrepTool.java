@@ -17,23 +17,20 @@
 package stroom.util;
 
 import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.name.Names;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.persist.PersistService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.streamstore.meta.db.StreamTypeEntityService;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.fs.FileSystemStreamTypeUtil;
-import stroom.streamstore.meta.StreamMetaService;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.fs.FileSystemStreamPathHelper;
+import stroom.streamstore.meta.api.FindStreamCriteria;
+import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.meta.api.StreamMetaService;
 import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamTypeEntity;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.io.StreamUtil;
 
 import java.io.IOException;
@@ -134,7 +131,7 @@ public class StreamGrepTool extends AbstractCommandLineTool {
 
         final StreamMetaService streamMetaService = injector.getInstance(StreamMetaService.class);
         final StreamStore streamStore = injector.getInstance(StreamStore.class);
-        final StreamTypeEntityService streamTypeService = injector.getInstance(Key.get(StreamTypeEntityService.class, Names.named("cachedStreamTypeService")));
+        final FileSystemStreamPathHelper fileSystemStreamPathHelper = injector.getInstance(FileSystemStreamPathHelper.class);
 
         if (feed != null) {
             builder.addTerm(StreamDataSource.FEED, Condition.EQUALS, feed);
@@ -143,7 +140,7 @@ public class StreamGrepTool extends AbstractCommandLineTool {
         if (streamType != null) {
             builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, streamType);
         } else {
-            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeEntity.RAW_EVENTS.getName());
+            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS);
         }
 
         // Query the stream store
@@ -156,8 +153,8 @@ public class StreamGrepTool extends AbstractCommandLineTool {
             final String streamTypeName = stream.getStreamTypeName();
             count++;
             LOGGER.info("processing() - " + count + "/" + results.size() + " "
-                    + FileSystemStreamTypeUtil.getDirectory(stream, streamTypeName) + " "
-                    + FileSystemStreamTypeUtil.getBaseName(stream));
+                    + fileSystemStreamPathHelper.getDirectory(stream, streamTypeName) + " "
+                    + fileSystemStreamPathHelper.getBaseName(stream));
 
             processFile(streamStore, stream.getId(), match);
         }

@@ -36,9 +36,9 @@ import stroom.pipeline.PipelineStoreImpl;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.refdata.impl.MockReferenceDataLoader;
-import stroom.security.MockSecurityContext;
 import stroom.security.SecurityContext;
-import stroom.streamstore.shared.StreamTypeEntity;
+import stroom.security.impl.mock.MockSecurityContext;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.cache.CacheManager;
 import stroom.util.date.DateUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
@@ -68,8 +68,8 @@ public class TestReferenceData extends StroomUnitTest {
         final DocRef pipeline2Ref = pipelineStore.createDocument("TEST_PIPELINE_2");
 
         final List<PipelineReference> pipelineReferences = new ArrayList<>();
-        pipelineReferences.add(new PipelineReference(pipeline1Ref, feed1Ref, StreamTypeEntity.REFERENCE.getName()));
-        pipelineReferences.add(new PipelineReference(pipeline2Ref, feed2Ref, StreamTypeEntity.REFERENCE.getName()));
+        pipelineReferences.add(new PipelineReference(pipeline1Ref, feed1Ref, StreamTypeNames.REFERENCE));
+        pipelineReferences.add(new PipelineReference(pipeline2Ref, feed2Ref, StreamTypeNames.REFERENCE));
 
         final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
         streamSet.add(new EffectiveStream(1, DateUtil.parseNormalDateTimeString("2008-01-01T09:47:00.000Z")));
@@ -149,7 +149,7 @@ public class TestReferenceData extends StroomUnitTest {
         final DocRef pipelineRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, "12345");
         final List<PipelineReference> pipelineReferences = new ArrayList<>();
 
-        pipelineReferences.add(new PipelineReference(pipelineRef, feed1Ref, StreamTypeEntity.REFERENCE.getName()));
+        pipelineReferences.add(new PipelineReference(pipelineRef, feed1Ref, StreamTypeNames.REFERENCE));
 
         final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
         streamSet.add(new EffectiveStream(0, 0L));
@@ -187,7 +187,7 @@ public class TestReferenceData extends StroomUnitTest {
         final DocRef pipelineRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, "12345");
         final List<PipelineReference> pipelineReferences = new ArrayList<>();
 
-        pipelineReferences.add(new PipelineReference(pipelineRef, feed1Ref, StreamTypeEntity.REFERENCE.getName()));
+        pipelineReferences.add(new PipelineReference(pipelineRef, feed1Ref, StreamTypeNames.REFERENCE));
 
         final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
         streamSet.add(new EffectiveStream(0, 0L));

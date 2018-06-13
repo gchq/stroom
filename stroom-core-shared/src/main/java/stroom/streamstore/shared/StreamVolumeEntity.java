@@ -18,18 +18,15 @@ package stroom.streamstore.shared;
 
 import stroom.entity.shared.BaseEntityBig;
 import stroom.entity.shared.SQLNameConstants;
-import stroom.node.shared.VolumeEntity;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.Transient;
 
 /**
  * Link table for which streams live on which volumes.
  */
-@Entity(name = "STRM_VOL")
+@Entity(name = "FS_STRM_VOL")
 public class StreamVolumeEntity extends BaseEntityBig {
     public static final String TABLE_NAME = SQLNameConstants.STREAM + SEP + SQLNameConstants.VOLUME;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
@@ -37,44 +34,38 @@ public class StreamVolumeEntity extends BaseEntityBig {
     public static final String LAST_ACCESS_MS = SQLNameConstants.LAST + SEP + SQLNameConstants.ACCESS
             + SQLNameConstants.MS_SUFFIX;
     private static final long serialVersionUID = 6729492408680929025L;
-    private VolumeEntity volume;
-    private StreamEntity stream;
+    private Long volumeId;
+    private Long streamId;
 
     public StreamVolumeEntity() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    @ManyToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = VolumeEntity.FOREIGN_KEY)
-    public VolumeEntity getVolume() {
-        return volume;
+    @Column(name = "FK_VOL_ID", nullable = false)
+    public Long getVolumeId() {
+        return volumeId;
     }
 
-    public void setVolume(final VolumeEntity volume) {
-        this.volume = volume;
+    public void setVolumeId(final Long volume) {
+        this.volumeId = volumeId;
     }
 
-    @ManyToOne(fetch = FetchType.EAGER, optional = false)
-    @JoinColumn(name = StreamEntity.FOREIGN_KEY)
-    public StreamEntity getStream() {
-        return stream;
+    @Column(name = "FK_STRM_ID", nullable = false)
+    public Long getStream() {
+        return streamId;
     }
 
-    public void setStream(final StreamEntity stream) {
-        this.stream = stream;
+    public void setStream(final Long streamId) {
+        this.streamId = streamId;
     }
 
     @Override
     protected void toString(final StringBuilder sb) {
         super.toString(sb);
-        if (getStream() != null) {
-            sb.append(", streamId=");
-            sb.append(getStream().getId());
-        }
-        if (getVolume() != null) {
-            sb.append(", volumeId=");
-            sb.append(getVolume().getId());
-        }
+        sb.append(", streamId=");
+        sb.append(streamId);
+        sb.append(", volumeId=");
+        sb.append(volumeId);
     }
 
     @Transient

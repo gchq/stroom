@@ -24,15 +24,12 @@ import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
 import stroom.node.shared.VolumeEntity;
 import stroom.node.shared.VolumeState;
-import stroom.streamstore.shared.FeedEntity;
-import stroom.streamstore.shared.StreamEntity;
 import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamAttributeValue;
-import stroom.streamstore.shared.StreamTypeEntity;
 import stroom.streamstore.shared.StreamVolumeEntity;
-import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamProcessorFilter;
-import stroom.streamtask.shared.StreamTask;
+import stroom.streamtask.shared.Processor;
+import stroom.streamtask.shared.ProcessorFilter;
+import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.util.date.DateUtil;
 
 import java.util.ArrayList;
@@ -44,22 +41,22 @@ public class TableSqlTool {
     private static final List<String> TABLE_CREATE_ORDER = Collections.unmodifiableList(Arrays.asList(
             Rack.TABLE_NAME,
             Node.TABLE_NAME,
-            StreamTypeEntity.TABLE_NAME,
+//            StreamTypeEntity.TABLE_NAME,
             ClusterLock.TABLE_NAME,
-            FeedEntity.TABLE_NAME,
+//            FeedEntity.TABLE_NAME,
             VolumeEntity.TABLE_NAME,
             VolumeState.TABLE_NAME,
             GlobalProperty.TABLE_NAME,
             Job.TABLE_NAME,
             JobNode.TABLE_NAME,
-            StreamProcessor.TABLE_NAME,
-            StreamProcessorFilter.TABLE_NAME,
-            StreamTypeEntity.TABLE_NAME,
-            StreamEntity.TABLE_NAME,
+            Processor.TABLE_NAME,
+            ProcessorFilter.TABLE_NAME,
+//            StreamTypeEntity.TABLE_NAME,
+//            StreamEntity.TABLE_NAME,
             StreamAttributeKey.TABLE_NAME,
             StreamAttributeValue.TABLE_NAME,
             StreamVolumeEntity.TABLE_NAME,
-            StreamTask.TABLE_NAME));
+            ProcessorFilterTask.TABLE_NAME));
 
     public static void main(final String[] args) {
         System.out.println("-- Script created by TableSqlTool on " + DateUtil.createNormalDateTimeString());

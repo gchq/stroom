@@ -20,6 +20,7 @@ package stroom.policy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dictionary.DictionaryStore;
+import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Period;
 import stroom.entity.shared.Range;
 import stroom.entity.util.XMLMarshallerUtil;
@@ -32,6 +33,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.DataRetentionRule;
 import stroom.streamstore.DataRetentionAgeUtil;
+import stroom.streamstore.meta.api.Stream;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.task.TaskContext;
 import stroom.util.date.DateUtil;
@@ -219,52 +221,74 @@ public class DataRetentionExecutor {
 
         // Ignore rules if none are active.
         if (activeRules.getActiveRules().size() > 0) {
-            // Create an object that can find streams with prepared statements and see if they match rules.
-            try (final DataRetentionStreamFinder finder = new DataRetentionStreamFinder(connection, dictionaryStore)) {
 
-                // Find out how many rows we are likely to examine.
-                final long rowCount = finder.getRowCount(ageRange, activeRules.getFieldSet());
 
-                // If we aren't likely to be touching any rows then ignore.
-                if (rowCount > 0) {
 
-                    // Create an object that can delete streams with prepared statements.
-                    try (final DataRetentionStreamDeleter deleter = new DataRetentionStreamDeleter(connection)) {
-                        List<Long> streamIdDeleteList = new ArrayList<>();
 
-                        boolean more = true;
-                        final Progress progress = new Progress(ageRange, rowCount);
-                        Range<Long> streamIdRange = new Range<>(0L, null);
-                        while (more && !Thread.currentThread().isInterrupted()) {
-                            if (progress.getStreamId() != null) {
-                                // Process from the next stream id onwards.
-                                streamIdRange = new Range<>(progress.getStreamId() + 1, null);
-                            }
 
-                            more = finder.findMatches(ageRange, streamIdRange, batchSize, activeRules, ageMap, taskContext, progress, streamIdDeleteList);
+            // TODO : @66 FIX DATA RETENTION SO THAT EXPRESSIONS ARE PROPERLY EVALUATED AGAINST THE STREAM META SERVICE.
 
-                            // Delete a batch of streams.
-                            while (streamIdDeleteList.size() >= batchSize) {
-                                final List<Long> batch = new ArrayList<>(streamIdDeleteList.subList(0, batchSize));
-                                streamIdDeleteList = new ArrayList<>(streamIdDeleteList.subList(batchSize, streamIdDeleteList.size()));
-                                deleter.deleteStreams(batch);
-                            }
-                        }
 
-                        // Delete any remaining streams in the list.
-                        if (streamIdDeleteList.size() > 0) {
-                            deleter.deleteStreams(streamIdDeleteList);
-                        }
 
-                    } catch (final SQLException e) {
-                        success = false;
-                        LOGGER.error(e.getMessage(), e);
-                    }
-                }
-            } catch (final SQLException e) {
-                success = false;
-                LOGGER.error(e.getMessage(), e);
-            }
+
+
+
+
+
+
+
+
+
+
+
+
+//            // Create an object that can find streams with prepared statements and see if they match rules.
+//            try (final DataRetentionStreamFinder finder = new DataRetentionStreamFinder(connection, dictionaryStore)) {
+//
+//                // Find out how many rows we are likely to examine.
+//                Range<Long> streamIdRange = new Range<>(0L, Long.MAX_VALUE);
+//                final BaseResultList<Stream> streams = finder.getStreams(ageRange, streamIdRange, batchSize);
+//
+//                // If we aren't likely to be touching any rows then ignore.
+//                if (streams.size() > 0) {
+//
+//                    // Create an object that can delete streams with prepared statements.
+//                    try (final DataRetentionStreamDeleter deleter = new DataRetentionStreamDeleter(connection)) {
+//                        List<Long> streamIdDeleteList = new ArrayList<>();
+//
+//                        boolean more = true;
+//                        final Progress progress = new Progress(ageRange, rowCount);
+//                        Range<Long> streamIdRange = new Range<>(0L, null);
+//                        while (more && !Thread.currentThread().isInterrupted()) {
+//                            if (progress.getStreamId() != null) {
+//                                // Process from the next stream id onwards.
+//                                streamIdRange = new Range<>(progress.getStreamId() + 1, null);
+//                            }
+//
+//                            more = finder.findMatches(ageRange, streamIdRange, batchSize, activeRules, ageMap, taskContext, progress, streamIdDeleteList);
+//
+//                            // Delete a batch of streams.
+//                            while (streamIdDeleteList.size() >= batchSize) {
+//                                final List<Long> batch = new ArrayList<>(streamIdDeleteList.subList(0, batchSize));
+//                                streamIdDeleteList = new ArrayList<>(streamIdDeleteList.subList(batchSize, streamIdDeleteList.size()));
+//                                deleter.deleteStreams(batch);
+//                            }
+//                        }
+//
+//                        // Delete any remaining streams in the list.
+//                        if (streamIdDeleteList.size() > 0) {
+//                            deleter.deleteStreams(streamIdDeleteList);
+//                        }
+//
+//                    } catch (final SQLException e) {
+//                        success = false;
+//                        LOGGER.error(e.getMessage(), e);
+//                    }
+//                }
+//            } catch (final SQLException e) {
+//                success = false;
+//                LOGGER.error(e.getMessage(), e);
+//            }
         }
 
         return success;

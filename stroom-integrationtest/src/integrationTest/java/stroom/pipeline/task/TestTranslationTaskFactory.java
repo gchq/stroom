@@ -27,15 +27,15 @@ import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.fs.StreamTypeNames;
-import stroom.streamstore.meta.StreamMetaService;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamTypeNames;
+import stroom.streamstore.meta.api.StreamMetaService;
+import stroom.streamstore.meta.api.FindStreamCriteria;
+import stroom.streamstore.meta.api.Stream;
 import stroom.streamstore.tools.StoreCreationTool;
 import stroom.streamtask.StreamProcessorTask;
 import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.streamtask.StreamTaskCreator;
-import stroom.streamtask.shared.StreamTask;
+import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.task.SimpleTaskContext;
 import stroom.task.TaskManager;
 import stroom.test.AbstractProcessIntegrationTest;
@@ -134,9 +134,9 @@ public class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
      */
     private List<StreamProcessorTaskExecutor> processAll() {
         final List<StreamProcessorTaskExecutor> results = new ArrayList<>();
-        List<StreamTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getDefaultNode(), 100);
+        List<ProcessorFilterTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getDefaultNode(), 100);
         while (streamTasks.size() > 0) {
-            for (final StreamTask streamTask : streamTasks) {
+            for (final ProcessorFilterTask streamTask : streamTasks) {
                 final StreamProcessorTask task = new StreamProcessorTask(streamTask);
                 taskManager.exec(task);
                 results.add(task.getStreamProcessorTaskExecutor());
