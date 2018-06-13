@@ -33,10 +33,7 @@ const NewElement = ({
       <img className="element-palette__icon" alt="X" src={require(`../images/${element.icon}`)} />
       <button
         className="element-palette__type"
-        onFocus={() => {
-            console.log('Focus on ', element);
-            setHasFocus(true);
-          }}
+        onFocus={() => setHasFocus(true)}
         onBlur={() => setHasFocus(false)}
       >
         {element.type}

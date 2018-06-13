@@ -1,4 +1,5 @@
 @import "./ElementPalette/ElementPalette";
+@import "./ElementDetails/ElementDetails";
 @import "./PipelineElement";
 @import "./RecycleBin";
 $palette-width: 12rem;
@@ -75,6 +76,7 @@ $palette-width: 12rem;
 .Pipeline-editor__graph {
   background-color: #fafafa;
   flex: 1;
+  display: flex;
   position: relative;
   overflow: scroll;
   overflow-y: scroll;
@@ -82,10 +84,17 @@ $palette-width: 12rem;
 }
 
 .Pipeline-editor__recycle-bin {
-  position: fixed;
-  bottom: 2rem;
+  align-self: flex-end;
+  margin: 1rem;
 }
 
 .LineContainer-svg {
   width: calc(100% + #{$palette-width} + 1em) !important;
+}
+
+.Pipeline-editor__content {
+  //TODO: Hack. I'm not sure why the offset needs to be as much as 190px.
+  width: calc(100% - 190px);
+  display: flex;
+  flex-direction: column;
 }
