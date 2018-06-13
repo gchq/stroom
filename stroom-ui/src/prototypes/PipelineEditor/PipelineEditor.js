@@ -110,7 +110,7 @@ const PipelineEditor = ({
           </div>
         </LineContainer>
 
-        <ElementDetails className="Pipeline-editor__details" />
+        <ElementDetails pipelineId={pipelineId} className="Pipeline-editor__details" />
       </div>
     </div>
   );
