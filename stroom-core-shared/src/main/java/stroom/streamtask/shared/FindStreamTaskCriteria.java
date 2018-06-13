@@ -25,6 +25,7 @@ import stroom.feed.shared.Feed;
 import stroom.node.shared.Node;
 import stroom.docref.DocRef;
 import stroom.streamstore.shared.Stream;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 
@@ -41,9 +42,9 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
     public static final String FIELD_CREATE_TIME = "Created";
     public static final String FIELD_START_TIME = "Start Time";
     public static final String FIELD_END_TIME_DATE = "End Time";
-    public static final String FIELD_FEED_NAME = "Feed";
+    public static final String FIELD_FEED_NAME = StreamDataSource.FEED_NAME;
     public static final String FIELD_PRIORITY = "Priority";
-    public static final String FIELD_PIPELINE_NAME = "Pipeline";
+    public static final String FIELD_PIPELINE_UUID = StreamDataSource.PIPELINE_UUID;
     public static final String FIELD_STATUS = "Status";
     public static final String FIELD_COUNT = "Count";
     public static final String FIELD_NODE = "Node";
