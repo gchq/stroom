@@ -47,7 +47,7 @@ const AddElementModal = ({
   };
 
   return (
-    <Modal size="tiny" open={!!newElementDefinition} onClose={onCancelNewElement}>
+    <Modal size="tiny" open={!!newElementDefinition} onClose={onCancelNewElement} dimmer="inverted">
       <Header content="Add New Element" />
       <Modal.Content>
         <Form>

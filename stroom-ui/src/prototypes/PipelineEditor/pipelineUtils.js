@@ -263,7 +263,7 @@ export function moveElementInPipeline(pipeline, itemToMove, destination) {
  * @return The updated pipeline definition.
  */
 export function deleteElementInPipeline(pipeline, itemToDelete) {
-  const children = getChildren(pipeline, itemToDelete);
+  const children = getDescendants(pipeline, itemToDelete);
 
   return {
     properties: {
@@ -286,9 +286,13 @@ export function deleteElementInPipeline(pipeline, itemToDelete) {
   };
 }
 
-// TODO This was previously not exported -- it doesn't need to be. But moving from Mocha
-// to Jest broke rewire. Exporting until we have a solution to this.
-export function getChildren(pipeline, parent) {
+/**
+ * Gets an array of all descendents of the pipeline element
+ *
+ * @param {pipeline} pipeline Pipeline definition
+ * @param {string} parent The id of the parent
+ */
+export function getDescendants(pipeline, parent) {
   let allChildren = [];
 
   const getAllChildren = (pipeline, element) => {
@@ -304,6 +308,12 @@ export function getChildren(pipeline, parent) {
   return allChildren;
 }
 
+/**
+ * Checks whether the give element is active in the pipeline. I.e. does anything link to it.
+ * 
+ * @param {pipeline} pipeline Pipeline definition
+ * @param {element} elementToCheck The element to check for activity
+ */
 export function isActive(pipeline, elementToCheck) {
   const linksInvolvingElement = pipeline.links.add.filter(element => elementToCheck.id === element.from || elementToCheck.id === element.to);
   return linksInvolvingElement.length > 0;
