@@ -32,6 +32,8 @@ import lineElementCreators from './pipelineLineElementCreators';
 
 import { isActive } from './pipelineUtils';
 
+import { ElementDetails } from './ElementDetails';
+
 const HORIZONTAL_SPACING = 150;
 const VERTICAL_SPACING = 50;
 const HORIZONTAL_START_PX = 50;
@@ -72,39 +74,44 @@ const PipelineEditor = ({
       <div className="Pipeline-editor__element-palette">
         <ElementPalette />
       </div>
+
       <button className="Pipeline-editor__palette-toggle" onClick={togglePaletteOpen}>
         {isPaletteOpen ? <Icon name="caret left" /> : <Icon name="caret right" />}
       </button>
 
-      <LineContainer
-        className="Pipeline-editor__graph"
-        lineContextId={`pipeline-lines-${pipelineId}`}
-        lineElementCreators={lineElementCreators}
-      >
-        <div className="Pipeline-editor__recycle-bin">
-          <RecycleBin pipelineId={pipelineId} />
-        </div>
-        <div className="Pipeline-editor__elements">
-          {pipeline.elements.add.filter(element => isActive(pipeline, element)).map(e => (
-            <div key={e.id} id={e.id} style={elementStyles[e.id]}>
-              <PipelineElement pipelineId={pipelineId} elementId={e.id} />
-            </div>
-          ))}
-        </div>
-        <div className="Pipeline-editor__lines">
-          {pipeline.links.add
-            .map(l => ({ ...l, lineId: `${l.from}-${l.to}` }))
-            .map(l => (
-              <LineTo
-                lineId={l.lineId}
-                key={l.lineId}
-                fromId={l.from}
-                toId={l.to}
-                lineType="curve"
-              />
+      <div className="Pipeline-editor__content">
+        <LineContainer
+          className="Pipeline-editor__graph"
+          lineContextId={`pipeline-lines-${pipelineId}`}
+          lineElementCreators={lineElementCreators}
+        >
+          <div className="Pipeline-editor__recycle-bin">
+            <RecycleBin pipelineId={pipelineId} />
+          </div>
+          <div className="Pipeline-editor__elements">
+            {pipeline.elements.add.filter(element => isActive(pipeline, element)).map(e => (
+              <div key={e.id} id={e.id} style={elementStyles[e.id]}>
+                <PipelineElement pipelineId={pipelineId} elementId={e.id} />
+              </div>
             ))}
-        </div>
-      </LineContainer>
+          </div>
+          <div className="Pipeline-editor__lines">
+            {pipeline.links.add
+              .map(l => ({ ...l, lineId: `${l.from}-${l.to}` }))
+              .map(l => (
+                <LineTo
+                  lineId={l.lineId}
+                  key={l.lineId}
+                  fromId={l.from}
+                  toId={l.to}
+                  lineType="curve"
+                />
+              ))}
+          </div>
+        </LineContainer>
+
+        <ElementDetails className="Pipeline-editor__details" />
+      </div>
     </div>
   );
 };

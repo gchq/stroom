@@ -1,4 +1,5 @@
 @import "./ElementPalette/ElementPalette";
+@import "./ElementDetails/ElementDetails";
 @import "./PipelineElement";
 @import "./RecycleBin";
 $palette-width: 12rem;
@@ -88,4 +89,10 @@ $palette-width: 12rem;
 
 .LineContainer-svg {
   width: calc(100% + #{$palette-width} + 1em) !important;
+}
+
+.Pipeline-editor__content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
