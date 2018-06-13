@@ -2,7 +2,7 @@ import React from 'react';
 
 import { compose, withState } from 'recompose';
 
-import { Header, Icon } from 'semantic-ui-react';
+import { Header } from 'semantic-ui-react';
 
 import NewElement from './NewElement';
 import { ElementCategories } from '../ElementCategories';
