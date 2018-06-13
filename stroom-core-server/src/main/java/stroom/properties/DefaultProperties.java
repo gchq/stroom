@@ -1305,14 +1305,14 @@ public class DefaultProperties {
         list.add(new GlobalProperty.Builder()
                 .name("stroom.refloader.offheapstore.localDir")
                 .value("${stroom.temp}/refDataOffHeapStore")
-                .description("The full directory path (must be on local disk) to use for storing the reference data store. The directory will be created if it doesn't exist")
+                .description("The full directory path  to use for storing the reference data store. It MUST be on local disk, NOT network storage, due to use of memory mapped files. The directory will be created if it doesn't exist.")
                 .editable(false)
                 .build());
 
         list.add(new GlobalProperty.Builder()
                 .name("stroom.refloader.offheapstore.maxStoreSize")
-                .value(Long.toString(ByteSizeUnit.GIBIBYTE.longBytes(10)))
-                .description("The maximum size in bytes for the ref loader off heap store. There must be available space on the disk to accommodate this size.")
+                .value(Long.toString(ByteSizeUnit.GIBIBYTE.longBytes(50)))
+                .description("The maximum size in bytes for the ref loader off heap store. There must be available space on the disk to accommodate this size. It can be larger than the amount of available RAM.")
                 .editable(false)
                 .build());
 
