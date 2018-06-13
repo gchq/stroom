@@ -9,7 +9,7 @@
 }
 
 .element-palette-category .ui.styled.accordion {
-  border-radius: 0;
+  border-radius: 0; // ? The below could be applied to only the content, not the headers. That'd be on '.element-palette-category .ui.styled.accordion .content'
   background-color: #fafafa;
 }
 
