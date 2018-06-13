@@ -64,8 +64,8 @@ public class TestExpressionMatcher extends StroomUnitTest {
 
     private Map<String, Object> createAttributeMap() {
         final Map<String, Object> attributeMap = new HashMap<>();
-        attributeMap.put(StreamDataSource.FEED, "TEST_FEED");
-        attributeMap.put(StreamDataSource.STREAM_TYPE, "Raw Events");
+        attributeMap.put(StreamDataSource.FEED_NAME, "TEST_FEED");
+        attributeMap.put(StreamDataSource.STREAM_TYPE_NAME, "Raw Events");
         return attributeMap;
     }
 }

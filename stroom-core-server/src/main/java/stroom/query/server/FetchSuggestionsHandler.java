@@ -66,15 +66,15 @@ class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction
     public SharedList<SharedString> exec(final FetchSuggestionsAction task) {
         if (task.getDataSource() != null) {
             if (StreamDataSource.STREAM_STORE_DOC_REF.equals(task.getDataSource())) {
-                if (task.getField().getName().equals(StreamDataSource.FEED)) {
+                if (task.getField().getName().equals(StreamDataSource.FEED_NAME)) {
                     return createList(feedService, task.getText());
                 }
 
-                if (task.getField().getName().equals(StreamDataSource.PIPELINE)) {
+                if (task.getField().getName().equals(StreamDataSource.PIPELINE_UUID)) {
                     return createList(pipelineService, task.getText());
                 }
 
-                if (task.getField().getName().equals(StreamDataSource.STREAM_TYPE)) {
+                if (task.getField().getName().equals(StreamDataSource.STREAM_TYPE_NAME)) {
                     return createList(streamTypeService, task.getText());
                 }
 

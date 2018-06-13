@@ -37,17 +37,17 @@ class StreamAttributeMapUtil {
                 attributeMap.put(StreamDataSource.PARENT_STREAM_ID, stream.getParentStreamId());
             }
             if (stream.getStreamType() != null) {
-                attributeMap.put(StreamDataSource.STREAM_TYPE, stream.getStreamType().getDisplayValue());
+                attributeMap.put(StreamDataSource.STREAM_TYPE_NAME, stream.getStreamType().getDisplayValue());
             }
             final Feed feed = stream.getFeed();
             if (feed != null) {
-                attributeMap.put(StreamDataSource.FEED, feed.getName());
+                attributeMap.put(StreamDataSource.FEED_NAME, feed.getName());
             }
             final StreamProcessor streamProcessor = stream.getStreamProcessor();
             if (streamProcessor != null) {
                 final PipelineEntity pipeline = streamProcessor.getPipeline();
                 if (pipeline != null) {
-                    attributeMap.put(StreamDataSource.PIPELINE, pipeline.getName());
+                    attributeMap.put(StreamDataSource.PIPELINE_UUID, pipeline.getUuid());
                 }
             }
         }

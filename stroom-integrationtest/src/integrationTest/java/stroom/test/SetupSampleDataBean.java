@@ -204,7 +204,7 @@ public final class SetupSampleDataBean {
                 final QueryData criteria = new QueryData.Builder()
                         .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
                         .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                                .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.EVENTS.getName())
+                                .addTerm(StreamDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamType.EVENTS.getName())
                                 .build())
                         .build();
 
@@ -257,10 +257,10 @@ public final class SetupSampleDataBean {
                 final QueryData criteria = new QueryData.Builder()
                         .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
                         .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                                .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed.getName())
+                                .addTerm(StreamDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, feed.getName())
                                 .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                                        .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
-                                        .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_REFERENCE.getName())
+                                        .addTerm(StreamDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
+                                        .addTerm(StreamDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamType.RAW_REFERENCE.getName())
                                         .build())
                                 .build())
                         .build();

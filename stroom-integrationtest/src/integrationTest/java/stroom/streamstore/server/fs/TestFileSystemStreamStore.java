@@ -128,12 +128,12 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
                 .addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, createYearPeriod(2014))
                 .addTerm(StreamDataSource.EFFECTIVE_TIME, Condition.BETWEEN, createYearPeriod(2014))
-                .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed1.getName())
+                .addTerm(StreamDataSource.FEED_NAME, Condition.EQUALS, feed1.getName())
                 .addTerm(StreamDataSource.PARENT_STREAM_ID, Condition.EQUALS, "1")
                 .addTerm(StreamDataSource.STREAM_ID, Condition.EQUALS, "1")
 //                .addTerm(StreamDataSource.PIPELINE, Condition.EQUALS, "1")
 //                .addTerm(StreamDataSource.STREAM_PROCESSOR_ID, Condition.EQUALS, "1")
-                .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.RAW_EVENTS.getDisplayValue())
+                .addTerm(StreamDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamType.RAW_EVENTS.getDisplayValue())
                 .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
                 .build();
         testCriteria(new FindStreamCriteria(expression), 0);
@@ -153,8 +153,8 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     public void testFeedFindAll() throws Exception {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
                 .addOperator(new ExpressionOperator.Builder(Op.OR)
-                        .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed1.getName())
-                        .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed2.getName())
+                        .addTerm(StreamDataSource.FEED_NAME, Condition.EQUALS, feed1.getName())
+                        .addTerm(StreamDataSource.FEED_NAME, Condition.EQUALS, feed2.getName())
                         .build())
                 .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
                 .build();
@@ -165,8 +165,8 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     public void testFeedFindSome() throws Exception {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
                 .addOperator(new ExpressionOperator.Builder(Op.OR)
-                        .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed1.getName())
-                        .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed2.getName())
+                        .addTerm(StreamDataSource.FEED_NAME, Condition.EQUALS, feed1.getName())
+                        .addTerm(StreamDataSource.FEED_NAME, Condition.EQUALS, feed2.getName())
                         .build())
                 .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
                 .build();
@@ -178,9 +178,9 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     @Test
     public void testFeedFindNone() throws Exception {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed1.getName())
+                .addTerm(StreamDataSource.FEED_NAME, Condition.EQUALS, feed1.getName())
                 .addOperator(new ExpressionOperator.Builder(Op.NOT)
-                        .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed1.getName())
+                        .addTerm(StreamDataSource.FEED_NAME, Condition.EQUALS, feed1.getName())
                         .build())
                 .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
                 .build();
@@ -190,7 +190,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     @Test
     public void testFeedFindOne() throws Exception {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed2.getName())
+                .addTerm(StreamDataSource.FEED_NAME, Condition.EQUALS, feed2.getName())
                 .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
                 .build();
         testCriteria(new FindStreamCriteria(expression), 1);
@@ -299,12 +299,12 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                 .addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, createToDateWithOffset(System.currentTimeMillis(), 1))
                 .addTerm(StreamDataSource.EFFECTIVE_TIME, Condition.BETWEEN, createToDateWithOffset(System.currentTimeMillis(), 1))
                 .addTerm(StreamDataSource.STATUS_TIME, Condition.BETWEEN, createToDateWithOffset(System.currentTimeMillis(), 1))
-                .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed1.getName())
+                .addTerm(StreamDataSource.FEED_NAME, Condition.EQUALS, feed1.getName())
                 .addTerm(StreamDataSource.PARENT_STREAM_ID, Condition.EQUALS, "1")
                 .addTerm(StreamDataSource.STREAM_ID, Condition.EQUALS, "1")
 //                .addTerm(StreamDataSource.PIPELINE, Condition.EQUALS, "1")
 //                .addTerm(StreamDataSource.STREAM_PROCESSOR_ID, Condition.EQUALS, "1")
-                .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.RAW_EVENTS.getDisplayValue())
+                .addTerm(StreamDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamType.RAW_EVENTS.getDisplayValue())
                 .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
                 .build();
         final FindStreamCriteria findStreamCriteria = new FindStreamCriteria(expression);
