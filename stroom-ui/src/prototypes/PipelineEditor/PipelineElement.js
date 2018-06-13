@@ -31,6 +31,8 @@ import { canMovePipelineElement } from './pipelineUtils';
 import { ItemTypes } from './dragDropTypes';
 import { isValidChildType } from './elementUtils'
 
+import { getInitialValues } from './ElementDetails'
+
 const { pipelineElementSelected, pipelineElementMoved } = actionCreators;
 
 const withFocus = withState('hasFocus', 'setHasFocus', false);
@@ -116,6 +118,7 @@ const PipelineElement = ({
   isOver,
   canDrop,
   pipelineId,
+  pipeline,
   elementId,
   element,
   elementDefinition,
@@ -125,7 +128,7 @@ const PipelineElement = ({
   newElementDefinition,
   setNewElementDefinition,
   dndIsHappening,
-
+  elements,
   hasFocus,
   setHasFocus
 }) => {
@@ -163,7 +166,12 @@ const PipelineElement = ({
     className += ' focus';
   }
 
-  const onClick = () => pipelineElementSelected(pipelineId, elementId);
+  const onClick = () => {
+    const elementTypeProperties = elements.elementProperties[element.type];
+    const elementProperties = pipeline.properties.add.filter(property => property.element === element.id);
+    const initalValues = getInitialValues(elementTypeProperties, elementProperties)
+    return pipelineElementSelected(pipelineId, elementId, initalValues);
+  }
 
   return compose(connectDragSource, connectDropTarget)(
     <div className={className} onClick={onClick}>
@@ -211,6 +219,7 @@ export default compose(
   connect(
     state => ({
       // state
+      elements: state.elements
     }),
     {
       // actions
