@@ -1,9 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
+import { compose, withState } from 'recompose';
 import { DragSource } from 'react-dnd';
-
 import { ItemTypes } from '../dragDropTypes';
+
+const withFocus = withState('hasFocus', 'setHasFocus', false);
 
 const dragSource = {
   canDrag(props) {
@@ -23,16 +25,31 @@ function dragCollect(connect, monitor) {
   };
 }
 
-const NewElement = ({ connectDragSource, isDragging, element }) =>
-  connectDragSource(<div className="element-palette-element">
+const NewElement = ({
+  connectDragSource, isDragging, element, hasFocus, setHasFocus,
+}) =>
+  connectDragSource(<div className={`element-palette-element ${hasFocus ? 'focus' : 'no-focus'}`}>
     <div className="element-palette-element__button-contents">
       <img className="element-palette__icon" alt="X" src={require(`../images/${element.icon}`)} />
-      <button className="element-palette__type">{element.type}</button>
+      <button
+        className="element-palette__type"
+        onFocus={() => {
+            console.log('Focus on ', element);
+            setHasFocus(true);
+          }}
+        onBlur={() => setHasFocus(false)}
+      >
+        {element.type}
+      </button>
     </div>
                     </div>);
 
 NewElement.propTypes = {
   element: PropTypes.object.isRequired,
+
+  // withFocus
+  hasFocus: PropTypes.bool.isRequired,
+  setHasFocus: PropTypes.func.isRequired,
 };
 
-export default DragSource(ItemTypes.PALLETE_ELEMENT, dragSource, dragCollect)(NewElement);
+export default compose(DragSource(ItemTypes.PALLETE_ELEMENT, dragSource, dragCollect), withFocus)(NewElement);

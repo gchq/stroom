@@ -36,6 +36,10 @@
   margin-right: 3px;
 }
 
+.element-palette-element.focus {
+  @extend %element-shared--focus;
+}
+
 .element-palette-element:hover {
   background-color: $hover-item-colour;
 }
@@ -47,8 +51,4 @@
 .element-palette__type {
   @extend %element-shared__type;
   box-sizing: border-box;
-}
-
-.element-palette__type:focus {
-  @extend %element-shared__type--focus;
 }

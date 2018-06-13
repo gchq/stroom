@@ -33,6 +33,7 @@ import { isValidChildType } from './elementUtils'
 
 const { pipelineElementSelected, pipelineElementMoved } = actionCreators;
 
+const withFocus = withState('hasFocus', 'setHasFocus', false);
 const withNameNewElementModal = withState('newElementDefinition', 'setNewElementDefinition', undefined);
 
 const dragSource = {
@@ -123,7 +124,10 @@ const PipelineElement = ({
   newElementForm,
   newElementDefinition,
   setNewElementDefinition,
-  dndIsHappening
+  dndIsHappening,
+
+  hasFocus,
+  setHasFocus
 }) => {
   let isIconDisabled = false;
   let className = 'Pipeline-element';
@@ -155,6 +159,10 @@ const PipelineElement = ({
     className += ' Pipeline-element__selected'
   }
 
+  if (hasFocus) {
+    className += ' focus';
+  }
+
   const onClick = () => pipelineElementSelected(pipelineId, elementId);
 
   return compose(connectDragSource, connectDropTarget)(
@@ -166,7 +174,7 @@ const PipelineElement = ({
         src={require(`./images/${elementDefinition.icon}`)}
         disabled={isIconDisabled}
       />
-      <button className='Pipeline-element__type'>
+      <button onFocus={() => setHasFocus(true)} onBlur={() => setHasFocus(false)} className='Pipeline-element__type'>
       {elementId}
       </button>
     </div>);
@@ -193,6 +201,10 @@ PipelineElement.propTypes = {
   // withNameNewElementModal
   newElementDefinition: PropTypes.object,
   setNewElementDefinition: PropTypes.func.isRequired,
+
+  // With Focus
+  hasFocus: PropTypes.bool.isRequired,
+  setHasFocus: PropTypes.func.isRequired
 };
 
 export default compose(
@@ -209,6 +221,7 @@ export default compose(
   withPipeline(),
   withElement(),
   withNameNewElementModal,
+  withFocus,
   DragSource(ItemTypes.ELEMENT, dragSource, dragCollect),
   DropTarget([ItemTypes.ELEMENT, ItemTypes.PALLETE_ELEMENT], dropTarget, dropCollect),
 )(PipelineElement);

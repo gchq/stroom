@@ -7,8 +7,8 @@
   @extend %element-shared__type;
 }
 
-.Pipeline-element__type:focus {
-  @extend %element-shared__type--focus;
+.Pipeline-element.focus {
+  @extend %element-shared--focus;
 }
 
 .Pipeline-element__icon {

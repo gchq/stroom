@@ -8,6 +8,7 @@
   border-radius: 5px;
   overflow: hidden;
   background-color: white; // box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1), 0 2px 2px 0 rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
 }
 
 %element-shared__icon {
@@ -31,6 +32,7 @@
   text-align: left;
 }
 
-%element-shared__type--focus {
-  text-decoration: underline;
+%element-shared--focus {
+  border-width: 2px;
+  border-color: black;
 }
