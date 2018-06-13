@@ -29,7 +29,7 @@ import stroom.persist.EntityManagerSupport;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.TextConverter;
 import stroom.pipeline.shared.XSLT;
-import stroom.refdata.RefDataModule;
+import stroom.refdata.ReferenceDataModule;
 import stroom.security.SecurityContext;
 import stroom.task.TaskHandler;
 
@@ -40,7 +40,7 @@ public class PipelineModule extends AbstractModule {
     @Override
     protected void configure() {
         // install sub-modules
-        install(new RefDataModule());
+        install(new ReferenceDataModule());
 
         bind(PipelineService.class).to(PipelineServiceImpl.class);
         bind(XSLTService.class).to(XSLTServiceImpl.class);

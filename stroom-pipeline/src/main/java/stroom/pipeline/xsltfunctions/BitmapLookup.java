@@ -21,11 +21,12 @@ import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import stroom.pipeline.state.StreamHolder;
+import stroom.refdata.LookupIdentifier;
 import stroom.refdata.ReferenceData;
 import stroom.refdata.ReferenceDataResult;
+import stroom.refdata.offheapstore.RefDataStoreProvider;
 import stroom.refdata.offheapstore.RefDataValueProxy;
 import stroom.refdata.offheapstore.RefDataValueProxyConsumer;
-import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
@@ -33,21 +34,23 @@ import javax.inject.Inject;
 class BitmapLookup extends AbstractLookup {
     @Inject
     BitmapLookup(final ReferenceData referenceData,
+                 final RefDataStoreProvider refDataStoreProvider,
                  final StreamHolder streamHolder,
                  final RefDataValueProxyConsumer.Factory consumerFactory) {
-        super(referenceData, streamHolder, consumerFactory);
+        super(referenceData, refDataStoreProvider.get(), streamHolder, consumerFactory);
     }
 
     @Override
     protected Sequence doLookup(final XPathContext context,
-                                final String map,
-                                final String key,
-                                final long eventTime,
+//                                final String map,
+//                                final String key,
+//                                final long eventTime,
                                 final boolean ignoreWarnings,
                                 final boolean trace,
                                 final LookupIdentifier lookupIdentifier) throws XPathException {
         SequenceMaker sequenceMaker = null;
 
+        String key = lookupIdentifier.getKey();
         int val;
         try {
             if (key.startsWith("0x")) {
@@ -65,7 +68,8 @@ class BitmapLookup extends AbstractLookup {
         if (bits.length > 0) {
             for (final int bit : bits) {
                 final String k = String.valueOf(bit);
-                final ReferenceDataResult result = getReferenceData(map, k, eventTime, lookupIdentifier);
+                final LookupIdentifier bitIdentifier = lookupIdentifier.cloneWithNewKey(k);
+                final ReferenceDataResult result = getReferenceData(bitIdentifier);
                 final RefDataValueProxy refDataValueProxy = result.getRefDataValueProxy();
 
 //                final EventListProxyConsumer eventListConsumer = EventListProxyConsumerFactory.getConsumer(
@@ -76,7 +80,7 @@ class BitmapLookup extends AbstractLookup {
 
                 if (refDataValueProxy != null) {
                     if (sequenceMaker == null) {
-                        sequenceMaker = new SequenceMaker(context, getConsumerFactory());
+                        sequenceMaker = new SequenceMaker(context, getRefDataStore(), getConsumerFactory());
                         sequenceMaker.open();
                     }
                     sequenceMaker.consume(refDataValueProxy);
@@ -105,13 +109,7 @@ class BitmapLookup extends AbstractLookup {
                 // Create the message.
                 final StringBuilder sb = new StringBuilder();
                 sb.append("Lookup failed ");
-                sb.append("(map = ");
-                sb.append(map);
-                sb.append(", key = ");
-                sb.append(failedBits.toString());
-                sb.append(", eventTime = ");
-                sb.append(DateUtil.createNormalDateTimeString(eventTime));
-                sb.append(")");
+                lookupIdentifier.append(sb);
                 outputWarning(context, sb, null);
             }
 

@@ -104,25 +104,24 @@ public class ReferenceData {
      * </p>
      *
      * @param pipelineReferences The references to look for reference data in.
-     * @param time               The event time (or the time the reference data is valid for)
-     * @param mapName            The map name
-     * @param key                The key of the reference data
+     * @param lookupIdentifier   The identifier to lookup in the reference data
      * @param result             The reference result object.
      */
+    // TODO rename to ensureDataAvailability or something like that as we are not going to return a value
     public void getValue(final List<PipelineReference> pipelineReferences,
-                         final long time,
-                         final String mapName,
-                         final String key,
+                         final LookupIdentifier lookupIdentifier,
                          final ReferenceDataResult result) {
         // Do we have a nested token?
-        final int splitPos = mapName.indexOf(NEST_SEPARATOR);
-        if (splitPos != -1) {
+
+//        final int splitPos = mapName.indexOf(NEST_SEPARATOR);
+        if (lookupIdentifier.isMapNested()) {
+//        if (splitPos != -1) {
             // Yes ... pull out the first map
-            final String startMap = mapName.substring(0, splitPos);
-            final String nextMap = mapName.substring(splitPos + NEST_SEPARATOR.length());
+//            final String startMap = mapName.substring(0, splitPos);
+//            final String nextMap = mapName.substring(splitPos + NEST_SEPARATOR.length());
 
             // Look up the KV then use that to recurse
-            doGetValue(pipelineReferences, time, startMap, key, result);
+            doGetValue(pipelineReferences, lookupIdentifier, result);
 
             final RefDataValueProxy refDataValueProxy = result.getRefDataValueProxy();
             Optional<RefDataValue> optValue = refDataValueProxy.supplyValue();
@@ -131,35 +130,49 @@ public class ReferenceData {
 
             if (!optValue.isPresent()) {
                 // map broken ... no link found
-                result.log(Severity.WARNING, () -> "No map found for '" + startMap + "'");
+                result.log(Severity.WARNING, () -> "No map found for '" + lookupIdentifier + "'");
             } else {
                 final RefDataValue refDataValue = optValue.get();
                 try {
-                    final StringValue stringValue = (StringValue) refDataValue;
-                    getValue(pipelineReferences, time, nextMap, stringValue.getValue(), result);
+                    final String stringValue = ((StringValue) refDataValue).getValue();
+                    // use the value from this lookup as the key for the nested map
+                    LookupIdentifier nestedIdentifier = lookupIdentifier.getNestedLookupIdentifier(stringValue);
+
+                    getValue(pipelineReferences, nestedIdentifier, result);
                 } catch (ClassCastException e) {
                     result.log(Severity.ERROR, () -> LambdaLogger.buildMessage("Value is the wrong type, expected: {}, found: {}",
                             StringValue.class.getName(), refDataValue.getClass().getName()));
                 }
             }
         } else {
-            doGetValue(pipelineReferences, time, mapName, key, result);
+            // non-nested map so just do a lookup
+            doGetValue(pipelineReferences, lookupIdentifier, result);
         }
     }
 
     private void doGetValue(final List<PipelineReference> pipelineReferences,
-                            final long time,
-                            final String mapName,
-                            final String keyName,
+                            final LookupIdentifier lookupIdentifier,
+//                            final long time,
+//                            final String mapName,
+//                            final String keyName,
                             final ReferenceDataResult referenceDataResult) {
         for (final PipelineReference pipelineReference : pipelineReferences) {
             // Handle context data differently loading it from the
             // current stream context.
             if (pipelineReference.getStreamType() != null
                     && StreamType.CONTEXT.getName().equals(pipelineReference.getStreamType())) {
-                getNestedStreamEventList(pipelineReference, mapName, keyName, referenceDataResult);
+                getNestedStreamEventList(
+                        pipelineReference,
+                        lookupIdentifier.getPrimaryMapName(),
+                        lookupIdentifier.getKey(),
+                        referenceDataResult);
             } else {
-                getExternalEventList(pipelineReference, time, mapName, keyName, referenceDataResult);
+                getExternalEventList(
+                        pipelineReference,
+                        lookupIdentifier.getEventTime(),
+                        lookupIdentifier.getPrimaryMapName(),
+                        lookupIdentifier.getKey(),
+                        referenceDataResult);
             }
 
             // If we have a list of events then we are done.
@@ -199,7 +212,6 @@ public class ReferenceData {
                     pipelineReference.getPipeline(),
                     pipelineEntity.getVersion(),
                     streamHolder.getStream().getParentStreamId(), streamNo);
-
 
 
             // TODO we may want to implement some sort of on-heap store that fronts our off-heap store
@@ -348,7 +360,7 @@ public class ReferenceData {
         // same object instance rather than id.
         if (pipelineReference.getFeed() == null ||
                 pipelineReference.getFeed().getUuid() == null ||
-                pipelineReference.getFeed().getUuid().isEmpty()  ||
+                pipelineReference.getFeed().getUuid().isEmpty() ||
                 pipelineReference.getStreamType() == null ||
                 pipelineReference.getStreamType().isEmpty()) {
             result.log(Severity.ERROR, () ->
@@ -390,31 +402,43 @@ public class ReferenceData {
                             pipelineEntity.getVersion(),
                             effectiveStream.getStreamId(), streamNo);
 
+                    // First check the pipeline scoped object to save us hitting the store for every lookup in a
+                    // pipeline process run.
                     if (refDataLoaderHolder.isRefStreamAvailable(refStreamDefinition)) {
                         // we have already loaded or confirmed the load state for this refStream in this
                         // pipeline process so no need to try again
+                        LOGGER.debug("refStreamDefinition {} is available for use", refStreamDefinition);
                     } else {
                         // we don't know what the load state is for this refStreamDefinition so need to find out
-
-                        // establish if we have the data for the effective stream in the store
+                        // by querying the store
                         final boolean isEffectiveStreamDataLoaded = refDataStore.isDataLoaded(refStreamDefinition);
 
-                        //TODO what happens if we need to overwrite?
-                        // ideally we want to check the overwrite status of the refFilter here so we don't have to set
-                        // up the whole pipeline before discovering overwrite is false.
-
                         if (!isEffectiveStreamDataLoaded) {
-                            // we don't have the data so kick off a process to load it all in
-                            LOGGER.debug("Loading effective stream {}", refStreamDefinition);
+                            // we don't have the complete data so kick off a process to load it all
+                            LOGGER.debug("Creating task to load reference data {}", refStreamDefinition);
 
                             // initiate a load of the ref data for this stream
-                            security.asProcessingUser(() ->
+
+                            List<RefStreamDefinition> loadedRefStreamDefinitions = security.asProcessingUserResult(() ->
                                     referenceDataLoader.load(refStreamDefinition));
+
+                            LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage(
+                                    "Loaded {} refStreamDefinitions", loadedRefStreamDefinitions.size()));
+
+                            // mark these ref stream defs as available for future lookups within this pipeline process
+                            loadedRefStreamDefinitions.forEach(refDataLoaderHolder::markRefStreamAsAvailable);
+
+                            if (loadedRefStreamDefinitions.isEmpty()) {
+                                result.log(Severity.WARNING, () -> "Unable to load reference data for " + refStreamDefinition + ")");
+                            }
                         }
                     }
 
+                    // now we should have the required data in the store (unless the max age is set far to small)
+
                     //TODO do we need to do this here?
-                    // now we have the data so just do the lookup
+
+                    // now we have the data in the store we can do the lookup to get the proxy object
                     final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
                     final Optional<RefDataValueProxy> optRefDataValueProxy = refDataStore.getValueProxy(mapDefinition, keyName);
 
@@ -469,37 +493,37 @@ public class ReferenceData {
 //        this.mapStoreCache = mapStorePool;
 //    }
 
-    private static class CachedMapStore {
-        private final long streamNo;
-        private final MapStore mapStore;
-
-        CachedMapStore(final long streamNo, final MapStore mapStore) {
-            this.streamNo = streamNo;
-            this.mapStore = mapStore;
-        }
-
-        public long getStreamNo() {
-            return streamNo;
-        }
-
-        public MapStore getMapStore() {
-            return mapStore;
-        }
-
-        @Override
-        public int hashCode() {
-            return (int) streamNo;
-        }
-
-        @Override
-        public boolean equals(final Object obj) {
-            if (obj == null || !(obj instanceof CachedMapStore)) {
-                return false;
-            }
-
-            final CachedMapStore cachedMapStore = (CachedMapStore) obj;
-
-            return cachedMapStore.streamNo == streamNo;
-        }
-    }
+//    private static class CachedMapStore {
+//        private final long streamNo;
+//        private final MapStore mapStore;
+//
+//        CachedMapStore(final long streamNo, final MapStore mapStore) {
+//            this.streamNo = streamNo;
+//            this.mapStore = mapStore;
+//        }
+//
+//        public long getStreamNo() {
+//            return streamNo;
+//        }
+//
+//        public MapStore getMapStore() {
+//            return mapStore;
+//        }
+//
+//        @Override
+//        public int hashCode() {
+//            return (int) streamNo;
+//        }
+//
+//        @Override
+//        public boolean equals(final Object obj) {
+//            if (obj == null || !(obj instanceof CachedMapStore)) {
+//                return false;
+//            }
+//
+//            final CachedMapStore cachedMapStore = (CachedMapStore) obj;
+//
+//            return cachedMapStore.streamNo == streamNo;
+//        }
+//    }
 }

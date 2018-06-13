@@ -20,8 +20,10 @@ import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import stroom.pipeline.state.StreamHolder;
+import stroom.refdata.LookupIdentifier;
 import stroom.refdata.ReferenceData;
 import stroom.refdata.ReferenceDataResult;
+import stroom.refdata.offheapstore.RefDataStoreProvider;
 import stroom.refdata.offheapstore.RefDataValueProxy;
 import stroom.refdata.offheapstore.RefDataValueProxyConsumer;
 import stroom.util.shared.Severity;
@@ -31,24 +33,25 @@ import javax.inject.Inject;
 class Lookup extends AbstractLookup {
     @Inject
     Lookup(final ReferenceData referenceData,
+           final RefDataStoreProvider refDataStoreProvider,
            final StreamHolder streamHolder,
            final RefDataValueProxyConsumer.Factory consumerFactory) {
-        super(referenceData, streamHolder, consumerFactory);
+        super(referenceData, refDataStoreProvider.get(), streamHolder, consumerFactory);
     }
 
     @Override
     protected Sequence doLookup(final XPathContext context,
-                                final String map,
-                                final String key,
-                                final long eventTime,
                                 final boolean ignoreWarnings,
                                 final boolean trace,
                                 final LookupIdentifier lookupIdentifier) throws XPathException {
-        final ReferenceDataResult result = getReferenceData(map, key, eventTime, lookupIdentifier);
+        // TODO rather than putting the proxy in the result we could just put the refStreamDefinition
+        // in there and then do the actual lookup in the sequenceMaker by passing an injected RefDataStore
+        // into it.
+        final ReferenceDataResult result = getReferenceData(lookupIdentifier);
 
         final RefDataValueProxy refDataValueProxy = result.getRefDataValueProxy();
 
-        final SequenceMaker sequenceMaker = new SequenceMaker(context, getConsumerFactory());
+        final SequenceMaker sequenceMaker = new SequenceMaker(context, getRefDataStore(), getConsumerFactory());
 //                EventListProxyConsumerFactory.getConsumerSupplier(eventListProxy));
 //        final EventListProxyConsumer eventListConsumer = EventListProxyConsumerFactory.getConsumer(
 //                eventListProxy,

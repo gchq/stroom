@@ -50,7 +50,7 @@ public class RefDataValueProxyConsumer {
             final Integer typeId = (int) bTypeId;
 
             // work out which byteBufferConsumer to use based on the typeId in the value byteBuffer
-            RefDataValueByteBufferConsumer consumer = typeToConsumerMap.computeIfAbsent(typeId, k ->
+            final RefDataValueByteBufferConsumer consumer = typeToConsumerMap.computeIfAbsent(typeId, k ->
                     typeToByteBufferConsumerFactoryMap.get(k)
                             .create(receiver, pipelineConfiguration)
             );

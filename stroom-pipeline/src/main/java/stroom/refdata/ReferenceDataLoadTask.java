@@ -19,7 +19,9 @@ package stroom.refdata;
 import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.task.ServerTask;
 
-public class ReferenceDataLoadTask extends ServerTask<MapStore> {
+import java.util.List;
+
+public class ReferenceDataLoadTask extends ServerTask<List<RefStreamDefinition>> {
 
     private RefStreamDefinition refStreamDefinition;
 

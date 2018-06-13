@@ -73,9 +73,9 @@ public class TestReferenceData extends StroomUnitTest {
                     return streamSet;
                 }
             };
-            final ReferenceDataLoader referenceDataLoader = effectiveFeed -> new MapStoreImpl();
+//            final ReferenceDataLoader referenceDataLoader = effectiveFeed -> new MapStoreImpl();
 
-            final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, referenceDataLoader, null, null);
+//            final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, referenceDataLoader, null, null);
 //            final ReferenceData referenceData = new ReferenceData(effectiveStreamCache, mapStoreCache, null, null, null, null, refDataStore);
 
             // Add multiple reference data items to prove that looping over maps
@@ -117,7 +117,8 @@ public class TestReferenceData extends StroomUnitTest {
     private void checkData(final ReferenceData data, final List<PipelineReference> pipelineReferences,
                            final String mapName) {
         final ReferenceDataResult result = new ReferenceDataResult();
-        data.getValue(pipelineReferences, DateUtil.parseNormalDateTimeString("2010-01-01T09:47:00.111Z"), mapName, "user1", result);
+
+        data.getValue(pipelineReferences, LookupIdentifier.of(mapName, "user1", "2010-01-01T09:47:00.111Z"), result);
 
         Assert.assertEquals("B1111", lookup(data, pipelineReferences, "2010-01-01T09:47:00.111Z", mapName, "user1"));
         Assert.assertEquals("B1111", lookup(data, pipelineReferences, "2015-01-01T09:47:00.000Z", mapName, "user1"));
@@ -236,7 +237,7 @@ public class TestReferenceData extends StroomUnitTest {
                           final String mapName,
                           final String key) {
         final ReferenceDataResult result = new ReferenceDataResult();
-        data.getValue(pipelineReferences, time, mapName, key, result);
+        data.getValue(pipelineReferences, LookupIdentifier.of(mapName, key, time), result);
 //        if (result.getEventListProxy() != null) {
 //            return result.getEventListProxy().toString();
 //        }

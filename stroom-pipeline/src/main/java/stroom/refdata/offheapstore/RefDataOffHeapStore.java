@@ -67,6 +67,8 @@ public class RefDataOffHeapStore implements RefDataStore {
     private final Path dbDir;
     private final long maxSize;
     private final int maxReaders;
+    private final int maxPutsBeforeCommit;
+
 
     private final Env<ByteBuffer> lmdbEnvironment;
 
@@ -93,7 +95,8 @@ public class RefDataOffHeapStore implements RefDataStore {
     RefDataOffHeapStore(
             @Assisted final Path dbDir,
             @Assisted final long maxSize,
-            @Assisted final int maxReaders,
+            @Assisted("maxReaders") final int maxReaders,
+            @Assisted("maxPutsBeforeCommit") final int maxPutsBeforeCommit,
             final KeyValueStoreDb.Factory keyValueStoreDbFactory,
             final ValueStoreDb.Factory valueStoreDbFactory,
             final RangeStoreDb.Factory rangeStoreDbFactory,
@@ -106,6 +109,7 @@ public class RefDataOffHeapStore implements RefDataStore {
         this.dbDir = dbDir;
         this.maxSize = maxSize;
         this.maxReaders = maxReaders;
+        this.maxPutsBeforeCommit = maxPutsBeforeCommit;
 
         LOGGER.debug("Creating LMDB environment with maxSize: {}, dbDir {}, maxReaders {}",
                 maxSize, dbDir.toAbsolutePath().toString(), maxReaders);
@@ -189,41 +193,7 @@ public class RefDataOffHeapStore implements RefDataStore {
     public Optional<RefDataValueProxy> getValueProxy(final MapDefinition mapDefinition, final String key) {
 
         return LmdbUtils.getWithReadTxn(lmdbEnvironment, readTxn -> {
-            final UID mapUid = mapUidForwardDb.get(readTxn, mapDefinition)
-                    .orElseThrow(() ->
-                            new RuntimeException(LambdaLogger.buildMessage(
-                                    "Could not find UID for mapDefinition {}", mapDefinition
-                            )));
-
-            //do the lookup in the kv store first
-            final KeyValueStoreKey keyValueStoreKey = new KeyValueStoreKey(mapUid, key);
-            Optional<ValueStoreKey> optValueStoreKey = keyValueStoreDb.get(readTxn, keyValueStoreKey);
-
-            if (!optValueStoreKey.isPresent()) {
-                //not found in the kv store so look in the keyrange store instead
-
-                try {
-                    // speculative lookup in the range store. At this point we don't know if we have
-                    // any ranges for this mapdef or not, but either way we need a call to LMDB so
-                    // just do the range lookup
-                    final long keyLong = Long.parseLong(key);
-                    // look up our long key in the range store to see if it is part of a range
-                    optValueStoreKey = rangeStoreDb.get(readTxn, mapUid, keyLong);
-
-                } catch (NumberFormatException e) {
-                    // key could not be converted to a long, either this mapdef has no ranges or
-                    // an invalid key was used. See if we have any ranges at all for this mapdef
-                    // to determine whether to error or not.
-                    boolean doesStoreContainRanges = rangeStoreDb.containsMapDefinition(readTxn, mapUid);
-                    if (doesStoreContainRanges) {
-                        // we have ranges for this map def so we would expect to be able to convert the key
-                        throw new RuntimeException(LambdaLogger.buildMessage(
-                                "Key {} cannot be used with the range store as it cannot be converted to a long", key), e);
-                    }
-                    // no ranges for this map def so the fact that we could not convert the key to a long
-                    // is not a problem. Do nothing.
-                }
-            }
+            Optional<ValueStoreKey> optValueStoreKey = getValueStoreKey(readTxn, mapDefinition, key);
 
             // return a RefDataValueProxy if we found a value.
             return optValueStoreKey.map(valueStoreKey ->
@@ -231,10 +201,61 @@ public class RefDataOffHeapStore implements RefDataStore {
         });
     }
 
+    private Optional<ValueStoreKey> getValueStoreKey(final Txn<ByteBuffer> readTxn, final MapDefinition mapDefinition, final String key) {
+        final UID mapUid = mapUidForwardDb.get(readTxn, mapDefinition)
+                .orElseThrow(() ->
+                        new RuntimeException(LambdaLogger.buildMessage(
+                                "Could not find UID for mapDefinition {}", mapDefinition
+                        )));
+
+        //do the lookup in the kv store first
+        final KeyValueStoreKey keyValueStoreKey = new KeyValueStoreKey(mapUid, key);
+        Optional<ValueStoreKey> optValueStoreKey = keyValueStoreDb.get(readTxn, keyValueStoreKey);
+
+        if (!optValueStoreKey.isPresent()) {
+            //not found in the kv store so look in the keyrange store instead
+
+            try {
+                // speculative lookup in the range store. At this point we don't know if we have
+                // any ranges for this mapdef or not, but either way we need a call to LMDB so
+                // just do the range lookup
+                final long keyLong = Long.parseLong(key);
+                // look up our long key in the range store to see if it is part of a range
+                optValueStoreKey = rangeStoreDb.get(readTxn, mapUid, keyLong);
+
+            } catch (NumberFormatException e) {
+                // key could not be converted to a long, either this mapdef has no ranges or
+                // an invalid key was used. See if we have any ranges at all for this mapdef
+                // to determine whether to error or not.
+                boolean doesStoreContainRanges = rangeStoreDb.containsMapDefinition(readTxn, mapUid);
+                if (doesStoreContainRanges) {
+                    // we have ranges for this map def so we would expect to be able to convert the key
+                    throw new RuntimeException(LambdaLogger.buildMessage(
+                            "Key {} cannot be used with the range store as it cannot be converted to a long", key), e);
+                }
+                // no ranges for this map def so the fact that we could not convert the key to a long
+                // is not a problem. Do nothing.
+            }
+        }
+        return optValueStoreKey;
+    }
+
     @Override
     public void consumeValue(final MapDefinition mapDefinition,
                              final String key,
                              final Consumer<RefDataValue> valueConsumer) {
+
+
+    }
+
+    @Override
+    public void consumeValueBytes(final MapDefinition mapDefinition,
+                                  final String key,
+                                  final Consumer<ByteBuffer> valueBytesConsumer) {
+
+        // TODO  breakdown getValueProxy to use the bit that gets the valueStoreKey as a buffer
+        // then use this buffer to do the lookup in the valueStoreDb, all in one txn and sharing
+        // buffer where possible
 
 
     }
@@ -275,8 +296,10 @@ public class RefDataOffHeapStore implements RefDataStore {
      * <pre>try (RefDataLoader refDataLoader = refDataOffHeapStore.getLoader(...)) { ... }</pre>
      */
     @Override
-    public RefDataLoader loader(final RefStreamDefinition refStreamDefinition, final long effectiveTimeMs) {
-        return new RefDataLoaderImpl(
+    public RefDataLoader loader(final RefStreamDefinition refStreamDefinition,
+                                final long effectiveTimeMs) {
+        //TODO should we pass in an ErrorReceivingProxy so we can log errors with it?
+        RefDataLoader refDataLoader = new RefDataLoaderImpl(
                 this,
                 refStreamDefStripedReentrantLock,
                 keyValueStoreDb,
@@ -284,9 +307,32 @@ public class RefDataOffHeapStore implements RefDataStore {
                 valueStoreDb,
                 mapDefinitionUIDStore,
                 processingInfoDb,
-                valueReferenceCountDb, lmdbEnvironment,
+                valueReferenceCountDb,
+                lmdbEnvironment,
                 refStreamDefinition,
                 effectiveTimeMs);
+
+        refDataLoader.setCommitInterval(maxPutsBeforeCommit);
+        return refDataLoader;
+    }
+
+    @Override
+    public void doWithLoader(final RefStreamDefinition refStreamDefinition,
+                             final long effectiveTimeMs,
+                             final Consumer<RefDataLoader> work) {
+
+        try (RefDataLoader refDataLoader = loader(refStreamDefinition, effectiveTimeMs)) {
+            // we now hold the lock for this RefStreamDefinition so test the completion state
+
+            if (isDataLoaded(refStreamDefinition)) {
+                LOGGER.debug("Data is already loaded for {}, so doing nothing", refStreamDefinition);
+            } else {
+                work.accept(refDataLoader);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(LambdaLogger.buildMessage(
+                    "Error closing refDataLoader for {}", refStreamDefinition), e);
+        }
     }
 
     @Override
@@ -402,6 +448,8 @@ public class RefDataOffHeapStore implements RefDataStore {
      * The transaction will be committed when the loader is closed
      */
     public static class RefDataLoaderImpl implements RefDataLoader {
+
+
 
         private Txn<ByteBuffer> writeTxn = null;
         private final RefDataOffHeapStore refDataOffHeapStore;
@@ -786,6 +834,10 @@ public class RefDataOffHeapStore implements RefDataStore {
     }
 
     public interface Factory {
-        RefDataStore create(final Path dbDir, final long maxSize, final int maxReaders);
+        RefDataStore create(
+                final Path dbDir,
+                final long maxSize,
+                @Assisted("maxReaders") final int maxReaders,
+                @Assisted("maxPutsBeforeCommit") final int maxPutsBeforeCommit);
     }
 }

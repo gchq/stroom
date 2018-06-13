@@ -28,8 +28,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.StreamHolder;
+import stroom.refdata.LookupIdentifier;
 import stroom.refdata.ReferenceData;
 import stroom.refdata.ReferenceDataResult;
+import stroom.refdata.offheapstore.RefDataStore;
 import stroom.refdata.offheapstore.RefDataValueProxy;
 import stroom.refdata.offheapstore.RefDataValueProxyConsumer;
 import stroom.util.date.DateUtil;
@@ -41,21 +43,27 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractLookup.class);
 
     private final ReferenceData referenceData;
+    private final RefDataStore refDataStore;
     private final StreamHolder streamHolder;
     private final RefDataValueProxyConsumer.Factory consumerFactory;
 
     private long defaultMs = -1;
 
     AbstractLookup(final ReferenceData referenceData,
-                   final StreamHolder streamHolder,
+                   final RefDataStore refDataStore, final StreamHolder streamHolder,
                    final RefDataValueProxyConsumer.Factory consumerFactory) {
         this.referenceData = referenceData;
+        this.refDataStore = refDataStore;
         this.streamHolder = streamHolder;
         this.consumerFactory = consumerFactory;
     }
 
     RefDataValueProxyConsumer.Factory getConsumerFactory() {
         return consumerFactory;
+    }
+
+    protected RefDataStore getRefDataStore() {
+        return refDataStore;
     }
 
     @Override
@@ -119,16 +127,32 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
             }
 
             // Create a lookup identifier if we are going to output debug.
-            final LookupIdentifier lookupIdentifier = new LookupIdentifier(map, key, ms);
 
-            // If we have got the date then continue to do the lookup.
+            final LookupIdentifier lookupIdentifier;
             try {
-                result = doLookup(context, map, key, ms, ignoreWarnings, traceLookup, lookupIdentifier);
-            } catch (final RuntimeException e) {
+                lookupIdentifier = new LookupIdentifier(map, key, ms);
+
+                // If we have got the date then continue to do the lookup.
+                try {
+                    result = doLookup(context, ignoreWarnings, traceLookup, lookupIdentifier);
+                } catch (final RuntimeException e) {
+                    if (!ignoreWarnings) {
+                        createLookupFailWarning(context, lookupIdentifier, e);
+                    }
+                }
+            } catch (RuntimeException e) {
                 if (!ignoreWarnings) {
-                    createLookupFailWarning(context, lookupIdentifier, e);
+                    final StringBuilder sb = new StringBuilder();
+                    sb.append("Identifier must have a map and a key (map = ");
+                    sb.append(map);
+                    sb.append(", key = ");
+                    sb.append(key);
+                    sb.append(", eventTime = ");
+                    sb.append(ms);
+                    log(context, Severity.ERROR, e.getMessage(), e);
                 }
             }
+
         } catch (final XPathException | RuntimeException e) {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
@@ -137,32 +161,21 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
     }
 
     abstract Sequence doLookup(final XPathContext context,
-                               final String map,
-                               final String key,
-                               final long eventTime,
                                final boolean ignoreWarnings,
                                final boolean trace,
                                final LookupIdentifier lookupIdentifier)
             throws XPathException;
 
-    ReferenceDataResult getReferenceData(final String map,
-                                         final String key,
-                                         final long eventTime,
-                                         final LookupIdentifier lookupIdentifier) {
+
+    ReferenceDataResult getReferenceData(final LookupIdentifier lookupIdentifier) {
         final ReferenceDataResult result = new ReferenceDataResult();
 
         result.log(Severity.INFO, () -> "Doing lookup " + lookupIdentifier);
-        if (map == null) {
-            result.log(Severity.ERROR, () -> "No map name has been specified");
-        } else if (key == null) {
-            result.log(Severity.ERROR, () -> "No key name has been specified");
+        final List<PipelineReference> pipelineReferences = getPipelineReferences();
+        if (pipelineReferences == null || pipelineReferences.size() == 0) {
+            result.log(Severity.ERROR, () -> "No pipeline references have been added to this XSLT step to perform a lookup");
         } else {
-            final List<PipelineReference> pipelineReferences = getPipelineReferences();
-            if (pipelineReferences == null || pipelineReferences.size() == 0) {
-                result.log(Severity.ERROR, () -> "No pipeline references have been added to this XSLT step to perform a lookup");
-            } else {
-                referenceData.getValue(pipelineReferences, eventTime, map, key, result);
-            }
+            referenceData.getValue(pipelineReferences, lookupIdentifier, result);
         }
 
         return result;
@@ -205,12 +218,16 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
 
     static class SequenceMaker {
         private final XPathContext context;
+        private final RefDataStore refDataStore;
         private final RefDataValueProxyConsumer.Factory consumerFactory;
         private Builder builder;
         private RefDataValueProxyConsumer consumer;
 
-        SequenceMaker(final XPathContext context, final RefDataValueProxyConsumer.Factory consumerFactory) {
+        SequenceMaker(final XPathContext context,
+                      final RefDataStore refDataStore,
+                      final RefDataValueProxyConsumer.Factory consumerFactory) {
             this.context = context;
+            this.refDataStore = refDataStore;
             this.consumerFactory = consumerFactory;
         }
 
@@ -258,32 +275,4 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
         }
     }
 
-    static class LookupIdentifier {
-        private final String map;
-        private final String key;
-        private final long eventTime;
-
-        LookupIdentifier(final String map, final String key, final long eventTime) {
-            this.map = map;
-            this.key = key;
-            this.eventTime = eventTime;
-        }
-
-        public void append(final StringBuilder sb) {
-            sb.append("(map = ");
-            sb.append(map);
-            sb.append(", key = ");
-            sb.append(key);
-            sb.append(", eventTime = ");
-            sb.append(DateUtil.createNormalDateTimeString(eventTime));
-            sb.append(")");
-        }
-
-        @Override
-        public String toString() {
-            final StringBuilder sb = new StringBuilder();
-            append(sb);
-            return sb.toString();
-        }
-    }
 }

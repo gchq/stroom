@@ -32,6 +32,8 @@ import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.FeedHolder;
+import stroom.refdata.offheapstore.RefDataStore;
+import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.security.Security;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
@@ -43,13 +45,16 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 @TaskHandlerBean(task = ContextDataLoadTask.class)
-class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask, MapStore> {
+class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask, List<RefStreamDefinition>> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ContextDataLoadTaskHandler.class);
 
     private final PipelineFactory pipelineFactory;
-    private final MapStoreHolder mapStoreHolder;
+    private final RefDataLoaderHolder refDataLoaderHolder;
+    private final RefDataStore refDataStore;
     private final FeedHolder feedHolder;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final PipelineService pipelineService;
@@ -60,14 +65,17 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
 
     @Inject
     ContextDataLoadTaskHandler(final PipelineFactory pipelineFactory,
-                               final MapStoreHolder mapStoreHolder,
+                               final RefDataLoaderHolder refDataLoaderHolder,
+                               final RefDataStore refDataStore,
                                final FeedHolder feedHolder,
                                final ErrorReceiverProxy errorReceiverProxy,
-                               @Named("cachedPipelineService") final PipelineService pipelineService,
+                               @Named("cachedPipelineService")
+                               final PipelineService pipelineService,
                                final PipelineDataCache pipelineDataCache,
                                final Security security) {
         this.pipelineFactory = pipelineFactory;
-        this.mapStoreHolder = mapStoreHolder;
+        this.refDataLoaderHolder = refDataLoaderHolder;
+        this.refDataStore = refDataStore;
         this.feedHolder = feedHolder;
         this.errorReceiverProxy = errorReceiverProxy;
         this.pipelineService = pipelineService;
@@ -76,10 +84,11 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
     }
 
     @Override
-    public MapStore exec(final ContextDataLoadTask task) {
+    public List<RefStreamDefinition> exec(final ContextDataLoadTask task) {
         return security.secureResult(() -> {
+            final List<RefStreamDefinition> loadedRefStreamDefinitions = new ArrayList<>();
             final StoredErrorReceiver storedErrorReceiver = new StoredErrorReceiver();
-            final MapStoreBuilder mapStoreBuilder = new MapStoreBuilderImpl(storedErrorReceiver);
+//            final MapStoreBuilder mapStoreBuilder = new MapStoreBuilderImpl(storedErrorReceiver);
             errorReceiver = new ErrorReceiverIdDecorator(getClass().getSimpleName(), storedErrorReceiver);
             errorReceiverProxy.setErrorReceiver(errorReceiver);
 
@@ -116,10 +125,31 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
 
                     // Get the appropriate encoding for the stream type.
                     final String encoding = EncodingSelection.select(feed, StreamType.CONTEXT);
-                    mapStoreHolder.setMapStoreBuilder(mapStoreBuilder);
+//                    mapStoreHolder.setMapStoreBuilder(mapStoreBuilder);
 
-                    // Parse the stream. The ReferenceDataFilter will process the context data
-                    pipeline.process(inputStream, encoding);
+                    // TODO is it always 0 for context streams?
+                    int streamNo = 0;
+                    RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
+                            pipelineEntity.getUuid(),
+                            pipelineEntity.getVersion(),
+                            stream.getId(),
+                            streamNo);
+
+                    refDataStore.doWithLoader(refStreamDefinition, stream.getEffectiveMs(), refDataLoader -> {
+                        refDataLoaderHolder.setRefDataLoader(refDataLoader);
+                        // Process the boundary.
+                        try {
+                            // Parse the stream. The ReferenceDataFilter will process the context data
+                            pipeline.process(inputStream, encoding);
+
+                            loadedRefStreamDefinitions.add(refStreamDefinition);
+                        } catch (final RuntimeException e) {
+                            log(Severity.FATAL_ERROR, e.getMessage(), e);
+                        }
+                    });
+
+                    // clear the reference to the loader now we have finished with it
+                    refDataLoaderHolder.setRefDataLoader(null);
 
                     if (LOGGER.isDebugEnabled()) {
                         LOGGER.debug("Finished loading context data " + contextIdentifier);
@@ -135,8 +165,7 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
                     }
                 }
             }
-
-            return mapStoreBuilder.getMapStore();
+            return loadedRefStreamDefinitions;
         });
     }
 

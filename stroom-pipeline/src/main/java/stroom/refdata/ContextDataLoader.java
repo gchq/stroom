@@ -18,10 +18,12 @@ package stroom.refdata;
 
 import stroom.feed.shared.Feed;
 import stroom.query.api.v2.DocRef;
+import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.streamstore.shared.Stream;
 
 import java.io.InputStream;
+import java.util.List;
 
 public interface ContextDataLoader {
-    MapStore load(InputStream inputStream, Stream stream, Feed feed, DocRef contextPipeline);
+    List<RefStreamDefinition> load(InputStream inputStream, Stream stream, Feed feed, DocRef contextPipeline);
 }

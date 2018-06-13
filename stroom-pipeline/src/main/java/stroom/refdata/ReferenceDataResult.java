@@ -30,7 +30,9 @@ import java.util.function.Supplier;
 public class ReferenceDataResult implements ErrorReceiver {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReferenceDataResult.class);
 
+    // TODO change this to hold a MapDefinition which can be used to later perform a lookup
     private RefDataValueProxy refDataValueProxy;
+
     private List<LazyMessage> messages = new ArrayList<>();
 
     public RefDataValueProxy getRefDataValueProxy() {

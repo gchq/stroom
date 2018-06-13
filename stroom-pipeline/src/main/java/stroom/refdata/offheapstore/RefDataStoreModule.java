@@ -15,20 +15,12 @@
  *
  */
 
-package stroom.refdata;
+package stroom.refdata.offheapstore;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
 import stroom.properties.StroomPropertyService;
-import stroom.refdata.offheapstore.AbstractByteBufferConsumer;
-import stroom.refdata.offheapstore.FastInfosetByteBufferConsumer;
-import stroom.refdata.offheapstore.FastInfosetValue;
-import stroom.refdata.offheapstore.RefDataOffHeapStore;
-import stroom.refdata.offheapstore.RefDataStore;
-import stroom.refdata.offheapstore.RefDataStoreProvider;
-import stroom.refdata.offheapstore.StringByteBufferConsumer;
-import stroom.refdata.offheapstore.StringValue;
 import stroom.refdata.offheapstore.databases.KeyValueStoreDb;
 import stroom.refdata.offheapstore.databases.MapUidForwardDb;
 import stroom.refdata.offheapstore.databases.MapUidReverseDb;
@@ -40,7 +32,8 @@ import stroom.refdata.offheapstore.serdes.FastInfoSetValueSerde;
 import stroom.refdata.offheapstore.serdes.RefDatValueSubSerde;
 import stroom.refdata.offheapstore.serdes.StringValueSerde;
 
-public class RefDataModule extends AbstractModule {
+public class RefDataStoreModule extends AbstractModule {
+
     @Override
     protected void configure() {
         //deps from other modules

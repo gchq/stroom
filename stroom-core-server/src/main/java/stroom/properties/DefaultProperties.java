@@ -1328,6 +1328,12 @@ public class DefaultProperties {
                 .description("The maximum number of concurrent readers/threads that can use the offheapstore.")
                 .editable(true)
                 .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.refloader.offheapstore.maxPutsBeforeCommit")
+                .value("1000")
+                .description("The maximum number of puts into the store before the transaction is committed. There is only one write transaction available long running transactions are not desirable.")
+                .editable(false)
+                .build());
         // ========================================END===========================================
 
         return Collections.unmodifiableList(list);

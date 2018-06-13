@@ -100,8 +100,8 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                         return streamSet;
                     }
                 };
-                final ReferenceDataLoader referenceDataLoader = effectiveFeed -> new MapStoreImpl();
-                final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, referenceDataLoader, null, null);
+//                final ReferenceDataLoader referenceDataLoader = effectiveFeed -> new MapStoreImpl();
+//                final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, referenceDataLoader, null, null);
                 referenceData.setEffectiveStreamCache(effectiveStreamCache);
 //                referenceData.setMapStorePool(mapStoreCache);
 
@@ -184,8 +184,8 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                         return streamSet;
                     }
                 };
-                final ReferenceDataLoader referenceDataLoader = effectiveFeed -> new MapStoreImpl();
-                final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, referenceDataLoader, null, null);
+//                final ReferenceDataLoader referenceDataLoader = effectiveFeed -> new MapStoreImpl();
+//                final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, referenceDataLoader, null, null);
                 data.setEffectiveStreamCache(effectiveStreamCache);
 //                data.setMapStorePool(mapStoreCache);
 
@@ -228,7 +228,7 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                           final String mapName,
                           final String key) {
         final ReferenceDataResult result = new ReferenceDataResult();
-        data.getValue(pipelineReferences, time, mapName, key, result);
+        data.getValue(pipelineReferences, LookupIdentifier.of(mapName, key, time), result);
 //        if (result.getEventListProxy() != null) {
 //            return result.getEventListProxy().toString();
 //        }

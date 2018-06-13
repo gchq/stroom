@@ -18,11 +18,13 @@ package stroom.refdata;
 
 import stroom.feed.shared.Feed;
 import stroom.query.api.v2.DocRef;
+import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.streamstore.shared.Stream;
 import stroom.task.TaskManager;
 
 import javax.inject.Inject;
 import java.io.InputStream;
+import java.util.List;
 
 public class ContextDataLoaderImpl implements ContextDataLoader {
     private final TaskManager taskManager;
@@ -33,8 +35,11 @@ public class ContextDataLoaderImpl implements ContextDataLoader {
     }
 
     @Override
-    public MapStore load(final InputStream inputStream, final Stream stream, final Feed feed,
-                         final DocRef contextPipeline) {
+    public List<RefStreamDefinition> load(final InputStream inputStream,
+                                          final Stream stream,
+                                          final Feed feed,
+                                          final DocRef contextPipeline) {
+
         return taskManager.exec(new ContextDataLoadTask(inputStream, stream, feed, contextPipeline));
     }
 }

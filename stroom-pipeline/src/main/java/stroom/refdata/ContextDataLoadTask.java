@@ -18,12 +18,14 @@ package stroom.refdata;
 
 import stroom.feed.shared.Feed;
 import stroom.query.api.v2.DocRef;
+import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.streamstore.shared.Stream;
 import stroom.task.ServerTask;
 
 import java.io.InputStream;
+import java.util.List;
 
-public class ContextDataLoadTask extends ServerTask<MapStore> {
+public class ContextDataLoadTask extends ServerTask<List<RefStreamDefinition>> {
     private InputStream inputStream;
     private Stream stream;
     private Feed feed;
@@ -32,7 +34,9 @@ public class ContextDataLoadTask extends ServerTask<MapStore> {
     public ContextDataLoadTask() {
     }
 
-    public ContextDataLoadTask(final InputStream inputStream, final Stream stream, final Feed feed,
+    public ContextDataLoadTask(final InputStream inputStream,
+                               final Stream stream,
+                               final Feed feed,
                                final DocRef contextPipeline) {
         this.inputStream = inputStream;
         this.stream = stream;

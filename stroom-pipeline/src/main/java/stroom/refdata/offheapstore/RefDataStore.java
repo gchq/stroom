@@ -77,6 +77,14 @@ public interface RefDataStore {
                       final String key,
                       final Consumer<RefDataValue> valueConsumer);
 
+    /**
+     * Performs a lookup using the passed mapDefinition and key and then applies the valueBytesConsumer to
+     * the found value. If no value is found the valueBytesConsumer is not called
+     */
+    void consumeValueBytes(final MapDefinition mapDefinition,
+                           final String key,
+                           final Consumer<ByteBuffer> valueBytesConsumer);
+
     void consumeValue(final ValueStoreKey valueStoreKey,
                       final Consumer<RefDataValue> valueConsumer);
 
@@ -98,7 +106,18 @@ public interface RefDataStore {
     <T> Optional<T> mapBytes(final ValueStoreKey valueStoreKey,
                              final Function<ByteBuffer, T> valueMapper);
 
-    RefDataLoader loader(final RefStreamDefinition refStreamDefinition, final long effectiveTimeMs);
+    RefDataLoader loader(final RefStreamDefinition refStreamDefinition,
+                         final long effectiveTimeMs);
+
+    /**
+     * Will initiate a new {@link RefDataLoader} for the passed {@link RefStreamDefinition} and effectiveTimeMs.
+     * The passed {@link Consumer} will be called with the new {@link RefDataLoader} only if
+     * the {@link RefDataProcessingInfo} for the {@link RefStreamDefinition} is not marked as complete. This test
+     * will be performed under a lock on the passed {@link RefStreamDefinition}.
+     */
+    void doWithLoader(final RefStreamDefinition refStreamDefinition,
+                      final long effectiveTimeMs,
+                      final Consumer<RefDataLoader> work);
 
     long getKeyValueEntryCount();
 
@@ -106,5 +125,6 @@ public interface RefDataStore {
 
     void purgeOldData();
 
-    void doWithRefStreamDefinitionLock(final RefStreamDefinition refStreamDefinition, final Runnable work);
+    void doWithRefStreamDefinitionLock(final RefStreamDefinition refStreamDefinition,
+                                       final Runnable work);
 }

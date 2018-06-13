@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Range;
 import stroom.properties.MockStroomPropertyService;
 import stroom.properties.StroomPropertyService;
-import stroom.refdata.RefDataModule;
 import stroom.refdata.offheapstore.databases.AbstractLmdbDbTest;
 import stroom.refdata.offheapstore.serdes.StringValueSerde;
 import stroom.util.ByteSizeUnit;
@@ -94,7 +93,7 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                     @Override
                     protected void configure() {
                         bind(StroomPropertyService.class).toInstance(mockStroomPropertyService);
-                        install(new RefDataModule());
+                        install(new RefDataStoreModule());
                     }
                 });
         injector.injectMembers(this);
@@ -324,29 +323,25 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         Runnable loadTask = () -> {
             LOGGER.debug("Running loadTask on thread {}", Thread.currentThread().getName());
             try {
-                try (RefDataLoader loader = refDataStore.loader(refStreamDefinition, effectiveTimeMs)) {
+                refDataStore.doWithLoader(refStreamDefinition, effectiveTimeMs, refDataLoader -> {
+                    refDataLoader.setCommitInterval(200);
+                    refDataLoader.initialise(false);
 
-                    if (!refDataStore.isDataLoaded(refStreamDefinition)) {
-                        loader.setCommitInterval(200);
-                        loader.initialise(false);
+                    long rangeStartInc = 0;
+                    long rangeEndExc;
+                    for (int i = 0; i < recCount; i++) {
+                        refDataLoader.put(mapDefinitionKey, "key" + i, StringValue.of("Value" + i));
 
-                        long rangeStartInc = 0;
-                        long rangeEndExc;
-                        for (int i = 0; i < recCount; i++) {
-                            loader.put(mapDefinitionKey, "key" + i, StringValue.of("Value" + i));
-
-                            rangeEndExc = rangeStartInc + 10;
-                            Range<Long> range = new Range<>(rangeStartInc, rangeEndExc);
-                            rangeStartInc = rangeEndExc;
-                            loader.put(mapDefinitionRange, range, StringValue.of("Value" + i));
-    //                        ThreadUtil.sleepAtLeastIgnoreInterrupts(50);
-                        }
-                        loader.completeProcessing();
-                        LOGGER.debug("Finished loading data");
-                    } else {
-                        LOGGER.debug("Data is already loaded");
+                        rangeEndExc = rangeStartInc + 10;
+                        Range<Long> range = new Range<>(rangeStartInc, rangeEndExc);
+                        rangeStartInc = rangeEndExc;
+                        refDataLoader.put(mapDefinitionRange, range, StringValue.of("Value" + i));
+                        //                        ThreadUtil.sleepAtLeastIgnoreInterrupts(50);
                     }
-                }
+                    refDataLoader.completeProcessing();
+                    LOGGER.debug("Finished loading data");
+
+                });
 
                 LOGGER.debug("Getting values");
                 LAMBDA_LOGGER.logDurationIfDebugEnabled(() -> {
@@ -404,29 +399,25 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
             final MapDefinition mapDefinitionRange = new MapDefinition(refStreamDefinition, "MyRangeMap");
             LOGGER.debug("Running loadTask on thread {}", Thread.currentThread().getName());
             try {
-                try (RefDataLoader loader = refDataStore.loader(refStreamDefinition, effectiveTimeMs)) {
+                refDataStore.doWithLoader(refStreamDefinition, effectiveTimeMs, refDataLoader -> {
+                    refDataLoader.setCommitInterval(200);
+                    refDataLoader.initialise(false);
 
-                    if (!refDataStore.isDataLoaded(refStreamDefinition)) {
-                        loader.setCommitInterval(200);
-                        loader.initialise(false);
+                    long rangeStartInc = 0;
+                    long rangeEndExc;
+                    for (int i = 0; i < recCount; i++) {
+                        refDataLoader.put(mapDefinitionKey, "key" + i, StringValue.of("Value" + i));
 
-                        long rangeStartInc = 0;
-                        long rangeEndExc;
-                        for (int i = 0; i < recCount; i++) {
-                            loader.put(mapDefinitionKey, "key" + i, StringValue.of("Value" + i));
-
-                            rangeEndExc = rangeStartInc + 10;
-                            Range<Long> range = new Range<>(rangeStartInc, rangeEndExc);
-                            rangeStartInc = rangeEndExc;
-                            loader.put(mapDefinitionRange, range, StringValue.of("Value" + i));
-                            //                        ThreadUtil.sleepAtLeastIgnoreInterrupts(50);
-                        }
-                        loader.completeProcessing();
-                        LOGGER.debug("Finished loading data");
-                    } else {
-                        LOGGER.debug("Data is already loaded");
+                        rangeEndExc = rangeStartInc + 10;
+                        Range<Long> range = new Range<>(rangeStartInc, rangeEndExc);
+                        rangeStartInc = rangeEndExc;
+                        refDataLoader.put(mapDefinitionRange, range, StringValue.of("Value" + i));
+                        //                        ThreadUtil.sleepAtLeastIgnoreInterrupts(50);
                     }
-                }
+                    refDataLoader.completeProcessing();
+                    LOGGER.debug("Finished loading data");
+
+                });
 
                 LOGGER.debug("Getting values");
                 LAMBDA_LOGGER.logDurationIfDebugEnabled(() -> {
