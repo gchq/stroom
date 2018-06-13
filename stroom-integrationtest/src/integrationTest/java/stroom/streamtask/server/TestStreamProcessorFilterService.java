@@ -168,7 +168,7 @@ public class TestStreamProcessorFilterService extends AbstractCoreIntegrationTes
             for (final Feed feed : include) {
                 xml += "" +
                         "               <term>\n" +
-                        "                  <field>Feed</field>\n" +
+                        "                  <field>" + StreamDataSource.FEED_NAME + "</field>\n" +
                         "                  <condition>EQUALS</condition>\n" +
                         "                  <value>" + feed.getName() + "</value>\n" +
                         "               </term>\n";
@@ -185,12 +185,12 @@ public class TestStreamProcessorFilterService extends AbstractCoreIntegrationTes
                 "            <op>OR</op>\n" +
                 "            <children>\n" +
                 "               <term>\n" +
-                "                  <field>Stream Type</field>\n" +
+                "                  <field>" + StreamDataSource.STREAM_TYPE_NAME + "</field>\n" +
                 "                  <condition>EQUALS</condition>\n" +
                 "                  <value>Raw Events</value>\n" +
                 "               </term>\n" +
                 "               <term>\n" +
-                "                  <field>Stream Type</field>\n" +
+                "                  <field>" + StreamDataSource.STREAM_TYPE_NAME + "</field>\n" +
                 "                  <condition>EQUALS</condition>\n" +
                 "                  <value>Raw Reference</value>\n" +
                 "               </term>\n" +
