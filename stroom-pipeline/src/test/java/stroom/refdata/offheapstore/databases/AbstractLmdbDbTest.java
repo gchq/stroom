@@ -54,7 +54,9 @@ public class AbstractLmdbDbTest {
 
     @After
     public void teardown() {
-        lmdbEnv.close();
+        if (lmdbEnv != null) {
+            lmdbEnv.close();
+        }
         lmdbEnv = null;
     }
 

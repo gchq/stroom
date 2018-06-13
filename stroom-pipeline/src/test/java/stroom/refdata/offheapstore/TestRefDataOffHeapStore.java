@@ -53,6 +53,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -62,6 +63,8 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestRefDataOffHeapStore.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(TestRefDataOffHeapStore.class);
 
+    private static final long DB_MAX_SIZE = ByteSizeUnit.MEBIBYTE.longBytes(5);
+
     @Rule
     public final TemporaryFolder tmpDir = new TemporaryFolder();
 
@@ -69,6 +72,11 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     private RefDataStore refDataStore;
 
     private final MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
+
+    @Override
+    protected long getMaxSizeBytes() {
+        return DB_MAX_SIZE;
+    }
 
     @Before
     public void setup() {
@@ -79,7 +87,7 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         mockStroomPropertyService.setProperty(RefDataStoreProvider.OFF_HEAP_STORE_DIR_PROP_KEY,
                 dbDir.toAbsolutePath().toString());
         mockStroomPropertyService.setProperty(RefDataStoreProvider.MAX_STORE_SIZE_BYTES_PROP_KEY,
-                Long.toString(ByteSizeUnit.KIBIBYTE.longBytes(1000)));
+                Long.toString(DB_MAX_SIZE));
 
         final Injector injector = Guice.createInjector(
                 new AbstractModule() {
@@ -366,6 +374,94 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                 .map(i -> {
                     LOGGER.debug("Running async task on thread {}", Thread.currentThread().getName());
                     final CompletableFuture<Void> future = CompletableFuture.runAsync(loadTask, executorService);
+                    LOGGER.debug("Got future");
+                    return future;
+                })
+                .collect(Collectors.toList());
+
+        futures.forEach(voidCompletableFuture -> {
+            try {
+                voidCompletableFuture.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        LOGGER.debug("Finished all");
+    }
+
+    /**
+     * Each task is trying to load data for a different {@link RefStreamDefinition} so they will all be fighting over
+     * the write txn
+     */
+    @Test
+    public void testLoaderConcurrency_multipleStreamDefs() {
+
+        final long effectiveTimeMs = System.currentTimeMillis();
+        final int recCount = 1_000;
+
+        Consumer<RefStreamDefinition> loadTask = refStreamDefinition -> {
+            final MapDefinition mapDefinitionKey = new MapDefinition(refStreamDefinition, "MyKeyMap");
+            final MapDefinition mapDefinitionRange = new MapDefinition(refStreamDefinition, "MyRangeMap");
+            LOGGER.debug("Running loadTask on thread {}", Thread.currentThread().getName());
+            try {
+                try (RefDataLoader loader = refDataStore.loader(refStreamDefinition, effectiveTimeMs)) {
+
+                    if (!refDataStore.isDataLoaded(refStreamDefinition)) {
+                        loader.setCommitInterval(200);
+                        loader.initialise(false);
+
+                        long rangeStartInc = 0;
+                        long rangeEndExc;
+                        for (int i = 0; i < recCount; i++) {
+                            loader.put(mapDefinitionKey, "key" + i, StringValue.of("Value" + i));
+
+                            rangeEndExc = rangeStartInc + 10;
+                            Range<Long> range = new Range<>(rangeStartInc, rangeEndExc);
+                            rangeStartInc = rangeEndExc;
+                            loader.put(mapDefinitionRange, range, StringValue.of("Value" + i));
+                            //                        ThreadUtil.sleepAtLeastIgnoreInterrupts(50);
+                        }
+                        loader.completeProcessing();
+                        LOGGER.debug("Finished loading data");
+                    } else {
+                        LOGGER.debug("Data is already loaded");
+                    }
+                }
+
+                LOGGER.debug("Getting values");
+                LAMBDA_LOGGER.logDurationIfDebugEnabled(() -> {
+                    IntStream.range(0, recCount)
+                            .boxed()
+                            .sorted(Comparator.reverseOrder())
+                            .forEach(i -> {
+                                Optional<RefDataValue> optValue = refDataStore.getValue(mapDefinitionKey, "key" + i);
+                                assertThat(optValue.isPresent());
+
+                                optValue = refDataStore.getValue(mapDefinitionKey, Integer.toString((i*10) + 5));
+                                assertThat(optValue.isPresent());
+                            });
+                }, () -> LambdaLogger.buildMessage("Getting {} entries, twice", recCount));
+
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            LOGGER.debug("Finished running loadTask on thread {}", Thread.currentThread().getName());
+        };
+
+        ExecutorService executorService = Executors.newFixedThreadPool(6);
+        List<CompletableFuture<Void>> futures = IntStream.rangeClosed(1, 10)
+                .boxed()
+                .map(i -> {
+                    LOGGER.debug("Running async task on thread {}", Thread.currentThread().getName());
+                    RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
+                            UUID.randomUUID().toString(),
+                            (byte) 0,
+                            123456L,
+                            1);
+                    final CompletableFuture<Void> future = CompletableFuture.runAsync(
+                            () ->
+                                    loadTask.accept(refStreamDefinition),
+                            executorService);
                     LOGGER.debug("Got future");
                     return future;
                 })

@@ -759,6 +759,7 @@ public class RefDataOffHeapStore implements RefDataStore {
         private void commitIfRequired() {
             putsCounter++;
             if (putsCounter % maxPutsBeforeCommit == 0) {
+                LOGGER.trace("Committing with putsCounter {}, maxPutsBeforeCommit {}", putsCounter, maxPutsBeforeCommit);
                 commit();
             }
         }
