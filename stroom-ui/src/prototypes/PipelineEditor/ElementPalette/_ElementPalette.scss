@@ -1,6 +1,5 @@
 @import "../Element";
 .element-palette {
-  padding: 0.5rem;
   background-color: #fafafa;
 }
 
@@ -9,9 +8,8 @@
   margin-bottom: 0;
 }
 
-%element-palette-category--shared {
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
+.element-palette-category .ui.styled.accordion {
+  border-radius: 0;
 }
 
 %element-palette-category__elements--shared {
@@ -19,7 +17,7 @@
   flex-direction: row;
   flex-wrap: wrap;
   overflow: hidden;
-  justify-content: flex-end;
+  justify-content: left;
 }
 
 .element-palette-category__elements--open {
