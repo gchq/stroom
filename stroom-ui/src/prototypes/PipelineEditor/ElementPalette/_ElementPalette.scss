@@ -1,8 +1,4 @@
 @import "../Element";
-.element-palette {
-  padding: 0.5rem;
-}
-
 .ui.header.closed {
   padding-bottom: 0;
   margin-bottom: 0;
@@ -18,7 +14,7 @@
   flex-direction: row;
   flex-wrap: wrap;
   overflow: hidden;
-  justify-content: flex-end;
+  justify-content: left;
 }
 
 .element-palette-category__elements--open {
