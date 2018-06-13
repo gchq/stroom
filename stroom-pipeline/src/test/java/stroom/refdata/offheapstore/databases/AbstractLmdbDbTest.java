@@ -17,6 +17,7 @@
 
 package stroom.refdata.offheapstore.databases;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
@@ -43,11 +44,23 @@ public class AbstractLmdbDbTest {
 
         Path dbDir = tmpDir.getRoot().toPath();
         LOGGER.debug("Creating LMDB environment with maxSize: {}, dbDir {}",
-                DB_MAX_SIZE, dbDir.toAbsolutePath().toString());
+                getMaxSizeBytes(), dbDir.toAbsolutePath().toString());
 
         lmdbEnv = Env.<ByteBuffer>create()
-                .setMapSize(DB_MAX_SIZE)
+                .setMapSize(getMaxSizeBytes())
                 .setMaxDbs(10)
                 .open(dbDir.toFile());
+    }
+
+    @After
+    public void teardown() {
+        lmdbEnv.close();
+        lmdbEnv = null;
+    }
+
+
+
+    protected long getMaxSizeBytes() {
+        return DB_MAX_SIZE;
     }
 }

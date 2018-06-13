@@ -390,7 +390,7 @@ public class ReferenceData {
                             pipelineEntity.getVersion(),
                             effectiveStream.getStreamId(), streamNo);
 
-                    if (refDataLoaderHolder.isRefStreamLoaded(refStreamDefinition)) {
+                    if (refDataLoaderHolder.isRefStreamAvailable(refStreamDefinition)) {
                         // we have already loaded or confirmed the load state for this refStream in this
                         // pipeline process so no need to try again
                     } else {

@@ -29,6 +29,7 @@ public interface RefDataLoader extends AutoCloseable {
     /**
      * Creates the initial ProcessingInfo entry to mark this stream definition
      * as having a load in progress.
+     * @param overwriteExisting If true, allows duplicate keys to override existing values
      */
     boolean initialise(final boolean overwriteExisting);
 

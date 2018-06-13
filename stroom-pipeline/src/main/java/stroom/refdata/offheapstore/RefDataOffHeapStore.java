@@ -567,6 +567,8 @@ public class RefDataOffHeapStore implements RefDataStore {
 
             // TODO May be able to create direct buffer for reuse over all write ops to save the cost
             // of buffer allocation, see info here https://github.com/lmdbjava/lmdbjava/issues/81
+            // If the loader holds a key and value ByteBuffer then they can be used for all write ops
+            // See TestByteBufferReusePerformance
 
             boolean didPutSucceed;
             if (optCurrentValueStoreKey.isPresent()) {

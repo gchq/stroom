@@ -30,7 +30,7 @@ public class RefDataLoaderHolder {
 
     // Set to keep track of which ref streams have been loaded, re-loaded or confirmed
     // to be already loaded within this pipeline processing instance
-    private Set<RefStreamDefinition> loadedRefStreamDefinitions = new HashSet<>();
+    private Set<RefStreamDefinition> availableRefStreamDefinitions = new HashSet<>();
 
     RefDataLoaderHolder(final RefDataLoader refDataLoader) {
         this.refDataLoader = refDataLoader;
@@ -44,11 +44,11 @@ public class RefDataLoaderHolder {
         this.refDataLoader = refDataLoader;
     }
 
-    public void markRefStreamAsLoaded(final RefStreamDefinition refStreamDefinition) {
-        loadedRefStreamDefinitions.add(refStreamDefinition);
+    public void markRefStreamAsAvailable(final RefStreamDefinition refStreamDefinition) {
+        availableRefStreamDefinitions.add(refStreamDefinition);
     }
 
-    public boolean isRefStreamLoaded(final RefStreamDefinition refStreamDefinition) {
-        return loadedRefStreamDefinitions.contains(refStreamDefinition);
+    public boolean isRefStreamAvailable(final RefStreamDefinition refStreamDefinition) {
+        return availableRefStreamDefinitions.contains(refStreamDefinition);
     }
 }
