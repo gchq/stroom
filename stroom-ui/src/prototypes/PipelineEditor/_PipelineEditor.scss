@@ -92,7 +92,8 @@ $palette-width: 12rem;
 }
 
 .Pipeline-editor__content {
-  width: 100%;
+  //TODO: Hack. I'm not sure why the offset needs to be as much as 190px.
+  width: calc( 100% - 190px);
   display: flex;
   flex-direction: column;
 }
