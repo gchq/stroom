@@ -17,13 +17,11 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import { compose, withState } from 'recompose';
+import { connect } from 'react-redux';
 
 import ExpressionOperator from './ExpressionOperator';
 import ROExpressionOperator from './ROExpressionOperator';
 import { LineContainer } from 'components/LineTo';
-
-import { withDataSource } from './DataSource';
-import { withExpression } from './withExpression';
 
 import { Checkbox } from 'semantic-ui-react';
 
@@ -41,6 +39,13 @@ const ExpressionBuilder = ({
   editableByUser,
   setEditableByUser,
 }) => {
+  if (!dataSource) {
+    return <div>Awaiting Data Source</div>;
+  }
+  if (!expression) {
+    return <div>Awaiting Expression</div>;
+  }
+
   const roOperator = (
     <ROExpressionOperator expressionId={expressionId} isEnabled operator={expression} />
   );
@@ -84,14 +89,13 @@ const ExpressionBuilder = ({
 
 ExpressionBuilder.propTypes = {
   // Set by container
+  dataSourceUuid: PropTypes.string.isRequired,
   expressionId: PropTypes.string.isRequired,
   isEditableSystemSet: PropTypes.bool.isRequired,
 
-  // withDataSource
-  dataSource: PropTypes.object.isRequired,
-
-  // withExpression
+  // Redux state
   expression: PropTypes.object.isRequired,
+  dataSource: PropTypes.object.isRequired,
 
   // withSetEditableByUser
   setEditableByUser: PropTypes.func.isRequired,
@@ -102,4 +106,10 @@ ExpressionBuilder.defaultProps = {
   isEditableSystemSet: false,
 };
 
-export default compose(withDataSource(), withExpression(), withSetEditableByUser)(ExpressionBuilder);
+export default compose(
+  connect((state, props) => ({
+    expression: state.expressions[props.expressionId],
+    dataSource: state.dataSources[props.dataSourceUuid],
+  })),
+  withSetEditableByUser,
+)(ExpressionBuilder);
