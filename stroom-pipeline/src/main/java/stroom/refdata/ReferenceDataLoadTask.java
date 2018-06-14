@@ -18,10 +18,11 @@ package stroom.refdata;
 
 import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.task.ServerTask;
+import stroom.util.shared.VoidResult;
 
 import java.util.List;
 
-public class ReferenceDataLoadTask extends ServerTask<List<RefStreamDefinition>> {
+public class ReferenceDataLoadTask extends ServerTask<VoidResult> {
 
     private RefStreamDefinition refStreamDefinition;
 

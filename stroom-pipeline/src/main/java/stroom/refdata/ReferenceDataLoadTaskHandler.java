@@ -53,6 +53,7 @@ import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskContext;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.Severity;
+import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -68,7 +69,7 @@ import java.util.Objects;
  * substitutions when processing events data.
  */
 @TaskHandlerBean(task = ReferenceDataLoadTask.class)
-class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoadTask, List<RefStreamDefinition>> {
+class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoadTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReferenceDataLoadTaskHandler.class);
 
     private final StreamStore streamStore;
@@ -127,7 +128,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
      * reference data key, value maps.
      */
     @Override
-    public List<RefStreamDefinition> exec(final ReferenceDataLoadTask task) {
+    public VoidResult exec(final ReferenceDataLoadTask task) {
         return security.secureResult(() -> {
             final List<RefStreamDefinition> loadedRefStreamDefinitions = new ArrayList<>();
             final StoredErrorReceiver storedErrorReceiver = new StoredErrorReceiver();
@@ -176,7 +177,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
             } catch (final RuntimeException e) {
                 log(Severity.FATAL_ERROR, e.getMessage(), e);
             }
-            return loadedRefStreamDefinitions;
+            return VoidResult.INSTANCE;
         });
     }
 
@@ -214,38 +215,43 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                 final PipelineEntity pipelineEntity = Objects.requireNonNull(pipelineHolder.getPipeline());
                 final DocRef pipelineDocRef = DocRefUtil.create(pipelineEntity);
 
+                final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
+                        pipelineDocRef,
+                        pipelineEntity.getVersion(),
+                        streamHolder.getStream().getId());
 
-                // Loop over the stream boundaries and process each
-                // sequentially.
-                final long streamCount = mainProvider.getStreamCount();
-                for (long streamNo = 0; streamNo < streamCount && !taskContext.isTerminated(); streamNo++) {
-                    streamHolder.setStreamNo(streamNo);
-                    streamLocationFactory.setStreamNo(streamNo + 1);
+                refDataStore.doWithLoader(refStreamDefinition, stream.getEffectiveMs(), refDataLoader -> {
+                    // we are now blocking any other thread loading the same refStreamDefinition
 
-                    // Get the stream.
-                    final StreamSourceInputStream inputStream = mainProvider.getStream(streamNo);
+                    try {
+                        // Loop over the stream boundaries and process each sequentially.
+                        // Typically ref data will only have a single streamNo so if there are
+                        // multiple then overrideExisting may be needed.
+                        final long streamCount = mainProvider.getStreamCount();
+                        for (long streamNo = 0; streamNo < streamCount && !taskContext.isTerminated(); streamNo++) {
+                            streamHolder.setStreamNo(streamNo);
+                            streamLocationFactory.setStreamNo(streamNo + 1);
 
-                    final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
-                            pipelineDocRef,
-                            pipelineEntity.getVersion(),
-                            streamHolder.getStream().getId(),
-                            streamNo);
+                            // Get the stream.
+                            final StreamSourceInputStream inputStream = mainProvider.getStream(streamNo);
 
-                    refDataStore.doWithLoader(refStreamDefinition, stream.getEffectiveMs(), refDataLoader -> {
-                        // we are now blocking any other thread loading the same refStreamDefinition
-                        refDataLoaderHolder.setRefDataLoader(refDataLoader);
-                        // Process the boundary.
-                        try {
-                            //process the pipeline, ref data will be loaded via the ReferenceDataFilter
-                            pipeline.process(inputStream, encoding);
-                            loadedRefStreamDefinitions.add(refStreamDefinition);
-                        } catch (final RuntimeException e) {
-                            log(Severity.FATAL_ERROR, e.getMessage(), e);
+
+                            refDataLoaderHolder.setRefDataLoader(refDataLoader);
+                            // Process the boundary.
+                            try {
+                                //process the pipeline, ref data will be loaded via the ReferenceDataFilter
+                                pipeline.process(inputStream, encoding);
+                                loadedRefStreamDefinitions.add(refStreamDefinition);
+                            } catch (final RuntimeException e) {
+                                log(Severity.FATAL_ERROR, e.getMessage(), e);
+                            }
                         }
-                    });
-                    // clear the reference to the loader now we have finished with it
-                    refDataLoaderHolder.setRefDataLoader(null);
-                }
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+                // clear the reference to the loader now we have finished with it
+                refDataLoaderHolder.setRefDataLoader(null);
 
             } catch (final RuntimeException e) {
                 log(Severity.FATAL_ERROR, e.getMessage(), e);

@@ -28,16 +28,16 @@ public class RefDataValueProxy {
     // held for the purpose of testing equality of a ValueProxy and
     // for calling methods on the instance
     private final RefDataStore refDataStore;
-    private final ValueStoreKey valueStoreKey;
     private final MapDefinition mapDefinition;
+    private final String key;
 
-    RefDataValueProxy(final RefDataStore refDataStore,
-                      final ValueStoreKey valueStoreKey,
-                      final MapDefinition mapDefinition) {
+    public RefDataValueProxy(final RefDataStore refDataStore,
+                             final MapDefinition mapDefinition,
+                             final String key) {
 
         this.refDataStore = Objects.requireNonNull(refDataStore);
         this.mapDefinition = Objects.requireNonNull(mapDefinition);
-        this.valueStoreKey = Objects.requireNonNull(valueStoreKey);
+        this.key = Objects.requireNonNull(key);
     }
 
     /**
@@ -48,7 +48,7 @@ public class RefDataValueProxy {
      * should expect to handle this possibility.
      */
     public Optional<RefDataValue> supplyValue() {
-        return refDataStore.getValue(valueStoreKey);
+        return null;
     }
 
 //    public <T> Optional<T> mapValue(final Function<RefDataValue, T> valueMapper) {
@@ -64,7 +64,7 @@ public class RefDataValueProxy {
 //    }
 
     public void consumeBytes(final Consumer<ByteBuffer> bytesConsumer) {
-        refDataStore.consumeBytes(valueStoreKey, bytesConsumer);
+//        refDataStore.consumeBytes(valueStoreKey, bytesConsumer);
     }
 
     @Override
@@ -73,20 +73,22 @@ public class RefDataValueProxy {
         if (o == null || getClass() != o.getClass()) return false;
         final RefDataValueProxy that = (RefDataValueProxy) o;
         return Objects.equals(refDataStore, that.refDataStore) &&
-                Objects.equals(valueStoreKey, that.valueStoreKey);
+                Objects.equals(mapDefinition, that.mapDefinition) &&
+                Objects.equals(key, that.key);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(refDataStore, valueStoreKey);
+        return Objects.hash(refDataStore, mapDefinition, key);
     }
 
     @Override
     public String toString() {
         return "RefDataValueProxy{" +
                 "refDataStore=" + refDataStore +
-                ", valueStoreKey=" + valueStoreKey +
+                ", mapDefinition=" + mapDefinition +
+                ", key='" + key + '\'' +
                 '}';
     }
 }

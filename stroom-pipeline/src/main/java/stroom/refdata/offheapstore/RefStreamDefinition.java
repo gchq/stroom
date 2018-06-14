@@ -42,8 +42,7 @@ public class RefStreamDefinition {
 
     public RefStreamDefinition(final DocRef pipelineDocRef,
                                final byte pipelineVersion,
-                               final long streamId,
-                               final long streamNo) {
+                               final long streamId) {
         this.pipelineDocRef = pipelineDocRef;
         this.pipelineVersion = pipelineVersion;
         this.streamId = streamId;

@@ -18,6 +18,7 @@ package stroom.refdata;
 
 import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.task.TaskManager;
+import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -32,7 +33,7 @@ public class ReferenceDataLoaderImpl implements ReferenceDataLoader {
     }
 
     @Override
-    public List<RefStreamDefinition> load(final RefStreamDefinition refStreamDefinition) {
+    public VoidResult load(final RefStreamDefinition refStreamDefinition) {
         return taskManager.exec(new ReferenceDataLoadTask(refStreamDefinition));
     }
 }

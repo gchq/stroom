@@ -180,8 +180,9 @@ public class RefDataOffHeapStore implements RefDataStore {
     @Override
     public Optional<RefDataValue> getValue(final MapDefinition mapDefinition,
                                            final String key) {
-        return getValueProxy(mapDefinition, key)
-                .flatMap(RefDataValueProxy::supplyValue);
+        throw new RuntimeException("not yet implemented");
+//        return getValueProxy(mapDefinition, key)
+//                .flatMap(RefDataValueProxy::supplyValue);
     }
 
     @Override
@@ -190,15 +191,16 @@ public class RefDataOffHeapStore implements RefDataStore {
     }
 
     @Override
-    public Optional<RefDataValueProxy> getValueProxy(final MapDefinition mapDefinition, final String key) {
+    public RefDataValueProxy getValueProxy(final MapDefinition mapDefinition, final String key) {
 
-        return LmdbUtils.getWithReadTxn(lmdbEnvironment, readTxn -> {
-            Optional<ValueStoreKey> optValueStoreKey = getValueStoreKey(readTxn, mapDefinition, key);
-
-            // return a RefDataValueProxy if we found a value.
-            return optValueStoreKey.map(valueStoreKey ->
-                    new RefDataValueProxy(this, valueStoreKey, mapDefinition));
-        });
+//        return LmdbUtils.getWithReadTxn(lmdbEnvironment, readTxn -> {
+//            Optional<ValueStoreKey> optValueStoreKey = getValueStoreKey(readTxn, mapDefinition, key);
+//
+//            // return a RefDataValueProxy if we found a value.
+//            return optValueStoreKey.map(valueStoreKey ->
+//                    new RefDataValueProxy(this, valueStoreKey, mapDefinition));
+//        });
+        return new RefDataValueProxy(this, mapDefinition, key);
     }
 
     private Optional<ValueStoreKey> getValueStoreKey(final Txn<ByteBuffer> readTxn, final MapDefinition mapDefinition, final String key) {

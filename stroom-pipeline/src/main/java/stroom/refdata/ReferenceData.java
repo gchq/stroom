@@ -211,7 +211,7 @@ public class ReferenceData {
             final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                     pipelineReference.getPipeline(),
                     pipelineEntity.getVersion(),
-                    streamHolder.getStream().getParentStreamId(), streamNo);
+                    streamHolder.getStream().getParentStreamId());
 
 
             // TODO we may want to implement some sort of on-heap store that fronts our off-heap store
@@ -394,14 +394,10 @@ public class ReferenceData {
 
                     final PipelineEntity pipelineEntity = pipelineService.loadByUuid(pipelineReference.getPipeline().getUuid());
 
-                    //TODO should always be zero for a ref stream??
-                    final long streamNo = 0;
-
                     final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                             pipelineReference.getPipeline(),
                             pipelineEntity.getVersion(),
-                            effectiveStream.getStreamId(),
-                            streamNo);
+                            effectiveStream.getStreamId());
 
                     // First check the pipeline scoped object to save us hitting the store for every lookup in a
                     // pipeline process run.
@@ -420,18 +416,14 @@ public class ReferenceData {
 
                             // initiate a load of the ref data for this stream
 
-                            List<RefStreamDefinition> loadedRefStreamDefinitions = security.asProcessingUserResult(() ->
+                            security.asProcessingUser(() ->
                                     referenceDataLoader.load(refStreamDefinition));
 
                             LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage(
-                                    "Loaded {} refStreamDefinitions", loadedRefStreamDefinitions.size()));
+                                    "Loaded {} refStreamDefinition", refStreamDefinition));
 
                             // mark these ref stream defs as available for future lookups within this pipeline process
-                            loadedRefStreamDefinitions.forEach(refDataLoaderHolder::markRefStreamAsAvailable);
-
-                            if (loadedRefStreamDefinitions.isEmpty()) {
-                                result.log(Severity.WARNING, () -> "Unable to load reference data for " + refStreamDefinition + ")");
-                            }
+                            refDataLoaderHolder.markRefStreamAsAvailable(refStreamDefinition);
                         }
                     }
 
@@ -440,17 +432,20 @@ public class ReferenceData {
                     //TODO do we need to do this here?
 
                     // now we have the data in the store we can do the lookup to get the proxy object
+//                    final Optional<RefDataValueProxy> optRefDataValueProxy = refDataStore.getValueProxy(mapDefinition, keyName);
+
                     final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
-                    final Optional<RefDataValueProxy> optRefDataValueProxy = refDataStore.getValueProxy(mapDefinition, keyName);
+                    final RefDataValueProxy refDataValueProxy = new RefDataValueProxy(refDataStore, mapDefinition, keyName);
+                    result.setRefDataValueProxy(refDataValueProxy);
 
-                    LOGGER.debug("Lookup for mapDefinition {}, key {}, returned {}", mapDefinition, keyName, optRefDataValueProxy);
+//                    LOGGER.debug("Lookup for mapDefinition {}, key {}, returned {}", mapDefinition, keyName, optRefDataValueProxy);
 
-                    if (optRefDataValueProxy.isPresent()) {
-                        result.log(Severity.INFO, () -> "Map store contains reference data (" + effectiveStream + ")");
-                        result.setRefDataValueProxy(optRefDataValueProxy.get());
-                    } else {
-                        result.log(Severity.WARNING, () -> "Map store has no reference data (" + effectiveStream + ")");
-                    }
+//                    if (optRefDataValueProxy.isPresent()) {
+//                        result.log(Severity.INFO, () -> "Map store contains reference data (" + effectiveStream + ")");
+//                        result.setRefDataValueProxy(optRefDataValueProxy.get());
+//                    } else {
+//                        result.log(Severity.WARNING, () -> "Map store has no reference data (" + effectiveStream + ")");
+//                    }
                 } else {
                     result.log(Severity.WARNING, () -> "No effective streams can be found in the returned set (" + effectiveStreamKey + ")");
                 }

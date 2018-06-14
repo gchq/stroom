@@ -63,8 +63,8 @@ public interface RefDataStore {
      * actual value. The proxy allows the value to be read/processed/mapped inside a transaction
      * to avoid unnecessary copying of data.
      */
-    Optional<RefDataValueProxy> getValueProxy(final MapDefinition mapDefinition,
-                                              final String key);
+    RefDataValueProxy getValueProxy(final MapDefinition mapDefinition,
+                                    final String key);
 
     Optional<RefDataValue> getValue(final ValueStoreKey valueStoreKey);
 
