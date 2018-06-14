@@ -4,6 +4,7 @@ import com.google.inject.assistedinject.Assisted;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
 import net.sf.saxon.trans.XPathException;
+import stroom.refdata.offheapstore.serdes.RefDataValueSerde;
 
 import javax.inject.Inject;
 import java.util.HashMap;
@@ -46,15 +47,18 @@ public class RefDataValueProxyConsumer {
 
         //
         refDataValueProxy.consumeBytes(byteBuffer -> {
-            final byte bTypeId = byteBuffer.get();
-            final Integer typeId = (int) bTypeId;
+
+            // find out what type of value we are dealing with
+            final Integer typeId = RefDataValueSerde.getTypeId(byteBuffer);
 
             // work out which byteBufferConsumer to use based on the typeId in the value byteBuffer
-            final RefDataValueByteBufferConsumer consumer = typeToConsumerMap.computeIfAbsent(typeId, k ->
-                    typeToByteBufferConsumerFactoryMap.get(k)
-                            .create(receiver, pipelineConfiguration)
+            final RefDataValueByteBufferConsumer consumer = typeToConsumerMap.computeIfAbsent(
+                    typeId, typeIdKey ->
+                            typeToByteBufferConsumerFactoryMap.get(typeIdKey)
+                                    .create(receiver, pipelineConfiguration)
             );
 
+            // now we have the appropriate consumer for the value type, consume the value
             consumer.consumeBytes(receiver, byteBuffer);
         });
     }

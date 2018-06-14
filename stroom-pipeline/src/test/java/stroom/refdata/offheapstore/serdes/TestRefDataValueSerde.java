@@ -17,19 +17,16 @@
 
 package stroom.refdata.offheapstore.serdes;
 
-import com.google.common.collect.ImmutableMap;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.refdata.lmdb.serde.Serde;
 import stroom.refdata.offheapstore.ByteArrayUtils;
 import stroom.refdata.offheapstore.FastInfosetValue;
 import stroom.refdata.offheapstore.RefDataValue;
 import stroom.refdata.offheapstore.StringValue;
 
 import java.nio.ByteBuffer;
-import java.util.Map;
 
 public class TestRefDataValueSerde extends AbstractSerdeTest {
 

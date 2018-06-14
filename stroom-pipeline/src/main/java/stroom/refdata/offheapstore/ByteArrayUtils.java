@@ -22,6 +22,7 @@ import stroom.util.logging.LambdaLogger;
 
 import javax.xml.bind.DatatypeConverter;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 public class ByteArrayUtils {
     /**
@@ -131,12 +132,13 @@ public class ByteArrayUtils {
         }
 
         final String value = byteBufferToHexAll(byteBuffer);
-        return LambdaLogger.buildMessage("Cap: {}, pos: {}, lim: {}, rem: {}, val [{}]",
+        return LambdaLogger.buildMessage("Cap: {}, pos: {}, lim: {}, rem: {}, val [{}], asStr [{}]",
                 byteBuffer.capacity(),
                 byteBuffer.position(),
                 byteBuffer.limit(),
                 byteBuffer.remaining(),
-                value);
+                value,
+                StandardCharsets.UTF_8.decode(byteBuffer.duplicate()));
     }
 
     /**

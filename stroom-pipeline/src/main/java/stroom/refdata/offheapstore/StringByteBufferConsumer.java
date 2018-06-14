@@ -22,28 +22,32 @@ import net.sf.saxon.event.Receiver;
 import net.sf.saxon.event.ReceiverOptions;
 import net.sf.saxon.expr.parser.Location;
 import net.sf.saxon.trans.XPathException;
+import stroom.refdata.offheapstore.serdes.StringValueSerde;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import javax.inject.Inject;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
-public class StringByteBufferConsumer implements RefDataValueByteBufferConsumer {
+public class StringByteBufferConsumer extends AbstractByteBufferConsumer {
 
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(StringByteBufferConsumer.class);
 
     static final Location NULL_LOCATION = new NullLocation();
+    private final StringValueSerde stringValueSerde;
 
-    private final Receiver receiver;
-
-    StringByteBufferConsumer(final Receiver receiver) {
-        this.receiver = receiver;
+    StringByteBufferConsumer(final Receiver receiver, final StringValueSerde stringValueSerde) {
+        super(receiver);
+        this.stringValueSerde = stringValueSerde;
     }
 
     @Override
     public void consumeBytes(final Receiver receiver, final ByteBuffer byteBuffer) {
 
-        final String str = StandardCharsets.UTF_8.decode(byteBuffer).toString();
+        // we should only be consuming string type values
+        final String str = StringValueSerde.extractStringValue(byteBuffer);
+
         try {
             receiver.characters(str, NULL_LOCATION, ReceiverOptions.WHOLE_TEXT_NODE);
         } catch (XPathException e) {
@@ -53,10 +57,17 @@ public class StringByteBufferConsumer implements RefDataValueByteBufferConsumer 
 
     public static class Factory implements AbstractByteBufferConsumer.Factory {
 
+        private final StringValueSerde stringValueSerde;
+
+        @Inject
+        public Factory(final StringValueSerde stringValueSerde) {
+            this.stringValueSerde = stringValueSerde;
+        }
+
         @Override
-        public AbstractByteBufferConsumer create(final Receiver receiver,
+        public RefDataValueByteBufferConsumer create(final Receiver receiver,
                                                  final PipelineConfiguration pipelineConfiguration) {
-            return new FastInfosetByteBufferConsumer(receiver, pipelineConfiguration);
+            return new StringByteBufferConsumer(receiver, stringValueSerde);
         }
     }
 }

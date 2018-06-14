@@ -400,7 +400,8 @@ public class ReferenceData {
                     final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                             pipelineReference.getPipeline(),
                             pipelineEntity.getVersion(),
-                            effectiveStream.getStreamId(), streamNo);
+                            effectiveStream.getStreamId(),
+                            streamNo);
 
                     // First check the pipeline scoped object to save us hitting the store for every lookup in a
                     // pipeline process run.

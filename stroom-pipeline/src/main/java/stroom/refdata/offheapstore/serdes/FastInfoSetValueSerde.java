@@ -27,7 +27,7 @@ public class FastInfoSetValueSerde implements RefDatValueSubSerde {
 
     @Override
     public RefDataValue deserialize(final ByteBuffer byteBuffer) {
-        int referenceCount = extractReferenceCount(byteBuffer);
+        int referenceCount = getReferenceCount(byteBuffer);
         byte[] bytes = new byte[byteBuffer.remaining()];
         byteBuffer.get(bytes);
         byteBuffer.flip();
@@ -45,4 +45,5 @@ public class FastInfoSetValueSerde implements RefDatValueSubSerde {
         }
         byteBuffer.flip();
     }
+
 }

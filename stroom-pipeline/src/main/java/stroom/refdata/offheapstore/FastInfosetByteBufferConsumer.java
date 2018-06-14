@@ -41,9 +41,12 @@ public class FastInfosetByteBufferConsumer extends AbstractByteBufferConsumer {
     }
 
     public static class Factory implements AbstractByteBufferConsumer.Factory {
+
         @Override
-        public AbstractByteBufferConsumer create(final Receiver receiver,
-                                                 final PipelineConfiguration pipelineConfiguration) {
+        public RefDataValueByteBufferConsumer create(
+                final Receiver receiver,
+                final PipelineConfiguration pipelineConfiguration) {
+
             return new FastInfosetByteBufferConsumer(receiver, pipelineConfiguration);
         }
     }

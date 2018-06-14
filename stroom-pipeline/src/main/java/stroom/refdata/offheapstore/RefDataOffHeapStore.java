@@ -197,7 +197,7 @@ public class RefDataOffHeapStore implements RefDataStore {
 
             // return a RefDataValueProxy if we found a value.
             return optValueStoreKey.map(valueStoreKey ->
-                    new RefDataValueProxy(this, valueStoreKey));
+                    new RefDataValueProxy(this, valueStoreKey, mapDefinition));
         });
     }
 

@@ -17,21 +17,23 @@
 
 package stroom.refdata.offheapstore.serdes;
 
+import stroom.refdata.offheapstore.ByteArrayUtils;
 import stroom.refdata.offheapstore.FastInfosetValue;
 import stroom.refdata.offheapstore.RefDataValue;
 import stroom.refdata.offheapstore.StringValue;
 import stroom.util.logging.LambdaLogger;
 
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 
 public class StringValueSerde implements RefDatValueSubSerde {
 
     @Override
-    public RefDataValue deserialize(final ByteBuffer byteBuffer) {
-        int referenceCount = extractReferenceCount(byteBuffer);
-        String str = StandardCharsets.UTF_8.decode(byteBuffer).toString();
-        byteBuffer.flip();
+    public RefDataValue deserialize(final ByteBuffer subBuffer) {
+        int referenceCount = getReferenceCount(subBuffer);
+        String str = StandardCharsets.UTF_8.decode(subBuffer).toString();
+        subBuffer.flip();
         return new StringValue(referenceCount, str);
     }
 
@@ -46,5 +48,17 @@ public class StringValueSerde implements RefDatValueSubSerde {
             throw new RuntimeException(LambdaLogger.buildMessage("Unable to cast {} to {}",
                     refDataValue.getClass().getCanonicalName(), FastInfosetValue.class.getCanonicalName()), e);
         }
+    }
+
+    /**
+     * Absolute method that extracts the string value from its place in the buffer.
+     * Does not change the passed buffer.
+     */
+    public static String extractStringValue(final ByteBuffer subBuffer) {
+        // advance a copy of the buffer to the value part
+        subBuffer.position(VALUE_OFFSET);
+        final ByteBuffer valueBuffer = subBuffer.slice();
+        subBuffer.rewind();
+        return StandardCharsets.UTF_8.decode(valueBuffer).toString();
     }
 }

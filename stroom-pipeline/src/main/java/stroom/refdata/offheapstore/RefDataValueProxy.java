@@ -29,12 +29,14 @@ public class RefDataValueProxy {
     // for calling methods on the instance
     private final RefDataStore refDataStore;
     private final ValueStoreKey valueStoreKey;
+    private final MapDefinition mapDefinition;
 
     RefDataValueProxy(final RefDataStore refDataStore,
-                      final ValueStoreKey valueStoreKey) {
+                      final ValueStoreKey valueStoreKey,
+                      final MapDefinition mapDefinition) {
 
-        Objects.requireNonNull(refDataStore);
         this.refDataStore = Objects.requireNonNull(refDataStore);
+        this.mapDefinition = Objects.requireNonNull(mapDefinition);
         this.valueStoreKey = Objects.requireNonNull(valueStoreKey);
     }
 
@@ -49,17 +51,17 @@ public class RefDataValueProxy {
         return refDataStore.getValue(valueStoreKey);
     }
 
-    public <T> Optional<T> mapValue(final Function<RefDataValue, T> valueMapper) {
-        return refDataStore.map(valueStoreKey, valueMapper);
-    }
-
-    public <T> Optional<T> mapBytes(final Function<ByteBuffer, T> valueMapper) {
-        return refDataStore.mapBytes(valueStoreKey, valueMapper);
-    }
-
-    public void consumeValue(final Consumer<RefDataValue> valueConsumer) {
-        refDataStore.consumeValue(valueStoreKey, valueConsumer);
-    }
+//    public <T> Optional<T> mapValue(final Function<RefDataValue, T> valueMapper) {
+//        return refDataStore.map(valueStoreKey, valueMapper);
+//    }
+//
+//    public <T> Optional<T> mapBytes(final Function<ByteBuffer, T> valueMapper) {
+//        return refDataStore.mapBytes(valueStoreKey, valueMapper);
+//    }
+//
+//    public void consumeValue(final Consumer<RefDataValue> valueConsumer) {
+//        refDataStore.consumeValue(valueStoreKey, valueConsumer);
+//    }
 
     public void consumeBytes(final Consumer<ByteBuffer> bytesConsumer) {
         refDataStore.consumeBytes(valueStoreKey, bytesConsumer);

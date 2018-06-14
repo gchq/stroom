@@ -26,7 +26,8 @@ import stroom.util.logging.LambdaLogger;
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Objects;
+import java.util.function.BiFunction;
 
 public class RefDataValueSerde implements
         Serde<RefDataValue>,
@@ -45,9 +46,8 @@ public class RefDataValueSerde implements
 
     @Override
     public RefDataValue deserialize(final ByteBuffer byteBuffer) {
-        final int typeId = byteBuffer.get();
-        return getSubSerde(typeId).deserialize(byteBuffer);
-        // rely on the subSerde flipping the buffer
+        return mapWithSubSerde(byteBuffer, (subSerde, subBuffer) ->
+                subSerde.deserialize(subBuffer));
     }
 
     @Override
@@ -57,28 +57,64 @@ public class RefDataValueSerde implements
         // rely on the subSerde flipping the buffer
     }
 
+    private <T> T mapWithSubSerde(final ByteBuffer byteBuffer,
+                                  final BiFunction<RefDatValueSubSerde, ByteBuffer, T> subBufferFunction) {
+        // work out what type of serde we need from the source buffer
+        // then create a new buffer from the content after the type ID
+        // put the source buffer back to how it was
+        int typeId = getTypeId(byteBuffer);
+        ByteBuffer subBuffer = byteBuffer.slice();
+        byteBuffer.rewind();
+        RefDatValueSubSerde subSerde = getSubSerde(typeId);
+
+        return subBufferFunction.apply(subSerde, subBuffer);
+    }
+
     private RefDatValueSubSerde getSubSerde(int typeId) {
-        return Optional.ofNullable(typeToSerdeMap.get(typeId))
-                .orElseThrow(() -> new RuntimeException(LambdaLogger.buildMessage("Unexpected typeId value {}", typeId)));
+        RefDatValueSubSerde subSerde = typeToSerdeMap.get(typeId);
+        Objects.requireNonNull(subSerde, () ->
+                LambdaLogger.buildMessage("Unexpected typeId value {}", typeId));
+        return subSerde;
+    }
+
+    ByteBuffer getSubBuffer(final ByteBuffer byteBuffer) {
+        byteBuffer.position(TYPE_ID_BYTES);
+        ByteBuffer subBuffer = byteBuffer.slice();
+        byteBuffer.rewind();
+        return subBuffer;
+    }
+
+    RefDatValueSubSerde getSubSerde(ByteBuffer byteBuffer) {
+        return getSubSerde(extractTypeId(byteBuffer));
     }
 
     /**
      * Compares the value portion of each of the passed {@link ByteBuffer} instances.
      * @return True if the bytes of the value portion of each buffer are equal
      */
-    public boolean areValuesEqual(final ByteBuffer thisValue, final ByteBuffer thatValue) {
-        final int thisTypeId = thisValue.get(TYPE_ID_OFFSET);
-        final int thatTypeId = thatValue.get(TYPE_ID_OFFSET);
+    public boolean areValuesEqual(final ByteBuffer thisBuffer, final ByteBuffer thatBuffer) {
+        final int thisTypeId = getTypeId(thisBuffer);
+        final int thatTypeId = getTypeId(thatBuffer);
+
         if (thisTypeId != thatTypeId) {
             throw new RuntimeException(LambdaLogger.buildMessage("Type IDs do not match, this {}, that {}",
                     thisTypeId, thatTypeId));
         }
-        return getSubSerde(thisTypeId).areValuesEqual(thisValue, thatValue);
+        final ByteBuffer thisSubBuffer = thisBuffer.slice();
+        final ByteBuffer thatSubBuffer = thatBuffer.slice();
+        // put the original buffers back to where they were
+        thisBuffer.rewind();
+        thatBuffer.rewind();
+
+        // slice the buffers so the sub-serdes only see the content they know about
+        return getSubSerde(thisTypeId).areValuesEqual(thisSubBuffer, thatSubBuffer);
     }
 
-    public int updateReferenceCount(final ByteBuffer valueBuffer, int referenceCountDelta) {
-        int typeId = valueBuffer.get(TYPE_ID_OFFSET);
-        return getSubSerde(typeId).updateReferenceCount(valueBuffer, referenceCountDelta);
+    public int updateReferenceCount(final ByteBuffer valueBuffer, final int referenceCountDelta) {
+        final int typeId = getTypeId(valueBuffer);
+        final ByteBuffer subBuffer = valueBuffer.slice();
+        valueBuffer.rewind();
+        return getSubSerde(typeId).updateReferenceCount(subBuffer, referenceCountDelta);
     }
 
     public int incrementReferenceCount(final ByteBuffer valueBuffer) {
@@ -89,5 +125,24 @@ public class RefDataValueSerde implements
         return updateReferenceCount(valueBuffer, -1);
     }
 
+    /**
+     * Extracts the type ID from passed {@link ByteBuffer}. Does not change the buffer's position.
+     */
+    public static int extractTypeId(final ByteBuffer valueBuffer) {
+        return valueBuffer.getInt(TYPE_ID_OFFSET);
+    }
 
+    /**
+     * Gets the type ID from passed {@link ByteBuffer}. Moves the buffer's position past the type id.
+     * Assumes the buffer is in the correct position.
+     */
+    public static int getTypeId(final ByteBuffer valueBuffer) {
+        // single byte cast to int
+        return valueBuffer.get();
+    }
+
+    public ByteBuffer extractValueBuffer(final ByteBuffer byteBuffer) {
+        return mapWithSubSerde(byteBuffer, (subSerde, subBuffer) ->
+        subSerde.extractValueBuffer(subBuffer));
+    }
 }
