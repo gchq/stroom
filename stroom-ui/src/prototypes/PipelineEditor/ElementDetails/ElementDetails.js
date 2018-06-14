@@ -23,18 +23,10 @@ const ElementDetails = ({
     );
   }
 
-  console.log('Selected element id', selectedElementId);
-
-  let element,
-    elementProperties,
-    elementType,
-    elementTypeProperties;
-
-  element = pipeline.pipeline.elements.add.find(element => element.id === selectedElementId);
-  elementProperties = pipeline.pipeline.properties.add.filter(property => property.element === selectedElementId);
-  elementType = elements.elements[element.type];
-  elementTypeProperties = elements.elementProperties[element.type];
-  console.log(elementType);
+  const element = pipeline.pipeline.elements.add.find(element => element.id === selectedElementId);
+  const elementProperties = pipeline.pipeline.properties.add.filter(property => property.element === selectedElementId);
+  const elementType = elements.elements[element.type];
+  const elementTypeProperties = elements.elementProperties[element.type];
 
   return (
     <Container className="element-details">
