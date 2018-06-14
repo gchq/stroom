@@ -144,11 +144,12 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         if (!didInitSucceed) {
             RefStreamDefinition refStreamDefinition = refDataLoaderHolder.getRefDataLoader().getRefStreamDefinition();
             errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
-                    LambdaLogger.buildMessage("A processing info entry already exists for this reference pipeline {}, version {}, streamId {}, stream No {}",
+                    LambdaLogger.buildMessage(
+                            "A processing info entry already exists for this reference pipeline {}, " +
+                                    "version {}, streamId {}",
                             refStreamDefinition.getPipelineDocRef(),
                             refStreamDefinition.getPipelineVersion(),
-                            refStreamDefinition.getStreamId(),
-                            refStreamDefinition.getStreamNo()), null);
+                            refStreamDefinition.getStreamId()), null);
         }
     }
 

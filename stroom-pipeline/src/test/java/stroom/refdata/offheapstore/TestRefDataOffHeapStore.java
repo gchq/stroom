@@ -113,8 +113,7 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 UUID.randomUUID().toString(),
                 version,
-                123456L,
-                1);
+                123456L);
 
         boolean isLoaded = refDataStore.isDataLoaded(refStreamDefinition);
 
@@ -177,8 +176,7 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 UUID.randomUUID().toString(),
                 (byte) 0,
-                123456L,
-                1);
+                123456L);
         long effectiveTimeMs = System.currentTimeMillis();
         MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "map1");
         String key = "myKey";
@@ -220,8 +218,7 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 UUID.randomUUID().toString(),
                 (byte) 0,
-                123456L,
-                1);
+                123456L);
         long effectiveTimeMs = System.currentTimeMillis();
         MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "map1");
         Range<Long> range = new Range<>(1L, 100L);
@@ -278,8 +275,7 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 UUID.randomUUID().toString(),
                 (byte) 0,
-                123456L,
-                1);
+                123456L);
 
         // same refStreamDefinition twice to imitate a re-load
         List<RefStreamDefinition> refStreamDefinitions = Arrays.asList(
@@ -295,8 +291,7 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 UUID.randomUUID().toString(),
                 (byte) 0,
-                123456L,
-                1);
+                123456L);
 
         // same refStreamDefinition twice to imitate a re-load
         List<RefStreamDefinition> refStreamDefinitions = Arrays.asList(
@@ -312,8 +307,7 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 UUID.randomUUID().toString(),
                 (byte) 0,
-                123456L,
-                1);
+                123456L);
         final long effectiveTimeMs = System.currentTimeMillis();
 
         final MapDefinition mapDefinitionKey = new MapDefinition(refStreamDefinition, "MyKeyMap");
@@ -447,8 +441,7 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                     RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                             UUID.randomUUID().toString(),
                             (byte) 0,
-                            123456L,
-                            1);
+                            123456L);
                     final CompletableFuture<Void> future = CompletableFuture.runAsync(
                             () ->
                                     loadTask.accept(refStreamDefinition),
@@ -475,8 +468,7 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 UUID.randomUUID().toString(),
                 (byte) 0,
-                123456L,
-                1);
+                123456L);
 
         // ensure reentrance works
         refDataStore.doWithRefStreamDefinitionLock(refStreamDefinition, () -> {
@@ -494,13 +486,11 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                 new RefStreamDefinition(
                         UUID.randomUUID().toString(),
                         (byte) 0,
-                        123456L,
-                        1),
+                        123456L),
                 new RefStreamDefinition(
                         UUID.randomUUID().toString(),
                         (byte) 0,
-                        123456L,
-                        1));
+                        123456L));
 
         bulkLoadAndAssert(refStreamDefinitions, overwriteExisting, commitInterval);
     }

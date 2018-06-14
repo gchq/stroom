@@ -79,7 +79,6 @@ public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinit
             // write as fixed length bytes so we can scan down the mapUidForwardDb looking for keys
             // with the same RefStreamDefinition
             output.writeLong(refStreamDefinition.getStreamId(), true);
-            output.writeLong(refStreamDefinition.getStreamNo(), true);
         }
 
         @Override
@@ -91,13 +90,11 @@ public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinit
 //            final String pipelineType = input.readString();
             final byte pipelineVersion = input.readByte();
             final long streamId = input.readLong(true);
-            final long streamNo = input.readLong(true);
 
             return new RefStreamDefinition(
                     pipelineUuid,
                     pipelineVersion,
-                    streamId,
-                    streamNo);
+                    streamId);
         }
     }
 }

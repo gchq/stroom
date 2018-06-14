@@ -119,8 +119,7 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 UUID.randomUUID().toString(),
                 version,
-                123456L,
-                1);
+                123456L);
         final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition,
                 "MyMapName");
 
@@ -166,11 +165,10 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
                 .boxed()
                 .map(i -> {
                     byte version = 0;
-                    // each one is different by the streamNo
+                    // each one is different by the streamId
                     final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                             uuidStr,
                             version,
-                            123456L,
                             i);
                     return new MapDefinition(refStreamDefinition, "MyMapName");
 
@@ -217,8 +215,7 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 uuidStr,
                 version,
-                123456L,
-                1);
+                123456L);
 
         loadEntries(Collections.singletonList(new MapDefinition(refStreamDefinition, "MyMapName")));
 
@@ -237,8 +234,7 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 uuidStr,
                 version,
-                123456L,
-                1);
+                123456L);
         MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "MyMapName");
 
         loadEntries(Collections.singletonList(mapDefinition));

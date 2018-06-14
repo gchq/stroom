@@ -128,12 +128,10 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
 //                    mapStoreHolder.setMapStoreBuilder(mapStoreBuilder);
 
                     // TODO is it always 0 for context streams?
-                    int streamNo = 0;
                     RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                             pipelineEntity.getUuid(),
                             pipelineEntity.getVersion(),
-                            stream.getId(),
-                            streamNo);
+                            stream.getId());
 
                     refDataStore.doWithLoader(refStreamDefinition, stream.getEffectiveMs(), refDataLoader -> {
                         refDataLoaderHolder.setRefDataLoader(refDataLoader);

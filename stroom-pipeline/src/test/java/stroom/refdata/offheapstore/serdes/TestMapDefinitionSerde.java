@@ -32,8 +32,7 @@ public class TestMapDefinitionSerde extends AbstractSerdeTest {
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 UUID.randomUUID().toString(),
                 version,
-                123456L,
-                1);
+                123456L);
         final MapDefinition mapDefinition1 = new MapDefinition(refStreamDefinition,
                 "MyMapName");
 

@@ -28,18 +28,15 @@ public class RefStreamDefinition {
     private final DocRef pipelineDocRef;
     private final byte pipelineVersion;
     private final long streamId;
-    private final long streamNo;
 
     private final int hashCode;
 
     public RefStreamDefinition(final String pipelineUuid,
                                final byte pipelineVersion,
-                               final long streamId,
-                               final long streamNo) {
+                               final long streamId) {
         this.pipelineDocRef = new DocRef(PipelineEntity.ENTITY_TYPE, pipelineUuid);
         this.pipelineVersion = pipelineVersion;
         this.streamId = streamId;
-        this.streamNo = streamNo;
         this.hashCode = buildHashCode();
     }
 
@@ -50,7 +47,6 @@ public class RefStreamDefinition {
         this.pipelineDocRef = pipelineDocRef;
         this.pipelineVersion = pipelineVersion;
         this.streamId = streamId;
-        this.streamNo = streamNo;
         this.hashCode = buildHashCode();
     }
 
@@ -66,17 +62,12 @@ public class RefStreamDefinition {
         return streamId;
     }
 
-    public long getStreamNo() {
-        return streamNo;
-    }
-
     @Override
     public String toString() {
         return "RefStreamDefinition{" +
                 "pipelineDocRef=" + pipelineDocRef +
                 ", pipelineVersion=" + pipelineVersion +
                 ", streamId=" + streamId +
-                ", streamNo=" + streamNo +
                 '}';
     }
 
@@ -87,7 +78,6 @@ public class RefStreamDefinition {
         final RefStreamDefinition that = (RefStreamDefinition) o;
         return pipelineVersion == that.pipelineVersion &&
                 streamId == that.streamId &&
-                streamNo == that.streamNo &&
                 Objects.equals(pipelineDocRef, that.pipelineDocRef);
     }
 
@@ -97,6 +87,6 @@ public class RefStreamDefinition {
     }
 
     private int buildHashCode() {
-        return Objects.hash(pipelineDocRef, pipelineVersion, streamId, streamNo);
+        return Objects.hash(pipelineDocRef, pipelineVersion, streamId);
     }
 }
