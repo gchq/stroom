@@ -8,86 +8,101 @@ import { Container, Header, Message, Image, Grid, Form } from 'semantic-ui-react
 
 import { reduxForm } from 'redux-form';
 
-import { withPipeline } from '../withPipeline';
-
 import ElementField from './ElementField';
 
 const ElementDetails = ({
   pipelineId, pipeline, selectedElementId, elements,
 }) => {
+  if (!selectedElementId) {
+    return (
+      <Container className="element-details">
+        <Message>
+          <Message.Header>Please select an element</Message.Header>
+        </Message>
+      </Container>
+    );
+  }
+
+  console.log('Selected element id', selectedElementId);
+
   let element,
     elementProperties,
     elementType,
     elementTypeProperties;
 
-  if (selectedElementId) {
-    element = pipeline.elements.add.find(element => element.id === selectedElementId);
-    elementProperties = pipeline.properties.add.filter(property => property.element === selectedElementId);
-    elementType = elements.elements[element.type];
-    elementTypeProperties = elements.elementProperties[element.type];
-    console.log(elementType);
-  }
+  element = pipeline.pipeline.elements.add.find(element => element.id === selectedElementId);
+  elementProperties = pipeline.pipeline.properties.add.filter(property => property.element === selectedElementId);
+  elementType = elements.elements[element.type];
+  elementTypeProperties = elements.elementProperties[element.type];
+  console.log(elementType);
 
   return (
     <Container className="element-details">
-      {selectedElementId ? (
-        <div>
-          <Grid>
-            <Grid.Row width="16">
-              <Header as="h2" className="element-details__header">
-                <Image
-                  src={require(`../images/${elementType.icon}`)}
-                  className="element-details__icon"
-                />
-                {element.id}
-              </Header>
-            </Grid.Row>
-            <Grid.Row>
-              <Header as="h4"> This is a {elementType.type} element</Header>
-            </Grid.Row>
-            <Form className="element-details__form">
-              {Object.keys(elementTypeProperties).map(key => (
-                <ElementField
-                  key={key}
-                  name={key}
-                  type={elementTypeProperties[key].type}
-                  description={elementTypeProperties[key].description}
-                  defaultValue={elementTypeProperties[key].defaultValue}
-                  value={elementProperties.find(element => element.name === key)}
-                />
-              ))}
-            </Form>
-          </Grid>
-        </div>
-      ) : (
-        <Message>
-          <Message.Header>Please select an element</Message.Header>
-        </Message>
-      )}
+      <Grid>
+        <Grid.Row width="16">
+          <Header as="h2" className="element-details__header">
+            <Image
+              src={require(`../images/${elementType.icon}`)}
+              className="element-details__icon"
+            />
+            {element.id}
+          </Header>
+        </Grid.Row>
+        <Grid.Row>
+          <Header as="h4"> This is a {elementType.type} element</Header>
+        </Grid.Row>
+        <Form className="element-details__form">
+          {Object.keys(elementTypeProperties).map(key => (
+            <ElementField
+              key={key}
+              name={key}
+              type={elementTypeProperties[key].type}
+              description={elementTypeProperties[key].description}
+              defaultValue={elementTypeProperties[key].defaultValue}
+              value={elementProperties.find(element => element.name === key)}
+            />
+          ))}
+        </Form>
+      </Grid>
     </Container>
   );
 };
 
 ElementDetails.propTypes = {
+  // Set by owner
   pipelineId: PropTypes.string.isRequired,
-  pipeline: PropTypes.object.isRequired,
-};
 
-const ElementDetailsForm = reduxForm({
-  form: 'elementDetails', // a unique identifier for this form
-})(ElementDetails);
+  // Redux state
+  pipeline: PropTypes.object.isRequired,
+  selectedElementId: PropTypes.string,
+  elements: PropTypes.object.isRequired,
+};
 
 export default compose(
   connect(
-    state => ({
-      elements: state.elements,
-      // TODO: map state for the pipeline
-      // state
-    }),
+    (state, props) => {
+      const pipeline = state.pipelines[props.pipelineId];
+      let initialValues;
+      let selectedElementId;
+      if (pipeline) {
+        initialValues = pipeline.selectedElementInitialValues;
+        selectedElementId = pipeline.selectedElementId;
+      }
+      const form = `${props.pipelineId}-elementDetails`;
+
+      return {
+        // for our component
+        elements: state.elements,
+        selectedElementId,
+        pipeline,
+        // for redux-form
+        form,
+        initialValues,
+      };
+    },
     {
       // actions
     },
   ),
-  // reduxForm({ form: 'elementDetails' }),
-  withPipeline(),
-)(ElementDetailsForm);
+  reduxForm(),
+)(ElementDetails);
