@@ -51,7 +51,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class RefDataOffHeapStore implements RefDataStore {
@@ -254,13 +253,13 @@ public class RefDataOffHeapStore implements RefDataStore {
         return optValueStoreKey;
     }
 
-    @Override
-    public void consumeValue(final MapDefinition mapDefinition,
-                             final String key,
-                             final Consumer<RefDataValue> valueConsumer) {
-
-
-    }
+//    @Override
+//    public void consumeValue(final MapDefinition mapDefinition,
+//                             final String key,
+//                             final Consumer<RefDataValue> valueConsumer) {
+//
+//
+//    }
 
     @Override
     public void consumeValueBytes(final MapDefinition mapDefinition,
@@ -274,33 +273,33 @@ public class RefDataOffHeapStore implements RefDataStore {
 
     }
 
-    @Override
-    public void consumeValue(final ValueStoreKey valueStoreKey, final Consumer<RefDataValue> valueConsumer) {
-
-    }
-
-    @Override
-    public void consumeBytes(final ValueStoreKey valueStoreKey, final Consumer<ByteBuffer> valueConsumer) {
-
-    }
-
-    @Override
-    public <T> Optional<T> map(final MapDefinition mapDefinition,
-                               final String key,
-                               final Function<RefDataValue, T> valueMapper) {
-
-        return Optional.empty();
-    }
-
-    @Override
-    public <T> Optional<T> map(final ValueStoreKey valueStoreKey, final Function<RefDataValue, T> valueMapper) {
-        return Optional.empty();
-    }
-
-    @Override
-    public <T> Optional<T> mapBytes(final ValueStoreKey valueStoreKey, final Function<ByteBuffer, T> valueMapper) {
-        return Optional.empty();
-    }
+//    @Override
+//    public void consumeValue(final ValueStoreKey valueStoreKey, final Consumer<RefDataValue> valueConsumer) {
+//
+//    }
+//
+//    @Override
+//    public void consumeBytes(final ValueStoreKey valueStoreKey, final Consumer<ByteBuffer> valueConsumer) {
+//
+//    }
+//
+//    @Override
+//    public <T> Optional<T> map(final MapDefinition mapDefinition,
+//                               final String key,
+//                               final Function<RefDataValue, T> valueMapper) {
+//
+//        return Optional.empty();
+//    }
+//
+//    @Override
+//    public <T> Optional<T> map(final ValueStoreKey valueStoreKey, final Function<RefDataValue, T> valueMapper) {
+//        return Optional.empty();
+//    }
+//
+//    @Override
+//    public <T> Optional<T> mapBytes(final ValueStoreKey valueStoreKey, final Function<ByteBuffer, T> valueMapper) {
+//        return Optional.empty();
+//    }
 
 
     /**

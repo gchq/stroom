@@ -20,7 +20,6 @@ package stroom.refdata.offheapstore;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 public interface RefDataStore {
 
@@ -69,13 +68,13 @@ public interface RefDataStore {
 //    Optional<RefDataValue> getValue(final ValueStoreKey valueStoreKey);
 
 
-    /**
-     * Performs a lookup using the passed mapDefinition and key and then applies the valueConsumer to
-     * the found value. If no value is found the valueConsumer is not called
-     */
-    void consumeValue(final MapDefinition mapDefinition,
-                      final String key,
-                      final Consumer<RefDataValue> valueConsumer);
+//    /**
+//     * Performs a lookup using the passed mapDefinition and key and then applies the valueConsumer to
+//     * the found value. If no value is found the valueConsumer is not called
+//     */
+//    void consumeValue(final MapDefinition mapDefinition,
+//                      final String key,
+//                      final Consumer<RefDataValue> valueConsumer);
 
     /**
      * Performs a lookup using the passed mapDefinition and key and then applies the valueBytesConsumer to
@@ -85,26 +84,26 @@ public interface RefDataStore {
                            final String key,
                            final Consumer<ByteBuffer> valueBytesConsumer);
 
-    void consumeValue(final ValueStoreKey valueStoreKey,
-                      final Consumer<RefDataValue> valueConsumer);
+//    void consumeValue(final ValueStoreKey valueStoreKey,
+//                      final Consumer<RefDataValue> valueConsumer);
+//
+//    void consumeBytes(final ValueStoreKey valueStoreKey,
+//                      final Consumer<ByteBuffer> valueConsumer);
 
-    void consumeBytes(final ValueStoreKey valueStoreKey,
-                      final Consumer<ByteBuffer> valueConsumer);
-
-    /**
-     * Performs a lookup using the passed mapDefinition and key and then applies the valueMapper to
-     * the found value, returning the value in an {@link Optional}. If no value is found an empty
-     * {@link Optional} is returned. The valueMapper will be applied inside a transaction.
-     */
-    <T> Optional<T> map(final MapDefinition mapDefinition,
-                        final String key,
-                        final Function<RefDataValue, T> valueMapper);
-
-    <T> Optional<T> map(final ValueStoreKey valueStoreKey,
-                        final Function<RefDataValue, T> valueMapper);
-
-    <T> Optional<T> mapBytes(final ValueStoreKey valueStoreKey,
-                             final Function<ByteBuffer, T> valueMapper);
+//    /**
+//     * Performs a lookup using the passed mapDefinition and key and then applies the valueMapper to
+//     * the found value, returning the value in an {@link Optional}. If no value is found an empty
+//     * {@link Optional} is returned. The valueMapper will be applied inside a transaction.
+//     */
+//    <T> Optional<T> map(final MapDefinition mapDefinition,
+//                        final String key,
+//                        final Function<RefDataValue, T> valueMapper);
+//
+//    <T> Optional<T> map(final ValueStoreKey valueStoreKey,
+//                        final Function<RefDataValue, T> valueMapper);
+//
+//    <T> Optional<T> mapBytes(final ValueStoreKey valueStoreKey,
+//                             final Function<ByteBuffer, T> valueMapper);
 
     /**
      * Will initiate a new {@link RefDataLoader} for the passed {@link RefStreamDefinition} and effectiveTimeMs.
