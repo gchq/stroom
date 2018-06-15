@@ -51,7 +51,7 @@ public final class ExpressionUtil {
 
     public static ExpressionOperator createStreamTypeExpression(final StreamType streamType) {
         return new ExpressionOperator.Builder(Op.AND)
-                .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, streamType.getDisplayValue())
+                .addTerm(StreamDataSource.STREAM_TYPE_NAME, Condition.EQUALS, streamType.getDisplayValue())
                 .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
                 .build();
     }
@@ -65,11 +65,11 @@ public final class ExpressionUtil {
 
         if (feeds != null) {
             if (feeds.length == 1) {
-                builder.addTerm(StreamDataSource.FEED, Condition.EQUALS, feeds[0].getName());
+                builder.addTerm(StreamDataSource.FEED_NAME, Condition.EQUALS, feeds[0].getName());
             } else {
                 final ExpressionOperator.Builder or = new ExpressionOperator.Builder(Op.OR);
                 for (final Feed feed : feeds) {
-                    or.addTerm(StreamDataSource.FEED, Condition.EQUALS, feed.getName());
+                    or.addTerm(StreamDataSource.FEED_NAME, Condition.EQUALS, feed.getName());
                 }
                 builder.addOperator(or.build());
             }
@@ -82,7 +82,7 @@ public final class ExpressionUtil {
 
     public static ExpressionOperator createPipelineExpression(final PipelineDoc pipelineDoc) {
         return new ExpressionOperator.Builder(Op.AND)
-                .addTerm(StreamDataSource.PIPELINE, Condition.EQUALS, pipelineDoc.getUuid())
+                .addTerm(StreamDataSource.PIPELINE_UUID, Condition.EQUALS, pipelineDoc.getUuid())
                 .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
                 .build();
     }

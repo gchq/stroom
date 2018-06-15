@@ -128,7 +128,7 @@ public class StreamDumpTool extends AbstractCommandLineTool {
             if (definition == null) {
                 throw new RuntimeException("Unable to locate Feed " + feed);
             }
-            builder.addTerm(StreamDataSource.FEED, Condition.EQUALS, definition.getName());
+            builder.addTerm(StreamDataSource.FEED_NAME, Condition.EQUALS, definition.getName());
         }
 
         if (streamType != null) {
@@ -136,9 +136,9 @@ public class StreamDumpTool extends AbstractCommandLineTool {
             if (type == null) {
                 throw new RuntimeException("Unable to locate stream type " + streamType);
             }
-            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, type.getDisplayValue());
+            builder.addTerm(StreamDataSource.STREAM_TYPE_NAME, Condition.EQUALS, type.getDisplayValue());
         } else {
-            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.RAW_EVENTS.getDisplayValue());
+            builder.addTerm(StreamDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamType.RAW_EVENTS.getDisplayValue());
         }
 
         // Query the stream store

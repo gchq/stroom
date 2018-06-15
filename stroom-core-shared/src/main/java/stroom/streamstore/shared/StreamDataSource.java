@@ -3,7 +3,6 @@ package stroom.streamstore.shared;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
 import stroom.feed.shared.Feed;
-import stroom.pipeline.shared.PipelineDoc;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 
@@ -31,9 +30,9 @@ public class StreamDataSource {
     private static final Map<String, String> STREAM_TYPE_FIELDS = new HashMap<>();
 //    private static final Map<String, String> PIPELINE_FIELDS = new HashMap<>();
 
-    public static final String FEED = "Feed";
-    public static final String PIPELINE = "Pipeline";
-    public static final String STREAM_TYPE = "Stream Type";
+    public static final String FEED_NAME = "feedName";
+    public static final String PIPELINE_UUID = "pipelineUuid";
+    public static final String STREAM_TYPE_NAME = "streamTypeName";
     public static final String STREAM_ID = "Stream Id";
     public static final String PARENT_STREAM_ID = "Parent Stream Id";
     public static final String STATUS = "Status";
@@ -57,13 +56,13 @@ public class StreamDataSource {
         STREAM_FIELDS.put(STREAM_ID, Stream.ID);
         STREAM_FIELDS.put(PARENT_STREAM_ID, Stream.PARENT_STREAM_ID);
         STREAM_FIELDS.put(CREATE_TIME, Stream.CREATE_MS);
-        FEED_FIELDS.put(FEED, Feed.NAME);
-        STREAM_TYPE_FIELDS.put(STREAM_TYPE, StreamType.NAME);
+        FEED_FIELDS.put(FEED_NAME, Feed.NAME);
+        STREAM_TYPE_FIELDS.put(STREAM_TYPE_NAME, StreamType.NAME);
 //        PIPELINE_FIELDS.put(PIPELINE, PipelineDoc.NAME);
 
-        FIELDS.add(createStringField(FEED));
-        FIELDS.add(createStringField(PIPELINE));
-        FIELDS.add(createStringField(STREAM_TYPE));
+        FIELDS.add(createStringField(FEED_NAME));
+        FIELDS.add(createStringField(PIPELINE_UUID));
+        FIELDS.add(createStringField(STREAM_TYPE_NAME));
         FIELDS.add(createIdField(STREAM_ID));
         FIELDS.add(createIdField(PARENT_STREAM_ID));
         FIELDS.add(createStringField(STATUS));

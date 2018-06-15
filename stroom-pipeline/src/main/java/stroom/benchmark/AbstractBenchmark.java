@@ -129,11 +129,11 @@ public abstract class AbstractBenchmark {
 
     protected void verifyData(final Feed feed, final String verificationString) {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
-        builder.addTerm(StreamDataSource.FEED, Condition.EQUALS, feed.getName());
+        builder.addTerm(StreamDataSource.FEED_NAME, Condition.EQUALS, feed.getName());
         if (feed.isReference()) {
-            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.REFERENCE.getDisplayValue());
+            builder.addTerm(StreamDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamType.REFERENCE.getDisplayValue());
         } else {
-            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamType.EVENTS.getDisplayValue());
+            builder.addTerm(StreamDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamType.EVENTS.getDisplayValue());
         }
         final FindStreamCriteria criteria = new FindStreamCriteria();
         criteria.setExpression(builder.build());

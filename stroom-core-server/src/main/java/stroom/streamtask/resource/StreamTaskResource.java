@@ -20,7 +20,6 @@
 package stroom.streamtask.resource;
 
 import com.codahale.metrics.health.HealthCheck;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.Api;
 import org.apache.commons.lang.NotImplementedException;
@@ -32,7 +31,6 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.streamstore.StreamAttributeMapServiceImpl;
-import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.StreamProcessorFilterService;
 import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
@@ -136,7 +134,7 @@ public class StreamTaskResource implements HasHealthCheck {
             } catch (IllegalArgumentException exception) {
                 return Response.status(Response.Status.BAD_REQUEST).entity("Invalid sortDirection field").build();
             }
-            if (sortBy.equalsIgnoreCase(FindStreamTaskCriteria.FIELD_PIPELINE_NAME)
+            if (sortBy.equalsIgnoreCase(FindStreamTaskCriteria.FIELD_PIPELINE_UUID)
                     || sortBy.equalsIgnoreCase(FindStreamTaskCriteria.FIELD_PRIORITY)) {
                 criteria.setSort(sortBy, direction, false);
             } else if (sortBy.equalsIgnoreCase(FIELD_PROGRESS)) {
