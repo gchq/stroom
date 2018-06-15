@@ -11,7 +11,46 @@ import { reduxForm } from 'redux-form';
 
 import ElementField from './ElementField';
 
-const ElementDetails = ({
+const enhance = compose(
+  connect(
+    (state, props) => {
+      const pipeline = state.pipelines[props.pipelineId];
+      let initialValues;
+      let selectedElementId;
+      if (pipeline) {
+        initialValues = pipeline.selectedElementInitialValues;
+        selectedElementId = pipeline.selectedElementId;
+      }
+      const form = `${props.pipelineId}-elementDetails`;
+
+      return {
+        // for our component
+        elements: state.elements,
+        selectedElementId,
+        pipeline,
+        // for redux-form
+        form,
+        initialValues,
+      };
+    },
+    {
+      // actions
+    },
+  ),
+  reduxForm(),
+  branch(
+    props => !props.selectedElementId,
+    renderComponent(() => (
+      <Container className="element-details">
+        <Message>
+          <Message.Header>Please select an element</Message.Header>
+        </Message>
+      </Container>
+    )),
+  ),
+);
+
+const ElementDetails = enhance(({
   pipelineId, pipeline, selectedElementId, elements,
 }) => {
   const element = pipeline.pipeline.elements.add.find(element => element.id === selectedElementId);
@@ -49,7 +88,7 @@ const ElementDetails = ({
       </Grid>
     </Container>
   );
-};
+});
 
 ElementDetails.propTypes = {
   // Set by owner
@@ -61,41 +100,4 @@ ElementDetails.propTypes = {
   elements: PropTypes.object.isRequired,
 };
 
-export default compose(
-  connect(
-    (state, props) => {
-      const pipeline = state.pipelines[props.pipelineId];
-      let initialValues;
-      let selectedElementId;
-      if (pipeline) {
-        initialValues = pipeline.selectedElementInitialValues;
-        selectedElementId = pipeline.selectedElementId;
-      }
-      const form = `${props.pipelineId}-elementDetails`;
-
-      return {
-        // for our component
-        elements: state.elements,
-        selectedElementId,
-        pipeline,
-        // for redux-form
-        form,
-        initialValues,
-      };
-    },
-    {
-      // actions
-    },
-  ),
-  reduxForm(),
-  branch(
-    props => !props.selectedElementId,
-    renderComponent(() => (
-      <Container className="element-details">
-        <Message>
-          <Message.Header>Please select an element</Message.Header>
-        </Message>
-      </Container>
-    )),
-  ),
-)(ElementDetails);
+export default ElementDetails;
