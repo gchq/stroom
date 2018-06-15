@@ -57,7 +57,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.statistics.stroomstats.entity.StroomStatsStoreModule());
         install(new stroom.statistics.stroomstats.internal.InternalModule());
         install(new stroom.statistics.stroomstats.rollup.StroomStatsRollupModule());
-        install(new stroom.streamstore.meta.db.StreamMetaDBModule());
+        install(new stroom.streamstore.meta.db.StreamStoreMetaDbModule());
         install(new stroom.streamstore.StreamStoreModule());
         install(new stroom.streamstore.fs.FSModule());
         install(new stroom.streamtask.StreamTaskModule());

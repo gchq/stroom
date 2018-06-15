@@ -17,30 +17,45 @@
 package stroom.streamstore.meta.db;
 
 import com.google.inject.Guice;
-import com.google.inject.Injector;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import stroom.properties.impl.mock.MockPropertyModule;
 import stroom.security.impl.mock.MockSecurityContextModule;
+import stroom.streamstore.meta.api.StreamMetaService;
+
+import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestFeedServiceImpl {
+class TestFeedServiceImpl {
+    @Inject
+    private StreamMetaServiceImpl streamMetaService;
+    @Inject
+    private FeedServiceImpl feedService;
+
+    @BeforeEach
+    void setup() {
+        Guice.createInjector(new StreamStoreMetaDbModule(), new MockSecurityContextModule(), new MockPropertyModule()).injectMembers(this);
+    }
+
     @Test
-    public void test1() {
-        final Injector injector = Guice.createInjector(new StreamStoreDBMetaModule(), new MockSecurityContextModule());
-        FeedService service = injector.getInstance(FeedService.class);
+    void test() {
+        // Delete everything.
+        streamMetaService.deleteAll();
+        feedService.deleteAll();
 
         String feedName = "TEST";
-        Integer id1 = service.getOrCreate(feedName);
-        Integer id2 = service.getOrCreate(feedName);
+        Integer id1 = feedService.getOrCreate(feedName);
+        Integer id2 = feedService.getOrCreate(feedName);
 
         assertThat(id1).isEqualTo(id2);
 
         feedName = "TEST2";
-        id1 = service.getOrCreate(feedName);
-        id2 = service.getOrCreate(feedName);
+        id1 = feedService.getOrCreate(feedName);
+        id2 = feedService.getOrCreate(feedName);
 
         assertThat(id1).isEqualTo(id2);
 
-        assertThat(service.list().size()).isEqualTo(2);
+        assertThat(feedService.list().size()).isEqualTo(2);
     }
 }

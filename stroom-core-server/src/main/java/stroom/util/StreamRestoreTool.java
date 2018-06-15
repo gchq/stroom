@@ -20,7 +20,6 @@ import com.google.common.base.Strings;
 import org.apache.commons.lang.mutable.MutableInt;
 import stroom.feed.MetaMap;
 import stroom.node.shared.VolumeEntity;
-import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.util.concurrent.SimpleConcurrentMap;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
@@ -34,11 +33,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -49,12 +46,16 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 public class StreamRestoreTool extends DatabaseTool {
-    static final int KEY_PAD = 30;
-    static final int COUNT_PAD = 10;
+    private static final int KEY_PAD = 30;
+    private static final int COUNT_PAD = 10;
     private static final String VOLUME_PATH = "VolumePath";
     private static final String STREAM_TYPE_PATH = "StreamTypePath";
     private static final String FILE_NAME = "FileName";
     private static final String FEED_ID = "FeedId";
+    private static final String STREAM_ID = "StreamId";
+    private static final String PARENT_STREAM_ID = "ParentStreamId";
+    private static final String CREATE_TIME = "CreateTime";
+    private static final String EFFECTIVE_TIME = "EffectiveTime";
     private static final String DATE_PATH = "DatePath";
     private static final String DEPTH = "Depth";
     private final BufferedReader inputReader = new BufferedReader(
@@ -87,11 +88,9 @@ public class StreamRestoreTool extends DatabaseTool {
             };
         }
     };
-    private Integer autoDeleteThreshold = null;
     private String deleteFile = null;
     private Map<String, Long> pathStreamTypeMap = null;
     private Map<String, Long> pathVolumeMap = null;
-    private Map<Long, String> feedIdNameMap = null;
     private boolean mock = false;
     private boolean inspect = false;
     private boolean sortKey = false;
@@ -299,7 +298,7 @@ public class StreamRestoreTool extends DatabaseTool {
     }
 
     public void setAutoDeleteThreshold(final Integer autoDeleteThreshold) {
-        this.autoDeleteThreshold = autoDeleteThreshold;
+        final Integer autoDeleteThreshold1 = autoDeleteThreshold;
     }
 
     public void setSortKey(final boolean sortKey) {
@@ -342,7 +341,7 @@ public class StreamRestoreTool extends DatabaseTool {
         if (fileName.indexOf(".") > 0) {
             final int splitPos = fileName.indexOf("=");
             rtnMap.put(FEED_ID, fileName.substring(1, splitPos));
-            rtnMap.put(StreamAttributeConstants.STREAM_ID, fileName.substring(splitPos + 1, fileName.indexOf(".")));
+            rtnMap.put(STREAM_ID, fileName.substring(splitPos + 1, fileName.indexOf(".")));
 
             int dotCount = 0;
             int dotPos = 0;
@@ -356,7 +355,7 @@ public class StreamRestoreTool extends DatabaseTool {
         if ((streamType == null || streamType.equals(rtnMap.get(STREAM_TYPE_PATH)))
                 && (feedId == null || feedId.equals(rtnMap.get(FEED_ID)))) {
             final Path file = Paths.get(line);
-            rtnMap.put(StreamAttributeConstants.CREATE_TIME, rtnMap.get(DATE_PATH) + getTime(file, datePart));
+            rtnMap.put(CREATE_TIME, rtnMap.get(DATE_PATH) + getTime(file, datePart));
         }
 
         return rtnMap;
@@ -423,16 +422,16 @@ public class StreamRestoreTool extends DatabaseTool {
                     if (action == 'r' && "0".equals(streamAttributes.get(DEPTH))) {
                         streamAttributes.putAll(readManifestAttributes(line));
 
-                        final long streamId = Long.parseLong(streamAttributes.get(StreamAttributeConstants.STREAM_ID));
-                        final long createMs = DateUtil.parseNormalDateTimeString(streamAttributes.get(StreamAttributeConstants.CREATE_TIME));
+                        final long streamId = Long.parseLong(streamAttributes.get(STREAM_ID));
+                        final long createMs = DateUtil.parseNormalDateTimeString(streamAttributes.get(CREATE_TIME));
                         long effectiveMs = createMs;
-                        if (streamAttributes.containsKey(StreamAttributeConstants.EFFECTIVE_TIME)) {
-                            effectiveMs = DateUtil.parseNormalDateTimeString(streamAttributes.get(StreamAttributeConstants.EFFECTIVE_TIME));
+                        if (streamAttributes.containsKey(EFFECTIVE_TIME)) {
+                            effectiveMs = DateUtil.parseNormalDateTimeString(streamAttributes.get(EFFECTIVE_TIME));
                         }
 
                         Long parentStreamId = null;
-                        if (streamAttributes.containsKey(StreamAttributeConstants.PARENT_STREAM_ID)) {
-                            parentStreamId = Long.valueOf(streamAttributes.get(StreamAttributeConstants.PARENT_STREAM_ID));
+                        if (streamAttributes.containsKey(PARENT_STREAM_ID)) {
+                            parentStreamId = Long.valueOf(streamAttributes.get(PARENT_STREAM_ID));
                         }
                         final long feedId = Long.valueOf(streamAttributes.get(FEED_ID));
                         final long streamTypeId = getPathStreamTypeMap().get(streamAttributes.get(STREAM_TYPE_PATH));

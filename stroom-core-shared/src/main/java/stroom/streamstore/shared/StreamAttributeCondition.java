@@ -22,6 +22,7 @@ import stroom.util.shared.HashCodeBuilder;
 
 import java.io.Serializable;
 
+@Deprecated
 public class StreamAttributeCondition implements Serializable {
     private static final long serialVersionUID = -2063409357774838870L;
 

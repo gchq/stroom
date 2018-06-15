@@ -31,7 +31,7 @@ import stroom.entity.shared.Clearable;
 import stroom.entity.shared.EntityAction;
 import stroom.entity.shared.Sort.Direction;
 import stroom.entity.util.HqlBuilder;
-import stroom.jobsystem.JobTrackedSchedule;
+import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.node.NodeCache;
 import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;

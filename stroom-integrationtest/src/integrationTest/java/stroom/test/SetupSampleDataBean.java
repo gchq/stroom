@@ -41,11 +41,8 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.statistics.sql.entity.StatisticStoreStore;
 import stroom.statistics.stroomstats.entity.StroomStatsStoreStore;
 import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.meta.db.StreamAttributeKeyService;
-import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
+import stroom.streamstore.meta.db.MetaKeyService;
 import stroom.streamstore.shared.QueryData;
-import stroom.streamstore.shared.StreamAttributeConstants;
-import stroom.streamstore.shared.StreamAttributeKey;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamProcessorFilterService;
@@ -93,7 +90,7 @@ public final class SetupSampleDataBean {
     private final FeedStore feedStore;
     private final FeedDocCache feedDocCache;
     private final StreamStore streamStore;
-    private final StreamAttributeKeyService streamAttributeKeyService;
+    private final MetaKeyService streamAttributeKeyService;
     private final CommonTestControl commonTestControl;
     private final ImportExportSerializer importExportSerializer;
     private final StreamProcessorFilterService streamProcessorFilterService;
@@ -109,7 +106,7 @@ public final class SetupSampleDataBean {
     SetupSampleDataBean(final FeedStore feedStore,
                         final FeedDocCache feedDocCache,
                         final StreamStore streamStore,
-                        final StreamAttributeKeyService streamAttributeKeyService,
+                        final MetaKeyService streamAttributeKeyService,
                         final CommonTestControl commonTestControl,
                         final ImportExportSerializer importExportSerializer,
                         final StreamProcessorFilterService streamProcessorFilterService,
@@ -136,24 +133,24 @@ public final class SetupSampleDataBean {
         this.stroomStatsStoreStore = stroomStatsStoreStore;
     }
 
-    private void createStreamAttributes() {
-        final BaseResultList<StreamAttributeKey> list = streamAttributeKeyService
-                .find(new FindStreamAttributeKeyCriteria());
-        final HashSet<String> existingItems = new HashSet<>();
-        for (final StreamAttributeKey streamAttributeKey : list) {
-            existingItems.add(streamAttributeKey.getName());
-        }
-        for (final String name : StreamAttributeConstants.SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP.keySet()) {
-            if (!existingItems.contains(name)) {
-                try {
-                    streamAttributeKeyService.save(new StreamAttributeKey(name,
-                            StreamAttributeConstants.SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP.get(name)));
-                } catch (final RuntimeException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
+//    private void createStreamAttributes() {
+//        final BaseResultList<StreamAttributeKey> list = streamAttributeKeyService
+//                .find(new FindStreamAttributeKeyCriteria());
+//        final HashSet<String> existingItems = new HashSet<>();
+//        for (final StreamAttributeKey streamAttributeKey : list) {
+//            existingItems.add(streamAttributeKey.getName());
+//        }
+//        for (final String name : StreamAttributeConstants.SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP.keySet()) {
+//            if (!existingItems.contains(name)) {
+//                try {
+//                    streamAttributeKeyService.save(new StreamAttributeKey(name,
+//                            StreamAttributeConstants.SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP.get(name)));
+//                } catch (final RuntimeException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        }
+//    }
 
     public void run(final boolean shutdown) {
         // Ensure admin user exists.
@@ -297,7 +294,7 @@ public final class SetupSampleDataBean {
         final Path configDir = importRootDir.resolve("config");
         final Path dataDir = importRootDir.resolve("input");
 
-        createStreamAttributes();
+//        createStreamAttributes();
 
         if (Files.exists(configDir)) {
             // Load config.
@@ -313,7 +310,7 @@ public final class SetupSampleDataBean {
             LOGGER.info("Node count = " + commonTestControl.countEntity(Node.class));
             LOGGER.info("Volume count = " + commonTestControl.countEntity(VolumeEntity.class));
             LOGGER.info("Feed count = " + commonTestControl.countEntity(FeedDoc.class));
-            LOGGER.info("StreamAttributeKey count = " + commonTestControl.countEntity(StreamAttributeKey.class));
+//            LOGGER.info("StreamAttributeKey count = " + commonTestControl.countEntity(StreamAttributeKey.class));
             LOGGER.info("Dashboard count = " + dashboardStore.list().size());
             LOGGER.info("Pipeline count = " + pipelineStore.list().size());
             LOGGER.info("Index count = " + indexStore.list().size());

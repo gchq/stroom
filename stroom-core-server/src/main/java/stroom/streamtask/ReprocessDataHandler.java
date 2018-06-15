@@ -20,7 +20,6 @@ package stroom.streamtask;
 import com.google.common.base.Strings;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.CriteriaSet;
-import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.Security;
@@ -72,9 +71,6 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
 
             try {
                 final FindStreamCriteria criteria = action.getCriteria();
-
-                criteria.getFetchSet().add(Processor.ENTITY_TYPE);
-                criteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
                 // We only want 1000 streams to be
                 // reprocessed at a maximum.
                 criteria.obtainPageRequest().setOffset(0L);

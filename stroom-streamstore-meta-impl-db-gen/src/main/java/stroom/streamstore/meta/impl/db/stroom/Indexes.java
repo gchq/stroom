@@ -10,12 +10,12 @@ import org.jooq.Index;
 import org.jooq.OrderField;
 import org.jooq.impl.AbstractKeys;
 
+import stroom.streamstore.meta.impl.db.stroom.tables.MetaKey;
+import stroom.streamstore.meta.impl.db.stroom.tables.MetaNumericValue;
+import stroom.streamstore.meta.impl.db.stroom.tables.StreamFeed;
+import stroom.streamstore.meta.impl.db.stroom.tables.StreamProcessor;
+import stroom.streamstore.meta.impl.db.stroom.tables.StreamType;
 import stroom.streamstore.meta.impl.db.stroom.tables.Strm;
-import stroom.streamstore.meta.impl.db.stroom.tables.StrmAtrKey;
-import stroom.streamstore.meta.impl.db.stroom.tables.StrmAtrVal;
-import stroom.streamstore.meta.impl.db.stroom.tables.StrmFeed;
-import stroom.streamstore.meta.impl.db.stroom.tables.StrmProcessor;
-import stroom.streamstore.meta.impl.db.stroom.tables.StrmType;
 
 
 /**
@@ -35,6 +35,16 @@ public class Indexes {
     // INDEX definitions
     // -------------------------------------------------------------------------
 
+    public static final Index META_KEY_NAME = Indexes0.META_KEY_NAME;
+    public static final Index META_KEY_PRIMARY = Indexes0.META_KEY_PRIMARY;
+    public static final Index META_NUMERIC_VALUE_META_NUMERIC_VALUE_CREATE_TIME_IDX = Indexes0.META_NUMERIC_VALUE_META_NUMERIC_VALUE_CREATE_TIME_IDX;
+    public static final Index META_NUMERIC_VALUE_META_NUMERIC_VALUE_STREAM_ID_IDX = Indexes0.META_NUMERIC_VALUE_META_NUMERIC_VALUE_STREAM_ID_IDX;
+    public static final Index META_NUMERIC_VALUE_PRIMARY = Indexes0.META_NUMERIC_VALUE_PRIMARY;
+    public static final Index STREAM_FEED_NAME = Indexes0.STREAM_FEED_NAME;
+    public static final Index STREAM_FEED_PRIMARY = Indexes0.STREAM_FEED_PRIMARY;
+    public static final Index STREAM_PROCESSOR_PRIMARY = Indexes0.STREAM_PROCESSOR_PRIMARY;
+    public static final Index STREAM_TYPE_NAME = Indexes0.STREAM_TYPE_NAME;
+    public static final Index STREAM_TYPE_PRIMARY = Indexes0.STREAM_TYPE_PRIMARY;
     public static final Index STRM_PRIMARY = Indexes0.STRM_PRIMARY;
     public static final Index STRM_STRM_CRT_MS_IDX = Indexes0.STRM_STRM_CRT_MS_IDX;
     public static final Index STRM_STRM_FK_FD_ID_CRT_MS_IDX = Indexes0.STRM_STRM_FK_FD_ID_CRT_MS_IDX;
@@ -43,22 +53,22 @@ public class Indexes {
     public static final Index STRM_STRM_FK_STRM_TP_ID = Indexes0.STRM_STRM_FK_STRM_TP_ID;
     public static final Index STRM_STRM_PARNT_STRM_ID_IDX = Indexes0.STRM_STRM_PARNT_STRM_ID_IDX;
     public static final Index STRM_STRM_STAT_IDX = Indexes0.STRM_STRM_STAT_IDX;
-    public static final Index STRM_ATR_KEY_NAME = Indexes0.STRM_ATR_KEY_NAME;
-    public static final Index STRM_ATR_KEY_PRIMARY = Indexes0.STRM_ATR_KEY_PRIMARY;
-    public static final Index STRM_ATR_VAL_PRIMARY = Indexes0.STRM_ATR_VAL_PRIMARY;
-    public static final Index STRM_ATR_VAL_STRM_ATR_VAL_CRT_MS_IDX = Indexes0.STRM_ATR_VAL_STRM_ATR_VAL_CRT_MS_IDX;
-    public static final Index STRM_ATR_VAL_STRM_ATR_VAL_STRM_ID_IDX = Indexes0.STRM_ATR_VAL_STRM_ATR_VAL_STRM_ID_IDX;
-    public static final Index STRM_FEED_NAME = Indexes0.STRM_FEED_NAME;
-    public static final Index STRM_FEED_PRIMARY = Indexes0.STRM_FEED_PRIMARY;
-    public static final Index STRM_PROCESSOR_PRIMARY = Indexes0.STRM_PROCESSOR_PRIMARY;
-    public static final Index STRM_TYPE_NAME = Indexes0.STRM_TYPE_NAME;
-    public static final Index STRM_TYPE_PRIMARY = Indexes0.STRM_TYPE_PRIMARY;
 
     // -------------------------------------------------------------------------
     // [#1459] distribute members to avoid static initialisers > 64kb
     // -------------------------------------------------------------------------
 
     private static class Indexes0 extends AbstractKeys {
+        public static Index META_KEY_NAME = createIndex("name", MetaKey.META_KEY, new OrderField[] { MetaKey.META_KEY.NAME }, true);
+        public static Index META_KEY_PRIMARY = createIndex("PRIMARY", MetaKey.META_KEY, new OrderField[] { MetaKey.META_KEY.ID }, true);
+        public static Index META_NUMERIC_VALUE_META_NUMERIC_VALUE_CREATE_TIME_IDX = createIndex("meta_numeric_value_create_time_idx", MetaNumericValue.META_NUMERIC_VALUE, new OrderField[] { MetaNumericValue.META_NUMERIC_VALUE.CREATE_TIME }, false);
+        public static Index META_NUMERIC_VALUE_META_NUMERIC_VALUE_STREAM_ID_IDX = createIndex("meta_numeric_value_stream_id_idx", MetaNumericValue.META_NUMERIC_VALUE, new OrderField[] { MetaNumericValue.META_NUMERIC_VALUE.STREAM_ID }, false);
+        public static Index META_NUMERIC_VALUE_PRIMARY = createIndex("PRIMARY", MetaNumericValue.META_NUMERIC_VALUE, new OrderField[] { MetaNumericValue.META_NUMERIC_VALUE.ID }, true);
+        public static Index STREAM_FEED_NAME = createIndex("NAME", StreamFeed.STREAM_FEED, new OrderField[] { StreamFeed.STREAM_FEED.NAME }, true);
+        public static Index STREAM_FEED_PRIMARY = createIndex("PRIMARY", StreamFeed.STREAM_FEED, new OrderField[] { StreamFeed.STREAM_FEED.ID }, true);
+        public static Index STREAM_PROCESSOR_PRIMARY = createIndex("PRIMARY", StreamProcessor.STREAM_PROCESSOR, new OrderField[] { StreamProcessor.STREAM_PROCESSOR.ID }, true);
+        public static Index STREAM_TYPE_NAME = createIndex("NAME", StreamType.STREAM_TYPE, new OrderField[] { StreamType.STREAM_TYPE.NAME }, true);
+        public static Index STREAM_TYPE_PRIMARY = createIndex("PRIMARY", StreamType.STREAM_TYPE, new OrderField[] { StreamType.STREAM_TYPE.ID }, true);
         public static Index STRM_PRIMARY = createIndex("PRIMARY", Strm.STRM, new OrderField[] { Strm.STRM.ID }, true);
         public static Index STRM_STRM_CRT_MS_IDX = createIndex("STRM_CRT_MS_IDX", Strm.STRM, new OrderField[] { Strm.STRM.CRT_MS }, false);
         public static Index STRM_STRM_FK_FD_ID_CRT_MS_IDX = createIndex("STRM_FK_FD_ID_CRT_MS_IDX", Strm.STRM, new OrderField[] { Strm.STRM.FK_FD_ID, Strm.STRM.CRT_MS }, false);
@@ -67,15 +77,5 @@ public class Indexes {
         public static Index STRM_STRM_FK_STRM_TP_ID = createIndex("STRM_FK_STRM_TP_ID", Strm.STRM, new OrderField[] { Strm.STRM.FK_STRM_TP_ID }, false);
         public static Index STRM_STRM_PARNT_STRM_ID_IDX = createIndex("STRM_PARNT_STRM_ID_IDX", Strm.STRM, new OrderField[] { Strm.STRM.PARNT_STRM_ID }, false);
         public static Index STRM_STRM_STAT_IDX = createIndex("STRM_STAT_IDX", Strm.STRM, new OrderField[] { Strm.STRM.STAT }, false);
-        public static Index STRM_ATR_KEY_NAME = createIndex("NAME", StrmAtrKey.STRM_ATR_KEY, new OrderField[] { StrmAtrKey.STRM_ATR_KEY.NAME }, true);
-        public static Index STRM_ATR_KEY_PRIMARY = createIndex("PRIMARY", StrmAtrKey.STRM_ATR_KEY, new OrderField[] { StrmAtrKey.STRM_ATR_KEY.ID }, true);
-        public static Index STRM_ATR_VAL_PRIMARY = createIndex("PRIMARY", StrmAtrVal.STRM_ATR_VAL, new OrderField[] { StrmAtrVal.STRM_ATR_VAL.ID }, true);
-        public static Index STRM_ATR_VAL_STRM_ATR_VAL_CRT_MS_IDX = createIndex("STRM_ATR_VAL_CRT_MS_IDX", StrmAtrVal.STRM_ATR_VAL, new OrderField[] { StrmAtrVal.STRM_ATR_VAL.CRT_MS }, false);
-        public static Index STRM_ATR_VAL_STRM_ATR_VAL_STRM_ID_IDX = createIndex("STRM_ATR_VAL_STRM_ID_IDX", StrmAtrVal.STRM_ATR_VAL, new OrderField[] { StrmAtrVal.STRM_ATR_VAL.STRM_ID }, false);
-        public static Index STRM_FEED_NAME = createIndex("NAME", StrmFeed.STRM_FEED, new OrderField[] { StrmFeed.STRM_FEED.NAME }, true);
-        public static Index STRM_FEED_PRIMARY = createIndex("PRIMARY", StrmFeed.STRM_FEED, new OrderField[] { StrmFeed.STRM_FEED.ID }, true);
-        public static Index STRM_PROCESSOR_PRIMARY = createIndex("PRIMARY", StrmProcessor.STRM_PROCESSOR, new OrderField[] { StrmProcessor.STRM_PROCESSOR.ID }, true);
-        public static Index STRM_TYPE_NAME = createIndex("NAME", StrmType.STRM_TYPE, new OrderField[] { StrmType.STRM_TYPE.NAME }, true);
-        public static Index STRM_TYPE_PRIMARY = createIndex("PRIMARY", StrmType.STRM_TYPE, new OrderField[] { StrmType.STRM_TYPE.ID }, true);
     }
 }

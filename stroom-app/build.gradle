@@ -83,6 +83,7 @@ dependencies {
     compile project(':stroom-externaldoc-server')
     compile project(':stroom-elastic-server')
     compile project(':stroom-ruleset-server')
+    compile project(':stroom-streamstore-meta-impl-db')
 
     compile libs.stroomDocRef
     compile libs.stroomQueryApi

@@ -91,13 +91,13 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
         list.add(new GlobalProperty.Builder()
-                .name("stroom.streamAttribute.deleteAge")
+                .name("stroom.meta.deleteAge")
                 .value("30d")
                 .description("The age of streams that we store meta data in the database for")
                 .editable(true)
                 .build());
         list.add(new GlobalProperty.Builder()
-                .name("stroom.streamAttribute.deleteBatchSize")
+                .name("stroom.meta.deleteBatchSize")
                 .value("1000")
                 .description("How many stream attributes we want to try and delete in a single batch")
                 .editable(true)

@@ -1,0 +1,9 @@
+ext.moduleName = 'stroom.properties.api'
+
+dependencies {
+//    compile libs.stroomDocRef
+//    compile libs.stroomQueryApi
+//
+//    compile libs.jaxb_api
+//    compile libs.swagger_annotations
+}

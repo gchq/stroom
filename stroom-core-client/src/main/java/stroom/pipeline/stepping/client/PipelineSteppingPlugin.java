@@ -24,19 +24,17 @@ import stroom.core.client.ContentManager;
 import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docref.DocRef;
-import stroom.entity.shared.EntityServiceFindAction;
 import stroom.entity.shared.SharedDocRef;
 import stroom.explorer.client.presenter.EntityChooser;
-import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.pipeline.stepping.client.presenter.SteppingContentTabPresenter;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.streamstore.meta.api.FindStreamCriteria;
 import stroom.streamstore.meta.api.Stream;
-import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
+import stroom.streamstore.shared.FindStreamAction;
 import stroom.streamstore.shared.StreamDataRow;
-import stroom.streamtask.shared.Processor;
 
 public class PipelineSteppingPlugin extends Plugin implements BeginPipelineSteppingEvent.Handler {
     private final Provider<EntityChooser> pipelineSelection;
@@ -83,14 +81,10 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
         chooser.addDataSelectionHandler(event -> {
             final DocRef pipeline = chooser.getSelectedEntityReference();
             if (pipeline != null) {
-                final FindStreamAttributeMapCriteria streamAttributeMapCriteria = new FindStreamAttributeMapCriteria();
-                streamAttributeMapCriteria.obtainFindStreamCriteria().obtainSelectedIdSet().add(streamId);
-                streamAttributeMapCriteria.getFetchSet().add(FeedDoc.DOCUMENT_TYPE);
-//                streamAttributeMapCriteria.getFetchSet().add(StreamTypeEntity.ENTITY_TYPE);
-                streamAttributeMapCriteria.getFetchSet().add(Processor.ENTITY_TYPE);
-                streamAttributeMapCriteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
+                final FindStreamCriteria streamAttributeMapCriteria = new FindStreamCriteria();
+                streamAttributeMapCriteria.obtainSelectedIdSet().add(streamId);
 
-                dispatcher.exec(new EntityServiceFindAction<FindStreamAttributeMapCriteria, StreamDataRow>(streamAttributeMapCriteria)).onSuccess(result -> {
+                dispatcher.exec(new FindStreamAction(streamAttributeMapCriteria)).onSuccess(result -> {
                     if (result != null && result.size() == 1) {
                         final StreamDataRow row = result.get(0);
                         openEditor(pipeline, row.getStream(), eventId, childStreamType);

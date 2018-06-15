@@ -18,7 +18,7 @@ package stroom.pipeline.destination;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.jobsystem.JobTrackedSchedule;
+import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.errorhandler.TerminatedException;
 import stroom.properties.StroomPropertyService;

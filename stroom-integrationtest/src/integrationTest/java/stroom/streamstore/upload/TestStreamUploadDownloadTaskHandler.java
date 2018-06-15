@@ -33,7 +33,6 @@ import stroom.streamstore.meta.api.Stream;
 import stroom.streamstore.meta.api.StreamMetaService;
 import stroom.streamstore.meta.api.StreamProperties;
 import stroom.streamstore.meta.api.StreamStatus;
-import stroom.streamstore.meta.db.StreamAttributeValueFlush;
 import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.TaskManager;
@@ -55,8 +54,6 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
     private StreamStore streamStore;
     @Inject
     private StreamMetaService streamMetaService;
-    @Inject
-    private StreamAttributeValueFlush streamAttributeValueFlush;
     @Inject
     private TaskManager taskManager;
 
@@ -174,8 +171,6 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
         Assert.assertEquals(2, streamList.size());
 
         final Stream originalStream = streamTarget.getStream();
-
-        streamAttributeValueFlush.flush();
 
         for (final Stream stream : streamList) {
             Assert.assertEquals(StreamStatus.UNLOCKED, stream.getStatus());

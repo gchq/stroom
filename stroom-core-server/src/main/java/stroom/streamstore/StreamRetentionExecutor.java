@@ -25,7 +25,7 @@ import stroom.entity.util.PeriodUtil;
 import stroom.feed.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.jobsystem.ClusterLockService;
-import stroom.jobsystem.JobTrackedSchedule;
+import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;

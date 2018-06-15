@@ -19,12 +19,10 @@ package stroom.streamstore;
 import stroom.security.Security;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.meta.api.Stream;
-import stroom.streamstore.meta.db.StreamAttributeMapRetentionRuleDecorator;
 import stroom.streamstore.shared.FetchFullStreamInfoAction;
 import stroom.streamstore.shared.FullStreamInfoResult;
 import stroom.streamstore.shared.FullStreamInfoResult.Entry;
 import stroom.streamstore.shared.FullStreamInfoResult.Section;
-import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.date.DateUtil;
@@ -60,7 +58,7 @@ class FetchFullStreamInfoHandler extends AbstractTaskHandler<FetchFullStreamInfo
 
         entries.add(new Entry("Stream Id", String.valueOf(stream.getId())));
         entries.add(new Entry("Status", stream.getStatus().getDisplayValue()));
-        entries.add(new Entry("Status Ms",getDateTimeString(stream.getStatusMs())));
+        entries.add(new Entry("Status Ms", getDateTimeString(stream.getStatusMs())));
         entries.add(new Entry("Stream Task Id", String.valueOf(stream.getStreamTaskId())));
         entries.add(new Entry("Parent Stream Id", String.valueOf(stream.getParentStreamId())));
         entries.add(new Entry("Created", getDateTimeString(stream.getCreateMs())));
@@ -72,7 +70,7 @@ class FetchFullStreamInfoHandler extends AbstractTaskHandler<FetchFullStreamInfo
             entries.add(new Entry("Stream Processor Id", String.valueOf(stream.getStreamProcessorId())));
         }
         if (stream.getPipelineUuid() != null) {
-            entries.add(new Entry( "Stream Processor Pipeline", String.valueOf(stream.getPipelineUuid())));
+            entries.add(new Entry("Stream Processor Pipeline", String.valueOf(stream.getPipelineUuid())));
         }
         return entries;
     }
@@ -83,9 +81,9 @@ class FetchFullStreamInfoHandler extends AbstractTaskHandler<FetchFullStreamInfo
         // Add additional data retention information.
         ruleDecorator.addMatchingRetentionRuleInfo(stream, metaMap);
 
-        entries.add(new Entry( StreamAttributeConstants.RETENTION_AGE, metaMap.get(StreamAttributeConstants.RETENTION_AGE)));
-        entries.add(new Entry( StreamAttributeConstants.RETENTION_UNTIL, metaMap.get(StreamAttributeConstants.RETENTION_UNTIL)));
-        entries.add(new Entry( StreamAttributeConstants.RETENTION_RULE, metaMap.get(StreamAttributeConstants.RETENTION_RULE)));
+        entries.add(new Entry(StreamAttributeMapRetentionRuleDecorator.RETENTION_AGE, metaMap.get(StreamAttributeMapRetentionRuleDecorator.RETENTION_AGE)));
+        entries.add(new Entry(StreamAttributeMapRetentionRuleDecorator.RETENTION_UNTIL, metaMap.get(StreamAttributeMapRetentionRuleDecorator.RETENTION_UNTIL)));
+        entries.add(new Entry(StreamAttributeMapRetentionRuleDecorator.RETENTION_RULE, metaMap.get(StreamAttributeMapRetentionRuleDecorator.RETENTION_RULE)));
 
         return entries;
     }
@@ -100,7 +98,7 @@ class FetchFullStreamInfoHandler extends AbstractTaskHandler<FetchFullStreamInfo
         if (metaMap == null) {
             final List<Entry> entries = new ArrayList<>(1);
             entries.add(new Entry("Deleted Stream Id", String.valueOf(stream.getId())));
-            sections.add(new Section( "Stream", entries));
+            sections.add(new Section("Stream", entries));
 
         } else {
             sections.add(new Section("Stream", getStreamEntries(stream)));

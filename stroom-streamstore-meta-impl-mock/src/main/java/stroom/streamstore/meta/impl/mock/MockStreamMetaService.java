@@ -113,6 +113,11 @@ public class MockStreamMetaService implements StreamMetaService, Clearable {
     }
 
     @Override
+    public void addAttributes(final Stream stream, final Map<String, String> attributes) {
+        // Do nothing.
+    }
+
+    @Override
     public int deleteStream(final long streamId) {
         return deleteStream(streamId, true);
     }
@@ -177,6 +182,11 @@ public class MockStreamMetaService implements StreamMetaService, Clearable {
         }
 
         return BaseResultList.createUnboundedList(list);
+    }
+
+    @Override
+    public BaseResultList<StreamDataRow> findRows(final FindStreamCriteria criteria) {
+        return null;
     }
 
     @Override

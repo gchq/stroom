@@ -26,9 +26,7 @@ public class StreamDataRow implements SharedObject {
     private static final long serialVersionUID = -8198186456924478908L;
 
     private Stream stream;
-//    private Map<StreamAttributeKey, String> attributeMap = new HashMap<>();
-    private Map<String, String> nameValueMap = new HashMap<>();
-//    private Map<String, StreamAttributeKey> nameKeyMap = new HashMap<>();
+    private Map<String, String> attributes = new HashMap<>();
 
     public StreamDataRow() {
         // Default constructor necessary for GWT serialisation.
@@ -46,40 +44,13 @@ public class StreamDataRow implements SharedObject {
         this.stream = stream;
     }
 
-//    public void addAttribute(StreamAttributeKey key, String value) {
-//        attributeMap.put(key, value);
-//        nameValueMap.put(key.getName(), value);
-//        nameKeyMap.put(key.getName(), key);
-//    }
-
-    public void addAttribute(String name, String value) {
-        nameValueMap.put(name, value);
+    public void addAttribute(final String name, final String value) {
+        attributes.put(name, value);
     }
 
     public String getAttributeValue(final String name) {
-        return nameValueMap.get(name);
+        return attributes.get(name);
     }
-//
-//    public String getAttributeValue(final StreamAttributeKey key) {
-//        return attributeMap.get(key);
-//    }
-//
-//    public Set<String> getAttributeKeySet() {
-//        return nameValueMap.keySet();
-//    }
-//
-//    public String formatAttribute(String name) {
-//        StreamAttributeKey streamAttributeKey = nameKeyMap.get(name);
-//        if (streamAttributeKey == null) {
-//            String value = nameValueMap.get(name);
-//            if (value != null) {
-//                return value;
-//            } else {
-//                return "";
-//            }
-//        }
-//        return streamAttributeKey.format(this, streamAttributeKey);
-//    }
 
     @Override
     public boolean equals(final Object o) {

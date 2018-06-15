@@ -20,7 +20,7 @@ import stroom.feed.MetaMap;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.serializable.RASegmentOutputStream;
-import stroom.streamstore.shared.StreamAttributeConstants;
+import stroom.streamstore.shared.StreamDataSource;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
@@ -81,8 +81,10 @@ public class RollingStreamDestination extends RollingDestination {
     void afterRoll(final Consumer<Throwable> exceptionConsumer) {
         // Write meta data to stream target.
         final MetaMap metaMap = new MetaMap();
-        metaMap.put(StreamAttributeConstants.REC_WRITE, recordCount.toString());
-        metaMap.put(StreamAttributeConstants.NODE, nodeName);
+        metaMap.put(StreamDataSource.REC_WRITE, recordCount.toString());
+
+        // TODO : @66 DO WE REALLY NEED TO KNOW WHAT NODE PROCESSED A STREAM AS THE DATA IS AVAILABLE ON STREAM TASK???
+//        metaMap.put(StreamAttributeConstants.NODE, nodeName);
         streamTarget.getAttributeMap().putAll(metaMap);
         streamStore.closeStreamTarget(streamTarget);
     }

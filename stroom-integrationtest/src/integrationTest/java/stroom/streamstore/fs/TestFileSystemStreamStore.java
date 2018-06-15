@@ -26,7 +26,6 @@ import stroom.entity.shared.Period;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.streamstore.FindStreamAttributeValueCriteria;
 import stroom.streamstore.FindStreamVolumeCriteria;
 import stroom.streamstore.StreamException;
 import stroom.streamstore.StreamMaintenanceService;
@@ -40,13 +39,7 @@ import stroom.streamstore.meta.api.Stream;
 import stroom.streamstore.meta.api.StreamMetaService;
 import stroom.streamstore.meta.api.StreamProperties;
 import stroom.streamstore.meta.api.StreamStatus;
-import stroom.streamstore.meta.db.StreamAttributeMapService;
-import stroom.streamstore.meta.db.StreamAttributeValueFlush;
-import stroom.streamstore.meta.db.StreamAttributeValueService;
 import stroom.streamstore.shared.ExpressionUtil;
-import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
-import stroom.streamstore.shared.StreamAttributeConstants;
-import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.streamstore.shared.StreamDataRow;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamTypeNames;
@@ -88,13 +81,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     @Inject
     private StreamMaintenanceService streamMaintenanceService;
     @Inject
-    private StreamAttributeValueService streamAttributeValueService;
-    @Inject
-    private StreamAttributeValueFlush streamAttributeValueFlush;
-    @Inject
     private StreamTaskCreator streamTaskCreator;
-    @Inject
-    private StreamAttributeMapService streamAttributeMapService;
     @Inject
     private FileSystemStreamPathHelper fileSystemStreamPathHelper;
 
@@ -522,8 +509,8 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
         final Stream exactMetaData = streamTarget.getStream();
         streamTarget.getOutputStream().write(testString.getBytes(StreamUtil.DEFAULT_CHARSET));
-        streamTarget.getAttributeMap().put(StreamAttributeConstants.REC_READ, "10");
-        streamTarget.getAttributeMap().put(StreamAttributeConstants.REC_WRITE, "20");
+        streamTarget.getAttributeMap().put(StreamDataSource.REC_READ, "10");
+        streamTarget.getAttributeMap().put(StreamDataSource.REC_WRITE, "20");
         streamStore.closeStreamTarget(streamTarget);
 
         final Stream reloadMetaData = streamMetaService.find(FindStreamCriteria.createWithStream(exactMetaData)).get(0);
@@ -535,14 +522,14 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         is.close();
         streamStore.closeStreamSource(streamSource);
 
-        final FindStreamAttributeMapCriteria criteria = new FindStreamAttributeMapCriteria();
-        criteria.getFindStreamCriteria().obtainSelectedIdSet().add(reloadMetaData.getId());
+        final FindStreamCriteria criteria = new FindStreamCriteria();
+        criteria.obtainSelectedIdSet().add(reloadMetaData.getId());
 
-        streamAttributeValueFlush.flush();
-        final StreamDataRow streamMD = streamAttributeMapService.find(criteria).getFirst();
+//        streamAttributeValueFlush.flush();
+        final StreamDataRow streamMD = streamMetaService.findRows(criteria).getFirst();
 
-        Assert.assertEquals("10", streamMD.getAttributeValue(StreamAttributeConstants.REC_READ));
-        Assert.assertEquals("20", streamMD.getAttributeValue(StreamAttributeConstants.REC_WRITE));
+        Assert.assertEquals("10", streamMD.getAttributeValue(StreamDataSource.REC_READ));
+        Assert.assertEquals("20", streamMD.getAttributeValue(StreamDataSource.REC_WRITE));
     }
 
     @Test
@@ -707,7 +694,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         streamTarget.getOutputStream().write("xyz".getBytes(StreamUtil.DEFAULT_CHARSET));
         streamTarget.getAttributeMap().put(testString1, testString2);
-        streamTarget.getAttributeMap().put(StreamAttributeConstants.REC_READ, "100");
+        streamTarget.getAttributeMap().put(StreamDataSource.REC_READ, "100");
         streamStore.closeStreamTarget(streamTarget);
 
         Stream stream = streamTarget.getStream();
@@ -742,10 +729,10 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         streamStore.closeStreamSource(streamSource);
 
         Assert.assertTrue(FileSystemUtil.deleteAnyPath(manifestFile));
-        for (final StreamAttributeValue value : streamAttributeValueService
-                .find(FindStreamAttributeValueCriteria.create(stream))) {
-            Assert.assertTrue(streamAttributeValueService.delete(value));
-        }
+//        for (final StreamAttributeValue value : streamAttributeValueService
+//                .find(FindStreamAttributeValueCriteria.create(stream))) {
+//            Assert.assertTrue(streamAttributeValueService.delete(value));
+//        }
 
         streamTarget = streamStore.openExistingStreamTarget(stream.getId());
         streamTarget.getAttributeMap().put(testString5, testString6);

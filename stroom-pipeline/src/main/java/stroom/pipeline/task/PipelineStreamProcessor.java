@@ -67,7 +67,6 @@ import stroom.streamstore.meta.api.Stream;
 import stroom.streamstore.meta.api.StreamMetaService;
 import stroom.streamstore.meta.api.StreamProperties;
 import stroom.streamstore.meta.api.StreamStatus;
-import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.InclusiveRanges;
@@ -525,14 +524,16 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             // Write some meta data to the map for all output streams to use
             // when they close.
             metaData.put("Source Stream", String.valueOf(source.getStream().getId()));
-            metaData.put(StreamAttributeConstants.REC_READ, String.valueOf(recordCount.getRead()));
-            metaData.put(StreamAttributeConstants.REC_WRITE, String.valueOf(recordCount.getWritten()));
-            metaData.put(StreamAttributeConstants.REC_INFO, String.valueOf(getMarkerCount(Severity.INFO)));
-            metaData.put(StreamAttributeConstants.REC_WARN, String.valueOf(getMarkerCount(Severity.WARNING)));
-            metaData.put(StreamAttributeConstants.REC_ERROR, String.valueOf(getMarkerCount(Severity.ERROR)));
-            metaData.put(StreamAttributeConstants.REC_FATAL, String.valueOf(getMarkerCount(Severity.FATAL_ERROR)));
-            metaData.put(StreamAttributeConstants.DURATION, String.valueOf(recordCount.getDuration()));
-            metaData.put(StreamAttributeConstants.NODE, nodeCache.getDefaultNode().getName());
+            metaData.put(StreamDataSource.REC_READ, String.valueOf(recordCount.getRead()));
+            metaData.put(StreamDataSource.REC_WRITE, String.valueOf(recordCount.getWritten()));
+            metaData.put(StreamDataSource.REC_INFO, String.valueOf(getMarkerCount(Severity.INFO)));
+            metaData.put(StreamDataSource.REC_WARN, String.valueOf(getMarkerCount(Severity.WARNING)));
+            metaData.put(StreamDataSource.REC_ERROR, String.valueOf(getMarkerCount(Severity.ERROR)));
+            metaData.put(StreamDataSource.REC_FATAL, String.valueOf(getMarkerCount(Severity.FATAL_ERROR)));
+            metaData.put(StreamDataSource.DURATION, String.valueOf(recordCount.getDuration()));
+
+            // TODO : @66 DO WE REALLY NEED TO KNOW WHAT NODE PROCESSED A STREAM AS THE DATA IS AVAILABLE ON STREAM TASK???
+//            metaData.put(StreamAttributeConstants.NODE, nodeCache.getDefaultNode().getName());
         } catch (final RuntimeException e) {
             outputError(e);
         }

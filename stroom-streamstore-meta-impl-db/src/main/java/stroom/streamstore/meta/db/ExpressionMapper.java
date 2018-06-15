@@ -35,7 +35,8 @@ class ExpressionMapper implements Function<ExpressionItem, Condition> {
             final ExpressionTerm term = (ExpressionTerm) item;
             final TermHandler<?> termHandler = termHandlers.get(term.getField());
             if (termHandler == null) {
-                throw new RuntimeException("No term handler supplied for term '" + term.getField() + "'");
+//                throw new RuntimeException("No term handler supplied for term '" + term.getField() + "'");
+                return null;
             }
 
             return termHandler.apply(term);
@@ -48,25 +49,27 @@ class ExpressionMapper implements Function<ExpressionItem, Condition> {
                     .filter(Objects::nonNull)
                     .toArray(Condition[]::new);
 
-            switch (operator.getOp()) {
-                case AND:
-                    return and(children);
-                case OR:
-                    return or(children);
-                case NOT:
+            if (children.length > 0) {
+                switch (operator.getOp()) {
+                    case AND:
+                        return and(children);
+                    case OR:
+                        return or(children);
+                    case NOT:
 
-                    if (children.length == 1) {
-                        // A single child, just apply the 'not' to that first item
-                        return not(children[0]);
-                    } else if (children.length > 1) {
-                        // If there are multiple children, apply an 'and' around them all
-                        return and(Arrays.stream(children)
-                                .map(DSL::not)
-                                .toArray(Condition[]::new));
-                    }
-                default:
-                    // Fall through to null if there aren't any children
-                    break;
+                        if (children.length == 1) {
+                            // A single child, just apply the 'not' to that first item
+                            return not(children[0]);
+                        } else {
+                            // If there are multiple children, apply an 'and' around them all
+                            return and(Arrays.stream(children)
+                                    .map(DSL::not)
+                                    .toArray(Condition[]::new));
+                        }
+                    default:
+                        // Fall through to null if there aren't any children
+                        break;
+                }
             }
         }
 

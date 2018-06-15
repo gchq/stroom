@@ -46,6 +46,7 @@ dependencies {
     compile libs.dropwizard_metrics_healthchecks
 
     testCompile project(':stroom-security-impl-mock')
+    testCompile project(':stroom-properties-impl-mock')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
 

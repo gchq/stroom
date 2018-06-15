@@ -5,7 +5,7 @@ import stroom.dictionary.DictionaryModule;
 import stroom.docstore.memory.MemoryPersistenceModule;
 import stroom.entity.MockEntityModule;
 import stroom.feed.FeedModule;
-import stroom.properties.MockPropertyModule;
+import stroom.properties.impl.mock.MockPropertyModule;
 import stroom.ruleset.RulesetModule;
 import stroom.security.impl.mock.MockSecurityContextModule;
 import stroom.streamstore.MockStreamStoreModule;

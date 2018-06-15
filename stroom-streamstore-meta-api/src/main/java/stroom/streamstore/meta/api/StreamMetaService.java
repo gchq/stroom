@@ -2,8 +2,10 @@ package stroom.streamstore.meta.api;
 
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Period;
+import stroom.streamstore.shared.StreamDataRow;
 
 import java.util.List;
+import java.util.Map;
 
 public interface StreamMetaService {
     /**
@@ -38,8 +40,9 @@ public interface StreamMetaService {
      */
     boolean canReadStream(long streamId);
 
-
     Stream updateStatus(long streamId, StreamStatus streamStatus);
+
+    void addAttributes(Stream stream, Map<String, String> attributes);
 
     /**
      * <p>
@@ -64,6 +67,8 @@ public interface StreamMetaService {
     List<String> getStreamTypes();
 
     BaseResultList<Stream> find(FindStreamCriteria criteria);
+
+    BaseResultList<StreamDataRow> findRows(FindStreamCriteria criteria);
 
     int findDelete(FindStreamCriteria criteria);
 

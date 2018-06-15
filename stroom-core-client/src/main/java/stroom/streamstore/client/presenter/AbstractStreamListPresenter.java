@@ -32,14 +32,13 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.client.presenter.EntityServiceFindActionDataProvider;
 import stroom.entity.shared.IdSet;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.ResultList;
+import stroom.streamstore.meta.api.FindStreamCriteria;
 import stroom.streamstore.meta.api.Stream;
 import stroom.streamstore.meta.api.StreamStatus;
 import stroom.streamstore.shared.FetchFullStreamInfoAction;
-import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.StreamDataRow;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
@@ -55,13 +54,14 @@ import stroom.widget.util.client.MultiSelectionModel;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 public abstract class AbstractStreamListPresenter extends MyPresenterWidget<DataGridView<StreamDataRow>> implements HasDataSelectionHandlers<IdSet>, Refreshable {
     private final TooltipPresenter tooltipPresenter;
 
     private final IdSet entityIdSet = new IdSet();
     private final ClientDispatchAsync dispatcher;
-    protected EntityServiceFindActionDataProvider<FindStreamAttributeMapCriteria, StreamDataRow> dataProvider;
+    protected FindStreamActionDataProvider dataProvider;
     private ResultList<StreamDataRow> resultList = null;
 
     AbstractStreamListPresenter(final EventBus eventBus,
@@ -76,8 +76,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
 
         addColumns(allowSelectAll);
 
-        this.dataProvider = new EntityServiceFindActionDataProvider<FindStreamAttributeMapCriteria, StreamDataRow>(
-                dispatcher, getView()) {
+        this.dataProvider = new FindStreamActionDataProvider(dispatcher, getView()) {
             @Override
             protected ResultList<StreamDataRow> processData(final ResultList<StreamDataRow> data) {
                 return onProcessData(data);
@@ -85,7 +84,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         };
     }
 
-    public EntityServiceFindActionDataProvider<FindStreamAttributeMapCriteria, StreamDataRow> getDataProvider() {
+    public FindStreamActionDataProvider getDataProvider() {
         return dataProvider;
     }
 
@@ -415,11 +414,15 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         return resultList;
     }
 
-    void addAttributeColumn(final String name, final String attribute, final int size) {
+    void addAttributeColumn(final String name, final String attribute, final Function<String, String> formatter, final int size) {
         final Column<StreamDataRow, String> column = new Column<StreamDataRow, String>(new TextCell()) {
             @Override
             public String getValue(final StreamDataRow row) {
-                return row.getAttributeValue(attribute);
+                final String value = row.getAttributeValue(attribute);
+                if (value == null) {
+                    return null;
+                }
+                return formatter.apply(value);
             }
         };
         getView().addResizableColumn(column, name, size);
@@ -430,7 +433,7 @@ public abstract class AbstractStreamListPresenter extends MyPresenterWidget<Data
         dataProvider.refresh();
     }
 
-    public void setCriteria(final FindStreamAttributeMapCriteria criteria) {
+    public void setCriteria(final FindStreamCriteria criteria) {
         if (criteria != null) {
             criteria.obtainPageRequest().setLength(PageRequest.DEFAULT_PAGE_SIZE);
         }

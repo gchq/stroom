@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cache.StroomCacheManager;
 import stroom.dashboard.shared.QueryEntity;
-import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.guice.StroomBeanStore;
 import stroom.index.IndexShardManager;
@@ -43,11 +42,6 @@ import stroom.security.Permission;
 import stroom.security.User;
 import stroom.security.UserGroupUser;
 import stroom.streamstore.fs.FileSystemUtil;
-import stroom.streamstore.meta.db.StreamAttributeKeyService;
-import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
-import stroom.streamstore.shared.StreamAttributeConstants;
-import stroom.streamstore.shared.StreamAttributeKey;
-import stroom.streamstore.shared.StreamAttributeValue;
 import stroom.streamstore.shared.StreamVolumeEntity;
 import stroom.streamtask.StreamTaskCreator;
 import stroom.streamtask.shared.Processor;
@@ -60,7 +54,6 @@ import javax.inject.Inject;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -90,11 +83,11 @@ public class DatabaseCommonTestControl implements CommonTestControl {
             Rack.TABLE_NAME,
 
             "STRM",
-            "STRM_FEED",
-            "STRM_TYPE",
-            "STRM_PROCESSOR",
-            StreamAttributeKey.TABLE_NAME,
-            StreamAttributeValue.TABLE_NAME,
+            "stream_feed",
+            "stream_type",
+            "stream_processor",
+            "stream_attribute_key",
+            "stream_attribute_numeric_value",
 
             Processor.TABLE_NAME,
             ProcessorFilter.TABLE_NAME,
@@ -108,7 +101,6 @@ public class DatabaseCommonTestControl implements CommonTestControl {
 
     private final VolumeService volumeService;
     private final ContentImportService contentImportService;
-    private final StreamAttributeKeyService streamAttributeKeyService;
     private final IndexShardManager indexShardManager;
     private final IndexShardWriterCache indexShardWriterCache;
     private final DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper;
@@ -120,7 +112,6 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     @Inject
     DatabaseCommonTestControl(final VolumeService volumeService,
                               final ContentImportService contentImportService,
-                              final StreamAttributeKeyService streamAttributeKeyService,
                               final IndexShardManager indexShardManager,
                               final IndexShardWriterCache indexShardWriterCache,
                               final DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper,
@@ -130,7 +121,6 @@ public class DatabaseCommonTestControl implements CommonTestControl {
                               final StroomBeanStore beanStore) {
         this.volumeService = volumeService;
         this.contentImportService = contentImportService;
-        this.streamAttributeKeyService = streamAttributeKeyService;
         this.indexShardManager = indexShardManager;
         this.indexShardWriterCache = indexShardWriterCache;
         this.databaseCommonTestControlTransactionHelper = databaseCommonTestControlTransactionHelper;
@@ -146,7 +136,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         //ensure the constraints are enabled in case teardown did not happen on a previous test
         databaseCommonTestControlTransactionHelper.enableConstraints();
         nodeConfig.setup();
-        createStreamAttributeKeys();
+//        createStreamAttributeKeys();
 
         // Ensure we can create tasks.
         streamTaskCreator.startup();
@@ -190,24 +180,24 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         LOGGER.info("test environment teardown completed in {}", Duration.between(startTime, Instant.now()));
     }
 
-    private void createStreamAttributeKeys() {
-        final BaseResultList<StreamAttributeKey> list = streamAttributeKeyService
-                .find(new FindStreamAttributeKeyCriteria());
-        final HashSet<String> existingItems = new HashSet<>();
-        for (final StreamAttributeKey streamAttributeKey : list) {
-            existingItems.add(streamAttributeKey.getName());
-        }
-        for (final String name : StreamAttributeConstants.SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP.keySet()) {
-            if (!existingItems.contains(name)) {
-                try {
-                    streamAttributeKeyService.save(new StreamAttributeKey(name,
-                            StreamAttributeConstants.SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP.get(name)));
-                } catch (final RuntimeException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
+//    private void createStreamAttributeKeys() {
+//        final BaseResultList<StreamAttributeKey> list = streamAttributeKeyService
+//                .find(new FindStreamAttributeKeyCriteria());
+//        final HashSet<String> existingItems = new HashSet<>();
+//        for (final StreamAttributeKey streamAttributeKey : list) {
+//            existingItems.add(streamAttributeKey.getName());
+//        }
+//        for (final String name : StreamAttributeConstants.SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP.keySet()) {
+//            if (!existingItems.contains(name)) {
+//                try {
+//                    streamAttributeKeyService.save(new StreamAttributeKey(name,
+//                            StreamAttributeConstants.SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP.get(name)));
+//                } catch (final RuntimeException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        }
+//    }
 
     @Override
     public int countEntity(final Class<?> clazz) {

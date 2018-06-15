@@ -139,7 +139,7 @@ class StreamTaskCreatorTransactionHelper {
         // Copy the filter
         final FindStreamCriteria findStreamCriteria = new FindStreamCriteria(streamIdExpression);
 //        findStreamCriteria.copyFrom(criteria);
-        findStreamCriteria.setSort(FindStreamCriteria.FIELD_ID, Direction.ASCENDING, false);
+        findStreamCriteria.setSort(StreamDataSource.STREAM_ID, Direction.ASCENDING, false);
 //        findStreamCriteria.setStreamIdRange(new IdRange(minStreamId, null));
 //        // Don't care about status
 //        findStreamCriteria.obtainStatusSet().add(StreamStatus.LOCKED);

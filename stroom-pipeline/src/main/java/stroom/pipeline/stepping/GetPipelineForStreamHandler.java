@@ -20,17 +20,14 @@ package stroom.pipeline.stepping;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.SharedDocRef;
-import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;
 import stroom.security.Security;
-import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.meta.api.StreamMetaService;
-import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.meta.api.FindStreamCriteria;
 import stroom.streamstore.meta.api.Stream;
-import stroom.streamtask.shared.Processor;
+import stroom.streamstore.meta.api.StreamMetaService;
+import stroom.streamstore.shared.ExpressionUtil;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 
@@ -39,17 +36,14 @@ import java.util.List;
 
 @TaskHandlerBean(task = GetPipelineForStreamAction.class)
 class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStreamAction, SharedDocRef> {
-    private final StreamStore streamStore;
     private final StreamMetaService streamMetaService;
     private final PipelineStore pipelineStore;
     private final Security security;
 
     @Inject
-    GetPipelineForStreamHandler(final StreamStore streamStore,
-                                final StreamMetaService streamMetaService,
+    GetPipelineForStreamHandler(final StreamMetaService streamMetaService,
                                 final PipelineStore pipelineStore,
                                 final Security security) {
-        this.streamStore = streamStore;
         this.streamMetaService = streamMetaService;
         this.pipelineStore = pipelineStore;
         this.security = security;
@@ -109,12 +103,7 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
         }
 
         return security.asProcessingUserResult(() -> {
-            final FindStreamCriteria criteria = new FindStreamCriteria();
-            criteria.setExpression(ExpressionUtil.createStreamExpression(id));
-            criteria.getFetchSet().add(Processor.ENTITY_TYPE);
-            criteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
-            criteria.getFetchSet().add(FeedDoc.DOCUMENT_TYPE);
-
+            final FindStreamCriteria criteria = new FindStreamCriteria(ExpressionUtil.createStreamExpression(id));
             final List<Stream> streamList = streamMetaService.find(criteria);
             if (streamList != null && streamList.size() > 0) {
                 return streamList.get(0);
@@ -130,11 +119,7 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
         }
 
         return security.asProcessingUserResult(() -> {
-            final FindStreamCriteria criteria = new FindStreamCriteria();
-            criteria.setExpression(ExpressionUtil.createParentStreamExpression(id));
-            criteria.getFetchSet().add(Processor.ENTITY_TYPE);
-            criteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
-
+            final FindStreamCriteria criteria = new FindStreamCriteria(ExpressionUtil.createParentStreamExpression(id));
             return streamMetaService.find(criteria).getFirst();
         });
     }

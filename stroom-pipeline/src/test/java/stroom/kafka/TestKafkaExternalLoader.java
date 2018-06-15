@@ -8,7 +8,7 @@ import stroom.connectors.ExternalLibService;
 import stroom.connectors.kafka.StroomKafkaProducer;
 import stroom.connectors.kafka.StroomKafkaProducerRecord;
 import stroom.connectors.kafka.StroomKafkaRecordMetaData;
-import stroom.properties.MockStroomPropertyService;
+import stroom.properties.impl.mock.MockStroomPropertyService;
 import stroom.properties.StroomPropertyService;
 
 import java.nio.charset.StandardCharsets;

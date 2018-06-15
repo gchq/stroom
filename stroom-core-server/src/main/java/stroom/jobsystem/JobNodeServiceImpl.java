@@ -40,6 +40,7 @@ import stroom.node.shared.Node;
 import stroom.persist.EntityManagerSupport;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
+import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.util.lifecycle.MethodReference;
 import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.lifecycle.StroomSimpleCronSchedule;

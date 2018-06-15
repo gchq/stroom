@@ -25,7 +25,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import stroom.properties.MockStroomPropertyService;
+import stroom.properties.impl.mock.MockStroomPropertyService;
 import stroom.docref.DocRef;
 import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.sql.entity.StatisticStoreCache;

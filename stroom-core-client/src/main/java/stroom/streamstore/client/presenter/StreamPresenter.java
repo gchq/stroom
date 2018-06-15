@@ -38,10 +38,8 @@ import stroom.docref.DocRef;
 import stroom.docref.SharedObject;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.IdSet;
-import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.ResultList;
 import stroom.entity.shared.SharedDocRef;
-import stroom.entity.shared.Sort.Direction;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
@@ -51,18 +49,16 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.streamstore.meta.api.FindStreamCriteria;
 import stroom.streamstore.meta.api.Stream;
 import stroom.streamstore.meta.api.StreamStatus;
 import stroom.streamstore.shared.DeleteStreamAction;
 import stroom.streamstore.shared.DownloadDataAction;
 import stroom.streamstore.shared.ExpressionUtil;
-import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
-import stroom.streamstore.meta.api.FindStreamCriteria;
 import stroom.streamstore.shared.ReprocessDataInfo;
 import stroom.streamstore.shared.StreamDataRow;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamtask.shared.ReprocessDataAction;
-import stroom.streamtask.shared.Processor;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -92,7 +88,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     private final ClientDispatchAsync dispatcher;
     private final ButtonView streamListFilter;
 
-    private FindStreamAttributeMapCriteria findStreamAttributeMapCriteria;
+    private FindStreamCriteria findStreamCriteria;
     private String feedName;
     private ButtonView streamListUpload;
     private ButtonView streamListDownload;
@@ -220,13 +216,13 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
             showData();
         }));
         registerHandler(streamListPresenter.addDataSelectionHandler(event -> setStreamListSelectableEnabled(event.getSelectedItem(),
-                getSingleStatus(findStreamAttributeMapCriteria))));
+                getSingleStatus(findStreamCriteria))));
         registerHandler(streamRelationListPresenter.getSelectionModel().addSelectionHandler(event -> showData()));
-        registerHandler(streamRelationListPresenter.addDataSelectionHandler(event -> setStreamRelationListSelectableEnabled(event.getSelectedItem(), getSingleStatus(findStreamAttributeMapCriteria))));
+        registerHandler(streamRelationListPresenter.addDataSelectionHandler(event -> setStreamRelationListSelectableEnabled(event.getSelectedItem(), getSingleStatus(findStreamCriteria))));
 
         registerHandler(streamListFilter.addClickHandler(event -> {
             final ExpressionPresenter presenter = streamListFilterPresenter.get();
-            presenter.read(findStreamAttributeMapCriteria.obtainFindStreamCriteria().obtainExpression(), StreamDataSource.STREAM_STORE_DOC_REF, StreamDataSource.getExtendedFields());
+            presenter.read(findStreamCriteria.obtainExpression(), StreamDataSource.STREAM_STORE_DOC_REF, StreamDataSource.getExtendedFields());
 
             final PopupUiHandlers streamFilterPUH = new DefaultPopupUiHandlers() {
                 @Override
@@ -234,7 +230,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
                     if (ok) {
                         final ExpressionOperator expression = presenter.write();
 
-                        if (!expression.equals(findStreamAttributeMapCriteria.obtainFindStreamCriteria().obtainExpression())) {
+                        if (!expression.equals(findStreamCriteria.obtainExpression())) {
                             if (hasAdvancedCriteria(expression)) {
                                 ConfirmEvent.fire(StreamPresenter.this,
                                         "You are setting advanced filters!  It is recommendend you constrain your filter (e.g. by 'Created') to avoid an expensive query.  "
@@ -265,12 +261,12 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
 
                 private void applyCriteriaAndShow(final ExpressionPresenter presenter) {
                     // Copy new filter settings back.
-                    findStreamAttributeMapCriteria.obtainFindStreamCriteria().setExpression(presenter.write());
+                    findStreamCriteria.setExpression(presenter.write());
                     // Reset the page offset.
-                    findStreamAttributeMapCriteria.obtainPageRequest().setOffset(0L);
+                    findStreamCriteria.obtainPageRequest().setOffset(0L);
 
                     // Init the buttons
-                    final StreamStatus status = getSingleStatus(findStreamAttributeMapCriteria);
+                    final StreamStatus status = getSingleStatus(findStreamCriteria);
                     setStreamListSelectableEnabled(streamListPresenter.getSelectedEntityIdSet(), status);
 
                     // Clear the current selection and get a new list of streams.
@@ -334,14 +330,6 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
 
         final Set<String> statusPeriod = getTerms(expression, StreamDataSource.STATUS_TIME);
         return statusPeriod.size() > 0;
-    }
-
-
-    private static StreamStatus getSingleStatus(final FindStreamAttributeMapCriteria criteria) {
-        if (criteria == null) {
-            return null;
-        }
-        return getSingleStatus(criteria.getFindStreamCriteria());
     }
 
     private static StreamStatus getSingleStatus(final FindStreamCriteria criteria) {
@@ -413,7 +401,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     }
 
     public FindStreamCriteria getCriteria() {
-        return findStreamAttributeMapCriteria.getFindStreamCriteria();
+        return findStreamCriteria;
     }
 
     @Override
@@ -427,29 +415,29 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         }
     }
 
-    private FindStreamAttributeMapCriteria createFindStreamAttributeMapCriteria() {
-        final FindStreamAttributeMapCriteria criteria = new FindStreamAttributeMapCriteria();
-        criteria.obtainFindStreamCriteria().obtainExpression();
-
-        final PageRequest pageRequest = criteria.obtainPageRequest();
-        pageRequest.setLength(PageRequest.DEFAULT_PAGE_SIZE);
-        pageRequest.setOffset(0L);
-
-        criteria.obtainFindStreamCriteria().getFetchSet().add(FeedDoc.DOCUMENT_TYPE);
-        criteria.obtainFindStreamCriteria().getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
-        criteria.obtainFindStreamCriteria().getFetchSet().add(Processor.ENTITY_TYPE);
-        criteria.obtainFindStreamCriteria().setSort(StreamDataSource.CREATE_TIME, Direction.DESCENDING, false);
-
-        return criteria;
-    }
+//    private FindStreamCriteria createFindStreamCriteria() {
+//        final FindStreamCriteria criteria = new FindStreamCriteria();
+//        criteria.obtainExpression();
+//
+//        final PageRequest pageRequest = criteria.obtainPageRequest();
+//        pageRequest.setLength(PageRequest.DEFAULT_PAGE_SIZE);
+//        pageRequest.setOffset(0L);
+//
+//        criteria.getFetchSet().add(FeedDoc.DOCUMENT_TYPE);
+//        criteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
+//        criteria.getFetchSet().add(Processor.ENTITY_TYPE);
+//        criteria.setSort(StreamDataSource.CREATE_TIME, Direction.DESCENDING, false);
+//
+//        return criteria;
+//    }
 
     private void setFeedCriteria(final String feedName) {
         this.feedName = feedName;
         showStreamListButtons(true);
         showStreamRelationListButtons(true);
 
-        findStreamAttributeMapCriteria = createFindStreamAttributeMapCriteria();
-        findStreamAttributeMapCriteria.obtainFindStreamCriteria().setExpression(ExpressionUtil.createFeedExpression(feedName));
+        findStreamCriteria = createFindStreamCriteria();
+        findStreamCriteria.setExpression(ExpressionUtil.createFeedExpression(feedName));
 
         initCriteria();
     }
@@ -458,8 +446,8 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         showStreamListButtons(false);
         showStreamRelationListButtons(false);
 
-        findStreamAttributeMapCriteria = createFindStreamAttributeMapCriteria();
-        findStreamAttributeMapCriteria.obtainFindStreamCriteria().setExpression(ExpressionUtil.createPipelineExpression(pipelineDoc));
+        findStreamCriteria = createFindStreamCriteria();
+        findStreamCriteria.setExpression(ExpressionUtil.createPipelineExpression(pipelineDoc));
 
         initCriteria();
     }
@@ -467,13 +455,13 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
     private void setNullCriteria() {
         showStreamListButtons(false);
         showStreamRelationListButtons(false);
-        findStreamAttributeMapCriteria = createFindStreamAttributeMapCriteria();
+        findStreamCriteria = createFindStreamCriteria();
 
         initCriteria();
     }
 
     private void initCriteria() {
-        streamListPresenter.setCriteria(findStreamAttributeMapCriteria);
+        streamListPresenter.setCriteria(findStreamCriteria);
         streamRelationListPresenter.setCriteria(null);
     }
 
@@ -490,9 +478,9 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         return null;
     }
 
-    public IdSet getSelectedEntityIdSet() {
-        return streamListPresenter.getSelectedEntityIdSet();
-    }
+//    public IdSet getSelectedEntityIdSet() {
+//        return streamListPresenter.getSelectedEntityIdSet();
+//    }
 
     @Override
     public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<IdSet> handler) {
@@ -573,7 +561,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
             SharedDocRef pipelineRef = null;
 
             // TODO : Fix by making entity id sets docref sets.
-//            final EntityIdSet<PipelineEntity> entityIdSet = findStreamAttributeMapCriteria.obtainFindStreamCriteria()
+//            final EntityIdSet<PipelineEntity> entityIdSet = findStreamCriteria
 //                    .getPipelineSet();
 //            if (entityIdSet != null) {
 //                if (entityIdSet.getSet().size() > 0) {
@@ -763,8 +751,8 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
 
     private static class ProcessStreamClickHandler extends AbstractStreamClickHandler {
         ProcessStreamClickHandler(final StreamPresenter streamPresenter,
-                                         final AbstractStreamListPresenter streamListPresenter, final boolean useCriteria,
-                                         final ClientDispatchAsync dispatcher) {
+                                  final AbstractStreamListPresenter streamListPresenter, final boolean useCriteria,
+                                  final ClientDispatchAsync dispatcher) {
             super(streamPresenter, streamListPresenter, useCriteria, dispatcher);
         }
 

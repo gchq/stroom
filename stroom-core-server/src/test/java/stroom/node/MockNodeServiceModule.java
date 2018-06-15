@@ -19,8 +19,6 @@ package stroom.node;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.Clearable;
-import stroom.properties.MockGlobalPropertyService;
-import stroom.streamtask.MockStreamProcessorService;
 
 public class MockNodeServiceModule extends AbstractModule {
     @Override

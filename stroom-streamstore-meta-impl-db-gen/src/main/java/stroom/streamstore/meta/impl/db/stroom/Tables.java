@@ -6,12 +6,12 @@ package stroom.streamstore.meta.impl.db.stroom;
 
 import javax.annotation.Generated;
 
+import stroom.streamstore.meta.impl.db.stroom.tables.MetaKey;
+import stroom.streamstore.meta.impl.db.stroom.tables.MetaNumericValue;
+import stroom.streamstore.meta.impl.db.stroom.tables.StreamFeed;
+import stroom.streamstore.meta.impl.db.stroom.tables.StreamProcessor;
+import stroom.streamstore.meta.impl.db.stroom.tables.StreamType;
 import stroom.streamstore.meta.impl.db.stroom.tables.Strm;
-import stroom.streamstore.meta.impl.db.stroom.tables.StrmAtrKey;
-import stroom.streamstore.meta.impl.db.stroom.tables.StrmAtrVal;
-import stroom.streamstore.meta.impl.db.stroom.tables.StrmFeed;
-import stroom.streamstore.meta.impl.db.stroom.tables.StrmProcessor;
-import stroom.streamstore.meta.impl.db.stroom.tables.StrmType;
 
 
 /**
@@ -28,32 +28,32 @@ import stroom.streamstore.meta.impl.db.stroom.tables.StrmType;
 public class Tables {
 
     /**
+     * The table <code>stroom.meta_key</code>.
+     */
+    public static final MetaKey META_KEY = stroom.streamstore.meta.impl.db.stroom.tables.MetaKey.META_KEY;
+
+    /**
+     * The table <code>stroom.meta_numeric_value</code>.
+     */
+    public static final MetaNumericValue META_NUMERIC_VALUE = stroom.streamstore.meta.impl.db.stroom.tables.MetaNumericValue.META_NUMERIC_VALUE;
+
+    /**
+     * The table <code>stroom.stream_feed</code>.
+     */
+    public static final StreamFeed STREAM_FEED = stroom.streamstore.meta.impl.db.stroom.tables.StreamFeed.STREAM_FEED;
+
+    /**
+     * The table <code>stroom.stream_processor</code>.
+     */
+    public static final StreamProcessor STREAM_PROCESSOR = stroom.streamstore.meta.impl.db.stroom.tables.StreamProcessor.STREAM_PROCESSOR;
+
+    /**
+     * The table <code>stroom.stream_type</code>.
+     */
+    public static final StreamType STREAM_TYPE = stroom.streamstore.meta.impl.db.stroom.tables.StreamType.STREAM_TYPE;
+
+    /**
      * The table <code>stroom.STRM</code>.
      */
     public static final Strm STRM = stroom.streamstore.meta.impl.db.stroom.tables.Strm.STRM;
-
-    /**
-     * The table <code>stroom.STRM_ATR_KEY</code>.
-     */
-    public static final StrmAtrKey STRM_ATR_KEY = stroom.streamstore.meta.impl.db.stroom.tables.StrmAtrKey.STRM_ATR_KEY;
-
-    /**
-     * The table <code>stroom.STRM_ATR_VAL</code>.
-     */
-    public static final StrmAtrVal STRM_ATR_VAL = stroom.streamstore.meta.impl.db.stroom.tables.StrmAtrVal.STRM_ATR_VAL;
-
-    /**
-     * The table <code>stroom.STRM_FEED</code>.
-     */
-    public static final StrmFeed STRM_FEED = stroom.streamstore.meta.impl.db.stroom.tables.StrmFeed.STRM_FEED;
-
-    /**
-     * The table <code>stroom.STRM_PROCESSOR</code>.
-     */
-    public static final StrmProcessor STRM_PROCESSOR = stroom.streamstore.meta.impl.db.stroom.tables.StrmProcessor.STRM_PROCESSOR;
-
-    /**
-     * The table <code>stroom.STRM_TYPE</code>.
-     */
-    public static final StrmType STRM_TYPE = stroom.streamstore.meta.impl.db.stroom.tables.StrmType.STRM_TYPE;
 }

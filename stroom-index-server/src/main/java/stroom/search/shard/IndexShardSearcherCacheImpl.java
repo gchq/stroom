@@ -26,7 +26,7 @@ import stroom.index.IndexShardService;
 import stroom.index.IndexShardWriter;
 import stroom.index.IndexShardWriterCache;
 import stroom.index.shared.IndexShard;
-import stroom.jobsystem.JobTrackedSchedule;
+import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.search.SearchException;
 import stroom.task.ExecutorProvider;
 import stroom.task.TaskContext;

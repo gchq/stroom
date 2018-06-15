@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.StroomDatabaseInfo;
 import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.jobsystem.ClusterLockService;
-import stroom.jobsystem.JobTrackedSchedule;
+import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.properties.StroomPropertyService;
 import stroom.task.TaskContext;
 import stroom.util.date.DateUtil;

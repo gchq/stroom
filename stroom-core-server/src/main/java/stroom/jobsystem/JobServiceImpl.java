@@ -31,6 +31,7 @@ import stroom.jobsystem.shared.FindJobCriteria;
 import stroom.jobsystem.shared.Job;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
+import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.util.lifecycle.MethodReference;
 import stroom.util.lifecycle.StroomStartup;
 import stroom.util.shared.CompareUtil;

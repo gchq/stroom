@@ -13,6 +13,7 @@ dependencies {
     compile project(':stroom-util-shared')
     compile project(':stroom-connectors')
     compile project(':stroom-streamstore-meta-api')
+    compile project(':stroom-properties-api')
 
     compile libs.eventLogging
     compile libs.stroomDocRef
@@ -78,6 +79,7 @@ dependencies {
 
     testCompile project(':stroom-security-impl-mock')
     testCompile project(':stroom-streamstore-meta-impl-mock')
+    testCompile project(':stroom-properties-impl-mock')
     testCompile libs.junit
     testCompile libs.mockito_core
 

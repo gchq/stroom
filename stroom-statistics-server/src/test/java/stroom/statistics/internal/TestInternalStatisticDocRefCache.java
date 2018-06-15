@@ -2,7 +2,7 @@ package stroom.statistics.internal;
 
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
-import stroom.properties.MockStroomPropertyService;
+import stroom.properties.impl.mock.MockStroomPropertyService;
 import stroom.docref.DocRef;
 
 import java.util.List;

@@ -19,7 +19,7 @@ package stroom.statistics.sql;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import stroom.jobsystem.JobTrackedSchedule;
+import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.task.TaskCallbackAdaptor;
 import stroom.task.TaskManager;
 import stroom.util.shared.VoidResult;

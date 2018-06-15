@@ -24,6 +24,10 @@ include 'stroom-proxy'
 include 'stroom-util-shared'
 include 'stroom-entity-shared'
 
+// Properties
+include 'stroom-properties-api'
+include 'stroom-properties-impl-mock'
+
 // Stream meta data projects
 include 'stroom-streamstore-meta-api'
 include 'stroom-streamstore-meta-impl-db'

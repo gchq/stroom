@@ -32,7 +32,7 @@ import stroom.node.shared.VolumeEntity;
 import stroom.node.shared.VolumeEntity.VolumeType;
 import stroom.node.shared.VolumeState;
 import stroom.persist.EntityManagerSupport;
-import stroom.properties.MockStroomPropertyService;
+import stroom.properties.impl.mock.MockStroomPropertyService;
 import stroom.properties.StroomPropertyService;
 import stroom.security.impl.mock.MockSecurityContext;
 import stroom.security.Security;

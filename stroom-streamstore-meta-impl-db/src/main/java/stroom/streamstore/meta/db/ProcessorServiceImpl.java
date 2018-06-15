@@ -23,7 +23,7 @@ import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Clearable;
-import stroom.streamstore.meta.impl.db.stroom.tables.records.StrmProcessorRecord;
+import stroom.streamstore.meta.impl.db.stroom.tables.records.StreamProcessorRecord;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -33,14 +33,14 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static stroom.streamstore.meta.impl.db.stroom.tables.StrmFeed.STRM_FEED;
-import static stroom.streamstore.meta.impl.db.stroom.tables.StrmProcessor.STRM_PROCESSOR;
+import static stroom.streamstore.meta.impl.db.stroom.tables.StreamFeed.STREAM_FEED;
+import static stroom.streamstore.meta.impl.db.stroom.tables.StreamProcessor.STREAM_PROCESSOR;
 
 @Singleton
 class ProcessorServiceImpl implements ProcessorService, Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorServiceImpl.class);
 
-    private final Map<Integer, StrmProcessorRecord> cache = new ConcurrentHashMap<>();
+    private final Map<Integer, StreamProcessorRecord> cache = new ConcurrentHashMap<>();
 
     private final DataSource dataSource;
 
@@ -71,7 +71,7 @@ class ProcessorServiceImpl implements ProcessorService, Clearable {
 //    @Override
 //    public List<String> list() {
 //        try (final Connection connection = dataSource.getConnection()) {
-//            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+//            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
 //
 //            return create
 //                    .select(FD.NAME)
@@ -85,17 +85,16 @@ class ProcessorServiceImpl implements ProcessorService, Clearable {
 //    }
 
     private Integer get(final Integer processorId, final String pipelineUuid) {
-        StrmProcessorRecord record = cache.get(processorId);
+        StreamProcessorRecord record = cache.get(processorId);
         if (record != null) {
             return record.getId();
         }
 
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-
-            record = create
-                    .selectFrom(STRM_PROCESSOR)
-                    .where(STRM_PROCESSOR.PROCESSOR_ID.eq(processorId))
+            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
+            record = context
+                    .selectFrom(STREAM_PROCESSOR)
+                    .where(STREAM_PROCESSOR.PROCESSOR_ID.eq(processorId))
                     .fetchOne();
 
         } catch (final SQLException e) {
@@ -113,17 +112,16 @@ class ProcessorServiceImpl implements ProcessorService, Clearable {
 
     private Integer create(final int processorId, final String pipelineUuid) {
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-
-            final StrmProcessorRecord record = create
-                    .insertInto(STRM_PROCESSOR, STRM_PROCESSOR.PROCESSOR_ID, STRM_PROCESSOR.PIPE_UUID)
+            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
+            final StreamProcessorRecord record = context
+                    .insertInto(STREAM_PROCESSOR, STREAM_PROCESSOR.PROCESSOR_ID, STREAM_PROCESSOR.PIPELINE_UUID)
                     .values(processorId, pipelineUuid)
-                    .returning(STRM_FEED.ID)
+                    .returning(STREAM_FEED.ID)
                     .fetchOne();
             cache.put(processorId, record);
             return record.getId();
 
-        } catch (final SQLException e) {
+        } catch (final SQLException | RuntimeException e) {
             // Expect errors in the case of duplicate names.
             LOGGER.debug(e.getMessage(), e);
         }

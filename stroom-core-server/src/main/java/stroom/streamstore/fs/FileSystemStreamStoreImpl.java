@@ -35,8 +35,7 @@ import stroom.streamstore.meta.api.Stream;
 import stroom.streamstore.meta.api.StreamMetaService;
 import stroom.streamstore.meta.api.StreamProperties;
 import stroom.streamstore.meta.api.StreamStatus;
-import stroom.streamstore.meta.db.StreamAttributeValueFlush;
-import stroom.streamstore.shared.StreamAttributeConstants;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.io.FileUtil;
 
@@ -70,20 +69,16 @@ public class FileSystemStreamStoreImpl implements StreamStore {
     private final VolumeService volumeService;
     private final StreamVolumeService streamVolumeService;
 
-    private final StreamAttributeValueFlush streamAttributeValueFlush;
-
     @Inject
     FileSystemStreamStoreImpl(final FileSystemStreamPathHelper fileSystemStreamPathHelper,
                               final StreamMetaService streamMetaService,
                               final NodeCache nodeCache,
                               final VolumeService volumeService,
-                              final StreamAttributeValueFlush streamAttributeValueFlush,
                               final StreamVolumeService streamVolumeService) {
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.streamMetaService = streamMetaService;
         this.nodeCache = nodeCache;
         this.volumeService = volumeService;
-        this.streamAttributeValueFlush = streamAttributeValueFlush;
         this.streamVolumeService = streamVolumeService;
     }
 
@@ -146,10 +141,10 @@ public class FileSystemStreamStoreImpl implements StreamStore {
             streamCloseException = e;
         }
 
-        updateAttribute(streamTarget, StreamAttributeConstants.STREAM_SIZE,
+        updateAttribute(streamTarget, StreamDataSource.STREAM_SIZE,
                 String.valueOf(((FileSystemStreamTarget) streamTarget).getStreamSize()));
 
-        updateAttribute(streamTarget, StreamAttributeConstants.FILE_SIZE,
+        updateAttribute(streamTarget, StreamDataSource.FILE_SIZE,
                 String.valueOf(((FileSystemStreamTarget) streamTarget).getTotalFileSize()));
 
         try {
@@ -186,7 +181,7 @@ public class FileSystemStreamStoreImpl implements StreamStore {
             // Unlock will update the meta data so set it back on the stream
             // target so the client has the up to date copy
             ((FileSystemStreamTarget) streamTarget).setMetaData(
-                    unLock(streamTarget.getStream(), streamTarget.getAttributeMap(), streamTarget.isAppend()));
+                    unLock(streamTarget.getStream(), streamTarget.getAttributeMap()));
         } else {
             throw new UncheckedIOException(streamCloseException);
         }
@@ -323,18 +318,18 @@ public class FileSystemStreamStoreImpl implements StreamStore {
     }
 
     private void syncAttributes(final Stream stream, final Stream dbStream, final FileSystemStreamTarget target) {
-        updateAttribute(target, StreamAttributeConstants.STREAM_ID, String.valueOf(dbStream.getId()));
+        updateAttribute(target, StreamDataSource.STREAM_ID, String.valueOf(dbStream.getId()));
 
         if (dbStream.getParentStreamId() != null) {
-            updateAttribute(target, StreamAttributeConstants.PARENT_STREAM_ID,
+            updateAttribute(target, StreamDataSource.PARENT_STREAM_ID,
                     String.valueOf(dbStream.getParentStreamId()));
         }
 
-        updateAttribute(target, StreamAttributeConstants.FEED, dbStream.getFeedName());
-        updateAttribute(target, StreamAttributeConstants.STREAM_TYPE, dbStream.getStreamTypeName());
-        updateAttribute(target, StreamAttributeConstants.CREATE_TIME, DateUtil.createNormalDateTimeString(stream.getCreateMs()));
+        updateAttribute(target, StreamDataSource.FEED, dbStream.getFeedName());
+        updateAttribute(target, StreamDataSource.STREAM_TYPE, dbStream.getStreamTypeName());
+        updateAttribute(target, StreamDataSource.CREATE_TIME, DateUtil.createNormalDateTimeString(stream.getCreateMs()));
         if (stream.getEffectiveMs() != null) {
-            updateAttribute(target, StreamAttributeConstants.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(stream.getEffectiveMs()));
+            updateAttribute(target, StreamDataSource.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(stream.getEffectiveMs()));
         }
     }
 
@@ -344,7 +339,7 @@ public class FileSystemStreamStoreImpl implements StreamStore {
         }
     }
 
-    private Stream unLock(final Stream stream, final MetaMap metaMap, final boolean append) {
+    private Stream unLock(final Stream stream, final Map<String, String> metaMap) {
         if (StreamStatus.UNLOCKED.equals(stream.getStatus())) {
             throw new IllegalStateException("Attempt to unlock a stream that is already unlocked");
         }
@@ -352,7 +347,7 @@ public class FileSystemStreamStoreImpl implements StreamStore {
         // Write the child meta data
         if (!metaMap.isEmpty()) {
             try {
-                streamAttributeValueFlush.persitAttributes(stream, append, metaMap);
+                streamMetaService.addAttributes(stream, metaMap);
             } catch (final RuntimeException e) {
                 LOGGER.error("unLock() - Failed to persist attributes in new transaction... will ignore");
             }

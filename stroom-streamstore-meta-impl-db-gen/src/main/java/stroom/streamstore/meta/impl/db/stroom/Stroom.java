@@ -15,12 +15,12 @@ import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
 import stroom.streamstore.meta.impl.db.DefaultCatalog;
+import stroom.streamstore.meta.impl.db.stroom.tables.MetaKey;
+import stroom.streamstore.meta.impl.db.stroom.tables.MetaNumericValue;
+import stroom.streamstore.meta.impl.db.stroom.tables.StreamFeed;
+import stroom.streamstore.meta.impl.db.stroom.tables.StreamProcessor;
+import stroom.streamstore.meta.impl.db.stroom.tables.StreamType;
 import stroom.streamstore.meta.impl.db.stroom.tables.Strm;
-import stroom.streamstore.meta.impl.db.stroom.tables.StrmAtrKey;
-import stroom.streamstore.meta.impl.db.stroom.tables.StrmAtrVal;
-import stroom.streamstore.meta.impl.db.stroom.tables.StrmFeed;
-import stroom.streamstore.meta.impl.db.stroom.tables.StrmProcessor;
-import stroom.streamstore.meta.impl.db.stroom.tables.StrmType;
 
 
 /**
@@ -36,7 +36,7 @@ import stroom.streamstore.meta.impl.db.stroom.tables.StrmType;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Stroom extends SchemaImpl {
 
-    private static final long serialVersionUID = 848561374;
+    private static final long serialVersionUID = -319419674;
 
     /**
      * The reference instance of <code>stroom</code>
@@ -44,34 +44,34 @@ public class Stroom extends SchemaImpl {
     public static final Stroom STROOM = new Stroom();
 
     /**
+     * The table <code>stroom.meta_key</code>.
+     */
+    public final MetaKey META_KEY = stroom.streamstore.meta.impl.db.stroom.tables.MetaKey.META_KEY;
+
+    /**
+     * The table <code>stroom.meta_numeric_value</code>.
+     */
+    public final MetaNumericValue META_NUMERIC_VALUE = stroom.streamstore.meta.impl.db.stroom.tables.MetaNumericValue.META_NUMERIC_VALUE;
+
+    /**
+     * The table <code>stroom.stream_feed</code>.
+     */
+    public final StreamFeed STREAM_FEED = stroom.streamstore.meta.impl.db.stroom.tables.StreamFeed.STREAM_FEED;
+
+    /**
+     * The table <code>stroom.stream_processor</code>.
+     */
+    public final StreamProcessor STREAM_PROCESSOR = stroom.streamstore.meta.impl.db.stroom.tables.StreamProcessor.STREAM_PROCESSOR;
+
+    /**
+     * The table <code>stroom.stream_type</code>.
+     */
+    public final StreamType STREAM_TYPE = stroom.streamstore.meta.impl.db.stroom.tables.StreamType.STREAM_TYPE;
+
+    /**
      * The table <code>stroom.STRM</code>.
      */
     public final Strm STRM = stroom.streamstore.meta.impl.db.stroom.tables.Strm.STRM;
-
-    /**
-     * The table <code>stroom.STRM_ATR_KEY</code>.
-     */
-    public final StrmAtrKey STRM_ATR_KEY = stroom.streamstore.meta.impl.db.stroom.tables.StrmAtrKey.STRM_ATR_KEY;
-
-    /**
-     * The table <code>stroom.STRM_ATR_VAL</code>.
-     */
-    public final StrmAtrVal STRM_ATR_VAL = stroom.streamstore.meta.impl.db.stroom.tables.StrmAtrVal.STRM_ATR_VAL;
-
-    /**
-     * The table <code>stroom.STRM_FEED</code>.
-     */
-    public final StrmFeed STRM_FEED = stroom.streamstore.meta.impl.db.stroom.tables.StrmFeed.STRM_FEED;
-
-    /**
-     * The table <code>stroom.STRM_PROCESSOR</code>.
-     */
-    public final StrmProcessor STRM_PROCESSOR = stroom.streamstore.meta.impl.db.stroom.tables.StrmProcessor.STRM_PROCESSOR;
-
-    /**
-     * The table <code>stroom.STRM_TYPE</code>.
-     */
-    public final StrmType STRM_TYPE = stroom.streamstore.meta.impl.db.stroom.tables.StrmType.STRM_TYPE;
 
     /**
      * No further instances allowed
@@ -98,11 +98,11 @@ public class Stroom extends SchemaImpl {
 
     private final List<Table<?>> getTables0() {
         return Arrays.<Table<?>>asList(
-            Strm.STRM,
-            StrmAtrKey.STRM_ATR_KEY,
-            StrmAtrVal.STRM_ATR_VAL,
-            StrmFeed.STRM_FEED,
-            StrmProcessor.STRM_PROCESSOR,
-            StrmType.STRM_TYPE);
+            MetaKey.META_KEY,
+            MetaNumericValue.META_NUMERIC_VALUE,
+            StreamFeed.STREAM_FEED,
+            StreamProcessor.STREAM_PROCESSOR,
+            StreamType.STREAM_TYPE,
+            Strm.STRM);
     }
 }

@@ -1,9 +1,10 @@
 package stroom.streamstore.meta.db;
 
 import com.google.inject.Guice;
-import com.google.inject.Injector;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import stroom.entity.shared.BaseResultList;
+import stroom.properties.impl.mock.MockPropertyModule;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -15,29 +16,37 @@ import stroom.streamstore.meta.api.StreamMetaService;
 import stroom.streamstore.meta.api.StreamProperties;
 import stroom.streamstore.shared.StreamDataSource;
 
+import javax.inject.Inject;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestStreamMetaServiceImpl {
-    @Test
-    void testJooq() {
-        final Injector injector = Guice.createInjector(new StreamStoreDBMetaModule(), new MockSecurityContextModule());
-        StreamMetaService service = injector.getInstance(StreamMetaService.class);
+    @Inject
+    private StreamMetaServiceImpl streamMetaService;
 
+    @BeforeEach
+    void setup() {
+        Guice.createInjector(new StreamStoreMetaDbModule(), new MockSecurityContextModule(), new MockPropertyModule()).injectMembers(this);
+    }
+
+    @Test
+    void test() {
         // Delete everything
-        service.findDelete(new FindStreamCriteria());
-        final Stream stream1 = service.createStream(createProperties("FEED1"));
-        final Stream stream2 = service.createStream(createProperties("FEED2"));
+        streamMetaService.deleteAll();
+
+        final Stream stream1 = streamMetaService.createStream(createProperties("FEED1"));
+        final Stream stream2 = streamMetaService.createStream(createProperties("FEED2"));
 
         final ExpressionOperator expression = new Builder(Op.AND)
                 .addTerm(StreamDataSource.STREAM_ID, Condition.EQUALS, String.valueOf(stream2.getId()))
                 .build();
         final FindStreamCriteria criteria = new FindStreamCriteria(expression);
 
-        final BaseResultList<Stream> streams = service.find(criteria);
+        final BaseResultList<Stream> streams = streamMetaService.find(criteria);
 
         assertThat(streams.size()).isEqualTo(1);
 
-        int deleted = service.findDelete(new FindStreamCriteria());
+        int deleted = streamMetaService.findDelete(new FindStreamCriteria());
         assertThat(deleted).isEqualTo(2);
     }
 

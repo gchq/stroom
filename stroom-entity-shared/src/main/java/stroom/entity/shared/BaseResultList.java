@@ -94,7 +94,7 @@ public class BaseResultList<T extends SharedObject> extends SharedList<T>impleme
      */
     public static <T extends SharedObject> BaseResultList<T> createCriterialBasedList(final List<T> realList,
             final BaseCriteria baseCriteria) {
-        return createCriterialBasedList(realList, baseCriteria, null);
+        return createPageResultList(realList, baseCriteria.getPageRequest(), null);
     }
 
     /**
@@ -102,16 +102,25 @@ public class BaseResultList<T extends SharedObject> extends SharedList<T>impleme
      */
     public static <T extends SharedObject> BaseResultList<T> createCriterialBasedList(final List<T> realList,
             final BaseCriteria baseCriteria, final Long totalSize) {
-        final boolean limited = baseCriteria.getPageRequest() != null
-                && baseCriteria.getPageRequest().getLength() != null;
+        return createPageResultList(realList, baseCriteria.getPageRequest(), totalSize);
+    }
+
+    /**
+     * Used for filter queries (maybe bounded).
+     */
+    public static <T extends SharedObject> BaseResultList<T> createPageResultList(final List<T> realList,
+                                                                                      final PageRequest pageRequest,
+                                                                                      final Long totalSize) {
+        final boolean limited =pageRequest != null
+                && pageRequest.getLength() != null;
         boolean moreToFollow = false;
         Long calulatedTotalSize = totalSize;
         long offset = 0;
-        if (baseCriteria.getPageRequest() != null && baseCriteria.getPageRequest().getOffset() != null) {
-            offset = baseCriteria.getPageRequest().getOffset();
+        if (pageRequest != null && pageRequest.getOffset() != null) {
+            offset = pageRequest.getOffset();
         }
         if (limited) {
-            if (realList.size() > (baseCriteria.getPageRequest().getLength() + 1)) {
+            if (realList.size() > (pageRequest.getLength() + 1)) {
                 // Here we check that if the query was supposed to be limited
                 // make sure we have
                 // get to process more that 1 + that limit. If this fails it
@@ -127,9 +136,9 @@ public class BaseResultList<T extends SharedObject> extends SharedList<T>impleme
         if (totalSize == null && limited) {
             // All our queries are + 1 on the limit so that we know there is
             // more to come
-            moreToFollow = realList.size() > baseCriteria.getPageRequest().getLength();
+            moreToFollow = realList.size() > pageRequest.getLength();
             if (!moreToFollow) {
-                calulatedTotalSize = baseCriteria.getPageRequest().getOffset() + realList.size();
+                calulatedTotalSize = pageRequest.getOffset() + realList.size();
             }
         }
 
@@ -143,6 +152,7 @@ public class BaseResultList<T extends SharedObject> extends SharedList<T>impleme
         }
         return results;
     }
+
 
     public PageResponse getPageResponse() {
         return pageResponse;

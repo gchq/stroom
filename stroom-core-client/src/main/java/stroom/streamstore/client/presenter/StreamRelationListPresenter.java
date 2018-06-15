@@ -32,11 +32,10 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.meta.api.FindStreamCriteria;
 import stroom.streamstore.meta.api.Stream;
 import stroom.streamstore.meta.api.StreamStatus;
-import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
-import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamDataRow;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.util.shared.Expander;
+import stroom.util.shared.ModelStringUtil;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 
 import java.util.ArrayList;
@@ -70,10 +69,9 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
             }
             builder.addTerm(StreamDataSource.STREAM_ID, Condition.EQUALS, String.valueOf(streamAttributeMap.getStream().getId()));
 
-            final FindStreamAttributeMapCriteria criteria = new FindStreamAttributeMapCriteria();
-            final FindStreamCriteria findStreamCriteria = criteria.obtainFindStreamCriteria();
-            findStreamCriteria.setExpression(builder.build());
-            findStreamCriteria.setSort(StreamDataSource.CREATE_TIME, Direction.ASCENDING, false);
+            final FindStreamCriteria criteria = new FindStreamCriteria();
+            criteria.setExpression(builder.build());
+            criteria.setSort(StreamDataSource.CREATE_TIME, Direction.ASCENDING, false);
 
             setCriteria(criteria);
         }
@@ -164,15 +162,17 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
         addFeedColumn();
         addPipelineColumn();
 
-        addAttributeColumn("Raw", StreamAttributeConstants.STREAM_SIZE, ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Disk", StreamAttributeConstants.FILE_SIZE, ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Read", StreamAttributeConstants.REC_READ, ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Write", StreamAttributeConstants.REC_WRITE, ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Fatal", StreamAttributeConstants.REC_FATAL, 40);
-        addAttributeColumn("Error", StreamAttributeConstants.REC_ERROR, 40);
-        addAttributeColumn("Warn", StreamAttributeConstants.REC_WARN, 40);
-        addAttributeColumn("Info", StreamAttributeConstants.REC_INFO, 40);
-        addAttributeColumn("Retention", StreamAttributeConstants.RETENTION_AGE, ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Raw", StreamDataSource.STREAM_SIZE, v -> ModelStringUtil.formatIECByteSizeString(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Disk", StreamDataSource.FILE_SIZE, v -> ModelStringUtil.formatIECByteSizeString(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Read", StreamDataSource.REC_READ, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Write", StreamDataSource.REC_WRITE, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Fatal", StreamDataSource.REC_FATAL, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
+        addAttributeColumn("Error", StreamDataSource.REC_ERROR, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
+        addAttributeColumn("Warn", StreamDataSource.REC_WARN, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
+        addAttributeColumn("Info", StreamDataSource.REC_INFO, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
+
+        // TODO : @66 Add data retention column back into the table.
+//        addAttributeColumn("Retention", StreamAttributeConstants.RETENTION_AGE, ColumnSizeConstants.SMALL_COL);
 
         getView().addEndColumn(new EndColumn<>());
     }

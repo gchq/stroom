@@ -33,6 +33,7 @@ dependencies {
 
     testCompile project(':stroom-security-impl-mock')
     testCompile project(':stroom-streamstore-meta-impl-mock')
+    testCompile project(':stroom-properties-impl-mock')
     testCompile project(':stroom-test-common')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')

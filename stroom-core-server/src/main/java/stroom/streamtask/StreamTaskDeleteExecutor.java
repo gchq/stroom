@@ -19,10 +19,11 @@ package stroom.streamtask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.Period;
 import stroom.entity.util.SqlBuilder;
 import stroom.jobsystem.ClusterLockService;
-import stroom.jobsystem.JobTrackedSchedule;
+import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.properties.StroomPropertyService;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.ProcessorFilter;
@@ -49,6 +50,7 @@ class StreamTaskDeleteExecutor extends AbstractBatchDeleteExecutor {
 
     private final StreamTaskCreatorImpl streamTaskCreator;
     private final StreamProcessorFilterService streamProcessorFilterService;
+    private final StroomEntityManager stroomEntityManager;
 
     @Inject
     StreamTaskDeleteExecutor(final BatchIdTransactionHelper batchIdTransactionHelper,
@@ -56,12 +58,14 @@ class StreamTaskDeleteExecutor extends AbstractBatchDeleteExecutor {
                              final StroomPropertyService propertyService,
                              final TaskContext taskContext,
                              final StreamTaskCreatorImpl streamTaskCreator,
-                             final StreamProcessorFilterService streamProcessorFilterService) {
+                             final StreamProcessorFilterService streamProcessorFilterService,
+                             final StroomEntityManager stroomEntityManager) {
         super(batchIdTransactionHelper, clusterLockService, propertyService, taskContext, TASK_NAME, LOCK_NAME,
                 STREAM_TASKS_DELETE_AGE_PROPERTY, STREAM_TASKS_DELETE_BATCH_SIZE_PROPERTY,
                 DEFAULT_STREAM_TASK_DELETE_BATCH_SIZE, TEMP_STRM_TASK_ID_TABLE);
         this.streamTaskCreator = streamTaskCreator;
         this.streamProcessorFilterService = streamProcessorFilterService;
+        this.stroomEntityManager = stroomEntityManager;
     }
 
     @StroomFrequencySchedule("1m")
@@ -99,7 +103,7 @@ class StreamTaskDeleteExecutor extends AbstractBatchDeleteExecutor {
     }
 
     @Override
-    protected SqlBuilder getTempIdSelectSql(final long age, final int batchSize) {
+    protected List<Long> getDeleteIdList(final long age, final int batchSize) {
         final SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT ");
         sql.append(ProcessorFilterTask.ID);
@@ -122,7 +126,7 @@ class StreamTaskDeleteExecutor extends AbstractBatchDeleteExecutor {
         sql.append(ProcessorFilterTask.ID);
         sql.append(" LIMIT ");
         sql.arg(batchSize);
-        return sql;
+        return stroomEntityManager.executeNativeQueryResultList(sql);
     }
 
     private void deleteOldFilters(final long age) {

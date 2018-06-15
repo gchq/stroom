@@ -26,6 +26,8 @@ import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 public abstract class AbstractBatchDeleteExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractBatchDeleteExecutor.class);
@@ -146,13 +148,13 @@ public abstract class AbstractBatchDeleteExecutor {
     private long insertIntoTempIdTable(final long age, final int batchSize, final long total) {
         info("Inserting ids for deletion into temp id table (total={})", total);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        final SqlBuilder sql = getTempIdSelectSql(age, batchSize);
-        final long count = batchIdTransactionHelper.insertIntoTempIdTable(tempIdTable, sql);
+        final List<Long> idList = getDeleteIdList(age, batchSize);
+        final long count = batchIdTransactionHelper.insertIntoTempIdTable(tempIdTable, idList);
         LOGGER.debug("Inserted {} ids in {}", count, logExecutionTime);
         return count;
     }
 
-    protected abstract SqlBuilder getTempIdSelectSql(final long age, final int batchSize);
+    protected abstract List<Long> getDeleteIdList(final long age, final int batchSize);
 
     protected final void deleteWithJoin(final String fromTable, final String fromColumn, final String type,
                                         final long total) {

@@ -35,6 +35,7 @@ dependencies {
     integrationTestCompile project(':stroom-util')
     integrationTestCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     integrationTestCompile project(':stroom-security-impl-mock')
+    integrationTestCompile project(':stroom-properties-impl-mock')
     integrationTestCompile project(':stroom-streamstore-meta-impl-mock')
 
     integrationTestCompile libs.slf4j_api

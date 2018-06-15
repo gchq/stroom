@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.entity.cluster.ClearServiceClusterTask;
 import stroom.entity.shared.Period;
-import stroom.jobsystem.JobTrackedSchedule;
 import stroom.jobsystem.shared.JobManager;
 import stroom.node.NodeService;
 import stroom.node.shared.FindNodeCriteria;
@@ -39,10 +38,7 @@ import stroom.streamstore.meta.api.FindStreamCriteria;
 import stroom.streamstore.meta.api.Stream;
 import stroom.streamstore.meta.api.StreamMetaService;
 import stroom.streamstore.meta.api.StreamStatus;
-import stroom.streamstore.meta.db.StreamAttributeMapService;
-import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
 import stroom.streamstore.shared.QueryData;
-import stroom.streamstore.shared.StreamAttributeConstants;
 import stroom.streamstore.shared.StreamDataRow;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamTypeNames;
@@ -60,6 +56,7 @@ import stroom.task.TaskManager;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.util.date.DateUtil;
+import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.Task;
@@ -88,7 +85,6 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final StreamProcessorService streamProcessorService;
     private final ClusterDispatchAsyncHelper dispatchHelper;
-    private final StreamAttributeMapService streamAttributeMapService;
     private final StreamMetaService streamMetaService;
     private final JobManager jobManager;
     private final NodeService nodeService;
@@ -112,7 +108,6 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                              final StreamProcessorFilterService streamProcessorFilterService,
                              final StreamProcessorService streamProcessorService,
                              final ClusterDispatchAsyncHelper dispatchHelper,
-                             final StreamAttributeMapService streamAttributeMapService,
                              final JobManager jobManager,
                              final NodeService nodeService,
                              final TaskManager taskManager,
@@ -123,7 +118,6 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
         this.streamProcessorFilterService = streamProcessorFilterService;
         this.streamProcessorService = streamProcessorService;
         this.dispatchHelper = dispatchHelper;
-        this.streamAttributeMapService = streamAttributeMapService;
         this.streamMetaService = streamMetaService;
         this.jobManager = jobManager;
         this.nodeService = nodeService;
@@ -467,10 +461,8 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                         .build())
                 .build();
 
-        final FindStreamAttributeMapCriteria criteria = new FindStreamAttributeMapCriteria();
-        criteria.obtainFindStreamCriteria().setExpression(expression);
-
-        final List<StreamDataRow> processedStreams = streamAttributeMapService.find(criteria);
+        final FindStreamCriteria criteria = new FindStreamCriteria(expression);
+        final List<StreamDataRow> processedStreams = streamMetaService.findRows(criteria);
 
         final long nowMs = System.currentTimeMillis();
 
@@ -482,9 +474,9 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
             final Period nodePeriod = new Period();
 
             for (final StreamDataRow processedStream : processedStreams) {
-                if (node.getName().equals(processedStream.getAttributeValue(StreamAttributeConstants.NODE))) {
-                    nodeWritten += getLong(processedStream, StreamAttributeConstants.REC_WRITE);
-                    nodeError += getLong(processedStream, StreamAttributeConstants.REC_ERROR);
+                if (node.getName().equals(processedStream.getAttributeValue(StreamDataSource.NODE))) {
+                    nodeWritten += getLong(processedStream, StreamDataSource.REC_WRITE);
+                    nodeError += getLong(processedStream, StreamDataSource.REC_ERROR);
 
                     checkPeriod(nodePeriod, processedStream);
                 }
@@ -512,7 +504,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 
     private void checkPeriod(final Period period, final StreamDataRow processedStream) {
         final long streamStartMs = processedStream.getStream().getCreateMs();
-        final long streamDuration = getLong(processedStream, StreamAttributeConstants.DURATION);
+        final long streamDuration = getLong(processedStream, StreamDataSource.DURATION);
         final long streamEndMs = streamStartMs + streamDuration;
 
         if (period.getFromMs() == null) {

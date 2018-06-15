@@ -21,6 +21,7 @@ import stroom.entity.StroomEntityManager;
 import stroom.entity.util.SqlBuilder;
 
 import javax.inject.Inject;
+import java.util.List;
 
 
 // @Transactional
@@ -56,17 +57,22 @@ public class BatchIdTransactionHelper {
         return executeUpdate(sql);
     }
 
-    public long insertIntoTempIdTable(final String tempIdTable, final SqlBuilder select) {
+    public long insertIntoTempIdTable(final String tempIdTable, final List<Long> idList) {
         final SqlBuilder sql = new SqlBuilder();
-
-        // TODO : @66 FIX TEMP TABLE CREATION IN THE NEW STREAM META SERVICE WORLD
-
         sql.append("INSERT INTO ");
         sql.append(tempIdTable);
-        sql.append(" (");
-//        sql.append(StreamEntity.ID);
+        sql.append(" (ID)");
         sql.append(") ");
-        sql.append(select);
+        sql.append("(");
+
+        if (idList.size() > 0) {
+            for (Long id : idList) {
+                sql.arg(id);
+                sql.append(",");
+            }
+            sql.setLength(sql.length() - 1);
+            sql.append(")");
+        }
 
         if (stroomDatabaseInfo.isMysql()) {
             return executeUpdate(sql);
