@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 
 import { Icon } from 'semantic-ui-react';
 
-import { compose, withState, branch, renderComponent } from 'recompose';
+import { compose, lifecycle, withState, branch, renderComponent } from 'recompose';
 import { connect } from 'react-redux';
 import { Loader } from 'semantic-ui-react';
 
@@ -31,10 +31,11 @@ import { ElementPalette } from './ElementPalette';
 import RecycleBin from './RecycleBin';
 
 import lineElementCreators from './pipelineLineElementCreators';
-
 import { isActive } from './pipelineUtils';
-
 import { ElementDetails } from './ElementDetails';
+
+import { fetchPipeline } from './pipelineResourceClient';
+import { fetchElements, fetchElementProperties } from './elementResourceClient';
 
 const HORIZONTAL_SPACING = 150;
 const VERTICAL_SPACING = 50;
@@ -55,16 +56,6 @@ const PipelineEditor = ({
   setPaletteOpen,
   elementsByCategory,
 }) => {
-  if (!pipeline) {
-    return <div>Awaiting pipeline</div>;
-  }
-  if (!pipeline.pipeline) {
-    return <div>Awaiting Pipeline Data</div>
-  }
-  if (!layoutInformation) {
-    return <div>Awaiting layout information</div>
-  }
-
   const togglePaletteOpen = () => setPaletteOpen(!isPaletteOpen);
 
   const elementStyles = mapObject(layoutInformation, l => ({
@@ -132,16 +123,23 @@ const PipelineEditor = ({
 
 PipelineEditor.propTypes = {
   // Set by owner
+  fetchElementsFromServer: PropTypes.bool.isRequired,
+  fetchPipelineFromServer: PropTypes.bool.isRequired,
   pipelineId: PropTypes.string.isRequired,
 
   // redux state
-  pipeline: PropTypes.object,
-  layoutInformation: PropTypes.object,
+  pipeline: PropTypes.object.isRequired,
+  layoutInformation: PropTypes.object.isRequired,
   elementsByCategory: PropTypes.object.isRequired,
 
   // withPaletteOpen
   isPaletteOpen: PropTypes.bool.isRequired,
   setPaletteOpen: PropTypes.func.isRequired,
+};
+
+PipelineEditor.defaultProps = {
+  fetchPipelineFromServer: false,
+  fetchElementsFromServer: false,
 };
 
 export default compose(
@@ -160,8 +158,31 @@ export default compose(
       };
     },
     {
-      // actions
+      // action, needed by lifecycle hook below
+      fetchPipeline,
+      fetchElements,
+      fetchElementProperties,
     },
+  ),
+  lifecycle({
+    componentDidMount() {
+      if (this.props.fetchElementsFromServer) {
+        this.props.fetchElements();
+        this.props.fetchElementProperties();
+      }
+      if (this.props.fetchPipelineFromServer) {
+        this.props.fetchPipeline(this.props.pipelineId);
+      }
+    },
+  }),
+  branch(props => !props.pipeline, renderComponent(() => <Loader active>Loading Pipeline</Loader>)),
+  branch(
+    props => !props.pipeline.pipeline,
+    renderComponent(() => <Loader active>Loading Pipeline Data</Loader>),
+  ),
+  branch(
+    props => !props.layoutInformation,
+    renderComponent(() => <Loader active>Loading Pipeline Layout Information</Loader>),
   ),
   withPaletteOpen,
 )(PipelineEditor);
