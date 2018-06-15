@@ -28,7 +28,9 @@ import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.serde.Serde;
+import stroom.refdata.offheapstore.BufferPair;
 import stroom.refdata.offheapstore.ByteArrayUtils;
+import stroom.refdata.offheapstore.ByteBufferPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -38,7 +40,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 /**
  * An abstract class representing a generic LMDB table with understanding of how to (de)serialise
@@ -58,8 +59,10 @@ public abstract class AbstractLmdbDb<K, V> {
     protected final String dbName;
     protected final Dbi<ByteBuffer> lmdbDbi;
     protected final Env<ByteBuffer> lmdbEnvironment;
+    protected final ByteBufferPool byteBufferPool;
 
     public AbstractLmdbDb(final Env<ByteBuffer> lmdbEnvironment,
+                          final ByteBufferPool byteBufferPool,
                           final Serde<K> keySerde,
                           final Serde<V> valueSerde,
                           final String dbName) {
@@ -68,6 +71,7 @@ public abstract class AbstractLmdbDb<K, V> {
         this.dbName = dbName;
         this.lmdbEnvironment = lmdbEnvironment;
         this.lmdbDbi = openDbi(lmdbEnvironment, dbName);
+        this.byteBufferPool = byteBufferPool;
     }
 
     public String getDbName() {
@@ -76,6 +80,14 @@ public abstract class AbstractLmdbDb<K, V> {
 
     public Dbi<ByteBuffer> getLmdbDbi() {
         return lmdbDbi;
+    }
+
+    protected ByteBuffer getKeyBufferFromPool() {
+        return byteBufferPool.getBuffer(lmdbEnvironment.getMaxKeySize());
+    }
+
+    protected BufferPair getBufferPairFromPool(int minValueBufferCapacity) {
+        return byteBufferPool.getBufferPair(lmdbEnvironment.getMaxKeySize(), minValueBufferCapacity);
     }
 
     protected Env<ByteBuffer> getLmdbEnvironment() {

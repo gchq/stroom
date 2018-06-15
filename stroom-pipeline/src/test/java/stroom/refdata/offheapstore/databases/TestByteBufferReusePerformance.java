@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.BasicLmdbDb;
 import stroom.refdata.lmdb.LmdbUtils;
 import stroom.refdata.lmdb.serde.Serde;
+import stroom.refdata.offheapstore.ByteBufferPool;
 import stroom.refdata.offheapstore.serdes.StringSerde;
 import stroom.util.ByteSizeUnit;
 import stroom.util.logging.LambdaLogger;
@@ -55,7 +56,7 @@ public class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
     public void setup() {
         super.setup();
 
-        basicLmdbDb = new BasicLmdbDb<>(lmdbEnv, stringSerde, stringSerde, "basicDb");
+        basicLmdbDb = new BasicLmdbDb<>(lmdbEnv, new ByteBufferPool(), stringSerde, stringSerde, "basicDb");
 
         //just to ensure the DB is created and ready to use
         basicLmdbDb.get("xxx");

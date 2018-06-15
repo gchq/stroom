@@ -133,7 +133,7 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
                             pipelineEntity.getVersion(),
                             stream.getId());
 
-                    refDataStore.doWithLoader(refStreamDefinition, stream.getEffectiveMs(), refDataLoader -> {
+                    refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, stream.getEffectiveMs(), refDataLoader -> {
                         refDataLoaderHolder.setRefDataLoader(refDataLoader);
                         // Process the boundary.
                         try {

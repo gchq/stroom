@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Range;
 import stroom.refdata.lmdb.AbstractLmdbDb;
 import stroom.refdata.offheapstore.ByteArrayUtils;
+import stroom.refdata.offheapstore.ByteBufferPool;
 import stroom.refdata.offheapstore.RangeStoreKey;
 import stroom.refdata.offheapstore.UID;
 import stroom.refdata.offheapstore.ValueStoreKey;
@@ -49,10 +50,11 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
 
     @Inject
     public RangeStoreDb(@Assisted final Env<ByteBuffer> lmdbEnvironment,
+                        final ByteBufferPool byteBufferPool,
                         final RangeStoreKeySerde keySerde,
                         final ValueStoreKeySerde valueSerde) {
 
-        super(lmdbEnvironment, keySerde, valueSerde, DB_NAME);
+        super(lmdbEnvironment, byteBufferPool, keySerde, valueSerde, DB_NAME);
     }
 
     /**

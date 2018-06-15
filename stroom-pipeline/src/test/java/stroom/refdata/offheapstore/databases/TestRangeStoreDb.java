@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Range;
 import stroom.refdata.lmdb.LmdbUtils;
+import stroom.refdata.offheapstore.ByteBufferPool;
 import stroom.refdata.offheapstore.RangeStoreKey;
 import stroom.refdata.offheapstore.UID;
 import stroom.refdata.offheapstore.ValueStoreKey;
@@ -68,6 +69,7 @@ public class TestRangeStoreDb extends AbstractLmdbDbTest {
 
         rangeStoreDb = new RangeStoreDb(
                 lmdbEnv,
+                new ByteBufferPool(),
                 new RangeStoreKeySerde(),
                 new ValueStoreKeySerde());
     }

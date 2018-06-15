@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.AbstractLmdbDb;
 import stroom.refdata.lmdb.LmdbUtils;
 import stroom.refdata.offheapstore.ByteArrayUtils;
+import stroom.refdata.offheapstore.ByteBufferPool;
 import stroom.refdata.offheapstore.RefDataValue;
 import stroom.refdata.offheapstore.ValueStoreKey;
 import stroom.refdata.offheapstore.serdes.RefDataValueSerde;
@@ -73,9 +74,10 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
 
     @Inject
     public ValueStoreDb(@Assisted final Env<ByteBuffer> lmdbEnvironment,
+                        final ByteBufferPool byteBufferPool,
                         final ValueStoreKeySerde keySerde,
                         final RefDataValueSerde valueSerde) {
-        super(lmdbEnvironment, keySerde, valueSerde, DB_NAME);
+        super(lmdbEnvironment, byteBufferPool, keySerde, valueSerde, DB_NAME);
         this.keySerde = keySerde;
         this.valueSerde = valueSerde;
     }

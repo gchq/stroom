@@ -6,6 +6,7 @@ import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.LmdbUtils;
+import stroom.refdata.offheapstore.ByteBufferPool;
 import stroom.refdata.offheapstore.RefDataValue;
 import stroom.refdata.offheapstore.StringValue;
 import stroom.refdata.offheapstore.ValueStoreKey;
@@ -41,6 +42,7 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
 
         valueStoreDb = new ValueStoreDb(
                 lmdbEnv,
+                new ByteBufferPool(),
                 new ValueStoreKeySerde(),
                 refDataValueSerde);
     }

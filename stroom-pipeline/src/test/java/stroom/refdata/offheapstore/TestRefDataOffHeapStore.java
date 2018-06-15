@@ -50,6 +50,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -183,28 +184,20 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
         assertThat(refDataStore.getKeyValueEntryCount()).isEqualTo(0);
 
-        boolean didPutSucceed = false;
-        try (RefDataLoader loader = refDataStore.loader(refStreamDefinition, effectiveTimeMs)) {
+        AtomicBoolean didPutSucceed = new AtomicBoolean(false);
+        refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, loader -> {
             loader.initialise(overwriteExisting);
-            didPutSucceed = loader.put(mapDefinition, key, value1);
+
+            didPutSucceed.set(loader.put(mapDefinition, key, value1));
             assertThat(didPutSucceed).isTrue();
-            loader.completeProcessing();
-        }
 
+            didPutSucceed.set(loader.put(mapDefinition, key, value2));
+            assertThat(didPutSucceed.get()).isEqualTo(overwriteExisting);
+
+            loader.completeProcessing();
+        });
         ((RefDataOffHeapStore) refDataStore).logAllContents();
 
-        assertThat((StringValue) refDataStore.getValue(mapDefinition, key).get()).isEqualTo(value1);
-
-        assertThat(refDataStore.getKeyValueEntryCount()).isEqualTo(1);
-
-        try (RefDataLoader loader = refDataStore.loader(refStreamDefinition, effectiveTimeMs)) {
-            loader.initialise(overwriteExisting);
-            didPutSucceed = loader.put(mapDefinition, key, value2);
-            assertThat(didPutSucceed).isEqualTo(overwriteExisting);
-            loader.completeProcessing();
-        }
-
-        ((RefDataOffHeapStore) refDataStore).logAllContents();
         assertThat((StringValue) refDataStore.getValue(mapDefinition, key).get()).isEqualTo(expectedFinalValue);
 
         assertThat(refDataStore.getKeyValueEntryCount()).isEqualTo(1);
@@ -226,25 +219,21 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
         assertThat(refDataStore.getKeyRangeValueEntryCount()).isEqualTo(0);
 
-        boolean didPutSucceed = false;
-        try (RefDataLoader loader = refDataStore.loader(refStreamDefinition, effectiveTimeMs)) {
+        final AtomicBoolean didPutSucceed = new AtomicBoolean(false);
+
+        refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, loader -> {
             loader.initialise(overwriteExisting);
-            didPutSucceed = loader.put(mapDefinition, range, value1);
+
+            didPutSucceed.set(loader.put(mapDefinition, range, value1));
             assertThat(didPutSucceed).isTrue();
+
+            didPutSucceed.set(loader.put(mapDefinition, range, value2));
+
+            // second put for same key, should only succeed if overwriteExisting is enabled
+            assertThat(didPutSucceed.get()).isEqualTo(overwriteExisting);
+
             loader.completeProcessing();
-        }
-
-        ((RefDataOffHeapStore) refDataStore).logAllContents();
-        assertThat((StringValue) refDataStore.getValue(mapDefinition, key).get()).isEqualTo(value1);
-
-        assertThat(refDataStore.getKeyRangeValueEntryCount()).isEqualTo(1);
-
-        try (RefDataLoader loader = refDataStore.loader(refStreamDefinition, effectiveTimeMs)) {
-            loader.initialise(overwriteExisting);
-            didPutSucceed = loader.put(mapDefinition, range, value2);
-            assertThat(didPutSucceed).isEqualTo(overwriteExisting);
-            loader.completeProcessing();
-        }
+        });
 
         ((RefDataOffHeapStore) refDataStore).logAllContents();
         assertThat((StringValue) refDataStore.getValue(mapDefinition, key).get()).isEqualTo(expectedFinalValue);
@@ -317,7 +306,7 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         Runnable loadTask = () -> {
             LOGGER.debug("Running loadTask on thread {}", Thread.currentThread().getName());
             try {
-                refDataStore.doWithLoader(refStreamDefinition, effectiveTimeMs, refDataLoader -> {
+                refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, refDataLoader -> {
                     refDataLoader.setCommitInterval(200);
                     refDataLoader.initialise(false);
 
@@ -346,7 +335,7 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                                 Optional<RefDataValue> optValue = refDataStore.getValue(mapDefinitionKey, "key" + i);
                                 assertThat(optValue.isPresent());
 
-                                optValue = refDataStore.getValue(mapDefinitionKey, Integer.toString((i*10) + 5));
+                                optValue = refDataStore.getValue(mapDefinitionKey, Integer.toString((i * 10) + 5));
                                 assertThat(optValue.isPresent());
                             });
                 }, () -> LambdaLogger.buildMessage("Getting {} entries, twice", recCount));
@@ -393,7 +382,7 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
             final MapDefinition mapDefinitionRange = new MapDefinition(refStreamDefinition, "MyRangeMap");
             LOGGER.debug("Running loadTask on thread {}", Thread.currentThread().getName());
             try {
-                refDataStore.doWithLoader(refStreamDefinition, effectiveTimeMs, refDataLoader -> {
+                refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, refDataLoader -> {
                     refDataLoader.setCommitInterval(200);
                     refDataLoader.initialise(false);
 
@@ -422,7 +411,7 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                                 Optional<RefDataValue> optValue = refDataStore.getValue(mapDefinitionKey, "key" + i);
                                 assertThat(optValue.isPresent());
 
-                                optValue = refDataStore.getValue(mapDefinitionKey, Integer.toString((i*10) + 5));
+                                optValue = refDataStore.getValue(mapDefinitionKey, Integer.toString((i * 10) + 5));
                                 assertThat(optValue.isPresent());
                             });
                 }, () -> LambdaLogger.buildMessage("Getting {} entries, twice", recCount));
@@ -518,9 +507,11 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                         refDataStore.getKeyValueEntryCount(),
                         refDataStore.getKeyRangeValueEntryCount());
 
+                boolean isLoadExpectedToHappen = true;
                 //Same stream def as last time so
                 if (refStreamDefinition.equals(lastRefStreamDefinition.get())) {
                     counter.set(lastCounterStartVal.get());
+                    isLoadExpectedToHappen = false;
                 }
                 lastCounterStartVal.set(counter.get());
 
@@ -531,7 +522,8 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                         overwriteExisting,
                         counter,
                         keyValueLoadedData,
-                        keyRangeValueLoadedData);
+                        keyRangeValueLoadedData,
+                        isLoadExpectedToHappen);
 
 
                 final Tuple2<Long, Long> endEntryCounts = Tuple.of(
@@ -569,23 +561,18 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         // query all values from the key/value store
         keyValueLoadedData.forEach(tuple3 -> {
             // get the proxy object
-            Optional<RefDataValueProxy> optValueProxy = refDataStore.getValueProxy(tuple3._1, tuple3._2);
+            RefDataValueProxy valueProxy = refDataStore.getValueProxy(tuple3._1, tuple3._2);
 
-            assertThat(optValueProxy).isNotEmpty();
 
-            RefDataValue refDataValue = optValueProxy
-                    .flatMap(RefDataValueProxy::supplyValue)
-                    .get();
+            RefDataValue refDataValue = valueProxy.supplyValue().get();
 
             assertThat(refDataValue).isInstanceOf(StringValue.class);
             assertThat((StringValue) refDataValue).isEqualTo(tuple3._3);
 
             // now consume the proxied value in a txn
-            optValueProxy.ifPresent(proxy -> {
-                proxy.consumeBytes(byteBuffer -> {
-                    RefDataValue refDataValue2 = new StringValueSerde().deserialize(byteBuffer);
-                    assertThat(refDataValue2).isEqualTo(tuple3._3);
-                });
+            valueProxy.consumeBytes(byteBuffer -> {
+                RefDataValue refDataValue2 = new StringValueSerde().deserialize(byteBuffer);
+                assertThat(refDataValue2).isEqualTo(tuple3._3);
             });
         });
     }
@@ -612,27 +599,25 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                 LOGGER.debug("range {}, key {}, expected {}", tuple3._2, tuple2._1, tuple2._2);
 
                 // get the proxy object
-                Optional<RefDataValueProxy> optValueProxy = refDataStore.getValueProxy(tuple3._1, tuple2._1);
+                RefDataValueProxy valueProxy = refDataStore.getValueProxy(tuple3._1, tuple2._1);
 
                 boolean isValueExpected = tuple2._2;
-                assertThat(optValueProxy.isPresent()).isEqualTo(isValueExpected);
 
-                if (optValueProxy.isPresent()) {
-                    RefDataValue refDataValue = optValueProxy
-                            .flatMap(RefDataValueProxy::supplyValue)
-                            .get();
 
+                Optional<RefDataValue> optRefDataValue = valueProxy.supplyValue();
+
+                assertThat(optRefDataValue.isPresent()).isEqualTo(isValueExpected);
+
+                optRefDataValue.ifPresent(refDataValue -> {
                     assertThat(refDataValue).isInstanceOf(StringValue.class);
                     assertThat((StringValue) refDataValue).isEqualTo(tuple3._3);
 
-                    // now consume the proxied value in a txn
-                    optValueProxy.ifPresent(proxy -> {
-                        proxy.consumeBytes(byteBuffer -> {
-                            RefDataValue refDataValue2 = new StringValueSerde().deserialize(byteBuffer);
-                            assertThat(refDataValue2).isEqualTo(tuple3._3);
-                        });
+                    valueProxy.consumeBytes(byteBuffer -> {
+                        RefDataValue refDataValue2 = new StringValueSerde().deserialize(byteBuffer);
+                        assertThat(refDataValue2).isEqualTo(tuple3._3);
                     });
-                }
+
+                });
             });
         });
     }
@@ -645,11 +630,12 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
             final boolean overwriteExisting,
             final AtomicInteger counter,
             final List<Tuple3<MapDefinition, String, StringValue>> keyValueLoadedData,
-            final List<Tuple3<MapDefinition, Range<Long>, StringValue>> keyRangeValueLoadedData) throws Exception {
+            final List<Tuple3<MapDefinition, Range<Long>, StringValue>> keyRangeValueLoadedData,
+            final boolean isLoadExpectedToHappen) throws Exception {
 
 
         final int entriesPerMapDef = 1;
-        try (RefDataLoader loader = refDataStore.loader(refStreamDefinition, effectiveTimeMs)) {
+        boolean didLoadHappen = refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, loader -> {
             loader.initialise(overwriteExisting);
             loader.setCommitInterval(commitInterval);
 
@@ -681,7 +667,9 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
             }
 
             loader.completeProcessing();
-        }
+        });
+
+        assertThat(didLoadHappen).isEqualTo(isLoadExpectedToHappen);
 
         RefDataProcessingInfo processingInfo = refDataStore.getProcessingInfo(refStreamDefinition).get();
 

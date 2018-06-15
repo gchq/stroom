@@ -23,6 +23,7 @@ import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.AbstractLmdbDb;
+import stroom.refdata.offheapstore.ByteBufferPool;
 import stroom.refdata.offheapstore.ValueStoreKey;
 import stroom.refdata.offheapstore.serdes.IntegerSerde;
 import stroom.refdata.offheapstore.serdes.ValueStoreKeySerde;
@@ -38,6 +39,7 @@ import java.nio.ByteBuffer;
 // into a new buffer and some values could be large) or use this table which would be a
 // cheaper update but would incur an additional cursor lookup.
 // Leaving it in in case perf testing reveals the cost of copying value bytes is too high.
+@Deprecated
 public class ValueReferenceCountDb extends AbstractLmdbDb<ValueStoreKey, Integer> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ValueReferenceCountDb.class);
@@ -51,10 +53,11 @@ public class ValueReferenceCountDb extends AbstractLmdbDb<ValueStoreKey, Integer
     @Inject
     public ValueReferenceCountDb(
             @Assisted final Env<ByteBuffer> lmdbEnvironment,
+            final ByteBufferPool byteBufferPool,
             final ValueStoreKeySerde keySerde,
             final IntegerSerde valueSerde) {
 
-        super(lmdbEnvironment, keySerde, valueSerde, DB_NAME);
+        super(lmdbEnvironment, byteBufferPool, keySerde, valueSerde, DB_NAME);
         this.keySerde = keySerde;
         this.valueSerde = valueSerde;
     }

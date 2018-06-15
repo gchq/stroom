@@ -61,8 +61,9 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
 
         final MapDefinitionSerde mapDefinitionSerde = new MapDefinitionSerde();
         final UIDSerde uidSerde = new UIDSerde();
-        mapUidForwardDb = new MapUidForwardDb(lmdbEnv, mapDefinitionSerde, uidSerde);
-        mapUidReverseDb = new MapUidReverseDb(lmdbEnv, uidSerde, mapDefinitionSerde);
+        final ByteBufferPool byteBufferPool = new ByteBufferPool();
+        mapUidForwardDb = new MapUidForwardDb(lmdbEnv, byteBufferPool, mapDefinitionSerde, uidSerde);
+        mapUidReverseDb = new MapUidReverseDb(lmdbEnv, byteBufferPool, uidSerde, mapDefinitionSerde);
 
         mapDefinitionUIDStore = new MapDefinitionUIDStore(
                 lmdbEnv,

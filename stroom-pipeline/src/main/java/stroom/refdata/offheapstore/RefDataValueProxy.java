@@ -21,7 +21,6 @@ import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 public class RefDataValueProxy {
 
@@ -48,7 +47,7 @@ public class RefDataValueProxy {
      * should expect to handle this possibility.
      */
     public Optional<RefDataValue> supplyValue() {
-        return null;
+        return refDataStore.getValue(mapDefinition, key);
     }
 
 //    public <T> Optional<T> mapValue(final Function<RefDataValue, T> valueMapper) {
@@ -64,7 +63,7 @@ public class RefDataValueProxy {
 //    }
 
     public void consumeBytes(final Consumer<ByteBuffer> bytesConsumer) {
-//        refDataStore.consumeBytes(valueStoreKey, bytesConsumer);
+        refDataStore.consumeValueBytes(mapDefinition, key, bytesConsumer);
     }
 
     @Override

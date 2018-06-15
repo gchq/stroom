@@ -22,6 +22,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.LmdbUtils;
+import stroom.refdata.offheapstore.ByteBufferPool;
 import stroom.refdata.offheapstore.RefDataProcessingInfo;
 import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.refdata.offheapstore.serdes.RefDataProcessingInfoSerde;
@@ -46,6 +47,7 @@ public class TestProcessingInfoDb extends AbstractLmdbDbTest {
 
         processingInfoDb = new ProcessingInfoDb(
                 lmdbEnv,
+                new ByteBufferPool(),
                 new RefStreamDefinitionSerde(),
                 new RefDataProcessingInfoSerde());
     }

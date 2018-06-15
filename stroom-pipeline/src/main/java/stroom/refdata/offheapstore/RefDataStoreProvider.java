@@ -37,7 +37,9 @@ public class RefDataStoreProvider implements Provider<RefDataStore> {
     public static final String MAX_STORE_SIZE_BYTES_PROP_KEY = "stroom.refloader.offheapstore.maxStoreSize";
     public static final String MAX_READERS_PROP_KEY = "stroom.refloader.offheapstore.maxReaders";
     public static final String MAX_PUTS_BEFORE_COMMIT_PROP_KEY = "stroom.refloader.offheapstore.maxPutsBeforeCommit";
+    public static final String VALUE_BUFFER_CAPACITY_PROP_KEY = "stroom.refloader.offheapstore.valueBufferCapacity";
 
+    public static final int VALUE_BUFFER_CAPACITY_DEFAULT_VALUE = 1_000;
     private static final long MAX_STORE_SIZE_BYTES_DEFAULT = ByteSizeUnit.GIBIBYTE.longBytes(10);
     private static final int MAX_READERS_DEFAULT = 100;
     private static final int MAX_PUTS_BEFORE_COMMIT_DEFAULT = 1000;
@@ -61,7 +63,15 @@ public class RefDataStoreProvider implements Provider<RefDataStore> {
         int maxPutsBeforeCommit = stroomPropertyService.getIntProperty(
                 MAX_PUTS_BEFORE_COMMIT_PROP_KEY, MAX_PUTS_BEFORE_COMMIT_DEFAULT);
 
-        this.refDataStore = refDataOffHeapStoreFactory.create(storeDir, maxStoreSizeBytes, maxReaders, maxPutsBeforeCommit);
+        int valueBufferCapacity = stroomPropertyService.getIntProperty(
+                VALUE_BUFFER_CAPACITY_PROP_KEY, VALUE_BUFFER_CAPACITY_DEFAULT_VALUE);
+
+        this.refDataStore = refDataOffHeapStoreFactory.create(
+                storeDir,
+                maxStoreSizeBytes,
+                maxReaders,
+                maxPutsBeforeCommit,
+                valueBufferCapacity);
     }
 
     @Override

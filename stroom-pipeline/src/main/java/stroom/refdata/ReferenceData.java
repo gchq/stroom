@@ -244,20 +244,26 @@ public class ReferenceData {
                 }
             }
 
-            // TODO do we need to look this up now? Why not just look up the value at the tinybuilder stage
-            // do the lookup to get the proxy for the value
-            final Optional<RefDataValueProxy> optRefDataValueProxy = refDataStore.getValueProxy(
-                    new MapDefinition(refStreamDefinition, mapName),
-                    keyName);
+            // Define a proxy object to allow callers to get the required value from the store
+            // now that we know that the stream that may contain it is in there.
+            final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
+            final RefDataValueProxy refDataValueProxy = refDataStore.getValueProxy(mapDefinition, keyName);
+            result.setRefDataValueProxy(refDataValueProxy);
 
-            if (optRefDataValueProxy.isPresent()) {
-                result.setRefDataValueProxy(optRefDataValueProxy.get());
-                result.log(Severity.INFO, () -> "Found value for context data");
-            } else {
-                result.log(Severity.WARNING, () -> LambdaLogger.buildMessage(
-                        "No value proxy found when we have just loaded it, map {}, key {}",
-                        mapName, keyName));
-            }
+//            // do the lookup to get the proxy for the value
+//            final Optional<RefDataValueProxy> optRefDataValueProxy = refDataStore.getValueProxy(
+//                    new MapDefinition(refStreamDefinition, mapName),
+//                    keyName);
+//            result.setRefDataValueProxy();
+//
+//            if (optRefDataValueProxy.isPresent()) {
+//                result.setRefDataValueProxy(optRefDataValueProxy.get());
+//                result.log(Severity.INFO, () -> "Found value for context data");
+//            } else {
+//                result.log(Severity.WARNING, () -> LambdaLogger.buildMessage(
+//                        "No value proxy found when we have just loaded it, map {}, key {}",
+//                        mapName, keyName));
+//            }
 
             // the data is now in the store so get the value proxy
 
@@ -435,7 +441,7 @@ public class ReferenceData {
 //                    final Optional<RefDataValueProxy> optRefDataValueProxy = refDataStore.getValueProxy(mapDefinition, keyName);
 
                     final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
-                    final RefDataValueProxy refDataValueProxy = new RefDataValueProxy(refDataStore, mapDefinition, keyName);
+                    final RefDataValueProxy refDataValueProxy = refDataStore.getValueProxy(mapDefinition, keyName);
                     result.setRefDataValueProxy(refDataValueProxy);
 
 //                    LOGGER.debug("Lookup for mapDefinition {}, key {}, returned {}", mapDefinition, keyName, optRefDataValueProxy);

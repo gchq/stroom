@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.AbstractLmdbDb;
 import stroom.refdata.offheapstore.ByteArrayUtils;
+import stroom.refdata.offheapstore.ByteBufferPool;
 import stroom.refdata.offheapstore.MapDefinition;
 import stroom.refdata.offheapstore.UID;
 import stroom.refdata.offheapstore.serdes.MapDefinitionSerde;
@@ -46,9 +47,10 @@ public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
 
     @Inject
     public MapUidReverseDb(@Assisted final Env<ByteBuffer> lmdbEnvironment,
+                           final ByteBufferPool byteBufferPool,
                            final UIDSerde keySerde,
                            final MapDefinitionSerde valueSerde) {
-        super(lmdbEnvironment, keySerde, valueSerde, DB_NAME);
+        super(lmdbEnvironment, byteBufferPool, keySerde, valueSerde, DB_NAME);
     }
 
     public Optional<ByteBuffer> getHighestUid(final Txn<ByteBuffer> txn) {

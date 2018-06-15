@@ -33,7 +33,6 @@ import stroom.refdata.offheapstore.databases.MapUidForwardDb;
 import stroom.refdata.offheapstore.databases.MapUidReverseDb;
 import stroom.refdata.offheapstore.databases.ProcessingInfoDb;
 import stroom.refdata.offheapstore.databases.RangeStoreDb;
-import stroom.refdata.offheapstore.databases.ValueReferenceCountDb;
 import stroom.refdata.offheapstore.databases.ValueStoreDb;
 import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.logging.LambdaLogger;
@@ -64,10 +63,12 @@ public class RefDataOffHeapStore implements RefDataStore {
 
     private static final String DATA_RETENTION_AGE_PROP_KEY = "stroom.refloader.offheapstore.deleteAge";
 
+
     private final Path dbDir;
     private final long maxSize;
     private final int maxReaders;
     private final int maxPutsBeforeCommit;
+    private final int valueBufferCapacity;
 
 
     private final Env<ByteBuffer> lmdbEnvironment;
@@ -79,13 +80,15 @@ public class RefDataOffHeapStore implements RefDataStore {
     private final MapUidForwardDb mapUidForwardDb;
     private final MapUidReverseDb mapUidReverseDb;
     private final ProcessingInfoDb processingInfoDb;
-    private final ValueReferenceCountDb valueReferenceCountDb;
+//    private final ValueReferenceCountDb valueReferenceCountDb;
 
     private final MapDefinitionUIDStore mapDefinitionUIDStore;
     private final StroomPropertyService stroomPropertyService;
 
     // For synchronising access to the data belonging to a MapDefinition
     private final Striped<Lock> refStreamDefStripedReentrantLock;
+
+    private final ByteBufferPool byteBufferPool;
 
     /**
      * @param dbDir   The directory the LMDB environment will be created in, it must already exist
@@ -97,19 +100,22 @@ public class RefDataOffHeapStore implements RefDataStore {
             @Assisted final long maxSize,
             @Assisted("maxReaders") final int maxReaders,
             @Assisted("maxPutsBeforeCommit") final int maxPutsBeforeCommit,
+            @Assisted("valueBufferCapacity") final int valueBufferCapacity,
+            final ByteBufferPool byteBufferPool,
             final KeyValueStoreDb.Factory keyValueStoreDbFactory,
             final ValueStoreDb.Factory valueStoreDbFactory,
             final RangeStoreDb.Factory rangeStoreDbFactory,
             final MapUidForwardDb.Factory mapUidForwardDbFactory,
             final MapUidReverseDb.Factory mapUidReverseDbFactory,
             final ProcessingInfoDb.Factory processingInfoDbFactory,
-            final ValueReferenceCountDb.Factory valueReferenceCountDbFactory,
+//            final ValueReferenceCountDb.Factory valueReferenceCountDbFactory,
             final StroomPropertyService stroomPropertyService) {
 
         this.dbDir = dbDir;
         this.maxSize = maxSize;
         this.maxReaders = maxReaders;
         this.maxPutsBeforeCommit = maxPutsBeforeCommit;
+        this.valueBufferCapacity = valueBufferCapacity;
 
         LOGGER.debug("Creating LMDB environment with maxSize: {}, dbDir {}, maxReaders {}",
                 maxSize, dbDir.toAbsolutePath().toString(), maxReaders);
@@ -137,10 +143,11 @@ public class RefDataOffHeapStore implements RefDataStore {
         this.mapUidForwardDb = mapUidForwardDbFactory.create(lmdbEnvironment);
         this.mapUidReverseDb = mapUidReverseDbFactory.create(lmdbEnvironment);
         this.processingInfoDb = processingInfoDbFactory.create(lmdbEnvironment);
-        this.valueReferenceCountDb = valueReferenceCountDbFactory.create(lmdbEnvironment);
+//        this.valueReferenceCountDb = valueReferenceCountDbFactory.create(lmdbEnvironment);
 
         this.mapDefinitionUIDStore = new MapDefinitionUIDStore(lmdbEnvironment, mapUidForwardDb, mapUidReverseDb);
         this.stroomPropertyService = stroomPropertyService;
+        this.byteBufferPool = byteBufferPool;
 
         this.refStreamDefStripedReentrantLock = Striped.lazyWeakLock(100);
     }
@@ -180,15 +187,17 @@ public class RefDataOffHeapStore implements RefDataStore {
     @Override
     public Optional<RefDataValue> getValue(final MapDefinition mapDefinition,
                                            final String key) {
-        throw new RuntimeException("not yet implemented");
-//        return getValueProxy(mapDefinition, key)
-//                .flatMap(RefDataValueProxy::supplyValue);
+
+        //TODO refactor to share the pooled key buffer
+        return byteBufferPool.getWithBuffer(lmdbEnvironment.getMaxKeySize(), keyBuffer ->
+                LmdbUtils.getWithReadTxn(lmdbEnvironment, readTxn ->
+                        getValueStoreKey(readTxn, mapDefinition, key)
+                                .flatMap(valueStoreKey -> valueStoreDb.get(readTxn, valueStoreKey))));
     }
 
-    @Override
-    public Optional<RefDataValue> getValue(final ValueStoreKey valueStoreKey) {
-        return valueStoreDb.get(valueStoreKey);
-    }
+//    public Optional<RefDataValue> getValue(final ValueStoreKey valueStoreKey) {
+//        return valueStoreDb.get(valueStoreKey);
+//    }
 
     @Override
     public RefDataValueProxy getValueProxy(final MapDefinition mapDefinition, final String key) {
@@ -203,7 +212,10 @@ public class RefDataOffHeapStore implements RefDataStore {
         return new RefDataValueProxy(this, mapDefinition, key);
     }
 
-    private Optional<ValueStoreKey> getValueStoreKey(final Txn<ByteBuffer> readTxn, final MapDefinition mapDefinition, final String key) {
+    private Optional<ValueStoreKey> getValueStoreKey(final Txn<ByteBuffer> readTxn,
+                                                     final MapDefinition mapDefinition,
+                                                     final String key) {
+
         final UID mapUid = mapUidForwardDb.get(readTxn, mapDefinition)
                 .orElseThrow(() ->
                         new RuntimeException(LambdaLogger.buildMessage(
@@ -297,19 +309,19 @@ public class RefDataOffHeapStore implements RefDataStore {
      * should be used in a try with resources block to ensure any transactions are closed, e.g.
      * <pre>try (RefDataLoader refDataLoader = refDataOffHeapStore.getLoader(...)) { ... }</pre>
      */
-    @Override
-    public RefDataLoader loader(final RefStreamDefinition refStreamDefinition,
+    RefDataLoader loader(final RefStreamDefinition refStreamDefinition,
                                 final long effectiveTimeMs) {
         //TODO should we pass in an ErrorReceivingProxy so we can log errors with it?
         RefDataLoader refDataLoader = new RefDataLoaderImpl(
                 this,
+                byteBufferPool,
                 refStreamDefStripedReentrantLock,
                 keyValueStoreDb,
                 rangeStoreDb,
                 valueStoreDb,
                 mapDefinitionUIDStore,
                 processingInfoDb,
-                valueReferenceCountDb,
+//                valueReferenceCountDb,
                 lmdbEnvironment,
                 refStreamDefinition,
                 effectiveTimeMs);
@@ -319,10 +331,11 @@ public class RefDataOffHeapStore implements RefDataStore {
     }
 
     @Override
-    public void doWithLoader(final RefStreamDefinition refStreamDefinition,
-                             final long effectiveTimeMs,
-                             final Consumer<RefDataLoader> work) {
+    public boolean doWithLoaderUnlessComplete(final RefStreamDefinition refStreamDefinition,
+                                           final long effectiveTimeMs,
+                                           final Consumer<RefDataLoader> work) {
 
+        boolean result = false;
         try (RefDataLoader refDataLoader = loader(refStreamDefinition, effectiveTimeMs)) {
             // we now hold the lock for this RefStreamDefinition so test the completion state
 
@@ -330,11 +343,13 @@ public class RefDataOffHeapStore implements RefDataStore {
                 LOGGER.debug("Data is already loaded for {}, so doing nothing", refStreamDefinition);
             } else {
                 work.accept(refDataLoader);
+                result = true;
             }
         } catch (Exception e) {
             throw new RuntimeException(LambdaLogger.buildMessage(
                     "Error closing refDataLoader for {}", refStreamDefinition), e);
         }
+        return result;
     }
 
     @Override
@@ -436,7 +451,15 @@ public class RefDataOffHeapStore implements RefDataStore {
         keyValueStoreDb.logDatabaseContents();
         rangeStoreDb.logDatabaseContents();
         valueStoreDb.logDatabaseContents();
-        valueReferenceCountDb.logDatabaseContents();
+//        valueReferenceCountDb.logDatabaseContents();
+    }
+
+    private ByteBuffer getKeyBufferFromPool() {
+        return byteBufferPool.getBuffer(lmdbEnvironment.getMaxKeySize());
+    }
+
+    private BufferPair getBufferPairFromPool() {
+        return byteBufferPool.getBufferPair(lmdbEnvironment.getMaxKeySize(), valueBufferCapacity);
     }
 
 
@@ -452,9 +475,9 @@ public class RefDataOffHeapStore implements RefDataStore {
     public static class RefDataLoaderImpl implements RefDataLoader {
 
 
-
         private Txn<ByteBuffer> writeTxn = null;
         private final RefDataOffHeapStore refDataOffHeapStore;
+        private final ByteBufferPool byteBufferPool;
         private final Lock refStreamDefReentrantLock;
 
         private final KeyValueStoreDb keyValueStoreDb;
@@ -462,7 +485,7 @@ public class RefDataOffHeapStore implements RefDataStore {
         private final ValueStoreDb valueStoreDb;
         private final MapDefinitionUIDStore mapDefinitionUIDStore;
         private final ProcessingInfoDb processingInfoDb;
-        private final ValueReferenceCountDb valueReferenceCountDb;
+//        private final ValueReferenceCountDb valueReferenceCountDb;
 
         private final Env<ByteBuffer> lmdbEnvironment;
         private final RefStreamDefinition refStreamDefinition;
@@ -485,23 +508,25 @@ public class RefDataOffHeapStore implements RefDataStore {
         }
 
         private RefDataLoaderImpl(final RefDataOffHeapStore refDataOffHeapStore,
+                                  final ByteBufferPool byteBufferPool,
                                   final Striped<Lock> refStreamDefStripedReentrantLock,
                                   final KeyValueStoreDb keyValueStoreDb,
                                   final RangeStoreDb rangeStoreDb,
                                   final ValueStoreDb valueStoreDb,
                                   final MapDefinitionUIDStore mapDefinitionUIDStore,
                                   final ProcessingInfoDb processingInfoDb,
-                                  final ValueReferenceCountDb valueReferenceCountDb,
+//                                  final ValueReferenceCountDb valueReferenceCountDb,
                                   final Env<ByteBuffer> lmdbEnvironment,
                                   final RefStreamDefinition refStreamDefinition,
                                   final long effectiveTimeMs) {
 
             this.refDataOffHeapStore = refDataOffHeapStore;
+            this.byteBufferPool = byteBufferPool;
             this.keyValueStoreDb = keyValueStoreDb;
             this.rangeStoreDb = rangeStoreDb;
             this.valueStoreDb = valueStoreDb;
             this.processingInfoDb = processingInfoDb;
-            this.valueReferenceCountDb = valueReferenceCountDb;
+//            this.valueReferenceCountDb = valueReferenceCountDb;
 
             this.mapDefinitionUIDStore = mapDefinitionUIDStore;
             this.lmdbEnvironment = lmdbEnvironment;
@@ -606,6 +631,8 @@ public class RefDataOffHeapStore implements RefDataStore {
             checkCurrentState(LoaderState.INITIALISED);
             beginTxnIfRequired();
 
+
+
             final UID mapUid = getOrCreateUid(mapDefinition);
             final KeyValueStoreKey keyValueStoreKey = new KeyValueStoreKey(mapUid, key);
 
@@ -619,6 +646,8 @@ public class RefDataOffHeapStore implements RefDataStore {
             // of buffer allocation, see info here https://github.com/lmdbjava/lmdbjava/issues/81
             // If the loader holds a key and value ByteBuffer then they can be used for all write ops
             // See TestByteBufferReusePerformance
+
+
 
             boolean didPutSucceed;
             if (optCurrentValueStoreKey.isPresent()) {
@@ -840,6 +869,7 @@ public class RefDataOffHeapStore implements RefDataStore {
                 final Path dbDir,
                 final long maxSize,
                 @Assisted("maxReaders") final int maxReaders,
-                @Assisted("maxPutsBeforeCommit") final int maxPutsBeforeCommit);
+                @Assisted("maxPutsBeforeCommit") final int maxPutsBeforeCommit,
+                @Assisted("valueBufferCapacity") final int valueBufferCapacity);
     }
 }

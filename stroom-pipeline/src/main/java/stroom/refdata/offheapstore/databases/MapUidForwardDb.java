@@ -22,6 +22,7 @@ import org.lmdbjava.Env;
 import org.lmdbjava.Txn;
 import stroom.refdata.lmdb.AbstractLmdbDb;
 import stroom.refdata.offheapstore.ByteArrayUtils;
+import stroom.refdata.offheapstore.ByteBufferPool;
 import stroom.refdata.offheapstore.MapDefinition;
 import stroom.refdata.offheapstore.UID;
 import stroom.refdata.offheapstore.serdes.MapDefinitionSerde;
@@ -38,10 +39,11 @@ public class MapUidForwardDb extends AbstractLmdbDb<MapDefinition, UID> {
 
     @Inject
     public MapUidForwardDb(@Assisted final Env<ByteBuffer> lmdbEnvironment,
+                           final ByteBufferPool byteBufferPool,
                            final MapDefinitionSerde keySerde,
                            final UIDSerde valueSerde) {
 
-        super(lmdbEnvironment, keySerde, valueSerde, DB_NAME);
+        super(lmdbEnvironment, byteBufferPool, keySerde, valueSerde, DB_NAME);
     }
 
     public Optional<ByteBuffer> getUID(final Txn<ByteBuffer> txn, final ByteBuffer keyBuffer) {

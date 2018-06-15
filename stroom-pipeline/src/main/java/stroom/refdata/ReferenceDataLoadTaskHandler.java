@@ -220,7 +220,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                         pipelineEntity.getVersion(),
                         streamHolder.getStream().getId());
 
-                refDataStore.doWithLoader(refStreamDefinition, stream.getEffectiveMs(), refDataLoader -> {
+                refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, stream.getEffectiveMs(), refDataLoader -> {
                     // we are now blocking any other thread loading the same refStreamDefinition
 
                     try {

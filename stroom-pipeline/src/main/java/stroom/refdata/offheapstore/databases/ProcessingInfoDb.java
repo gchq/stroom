@@ -5,6 +5,7 @@ import org.lmdbjava.Env;
 import org.lmdbjava.Txn;
 import stroom.refdata.lmdb.AbstractLmdbDb;
 import stroom.refdata.lmdb.LmdbUtils;
+import stroom.refdata.offheapstore.ByteBufferPool;
 import stroom.refdata.offheapstore.RefDataProcessingInfo;
 import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.refdata.offheapstore.serdes.RefDataProcessingInfoSerde;
@@ -21,10 +22,11 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
 
     @Inject
     public ProcessingInfoDb(@Assisted final Env<ByteBuffer> lmdbEnvironment,
+                            final ByteBufferPool byteBufferPool,
                             final RefStreamDefinitionSerde keySerde,
                             final RefDataProcessingInfoSerde valueSerde) {
 
-        super(lmdbEnvironment, keySerde, valueSerde, DB_NAME);
+        super(lmdbEnvironment, byteBufferPool, keySerde, valueSerde, DB_NAME);
         this.keySerde = keySerde;
         this.valueSerde = valueSerde;
     }

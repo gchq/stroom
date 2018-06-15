@@ -1334,6 +1334,13 @@ public class DefaultProperties {
                 .description("The maximum number of puts into the store before the transaction is committed. There is only one write transaction available long running transactions are not desirable.")
                 .editable(false)
                 .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.refloader.offheapstore.valueBufferCapacity")
+                .value("500000")
+                .description("The size in bytes allocated to the value buffers used in the offheapstore. This should be large enough to accommodate reference data values.")
+                .editable(false)
+                .build());
+
         // ========================================END===========================================
 
         return Collections.unmodifiableList(list);

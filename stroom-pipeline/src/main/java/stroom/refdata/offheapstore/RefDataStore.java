@@ -66,7 +66,7 @@ public interface RefDataStore {
     RefDataValueProxy getValueProxy(final MapDefinition mapDefinition,
                                     final String key);
 
-    Optional<RefDataValue> getValue(final ValueStoreKey valueStoreKey);
+//    Optional<RefDataValue> getValue(final ValueStoreKey valueStoreKey);
 
 
     /**
@@ -106,18 +106,16 @@ public interface RefDataStore {
     <T> Optional<T> mapBytes(final ValueStoreKey valueStoreKey,
                              final Function<ByteBuffer, T> valueMapper);
 
-    RefDataLoader loader(final RefStreamDefinition refStreamDefinition,
-                         final long effectiveTimeMs);
-
     /**
      * Will initiate a new {@link RefDataLoader} for the passed {@link RefStreamDefinition} and effectiveTimeMs.
      * The passed {@link Consumer} will be called with the new {@link RefDataLoader} only if
      * the {@link RefDataProcessingInfo} for the {@link RefStreamDefinition} is not marked as complete. This test
      * will be performed under a lock on the passed {@link RefStreamDefinition}.
+     * @return True if work was executed
      */
-    void doWithLoader(final RefStreamDefinition refStreamDefinition,
-                      final long effectiveTimeMs,
-                      final Consumer<RefDataLoader> work);
+    boolean doWithLoaderUnlessComplete(final RefStreamDefinition refStreamDefinition,
+                                       final long effectiveTimeMs,
+                                       final Consumer<RefDataLoader> work);
 
     long getKeyValueEntryCount();
 
