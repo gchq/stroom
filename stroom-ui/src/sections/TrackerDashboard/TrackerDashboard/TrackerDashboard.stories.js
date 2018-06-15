@@ -26,7 +26,6 @@ import { trackers, generateGenericTracker } from '../tracker.testData';
 import { actionCreators } from '../redux';
 
 const containerStyle = {
-  border: '30px solid green',
   height: '500px',
 };
 
