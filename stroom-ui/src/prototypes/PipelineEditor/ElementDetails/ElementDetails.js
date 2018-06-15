@@ -41,7 +41,7 @@ const ElementDetails = ({
               name={key}
               type={elementTypeProperties[key].type}
               description={elementTypeProperties[key].description}
-              defaultValue={elementTypeProperties[key].defaultValue}
+              defaultValue={parseInt(elementTypeProperties[key].defaultValue, 10)}
               value={elementProperties.find(element => element.name === key)}
             />
           ))}

@@ -1,7 +1,9 @@
 const getActualValue = (value, defaultValue, type) => {
+  // In case the type of the element doesn't not macth the type in the data.
+  type = type === 'int' ? 'integer' : type;
   let actualValue;
   if (value) {
-    actualValue = value[type] || defaultValue;
+    actualValue = value.value[type] || defaultValue;
   } else {
     actualValue = defaultValue;
   }
@@ -21,4 +23,4 @@ const getInitialValues = (elementTypeProperties, elementProperties) => {
   return initialValues;
 };
 
-export { getInitialValues };
+export { getActualValue, getInitialValues };
