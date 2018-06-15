@@ -13,7 +13,11 @@ const actionCreators = createActions({
     pipelineId,
     pipeline,
   }),
-  PIPELINE_ELEMENT_SELECTED: (pipelineId, elementId) => ({ pipelineId, elementId }),
+  PIPELINE_ELEMENT_SELECTED: (pipelineId, elementId, initialValues) => ({
+    pipelineId,
+    elementId,
+    initialValues,
+  }),
   PIPELINE_ELEMENT_MOVED: (pipelineId, itemToMove, destination) => ({
     pipelineId,
     itemToMove,
@@ -50,6 +54,7 @@ const pipelineReducer = handleActions(
       [action.payload.pipelineId]: {
         ...state[action.payload.pipelineId],
         selectedElementId: action.payload.elementId,
+        selectedElementInitialValues: action.payload.initialValues,
       },
     }),
     PIPELINE_ELEMENT_DELETED: (state, action) => ({

@@ -46,18 +46,16 @@ const ElementDetails = ({
               <Header as="h4"> This is a {elementType.type} element</Header>
             </Grid.Row>
             <Form className="element-details__form">
-              {Object.keys(elementTypeProperties).map((key) => {
-                const thingy = elementProperties.find(element => element.name === key);
-                return (
-                  <ElementField
-                    name={key}
-                    type={elementTypeProperties[key].type}
-                    description={elementTypeProperties[key].description}
-                    defaultValue={elementTypeProperties[key].defaultValue}
-                    value={elementProperties.find(element => element.name === key)}
-                  />
-                );
-              })}
+              {Object.keys(elementTypeProperties).map(key => (
+                <ElementField
+                  key={key}
+                  name={key}
+                  type={elementTypeProperties[key].type}
+                  description={elementTypeProperties[key].description}
+                  defaultValue={elementTypeProperties[key].defaultValue}
+                  value={elementProperties.find(element => element.name === key)}
+                />
+              ))}
             </Form>
           </Grid>
         </div>
@@ -75,16 +73,21 @@ ElementDetails.propTypes = {
   pipeline: PropTypes.object.isRequired,
 };
 
+const ElementDetailsForm = reduxForm({
+  form: 'elementDetails', // a unique identifier for this form
+})(ElementDetails);
+
 export default compose(
   connect(
     state => ({
       elements: state.elements,
+      // TODO: map state for the pipeline
       // state
     }),
     {
       // actions
     },
   ),
-  reduxForm({ form: 'elementDetails' }),
+  // reduxForm({ form: 'elementDetails' }),
   withPipeline(),
-)(ElementDetails);
+)(ElementDetailsForm);

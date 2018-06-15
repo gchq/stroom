@@ -10,7 +10,6 @@ import { Modal, Header, Form, Button } from 'semantic-ui-react';
 import { actionCreators } from './redux';
 
 import { uniqueElementName } from './pipelineUtils';
-import { withPipeline } from './withPipeline';
 import { required, minLength2, renderField } from 'lib/reduxFormUtils';
 
 const { pipelineElementAdded } = actionCreators;
@@ -20,7 +19,7 @@ const AddElementModal = ({
   pipelineId,
   elementId,
 
-  // withPipeline
+  // redux state
   pipeline,
 
   // Redux actions
@@ -58,7 +57,7 @@ const AddElementModal = ({
               component={renderField}
               type="text"
               placeholder="Name"
-              validate={[required, minLength2, uniqueElementName(pipeline)]}
+              validate={[required, minLength2, uniqueElementName(pipeline.pipeline)]}
             />
           </Form.Field>
         </Form>
@@ -81,7 +80,7 @@ AddElementModal.propTypes = {
   pipelineId: PropTypes.string.isRequired,
   elementId: PropTypes.string.isRequired,
 
-  // withPipeline
+  // redux state
   pipeline: PropTypes.object.isRequired,
 
   // With New Element Definition from Container
@@ -97,12 +96,12 @@ AddElementModal.propTypes = {
 
 export default compose(
   connect(
-    state => ({
+    (state, props) => ({
       // state
       newElementForm: state.form.newElementName,
+      pipeline: state.pipelines[props.pipelineId],
     }),
     { pipelineElementAdded },
   ),
   reduxForm({ form: 'newElementName' }),
-  withPipeline(),
 )(AddElementModal);

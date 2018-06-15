@@ -91,14 +91,16 @@ const PipelineEditor = ({
             <RecycleBin pipelineId={pipelineId} />
           </div>
           <div className="Pipeline-editor__elements">
-            {pipeline.elements.add.filter(element => isActive(pipeline, element)).map(e => (
-              <div key={e.id} id={e.id} style={elementStyles[e.id]}>
-                <PipelineElement pipelineId={pipelineId} elementId={e.id} />
-              </div>
-            ))}
+            {pipeline.pipeline.elements.add
+              .filter(element => isActive(pipeline.pipeline, element))
+              .map(e => (
+                <div key={e.id} id={e.id} style={elementStyles[e.id]}>
+                  <PipelineElement pipelineId={pipelineId} elementId={e.id} />
+                </div>
+              ))}
           </div>
           <div className="Pipeline-editor__lines">
-            {pipeline.links.add
+            {pipeline.pipeline.links.add
               .map(l => ({ ...l, lineId: `${l.from}-${l.to}` }))
               .map(l => (
                 <LineTo
@@ -121,7 +123,6 @@ const PipelineEditor = ({
 PipelineEditor.propTypes = {
   pipelineId: PropTypes.string.isRequired,
   pipeline: PropTypes.object.isRequired,
-  asTree: PropTypes.object.isRequired,
   layoutInformation: PropTypes.object.isRequired,
   elementsByCategory: PropTypes.object.isRequired,
 

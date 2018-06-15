@@ -6,7 +6,7 @@ import { connect } from 'react-redux';
 
 import { Message, Form } from 'semantic-ui-react';
 
-import { Toggle, InputField } from 'react-semantic-redux-form';
+import { Toggle, ToggleField, InputField } from 'react-semantic-redux-form';
 
 import { Field } from 'redux-form';
 
@@ -28,33 +28,27 @@ const ElementFieldType = ({
   let actualValue;
   switch (type) {
     case 'boolean':
+      actualValue = getActualValue(value, defaultValue, 'boolean') === 'true';
       return (
         <Field
+          label={name}
           name={name}
           component={Toggle}
-          value={getActualValue(value, defaultValue, 'boolean')}
+          value={actualValue}
+          checked={actualValue}
         />
       );
     case 'int':
-      return <NumericInput value={getActualValue(value, defaultValue, 'integer')} />;
+      actualValue = getActualValue(value, defaultValue, 'integer');
+      return <NumericInput value={actualValue} />;
     case 'String':
     case 'DocRef':
     case 'PipelineReference':
-      return (
-        <Field
-          name={name}
-          component={InputField}
-          value={getActualValue(value, defaultValue, 'string')}
-        />
-      );
+      actualValue = getActualValue(value, defaultValue, 'string');
+      return <Field name={name} component={InputField} value={actualValue} />;
     default:
-      return (
-        <Field
-          name={name}
-          component={InputField}
-          value={getActualValue(value, defaultValue, 'string')}
-        />
-      );
+      actualValue = getActualValue(value, defaultValue, 'string');
+      return <Field name={name} component={InputField} value={actualValue} />;
   }
 };
 

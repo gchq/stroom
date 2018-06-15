@@ -16,9 +16,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import { compose } from 'recompose';
+import { connect } from 'react-redux';
 import { getPipelineLayoutInformation } from './pipelineUtils';
-
-import { withPipeline } from './withPipeline';
 
 /**
  * This is a Higher Order Component
@@ -32,6 +32,7 @@ export function withPipelineAndLayoutInfo() {
   return (WrappedComponent) => {
     const WithPipelineAndLayoutInfo = class extends Component {
       static propTypes = {
+        pipelineId: PropTypes.string.isRequired,
         asTree: PropTypes.object.isRequired,
       };
 
@@ -41,8 +42,8 @@ export function withPipelineAndLayoutInfo() {
 
       static getDerivedStateFromProps(nextProps, prevState) {
         let layoutInformation;
-        if (nextProps.asTree) {
-          layoutInformation = getPipelineLayoutInformation(nextProps.asTree);
+        if (!!nextProps.pipeline && !!nextProps.pipeline.asTree) {
+          layoutInformation = getPipelineLayoutInformation(nextProps.pipeline.asTree);
         }
 
         return {
@@ -58,6 +59,8 @@ export function withPipelineAndLayoutInfo() {
       }
     };
 
-    return withPipeline()(WithPipelineAndLayoutInfo);
+    return compose(connect((state, props) => ({
+      pipeline: state.pipelines[props.pipelineId],
+    })))(WithPipelineAndLayoutInfo);
   };
 }

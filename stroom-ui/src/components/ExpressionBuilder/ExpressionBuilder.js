@@ -40,6 +40,13 @@ const ExpressionBuilder = ({
   editableByUser,
   setEditableByUser,
 }) => {
+  if (!dataSource) {
+    return <div>Awaiting Data Source</div>;
+  }
+  if (!expression) {
+    return <div>Awaiting Expression</div>;
+  }
+
   const roOperator = (
     <ROExpressionOperator expressionId={expressionId} isEnabled operator={expression} />
   );
@@ -83,6 +90,7 @@ const ExpressionBuilder = ({
 
 ExpressionBuilder.propTypes = {
   // Set by container
+  dataSourceUuid: PropTypes.string.isRequired,
   expressionId: PropTypes.string.isRequired,
   isEditableSystemSet: PropTypes.bool.isRequired,
 
@@ -110,6 +118,12 @@ export default compose(
     },
   ),
   withSetEditableByUser,
-  branch(props => !props.expression, renderComponent(() => <Loader active>Loading Expression</Loader>)),
-  branch(props => !props.dataSource, renderComponent(() => <Loader active>Loading Data Source</Loader>)),
+  branch(
+    props => !props.expression,
+    renderComponent(() => <Loader active>Loading Expression</Loader>),
+  ),
+  branch(
+    props => !props.dataSource,
+    renderComponent(() => <Loader active>Loading Data Source</Loader>),
+  ),
 )(ExpressionBuilder);

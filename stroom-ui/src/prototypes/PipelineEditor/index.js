@@ -16,7 +16,6 @@
 import PipelineEditor from './PipelineEditor';
 
 import { pipelineReducer, elementReducer } from './redux';
-import { withPipeline } from './withPipeline';
 import { fetchPipeline } from './pipelineResourceClient';
 import { fetchElements, fetchElementProperties } from './elementResourceClient';
 import { withPipelineFromUrl, PipelineEditorFromUrl } from './withPipelineFromUrl';
@@ -26,7 +25,6 @@ export {
   PipelineEditorFromUrl,
   pipelineReducer,
   elementReducer,
-  withPipeline,
   fetchPipeline,
   fetchElements,
   fetchElementProperties,
