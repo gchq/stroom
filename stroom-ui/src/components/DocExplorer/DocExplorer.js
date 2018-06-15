@@ -16,42 +16,34 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose } from 'recompose';
+import { compose, lifecycle, branch, renderComponent } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Input } from 'semantic-ui-react';
+import { Input, Loader } from 'semantic-ui-react';
 
 import Folder from './Folder';
 
-import { withCreatedExplorer } from './withExplorer';
-
 import { actionCreators } from './redux';
 
-const { searchTermUpdated } = actionCreators;
+const { searchTermUpdated, explorerTreeOpened } = actionCreators;
 
-const DocExplorer = (props) => {
-  const {
-    documentTree, explorerId, explorer, searchTermUpdated,
-  } = props;
-
-  const { searchTerm } = explorer;
-
-  return (
-    <div>
-      <Input
-        icon="search"
-        placeholder="Search..."
-        value={searchTerm}
-        onChange={e => searchTermUpdated(explorerId, e.target.value)}
-      />
-      <Folder explorerId={explorerId} folder={documentTree} />
-    </div>
-  );
-};
+const DocExplorer = ({
+  documentTree, explorerId, explorer, searchTermUpdated,
+}) => (
+  <div>
+    <Input
+      icon="search"
+      placeholder="Search..."
+      value={explorer.searchTerm}
+      onChange={e => searchTermUpdated(explorerId, e.target.value)}
+    />
+    <Folder explorerId={explorerId} folder={documentTree} />
+  </div>
+);
 
 DocExplorer.propTypes = {
   explorerId: PropTypes.string.isRequired,
-  explorer: PropTypes.object.isRequired,
+  explorer: PropTypes.object,
   documentTree: PropTypes.object.isRequired,
 
   searchTermUpdated: PropTypes.func.isRequired,
@@ -59,12 +51,24 @@ DocExplorer.propTypes = {
 
 export default compose(
   connect(
-    state => ({
+    (state, props) => ({
       documentTree: state.explorerTree.documentTree,
+      explorer: state.explorerTree.explorers[props.explorerId],
     }),
     {
       searchTermUpdated,
+      explorerTreeOpened,
     },
   ),
-  withCreatedExplorer(),
+  lifecycle({
+    componentDidMount() {
+      this.props.explorerTreeOpened(
+        this.props.explorerId,
+        this.props.allowMultiSelect,
+        this.props.allowDragAndDrop,
+        this.props.typeFilter,
+      );
+    },
+  }),
+  branch(props => !props.explorer, renderComponent(() => <Loader active>Loading Explorer</Loader>)),
 )(DocExplorer);

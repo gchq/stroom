@@ -29,8 +29,6 @@ import DocRef from './DocRef';
 
 import FolderMenu from './FolderMenu';
 
-import { withExistingExplorer } from './withExplorer';
-
 import { actionCreators } from './redux';
 
 const { moveExplorerItem, folderOpenToggled } = actionCreators;
@@ -172,15 +170,15 @@ Folder.propTypes = {
 // We need to use this ourself, so create a variable
 const DndFolder = compose(
   connect(
-    state => ({
+    (state, props) => ({
       // state
+      explorer: state.explorerTree.explorers[props.explorerId]
     }),
     {
       moveExplorerItem,
       folderOpenToggled,
     },
   ),
-  withExistingExplorer(),
   withContextMenu,
   DragSource(ItemTypes.FOLDER, dragSource, dragCollect),
   DropTarget([ItemTypes.FOLDER, ItemTypes.DOC_REF], dropTarget, dropCollect),

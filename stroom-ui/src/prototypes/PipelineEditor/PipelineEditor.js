@@ -18,8 +18,10 @@ import PropTypes from 'prop-types';
 
 import { Icon } from 'semantic-ui-react';
 
-import { compose, withState } from 'recompose';
+import { compose, withState, branch, renderComponent } from 'recompose';
 import { connect } from 'react-redux';
+import { Loader } from 'semantic-ui-react';
+
 import { LineContainer, LineTo } from 'components/LineTo';
 import { mapObject } from 'lib/treeUtils';
 import { withPipelineAndLayoutInfo } from './withPipelineAndLayoutInfo';

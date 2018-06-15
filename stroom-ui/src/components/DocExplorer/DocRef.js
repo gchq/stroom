@@ -24,8 +24,6 @@ import { DragSource } from 'react-dnd';
 
 import { actionCreators } from './redux';
 
-import { withExistingExplorer } from './withExplorer';
-
 import DocRefMenu from './DocRefMenu';
 
 const { docRefSelected, docRefOpened } = actionCreators;
@@ -142,15 +140,15 @@ DocRef.propTypes = {
 
 export default compose(
   connect(
-    state => ({
+    (state, props) => ({
       // state
+      explorer: state.explorerTree.explorers[props.explorerId]
     }),
     {
       docRefSelected,
       docRefOpened,
     },
   ),
-  withExistingExplorer(),
   withContextMenu,
   DragSource(ItemTypes.DOC_REF, dragSource, dragCollect),
 )(DocRef);

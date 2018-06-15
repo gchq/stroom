@@ -16,19 +16,17 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose, withState } from 'recompose';
+import { compose, withState, lifecycle, branch, renderComponent } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Button, Modal, Input } from 'semantic-ui-react';
+import { Button, Modal, Input, Loader } from 'semantic-ui-react';
 
 import { findItem } from 'lib/treeUtils';
 import { actionCreators } from './redux';
-import { withCreatedExplorer } from './withExplorer';
-import { withPickedDocRef } from './withPickedDocRef';
 
 import DocExplorer from './DocExplorer';
 
-const { docRefPicked } = actionCreators;
+const { docRefPicked, explorerTreeOpened } = actionCreators;
 
 const withModal = withState('isOpen', 'setIsOpen', false);
 
@@ -65,7 +63,7 @@ const DocRefModalPicker = ({
       open={isOpen}
       onClose={handleClose}
       size="small"
-      dimmer="blurring"
+      dimmer="inverted"
     >
       <Modal.Header>Select a Doc Ref</Modal.Header>
       <Modal.Content scrolling>
@@ -78,7 +76,7 @@ const DocRefModalPicker = ({
         />
       </Modal.Content>
       <Modal.Actions>
-        <Button negative onClick={() => setIsOpen(false)}>
+        <Button negative onClick={handleClose}>
           Cancel
         </Button>
         <Button
@@ -108,15 +106,22 @@ DocRefModalPicker.propTypes = {
 
 export default compose(
   connect(
-    state => ({
+    (state, props) => ({
       documentTree: state.explorerTree.documentTree,
+      docRef: state.explorerTree.pickedDocRefs[props.pickerId],
+      explorer: state.explorerTree.explorers[props.pickerId],
     }),
     {
       // actions
       docRefPicked,
+      explorerTreeOpened,
     },
   ),
-  withPickedDocRef(),
-  withCreatedExplorer('pickerId'),
+  lifecycle({
+    componentDidMount() {
+      this.props.explorerTreeOpened(this.props.pickerId, false, false, this.props.typeFilter);
+    },
+  }),
   withModal,
+  branch(props => !props.explorer, renderComponent(() => <Loader active>Loading Explorer</Loader>)),
 )(DocRefModalPicker);

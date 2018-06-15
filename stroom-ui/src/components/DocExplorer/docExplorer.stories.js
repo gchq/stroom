@@ -57,7 +57,7 @@ storiesOf('Document Explorer', module)
       allowDragAndDrop={false}
     />
   ))
-  .add('Explorer Tree (type filter to monster)', () => (
+  .add('Explorer Tree (type filter to XSLT)', () => (
     <DocExplorer explorerId="filtered-xslt" typeFilter={DOC_REF_TYPES.XSLT} />
   ))
   .add('Explorer Tree (type filter to dictionary)', () => (
