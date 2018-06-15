@@ -60,7 +60,7 @@ function dragCollect(connect, monitor) {
 
 const dropTarget = {
   canDrop(props, monitor) {
-    const { pipeline, asTree, elementId } = props;
+    const { pipeline, elementId } = props;
     const thisElement = pipeline.pipeline.elements.add.filter(element => element.id === elementId)[0];
     const typeOfThisElement = props.elements.elements[thisElement.type];
     switch (monitor.getItemType()) {
@@ -70,7 +70,7 @@ const dropTarget = {
         let dropeeType = props.elements.elements[dropee.type];
         const isValidChild = isValidChildType(typeOfThisElement, dropeeType, 0);
 
-        const isValid = canMovePipelineElement(pipeline.pipeline, asTree, dropeeId, elementId);
+        const isValid = canMovePipelineElement(pipeline.pipeline, pipeline.asTree, dropeeId, elementId);
 
         return isValidChild && isValid;
       case ItemTypes.PALLETE_ELEMENT:
@@ -114,8 +114,8 @@ function dropCollect(connect, monitor) {
 
 const PipelineElement = ({
   connectDragSource,
-  isDragging,
   connectDropTarget,
+  isDragging,
   isOver,
   canDrop,
   pipelineId,
