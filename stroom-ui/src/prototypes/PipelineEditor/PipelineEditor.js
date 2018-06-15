@@ -39,8 +39,8 @@ import { fetchElements, fetchElementProperties } from './elementResourceClient';
 
 const HORIZONTAL_SPACING = 150;
 const VERTICAL_SPACING = 50;
-const HORIZONTAL_START_PX = 50;
-const VERTICAL_START_PX = 50;
+const HORIZONTAL_START_PX = 10;
+const VERTICAL_START_PX = 10;
 const COMMON_ELEMENT_STYLE = {
   position: 'absolute',
 };
@@ -58,11 +58,17 @@ const PipelineEditor = ({
 }) => {
   const togglePaletteOpen = () => setPaletteOpen(!isPaletteOpen);
 
-  const elementStyles = mapObject(layoutInformation, l => ({
-    ...COMMON_ELEMENT_STYLE,
-    top: `${VERTICAL_START_PX + l.verticalPos * VERTICAL_SPACING}px`,
-    left: `${HORIZONTAL_START_PX + l.horizontalPos * HORIZONTAL_SPACING}px`,
-  }));
+  const elementStyles = mapObject(layoutInformation, (l) => {
+    const index = l.verticalPos - 1;
+    const fromTop = VERTICAL_START_PX + index * VERTICAL_SPACING;
+    const fromLeft = HORIZONTAL_START_PX + l.horizontalPos * HORIZONTAL_SPACING;
+
+    return {
+      ...COMMON_ELEMENT_STYLE,
+      top: `${fromTop}px`,
+      left: `${fromLeft}px`,
+    };
+  });
 
   let className = 'Pipeline-editor';
 
