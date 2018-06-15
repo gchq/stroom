@@ -40,7 +40,13 @@ const ElementFieldType = ({
       );
     case 'int':
       actualValue = getActualValue(value, defaultValue, 'integer');
-      return <NumericInput value={actualValue} />;
+      return (
+        <Field
+          name={name}
+          value={actualValue}
+          component={props => <NumericInput {...props.input} />}
+        />
+      );
     case 'String':
     case 'DocRef':
     case 'PipelineReference':
@@ -76,7 +82,7 @@ ElementField.propTypes = {
   description: PropTypes.string.isRequired,
   type: PropTypes.string.isRequired,
   defaultValue: PropTypes.string.isRequired,
-  value: PropTypes.string,
+  value: PropTypes.object,
 };
 
 export default compose(connect(
