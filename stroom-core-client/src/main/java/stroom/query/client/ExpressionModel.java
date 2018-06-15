@@ -55,7 +55,7 @@ public class ExpressionModel {
 
                 final Operator operator = new Operator();
                 operator.setOp(expressionOperator.getOp());
-                operator.setEnabled(expressionOperator.enabled());
+                operator.setEnabled(expressionOperator.getEnabled());
                 return operator;
 
             } else if (expressionItem instanceof ExpressionTerm) {

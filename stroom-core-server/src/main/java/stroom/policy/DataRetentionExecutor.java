@@ -368,7 +368,7 @@ public class DataRetentionExecutor {
 
             // Also make sure we create a list of rules that are enabled and have at least one enabled term.
             rules.forEach(rule -> {
-                if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().enabled()) {
+                if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().getEnabled()) {
                     final Set<String> fields = new HashSet<>();
                     addToFieldSet(rule, fields);
                     if (fields.size() > 0) {
@@ -389,7 +389,7 @@ public class DataRetentionExecutor {
         }
 
         private void addChildren(final ExpressionItem item, final Set<String> fieldSet) {
-            if (item.enabled()) {
+            if (item.getEnabled()) {
                 if (item instanceof ExpressionOperator) {
                     final ExpressionOperator operator = (ExpressionOperator) item;
                     operator.getChildren().forEach(i -> addChildren(i, fieldSet));
