@@ -21,18 +21,20 @@ import { connect } from 'react-redux';
 
 import { DragSource, DropTarget } from 'react-dnd';
 
+import { Image } from 'semantic-ui-react';
+
+import AddElementModal from './AddElementModal';
 import { withElement } from './withElement';
 import { withPipeline } from './withPipeline';
-
 import { actionCreators } from './redux';
-
 import { canMovePipelineElement } from './pipelineUtils';
-
 import { ItemTypes } from './dragDropTypes';
+import { isValidChildType } from './elementUtils'
 
 const { pipelineElementSelected, pipelineElementMoved } = actionCreators;
 
-const withContextMenu = withState('isContextMenuOpen', 'setContextMenuOpen', false);
+const withFocus = withState('hasFocus', 'setHasFocus', false);
+const withNameNewElementModal = withState('newElementDefinition', 'setNewElementDefinition', undefined);
 
 const dragSource = {
   canDrag(props) {
@@ -54,15 +56,47 @@ function dragCollect(connect, monitor) {
 
 const dropTarget = {
   canDrop(props, monitor) {
-    return canMovePipelineElement(
-      props.pipeline,
-      props.asTree,
-      monitor.getItem().elementId,
-      props.elementId,
-    );
+    const { pipeline, asTree, elementId } = props;
+    const thisElement = pipeline.elements.add.filter(element => element.id === elementId)[0];
+    const typeOfThisElement = props.elements.elements[thisElement.type]
+    switch (monitor.getItemType()) {
+      case ItemTypes.ELEMENT:
+        let dropeeId = monitor.getItem().elementId;
+        let dropee = pipeline.elements.add.filter(element => element.id === dropeeId)[0];
+        let dropeeType = props.elements.elements[dropee.type]
+        let isValidChild = isValidChildType(typeOfThisElement, dropeeType, 0)
+
+        let isValid = canMovePipelineElement(pipeline, asTree, dropeeId, elementId);
+
+        return isValidChild && isValid;
+      case ItemTypes.PALLETE_ELEMENT:
+        dropeeType = monitor.getItem().element;
+        if(dropeeType){
+          let isValidChild = isValidChildType(typeOfThisElement, dropeeType, 0)
+          return isValidChild
+        }
+        else { 
+          return true; 
+        }
+      default:
+        return false;
+    }
   },
   drop(props, monitor) {
-    props.pipelineElementMoved(props.pipelineId, monitor.getItem().elementId, props.elementId);
+    switch (monitor.getItemType()) {
+      case ItemTypes.ELEMENT:
+        const newElementId = monitor.getItem().elementId;
+        const { elementId, pipelineId, pipelineElementMoved } = props;
+        pipelineElementMoved(pipelineId, newElementId, elementId);
+        break;
+      case ItemTypes.PALLETE_ELEMENT:
+        const newElementDefinition = monitor.getItem().element;
+        const { setNewElementDefinition } = props;
+        setNewElementDefinition(newElementDefinition);
+        break;
+      default:
+        break;
+    }
   },
 };
 
@@ -71,6 +105,7 @@ function dropCollect(connect, monitor) {
     connectDropTarget: connect.dropTarget(),
     isOver: monitor.isOver(),
     canDrop: monitor.canDrop(),
+    dndIsHappening: (monitor.getItem() !== null)
   };
 }
 
@@ -85,10 +120,16 @@ const PipelineElement = ({
   element,
   elementDefinition,
   pipelineElementSelected,
+  selectedElementId,
+  newElementForm,
+  newElementDefinition,
+  setNewElementDefinition,
+  dndIsHappening,
 
-  isContextMenuOpen,
-  setContextMenuOpen,
+  hasFocus,
+  setHasFocus
 }) => {
+  let isIconDisabled = false;
   let className = 'Pipeline-element';
   if (isOver) {
     className += ' Pipeline-element__over';
@@ -100,25 +141,43 @@ const PipelineElement = ({
     if (canDrop) {
       className += ' Pipeline-element__over_can_drop';
     } else {
-      className += ' Pipeline-element__over_cannot_drop';
+      isIconDisabled = true;
+      className += ' Pipeline-element__cannot_drop';
+    }
+  }
+  else {
+    if(canDrop){
+      className += ' Pipeline-element__not_over_can_drop';
+    }
+    else if (dndIsHappening){
+      isIconDisabled = true;
+      className += ' Pipeline-element__cannot_drop';
     }
   }
 
-  return compose(connectDragSource, connectDropTarget)(<div
-    className={className}
-    onClick={() => pipelineElementSelected(pipelineId, elementId)}
-    onContextMenu={(e) => {
-        setContextMenuOpen(true);
-        e.preventDefault();
-      }}
-  >
-    <img
-      className="Pipeline-element__icon"
-      alt="X"
-      src={require(`./images/${elementDefinition.icon}`)}
-    />
-    {elementId}
-  </div>);
+  if(selectedElementId === elementId){
+    className += ' Pipeline-element__selected'
+  }
+
+  if (hasFocus) {
+    className += ' focus';
+  }
+
+  const onClick = () => pipelineElementSelected(pipelineId, elementId);
+
+  return compose(connectDragSource, connectDropTarget)(
+    <div className={className} onClick={onClick}>
+      <AddElementModal {...{setNewElementDefinition, newElementDefinition, pipelineId, elementId}}  />
+      <Image
+        className="Pipeline-element__icon"
+        alt="X"
+        src={require(`./images/${elementDefinition.icon}`)}
+        disabled={isIconDisabled}
+      />
+      <button onFocus={() => setHasFocus(true)} onBlur={() => setHasFocus(false)} className='Pipeline-element__type'>
+      {elementId}
+      </button>
+    </div>);
 };
 
 PipelineElement.propTypes = {
@@ -126,17 +185,26 @@ PipelineElement.propTypes = {
   pipelineId: PropTypes.string.isRequired,
   elementId: PropTypes.string.isRequired,
 
+  selectedElementId: PropTypes.string,
+
   // withPipeline
   pipeline: PropTypes.object.isRequired,
   asTree: PropTypes.object.isRequired,
-  pipelineElementSelected: PropTypes.func.isRequired,
 
   // withElement
   element: PropTypes.object.isRequired,
 
-  // withContextMenu
-  isContextMenuOpen: PropTypes.bool.isRequired,
-  setContextMenuOpen: PropTypes.func.isRequired,
+  // Redux actions
+  pipelineElementSelected: PropTypes.func.isRequired,
+  pipelineElementMoved: PropTypes.func.isRequired,
+
+  // withNameNewElementModal
+  newElementDefinition: PropTypes.object,
+  setNewElementDefinition: PropTypes.func.isRequired,
+
+  // With Focus
+  hasFocus: PropTypes.bool.isRequired,
+  setHasFocus: PropTypes.func.isRequired
 };
 
 export default compose(
@@ -145,13 +213,15 @@ export default compose(
       // state
     }),
     {
+      // actions
       pipelineElementSelected,
-      pipelineElementMoved,
+      pipelineElementMoved
     },
   ),
   withPipeline(),
   withElement(),
-  withContextMenu,
+  withNameNewElementModal,
+  withFocus,
   DragSource(ItemTypes.ELEMENT, dragSource, dragCollect),
-  DropTarget([ItemTypes.ELEMENT], dropTarget, dropCollect),
+  DropTarget([ItemTypes.ELEMENT, ItemTypes.PALLETE_ELEMENT], dropTarget, dropCollect),
 )(PipelineElement);

@@ -26,8 +26,7 @@ import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 import { PipelineEditor } from './index';
 
 import PipelineElement from './PipelineElement';
-import { ElementPallete } from './ElementPallete';
-import { AddElementWizard } from './AddElementToPipeline';
+import { ElementPalette } from './ElementPalette';
 
 import { actionCreators } from './redux';
 
@@ -35,7 +34,7 @@ import 'styles/main.css';
 
 import { testPipeline, testPipelineElements } from './test/pipeline.testData';
 import { testElementTypes, testElementProperties } from './test/elements.testData';
-import { pipeline01 } from './test/setupSampleDataPipelines.testData';
+import { pipeline01, pipeline02 } from './test/setupSampleDataPipelines.testData';
 
 const { pipelineReceived, elementsReceived, elementPropertiesReceived } = actionCreators;
 
@@ -58,14 +57,25 @@ stories
 // Add story for a pipeline copied from setupSampleData
 stories
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(pipelineReceived('testPipeline', pipeline01));
+    store.dispatch(pipelineReceived('pipeline01', pipeline01));
   })) // must be recorder after/outside of the test initialisation decorators
-  .add('setupSampleData -- pipeline01', () => <PipelineEditor pipelineId="testPipeline" />);
+  .add('setupSampleData -- pipeline01 - is a long pipeline', () => (
+    <PipelineEditor pipelineId="pipeline01" />
+  ));
 
-storiesOf('Element Pallete', module)
+// Add story for a pipeline copied from setupSampleData
+stories
+  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
+    store.dispatch(pipelineReceived('pipeline02', pipeline02));
+  })) // must be recorder after/outside of the test initialisation decorators
+  .add('setupSampleData -- pipeline02 - contains a deleted element', () => (
+    <PipelineEditor pipelineId="pipeline02" />
+  ));
+
+storiesOf('Element Palette', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(elementsReceived(testElementTypes));
     store.dispatch(elementPropertiesReceived(testElementProperties));
   })) // must be recorder after/outside of the test initialisation decorators
   .addDecorator(DragDropDecorator)
-  .add('Element Pallete', () => <ElementPallete />);
+  .add('Element Palette', () => <ElementPalette />);

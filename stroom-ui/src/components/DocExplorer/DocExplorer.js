@@ -34,7 +34,7 @@ const DocExplorer = (props) => {
     documentTree, explorerId, explorer, searchTermUpdated,
   } = props;
 
-  const { searchTerm, pendingDocRefToDelete } = explorer;
+  const { searchTerm } = explorer;
 
   return (
     <div>

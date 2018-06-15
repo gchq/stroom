@@ -1,0 +1,22 @@
+@import "../Element";
+.element-details {
+  padding: 0.5rem;
+  background-color: #fafafa;
+  height: 300px;
+}
+
+.element-details__header {
+  padding-top: 20px;
+}
+
+.element-details__form {
+  width: 100%;
+}
+
+.element-details__property-message {
+  margin-top: 0px !important;
+}
+
+.element-details__field {
+  width: 300px;
+}

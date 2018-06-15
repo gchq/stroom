@@ -115,6 +115,55 @@ export function getPipelineLayoutInformation(asTree, orientation = ORIENTATION.h
 }
 
 /**
+ * Use this function to retrieve all element names from the pipeline.
+ *
+ * @param {pipeline} pipeline The pipeline from with to extract names
+ */
+export function getAllElementNames(pipeline) {
+  const names = [];
+
+  pipeline.elements.add
+    .map(e => e.id)
+    .map(id => id.toLowerCase())
+    .forEach(id => names.push(id));
+
+  return names;
+}
+
+// We have to 'cache' the unique name function or the redux form remounts every time the value changes.
+let memoizedUniqueName;
+let namesForMemoizedFunction;
+
+const listsOfStringsAreEquals = (list1, list2) => {
+  if (list1.length !== list2.length) {
+    return false;
+  }
+
+  return JSON.stringify(list1) === JSON.stringify(list2);
+};
+
+export const uniqueElementName = (pipeline) => {
+  // If we already had a names list
+  if (namesForMemoizedFunction) {
+    const namesNow = getAllElementNames(pipeline);
+
+    // Has it changed?
+    if (!listsOfStringsAreEquals(namesForMemoizedFunction, namesNow)) {
+      namesForMemoizedFunction = namesNow;
+      memoizedUniqueName = value =>
+        (namesForMemoizedFunction.includes(value) ? 'must be unique name' : undefined);
+    }
+  } else {
+    // Create a new memoized function
+    namesForMemoizedFunction = getAllElementNames(pipeline);
+    memoizedUniqueName = value =>
+      (namesForMemoizedFunction.includes(value) ? 'must be unique name' : undefined);
+  }
+
+  return memoizedUniqueName;
+};
+
+/**
  *
  *
  *
@@ -159,6 +208,11 @@ export function createNewElementInPipeline(pipeline, parentId, childDefinition, 
 export function canMovePipelineElement(pipeline, pipelineAsTree, itemToMove, destination) {
   const itemToMoveNode = findItem(pipelineAsTree, itemToMove);
   const destinationNode = findItem(pipelineAsTree, destination);
+
+  // If either node cannot be found...bad times
+  if (!itemToMoveNode || !destinationNode) {
+    return false;
+  }
 
   // If the item being dropped is a folder, and is being dropped into itself
   if (findMatch(itemToMoveNode, destinationNode)) {
@@ -209,7 +263,7 @@ export function moveElementInPipeline(pipeline, itemToMove, destination) {
  * @return The updated pipeline definition.
  */
 export function deleteElementInPipeline(pipeline, itemToDelete) {
-  const children = getChildren(pipeline, itemToDelete);
+  const children = getDescendants(pipeline, itemToDelete);
 
   return {
     properties: {
@@ -232,9 +286,13 @@ export function deleteElementInPipeline(pipeline, itemToDelete) {
   };
 }
 
-// TODO This was previously not exported -- it doesn't need to be. But moving from Mocha
-// to Jest broke rewire. Exporting until we have a solution to this.
-export function getChildren(pipeline, parent) {
+/**
+ * Gets an array of all descendents of the pipeline element
+ *
+ * @param {pipeline} pipeline Pipeline definition
+ * @param {string} parent The id of the parent
+ */
+export function getDescendants(pipeline, parent) {
   let allChildren = [];
 
   const getAllChildren = (pipeline, element) => {
@@ -248,4 +306,15 @@ export function getChildren(pipeline, parent) {
   getAllChildren(pipeline, parent);
 
   return allChildren;
+}
+
+/**
+ * Checks whether the give element is active in the pipeline. I.e. does anything link to it.
+ * 
+ * @param {pipeline} pipeline Pipeline definition
+ * @param {element} elementToCheck The element to check for activity
+ */
+export function isActive(pipeline, elementToCheck) {
+  const linksInvolvingElement = pipeline.links.add.filter(element => elementToCheck.id === element.from || elementToCheck.id === element.to);
+  return linksInvolvingElement.length > 0;
 }

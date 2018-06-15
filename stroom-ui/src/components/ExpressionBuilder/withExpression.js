@@ -18,8 +18,6 @@ import PropTypes from 'prop-types';
 
 import { connect } from 'react-redux';
 
-import { actionCreators } from './redux';
-
 /**
  * This is a Higher Order Component
  * https://reactjs.org/docs/higher-order-components.html

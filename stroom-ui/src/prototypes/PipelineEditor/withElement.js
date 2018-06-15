@@ -36,6 +36,7 @@ export function withElement() {
         elementId: PropTypes.string,
         pipelines: PropTypes.object.isRequired,
         elements: PropTypes.object.isRequired,
+        selectedElementId: PropTypes.string,
       };
 
       state = {
@@ -61,6 +62,7 @@ export function withElement() {
           ...pipeline,
           element,
           elementDefinition,
+          selectedElementId: prevState.selectedElementId,
         };
       }
 

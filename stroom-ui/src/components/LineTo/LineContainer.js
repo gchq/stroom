@@ -127,17 +127,7 @@ class LineContainer extends Component {
     return (
       <LineContext.Provider value={this.props.lineContextId}>
         <div className={this.props.className}>
-          <svg
-            id={this.props.lineContextId}
-            width="1000px"
-            height="1000px"
-            style={{
-              pointerEvents: 'none',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-            }}
-          >
+          <svg className="LineContainer-svg" id={this.props.lineContextId}>
             <g transform={transform}>{this.renderChildren()}</g>
           </svg>
           {this.props.children}
