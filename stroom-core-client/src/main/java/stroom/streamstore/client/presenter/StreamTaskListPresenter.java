@@ -149,7 +149,7 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Stre
             }
         }, "Priority", 100);
         getView().addResizableColumn(
-                new OrderByColumn<StreamTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_PIPELINE_NAME, true) {
+                new OrderByColumn<StreamTask, String>(new TextCell(), FindStreamTaskCriteria.FIELD_PIPELINE_UUID, true) {
                     @Override
                     public String getValue(final StreamTask row) {
                         if (row.getStreamProcessorFilter() != null) {

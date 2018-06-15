@@ -155,7 +155,7 @@ public class ExpressionToFindCriteria {
                 }
 
                 // Check that if parent is NOT then the only field we are using is FEED.
-                if (opStack.contains(Op.NOT) && !StreamDataSource.FEED.equals(fieldNames.iterator().next())) {
+                if (opStack.contains(Op.NOT) && !StreamDataSource.FEED_NAME.equals(fieldNames.iterator().next())) {
                     final String errorMsg = OP_STACK_ERROR.apply("The use of NOT is only supported for Feed", opStack);
                     throw new EntityServiceException(errorMsg);
                 }
@@ -185,7 +185,7 @@ public class ExpressionToFindCriteria {
                     throw new EntityServiceException(errorMsg);
                 }
 
-                if (!StreamDataSource.FEED.equals(fieldNames.iterator().next())) {
+                if (!StreamDataSource.FEED_NAME.equals(fieldNames.iterator().next())) {
                     final String errorMsg = OP_STACK_ERROR.apply("The use of NOT is only supported for Feed", opStack);
                     throw new EntityServiceException(errorMsg);
                 }
@@ -212,13 +212,13 @@ public class ExpressionToFindCriteria {
                 .collect(Collectors.groupingBy(ExpressionTerm::getField, Collectors.toList()));
 
         map.forEach((field, terms) -> {
-            if (negate && !StreamDataSource.FEED.equals(field)) {
+            if (negate && !StreamDataSource.FEED_NAME.equals(field)) {
                 final String errorMsg = "Negation attempted on " + field;
                 throw new EntityServiceException(errorMsg);
             }
 
             switch (field) {
-                case StreamDataSource.FEED:
+                case StreamDataSource.FEED_NAME:
                     if (negate) {
                         criteria.obtainFeeds().setExclude(
                                 convertEntityIdSetValues(
@@ -235,7 +235,7 @@ public class ExpressionToFindCriteria {
                                         value -> findFeeds(field, value)));
                     }
                     break;
-                case StreamDataSource.PIPELINE:
+                case StreamDataSource.PIPELINE_UUID:
                     criteria.setPipelineIdSet(
                             convertEntityIdSetValues(
                                     criteria.getPipelineIdSet(),
@@ -243,7 +243,7 @@ public class ExpressionToFindCriteria {
                                     getAllValues(terms),
                                     value -> findPipelines(field, value)));
                     break;
-                case StreamDataSource.STREAM_TYPE:
+                case StreamDataSource.STREAM_TYPE_NAME:
                     criteria.setStreamTypeIdSet(
                             convertEntityIdSetLongValues(
                                     criteria.getStreamTypeIdSet(),

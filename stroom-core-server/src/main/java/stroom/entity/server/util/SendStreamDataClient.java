@@ -108,8 +108,8 @@ public final class SendStreamDataClient {
         if (streamType == null) {
             throw new RuntimeException("Unknown stream type " + argsMap.get(STREAM_TYPE));
         }
-        builder.addTerm(StreamDataSource.FEED, Condition.EQUALS, definition.getName());
-        builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, streamType.getDisplayValue());
+        builder.addTerm(StreamDataSource.FEED_NAME, Condition.EQUALS, definition.getName());
+        builder.addTerm(StreamDataSource.STREAM_TYPE_NAME, Condition.EQUALS, streamType.getDisplayValue());
 
         // Query the stream store
         final FindStreamCriteria criteria = new FindStreamCriteria();

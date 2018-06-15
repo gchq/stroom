@@ -119,7 +119,7 @@ public class StreamRetentionExecutor {
 
             final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
                     .addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(createPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(createPeriod.getToMs()))
-                    .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed.getName())
+                    .addTerm(StreamDataSource.FEED_NAME, Condition.EQUALS, feed.getName())
                     // we only want it to logically delete UNLOCKED items and not ones
                     // already marked as DELETED
                     .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())

@@ -58,14 +58,14 @@ public class TestExpressionMatcher extends StroomUnitTest {
 
     private ExpressionOperator createExpression(final Op op, final String feedName) {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(true, op);
-        builder.addTerm("Feed", Condition.CONTAINS, feedName);
+        builder.addTerm(StreamDataSource.FEED_NAME, Condition.CONTAINS, feedName);
         return builder.build();
     }
 
     private Map<String, Object> createAttributeMap() {
         final Map<String, Object> attributeMap = new HashMap<>();
-        attributeMap.put(StreamDataSource.FEED, "TEST_FEED");
-        attributeMap.put(StreamDataSource.STREAM_TYPE, "Raw Events");
+        attributeMap.put(StreamDataSource.FEED_NAME, "TEST_FEED");
+        attributeMap.put(StreamDataSource.STREAM_TYPE_NAME, "Raw Events");
         return attributeMap;
     }
 }

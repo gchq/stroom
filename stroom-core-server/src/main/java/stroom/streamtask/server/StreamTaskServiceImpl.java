@@ -176,7 +176,7 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<StreamTask, F
                 .add(FindStreamTaskCriteria.FIELD_END_TIME_DATE, TABLE_PREFIX_STREAM_TASK + StreamTask.END_TIME_MS, "endTimeMs")
                 .add(FindStreamTaskCriteria.FIELD_FEED_NAME, "F_NAME", "stream.feed.name")
                 .add(FindStreamTaskCriteria.FIELD_PRIORITY, "PRIORITY_1", "streamProcessorFilter.priority")
-                .add(FindStreamTaskCriteria.FIELD_PIPELINE_NAME, "P_NAME", "streamProcessorFilter.streamProcessor.pipeline.name")
+                .add(FindStreamTaskCriteria.FIELD_PIPELINE_UUID, "P_NAME", "streamProcessorFilter.streamProcessor.pipeline.uuid")
                 .add(FindStreamTaskCriteria.FIELD_STATUS, "STAT_ID1", "pstatus")
                 .add(FindStreamTaskCriteria.FIELD_COUNT, SQLNameConstants.COUNT, "NA")
                 .add(FindStreamTaskCriteria.FIELD_NODE, null, "node.name");

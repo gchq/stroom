@@ -113,10 +113,10 @@ public class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
                 .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
                 .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
                     .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                        .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed1.getName())
-                        .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed2.getName())
+                        .addTerm(StreamDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, feed1.getName())
+                        .addTerm(StreamDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, feed2.getName())
                         .build())
-                    .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
+                    .addTerm(StreamDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
                     .build())
                 .build();
 

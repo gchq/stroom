@@ -32,10 +32,7 @@ import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.DataRetentionRule;
 import stroom.streamstore.server.StreamMaintenanceService;
 import stroom.streamstore.server.StreamStore;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamStatus;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.*;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.date.DateUtil;
@@ -73,7 +70,7 @@ public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
 
         // save two streams, one inside retention period, one outside
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(true, Op.AND);
-        builder.addTerm("Feed", Condition.EQUALS, feed.getName());
+        builder.addTerm(StreamDataSource.FEED_NAME, Condition.EQUALS, feed.getName());
         final DataRetentionRule rule = createRule(1, builder.build(), RETENTION_PERIOD_DAYS, stroom.streamstore.shared.TimeUnit.DAYS);
         final DataRetentionPolicy currentPolicy = dataRetentionService.load();
         final DataRetentionPolicy dataRetentionPolicy = new DataRetentionPolicy(Collections.singletonList(rule));
