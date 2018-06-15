@@ -16,3 +16,5 @@ export const renderField = ({
     </div>
   </div>
 );
+
+export const truncate = (text, limit) => (text.length > limit ? `${text.substr(0, limit)}...` : text);

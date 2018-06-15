@@ -57,20 +57,21 @@ storiesOf('Expression Builder', module)
     store.dispatch(receiveDataSource('testDs', testDataSource));
     store.dispatch(expressionChanged('populatedExEdit', testExpression));
     store.dispatch(expressionChanged('populatedExRO', testExpression));
+    store.dispatch(expressionChanged('populatedExNoDs', testExpression));
     store.dispatch(expressionChanged('simplestEx', simplestExpression));
   })) // must be recorder after/outside of the test initialisation decorators
   .addDecorator(DragDropDecorator)
   .add('Populated Editable', () => (
-    <ExpressionBuilder isEditableSystemSet dataSourceUuid="testDs" expressionId="populatedExEdit" />
+    <ExpressionBuilder allowEdit dataSourceUuid="testDs" expressionId="populatedExEdit" />
   ))
   .add('Populated ReadOnly', () => (
     <ExpressionBuilder dataSourceUuid="testDs" expressionId="populatedExRO" />
   ))
   .add('Simplest Editable', () => (
-    <ExpressionBuilder isEditableSystemSet dataSourceUuid="testDs" expressionId="simplestEx" />
+    <ExpressionBuilder allowEdit dataSourceUuid="testDs" expressionId="simplestEx" />
   ))
-  .add('Missing Data Source', () => (
-    <ExpressionBuilder dataSourceUuid="missingDs" expressionId="simplestEx" />
+  .add('Missing Data Source (read only)', () => (
+    <ExpressionBuilder dataSourceUuid="missingDs" expressionId="populatedExNoDs" />
   ))
   .add('Missing Expression', () => (
     <ExpressionBuilder dataSourceUuid="testDs" expressionId="missingEx" />
