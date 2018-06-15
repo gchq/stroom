@@ -1,7 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose } from 'recompose';
+import { compose, branch, renderComponent } from 'recompose';
+
 import { connect } from 'react-redux';
 
 import { Container, Header, Message, Image, Grid, Form } from 'semantic-ui-react';
@@ -13,16 +14,6 @@ import ElementField from './ElementField';
 const ElementDetails = ({
   pipelineId, pipeline, selectedElementId, elements,
 }) => {
-  if (!selectedElementId) {
-    return (
-      <Container className="element-details">
-        <Message>
-          <Message.Header>Please select an element</Message.Header>
-        </Message>
-      </Container>
-    );
-  }
-
   const element = pipeline.pipeline.elements.add.find(element => element.id === selectedElementId);
   const elementProperties = pipeline.pipeline.properties.add.filter(property => property.element === selectedElementId);
   const elementType = elements.elements[element.type];
@@ -97,4 +88,14 @@ export default compose(
     },
   ),
   reduxForm(),
+  branch(
+    props => !props.selectedElementId,
+    renderComponent(() => (
+      <Container className="element-details">
+        <Message>
+          <Message.Header>Please select an element</Message.Header>
+        </Message>
+      </Container>
+    )),
+  ),
 )(ElementDetails);
