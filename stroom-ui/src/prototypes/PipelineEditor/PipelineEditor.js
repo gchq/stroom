@@ -24,7 +24,7 @@ import { Loader } from 'semantic-ui-react';
 
 import { LineContainer, LineTo } from 'components/LineTo';
 import { mapObject } from 'lib/treeUtils';
-import { withPipelineAndLayoutInfo } from './withPipelineAndLayoutInfo';
+import { getPipelineLayoutInformation } from './pipelineUtils';
 
 import PipelineElement from './PipelineElement';
 import { ElementPalette } from './ElementPalette';
@@ -55,6 +55,16 @@ const PipelineEditor = ({
   setPaletteOpen,
   elementsByCategory,
 }) => {
+  if (!pipeline) {
+    return <div>Awaiting pipeline</div>;
+  }
+  if (!pipeline.pipeline) {
+    return <div>Awaiting Pipeline Data</div>
+  }
+  if (!layoutInformation) {
+    return <div>Awaiting layout information</div>
+  }
+
   const togglePaletteOpen = () => setPaletteOpen(!isPaletteOpen);
 
   const elementStyles = mapObject(layoutInformation, l => ({
@@ -121,9 +131,12 @@ const PipelineEditor = ({
 };
 
 PipelineEditor.propTypes = {
+  // Set by owner
   pipelineId: PropTypes.string.isRequired,
-  pipeline: PropTypes.object.isRequired,
-  layoutInformation: PropTypes.object.isRequired,
+
+  // redux state
+  pipeline: PropTypes.object,
+  layoutInformation: PropTypes.object,
   elementsByCategory: PropTypes.object.isRequired,
 
   // withPaletteOpen
@@ -133,13 +146,22 @@ PipelineEditor.propTypes = {
 
 export default compose(
   connect(
-    state => ({
-      elementsByCategory: state.elements.byCategory || {},
-    }),
+    (state, props) => {
+      const pipeline = state.pipelines[props.pipelineId];
+      let layoutInformation;
+      if (pipeline) {
+        layoutInformation = getPipelineLayoutInformation(pipeline.asTree);
+      }
+
+      return {
+        elementsByCategory: state.elements.byCategory || {},
+        pipeline,
+        layoutInformation,
+      };
+    },
     {
       // actions
     },
   ),
-  withPipelineAndLayoutInfo(),
   withPaletteOpen,
 )(PipelineEditor);
