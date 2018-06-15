@@ -19,6 +19,7 @@ const getInitialValues = (elementTypeProperties, elementProperties) => {
       elementTypeProperties[key].defaultValue,
       elementTypeProperties[key].type,
     );
+    return null;
   });
   return initialValues;
 };

@@ -6,7 +6,7 @@ import { connect } from 'react-redux';
 
 import { Message, Form } from 'semantic-ui-react';
 
-import { Toggle, ToggleField, InputField } from 'react-semantic-redux-form';
+import { Toggle, InputField } from 'react-semantic-redux-form';
 
 import { Field } from 'redux-form';
 
