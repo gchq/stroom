@@ -25,8 +25,7 @@ import './NumericInput.css';
 
 const enhance = compose(
   withState('isDownDisabled', 'setDownDisabled', false),
-  withState('isUpDisabled', 'setUpDisabled', false),
-  withState('value', 'setValue', 0),
+  withState('isUpDisabled', 'setUpDisabled', false)
 );
 
 const getFallBackValue = (defaultValue, placeholder) => {
@@ -64,8 +63,9 @@ const NumericInput = enhance(({
   setUpDisabled,
   setDownDisabled,
   setValue,
+  onChange,
 }) => {
-  let valueIsBad;
+  let valueIsBad = false;
   let valueIsBadMessage = '';
   if (value < min) {
     valueIsBad = true;
@@ -87,24 +87,25 @@ const NumericInput = enhance(({
                 size="tiny"
                 placeholder={placeholder || 0}
                 className="numeric-input"
-                value={value || defaultValue }
+                value={value}
                   // defaultValue={defaultValue || null}
                 onChange={(e, props) => {
                     let newValue = parseInt(props.value, 10); // 10 = the radix, indicating decimal
                     if (isNaN(newValue)) {
                       newValue = props.value;
                     }
-                    setValue(newValue);
+                    setValue(newValue)
                     setButtonDisabledStates(max, min, newValue, setUpDisabled, setDownDisabled);
+                    onChange(newValue)
                   }}
                 action={
                   <div>
                       <Button
                         className="button-top"
                         onClick={(e, props) => {
-                          const newValue = (value || getFallBackValue(defaultValue, placeholder)) + 1;
-                          setValue(newValue);
+                          const newValue = parseInt(value || getFallBackValue(defaultValue, placeholder), 10) + 1; // 10 = the radix, indicating decimal
                           setButtonDisabledStates(max, min, newValue, setUpDisabled, setDownDisabled);
+                          onChange(newValue)
                         }}
                         disabled={isUpDisabled}
                       >
@@ -113,9 +114,9 @@ const NumericInput = enhance(({
                       <Button
                         className="button-bottom"
                         onClick={(e, props) => {
-                          const newValue = (value || getFallBackValue(defaultValue, placeholder)) - 1;
-                          setValue(newValue);
+                          const newValue = parseInt(value || getFallBackValue(defaultValue, placeholder), 10) - 1; // 10 = the radix, indicating decimal
                           setButtonDisabledStates(max, min, newValue, setUpDisabled, setDownDisabled);
+                          onChange(newValue)
                         }}
                         disabled={isDownDisabled}
                       >
@@ -140,7 +141,7 @@ NumericInput.propTypes = {
   max: PropTypes.number,
   placeholder: PropTypes.string,
   defaultValue: PropTypes.number,
-  value: PropTypes.number,
+  value: PropTypes.number
 };
 
 export default NumericInput;

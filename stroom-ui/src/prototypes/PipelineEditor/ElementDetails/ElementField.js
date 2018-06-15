@@ -6,21 +6,13 @@ import { connect } from 'react-redux';
 
 import { Message, Form } from 'semantic-ui-react';
 
-import { Toggle, ToggleField, InputField } from 'react-semantic-redux-form';
+import { Toggle, InputField } from 'react-semantic-redux-form';
 
 import { Field } from 'redux-form';
 
-import NumericInput from 'prototypes/NumericInput';
+import { getActualValue } from './elementDetailsUtils';
 
-const getActualValue = (value, defaultValue, type) => {
-  let actualValue;
-  if (value) {
-    actualValue = value[type] || defaultValue;
-  } else {
-    actualValue = defaultValue;
-  }
-  return actualValue;
-};
+import NumericInput from 'prototypes/NumericInput';
 
 const ElementFieldType = ({
   name, type, value, defaultValue,
@@ -39,8 +31,17 @@ const ElementFieldType = ({
         />
       );
     case 'int':
-      actualValue = getActualValue(value, defaultValue, 'integer');
-      return <NumericInput value={actualValue} />;
+      actualValue = parseInt(getActualValue(value, defaultValue, 'integer'), 10);
+      return (
+        <Field
+          name={name}
+          value={actualValue}
+          component={(props) => {
+            console.log({ props });
+            return <NumericInput {...props.input} />;
+          }}
+        />
+      );
     case 'String':
     case 'DocRef':
     case 'PipelineReference':
@@ -75,8 +76,8 @@ ElementField.propTypes = {
   name: PropTypes.string.isRequired,
   description: PropTypes.string.isRequired,
   type: PropTypes.string.isRequired,
-  defaultValue: PropTypes.string.isRequired,
-  value: PropTypes.string,
+  defaultValue: PropTypes.number.isRequired,
+  value: PropTypes.object,
 };
 
 export default compose(connect(
