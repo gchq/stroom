@@ -65,7 +65,7 @@ const NumericInput = enhance(({
   setValue,
   onChange,
 }) => {
-  let valueIsBad;
+  let valueIsBad = false;
   let valueIsBadMessage = '';
   if (value < min) {
     valueIsBad = true;
