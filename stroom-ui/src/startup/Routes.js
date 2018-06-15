@@ -25,7 +25,7 @@ import OriginalList from 'prototypes/OriginalList';
 import Graph from 'prototypes/Graph';
 import TrackerDashboard from 'sections/TrackerDashboard';
 import { AuthenticationRequest, HandleAuthenticationResponse } from 'startup/Authentication';
-import { PipelineEditorFromUrl } from 'prototypes/PipelineEditor';
+import { PipelineEditor } from 'prototypes/PipelineEditor';
 
 import PathNotFound from 'sections/PathNotFound';
 
@@ -80,7 +80,7 @@ class Routes extends Component {
             path="/pipelines/:pipelineId"
             render={({ match }) =>
               (this.isLoggedIn() ? (
-                <PipelineEditorFromUrl pipelineId={match.params.pipelineId} />
+                <PipelineEditor fetchElementsFromServer={true} fetchPipelineFromServer={true} pipelineId={match.params.pipelineId} />
               ) : (
                 <AuthenticationRequest
                   referrer={match.url}
