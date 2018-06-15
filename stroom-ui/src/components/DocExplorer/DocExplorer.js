@@ -43,7 +43,7 @@ const DocExplorer = ({
 
 DocExplorer.propTypes = {
   explorerId: PropTypes.string.isRequired,
-  explorer: PropTypes.object,
+  explorer: PropTypes.object.isRequired,
   documentTree: PropTypes.object.isRequired,
 
   searchTermUpdated: PropTypes.func.isRequired,

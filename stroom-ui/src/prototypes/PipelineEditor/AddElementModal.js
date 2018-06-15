@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose } from 'recompose';
+import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
 import { Field, reduxForm } from 'redux-form';
 
@@ -15,65 +15,48 @@ import { required, minLength2, renderField } from 'lib/reduxFormUtils';
 const { pipelineElementAdded } = actionCreators;
 
 const AddElementModal = ({
-  // Set by container
-  pipelineId,
-  elementId,
-
-  // redux state
+  // From redux state
   pipeline,
-
-  // Redux actions
-  pipelineElementAdded,
 
   // withNewElementDefinition from container
   newElementDefinition,
   setNewElementDefinition,
 
   // Redux form
-  newElementForm,
   invalid,
   submitting,
-  reset,
-}) => {
-  const onConfirmNewElement = () => {
-    pipelineElementAdded(pipelineId, elementId, newElementDefinition, newElementForm.values.name);
-    setNewElementDefinition(undefined);
-    reset();
-  };
-  const onCancelNewElement = () => {
-    setNewElementDefinition(undefined);
-    reset();
-  };
 
-  return (
-    <Modal size="tiny" open={!!newElementDefinition} onClose={onCancelNewElement} dimmer="inverted">
-      <Header content="Add New Element" />
-      <Modal.Content>
-        <Form>
-          <Form.Field>
-            <label>Name</label>
-            <Field
-              name="name"
-              component={renderField}
-              type="text"
-              placeholder="Name"
-              validate={[required, minLength2, uniqueElementName(pipeline.pipeline)]}
-            />
-          </Form.Field>
-        </Form>
-      </Modal.Content>
-      <Modal.Actions>
-        <Button
-          positive
-          content="Submit"
-          disabled={invalid || submitting}
-          onClick={onConfirmNewElement}
-        />
-        <Button negative content="Cancel" onClick={onCancelNewElement} />
-      </Modal.Actions>
-    </Modal>
-  );
-};
+  // withProps
+  onConfirmNewElement,
+  onCancelNewElement,
+}) => (
+  <Modal size="tiny" open={!!newElementDefinition} onClose={onCancelNewElement} dimmer="inverted">
+    <Header content="Add New Element" />
+    <Modal.Content>
+      <Form>
+        <Form.Field>
+          <label>Name</label>
+          <Field
+            name="name"
+            component={renderField}
+            type="text"
+            placeholder="Name"
+            validate={[required, minLength2, uniqueElementName(pipeline.pipeline)]}
+          />
+        </Form.Field>
+      </Form>
+    </Modal.Content>
+    <Modal.Actions>
+      <Button
+        positive
+        content="Submit"
+        disabled={invalid || submitting}
+        onClick={onConfirmNewElement}
+      />
+      <Button negative content="Cancel" onClick={onCancelNewElement} />
+    </Modal.Actions>
+  </Modal>
+);
 
 AddElementModal.propTypes = {
   // Set by container
@@ -92,6 +75,10 @@ AddElementModal.propTypes = {
 
   // redux form
   newElementForm: PropTypes.object,
+
+  // withProps will set the event handlers up
+  onConfirmNewElement: PropTypes.func.isRequired,
+  onCancelNewElement: PropTypes.func.isRequired,
 };
 
 export default compose(
@@ -104,4 +91,23 @@ export default compose(
     { pipelineElementAdded },
   ),
   reduxForm({ form: 'newElementName' }),
+  withProps(({ // Properties from owner
+    pipelineId, elementId,
+    // Redux action
+    pipelineElementAdded,
+    // from withNewElementDefinition in owner
+    newElementDefinition, setNewElementDefinition,
+    // Redux form
+    newElementForm, reset,
+  }) => ({
+    onConfirmNewElement: () => {
+      pipelineElementAdded(pipelineId, elementId, newElementDefinition, newElementForm.values.name);
+      setNewElementDefinition(undefined);
+      reset();
+    },
+    onCancelNewElement: () => {
+      setNewElementDefinition(undefined);
+      reset();
+    },
+  })),
 )(AddElementModal);
