@@ -23,7 +23,7 @@ const initialState = {
   trackers: [],
   isLoading: false,
   showCompleted: false,
-  sortBy: 'Pipeline',
+  sortBy: 'pipelineUuid',
   sortDirection: 'ascending',
   pageSize: 10,
   pageOffset: 0,
@@ -34,7 +34,7 @@ const initialState = {
 };
 
 export const Directions = Object.freeze({ ascending: 'ascending', descending: 'descending' });
-export const SortByOptions = { pipeline: 'Pipeline', priority: 'Priority', progress: 'progress' };
+export const SortByOptions = { pipelineUuid: 'pipelineUuid', priority: 'Priority', progress: 'progress' };
 
 export const actionCreators = createActions({
   UPDATE_SORT: (sortBy, sortDirection) => ({ sortBy, sortDirection }),

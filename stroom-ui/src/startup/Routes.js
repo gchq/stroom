@@ -80,7 +80,11 @@ class Routes extends Component {
             path="/pipelines/:pipelineId"
             render={({ match }) =>
               (this.isLoggedIn() ? (
-                <PipelineEditor fetchElementsFromServer={true} fetchPipelineFromServer={true} pipelineId={match.params.pipelineId} />
+                <PipelineEditor
+                  fetchElementsFromServer
+                  fetchPipelineFromServer
+                  pipelineId={match.params.pipelineId}
+                />
               ) : (
                 <AuthenticationRequest
                   referrer={match.url}
