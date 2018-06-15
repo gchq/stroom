@@ -81,7 +81,6 @@ const NumericInput = enhance(({
                     if (isNaN(newValue)) {
                       newValue = props.value;
                     }
-                    setValue(newValue);
                     setButtonDisabledStates(max, min, newValue, setUpDisabled, setDownDisabled);
                     onChange(newValue);
                   }}
