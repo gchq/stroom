@@ -25,11 +25,12 @@ import { Image } from 'semantic-ui-react';
 
 import AddElementModal from './AddElementModal';
 import { withElement } from './withElement';
-import { withPipeline } from './withPipeline';
 import { actionCreators } from './redux';
 import { canMovePipelineElement } from './pipelineUtils';
 import { ItemTypes } from './dragDropTypes';
 import { isValidChildType } from './elementUtils'
+
+import { getInitialValues } from './ElementDetails'
 
 const { pipelineElementSelected, pipelineElementMoved } = actionCreators;
 
@@ -57,16 +58,16 @@ function dragCollect(connect, monitor) {
 const dropTarget = {
   canDrop(props, monitor) {
     const { pipeline, asTree, elementId } = props;
-    const thisElement = pipeline.elements.add.filter(element => element.id === elementId)[0];
+    const thisElement = pipeline.pipeline.elements.add.filter(element => element.id === elementId)[0];
     const typeOfThisElement = props.elements.elements[thisElement.type]
     switch (monitor.getItemType()) {
       case ItemTypes.ELEMENT:
         let dropeeId = monitor.getItem().elementId;
-        let dropee = pipeline.elements.add.filter(element => element.id === dropeeId)[0];
+        let dropee = pipeline.pipeline.elements.add.filter(element => element.id === dropeeId)[0];
         let dropeeType = props.elements.elements[dropee.type]
         let isValidChild = isValidChildType(typeOfThisElement, dropeeType, 0)
 
-        let isValid = canMovePipelineElement(pipeline, asTree, dropeeId, elementId);
+        let isValid = canMovePipelineElement(pipeline.pipeline, asTree, dropeeId, elementId);
 
         return isValidChild && isValid;
       case ItemTypes.PALLETE_ELEMENT:
@@ -116,6 +117,7 @@ const PipelineElement = ({
   isOver,
   canDrop,
   pipelineId,
+  pipeline,
   elementId,
   element,
   elementDefinition,
@@ -125,7 +127,7 @@ const PipelineElement = ({
   newElementDefinition,
   setNewElementDefinition,
   dndIsHappening,
-
+  elements,
   hasFocus,
   setHasFocus
 }) => {
@@ -163,7 +165,14 @@ const PipelineElement = ({
     className += ' focus';
   }
 
-  const onClick = () => pipelineElementSelected(pipelineId, elementId);
+  const onClick = () => {
+    // We need to get the initial values for this element and make sure they go into the state, 
+    // ready for redux-form to populate the new form.
+    const elementTypeProperties = elements.elementProperties[element.type];
+    const elementProperties = pipeline.pipeline.properties.add.filter(property => property.element === element.id);
+    const initalValues = getInitialValues(elementTypeProperties, elementProperties)
+    return pipelineElementSelected(pipelineId, elementId, initalValues);
+  }
 
   return compose(connectDragSource, connectDropTarget)(
     <div className={className} onClick={onClick}>
@@ -187,9 +196,8 @@ PipelineElement.propTypes = {
 
   selectedElementId: PropTypes.string,
 
-  // withPipeline
+  // redux state
   pipeline: PropTypes.object.isRequired,
-  asTree: PropTypes.object.isRequired,
 
   // withElement
   element: PropTypes.object.isRequired,
@@ -209,8 +217,10 @@ PipelineElement.propTypes = {
 
 export default compose(
   connect(
-    state => ({
+    (state, props) => ({
       // state
+      elements: state.elements,
+      pipeline: state.pipelines[props.pipelineId]
     }),
     {
       // actions
@@ -218,7 +228,6 @@ export default compose(
       pipelineElementMoved
     },
   ),
-  withPipeline(),
   withElement(),
   withNameNewElementModal,
   withFocus,

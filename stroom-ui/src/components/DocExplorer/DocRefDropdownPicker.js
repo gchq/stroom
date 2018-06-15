@@ -25,8 +25,6 @@ import { iterateNodes, findItem } from 'lib/treeUtils';
 
 import { actionCreators } from './redux';
 
-import { withPickedDocRef } from './withPickedDocRef';
-
 const { docRefPicked } = actionCreators;
 
 const DocRefDropdownPicker = ({
@@ -90,14 +88,12 @@ DocRefDropdownPicker.propTypes = {
   docRefPicked: PropTypes.func.isRequired,
 };
 
-export default compose(
-  connect(
-    state => ({
-      documentTree: state.explorerTree.documentTree,
-    }),
-    {
-      docRefPicked,
-    },
-  ),
-  withPickedDocRef(),
-)(DocRefDropdownPicker);
+export default compose(connect(
+  (state, props) => ({
+    documentTree: state.explorerTree.documentTree,
+    docRef: state.explorerTree.pickedDocRefs[props.pickerId],
+  }),
+  {
+    docRefPicked,
+  },
+))(DocRefDropdownPicker);

@@ -16,14 +16,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose, withState } from 'recompose';
+import { compose, withState, branch, renderComponent } from 'recompose';
+import { connect } from 'react-redux';
+import { Loader } from 'semantic-ui-react';
 
 import ExpressionOperator from './ExpressionOperator';
 import ROExpressionOperator from './ROExpressionOperator';
 import { LineContainer } from 'components/LineTo';
-
-import { withDataSource } from './DataSource';
-import { withExpression } from './withExpression';
 
 import { Checkbox } from 'semantic-ui-react';
 
@@ -41,6 +40,13 @@ const ExpressionBuilder = ({
   editableByUser,
   setEditableByUser,
 }) => {
+  if (!dataSource) {
+    return <div>Awaiting Data Source</div>;
+  }
+  if (!expression) {
+    return <div>Awaiting Expression</div>;
+  }
+
   const roOperator = (
     <ROExpressionOperator expressionId={expressionId} isEnabled operator={expression} />
   );
@@ -84,13 +90,12 @@ const ExpressionBuilder = ({
 
 ExpressionBuilder.propTypes = {
   // Set by container
+  dataSourceUuid: PropTypes.string.isRequired,
   expressionId: PropTypes.string.isRequired,
   isEditableSystemSet: PropTypes.bool.isRequired,
 
-  // withDataSource
+  // Redux state
   dataSource: PropTypes.object.isRequired,
-
-  // withExpression
   expression: PropTypes.object.isRequired,
 
   // withSetEditableByUser
@@ -102,4 +107,23 @@ ExpressionBuilder.defaultProps = {
   isEditableSystemSet: false,
 };
 
-export default compose(withDataSource(), withExpression(), withSetEditableByUser)(ExpressionBuilder);
+export default compose(
+  connect(
+    (state, props) => ({
+      dataSource: state.dataSources[props.dataSourceUuid],
+      expression: state.expressions[props.expressionId],
+    }),
+    {
+      // actions
+    },
+  ),
+  withSetEditableByUser,
+  branch(
+    props => !props.expression,
+    renderComponent(() => <Loader active>Loading Expression</Loader>),
+  ),
+  branch(
+    props => !props.dataSource,
+    renderComponent(() => <Loader active>Loading Data Source</Loader>),
+  ),
+)(ExpressionBuilder);

@@ -18,11 +18,13 @@ import PropTypes from 'prop-types';
 
 import { Icon } from 'semantic-ui-react';
 
-import { compose, withState } from 'recompose';
+import { compose, withState, branch, renderComponent } from 'recompose';
 import { connect } from 'react-redux';
+import { Loader } from 'semantic-ui-react';
+
 import { LineContainer, LineTo } from 'components/LineTo';
 import { mapObject } from 'lib/treeUtils';
-import { withPipelineAndLayoutInfo } from './withPipelineAndLayoutInfo';
+import { getPipelineLayoutInformation } from './pipelineUtils';
 
 import PipelineElement from './PipelineElement';
 import { ElementPalette } from './ElementPalette';
@@ -53,6 +55,16 @@ const PipelineEditor = ({
   setPaletteOpen,
   elementsByCategory,
 }) => {
+  if (!pipeline) {
+    return <div>Awaiting pipeline</div>;
+  }
+  if (!pipeline.pipeline) {
+    return <div>Awaiting Pipeline Data</div>
+  }
+  if (!layoutInformation) {
+    return <div>Awaiting layout information</div>
+  }
+
   const togglePaletteOpen = () => setPaletteOpen(!isPaletteOpen);
 
   const elementStyles = mapObject(layoutInformation, l => ({
@@ -89,14 +101,16 @@ const PipelineEditor = ({
             <RecycleBin pipelineId={pipelineId} />
           </div>
           <div className="Pipeline-editor__elements">
-            {pipeline.elements.add.filter(element => isActive(pipeline, element)).map(e => (
-              <div key={e.id} id={e.id} style={elementStyles[e.id]}>
-                <PipelineElement pipelineId={pipelineId} elementId={e.id} />
-              </div>
-            ))}
+            {pipeline.pipeline.elements.add
+              .filter(element => isActive(pipeline.pipeline, element))
+              .map(e => (
+                <div key={e.id} id={e.id} style={elementStyles[e.id]}>
+                  <PipelineElement pipelineId={pipelineId} elementId={e.id} />
+                </div>
+              ))}
           </div>
           <div className="Pipeline-editor__lines">
-            {pipeline.links.add
+            {pipeline.pipeline.links.add
               .map(l => ({ ...l, lineId: `${l.from}-${l.to}` }))
               .map(l => (
                 <LineTo
@@ -117,10 +131,12 @@ const PipelineEditor = ({
 };
 
 PipelineEditor.propTypes = {
+  // Set by owner
   pipelineId: PropTypes.string.isRequired,
-  pipeline: PropTypes.object.isRequired,
-  asTree: PropTypes.object.isRequired,
-  layoutInformation: PropTypes.object.isRequired,
+
+  // redux state
+  pipeline: PropTypes.object,
+  layoutInformation: PropTypes.object,
   elementsByCategory: PropTypes.object.isRequired,
 
   // withPaletteOpen
@@ -130,13 +146,22 @@ PipelineEditor.propTypes = {
 
 export default compose(
   connect(
-    state => ({
-      elementsByCategory: state.elements.byCategory || {},
-    }),
+    (state, props) => {
+      const pipeline = state.pipelines[props.pipelineId];
+      let layoutInformation;
+      if (pipeline) {
+        layoutInformation = getPipelineLayoutInformation(pipeline.asTree);
+      }
+
+      return {
+        elementsByCategory: state.elements.byCategory || {},
+        pipeline,
+        layoutInformation,
+      };
+    },
     {
       // actions
     },
   ),
-  withPipelineAndLayoutInfo(),
   withPaletteOpen,
 )(PipelineEditor);
