@@ -69,11 +69,11 @@ class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction
         return security.secureResult(() -> {
             if (task.getDataSource() != null) {
                 if (StreamDataSource.STREAM_STORE_DOC_REF.equals(task.getDataSource())) {
-                    if (task.getField().getName().equals(StreamDataSource.FEED)) {
+                    if (task.getField().getName().equals(StreamDataSource.FEED_NAME)) {
                         return createList(feedService, task.getText());
                     }
 
-                    if (task.getField().getName().equals(StreamDataSource.PIPELINE)) {
+                    if (task.getField().getName().equals(StreamDataSource.PIPELINE_UUID)) {
                         return new SharedList<>(pipelineStore.list().stream()
                                 .filter(docRef -> docRef.getName().contains(task.getText()))
                                 .map(DocRef::getName)
@@ -82,7 +82,7 @@ class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction
                                 .collect(Collectors.toList()));
                     }
 
-                    if (task.getField().getName().equals(StreamDataSource.STREAM_TYPE)) {
+                    if (task.getField().getName().equals(StreamDataSource.STREAM_TYPE_NAME)) {
                         return createList(streamTypeService, task.getText());
                     }
 
