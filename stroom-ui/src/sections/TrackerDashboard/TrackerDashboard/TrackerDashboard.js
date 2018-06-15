@@ -22,7 +22,8 @@ import Mousetrap from 'mousetrap';
 import { Label, Table, Progress, Button, Input, Menu, Pagination } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 
-import { actionCreators, Directions, SortByOptions, updateTrackerSelection } from '../redux';
+import { actionCreators, Directions, SortByOptions } from '../redux';
+import { expressionActionCreators } from 'components/ExpressionBuilder';
 import { fetchTrackers, TrackerSelection } from '../streamTasksResourceClient';
 import TrackerDetails from '../TrackerDetails/TrackerDetails';
 
@@ -155,7 +156,7 @@ class TrackerDashboard extends Component {
                 <Table.Row
                   key={filterId}
                   className="tracker-row"
-                  onClick={() => onHandleTrackerSelection(filterId)}
+                  onClick={() => onHandleTrackerSelection(filterId, trackers)}
                   active={selectedTrackerId === filterId}
                 >
                   <Table.Cell className="name-column" textAlign="left" width={7}>
@@ -208,13 +209,23 @@ const mapStateToProps = state => ({
   numberOfPages: state.trackerDashboard.numberOfPages,
 });
 
-const mapDispatchToProps = dispatch => ({
+const mapDispatchToProps = (dispatch, ownProps) => ({
   onHandleSort: (sortBy, sortDirection) => {
     dispatch(actionCreators.updateSort(sortBy, sortDirection));
     dispatch(fetchTrackers());
   },
-  onHandleTrackerSelection: (filterId) => {
-    dispatch(updateTrackerSelection(filterId));
+  onHandleTrackerSelection: (filterId, trackers) => {
+    dispatch(actionCreators.updateTrackerSelection(filterId));
+
+    let expression;
+    if (filterId !== undefined) {
+      const tracker = trackers.find(t => t.filterId === filterId);
+      if (tracker && tracker.filter) {
+        expression = tracker.filter.expression;
+      }
+    }
+
+    dispatch(expressionActionCreators.expressionChanged('trackerDetailsExpression', expression));
   },
   onMoveSelection: (direction) => {
     dispatch(actionCreators.moveSelection(direction));

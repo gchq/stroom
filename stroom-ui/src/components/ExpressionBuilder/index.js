@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import ExpressionBuilder from './ExpressionBuilder';
-import { expressionReducer } from './redux';
+import { expressionReducer, actionCreators as expressionActionCreators } from './redux';
 import { dataSourceReducer, actionCreators as dataSourceActionCreators } from './DataSource';
 
 export {
@@ -22,4 +22,5 @@ export {
   expressionReducer,
   dataSourceReducer,
   dataSourceActionCreators,
+  expressionActionCreators
 };
