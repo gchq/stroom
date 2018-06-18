@@ -30,20 +30,17 @@ const { searchTermUpdated, explorerTreeOpened } = actionCreators;
 
 const DocExplorer = ({
   documentTree, explorerId, explorer, searchTermUpdated,
-}) => {
-  console.log({ explorerId, documentTree });
-  return (
-    <div>
-      <Input
-        icon="search"
-        placeholder="Search..."
-        value={explorer.searchTerm}
-        onChange={e => searchTermUpdated(explorerId, e.target.value)}
-      />
-      <Folder explorerId={explorerId} folder={documentTree} />
-    </div>
-  );
-};
+}) => (
+  <div>
+    <Input
+      icon="search"
+      placeholder="Search..."
+      value={explorer.searchTerm}
+      onChange={e => searchTermUpdated(explorerId, e.target.value)}
+    />
+    <Folder explorerId={explorerId} folder={documentTree} />
+  </div>
+);
 
 DocExplorer.propTypes = {
   // Set by container
