@@ -26,6 +26,7 @@ import Graph from 'prototypes/Graph';
 import TrackerDashboard from 'sections/TrackerDashboard';
 import { AuthenticationRequest, HandleAuthenticationResponse } from 'startup/Authentication';
 import { PipelineEditor } from 'prototypes/PipelineEditor';
+import { DocExplorer } from 'components/DocExplorer';
 
 import PathNotFound from 'sections/PathNotFound';
 
@@ -85,6 +86,23 @@ class Routes extends Component {
                   fetchPipelineFromServer
                   pipelineId={match.params.pipelineId}
                 />
+              ) : (
+                <AuthenticationRequest
+                  referrer={match.url}
+                  uiUrl={this.props.advertisedUrl}
+                  appClientId={this.props.appClientId}
+                  authenticationServiceUrl={this.props.authenticationServiceUrl}
+                />
+              ))
+            }
+          />
+
+          <Route
+            exact
+            path="/explorerTree"
+            render={({ match }) =>
+              (this.isLoggedIn() ? (
+                <DocExplorer fetchTreeFromServer explorerId="singleton" />
               ) : (
                 <AuthenticationRequest
                   referrer={match.url}

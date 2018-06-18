@@ -33,7 +33,7 @@ import { actionCreators } from './redux';
 
 import 'styles/main.css';
 
-import { testPipeline, testPipelineElements } from './test/pipeline.testData';
+import { testPipeline, testPipelineElements, bigTestPipeline } from './test/pipeline.testData';
 import { testElementTypes, testElementProperties } from './test/elements.testData';
 import { pipeline01, pipeline02 } from './test/setupSampleDataPipelines.testData';
 
@@ -59,6 +59,14 @@ pipelineEditorStories
   })) // must be recorder after/outside of the test initialisation decorators
   .addDecorator(DragDropDecorator)
   .add('Simple pipeline', () => <PipelineEditor pipelineId="testPipeline" />);
+
+// Add storyfor a simple pipeline
+pipelineEditorStories
+  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
+    store.dispatch(pipelineReceived('bigTestPipeline', bigTestPipeline));
+  })) // must be recorder after/outside of the test initialisation decorators
+  .addDecorator(DragDropDecorator)
+  .add('Pipeline with Inheritance', () => <PipelineEditor pipelineId="bigTestPipeline" />);
 
 // Add story for a pipeline copied from setupSampleData
 pipelineEditorStories

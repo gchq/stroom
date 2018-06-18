@@ -791,4 +791,4 @@ const testPipelineElements = {
   myXmlWriter2,
 };
 
-export { testPipeline, singleElementTestPipeline, testPipelineElements };
+export { testPipeline, singleElementTestPipeline, bigTestPipeline, testPipelineElements };

@@ -40,6 +40,7 @@ import stroom.dictionary.DictionaryResource2;
 import stroom.dictionary.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dispatch.shared.DispatchService;
+import stroom.explorer.ExplorerResource;
 import stroom.feed.RemoteFeedServiceRPC;
 import stroom.guice.AppModule;
 import stroom.importexport.ImportExportActionHandler;
@@ -236,6 +237,7 @@ public class App extends Application<Config> {
         GuiceUtil.addResource(environment.jersey(), injector, AuthorisationResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, StreamTaskResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, PipelineResource.class);
+        GuiceUtil.addResource(environment.jersey(), injector, ExplorerResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, ElementResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, SessionResource.class);
 

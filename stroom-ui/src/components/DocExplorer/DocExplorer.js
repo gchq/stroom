@@ -24,29 +24,40 @@ import { Input, Loader } from 'semantic-ui-react';
 import Folder from './Folder';
 
 import { actionCreators } from './redux';
+import { fetchDocTree } from './explorerClient';
 
 const { searchTermUpdated, explorerTreeOpened } = actionCreators;
 
 const DocExplorer = ({
   documentTree, explorerId, explorer, searchTermUpdated,
-}) => (
-  <div>
-    <Input
-      icon="search"
-      placeholder="Search..."
-      value={explorer.searchTerm}
-      onChange={e => searchTermUpdated(explorerId, e.target.value)}
-    />
-    <Folder explorerId={explorerId} folder={documentTree} />
-  </div>
-);
+}) => {
+  console.log({ explorerId, documentTree });
+  return (
+    <div>
+      <Input
+        icon="search"
+        placeholder="Search..."
+        value={explorer.searchTerm}
+        onChange={e => searchTermUpdated(explorerId, e.target.value)}
+      />
+      <Folder explorerId={explorerId} folder={documentTree} />
+    </div>
+  );
+};
 
 DocExplorer.propTypes = {
+  // Set by container
+  fetchTreeFromServer: PropTypes.bool.isRequired,
+
   explorerId: PropTypes.string.isRequired,
   explorer: PropTypes.object.isRequired,
   documentTree: PropTypes.object.isRequired,
 
   searchTermUpdated: PropTypes.func.isRequired,
+};
+
+DocExplorer.defaultProps = {
+  fetchTreeFromServer: false, // only false will work
 };
 
 export default compose(
@@ -58,10 +69,15 @@ export default compose(
     {
       searchTermUpdated,
       explorerTreeOpened,
+      fetchDocTree,
     },
   ),
   lifecycle({
     componentDidMount() {
+      if (this.props.fetchTreeFromServer) {
+        this.props.fetchDocTree();
+      }
+
       this.props.explorerTreeOpened(
         this.props.explorerId,
         this.props.allowMultiSelect,
@@ -70,5 +86,12 @@ export default compose(
       );
     },
   }),
-  branch(props => !props.explorer, renderComponent(() => <Loader active>Loading Explorer</Loader>)),
+  branch(
+    props => !props.documentTree,
+    renderComponent(() => <Loader active>Loading Document Tree</Loader>),
+  ),
+  branch(
+    props => !props.explorer,
+    renderComponent(() => <Loader active>Creating Explorer</Loader>),
+  ),
 )(DocExplorer);

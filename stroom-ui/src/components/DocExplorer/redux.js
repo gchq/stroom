@@ -55,7 +55,7 @@ function getToggledState(currentState, isUser) {
 const DEFAULT_EXPLORER_ID = 'default';
 
 const actionCreators = createActions({
-  RECEIVED_DOC_TREE: documentTree => ({ documentTree }),
+  DOC_TREE_RECEIVED: documentTree => ({ documentTree }),
   EXPLORER_TREE_OPENED: (explorerId, allowMultiSelect, allowDragAndDrop, typeFilter) => ({
     explorerId,
     allowMultiSelect,
@@ -213,7 +213,7 @@ function getStateAfterTreeUpdate(state, documentTree) {
 const explorerTreeReducer = handleActions(
   {
     // Receive the current state of the explorer tree
-    RECEIVED_DOC_TREE: (state, action) =>
+    DOC_TREE_RECEIVED: (state, action) =>
       getStateAfterTreeUpdate(state, action.payload.documentTree),
 
     // When an explorer is opened
