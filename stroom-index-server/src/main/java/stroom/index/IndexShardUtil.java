@@ -17,7 +17,7 @@
 package stroom.index;
 
 import stroom.index.shared.IndexShard;
-import stroom.streamstore.fs.FileSystemUtil;
+import stroom.streamstore.store.impl.fs.FileSystemUtil;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;

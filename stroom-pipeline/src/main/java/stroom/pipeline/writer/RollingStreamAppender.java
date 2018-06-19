@@ -34,8 +34,8 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.StreamHolder;
 import stroom.data.meta.api.StreamProperties;
-import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.api.StreamTarget;
+import stroom.streamstore.store.api.StreamStore;
+import stroom.streamstore.store.api.StreamTarget;
 import stroom.data.meta.api.Stream;
 import stroom.task.TaskContext;
 

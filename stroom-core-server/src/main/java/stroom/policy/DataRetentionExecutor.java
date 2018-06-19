@@ -30,7 +30,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.DataRetentionRule;
-import stroom.streamstore.DataRetentionAgeUtil;
+import stroom.streamstore.store.DataRetentionAgeUtil;
 import stroom.data.meta.api.StreamDataSource;
 import stroom.task.TaskContext;
 import stroom.util.date.DateUtil;

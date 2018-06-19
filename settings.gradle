@@ -28,11 +28,17 @@ include 'stroom-entity-shared'
 include 'stroom-properties-api'
 include 'stroom-properties-impl-mock'
 
-// Stream store meta data projects
+// Data meta projects
 include 'stroom-data-meta:stroom-data-meta-api'
 include 'stroom-data-meta:stroom-data-meta-impl-db'
 include 'stroom-data-meta:stroom-data-meta-impl-db-gen'
 include 'stroom-data-meta:stroom-data-meta-impl-mock'
+
+// Data store projects
+include 'stroom-data-store:stroom-data-store-api'
+include 'stroom-data-store:stroom-data-store-impl-fs'
+include 'stroom-data-store:stroom-data-store-impl-fs-db-gen'
+include 'stroom-data-store:stroom-data-store-impl-mock'
 
 // API projects
 include 'stroom-security-api'

@@ -33,7 +33,7 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.statistics.sql.StatisticEvent;
 import stroom.statistics.sql.StatisticTag;
 import stroom.statistics.sql.Statistics;
-import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.store.api.StreamStore;
 import stroom.data.meta.api.FindStreamCriteria;
 import stroom.data.meta.api.Stream;
 import stroom.data.meta.api.StreamMetaService;

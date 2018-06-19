@@ -26,7 +26,7 @@ import stroom.pipeline.XsltStore;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.XsltDoc;
-import stroom.streamstore.api.StreamStore;
+import stroom.streamstore.store.api.StreamStore;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.data.meta.api.StreamMetaService;
 import stroom.data.meta.api.FindStreamCriteria;

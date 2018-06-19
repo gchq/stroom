@@ -18,7 +18,7 @@ package stroom.streamtask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.streamstore.api.StreamSource;
+import stroom.streamstore.store.api.StreamSource;
 import stroom.streamtask.shared.Processor;
 import stroom.streamtask.shared.ProcessorFilter;
 import stroom.streamtask.shared.ProcessorFilterTask;

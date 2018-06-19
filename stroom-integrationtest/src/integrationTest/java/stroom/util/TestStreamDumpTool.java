@@ -17,8 +17,8 @@
 package stroom.util;
 
 import org.junit.Test;
-import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.api.StreamTarget;
+import stroom.streamstore.store.api.StreamStore;
+import stroom.streamstore.store.api.StreamTarget;
 import stroom.data.meta.api.StreamProperties;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;

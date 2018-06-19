@@ -1,0 +1,26 @@
+ext.moduleName = 'stroom.data.store.impl.fs'
+
+dependencies {
+    compile project(':stroom-data-store:stroom-data-store-impl-fs-db-gen')
+    compile project(':stroom-data-store:stroom-data-store-api')
+    compile project(':stroom-properties-api')
+    compile project(':stroom-security-api')
+    compile project(':stroom-util') // TODO : @66 TRY AND REMOVE THIS
+    compile libs.stroomQueryApi
+
+    compile libs.flyway_core
+    compile libs.guava
+    compile libs.guice4
+    compile libs.hikari
+    compile libs.jooq
+    compile libs.javax_inject
+    compile libs.slf4j_api
+
+    runtime libs.mysql_connector_java
+
+    testCompile libs.junit_jupiter
+    testCompile libs.assertj_core
+
+    testCompile project(':stroom-security-impl-mock')
+    testCompile project(':stroom-properties-impl-mock')
+}

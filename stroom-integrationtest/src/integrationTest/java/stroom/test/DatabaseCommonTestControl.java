@@ -41,7 +41,7 @@ import stroom.security.DocumentPermission;
 import stroom.security.Permission;
 import stroom.security.User;
 import stroom.security.UserGroupUser;
-import stroom.streamstore.fs.FileSystemUtil;
+import stroom.streamstore.store.impl.fs.FileSystemUtil;
 import stroom.streamstore.shared.StreamVolumeEntity;
 import stroom.streamtask.StreamTaskCreator;
 import stroom.streamtask.shared.Processor;

@@ -16,8 +16,8 @@
 
 package stroom.pipeline.writer;
 
-import stroom.streamstore.fs.serializable.RASegmentOutputStream;
-import stroom.streamstore.fs.serializable.SegmentOutputStream;
+import stroom.streamstore.store.impl.fs.serializable.RASegmentOutputStream;
+import stroom.streamstore.store.impl.fs.serializable.SegmentOutputStream;
 import stroom.util.io.WrappedOutputStream;
 
 import java.io.IOException;

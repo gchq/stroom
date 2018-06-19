@@ -18,8 +18,8 @@ package stroom.io;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.api.StreamTarget;
+import stroom.streamstore.store.api.StreamStore;
+import stroom.streamstore.store.api.StreamTarget;
 import stroom.guice.PipelineScoped;
 
 import javax.inject.Inject;

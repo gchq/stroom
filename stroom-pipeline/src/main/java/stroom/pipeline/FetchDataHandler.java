@@ -31,8 +31,7 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
-import stroom.streamstore.api.StreamStore;
-import stroom.streamtask.StreamProcessorService;
+import stroom.streamstore.store.api.StreamStore;
 import stroom.task.TaskHandlerBean;
 
 import javax.inject.Inject;
