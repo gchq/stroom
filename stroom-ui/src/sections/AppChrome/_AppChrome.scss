@@ -1,8 +1,35 @@
 .app-chrome {
+  display: flex;
+  flex-direction: column;
+}
+
+.app-chrome__menu {
+}
+
+.tab-item__icon {
+  width: 0.7rem;
+  margin-right: 0.3rem;
+}
+
+.app-chrome__tabs {
+  display: flex;
+  flex-direction: row;
 }
 
 .app-chrome__explorer-tab {
+  flex-grow: 0;
+  flex-basis: 10rem;
 }
 
 .app-chrome__content-tab {
+  flex-grow: 1;
+}
+
+.app-chrome__content-tab .close-btn {
+  padding-left: 1rem;
+  border: none;
+}
+
+.close-btn:hover {
+  color: red;
 }

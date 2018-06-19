@@ -24,6 +24,7 @@ import ErrorPage from 'sections/ErrorPage';
 import OriginalList from 'prototypes/OriginalList';
 import Graph from 'prototypes/Graph';
 import TrackerDashboard from 'sections/TrackerDashboard';
+import AppChrome from 'sections/AppChrome';
 import { AuthenticationRequest, HandleAuthenticationResponse } from 'startup/Authentication';
 import { PipelineEditor } from 'prototypes/PipelineEditor';
 import { DocExplorer } from 'components/DocExplorer';
@@ -58,6 +59,23 @@ class Routes extends Component {
           <Route exact path="/prototypes/graph" component={Graph} />
 
           {/* Application Routes - require authentication */}
+          <Route
+            exact
+            path="/"
+            render={() =>
+              (this.isLoggedIn() ? (
+                <AppChrome />
+              ) : (
+                <AuthenticationRequest
+                  referrer="/"
+                  uiUrl={this.props.advertisedUrl}
+                  appClientId={this.props.appClientId}
+                  authenticationServiceUrl={this.props.authenticationServiceUrl}
+                />
+              ))
+            }
+          />
+
           <Route
             exact
             path="/trackers"

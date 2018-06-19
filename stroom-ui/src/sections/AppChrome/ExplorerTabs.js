@@ -1,27 +1,28 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 
-import { connect } from 'react-redux';
 import { Tab } from 'semantic-ui-react';
 
 import { DocExplorer } from 'components/DocExplorer';
 
 const EXPLORER_ID = 'in-explorer-tab';
 
-const ExplorerTabs = props => (
-  <Tab
-    renderActiveOnly={false}
-    panes={[
-      {
-        menuItem: 'Explorer',
-        pane: (
-          <Tab.Pane>
-            <DocExplorer explorerId={EXPLORER_ID} />
-          </Tab.Pane>
-        ),
-      },
-    ]}
-  />
-);
+const ExplorerTabs = (props) => {
+  const panes = [];
+
+  panes.push({
+    menuItem: {
+      key: 'explorer',
+      icon: 'globe',
+      content: 'Explorer',
+    },
+    pane: (
+      <Tab.Pane>
+        <DocExplorer fetchTreeFromServer explorerId={EXPLORER_ID} />
+      </Tab.Pane>
+    ),
+  });
+
+  return <Tab renderActiveOnly={false} panes={panes} />;
+};
 
 export default ExplorerTabs;

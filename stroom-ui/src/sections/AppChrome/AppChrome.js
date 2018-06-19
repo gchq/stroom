@@ -24,11 +24,13 @@ const AppChrome = props => (
     <div className="app-chrome__menu">
       <AppMenu />
     </div>
-    <div className="app-chrome__explorer-tab">
-      <ExplorerTabs />
-    </div>
-    <div className="app-chrome__content-tab">
-      <ContentTabs />
+    <div className="app-chrome__tabs">
+      <div className="app-chrome__explorer-tab">
+        <ExplorerTabs />
+      </div>
+      <div className="app-chrome__content-tab">
+        <ContentTabs />
+      </div>
     </div>
   </div>
 );

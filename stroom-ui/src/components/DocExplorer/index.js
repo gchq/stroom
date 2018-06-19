@@ -29,3 +29,5 @@ export {
   // Test exports
   testTree,
 };
+
+export default DocExplorer;
