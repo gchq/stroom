@@ -34,7 +34,7 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.meta.api.FindStreamCriteria;
 import stroom.streamstore.meta.api.Stream;
 import stroom.streamstore.shared.FindStreamAction;
-import stroom.streamstore.shared.StreamDataRow;
+import stroom.streamstore.meta.api.StreamDataRow;
 
 public class PipelineSteppingPlugin extends Plugin implements BeginPipelineSteppingEvent.Handler {
     private final Provider<EntityChooser> pipelineSelection;

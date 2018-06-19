@@ -37,7 +37,7 @@ import stroom.streamstore.meta.api.StreamMetaService;
 import stroom.streamstore.meta.api.StreamStatus;
 import stroom.streamstore.shared.Limits;
 import stroom.streamstore.shared.QueryData;
-import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamstore.meta.api.StreamDataSource;
 import stroom.streamtask.StreamTaskCreatorTransactionHelper.CreatedTasks;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.FindStreamTaskCriteria;

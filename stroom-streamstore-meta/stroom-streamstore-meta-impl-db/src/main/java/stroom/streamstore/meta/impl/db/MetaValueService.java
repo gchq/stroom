@@ -19,7 +19,7 @@ package stroom.streamstore.meta.impl.db;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Flushable;
 import stroom.streamstore.meta.api.Stream;
-import stroom.streamstore.shared.StreamDataRow;
+import stroom.streamstore.meta.api.StreamDataRow;
 
 import java.util.List;
 import java.util.Map;

@@ -38,7 +38,7 @@ import stroom.streamstore.meta.api.FindStreamCriteria;
 import stroom.streamstore.meta.api.Stream;
 import stroom.streamstore.meta.api.StreamMetaService;
 import stroom.streamstore.meta.api.StreamStatus;
-import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamstore.meta.api.StreamDataSource;
 import stroom.streamtask.InclusiveRanges.InclusiveRange;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.ProcessorFilter;

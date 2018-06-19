@@ -36,6 +36,7 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.docref.DocRef;
 import stroom.docref.SharedObject;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.IdSet;
 import stroom.entity.shared.ResultList;
@@ -54,10 +55,10 @@ import stroom.streamstore.meta.api.Stream;
 import stroom.streamstore.meta.api.StreamStatus;
 import stroom.streamstore.shared.DeleteStreamAction;
 import stroom.streamstore.shared.DownloadDataAction;
-import stroom.streamstore.shared.ExpressionUtil;
+import stroom.streamstore.meta.api.ExpressionUtil;
 import stroom.streamstore.shared.ReprocessDataInfo;
-import stroom.streamstore.shared.StreamDataRow;
-import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamstore.meta.api.StreamDataRow;
+import stroom.streamstore.meta.api.StreamDataSource;
 import stroom.streamtask.shared.ReprocessDataAction;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
@@ -409,7 +410,7 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         if (entity instanceof FeedDoc) {
             setFeedCriteria(docRef.getName());
         } else if (entity instanceof PipelineDoc) {
-            setPipelineCriteria((PipelineDoc) entity);
+            setPipelineCriteria(docRef);
         } else {
             setNullCriteria();
         }
@@ -442,12 +443,12 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         initCriteria();
     }
 
-    private void setPipelineCriteria(final PipelineDoc pipelineDoc) {
+    private void setPipelineCriteria(final DocRef pipelineRef) {
         showStreamListButtons(false);
         showStreamRelationListButtons(false);
 
         findStreamCriteria = createFindStreamCriteria();
-        findStreamCriteria.setExpression(ExpressionUtil.createPipelineExpression(pipelineDoc));
+        findStreamCriteria.setExpression(ExpressionUtil.createPipelineExpression(pipelineRef));
 
         initCriteria();
     }

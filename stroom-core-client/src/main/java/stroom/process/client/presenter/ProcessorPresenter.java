@@ -33,7 +33,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.streamstore.shared.QueryData;
-import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamstore.meta.api.StreamDataSource;
 import stroom.streamtask.shared.CreateProcessorAction;
 import stroom.streamtask.shared.ProcessorFilter;
 import stroom.streamtask.shared.ProcessorFilterRow;

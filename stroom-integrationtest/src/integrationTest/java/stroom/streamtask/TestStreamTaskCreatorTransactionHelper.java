@@ -30,7 +30,7 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.meta.api.FindStreamCriteria;
 import stroom.streamstore.meta.api.Stream;
 import stroom.streamstore.meta.api.StreamMetaService;
-import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamstore.meta.api.StreamDataSource;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.test.AbstractCoreIntegrationTest;

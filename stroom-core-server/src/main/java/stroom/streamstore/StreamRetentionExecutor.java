@@ -32,7 +32,7 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.meta.api.FindStreamCriteria;
 import stroom.streamstore.meta.api.StreamMetaService;
 import stroom.streamstore.meta.api.StreamStatus;
-import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamstore.meta.api.StreamDataSource;
 import stroom.task.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.lifecycle.StroomSimpleCronSchedule;

@@ -2,7 +2,7 @@ ext.moduleName = 'stroom.streamstore.meta.api'
 
 dependencies {
     compile project(':stroom-entity-shared') // TODO : @66 TRY AND BREAK OUT SHARED CLASSES
-    compile project(':stroom-core-shared') // TODO : @66 TRY AND REMOVE THIS
+//    compile project(':stroom-core-shared') // TODO : @66 TRY AND REMOVE THIS
 
     compile libs.stroomDocRef
     compile libs.stroomQueryApi

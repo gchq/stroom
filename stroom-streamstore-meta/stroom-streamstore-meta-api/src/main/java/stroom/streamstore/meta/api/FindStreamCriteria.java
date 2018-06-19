@@ -24,7 +24,6 @@ import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.Sort;
 import stroom.entity.shared.Sort.Direction;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.streamstore.shared.ExpressionUtil;
 
 import java.util.ArrayList;
 import java.util.List;

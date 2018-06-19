@@ -26,8 +26,8 @@ import stroom.security.impl.mock.MockSecurityContextModule;
 import stroom.streamstore.meta.api.FindStreamCriteria;
 import stroom.streamstore.meta.api.Stream;
 import stroom.streamstore.meta.api.StreamProperties;
-import stroom.streamstore.shared.ExpressionUtil;
-import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamstore.meta.api.ExpressionUtil;
+import stroom.streamstore.meta.api.StreamDataSource;
 import stroom.util.date.DateUtil;
 
 import javax.inject.Inject;

@@ -21,7 +21,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamstore.meta.api.StreamDataSource;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.ProcessorFilter;
 import stroom.util.test.StroomJUnit4ClassRunner;

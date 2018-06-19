@@ -23,7 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.streamstore.meta.api.Stream;
 import stroom.streamstore.meta.impl.db.stroom.tables.records.MetaNumericValueRecord;
-import stroom.streamstore.shared.StreamDataRow;
+import stroom.streamstore.meta.api.StreamDataRow;
 import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.lifecycle.StroomShutdown;

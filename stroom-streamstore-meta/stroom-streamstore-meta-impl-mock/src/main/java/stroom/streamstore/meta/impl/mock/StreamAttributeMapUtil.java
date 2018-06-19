@@ -3,8 +3,8 @@ package stroom.streamstore.meta.impl.mock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.streamstore.meta.api.Stream;
-import stroom.streamstore.shared.StreamDataRow;
-import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamstore.meta.api.StreamDataRow;
+import stroom.streamstore.meta.api.StreamDataSource;
 import stroom.util.date.DateUtil;
 
 import java.util.HashMap;

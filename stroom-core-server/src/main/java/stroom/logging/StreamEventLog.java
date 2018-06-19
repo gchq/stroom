@@ -40,7 +40,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.Security;
 import stroom.streamstore.meta.api.FindStreamCriteria;
 import stroom.streamstore.meta.api.Stream;
-import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamstore.meta.api.StreamDataSource;
 
 import javax.inject.Inject;
 import java.util.List;

@@ -29,7 +29,7 @@ import stroom.streamstore.meta.api.Stream;
 import stroom.streamstore.meta.api.StreamMetaService;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.ReprocessDataInfo;
-import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamstore.meta.api.StreamDataSource;
 import stroom.streamtask.shared.Processor;
 import stroom.streamtask.shared.ReprocessDataAction;
 import stroom.task.AbstractTaskHandler;

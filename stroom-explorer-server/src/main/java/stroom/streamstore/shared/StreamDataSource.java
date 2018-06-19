@@ -6,12 +6,12 @@ import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Deprecated
 public class StreamDataSource {
     public static final String STREAM_STORE_TYPE = "StreamStore";
     public static final DocRef STREAM_STORE_DOC_REF = new DocRef.Builder()
@@ -41,7 +41,7 @@ public class StreamDataSource {
     public static final String STREAM_PROCESSOR_ID = "Stream Processor Id";
 
     // Extended fields.
-    public static final String NODE = "Node";
+//    public static final String NODE = "Node";
     public static final String REC_READ = "RecRead";
     public static final String REC_WRITE = "RecWrite";
     public static final String REC_INFO = "RecInfo";
@@ -78,7 +78,7 @@ public class StreamDataSource {
 
         EXTENDED_FIELDS.addAll(FIELDS);
 
-        EXTENDED_FIELDS.add(createStringField(NODE));
+//        EXTENDED_FIELDS.add(createStringField(NODE));
         EXTENDED_FIELDS.add(createNumField(REC_READ));
         EXTENDED_FIELDS.add(createNumField(REC_WRITE));
         EXTENDED_FIELDS.add(createNumField(REC_INFO));
@@ -100,7 +100,7 @@ public class StreamDataSource {
                 .addConditions(Condition.GREATER_THAN_OR_EQUAL_TO)
                 .addConditions(Condition.LESS_THAN)
                 .addConditions(Condition.LESS_THAN_OR_EQUAL_TO)
-                .type(DataSourceField.DataSourceFieldType.DATE_FIELD)
+                .type(DataSourceFieldType.DATE_FIELD)
                 .build();
     }
 
@@ -110,7 +110,7 @@ public class StreamDataSource {
                 .addConditions(Condition.EQUALS)
                 .addConditions(Condition.IN)
                 .addConditions(Condition.IN_DICTIONARY)
-                .type(DataSourceField.DataSourceFieldType.FIELD)
+                .type(DataSourceFieldType.FIELD)
                 .build();
     }
 
@@ -119,7 +119,7 @@ public class StreamDataSource {
                 .name(name)
                 .addConditions(Condition.EQUALS)
                 .addConditions(Condition.IN)
-                .type(DataSourceField.DataSourceFieldType.ID)
+                .type(DataSourceFieldType.ID)
                 .build();
     }
 

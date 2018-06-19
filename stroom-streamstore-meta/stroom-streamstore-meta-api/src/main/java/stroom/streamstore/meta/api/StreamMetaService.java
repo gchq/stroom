@@ -2,7 +2,6 @@ package stroom.streamstore.meta.api;
 
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Period;
-import stroom.streamstore.shared.StreamDataRow;
 
 import java.util.List;
 import java.util.Map;
@@ -10,6 +9,7 @@ import java.util.Map;
 public interface StreamMetaService {
     /**
      * Create a stream with the supplied stream properties.
+     *
      * @param streamProperties The properties that the newly created stream will have.
      * @return A new locked stream ready to associate written data with.
      */
@@ -26,7 +26,7 @@ public interface StreamMetaService {
     /**
      * Get a stream from the stream meta service by id.
      *
-     * @param streamId The id of the stream to retrieve.
+     * @param streamId  The id of the stream to retrieve.
      * @param anyStatus Whether to allow locked or deleted streams to be returned.
      * @return An unlocked stream for the supplied id or null if no unlocked stream can be found unless anyStatus is true.
      */

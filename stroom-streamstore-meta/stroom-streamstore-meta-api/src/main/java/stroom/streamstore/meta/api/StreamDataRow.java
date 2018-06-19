@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.streamstore.shared;
+package stroom.streamstore.meta.api;
 
 import stroom.docref.SharedObject;
-import stroom.streamstore.meta.api.Stream;
 
 import java.util.HashMap;
 import java.util.Map;

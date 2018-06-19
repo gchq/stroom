@@ -39,8 +39,8 @@ import stroom.streamstore.meta.api.Stream;
 import stroom.streamstore.meta.api.StreamMetaService;
 import stroom.streamstore.meta.api.StreamStatus;
 import stroom.streamstore.shared.QueryData;
-import stroom.streamstore.shared.StreamDataRow;
-import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamstore.meta.api.StreamDataRow;
+import stroom.streamstore.meta.api.StreamDataSource;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamProcessorFilterService;
 import stroom.streamtask.StreamProcessorService;
@@ -473,14 +473,15 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
             long nodeError = 0;
             final Period nodePeriod = new Period();
 
-            for (final StreamDataRow processedStream : processedStreams) {
-                if (node.getName().equals(processedStream.getAttributeValue(StreamDataSource.NODE))) {
-                    nodeWritten += getLong(processedStream, StreamDataSource.REC_WRITE);
-                    nodeError += getLong(processedStream, StreamDataSource.REC_ERROR);
-
-                    checkPeriod(nodePeriod, processedStream);
-                }
-            }
+            // TODO : @66 LOOK AT PROCESSOR TASKS TO ESTABLISH NODE
+//            for (final StreamDataRow processedStream : processedStreams) {
+//                if (node.getName().equals(processedStream.getAttributeValue(StreamDataSource.NODE))) {
+//                    nodeWritten += getLong(processedStream, StreamDataSource.REC_WRITE);
+//                    nodeError += getLong(processedStream, StreamDataSource.REC_ERROR);
+//
+//                    checkPeriod(nodePeriod, processedStream);
+//                }
+//            }
 
             statisticEventList.add(StatisticEvent.createValue(nowMs,
                     ROOT_TEST_NAME, Arrays.asList(new StatisticTag("Node", node.getName()),

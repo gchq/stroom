@@ -39,7 +39,7 @@ import stroom.streamstore.meta.api.FindStreamCriteria;
 import stroom.streamstore.meta.api.Stream;
 import stroom.streamstore.meta.api.StreamStatus;
 import stroom.streamstore.shared.FetchFullStreamInfoAction;
-import stroom.streamstore.shared.StreamDataRow;
+import stroom.streamstore.meta.api.StreamDataRow;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;

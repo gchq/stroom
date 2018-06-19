@@ -34,8 +34,8 @@ import stroom.streamstore.meta.impl.db.stroom.tables.StreamFeed;
 import stroom.streamstore.meta.impl.db.stroom.tables.StreamProcessor;
 import stroom.streamstore.meta.impl.db.stroom.tables.StreamType;
 import stroom.streamstore.meta.impl.db.stroom.tables.Strm;
-import stroom.streamstore.shared.StreamDataRow;
-import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamstore.meta.api.StreamDataRow;
+import stroom.streamstore.meta.api.StreamDataSource;
 import stroom.util.date.DateUtil;
 
 import javax.inject.Inject;

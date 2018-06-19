@@ -27,7 +27,7 @@ import stroom.security.Security;
 import stroom.streamstore.meta.api.FindStreamCriteria;
 import stroom.streamstore.meta.api.Stream;
 import stroom.streamstore.meta.api.StreamMetaService;
-import stroom.streamstore.shared.ExpressionUtil;
+import stroom.streamstore.meta.api.ExpressionUtil;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 

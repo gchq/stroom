@@ -29,7 +29,7 @@ import stroom.query.shared.FetchSuggestionsAction;
 import stroom.security.Security;
 import stroom.streamstore.meta.api.StreamMetaService;
 import stroom.streamstore.meta.api.StreamStatus;
-import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamstore.meta.api.StreamDataSource;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.SharedList;
@@ -90,9 +90,9 @@ class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction
                                 .collect(Collectors.toList()));
                     }
 
-                    if (task.getField().getName().equals(StreamDataSource.NODE)) {
-                        return createList(nodeService, task.getText());
-                    }
+//                    if (task.getField().getName().equals(StreamDataSource.NODE)) {
+//                        return createList(nodeService, task.getText());
+//                    }
                 }
             }
 

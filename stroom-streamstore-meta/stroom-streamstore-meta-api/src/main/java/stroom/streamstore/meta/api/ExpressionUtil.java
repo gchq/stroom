@@ -1,12 +1,11 @@
-package stroom.streamstore.shared;
+package stroom.streamstore.meta.api;
 
-import stroom.pipeline.shared.PipelineDoc;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.streamstore.meta.api.StreamStatus;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -80,9 +79,9 @@ public final class ExpressionUtil {
     }
 
 
-    public static ExpressionOperator createPipelineExpression(final PipelineDoc pipelineDoc) {
+    public static ExpressionOperator createPipelineExpression(final DocRef pipelineRef) {
         return new ExpressionOperator.Builder(Op.AND)
-                .addTerm(StreamDataSource.PIPELINE, Condition.EQUALS, pipelineDoc.getUuid())
+                .addTerm(StreamDataSource.PIPELINE, Condition.EQUALS, pipelineRef.getUuid())
                 .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
                 .build();
     }

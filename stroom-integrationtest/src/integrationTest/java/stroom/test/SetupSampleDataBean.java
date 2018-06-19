@@ -43,7 +43,7 @@ import stroom.statistics.stroomstats.entity.StroomStatsStoreStore;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.meta.impl.db.MetaKeyService;
 import stroom.streamstore.shared.QueryData;
-import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamstore.meta.api.StreamDataSource;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamProcessorFilterService;
 import stroom.util.io.FileUtil;

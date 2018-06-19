@@ -27,7 +27,7 @@ import stroom.ruleset.shared.DataReceiptAction;
 import stroom.ruleset.shared.Rule;
 import stroom.ruleset.shared.RuleSet;
 import stroom.streamstore.ExpressionMatcher;
-import stroom.streamstore.shared.ExpressionUtil;
+import stroom.streamstore.meta.api.ExpressionUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -29,7 +29,7 @@ import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamstore.fs.serializable.NestedInputStream;
 import stroom.streamstore.fs.serializable.RANestedInputStream;
 import stroom.streamstore.meta.api.StreamMetaService;
-import stroom.streamstore.shared.ExpressionUtil;
+import stroom.streamstore.meta.api.ExpressionUtil;
 import stroom.streamstore.meta.api.FindStreamCriteria;
 import stroom.streamstore.meta.api.Stream;
 import stroom.streamtask.statistic.MetaDataStatistic;

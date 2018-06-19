@@ -27,7 +27,7 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.ruleset.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
 import stroom.ruleset.shared.DataRetentionRule;
 import stroom.streamstore.shared.FetchFieldsAction;
-import stroom.streamstore.shared.StreamDataSource;
+import stroom.streamstore.meta.api.StreamDataSource;
 import stroom.streamstore.shared.TimeUnit;
 
 public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionRuleView> {
