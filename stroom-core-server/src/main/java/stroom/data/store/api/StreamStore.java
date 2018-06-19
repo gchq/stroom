@@ -17,7 +17,7 @@
 
 package stroom.data.store.api;
 
-import stroom.data.store.StreamException;
+import stroom.data.meta.api.AttributeMap;
 import stroom.data.meta.api.Stream;
 import stroom.data.meta.api.StreamProperties;
 
@@ -117,5 +117,5 @@ public interface StreamStore {
      * @param streamId
      * @return
      */
-    Map<String, String> getStoredMeta(Stream stream);
+    AttributeMap getStoredMeta(Stream stream);
 }

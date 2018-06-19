@@ -28,7 +28,7 @@ import stroom.data.meta.api.StreamMetaService;
 import stroom.data.meta.api.StreamProperties;
 import stroom.data.meta.api.StreamStatus;
 import stroom.data.meta.impl.mock.MockStreamMetaService;
-import stroom.data.store.StreamException;
+import stroom.data.store.api.StreamException;
 import stroom.util.collections.TypedMap;
 
 import javax.inject.Inject;
@@ -298,7 +298,7 @@ public class MockStreamStore implements StreamStore, Clearable {
     }
 
     @Override
-    public Map<String, String> getStoredMeta(final Stream stream) {
+    public AttributeMap getStoredMeta(final Stream stream) {
         return null;
     }
 

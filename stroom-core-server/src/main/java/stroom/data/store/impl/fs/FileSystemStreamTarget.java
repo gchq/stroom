@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
 import stroom.io.SeekableOutputStream;
-import stroom.data.store.StreamException;
+import stroom.data.store.api.StreamException;
 import stroom.data.store.api.StreamTarget;
 import stroom.data.meta.api.Stream;
 import stroom.streamstore.shared.StreamTypeNames;

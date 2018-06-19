@@ -26,7 +26,7 @@ import stroom.node.NodeCache;
 import stroom.node.VolumeService;
 import stroom.node.shared.Node;
 import stroom.node.shared.VolumeEntity;
-import stroom.data.store.StreamException;
+import stroom.data.store.api.StreamException;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
@@ -269,7 +269,7 @@ public class FileSystemStreamStoreImpl implements StreamStore {
     }
 
     @Override
-    public Map<String, String> getStoredMeta(final Stream stream) {
+    public AttributeMap getStoredMeta(final Stream stream) {
         final Set<StreamVolume> volumeSet = streamVolumeService.findStreamVolume(stream.getId());
         if (volumeSet != null && volumeSet.size() > 0) {
             final StreamVolume streamVolume = volumeSet.iterator().next();
