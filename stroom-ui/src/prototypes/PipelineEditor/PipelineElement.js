@@ -132,6 +132,7 @@ const PipelineElement = ({
   elements,
   hasFocus,
   setHasFocus,
+  onClick
 }) => {
   let isIconDisabled = false;
   let className = 'Pipeline-element';
@@ -163,7 +164,8 @@ const PipelineElement = ({
     className += ' focus';
   }
 
-  const onClick = () => {
+  const handleClick = () => {
+    onClick();
     // We need to get the initial values for this element and make sure they go into the state,
     // ready for redux-form to populate the new form.
     const elementTypeProperties = elements.elementProperties[element.type];
@@ -172,7 +174,7 @@ const PipelineElement = ({
     return pipelineElementSelected(pipelineId, elementId, initalValues);
   };
 
-  return compose(connectDragSource, connectDropTarget)(<div className={className} onClick={onClick}>
+  return compose(connectDragSource, connectDropTarget)(<div className={className} onClick={handleClick}>
     <AddElementModal
       {...{
  setNewElementDefinition, newElementDefinition, pipelineId, elementId,
@@ -198,6 +200,7 @@ PipelineElement.propTypes = {
   // Set by container
   pipelineId: PropTypes.string.isRequired,
   elementId: PropTypes.string.isRequired,
+  onClick: PropTypes.func,
 
   selectedElementId: PropTypes.string,
 

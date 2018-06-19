@@ -95,4 +95,17 @@ storiesOf('HorizontalPanel', module)
       ]}
       headerSize="h4"
     />
+  ))
+  .add('with lots of content', () => (
+    <HorizontalPanel
+      title="A smaller header"
+      onClose={() => console.log('closed')}
+      content={<div>{loremIpsum({ count: 6000, units: 'words' })}</div>}
+      headerMenuItems={[
+        <Menu.Item key="enabledCheckbox">
+          <Checkbox toggle>thingy</Checkbox>
+        </Menu.Item>,
+      ]}
+      headerSize="h4"
+    />
   ));

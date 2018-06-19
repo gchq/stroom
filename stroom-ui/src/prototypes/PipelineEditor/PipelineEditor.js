@@ -46,6 +46,7 @@ const COMMON_ELEMENT_STYLE = {
 };
 
 const withPaletteOpen = withState('isPaletteOpen', 'setPaletteOpen', true);
+const withElementDetailsOpen = withState('isElementDetailsOpen', 'setElementDetailsOpen', false);
 
 const PipelineEditor = ({
   pipelineId,
@@ -55,6 +56,8 @@ const PipelineEditor = ({
   isPaletteOpen,
   setPaletteOpen,
   elementsByCategory,
+  isElementDetailsOpen,
+  setElementDetailsOpen,
 }) => {
   const togglePaletteOpen = () => setPaletteOpen(!isPaletteOpen);
 
@@ -102,7 +105,11 @@ const PipelineEditor = ({
               .filter(element => isActive(pipeline.pipeline, element))
               .map(e => (
                 <div key={e.id} id={e.id} style={elementStyles[e.id]}>
-                  <PipelineElement pipelineId={pipelineId} elementId={e.id} />
+                  <PipelineElement
+                    pipelineId={pipelineId}
+                    elementId={e.id}
+                    onClick={() => setElementDetailsOpen(true)}
+                  />
                 </div>
               ))}
           </div>
@@ -120,8 +127,15 @@ const PipelineEditor = ({
               ))}
           </div>
         </LineContainer>
-
-        <ElementDetails pipelineId={pipelineId} className="Pipeline-editor__details" />
+        {isElementDetailsOpen ? (
+          <ElementDetails
+            pipelineId={pipelineId}
+            className="Pipeline-editor__details"
+            onClose={() => setElementDetailsOpen(false)}
+          />
+        ) : (
+          undefined
+        )}
       </div>
     </div>
   );
@@ -191,4 +205,5 @@ export default compose(
     renderComponent(() => <Loader active>Loading Pipeline Layout Information</Loader>),
   ),
   withPaletteOpen,
+  withElementDetailsOpen,
 )(PipelineEditor);

@@ -1,20 +1,6 @@
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
-import loremIpsum from 'lorem-ipsum';
-import {
-  Sidebar,
-  Input,
-  Segment,
-  Button,
-  Menu,
-  Image,
-  Icon,
-  Header,
-  Grid,
-  Divider,
-  Container,
-  Checkbox,
-} from 'semantic-ui-react';
+import { Button, Menu, Header, Grid, Divider, Sticky } from 'semantic-ui-react';
 import { compose, withState } from 'recompose';
 
 const enhance = compose(withState('activeItem', 'setActiveItem', 'home'));
@@ -31,7 +17,7 @@ const HorizontalPanel = enhance(({
   headerSize,
 }) => (
   <div className="horizontal-panel__container">
-    <Grid>
+    <Grid className="horizontal-panel_header-container">
       <Grid.Column width={titleColumns || 4}>
         <Header as={headerSize || 'h2'}>{title}</Header>
       </Grid.Column>
@@ -47,13 +33,14 @@ const HorizontalPanel = enhance(({
       </Grid.Column>
     </Grid>
     <Divider />
+
     <div className="horizontal-panel__content">{content}</div>
   </div>
 ));
 
 HorizontalPanel.propTypes = {
   content: PropTypes.object.isRequired,
-  title: PropTypes.string.isRequired,
+  title: PropTypes.object.isRequired,
   headerMenuItems: PropTypes.array,
   onClose: PropTypes.func.isRequired,
   titleColumns: PropTypes.number,
