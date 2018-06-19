@@ -98,7 +98,7 @@ const PipelineEditor = ({
             <RecycleBin pipelineId={pipelineId} />
           </div>
           <div className="Pipeline-editor__elements">
-            {pipeline.pipeline.elements.add
+            {pipeline.pipeline.merged.elements.add
               .filter(element => isActive(pipeline.pipeline, element))
               .map(e => (
                 <div key={e.id} id={e.id} style={elementStyles[e.id]}>
@@ -107,7 +107,7 @@ const PipelineEditor = ({
               ))}
           </div>
           <div className="Pipeline-editor__lines">
-            {pipeline.pipeline.links.add
+            {pipeline.pipeline.merged.links.add
               .map(l => ({ ...l, lineId: `${l.from}-${l.to}` }))
               .map(l => (
                 <LineTo

@@ -28,7 +28,7 @@ export function getPipelineAsTree(pipeline) {
   const elements = {};
 
   // Put all the elements into an object, keyed on id
-  pipeline.elements.add.forEach((e) => {
+  pipeline.merged.elements.add.forEach((e) => {
     elements[e.id] = {
       uuid: e.id,
       type: e.type,
@@ -37,22 +37,22 @@ export function getPipelineAsTree(pipeline) {
   });
 
   // Create the tree using links
-  pipeline.links.add.forEach((l) => {
+  pipeline.merged.links.add.forEach((l) => {
     elements[l.from].children.push(elements[l.to]);
   });
 
   // Figure out the root -- if a link doesn't have anything going to it then it's the root.
-  const rootLinks = pipeline.links.add.filter((fromLink) => {
-    const toLinks = pipeline.links.add.filter(l => fromLink.from === l.to);
+  const rootLinks = pipeline.merged.links.add.filter((fromLink) => {
+    const toLinks = pipeline.merged.links.add.filter(l => fromLink.from === l.to);
     return toLinks.length === 0;
   });
 
   let rootId;
   if (rootLinks.length === 0) {
     // Maybe there's only one thing and therefore no links?
-    if (pipeline.elements.add.length !== 0) {
+    if (pipeline.merged.elements.add.length !== 0) {
       // If there're no links then we can use the first element.
-      rootId = pipeline.elements.add[0].id;
+      rootId = pipeline.merged.elements.add[0].id;
     } else {
       // If there are no elements then we can't have a root node.
       rootId = undefined;
@@ -122,10 +122,16 @@ export function getPipelineLayoutInformation(asTree, orientation = ORIENTATION.h
 export function getAllElementNames(pipeline) {
   const names = [];
 
-  pipeline.elements.add
+  pipeline.merged.elements.add
     .map(e => e.id)
     .map(id => id.toLowerCase())
     .forEach(id => names.push(id));
+  pipeline.configStack.forEach(cs => {
+    cs.elements.add
+      .map(e => e.id)
+      .map(id => id.toLowerCase())
+      .forEach(id => names.push(id));
+  })
 
   return names;
 }
@@ -315,6 +321,6 @@ export function getDescendants(pipeline, parent) {
  * @param {element} elementToCheck The element to check for activity
  */
 export function isActive(pipeline, elementToCheck) {
-  const linksInvolvingElement = pipeline.links.add.filter(element => elementToCheck.id === element.from || elementToCheck.id === element.to);
+  const linksInvolvingElement = pipeline.merged.links.add.filter(element => elementToCheck.id === element.from || elementToCheck.id === element.to);
   return linksInvolvingElement.length > 0;
 }

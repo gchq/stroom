@@ -61,12 +61,12 @@ function dragCollect(connect, monitor) {
 const dropTarget = {
   canDrop(props, monitor) {
     const { pipeline, elementId } = props;
-    const thisElement = pipeline.pipeline.elements.add.filter(element => element.id === elementId)[0];
+    const thisElement = pipeline.pipeline.merged.elements.add.filter(element => element.id === elementId)[0];
     const typeOfThisElement = props.elements.elements[thisElement.type];
     switch (monitor.getItemType()) {
       case ItemTypes.ELEMENT:
         const dropeeId = monitor.getItem().elementId;
-        const dropee = pipeline.pipeline.elements.add.filter(element => element.id === dropeeId)[0];
+        const dropee = pipeline.pipeline.merged.elements.add.filter(element => element.id === dropeeId)[0];
         let dropeeType = props.elements.elements[dropee.type];
         const isValidChild = isValidChildType(typeOfThisElement, dropeeType, 0);
 
@@ -167,7 +167,7 @@ const PipelineElement = ({
     // We need to get the initial values for this element and make sure they go into the state,
     // ready for redux-form to populate the new form.
     const elementTypeProperties = elements.elementProperties[element.type];
-    const elementProperties = pipeline.pipeline.properties.add.filter(property => property.element === element.id);
+    const elementProperties = pipeline.pipeline.merged.properties.add.filter(property => property.element === element.id);
     const initalValues = getInitialValues(elementTypeProperties, elementProperties);
     return pipelineElementSelected(pipelineId, elementId, initalValues);
   };
@@ -229,8 +229,8 @@ export default compose(
       let element;
       let elementDefinition;
 
-      if (pipeline) {
-        element = pipeline.pipeline.elements.add.find(e => e.id === props.elementId);
+      if (pipeline && pipeline.pipeline) {
+        element = pipeline.pipeline.merged.elements.add.find(e => e.id === props.elementId);
         if (element) {
           elementDefinition = Object.values(elements.elements).find(e => e.type === element.type);
         }

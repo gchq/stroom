@@ -33,9 +33,7 @@ import { actionCreators } from './redux';
 
 import 'styles/main.css';
 
-import { testPipeline, testPipelineElements, bigTestPipeline } from './test/pipeline.testData';
-import { testElementTypes, testElementProperties } from './test/elements.testData';
-import { pipeline01, pipeline02 } from './test/setupSampleDataPipelines.testData';
+import { testPipelines, elements, elementProperties } from './test';
 
 const {
   pipelineReceived,
@@ -48,58 +46,47 @@ const {
 // because each story needs to dispatch it's own data, and a chained sequence of
 // dispatches and adds reads awkwardly.
 const pipelineEditorStories = storiesOf('Pipeline Editor', module).addDecorator(ReduxDecoratorWithInitialisation((store) => {
-  store.dispatch(elementsReceived(testElementTypes));
-  store.dispatch(elementPropertiesReceived(testElementProperties));
+  store.dispatch(elementsReceived(elements));
+  store.dispatch(elementPropertiesReceived(elementProperties));
 }));
 
 // Add storyfor a simple pipeline
 pipelineEditorStories
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(pipelineReceived('testPipeline', testPipeline));
+    store.dispatch(pipelineReceived('simplePipeline', testPipelines.simple));
   })) // must be recorder after/outside of the test initialisation decorators
   .addDecorator(DragDropDecorator)
-  .add('Simple pipeline', () => <PipelineEditor pipelineId="testPipeline" />);
+  .add('Simple', () => <PipelineEditor pipelineId="simplePipeline" />);
 
-// Add storyfor a simple pipeline
+// Add storyfor inherited pipeline
 pipelineEditorStories
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(pipelineReceived('bigTestPipeline', bigTestPipeline));
+    store.dispatch(pipelineReceived('inheritedPipeline', testPipelines.inherited));
   })) // must be recorder after/outside of the test initialisation decorators
   .addDecorator(DragDropDecorator)
-  .add('Pipeline with Inheritance', () => <PipelineEditor pipelineId="bigTestPipeline" />);
+  .add('Inheritance', () => <PipelineEditor pipelineId="inheritedPipeline" />);
 
 // Add story for a pipeline copied from setupSampleData
 pipelineEditorStories
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(pipelineReceived('pipeline01', pipeline01));
+    store.dispatch(pipelineReceived('longPipeline', testPipelines.long));
   })) // must be recorder after/outside of the test initialisation decorators
-  .add('setupSampleData -- pipeline01 - is a long pipeline', () => (
-    <PipelineEditor pipelineId="pipeline01" />
-  ));
-
-// Add story for a pipeline copied from setupSampleData
-pipelineEditorStories
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(pipelineReceived('pipeline02', pipeline02));
-  })) // must be recorder after/outside of the test initialisation decorators
-  .add('setupSampleData -- pipeline02 - contains a deleted element', () => (
-    <PipelineEditor pipelineId="pipeline02" />
-  ));
+  .add('Long', () => <PipelineEditor pipelineId="longPipeline" />);
 
 storiesOf('Element Palette', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(elementsReceived(testElementTypes));
-    store.dispatch(elementPropertiesReceived(testElementProperties));
+    store.dispatch(elementsReceived(elements));
+    store.dispatch(elementPropertiesReceived(elementProperties));
   })) // must be recorder after/outside of the test initialisation decorators
   .addDecorator(DragDropDecorator)
   .add('Element Palette', () => <ElementPalette />);
 
 storiesOf('Element Details', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(elementsReceived(testElementTypes));
-    store.dispatch(elementPropertiesReceived(testElementProperties));
-    store.dispatch(pipelineReceived('pipeline01', pipeline01));
-    store.dispatch(pipelineElementSelected('pipeline01', 'splitFilter', { splitDepth: 10, splitCount: 10 }));
+    store.dispatch(elementsReceived(elements));
+    store.dispatch(elementPropertiesReceived(elementProperties));
+    store.dispatch(pipelineReceived('longPipeline', pipeline01));
+    store.dispatch(pipelineElementSelected('longPipeline', 'splitFilter', { splitDepth: 10, splitCount: 10 }));
   })) // must be recorder after/outside of the test initialisation decorators
   .addDecorator(DragDropDecorator)
-  .add('Simple element details page', () => <ElementDetails pipelineId="pipeline01" />);
+  .add('Simple element details page', () => <ElementDetails pipelineId="longPipeline" />);
