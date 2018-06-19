@@ -21,7 +21,7 @@ import { storiesOf } from '@storybook/react';
 import HorizontalPanel from './HorizontalPanel';
 
 storiesOf('HorizontalPanel', module)
-  .add('basic - segment content', () => (
+  .add('segment content', () => (
     <HorizontalPanel
       title="Some title"
       onClose={() => console.log('closed')}
@@ -33,7 +33,7 @@ storiesOf('HorizontalPanel', module)
       ]}
     />
   ))
-  .add('basic - container content', () => (
+  .add('container content', () => (
     <HorizontalPanel
       title="Some title"
       onClose={() => console.log('closed')}
@@ -45,7 +45,7 @@ storiesOf('HorizontalPanel', module)
       ]}
     />
   ))
-  .add('basic - div content', () => (
+  .add('div content', () => (
     <HorizontalPanel
       title="Some title"
       onClose={() => console.log('closed')}
@@ -55,5 +55,44 @@ storiesOf('HorizontalPanel', module)
           <Checkbox toggle>thingy</Checkbox>
         </Menu.Item>,
       ]}
+    />
+  ))
+  .add('long title', () => (
+    <HorizontalPanel
+      title="Some very, very long title"
+      onClose={() => console.log('closed')}
+      content={<div>{loremIpsum({ count: 100, units: 'words' })}</div>}
+      headerMenuItems={[
+        <Menu.Item key="enabledCheckbox">
+          <Checkbox toggle>thingy</Checkbox>
+        </Menu.Item>,
+      ]}
+    />
+  ))
+  .add('long title with adjusted columns', () => (
+    <HorizontalPanel
+      title="Some very, very long title"
+      onClose={() => console.log('closed')}
+      content={<div>{loremIpsum({ count: 100, units: 'words' })}</div>}
+      headerMenuItems={[
+        <Menu.Item key="enabledCheckbox">
+          <Checkbox toggle>thingy</Checkbox>
+        </Menu.Item>,
+      ]}
+      titleColumns="8"
+      menuColumns="8"
+    />
+  ))
+  .add('With different sized header', () => (
+    <HorizontalPanel
+      title="A smaller header"
+      onClose={() => console.log('closed')}
+      content={<div>{loremIpsum({ count: 100, units: 'words' })}</div>}
+      headerMenuItems={[
+        <Menu.Item key="enabledCheckbox">
+          <Checkbox toggle>thingy</Checkbox>
+        </Menu.Item>,
+      ]}
+      headerSize="h4"
     />
   ));

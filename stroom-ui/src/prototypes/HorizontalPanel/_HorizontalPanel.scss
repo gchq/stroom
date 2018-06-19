@@ -15,11 +15,15 @@
  */
 
 .horizontal-panel__container {
-  width: 100%;
+  overflow: auto;
+}
+
+.horizontal-panel__container .grid {
+  margin-left: 0rem;
+  margin-right: 0rem;
 }
 
 .horizontal-panel__container .header {
-  padding-left: 20px !important;
   padding-top: 10px !important;
 }
 
@@ -31,4 +35,8 @@
   width: 100%;
   padding-left: 10px;
   padding-right: 10px;
+}
+
+.horizontal-panel_close-button {
+  padding: 0px !important;
 }
