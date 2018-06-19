@@ -79,7 +79,7 @@ const DocRef = ({
   const onDoubleClick = () => {
     clearTimeout(timer);
     prevent = true;
-    docRefOpened(explorerId, docRef);
+    docRefOpened(docRef);
   };
 
   const onRightClick = (e) => {

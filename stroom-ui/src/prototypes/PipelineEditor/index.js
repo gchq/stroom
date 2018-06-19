@@ -27,3 +27,5 @@ export {
   fetchElements,
   fetchElementProperties,
 };
+
+export default PipelineEditor;

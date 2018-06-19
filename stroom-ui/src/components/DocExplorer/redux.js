@@ -45,7 +45,7 @@ function getToggledState(currentState, isUser) {
       case OPEN_STATES.byUser:
         return OPEN_STATES.closed;
       default:
-        throw new Error('Invalid current state: ' + currentState);
+        throw new Error(`Invalid current state: ${currentState}`);
     }
   } else {
     return OPEN_STATES.byUser;
@@ -62,7 +62,11 @@ const actionCreators = createActions({
     allowDragAndDrop,
     typeFilter,
   }),
-  MOVE_EXPLORER_ITEM: (explorerId, itemToMove, destination) => ({ explorerId, itemToMove, destination }),
+  MOVE_EXPLORER_ITEM: (explorerId, itemToMove, destination) => ({
+    explorerId,
+    itemToMove,
+    destination,
+  }),
   FOLDER_OPEN_TOGGLED: (explorerId, docRef) => ({
     explorerId,
     docRef,
@@ -71,17 +75,18 @@ const actionCreators = createActions({
     explorerId,
     searchTerm,
   }),
-  DOC_REF_SELECTED:(explorerId, docRef) => ({
+  DOC_REF_SELECTED: (explorerId, docRef) => ({
     explorerId,
     docRef,
   }),
-  DOC_REF_OPENED: (explorerId, docRef) => ({ explorerId, docRef }),
-  DOC_REF_DELETED:  (explorerId, docRef) => ({
+  DOC_REF_OPENED: docRef => ({ docRef }),
+  DOC_REF_CLOSED: docRef => ({ docRef }),
+  DOC_REF_DELETED: (explorerId, docRef) => ({
     explorerId,
     docRef,
   }),
-  DOC_REF_PICKED: (pickerId, docRef) => ({ pickerId, docRef })
-})
+  DOC_REF_PICKED: (pickerId, docRef) => ({ pickerId, docRef }),
+});
 
 const defaultExplorerState = {
   searchTerm: '',
@@ -96,7 +101,7 @@ const defaultState = {
   documentTree: {}, // The hierarchy of doc refs in folders
   explorers: {},
   pickedDocRefs: {}, // Picked Doc Refs by pickerId
-  isDocRefOpen: {}, // in response to user actions
+  openDocRefs: [], // in response to user actions
   allowMultiSelect: true,
   allowDragAndDrop: true,
 };
@@ -192,7 +197,7 @@ function getUpdatedExplorer(documentTree, optExplorer, searchTerm, typeFilter) {
       explorer.isFolderOpen,
     ),
     inSearch: isInSearchMap,
-    inTypeFilter: isInTypeFilterMap
+    inTypeFilter: isInTypeFilterMap,
   };
 }
 
@@ -315,17 +320,16 @@ const explorerTreeReducer = handleActions(
     },
 
     // Open Doc Ref
-    DOC_REF_OPENED: (state, action) => {
-      const { docRef } = action.payload;
+    DOC_REF_OPENED: (state, action) => ({
+      ...state,
+      openDocRefs: state.openDocRefs.concat([action.payload.docRef]),
+    }),
 
-      return {
-        ...state,
-        isDocRefOpen: {
-          ...state.isDocRefOpen,
-          [docRef.uuid]: !state.isDocRefOpen[docRef.uuid],
-        },
-      };
-    },
+    // Close Doc Ref
+    DOC_REF_CLOSED: (state, action) => ({
+      ...state,
+      openDocRefs: state.openDocRefs.filter(d => d.uuid !== action.payload.docRef.uuid),
+    }),
 
     // Confirm Delete Doc Ref
     DOC_REF_DELETED: (state, action) => {
@@ -348,8 +352,4 @@ const explorerTreeReducer = handleActions(
   defaultState,
 );
 
-export {
-  DEFAULT_EXPLORER_ID,
-  actionCreators,
-  explorerTreeReducer,
-};
+export { DEFAULT_EXPLORER_ID, actionCreators, explorerTreeReducer };

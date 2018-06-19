@@ -51,7 +51,7 @@ const DocRefMenu = ({
       <Dropdown.Menu>
         <Dropdown.Item
           onClick={() => {
-            docRefOpened(explorerId, docRef);
+            docRefOpened(docRef);
             closeContextMenu();
           }}
         >
