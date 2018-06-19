@@ -42,19 +42,19 @@ public class StreamAttributeMapRetentionRuleDecorator {
         expressionMatcher = new ExpressionMatcher(StreamDataSource.getFieldMap(), dictionaryStore);
     }
 
-    public void addMatchingRetentionRuleInfo(final Stream stream, final Map<String, String> metaMap) {
+    public void addMatchingRetentionRuleInfo(final Stream stream, final Map<String, String> attributeMap) {
         int index = -1;
 
         // If there are no active rules then we aren't going to process anything.
         if (rules.size() > 0) {
             // Create an attribute map we can match on.
-            final Map<String, Object> attributeMap = StreamAttributeMapUtil.createAttributeMap(stream, metaMap);
-            index = findMatchingRuleIndex(attributeMap);
+            final Map<String, Object> map = StreamAttributeMapUtil.createAttributeMap(stream, attributeMap);
+            index = findMatchingRuleIndex(map);
         }
 
         if (index != -1) {
             final DataRetentionRule rule = rules.get(index);
-            metaMap.put(RETENTION_AGE, rule.getAgeString());
+            attributeMap.put(RETENTION_AGE, rule.getAgeString());
 
             String keepUntil = DataRetentionRule.FOREVER;
             if (stream != null) {
@@ -66,12 +66,12 @@ public class StreamAttributeMapRetentionRuleDecorator {
                 }
             }
 
-            metaMap.put(RETENTION_UNTIL, keepUntil);
-            metaMap.put(RETENTION_RULE, rule.toString());
+            attributeMap.put(RETENTION_UNTIL, keepUntil);
+            attributeMap.put(RETENTION_RULE, rule.toString());
         } else {
-            metaMap.put(RETENTION_AGE, DataRetentionRule.FOREVER);
-            metaMap.put(RETENTION_UNTIL, DataRetentionRule.FOREVER);
-            metaMap.put(RETENTION_RULE, "None");
+            attributeMap.put(RETENTION_AGE, DataRetentionRule.FOREVER);
+            attributeMap.put(RETENTION_UNTIL, DataRetentionRule.FOREVER);
+            attributeMap.put(RETENTION_RULE, "None");
         }
     }
 

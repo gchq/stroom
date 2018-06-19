@@ -3,7 +3,7 @@ package stroom.proxy.repo;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.feed.MetaMap;
+import stroom.feed.AttributeMap;
 import stroom.datafeed.StroomStatusCode;
 import stroom.datafeed.StroomStreamException;
 import stroom.util.io.StreamUtil;
@@ -29,8 +29,8 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
         final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(
                 "Sample Data".getBytes(StreamUtil.DEFAULT_CHARSET));
 
-        final MetaMap metaMap = new MetaMap();
-        metaMap.put("TEST", "VALUE");
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put("TEST", "VALUE");
 
         final byte[] buffer = new byte[1000];
 
@@ -39,7 +39,7 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
         final StroomZipOutputStream stroomZipOutputStream = new StroomZipOutputStreamImpl(zipFile);
         final List<StroomStreamHandler> list = new ArrayList<StroomStreamHandler>();
         list.add(StroomStreamHandlerUtil.createStroomStreamHandler(stroomZipOutputStream));
-        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, list, buffer, "test");
+        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, list, buffer, "test");
 
         stroomStreamProcessor.process(byteArrayInputStream, "");
 
@@ -63,9 +63,9 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
 
         final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(fullData, 0, fullData.length - 10);
 
-        final MetaMap metaMap = new MetaMap();
-        metaMap.put("TEST", "VALUE");
-        metaMap.put("Compression", "GZIP");
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put("TEST", "VALUE");
+        attributeMap.put("Compression", "GZIP");
 
         final byte[] buffer = new byte[1000];
 
@@ -74,7 +74,7 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
         final StroomZipOutputStream stroomZipOutputStream = new StroomZipOutputStreamImpl(zipFile);
         final List<StroomStreamHandler> list = new ArrayList<StroomStreamHandler>();
         list.add(StroomStreamHandlerUtil.createStroomStreamHandler(stroomZipOutputStream));
-        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, list, buffer, "test");
+        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, list, buffer, "test");
 
         try {
             stroomStreamProcessor.process(byteArrayInputStream, "");
@@ -104,9 +104,9 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
 
         final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(fullData, 0, fullData.length / 2);
 
-        final MetaMap metaMap = new MetaMap();
-        metaMap.put("TEST", "VALUE");
-        metaMap.put("Compression", "ZIP");
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put("TEST", "VALUE");
+        attributeMap.put("Compression", "ZIP");
 
         final byte[] buffer = new byte[1000];
 
@@ -115,7 +115,7 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
         final StroomZipOutputStream stroomZipOutputStream = new StroomZipOutputStreamImpl(zipFile);
         final List<StroomStreamHandler> list = new ArrayList<StroomStreamHandler>();
         list.add(StroomStreamHandlerUtil.createStroomStreamHandler(stroomZipOutputStream));
-        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, list, buffer, "test");
+        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, list, buffer, "test");
 
         try {
             stroomStreamProcessor.process(byteArrayInputStream, "");
@@ -138,9 +138,9 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
 
         final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(fullData, 0, fullData.length / 2);
 
-        final MetaMap metaMap = new MetaMap();
-        metaMap.put("TEST", "VALUE");
-        metaMap.put("Compression", "ZIP");
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put("TEST", "VALUE");
+        attributeMap.put("Compression", "ZIP");
 
         final byte[] buffer = new byte[1000];
 
@@ -149,7 +149,7 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
         final StroomZipOutputStream stroomZipOutputStream = new StroomZipOutputStreamImpl(zipFile);
         final List<StroomStreamHandler> list = new ArrayList<>();
         list.add(StroomStreamHandlerUtil.createStroomStreamHandler(stroomZipOutputStream));
-        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, list, buffer, "test");
+        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, list, buffer, "test");
 
         stroomStreamProcessor.process(byteArrayInputStream, "");
         stroomZipOutputStream.close();
@@ -367,9 +367,9 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
 
     private void doCheckOrder(final ByteArrayOutputStream byteArrayOutputStream, final Path zipFile, final boolean fail)
             throws IOException {
-        final MetaMap metaMap = new MetaMap();
-        metaMap.put("TEST", "VALUE");
-        metaMap.put("Compression", "ZIP");
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put("TEST", "VALUE");
+        attributeMap.put("Compression", "ZIP");
         final byte[] buffer = new byte[1000];
 
         final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
@@ -380,7 +380,7 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
         list.add(StroomStreamHandlerUtil.createStroomStreamOrderCheck());
 
         try {
-            final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, list, buffer, "test");
+            final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, list, buffer, "test");
 
             stroomStreamProcessor.process(byteArrayInputStream, "");
             if (fail) {

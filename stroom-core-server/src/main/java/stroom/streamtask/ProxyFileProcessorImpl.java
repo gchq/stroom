@@ -19,7 +19,7 @@ package stroom.streamtask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.FeedDocCache;
-import stroom.feed.MetaMap;
+import stroom.feed.AttributeMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.streamtask.statistic.MetaDataStatistic;
@@ -176,11 +176,11 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
 
         streamTargetStroomStreamHandler.setOneByOne(oneByOne);
 
-        final MetaMap globalMetaMap = new MetaMap();
-        globalMetaMap.put(StroomHeaderArguments.FEED, feed.getName());
+        final AttributeMap globalAttributeMap = new AttributeMap();
+        globalAttributeMap.put(StroomHeaderArguments.FEED, feed.getName());
 
 //        try {
-            streamTargetStroomStreamHandler.handleHeader(globalMetaMap);
+            streamTargetStroomStreamHandler.handleHeader(globalAttributeMap);
 //        } catch (final IOException ioEx) {
 //            streamTargetStroomStreamHandler.close();
 //            throw new RuntimeException(ioEx);

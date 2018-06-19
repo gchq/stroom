@@ -17,23 +17,23 @@
 
 package stroom.ruleset;
 
-import stroom.datafeed.MetaMapFilter;
-import stroom.feed.MetaMap;
+import stroom.datafeed.AttributeMapFilter;
+import stroom.feed.AttributeMap;
 import stroom.datafeed.StroomStatusCode;
 import stroom.datafeed.StroomStreamException;
 import stroom.ruleset.shared.DataReceiptAction;
 
-class MetaMapFilterImpl implements MetaMapFilter {
+class AttributeMapFilterImpl implements AttributeMapFilter {
     private final DataReceiptPolicyChecker dataReceiptPolicyChecker;
 
-    MetaMapFilterImpl(final DataReceiptPolicyChecker dataReceiptPolicyChecker) {
+    AttributeMapFilterImpl(final DataReceiptPolicyChecker dataReceiptPolicyChecker) {
         this.dataReceiptPolicyChecker = dataReceiptPolicyChecker;
     }
 
     @Override
-    public boolean filter(final MetaMap metaMap) {
+    public boolean filter(final AttributeMap attributeMap) {
         // We need to examine the meta map and ensure we aren't dropping or rejecting this data.
-        final DataReceiptAction dataReceiptAction = dataReceiptPolicyChecker.check(metaMap);
+        final DataReceiptAction dataReceiptAction = dataReceiptPolicyChecker.check(attributeMap);
 
         if (DataReceiptAction.REJECT.equals(dataReceiptAction)) {
             throw new StroomStreamException(StroomStatusCode.RECEIPT_POLICY_SET_TO_REJECT_DATA);

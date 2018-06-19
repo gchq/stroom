@@ -1,6 +1,6 @@
 package stroom.proxy.handler;
 
-import stroom.feed.MetaMap;
+import stroom.feed.AttributeMap;
 import stroom.proxy.repo.StroomZipEntry;
 
 import java.io.ByteArrayOutputStream;
@@ -22,7 +22,7 @@ class MockStreamHandler implements StreamHandler {
     private boolean generateExceptionOnData = false;
 
     @Override
-    public void setMetaMap(final MetaMap metaMap) {
+    public void setAttributeMap(final AttributeMap attributeMap) {
     }
 
     @Override

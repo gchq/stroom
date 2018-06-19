@@ -19,7 +19,7 @@ package stroom.headless;
 
 import stroom.docref.DocRef;
 import stroom.feed.FeedStore;
-import stroom.feed.MetaMap;
+import stroom.feed.AttributeMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.ErrorWriter;
@@ -123,7 +123,7 @@ class CLITranslationTaskHandler extends AbstractTaskHandler<CLITranslationTask, 
                 }
 
                 // Load the meta and context data.
-                final MetaMap metaData = new MetaMap();
+                final AttributeMap metaData = new AttributeMap();
                 metaData.read(metaStream, false);
 
                 // Get the feed.

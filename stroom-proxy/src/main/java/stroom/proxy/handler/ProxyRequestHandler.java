@@ -2,11 +2,11 @@ package stroom.proxy.handler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.datafeed.MetaMapFilter;
-import stroom.datafeed.MetaMapFilterFactory;
+import stroom.datafeed.AttributeMapFilter;
+import stroom.datafeed.AttributeMapFilterFactory;
 import stroom.datafeed.RequestHandler;
-import stroom.feed.MetaMap;
-import stroom.feed.MetaMapFactory;
+import stroom.feed.AttributeMap;
+import stroom.feed.AttributeMapFactory;
 import stroom.datafeed.StroomStatusCode;
 import stroom.datafeed.StroomStreamException;
 import stroom.proxy.repo.StroomStreamProcessor;
@@ -34,16 +34,16 @@ public class ProxyRequestHandler implements RequestHandler {
     private static final AtomicInteger concurrentRequestCount = new AtomicInteger(0);
 
     private final MasterStreamHandlerFactory streamHandlerFactory;
-    private final MetaMapFilter metaMapFilter;
+    private final AttributeMapFilter attributeMapFilter;
     private final LogStream logStream;
 
     @Inject
     public ProxyRequestHandler(final ProxyRequestConfig proxyRequestConfig,
                                final MasterStreamHandlerFactory streamHandlerFactory,
-                               final MetaMapFilterFactory metaMapFilterFactory,
+                               final AttributeMapFilterFactory attributeMapFilterFactory,
                                final LogStream logStream) {
         this.streamHandlerFactory = streamHandlerFactory;
-        this.metaMapFilter = metaMapFilterFactory.create(new DocRef("RuleSet", proxyRequestConfig.getReceiptPolicyUuid()));
+        this.attributeMapFilter = attributeMapFilterFactory.create(new DocRef("RuleSet", proxyRequestConfig.getReceiptPolicyUuid()));
         this.logStream = logStream;
     }
 
@@ -61,23 +61,23 @@ public class ProxyRequestHandler implements RequestHandler {
         int returnCode = HttpServletResponse.SC_OK;
 
         final long startTimeMs = System.currentTimeMillis();
-        final MetaMap metaMap = MetaMapFactory.create(request);
+        final AttributeMap attributeMap = AttributeMapFactory.create(request);
 
         try {
             try (final ByteCountInputStream inputStream = new ByteCountInputStream(request.getInputStream())) {
                 // Test to see if we are going to accept this stream or drop the data.
-                if (metaMapFilter.filter(metaMap)) {
+                if (attributeMapFilter.filter(attributeMap)) {
                     // Send the data
                     final List<StreamHandler> handlers = streamHandlerFactory.addReceiveHandlers(new ArrayList<>());
 
                     try {
                         // Set the meta map for all handlers.
                         for (final StreamHandler streamHandler : handlers) {
-                            streamHandler.setMetaMap(metaMap);
+                            streamHandler.setAttributeMap(attributeMap);
                         }
 
                         final byte[] buffer = BufferFactory.create();
-                        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlers, buffer, "DataFeedServlet");
+                        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, handlers, buffer, "DataFeedServlet");
 
                         stroomStreamProcessor.processRequestHeader(request);
 
@@ -104,7 +104,7 @@ public class ProxyRequestHandler implements RequestHandler {
                     }
 
                     final long duration = System.currentTimeMillis() - startTimeMs;
-                    logStream.log(RECEIVE_LOG, metaMap, "RECEIVE", request.getRequestURI(), returnCode, inputStream.getByteCount(), duration);
+                    logStream.log(RECEIVE_LOG, attributeMap, "RECEIVE", request.getRequestURI(), returnCode, inputStream.getByteCount(), duration);
 
                 } else {
                     // Just read the stream in and ignore it
@@ -113,32 +113,32 @@ public class ProxyRequestHandler implements RequestHandler {
                         // Ignore data.
                     }
                     returnCode = HttpServletResponse.SC_OK;
-                    LOGGER.warn("\"Dropped stream\",{}", CSVFormatter.format(metaMap));
+                    LOGGER.warn("\"Dropped stream\",{}", CSVFormatter.format(attributeMap));
 
                     final long duration = System.currentTimeMillis() - startTimeMs;
-                    logStream.log(RECEIVE_LOG, metaMap, "DROP", request.getRequestURI(), returnCode, inputStream.getByteCount(), duration);
+                    logStream.log(RECEIVE_LOG, attributeMap, "DROP", request.getRequestURI(), returnCode, inputStream.getByteCount(), duration);
                 }
             }
         } catch (final StroomStreamException e) {
             StroomStreamException.sendErrorResponse(response, e);
             returnCode = e.getStroomStatusCode().getCode();
 
-            LOGGER.warn("\"handleException()\",{},\"{}\"", CSVFormatter.format(metaMap), CSVFormatter.escape(e.getMessage()));
+            LOGGER.warn("\"handleException()\",{},\"{}\"", CSVFormatter.format(attributeMap), CSVFormatter.escape(e.getMessage()));
 
             final long duration = System.currentTimeMillis() - startTimeMs;
             if (StroomStatusCode.RECEIPT_POLICY_SET_TO_REJECT_DATA.equals(e.getStroomStatusCode())) {
-                logStream.log(RECEIVE_LOG, metaMap, "REJECT", request.getRequestURI(), returnCode, -1, duration);
+                logStream.log(RECEIVE_LOG, attributeMap, "REJECT", request.getRequestURI(), returnCode, -1, duration);
             } else {
-                logStream.log(RECEIVE_LOG, metaMap, "ERROR", request.getRequestURI(), returnCode, -1, duration);
+                logStream.log(RECEIVE_LOG, attributeMap, "ERROR", request.getRequestURI(), returnCode, -1, duration);
             }
 
         } catch (final IOException | RuntimeException e) {
             StroomStreamException.sendErrorResponse(response, e);
             returnCode = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 
-            LOGGER.error("\"handleException()\",{}", CSVFormatter.format(metaMap), e);
+            LOGGER.error("\"handleException()\",{}", CSVFormatter.format(attributeMap), e);
             final long duration = System.currentTimeMillis() - startTimeMs;
-            logStream.log(RECEIVE_LOG, metaMap, "ERROR", request.getRequestURI(), returnCode, -1, duration);
+            logStream.log(RECEIVE_LOG, attributeMap, "ERROR", request.getRequestURI(), returnCode, -1, duration);
         }
 
         response.setStatus(returnCode);

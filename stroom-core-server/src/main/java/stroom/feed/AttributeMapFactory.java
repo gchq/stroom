@@ -20,32 +20,32 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Enumeration;
 import java.util.StringTokenizer;
 
-public class MetaMapFactory {
-    public static MetaMap cloneAllowable(final MetaMap in) {
-        final MetaMap metaMap = new MetaMap();
-        metaMap.putAll(in);
-        metaMap.removeAll(StroomHeaderArguments.HEADER_CLONE_EXCLUDE_SET);
-        return metaMap;
+public class AttributeMapFactory {
+    public static AttributeMap cloneAllowable(final AttributeMap in) {
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.putAll(in);
+        attributeMap.removeAll(StroomHeaderArguments.HEADER_CLONE_EXCLUDE_SET);
+        return attributeMap;
     }
 
-    public static MetaMap create(final HttpServletRequest httpServletRequest) {
-        MetaMap metaMap = new MetaMap();
-        addAllHeaders(httpServletRequest, metaMap);
-        addAllQueryString(httpServletRequest, metaMap);
+    public static AttributeMap create(final HttpServletRequest httpServletRequest) {
+        AttributeMap attributeMap = new AttributeMap();
+        addAllHeaders(httpServletRequest, attributeMap);
+        addAllQueryString(httpServletRequest, attributeMap);
 
-        return metaMap;
+        return attributeMap;
     }
 
     @SuppressWarnings("unchecked")
-    private static void addAllHeaders(HttpServletRequest httpServletRequest, MetaMap metaMap) {
+    private static void addAllHeaders(HttpServletRequest httpServletRequest, AttributeMap attributeMap) {
         Enumeration<String> headerNames = httpServletRequest.getHeaderNames();
         while (headerNames.hasMoreElements()) {
             String header = headerNames.nextElement();
-            metaMap.put(header, httpServletRequest.getHeader(header));
+            attributeMap.put(header, httpServletRequest.getHeader(header));
         }
     }
 
-    private static void addAllQueryString(HttpServletRequest httpServletRequest, MetaMap metaMap) {
+    private static void addAllQueryString(HttpServletRequest httpServletRequest, AttributeMap attributeMap) {
         String queryString = httpServletRequest.getQueryString();
         if (queryString != null) {
             StringTokenizer st = new StringTokenizer(httpServletRequest.getQueryString(), "&");
@@ -56,7 +56,7 @@ public class MetaMapFactory {
                     String key = pair.substring(0, pos);
                     String val = pair.substring(pos + 1, pair.length());
 
-                    metaMap.put(key, val);
+                    attributeMap.put(key, val);
                 }
             }
         }

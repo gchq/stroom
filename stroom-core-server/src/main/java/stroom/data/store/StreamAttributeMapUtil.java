@@ -19,27 +19,27 @@ class StreamAttributeMapUtil {
     /**
      * Turns a stream attribute map object into a generic map of attributes for use by an expression filter.
      */
-    static Map<String, Object> createAttributeMap(final Stream stream, final Map<String, String> metaMap) {
-        final Map<String, Object> attributeMap = new HashMap<>();
+    static Map<String, Object> createAttributeMap(final Stream stream, final Map<String, String> attributeMap) {
+        final Map<String, Object> map = new HashMap<>();
 
         if (stream != null) {
-            attributeMap.put(StreamDataSource.STREAM_ID, stream.getId());
-            attributeMap.put(StreamDataSource.CREATE_TIME, stream.getCreateMs());
-            attributeMap.put(StreamDataSource.EFFECTIVE_TIME, stream.getEffectiveMs());
-            attributeMap.put(StreamDataSource.STATUS_TIME, stream.getStatusMs());
-            attributeMap.put(StreamDataSource.STATUS, stream.getStatus().getDisplayValue());
+            map.put(StreamDataSource.STREAM_ID, stream.getId());
+            map.put(StreamDataSource.CREATE_TIME, stream.getCreateMs());
+            map.put(StreamDataSource.EFFECTIVE_TIME, stream.getEffectiveMs());
+            map.put(StreamDataSource.STATUS_TIME, stream.getStatusMs());
+            map.put(StreamDataSource.STATUS, stream.getStatus().getDisplayValue());
             if (stream.getParentStreamId() != null) {
-                attributeMap.put(StreamDataSource.PARENT_STREAM_ID, stream.getParentStreamId());
+                map.put(StreamDataSource.PARENT_STREAM_ID, stream.getParentStreamId());
             }
             if (stream.getStreamTypeName() != null) {
-                attributeMap.put(StreamDataSource.STREAM_TYPE, stream.getStreamTypeName());
+                map.put(StreamDataSource.STREAM_TYPE, stream.getStreamTypeName());
             }
             final String feedName = stream.getFeedName();
             if (feedName != null) {
-                attributeMap.put(StreamDataSource.FEED, feedName);
+                map.put(StreamDataSource.FEED, feedName);
             }
             final String pipelineName = stream.getPipelineUuid();
-            attributeMap.put(StreamDataSource.PIPELINE, pipelineName);
+            map.put(StreamDataSource.PIPELINE, pipelineName);
 //            if (streamProcessor != null) {
 //                final String pipelineUuid = streamProcessor.getPipelineUuid();
 //                if (pipelineUuid != null) {
@@ -49,18 +49,18 @@ class StreamAttributeMapUtil {
         }
 
         StreamDataSource.getExtendedFields().forEach(field -> {
-            final String value = metaMap.get(field.getName());
+            final String value = attributeMap.get(field.getName());
             if (value != null) {
                 try {
                     switch (field.getType()) {
                         case FIELD:
-                            attributeMap.put(field.getName(), value);
+                            map.put(field.getName(), value);
                             break;
                         case DATE_FIELD:
-                            attributeMap.put(field.getName(), DateUtil.parseNormalDateTimeString(value));
+                            map.put(field.getName(), DateUtil.parseNormalDateTimeString(value));
                             break;
                         default:
-                            attributeMap.put(field.getName(), Long.valueOf(value));
+                            map.put(field.getName(), Long.valueOf(value));
                             break;
                     }
                 } catch (final RuntimeException e) {
@@ -68,6 +68,6 @@ class StreamAttributeMapUtil {
                 }
             }
         });
-        return attributeMap;
+        return map;
     }
 }

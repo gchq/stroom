@@ -18,7 +18,7 @@ package stroom.proxy.repo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.MetaMap;
+import stroom.feed.AttributeMap;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.InitialByteArrayOutputStream;
@@ -148,7 +148,7 @@ public final class ProxyFileHandler {
         }
     }
 
-    private void sendEntry(final List<? extends StroomStreamHandler> stroomStreamHandlerList, final MetaMap metaMap,
+    private void sendEntry(final List<? extends StroomStreamHandler> stroomStreamHandlerList, final AttributeMap attributeMap,
                           final StroomZipEntry targetEntry) throws IOException {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("sendEntry() - " + targetEntry);
@@ -156,12 +156,12 @@ public final class ProxyFileHandler {
         final byte[] buffer = BufferFactory.create();
         for (final StroomStreamHandler stroomStreamHandler : stroomStreamHandlerList) {
             if (stroomStreamHandler instanceof StroomHeaderStreamHandler) {
-                ((StroomHeaderStreamHandler) stroomStreamHandler).handleHeader(metaMap);
+                ((StroomHeaderStreamHandler) stroomStreamHandler).handleHeader(attributeMap);
             }
             stroomStreamHandler.handleEntryStart(targetEntry);
         }
         final InitialByteArrayOutputStream initialByteArrayOutputStream = new InitialByteArrayOutputStream(buffer);
-        metaMap.write(initialByteArrayOutputStream, false);
+        attributeMap.write(initialByteArrayOutputStream, false);
         final BufferPos bufferPos = initialByteArrayOutputStream.getBufferPos();
         for (final StroomStreamHandler stroomStreamHandler : stroomStreamHandlerList) {
             stroomStreamHandler.handleEntryData(bufferPos.getBuffer(), 0, bufferPos.getBufferPos());

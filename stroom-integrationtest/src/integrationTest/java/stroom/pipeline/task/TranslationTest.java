@@ -24,7 +24,7 @@ import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.FeedDocCache;
 import stroom.feed.FeedStore;
-import stroom.feed.MetaMap;
+import stroom.feed.AttributeMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.ImportExportSerializer;
@@ -316,13 +316,13 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     }
 
     private void loadZipData(final Path file, final FeedDoc feed) throws IOException {
-        final MetaMap metaMap = new MetaMap();
-        metaMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
 
         final List<StreamTargetStroomStreamHandler> handlerList = StreamTargetStroomStreamHandler
                 .buildSingleHandlerList(streamStore, feedDocCache, null, feed.getName(), feed.getStreamType());
 
-        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlerList, new byte[1000],
+        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, handlerList, new byte[1000],
                 "DefaultDataFeedRequest-");
 
         stroomStreamProcessor.process(Files.newInputStream(file), "test");

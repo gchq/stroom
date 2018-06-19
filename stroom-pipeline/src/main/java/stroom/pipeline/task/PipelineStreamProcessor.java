@@ -24,7 +24,7 @@ import org.slf4j.MarkerFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.feed.FeedProperties;
-import stroom.feed.MetaMap;
+import stroom.feed.AttributeMap;
 import stroom.io.StreamCloser;
 import stroom.node.NodeCache;
 import stroom.pipeline.DefaultErrorWriter;
@@ -650,8 +650,8 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                         // Only do something if an output stream was used.
                         if (processInfoStreamTarget != null) {
                             // Write meta data.
-                            final MetaMap metaMap = metaData.getMetaMap();
-                            processInfoStreamTarget.getAttributeMap().putAll(metaMap);
+                            final AttributeMap attributeMap = metaData.getAttributeMap();
+                            processInfoStreamTarget.getAttributeMap().putAll(attributeMap);
                             // We let the streamCloser close the stream target
                             // with the stream store as it may want to delete it
                         }

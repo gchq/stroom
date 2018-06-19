@@ -20,7 +20,7 @@ package stroom.test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.FeedDocCache;
-import stroom.feed.MetaMap;
+import stroom.feed.AttributeMap;
 import stroom.feed.shared.FeedDoc;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFile;
@@ -121,7 +121,7 @@ public class DataLoader {
                 final RawInputSegmentWriter writer = new RawInputSegmentWriter();
                 writer.write(new BufferedInputStream(inputStream), outputStream);
 
-                final MetaMap map = new MetaMap();
+                final AttributeMap map = new AttributeMap();
                 map.put("TestData", "Loaded By SetupSampleData");
 
                 map.write(streamTarget.addChildStream(StreamTypeNames.META).getOutputStream(), true);
@@ -145,7 +145,7 @@ public class DataLoader {
                 final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(
                         streamStore, feedDocCache, null, feed.getName(), feed.getStreamType());
 
-                final MetaMap map = new MetaMap();
+                final AttributeMap map = new AttributeMap();
                 map.put("TestData", "Loaded By SetupSampleData");
 
                 streamTargetStroomStreamHandler.handleHeader(map);

@@ -19,7 +19,7 @@ package stroom.entity.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.MetaMap;
+import stroom.feed.AttributeMap;
 import stroom.feed.shared.FeedDoc;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
@@ -141,9 +141,9 @@ public final class SendStreamDataClient {
         }
 
         if (meta != null) {
-            final MetaMap metaMap = new MetaMap();
-            metaMap.read(meta.getInputStream(), true);
-            metaMap.entrySet().stream().filter(entry -> connection.getRequestProperty(entry.getKey()) == null)
+            final AttributeMap attributeMap = new AttributeMap();
+            attributeMap.read(meta.getInputStream(), true);
+            attributeMap.entrySet().stream().filter(entry -> connection.getRequestProperty(entry.getKey()) == null)
                     .forEach(entry -> connection.addRequestProperty(entry.getKey(), entry.getValue()));
         }
 

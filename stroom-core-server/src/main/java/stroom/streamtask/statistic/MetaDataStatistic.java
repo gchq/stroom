@@ -16,8 +16,8 @@
 
 package stroom.streamtask.statistic;
 
-import stroom.feed.MetaMap;
+import stroom.feed.AttributeMap;
 
 public interface MetaDataStatistic {
-    void recordStatistics(MetaMap metaData);
+    void recordStatistics(AttributeMap metaData);
 }

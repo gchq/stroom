@@ -2,8 +2,8 @@ package stroom.proxy.handler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.MetaMap;
-import stroom.feed.MetaMapFactory;
+import stroom.feed.AttributeMap;
+import stroom.feed.AttributeMapFactory;
 import stroom.feed.StroomHeaderArguments;
 import stroom.datafeed.StroomStreamException;
 import stroom.proxy.repo.StroomZipEntry;
@@ -38,7 +38,7 @@ class ForwardStreamHandler implements StreamHandler, HostnameVerifier {
     private long startTimeMs;
     private long bytesSent = 0;
 
-    private MetaMap metaMap;
+    private AttributeMap attributeMap;
 
     public ForwardStreamHandler(final LogStream logStream,
                                 final String forwardUrl,
@@ -53,17 +53,17 @@ class ForwardStreamHandler implements StreamHandler, HostnameVerifier {
     }
 
     @Override
-    public void setMetaMap(final MetaMap metaMap) {
-        this.metaMap = metaMap;
+    public void setAttributeMap(final AttributeMap attributeMap) {
+        this.attributeMap = attributeMap;
     }
 
     @Override
     public void handleHeader() throws IOException {
         if (LOGGER.isInfoEnabled()) {
-            LOGGER.info("handleHeader() - " + forwardUrl + " Sending request " + metaMap);
+            LOGGER.info("handleHeader() - " + forwardUrl + " Sending request " + attributeMap);
         }
         startTimeMs = System.currentTimeMillis();
-        guid = metaMap.computeIfAbsent(StroomHeaderArguments.GUID, k -> UUID.randomUUID().toString());
+        guid = attributeMap.computeIfAbsent(StroomHeaderArguments.GUID, k -> UUID.randomUUID().toString());
 
         URL url = new URL(forwardUrl);
         connection = (HttpURLConnection) url.openConnection();
@@ -84,7 +84,7 @@ class ForwardStreamHandler implements StreamHandler, HostnameVerifier {
 
         connection.addRequestProperty(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
 
-        MetaMap sendHeader = MetaMapFactory.cloneAllowable(metaMap);
+        AttributeMap sendHeader = AttributeMapFactory.cloneAllowable(attributeMap);
         for (Entry<String, String> entry : sendHeader.entrySet()) {
             connection.addRequestProperty(entry.getKey(), entry.getValue());
         }
@@ -113,7 +113,7 @@ class ForwardStreamHandler implements StreamHandler, HostnameVerifier {
                 responseCode = StroomStreamException.checkConnectionResponse(connection);
             } finally {
                 final long duration = System.currentTimeMillis() - startTimeMs;
-                logStream.log(SEND_LOG, metaMap, "SEND", forwardUrl, responseCode, bytesSent, duration);
+                logStream.log(SEND_LOG, attributeMap, "SEND", forwardUrl, responseCode, bytesSent, duration);
 
                 connection.disconnect();
                 connection = null;

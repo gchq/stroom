@@ -21,7 +21,7 @@ package stroom.data.store.impl.fs;
 import event.logging.util.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.MetaMap;
+import stroom.feed.AttributeMap;
 import stroom.node.NodeCache;
 import stroom.node.VolumeService;
 import stroom.node.shared.Node;
@@ -276,16 +276,16 @@ public class FileSystemStreamStoreImpl implements StreamStore {
             final Path manifest = fileSystemStreamPathHelper.createChildStreamFile(stream, streamVolume, StreamTypeNames.MANIFEST);
 
             if (Files.isRegularFile(manifest)) {
-                final MetaMap metaMap = new MetaMap();
+                final AttributeMap attributeMap = new AttributeMap();
                 try {
-                    metaMap.read(Files.newInputStream(manifest), true);
+                    attributeMap.read(Files.newInputStream(manifest), true);
                 } catch (final IOException ioException) {
                     LOGGER.error("loadAttributeMapFromFileSystem() {}", manifest, ioException);
                 }
 
-//                for (final String name : metaMap.keySet()) {
+//                for (final String name : attributeMap.keySet()) {
 //                    final StreamAttributeKey key = keyMap.get(name);
-//                    final String value = metaMap.get(name);
+//                    final String value = attributeMap.get(name);
 //                    if (key == null) {
 //                        streamAttributeMap.addAttribute(name, value);
 //                    } else {
@@ -298,7 +298,7 @@ public class FileSystemStreamStoreImpl implements StreamStore {
                             stream, stream.getStreamTypeName());
 
                     final List<Path> allFiles = fileSystemStreamPathHelper.findAllDescendantStreamFileList(rootFile);
-                    metaMap.put("Files", allFiles.stream().map(FileUtil::getCanonicalPath).collect(Collectors.joining(",")));
+                    attributeMap.put("Files", allFiles.stream().map(FileUtil::getCanonicalPath).collect(Collectors.joining(",")));
 
 
                     //                streamAttributeMap.setFileNameList(new ArrayList<>());
@@ -310,7 +310,7 @@ public class FileSystemStreamStoreImpl implements StreamStore {
                     LOGGER.error("loadAttributeMapFromFileSystem() ", e);
                 }
 
-                return metaMap;
+                return attributeMap;
             }
         }
 
@@ -339,15 +339,15 @@ public class FileSystemStreamStoreImpl implements StreamStore {
         }
     }
 
-    private Stream unLock(final Stream stream, final Map<String, String> metaMap) {
+    private Stream unLock(final Stream stream, final Map<String, String> attributeMap) {
         if (StreamStatus.UNLOCKED.equals(stream.getStatus())) {
             throw new IllegalStateException("Attempt to unlock a stream that is already unlocked");
         }
 
         // Write the child meta data
-        if (!metaMap.isEmpty()) {
+        if (!attributeMap.isEmpty()) {
             try {
-                streamMetaService.addAttributes(stream, metaMap);
+                streamMetaService.addAttributes(stream, attributeMap);
             } catch (final RuntimeException e) {
                 LOGGER.error("unLock() - Failed to persist attributes in new transaction... will ignore");
             }

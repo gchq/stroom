@@ -1,7 +1,7 @@
 package stroom.proxy.repo;
 
 import com.google.common.base.Strings;
-import stroom.feed.MetaMap;
+import stroom.feed.AttributeMap;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -65,12 +65,12 @@ class PathCreator {
         return newPath;
     }
 
-    private static String replaceMetaMapVars(final String path, final MetaMap metaMap) {
+    private static String replaceAttributeMapVars(final String path, final AttributeMap attributeMap) {
         String result = path;
-        if (metaMap != null) {
+        if (attributeMap != null) {
             final String[] vars = findVars(result);
             for (final String var : vars) {
-                String value = metaMap.get(var);
+                String value = attributeMap.get(var);
                 if (value != null) {
                     result = replace(result, var, value);
                 }
@@ -79,9 +79,9 @@ class PathCreator {
         return result;
     }
 
-    static String replaceAll(String template, final MetaMap metaMap) {
+    static String replaceAll(String template, final AttributeMap attributeMap) {
         template = replaceTimeVars(template);
-        template = replaceMetaMapVars(template, metaMap);
+        template = replaceAttributeMapVars(template, attributeMap);
         return template;
     }
 }

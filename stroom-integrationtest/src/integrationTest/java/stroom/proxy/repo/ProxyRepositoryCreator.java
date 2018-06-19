@@ -21,7 +21,7 @@ import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.FeedDocCache;
-import stroom.feed.MetaMap;
+import stroom.feed.AttributeMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.util.date.DateUtil;
@@ -101,7 +101,7 @@ public class ProxyRepositoryCreator {
 
                 // Add meta data.
                 OutputStream zipPart = zipOutputStream.addEntry(new StroomZipEntry(null, newName, StroomZipFileType.Meta).getFullName());
-                final MetaMap map = createMap(feed, effectiveMs);
+                final AttributeMap map = createMap(feed, effectiveMs);
                 map.write(zipPart, true);
 
                 // Add data.
@@ -135,7 +135,7 @@ public class ProxyRepositoryCreator {
 
                     // Add meta data.
                     InputStream inputStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Meta);
-                    final MetaMap map = createMap(feed, effectiveMs);
+                    final AttributeMap map = createMap(feed, effectiveMs);
                     if (inputStream != null) {
                         map.read(inputStream, true);
                     }
@@ -167,10 +167,10 @@ public class ProxyRepositoryCreator {
         }
     }
 
-    private MetaMap createMap(final FeedDoc feed, final Long effectiveMs) {
+    private AttributeMap createMap(final FeedDoc feed, final Long effectiveMs) {
         final String dateTime = DateUtil.createNormalDateTimeString(effectiveMs);
 
-        final MetaMap map = new MetaMap();
+        final AttributeMap map = new AttributeMap();
         map.put(StroomHeaderArguments.FEED, feed.getName());
         map.put(StroomHeaderArguments.RECEIVED_TIME, dateTime);
         map.put(StroomHeaderArguments.EFFECTIVE_TIME, dateTime);

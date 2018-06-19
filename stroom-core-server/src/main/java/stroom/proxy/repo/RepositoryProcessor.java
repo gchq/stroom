@@ -18,7 +18,7 @@ package stroom.proxy.repo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.MetaMap;
+import stroom.feed.AttributeMap;
 import stroom.task.TaskContext;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.CloseableUtil;
@@ -267,12 +267,12 @@ public final class RepositoryProcessor {
     }
 
     private String getFeed(final StroomZipRepository stroomZipRepository, final Path path) {
-        final MetaMap metaMap = getMetaMap(stroomZipRepository, path);
-        return metaMap.get(FEED);
+        final AttributeMap attributeMap = getAttributeMap(stroomZipRepository, path);
+        return attributeMap.get(FEED);
     }
 
-    private MetaMap getMetaMap(final StroomZipRepository stroomZipRepository, final Path path) {
-        final MetaMap metaMap = new MetaMap();
+    private AttributeMap getAttributeMap(final StroomZipRepository stroomZipRepository, final Path path) {
+        final AttributeMap attributeMap = new AttributeMap();
         StroomZipFile stroomZipFile = null;
         try {
             stroomZipFile = new StroomZipFile(path);
@@ -286,19 +286,19 @@ public final class RepositoryProcessor {
                 if (anyHeaderStream == null) {
                     stroomZipRepository.addErrorMessage(stroomZipFile, "Unable to find header??", true);
                 } else {
-                    metaMap.read(anyHeaderStream, false);
+                    attributeMap.read(anyHeaderStream, false);
                 }
             }
         } catch (final IOException ex) {
             // Unable to open file ... must be bad.
             stroomZipRepository.addErrorMessage(stroomZipFile, ex.getMessage(), true);
-            LOGGER.error("getMetaMap", ex);
+            LOGGER.error("getAttributeMap", ex);
 
         } finally {
             CloseableUtil.closeLogAndIgnoreException(stroomZipFile);
         }
 
-        return metaMap;
+        return attributeMap;
     }
 
     private void addErrorMessage(final StroomZipRepository stroomZipRepository, final Path path, final String msg, final boolean bad) {

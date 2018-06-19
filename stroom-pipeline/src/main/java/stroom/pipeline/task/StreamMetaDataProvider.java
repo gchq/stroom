@@ -18,7 +18,7 @@
 package stroom.pipeline.task;
 
 import stroom.docref.DocRef;
-import stroom.feed.MetaMap;
+import stroom.feed.AttributeMap;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.state.MetaDataProvider;
@@ -46,7 +46,7 @@ public class StreamMetaDataProvider implements MetaDataProvider {
     private final PipelineStore pipelineStore;
 
     private Map<String, String> parentData = new ConcurrentHashMap<>();
-    private MetaMap metaData;
+    private AttributeMap metaData;
     private long lastMetaStreamNo;
 
     public StreamMetaDataProvider(final StreamHolder streamHolder,
@@ -77,11 +77,11 @@ public class StreamMetaDataProvider implements MetaDataProvider {
     }
 
     @Override
-    public MetaMap getMetaData() {
+    public AttributeMap getMetaData() {
         try {
             // Determine if we need to read the meta stream.
             if (metaData == null || lastMetaStreamNo != streamHolder.getStreamNo()) {
-                metaData = new MetaMap();
+                metaData = new AttributeMap();
                 lastMetaStreamNo = streamHolder.getStreamNo();
 
                 // Setup meta data.

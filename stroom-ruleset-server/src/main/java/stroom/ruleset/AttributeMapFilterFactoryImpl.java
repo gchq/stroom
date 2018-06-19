@@ -17,26 +17,26 @@
 
 package stroom.ruleset;
 
-import stroom.datafeed.MetaMapFilter;
-import stroom.datafeed.MetaMapFilterFactory;
+import stroom.datafeed.AttributeMapFilter;
+import stroom.datafeed.AttributeMapFilterFactory;
 import stroom.dictionary.DictionaryStore;
 import stroom.docref.DocRef;
 
 import javax.inject.Inject;
 
-public class MetaMapFilterFactoryImpl implements MetaMapFilterFactory {
+public class AttributeMapFilterFactoryImpl implements AttributeMapFilterFactory {
     private final RuleSetService ruleSetService;
     private final DictionaryStore dictionaryStore;
 
     @Inject
-    MetaMapFilterFactoryImpl(final RuleSetService ruleSetService,
+    AttributeMapFilterFactoryImpl(final RuleSetService ruleSetService,
                              final DictionaryStore dictionaryStore) {
         this.ruleSetService = ruleSetService;
         this.dictionaryStore = dictionaryStore;
     }
 
     @Override
-    public MetaMapFilter create(final DocRef policyRef) {
-        return new MetaMapFilterImpl(new DataReceiptPolicyChecker(ruleSetService, dictionaryStore, policyRef));
+    public AttributeMapFilter create(final DocRef policyRef) {
+        return new AttributeMapFilterImpl(new DataReceiptPolicyChecker(ruleSetService, dictionaryStore, policyRef));
     }
 }

@@ -18,7 +18,7 @@ package stroom.util;
 
 import com.google.common.base.Strings;
 import org.apache.commons.lang.mutable.MutableInt;
-import stroom.feed.MetaMap;
+import stroom.feed.AttributeMap;
 import stroom.node.shared.VolumeEntity;
 import stroom.util.concurrent.SimpleConcurrentMap;
 import stroom.util.date.DateUtil;
@@ -378,12 +378,12 @@ public class StreamRestoreTool extends DatabaseTool {
         final Map<String, String> rtnMap = new HashMap<>();
         final Path manifest = Paths.get(rootFile.substring(0, rootFile.lastIndexOf(".")) + ".mf.dat");
         if (Files.isRegularFile(manifest)) {
-            final MetaMap metaMap = new MetaMap();
+            final AttributeMap attributeMap = new AttributeMap();
             try (final InputStream inputStream = Files.newInputStream(manifest)) {
-                metaMap.read(inputStream, true);
+                attributeMap.read(inputStream, true);
             } catch (final IOException ioEx) {
             }
-            rtnMap.putAll(metaMap);
+            rtnMap.putAll(attributeMap);
         }
         return rtnMap;
     }

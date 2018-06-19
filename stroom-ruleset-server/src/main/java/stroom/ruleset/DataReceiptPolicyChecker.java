@@ -21,7 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.dictionary.DictionaryStore;
-import stroom.feed.MetaMap;
+import stroom.feed.AttributeMap;
 import stroom.docref.DocRef;
 import stroom.ruleset.shared.DataReceiptAction;
 import stroom.ruleset.shared.Rule;
@@ -59,8 +59,8 @@ class DataReceiptPolicyChecker {
         this.policyRef = policyRef;
     }
 
-    DataReceiptAction check(final MetaMap metaMap) {
-        return getChecker().check(metaMap);
+    DataReceiptAction check(final AttributeMap attributeMap) {
+        return getChecker().check(attributeMap);
     }
 
     private Checker getChecker() {
@@ -124,12 +124,12 @@ class DataReceiptPolicyChecker {
     }
 
     private interface Checker {
-        DataReceiptAction check(MetaMap metaMap);
+        DataReceiptAction check(AttributeMap attributeMap);
     }
 
     private static class ReceiveAllChecker implements Checker {
         @Override
-        public DataReceiptAction check(final MetaMap metaMap) {
+        public DataReceiptAction check(final AttributeMap attributeMap) {
             return DataReceiptAction.RECEIVE;
         }
     }
@@ -146,10 +146,10 @@ class DataReceiptPolicyChecker {
         }
 
         @Override
-        public DataReceiptAction check(final MetaMap metaMap) {
-            final Map<String, Object> attributeMap = createAttributeMap(metaMap, fieldMap);
+        public DataReceiptAction check(final AttributeMap attributeMap) {
+            final Map<String, Object> map = createAttributeMap(attributeMap, fieldMap);
 
-            final Rule matchingRule = findMatchingRule(expressionMatcher, attributeMap, activeRules);
+            final Rule matchingRule = findMatchingRule(expressionMatcher, map, activeRules);
             if (matchingRule != null && matchingRule.getAction() != null) {
                 return matchingRule.getAction();
             }
@@ -158,24 +158,24 @@ class DataReceiptPolicyChecker {
             return DataReceiptAction.RECEIVE;
         }
 
-        private Map<String, Object> createAttributeMap(final MetaMap metaMap, final Map<String, DataSourceField> fieldMap) {
-            final Map<String, Object> attributeMap = new HashMap<>();
+        private Map<String, Object> createAttributeMap(final AttributeMap attributeMap, final Map<String, DataSourceField> fieldMap) {
+            final Map<String, Object> map = new HashMap<>();
             fieldMap.forEach((fieldName, field) -> {
                 try {
-                    final String string = metaMap.get(fieldName);
+                    final String string = attributeMap.get(fieldName);
                     switch (field.getType()) {
                         case FIELD:
-                            attributeMap.put(fieldName, string);
+                            map.put(fieldName, string);
                             break;
                         default:
-                            attributeMap.put(fieldName, getSafeLong(string));
+                            map.put(fieldName, getSafeLong(string));
                             break;
                     }
                 } catch (final RuntimeException e) {
                     LOGGER.debug(e.getMessage(), e);
                 }
             });
-            return attributeMap;
+            return map;
         }
 
         private Long getSafeLong(final String string) {

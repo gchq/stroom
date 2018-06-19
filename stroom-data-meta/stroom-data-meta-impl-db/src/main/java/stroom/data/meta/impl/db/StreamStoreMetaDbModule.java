@@ -23,7 +23,7 @@ public class StreamStoreMetaDbModule extends AbstractModule {
 
 
         bind(MetaKeyService.class).to(MetaKeyServiceImpl.class);
-//        bind(MetaMapService.class).to(StreamDataRowService.class);
+//        bind(AttributeMapService.class).to(StreamDataRowService.class);
 //        bind(MetaValueFlush.class).to(MetaValueFlushImpl.class);
         bind(MetaValueService.class).to(MetaValueServiceImpl.class);
 

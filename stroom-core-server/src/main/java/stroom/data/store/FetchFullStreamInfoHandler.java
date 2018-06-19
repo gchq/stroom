@@ -75,15 +75,15 @@ class FetchFullStreamInfoHandler extends AbstractTaskHandler<FetchFullStreamInfo
         return entries;
     }
 
-    private List<Entry> getDataRententionEntries(final Stream stream, final Map<String, String> metaMap) {
+    private List<Entry> getDataRententionEntries(final Stream stream, final Map<String, String> attributeMap) {
         final List<Entry> entries = new ArrayList<>();
 
         // Add additional data retention information.
-        ruleDecorator.addMatchingRetentionRuleInfo(stream, metaMap);
+        ruleDecorator.addMatchingRetentionRuleInfo(stream, attributeMap);
 
-        entries.add(new Entry(StreamAttributeMapRetentionRuleDecorator.RETENTION_AGE, metaMap.get(StreamAttributeMapRetentionRuleDecorator.RETENTION_AGE)));
-        entries.add(new Entry(StreamAttributeMapRetentionRuleDecorator.RETENTION_UNTIL, metaMap.get(StreamAttributeMapRetentionRuleDecorator.RETENTION_UNTIL)));
-        entries.add(new Entry(StreamAttributeMapRetentionRuleDecorator.RETENTION_RULE, metaMap.get(StreamAttributeMapRetentionRuleDecorator.RETENTION_RULE)));
+        entries.add(new Entry(StreamAttributeMapRetentionRuleDecorator.RETENTION_AGE, attributeMap.get(StreamAttributeMapRetentionRuleDecorator.RETENTION_AGE)));
+        entries.add(new Entry(StreamAttributeMapRetentionRuleDecorator.RETENTION_UNTIL, attributeMap.get(StreamAttributeMapRetentionRuleDecorator.RETENTION_UNTIL)));
+        entries.add(new Entry(StreamAttributeMapRetentionRuleDecorator.RETENTION_RULE, attributeMap.get(StreamAttributeMapRetentionRuleDecorator.RETENTION_RULE)));
 
         return entries;
     }
@@ -93,9 +93,9 @@ class FetchFullStreamInfoHandler extends AbstractTaskHandler<FetchFullStreamInfo
         final Stream stream = action.getStream();
         final List<Section> sections = new ArrayList<>();
 
-        final Map<String, String> metaMap = streamStore.getStoredMeta(stream);
+        final Map<String, String> attributeMap = streamStore.getStoredMeta(stream);
 
-        if (metaMap == null) {
+        if (attributeMap == null) {
             final List<Entry> entries = new ArrayList<>(1);
             entries.add(new Entry("Deleted Stream Id", String.valueOf(stream.getId())));
             sections.add(new Section("Stream", entries));
@@ -104,8 +104,8 @@ class FetchFullStreamInfoHandler extends AbstractTaskHandler<FetchFullStreamInfo
             sections.add(new Section("Stream", getStreamEntries(stream)));
 
             final List<Entry> entries = new ArrayList<>();
-            final List<String> sortedKeys = metaMap.keySet().stream().sorted(Comparator.naturalOrder()).collect(Collectors.toList());
-            sortedKeys.forEach(key -> entries.add(new Entry(key, metaMap.get(key))));
+            final List<String> sortedKeys = attributeMap.keySet().stream().sorted(Comparator.naturalOrder()).collect(Collectors.toList());
+            sortedKeys.forEach(key -> entries.add(new Entry(key, attributeMap.get(key))));
             sections.add(new Section("Attributes", entries));
 
 
@@ -135,7 +135,7 @@ class FetchFullStreamInfoHandler extends AbstractTaskHandler<FetchFullStreamInfo
 
 
             // Add additional data retention information.
-            sections.add(new Section("Retention", getDataRententionEntries(stream, metaMap)));
+            sections.add(new Section("Retention", getDataRententionEntries(stream, attributeMap)));
 
 
         }

@@ -528,7 +528,7 @@ class StreamMetaServiceImpl implements StreamMetaService {
 //                        if (dataRetentionPolicy != null && dataRetentionPolicy.getRules() != null) {
 //                            rules = dataRetentionPolicy.getRules();
 //                        }
-//                        final MetaMapRetentionRuleDecorator ruleDecorator = new MetaMapRetentionRuleDecorator(dictionaryStore, rules);
+//                        final AttributeMapRetentionRuleDecorator ruleDecorator = new AttributeMapRetentionRuleDecorator(dictionaryStore, rules);
 
                 // Query the database for the attribute values
 //                        if (criteria.isUseCache()) {

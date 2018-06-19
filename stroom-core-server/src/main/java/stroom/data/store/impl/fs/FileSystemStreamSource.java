@@ -18,7 +18,7 @@ package stroom.data.store.impl.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.MetaMap;
+import stroom.feed.AttributeMap;
 import stroom.io.StreamCloser;
 import stroom.data.store.api.StreamSource;
 import stroom.data.meta.api.Stream;
@@ -41,7 +41,7 @@ public final class FileSystemStreamSource implements StreamSource {
     private Stream stream;
     private String rootPath;
     private String streamType;
-    private MetaMap attributeMap;
+    private AttributeMap attributeMap;
     private InputStream inputStream;
     private Path file;
     private FileSystemStreamSource parent;
@@ -154,12 +154,12 @@ public final class FileSystemStreamSource implements StreamSource {
     }
 
     @Override
-    public MetaMap getAttributeMap() {
+    public AttributeMap getAttributeMap() {
         if (parent != null) {
             return parent.getAttributeMap();
         }
         if (attributeMap == null) {
-            attributeMap = new MetaMap();
+            attributeMap = new AttributeMap();
             try {
                 final StreamSource streamSource = getChildStream(StreamTypeNames.MANIFEST);
                 if (streamSource != null) {

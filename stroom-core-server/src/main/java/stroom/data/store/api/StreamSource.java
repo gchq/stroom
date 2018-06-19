@@ -16,7 +16,7 @@
 
 package stroom.data.store.api;
 
-import stroom.feed.MetaMap;
+import stroom.feed.AttributeMap;
 import stroom.data.meta.api.Stream;
 
 import java.io.Closeable;
@@ -48,7 +48,7 @@ public interface StreamSource extends Closeable {
     /**
      * Any attributes regarding the stream
      */
-    MetaMap getAttributeMap();
+    AttributeMap getAttributeMap();
 
     /**
      * Depending on the type of stream we we may return back null if the stream

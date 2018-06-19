@@ -16,11 +16,10 @@
 
 package stroom.streamtask.statistic;
 
-import stroom.feed.MetaMap;
-import stroom.streamtask.statistic.MetaDataStatistic;
+import stroom.feed.AttributeMap;
 
 class MockMetaDataStatistic implements MetaDataStatistic {
     @Override
-    public void recordStatistics(MetaMap metaData) {
+    public void recordStatistics(AttributeMap metaData) {
     }
 }

@@ -22,7 +22,7 @@ import org.junit.Test;
 import stroom.docref.DocRef;
 import stroom.feed.FeedDocCache;
 import stroom.feed.FeedStore;
-import stroom.feed.MetaMap;
+import stroom.feed.AttributeMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.proxy.repo.StroomZipEntry;
@@ -58,12 +58,12 @@ public class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrat
         feedDoc.setReference(true);
         feedStore.writeDocument(feedDoc);
 
-        final MetaMap metaMap = new MetaMap();
-        metaMap.put(StroomHeaderArguments.FEED, "TEST_FEED");
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put(StroomHeaderArguments.FEED, "TEST_FEED");
 
         final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(streamStore,
                 feedDocCache, null, "TEST_FEED", StreamTypeNames.RAW_REFERENCE);
-        streamTargetStroomStreamHandler.handleHeader(metaMap);
+        streamTargetStroomStreamHandler.handleHeader(attributeMap);
         streamTargetStroomStreamHandler.handleEntryStart(new StroomZipEntry(null, "1", StroomZipFileType.Meta));
         streamTargetStroomStreamHandler.handleEntryEnd();
         streamTargetStroomStreamHandler.handleEntryStart(new StroomZipEntry(null, "1", StroomZipFileType.Context));
@@ -91,22 +91,22 @@ public class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrat
     public void testFeedChange() throws IOException {
         streamStore.clear();
 
-        final MetaMap metaMap1 = new MetaMap();
-        metaMap1.put(StroomHeaderArguments.FEED, "TEST_FEED1");
+        final AttributeMap attributeMap1 = new AttributeMap();
+        attributeMap1.put(StroomHeaderArguments.FEED, "TEST_FEED1");
 
-        final MetaMap metaMap2 = new MetaMap();
-        metaMap2.put(StroomHeaderArguments.FEED, "TEST_FEED2");
+        final AttributeMap attributeMap2 = new AttributeMap();
+        attributeMap2.put(StroomHeaderArguments.FEED, "TEST_FEED2");
 
         final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(streamStore,
                 feedDocCache, null, "TEST_FEED1", StreamTypeNames.RAW_EVENTS);
-        streamTargetStroomStreamHandler.handleHeader(metaMap1);
+        streamTargetStroomStreamHandler.handleHeader(attributeMap1);
         streamTargetStroomStreamHandler.handleEntryStart(new StroomZipEntry(null, "1", StroomZipFileType.Meta));
         streamTargetStroomStreamHandler.handleEntryEnd();
         streamTargetStroomStreamHandler.handleEntryStart(new StroomZipEntry(null, "1", StroomZipFileType.Context));
         streamTargetStroomStreamHandler.handleEntryEnd();
         streamTargetStroomStreamHandler.handleEntryStart(new StroomZipEntry(null, "1", StroomZipFileType.Data));
         streamTargetStroomStreamHandler.handleEntryEnd();
-        streamTargetStroomStreamHandler.handleHeader(metaMap2);
+        streamTargetStroomStreamHandler.handleHeader(attributeMap2);
         streamTargetStroomStreamHandler.handleEntryStart(new StroomZipEntry(null, "2", StroomZipFileType.Meta));
         streamTargetStroomStreamHandler.handleEntryEnd();
         streamTargetStroomStreamHandler.handleEntryStart(new StroomZipEntry(null, "2", StroomZipFileType.Context));
@@ -128,12 +128,12 @@ public class TestStreamTargetStroomStreamHandler extends AbstractProcessIntegrat
     public void testFeedAggregation() throws IOException {
         streamStore.clear();
 
-        final MetaMap metaMap = new MetaMap();
-        metaMap.put(StroomHeaderArguments.FEED, "TEST_FEED");
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put(StroomHeaderArguments.FEED, "TEST_FEED");
 
         final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(streamStore,
                 feedDocCache, null, "TEST_FEED", StreamTypeNames.RAW_EVENTS);
-        streamTargetStroomStreamHandler.handleHeader(metaMap);
+        streamTargetStroomStreamHandler.handleHeader(attributeMap);
         streamTargetStroomStreamHandler.handleEntryStart(new StroomZipEntry(null, "1", StroomZipFileType.Meta));
         streamTargetStroomStreamHandler.handleEntryEnd();
         streamTargetStroomStreamHandler.handleEntryStart(new StroomZipEntry(null, "1", StroomZipFileType.Context));

@@ -18,7 +18,7 @@ package stroom.data.store.impl.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.MetaMap;
+import stroom.feed.AttributeMap;
 import stroom.io.SeekableOutputStream;
 import stroom.data.store.StreamException;
 import stroom.data.store.api.StreamTarget;
@@ -51,7 +51,7 @@ public final class FileSystemStreamTarget implements StreamTarget {
     private Stream stream;
     private boolean closed;
     private boolean append;
-    private MetaMap attributeMap;
+    private AttributeMap attributeMap;
     private OutputStream outputStream;
     private Set<Path> files;
     private FileSystemStreamTarget parent;
@@ -247,12 +247,12 @@ public final class FileSystemStreamTarget implements StreamTarget {
     }
 
     @Override
-    public MetaMap getAttributeMap() {
+    public AttributeMap getAttributeMap() {
         if (parent != null) {
             return parent.getAttributeMap();
         }
         if (attributeMap == null) {
-            attributeMap = new MetaMap();
+            attributeMap = new AttributeMap();
             if (isAppend()) {
                 final Path manifestFile = fileSystemStreamPathHelper
                         .createChildStreamFile(getFiles(false).iterator().next(), StreamTypeNames.MANIFEST);

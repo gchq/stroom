@@ -18,7 +18,7 @@
 package stroom.pipeline.writer;
 
 import stroom.docref.DocRef;
-import stroom.feed.MetaMap;
+import stroom.feed.AttributeMap;
 import stroom.feed.shared.FeedDoc;
 import stroom.io.StreamCloser;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -146,8 +146,8 @@ public class StreamAppender extends AbstractAppender {
         // Only do something if an output stream was used.
         if (streamTarget != null) {
             // Write meta data.
-            final MetaMap metaMap = metaData.getMetaMap();
-            streamTarget.getAttributeMap().putAll(metaMap);
+            final AttributeMap attributeMap = metaData.getAttributeMap();
+            streamTarget.getAttributeMap().putAll(attributeMap);
             // We leave the streamCloser to close the stream target as it may
             // want to delete it instead
         }

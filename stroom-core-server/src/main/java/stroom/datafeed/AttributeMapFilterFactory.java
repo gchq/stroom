@@ -17,8 +17,8 @@
 
 package stroom.datafeed;
 
-import stroom.feed.MetaMap;
+import stroom.docref.DocRef;
 
-public interface MetaMapFilter {
-    boolean filter(MetaMap metaMap);
+public interface AttributeMapFilterFactory {
+    AttributeMapFilter create(DocRef policyRef);
 }

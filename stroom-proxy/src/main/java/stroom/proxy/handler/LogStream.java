@@ -1,7 +1,7 @@
 package stroom.proxy.handler;
 
 import org.slf4j.Logger;
-import stroom.feed.MetaMap;
+import stroom.feed.AttributeMap;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -25,9 +25,9 @@ public class LogStream {
         }
     }
 
-    public void log(final Logger logger, final MetaMap metaMap, final String type, final String url, final int responseCode, final long bytes, final long duration) {
+    public void log(final Logger logger, final AttributeMap attributeMap, final String type, final String url, final int responseCode, final long bytes, final long duration) {
         if (logger.isInfoEnabled() && metaKeySet.size() > 0) {
-            final Map<String, String> filteredMap = metaMap.entrySet().stream()
+            final Map<String, String> filteredMap = attributeMap.entrySet().stream()
                     .filter(entry -> metaKeySet.contains(entry.getKey().toLowerCase()))
                     .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
             final String kvPairs = CSVFormatter.format(filteredMap);

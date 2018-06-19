@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.feed.FeedDocCache;
-import stroom.feed.MetaMap;
+import stroom.feed.AttributeMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.proxy.repo.StroomZipFile;
@@ -101,40 +101,40 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
 
         final String name = task.getFileName().toUpperCase();
 
-        final MetaMap metaMap = new MetaMap();
+        final AttributeMap attributeMap = new AttributeMap();
         if (task.getMetaData() != null && task.getMetaData().trim().length() > 0) {
             try {
-                metaMap.read(task.getMetaData().getBytes(StreamUtil.DEFAULT_CHARSET));
+                attributeMap.read(task.getMetaData().getBytes(StreamUtil.DEFAULT_CHARSET));
             } catch (final IOException e) {
                 LOGGER.error("uploadData()", e);
             }
         }
 
         if (task.getEffectiveMs() != null) {
-            metaMap.put(StroomHeaderArguments.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(task.getEffectiveMs()));
+            attributeMap.put(StroomHeaderArguments.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(task.getEffectiveMs()));
         }
-        metaMap.put(StroomHeaderArguments.REMOTE_FILE, task.getFileName());
-        metaMap.put(StroomHeaderArguments.FEED, task.getFeedName());
-        metaMap.put(StroomHeaderArguments.RECEIVED_TIME, DateUtil.createNormalDateTimeString(System.currentTimeMillis()));
-        metaMap.put(StroomHeaderArguments.USER_AGENT, "STROOM-UI");
+        attributeMap.put(StroomHeaderArguments.REMOTE_FILE, task.getFileName());
+        attributeMap.put(StroomHeaderArguments.FEED, task.getFeedName());
+        attributeMap.put(StroomHeaderArguments.RECEIVED_TIME, DateUtil.createNormalDateTimeString(System.currentTimeMillis()));
+        attributeMap.put(StroomHeaderArguments.USER_AGENT, "STROOM-UI");
 
         if (name.endsWith(FILE_SEPERATOR + StroomHeaderArguments.COMPRESSION_ZIP)) {
-            metaMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
-            uploadZipFile(taskContext, task, metaMap);
+            attributeMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
+            uploadZipFile(taskContext, task, attributeMap);
         } else {
             if (name.endsWith(FILE_SEPERATOR + StroomHeaderArguments.COMPRESSION_GZIP)) {
-                metaMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_GZIP);
+                attributeMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_GZIP);
             }
             if (name.endsWith(FILE_SEPERATOR + GZ)) {
-                metaMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_GZIP);
+                attributeMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_GZIP);
             }
-            uploadStreamFile(task, task, metaMap);
+            uploadStreamFile(task, task, attributeMap);
         }
     }
 
     private void uploadZipFile(final TaskContext taskContext,
                                final StreamUploadTask streamUploadTask,
-                               final MetaMap metaMap) {
+                               final AttributeMap attributeMap) {
         StroomZipFile stroomZipFile = null;
         try {
             taskContext.info("Zip");
@@ -147,7 +147,7 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
             for (int i = 0; i < groupedFileLists.size(); i++) {
                 taskContext.info("Zip {}/{}", i, groupedFileLists.size());
 
-                uploadData(stroomZipFile, streamUploadTask, metaMap, groupedFileLists.get(i));
+                uploadData(stroomZipFile, streamUploadTask, attributeMap, groupedFileLists.get(i));
 
             }
         } catch (final RuntimeException | IOException e) {
@@ -159,12 +159,12 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
     }
 
     private void uploadStreamFile(final StreamUploadTask task,
-                                  final StreamUploadTask streamUploadTask, final MetaMap metaMap) {
+                                  final StreamUploadTask streamUploadTask, final AttributeMap attributeMap) {
         try {
             final List<StreamTargetStroomStreamHandler> handlerList = StreamTargetStroomStreamHandler
                     .buildSingleHandlerList(streamStore, feedDocCache, metaDataStatistics, task.getFeedName(), task.getStreamTypeName());
             final byte[] buffer = BufferFactory.create();
-            final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlerList,
+            final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, handlerList,
                     buffer, "Upload");
             try (final InputStream inputStream = Files.newInputStream(streamUploadTask.getFile())) {
                 stroomStreamProcessor.process(inputStream, "Upload");
@@ -175,7 +175,7 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
         }
     }
 
-    private void uploadData(final StroomZipFile stroomZipFile, final StreamUploadTask task, final MetaMap metaMap,
+    private void uploadData(final StroomZipFile stroomZipFile, final StreamUploadTask task, final AttributeMap attributeMap,
                             final List<String> fileList) throws IOException {
         StreamTarget streamTarget = null;
 
@@ -199,11 +199,11 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
             for (final String inputBase : fileList) {
                 count++;
                 taskContext.info("{}/{}", count, maxCount);
-                streamContents(stroomZipFile, metaMap, rawNestedStreamTarget, inputBase, StroomZipFileType.Data,
+                streamContents(stroomZipFile, attributeMap, rawNestedStreamTarget, inputBase, StroomZipFileType.Data,
                         streamProgressMonitor);
-                streamContents(stroomZipFile, metaMap, rawNestedStreamTarget, inputBase, StroomZipFileType.Meta,
+                streamContents(stroomZipFile, attributeMap, rawNestedStreamTarget, inputBase, StroomZipFileType.Meta,
                         streamProgressMonitor);
-                streamContents(stroomZipFile, metaMap, rawNestedStreamTarget, inputBase, StroomZipFileType.Context,
+                streamContents(stroomZipFile, attributeMap, rawNestedStreamTarget, inputBase, StroomZipFileType.Context,
                         streamProgressMonitor);
             }
 
@@ -216,7 +216,7 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
         }
     }
 
-    private void streamContents(final StroomZipFile stroomZipFile, final MetaMap globalMetaMap,
+    private void streamContents(final StroomZipFile stroomZipFile, final AttributeMap globalAttributeMap,
                                 final NestedStreamTarget nestedStreamTarget, final String baseName, final StroomZipFileType stroomZipFileType,
                                 final StreamProgressMonitor streamProgressMonitor) throws IOException {
         final InputStream sourceStream = stroomZipFile.getInputStream(baseName, stroomZipFileType);
@@ -230,13 +230,13 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
             nestedStreamTarget.closeEntry();
         }
         if (StroomZipFileType.Meta.equals(stroomZipFileType)) {
-            final MetaMap segmentMetaMap = new MetaMap();
-            segmentMetaMap.putAll(globalMetaMap);
+            final AttributeMap segmentAttributeMap = new AttributeMap();
+            segmentAttributeMap.putAll(globalAttributeMap);
             if (sourceStream != null) {
-                segmentMetaMap.read(sourceStream, false);
+                segmentAttributeMap.read(sourceStream, false);
             }
             nestedStreamTarget.putNextEntry(StreamTypeNames.META);
-            segmentMetaMap.write(nestedStreamTarget.getOutputStream(StreamTypeNames.META), false);
+            segmentAttributeMap.write(nestedStreamTarget.getOutputStream(StreamTypeNames.META), false);
             nestedStreamTarget.closeEntry(StreamTypeNames.META);
         }
         if (StroomZipFileType.Context.equals(stroomZipFileType)) {

@@ -16,7 +16,7 @@
 
 package stroom.pipeline.destination;
 
-import stroom.feed.MetaMap;
+import stroom.feed.AttributeMap;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.data.store.impl.fs.serializable.RASegmentOutputStream;
@@ -80,12 +80,12 @@ public class RollingStreamDestination extends RollingDestination {
     @Override
     void afterRoll(final Consumer<Throwable> exceptionConsumer) {
         // Write meta data to stream target.
-        final MetaMap metaMap = new MetaMap();
-        metaMap.put(StreamDataSource.REC_WRITE, recordCount.toString());
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put(StreamDataSource.REC_WRITE, recordCount.toString());
 
         // TODO : @66 DO WE REALLY NEED TO KNOW WHAT NODE PROCESSED A STREAM AS THE DATA IS AVAILABLE ON STREAM TASK???
-//        metaMap.put(StreamAttributeConstants.NODE, nodeName);
-        streamTarget.getAttributeMap().putAll(metaMap);
+//        attributeMap.put(StreamAttributeConstants.NODE, nodeName);
+        streamTarget.getAttributeMap().putAll(attributeMap);
         streamStore.closeStreamTarget(streamTarget);
     }
 

@@ -2,7 +2,7 @@ package stroom.proxy.repo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.MetaMap;
+import stroom.feed.AttributeMap;
 import stroom.task.TaskContext;
 import stroom.util.io.StreamProgressMonitor;
 
@@ -112,7 +112,7 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
     }
 
     @Override
-    public void addMissingMetaMap(final MetaMap metaMap) throws IOException {
+    public void addMissingAttributeMap(final AttributeMap attributeMap) throws IOException {
         if (stroomZipNameSet == null) {
             throw new RuntimeException("You can only add missing meta data if you are monitoring entries");
 
@@ -120,7 +120,7 @@ public class StroomZipOutputStreamImpl implements StroomZipOutputStream {
         for (final String baseName : stroomZipNameSet.getBaseNameList()) {
             if (stroomZipNameSet.getName(baseName, StroomZipFileType.Meta) == null) {
                 zipOutputStream.putNextEntry(new ZipEntry(baseName + StroomZipFileType.Meta.getExtension()));
-                metaMap.write(zipOutputStream, false);
+                attributeMap.write(zipOutputStream, false);
                 zipOutputStream.closeEntry();
             }
         }

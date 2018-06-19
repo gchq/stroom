@@ -2,7 +2,7 @@ package stroom.proxy.repo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.MetaMap;
+import stroom.feed.AttributeMap;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.state.MetaDataHolder;
@@ -48,8 +48,8 @@ public class ProxyRepositoryStreamAppender extends AbstractDestinationProvider i
         try {
             if (stroomZipOutputStream != null) {
                 if (doneOne) {
-                    final MetaMap metaMap = metaDataHolder.getMetaData();
-                    stroomZipOutputStream.addMissingMetaMap(metaMap);
+                    final AttributeMap attributeMap = metaDataHolder.getMetaData();
+                    stroomZipOutputStream.addMissingAttributeMap(attributeMap);
                     stroomZipOutputStream.close();
                 } else {
                     stroomZipOutputStream.closeDelete();
@@ -85,8 +85,8 @@ public class ProxyRepositoryStreamAppender extends AbstractDestinationProvider i
     @Override
     public OutputStream getOutputStream(final byte[] header, final byte[] footer) throws IOException {
         if (outputStream == null) {
-            final MetaMap metaMap = metaDataHolder.getMetaData();
-            stroomZipOutputStream = proxyRepositoryManager.getActiveRepository().getStroomZipOutputStream(metaMap);
+            final AttributeMap attributeMap = metaDataHolder.getMetaData();
+            stroomZipOutputStream = proxyRepositoryManager.getActiveRepository().getStroomZipOutputStream(attributeMap);
             nextEntry();
         }
 
@@ -97,8 +97,8 @@ public class ProxyRepositoryStreamAppender extends AbstractDestinationProvider i
     private void nextEntry() throws IOException {
         if (stroomZipOutputStream != null) {
             count++;
-            final MetaMap metaMap = metaDataHolder.getMetaData();
-            String fileName = metaMap.get("fileName");
+            final AttributeMap attributeMap = metaDataHolder.getMetaData();
+            String fileName = attributeMap.get("fileName");
             if (fileName == null) {
                 fileName = ModelStringUtil.zeroPad(3, String.valueOf(count)) + ".dat";
             }

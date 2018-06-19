@@ -19,7 +19,7 @@ package stroom.ruleset;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
-import stroom.datafeed.MetaMapFilterFactory;
+import stroom.datafeed.AttributeMapFilterFactory;
 import stroom.explorer.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.ruleset.shared.RuleSet;
@@ -28,7 +28,7 @@ public class RulesetModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(RuleSetService.class).to(RuleSetServiceImpl.class);
-        bind(MetaMapFilterFactory.class).to(MetaMapFilterFactoryImpl.class);
+        bind(AttributeMapFilterFactory.class).to(AttributeMapFilterFactoryImpl.class);
 
         final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
         explorerActionHandlerBinder.addBinding().to(stroom.ruleset.RuleSetServiceImpl.class);
@@ -44,9 +44,9 @@ public class RulesetModule extends AbstractModule {
     }
 
 //    @Bean
-//    public MetaMapFilterFactory metaMapFilterFactory(final RuleSetService ruleSetService,
+//    public AttributeMapFilterFactory attributeMapFilterFactory(final RuleSetService ruleSetService,
 //                                                     final DictionaryStore dictionaryStore) {
-//        return new MetaMapFilterFactoryImpl(ruleSetService, dictionaryStore);
+//        return new AttributeMapFilterFactoryImpl(ruleSetService, dictionaryStore);
 //    }
 //
 //    @Bean

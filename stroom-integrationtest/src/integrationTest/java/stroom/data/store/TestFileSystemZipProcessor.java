@@ -20,7 +20,7 @@ package stroom.data.store;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.feed.FeedDocCache;
-import stroom.feed.MetaMap;
+import stroom.feed.AttributeMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.data.store.api.StreamSource;
@@ -216,14 +216,14 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                         final HashMap<String, List<String>> expectedBoundaries) throws IOException {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
-        final MetaMap metaMap = new MetaMap();
-        metaMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
 
         final List<StreamTargetStroomStreamHandler> handlerList = StreamTargetStroomStreamHandler
                 .buildSingleHandlerList(streamStore, feedDocCache, null, feedName, StreamTypeNames.RAW_EVENTS);
 
-        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlerList, new byte[1000],
-                "DefaultDataFeedRequest-" + metaMap.get(StroomHeaderArguments.GUID));
+        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, handlerList, new byte[1000],
+                "DefaultDataFeedRequest-" + attributeMap.get(StroomHeaderArguments.GUID));
         stroomStreamProcessor.setAppendReceivedPath(false);
 
         for (int i = 0; i < processCount; i++) {

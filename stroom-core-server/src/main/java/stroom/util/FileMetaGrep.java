@@ -18,7 +18,7 @@ package stroom.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.MetaMap;
+import stroom.feed.AttributeMap;
 import stroom.data.store.impl.fs.BlockGZIPInputFile;
 import stroom.data.store.impl.fs.UncompressedInputStream;
 import stroom.data.store.impl.fs.serializable.RANestedInputStream;
@@ -112,18 +112,18 @@ public class FileMetaGrep extends AbstractCommandLineTool {
                 while (nestedInputStream.getNextEntry()) {
                     segment++;
 
-                    MetaMap metaMap = new MetaMap();
-                    metaMap.read(nestedInputStream, false);
+                    AttributeMap attributeMap = new AttributeMap();
+                    attributeMap.read(nestedInputStream, false);
                     nestedInputStream.closeEntry();
 
                     boolean match = true;
 
                     for (String matchKey : matchMap.keySet()) {
-                        if (!metaMap.containsKey(matchKey)) {
+                        if (!attributeMap.containsKey(matchKey)) {
                             // No Good
                             match = false;
                         } else {
-                            if (!metaMap.get(matchKey).startsWith(matchMap.get(matchKey))) {
+                            if (!attributeMap.get(matchKey).startsWith(matchMap.get(matchKey))) {
                                 // No Good
                                 match = false;
                             }
@@ -133,7 +133,7 @@ public class FileMetaGrep extends AbstractCommandLineTool {
                     if (match) {
                         // Found Match
                         System.out.println("Found Match in " + path + " at segment " + segment);
-                        System.out.write(metaMap.toByteArray());
+                        System.out.write(attributeMap.toByteArray());
                         System.out.println();
                     }
 

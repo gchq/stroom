@@ -17,7 +17,7 @@
 package stroom.data.store.impl.mock;
 
 import stroom.entity.shared.Clearable;
-import stroom.feed.MetaMap;
+import stroom.feed.AttributeMap;
 import stroom.io.SeekableInputStream;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
@@ -392,7 +392,7 @@ public class MockStreamStore implements StreamStore, Clearable {
     private class MockStreamTarget implements StreamTarget {
         private final Stream stream;
         private final String streamTypeName;
-        private final MetaMap attributeMap = new MetaMap();
+        private final AttributeMap attributeMap = new AttributeMap();
         private final Map<String, MockStreamTarget> childMap = new HashMap<>();
         private ByteArrayOutputStream outputStream = null;
         private StreamTarget parent;
@@ -458,7 +458,7 @@ public class MockStreamStore implements StreamStore, Clearable {
         }
 
         @Override
-        public MetaMap getAttributeMap() {
+        public AttributeMap getAttributeMap() {
             return attributeMap;
         }
 
@@ -471,7 +471,7 @@ public class MockStreamStore implements StreamStore, Clearable {
     private class MockStreamSource implements StreamSource {
         private final Stream stream;
         private final String streamTypeName;
-        private final MetaMap attributeMap = new MetaMap();
+        private final AttributeMap attributeMap = new AttributeMap();
         private InputStream inputStream = null;
         private StreamSource parent;
 
@@ -545,7 +545,7 @@ public class MockStreamStore implements StreamStore, Clearable {
         }
 
         @Override
-        public MetaMap getAttributeMap() {
+        public AttributeMap getAttributeMap() {
             return attributeMap;
         }
     }

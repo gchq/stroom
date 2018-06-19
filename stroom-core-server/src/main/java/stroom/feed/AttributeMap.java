@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * Map that does not care about key case.
  */
-public class MetaMap extends CIStringHashMap {
+public class AttributeMap extends CIStringHashMap {
     private static final long serialVersionUID = 4877407570072403322L;
 
     private static final String HEADER_DELIMITER = ":";
