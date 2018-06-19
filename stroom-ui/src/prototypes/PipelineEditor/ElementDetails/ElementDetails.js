@@ -73,16 +73,20 @@ const ElementDetails = enhance(({
 
   const content = (
     <Form className="element-details__form">
-      {Object.keys(elementTypeProperties).map(key => (
-        <ElementField
-          key={key}
-          name={key}
-          type={elementTypeProperties[key].type}
-          description={elementTypeProperties[key].description}
-          defaultValue={parseInt(elementTypeProperties[key].defaultValue, 10)}
-          value={elementProperties.find(element => element.name === key)}
-        />
-      ))}
+      {Object.keys(elementTypeProperties).length === 0 ? (
+        <p>There is nothing to configure for this element </p>
+      ) : (
+        Object.keys(elementTypeProperties).map(key => (
+          <ElementField
+            key={key}
+            name={key}
+            type={elementTypeProperties[key].type}
+            description={elementTypeProperties[key].description}
+            defaultValue={parseInt(elementTypeProperties[key].defaultValue, 10)}
+            value={elementProperties.find(element => element.name === key)}
+          />
+        ))
+      )}
     </Form>
   );
 
