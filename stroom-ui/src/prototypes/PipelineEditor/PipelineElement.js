@@ -185,6 +185,7 @@ const PipelineElement = ({
       alt="X"
       src={require(`./images/${elementDefinition.icon}`)}
       disabled={isIconDisabled}
+      size="mini"
     />
     <button
       onFocus={() => setHasFocus(true)}

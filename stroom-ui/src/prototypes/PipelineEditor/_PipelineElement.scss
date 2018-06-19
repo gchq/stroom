@@ -13,7 +13,7 @@
 
 .Pipeline-element__icon {
   @extend %element-shared__icon;
-  display: inline !important;
+  height: 25px !important;
 }
 
 .Pipeline-element:hover {
