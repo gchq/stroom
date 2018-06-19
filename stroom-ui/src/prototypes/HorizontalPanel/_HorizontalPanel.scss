@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
+$header-height: 46px;
 .horizontal-panel__container {
-  overflow: auto;
+  overflow: hidden;
 }
 
 .horizontal-panel__container .grid {
@@ -24,19 +25,27 @@
 }
 
 .horizontal-panel__container .header {
+  height: $header-height;
   padding-top: 10px !important;
 }
 
 .horizontal-panel__container .divider {
   margin-top: 0px !important;
+  margin-bottom: 1px;
 }
 
 .horizontal-panel__content {
   width: 100%;
+  height: calc(100% - #{$header-height});
   padding-left: 10px;
   padding-right: 10px;
+  overflow: auto;
 }
 
 .horizontal-panel_close-button {
   padding: 0px !important;
+}
+
+.horizontal-panel_header-container {
+  width: 100%;
 }

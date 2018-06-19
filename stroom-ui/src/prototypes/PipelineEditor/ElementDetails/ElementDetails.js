@@ -88,6 +88,7 @@ const ElementDetails = enhance(({
 
   return (
     <HorizontalPanel
+      className="element-details__panel"
       title={title}
       onClose={() => onClose()}
       content={content}

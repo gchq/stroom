@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Menu, Header, Grid, Divider } from 'semantic-ui-react';
+import { Button, Menu, Header, Grid, Divider, Sticky } from 'semantic-ui-react';
 import { compose, withState } from 'recompose';
 
 const enhance = compose(withState('activeItem', 'setActiveItem', 'home'));
@@ -17,7 +17,7 @@ const HorizontalPanel = enhance(({
   headerSize,
 }) => (
   <div className="horizontal-panel__container">
-    <Grid>
+    <Grid className="horizontal-panel_header-container">
       <Grid.Column width={titleColumns || 4}>
         <Header as={headerSize || 'h2'}>{title}</Header>
       </Grid.Column>
@@ -33,6 +33,7 @@ const HorizontalPanel = enhance(({
       </Grid.Column>
     </Grid>
     <Divider />
+
     <div className="horizontal-panel__content">{content}</div>
   </div>
 ));
