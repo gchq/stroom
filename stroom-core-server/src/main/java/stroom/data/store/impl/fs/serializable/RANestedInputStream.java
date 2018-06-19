@@ -17,6 +17,7 @@
 package stroom.data.store.impl.fs.serializable;
 
 import stroom.io.SeekableInputStream;
+import stroom.io.BasicStreamCloser;
 import stroom.io.StreamCloser;
 import stroom.data.store.api.StreamSource;
 import stroom.streamstore.shared.StreamTypeNames;
@@ -43,7 +44,7 @@ public class RANestedInputStream extends NestedInputStream {
         this.data = data;
         this.index = index;
 
-        streamCloser = new StreamCloser();
+        streamCloser = new BasicStreamCloser();
         streamCloser.add(data).add(index);
     }
 

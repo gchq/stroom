@@ -17,6 +17,7 @@
 package stroom.data.store.impl.fs;
 
 import stroom.io.SeekableOutputStream;
+import stroom.io.BasicStreamCloser;
 import stroom.io.StreamCloser;
 import stroom.util.io.FileUtil;
 
@@ -48,7 +49,7 @@ public class BlockGZIPOutputFile extends OutputStream implements SeekableOutputS
     // Our index buffer we append on at the end.
     private final BlockByteArrayOutputStream indexBuffer;
     // Use to help track non-closed streams
-    private final StreamCloser streamCloser = new StreamCloser();
+    private final StreamCloser streamCloser = new BasicStreamCloser();
     // The stream - we hold a buffer onto it as well
     private BufferedOutputStream currentStreamBuffer;
     private GZIPOutputStream currentStreamGzip;

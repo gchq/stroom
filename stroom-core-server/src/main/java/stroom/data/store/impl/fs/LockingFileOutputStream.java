@@ -17,6 +17,7 @@
 package stroom.data.store.impl.fs;
 
 import stroom.io.SeekableOutputStream;
+import stroom.io.BasicStreamCloser;
 import stroom.io.StreamCloser;
 
 import java.io.BufferedOutputStream;
@@ -41,7 +42,7 @@ public class LockingFileOutputStream extends OutputStream implements SeekableOut
     private boolean closed = false;
 
     // Use to help track non-closed streams
-    private StreamCloser streamCloser = new StreamCloser();
+    private StreamCloser streamCloser = new BasicStreamCloser();
 
     public LockingFileOutputStream(Path file, boolean lazy) throws IOException {
         this.finalFile = file;

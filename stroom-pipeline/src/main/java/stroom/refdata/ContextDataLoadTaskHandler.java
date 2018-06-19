@@ -20,6 +20,7 @@ package stroom.refdata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.FeedProperties;
+import stroom.io.BasicStreamCloser;
 import stroom.io.StreamCloser;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiverIdDecorator;
@@ -99,7 +100,7 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
             final String feedName = task.getFeedName();
 
             if (inputStream != null) {
-                final StreamCloser streamCloser = new StreamCloser();
+                final StreamCloser streamCloser = new BasicStreamCloser();
                 streamCloser.add(inputStream);
 
                 try {

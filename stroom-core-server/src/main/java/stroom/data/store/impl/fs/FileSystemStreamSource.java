@@ -19,6 +19,7 @@ package stroom.data.store.impl.fs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
+import stroom.io.BasicStreamCloser;
 import stroom.io.StreamCloser;
 import stroom.data.store.api.StreamSource;
 import stroom.data.meta.api.Stream;
@@ -37,7 +38,7 @@ public final class FileSystemStreamSource implements StreamSource {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamSource.class);
 
     private final FileSystemStreamPathHelper fileSystemStreamPathHelper;
-    private final StreamCloser streamCloser = new StreamCloser();
+    private final StreamCloser streamCloser = new BasicStreamCloser();
     private Stream stream;
     private String rootPath;
     private String streamType;

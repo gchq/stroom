@@ -17,6 +17,7 @@
 package stroom.data.store.impl.fs;
 
 import stroom.io.SeekableInputStream;
+import stroom.io.BasicStreamCloser;
 import stroom.io.StreamCloser;
 
 import java.io.IOException;
@@ -39,7 +40,7 @@ public class UncompressedInputStream extends InputStream implements SeekableInpu
     private long lastMarkPosition;
 
     // Use to help track non-closed streams
-    private StreamCloser streamCloser = new StreamCloser();
+    private StreamCloser streamCloser = new BasicStreamCloser();
 
     public UncompressedInputStream(final Path file, boolean lazy) throws IOException {
         if (lazy && !Files.isRegularFile(file)) {

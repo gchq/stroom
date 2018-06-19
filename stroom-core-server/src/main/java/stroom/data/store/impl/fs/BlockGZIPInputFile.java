@@ -16,6 +16,7 @@
 
 package stroom.data.store.impl.fs;
 
+import stroom.io.BasicStreamCloser;
 import stroom.io.StreamCloser;
 
 import java.io.IOException;
@@ -36,7 +37,7 @@ public class BlockGZIPInputFile extends BlockGZIPInput {
     // File pointer
     private final Path file;
 
-    private final StreamCloser streamCloser = new StreamCloser();
+    private final StreamCloser streamCloser = new BasicStreamCloser();
 
     /**
      * Constructor to open a Block GZIP File.

@@ -17,6 +17,7 @@
 package stroom.data.store.impl.fs.serializable;
 
 import stroom.io.SeekableInputStream;
+import stroom.io.BasicStreamCloser;
 import stroom.io.StreamCloser;
 import stroom.data.store.api.StreamSource;
 import stroom.streamstore.shared.StreamTypeNames;
@@ -67,7 +68,7 @@ public class StreamSourceInputStreamProviderImpl implements StreamSourceInputStr
 
     private StreamCloser getStreamCloser() {
         if (streamCloser == null) {
-            streamCloser = new StreamCloser();
+            streamCloser = new BasicStreamCloser();
         }
         return streamCloser;
     }

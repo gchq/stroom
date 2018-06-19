@@ -13,6 +13,7 @@ dependencies {
     compile project(':stroom-util-shared')
     compile project(':stroom-connectors')
     compile project(':stroom-data-meta:stroom-data-meta-api')
+    compile project(':stroom-data-store:stroom-data-store-api')
     compile project(':stroom-properties-api')
 
     compile libs.eventLogging

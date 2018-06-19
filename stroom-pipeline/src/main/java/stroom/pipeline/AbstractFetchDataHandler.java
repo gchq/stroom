@@ -23,6 +23,7 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceException;
 import stroom.feed.FeedProperties;
 import stroom.guice.PipelineScopeRunnable;
+import stroom.io.BasicStreamCloser;
 import stroom.io.StreamCloser;
 import stroom.logging.StreamEventLog;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -143,7 +144,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                                               final Severity... expandedSeverities) {
         // Allow users with 'Use' permission to read data, pipelines and XSLT.
         return security.useAsReadResult(() -> {
-            final StreamCloser streamCloser = new StreamCloser();
+            final StreamCloser streamCloser = new BasicStreamCloser();
             List<String> availableChildStreamTypes;
             String feedName = null;
             String streamTypeName = null;
