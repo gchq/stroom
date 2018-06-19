@@ -183,6 +183,8 @@ else
     # Use 1 local worker to avoid using too much memory as each worker will chew up ~500Mb ram
     ./gradlew -PdumpFailedTestXml=true -Pversion=$TRAVIS_TAG -PgwtCompilerWorkers=1 -PgwtCompilerMinHeap=50M -PgwtCompilerMaxHeap=500M clean build dist ${extraBuildArgs}
 
+    bash <(curl -s https://blackducksoftware.github.io/hub-detect/hub-detect.sh) --blackduck.hub.url=https://hubeval17.blackducksoftware.com --blackduck.hub.username=${BLACKDUCK_USERNAME} --blackduck.hub.password=${BLACKDUCK_PASSWORD}
+
     #Don't do a docker build for pull requests
     if [ "$doDockerBuild" = true ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then
         #TODO - the major and minor floating tags assume that the release builds are all done in strict sequence
