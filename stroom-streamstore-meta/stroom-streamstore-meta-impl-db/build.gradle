@@ -5,7 +5,6 @@ dependencies {
     compile project(':stroom-streamstore-meta:stroom-streamstore-meta-api')
     compile project(':stroom-properties-api')
     compile project(':stroom-security-api')
-    compile project(':stroom-core-shared') // TODO : @66 TRY AND REMOVE THIS
     compile project(':stroom-util') // TODO : @66 TRY AND REMOVE THIS
     compile libs.stroomQueryApi
 
