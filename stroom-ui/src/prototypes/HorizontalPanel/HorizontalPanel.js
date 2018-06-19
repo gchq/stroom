@@ -1,19 +1,11 @@
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
-import loremIpsum from 'lorem-ipsum';
 import {
-  Sidebar,
-  Input,
-  Segment,
   Button,
   Menu,
-  Image,
-  Icon,
   Header,
   Grid,
   Divider,
-  Container,
-  Checkbox,
 } from 'semantic-ui-react';
 import { compose, withState } from 'recompose';
 
