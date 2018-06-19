@@ -25,7 +25,7 @@ import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.FeedStore;
 import stroom.feed.shared.FeedDoc;
-import stroom.streamstore.store.StreamRetentionExecutor;
+import stroom.data.store.StreamRetentionExecutor;
 import stroom.data.meta.api.FindStreamCriteria;
 import stroom.data.meta.api.Stream;
 import stroom.data.meta.api.StreamMetaService;

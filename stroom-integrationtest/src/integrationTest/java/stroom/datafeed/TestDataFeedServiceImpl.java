@@ -21,7 +21,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import stroom.feed.StroomHeaderArguments;
-import stroom.streamstore.MockStreamStore;
+import stroom.data.store.impl.mock.MockStreamStore;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 

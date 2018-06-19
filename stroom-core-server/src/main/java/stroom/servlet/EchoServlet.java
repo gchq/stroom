@@ -16,7 +16,7 @@
 
 package stroom.servlet;
 
-import stroom.streamstore.store.impl.fs.BlockGZIPInputStream;
+import stroom.data.store.impl.fs.BlockGZIPInputStream;
 import stroom.util.io.StreamUtil;
 
 import javax.servlet.ServletException;

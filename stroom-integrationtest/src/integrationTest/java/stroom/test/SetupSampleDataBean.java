@@ -40,7 +40,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.statistics.sql.entity.StatisticStoreStore;
 import stroom.statistics.stroomstats.entity.StroomStatsStoreStore;
-import stroom.streamstore.store.api.StreamStore;
+import stroom.data.store.api.StreamStore;
 import stroom.data.meta.impl.db.MetaKeyService;
 import stroom.streamstore.shared.QueryData;
 import stroom.data.meta.api.StreamDataSource;

@@ -20,7 +20,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import stroom.feed.MetaMap;
-import stroom.streamstore.store.StreamFactory;
+import stroom.data.store.StreamFactory;
 import stroom.util.date.DateUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;

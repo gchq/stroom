@@ -27,7 +27,7 @@ import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFileType;
-import stroom.streamstore.MockStreamStore;
+import stroom.data.store.impl.mock.MockStreamStore;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractProcessIntegrationTest;
 

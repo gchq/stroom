@@ -8,7 +8,7 @@ import stroom.feed.FeedModule;
 import stroom.properties.impl.mock.MockPropertyModule;
 import stroom.ruleset.RulesetModule;
 import stroom.security.impl.mock.MockSecurityContextModule;
-import stroom.streamstore.MockStreamStoreModule;
+import stroom.data.store.impl.mock.MockStreamStoreModule;
 import stroom.streamtask.statistic.MockMetaDataStatisticModule;
 
 public class TestBaseModule extends AbstractModule {

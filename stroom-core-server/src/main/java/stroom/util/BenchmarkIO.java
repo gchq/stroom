@@ -16,15 +16,15 @@
 
 package stroom.util;
 
-import stroom.streamstore.store.impl.fs.BlockGZIPInputFile;
-import stroom.streamstore.store.impl.fs.BlockGZIPOutputFile;
-import stroom.streamstore.store.impl.fs.FileSystemUtil;
-import stroom.streamstore.store.impl.fs.LockingFileOutputStream;
-import stroom.streamstore.store.impl.fs.UncompressedInputStream;
-import stroom.streamstore.store.impl.fs.serializable.RASegmentInputStream;
-import stroom.streamstore.store.impl.fs.serializable.RASegmentOutputStream;
-import stroom.streamstore.store.impl.fs.serializable.RawInputSegmentWriter;
-import stroom.streamstore.store.impl.fs.serializable.SegmentOutputStream;
+import stroom.data.store.impl.fs.BlockGZIPInputFile;
+import stroom.data.store.impl.fs.BlockGZIPOutputFile;
+import stroom.data.store.impl.fs.FileSystemUtil;
+import stroom.data.store.impl.fs.LockingFileOutputStream;
+import stroom.data.store.impl.fs.UncompressedInputStream;
+import stroom.data.store.impl.fs.serializable.RASegmentInputStream;
+import stroom.data.store.impl.fs.serializable.RASegmentOutputStream;
+import stroom.data.store.impl.fs.serializable.RawInputSegmentWriter;
+import stroom.data.store.impl.fs.serializable.SegmentOutputStream;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 

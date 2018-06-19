@@ -2,7 +2,8 @@ package stroom.guice;
 
 import com.google.inject.AbstractModule;
 import stroom.data.meta.impl.db.StreamStoreMetaDbModule;
-import stroom.streamstore.store.StreamStoreModule;
+import stroom.data.store.impl.fs.FSModule;
+import stroom.data.store.StreamStoreModule;
 
 public class CoreModule extends AbstractModule {
     @Override
@@ -61,7 +62,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.statistics.stroomstats.rollup.StroomStatsRollupModule());
         install(new StreamStoreMetaDbModule());
         install(new StreamStoreModule());
-        install(new stroom.streamstore.store.impl.fs.FSModule());
+        install(new FSModule());
         install(new stroom.streamtask.StreamTaskModule());
         install(new stroom.task.TaskModule());
         install(new stroom.task.cluster.ClusterTaskModule());

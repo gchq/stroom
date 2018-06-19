@@ -18,9 +18,9 @@ package stroom.pipeline;
 
 import org.junit.Assert;
 import stroom.docref.DocRef;
-import stroom.streamstore.store.api.StreamSource;
-import stroom.streamstore.store.api.StreamStore;
-import stroom.streamstore.store.impl.fs.serializable.RASegmentInputStream;
+import stroom.data.store.api.StreamSource;
+import stroom.data.store.api.StreamStore;
+import stroom.data.store.impl.fs.serializable.RASegmentInputStream;
 import stroom.data.meta.api.StreamMetaService;
 import stroom.data.meta.api.FindStreamCriteria;
 import stroom.data.meta.api.Stream;

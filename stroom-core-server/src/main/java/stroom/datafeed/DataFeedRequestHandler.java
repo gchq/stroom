@@ -28,7 +28,7 @@ import stroom.feed.shared.FeedDoc;
 import stroom.properties.api.StroomPropertyService;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.security.Security;
-import stroom.streamstore.store.api.StreamStore;
+import stroom.data.store.api.StreamStore;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamTargetStroomStreamHandler;
 import stroom.streamtask.statistic.MetaDataStatistic;

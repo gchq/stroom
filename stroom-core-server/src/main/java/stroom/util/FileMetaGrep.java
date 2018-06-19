@@ -19,9 +19,9 @@ package stroom.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
-import stroom.streamstore.store.impl.fs.BlockGZIPInputFile;
-import stroom.streamstore.store.impl.fs.UncompressedInputStream;
-import stroom.streamstore.store.impl.fs.serializable.RANestedInputStream;
+import stroom.data.store.impl.fs.BlockGZIPInputFile;
+import stroom.data.store.impl.fs.UncompressedInputStream;
+import stroom.data.store.impl.fs.serializable.RANestedInputStream;
 import stroom.util.io.AbstractFileVisitor;
 
 import java.io.IOException;

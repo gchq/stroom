@@ -27,7 +27,7 @@ import stroom.properties.api.StroomPropertyService;
 import stroom.proxy.repo.ProxyFileHandler;
 import stroom.proxy.repo.ProxyFileProcessor;
 import stroom.proxy.repo.StroomZipRepository;
-import stroom.streamstore.store.api.StreamStore;
+import stroom.data.store.api.StreamStore;
 import stroom.util.io.StreamProgressMonitor;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;

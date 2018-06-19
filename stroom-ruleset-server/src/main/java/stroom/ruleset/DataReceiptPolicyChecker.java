@@ -26,7 +26,7 @@ import stroom.docref.DocRef;
 import stroom.ruleset.shared.DataReceiptAction;
 import stroom.ruleset.shared.Rule;
 import stroom.ruleset.shared.RuleSet;
-import stroom.streamstore.store.ExpressionMatcher;
+import stroom.data.store.ExpressionMatcher;
 import stroom.data.meta.api.ExpressionUtil;
 
 import java.util.ArrayList;

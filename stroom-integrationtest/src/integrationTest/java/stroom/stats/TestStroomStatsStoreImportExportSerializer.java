@@ -31,7 +31,7 @@ import stroom.statistics.stroomstats.entity.StroomStatsStoreStore;
 import stroom.stats.shared.StatisticField;
 import stroom.stats.shared.StroomStatsStoreDoc;
 import stroom.stats.shared.StroomStatsStoreEntityData;
-import stroom.streamstore.store.impl.fs.FileSystemUtil;
+import stroom.data.store.impl.fs.FileSystemUtil;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.io.FileUtil;
 

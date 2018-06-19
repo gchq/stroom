@@ -19,9 +19,10 @@ package stroom.headless;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.multibindings.Multibinder;
+import stroom.data.store.impl.fs.FSModule;
 import stroom.explorer.ExplorerActionHandlerFactory;
 import stroom.statistics.internal.InternalStatisticsReceiver;
-import stroom.streamstore.store.StreamStoreModule;
+import stroom.data.store.StreamStoreModule;
 import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.task.TaskHandler;
 
@@ -58,7 +59,7 @@ public class HeadlessModule extends AbstractModule {
         install(new stroom.resource.ResourceModule());
         install(new stroom.security.impl.mock.MockSecurityContextModule());
         install(new StreamStoreModule());
-        install(new stroom.streamstore.store.impl.fs.FSModule());
+        install(new FSModule());
         install(new stroom.streamtask.StreamTaskModule());
         install(new stroom.task.TaskModule());
         install(new stroom.task.cluster.ClusterTaskModule());
