@@ -50,7 +50,7 @@ import java.util.Collection;
  * <p>
  * Any files ended in .lock are locked output streams that have not yet closed.
  */
-public final class FileSystemUtil {
+final class FileSystemUtil {
     public static final int MKDIR_RETRY_COUNT = 2;
     public static final int MKDIR_RETRY_SLEEP_MS = 100;
 
@@ -59,11 +59,11 @@ public final class FileSystemUtil {
      * across Windows and UNIX.
      */
     public static final char SEPERATOR_CHAR = '/';
-    public static final char FILE_SEPERATOR_CHAR = '=';
-    /**
-     * Extension used for locking.
-     */
-    public static final String LOCK_EXTENSION = ".lock";
+//    public static final char FILE_SEPERATOR_CHAR = '=';
+//    /**
+//     * Extension used for locking.
+//     */
+//    public static final String LOCK_EXTENSION = ".lock";
     /**
      * How big our buffers are. This should always be a multiple of 8.
      */

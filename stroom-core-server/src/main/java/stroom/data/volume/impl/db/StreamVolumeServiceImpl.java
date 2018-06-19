@@ -1,6 +1,8 @@
-package stroom.data.store.impl.fs;
+package stroom.data.volume.impl.db;
 
 import event.logging.BaseAdvancedQueryItem;
+import stroom.data.store.FindStreamVolumeCriteria;
+import stroom.data.volume.api.StreamVolumeService;
 import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.SQLNameConstants;
@@ -10,7 +12,6 @@ import stroom.node.shared.VolumeEntity;
 import stroom.node.shared.VolumeEntity.VolumeType;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
-import stroom.data.store.FindStreamVolumeCriteria;
 import stroom.util.concurrent.AtomicSequence;
 
 import javax.inject.Inject;
@@ -388,5 +389,50 @@ public class StreamVolumeServiceImpl implements StreamVolumeService {
      */
     private int pickIndex(final int size) {
         return sequence.next(size);
+    }
+
+    class StreamVolumeImpl implements StreamVolume {
+        private final long streamId;
+        private final String volumePath;
+        private final VolumeType volumeType;
+        private final int nodeId;
+        private final int rackId;
+
+        StreamVolumeImpl(final long streamId,
+                         final String volumePath,
+                         final VolumeType volumeType,
+                         final int nodeId,
+                         final int rackId) {
+            this.streamId = streamId;
+            this.volumePath = volumePath;
+            this.volumeType = volumeType;
+            this.nodeId = nodeId;
+            this.rackId = rackId;
+        }
+
+        @Override
+        public long getStreamId() {
+            return streamId;
+        }
+
+        @Override
+        public String getVolumePath() {
+            return volumePath;
+        }
+
+        @Override
+        public VolumeType getVolumeType() {
+            return volumeType;
+        }
+
+        @Override
+        public int getNodeId() {
+            return nodeId;
+        }
+
+        @Override
+        public int getRackId() {
+            return rackId;
+        }
     }
 }

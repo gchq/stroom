@@ -33,7 +33,7 @@ import java.nio.file.StandardOpenOption;
  * <p>
  * if lazy it is assumed that a missing file means a blank stream.
  */
-public class UncompressedInputStream extends InputStream implements SeekableInputStream {
+class UncompressedInputStream extends InputStream implements SeekableInputStream {
     private final FileChannel raFile;
     private final BlockBufferedInputStream streamAdaptor;
     private long position;

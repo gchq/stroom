@@ -18,9 +18,7 @@ package stroom.data.store.impl.fs;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.data.store.impl.fs.FileSystemCleanExecutor;
-import stroom.data.store.impl.fs.FileSystemStreamMaintenanceService;
-import stroom.data.store.impl.fs.StreamVolumeService;
+import stroom.data.volume.api.StreamVolumeService;
 import stroom.jobsystem.MockTask;
 import stroom.data.store.FindStreamVolumeCriteria;
 import stroom.data.meta.api.Stream;

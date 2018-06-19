@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.xml.util;
+package stroom.data.volume.impl.db;
 
-import stroom.entity.util.XMLUtil;
-import stroom.data.store.impl.fs.BlockGZIPInputStream;
+import com.google.inject.AbstractModule;
+import stroom.data.volume.api.StreamVolumeService;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-
-public class BGZIPOutputXML {
-    public static void main(String[] args) throws IOException {
-        String fileName = args[1];
-        InputStream inputStream = new BlockGZIPInputStream(Files.newInputStream(Paths.get(fileName)));
-        XMLUtil.prettyPrintXML(inputStream, System.out);
+public class DataVolumeDbModule extends AbstractModule {
+    @Override
+    protected void configure() {
+        bind(StreamVolumeService.class).to(StreamVolumeServiceImpl.class);
     }
 }

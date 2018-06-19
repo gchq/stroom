@@ -41,7 +41,6 @@ import stroom.security.DocumentPermission;
 import stroom.security.Permission;
 import stroom.security.User;
 import stroom.security.UserGroupUser;
-import stroom.data.store.impl.fs.FileSystemUtil;
 import stroom.streamstore.shared.StreamVolumeEntity;
 import stroom.streamtask.StreamTaskCreator;
 import stroom.streamtask.shared.Processor;
@@ -51,6 +50,7 @@ import stroom.streamtask.shared.ProcessorFilterTracker;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
@@ -161,7 +161,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         for (final VolumeEntity volume : volumes) {
             // The parent will also pick up the index shard (as well as the
             // store)
-            FileUtil.deleteContents(FileSystemUtil.createFileTypeRoot(volume).getParent());
+            FileUtil.deleteContents(Paths.get(volume.getPath()));
         }
 
         //ensure any hibernate entities are flushed down before we clear the tables

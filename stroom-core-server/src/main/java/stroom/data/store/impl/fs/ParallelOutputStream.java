@@ -30,7 +30,7 @@ import java.util.Set;
 /**
  * Class to write the same data to a number of streams.
  */
-public class ParallelOutputStream extends OutputStream implements SeekableOutputStream {
+class ParallelOutputStream extends OutputStream implements SeekableOutputStream {
     private List<OutputStream> outputStreamList;
     private int outputStreamListSize = 0;
 

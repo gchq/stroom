@@ -30,7 +30,7 @@ import java.util.zip.GZIPInputStream;
 /**
  * @see BlockGZIPConstants
  */
-public abstract class BlockGZIPInput extends InputStream implements SeekableInputStream {
+abstract class BlockGZIPInput extends InputStream implements SeekableInputStream {
     // Use to help track non-closed streams
     private final StreamCloser streamCloser = new BasicStreamCloser();
     /**

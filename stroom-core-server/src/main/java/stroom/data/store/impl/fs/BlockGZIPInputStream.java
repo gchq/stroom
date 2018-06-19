@@ -22,7 +22,7 @@ import java.io.InputStream;
 /**
  * @see BlockGZIPConstants
  */
-public class BlockGZIPInputStream extends BlockGZIPInput {
+class BlockGZIPInputStream extends BlockGZIPInput {
     InputStream inputStream;
 
     /**

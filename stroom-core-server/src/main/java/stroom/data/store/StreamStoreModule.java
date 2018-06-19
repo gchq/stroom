@@ -18,14 +18,14 @@ package stroom.data.store;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.data.store.impl.fs.StreamVolumeService;
-import stroom.data.store.impl.fs.StreamVolumeServiceImpl;
+import stroom.data.store.impl.SteamStoreStreamCloserImpl;
+import stroom.io.StreamCloser;
 import stroom.task.TaskHandler;
 
 public class StreamStoreModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(StreamVolumeService.class).to(StreamVolumeServiceImpl.class);
+        bind(StreamCloser.class).to(SteamStoreStreamCloserImpl.class);
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(DeleteStreamHandler.class);

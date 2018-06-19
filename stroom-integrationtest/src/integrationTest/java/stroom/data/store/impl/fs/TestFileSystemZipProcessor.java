@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.data.store;
+package stroom.data.store.impl.fs;
 
 import org.junit.Assert;
 import org.junit.Test;

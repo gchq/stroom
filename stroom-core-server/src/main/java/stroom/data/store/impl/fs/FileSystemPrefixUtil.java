@@ -21,7 +21,7 @@ package stroom.data.store.impl.fs;
  * Utility to get prefix sequences.
  * </p>
  */
-public final class FileSystemPrefixUtil {
+final class FileSystemPrefixUtil {
     private static final String START_PREFIX = "000";
     private static final int PAD_SIZE = 3;
 

@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.zip.GZIPOutputStream;
 
-public class BlockGZipOutputStream extends OutputStream implements SeekableOutputStream {
+class BlockGZipOutputStream extends OutputStream implements SeekableOutputStream {
     private static final Logger LOGGER = LoggerFactory.getLogger(BlockGZipOutputStream.class);
 
     // The main buffer used (typically holds 2 longs and the the GZIP output).

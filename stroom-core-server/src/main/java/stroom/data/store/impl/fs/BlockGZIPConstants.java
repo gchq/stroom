@@ -26,7 +26,7 @@ import stroom.util.io.StreamUtil;
  * [Block Data] [Magic Marker] [Block Size] [Block Data] ... [Magic Marker] <-
  * (Index Position) [Un-Compressed Index Data] [EOF] <- (EOF)
  */
-public final class BlockGZIPConstants {
+final class BlockGZIPConstants {
     /**
      * Lock name.
      */

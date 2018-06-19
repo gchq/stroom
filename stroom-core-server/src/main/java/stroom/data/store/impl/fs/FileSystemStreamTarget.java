@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 /**
  * A file system implementation of StreamTarget.
  */
-public final class FileSystemStreamTarget implements StreamTarget {
+final class FileSystemStreamTarget implements StreamTarget {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamTarget.class);
 
     private final FileSystemStreamPathHelper fileSystemStreamPathHelper;

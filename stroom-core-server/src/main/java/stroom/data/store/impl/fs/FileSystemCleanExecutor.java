@@ -51,7 +51,7 @@ import java.util.Map;
 /**
  * Task to clean the stream store.
  */
-public class FileSystemCleanExecutor {
+class FileSystemCleanExecutor {
     private static final String DELETE_OUT = "delete.out";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemCleanExecutor.class);

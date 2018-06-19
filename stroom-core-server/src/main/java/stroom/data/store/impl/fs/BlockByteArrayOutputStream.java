@@ -26,7 +26,7 @@ import java.nio.LongBuffer;
  * byte array. Also provides a methods to write long's and also over write a
  * long in part of the buffer.
  */
-public class BlockByteArrayOutputStream extends ByteArrayOutputStream {
+class BlockByteArrayOutputStream extends ByteArrayOutputStream {
     /**
      * Used for the long conversion
      */

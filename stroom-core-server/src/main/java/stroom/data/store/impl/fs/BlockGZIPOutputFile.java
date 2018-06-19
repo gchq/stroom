@@ -34,7 +34,7 @@ import java.util.zip.GZIPOutputStream;
 /**
  * @see BlockGZIPConstants
  */
-public class BlockGZIPOutputFile extends OutputStream implements SeekableOutputStream {
+class BlockGZIPOutputFile extends OutputStream implements SeekableOutputStream {
     // We have in built locking while open
     private final Path finalFile;
     private final Path lockFile;

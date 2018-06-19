@@ -14,13 +14,8 @@
  * limitations under the License.
  */
 
-package stroom.util;
+package stroom.data.store.impl.fs;
 
-import stroom.data.store.impl.fs.BlockGZIPInputFile;
-import stroom.data.store.impl.fs.BlockGZIPOutputFile;
-import stroom.data.store.impl.fs.FileSystemUtil;
-import stroom.data.store.impl.fs.LockingFileOutputStream;
-import stroom.data.store.impl.fs.UncompressedInputStream;
 import stroom.data.store.impl.fs.serializable.RASegmentInputStream;
 import stroom.data.store.impl.fs.serializable.RASegmentOutputStream;
 import stroom.data.store.impl.fs.serializable.RawInputSegmentWriter;

@@ -17,8 +17,8 @@
 package stroom.index;
 
 import stroom.index.shared.IndexShard;
-import stroom.data.store.impl.fs.FileSystemUtil;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -29,17 +29,17 @@ public class IndexShardUtil {
     public static Path getIndexPath(IndexShard indexShard) {
         StringBuilder builder = new StringBuilder();
         builder.append(indexShard.getVolume().getPath());
-        builder.append(FileSystemUtil.SEPERATOR_CHAR);
+        builder.append(File.separatorChar);
         builder.append("index");
-        builder.append(FileSystemUtil.SEPERATOR_CHAR);
+        builder.append(File.separatorChar);
         if (indexShard.getOldIndexId() != null) {
             builder.append(indexShard.getOldIndexId());
         } else {
             builder.append(indexShard.getIndexUuid());
         }
-        builder.append(FileSystemUtil.SEPERATOR_CHAR);
+        builder.append(File.separatorChar);
         builder.append(indexShard.getPartition());
-        builder.append(FileSystemUtil.SEPERATOR_CHAR);
+        builder.append(File.separatorChar);
         builder.append(indexShard.getId());
         return Paths.get(builder.toString());
     }

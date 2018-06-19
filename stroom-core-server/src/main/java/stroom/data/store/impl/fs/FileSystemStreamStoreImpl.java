@@ -22,6 +22,7 @@ import event.logging.util.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
+import stroom.data.volume.api.StreamVolumeService;
 import stroom.node.NodeCache;
 import stroom.node.VolumeService;
 import stroom.node.shared.Node;
@@ -30,7 +31,7 @@ import stroom.data.store.api.StreamException;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
-import stroom.data.store.impl.fs.StreamVolumeService.StreamVolume;
+import stroom.data.volume.api.StreamVolumeService.StreamVolume;
 import stroom.data.meta.api.Stream;
 import stroom.data.meta.api.StreamMetaService;
 import stroom.data.meta.api.StreamProperties;
@@ -46,7 +47,6 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -60,7 +60,7 @@ import java.util.stream.Collectors;
  * </p>
  */
 @Singleton
-public class FileSystemStreamStoreImpl implements StreamStore {
+class FileSystemStreamStoreImpl implements StreamStore {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamStoreImpl.class);
 
     private final FileSystemStreamPathHelper fileSystemStreamPathHelper;

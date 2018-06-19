@@ -4,9 +4,11 @@ import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import stroom.dashboard.TestDashboardStoreImpl;
-import stroom.data.store.TestFileSystemZipProcessor;
+import stroom.data.store.impl.fs.TestFileSystemZipProcessor;
+import stroom.data.store.impl.fs.TestFileSystemCleanTask;
 import stroom.data.store.impl.fs.TestFileSystemStreamMaintenanceService;
 import stroom.data.store.impl.fs.TestFileSystemStreamStore;
+import stroom.data.store.impl.fs.TestStreamArchiveTask;
 import stroom.xmlschema.TestXMLSchemaStoreImpl;
 
 @Ignore("Don't run this test suite automatically as the tests are already run on their own")
@@ -54,9 +56,9 @@ import stroom.xmlschema.TestXMLSchemaStoreImpl;
         stroom.data.store.upload.TestStreamUploadDownloadTaskHandler.class,
         stroom.streamtask.TestDataRetentionExecutor.class,
         stroom.streamtask.TestDataRetentionTransactionHelper.class,
-        stroom.streamtask.TestFileSystemCleanTask.class,
+        TestFileSystemCleanTask.class,
         stroom.streamtask.TestProxyAggregationTask.class,
-        stroom.streamtask.TestStreamArchiveTask.class,
+        TestStreamArchiveTask.class,
         stroom.streamtask.TestStreamProcessorFilterService.class,
         stroom.streamtask.TestStreamRetentionExecutor.class,
         stroom.streamtask.TestStreamTaskCreator.class,

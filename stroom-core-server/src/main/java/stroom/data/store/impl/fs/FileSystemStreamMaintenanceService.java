@@ -19,6 +19,7 @@ package stroom.data.store.impl.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.volume.api.StreamVolumeService;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.PageRequest;
 import stroom.node.shared.VolumeEntity;
@@ -30,7 +31,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.data.store.FindStreamVolumeCriteria;
 import stroom.data.store.ScanVolumePathResult;
 import stroom.data.store.StreamMaintenanceService;
-import stroom.data.store.impl.fs.StreamVolumeService.StreamVolume;
+import stroom.data.volume.api.StreamVolumeService.StreamVolume;
 import stroom.data.meta.api.FindStreamCriteria;
 import stroom.data.meta.api.Stream;
 import stroom.data.meta.api.StreamMetaService;
@@ -57,7 +58,7 @@ import java.util.Set;
  * API used by the tasks to interface to the stream store under the bonnet.
  */
 @Singleton
-public class FileSystemStreamMaintenanceService
+class FileSystemStreamMaintenanceService
         implements StreamMaintenanceService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamMaintenanceService.class);

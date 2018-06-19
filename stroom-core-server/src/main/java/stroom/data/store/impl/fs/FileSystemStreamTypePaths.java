@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
-public class FileSystemStreamTypePaths {
+class FileSystemStreamTypePaths {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamTypePaths.class);
     private static final Map<String, String> PATH_MAP = new HashMap<>();
     private static final Map<String, String> TYPE_MAP = new HashMap<>();

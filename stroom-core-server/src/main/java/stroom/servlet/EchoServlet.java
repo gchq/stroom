@@ -16,23 +16,20 @@
 
 package stroom.servlet;
 
-import stroom.data.store.impl.fs.BlockGZIPInputStream;
-import stroom.util.io.StreamUtil;
-
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.io.InputStream;
 
 public class EchoServlet extends HttpServlet {
     private static final long serialVersionUID = -2569496543022536282L;
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        final InputStream is = new BlockGZIPInputStream(req.getInputStream());
-        resp.setStatus(200);
-        StreamUtil.streamToStream(is, resp.getOutputStream());
+        // TODO : @66 DO WE REALLY WANT TO SUPPORT ECHO TO DECODE BGZIP?
+//        final InputStream is = new BlockGZIPInputStream(req.getInputStream());
+//        resp.setStatus(200);
+//        StreamUtil.streamToStream(is, resp.getOutputStream());
     }
 }

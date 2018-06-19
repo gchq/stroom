@@ -17,7 +17,7 @@
 package stroom.data.store.impl.fs;
 
 import com.google.inject.Inject;
-import stroom.data.store.impl.fs.StreamVolumeService.StreamVolume;
+import stroom.data.volume.api.StreamVolumeService.StreamVolume;
 import stroom.data.meta.api.Stream;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.date.DateUtil;

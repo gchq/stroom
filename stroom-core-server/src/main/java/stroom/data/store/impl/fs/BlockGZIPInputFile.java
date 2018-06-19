@@ -30,7 +30,7 @@ import java.nio.file.StandardOpenOption;
 /**
  * @see BlockGZIPConstants
  */
-public class BlockGZIPInputFile extends BlockGZIPInput {
+class BlockGZIPInputFile extends BlockGZIPInput {
     // File being read
     private final FileChannel raFile;
 

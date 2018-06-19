@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.streamtask;
+package stroom.data.store.impl.fs;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -32,12 +32,10 @@ import stroom.data.store.StreamDeleteExecutor;
 import stroom.data.store.StreamRetentionExecutor;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
-import stroom.data.store.impl.fs.FileSystemCleanExecutor;
-import stroom.data.store.impl.fs.StreamVolumeService;
-import stroom.data.store.impl.fs.StreamVolumeService.StreamVolume;
+import stroom.data.volume.api.StreamVolumeService;
+import stroom.data.volume.api.StreamVolumeService.StreamVolume;
 import stroom.data.meta.api.StreamProperties;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.task.SimpleTaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.config.StroomProperties;
 import stroom.util.test.FileSystemTestUtil;
@@ -72,8 +70,8 @@ public class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
     private NodeCache nodeCache;
     @Inject
     private NodeService nodeService;
-    @Inject
-    private StreamTaskCreatorImpl streamTaskCreator;
+//    @Inject
+//    private StreamTaskCreatorImpl streamTaskCreator;
     @Inject
     private StreamRetentionExecutor streamRetentionExecutor;
     @Inject
@@ -131,13 +129,13 @@ public class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
         newFileTarget.getOutputStream().write("MyTest".getBytes());
         streamStore.closeStreamTarget(newFileTarget);
 
-        // Now we have added some data create some associated stream tasks.
-        // TODO : At some point we need to change deletion to delete streams and
-        // not tasks. Tasks should be deleted if an associated source stream is
-        // deleted if they exist, however currently streams are only deleted if
-        // their associated task exists which would prevent us from deleting
-        // streams that have no task associated with them.
-        streamTaskCreator.createTasks(new SimpleTaskContext());
+//        // Now we have added some data create some associated stream tasks.
+//        // TODO : At some point we need to change deletion to delete streams and
+//        // not tasks. Tasks should be deleted if an associated source stream is
+//        // deleted if they exist, however currently streams are only deleted if
+//        // their associated task exists which would prevent us from deleting
+//        // streams that have no task associated with them.
+//        streamTaskCreator.createTasks(new SimpleTaskContext());
 
         List<StreamVolume> oldVolumeList = streamVolumeService
                 .find(FindStreamVolumeCriteria.create(oldFileTarget.getStream()));

@@ -18,6 +18,12 @@ package stroom.pipeline;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.StreamStatus;
+import stroom.data.store.api.StreamSource;
+import stroom.data.store.api.StreamStore;
+import stroom.data.store.impl.fs.serializable.CompoundInputStream;
+import stroom.data.store.impl.fs.serializable.RASegmentInputStream;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceException;
@@ -49,13 +55,6 @@ import stroom.pipeline.writer.OutputStreamAppender;
 import stroom.pipeline.writer.TextWriter;
 import stroom.pipeline.writer.XMLWriter;
 import stroom.security.Security;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.impl.fs.FileSystemUtil;
-import stroom.data.store.impl.fs.serializable.CompoundInputStream;
-import stroom.data.store.impl.fs.serializable.RASegmentInputStream;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamStatus;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.AbstractTaskHandler;
 import stroom.util.io.StreamUtil;
@@ -399,7 +398,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
 
         try (BOMRemovalInputStream bomRemovalIS = new BOMRemovalInputStream(segmentInputStream, encoding);
              final Reader reader = new InputStreamReader(bomRemovalIS, encoding)) {
-            final char[] buffer = new char[FileSystemUtil.STREAM_BUFFER_SIZE];
+            final char[] buffer = new char[102400];
 
             final long maxLength = MAX_LINE_LENGTH * pageRange.getLength();
             while (lineNo < maxLineNo && (len = reader.read(buffer)) != -1) {

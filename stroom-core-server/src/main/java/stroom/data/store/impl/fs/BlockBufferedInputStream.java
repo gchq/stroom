@@ -26,7 +26,7 @@ import java.io.InputStream;
  * <p>
  * Also allows us to use the buffer to read another stream.
  */
-public class BlockBufferedInputStream extends BufferedInputStream {
+class BlockBufferedInputStream extends BufferedInputStream {
     /**
      * How far we have read along the stream.
      */

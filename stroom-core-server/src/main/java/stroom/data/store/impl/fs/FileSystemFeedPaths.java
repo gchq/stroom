@@ -17,7 +17,7 @@ import java.util.Map;
  * This class exists to map feed id's to file paths using old data from the DB.
  */
 @Singleton
-public class FileSystemFeedPaths {
+class FileSystemFeedPaths {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemFeedPaths.class);
 
     private final DataSource dataSource;

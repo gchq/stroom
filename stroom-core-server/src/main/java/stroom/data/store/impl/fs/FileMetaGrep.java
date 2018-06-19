@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.util;
+package stroom.data.store.impl.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
-import stroom.data.store.impl.fs.BlockGZIPInputFile;
-import stroom.data.store.impl.fs.UncompressedInputStream;
 import stroom.data.store.impl.fs.serializable.RANestedInputStream;
+import stroom.util.AbstractCommandLineTool;
+import stroom.util.ArgsUtil;
 import stroom.util.io.AbstractFileVisitor;
 
 import java.io.IOException;
@@ -40,7 +40,7 @@ public class FileMetaGrep extends AbstractCommandLineTool {
     private String[] repoPathParts = null;
     private String feedId;
 
-    public FileMetaGrep(String[] args) {
+    private FileMetaGrep(String[] args) {
         matchMap = ArgsUtil.parse(args);
         matchMap.remove("repoPath");
         matchMap.remove("feedId");

@@ -34,7 +34,7 @@ import java.nio.file.Paths;
  * If lazy is set on it also does not create the file until some data is written
  * (thus the file does not exist if no data was written).
  */
-public class LockingFileOutputStream extends OutputStream implements SeekableOutputStream {
+class LockingFileOutputStream extends OutputStream implements SeekableOutputStream {
     private final Path finalFile;
     private final Path lockFile;
     private OutputStream outputStream;

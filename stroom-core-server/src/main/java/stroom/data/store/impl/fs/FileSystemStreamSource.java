@@ -34,7 +34,7 @@ import java.nio.file.Path;
 /**
  * A file system implementation of StreamSource.
  */
-public final class FileSystemStreamSource implements StreamSource {
+final class FileSystemStreamSource implements StreamSource {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamSource.class);
 
     private final FileSystemStreamPathHelper fileSystemStreamPathHelper;

@@ -30,7 +30,7 @@ import java.util.zip.GZIPInputStream;
 /**
  * Class used to check a Block GZIP file.
  */
-public class BlockGZIPFileVerifier {
+class BlockGZIPFileVerifier {
     // File being read
     private final RandomAccessFile raFile;
     private final InputStream stream;

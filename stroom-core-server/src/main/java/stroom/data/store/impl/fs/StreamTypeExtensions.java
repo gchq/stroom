@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
-public class StreamTypeExtensions {
+class StreamTypeExtensions {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamTypeExtensions.class);
     private static final Map<String, String> EXTENSION_MAP = new HashMap<>();
 

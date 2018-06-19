@@ -19,17 +19,16 @@ package stroom.util;
 import com.google.inject.Injector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.meta.api.FindStreamCriteria;
+import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.StreamDataSource;
+import stroom.data.meta.api.StreamMetaService;
+import stroom.data.store.api.StreamSource;
+import stroom.data.store.api.StreamStore;
 import stroom.persist.PersistService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.impl.fs.FileSystemStreamPathHelper;
-import stroom.data.meta.api.FindStreamCriteria;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamMetaService;
-import stroom.data.meta.api.StreamDataSource;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.io.StreamUtil;
 
@@ -131,7 +130,6 @@ public class StreamGrepTool extends AbstractCommandLineTool {
 
         final StreamMetaService streamMetaService = injector.getInstance(StreamMetaService.class);
         final StreamStore streamStore = injector.getInstance(StreamStore.class);
-        final FileSystemStreamPathHelper fileSystemStreamPathHelper = injector.getInstance(FileSystemStreamPathHelper.class);
 
         if (feed != null) {
             builder.addTerm(StreamDataSource.FEED, Condition.EQUALS, feed);
@@ -150,11 +148,8 @@ public class StreamGrepTool extends AbstractCommandLineTool {
 
         int count = 0;
         for (final Stream stream : results) {
-            final String streamTypeName = stream.getStreamTypeName();
             count++;
-            LOGGER.info("processing() - " + count + "/" + results.size() + " "
-                    + fileSystemStreamPathHelper.getDirectory(stream, streamTypeName) + " "
-                    + fileSystemStreamPathHelper.getBaseName(stream));
+            LOGGER.info("processing() - " + count + "/" + results.size() + " " + stream);
 
             processFile(streamStore, stream.getId(), match);
         }
