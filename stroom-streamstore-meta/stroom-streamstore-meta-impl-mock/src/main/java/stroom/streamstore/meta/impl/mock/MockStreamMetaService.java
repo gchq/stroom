@@ -87,10 +87,10 @@ public class MockStreamMetaService implements StreamMetaService, Clearable {
         return BaseResultList.createUnboundedList(results);
     }
 
-    @Override
-    public boolean canReadStream(final long streamId) {
-        return streamMap.containsKey(streamId);
-    }
+//    @Override
+//    public boolean canReadStream(final long streamId) {
+//        return streamMap.containsKey(streamId);
+//    }
 
     @Override
     public Stream getStream(final long streamId) {
@@ -140,10 +140,10 @@ public class MockStreamMetaService implements StreamMetaService, Clearable {
         return (int) streamMap.values().stream().filter(stream -> StreamStatus.LOCKED.equals(stream.getStatus())).count();
     }
 
-    @Override
-    public Period getCreatePeriod() {
-        return new Period(0L, Long.MAX_VALUE);
-    }
+//    @Override
+//    public Period getCreatePeriod() {
+//        return new Period(0L, Long.MAX_VALUE);
+//    }
 
     @Override
     public List<String> getFeeds() {

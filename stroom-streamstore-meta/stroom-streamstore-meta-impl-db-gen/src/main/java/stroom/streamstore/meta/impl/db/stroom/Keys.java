@@ -13,16 +13,16 @@ import org.jooq.impl.AbstractKeys;
 
 import stroom.streamstore.meta.impl.db.stroom.tables.MetaKey;
 import stroom.streamstore.meta.impl.db.stroom.tables.MetaNumericValue;
+import stroom.streamstore.meta.impl.db.stroom.tables.Stream;
 import stroom.streamstore.meta.impl.db.stroom.tables.StreamFeed;
 import stroom.streamstore.meta.impl.db.stroom.tables.StreamProcessor;
 import stroom.streamstore.meta.impl.db.stroom.tables.StreamType;
-import stroom.streamstore.meta.impl.db.stroom.tables.Strm;
 import stroom.streamstore.meta.impl.db.stroom.tables.records.MetaKeyRecord;
 import stroom.streamstore.meta.impl.db.stroom.tables.records.MetaNumericValueRecord;
 import stroom.streamstore.meta.impl.db.stroom.tables.records.StreamFeedRecord;
 import stroom.streamstore.meta.impl.db.stroom.tables.records.StreamProcessorRecord;
+import stroom.streamstore.meta.impl.db.stroom.tables.records.StreamRecord;
 import stroom.streamstore.meta.impl.db.stroom.tables.records.StreamTypeRecord;
-import stroom.streamstore.meta.impl.db.stroom.tables.records.StrmRecord;
 
 
 /**
@@ -45,10 +45,10 @@ public class Keys {
 
     public static final Identity<MetaKeyRecord, Integer> IDENTITY_META_KEY = Identities0.IDENTITY_META_KEY;
     public static final Identity<MetaNumericValueRecord, Long> IDENTITY_META_NUMERIC_VALUE = Identities0.IDENTITY_META_NUMERIC_VALUE;
+    public static final Identity<StreamRecord, Long> IDENTITY_STREAM = Identities0.IDENTITY_STREAM;
     public static final Identity<StreamFeedRecord, Integer> IDENTITY_STREAM_FEED = Identities0.IDENTITY_STREAM_FEED;
     public static final Identity<StreamProcessorRecord, Integer> IDENTITY_STREAM_PROCESSOR = Identities0.IDENTITY_STREAM_PROCESSOR;
     public static final Identity<StreamTypeRecord, Integer> IDENTITY_STREAM_TYPE = Identities0.IDENTITY_STREAM_TYPE;
-    public static final Identity<StrmRecord, Long> IDENTITY_STRM = Identities0.IDENTITY_STRM;
 
     // -------------------------------------------------------------------------
     // UNIQUE and PRIMARY KEY definitions
@@ -57,20 +57,20 @@ public class Keys {
     public static final UniqueKey<MetaKeyRecord> KEY_META_KEY_PRIMARY = UniqueKeys0.KEY_META_KEY_PRIMARY;
     public static final UniqueKey<MetaKeyRecord> KEY_META_KEY_NAME = UniqueKeys0.KEY_META_KEY_NAME;
     public static final UniqueKey<MetaNumericValueRecord> KEY_META_NUMERIC_VALUE_PRIMARY = UniqueKeys0.KEY_META_NUMERIC_VALUE_PRIMARY;
+    public static final UniqueKey<StreamRecord> KEY_STREAM_PRIMARY = UniqueKeys0.KEY_STREAM_PRIMARY;
     public static final UniqueKey<StreamFeedRecord> KEY_STREAM_FEED_PRIMARY = UniqueKeys0.KEY_STREAM_FEED_PRIMARY;
     public static final UniqueKey<StreamFeedRecord> KEY_STREAM_FEED_NAME = UniqueKeys0.KEY_STREAM_FEED_NAME;
     public static final UniqueKey<StreamProcessorRecord> KEY_STREAM_PROCESSOR_PRIMARY = UniqueKeys0.KEY_STREAM_PROCESSOR_PRIMARY;
     public static final UniqueKey<StreamTypeRecord> KEY_STREAM_TYPE_PRIMARY = UniqueKeys0.KEY_STREAM_TYPE_PRIMARY;
     public static final UniqueKey<StreamTypeRecord> KEY_STREAM_TYPE_NAME = UniqueKeys0.KEY_STREAM_TYPE_NAME;
-    public static final UniqueKey<StrmRecord> KEY_STRM_PRIMARY = UniqueKeys0.KEY_STRM_PRIMARY;
 
     // -------------------------------------------------------------------------
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final ForeignKey<StrmRecord, StreamFeedRecord> STRM_FK_FD_ID = ForeignKeys0.STRM_FK_FD_ID;
-    public static final ForeignKey<StrmRecord, StreamProcessorRecord> STRM_FK_STRM_PROC_ID = ForeignKeys0.STRM_FK_STRM_PROC_ID;
-    public static final ForeignKey<StrmRecord, StreamTypeRecord> STRM_FK_STRM_TP_ID = ForeignKeys0.STRM_FK_STRM_TP_ID;
+    public static final ForeignKey<StreamRecord, StreamFeedRecord> STRM_FK_FD_ID = ForeignKeys0.STRM_FK_FD_ID;
+    public static final ForeignKey<StreamRecord, StreamProcessorRecord> STRM_FK_STRM_PROC_ID = ForeignKeys0.STRM_FK_STRM_PROC_ID;
+    public static final ForeignKey<StreamRecord, StreamTypeRecord> STRM_FK_STRM_TP_ID = ForeignKeys0.STRM_FK_STRM_TP_ID;
 
     // -------------------------------------------------------------------------
     // [#1459] distribute members to avoid static initialisers > 64kb
@@ -79,27 +79,27 @@ public class Keys {
     private static class Identities0 extends AbstractKeys {
         public static Identity<MetaKeyRecord, Integer> IDENTITY_META_KEY = createIdentity(MetaKey.META_KEY, MetaKey.META_KEY.ID);
         public static Identity<MetaNumericValueRecord, Long> IDENTITY_META_NUMERIC_VALUE = createIdentity(MetaNumericValue.META_NUMERIC_VALUE, MetaNumericValue.META_NUMERIC_VALUE.ID);
+        public static Identity<StreamRecord, Long> IDENTITY_STREAM = createIdentity(Stream.STREAM, Stream.STREAM.ID);
         public static Identity<StreamFeedRecord, Integer> IDENTITY_STREAM_FEED = createIdentity(StreamFeed.STREAM_FEED, StreamFeed.STREAM_FEED.ID);
         public static Identity<StreamProcessorRecord, Integer> IDENTITY_STREAM_PROCESSOR = createIdentity(StreamProcessor.STREAM_PROCESSOR, StreamProcessor.STREAM_PROCESSOR.ID);
         public static Identity<StreamTypeRecord, Integer> IDENTITY_STREAM_TYPE = createIdentity(StreamType.STREAM_TYPE, StreamType.STREAM_TYPE.ID);
-        public static Identity<StrmRecord, Long> IDENTITY_STRM = createIdentity(Strm.STRM, Strm.STRM.ID);
     }
 
     private static class UniqueKeys0 extends AbstractKeys {
         public static final UniqueKey<MetaKeyRecord> KEY_META_KEY_PRIMARY = createUniqueKey(MetaKey.META_KEY, "KEY_meta_key_PRIMARY", MetaKey.META_KEY.ID);
         public static final UniqueKey<MetaKeyRecord> KEY_META_KEY_NAME = createUniqueKey(MetaKey.META_KEY, "KEY_meta_key_name", MetaKey.META_KEY.NAME);
         public static final UniqueKey<MetaNumericValueRecord> KEY_META_NUMERIC_VALUE_PRIMARY = createUniqueKey(MetaNumericValue.META_NUMERIC_VALUE, "KEY_meta_numeric_value_PRIMARY", MetaNumericValue.META_NUMERIC_VALUE.ID);
+        public static final UniqueKey<StreamRecord> KEY_STREAM_PRIMARY = createUniqueKey(Stream.STREAM, "KEY_stream_PRIMARY", Stream.STREAM.ID);
         public static final UniqueKey<StreamFeedRecord> KEY_STREAM_FEED_PRIMARY = createUniqueKey(StreamFeed.STREAM_FEED, "KEY_stream_feed_PRIMARY", StreamFeed.STREAM_FEED.ID);
         public static final UniqueKey<StreamFeedRecord> KEY_STREAM_FEED_NAME = createUniqueKey(StreamFeed.STREAM_FEED, "KEY_stream_feed_NAME", StreamFeed.STREAM_FEED.NAME);
         public static final UniqueKey<StreamProcessorRecord> KEY_STREAM_PROCESSOR_PRIMARY = createUniqueKey(StreamProcessor.STREAM_PROCESSOR, "KEY_stream_processor_PRIMARY", StreamProcessor.STREAM_PROCESSOR.ID);
         public static final UniqueKey<StreamTypeRecord> KEY_STREAM_TYPE_PRIMARY = createUniqueKey(StreamType.STREAM_TYPE, "KEY_stream_type_PRIMARY", StreamType.STREAM_TYPE.ID);
         public static final UniqueKey<StreamTypeRecord> KEY_STREAM_TYPE_NAME = createUniqueKey(StreamType.STREAM_TYPE, "KEY_stream_type_NAME", StreamType.STREAM_TYPE.NAME);
-        public static final UniqueKey<StrmRecord> KEY_STRM_PRIMARY = createUniqueKey(Strm.STRM, "KEY_STRM_PRIMARY", Strm.STRM.ID);
     }
 
     private static class ForeignKeys0 extends AbstractKeys {
-        public static final ForeignKey<StrmRecord, StreamFeedRecord> STRM_FK_FD_ID = createForeignKey(stroom.streamstore.meta.impl.db.stroom.Keys.KEY_STREAM_FEED_PRIMARY, Strm.STRM, "STRM_FK_FD_ID", Strm.STRM.FK_FD_ID);
-        public static final ForeignKey<StrmRecord, StreamProcessorRecord> STRM_FK_STRM_PROC_ID = createForeignKey(stroom.streamstore.meta.impl.db.stroom.Keys.KEY_STREAM_PROCESSOR_PRIMARY, Strm.STRM, "STRM_FK_STRM_PROC_ID", Strm.STRM.FK_STRM_PROC_ID);
-        public static final ForeignKey<StrmRecord, StreamTypeRecord> STRM_FK_STRM_TP_ID = createForeignKey(stroom.streamstore.meta.impl.db.stroom.Keys.KEY_STREAM_TYPE_PRIMARY, Strm.STRM, "STRM_FK_STRM_TP_ID", Strm.STRM.FK_STRM_TP_ID);
+        public static final ForeignKey<StreamRecord, StreamFeedRecord> STRM_FK_FD_ID = createForeignKey(stroom.streamstore.meta.impl.db.stroom.Keys.KEY_STREAM_FEED_PRIMARY, Stream.STREAM, "STRM_FK_FD_ID", Stream.STREAM.FK_FD_ID);
+        public static final ForeignKey<StreamRecord, StreamProcessorRecord> STRM_FK_STRM_PROC_ID = createForeignKey(stroom.streamstore.meta.impl.db.stroom.Keys.KEY_STREAM_PROCESSOR_PRIMARY, Stream.STREAM, "STRM_FK_STRM_PROC_ID", Stream.STREAM.FK_STRM_PROC_ID);
+        public static final ForeignKey<StreamRecord, StreamTypeRecord> STRM_FK_STRM_TP_ID = createForeignKey(stroom.streamstore.meta.impl.db.stroom.Keys.KEY_STREAM_TYPE_PRIMARY, Stream.STREAM, "STRM_FK_STRM_TP_ID", Stream.STREAM.FK_STRM_TP_ID);
     }
 }

@@ -8,10 +8,10 @@ import javax.annotation.Generated;
 
 import stroom.streamstore.meta.impl.db.stroom.tables.MetaKey;
 import stroom.streamstore.meta.impl.db.stroom.tables.MetaNumericValue;
+import stroom.streamstore.meta.impl.db.stroom.tables.Stream;
 import stroom.streamstore.meta.impl.db.stroom.tables.StreamFeed;
 import stroom.streamstore.meta.impl.db.stroom.tables.StreamProcessor;
 import stroom.streamstore.meta.impl.db.stroom.tables.StreamType;
-import stroom.streamstore.meta.impl.db.stroom.tables.Strm;
 
 
 /**
@@ -38,6 +38,11 @@ public class Tables {
     public static final MetaNumericValue META_NUMERIC_VALUE = stroom.streamstore.meta.impl.db.stroom.tables.MetaNumericValue.META_NUMERIC_VALUE;
 
     /**
+     * The table <code>stroom.stream</code>.
+     */
+    public static final Stream STREAM = stroom.streamstore.meta.impl.db.stroom.tables.Stream.STREAM;
+
+    /**
      * The table <code>stroom.stream_feed</code>.
      */
     public static final StreamFeed STREAM_FEED = stroom.streamstore.meta.impl.db.stroom.tables.StreamFeed.STREAM_FEED;
@@ -51,9 +56,4 @@ public class Tables {
      * The table <code>stroom.stream_type</code>.
      */
     public static final StreamType STREAM_TYPE = stroom.streamstore.meta.impl.db.stroom.tables.StreamType.STREAM_TYPE;
-
-    /**
-     * The table <code>stroom.STRM</code>.
-     */
-    public static final Strm STRM = stroom.streamstore.meta.impl.db.stroom.tables.Strm.STRM;
 }

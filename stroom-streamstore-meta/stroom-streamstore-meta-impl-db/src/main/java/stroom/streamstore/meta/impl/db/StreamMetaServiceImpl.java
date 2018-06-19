@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.IdSet;
 import stroom.entity.shared.PageRequest;
-import stroom.entity.shared.Period;
 import stroom.entity.shared.Sort.Direction;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -22,6 +21,8 @@ import stroom.security.shared.PermissionNames;
 import stroom.streamstore.meta.api.EffectiveMetaDataCriteria;
 import stroom.streamstore.meta.api.FindStreamCriteria;
 import stroom.streamstore.meta.api.Stream;
+import stroom.streamstore.meta.api.StreamDataRow;
+import stroom.streamstore.meta.api.StreamDataSource;
 import stroom.streamstore.meta.api.StreamMetaService;
 import stroom.streamstore.meta.api.StreamProperties;
 import stroom.streamstore.meta.api.StreamSecurityFilter;
@@ -33,9 +34,6 @@ import stroom.streamstore.meta.impl.db.stroom.tables.MetaNumericValue;
 import stroom.streamstore.meta.impl.db.stroom.tables.StreamFeed;
 import stroom.streamstore.meta.impl.db.stroom.tables.StreamProcessor;
 import stroom.streamstore.meta.impl.db.stroom.tables.StreamType;
-import stroom.streamstore.meta.impl.db.stroom.tables.Strm;
-import stroom.streamstore.meta.api.StreamDataRow;
-import stroom.streamstore.meta.api.StreamDataSource;
 import stroom.util.date.DateUtil;
 
 import javax.inject.Inject;
@@ -51,10 +49,10 @@ import java.util.Optional;
 
 import static org.jooq.impl.DSL.selectDistinct;
 import static stroom.streamstore.meta.impl.db.stroom.tables.MetaNumericValue.META_NUMERIC_VALUE;
+import static stroom.streamstore.meta.impl.db.stroom.tables.Stream.STREAM;
 import static stroom.streamstore.meta.impl.db.stroom.tables.StreamFeed.STREAM_FEED;
 import static stroom.streamstore.meta.impl.db.stroom.tables.StreamProcessor.STREAM_PROCESSOR;
 import static stroom.streamstore.meta.impl.db.stroom.tables.StreamType.STREAM_TYPE;
-import static stroom.streamstore.meta.impl.db.stroom.tables.Strm.STRM;
 
 @Singleton
 class StreamMetaServiceImpl implements StreamMetaService {
@@ -69,7 +67,7 @@ class StreamMetaServiceImpl implements StreamMetaService {
     private final StreamSecurityFilter streamSecurityFilter;
     private final Security security;
 
-    private final Strm strm = STRM.as("s");
+    private final stroom.streamstore.meta.impl.db.stroom.tables.Stream strm = STREAM.as("s");
     private final StreamFeed strmFeed = STREAM_FEED.as("f");
     private final StreamType strmType = STREAM_TYPE.as("st");
     private final StreamProcessor strmProcessor = STREAM_PROCESSOR.as("sp");
@@ -148,17 +146,17 @@ class StreamMetaServiceImpl implements StreamMetaService {
 
         try (final Connection connection = dataSource.getConnection()) {
             final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
-            final long id = context.insertInto(STRM,
-                    STRM.VER,
-                    STRM.CRT_MS,
-                    STRM.EFFECT_MS,
-                    STRM.PARNT_STRM_ID,
-                    STRM.STAT,
-                    STRM.STAT_MS,
-                    STRM.STRM_TASK_ID,
-                    STRM.FK_FD_ID,
-                    STRM.FK_STRM_TP_ID,
-                    STRM.FK_STRM_PROC_ID)
+            final long id = context.insertInto(STREAM,
+                    STREAM.VER,
+                    STREAM.CRT_MS,
+                    STREAM.EFFECT_MS,
+                    STREAM.PARNT_STRM_ID,
+                    STREAM.STAT,
+                    STREAM.STAT_MS,
+                    STREAM.STRM_TASK_ID,
+                    STREAM.FK_FD_ID,
+                    STREAM.FK_STRM_TP_ID,
+                    STREAM.FK_STRM_PROC_ID)
                     .values(
                             (byte) 1,
                             streamProperties.getCreateMs(),
@@ -170,7 +168,7 @@ class StreamMetaServiceImpl implements StreamMetaService {
                             feedId,
                             streamTypeId,
                             processorId)
-                    .returning(STRM.ID)
+                    .returning(STREAM.ID)
                     .fetchOne()
                     .getId();
 
@@ -208,10 +206,10 @@ class StreamMetaServiceImpl implements StreamMetaService {
         return list.get(0);
     }
 
-    @Override
-    public boolean canReadStream(final long streamId) {
-        return getStream(streamId) != null;
-    }
+//    @Override
+//    public boolean canReadStream(final long streamId) {
+//        return getStream(streamId) != null;
+//    }
 
     @Override
     public Stream updateStatus(final long streamId, final StreamStatus streamStatus) {
@@ -482,22 +480,22 @@ class StreamMetaServiceImpl implements StreamMetaService {
         }
     }
 
-    @Override
-    public Period getCreatePeriod() {
-        try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
-            return context
-                    .select(strm.CRT_MS.min(), strm.CRT_MS.max())
-                    .from(strm)
-                    .fetchOptional()
-                    .map(r -> new Period(r.value1(), r.value2()))
-                    .orElse(null);
-
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
-    }
+//    @Override
+//    public Period getCreatePeriod() {
+//        try (final Connection connection = dataSource.getConnection()) {
+//            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
+//            return context
+//                    .select(strm.CRT_MS.min(), strm.CRT_MS.max())
+//                    .from(strm)
+//                    .fetchOptional()
+//                    .map(r -> new Period(r.value1(), r.value2()))
+//                    .orElse(null);
+//
+//        } catch (final SQLException e) {
+//            LOGGER.error(e.getMessage(), e);
+//            throw new RuntimeException(e.getMessage(), e);
+//        }
+//    }
 
     @Override
     public BaseResultList<StreamDataRow> findRows(final FindStreamCriteria criteria) {
@@ -556,7 +554,7 @@ class StreamMetaServiceImpl implements StreamMetaService {
         try (final Connection connection = dataSource.getConnection()) {
             final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
             return context
-                    .delete(STRM)
+                    .delete(STREAM)
                     .execute();
         } catch (final SQLException e) {
             throw new RuntimeException(e.getMessage(), e);
