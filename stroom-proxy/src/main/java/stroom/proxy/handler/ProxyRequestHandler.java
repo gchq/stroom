@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import stroom.datafeed.AttributeMapFilter;
 import stroom.datafeed.AttributeMapFilterFactory;
 import stroom.datafeed.RequestHandler;
-import stroom.feed.AttributeMap;
+import stroom.data.meta.api.AttributeMap;
 import stroom.feed.AttributeMapFactory;
 import stroom.datafeed.StroomStatusCode;
 import stroom.datafeed.StroomStreamException;

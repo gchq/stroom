@@ -18,7 +18,7 @@ package stroom.data.store.impl.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.AttributeMap;
+import stroom.data.meta.api.AttributeMap;
 import stroom.io.StreamCloser;
 import stroom.data.store.api.StreamSource;
 import stroom.data.meta.api.Stream;

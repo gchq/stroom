@@ -20,7 +20,7 @@ package stroom.data.store;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.feed.FeedDocCache;
-import stroom.feed.AttributeMap;
+import stroom.data.meta.api.AttributeMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.data.store.api.StreamSource;

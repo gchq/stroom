@@ -16,6 +16,8 @@
 
 package stroom.feed;
 
+import stroom.data.meta.api.AttributeMap;
+
 import javax.servlet.http.HttpServletRequest;
 import java.util.Enumeration;
 import java.util.StringTokenizer;

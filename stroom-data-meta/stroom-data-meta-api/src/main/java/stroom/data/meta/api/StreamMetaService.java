@@ -46,7 +46,7 @@ public interface StreamMetaService {
      * @param stream The stream to add attributes to.
      * @param attributes A map of key/value attributes.
      */
-    void addAttributes(Stream stream, Map<String, String> attributes);
+    void addAttributes(Stream stream, AttributeMap attributes);
 
     /**
      * Delete a stream by id. Note that this method will only delete unlocked streams.

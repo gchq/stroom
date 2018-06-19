@@ -18,7 +18,7 @@
 package stroom.pipeline.writer;
 
 import stroom.docref.DocRef;
-import stroom.feed.AttributeMap;
+import stroom.data.meta.api.AttributeMap;
 import stroom.feed.shared.FeedDoc;
 import stroom.io.StreamCloser;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;

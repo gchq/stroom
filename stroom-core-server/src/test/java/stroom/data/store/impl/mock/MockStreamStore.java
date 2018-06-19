@@ -17,7 +17,7 @@
 package stroom.data.store.impl.mock;
 
 import stroom.entity.shared.Clearable;
-import stroom.feed.AttributeMap;
+import stroom.data.meta.api.AttributeMap;
 import stroom.io.SeekableInputStream;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;

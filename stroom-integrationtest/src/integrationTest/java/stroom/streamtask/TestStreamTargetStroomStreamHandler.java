@@ -22,7 +22,7 @@ import org.junit.Test;
 import stroom.docref.DocRef;
 import stroom.feed.FeedDocCache;
 import stroom.feed.FeedStore;
-import stroom.feed.AttributeMap;
+import stroom.data.meta.api.AttributeMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.proxy.repo.StroomZipEntry;

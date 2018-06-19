@@ -17,7 +17,7 @@
 
 package stroom.datafeed;
 
-import stroom.feed.AttributeMap;
+import stroom.data.meta.api.AttributeMap;
 
 public interface AttributeMapFilter {
     boolean filter(AttributeMap attributeMap);

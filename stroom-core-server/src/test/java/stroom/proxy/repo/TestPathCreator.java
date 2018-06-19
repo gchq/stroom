@@ -5,7 +5,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.AttributeMap;
+import stroom.data.meta.api.AttributeMap;
 
 public class TestPathCreator {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestPathCreator.class);

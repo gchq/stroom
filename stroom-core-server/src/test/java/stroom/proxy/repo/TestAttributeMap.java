@@ -2,7 +2,7 @@ package stroom.proxy.repo;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.feed.AttributeMap;
+import stroom.data.meta.api.AttributeMap;
 
 import java.io.IOException;
 import java.util.Arrays;

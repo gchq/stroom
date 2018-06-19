@@ -16,7 +16,7 @@
 
 package stroom.pipeline.destination;
 
-import stroom.feed.AttributeMap;
+import stroom.data.meta.api.AttributeMap;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.data.store.impl.fs.serializable.RASegmentOutputStream;

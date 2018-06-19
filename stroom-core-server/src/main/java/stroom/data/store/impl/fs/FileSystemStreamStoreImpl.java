@@ -21,7 +21,7 @@ package stroom.data.store.impl.fs;
 import event.logging.util.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.AttributeMap;
+import stroom.data.meta.api.AttributeMap;
 import stroom.node.NodeCache;
 import stroom.node.VolumeService;
 import stroom.node.shared.Node;
@@ -339,7 +339,7 @@ public class FileSystemStreamStoreImpl implements StreamStore {
         }
     }
 
-    private Stream unLock(final Stream stream, final Map<String, String> attributeMap) {
+    private Stream unLock(final Stream stream, final AttributeMap attributeMap) {
         if (StreamStatus.UNLOCKED.equals(stream.getStatus())) {
             throw new IllegalStateException("Attempt to unlock a stream that is already unlocked");
         }

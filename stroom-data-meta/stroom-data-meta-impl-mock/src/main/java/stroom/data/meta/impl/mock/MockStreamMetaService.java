@@ -1,15 +1,16 @@
 package stroom.data.meta.impl.mock;
 
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.Clearable;
+import stroom.data.meta.api.AttributeMap;
 import stroom.data.meta.api.EffectiveMetaDataCriteria;
 import stroom.data.meta.api.FindStreamCriteria;
 import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.StreamDataRow;
+import stroom.data.meta.api.StreamDataSource;
 import stroom.data.meta.api.StreamMetaService;
 import stroom.data.meta.api.StreamProperties;
 import stroom.data.meta.api.StreamStatus;
-import stroom.data.meta.api.StreamDataRow;
-import stroom.data.meta.api.StreamDataSource;
+import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.Clearable;
 
 import javax.inject.Singleton;
 import java.util.ArrayList;
@@ -112,7 +113,7 @@ public class MockStreamMetaService implements StreamMetaService, Clearable {
     }
 
     @Override
-    public void addAttributes(final Stream stream, final Map<String, String> attributes) {
+    public void addAttributes(final Stream stream, final AttributeMap attributes) {
         // Do nothing.
     }
 

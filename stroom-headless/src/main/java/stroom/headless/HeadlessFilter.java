@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
-import stroom.feed.AttributeMap;
+import stroom.data.meta.api.AttributeMap;
 import stroom.pipeline.ErrorWriter;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.filter.AbstractXMLFilter;

@@ -21,9 +21,10 @@ import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.meta.api.AttributeMap;
 import stroom.data.meta.api.Stream;
-import stroom.data.meta.impl.db.stroom.tables.records.MetaNumericValueRecord;
 import stroom.data.meta.api.StreamDataRow;
+import stroom.data.meta.impl.db.stroom.tables.records.MetaNumericValueRecord;
 import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.lifecycle.StroomShutdown;
@@ -67,7 +68,7 @@ class MetaValueServiceImpl implements MetaValueService {
     }
 
     @Override
-    public void addAttributes(final Stream stream, final Map<String, String> attributes) {
+    public void addAttributes(final Stream stream, final AttributeMap attributes) {
         attributes.forEach((k, v) -> {
             try {
                 final Long longValue = Long.valueOf(v);

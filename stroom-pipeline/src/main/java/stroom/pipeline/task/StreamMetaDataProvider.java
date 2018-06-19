@@ -18,7 +18,7 @@
 package stroom.pipeline.task;
 
 import stroom.docref.DocRef;
-import stroom.feed.AttributeMap;
+import stroom.data.meta.api.AttributeMap;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.state.MetaDataProvider;

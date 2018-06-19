@@ -2,7 +2,7 @@ package stroom.pipeline.writer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.AttributeMap;
+import stroom.data.meta.api.AttributeMap;
 import stroom.feed.AttributeMapFactory;
 import stroom.feed.StroomHeaderArguments;
 import stroom.datafeed.StroomStreamException;

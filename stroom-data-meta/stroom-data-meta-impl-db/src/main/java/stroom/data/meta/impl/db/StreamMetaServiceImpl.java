@@ -8,6 +8,7 @@ import org.jooq.SelectConditionStep;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.meta.api.AttributeMap;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.IdSet;
 import stroom.entity.shared.PageRequest;
@@ -258,7 +259,7 @@ class StreamMetaServiceImpl implements StreamMetaService {
     }
 
     @Override
-    public void addAttributes(final Stream stream, final Map<String, String> attributes) {
+    public void addAttributes(final Stream stream, final AttributeMap attributes) {
         metaValueService.addAttributes(stream, attributes);
     }
 

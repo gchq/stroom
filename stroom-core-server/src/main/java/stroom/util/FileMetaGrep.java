@@ -18,7 +18,7 @@ package stroom.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.AttributeMap;
+import stroom.data.meta.api.AttributeMap;
 import stroom.data.store.impl.fs.BlockGZIPInputFile;
 import stroom.data.store.impl.fs.UncompressedInputStream;
 import stroom.data.store.impl.fs.serializable.RANestedInputStream;

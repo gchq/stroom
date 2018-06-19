@@ -20,6 +20,7 @@ package stroom.data.meta.impl.db;
 import com.google.inject.Guice;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import stroom.data.meta.api.AttributeMap;
 import stroom.data.meta.impl.db.MetaValueConfig;
 import stroom.data.meta.impl.db.MetaValueServiceImpl;
 import stroom.data.meta.impl.db.StreamMetaServiceImpl;
@@ -142,7 +143,9 @@ class TestMetaValueServiceImpl {
                 .build();
     }
 
-    private Map<String, String> createAttributes() {
-        return Collections.singletonMap(StreamDataSource.FILE_SIZE, "100");
+    private AttributeMap createAttributes() {
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put(StreamDataSource.FILE_SIZE, "100");
+        return attributeMap;
     }
 }
