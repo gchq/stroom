@@ -24,7 +24,7 @@ import stroom.node.NodeCache;
 import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.VolumeEntity;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.task.AsyncTaskHelper;
 import stroom.task.TaskCallbackAdaptor;
 import stroom.task.TaskContext;

@@ -8,7 +8,7 @@ import stroom.entity.shared.Clearable;
 import stroom.entity.shared.ExternalDocRefConstants;
 import stroom.node.shared.ClientProperties;
 import stroom.pipeline.errorhandler.LoggedException;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.docref.DocRef;
 import stroom.query.audit.client.DocRefResourceHttpClient;
 import stroom.query.security.ServiceUser;

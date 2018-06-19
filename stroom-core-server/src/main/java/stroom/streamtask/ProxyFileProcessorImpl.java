@@ -23,7 +23,7 @@ import stroom.feed.MetaMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.streamtask.statistic.MetaDataStatistic;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.proxy.repo.ProxyFileHandler;
 import stroom.proxy.repo.ProxyFileProcessor;
 import stroom.proxy.repo.StroomZipRepository;

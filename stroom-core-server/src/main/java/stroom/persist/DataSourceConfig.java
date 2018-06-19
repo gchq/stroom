@@ -16,7 +16,7 @@
 
 package stroom.persist;
 
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 
 import java.util.Objects;
 

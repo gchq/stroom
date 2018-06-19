@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.node.shared.ClientProperties;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;

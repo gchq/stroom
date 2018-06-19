@@ -25,7 +25,7 @@ import stroom.feed.MetaMap;
 import stroom.feed.MetaMapFactory;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.security.Security;
 import stroom.streamstore.api.StreamStore;

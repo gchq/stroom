@@ -18,9 +18,7 @@ package stroom.statistics.sql.internal;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.properties.StroomPropertyService;
 import stroom.statistics.internal.InternalStatisticsService;
-import stroom.statistics.sql.Statistics;
 
 public class InternalModule extends AbstractModule {
     @Override

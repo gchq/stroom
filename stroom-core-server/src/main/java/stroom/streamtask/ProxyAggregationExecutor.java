@@ -20,7 +20,7 @@ package stroom.streamtask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.lifecycle.JobTrackedSchedule;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.proxy.repo.RepositoryProcessor;
 import stroom.proxy.repo.StroomZipRepository;
 import stroom.task.ExecutorProvider;

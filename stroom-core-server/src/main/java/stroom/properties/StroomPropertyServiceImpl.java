@@ -16,6 +16,7 @@
 
 package stroom.properties;
 
+import stroom.properties.api.StroomPropertyService;
 import stroom.util.config.StroomProperties;
 
 /**

@@ -22,6 +22,7 @@ import com.google.inject.multibindings.Multibinder;
 import stroom.entity.FindService;
 import stroom.node.shared.ClientPropertiesService;
 import stroom.node.shared.GlobalProperty;
+import stroom.properties.api.StroomPropertyService;
 
 public class PropertyModule extends AbstractModule {
     @Override

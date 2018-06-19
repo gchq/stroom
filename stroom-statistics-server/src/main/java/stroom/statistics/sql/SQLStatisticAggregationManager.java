@@ -22,7 +22,7 @@ import stroom.entity.StroomDatabaseInfo;
 import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.jobsystem.ClusterLockService;
 import stroom.util.lifecycle.JobTrackedSchedule;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.task.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.lifecycle.StroomSimpleCronSchedule;

@@ -25,7 +25,7 @@ import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.datasource.api.v2.DataSourceField;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.shared.common.CustomRollUpMask;

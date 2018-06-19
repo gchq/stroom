@@ -19,7 +19,7 @@ package stroom.task.cluster;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.node.shared.Node;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.util.shared.ModelStringUtil;
 import stroom.docref.SharedObject;

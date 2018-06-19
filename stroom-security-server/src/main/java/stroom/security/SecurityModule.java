@@ -22,7 +22,7 @@ import com.google.inject.multibindings.Multibinder;
 import stroom.entity.event.EntityEvent;
 import stroom.entity.shared.Clearable;
 import stroom.logging.EventInfoProvider;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.task.TaskHandler;
 
 public class SecurityModule extends AbstractModule {

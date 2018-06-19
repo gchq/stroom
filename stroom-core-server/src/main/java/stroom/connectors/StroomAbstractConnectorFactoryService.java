@@ -1,8 +1,6 @@
 package stroom.connectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 

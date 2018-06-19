@@ -2,7 +2,7 @@ package stroom.datasource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.docref.DocRef;
 import stroom.security.SecurityContext;
 import stroom.servicediscovery.ServiceDiscoverer;

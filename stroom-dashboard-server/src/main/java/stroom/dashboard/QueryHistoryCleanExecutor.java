@@ -20,7 +20,7 @@ package stroom.dashboard;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.lifecycle.JobTrackedSchedule;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.util.shared.Task;
 import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.task.TaskContext;

@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.util.ConnectionUtil;
 import stroom.entity.util.SqlUtil;
 import stroom.entity.StroomDatabaseInfo;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.statistics.shared.StatisticType;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;

@@ -5,7 +5,7 @@ import com.google.inject.Provides;
 import com.google.inject.multibindings.Multibinder;
 import com.zaxxer.hikari.HikariConfig;
 import stroom.entity.shared.Clearable;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.streamstore.meta.api.StreamMetaService;
 import stroom.streamstore.meta.api.StreamSecurityFilter;
 import stroom.util.shared.ModelStringUtil;

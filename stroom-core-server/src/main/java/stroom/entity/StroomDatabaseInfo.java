@@ -16,7 +16,7 @@
 
 package stroom.entity;
 
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;

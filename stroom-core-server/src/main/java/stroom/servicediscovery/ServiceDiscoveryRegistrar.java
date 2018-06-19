@@ -9,7 +9,7 @@ import org.apache.curator.x.discovery.ServiceType;
 import org.apache.curator.x.discovery.UriSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;

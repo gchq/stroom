@@ -3,7 +3,7 @@ package stroom.statistics.internal;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.docref.DocRef;
 
 import javax.inject.Inject;

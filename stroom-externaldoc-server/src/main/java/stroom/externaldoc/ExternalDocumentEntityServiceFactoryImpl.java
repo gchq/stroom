@@ -3,7 +3,7 @@ package stroom.externaldoc;
 import stroom.explorer.ExplorerActionHandlerFactory;
 import stroom.importexport.ImportExportActionHandlerFactory;
 import stroom.logging.DocumentEventLog;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.security.SecurityContext;
 
 import javax.inject.Inject;

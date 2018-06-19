@@ -16,7 +16,7 @@
 
 package stroom.servlet;
 
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
 

@@ -49,7 +49,7 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.PipelineContext;
 import stroom.pipeline.writer.PathCreator;
 import stroom.pool.PoolItem;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.docref.DocRef;
 import stroom.util.CharBuffer;
 import stroom.util.shared.Location;

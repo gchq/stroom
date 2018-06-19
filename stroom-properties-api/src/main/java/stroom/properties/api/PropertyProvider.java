@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.properties;
+package stroom.properties.api;
 
 public interface PropertyProvider {
     String getProperty(String name);

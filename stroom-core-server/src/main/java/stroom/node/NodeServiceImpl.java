@@ -23,7 +23,7 @@ import stroom.entity.StroomEntityManager;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 

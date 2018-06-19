@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.errorhandler.TerminatedException;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.task.TaskContext;
 import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.lifecycle.StroomShutdown;

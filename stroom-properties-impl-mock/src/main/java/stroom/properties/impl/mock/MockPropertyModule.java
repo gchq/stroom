@@ -17,7 +17,7 @@
 package stroom.properties.impl.mock;
 
 import com.google.inject.AbstractModule;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 
 public class MockPropertyModule extends AbstractModule {
     @Override

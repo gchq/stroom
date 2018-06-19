@@ -13,7 +13,7 @@ import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.entity.util.PreparedStatementUtil;
 import stroom.entity.util.SqlBuilder;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.shared.StatisticType;
 import stroom.statistics.sql.SQLStatisticConstants;

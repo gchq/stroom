@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.properties;
+package stroom.properties.api;
 
 import java.util.ArrayList;
 import java.util.Arrays;

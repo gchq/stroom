@@ -28,7 +28,7 @@ import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.index.LuceneVersionUtil;
 import stroom.index.shared.IndexShard;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.task.ExecutorProvider;
 import stroom.task.TaskContext;
 import stroom.util.logging.LambdaLogger;

@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.node.NodeCache;
 import stroom.node.shared.ClientProperties;
 import stroom.node.shared.Node;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.CoprocessorSettings;

@@ -24,7 +24,7 @@ import stroom.entity.shared.Period;
 import stroom.entity.util.XMLMarshallerUtil;
 import stroom.jobsystem.ClusterLockService;
 import stroom.util.lifecycle.JobTrackedSchedule;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;

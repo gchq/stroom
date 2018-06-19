@@ -23,7 +23,7 @@ import stroom.entity.shared.BaseResultList;
 import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.query.api.v2.Query;
 import stroom.search.EventRef;
 import stroom.search.EventRefs;

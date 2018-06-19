@@ -1,6 +1,6 @@
 package stroom.benchmark;
 
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 
 public class BenchmarkClusterConfig {
     private final int streamCount;

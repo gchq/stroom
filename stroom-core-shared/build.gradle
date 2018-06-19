@@ -5,7 +5,7 @@ dependencies {
     compile project(':stroom-util-shared')
     compile project(':stroom-docstore-shared')
     compile project(':stroom-explorer-api')
-    compile project(':stroom-streamstore-meta-api')
+    compile project(':stroom-streamstore-meta:stroom-streamstore-meta-api')
 
     compile libs.stroomDocRef
     compile libs.stroomQueryApi

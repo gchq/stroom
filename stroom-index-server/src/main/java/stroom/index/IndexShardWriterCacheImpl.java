@@ -25,7 +25,7 @@ import stroom.index.shared.IndexShardKey;
 import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.docref.DocRef;
 import stroom.task.ExecutorProvider;
 import stroom.task.TaskContext;

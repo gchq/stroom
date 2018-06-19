@@ -19,7 +19,7 @@ package stroom.streamstore;
 import stroom.entity.shared.BaseResultList;
 import stroom.jobsystem.ClusterLockService;
 import stroom.util.lifecycle.JobTrackedSchedule;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;

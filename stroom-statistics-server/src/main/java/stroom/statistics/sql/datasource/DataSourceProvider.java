@@ -5,7 +5,7 @@ import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.persist.C3P0Config;
 import stroom.persist.DataSourceConfig;
 import stroom.util.config.StroomProperties;

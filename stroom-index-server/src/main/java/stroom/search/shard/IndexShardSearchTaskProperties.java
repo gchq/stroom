@@ -16,7 +16,7 @@
 
 package stroom.search.shard;
 
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 
 import javax.inject.Inject;
 

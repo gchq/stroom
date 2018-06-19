@@ -24,7 +24,7 @@ import stroom.feed.StroomHessianProxyFactory;
 import stroom.guice.StroomBeanStore;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 

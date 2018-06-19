@@ -41,7 +41,7 @@ import stroom.node.shared.VolumeEntity.VolumeType;
 import stroom.node.shared.VolumeEntity.VolumeUseStatus;
 import stroom.node.shared.VolumeState;
 import stroom.persist.EntityManagerSupport;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.statistics.internal.InternalStatisticEvent;

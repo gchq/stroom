@@ -24,7 +24,7 @@ import com.google.inject.name.Named;
 import stroom.entity.CachingEntityManager;
 import stroom.entity.FindService;
 import stroom.node.shared.Node;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.security.Security;
 
 public class NodeServiceModule extends AbstractModule {

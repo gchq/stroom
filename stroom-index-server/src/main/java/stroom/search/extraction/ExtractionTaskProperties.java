@@ -16,7 +16,7 @@
 
 package stroom.search.extraction;
 
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 
 import javax.inject.Inject;
 

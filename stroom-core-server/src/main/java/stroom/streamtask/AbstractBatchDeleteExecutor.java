@@ -18,16 +18,14 @@ package stroom.streamtask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.util.SqlBuilder;
 import stroom.jobsystem.ClusterLockService;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.StroomPropertyService;
 import stroom.task.TaskContext;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 public abstract class AbstractBatchDeleteExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractBatchDeleteExecutor.class);

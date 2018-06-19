@@ -16,7 +16,7 @@
 
 package stroom.pipeline.writer;
 
-import stroom.properties.PropertyProvider;
+import stroom.properties.api.PropertyProvider;
 
 import java.util.Set;
 
