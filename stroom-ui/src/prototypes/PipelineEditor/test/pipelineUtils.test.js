@@ -16,7 +16,7 @@
 import { getPipelineAsTree, deleteElementInPipeline, getDescendants } from '../pipelineUtils';
 
 import { testPipeline, singleElementTestPipeline } from './pipeline.testData';
-import { pipeline01, pipeline02 } from './test/setupSampleDataPipelines.testData';
+import { pipeline01, pipeline02 } from './setupSampleDataPipelines.testData';
 
 describe('Pipeline Utils', () => {
   describe('#getPipelineAsTree', () => {
