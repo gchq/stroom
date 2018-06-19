@@ -18,8 +18,8 @@ package stroom.streamstore.shared;
 
 import stroom.entity.shared.Action;
 import stroom.entity.shared.ResultList;
-import stroom.streamstore.meta.api.FindStreamCriteria;
-import stroom.streamstore.meta.api.StreamDataRow;
+import stroom.data.meta.api.FindStreamCriteria;
+import stroom.data.meta.api.StreamDataRow;
 
 public class FindStreamAction extends Action<ResultList<StreamDataRow>> {
     private static final long serialVersionUID = -3560107233301674555L;

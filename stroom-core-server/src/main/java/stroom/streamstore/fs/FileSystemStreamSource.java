@@ -21,8 +21,8 @@ import org.slf4j.LoggerFactory;
 import stroom.feed.MetaMap;
 import stroom.io.StreamCloser;
 import stroom.streamstore.api.StreamSource;
-import stroom.streamstore.meta.api.Stream;
-import stroom.streamstore.meta.api.StreamStatus;
+import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.StreamStatus;
 import stroom.streamstore.shared.StreamTypeNames;
 
 import java.io.IOException;

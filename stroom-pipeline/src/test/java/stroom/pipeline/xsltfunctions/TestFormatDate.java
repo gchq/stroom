@@ -20,7 +20,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import stroom.pipeline.state.StreamHolder;
-import stroom.streamstore.meta.api.Stream;
+import stroom.data.meta.api.Stream;
 import stroom.util.date.DateUtil;
 import stroom.util.test.StroomExpectedException;
 import stroom.util.test.StroomJUnit4ClassRunner;

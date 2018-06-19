@@ -31,10 +31,10 @@ import stroom.streamstore.FindStreamVolumeCriteria;
 import stroom.streamstore.ScanVolumePathResult;
 import stroom.streamstore.StreamMaintenanceService;
 import stroom.streamstore.fs.StreamVolumeService.StreamVolume;
-import stroom.streamstore.meta.api.FindStreamCriteria;
-import stroom.streamstore.meta.api.Stream;
-import stroom.streamstore.meta.api.StreamMetaService;
-import stroom.streamstore.meta.api.StreamDataSource;
+import stroom.data.meta.api.FindStreamCriteria;
+import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.StreamMetaService;
+import stroom.data.meta.api.StreamDataSource;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;

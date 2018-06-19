@@ -1,7 +1,7 @@
 package stroom.streamstore.shared;
 
 import stroom.entity.shared.Action;
-import stroom.streamstore.meta.api.FindStreamCriteria;
+import stroom.data.meta.api.FindStreamCriteria;
 import stroom.util.shared.SharedInteger;
 
 public class DeleteStreamAction extends Action<SharedInteger> {

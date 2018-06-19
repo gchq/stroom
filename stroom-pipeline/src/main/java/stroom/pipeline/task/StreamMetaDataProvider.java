@@ -25,7 +25,7 @@ import stroom.pipeline.state.MetaDataProvider;
 import stroom.pipeline.state.StreamHolder;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
-import stroom.streamstore.meta.api.Stream;
+import stroom.data.meta.api.Stream;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.date.DateUtil;
 

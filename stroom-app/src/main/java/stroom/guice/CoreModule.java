@@ -1,7 +1,7 @@
 package stroom.guice;
 
 import com.google.inject.AbstractModule;
-import stroom.streamstore.meta.impl.db.StreamStoreMetaDbModule;
+import stroom.data.meta.impl.db.StreamStoreMetaDbModule;
 
 public class CoreModule extends AbstractModule {
     @Override

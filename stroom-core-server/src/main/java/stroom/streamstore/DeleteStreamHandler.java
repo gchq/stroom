@@ -17,7 +17,7 @@
 package stroom.streamstore;
 
 import stroom.security.Security;
-import stroom.streamstore.meta.api.StreamMetaService;
+import stroom.data.meta.api.StreamMetaService;
 import stroom.streamstore.shared.DeleteStreamAction;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;

@@ -1,7 +1,7 @@
 package stroom.headless;
 
-import stroom.streamstore.meta.api.Stream;
-import stroom.streamstore.meta.api.StreamStatus;
+import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.StreamStatus;
 
 class StreamImpl implements Stream {
     private long id;

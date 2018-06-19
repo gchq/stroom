@@ -17,7 +17,7 @@
 package stroom.streamstore.api;
 
 import stroom.feed.MetaMap;
-import stroom.streamstore.meta.api.Stream;
+import stroom.data.meta.api.Stream;
 
 import java.io.Closeable;
 import java.io.InputStream;

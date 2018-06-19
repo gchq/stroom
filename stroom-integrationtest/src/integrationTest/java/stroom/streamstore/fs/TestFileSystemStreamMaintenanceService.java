@@ -20,11 +20,10 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.jobsystem.MockTask;
 import stroom.streamstore.FindStreamVolumeCriteria;
-import stroom.streamstore.meta.api.Stream;
+import stroom.data.meta.api.Stream;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
-import stroom.util.io.FileUtil;
 import stroom.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;

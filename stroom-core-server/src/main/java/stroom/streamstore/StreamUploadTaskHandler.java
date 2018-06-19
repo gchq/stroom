@@ -28,7 +28,7 @@ import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.security.Security;
-import stroom.streamstore.meta.api.StreamProperties;
+import stroom.data.meta.api.StreamProperties;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.shared.StreamTypeNames;

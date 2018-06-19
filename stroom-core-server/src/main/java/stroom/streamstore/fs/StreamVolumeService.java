@@ -3,12 +3,10 @@ package stroom.streamstore.fs;
 import stroom.docref.SharedObject;
 import stroom.entity.FindService;
 import stroom.entity.SupportsCriteriaLogging;
-import stroom.node.shared.Volume;
 import stroom.node.shared.VolumeEntity;
 import stroom.node.shared.VolumeEntity.VolumeType;
 import stroom.streamstore.FindStreamVolumeCriteria;
 import stroom.streamstore.fs.StreamVolumeService.StreamVolume;
-import stroom.streamstore.meta.api.Stream;
 
 import java.util.Set;
 

@@ -35,7 +35,7 @@ import stroom.entity.shared.Sort.Direction;
 import stroom.feed.shared.FeedDoc;
 import stroom.node.shared.Node;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.streamstore.meta.api.StreamStatus;
+import stroom.data.meta.api.StreamStatus;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.Processor;
 import stroom.streamtask.shared.ProcessorFilterTask;

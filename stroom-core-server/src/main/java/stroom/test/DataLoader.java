@@ -30,7 +30,7 @@ import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamstore.fs.serializable.RASegmentOutputStream;
 import stroom.streamstore.fs.serializable.RawInputSegmentWriter;
-import stroom.streamstore.meta.api.StreamProperties;
+import stroom.data.meta.api.StreamProperties;
 import stroom.streamtask.StreamTargetStroomStreamHandler;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;

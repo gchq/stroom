@@ -20,7 +20,7 @@ import stroom.feed.MetaMap;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.serializable.RASegmentOutputStream;
-import stroom.streamstore.meta.api.StreamDataSource;
+import stroom.data.meta.api.StreamDataSource;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;

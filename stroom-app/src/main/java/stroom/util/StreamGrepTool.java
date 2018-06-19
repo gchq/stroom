@@ -26,10 +26,10 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.fs.FileSystemStreamPathHelper;
-import stroom.streamstore.meta.api.FindStreamCriteria;
-import stroom.streamstore.meta.api.Stream;
-import stroom.streamstore.meta.api.StreamMetaService;
-import stroom.streamstore.meta.api.StreamDataSource;
+import stroom.data.meta.api.FindStreamCriteria;
+import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.StreamMetaService;
+import stroom.data.meta.api.StreamDataSource;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.io.StreamUtil;
 

@@ -21,8 +21,8 @@ import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.HasIsConstrained;
 import stroom.entity.shared.Period;
-import stroom.streamstore.meta.api.Stream;
-import stroom.streamstore.meta.api.StreamStatus;
+import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.StreamStatus;
 
 /**
  * <p>

@@ -23,11 +23,11 @@ import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.streamstore.meta.api.Stream;
-import stroom.streamstore.meta.api.StreamMetaService;
-import stroom.streamstore.meta.api.StreamProperties;
-import stroom.streamstore.meta.api.StreamStatus;
-import stroom.streamstore.meta.impl.mock.MockStreamMetaService;
+import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.StreamMetaService;
+import stroom.data.meta.api.StreamProperties;
+import stroom.data.meta.api.StreamStatus;
+import stroom.data.meta.impl.mock.MockStreamMetaService;
 import stroom.util.collections.TypedMap;
 
 import javax.inject.Inject;

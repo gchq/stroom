@@ -19,7 +19,7 @@ package stroom.streamstore;
 import stroom.entity.shared.DataSourceFields;
 import stroom.security.Security;
 import stroom.streamstore.shared.FetchFieldsAction;
-import stroom.streamstore.meta.api.StreamDataSource;
+import stroom.data.meta.api.StreamDataSource;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 

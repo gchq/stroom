@@ -19,8 +19,8 @@ package stroom.streamstore;
 
 import stroom.dictionary.DictionaryStore;
 import stroom.ruleset.shared.DataRetentionRule;
-import stroom.streamstore.meta.api.Stream;
-import stroom.streamstore.meta.api.StreamDataSource;
+import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.StreamDataSource;
 import stroom.util.date.DateUtil;
 
 import java.time.Instant;

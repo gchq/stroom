@@ -21,7 +21,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.ExpressionMatcher;
-import stroom.streamstore.meta.api.StreamDataSource;
+import stroom.data.meta.api.StreamDataSource;
 
 import java.util.HashMap;
 import java.util.Map;

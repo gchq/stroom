@@ -24,10 +24,10 @@ import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;
 import stroom.security.Security;
-import stroom.streamstore.meta.api.FindStreamCriteria;
-import stroom.streamstore.meta.api.Stream;
-import stroom.streamstore.meta.api.StreamMetaService;
-import stroom.streamstore.meta.api.ExpressionUtil;
+import stroom.data.meta.api.FindStreamCriteria;
+import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.StreamMetaService;
+import stroom.data.meta.api.ExpressionUtil;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 

@@ -18,8 +18,7 @@ package stroom.streamstore;
 
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.CriteriaSet;
-import stroom.streamstore.meta.api.Stream;
-import stroom.streamstore.meta.api.StreamStatus;
+import stroom.data.meta.api.Stream;
 
 public class FindStreamVolumeCriteria extends BaseCriteria {
     private static final long serialVersionUID = 3528656425356870590L;

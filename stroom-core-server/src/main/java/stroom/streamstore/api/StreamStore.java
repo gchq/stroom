@@ -18,8 +18,8 @@
 package stroom.streamstore.api;
 
 import stroom.streamstore.StreamException;
-import stroom.streamstore.meta.api.Stream;
-import stroom.streamstore.meta.api.StreamProperties;
+import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.StreamProperties;
 
 import java.util.Map;
 

@@ -18,7 +18,7 @@ package stroom.streamstore;
 
 import stroom.security.Security;
 import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.meta.api.Stream;
+import stroom.data.meta.api.Stream;
 import stroom.streamstore.shared.FetchFullStreamInfoAction;
 import stroom.streamstore.shared.FullStreamInfoResult;
 import stroom.streamstore.shared.FullStreamInfoResult.Entry;

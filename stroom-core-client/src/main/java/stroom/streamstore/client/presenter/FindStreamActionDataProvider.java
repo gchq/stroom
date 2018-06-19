@@ -23,9 +23,9 @@ import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.ResultList;
 import stroom.entity.shared.Sort.Direction;
-import stroom.streamstore.meta.api.FindStreamCriteria;
+import stroom.data.meta.api.FindStreamCriteria;
 import stroom.streamstore.shared.FindStreamAction;
-import stroom.streamstore.meta.api.StreamDataRow;
+import stroom.data.meta.api.StreamDataRow;
 
 public class FindStreamActionDataProvider implements Refreshable, ColumnSortEvent.Handler {
     private final ClientDispatchAsync dispatcher;

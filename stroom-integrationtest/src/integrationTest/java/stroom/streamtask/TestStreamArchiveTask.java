@@ -35,7 +35,7 @@ import stroom.streamstore.api.StreamTarget;
 import stroom.streamstore.fs.FileSystemCleanExecutor;
 import stroom.streamstore.fs.StreamVolumeService;
 import stroom.streamstore.fs.StreamVolumeService.StreamVolume;
-import stroom.streamstore.meta.api.StreamProperties;
+import stroom.data.meta.api.StreamProperties;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.SimpleTaskContext;
 import stroom.test.AbstractCoreIntegrationTest;

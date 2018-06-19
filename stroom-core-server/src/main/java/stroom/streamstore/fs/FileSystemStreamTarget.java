@@ -22,7 +22,7 @@ import stroom.feed.MetaMap;
 import stroom.io.SeekableOutputStream;
 import stroom.streamstore.StreamException;
 import stroom.streamstore.api.StreamTarget;
-import stroom.streamstore.meta.api.Stream;
+import stroom.data.meta.api.Stream;
 import stroom.streamstore.shared.StreamTypeNames;
 
 import java.io.IOException;

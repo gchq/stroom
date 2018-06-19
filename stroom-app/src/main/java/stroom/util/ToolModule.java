@@ -18,7 +18,7 @@ package stroom.util;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import stroom.streamstore.meta.impl.db.StreamStoreMetaDbModule;
+import stroom.data.meta.impl.db.StreamStoreMetaDbModule;
 import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;

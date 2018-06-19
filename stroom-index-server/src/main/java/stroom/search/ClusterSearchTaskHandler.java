@@ -51,7 +51,7 @@ import stroom.search.shard.IndexShardSearchTaskProducer;
 import stroom.search.shard.IndexShardSearchTaskProperties;
 import stroom.search.shard.IndexShardSearcherCache;
 import stroom.security.Security;
-import stroom.streamstore.meta.api.StreamMetaService;
+import stroom.data.meta.api.StreamMetaService;
 import stroom.task.ExecutorProvider;
 import stroom.task.TaskCallback;
 import stroom.task.TaskContext;

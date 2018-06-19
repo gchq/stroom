@@ -18,7 +18,6 @@ package stroom.streamtask.shared;
 
 import stroom.entity.shared.Action;
 import stroom.docref.DocRef;
-import stroom.streamstore.meta.api.FindStreamCriteria;
 import stroom.streamstore.shared.QueryData;
 
 public class CreateProcessorAction extends Action<ProcessorFilter> {

@@ -24,7 +24,7 @@ import stroom.feed.shared.FeedDoc;
 import stroom.streamstore.api.StreamSource;
 import stroom.streamstore.api.StreamStore;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.streamstore.meta.api.Stream;
+import stroom.data.meta.api.Stream;
 import stroom.util.date.DateUtil;
 
 import javax.net.ssl.HttpsURLConnection;
