@@ -47,6 +47,14 @@ public class TreeStructure implements SharedObject {
         return root;
     }
 
+    public Map<ExplorerNode, ExplorerNode> getParentMap() {
+        return parentMap;
+    }
+
+    public Map<ExplorerNode, List<ExplorerNode>> getChildMap() {
+        return childMap;
+    }
+
     public ExplorerNode getParent(final ExplorerNode child) {
         return parentMap.get(child);
     }

@@ -209,7 +209,7 @@ const mapStateToProps = state => ({
   numberOfPages: state.trackerDashboard.numberOfPages,
 });
 
-const mapDispatchToProps = (dispatch, ownProps) => ({
+const mapDispatchToProps = dispatch => ({
   onHandleSort: (sortBy, sortDirection) => {
     dispatch(actionCreators.updateSort(sortBy, sortDirection));
     dispatch(fetchTrackers());

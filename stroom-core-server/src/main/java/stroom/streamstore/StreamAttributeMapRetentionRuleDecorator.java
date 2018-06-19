@@ -76,7 +76,7 @@ public class StreamAttributeMapRetentionRuleDecorator {
         for (int i = 0; i < rules.size(); i++) {
             final DataRetentionRule rule = rules.get(i);
             // We will ignore rules that are not enabled or have no enabled expression.
-            if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().enabled()) {
+            if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().getEnabled()) {
                 if (expressionMatcher.match(attributeMap, rule.getExpression())) {
                     return i;
                 }

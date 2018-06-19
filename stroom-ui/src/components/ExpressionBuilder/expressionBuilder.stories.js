@@ -34,7 +34,7 @@ import { actionCreators as docExplorerActionCreators, testTree } from 'component
 
 const { expressionChanged } = expressionActionCreators;
 const { receiveDataSource } = dataSourceActionCreators;
-const { receivedDocTree } = docExplorerActionCreators;
+const { docTreeReceived } = docExplorerActionCreators;
 
 import 'styles/main.css';
 
@@ -53,7 +53,7 @@ import markdown from './expressionBuilder.md';
 
 storiesOf('Expression Builder', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(receivedDocTree(testTree));
+    store.dispatch(docTreeReceived(testTree));
     store.dispatch(receiveDataSource('testDs', testDataSource));
     store.dispatch(expressionChanged('populatedExEdit', testExpression));
     store.dispatch(expressionChanged('populatedExRO', testExpression));

@@ -156,7 +156,7 @@ public class StatStoreCriteriaBuilder {
      */
     private static void findAllTermNodes(final ExpressionItem node, final List<ExpressionTerm> termsFound) {
         // Don't go any further down this branch if this node is disabled.
-        if (node.enabled()) {
+        if (node.getEnabled()) {
             if (node instanceof ExpressionTerm) {
                 final ExpressionTerm termNode = (ExpressionTerm) node;
 

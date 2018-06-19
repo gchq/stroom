@@ -156,7 +156,7 @@ class StreamTaskCreatorTransactionHelper {
         if (expression != null) {
             builder = new ExpressionOperator.Builder(expression.getOp());
 
-            if (expression.enabled() && expression.getChildren() != null) {
+            if (expression.getEnabled() && expression.getChildren() != null) {
                 addChildren(builder, expression);
             }
 
@@ -173,7 +173,7 @@ class StreamTaskCreatorTransactionHelper {
 
     private void addChildren(final ExpressionOperator.Builder builder, final ExpressionOperator parent) {
         for (final ExpressionItem item : parent.getChildren()) {
-            if (item.enabled()) {
+            if (item.getEnabled()) {
                 if (item instanceof ExpressionOperator) {
                     final ExpressionOperator expressionOperator = (ExpressionOperator) item;
                     final ExpressionOperator.Builder child = new ExpressionOperator.Builder(Op.OR);

@@ -26,6 +26,7 @@ import { actionCreators } from './redux';
 
 import markdown from './docExplorer.md';
 import { testTree, DOC_REF_TYPES } from './documentTree.testData';
+import { fromSetupSampleData } from './documentTree.testData.large';
 
 import { pickRandomItem } from 'lib/treeUtils';
 
@@ -34,11 +35,18 @@ import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
 import 'styles/main.css';
 
-const { receivedDocTree, docRefPicked } = actionCreators;
+const { docTreeReceived, docRefPicked } = actionCreators;
+
+storiesOf('Document Explorer (Setup Sample Data)', module)
+  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
+    store.dispatch(docTreeReceived(fromSetupSampleData));
+  }))
+  .addDecorator(DragDropDecorator)
+  .add('Explorer Tree', () => <DocExplorer explorerId='root'/>);
 
 storiesOf('Document Explorer', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(receivedDocTree(testTree));
+    store.dispatch(docTreeReceived(testTree));
     store.dispatch(docRefPicked(
       'dropdown2',
       pickRandomItem(testTree, (l, n) => n.type === DOC_REF_TYPES.XSLT),
