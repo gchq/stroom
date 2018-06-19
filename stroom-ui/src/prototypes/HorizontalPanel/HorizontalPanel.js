@@ -1,12 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  Button,
-  Menu,
-  Header,
-  Grid,
-  Divider,
-} from 'semantic-ui-react';
+import { Button, Menu, Header, Grid, Divider } from 'semantic-ui-react';
 import { compose, withState } from 'recompose';
 
 const enhance = compose(withState('activeItem', 'setActiveItem', 'home'));
@@ -45,7 +39,7 @@ const HorizontalPanel = enhance(({
 
 HorizontalPanel.propTypes = {
   content: PropTypes.object.isRequired,
-  title: PropTypes.string.isRequired,
+  title: PropTypes.object.isRequired,
   headerMenuItems: PropTypes.array,
   onClose: PropTypes.func.isRequired,
   titleColumns: PropTypes.number,

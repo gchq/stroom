@@ -9,6 +9,8 @@ import { Container, Header, Message, Image, Grid, Form } from 'semantic-ui-react
 
 import { reduxForm } from 'redux-form';
 
+import HorizontalPanel from 'prototypes/HorizontalPanel';
+
 import ElementField from './ElementField';
 
 const enhance = compose(
@@ -51,48 +53,55 @@ const enhance = compose(
 );
 
 const ElementDetails = enhance(({
-  pipelineId, pipeline, selectedElementId, elements,
+  pipelineId, pipeline, selectedElementId, elements, onClose,
 }) => {
   const element = pipeline.pipeline.elements.add.find(element => element.id === selectedElementId);
   const elementProperties = pipeline.pipeline.properties.add.filter(property => property.element === selectedElementId);
   const elementType = elements.elements[element.type];
   const elementTypeProperties = elements.elementProperties[element.type];
 
+  const title = (
+    <React.Fragment>
+      <Image
+        size="small"
+        src={require(`../images/${elementType.icon}`)}
+        className="element-details__icon"
+      />
+      {element.id}
+    </React.Fragment>
+  );
+
+  const content = (
+    <Form className="element-details__form">
+      {Object.keys(elementTypeProperties).map(key => (
+        <ElementField
+          key={key}
+          name={key}
+          type={elementTypeProperties[key].type}
+          description={elementTypeProperties[key].description}
+          defaultValue={parseInt(elementTypeProperties[key].defaultValue, 10)}
+          value={elementProperties.find(element => element.name === key)}
+        />
+      ))}
+    </Form>
+  );
+
   return (
-    <Container className="element-details">
-      <Grid>
-        <Grid.Row width="16">
-          <Header as="h2" className="element-details__header">
-            <Image
-              src={require(`../images/${elementType.icon}`)}
-              className="element-details__icon"
-            />
-            {element.id}
-          </Header>
-        </Grid.Row>
-        <Grid.Row>
-          <Header as="h4"> This is a {elementType.type} element</Header>
-        </Grid.Row>
-        <Form className="element-details__form">
-          {Object.keys(elementTypeProperties).map(key => (
-            <ElementField
-              key={key}
-              name={key}
-              type={elementTypeProperties[key].type}
-              description={elementTypeProperties[key].description}
-              defaultValue={parseInt(elementTypeProperties[key].defaultValue, 10)}
-              value={elementProperties.find(element => element.name === key)}
-            />
-          ))}
-        </Form>
-      </Grid>
-    </Container>
+    <HorizontalPanel
+      title={title}
+      onClose={() => onClose()}
+      content={content}
+      titleColumns={6}
+      menuColumns={10}
+      headerSize="h3"
+    />
   );
 });
 
 ElementDetails.propTypes = {
   // Set by owner
   pipelineId: PropTypes.string.isRequired,
+  onClose: PropTypes.func,
 
   // Redux state
   pipeline: PropTypes.object.isRequired,
