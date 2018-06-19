@@ -1,6 +1,6 @@
-/.classpath
-/.project
-/.settings/
-/target/
-/build/
-/tmp/
+.classpath
+.project
+.settings
+target
+build
+tmp
