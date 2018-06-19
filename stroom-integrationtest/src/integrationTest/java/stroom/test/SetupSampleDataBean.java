@@ -41,7 +41,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.statistics.sql.entity.StatisticStoreStore;
 import stroom.statistics.stroomstats.entity.StroomStatsStoreStore;
 import stroom.streamstore.api.StreamStore;
-import stroom.streamstore.meta.db.MetaKeyService;
+import stroom.streamstore.meta.impl.db.MetaKeyService;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamTypeNames;
