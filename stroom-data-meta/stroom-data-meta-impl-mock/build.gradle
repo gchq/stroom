@@ -1,0 +1,8 @@
+ext.moduleName = 'stroom.data.meta.impl.mock'
+
+dependencies {
+    compile project(':stroom-data-meta:stroom-data-meta-api')
+    compile project(':stroom-util')
+    compile libs.guice4
+    compile libs.javax_inject
+}

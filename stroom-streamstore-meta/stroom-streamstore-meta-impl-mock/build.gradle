@@ -1,8 +1,0 @@
-ext.moduleName = 'stroom.streamstore.meta.impl.mock'
-
-dependencies {
-    compile project(':stroom-streamstore-meta:stroom-streamstore-meta-api')
-    compile project(':stroom-util')
-    compile libs.guice4
-    compile libs.javax_inject
-}

@@ -1,6 +1,6 @@
 apply plugin: 'nu.studer.jooq'
 
-ext.moduleName = 'stroom.streamstore.meta.impl.db.gen'
+ext.moduleName = 'stroom.data.meta.impl.db.gen'
 
 dependencies {
     compile libs.jooq
@@ -36,7 +36,7 @@ if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
                         excludes = 'schema_version'
                     }
                     target {
-                        packageName = 'stroom.streamstore.meta.impl.db'
+                        packageName = 'stroom.data.meta.impl.db'
                         directory = 'src/main/java'
                     }
                 }

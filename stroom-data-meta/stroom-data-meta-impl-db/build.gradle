@@ -1,8 +1,8 @@
-ext.moduleName = 'stroom.streamstore.meta.impl.db'
+ext.moduleName = 'stroom.data.meta.impl.db'
 
 dependencies {
-    compile project(':stroom-streamstore-meta:stroom-streamstore-meta-impl-db-gen')
-    compile project(':stroom-streamstore-meta:stroom-streamstore-meta-api')
+    compile project(':stroom-data-meta:stroom-data-meta-impl-db-gen')
+    compile project(':stroom-data-meta:stroom-data-meta-api')
     compile project(':stroom-properties-api')
     compile project(':stroom-security-api')
     compile project(':stroom-util') // TODO : @66 TRY AND REMOVE THIS
