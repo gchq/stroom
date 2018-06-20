@@ -16,45 +16,41 @@
 
 package stroom.data.store.impl.fs;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import stroom.data.store.api.NestedInputStream;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.test.StroomJUnit4ClassRunner;
-import stroom.util.test.StroomUnitTest;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestRASegmentStreamsWithBoundary extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestRASegmentStreamsWithBoundary {
     private Path datFile;
     private Path segFile;
     private Path bdyFile;
 
-    @Before
-    public void setup() {
-        final Path dir = getCurrentTestDir();
+    @BeforeEach
+    void setup() {
+        final Path dir = FileUtil.getTempDir();
         datFile = dir.resolve("test.bzg");
         segFile = dir.resolve("test.seg.dat");
         bdyFile = dir.resolve("test.bdy.dat");
     }
 
-    @After
-    public void clean() {
+    @AfterEach
+    void clean() {
         FileUtil.deleteFile(datFile);
         FileUtil.deleteFile(segFile);
         FileUtil.deleteFile(bdyFile);
     }
 
     @Test
-    public void testSimpleLowLevelAPI() throws IOException {
+    void testSimpleLowLevelAPI() throws IOException {
         final RASegmentOutputStream segmentStream = new RASegmentOutputStream(new BlockGZIPOutputFile(datFile),
                 new LockingFileOutputStream(segFile, true));
 
@@ -78,26 +74,26 @@ public class TestRASegmentStreamsWithBoundary extends StroomUnitTest {
         // This will flush all the index files (to create them)
         boundaryStream.flush();
 
-        Assert.assertTrue(Files.isRegularFile(Paths.get(datFile.toString() + ".lock")));
-        Assert.assertTrue(Files.isRegularFile(Paths.get(segFile.toString() + ".lock")));
-        Assert.assertTrue(Files.isRegularFile(Paths.get(bdyFile.toString() + ".lock")));
+        assertThat(Files.isRegularFile(Paths.get(datFile.toString() + ".lock"))).isTrue();
+        assertThat(Files.isRegularFile(Paths.get(segFile.toString() + ".lock"))).isTrue();
+        assertThat(Files.isRegularFile(Paths.get(bdyFile.toString() + ".lock"))).isTrue();
 
         boundaryStream.close();
 
-        Assert.assertTrue(Files.isRegularFile(datFile));
-        Assert.assertTrue(Files.isRegularFile(segFile));
-        Assert.assertTrue(Files.isRegularFile(bdyFile));
+        assertThat(Files.isRegularFile(datFile)).isTrue();
+        assertThat(Files.isRegularFile(segFile)).isTrue();
+        assertThat(Files.isRegularFile(bdyFile)).isTrue();
 
         final RASegmentInputStream boundaryInputStream = new RASegmentInputStream(new BlockGZIPInputFile(datFile),
                 new UncompressedInputStream(bdyFile, true));
 
         boundaryInputStream.include(1);
 
-        Assert.assertEquals("2A\n2B\n2C\n2D\n", StreamUtil.streamToString(boundaryInputStream));
+        assertThat(StreamUtil.streamToString(boundaryInputStream)).isEqualTo("2A\n2B\n2C\n2D\n");
     }
 
     @Test
-    public void testHighLevelAPI_Basic() throws IOException {
+    void testHighLevelAPI_Basic() throws IOException {
         final RASegmentOutputStream segmentStream = new RASegmentOutputStream(new BlockGZIPOutputFile(datFile),
                 new LockingFileOutputStream(segFile, true));
 
@@ -123,54 +119,54 @@ public class TestRASegmentStreamsWithBoundary extends StroomUnitTest {
         // This will flush all the index files (to create them)
         boundaryStream.flush();
 
-        Assert.assertTrue(Files.isRegularFile(Paths.get(datFile.toString() + ".lock")));
-        Assert.assertTrue(Files.isRegularFile(Paths.get(segFile.toString() + ".lock")));
-        Assert.assertTrue(Files.isRegularFile(Paths.get(bdyFile.toString() + ".lock")));
+        assertThat(Files.isRegularFile(Paths.get(datFile.toString() + ".lock"))).isTrue();
+        assertThat(Files.isRegularFile(Paths.get(segFile.toString() + ".lock"))).isTrue();
+        assertThat(Files.isRegularFile(Paths.get(bdyFile.toString() + ".lock"))).isTrue();
 
         boundaryStream.close();
 
-        Assert.assertTrue(Files.isRegularFile(datFile));
-        Assert.assertTrue(Files.isRegularFile(segFile));
-        Assert.assertTrue(Files.isRegularFile(bdyFile));
+        assertThat(Files.isRegularFile(datFile)).isTrue();
+        assertThat(Files.isRegularFile(segFile)).isTrue();
+        assertThat(Files.isRegularFile(bdyFile)).isTrue();
 
         final RANestedInputStream boundaryInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile),
                 new UncompressedInputStream(bdyFile, true));
 
-        Assert.assertEquals(2, boundaryInputStream.getEntryCount());
+        assertThat(boundaryInputStream.getEntryCount()).isEqualTo(2);
 
-        Assert.assertTrue(boundaryInputStream.getNextEntry());
-        Assert.assertEquals("1A\n1B\n1C\n1D\n", StreamUtil.streamToString(boundaryInputStream, false));
-        Assert.assertEquals(0, boundaryInputStream.entryByteOffsetStart());
+        assertThat(boundaryInputStream.getNextEntry()).isTrue();
+        assertThat(StreamUtil.streamToString(boundaryInputStream, false)).isEqualTo("1A\n1B\n1C\n1D\n");
+        assertThat(boundaryInputStream.entryByteOffsetStart()).isEqualTo(0);
         boundaryInputStream.closeEntry();
 
-        Assert.assertEquals(2, boundaryInputStream.getEntryCount());
+        assertThat(boundaryInputStream.getEntryCount()).isEqualTo(2);
 
-        Assert.assertTrue(boundaryInputStream.getNextEntry());
-        Assert.assertEquals("2A\n2B\n2C\n2D\n", StreamUtil.streamToString(boundaryInputStream, false));
-        Assert.assertEquals(12, boundaryInputStream.entryByteOffsetStart());
+        assertThat(boundaryInputStream.getNextEntry()).isTrue();
+        assertThat(StreamUtil.streamToString(boundaryInputStream, false)).isEqualTo("2A\n2B\n2C\n2D\n");
+        assertThat(boundaryInputStream.entryByteOffsetStart()).isEqualTo(12);
         boundaryInputStream.closeEntry();
         boundaryInputStream.close();
 
-        Assert.assertEquals(2, boundaryInputStream.getEntryCount());
+        assertThat(boundaryInputStream.getEntryCount()).isEqualTo(2);
 
         final RANestedInputStream boundaryInputStream2 = new RANestedInputStream(new BlockGZIPInputFile(datFile),
                 new UncompressedInputStream(bdyFile, true));
 
-        Assert.assertTrue(boundaryInputStream2.getNextEntry(1));
-        Assert.assertEquals("2A\n2B\n2C\n2D\n", StreamUtil.streamToString(boundaryInputStream2, false));
+        assertThat(boundaryInputStream2.getNextEntry(1)).isTrue();
+        assertThat(StreamUtil.streamToString(boundaryInputStream2, false)).isEqualTo("2A\n2B\n2C\n2D\n");
         boundaryInputStream2.closeEntry();
         boundaryInputStream2.close();
 
         final RANestedInputStream boundaryInputStream3 = new RANestedInputStream(new BlockGZIPInputFile(datFile),
                 new UncompressedInputStream(bdyFile, true));
 
-        Assert.assertFalse(boundaryInputStream3.getNextEntry(2));
+        assertThat(boundaryInputStream3.getNextEntry(2)).isFalse();
         boundaryInputStream3.close();
 
     }
 
     @Test
-    public void testHighLevelAPI_RandomAccess() throws IOException {
+    void testHighLevelAPI_RandomAccess() throws IOException {
         final RASegmentOutputStream segmentStream = new RASegmentOutputStream(new BlockGZIPOutputFile(datFile),
                 new LockingFileOutputStream(segFile, true));
 
@@ -181,20 +177,20 @@ public class TestRASegmentStreamsWithBoundary extends StroomUnitTest {
         boundaryStream.write("1A\n".getBytes(StreamUtil.DEFAULT_CHARSET));
         boundaryStream.write("1B\n".getBytes(StreamUtil.DEFAULT_CHARSET));
 
-        Assert.assertEquals(6, segmentStream.getPosition());
+        assertThat(segmentStream.getPosition()).isEqualTo(6);
         segmentStream.addSegment();
 
         boundaryStream.write("1C\n".getBytes(StreamUtil.DEFAULT_CHARSET));
         boundaryStream.write("1D\n".getBytes(StreamUtil.DEFAULT_CHARSET));
 
-        Assert.assertEquals(12, segmentStream.getPosition());
+        assertThat(segmentStream.getPosition()).isEqualTo(12);
         boundaryStream.closeEntry();
 
         boundaryStream.putNextEntry();
         boundaryStream.write("2A\n".getBytes(StreamUtil.DEFAULT_CHARSET));
         boundaryStream.write("2B\n".getBytes(StreamUtil.DEFAULT_CHARSET));
 
-        Assert.assertEquals(18, segmentStream.getPosition());
+        assertThat(segmentStream.getPosition()).isEqualTo(18);
         segmentStream.addSegment();
 
         boundaryStream.write("2C\n".getBytes(StreamUtil.DEFAULT_CHARSET));
@@ -217,7 +213,7 @@ public class TestRASegmentStreamsWithBoundary extends StroomUnitTest {
 
         segmentInputStream.include(1);
 
-        Assert.assertEquals("2C\n2D\n", StreamUtil.streamToString(segmentInputStream, false));
+        assertThat(StreamUtil.streamToString(segmentInputStream, false)).isEqualTo("2C\n2D\n");
 
         boundaryInputStream.close();
         segmentInputStream.close();
@@ -225,7 +221,7 @@ public class TestRASegmentStreamsWithBoundary extends StroomUnitTest {
     }
 
     @Test
-    public void testHighLevelAPI_SingleBoundaryNoBoundaryIndex() throws IOException {
+    void testHighLevelAPI_SingleBoundaryNoBoundaryIndex() throws IOException {
         final RASegmentOutputStream segmentStream = new RASegmentOutputStream(new BlockGZIPOutputFile(datFile),
                 new LockingFileOutputStream(segFile, true));
 
@@ -243,24 +239,24 @@ public class TestRASegmentStreamsWithBoundary extends StroomUnitTest {
 
         boundaryStream.close();
 
-        Assert.assertTrue(Files.isRegularFile(datFile));
-        Assert.assertTrue(Files.isRegularFile(segFile));
-        Assert.assertFalse(Files.isRegularFile(bdyFile));
+        assertThat(Files.isRegularFile(datFile)).isTrue();
+        assertThat(Files.isRegularFile(segFile)).isTrue();
+        assertThat(Files.isRegularFile(bdyFile)).isFalse();
 
         final RANestedInputStream boundaryInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile),
                 new UncompressedInputStream(bdyFile, true));
 
-        Assert.assertTrue(boundaryInputStream.getNextEntry());
-        Assert.assertEquals("1A\n1B\n1C\n1D\n", StreamUtil.streamToString(boundaryInputStream, false));
+        assertThat(boundaryInputStream.getNextEntry()).isTrue();
+        assertThat(StreamUtil.streamToString(boundaryInputStream, false)).isEqualTo("1A\n1B\n1C\n1D\n");
         boundaryInputStream.closeEntry();
 
-        Assert.assertFalse(boundaryInputStream.getNextEntry());
+        assertThat(boundaryInputStream.getNextEntry()).isFalse();
         boundaryInputStream.close();
 
     }
 
     @Test
-    public void testHighLevelAPI_MultipleBlankStreams() throws IOException {
+    void testHighLevelAPI_MultipleBlankStreams() throws IOException {
         final RASegmentOutputStream segmentStream = new RASegmentOutputStream(new BlockGZIPOutputFile(datFile),
                 new LockingFileOutputStream(segFile, true));
 
@@ -287,33 +283,31 @@ public class TestRASegmentStreamsWithBoundary extends StroomUnitTest {
 
         boundaryStream.close();
 
-        Assert.assertTrue(Files.isRegularFile(datFile));
-        Assert.assertTrue(Files.isRegularFile(segFile));
-        Assert.assertTrue(Files.isRegularFile(bdyFile));
+        assertThat(Files.isRegularFile(datFile)).isTrue();
+        assertThat(Files.isRegularFile(segFile)).isTrue();
+        assertThat(Files.isRegularFile(bdyFile)).isTrue();
 
         final RANestedInputStream boundaryInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile),
                 new UncompressedInputStream(bdyFile, true));
 
         // 1
-        Assert.assertTrue(boundaryInputStream.getNextEntry());
-        Assert.assertEquals("", StreamUtil.streamToString(boundaryInputStream, false));
+        assertThat(boundaryInputStream.getNextEntry()).isTrue();
+        assertThat(StreamUtil.streamToString(boundaryInputStream, false)).isEqualTo("");
         boundaryInputStream.closeEntry();
         // 2
-        Assert.assertTrue(boundaryInputStream.getNextEntry());
-        Assert.assertEquals("", StreamUtil.streamToString(boundaryInputStream, false));
+        assertThat(boundaryInputStream.getNextEntry()).isTrue();
+        assertThat(StreamUtil.streamToString(boundaryInputStream, false)).isEqualTo("");
         boundaryInputStream.closeEntry();
         // 3
-        Assert.assertTrue(boundaryInputStream.getNextEntry());
-        Assert.assertEquals("", StreamUtil.streamToString(boundaryInputStream, false));
+        assertThat(boundaryInputStream.getNextEntry()).isTrue();
+        assertThat(StreamUtil.streamToString(boundaryInputStream, false)).isEqualTo("");
         boundaryInputStream.closeEntry();
         // 4
-        Assert.assertTrue(boundaryInputStream.getNextEntry());
-        Assert.assertEquals("1A\n1B\n1C\n1D\n", StreamUtil.streamToString(boundaryInputStream, false));
+        assertThat(boundaryInputStream.getNextEntry()).isTrue();
+        assertThat(StreamUtil.streamToString(boundaryInputStream, false)).isEqualTo("1A\n1B\n1C\n1D\n");
         boundaryInputStream.closeEntry();
 
-        Assert.assertFalse(boundaryInputStream.getNextEntry());
+        assertThat(boundaryInputStream.getNextEntry()).isFalse();
         boundaryInputStream.close();
-
     }
-
 }

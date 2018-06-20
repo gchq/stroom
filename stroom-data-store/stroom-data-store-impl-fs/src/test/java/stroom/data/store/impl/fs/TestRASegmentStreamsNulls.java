@@ -16,23 +16,21 @@
 
 package stroom.data.store.impl.fs;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import stroom.data.store.api.SegmentOutputStream;
+import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.test.StroomJUnit4ClassRunner;
-import stroom.util.test.StroomUnitTest;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestRASegmentStreamsNulls extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestRASegmentStreamsNulls {
     @Test
-    public void testNoSegments() throws IOException {
-        final Path dir = getCurrentTestDir();
+    void testNoSegments() throws IOException {
+        final Path dir = FileUtil.getTempDir();
         final Path datFile = dir.resolve("test.bzg");
         final Path segFile = dir.resolve("test.seg.dat");
 
@@ -43,13 +41,13 @@ public class TestRASegmentStreamsNulls extends StroomUnitTest {
 
         segStream.close();
 
-        Assert.assertTrue(Files.isRegularFile(datFile));
-        Assert.assertFalse(Files.isRegularFile(segFile));
+        assertThat(Files.isRegularFile(datFile)).isTrue();
+        assertThat(Files.isRegularFile(segFile)).isFalse();
 
         RASegmentInputStream inputStream = new RASegmentInputStream(new BlockGZIPInputFile(datFile),
                 new UncompressedInputStream(segFile, true));
 
-        Assert.assertEquals("tom1", StreamUtil.streamToString(inputStream));
+        assertThat(StreamUtil.streamToString(inputStream)).isEqualTo("tom1");
 
         inputStream = new RASegmentInputStream(new BlockGZIPInputFile(datFile),
                 new UncompressedInputStream(segFile, true));
@@ -60,7 +58,7 @@ public class TestRASegmentStreamsNulls extends StroomUnitTest {
             inputStream.include(i);
         }
 
-        Assert.assertEquals("tom1", StreamUtil.streamToString(inputStream));
+        assertThat(StreamUtil.streamToString(inputStream)).isEqualTo("tom1");
 
         Files.deleteIfExists(datFile);
         Files.deleteIfExists(segFile);

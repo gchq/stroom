@@ -16,45 +16,43 @@
 
 package stroom.data.store.impl.fs;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import stroom.data.store.api.NestedOutputStream;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.util.io.FileUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
-import stroom.util.test.StroomJUnit4ClassRunner;
-import stroom.util.test.StroomUnitTest;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestRACompoundInputStream extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Fail.fail;
+
+class TestRACompoundInputStream {
     private Path datFile;
     private Path segFile;
     private Path bdyFile;
 
-    @Before
-    public void setup() {
-        final Path dir = getCurrentTestDir();
+    @BeforeEach
+    void setup() {
+        final Path dir = FileUtil.getTempDir();
         datFile = dir.resolve("test.bzg");
         segFile = dir.resolve("test.seg.dat");
         bdyFile = dir.resolve("test.bdy.dat");
     }
 
-    @After
-    public void clean() {
+    @AfterEach
+    void clean() {
         FileUtil.deleteFile(datFile);
         FileUtil.deleteFile(segFile);
         FileUtil.deleteFile(bdyFile);
     }
 
-    public void setup(final int bdyCount, final int segPerBdy) throws IOException {
+    private void setup(final int bdyCount, final int segPerBdy) throws IOException {
         final RASegmentOutputStream segmentStream = new RASegmentOutputStream(new BlockGZIPOutputFile(datFile),
                 new LockingFileOutputStream(segFile, true));
 
@@ -74,22 +72,22 @@ public class TestRACompoundInputStream extends StroomUnitTest {
 
         boundaryStream.close();
 
-        Assert.assertTrue(Files.isRegularFile(datFile));
+        assertThat(Files.isRegularFile(datFile)).isTrue();
         if (segPerBdy > 1) {
-            Assert.assertTrue(Files.isRegularFile(segFile));
+            assertThat(Files.isRegularFile(segFile)).isTrue();
         } else {
-            Assert.assertFalse(Files.isRegularFile(segFile));
+            assertThat(Files.isRegularFile(segFile)).isFalse();
         }
         if (bdyCount > 1) {
-            Assert.assertTrue(Files.isRegularFile(bdyFile));
+            assertThat(Files.isRegularFile(bdyFile)).isTrue();
         } else {
-            Assert.assertFalse(Files.isRegularFile(bdyFile));
+            assertThat(Files.isRegularFile(bdyFile)).isFalse();
         }
 
     }
 
     // @Test BROKEN
-    public void testBlanks() throws IOException {
+    void testBlanks() throws IOException {
         final RASegmentOutputStream segmentStream = new RASegmentOutputStream(new BlockGZIPOutputFile(datFile),
                 new LockingFileOutputStream(segFile, true));
 
@@ -117,17 +115,17 @@ public class TestRACompoundInputStream extends StroomUnitTest {
 
         SegmentInputStream seg = compoundInputStream.getNextInputStream(0);
         seg.include(0);
-        Assert.assertEquals("", StreamUtil.streamToString(seg));
+        assertThat(StreamUtil.streamToString(seg)).isEqualTo("");
 
         seg = compoundInputStream.getNextInputStream(0);
         seg.include(1);
-        Assert.assertEquals("", StreamUtil.streamToString(seg));
+        assertThat(StreamUtil.streamToString(seg)).isEqualTo("");
 
         compoundInputStream.close();
     }
 
     @Test
-    public void testNoSegOrBdyData() throws IOException {
+    void testNoSegOrBdyData() throws IOException {
         setup(1, 1);
 
         final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile), new UncompressedInputStream(bdyFile, true));
@@ -135,14 +133,14 @@ public class TestRACompoundInputStream extends StroomUnitTest {
 
         final SegmentInputStream seg = compoundInputStream.getNextInputStream(0);
         seg.include(0);
-        Assert.assertEquals("B=1,S=1\n", StreamUtil.streamToString(seg));
+        assertThat(StreamUtil.streamToString(seg)).isEqualTo("B=1,S=1\n");
 
         compoundInputStream.close();
 
     }
 
     @Test
-    public void testNoSegData() throws IOException {
+    void testNoSegData() throws IOException {
         setup(1, 0);
 
         final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile), new UncompressedInputStream(bdyFile, true));
@@ -150,14 +148,14 @@ public class TestRACompoundInputStream extends StroomUnitTest {
 
         final SegmentInputStream seg = compoundInputStream.getNextInputStream(0);
         seg.include(0);
-        Assert.assertEquals("", StreamUtil.streamToString(seg));
+        assertThat(StreamUtil.streamToString(seg)).isEqualTo("");
 
         compoundInputStream.close();
 
     }
 
     @Test
-    public void testNoBdyOrSeg() throws IOException {
+    void testNoBdyOrSeg() throws IOException {
         setup(1, 1);
 
         final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile), new UncompressedInputStream(bdyFile, true));
@@ -165,13 +163,13 @@ public class TestRACompoundInputStream extends StroomUnitTest {
 
         final SegmentInputStream seg = compoundInputStream.getNextInputStream(0);
         seg.include(0);
-        Assert.assertEquals("B=1,S=1\n", StreamUtil.streamToString(seg));
+        assertThat(StreamUtil.streamToString(seg)).isEqualTo("B=1,S=1\n");
 
         compoundInputStream.close();
     }
 
     @Test
-    public void testSmall1() throws IOException {
+    void testSmall1() throws IOException {
         setup(2, 2);
 
         final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile), new UncompressedInputStream(bdyFile, true));
@@ -179,13 +177,13 @@ public class TestRACompoundInputStream extends StroomUnitTest {
 
         final SegmentInputStream seg = compoundInputStream.getNextInputStream(0);
         seg.include(0);
-        Assert.assertEquals("B=1,S=1\n", StreamUtil.streamToString(seg));
+        assertThat(StreamUtil.streamToString(seg)).isEqualTo("B=1,S=1\n");
 
         compoundInputStream.close();
     }
 
     @Test
-    public void testSmall2() throws IOException {
+    void testSmall2() throws IOException {
         setup(2, 2);
 
         final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile), new UncompressedInputStream(bdyFile, true));
@@ -193,13 +191,13 @@ public class TestRACompoundInputStream extends StroomUnitTest {
 
         final SegmentInputStream seg = compoundInputStream.getNextInputStream(0);
         seg.include(1);
-        Assert.assertEquals("B=1,S=2\n", StreamUtil.streamToString(seg));
+        assertThat(StreamUtil.streamToString(seg)).isEqualTo("B=1,S=2\n");
 
         compoundInputStream.close();
     }
 
     @Test
-    public void testSmall3() throws IOException {
+    void testSmall3() throws IOException {
         setup(2, 2);
 
         final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile), new UncompressedInputStream(bdyFile, true));
@@ -207,13 +205,13 @@ public class TestRACompoundInputStream extends StroomUnitTest {
 
         final SegmentInputStream seg = compoundInputStream.getNextInputStream(1);
         seg.include(0);
-        Assert.assertEquals("B=2,S=1\n", StreamUtil.streamToString(seg));
+        assertThat(StreamUtil.streamToString(seg)).isEqualTo("B=2,S=1\n");
 
         compoundInputStream.close();
     }
 
     @Test
-    public void testSmall4() throws IOException {
+    void testSmall4() throws IOException {
         setup(2, 2);
 
         final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile), new UncompressedInputStream(bdyFile, true));
@@ -221,13 +219,13 @@ public class TestRACompoundInputStream extends StroomUnitTest {
 
         final SegmentInputStream seg = compoundInputStream.getNextInputStream(1);
         seg.include(1);
-        Assert.assertEquals("B=2,S=2\n", StreamUtil.streamToString(seg));
+        assertThat(StreamUtil.streamToString(seg)).isEqualTo("B=2,S=2\n");
 
         compoundInputStream.close();
     }
 
     @Test
-    public void testSmallIOError1() throws IOException {
+    void testSmallIOError1() throws IOException {
         setup(2, 2);
 
         final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile), new UncompressedInputStream(bdyFile, true));
@@ -235,14 +233,14 @@ public class TestRACompoundInputStream extends StroomUnitTest {
 
         try {
             compoundInputStream.getNextInputStream(2);
-            Assert.fail("Expecting IO Error");
+            fail("Expecting IO Error");
         } catch (final IOException e) {
         }
         compoundInputStream.close();
     }
 
     @Test
-    public void testSmallIOError2() throws IOException {
+    void testSmallIOError2() throws IOException {
         setup(2, 2);
 
         final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile), new UncompressedInputStream(bdyFile, true));
@@ -253,7 +251,7 @@ public class TestRACompoundInputStream extends StroomUnitTest {
         try {
             seg = compoundInputStream.getNextInputStream(1);
             seg.include(2);
-            Assert.fail("Expecting IO Error");
+            fail("Expecting IO Error");
         } catch (final RuntimeException e) {
         }
         StreamUtil.close(seg);
@@ -261,32 +259,32 @@ public class TestRACompoundInputStream extends StroomUnitTest {
     }
 
     @Test
-    public void testBdyWithNoSegs1() throws IOException {
+    void testBdyWithNoSegs1() throws IOException {
         setup(100, 1);
 
         final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile), new UncompressedInputStream(bdyFile, true));
         final RACompoundInputStream compoundInputStream = new RACompoundInputStream(nestedInputStream, new UncompressedInputStream(segFile, true));
 
         final SegmentInputStream seg = compoundInputStream.getNextInputStream(0);
-        Assert.assertEquals("B=1,S=1\n", StreamUtil.streamToString(seg));
+        assertThat(StreamUtil.streamToString(seg)).isEqualTo("B=1,S=1\n");
         compoundInputStream.close();
     }
 
     @Test
-    public void testBdyWithNoSegs2() throws IOException {
+    void testBdyWithNoSegs2() throws IOException {
         setup(100, 1);
 
         final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile), new UncompressedInputStream(bdyFile, true));
         final RACompoundInputStream compoundInputStream = new RACompoundInputStream(nestedInputStream, new UncompressedInputStream(segFile, true));
 
         final SegmentInputStream seg = compoundInputStream.getNextInputStream(99);
-        Assert.assertEquals("B=100,S=1\n", StreamUtil.streamToString(seg));
+        assertThat(StreamUtil.streamToString(seg)).isEqualTo("B=100,S=1\n");
 
         compoundInputStream.close();
     }
 
     @Test
-    public void testNoBdyWithSegs1() throws IOException {
+    void testNoBdyWithSegs1() throws IOException {
         setup(1, 100);
 
         final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile), new UncompressedInputStream(bdyFile, true));
@@ -294,12 +292,12 @@ public class TestRACompoundInputStream extends StroomUnitTest {
 
         final SegmentInputStream seg = compoundInputStream.getNextInputStream(0);
         seg.include(0);
-        Assert.assertEquals("B=1,S=1\n", StreamUtil.streamToString(seg));
+        assertThat(StreamUtil.streamToString(seg)).isEqualTo("B=1,S=1\n");
         compoundInputStream.close();
     }
 
     @Test
-    public void testNoBdyWithSegs2WithReuse() throws IOException {
+    void testNoBdyWithSegs2WithReuse() throws IOException {
         setup(2, 100);
 
         final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile), new UncompressedInputStream(bdyFile, true));
@@ -307,17 +305,17 @@ public class TestRACompoundInputStream extends StroomUnitTest {
 
         SegmentInputStream seg = compoundInputStream.getNextInputStream(0);
         seg.include(99);
-        Assert.assertEquals("B=1,S=100\n", StreamUtil.streamToString(new IgnoreCloseInputStream(seg)));
+        assertThat(StreamUtil.streamToString(new IgnoreCloseInputStream(seg))).isEqualTo("B=1,S=100\n");
 
         seg = compoundInputStream.getNextInputStream(0);
         seg.include(99);
-        Assert.assertEquals("B=2,S=100\n", StreamUtil.streamToString(new IgnoreCloseInputStream(seg)));
+        assertThat(StreamUtil.streamToString(new IgnoreCloseInputStream(seg))).isEqualTo("B=2,S=100\n");
 
         compoundInputStream.close();
     }
 
     @Test
-    public void testBroken() throws IOException {
+    void testBroken() throws IOException {
         setup(10, 10);
 
         final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile),
@@ -334,14 +332,14 @@ public class TestRACompoundInputStream extends StroomUnitTest {
         segmentInputStream.include(1);
         segmentInputStream.include(9);
 
-        Assert.assertEquals("B=2,S=1\nB=2,S=2\nB=2,S=10\n", StreamUtil.streamToString(segmentInputStream, true));
+        assertThat(StreamUtil.streamToString(segmentInputStream, true)).isEqualTo("B=2,S=1\nB=2,S=2\nB=2,S=10\n");
         nestedInputStream.closeEntry();
         nestedInputStream.close();
 
     }
 
     @Test
-    public void testSmallBigScan() throws IOException {
+    void testSmallBigScan() throws IOException {
         setup(10, 10);
 
         // RAW Nest Stream Check
@@ -355,11 +353,10 @@ public class TestRACompoundInputStream extends StroomUnitTest {
             final String expectedStart = "[B=" + b + ",S=1\n";
             final String expectedEnd = "B=" + b + ",S=10\n]";
 
-            Assert.assertTrue(full + " did not start with " + expectedStart, full.startsWith(expectedStart));
-            Assert.assertTrue(full + " did not end with " + expectedEnd, full.endsWith(expectedEnd));
+            assertThat(full).withFailMessage(full + " did not start with " + expectedStart).startsWith(expectedStart);
+            assertThat(full).withFailMessage(full + " did not end with " + expectedEnd).endsWith(expectedEnd);
 
             nestedInputStream.closeEntry();
-
         }
         nestedInputStream.close();
 
@@ -373,15 +370,15 @@ public class TestRACompoundInputStream extends StroomUnitTest {
                     new UncompressedInputStream(segFile, true), nestedInputStream.entryByteOffsetStart(),
                     nestedInputStream.entryByteOffsetEnd());
 
-            Assert.assertEquals("Expecting 10 segments", 10, segmentInputStream.count());
+            assertThat(segmentInputStream.count()).withFailMessage("Expecting 10 segments").isEqualTo(10);
 
             final String full = "[" + StreamUtil.streamToString(segmentInputStream, true) + "]";
 
             final String expectedStart = "[B=" + b + ",S=1\n";
             final String expectedEnd = "B=" + b + ",S=10\n]";
 
-            Assert.assertTrue(full + " did not start with " + expectedStart, full.startsWith(expectedStart));
-            Assert.assertTrue(full + " did not end with " + expectedEnd, full.endsWith(expectedEnd));
+            assertThat(full).withFailMessage(full + " did not start with " + expectedStart).startsWith(expectedStart);
+            assertThat(full).withFailMessage(full + " did not end with " + expectedEnd).endsWith(expectedEnd);
 
             nestedInputStream.closeEntry();
 
@@ -407,8 +404,8 @@ public class TestRACompoundInputStream extends StroomUnitTest {
             final String expectedStart = "[B=" + b + ",S=1\nB=" + b + ",S=2\n";
             final String expectedEnd = "B=" + b + ",S=10\n]";
 
-            Assert.assertTrue(full + " did not start with " + expectedStart, full.startsWith(expectedStart));
-            Assert.assertTrue(full + " did not end with " + expectedEnd, full.endsWith(expectedEnd));
+            assertThat(full).withFailMessage(full + " did not start with " + expectedStart).startsWith(expectedStart);
+            assertThat(full).withFailMessage(full + " did not end with " + expectedEnd).endsWith(expectedEnd);
 
             nestedInputStream.closeEntry();
 
@@ -430,24 +427,24 @@ public class TestRACompoundInputStream extends StroomUnitTest {
                     seg.include(s - 1);
                     final String actual = StreamUtil.streamToString(seg);
                     if (!check.equals(actual)) {
-                        failed.append("Expected :" + check + "Actual   :" + actual);
+                        failed.append("Expected :").append(check).append("Actual   :").append(actual);
                     } else {
-                        working.append("Passed   :" + actual);
+                        working.append("Passed   :").append(actual);
                     }
                     seg.close();
                     compoundInputStream.close();
                 } catch (final RuntimeException e) {
-                    failed.append("Exception :" + check);
+                    failed.append("Exception :").append(check);
 
                 }
             }
         }
 
-        Assert.assertTrue(working.toString() + failed.toString(), failed.length() == 0);
+        assertThat(failed.length()).withFailMessage(working.toString() + failed.toString()).isEqualTo(0);
     }
 
     @Test
-    public void testNextEntry() throws IOException {
+    void testNextEntry() throws IOException {
         setup(10, 10);
 
         // RAW Nest Stream Check
@@ -461,8 +458,8 @@ public class TestRACompoundInputStream extends StroomUnitTest {
             final String expectedStart = "[B=" + b + ",S=1\n";
             final String expectedEnd = "B=" + b + ",S=10\n]";
 
-            Assert.assertTrue(full + " did not start with " + expectedStart, full.startsWith(expectedStart));
-            Assert.assertTrue(full + " did not end with " + expectedEnd, full.endsWith(expectedEnd));
+            assertThat(full).withFailMessage(full + " did not start with " + expectedStart).startsWith(expectedStart);
+            assertThat(full).withFailMessage(full + " did not end with " + expectedEnd).endsWith(expectedEnd);
 
             nestedInputStream.closeEntry();
         }
@@ -470,7 +467,7 @@ public class TestRACompoundInputStream extends StroomUnitTest {
     }
 
     @Test
-    public void testNextEntrySkip() throws IOException {
+    void testNextEntrySkip() throws IOException {
         setup(10, 10);
 
         // RAW Nest Stream Check
@@ -487,8 +484,8 @@ public class TestRACompoundInputStream extends StroomUnitTest {
             final String expectedStart = "[B=" + b + ",S=1\n";
             final String expectedEnd = "B=" + b + ",S=10\n]";
 
-            Assert.assertTrue(full + " did not start with " + expectedStart, full.startsWith(expectedStart));
-            Assert.assertTrue(full + " did not end with " + expectedEnd, full.endsWith(expectedEnd));
+            assertThat(full).withFailMessage(full + " did not start with " + expectedStart).startsWith(expectedStart);
+            assertThat(full).withFailMessage(full + " did not end with " + expectedEnd).endsWith(expectedEnd);
 
             nestedInputStream.closeEntry();
         }
@@ -496,7 +493,7 @@ public class TestRACompoundInputStream extends StroomUnitTest {
     }
 
     @Test
-    public void testGetEntryForward() throws IOException {
+    void testGetEntryForward() throws IOException {
         setup(10, 10);
 
         // RAW Nest Stream Check
@@ -511,8 +508,8 @@ public class TestRACompoundInputStream extends StroomUnitTest {
             final String expectedStart = "[B=" + b + ",S=1\n";
             final String expectedEnd = "B=" + b + ",S=10\n]";
 
-            Assert.assertTrue(full + " did not start with " + expectedStart, full.startsWith(expectedStart));
-            Assert.assertTrue(full + " did not end with " + expectedEnd, full.endsWith(expectedEnd));
+            assertThat(full).withFailMessage(full + " did not start with " + expectedStart).startsWith(expectedStart);
+            assertThat(full).withFailMessage(full + " did not end with " + expectedEnd).endsWith(expectedEnd);
 
             nestedInputStream.closeEntry();
         }
@@ -520,7 +517,7 @@ public class TestRACompoundInputStream extends StroomUnitTest {
     }
 
     @Test
-    public void testGetEntryBackward() throws IOException {
+    void testGetEntryBackward() throws IOException {
         setup(10, 10);
 
         // RAW Nest Stream Check
@@ -535,8 +532,8 @@ public class TestRACompoundInputStream extends StroomUnitTest {
             final String expectedStart = "[B=" + b + ",S=1\n";
             final String expectedEnd = "B=" + b + ",S=10\n]";
 
-            Assert.assertTrue(full + " did not start with " + expectedStart, full.startsWith(expectedStart));
-            Assert.assertTrue(full + " did not end with " + expectedEnd, full.endsWith(expectedEnd));
+            assertThat(full).withFailMessage(full + " did not start with " + expectedStart).startsWith(expectedStart);
+            assertThat(full).withFailMessage(full + " did not end with " + expectedEnd).endsWith(expectedEnd);
 
             nestedInputStream.closeEntry();
         }

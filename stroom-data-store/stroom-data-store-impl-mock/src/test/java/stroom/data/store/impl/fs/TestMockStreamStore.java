@@ -16,32 +16,28 @@
 
 package stroom.data.store.impl.fs;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamTarget;
-import stroom.data.store.impl.fs.MockStreamStore;
-import stroom.streamstore.shared.StreamTypeNames;
+import org.junit.jupiter.api.Test;
 import stroom.data.meta.api.FindStreamCriteria;
 import stroom.data.meta.api.Stream;
 import stroom.data.meta.api.StreamProperties;
 import stroom.data.meta.impl.mock.MockStreamMetaService;
+import stroom.data.store.api.StreamSource;
+import stroom.data.store.api.StreamTarget;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.io.StreamUtil;
-import stroom.util.test.StroomJUnit4ClassRunner;
-import stroom.util.test.StroomUnitTest;
 
 import java.io.IOException;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * <p>
  * Test the mock as it is quite complicated.
  * </p>
  */
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestMockStreamStore extends StroomUnitTest {
+class TestMockStreamStore {
     @Test
-    public void testExample() throws IOException {
+    void testExample() throws IOException {
         final MockStreamMetaService mockStreamMetaService = new MockStreamMetaService();
         final MockStreamStore mockStreamStore = new MockStreamStore(mockStreamMetaService);
 
@@ -58,11 +54,11 @@ public class TestMockStreamStore extends StroomUnitTest {
         streamTarget.addChildStream(InternalStreamTypeNames.SEGMENT_INDEX).getOutputStream()
                 .write("CHILD".getBytes(StreamUtil.DEFAULT_CHARSET));
 
-        Assert.assertEquals(0, mockStreamMetaService.find(FindStreamCriteria.createWithStream(stream)).size());
+        assertThat(mockStreamMetaService.find(FindStreamCriteria.createWithStream(stream)).size()).isEqualTo(0);
 
         mockStreamStore.closeStreamTarget(streamTarget);
 
-        Assert.assertEquals(1, mockStreamMetaService.find(FindStreamCriteria.createWithStream(stream)).size());
+        assertThat(mockStreamMetaService.find(FindStreamCriteria.createWithStream(stream)).size()).isEqualTo(1);
 
         final Stream reload = mockStreamMetaService.find(FindStreamCriteria.createWithStream(stream)).get(0);
 
@@ -70,10 +66,10 @@ public class TestMockStreamStore extends StroomUnitTest {
 
         String testMe = StreamUtil.streamToString(streamSource.getInputStream());
 
-        Assert.assertEquals("PARENT", testMe);
+        assertThat(testMe).isEqualTo("PARENT");
 
         testMe = StreamUtil.streamToString(streamSource.getChildStream(InternalStreamTypeNames.SEGMENT_INDEX).getInputStream());
 
-        Assert.assertEquals("CHILD", testMe);
+        assertThat(testMe).isEqualTo("CHILD");
     }
 }

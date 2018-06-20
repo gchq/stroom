@@ -16,21 +16,14 @@
 
 package stroom.data.store.impl.fs;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import stroom.data.store.impl.fs.FileSystemFeedPaths;
-import stroom.data.store.impl.fs.FileSystemStreamPathHelper;
-import stroom.data.store.impl.fs.FileSystemUtil;
+import org.junit.jupiter.api.Test;
+import stroom.data.meta.api.Stream;
 import stroom.node.shared.Node;
 import stroom.node.shared.VolumeEntity;
-import stroom.data.meta.api.Stream;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.test.FileSystemTestUtil;
-import stroom.util.test.StroomJUnit4ClassRunner;
-import stroom.util.test.StroomUnitTest;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -43,18 +36,18 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestFileSystemUtil extends StroomUnitTest {
+class TestFileSystemUtil {
     private static final String NO_WRITE_DIR1 = "/usr/bin/username";
     private static final String NO_WRITE_DIR2 = "/unable/to/create/this";
 
     private VolumeEntity buildTestVolume() {
         final VolumeEntity config = new VolumeEntity();
-        config.setPath(FileUtil.getCanonicalPath(getCurrentTestDir()));
+        config.setPath(FileUtil.getCanonicalPath(FileUtil.getTempDir()));
         config.setNode(buildTestNode());
         return config;
     }
@@ -66,37 +59,36 @@ public class TestFileSystemUtil extends StroomUnitTest {
     }
 
     @Test
-    public void testEncode() {
-        Assert.assertEquals("ABC", FileSystemUtil.encodeFileName("ABC"));
-        Assert.assertEquals("ABC#02f", FileSystemUtil.encodeFileName("ABC/"));
+    void testEncode() {
+        assertThat(FileSystemUtil.encodeFileName("ABC")).isEqualTo("ABC");
+        assertThat(FileSystemUtil.encodeFileName("ABC/")).isEqualTo("ABC#02f");
 
-        Assert.assertEquals("ABC#000", FileSystemUtil.encodeFileName("ABC" + ((char) 0)));
-        Assert.assertEquals("#023", FileSystemUtil.encodeFileName("#"));
-        Assert.assertEquals("#023#023", FileSystemUtil.encodeFileName("##"));
+        assertThat(FileSystemUtil.encodeFileName("ABC" + ((char) 0))).isEqualTo("ABC#000");
+        assertThat(FileSystemUtil.encodeFileName("#")).isEqualTo("#023");
+        assertThat(FileSystemUtil.encodeFileName("##")).isEqualTo("#023#023");
 
-        Assert.assertEquals("#", FileSystemUtil.decodeFileName("#023"));
-        Assert.assertEquals("##", FileSystemUtil.decodeFileName("#023#023"));
+        assertThat(FileSystemUtil.decodeFileName("#023")).isEqualTo("#");
+        assertThat(FileSystemUtil.decodeFileName("#023#023")).isEqualTo("##");
 
-        Assert.assertEquals("#", FileSystemUtil.decodeFileName(FileSystemUtil.encodeFileName("#")));
-        Assert.assertEquals("//", FileSystemUtil.decodeFileName(FileSystemUtil.encodeFileName("//")));
+        assertThat(FileSystemUtil.decodeFileName(FileSystemUtil.encodeFileName("#"))).isEqualTo("#");
+        assertThat(FileSystemUtil.decodeFileName(FileSystemUtil.encodeFileName("//"))).isEqualTo("//");
 
-        Assert.assertEquals("ABC/", FileSystemUtil.decodeFileName(FileSystemUtil.encodeFileName("ABC/")));
+        assertThat(FileSystemUtil.decodeFileName(FileSystemUtil.encodeFileName("ABC/"))).isEqualTo("ABC/");
 
-        Assert.assertEquals("///", FileSystemUtil.decodeFileName(FileSystemUtil.encodeFileName("///")));
-        Assert.assertEquals("#/", FileSystemUtil.decodeFileName(FileSystemUtil.encodeFileName("#/")));
+        assertThat(FileSystemUtil.decodeFileName(FileSystemUtil.encodeFileName("///"))).isEqualTo("///");
+        assertThat(FileSystemUtil.decodeFileName(FileSystemUtil.encodeFileName("#/"))).isEqualTo("#/");
 
     }
 
     @Test
-    public void testCreateFileTypeRoot() {
+    void testCreateFileTypeRoot() {
         final String root = FileUtil.getCanonicalPath(FileSystemUtil.createFileTypeRoot(buildTestVolume()));
-
-        Assert.assertNotNull(root);
-        Assert.assertTrue(root.endsWith("store"));
+        assertThat(root).isNotNull();
+        assertThat(root).endsWith("store");
     }
 
     @Test
-    public void testCreateRootStreamFile() {
+    void testCreateRootStreamFile() {
         final Stream stream = mock(Stream.class);
         when(stream.getId()).thenReturn(1001001L);
         when(stream.getStreamTypeName()).thenReturn(StreamTypeNames.EVENTS);
@@ -110,12 +102,12 @@ public class TestFileSystemUtil extends StroomUnitTest {
 
         final Path rootFile = fileSystemStreamPathHelper.createRootStreamFile(buildTestVolume().getPath(), stream, StreamTypeNames.EVENTS);
 
-        Assert.assertNotNull(rootFile);
+        assertThat(rootFile).isNotNull();
         assertPathEndsWith(rootFile, "EVENTS/2010/01/01/001/001/1=001001001.evt.bgz");
     }
 
     @Test
-    public void testCreateChildStreamFile() throws IOException {
+    void testCreateChildStreamFile() throws IOException {
         final Stream stream = mock(Stream.class);
         when(stream.getId()).thenReturn(1001001L);
         when(stream.getStreamTypeName()).thenReturn(StreamTypeNames.RAW_EVENTS);
@@ -145,7 +137,7 @@ public class TestFileSystemUtil extends StroomUnitTest {
         assertPathEndsWith(child1_1, "EVENTS/2010/01/01/001/001/1=001001001.revt.ctx.seg.dat");
 
         final List<Path> kids = fileSystemStreamPathHelper.findAllDescendantStreamFileList(rootFile);
-        Assert.assertEquals("should match 3 kids", 3, kids.size());
+        assertThat(kids.size()).withFailMessage("should match 3 kids").isEqualTo(3);
 
         for (final Path kid : kids) {
             FileUtil.deleteFile(kid);
@@ -164,15 +156,13 @@ public class TestFileSystemUtil extends StroomUnitTest {
         fullPath = fullPath.replace('\\', '-');
         check = check.replace('/', '-');
         check = check.replace('\\', '-');
-
-        Assert.assertTrue("Expecting " + fullPath + " to end with " + check, fullPath.endsWith(check));
-
+        assertThat(fullPath).withFailMessage("Expecting " + fullPath + " to end with " + check).endsWith(check);
     }
 
     @Test
-    public void testParentMkdirsAndDelete() {
-        final Path dir1 = getCurrentTestDir().resolve(FileSystemTestUtil.getUniqueTestString());
-        final Path dir2 = getCurrentTestDir().resolve(FileSystemTestUtil.getUniqueTestString());
+    void testParentMkdirsAndDelete() {
+        final Path dir1 = FileUtil.getTempDir().resolve(FileSystemTestUtil.getUniqueTestString());
+        final Path dir2 = FileUtil.getTempDir().resolve(FileSystemTestUtil.getUniqueTestString());
         final Path file1 = dir1.resolve("test.dat");
         final Path file2 = dir2.resolve("test.dat");
         final HashSet<Path> files = new HashSet<>();
@@ -182,23 +172,20 @@ public class TestFileSystemUtil extends StroomUnitTest {
         FileUtil.mkdirs(file1);
         FileUtil.mkdirs(file2);
 
-        Assert.assertTrue("Dirs exist... but not error",
-                FileSystemUtil.mkdirs(FileUtil.getTempDir(), file1.getParent()));
-        Assert.assertTrue("Dirs exist... but not error",
-                FileSystemUtil.mkdirs(FileUtil.getTempDir(), file2.getParent()));
+        assertThat(FileSystemUtil.mkdirs(FileUtil.getTempDir(), file1.getParent())).withFailMessage("Dirs exist... but not error").isTrue();
+        assertThat(FileSystemUtil.mkdirs(FileUtil.getTempDir(), file2.getParent())).withFailMessage("Dirs exist... but not error").isTrue();
 
-        Assert.assertTrue("Delete Files", FileSystemUtil.deleteAnyPath(files));
-        Assert.assertTrue("Delete Files Gone", FileSystemUtil.deleteAnyPath(files));
+        assertThat(FileSystemUtil.deleteAnyPath(files)).withFailMessage("Delete Files").isTrue();
+        assertThat(FileSystemUtil.deleteAnyPath(files)).withFailMessage("Delete Files Gone").isTrue();
 
-        Assert.assertTrue("Delete Files Gone", FileUtil.deleteContents(dir1));
-        Assert.assertTrue("Delete Files Gone", FileUtil.deleteContents(dir2));
-
+        assertThat(FileUtil.deleteContents(dir1)).withFailMessage("Delete Files Gone").isTrue();
+        assertThat(FileUtil.deleteContents(dir2)).withFailMessage("Delete Files Gone").isTrue();
     }
 
     @Test
-    public void testCreateBadDirs() {
-        Assert.assertFalse(FileSystemUtil.mkdirs(null, Paths.get(NO_WRITE_DIR1)));
-        Assert.assertFalse(FileSystemUtil.mkdirs(null, Paths.get(NO_WRITE_DIR2)));
+    void testCreateBadDirs() {
+        assertThat(FileSystemUtil.mkdirs(null, Paths.get(NO_WRITE_DIR1))).isFalse();
+        assertThat(FileSystemUtil.mkdirs(null, Paths.get(NO_WRITE_DIR2))).isFalse();
     }
 
     /**
@@ -207,11 +194,11 @@ public class TestFileSystemUtil extends StroomUnitTest {
      * trying to create the same dir).
      */
     @Test
-    public void testParentMkdirs() throws InterruptedException {
+    void testParentMkdirs() throws InterruptedException {
         final HashSet<Path> fileSet = new HashSet<>();
 
         final String dir = FileSystemTestUtil.getUniqueTestString();
-        final Path dir1 = getCurrentTestDir().resolve(dir);
+        final Path dir1 = FileUtil.getTempDir().resolve(dir);
         // Create 100 files in 10 similar directories
         for (int i = 0; i < 100; i++) {
             final Path dir2 = dir1.resolve(dir);
@@ -242,24 +229,27 @@ public class TestFileSystemUtil extends StroomUnitTest {
 
         threadPoolExecutor.awaitTermination(100, TimeUnit.SECONDS);
 
-        Assert.assertTrue(allOk.get());
+        assertThat(allOk.get()).isTrue();
 
         FileUtil.deleteDir(dir1);
     }
 
     @Test
-    public void testMkDirs() {
-        final Path rootDir = getCurrentTestDir();
-        Assert.assertTrue("Should be OK to create a dir off the root",
-                FileSystemUtil.mkdirs(rootDir, rootDir.resolve(FileSystemTestUtil.getUniqueTestString())));
+    void testMkDirs() {
+        final Path rootDir = FileUtil.getTempDir();
+        assertThat(FileSystemUtil.mkdirs(rootDir, rootDir.resolve(FileSystemTestUtil.getUniqueTestString())))
+                .withFailMessage("Should be OK to create a dir off the root")
+                .isTrue();
         final Path nonExistingRoot = rootDir.resolve(FileSystemTestUtil.getUniqueTestString());
-        Assert.assertFalse("Should be NOT be OK to create a dir off a non existant root", FileSystemUtil
-                .mkdirs(nonExistingRoot, nonExistingRoot.resolve(FileSystemTestUtil.getUniqueTestString() + "/a/b")));
+        assertThat(FileSystemUtil
+                .mkdirs(nonExistingRoot, nonExistingRoot.resolve(FileSystemTestUtil.getUniqueTestString() + "/a/b")))
+                .withFailMessage("Should be NOT be OK to create a dir off a non existant root")
+                .isFalse();
 
     }
 
     @Test
-    public void testDirPath() {
+    void testDirPath() {
         final Stream stream = mock(Stream.class);
         when(stream.getId()).thenReturn(100100L);
         when(stream.getStreamTypeName()).thenReturn(StreamTypeNames.EVENTS);
@@ -271,12 +261,12 @@ public class TestFileSystemUtil extends StroomUnitTest {
 
         final FileSystemStreamPathHelper fileSystemStreamPathHelper = new FileSystemStreamPathHelper(fileSystemFeedPaths);
 
-        Assert.assertEquals("EVENTS/2008/11/18/100", fileSystemStreamPathHelper.getDirectory(stream, StreamTypeNames.EVENTS));
-        Assert.assertEquals("2=100100", fileSystemStreamPathHelper.getBaseName(stream));
+        assertThat(fileSystemStreamPathHelper.getDirectory(stream, StreamTypeNames.EVENTS)).isEqualTo("EVENTS/2008/11/18/100");
+        assertThat(fileSystemStreamPathHelper.getBaseName(stream)).isEqualTo("2=100100");
     }
 
     @Test
-    public void testDirPath2() {
+    void testDirPath2() {
         final Stream stream = mock(Stream.class);
         when(stream.getId()).thenReturn(1100100L);
         when(stream.getStreamTypeName()).thenReturn(StreamTypeNames.EVENTS);
@@ -288,8 +278,7 @@ public class TestFileSystemUtil extends StroomUnitTest {
 
         final FileSystemStreamPathHelper fileSystemStreamPathHelper = new FileSystemStreamPathHelper(fileSystemFeedPaths);
 
-        Assert.assertEquals("EVENTS/2008/11/18/001/100",
-                fileSystemStreamPathHelper.getDirectory(stream, StreamTypeNames.EVENTS));
-        Assert.assertEquals("2=001100100", fileSystemStreamPathHelper.getBaseName(stream));
+        assertThat(fileSystemStreamPathHelper.getDirectory(stream, StreamTypeNames.EVENTS)).isEqualTo("EVENTS/2008/11/18/001/100");
+        assertThat(fileSystemStreamPathHelper.getBaseName(stream)).isEqualTo("2=001100100");
     }
 }

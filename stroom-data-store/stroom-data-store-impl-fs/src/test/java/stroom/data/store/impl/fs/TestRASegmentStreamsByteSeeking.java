@@ -16,23 +16,21 @@
 
 package stroom.data.store.impl.fs;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import stroom.data.store.api.SegmentOutputStream;
+import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.test.StroomJUnit4ClassRunner;
-import stroom.util.test.StroomUnitTest;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestRASegmentStreamsByteSeeking extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestRASegmentStreamsByteSeeking {
     @Test
-    public void testByteSeeking() throws IOException {
-        final Path dir = getCurrentTestDir();
+    void testByteSeeking() throws IOException {
+        final Path dir = FileUtil.getTempDir();
         try (SegmentOutputStream os = new RASegmentOutputStream(new BlockGZIPOutputFile(dir.resolve("test.dat")),
                 Files.newOutputStream(dir.resolve("test.idx")))) {
             os.write("LINE ONE\n".getBytes(StreamUtil.DEFAULT_CHARSET));
@@ -44,7 +42,6 @@ public class TestRASegmentStreamsByteSeeking extends StroomUnitTest {
             os.write("LINE FOUR\n".getBytes(StreamUtil.DEFAULT_CHARSET));
 
             os.flush();
-            os.close();
         }
 
         final UncompressedInputStream debug = new UncompressedInputStream(dir.resolve("test.idx"), true);
@@ -52,25 +49,25 @@ public class TestRASegmentStreamsByteSeeking extends StroomUnitTest {
         RASegmentInputStream is = new RASegmentInputStream(new BlockGZIPInputFile(dir.resolve("test.dat")),
                 new UncompressedInputStream(dir.resolve("test.idx"), true));
 
-        Assert.assertEquals(4, is.count());
+        assertThat(is.count()).isEqualTo(4);
 
-        Assert.assertEquals(0, is.byteOffset(0));
-        Assert.assertEquals(9, is.byteOffset(1));
-        Assert.assertEquals(18, is.byteOffset(2));
-        Assert.assertEquals(29, is.byteOffset(3));
+        assertThat(is.byteOffset(0)).isEqualTo(0);
+        assertThat(is.byteOffset(1)).isEqualTo(9);
+        assertThat(is.byteOffset(2)).isEqualTo(18);
+        assertThat(is.byteOffset(3)).isEqualTo(29);
 
-        Assert.assertEquals(0, is.segmentAtByteOffset(0));
-        Assert.assertEquals(0, is.segmentAtByteOffset(1));
-        Assert.assertEquals(0, is.segmentAtByteOffset(8));
-        Assert.assertEquals(1, is.segmentAtByteOffset(9));
-        Assert.assertEquals(1, is.segmentAtByteOffset(17));
-        Assert.assertEquals(2, is.segmentAtByteOffset(18));
-        Assert.assertEquals(2, is.segmentAtByteOffset(28));
-        Assert.assertEquals(3, is.segmentAtByteOffset(29));
-        Assert.assertEquals(3, is.segmentAtByteOffset(38));
-        Assert.assertEquals(3, is.segmentAtByteOffset(39));
-        Assert.assertEquals(-1, is.segmentAtByteOffset(40));
-        Assert.assertEquals(-1, is.segmentAtByteOffset(9999));
+        assertThat(is.segmentAtByteOffset(0)).isEqualTo(0);
+        assertThat(is.segmentAtByteOffset(1)).isEqualTo(0);
+        assertThat(is.segmentAtByteOffset(8)).isEqualTo(0);
+        assertThat(is.segmentAtByteOffset(9)).isEqualTo(1);
+        assertThat(is.segmentAtByteOffset(17)).isEqualTo(1);
+        assertThat(is.segmentAtByteOffset(18)).isEqualTo(2);
+        assertThat(is.segmentAtByteOffset(28)).isEqualTo(2);
+        assertThat(is.segmentAtByteOffset(29)).isEqualTo(3);
+        assertThat(is.segmentAtByteOffset(38)).isEqualTo(3);
+        assertThat(is.segmentAtByteOffset(39)).isEqualTo(3);
+        assertThat(is.segmentAtByteOffset(40)).isEqualTo(-1);
+        assertThat(is.segmentAtByteOffset(9999)).isEqualTo(-1);
 
         debug.close();
         is.close();
@@ -78,7 +75,7 @@ public class TestRASegmentStreamsByteSeeking extends StroomUnitTest {
         is = new RASegmentInputStream(new BlockGZIPInputFile(dir.resolve("test.dat")),
                 new UncompressedInputStream(dir.resolve("test.idx"), true), 5, 8);
 
-        Assert.assertEquals("ONE", StreamUtil.streamToString(is));
+        assertThat(StreamUtil.streamToString(is)).isEqualTo("ONE");
         is.close();
 
         is = new RASegmentInputStream(new BlockGZIPInputFile(dir.resolve("test.dat")),
@@ -86,7 +83,7 @@ public class TestRASegmentStreamsByteSeeking extends StroomUnitTest {
 
         is.include(0);
         is.include(2);
-        Assert.assertEquals("ONE\nLINE THREE\n", StreamUtil.streamToString(is));
+        assertThat(StreamUtil.streamToString(is)).isEqualTo("ONE\nLINE THREE\n");
         is.close();
 
         is = new RASegmentInputStream(new BlockGZIPInputFile(dir.resolve("test.dat")),
@@ -94,7 +91,7 @@ public class TestRASegmentStreamsByteSeeking extends StroomUnitTest {
 
         is.include(0);
         is.include(1);
-        Assert.assertEquals("LINE ONE\nLINE", StreamUtil.streamToString(is));
+        assertThat(StreamUtil.streamToString(is)).isEqualTo("LINE ONE\nLINE");
         is.close();
     }
 }

@@ -16,20 +16,18 @@
 
 package stroom.data.store;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import stroom.datafeed.StroomStatusCode;
 import stroom.datafeed.StroomStreamException;
-import stroom.util.test.StroomJUnit4ClassRunner;
 
 import java.io.IOException;
 import java.util.zip.ZipException;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestStroomStreamException {
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+class TestStroomStreamException {
     @Test
-    public void testCompressedStreamCorrupt() {
+    void testCompressedStreamCorrupt() {
         doTest(new ZipException("test"), StroomStatusCode.COMPRESSED_STREAM_INVALID, "test");
         doTest(new RuntimeException(new ZipException("test")), StroomStatusCode.COMPRESSED_STREAM_INVALID, "test");
         doTest(new RuntimeException(new RuntimeException(new ZipException("test"))),
@@ -38,19 +36,11 @@ public class TestStroomStreamException {
     }
 
     @Test
-    public void testOtherError() {
+    void testOtherError() {
         doTest(new RuntimeException("test"), StroomStatusCode.UNKNOWN_ERROR, "test");
     }
 
     private void doTest(Exception exception, StroomStatusCode stroomStatusCode, String msg) {
-        try {
-            StroomStreamException.create(exception);
-            Assert.fail();
-        } catch (StroomStreamException stroomStreamExcpetion) {
-            Assert.assertEquals(
-                    "Stroom Status " + stroomStatusCode.getCode() + " - " + stroomStatusCode.getMessage() + " - " + msg,
-                    stroomStreamExcpetion.getMessage());
-        }
+        assertThatThrownBy(() -> StroomStreamException.create(exception)).hasMessage("Stroom Status " + stroomStatusCode.getCode() + " - " + stroomStatusCode.getMessage() + " - " + msg);
     }
-
 }

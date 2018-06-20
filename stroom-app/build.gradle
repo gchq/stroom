@@ -84,6 +84,7 @@ dependencies {
     compile project(':stroom-elastic-server')
     compile project(':stroom-ruleset-server')
     compile project(':stroom-data-meta:stroom-data-meta-impl-db')
+    compile project(':stroom-data-store:stroom-data-store-impl-fs')
 
     compile libs.stroomDocRef
     compile libs.stroomQueryApi

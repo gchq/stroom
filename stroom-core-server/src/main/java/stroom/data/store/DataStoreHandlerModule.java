@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs;
+package stroom.data.store;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.data.store.StreamMaintenanceService;
-import stroom.data.store.api.StreamStore;
 import stroom.task.TaskHandler;
 
-public class FSModule extends AbstractModule {
+public class DataStoreHandlerModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(StreamMaintenanceService.class).to(FileSystemStreamMaintenanceService.class);
-        bind(StreamStore.class).to(FileSystemStreamStoreImpl.class);
-
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(FileSystemCleanSubTaskHandler.class);
+        taskHandlerBinder.addBinding().to(DeleteStreamHandler.class);
+        taskHandlerBinder.addBinding().to(DownloadDataHandler.class);
+        taskHandlerBinder.addBinding().to(FetchFieldsHandler.class);
+        taskHandlerBinder.addBinding().to(StreamDownloadTaskHandler.class);
+        taskHandlerBinder.addBinding().to(StreamUploadTaskHandler.class);
+        taskHandlerBinder.addBinding().to(UploadDataHandler.class);
     }
 }

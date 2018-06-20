@@ -36,16 +36,16 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 abstract class ManualCheckStreamPerformance {
-    static int testThreadCount = 10;
-    static int testSize = 100000;
+    private static int testThreadCount = 10;
+    private static int testSize = 100000;
 
-    public static Path getTempFile() throws IOException {
+    static Path getTempFile() throws IOException {
         final Path tempFile = Files.createTempFile(FileUtil.getTempDir(), "test", "test");
         FileUtil.deleteFile(tempFile);
         return tempFile;
     }
 
-    public static void averageTimeCheck(final String msg, final TimedAction provider) throws InterruptedException {
+    static void averageTimeCheck(final String msg, final TimedAction provider) throws InterruptedException {
         final HashMap<Thread, Long> threadTimes = new HashMap<>();
         for (int i = 0; i < testThreadCount; i++) {
             final Thread t = new Thread((() -> {

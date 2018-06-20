@@ -16,15 +16,9 @@
 
 package stroom.data.store.impl.fs;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import stroom.data.store.impl.fs.BlockGZIPInputStream;
-import stroom.data.store.impl.fs.BlockGZIPOutputFile;
+import org.junit.jupiter.api.Test;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.test.StroomJUnit4ClassRunner;
-import stroom.util.test.StroomUnitTest;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -34,11 +28,12 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestBlockGZIPStreams extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestBlockGZIPStreams {
     @Test
-    public void testSimple() throws IOException {
-        final Path testFile = Files.createTempFile(getCurrentTestDir(), "test", ".bgz");
+    void testSimple() throws IOException {
+        final Path testFile = Files.createTempFile(FileUtil.getTempDir(), "test", ".bgz");
         FileUtil.deleteFile(testFile);
         final OutputStream os = new BufferedOutputStream(new BlockGZIPOutputFile(testFile, 100));
 
@@ -54,17 +49,15 @@ public class TestBlockGZIPStreams extends StroomUnitTest {
             String line;
             int expected = 0;
             while ((line = in.readLine()) != null) {
-                Assert.assertEquals(expected, Integer.parseInt(line));
+                assertThat(Integer.parseInt(line)).isEqualTo(expected);
                 expected++;
             }
-            Assert.assertEquals(1000, expected);
+            assertThat(expected).isEqualTo(1000);
 
             bgzi.close();
             FileUtil.deleteFile(testFile);
 
-            Assert.assertTrue("must have been at least 5 blcoks read", bgzi.getBlockCount() > 5);
+            assertThat(bgzi.getBlockCount()).withFailMessage("must have been at least 5 blocks read").isGreaterThan(5);
         }
-
     }
-
 }

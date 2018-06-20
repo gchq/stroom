@@ -16,27 +16,24 @@
 
 package stroom.data.store.impl.fs;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
 import stroom.test.RawInputSegmentWriter;
 import stroom.util.io.StreamUtil;
-import stroom.util.test.StroomJUnit4ClassRunner;
-import stroom.util.test.StroomUnitTest;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Tests that the raw input segment writer is capable of determining the input
  * type (XML and text) correctly and that it inserts segment boundaries in the
  * correct places.
  */
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestRawInputSegmentWriter extends StroomUnitTest {
+class TestRawInputSegmentWriter {
     @Test
-    public void testSimpleWriteThenRead() {
+    void testSimpleWriteThenRead() {
         final String text = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><records><record>text1</record><record>text2</record><record>text3</record></records>";
         final InputStream bais = new ByteArrayInputStream(text.getBytes(StreamUtil.DEFAULT_CHARSET));
 
@@ -46,6 +43,6 @@ public class TestRawInputSegmentWriter extends StroomUnitTest {
         final RawInputSegmentWriter writer = new RawInputSegmentWriter();
         writer.write(bais, new RASegmentOutputStream(dataBuffer, indexBuffer));
 
-        Assert.assertEquals(text, new String(dataBuffer.toByteArray(), StreamUtil.DEFAULT_CHARSET));
+        assertThat(new String(dataBuffer.toByteArray(), StreamUtil.DEFAULT_CHARSET)).isEqualTo(text);
     }
 }

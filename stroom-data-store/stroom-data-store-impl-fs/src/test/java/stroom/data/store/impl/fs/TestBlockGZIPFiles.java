@@ -16,15 +16,9 @@
 
 package stroom.data.store.impl.fs;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import stroom.data.store.impl.fs.BlockGZIPInputFile;
-import stroom.data.store.impl.fs.BlockGZIPOutputFile;
+import org.junit.jupiter.api.Test;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.test.StroomJUnit4ClassRunner;
-import stroom.util.test.StroomUnitTest;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -34,20 +28,21 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-@RunWith(StroomJUnit4ClassRunner.class)
-public class TestBlockGZIPFiles extends StroomUnitTest {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class TestBlockGZIPFiles {
     @Test
-    public void testSimpleSmallDataInBigBlock() throws IOException {
+    void testSimpleSmallDataInBigBlock() throws IOException {
         testWriteAndRead(10000, 99);
     }
 
     @Test
-    public void testSimpleDataInLotsOfSmallBlocks() throws IOException {
+    void testSimpleDataInLotsOfSmallBlocks() throws IOException {
         testWriteAndRead(100, 999);
     }
 
     @Test
-    public void testSimpleBounds() throws IOException {
+    void testSimpleBounds() throws IOException {
         testWriteAndRead(10, 0);
         testWriteAndRead(10, 1);
         testWriteAndRead(10, 9);
@@ -59,7 +54,7 @@ public class TestBlockGZIPFiles extends StroomUnitTest {
     }
 
     @Test
-    public void testBroken() throws IOException {
+    void testBroken() throws IOException {
         for (int inBuf = 2; inBuf < 5; inBuf++) {
             for (int outBuf = 2; outBuf < 5; outBuf++) {
                 testWriteAndReadBuffered(9, 100, inBuf, outBuf);
@@ -71,20 +66,20 @@ public class TestBlockGZIPFiles extends StroomUnitTest {
     }
 
     @Test
-    public void testBufferedSmall() throws IOException {
+    void testBufferedSmall() throws IOException {
         testWriteAndReadBuffered(10, 30, 3, 3);
         testWriteAndReadBuffered(10, 29, 3, 3);
         testWriteAndReadBuffered(10, 31, 3, 3);
     }
 
     @Test
-    public void testBufferedBig() throws IOException {
+    void testBufferedBig() throws IOException {
         testWriteAndReadBuffered(1000, 1000000, 100, 100);
     }
 
     @Test
-    public void testBig() throws IOException {
-        final Path testFile = getCurrentTestDir().resolve("testBig.bgz");
+    void testBig() throws IOException {
+        final Path testFile = FileUtil.getTempDir().resolve("testBig.bgz");
         FileUtil.deleteFile(testFile);
         final OutputStream os = new BufferedOutputStream(new BlockGZIPOutputFile(testFile, 1000000));
         for (int i = 0; i < 10000; i++) {
@@ -107,18 +102,19 @@ public class TestBlockGZIPFiles extends StroomUnitTest {
         is.reset();
 
         final byte[] testBuf = new byte[10000];
-        while ((is.read(testBuf)) != -1)
-            ;
+        while ((is.read(testBuf)) != -1) {
+            // Ignore
+        }
 
         is.close();
 
-        Assert.assertTrue("Should not have any locks on file", FileUtil.delete(testFile));
-        Assert.assertFalse("file deleted", Files.isRegularFile(testFile));
+        assertThat(FileUtil.delete(testFile)).withFailMessage("Should not have any locks on file").isTrue();
+        assertThat(Files.isRegularFile(testFile)).withFailMessage("file deleted").isFalse();
 
     }
 
     private void testWriteAndRead(final int blockSize, final int fileSize) throws IOException {
-        final Path file = Files.createTempFile(getCurrentTestDir(), "test", ".bgz");
+        final Path file = Files.createTempFile(FileUtil.getTempDir(), "test", ".bgz");
         FileUtil.deleteFile(file);
 
         // Stupid Block Size For Testing
@@ -136,18 +132,18 @@ public class TestBlockGZIPFiles extends StroomUnitTest {
         int actual;
 
         while ((actual = inStream.read()) != -1) {
-            Assert.assertEquals(expected, (byte) actual);
+            assertThat((byte) actual).isEqualTo(expected);
             expected++;
         }
 
         inStream.close();
 
-        Assert.assertEquals("Expected to load records", (byte) fileSize, expected);
+        assertThat((byte) fileSize).withFailMessage("Expected to load records").isEqualTo(expected);
     }
 
     private void testWriteAndReadBuffered(final int blockSize, final int fileSize, final int inBuff, final int outBuf)
             throws IOException {
-        final Path file = Files.createTempFile(getCurrentTestDir(), "test", ".bgz");
+        final Path file = Files.createTempFile(FileUtil.getTempDir(), "test", ".bgz");
         FileUtil.deleteFile(file);
 
         // Stupid Block Size For Testing
@@ -165,17 +161,17 @@ public class TestBlockGZIPFiles extends StroomUnitTest {
         int actual;
 
         while ((actual = inStream.read()) != -1) {
-            Assert.assertEquals(expected, (byte) actual);
+            assertThat((byte) actual).isEqualTo(expected);
             expected++;
         }
         inStream.close();
 
-        Assert.assertEquals("Expected to load records", (byte) fileSize, expected);
+        assertThat((byte) fileSize).withFailMessage("Expected to load records").isEqualTo(expected);
     }
 
     @Test
-    public void testSeeking() throws IOException {
-        final Path file = getCurrentTestDir().resolve("test.bgz");
+    void testSeeking() throws IOException {
+        final Path file = FileUtil.getTempDir().resolve("test.bgz");
         FileUtil.deleteFile(file);
 
         // Stupid Block Size For Testing
@@ -191,54 +187,54 @@ public class TestBlockGZIPFiles extends StroomUnitTest {
 
         inStream.mark(0);
 
-        Assert.assertEquals(9, inStream.skip(9));
-        Assert.assertEquals(9, inStream.read());
+        assertThat(inStream.skip(9)).isEqualTo(9);
+        assertThat(inStream.read()).isEqualTo(9);
         inStream.reset();
 
         // inStream.reset();
-        Assert.assertEquals(50, inStream.skip(50));
-        Assert.assertEquals(50, inStream.read());
+        assertThat(inStream.skip(50)).isEqualTo(50);
+        assertThat(inStream.read()).isEqualTo(50);
 
         inStream.reset();
-        Assert.assertEquals(100, inStream.skip(100));
-        Assert.assertEquals(100, inStream.read());
+        assertThat(inStream.skip(100)).isEqualTo(100);
+        assertThat(inStream.read()).isEqualTo(100);
 
         inStream.reset();
-        Assert.assertEquals(104, inStream.skip(104));
-        Assert.assertEquals(104, inStream.read());
+        assertThat(inStream.skip(104)).isEqualTo(104);
+        assertThat(inStream.read()).isEqualTo(104);
 
         inStream.reset();
-        Assert.assertEquals(50, inStream.skip(50));
+        assertThat(inStream.skip(50)).isEqualTo(50);
         inStream.mark(-1);
-        Assert.assertEquals(50, inStream.read());
+        assertThat(inStream.read()).isEqualTo(50);
         inStream.reset();
-        Assert.assertEquals(50, inStream.read());
+        assertThat(inStream.read()).isEqualTo(50);
 
         inStream.close();
 
         inStream = new BlockGZIPInputFile(file, 10);
 
         final byte[] testRead = new byte[50];
-        Assert.assertEquals(0, inStream.getPosition());
+        assertThat(inStream.getPosition()).isEqualTo(0);
         StreamUtil.fillBuffer(inStream, testRead);
-        Assert.assertEquals(50, inStream.getPosition());
+        assertThat(inStream.getPosition()).isEqualTo(50);
         // Seek back and re-read
         inStream.seek(0);
         StreamUtil.fillBuffer(inStream, testRead);
-        Assert.assertEquals(50, inStream.getPosition());
+        assertThat(inStream.getPosition()).isEqualTo(50);
 
         // Go back
         for (byte i = 94; i >= 0; i--) {
             inStream.seek(i);
-            Assert.assertEquals(i, inStream.read());
+            assertThat(inStream.read()).isEqualTo(i);
             inStream.skip(9);
-            Assert.assertEquals(i + 10, inStream.read());
+            assertThat(inStream.read()).isEqualTo(i + 10);
         }
 
         // Go forward
         for (byte i = 3; i < 100; i += 8) {
             inStream.seek(i);
-            Assert.assertEquals(i, inStream.read());
+            assertThat(inStream.read()).isEqualTo(i);
         }
 
         inStream.close();
