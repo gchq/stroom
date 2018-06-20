@@ -38,7 +38,7 @@ import { fetchPipeline } from './pipelineResourceClient';
 import { fetchElements, fetchElementProperties } from './elementResourceClient';
 
 const HORIZONTAL_SPACING = 150;
-const VERTICAL_SPACING = 50;
+const VERTICAL_SPACING = 70;
 const HORIZONTAL_START_PX = 10;
 const VERTICAL_START_PX = 10;
 const COMMON_ELEMENT_STYLE = {

@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Message, Form } from 'semantic-ui-react';
+import { Message, Form, Popup, Icon } from 'semantic-ui-react';
 
 import { Toggle, InputField } from 'react-semantic-redux-form';
 
@@ -21,15 +21,7 @@ const ElementFieldType = ({
   switch (type) {
     case 'boolean':
       actualValue = getActualValue(value, defaultValue, 'boolean') === 'true';
-      return (
-        <Field
-          label={name}
-          name={name}
-          component={Toggle}
-          value={actualValue}
-          checked={actualValue}
-        />
-      );
+      return <Field name={name} component={Toggle} value={actualValue} checked={actualValue} />;
     case 'int':
       actualValue = parseInt(getActualValue(value, defaultValue, 'integer'), 10);
       return (
@@ -58,17 +50,29 @@ const ElementField = ({
 }) => (
   <Form.Group>
     <Form.Field className="element-details__field">
-      <label>{name}</label>
+      <label>{description}</label>
+
       <ElementFieldType name={name} type={type} value={value} defaultValue={defaultValue} />
     </Form.Field>
-    <Message className="element-details__property-message">
-      <Message.Header>{description}</Message.Header>
-      {defaultValue ? (
-        <p>The default value is '{defaultValue}'.</p>
-      ) : (
-        <p>This property does not have a default value.</p>
-      )}
-    </Message>
+    <Popup
+      trigger={<Icon name="question circle" color="blue" size="large" />}
+      content={
+        <div>
+          {defaultValue ? (
+            <p>
+              The <em>default value</em> is <strong>{defaultValue}</strong>.
+            </p>
+          ) : (
+            <p>
+              This property does not have a <em>default value</em>.
+            </p>
+          )}
+          <p>
+            The <em>field name</em> of this property is <strong>{name}</strong>
+          </p>
+        </div>
+      }
+    />
   </Form.Group>
 );
 
