@@ -100,8 +100,8 @@ class Routes extends Component {
             render={({ match }) =>
               (this.isLoggedIn() ? (
                 <PipelineEditor
-                  shouldFetchElementsFromServer
-                  shouldFetchPipelineFromServer
+                  shouldFetchElementsFromServer={true}
+                  shouldFetchPipelineFromServer={true}
                   pipelineId={match.params.pipelineId}
                 />
               ) : (

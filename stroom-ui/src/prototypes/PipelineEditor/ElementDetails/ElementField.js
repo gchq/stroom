@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Message, Form, Popup, Icon } from 'semantic-ui-react';
+import { Form, Popup, Icon } from 'semantic-ui-react';
 
 import { Toggle, InputField } from 'react-semantic-redux-form';
 

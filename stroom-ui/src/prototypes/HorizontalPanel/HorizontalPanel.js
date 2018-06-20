@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Menu, Header, Grid, Divider, Sticky } from 'semantic-ui-react';
+import { Button, Menu, Header, Grid, Divider } from 'semantic-ui-react';
 import { compose, withState } from 'recompose';
 
 const enhance = compose(withState('activeItem', 'setActiveItem', 'home'));

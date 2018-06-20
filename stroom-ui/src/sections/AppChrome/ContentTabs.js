@@ -23,7 +23,9 @@ const ContentTabs = ({
         key: 'welcome',
         content: 'Welcome',
       },
-      pane: <Tab.Pane>Stroom is designed to receive data from multiple systems.</Tab.Pane>,
+      pane: (
+        <Tab.Pane key="welcome">Stroom is designed to receive data from multiple systems.</Tab.Pane>
+      ),
     });
   }
 

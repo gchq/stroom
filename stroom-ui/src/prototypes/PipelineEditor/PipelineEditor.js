@@ -67,6 +67,7 @@ const enhance = compose(
         shouldFetchPipelineFromServer,
         fetchElements,
         fetchElementProperties,
+        fetchPipeline,
         pipelineId,
       } = this.props;
       if (shouldFetchElementsFromServer) {

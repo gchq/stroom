@@ -47,8 +47,7 @@ const dragSource = {
   beginDrag(props) {
     return {
       elementId: props.elementId,
-      elementDefinition: props.elementDefinition,
-      element: props.element,
+      elementDefinition: props.elementDefinition
     };
   },
 };
@@ -65,7 +64,6 @@ const dropTarget = {
     switch (monitor.getItemType()) {
       case ItemTypes.ELEMENT:
         const dropeeId = monitor.getItem().elementId;
-        const dropee = monitor.getItem().element;
         const dropeeDefinition = monitor.getItem().elementDefinition;
         const isValidChild = isValidChildType(elementDefinition, dropeeDefinition, 0);
 

@@ -31,7 +31,7 @@ import {
 } from 'prototypes/PipelineEditor';
 import { trackerDashboardReducer as trackerDashboard } from 'sections/TrackerDashboard';
 import { errorPageReducer as errorPage } from 'sections/ErrorPage';
-import config from './config';
+import { configReducer as config } from './config';
 
 export default combineReducers({
   routing: routerReducer,

@@ -16,33 +16,30 @@
 
 import $ from 'jquery';
 
+import { createActions, handleActions } from 'redux-actions';
+
 export const UPDATE_CONFIG = 'config/UPDATE_CONFIG';
 
 const initialState = {};
 
-export default (state = initialState, action) => {
-  switch (action.type) {
-    case UPDATE_CONFIG:
-      return {
-        ...state,
-        ...action.config,
-      };
-    default:
-      return state;
-  }
-};
+const actionCreators = createActions({
+  UPDATE_CONFIG: config => ({ config }),
+});
 
-function updateConfig(config) {
-  return {
-    type: UPDATE_CONFIG,
-    config,
-  };
-}
+const configReducer = handleActions(
+  {
+    UPDATE_CONFIG: (state, action) => ({
+      ...state,
+      ...action.payload.config,
+    }),
+  },
+  initialState,
+);
 
 export const fetchConfig = () => (dispatch) => {
   fetch('/config.json', { method: 'get' })
     .then(response => response.json())
-    .then(config => dispatch(updateConfig(config)));
+    .then(config => dispatch(actionCreators.updateConfig(config)));
 };
 
 export const fetchConfigSynchronously = () => {
@@ -59,3 +56,5 @@ export const fetchConfigSynchronously = () => {
 
   return result.responseJSON;
 };
+
+export { actionCreators, configReducer };

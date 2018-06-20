@@ -5,7 +5,7 @@ import { compose, branch, renderComponent } from 'recompose';
 
 import { connect } from 'react-redux';
 
-import { Container, Header, Message, Image, Grid, Form } from 'semantic-ui-react';
+import { Container, Message, Image, Form } from 'semantic-ui-react';
 
 import { reduxForm } from 'redux-form';
 

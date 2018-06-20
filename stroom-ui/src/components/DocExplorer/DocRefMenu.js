@@ -16,7 +16,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { withState, compose, createEventHandlerWithConfig } from 'recompose';
+import { withState, compose } from 'recompose';
 import { connect } from 'react-redux';
 
 import { Dropdown, Icon, Confirm } from 'semantic-ui-react';
@@ -56,24 +56,24 @@ const DocRefMenu = enhance(({
       content="This will delete the doc ref, are you sure?"
       onCancel={() => setPendingDeletion(false)}
       onConfirm={() => {
-        docRefDeleted(explorerId, docRef);
-        setPendingDeletion(false);
-      }}
+          docRefDeleted(explorerId, docRef);
+          setPendingDeletion(false);
+        }}
     />
     <Dropdown inline icon={null} open={isOpen} onClose={() => closeContextMenu()}>
       <Dropdown.Menu>
         <Dropdown.Item
           onClick={() => {
-            docRefOpened(docRef);
-            closeContextMenu();
-          }}
+              docRefOpened(docRef);
+              closeContextMenu();
+            }}
         >
           <Icon name="file" />
-          Open
+            Open
         </Dropdown.Item>
         <Dropdown.Item onClick={() => setPendingDeletion(true)}>
           <Icon name="trash" />
-          Delete
+            Delete
         </Dropdown.Item>
       </Dropdown.Menu>
     </Dropdown>
@@ -84,7 +84,7 @@ DocRefMenu.propTypes = {
   explorerId: PropTypes.string.isRequired,
   docRef: PropTypes.object.isRequired,
   isOpen: PropTypes.bool.isRequired,
-  closeContextMenu: PropTypes.func.isRequired
+  closeContextMenu: PropTypes.func.isRequired,
 };
 
 export default DocRefMenu;
