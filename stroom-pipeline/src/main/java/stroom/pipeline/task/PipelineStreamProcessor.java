@@ -21,10 +21,21 @@ import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
+import stroom.data.meta.api.AttributeMap;
+import stroom.data.meta.api.FindStreamCriteria;
+import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.StreamDataSource;
+import stroom.data.meta.api.StreamMetaService;
+import stroom.data.meta.api.StreamProperties;
+import stroom.data.meta.api.StreamStatus;
+import stroom.data.store.api.StreamSource;
+import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.StreamTarget;
+import stroom.data.store.api.SegmentInputStream;
+import stroom.data.store.api.StreamSourceInputStreamProvider;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.feed.FeedProperties;
-import stroom.data.meta.api.AttributeMap;
 import stroom.io.StreamCloser;
 import stroom.node.NodeCache;
 import stroom.pipeline.DefaultErrorWriter;
@@ -57,17 +68,6 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
-import stroom.data.store.impl.fs.serializable.RASegmentInputStream;
-import stroom.data.store.impl.fs.serializable.StreamSourceInputStreamProvider;
-import stroom.data.meta.api.FindStreamCriteria;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamMetaService;
-import stroom.data.meta.api.StreamProperties;
-import stroom.data.meta.api.StreamStatus;
-import stroom.data.meta.api.StreamDataSource;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.InclusiveRanges;
 import stroom.streamtask.InclusiveRanges.InclusiveRange;
@@ -422,7 +422,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                     final String data = streamTask.getData();
                     if (data != null && !data.isEmpty()) {
                         final List<InclusiveRange> ranges = InclusiveRanges.rangesFromString(data);
-                        final RASegmentInputStream raSegmentInputStream = mainProvider.getSegmentInputStream(streamNo);
+                        final SegmentInputStream raSegmentInputStream = mainProvider.getSegmentInputStream(streamNo);
                         raSegmentInputStream.include(0);
                         for (final InclusiveRange range : ranges) {
                             for (long i = range.getMin(); i <= range.getMax(); i++) {
@@ -514,7 +514,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                     outputError(e);
                 }
             }
-        } catch (final IOException | RuntimeException e) {
+        } catch (final RuntimeException e) {
             outputError(e);
         }
     }

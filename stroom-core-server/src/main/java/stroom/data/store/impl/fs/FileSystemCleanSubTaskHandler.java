@@ -113,6 +113,5 @@ class FileSystemCleanSubTaskHandler extends AbstractTaskHandler<FileSystemCleanS
         public void onFailure(final Throwable t) {
             taskProgress.addScanComplete();
         }
-
     }
 }

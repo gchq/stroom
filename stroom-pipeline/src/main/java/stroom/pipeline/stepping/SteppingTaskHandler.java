@@ -20,6 +20,14 @@ package stroom.pipeline.stepping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
+import stroom.data.meta.api.FindStreamCriteria;
+import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.StreamMetaService;
+import stroom.data.store.api.NestedInputStream;
+import stroom.data.store.api.StreamSource;
+import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.StreamSourceInputStream;
+import stroom.data.store.api.StreamSourceInputStreamProvider;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.feed.FeedProperties;
@@ -50,16 +58,7 @@ import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.Security;
 import stroom.security.UserTokenUtil;
 import stroom.security.shared.PermissionNames;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.data.store.impl.fs.serializable.NestedInputStream;
-import stroom.data.store.impl.fs.serializable.RANestedInputStream;
-import stroom.data.store.impl.fs.serializable.StreamSourceInputStream;
-import stroom.data.store.impl.fs.serializable.StreamSourceInputStreamProvider;
-import stroom.data.meta.api.StreamMetaService;
-import stroom.data.meta.api.FindStreamCriteria;
-import stroom.data.meta.api.Stream;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskContext;
 import stroom.task.TaskHandlerBean;
@@ -619,7 +618,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
             } catch (final SAXException | IOException | RuntimeException e) {
                 error(e);
             }
-        } catch (final IOException | RuntimeException e) {
+        } catch (final RuntimeException e) {
             error(e);
         }
     }
@@ -669,7 +668,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
             try {
                 final StreamSource streamSource = streamStore.openStreamSource(location.getStreamId());
                 if (streamSource != null) {
-                    final NestedInputStream inputStream = new RANestedInputStream(streamSource);
+                    final NestedInputStream inputStream = streamSource.getNestedInputStream();
 
                     try {
                         // Skip to the appropriate stream.

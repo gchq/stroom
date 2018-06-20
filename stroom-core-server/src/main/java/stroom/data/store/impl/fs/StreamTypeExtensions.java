@@ -25,7 +25,7 @@ class StreamTypeExtensions {
         EXTENSION_MAP.put("Context", "ctx");
     }
 
-    public static String getExtension(final String streamType) {
+    static String getExtension(final String streamType) {
         String extension = EXTENSION_MAP.get(streamType);
         if (extension == null) {
             LOGGER.warn("Unknown stream type '" + streamType + "' using extension 'dat'");

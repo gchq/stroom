@@ -23,7 +23,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.XMLFilterImpl;
 import stroom.entity.util.XMLUtil;
 import stroom.io.EncodingWriter;
-import stroom.data.store.impl.fs.serializable.SegmentOutputStream;
+import stroom.data.store.api.SegmentOutputStream;
 import stroom.util.CharBuffer;
 import stroom.util.io.StreamUtil;
 

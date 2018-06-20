@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs.serializable;
+package stroom.data.store.impl.fs;
 
-import stroom.data.store.api.StreamTarget;
-import stroom.streamstore.shared.StreamTypeNames;
+import stroom.data.store.api.SegmentOutputStream;
 import stroom.util.io.CloseableUtil;
 
 import java.io.IOException;
@@ -30,7 +29,7 @@ import java.nio.LongBuffer;
  * produces output that will be readable with a <code>SegmentInputStream</code>
  * that opens files for random access.
  */
-public class RASegmentOutputStream extends OutputStream implements SegmentOutputStream {
+class RASegmentOutputStream extends SegmentOutputStream {
     private static final int LONG_BYTES = 8;
 
     private byte[] buffer;
@@ -41,17 +40,7 @@ public class RASegmentOutputStream extends OutputStream implements SegmentOutput
     private long position;
     private long lastBoundary;
 
-    /**
-     * Create a default segment output stream for a given target (creates a
-     * child stream for you).
-     *
-     * @param streamTarget to write the data to.
-     */
-    public RASegmentOutputStream(final StreamTarget streamTarget) {
-        this(streamTarget.getOutputStream(), streamTarget.addChildStream(StreamTypeNames.SEGMENT_INDEX).getOutputStream());
-    }
-
-    public RASegmentOutputStream(final OutputStream dataFile, final OutputStream indexFile) {
+    RASegmentOutputStream(final OutputStream dataFile, final OutputStream indexFile) {
         dataOutputStream = dataFile;
         indexOutputStream = indexFile;
 
@@ -129,6 +118,7 @@ public class RASegmentOutputStream extends OutputStream implements SegmentOutput
      *                     <code>IOException</code> is thrown if the output stream is
      *                     closed.
      */
+    @SuppressWarnings("NullableProblems")
     @Override
     public void write(final byte[] b, final int off, final int len) throws IOException {
         dataOutputStream.write(b, off, len);
@@ -139,6 +129,7 @@ public class RASegmentOutputStream extends OutputStream implements SegmentOutput
      * Writes <code>b.length</code> bytes from the specified byte array to the
      * data output stream.
      */
+    @SuppressWarnings("NullableProblems")
     @Override
     public void write(final byte[] b) throws IOException {
         dataOutputStream.write(b);
@@ -161,16 +152,14 @@ public class RASegmentOutputStream extends OutputStream implements SegmentOutput
 
     @Override
     public String toString() {
-        final StringBuilder builder = new StringBuilder();
-        builder.append("RASegmentOutputStream");
-        builder.append("\ndata = ");
-        builder.append(dataOutputStream);
-        builder.append("\nindex = ");
-        builder.append(indexOutputStream);
-        builder.append("\nposition = ");
-        builder.append(position);
-        builder.append("\nlastBoundary = ");
-        builder.append(lastBoundary);
-        return builder.toString();
+        return "RASegmentOutputStream" +
+                "\ndata = " +
+                dataOutputStream +
+                "\nindex = " +
+                indexOutputStream +
+                "\nposition = " +
+                position +
+                "\nlastBoundary = " +
+                lastBoundary;
     }
 }

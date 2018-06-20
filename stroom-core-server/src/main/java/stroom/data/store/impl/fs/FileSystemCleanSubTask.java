@@ -41,27 +41,28 @@ class FileSystemCleanSubTask extends ServerTask<VoidResult> {
         this.taskProgress = taskProgress;
     }
 
-    public VolumeEntity getVolume() {
+    VolumeEntity getVolume() {
         return volume;
     }
 
-    public String getPath() {
+    String getPath() {
         return path;
     }
 
-    public String getLogPrefix() {
+    String getLogPrefix() {
         return logPrefix;
     }
 
+    @Override
     public Task<?> getParentTask() {
         return parentTask;
     }
 
-    public FileSystemCleanExecutor getParentHandler() {
+    FileSystemCleanExecutor getParentHandler() {
         return parentHandler;
     }
 
-    public FileSystemCleanProgress getTaskProgress() {
+    FileSystemCleanProgress getTaskProgress() {
         return taskProgress;
     }
 }

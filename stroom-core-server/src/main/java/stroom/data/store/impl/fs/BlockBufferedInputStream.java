@@ -35,7 +35,7 @@ class BlockBufferedInputStream extends BufferedInputStream {
     /**
      * @param in the stream we are buffering.
      */
-    public BlockBufferedInputStream(final InputStream in) {
+     BlockBufferedInputStream(final InputStream in) {
         super(in);
     }
 
@@ -43,7 +43,7 @@ class BlockBufferedInputStream extends BufferedInputStream {
      * @param in      the stream we are buffering.
      * @param bufSize buffer size to use
      */
-    public BlockBufferedInputStream(final InputStream in, final int bufSize) {
+     BlockBufferedInputStream(final InputStream in, final int bufSize) {
         super(in, bufSize);
     }
 
@@ -53,7 +53,7 @@ class BlockBufferedInputStream extends BufferedInputStream {
      *
      * @param newIn new stream to read
      */
-    public void recycle(final InputStream newIn) {
+     void recycle(final InputStream newIn) {
         count = 0;
         pos = 0;
         streamPosition = 0;
@@ -72,6 +72,7 @@ class BlockBufferedInputStream extends BufferedInputStream {
         return rtn;
     }
 
+    @SuppressWarnings("NullableProblems")
     @Override
     public int read(final byte[] b) throws IOException {
         int rtn = super.read(b);
@@ -82,6 +83,7 @@ class BlockBufferedInputStream extends BufferedInputStream {
         return rtn;
     }
 
+    @SuppressWarnings("NullableProblems")
     @Override
     public int read(final byte[] b, final int off, final int len) throws IOException {
         int rtn = super.read(b, off, len);
@@ -92,12 +94,12 @@ class BlockBufferedInputStream extends BufferedInputStream {
         return rtn;
     }
 
-    /**
-     * @return how far down the stream we are
-     */
-    public long getStreamPosition() {
-        return streamPosition;
-    }
+//    /**
+//     * @return how far down the stream we are
+//     */
+//    public long getStreamPosition() {
+//        return streamPosition;
+//    }
 
     @Override
     public String toString() {

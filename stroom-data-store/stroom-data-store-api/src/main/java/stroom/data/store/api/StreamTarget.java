@@ -50,6 +50,10 @@ public interface StreamTarget extends Closeable {
      */
     OutputStream getOutputStream();
 
+    NestedStreamTarget getNestedStreamTarget(boolean syncWriting);
+
+    SegmentOutputStream getSegmentOutputStream();
+
     /**
      * Add a child stream for this main stream.
      *

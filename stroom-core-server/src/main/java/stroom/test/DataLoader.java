@@ -19,18 +19,17 @@ package stroom.test;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.FeedDocCache;
 import stroom.data.meta.api.AttributeMap;
+import stroom.data.meta.api.StreamProperties;
+import stroom.data.store.api.SegmentOutputStream;
+import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.StreamTarget;
+import stroom.feed.FeedDocCache;
 import stroom.feed.shared.FeedDoc;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.data.store.impl.fs.serializable.RASegmentOutputStream;
-import stroom.data.store.impl.fs.serializable.RawInputSegmentWriter;
-import stroom.data.meta.api.StreamProperties;
 import stroom.streamtask.StreamTargetStroomStreamHandler;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
@@ -117,7 +116,7 @@ public class DataLoader {
             final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
 
             try {
-                final RASegmentOutputStream outputStream = new RASegmentOutputStream(streamTarget);
+                final SegmentOutputStream outputStream = streamTarget.getSegmentOutputStream();
                 final RawInputSegmentWriter writer = new RawInputSegmentWriter();
                 writer.write(new BufferedInputStream(inputStream), outputStream);
 

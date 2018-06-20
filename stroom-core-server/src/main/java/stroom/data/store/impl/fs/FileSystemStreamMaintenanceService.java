@@ -79,10 +79,7 @@ class FileSystemStreamMaintenanceService
         this.security = security;
     }
 
-    @SuppressWarnings("unchecked")
-//    @Override
-    // @Transactional
-    public List<Path> findAllStreamFile(final Stream stream) {
+    List<Path> findAllStreamFile(final Stream stream) {
         final Set<StreamVolume> streamVolumes = streamVolumeService.findStreamVolume(stream.getId());
         final List<Path> results = new ArrayList<>();
         for (final StreamVolume streamVolume : streamVolumes) {

@@ -20,10 +20,7 @@ import stroom.io.SeekableOutputStream;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -32,31 +29,17 @@ import java.util.Set;
  */
 class ParallelOutputStream extends OutputStream implements SeekableOutputStream {
     private List<OutputStream> outputStreamList;
-    private int outputStreamListSize = 0;
+    private int outputStreamListSize;
 
     /**
      * Write to this set.
      */
-    public ParallelOutputStream(final Set<OutputStream> outputStreamSet) {
+    private ParallelOutputStream(final Set<OutputStream> outputStreamSet) {
         this.outputStreamList = new ArrayList<>(outputStreamSet);
         this.outputStreamListSize = outputStreamList.size();
     }
 
-    private static Set<OutputStream> createOutputStreamsForFiles(final Set<Path> outFileSet)
-            throws IOException {
-        Set<OutputStream> rtn = new HashSet<>();
-        for (Path file : outFileSet) {
-            rtn.add(Files.newOutputStream(file));
-        }
-        return rtn;
-    }
-
-    public static ParallelOutputStream create(final Set<Path> outFileSet) throws IOException {
-        return new ParallelOutputStream(createOutputStreamsForFiles(outFileSet));
-    }
-
-    public static OutputStream createForStreamSet(final Set<OutputStream> outputStreamSet)
-            throws IOException {
+    static OutputStream createForStreamSet(final Set<OutputStream> outputStreamSet) {
         if (outputStreamSet.size() == 1) {
             return outputStreamSet.iterator().next();
         }
@@ -70,6 +53,7 @@ class ParallelOutputStream extends OutputStream implements SeekableOutputStream 
         }
     }
 
+    @SuppressWarnings("NullableProblems")
     @Override
     public void write(final byte[] b) throws IOException {
         for (int i = 0; i < outputStreamListSize; i++) {
@@ -77,6 +61,7 @@ class ParallelOutputStream extends OutputStream implements SeekableOutputStream 
         }
     }
 
+    @SuppressWarnings("NullableProblems")
     @Override
     public void write(final byte[] b, final int off, final int len) throws IOException {
         for (int i = 0; i < outputStreamListSize; i++) {
@@ -134,5 +119,4 @@ class ParallelOutputStream extends OutputStream implements SeekableOutputStream 
             ((SeekableOutputStream) outputStreamList.get(i)).seek(pos);
         }
     }
-
 }

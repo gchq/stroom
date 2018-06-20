@@ -41,40 +41,35 @@ class BlockGZIPFileVerifier {
     private byte[] magicMarkerRawBufffer = new byte[BlockGZIPConstants.MAGIC_MARKER.length];
     private byte[] headerMarkerRawBuffer = new byte[BlockGZIPConstants.BLOCK_GZIP_V1_IDENTIFIER.length];
 
-    private int blockSize;
-    private long idxStart;
-    private long dataLength;
-    private long eof;
-
     /**
      * Constructor to open a Block GZIP File.
      */
-    public BlockGZIPFileVerifier(final Path bgz) throws IOException {
+    private BlockGZIPFileVerifier(final Path bgz) throws IOException {
         raFile = new RandomAccessFile(bgz.toFile(), BlockGZIPConstants.READ_ONLY);
         stream = new RAInputStreamAdaptor();
     }
 
-    public static void main(String[] args) throws IOException {
+    static void main(String[] args) throws IOException {
         new BlockGZIPFileVerifier(Paths.get(args[0])).verify();
     }
 
-    RandomAccessFile getRaFile() {
+    private RandomAccessFile getRaFile() {
         return raFile;
     }
 
     /**
      * Test the file.
      */
-    public void verify() throws IOException {
+    void verify() throws IOException {
         raFile.seek(0);
 
         readHeaderMarker();
 
         // Read Header
-        blockSize = (int) readLong();
-        dataLength = readLong();
-        idxStart = readLong();
-        eof = readLong();
+        final int blockSize = (int) readLong();
+        final long dataLength = readLong();
+        final long idxStart = readLong();
+        final long eof = readLong();
 
         long numberOfBlocks = dataLength / blockSize;
 
@@ -135,18 +130,17 @@ class BlockGZIPFileVerifier {
 
             ByteArrayInputStream is = new ByteArrayInputStream(buffer.getRawBuffer(), 0, buffer.size());
             GZIPInputStream gzip = new GZIPInputStream(is);
-            int byteRead = 0;
+            int byteRead;
             while ((byteRead = gzip.read()) != -1) {
                 // Do something to get around check style
                 byteRead += byteRead;
             }
-
         }
     }
 
     private void fillBuffer(final InputStream stream, final BlockByteArrayOutputStream buffer, final int len)
             throws IOException {
-        int byteRead = 0;
+        int byteRead;
         int bytesRead = 0;
         while ((byteRead = stream.read()) != -1) {
             bytesRead++;
@@ -231,15 +225,16 @@ class BlockGZIPFileVerifier {
             return getRaFile().read();
         }
 
+        @SuppressWarnings("NullableProblems")
         @Override
         public int read(final byte[] b) throws IOException {
             return getRaFile().read(b);
         }
 
+        @SuppressWarnings("NullableProblems")
         @Override
         public int read(final byte[] b, final int off, final int len) throws IOException {
             return getRaFile().read(b, off, len);
         }
     }
-
 }

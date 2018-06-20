@@ -35,7 +35,7 @@ class FileSystemCleanProgress {
     FileSystemCleanProgress() {
     }
 
-    public void addResult(final ScanVolumePathResult result) {
+    void addResult(final ScanVolumePathResult result) {
         scanDirCount.incrementAndGet();
         scanFileCount.addAndGet(result.getFileCount());
         scanDeleteCount.addAndGet(result.getDeleteList().size());
@@ -43,43 +43,43 @@ class FileSystemCleanProgress {
         lineQueue.addAll(result.getDeleteList());
     }
 
-    public String traceInfo() {
+    String traceInfo() {
         return "scanDirCount " + ModelStringUtil.formatCsv(scanDirCount) + ", scanFileCount "
                 + ModelStringUtil.formatCsv(scanFileCount) + ", scanDeleteCount "
                 + ModelStringUtil.formatCsv(scanDeleteCount) + ", scanTooNewToDeleteCount "
                 + ModelStringUtil.formatCsv(scanTooNewToDeleteCount);
     }
 
-    public AtomicLong getScanDirCount() {
+    AtomicLong getScanDirCount() {
         return scanDirCount;
     }
 
-    public AtomicLong getScanDeleteCount() {
+    AtomicLong getScanDeleteCount() {
         return scanDeleteCount;
     }
 
-    public AtomicLong getScanFileCount() {
+    AtomicLong getScanFileCount() {
         return scanFileCount;
     }
 
-    public void addScanPending(int value) {
+    void addScanPending(int value) {
         scanPending.addAndGet(value);
     }
 
-    public void addScanComplete() {
+    void addScanComplete() {
         scanComplete.incrementAndGet();
         scanPending.decrementAndGet();
     }
 
-    public long getScanPending() {
-        return scanPending.get();
-    }
+//    long getScanPending() {
+//        return scanPending.get();
+//    }
+//
+//    long getScanComplete() {
+//        return scanComplete.get();
+//    }
 
-    public long getScanComplete() {
-        return scanComplete.get();
-    }
-
-    public Queue<String> getLineQueue() {
+    Queue<String> getLineQueue() {
         return lineQueue;
     }
 }

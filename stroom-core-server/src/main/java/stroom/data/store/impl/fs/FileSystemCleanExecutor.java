@@ -93,7 +93,7 @@ class FileSystemCleanExecutor {
         this.deleteOut = propertyService.getBooleanProperty("stroom.fileSystemCleanDeleteOut", false);
     }
 
-    public Long getOldAge() {
+    Long getOldAge() {
         return oldAge;
     }
 
@@ -101,7 +101,7 @@ class FileSystemCleanExecutor {
         return !deleteOut;
     }
 
-    public AsyncTaskHelper<VoidResult> getAsyncTaskHelper() {
+    AsyncTaskHelper<VoidResult> getAsyncTaskHelper() {
         return asyncTaskHelper;
     }
 
@@ -197,7 +197,7 @@ class FileSystemCleanExecutor {
                         trace.append(taskProgress.getScanDeleteCount());
                         trace.append(") ");
 
-                        String line = null;
+                        String line;
                         try {
                             final PrintWriter deletePrintWriter = printWriterMap.get(volume);
                             while ((line = taskProgress.getLineQueue().poll()) != null) {

@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.mock;
+package stroom.data.store.impl.fs;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamTarget;
+import stroom.data.store.impl.fs.MockStreamStore;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.data.meta.api.FindStreamCriteria;
 import stroom.data.meta.api.Stream;
@@ -54,7 +55,7 @@ public class TestMockStreamStore extends StroomUnitTest {
         final StreamTarget streamTarget = mockStreamStore.openStreamTarget(streamProperties);
         final Stream stream = streamTarget.getStream();
         streamTarget.getOutputStream().write("PARENT".getBytes(StreamUtil.DEFAULT_CHARSET));
-        streamTarget.addChildStream(StreamTypeNames.SEGMENT_INDEX).getOutputStream()
+        streamTarget.addChildStream(InternalStreamTypeNames.SEGMENT_INDEX).getOutputStream()
                 .write("CHILD".getBytes(StreamUtil.DEFAULT_CHARSET));
 
         Assert.assertEquals(0, mockStreamMetaService.find(FindStreamCriteria.createWithStream(stream)).size());
@@ -71,7 +72,7 @@ public class TestMockStreamStore extends StroomUnitTest {
 
         Assert.assertEquals("PARENT", testMe);
 
-        testMe = StreamUtil.streamToString(streamSource.getChildStream(StreamTypeNames.SEGMENT_INDEX).getInputStream());
+        testMe = StreamUtil.streamToString(streamSource.getChildStream(InternalStreamTypeNames.SEGMENT_INDEX).getInputStream());
 
         Assert.assertEquals("CHILD", testMe);
     }

@@ -17,10 +17,10 @@
 package stroom.pipeline.destination;
 
 import stroom.data.meta.api.AttributeMap;
+import stroom.data.meta.api.StreamDataSource;
+import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
-import stroom.data.store.impl.fs.serializable.RASegmentOutputStream;
-import stroom.data.meta.api.StreamDataSource;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
@@ -31,7 +31,7 @@ public class RollingStreamDestination extends RollingDestination {
     private final StreamTarget streamTarget;
     private final String nodeName;
     private final AtomicLong recordCount = new AtomicLong();
-    private final RASegmentOutputStream segmentOutputStream;
+    private final SegmentOutputStream segmentOutputStream;
 
     public RollingStreamDestination(final StreamKey key,
                                     final long frequency,
@@ -39,7 +39,7 @@ public class RollingStreamDestination extends RollingDestination {
                                     final long creationTime,
                                     final StreamStore streamStore,
                                     final StreamTarget streamTarget,
-                                    final String nodeName) throws IOException {
+                                    final String nodeName) {
         super(key, frequency, maxSize, creationTime);
 
         this.streamStore = streamStore;
@@ -47,7 +47,7 @@ public class RollingStreamDestination extends RollingDestination {
         this.nodeName = nodeName;
 
         if (key.isSegmentOutput()) {
-            segmentOutputStream = new RASegmentOutputStream(streamTarget);
+            segmentOutputStream = streamTarget.getSegmentOutputStream();
             setOutputStream(new ByteCountOutputStream(segmentOutputStream));
         } else {
             segmentOutputStream = null;

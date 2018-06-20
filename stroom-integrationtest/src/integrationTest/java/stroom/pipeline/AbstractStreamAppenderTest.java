@@ -17,13 +17,13 @@
 package stroom.pipeline;
 
 import org.junit.Assert;
-import stroom.docref.DocRef;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.impl.fs.serializable.RASegmentInputStream;
-import stroom.data.meta.api.StreamMetaService;
 import stroom.data.meta.api.FindStreamCriteria;
 import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.StreamMetaService;
+import stroom.data.store.api.SegmentInputStream;
+import stroom.data.store.api.StreamSource;
+import stroom.data.store.api.StreamStore;
+import stroom.docref.DocRef;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
 
@@ -165,7 +165,7 @@ public abstract class AbstractStreamAppenderTest extends AbstractAppenderTest {
         }
     }
 
-    private void checkFull(final long streamId, final String outputReference) {
+    private void checkFull(final long streamId, final String outputReference) throws IOException {
         final StreamSource streamSource = streamStore.openStreamSource(streamId);
         final Path refFile = StroomPipelineTestFileUtil.getTestResourcesFile(outputReference);
         final String refData = StreamUtil.fileToString(refFile);
@@ -176,7 +176,7 @@ public abstract class AbstractStreamAppenderTest extends AbstractAppenderTest {
 
     private void checkOuterData(final long streamId, final int count, final String ref) throws IOException {
         final StreamSource streamSource = streamStore.openStreamSource(streamId);
-        final RASegmentInputStream segmentInputStream = new RASegmentInputStream(streamSource);
+        final SegmentInputStream segmentInputStream = streamSource.getSegmentInputStream();
 
         Assert.assertEquals(count, segmentInputStream.count());
 
@@ -192,7 +192,7 @@ public abstract class AbstractStreamAppenderTest extends AbstractAppenderTest {
 
     private void checkInnerData(final long streamId, final int count, final String ref) throws IOException {
         final StreamSource streamSource = streamStore.openStreamSource(streamId);
-        final RASegmentInputStream segmentInputStream = new RASegmentInputStream(streamSource);
+        final SegmentInputStream segmentInputStream = streamSource.getSegmentInputStream();
 
         Assert.assertEquals(count, segmentInputStream.count());
 

@@ -30,11 +30,9 @@ final class FileSystemPrefixUtil {
     }
 
     /**
-     * <p>
      * Pad a prefix.
-     * </p>
      */
-    public static String padId(final Long current) {
+    static String padId(final Long current) {
         if (current == null) {
             return START_PREFIX;
         }
@@ -51,7 +49,7 @@ final class FileSystemPrefixUtil {
     /**
      * Given a string chop it up into 3 parts separately by '/'.
      */
-    public static String buildIdPath(final String id) {
+    static String buildIdPath(final String id) {
         if (id.length() == PAD_SIZE) {
             return null;
         }

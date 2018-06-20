@@ -1,6 +1,7 @@
 package stroom.datafeed;
 
 import com.google.inject.AbstractModule;
+import stroom.data.store.impl.fs.MockStreamStoreModule;
 import stroom.dictionary.DictionaryModule;
 import stroom.docstore.memory.MemoryPersistenceModule;
 import stroom.entity.MockEntityModule;
@@ -8,7 +9,6 @@ import stroom.feed.FeedModule;
 import stroom.properties.impl.mock.MockPropertyModule;
 import stroom.ruleset.RulesetModule;
 import stroom.security.impl.mock.MockSecurityContextModule;
-import stroom.data.store.impl.mock.MockStreamStoreModule;
 import stroom.streamtask.statistic.MockMetaDataStatisticModule;
 
 public class TestBaseModule extends AbstractModule {

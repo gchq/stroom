@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.mock;
+package stroom.data.store.impl.fs;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
+import stroom.data.store.impl.fs.MockStreamStore;
 import stroom.entity.shared.Clearable;
 import stroom.data.store.api.StreamStore;
 

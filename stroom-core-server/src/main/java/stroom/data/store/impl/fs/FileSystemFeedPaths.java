@@ -30,7 +30,7 @@ class FileSystemFeedPaths {
         refresh();
     }
 
-    public String getPath(final String feedName) {
+    String getPath(final String feedName) {
         String path = feedToPathMap.get(feedName);
         if (path == null) {
             insert(feedName);

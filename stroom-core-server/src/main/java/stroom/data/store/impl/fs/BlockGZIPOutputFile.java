@@ -66,14 +66,14 @@ class BlockGZIPOutputFile extends OutputStream implements SeekableOutputStream {
     /**
      * @see BlockGZIPConstants
      */
-    public BlockGZIPOutputFile(final Path file) throws IOException {
+    BlockGZIPOutputFile(final Path file) throws IOException {
         this(file, BlockGZIPConstants.DEFAULT_BLOCK_SIZE);
     }
 
     /**
      * @see BlockGZIPConstants
      */
-    public BlockGZIPOutputFile(final Path file, final int blockSize) throws IOException {
+    BlockGZIPOutputFile(final Path file, final int blockSize) throws IOException {
         this.blockSize = blockSize;
         this.mainBuffer = new BlockByteArrayOutputStream();
         this.indexBuffer = new BlockByteArrayOutputStream();
@@ -119,8 +119,13 @@ class BlockGZIPOutputFile extends OutputStream implements SeekableOutputStream {
     /**
      * @return Our current position (in uncompressed bytes)
      */
+    @Override
     public long getPosition() {
         return position;
+    }
+
+    long getBlockCount() {
+        return blockCount;
     }
 
     /**
@@ -180,12 +185,14 @@ class BlockGZIPOutputFile extends OutputStream implements SeekableOutputStream {
         }
     }
 
+    @SuppressWarnings("NullableProblems")
     @Override
     public void write(final byte[] b) throws IOException {
         // Delegate
         write(b, 0, b.length);
     }
 
+    @SuppressWarnings("NullableProblems")
     @Override
     public void write(final byte[] bytes, final int offset, final int length) throws IOException {
         if (currentStreamBuffer == null) {
@@ -278,21 +285,21 @@ class BlockGZIPOutputFile extends OutputStream implements SeekableOutputStream {
         }
     }
 
-    long getBlockCount() {
-        return blockCount;
-    }
-
-    long getBlockSize() {
-        return blockSize;
-    }
+//    long getBlockCount() {
+//        return blockCount;
+//    }
+//
+//    long getBlockSize() {
+//        return blockSize;
+//    }
 
     @Override
-    public long getSize() throws IOException {
+    public long getSize() {
         return getPosition();
     }
 
     @Override
-    public void seek(long pos) throws IOException {
+    public void seek(long pos) {
         throw new UnsupportedOperationException();
     }
 

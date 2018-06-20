@@ -30,23 +30,23 @@ final class BlockGZIPConstants {
     /**
      * Lock name.
      */
-    public static final String LOCK_EXTENSION = ".lock";
+    static final String LOCK_EXTENSION = ".lock";
     /**
      * Default Block we write.
      */
-    public static final int DEFAULT_BLOCK_SIZE = 1000000; // 1MB
+    static final int DEFAULT_BLOCK_SIZE = 1000000; // 1MB
     /**
      * Java IO Read Only.
      */
-    public static final String READ_ONLY = "r";
+    static final String READ_ONLY = "r";
     /**
      * Java IO Read Write.
      */
-    public static final String READ_WRITE = "rw";
+    static final String READ_WRITE = "rw";
     /**
      * How long is a long.
      */
-    public static final int LONG_BYTES = 8;
+    static final int LONG_BYTES = 8;
     /**
      * Written at the start to identify .
      */
@@ -59,8 +59,8 @@ final class BlockGZIPConstants {
      */
     static final byte[] MAGIC_MARKER = new byte[]{MAGIC_LOW, MAGIC_LOW, MAGIC_LOW, 0, 0, MAGIC_HIGH, MAGIC_HIGH,
             MAGIC_HIGH};
+
     private BlockGZIPConstants() {
         // NA
     }
-
 }

@@ -19,20 +19,20 @@ package stroom.data.store;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.meta.api.AttributeMap;
+import stroom.data.meta.api.StreamProperties;
+import stroom.data.store.api.NestedStreamTarget;
+import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.StreamTarget;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.feed.FeedDocCache;
-import stroom.data.meta.api.AttributeMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.security.Security;
-import stroom.data.meta.api.StreamProperties;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.data.store.impl.fs.serializable.NestedStreamTarget;
 import stroom.streamtask.StreamTargetStroomStreamHandler;
 import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.task.AbstractTaskHandler;
@@ -192,7 +192,7 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
 
             streamTarget = streamStore.openStreamTarget(streamProperties);
 
-            final NestedStreamTarget rawNestedStreamTarget = new NestedStreamTarget(streamTarget, true);
+            final NestedStreamTarget rawNestedStreamTarget = streamTarget.getNestedStreamTarget(true);
 
             int count = 0;
             final int maxCount = fileList.size();

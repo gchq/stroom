@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs.serializable;
+package stroom.data.store.impl.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.store.api.SegmentInputStream;
 import stroom.io.SeekableInputStream;
-import stroom.data.store.api.StreamSource;
-import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.io.StreamUtil;
 
 import java.io.IOException;
@@ -39,7 +38,7 @@ import java.util.TreeSet;
  * mode the segments are logical (i.e. they start at 0 regardless of the
  * window).
  */
-public class RASegmentInputStream extends InputStream implements SegmentInputStream {
+class RASegmentInputStream extends SegmentInputStream {
     private static final Logger LOGGER = LoggerFactory.getLogger(RASegmentInputStream.class);
     private static final int INT8 = 8;
     private final byte[] eightBytes = new byte[INT8];
@@ -60,25 +59,16 @@ public class RASegmentInputStream extends InputStream implements SegmentInputStr
     private long windowSegmentStart = 0;
     private long windowSegmentCount = 0;
     private long totalSegmentCount;
-    /**
-     * Read a segment stream from a stream source (opens the child segment
-     * stream for us).
-     *
-     * @param streamSource to read from
-     */
-    public RASegmentInputStream(final StreamSource streamSource) throws IOException {
-        this(streamSource.getInputStream(), streamSource.getChildStream(StreamTypeNames.SEGMENT_INDEX).getInputStream());
-    }
 
-    public RASegmentInputStream(final InputStream data, final InputStream index) throws IOException {
+    RASegmentInputStream(final InputStream data, final InputStream index) throws IOException {
         this.data = data;
         this.index = index;
 
         initWindow(0, ((SeekableInputStream) data).getSize());
     }
 
-    public RASegmentInputStream(final InputStream data, final InputStream index, final long byteStart,
-                                final long byteEnd) throws IOException {
+    RASegmentInputStream(final InputStream data, final InputStream index, final long byteStart,
+                         final long byteEnd) throws IOException {
         this.data = data;
         this.index = index;
 
@@ -331,6 +321,7 @@ public class RASegmentInputStream extends InputStream implements SegmentInputStr
      *                     some other I/O error occurs.
      * @see java.io.InputStream#read()
      */
+    @SuppressWarnings("NullableProblems")
     @Override
     public int read(final byte[] b, final int off, final int len) throws IOException {
         if (b == null) {
@@ -469,6 +460,7 @@ public class RASegmentInputStream extends InputStream implements SegmentInputStr
         return totalBytesRead;
     }
 
+    @SuppressWarnings("NullableProblems")
     @Override
     public int read(final byte[] b) throws IOException {
         return read(b, 0, b.length);
@@ -590,7 +582,7 @@ public class RASegmentInputStream extends InputStream implements SegmentInputStr
     }
 
     @Override
-    public void reset() throws IOException {
+    public void reset() {
         throw new IllegalStateException("Segmented Stream does not support mark and reset");
     }
 
@@ -606,7 +598,7 @@ public class RASegmentInputStream extends InputStream implements SegmentInputStr
      * @param segment    to find the byte offset of
      * @param lowerBound if you want the start of the end byte pos
      */
-    public long byteOffset(final long segment, final boolean lowerBound) throws IOException {
+    private long byteOffset(final long segment, final boolean lowerBound) throws IOException {
         // start pos ?
         if (lowerBound) {
             if (segment == 0) {
@@ -636,7 +628,7 @@ public class RASegmentInputStream extends InputStream implements SegmentInputStr
      * will look for the lowest one skipping back over any empty segments
      * otherwise it will skip forward.
      */
-    public long segmentAtByteOffset(final long findBytePos, final boolean lowerBound) throws IOException {
+    long segmentAtByteOffset(final long findBytePos, final boolean lowerBound) throws IOException {
         // Seek past EOF?
         if (findBytePos > getDataSize()) {
             return -1;
@@ -667,7 +659,7 @@ public class RASegmentInputStream extends InputStream implements SegmentInputStr
                 }
             } else {
                 // Skip forward over any empty segments
-                long nextMidPointBytePos = 0;
+                long nextMidPointBytePos;
                 while ((midPointSegment + 1 < totalSegmentCount)
                         && (nextMidPointBytePos = byteOffset(midPointSegment + 1, false)) == midPointBytePos) {
                     midPointSegment++;
@@ -700,7 +692,7 @@ public class RASegmentInputStream extends InputStream implements SegmentInputStr
         private final long start;
         private final long end;
 
-        public ByteRange(final long start, final long end) {
+        ByteRange(final long start, final long end) {
             this.start = start;
             this.end = end;
 

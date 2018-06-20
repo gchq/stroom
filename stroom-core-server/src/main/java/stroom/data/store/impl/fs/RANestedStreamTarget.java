@@ -14,45 +14,42 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs.serializable;
+package stroom.data.store.impl.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.store.api.NestedStreamTarget;
 import stroom.data.store.api.StreamTarget;
-import stroom.data.store.impl.fs.FileSystemStreamPathHelper;
-import stroom.streamstore.shared.StreamTypeNames;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashMap;
 
-public class NestedStreamTarget implements Closeable {
-    private static final Logger LOGGER = LoggerFactory.getLogger(NestedStreamTarget.class);
+class RANestedStreamTarget implements NestedStreamTarget {
+    private static final Logger LOGGER = LoggerFactory.getLogger(RANestedStreamTarget.class);
 
     private final StreamTarget rootStreamTarget;
     private final boolean syncWriting;
     private final HashMap<String, RANestedOutputStream> nestedOutputStreamMap = new HashMap<>(10);
     private final HashMap<String, OutputStream> outputStreamMap = new HashMap<>(10);
 
-    public NestedStreamTarget(StreamTarget streamTarget, boolean syncWriting) throws IOException {
+    RANestedStreamTarget(StreamTarget streamTarget, boolean syncWriting) {
         this.rootStreamTarget = streamTarget;
         this.syncWriting = syncWriting;
-        RANestedOutputStream root = new RANestedOutputStream(streamTarget);
+        RANestedOutputStream root = new RANestedOutputStream(
+                streamTarget.getOutputStream(),
+                streamTarget.addChildStream(InternalStreamTypeNames.BOUNDARY_INDEX).getOutputStream());
         nestedOutputStreamMap.put(null, root);
         outputStreamMap.put(null, new RASegmentOutputStream(root,
-                streamTarget.addChildStream(StreamTypeNames.SEGMENT_INDEX).getOutputStream()));
+                streamTarget.addChildStream(InternalStreamTypeNames.SEGMENT_INDEX).getOutputStream()));
 
-    }
-
-    public StreamTarget getRootStreamTarget() {
-        return rootStreamTarget;
     }
 
     private void logDebug(String msg) {
         LOGGER.debug(msg + rootStreamTarget.getStream().getId());
     }
 
+    @Override
     public void putNextEntry() throws IOException {
         if (LOGGER.isDebugEnabled()) {
             logDebug("putNextEntry()");
@@ -61,6 +58,7 @@ public class NestedStreamTarget implements Closeable {
 
     }
 
+    @Override
     public void closeEntry() throws IOException {
         if (LOGGER.isDebugEnabled()) {
             logDebug("closeEntry()");
@@ -69,6 +67,7 @@ public class NestedStreamTarget implements Closeable {
 
     }
 
+    @Override
     public void putNextEntry(String streamTypeName) throws IOException {
         if (LOGGER.isDebugEnabled()) {
             logDebug("putNextEntry() - " + streamTypeName);
@@ -76,6 +75,7 @@ public class NestedStreamTarget implements Closeable {
         getRANestedOutputStream(streamTypeName).putNextEntry();
     }
 
+    @Override
     public void closeEntry(String streamType) throws IOException {
         if (LOGGER.isDebugEnabled()) {
             logDebug("closeEntry() - " + streamType);
@@ -92,7 +92,8 @@ public class NestedStreamTarget implements Closeable {
         RANestedOutputStream child = nestedOutputStreamMap.get(streamTypeName);
         if (child == null) {
             StreamTarget childTarget = rootStreamTarget.addChildStream(streamTypeName);
-            child = new RANestedOutputStream(childTarget);
+            child = new RANestedOutputStream(childTarget.getOutputStream(),
+                    childTarget.addChildStream(InternalStreamTypeNames.BOUNDARY_INDEX).getOutputStream());
             nestedOutputStreamMap.put(streamTypeName, child);
         }
 
@@ -107,10 +108,12 @@ public class NestedStreamTarget implements Closeable {
         return child;
     }
 
+    @Override
     public OutputStream getOutputStream() throws IOException {
         return getOutputStream(null);
     }
 
+    @Override
     public OutputStream getOutputStream(String streamType) throws IOException {
         OutputStream outputStream = outputStreamMap.get(streamType);
         if (outputStream == null) {
@@ -120,7 +123,7 @@ public class NestedStreamTarget implements Closeable {
                 RANestedOutputStream nestedOutputStream = getRANestedOutputStream(streamType);
                 StreamTarget childTarget = rootStreamTarget.getChildStream(streamType);
                 outputStream = new RASegmentOutputStream(nestedOutputStream,
-                        childTarget.addChildStream(StreamTypeNames.SEGMENT_INDEX).getOutputStream());
+                        childTarget.addChildStream(InternalStreamTypeNames.SEGMENT_INDEX).getOutputStream());
                 outputStreamMap.put(streamType, outputStream);
             }
         }

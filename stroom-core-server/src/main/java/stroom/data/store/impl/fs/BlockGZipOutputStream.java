@@ -52,11 +52,11 @@ class BlockGZipOutputStream extends OutputStream implements SeekableOutputStream
     private long currentBlockEndPos = 0;
     private boolean closed;
 
-    public BlockGZipOutputStream(final SeekableOutputStream mainStream) throws IOException {
+    BlockGZipOutputStream(final SeekableOutputStream mainStream) throws IOException {
         this(mainStream, BlockGZIPConstants.DEFAULT_BLOCK_SIZE);
     }
 
-    public BlockGZipOutputStream(final SeekableOutputStream mainStream, final int blockSize) throws IOException {
+    BlockGZipOutputStream(final SeekableOutputStream mainStream, final int blockSize) throws IOException {
         this.mainStream = mainStream;
         this.blockSize = blockSize;
         this.mainBuffer = new BlockByteArrayOutputStream();
@@ -95,6 +95,7 @@ class BlockGZipOutputStream extends OutputStream implements SeekableOutputStream
     /**
      * @return Our current position (in uncompressed bytes)
      */
+    @Override
     public long getPosition() {
         return position;
     }
@@ -156,12 +157,14 @@ class BlockGZipOutputStream extends OutputStream implements SeekableOutputStream
         }
     }
 
+    @SuppressWarnings("NullableProblems")
     @Override
     public void write(final byte[] b) throws IOException {
         // Delegate
         write(b, 0, b.length);
     }
 
+    @SuppressWarnings("NullableProblems")
     @Override
     public void write(final byte[] bytes, final int offset, final int length) throws IOException {
         if (currentStreamBuffer == null) {
@@ -256,17 +259,17 @@ class BlockGZipOutputStream extends OutputStream implements SeekableOutputStream
         return blockCount;
     }
 
-    long getBlockSize() {
-        return blockSize;
-    }
+//    long getBlockSize() {
+//        return blockSize;
+//    }
 
     @Override
-    public long getSize() throws IOException {
+    public long getSize() {
         return position;
     }
 
     @Override
-    public void seek(long pos) throws IOException {
+    public void seek(long pos) {
         throw new UnsupportedOperationException();
     }
 }

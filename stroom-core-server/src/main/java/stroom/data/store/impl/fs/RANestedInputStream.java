@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs.serializable;
+package stroom.data.store.impl.fs;
 
-import stroom.io.SeekableInputStream;
+import stroom.data.store.api.NestedInputStream;
 import stroom.io.BasicStreamCloser;
+import stroom.io.SeekableInputStream;
 import stroom.io.StreamCloser;
-import stroom.data.store.api.StreamSource;
-import stroom.streamstore.shared.StreamTypeNames;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,7 +29,7 @@ import java.io.InputStream;
  * <p>
  * You must call getNextEntry and closeEntry like the ZIP API.
  */
-public class RANestedInputStream extends NestedInputStream {
+class RANestedInputStream extends NestedInputStream {
     protected final InputStream data;
     protected final InputStream index;
     private final StreamCloser streamCloser;
@@ -40,16 +39,12 @@ public class RANestedInputStream extends NestedInputStream {
     private Long segmentCount = null;
     private RASegmentInputStream segmentInputStream;
 
-    public RANestedInputStream(InputStream data, InputStream index) {
+    RANestedInputStream(final InputStream data, final InputStream index) {
         this.data = data;
         this.index = index;
 
         streamCloser = new BasicStreamCloser();
         streamCloser.add(data).add(index);
-    }
-
-    public RANestedInputStream(final StreamSource streamSource) {
-        this(streamSource.getInputStream(), streamSource.getChildStream(StreamTypeNames.BOUNDARY_INDEX).getInputStream());
     }
 
     public void closeEntry() throws IOException {
@@ -70,8 +65,7 @@ public class RANestedInputStream extends NestedInputStream {
         return getNextEntry(0);
     }
 
-    @Override
-    public boolean getNextEntry(long skipCount) throws IOException {
+    boolean getNextEntry(long skipCount) throws IOException {
         currentEntry = currentEntry + skipCount + 1;
         return getEntry(currentEntry);
     }
@@ -109,14 +103,12 @@ public class RANestedInputStream extends NestedInputStream {
         return true;
     }
 
-    @Override
-    public long entryByteOffsetStart() throws IOException {
+    long entryByteOffsetStart() throws IOException {
         checkOpenEntry();
         return segmentInputStream.byteOffset(currentEntry);
     }
 
-    @Override
-    public long entryByteOffsetEnd() throws IOException {
+    long entryByteOffsetEnd() throws IOException {
         checkOpenEntry();
         long offset = segmentInputStream.byteOffset(currentEntry + 1);
         if (offset == -1) {
@@ -135,13 +127,13 @@ public class RANestedInputStream extends NestedInputStream {
         return segmentCount;
     }
 
-    private final void checkNotClosed() throws IOException {
+    private void checkNotClosed() throws IOException {
         if (closed) {
             throw new IOException("Stream has been closed and no more entries allowed");
         }
     }
 
-    private final void checkOpenEntry() throws IOException {
+    private void checkOpenEntry() throws IOException {
         if (currentEntryClosed) {
             throw new IOException("Nested stream is not open");
         }
@@ -153,6 +145,7 @@ public class RANestedInputStream extends NestedInputStream {
         return segmentInputStream.read();
     }
 
+    @SuppressWarnings("NullableProblems")
     @Override
     public int read(byte[] b) throws IOException {
         checkOpenEntry();
@@ -164,13 +157,12 @@ public class RANestedInputStream extends NestedInputStream {
         closed = true;
         try {
             streamCloser.close();
-        } catch (final IOException e) {
-            throw e;
         } finally {
             super.close();
         }
     }
 
+    @SuppressWarnings("NullableProblems")
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
         checkOpenEntry();

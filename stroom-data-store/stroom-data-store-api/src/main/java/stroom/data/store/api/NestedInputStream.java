@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs.serializable;
+package stroom.data.store.api;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,7 +28,6 @@ public abstract class NestedInputStream extends InputStream {
      * @return number of nested entries
      */
     public abstract long getEntryCount() throws IOException;
-
     /**
      * Tries to get a specific entry number.
      *
@@ -40,22 +39,6 @@ public abstract class NestedInputStream extends InputStream {
      * @return true if we have another entry to read
      */
     public abstract boolean getNextEntry() throws IOException;
-
-    /**
-     * @param skipCount entries to skip over
-     * @return true if we have another entry to read
-     */
-    public abstract boolean getNextEntry(long skipCount) throws IOException;
-
-    /**
-     * @return the byte offset of the current entry
-     */
-    public abstract long entryByteOffsetStart() throws IOException;
-
-    /**
-     * @return the byte offset of the current entry
-     */
-    public abstract long entryByteOffsetEnd() throws IOException;
 
     /**
      * You must call this to before you try and get the next entry.

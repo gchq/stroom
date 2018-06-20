@@ -22,22 +22,21 @@ import event.logging.util.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
-import stroom.data.volume.api.StreamVolumeService;
-import stroom.node.NodeCache;
-import stroom.node.VolumeService;
-import stroom.node.shared.Node;
-import stroom.node.shared.VolumeEntity;
+import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.StreamDataSource;
+import stroom.data.meta.api.StreamMetaService;
+import stroom.data.meta.api.StreamProperties;
+import stroom.data.meta.api.StreamStatus;
 import stroom.data.store.api.StreamException;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
+import stroom.data.volume.api.StreamVolumeService;
 import stroom.data.volume.api.StreamVolumeService.StreamVolume;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamMetaService;
-import stroom.data.meta.api.StreamProperties;
-import stroom.data.meta.api.StreamStatus;
-import stroom.data.meta.api.StreamDataSource;
-import stroom.streamstore.shared.StreamTypeNames;
+import stroom.node.NodeCache;
+import stroom.node.VolumeService;
+import stroom.node.shared.Node;
+import stroom.node.shared.VolumeEntity;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
@@ -153,12 +152,12 @@ class FileSystemStreamStoreImpl implements StreamStore {
             // Are we appending?
             if (streamTarget.isAppend()) {
                 final Set<Path> childFile = fileSystemStreamPathHelper.createChildStreamPath(
-                        ((FileSystemStreamTarget) streamTarget).getFiles(false), StreamTypeNames.MANIFEST);
+                        ((FileSystemStreamTarget) streamTarget).getFiles(false), InternalStreamTypeNames.MANIFEST);
 
                 // Does the manifest exist ... overwrite it
                 if (FileSystemUtil.isAllFile(childFile)) {
                     streamTarget.getAttributeMap()
-                            .write(fileSystemStreamPathHelper.getOutputStream(StreamTypeNames.MANIFEST, childFile), true);
+                            .write(fileSystemStreamPathHelper.getOutputStream(InternalStreamTypeNames.MANIFEST, childFile), true);
                     doneManifest = true;
                 }
             }
@@ -167,7 +166,7 @@ class FileSystemStreamStoreImpl implements StreamStore {
                 // No manifest done yet ... output one if the parent dir's exist
                 if (FileSystemUtil.isAllParentDirectoryExist(((FileSystemStreamTarget) streamTarget).getFiles(false))) {
                     streamTarget.getAttributeMap()
-                            .write(streamTarget.addChildStream(StreamTypeNames.MANIFEST).getOutputStream(), true);
+                            .write(streamTarget.addChildStream(InternalStreamTypeNames.MANIFEST).getOutputStream(), true);
                 } else {
                     LOGGER.warn("closeStreamTarget() - Closing target file with no directory present");
                 }
@@ -273,7 +272,7 @@ class FileSystemStreamStoreImpl implements StreamStore {
         final Set<StreamVolume> volumeSet = streamVolumeService.findStreamVolume(stream.getId());
         if (volumeSet != null && volumeSet.size() > 0) {
             final StreamVolume streamVolume = volumeSet.iterator().next();
-            final Path manifest = fileSystemStreamPathHelper.createChildStreamFile(stream, streamVolume, StreamTypeNames.MANIFEST);
+            final Path manifest = fileSystemStreamPathHelper.createChildStreamFile(stream, streamVolume, InternalStreamTypeNames.MANIFEST);
 
             if (Files.isRegularFile(manifest)) {
                 final AttributeMap attributeMap = new AttributeMap();

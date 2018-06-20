@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs.serializable;
-
-import stroom.io.IOutputStream;
+package stroom.data.store.api;
 
 import java.io.IOException;
+import java.io.OutputStream;
 
 /**
  * <p>
@@ -27,13 +26,13 @@ import java.io.IOException;
  * by a <code>SegmentInputStream</code>.
  * </p>
  */
-public interface SegmentOutputStream extends IOutputStream {
+public abstract class SegmentOutputStream extends OutputStream {
     /**
      * Adds a segment boundary to the output stream. All bytes written between
      * the start of the output or the last boundary will be considered a segment
      * by the <code>SegmentInputStream</code>.
      */
-    void addSegment() throws IOException;
+    public abstract void addSegment() throws IOException;
 
     /**
      * Adds a segment boundary to the output stream at a given byte position.
@@ -42,10 +41,10 @@ public interface SegmentOutputStream extends IOutputStream {
      *
      * @param position The byte position of the end of the segment.
      */
-    void addSegment(final long position) throws IOException;
+    public abstract void addSegment(final long position) throws IOException;
 
     /**
      * Gets the current byte position in the output stream.
      */
-    long getPosition();
+    public abstract long getPosition();
 }

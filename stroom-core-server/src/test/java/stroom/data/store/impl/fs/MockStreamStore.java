@@ -14,21 +14,26 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.mock;
+package stroom.data.store.impl.fs;
 
-import stroom.entity.shared.Clearable;
 import stroom.data.meta.api.AttributeMap;
-import stroom.io.SeekableInputStream;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
-import stroom.streamstore.shared.StreamTypeNames;
 import stroom.data.meta.api.Stream;
 import stroom.data.meta.api.StreamMetaService;
 import stroom.data.meta.api.StreamProperties;
 import stroom.data.meta.api.StreamStatus;
 import stroom.data.meta.impl.mock.MockStreamMetaService;
+import stroom.data.store.api.CompoundInputStream;
+import stroom.data.store.api.NestedInputStream;
+import stroom.data.store.api.NestedStreamTarget;
+import stroom.data.store.api.SegmentInputStream;
+import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.StreamException;
+import stroom.data.store.api.StreamSource;
+import stroom.data.store.api.StreamSourceInputStreamProvider;
+import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.StreamTarget;
+import stroom.entity.shared.Clearable;
+import stroom.io.SeekableInputStream;
 import stroom.util.collections.TypedMap;
 
 import javax.inject.Inject;
@@ -418,6 +423,17 @@ public class MockStreamStore implements StreamStore, Clearable {
         }
 
         @Override
+        public NestedStreamTarget getNestedStreamTarget(final boolean syncWriting) {
+            return new RANestedStreamTarget(this, syncWriting);
+        }
+
+        @Override
+        public SegmentOutputStream getSegmentOutputStream() {
+            return new RASegmentOutputStream(getOutputStream(),
+                    addChildStream(InternalStreamTypeNames.SEGMENT_INDEX).getOutputStream());
+        }
+
+        @Override
         public void close() {
             try {
                 if (outputStream != null) {
@@ -500,6 +516,34 @@ public class MockStreamStore implements StreamStore, Clearable {
             return inputStream;
         }
 
+        @Override
+        public NestedInputStream getNestedInputStream() throws IOException {
+            final InputStream data = getInputStream();
+            final InputStream boundaryIndex = getChildStream(InternalStreamTypeNames.BOUNDARY_INDEX).getInputStream();
+            return new RANestedInputStream(data, boundaryIndex);
+        }
+
+        @Override
+        public SegmentInputStream getSegmentInputStream() throws IOException {
+            final InputStream data = getInputStream();
+            final InputStream segmentIndex = getChildStream(InternalStreamTypeNames.SEGMENT_INDEX).getInputStream();
+            return new RASegmentInputStream(data, segmentIndex);
+        }
+
+        @Override
+        public CompoundInputStream getCompoundInputStream() throws IOException {
+            final InputStream data = getInputStream();
+            final InputStream boundaryIndex = getChildStream(InternalStreamTypeNames.BOUNDARY_INDEX).getInputStream();
+            final InputStream segmentIndex = getChildStream(InternalStreamTypeNames.SEGMENT_INDEX).getInputStream();
+            final RANestedInputStream nestedInputStream = new RANestedInputStream(data, boundaryIndex);
+            return new RACompoundInputStream(nestedInputStream, segmentIndex);
+        }
+
+        @Override
+        public StreamSourceInputStreamProvider getInputStreamProvider() {
+            return new StreamSourceInputStreamProviderImpl(this);
+        }
+
         /**
          * Close off the stream.
          */
@@ -527,7 +571,7 @@ public class MockStreamStore implements StreamStore, Clearable {
                 return new MockStreamSource(this, streamTypeName);
             }
 
-            if (StreamTypeNames.BOUNDARY_INDEX.equals(streamTypeName)) {
+            if (InternalStreamTypeNames.BOUNDARY_INDEX.equals(streamTypeName)) {
                 return new MockBoundaryStreamSource(this);
             }
 
@@ -552,7 +596,7 @@ public class MockStreamStore implements StreamStore, Clearable {
 
     private class MockBoundaryStreamSource extends MockStreamSource {
         MockBoundaryStreamSource(final StreamSource parent) {
-            super(parent, StreamTypeNames.BOUNDARY_INDEX);
+            super(parent, InternalStreamTypeNames.BOUNDARY_INDEX);
         }
 
         @Override

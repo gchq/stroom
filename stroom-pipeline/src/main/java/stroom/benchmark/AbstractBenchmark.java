@@ -18,6 +18,7 @@ package stroom.benchmark;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.store.api.SegmentOutputStream;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.util.XMLUtil;
 import stroom.feed.shared.FeedDoc;
@@ -27,8 +28,6 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
-import stroom.data.store.impl.fs.serializable.RASegmentOutputStream;
-import stroom.data.store.impl.fs.serializable.RawInputSegmentWriter;
 import stroom.data.meta.api.FindStreamCriteria;
 import stroom.data.meta.api.Stream;
 import stroom.data.meta.api.StreamMetaService;
@@ -37,6 +36,7 @@ import stroom.data.meta.api.ExpressionUtil;
 import stroom.data.meta.api.StreamDataSource;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.TaskContext;
+import stroom.test.RawInputSegmentWriter;
 import stroom.util.io.StreamUtil;
 
 import java.io.IOException;
@@ -96,7 +96,7 @@ public abstract class AbstractBenchmark {
 
         final InputStream dataInputStream = StreamUtil.stringToStream(data);
 
-        final RASegmentOutputStream dataOutputStream = new RASegmentOutputStream(dataTarget);
+        final SegmentOutputStream dataOutputStream = dataTarget.getSegmentOutputStream();
 
         final RawInputSegmentWriter dataWriter = new RawInputSegmentWriter();
         dataWriter.write(dataInputStream, dataOutputStream);
@@ -138,7 +138,7 @@ public abstract class AbstractBenchmark {
         return output.toString();
     }
 
-    protected void verifyData(final FeedDoc feed, final String verificationString) {
+    protected void verifyData(final FeedDoc feed, final String verificationString) throws IOException {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
         builder.addTerm(StreamDataSource.FEED, Condition.EQUALS, feed.getName());
         if (feed.isReference()) {

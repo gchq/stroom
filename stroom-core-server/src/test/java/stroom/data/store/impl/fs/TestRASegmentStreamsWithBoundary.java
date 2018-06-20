@@ -21,15 +21,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.data.store.impl.fs.BlockGZIPInputFile;
-import stroom.data.store.impl.fs.BlockGZIPOutputFile;
-import stroom.data.store.impl.fs.LockingFileOutputStream;
-import stroom.data.store.impl.fs.UncompressedInputStream;
-import stroom.data.store.impl.fs.serializable.NestedInputStream;
-import stroom.data.store.impl.fs.serializable.RANestedInputStream;
-import stroom.data.store.impl.fs.serializable.RANestedOutputStream;
-import stroom.data.store.impl.fs.serializable.RASegmentInputStream;
-import stroom.data.store.impl.fs.serializable.RASegmentOutputStream;
+import stroom.data.store.api.NestedInputStream;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
@@ -211,7 +203,7 @@ public class TestRASegmentStreamsWithBoundary extends StroomUnitTest {
 
         boundaryStream.close();
 
-        final NestedInputStream boundaryInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile),
+        final RANestedInputStream boundaryInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile),
                 new UncompressedInputStream(bdyFile, true));
 
         // Read 2nd segment from 2nd boundary

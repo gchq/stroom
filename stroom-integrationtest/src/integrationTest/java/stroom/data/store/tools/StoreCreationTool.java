@@ -17,6 +17,12 @@
 package stroom.data.store.tools;
 
 import org.junit.Assert;
+import stroom.data.meta.api.StreamDataSource;
+import stroom.data.meta.api.StreamProperties;
+import stroom.data.store.api.SegmentOutputStream;
+import stroom.data.store.api.StreamSource;
+import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.StreamTarget;
 import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.FeedStore;
@@ -41,14 +47,7 @@ import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
-import stroom.data.store.impl.fs.serializable.RASegmentOutputStream;
-import stroom.data.store.impl.fs.serializable.RawInputSegmentWriter;
-import stroom.data.meta.api.StreamProperties;
 import stroom.streamstore.shared.QueryData;
-import stroom.data.meta.api.StreamDataSource;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamProcessorFilterService;
 import stroom.streamtask.StreamProcessorService;
@@ -56,6 +55,7 @@ import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.Processor;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
+import stroom.test.RawInputSegmentWriter;
 import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
@@ -167,16 +167,20 @@ public final class StoreCreationTool {
         final StreamTarget target = streamStore.openStreamTarget(streamProperties);
 
         final InputStream inputStream = new ByteArrayInputStream(data.getBytes());
-        final RASegmentOutputStream outputStream = new RASegmentOutputStream(target);
+        final SegmentOutputStream outputStream = target.getSegmentOutputStream();
 
         final RawInputSegmentWriter writer = new RawInputSegmentWriter();
         writer.write(inputStream, outputStream);
 
         streamStore.closeStreamTarget(target);
 
-        final StreamSource checkSource = streamStore.openStreamSource(target.getStream().getId());
-        Assert.assertEquals(data, StreamUtil.streamToString(checkSource.getInputStream()));
-        streamStore.closeStreamSource(checkSource);
+        try {
+            final StreamSource checkSource = streamStore.openStreamSource(target.getStream().getId());
+            Assert.assertEquals(data, StreamUtil.streamToString(checkSource.getInputStream()));
+            streamStore.closeStreamSource(checkSource);
+        } catch (final IOException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
 
         return referenceFeed;
     }
@@ -312,7 +316,7 @@ public final class StoreCreationTool {
 
         final InputStream dataInputStream = Files.newInputStream(dataLocation);
 
-        final RASegmentOutputStream dataOutputStream = new RASegmentOutputStream(dataTarget);
+        final SegmentOutputStream dataOutputStream = dataTarget.getSegmentOutputStream();
 
         final RawInputSegmentWriter dataWriter = new RawInputSegmentWriter();
         dataWriter.write(dataInputStream, dataOutputStream);
@@ -322,7 +326,7 @@ public final class StoreCreationTool {
 
             final InputStream contextInputStream = Files.newInputStream(contextLocation);
 
-            final RASegmentOutputStream contextOutputStream = new RASegmentOutputStream(contextTarget);
+            final SegmentOutputStream contextOutputStream = contextTarget.getSegmentOutputStream();
 
             final RawInputSegmentWriter contextWriter = new RawInputSegmentWriter();
             contextWriter.write(contextInputStream, contextOutputStream);

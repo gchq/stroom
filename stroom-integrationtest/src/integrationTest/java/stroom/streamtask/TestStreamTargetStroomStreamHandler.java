@@ -19,15 +19,15 @@ package stroom.streamtask;
 
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.data.meta.api.AttributeMap;
+import stroom.data.store.impl.fs.MockStreamStore;
 import stroom.docref.DocRef;
 import stroom.feed.FeedDocCache;
 import stroom.feed.FeedStore;
-import stroom.data.meta.api.AttributeMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFileType;
-import stroom.data.store.impl.mock.MockStreamStore;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractProcessIntegrationTest;
 

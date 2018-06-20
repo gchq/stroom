@@ -14,20 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs.serializable;
+package stroom.data.store.api;
 
-import java.io.Closeable;
-import java.io.IOException;
+import java.io.InputStream;
 
-/**
- * Wrapper for a nested input stream.
- * <p>
- * You must call getNextEntry and closeEntry like the ZIP API.
- */
-public interface StreamSourceInputStreamProvider extends Closeable {
-    long getStreamCount() throws IOException;
-
-    StreamSourceInputStream getStream(final long streamNo) throws IOException;
-
-    RASegmentInputStream getSegmentInputStream(final long streamNo) throws IOException;
+public abstract class StreamSourceInputStream extends InputStream {
+    public abstract long size();
 }

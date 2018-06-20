@@ -21,17 +21,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.data.store.impl.fs.BlockGZIPInputFile;
-import stroom.data.store.impl.fs.BlockGZIPOutputFile;
-import stroom.data.store.impl.fs.LockingFileOutputStream;
-import stroom.data.store.impl.fs.UncompressedInputStream;
-import stroom.data.store.impl.fs.serializable.CompoundInputStream;
-import stroom.data.store.impl.fs.serializable.NestedInputStream;
-import stroom.data.store.impl.fs.serializable.NestedOutputStream;
-import stroom.data.store.impl.fs.serializable.RANestedInputStream;
-import stroom.data.store.impl.fs.serializable.RANestedOutputStream;
-import stroom.data.store.impl.fs.serializable.RASegmentInputStream;
-import stroom.data.store.impl.fs.serializable.RASegmentOutputStream;
+import stroom.data.store.api.NestedOutputStream;
+import stroom.data.store.api.SegmentInputStream;
 import stroom.util.io.FileUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
@@ -43,7 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 @RunWith(StroomJUnit4ClassRunner.class)
-public class TestCompoundInputStream extends StroomUnitTest {
+public class TestRACompoundInputStream extends StroomUnitTest {
     private Path datFile;
     private Path segFile;
     private Path bdyFile;
@@ -67,7 +58,7 @@ public class TestCompoundInputStream extends StroomUnitTest {
         final RASegmentOutputStream segmentStream = new RASegmentOutputStream(new BlockGZIPOutputFile(datFile),
                 new LockingFileOutputStream(segFile, true));
 
-        final NestedOutputStream boundaryStream = new RANestedOutputStream(segmentStream,
+        final RANestedOutputStream boundaryStream = new RANestedOutputStream(segmentStream,
                 new LockingFileOutputStream(bdyFile, true));
 
         for (int b = 1; b <= bdyCount; b++) {
@@ -121,10 +112,10 @@ public class TestCompoundInputStream extends StroomUnitTest {
         boundaryStream.flush();
         boundaryStream.close();
 
-        final CompoundInputStream compoundInputStream = new CompoundInputStream(new BlockGZIPInputFile(datFile),
-                new UncompressedInputStream(bdyFile, true), new UncompressedInputStream(segFile, true));
+        final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile), new UncompressedInputStream(bdyFile, true));
+        final RACompoundInputStream compoundInputStream = new RACompoundInputStream(nestedInputStream, new UncompressedInputStream(segFile, true));
 
-        RASegmentInputStream seg = compoundInputStream.getNextInputStream(0);
+        SegmentInputStream seg = compoundInputStream.getNextInputStream(0);
         seg.include(0);
         Assert.assertEquals("", StreamUtil.streamToString(seg));
 
@@ -139,10 +130,10 @@ public class TestCompoundInputStream extends StroomUnitTest {
     public void testNoSegOrBdyData() throws IOException {
         setup(1, 1);
 
-        final CompoundInputStream compoundInputStream = new CompoundInputStream(new BlockGZIPInputFile(datFile),
-                new UncompressedInputStream(bdyFile, true), new UncompressedInputStream(segFile, true));
+        final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile), new UncompressedInputStream(bdyFile, true));
+        final RACompoundInputStream compoundInputStream = new RACompoundInputStream(nestedInputStream, new UncompressedInputStream(segFile, true));
 
-        final RASegmentInputStream seg = compoundInputStream.getNextInputStream(0);
+        final SegmentInputStream seg = compoundInputStream.getNextInputStream(0);
         seg.include(0);
         Assert.assertEquals("B=1,S=1\n", StreamUtil.streamToString(seg));
 
@@ -154,10 +145,10 @@ public class TestCompoundInputStream extends StroomUnitTest {
     public void testNoSegData() throws IOException {
         setup(1, 0);
 
-        final CompoundInputStream compoundInputStream = new CompoundInputStream(new BlockGZIPInputFile(datFile),
-                new UncompressedInputStream(bdyFile, true), new UncompressedInputStream(segFile, true));
+        final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile), new UncompressedInputStream(bdyFile, true));
+        final RACompoundInputStream compoundInputStream = new RACompoundInputStream(nestedInputStream, new UncompressedInputStream(segFile, true));
 
-        final RASegmentInputStream seg = compoundInputStream.getNextInputStream(0);
+        final SegmentInputStream seg = compoundInputStream.getNextInputStream(0);
         seg.include(0);
         Assert.assertEquals("", StreamUtil.streamToString(seg));
 
@@ -169,10 +160,10 @@ public class TestCompoundInputStream extends StroomUnitTest {
     public void testNoBdyOrSeg() throws IOException {
         setup(1, 1);
 
-        final CompoundInputStream compoundInputStream = new CompoundInputStream(new BlockGZIPInputFile(datFile),
-                new UncompressedInputStream(bdyFile, true), new UncompressedInputStream(segFile, true));
+        final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile), new UncompressedInputStream(bdyFile, true));
+        final RACompoundInputStream compoundInputStream = new RACompoundInputStream(nestedInputStream, new UncompressedInputStream(segFile, true));
 
-        final RASegmentInputStream seg = compoundInputStream.getNextInputStream(0);
+        final SegmentInputStream seg = compoundInputStream.getNextInputStream(0);
         seg.include(0);
         Assert.assertEquals("B=1,S=1\n", StreamUtil.streamToString(seg));
 
@@ -183,10 +174,10 @@ public class TestCompoundInputStream extends StroomUnitTest {
     public void testSmall1() throws IOException {
         setup(2, 2);
 
-        final CompoundInputStream compoundInputStream = new CompoundInputStream(new BlockGZIPInputFile(datFile),
-                new UncompressedInputStream(bdyFile, true), new UncompressedInputStream(segFile, true));
+        final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile), new UncompressedInputStream(bdyFile, true));
+        final RACompoundInputStream compoundInputStream = new RACompoundInputStream(nestedInputStream, new UncompressedInputStream(segFile, true));
 
-        final RASegmentInputStream seg = compoundInputStream.getNextInputStream(0);
+        final SegmentInputStream seg = compoundInputStream.getNextInputStream(0);
         seg.include(0);
         Assert.assertEquals("B=1,S=1\n", StreamUtil.streamToString(seg));
 
@@ -197,10 +188,10 @@ public class TestCompoundInputStream extends StroomUnitTest {
     public void testSmall2() throws IOException {
         setup(2, 2);
 
-        final CompoundInputStream compoundInputStream = new CompoundInputStream(new BlockGZIPInputFile(datFile),
-                new UncompressedInputStream(bdyFile, true), new UncompressedInputStream(segFile, true));
+        final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile), new UncompressedInputStream(bdyFile, true));
+        final RACompoundInputStream compoundInputStream = new RACompoundInputStream(nestedInputStream, new UncompressedInputStream(segFile, true));
 
-        final RASegmentInputStream seg = compoundInputStream.getNextInputStream(0);
+        final SegmentInputStream seg = compoundInputStream.getNextInputStream(0);
         seg.include(1);
         Assert.assertEquals("B=1,S=2\n", StreamUtil.streamToString(seg));
 
@@ -211,10 +202,10 @@ public class TestCompoundInputStream extends StroomUnitTest {
     public void testSmall3() throws IOException {
         setup(2, 2);
 
-        final CompoundInputStream compoundInputStream = new CompoundInputStream(new BlockGZIPInputFile(datFile),
-                new UncompressedInputStream(bdyFile, true), new UncompressedInputStream(segFile, true));
+        final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile), new UncompressedInputStream(bdyFile, true));
+        final RACompoundInputStream compoundInputStream = new RACompoundInputStream(nestedInputStream, new UncompressedInputStream(segFile, true));
 
-        final RASegmentInputStream seg = compoundInputStream.getNextInputStream(1);
+        final SegmentInputStream seg = compoundInputStream.getNextInputStream(1);
         seg.include(0);
         Assert.assertEquals("B=2,S=1\n", StreamUtil.streamToString(seg));
 
@@ -225,10 +216,10 @@ public class TestCompoundInputStream extends StroomUnitTest {
     public void testSmall4() throws IOException {
         setup(2, 2);
 
-        final CompoundInputStream compoundInputStream = new CompoundInputStream(new BlockGZIPInputFile(datFile),
-                new UncompressedInputStream(bdyFile, true), new UncompressedInputStream(segFile, true));
+        final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile), new UncompressedInputStream(bdyFile, true));
+        final RACompoundInputStream compoundInputStream = new RACompoundInputStream(nestedInputStream, new UncompressedInputStream(segFile, true));
 
-        final RASegmentInputStream seg = compoundInputStream.getNextInputStream(1);
+        final SegmentInputStream seg = compoundInputStream.getNextInputStream(1);
         seg.include(1);
         Assert.assertEquals("B=2,S=2\n", StreamUtil.streamToString(seg));
 
@@ -239,8 +230,8 @@ public class TestCompoundInputStream extends StroomUnitTest {
     public void testSmallIOError1() throws IOException {
         setup(2, 2);
 
-        final CompoundInputStream compoundInputStream = new CompoundInputStream(new BlockGZIPInputFile(datFile),
-                new UncompressedInputStream(bdyFile, true), new UncompressedInputStream(segFile, true));
+        final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile), new UncompressedInputStream(bdyFile, true));
+        final RACompoundInputStream compoundInputStream = new RACompoundInputStream(nestedInputStream, new UncompressedInputStream(segFile, true));
 
         try {
             compoundInputStream.getNextInputStream(2);
@@ -254,10 +245,10 @@ public class TestCompoundInputStream extends StroomUnitTest {
     public void testSmallIOError2() throws IOException {
         setup(2, 2);
 
-        final CompoundInputStream compoundInputStream = new CompoundInputStream(new BlockGZIPInputFile(datFile),
-                new UncompressedInputStream(bdyFile, true), new UncompressedInputStream(segFile, true));
+        final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile), new UncompressedInputStream(bdyFile, true));
+        final RACompoundInputStream compoundInputStream = new RACompoundInputStream(nestedInputStream, new UncompressedInputStream(segFile, true));
 
-        RASegmentInputStream seg = null;
+        SegmentInputStream seg = null;
 
         try {
             seg = compoundInputStream.getNextInputStream(1);
@@ -273,10 +264,10 @@ public class TestCompoundInputStream extends StroomUnitTest {
     public void testBdyWithNoSegs1() throws IOException {
         setup(100, 1);
 
-        final CompoundInputStream compoundInputStream = new CompoundInputStream(new BlockGZIPInputFile(datFile),
-                new UncompressedInputStream(bdyFile, true), new UncompressedInputStream(segFile, true));
+        final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile), new UncompressedInputStream(bdyFile, true));
+        final RACompoundInputStream compoundInputStream = new RACompoundInputStream(nestedInputStream, new UncompressedInputStream(segFile, true));
 
-        final RASegmentInputStream seg = compoundInputStream.getNextInputStream(0);
+        final SegmentInputStream seg = compoundInputStream.getNextInputStream(0);
         Assert.assertEquals("B=1,S=1\n", StreamUtil.streamToString(seg));
         compoundInputStream.close();
     }
@@ -285,10 +276,10 @@ public class TestCompoundInputStream extends StroomUnitTest {
     public void testBdyWithNoSegs2() throws IOException {
         setup(100, 1);
 
-        final CompoundInputStream compoundInputStream = new CompoundInputStream(new BlockGZIPInputFile(datFile),
-                new UncompressedInputStream(bdyFile, true), new UncompressedInputStream(segFile, true));
+        final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile), new UncompressedInputStream(bdyFile, true));
+        final RACompoundInputStream compoundInputStream = new RACompoundInputStream(nestedInputStream, new UncompressedInputStream(segFile, true));
 
-        final RASegmentInputStream seg = compoundInputStream.getNextInputStream(99);
+        final SegmentInputStream seg = compoundInputStream.getNextInputStream(99);
         Assert.assertEquals("B=100,S=1\n", StreamUtil.streamToString(seg));
 
         compoundInputStream.close();
@@ -298,10 +289,10 @@ public class TestCompoundInputStream extends StroomUnitTest {
     public void testNoBdyWithSegs1() throws IOException {
         setup(1, 100);
 
-        final CompoundInputStream compoundInputStream = new CompoundInputStream(new BlockGZIPInputFile(datFile),
-                new UncompressedInputStream(bdyFile, true), new UncompressedInputStream(segFile, true));
+        final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile), new UncompressedInputStream(bdyFile, true));
+        final RACompoundInputStream compoundInputStream = new RACompoundInputStream(nestedInputStream, new UncompressedInputStream(segFile, true));
 
-        final RASegmentInputStream seg = compoundInputStream.getNextInputStream(0);
+        final SegmentInputStream seg = compoundInputStream.getNextInputStream(0);
         seg.include(0);
         Assert.assertEquals("B=1,S=1\n", StreamUtil.streamToString(seg));
         compoundInputStream.close();
@@ -311,10 +302,10 @@ public class TestCompoundInputStream extends StroomUnitTest {
     public void testNoBdyWithSegs2WithReuse() throws IOException {
         setup(2, 100);
 
-        final CompoundInputStream compoundInputStream = new CompoundInputStream(new BlockGZIPInputFile(datFile),
-                new UncompressedInputStream(bdyFile, true), new UncompressedInputStream(segFile, true));
+        final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile), new UncompressedInputStream(bdyFile, true));
+        final RACompoundInputStream compoundInputStream = new RACompoundInputStream(nestedInputStream, new UncompressedInputStream(segFile, true));
 
-        RASegmentInputStream seg = compoundInputStream.getNextInputStream(0);
+        SegmentInputStream seg = compoundInputStream.getNextInputStream(0);
         seg.include(99);
         Assert.assertEquals("B=1,S=100\n", StreamUtil.streamToString(new IgnoreCloseInputStream(seg)));
 
@@ -329,7 +320,7 @@ public class TestCompoundInputStream extends StroomUnitTest {
     public void testBroken() throws IOException {
         setup(10, 10);
 
-        final NestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile),
+        final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile),
                 new UncompressedInputStream(bdyFile, true));
         nestedInputStream.getNextEntry();
         nestedInputStream.closeEntry();
@@ -354,7 +345,7 @@ public class TestCompoundInputStream extends StroomUnitTest {
         setup(10, 10);
 
         // RAW Nest Stream Check
-        NestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile),
+        RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile),
                 new UncompressedInputStream(bdyFile, true));
         for (int b = 1; b <= 10; b++) {
             nestedInputStream.getNextEntry();
@@ -432,11 +423,10 @@ public class TestCompoundInputStream extends StroomUnitTest {
                 final String check = "B=" + b + ",S=" + s + "\n";
 
                 try {
-                    final CompoundInputStream compoundInputStream = new CompoundInputStream(
-                            new BlockGZIPInputFile(datFile), new UncompressedInputStream(bdyFile, true),
-                            new UncompressedInputStream(segFile, true));
+                    final RANestedInputStream nis = new RANestedInputStream(new BlockGZIPInputFile(datFile), new UncompressedInputStream(bdyFile, true));
+                    final RACompoundInputStream compoundInputStream = new RACompoundInputStream(nis, new UncompressedInputStream(segFile, true));
 
-                    final RASegmentInputStream seg = compoundInputStream.getNextInputStream(b - 1);
+                    final SegmentInputStream seg = compoundInputStream.getNextInputStream(b - 1);
                     seg.include(s - 1);
                     final String actual = StreamUtil.streamToString(seg);
                     if (!check.equals(actual)) {
@@ -461,7 +451,7 @@ public class TestCompoundInputStream extends StroomUnitTest {
         setup(10, 10);
 
         // RAW Nest Stream Check
-        final NestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile),
+        final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile),
                 new UncompressedInputStream(bdyFile, true));
         for (int b = 1; b <= 10; b++) {
             nestedInputStream.getNextEntry();
@@ -484,7 +474,7 @@ public class TestCompoundInputStream extends StroomUnitTest {
         setup(10, 10);
 
         // RAW Nest Stream Check
-        final NestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile),
+        final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile),
                 new UncompressedInputStream(bdyFile, true));
 
         nestedInputStream.getNextEntry(3);
@@ -510,7 +500,7 @@ public class TestCompoundInputStream extends StroomUnitTest {
         setup(10, 10);
 
         // RAW Nest Stream Check
-        final NestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile),
+        final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile),
                 new UncompressedInputStream(bdyFile, true));
 
         for (int b = 1; b <= 10; b++) {
@@ -534,7 +524,7 @@ public class TestCompoundInputStream extends StroomUnitTest {
         setup(10, 10);
 
         // RAW Nest Stream Check
-        final NestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile),
+        final RANestedInputStream nestedInputStream = new RANestedInputStream(new BlockGZIPInputFile(datFile),
                 new UncompressedInputStream(bdyFile, true));
 
         for (int b = 10; b >= 1; b--) {

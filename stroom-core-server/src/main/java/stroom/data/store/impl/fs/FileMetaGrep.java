@@ -19,7 +19,6 @@ package stroom.data.store.impl.fs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
-import stroom.data.store.impl.fs.serializable.RANestedInputStream;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.ArgsUtil;
 import stroom.util.io.AbstractFileVisitor;
@@ -34,9 +33,9 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
 import java.util.Map;
 
-public class FileMetaGrep extends AbstractCommandLineTool {
+class FileMetaGrep extends AbstractCommandLineTool {
     private Logger LOGGER = LoggerFactory.getLogger(FileMetaGrep.class);
-    Map<String, String> matchMap;
+    private Map<String, String> matchMap;
     private String[] repoPathParts = null;
     private String feedId;
 

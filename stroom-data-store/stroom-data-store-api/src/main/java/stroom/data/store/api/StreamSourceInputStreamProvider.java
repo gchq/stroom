@@ -14,21 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs.serializable;
+package stroom.data.store.api;
 
-import stroom.util.io.IgnoreCloseInputStream;
+import java.io.Closeable;
+import java.io.IOException;
 
-import java.io.InputStream;
+public interface StreamSourceInputStreamProvider extends Closeable {
+    long getStreamCount() throws IOException;
 
-public class StreamSourceInputStream extends IgnoreCloseInputStream {
-    private final long size;
+    StreamSourceInputStream getStream(final long streamNo) throws IOException;
 
-    public StreamSourceInputStream(final InputStream inputStream, final long size) {
-        super(inputStream);
-        this.size = size;
-    }
-
-    public long size() {
-        return size;
-    }
+    SegmentInputStream getSegmentInputStream(final long streamNo) throws IOException;
 }

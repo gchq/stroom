@@ -16,8 +16,8 @@
 
 package stroom.data.store.impl.fs;
 
-import stroom.io.SeekableInputStream;
 import stroom.io.BasicStreamCloser;
+import stroom.io.SeekableInputStream;
 import stroom.io.StreamCloser;
 
 import java.io.IOException;
@@ -42,7 +42,7 @@ class UncompressedInputStream extends InputStream implements SeekableInputStream
     // Use to help track non-closed streams
     private StreamCloser streamCloser = new BasicStreamCloser();
 
-    public UncompressedInputStream(final Path file, boolean lazy) throws IOException {
+    UncompressedInputStream(final Path file, boolean lazy) throws IOException {
         if (lazy && !Files.isRegularFile(file)) {
             raFile = null;
             streamAdaptor = null;
@@ -73,6 +73,7 @@ class UncompressedInputStream extends InputStream implements SeekableInputStream
     /**
      * @param b to fill
      */
+    @SuppressWarnings("NullableProblems")
     @Override
     public int read(final byte[] b) throws IOException {
         if (streamAdaptor == null) {
@@ -92,6 +93,7 @@ class UncompressedInputStream extends InputStream implements SeekableInputStream
      * @param off offset
      * @param len length
      */
+    @SuppressWarnings("NullableProblems")
     @Override
     public int read(final byte[] b, final int off, final int len) throws IOException {
         if (streamAdaptor == null) {
@@ -110,15 +112,13 @@ class UncompressedInputStream extends InputStream implements SeekableInputStream
     public void close() throws IOException {
         try {
             streamCloser.close();
-        } catch (final IOException e) {
-            throw e;
         } finally {
             super.close();
         }
     }
 
     @Override
-    public long getPosition() throws IOException {
+    public long getPosition() {
         return position;
     }
 

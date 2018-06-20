@@ -20,8 +20,8 @@ package stroom.datafeed;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import stroom.data.store.impl.fs.MockStreamStore;
 import stroom.feed.StroomHeaderArguments;
-import stroom.data.store.impl.mock.MockStreamStore;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 
@@ -44,7 +44,7 @@ import java.util.zip.ZipOutputStream;
 public class TestDataFeedServiceImpl extends TestBase {
     @Inject
     private DataFeedServlet dataFeedService;
-//    @Inject
+    //    @Inject
 //    private FeedService feedService;
     @Inject
     private MockHttpServletRequest request;

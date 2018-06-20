@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs.serializable;
+package stroom.data.store.impl.fs;
 
-import stroom.io.SeekableInputStream;
-import stroom.io.BasicStreamCloser;
-import stroom.io.StreamCloser;
+import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.StreamSource;
+import stroom.data.store.api.StreamSourceInputStream;
+import stroom.data.store.api.StreamSourceInputStreamProvider;
+import stroom.io.BasicStreamCloser;
+import stroom.io.SeekableInputStream;
+import stroom.io.StreamCloser;
 import stroom.streamstore.shared.StreamTypeNames;
 
 import java.io.IOException;
@@ -30,7 +33,7 @@ import java.io.InputStream;
  * <p>
  * You must call getNextEntry and closeEntry like the ZIP API.
  */
-public class StreamSourceInputStreamProviderImpl implements StreamSourceInputStreamProvider {
+class StreamSourceInputStreamProviderImpl implements StreamSourceInputStreamProvider {
     private final StreamSource streamSource;
     private Long segmentCount = null;
     private InputStream data;
@@ -38,11 +41,11 @@ public class StreamSourceInputStreamProviderImpl implements StreamSourceInputStr
     private InputStream segmentIndex;
     private StreamCloser streamCloser;
 
-    public StreamSourceInputStreamProviderImpl(final StreamSource streamSource) {
+    StreamSourceInputStreamProviderImpl(final StreamSource streamSource) {
         this.streamSource = streamSource;
     }
 
-    private InputStream getData() {
+    private InputStream getData() throws IOException {
         if (data == null) {
             data = streamSource.getInputStream();
             getStreamCloser().add(data);
@@ -50,17 +53,17 @@ public class StreamSourceInputStreamProviderImpl implements StreamSourceInputStr
         return data;
     }
 
-    private InputStream getBoundaryIndex() {
+    private InputStream getBoundaryIndex() throws IOException {
         if (boundaryIndex == null) {
-            boundaryIndex = streamSource.getChildStream(StreamTypeNames.BOUNDARY_INDEX).getInputStream();
+            boundaryIndex = streamSource.getChildStream(InternalStreamTypeNames.BOUNDARY_INDEX).getInputStream();
             getStreamCloser().add(boundaryIndex);
         }
         return boundaryIndex;
     }
 
-    private InputStream getSegmentIndex() {
+    private InputStream getSegmentIndex() throws IOException {
         if (segmentIndex == null) {
-            segmentIndex = streamSource.getChildStream(StreamTypeNames.SEGMENT_INDEX).getInputStream();
+            segmentIndex = streamSource.getChildStream(InternalStreamTypeNames.SEGMENT_INDEX).getInputStream();
             getStreamCloser().add(segmentIndex);
         }
         return segmentIndex;
@@ -100,11 +103,11 @@ public class StreamSourceInputStreamProviderImpl implements StreamSourceInputStr
         final long size = entryByteOffsetEnd - entryByteOffsetStart;
 
         // Create the wrapped input stream.
-        return new StreamSourceInputStream(segmentInputStream, size);
+        return new StreamSourceInputStreamImpl(segmentInputStream, size);
     }
 
     @Override
-    public RASegmentInputStream getSegmentInputStream(final long streamNo) throws IOException {
+    public SegmentInputStream getSegmentInputStream(final long streamNo) throws IOException {
         // Check bounds.
         final long segmentCount = getSegmentCount();
         if (streamNo < 0 || streamNo >= segmentCount) {

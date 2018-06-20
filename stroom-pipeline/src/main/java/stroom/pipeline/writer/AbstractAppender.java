@@ -18,7 +18,7 @@ package stroom.pipeline.writer;
 
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
-import stroom.data.store.impl.fs.serializable.SegmentOutputStream;
+import stroom.data.store.api.SegmentOutputStream;
 import stroom.util.shared.Severity;
 
 import java.io.IOException;

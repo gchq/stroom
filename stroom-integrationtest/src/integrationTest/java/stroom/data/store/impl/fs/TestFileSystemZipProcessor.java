@@ -19,14 +19,13 @@ package stroom.data.store.impl.fs;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.feed.FeedDocCache;
 import stroom.data.meta.api.AttributeMap;
-import stroom.feed.StroomHeaderArguments;
-import stroom.proxy.repo.StroomStreamProcessor;
+import stroom.data.store.api.NestedInputStream;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
-import stroom.data.store.impl.fs.FileSystemStreamMaintenanceService;
-import stroom.data.store.impl.fs.serializable.RANestedInputStream;
+import stroom.feed.FeedDocCache;
+import stroom.feed.StroomHeaderArguments;
+import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamTargetStroomStreamHandler;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -265,7 +264,7 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
             final String key = entry.getKey();
             final List<String> nestedContentList = entry.getValue();
             if (key == null) {
-                final RANestedInputStream inputStream = new RANestedInputStream(source);
+                final NestedInputStream inputStream = source.getNestedInputStream();
                 for (final String nestedContent : nestedContentList) {
                     Assert.assertTrue(inputStream.getNextEntry());
                     Assert.assertEquals(nestedContent, StreamUtil.streamToString(inputStream, false));
@@ -273,7 +272,7 @@ public class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                 }
                 inputStream.close();
             } else {
-                final RANestedInputStream inputStream = new RANestedInputStream(source.getChildStream(key));
+                final NestedInputStream inputStream = source.getChildStream(key).getNestedInputStream();
                 for (final String nestedContent : nestedContentList) {
                     Assert.assertTrue(inputStream.getNextEntry());
                     Assert.assertEquals(nestedContent, StreamUtil.streamToString(inputStream, false));

@@ -17,9 +17,10 @@
 
 package stroom.headless;
 
+import stroom.data.meta.api.AttributeMap;
+import stroom.data.meta.api.Stream;
 import stroom.docref.DocRef;
 import stroom.feed.FeedStore;
-import stroom.data.meta.api.AttributeMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.ErrorWriterProxy;
@@ -46,10 +47,6 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.Security;
-import stroom.data.store.impl.fs.serializable.RASegmentInputStream;
-import stroom.data.store.impl.fs.serializable.StreamSourceInputStream;
-import stroom.data.store.impl.fs.serializable.StreamSourceInputStreamProvider;
-import stroom.data.meta.api.Stream;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
@@ -261,34 +258,6 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
             if (errorReceiverProxy.getErrorReceiver() instanceof ErrorStatistics) {
                 ((ErrorStatistics) errorReceiverProxy.getErrorReceiver()).checkRecord(-1);
             }
-        }
-    }
-
-    private static class BasicInputStreamProvider implements StreamSourceInputStreamProvider {
-        private final StreamSourceInputStream inputStream;
-
-        BasicInputStreamProvider(final InputStream inputStream, final long size) {
-            this.inputStream = new StreamSourceInputStream(inputStream, size);
-        }
-
-        @Override
-        public long getStreamCount() {
-            return 1;
-        }
-
-        @Override
-        public StreamSourceInputStream getStream(final long streamNo) {
-            return inputStream;
-        }
-
-        @Override
-        public RASegmentInputStream getSegmentInputStream(final long streamNo) {
-            return null;
-        }
-
-        @Override
-        public void close() throws IOException {
-            inputStream.close();
         }
     }
 }

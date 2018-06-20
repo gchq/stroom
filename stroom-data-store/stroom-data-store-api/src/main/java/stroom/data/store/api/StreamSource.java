@@ -20,6 +20,7 @@ import stroom.data.meta.api.AttributeMap;
 import stroom.data.meta.api.Stream;
 
 import java.io.Closeable;
+import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -43,7 +44,15 @@ public interface StreamSource extends Closeable {
     /**
      * @return the real IO input stream
      */
-    InputStream getInputStream();
+    InputStream getInputStream() throws IOException;
+
+    NestedInputStream getNestedInputStream() throws IOException;
+
+    SegmentInputStream getSegmentInputStream() throws IOException;
+
+    CompoundInputStream getCompoundInputStream() throws IOException;
+
+    StreamSourceInputStreamProvider getInputStreamProvider();
 
     /**
      * Any attributes regarding the stream

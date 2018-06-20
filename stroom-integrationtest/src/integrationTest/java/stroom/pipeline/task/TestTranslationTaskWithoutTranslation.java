@@ -18,12 +18,12 @@ package stroom.pipeline.task;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.node.NodeCache;
-import stroom.data.store.impl.mock.MockStreamStore;
 import stroom.data.meta.api.Stream;
 import stroom.data.meta.impl.mock.MockStreamMetaService;
-import stroom.streamstore.shared.StreamTypeNames;
+import stroom.data.store.impl.fs.MockStreamStore;
 import stroom.data.store.tools.StoreCreationTool;
+import stroom.node.NodeCache;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamProcessorTask;
 import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.streamtask.StreamTaskCreator;

@@ -136,11 +136,11 @@ public class TestFileSystemUtil extends StroomUnitTest {
         touch(child1);
         assertPathEndsWith(child1, "EVENTS/2010/01/01/001/001/1=001001001.revt.ctx.bgz");
 
-        final Path child2 = fileSystemStreamPathHelper.createChildStreamFile(rootFile, StreamTypeNames.SEGMENT_INDEX);
+        final Path child2 = fileSystemStreamPathHelper.createChildStreamFile(rootFile, InternalStreamTypeNames.SEGMENT_INDEX);
         touch(child2);
         assertPathEndsWith(child2, "EVENTS/2010/01/01/001/001/1=001001001.revt.seg.dat");
 
-        final Path child1_1 = fileSystemStreamPathHelper.createChildStreamFile(child1, StreamTypeNames.SEGMENT_INDEX);
+        final Path child1_1 = fileSystemStreamPathHelper.createChildStreamFile(child1, InternalStreamTypeNames.SEGMENT_INDEX);
         touch(child1_1);
         assertPathEndsWith(child1_1, "EVENTS/2010/01/01/001/001/1=001001001.revt.ctx.seg.dat");
 

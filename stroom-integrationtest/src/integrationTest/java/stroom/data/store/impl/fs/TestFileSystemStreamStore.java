@@ -714,7 +714,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         Assert.assertEquals(testString2, streamSource.getAttributeMap().get(testString1));
         streamStore.closeStreamSource(streamSource);
 
-        final Set<Path> manifestFile = fileSystemStreamPathHelper.createChildStreamPath(rootFile, StreamTypeNames.MANIFEST);
+        final Set<Path> manifestFile = fileSystemStreamPathHelper.createChildStreamPath(rootFile, InternalStreamTypeNames.MANIFEST);
 
         Assert.assertTrue(FileSystemUtil.isAllFile(manifestFile));
 

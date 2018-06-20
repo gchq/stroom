@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class FileSystemStreamPathHelper {
+class FileSystemStreamPathHelper {
     /**
      * We use this rather than the File.separator as we need to be standard
      * across Windows and UNIX.
@@ -45,9 +45,9 @@ public class FileSystemStreamPathHelper {
     private static final String STORE_NAME = "store";
 
     private String[] CHILD_STREAM_TYPES = new String[]{
-            StreamTypeNames.SEGMENT_INDEX,
-            StreamTypeNames.BOUNDARY_INDEX,
-            StreamTypeNames.MANIFEST,
+            InternalStreamTypeNames.SEGMENT_INDEX,
+            InternalStreamTypeNames.BOUNDARY_INDEX,
+            InternalStreamTypeNames.MANIFEST,
             StreamTypeNames.META,
             StreamTypeNames.CONTEXT};
 
@@ -133,7 +133,7 @@ public class FileSystemStreamPathHelper {
     /**
      * Create a child file for a parent.
      */
-    public Path createChildStreamFile(final Stream stream, final StreamVolume streamVolume, final String streamTypeName) {
+    Path createChildStreamFile(final Stream stream, final StreamVolume streamVolume, final String streamTypeName) {
         final String path = createFilePathBase(streamVolume.getVolumePath(), stream,
                 stream.getStreamTypeName()) +
                 "." +
@@ -154,14 +154,14 @@ public class FileSystemStreamPathHelper {
      * [feedid]_[streamid]
      * </p>
      */
-    public String getBaseName(Stream stream) {
+    String getBaseName(Stream stream) {
         final String feedPath = fileSystemFeedPaths.getPath(stream.getFeedName());
         return feedPath +
                 FILE_SEPERATOR_CHAR +
                 FileSystemPrefixUtil.padId(stream.getId());
     }
 
-    public String getDirectory(Stream stream, String streamTypeName) {
+    String getDirectory(Stream stream, String streamTypeName) {
         StringBuilder builder = new StringBuilder();
         builder.append(FileSystemStreamTypePaths.getPath(streamTypeName));
         builder.append(FileSystemStreamPathHelper.SEPERATOR_CHAR);
@@ -191,7 +191,7 @@ public class FileSystemStreamPathHelper {
     /**
      * Find all the descendants to this file.
      */
-    public List<Path> findAllDescendantStreamFileList(final Path parent) {
+    List<Path> findAllDescendantStreamFileList(final Path parent) {
         List<Path> rtn = new ArrayList<>();
         List<Path> kids = findChildStreamFileList(parent);
         for (Path kid : kids) {
@@ -204,7 +204,7 @@ public class FileSystemStreamPathHelper {
     /**
      * Return a File IO object.
      */
-    public Path createRootStreamFile(final String rootPath, final Stream stream, final String streamTypeName) {
+    Path createRootStreamFile(final String rootPath, final Stream stream, final String streamTypeName) {
         final String path = createFilePathBase(rootPath, stream, streamTypeName) +
                 "." +
                 StreamTypeExtensions.getExtension(streamTypeName) +
@@ -228,24 +228,24 @@ public class FileSystemStreamPathHelper {
     }
 
     private FileStoreType getFileStoreType(final String streamTypeName) {
-        if (StreamTypeNames.SEGMENT_INDEX.equals(streamTypeName)) {
+        if (InternalStreamTypeNames.SEGMENT_INDEX.equals(streamTypeName)) {
             return FileStoreType.dat;
         }
-        if (StreamTypeNames.BOUNDARY_INDEX.equals(streamTypeName)) {
+        if (InternalStreamTypeNames.BOUNDARY_INDEX.equals(streamTypeName)) {
             return FileStoreType.dat;
         }
-        if (StreamTypeNames.MANIFEST.equals(streamTypeName)) {
+        if (InternalStreamTypeNames.MANIFEST.equals(streamTypeName)) {
             return FileStoreType.dat;
         }
         return FileStoreType.bgz;
     }
 
     boolean isStreamTypeLazy(final String streamTypeName) {
-        return StreamTypeNames.SEGMENT_INDEX.equals(streamTypeName) || StreamTypeNames.BOUNDARY_INDEX.equals(streamTypeName);
+        return InternalStreamTypeNames.SEGMENT_INDEX.equals(streamTypeName) || InternalStreamTypeNames.BOUNDARY_INDEX.equals(streamTypeName);
     }
 
-    public static boolean isStreamTypeSegment(final String streamTypeName) {
-        return StreamTypeNames.SEGMENT_INDEX.equals(streamTypeName) || StreamTypeNames.BOUNDARY_INDEX.equals(streamTypeName);
+    static boolean isStreamTypeSegment(final String streamTypeName) {
+        return InternalStreamTypeNames.SEGMENT_INDEX.equals(streamTypeName) || InternalStreamTypeNames.BOUNDARY_INDEX.equals(streamTypeName);
     }
 
     /**

@@ -16,17 +16,14 @@
 
 package stroom.pipeline.writer;
 
-import stroom.data.store.impl.fs.serializable.RASegmentOutputStream;
-import stroom.data.store.impl.fs.serializable.SegmentOutputStream;
-import stroom.util.io.WrappedOutputStream;
+import stroom.data.store.api.SegmentOutputStream;
 
 import java.io.IOException;
 
-public class WrappedSegmentOutputStream extends WrappedOutputStream implements SegmentOutputStream {
-    private final RASegmentOutputStream segmentOutputStream;
+public class WrappedSegmentOutputStream extends SegmentOutputStream {
+    private final SegmentOutputStream segmentOutputStream;
 
-    public WrappedSegmentOutputStream(final RASegmentOutputStream segmentOutputStream) {
-        super(segmentOutputStream);
+    public WrappedSegmentOutputStream(final SegmentOutputStream segmentOutputStream) {
         this.segmentOutputStream = segmentOutputStream;
     }
 
@@ -43,5 +40,30 @@ public class WrappedSegmentOutputStream extends WrappedOutputStream implements S
     @Override
     public long getPosition() {
         return segmentOutputStream.getPosition();
+    }
+
+    @Override
+    public void close() throws IOException {
+        segmentOutputStream.close();
+    }
+
+    @Override
+    public void flush() throws IOException {
+        segmentOutputStream.flush();
+    }
+
+    @Override
+    public void write(byte[] b, int off, int len) throws IOException {
+        segmentOutputStream.write(b, off, len);
+    }
+
+    @Override
+    public void write(byte[] b) throws IOException {
+        segmentOutputStream.write(b);
+    }
+
+    @Override
+    public void write(int b) throws IOException {
+        segmentOutputStream.write(b);
     }
 }

@@ -20,11 +20,20 @@ package stroom.pipeline.task;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.meta.api.AttributeMap;
+import stroom.data.meta.api.FindStreamCriteria;
+import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.StreamDataSource;
+import stroom.data.meta.api.StreamMetaService;
+import stroom.data.meta.api.StreamProperties;
+import stroom.data.store.api.SegmentOutputStream;
+import stroom.data.store.api.StreamSource;
+import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.StreamTarget;
 import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.FeedDocCache;
 import stroom.feed.FeedStore;
-import stroom.data.meta.api.AttributeMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.ImportExportSerializer;
@@ -42,17 +51,7 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.UserTokenUtil;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
-import stroom.data.store.impl.fs.serializable.RASegmentOutputStream;
-import stroom.data.store.impl.fs.serializable.RawInputSegmentWriter;
-import stroom.data.meta.api.FindStreamCriteria;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamMetaService;
-import stroom.data.meta.api.StreamProperties;
 import stroom.streamstore.shared.QueryData;
-import stroom.data.meta.api.StreamDataSource;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamProcessorFilterService;
 import stroom.streamtask.StreamProcessorService;
@@ -66,6 +65,7 @@ import stroom.task.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.ComparisonHelper;
 import stroom.test.ContentImportService;
+import stroom.test.RawInputSegmentWriter;
 import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
@@ -298,7 +298,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             final StreamTarget target = streamStore.openStreamTarget(streamProperties);
 
             final InputStream inputStream = new BufferedInputStream(Files.newInputStream(file));
-            final RASegmentOutputStream outputStream = new RASegmentOutputStream(target);
+            final SegmentOutputStream outputStream = target.getSegmentOutputStream();
 
             final RawInputSegmentWriter writer = new RawInputSegmentWriter();
             writer.write(inputStream, outputStream);
@@ -527,7 +527,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         return latest.getId();
     }
 
-    private void copyStream(final Stream stream, final OutputStream outputStream) {
+    private void copyStream(final Stream stream, final OutputStream outputStream) throws IOException {
         final StreamSource streamSource = streamStore.openStreamSource(stream.getId());
         StreamUtil.streamToStream(streamSource.getInputStream(), outputStream, false);
         streamStore.closeStreamSource(streamSource);

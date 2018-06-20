@@ -16,10 +16,8 @@
 
 package stroom.data.store.impl.fs;
 
-import stroom.data.store.impl.fs.serializable.RASegmentInputStream;
-import stroom.data.store.impl.fs.serializable.RASegmentOutputStream;
-import stroom.data.store.impl.fs.serializable.RawInputSegmentWriter;
-import stroom.data.store.impl.fs.serializable.SegmentOutputStream;
+import stroom.data.store.api.SegmentOutputStream;
+import stroom.test.RawInputSegmentWriter;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
@@ -37,7 +35,7 @@ import java.util.HashMap;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-public class BenchmarkIO {
+class BenchmarkIO {
     private static final int MB = 1000000;
     private static HashMap<StreamType, Integer> writeSpeed = new HashMap<>();
     private static HashMap<StreamType, Integer> readSpeed = new HashMap<>();
@@ -49,7 +47,7 @@ public class BenchmarkIO {
         }
     }
 
-    public static void main(final String[] args) throws IOException {
+    static void main(final String[] args) throws IOException {
         new BenchmarkIO().run(args);
     }
 
@@ -126,9 +124,9 @@ public class BenchmarkIO {
         Files.delete(bgzipIdxFile3);
     }
 
-    public void doTest(final Path file1, final Path file2, final byte[] data, final StreamType streamType) throws IOException {
+    private void doTest(final Path file1, final Path file2, final byte[] data, final StreamType streamType) throws IOException {
         // Write the data.
-        OutputStream os = null;
+        OutputStream os;
         switch (streamType) {
             case PLAIN:
                 os = new BufferedOutputStream(Files.newOutputStream(file1), FileSystemUtil.STREAM_BUFFER_SIZE);
@@ -154,11 +152,11 @@ public class BenchmarkIO {
 
         long startTime = System.currentTimeMillis();
 
-        if (streamType == StreamType.RAW_SEG_TEXT) {
+        if (StreamType.RAW_SEG_TEXT.equals(streamType)) {
             os = new RASegmentOutputStream(new BlockGZIPOutputFile(file1), new LockingFileOutputStream(file2, false));
             final RawInputSegmentWriter wtr = new RawInputSegmentWriter();
             wtr.write(new ByteArrayInputStream(data), (RASegmentOutputStream) os);
-        } else if (streamType == StreamType.RAW_SEG_XML) {
+        } else if (StreamType.RAW_SEG_XML.equals(streamType)) {
             os = new RASegmentOutputStream(new BlockGZIPOutputFile(file1), new LockingFileOutputStream(file2, false));
             final RawInputSegmentWriter wtr = new RawInputSegmentWriter();
             wtr.write(new ByteArrayInputStream(data), (RASegmentOutputStream) os);
@@ -232,7 +230,7 @@ public class BenchmarkIO {
         startTime = System.currentTimeMillis();
 
         // Read in a long winded way...
-        int len = 0;
+        int len;
         final ByteArrayOutputStream bos = new ByteArrayOutputStream();
         while ((len = is.read(buffer)) != -1) {
             bos.write(buffer, 0, len);

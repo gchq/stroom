@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs.serializable;
-
-import stroom.io.IInputStream;
+package stroom.data.store.api;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * <p>
@@ -31,7 +30,7 @@ import java.io.IOException;
  * <code>count() - 1</code>.
  * </p>
  */
-public interface SegmentInputStream extends IInputStream {
+public abstract class SegmentInputStream extends InputStream {
     /**
      * This method returns the total number of segments that can be read from
      * this input stream.
@@ -41,40 +40,40 @@ public interface SegmentInputStream extends IInputStream {
      * @throws IOException Could be thrown when trying to determine how many segments
      *                     there are.
      */
-    long count() throws IOException;
+    public abstract long count();
 
     /**
      * Return the byte offset in the underlying stream given a segment number
      */
-    long byteOffset(long segment) throws IOException;
+    public abstract long byteOffset(long segment) throws IOException;
 
     /**
      * Return the segment number given a byte position
      */
-    long segmentAtByteOffset(long bytePos) throws IOException;
+    public abstract long segmentAtByteOffset(long bytePos) throws IOException;
 
     /**
      * Includes a specific segment number when reading from this input stream.
      */
-    void include(long segment);
+    public abstract void include(long segment);
 
     /**
      * Includes all segments when reading from this input stream. This is the
      * default behaviour if no segments are specifically included or excluded.
      */
-    void includeAll();
+    public abstract void includeAll();
 
     /**
      * Excludes a specific segment number when reading from this input stream.
      * Initially all segments are included so setting this will exclude only the
      * specified segment.
      */
-    void exclude(long segment);
+    public abstract void exclude(long segment);
 
     /**
      * Excludes all segments when reading from this input stream. It is unlikely
      * that all input should be excluded, instead this method should be used to
      * clear all includes that have been specifically set.
      */
-    void excludeAll();
+    public abstract void excludeAll();
 }

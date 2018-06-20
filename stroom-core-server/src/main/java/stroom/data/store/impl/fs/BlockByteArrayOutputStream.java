@@ -36,14 +36,14 @@ class BlockByteArrayOutputStream extends ByteArrayOutputStream {
     /**
      * @param initialSize used if you have a good idea how big you want us to be
      */
-    public BlockByteArrayOutputStream(final int initialSize) {
+    BlockByteArrayOutputStream(final int initialSize) {
         super(initialSize);
     }
 
-    public BlockByteArrayOutputStream() {
+    BlockByteArrayOutputStream() {
     }
 
-    public byte[] getRawBuffer() {
+    byte[] getRawBuffer() {
         return buf;
     }
 
@@ -52,7 +52,7 @@ class BlockByteArrayOutputStream extends ByteArrayOutputStream {
      *
      * @param value long to write
      */
-    public void writeLong(final long value) throws IOException {
+    void writeLong(final long value) throws IOException {
         longBuffer.rewind();
         longBuffer.put(value);
         this.write(longRawBuffer);
@@ -64,7 +64,7 @@ class BlockByteArrayOutputStream extends ByteArrayOutputStream {
      * @param offset to use
      * @param value  long to write
      */
-    public void overwriteLongAtOffset(final int offset, final long value) {
+    void overwriteLongAtOffset(final int offset, final long value) {
         longBuffer.rewind();
         longBuffer.put(value);
         System.arraycopy(longRawBuffer, 0, this.getRawBuffer(), offset, BlockGZIPConstants.LONG_BYTES);

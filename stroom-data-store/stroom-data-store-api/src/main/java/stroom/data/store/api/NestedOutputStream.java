@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs.serializable;
+package stroom.data.store.api;
 
 import java.io.IOException;
 import java.io.OutputStream;

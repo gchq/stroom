@@ -19,12 +19,15 @@ package stroom.data.store.impl.fs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
-import stroom.io.BasicStreamCloser;
-import stroom.io.StreamCloser;
-import stroom.data.store.api.StreamSource;
 import stroom.data.meta.api.Stream;
 import stroom.data.meta.api.StreamStatus;
-import stroom.streamstore.shared.StreamTypeNames;
+import stroom.data.store.api.CompoundInputStream;
+import stroom.data.store.api.NestedInputStream;
+import stroom.data.store.api.SegmentInputStream;
+import stroom.data.store.api.StreamSource;
+import stroom.data.store.api.StreamSourceInputStreamProvider;
+import stroom.io.BasicStreamCloser;
+import stroom.io.StreamCloser;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -127,6 +130,34 @@ final class FileSystemStreamSource implements StreamSource {
     }
 
     @Override
+    public NestedInputStream getNestedInputStream() throws IOException {
+        final InputStream data = getInputStream();
+        final InputStream boundaryIndex = getChildStream(InternalStreamTypeNames.BOUNDARY_INDEX).getInputStream();
+        return new RANestedInputStream(data, boundaryIndex);
+    }
+
+    @Override
+    public SegmentInputStream getSegmentInputStream() throws IOException {
+        final InputStream data = getInputStream();
+        final InputStream segmentIndex = getChildStream(InternalStreamTypeNames.SEGMENT_INDEX).getInputStream();
+        return new RASegmentInputStream(data, segmentIndex);
+    }
+
+    @Override
+    public CompoundInputStream getCompoundInputStream() throws IOException {
+        final InputStream data = getInputStream();
+        final InputStream boundaryIndex = getChildStream(InternalStreamTypeNames.BOUNDARY_INDEX).getInputStream();
+        final InputStream segmentIndex = getChildStream(InternalStreamTypeNames.SEGMENT_INDEX).getInputStream();
+        final RANestedInputStream nestedInputStream = new RANestedInputStream(data, boundaryIndex);
+        return new RACompoundInputStream(nestedInputStream, segmentIndex);
+    }
+
+    @Override
+    public StreamSourceInputStreamProvider getInputStreamProvider() {
+        return new StreamSourceInputStreamProviderImpl(this);
+    }
+
+    @Override
     public Stream getStream() {
         return stream;
     }
@@ -162,7 +193,7 @@ final class FileSystemStreamSource implements StreamSource {
         if (attributeMap == null) {
             attributeMap = new AttributeMap();
             try {
-                final StreamSource streamSource = getChildStream(StreamTypeNames.MANIFEST);
+                final StreamSource streamSource = getChildStream(InternalStreamTypeNames.MANIFEST);
                 if (streamSource != null) {
                     attributeMap.read(streamSource.getInputStream(), true);
                 }

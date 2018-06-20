@@ -18,6 +18,11 @@
 package stroom.test;
 
 import org.junit.Assert;
+import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.StreamDataSource;
+import stroom.data.meta.api.StreamProperties;
+import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.StreamTarget;
 import stroom.docref.DocRef;
 import stroom.feed.StroomHeaderArguments;
 import stroom.index.IndexStore;
@@ -32,14 +37,7 @@ import stroom.node.shared.VolumeEntity;
 import stroom.node.shared.VolumeEntity.VolumeUseStatus;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
-import stroom.data.store.impl.fs.serializable.RASegmentOutputStream;
-import stroom.data.store.impl.fs.serializable.RawInputSegmentWriter;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamProperties;
 import stroom.streamstore.shared.QueryData;
-import stroom.data.meta.api.StreamDataSource;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamProcessorFilterService;
 import stroom.streamtask.StreamProcessorService;
@@ -148,7 +146,7 @@ public class CommonTestScenarioCreator {
         final InputStream inputStream = new ByteArrayInputStream("line1\nline2".getBytes(StreamUtil.DEFAULT_CHARSET));
 
         final RawInputSegmentWriter writer = new RawInputSegmentWriter();
-        writer.write(inputStream, new RASegmentOutputStream(target));
+        writer.write(inputStream, target.getSegmentOutputStream());
 
         target.getAttributeMap().put(StroomHeaderArguments.FEED, feed);
 
@@ -174,7 +172,7 @@ public class CommonTestScenarioCreator {
                 + "Version=\"3.0.0\"/>").getBytes(StreamUtil.DEFAULT_CHARSET));
 
         final RawInputSegmentWriter writer = new RawInputSegmentWriter();
-        writer.write(inputStream, new RASegmentOutputStream(target));
+        writer.write(inputStream, target.getSegmentOutputStream());
         streamStore.closeStreamTarget(target);
         return target.getStream();
     }

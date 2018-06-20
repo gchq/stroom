@@ -51,27 +51,22 @@ import java.util.Collection;
  * Any files ended in .lock are locked output streams that have not yet closed.
  */
 final class FileSystemUtil {
-    public static final int MKDIR_RETRY_COUNT = 2;
-    public static final int MKDIR_RETRY_SLEEP_MS = 100;
+    private static final int MKDIR_RETRY_COUNT = 2;
+    private static final int MKDIR_RETRY_SLEEP_MS = 100;
 
     /**
      * We use this rather than the File.separator as we need to be standard
      * across Windows and UNIX.
      */
-    public static final char SEPERATOR_CHAR = '/';
-//    public static final char FILE_SEPERATOR_CHAR = '=';
-//    /**
-//     * Extension used for locking.
-//     */
-//    public static final String LOCK_EXTENSION = ".lock";
+    static final char SEPERATOR_CHAR = '/';
     /**
      * How big our buffers are. This should always be a multiple of 8.
      */
-    public static final int STREAM_BUFFER_SIZE = 1024 * 100;
+    static final int STREAM_BUFFER_SIZE = 1024 * 100;
     /**
      * The store root.
      */
-    public static final String STORE_NAME = "store";
+    private static final String STORE_NAME = "store";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemUtil.class);
 
@@ -82,7 +77,7 @@ final class FileSystemUtil {
     /**
      * Create a root path.
      */
-    public static Path createFileTypeRoot(final VolumeEntity volume) {
+    static Path createFileTypeRoot(final VolumeEntity volume) {
         //        if (streamType != null) {
 //            builder.append(SEPERATOR_CHAR);
 //            builder.append(streamType.toString());
@@ -93,7 +88,7 @@ final class FileSystemUtil {
         return Paths.get(path);
     }
 
-    public static String encodeFileName(String fileName) {
+    static String encodeFileName(String fileName) {
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < fileName.length(); i++) {
             char c = fileName.charAt(i);
@@ -107,7 +102,7 @@ final class FileSystemUtil {
         return builder.toString();
     }
 
-    public static String decodeFileName(String fileName) {
+    static String decodeFileName(String fileName) {
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < fileName.length(); i++) {
             char c = fileName.charAt(i);
@@ -122,7 +117,7 @@ final class FileSystemUtil {
         return builder.toString();
     }
 
-    public static boolean deleteAnyPath(final Collection<Path> files) {
+    static boolean deleteAnyPath(final Collection<Path> files) {
         boolean ok = true;
         for (Path file : files) {
             if (Files.isRegularFile(file)) {
@@ -140,7 +135,7 @@ final class FileSystemUtil {
         return ok;
     }
 
-    public static boolean isAllFile(final Collection<Path> files) {
+    static boolean isAllFile(final Collection<Path> files) {
         boolean allFiles = true;
         for (Path file : files) {
             allFiles &= Files.isRegularFile(file);
@@ -148,7 +143,7 @@ final class FileSystemUtil {
         return allFiles;
     }
 
-    public static boolean isAllParentDirectoryExist(final Collection<Path> files) {
+    static boolean isAllParentDirectoryExist(final Collection<Path> files) {
         boolean allDirs = true;
         for (Path file : files) {
             allDirs &= Files.isDirectory(file.getParent());
@@ -156,7 +151,7 @@ final class FileSystemUtil {
         return allDirs;
     }
 
-    public static boolean updateLastModified(final Collection<Path> files, final long lastModified) {
+    static boolean updateLastModified(final Collection<Path> files, final long lastModified) {
         boolean allOk = true;
         for (Path file : files) {
             try {

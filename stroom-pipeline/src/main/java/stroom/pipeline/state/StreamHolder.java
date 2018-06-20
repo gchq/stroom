@@ -16,15 +16,13 @@
 
 package stroom.pipeline.state;
 
-import stroom.io.StreamCloser;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.impl.fs.serializable.StreamSourceInputStreamProvider;
-import stroom.data.store.impl.fs.serializable.StreamSourceInputStreamProviderImpl;
 import stroom.data.meta.api.Stream;
+import stroom.data.store.api.StreamSource;
+import stroom.data.store.api.StreamSourceInputStreamProvider;
 import stroom.guice.PipelineScoped;
+import stroom.io.StreamCloser;
 
 import javax.inject.Inject;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -50,9 +48,9 @@ public class StreamHolder implements Holder {
         this.stream = stream;
     }
 
-    public void addProvider(final StreamSource source) throws IOException {
+    public void addProvider(final StreamSource source) {
         if (source != null) {
-            final StreamSourceInputStreamProvider provider = new StreamSourceInputStreamProviderImpl(source);
+            final StreamSourceInputStreamProvider provider = source.getInputStreamProvider();
             streamCloser.add(provider);
             streamCloser.add(source);
             streamProviders.put(source.getStreamTypeName(), provider);

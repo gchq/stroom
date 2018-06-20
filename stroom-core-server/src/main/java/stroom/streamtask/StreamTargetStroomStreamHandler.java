@@ -19,9 +19,15 @@ package stroom.streamtask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.FeedDocCache;
 import stroom.data.meta.api.AttributeMap;
+import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.StreamProperties;
+import stroom.data.store.StreamFactory;
+import stroom.data.store.api.NestedStreamTarget;
+import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.StreamTarget;
 import stroom.feed.AttributeMapFactory;
+import stroom.feed.FeedDocCache;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.proxy.repo.StroomHeaderStreamHandler;
@@ -29,13 +35,7 @@ import stroom.proxy.repo.StroomStreamHandler;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.proxy.repo.StroomZipNameSet;
-import stroom.data.store.StreamFactory;
-import stroom.data.meta.api.StreamProperties;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.data.store.impl.fs.serializable.NestedStreamTarget;
-import stroom.data.meta.api.Stream;
 import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.util.io.CloseableUtil;
 
@@ -319,7 +319,7 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
             final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
             feedStreamTarget.put(currentFeedName, streamTarget);
             streamSet.add(streamTarget.getStream());
-            nestedStreamTarget = new NestedStreamTarget(streamTarget, false);
+            nestedStreamTarget = streamTarget.getNestedStreamTarget(false);
             feedNestedStreamTarget.put(currentFeedName, nestedStreamTarget);
         }
         return nestedStreamTarget;

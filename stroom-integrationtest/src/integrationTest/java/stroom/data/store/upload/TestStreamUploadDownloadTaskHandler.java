@@ -18,22 +18,22 @@ package stroom.data.store.upload;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.proxy.repo.StroomZipFile;
-import stroom.proxy.repo.StroomZipFileType;
-import stroom.security.UserTokenUtil;
-import stroom.data.store.StreamDownloadSettings;
-import stroom.data.store.StreamDownloadTask;
-import stroom.data.store.StreamUploadTask;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
-import stroom.data.store.impl.fs.serializable.NestedStreamTarget;
+import stroom.data.meta.api.ExpressionUtil;
 import stroom.data.meta.api.FindStreamCriteria;
 import stroom.data.meta.api.Stream;
 import stroom.data.meta.api.StreamMetaService;
 import stroom.data.meta.api.StreamProperties;
 import stroom.data.meta.api.StreamStatus;
-import stroom.data.meta.api.ExpressionUtil;
+import stroom.data.store.StreamDownloadSettings;
+import stroom.data.store.StreamDownloadTask;
+import stroom.data.store.StreamUploadTask;
+import stroom.data.store.api.NestedStreamTarget;
+import stroom.data.store.api.StreamSource;
+import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.StreamTarget;
+import stroom.proxy.repo.StroomZipFile;
+import stroom.proxy.repo.StroomZipFileType;
+import stroom.security.UserTokenUtil;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -113,7 +113,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
                 .build();
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
 
-        final NestedStreamTarget nestedStreamTarget = new NestedStreamTarget(streamTarget, true);
+        final NestedStreamTarget nestedStreamTarget = streamTarget.getNestedStreamTarget(true);
 
         nestedStreamTarget.putNextEntry();
         nestedStreamTarget.getOutputStream().write("DATA1".getBytes(StreamUtil.DEFAULT_CHARSET));

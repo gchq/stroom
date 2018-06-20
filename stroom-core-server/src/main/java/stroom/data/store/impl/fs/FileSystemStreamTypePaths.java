@@ -31,7 +31,7 @@ class FileSystemStreamTypePaths {
         TYPE_MAP.put(path, name);
     }
 
-    public static String getPath(final String streamType) {
+    static String getPath(final String streamType) {
         String path = PATH_MAP.get(streamType);
         if (path == null) {
             path = streamType.toUpperCase().replaceAll("\\W", "_");
@@ -41,7 +41,7 @@ class FileSystemStreamTypePaths {
         return path;
     }
 
-    public static String getType(final String path) {
+    static String getType(final String path) {
         String type = TYPE_MAP.get(path);
         if (type == null) {
             LOGGER.error("Unknown stream type for path '"  + path + "'");

@@ -20,10 +20,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.Stream;
 import stroom.data.meta.api.StreamStatus;
+import stroom.data.store.api.CompoundInputStream;
+import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
-import stroom.data.store.impl.fs.serializable.CompoundInputStream;
-import stroom.data.store.impl.fs.serializable.RASegmentInputStream;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceException;
@@ -81,6 +81,11 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractFetchDataHandler.class);
 
     private static final int MAX_LINE_LENGTH = 1000;
+    /**
+     * How big our buffers are. This should always be a multiple of 8.
+     */
+    private static final int STREAM_BUFFER_SIZE = 1024 * 100;
+
     private final Long streamsLength = 1L;
     private final boolean streamsTotalIsExact = true;
 
@@ -191,7 +196,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                 }
 
                 // Get the boundary and segment input streams.
-                final CompoundInputStream compoundInputStream = new CompoundInputStream(streamSource);
+                final CompoundInputStream compoundInputStream = streamSource.getCompoundInputStream();
                 streamCloser.add(compoundInputStream);
 
                 streamsOffset = streamsRange.getOffset();
@@ -200,7 +205,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                     streamsOffset = streamsTotal - 1;
                 }
 
-                final RASegmentInputStream segmentInputStream = compoundInputStream.getNextInputStream(streamsOffset);
+                final SegmentInputStream segmentInputStream = compoundInputStream.getNextInputStream(streamsOffset);
                 streamCloser.add(segmentInputStream);
 
                 writeEventLog(streamSource.getStream(), feedName, streamTypeName, null);
@@ -245,7 +250,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
         });
     }
 
-    private FetchMarkerResult createMarkerResult(final String feedName, final String streamTypeName, final RASegmentInputStream segmentInputStream, final OffsetRange<Long> pageRange, final List<String> availableChildStreamTypes, final Severity... expandedSeverities) throws IOException {
+    private FetchMarkerResult createMarkerResult(final String feedName, final String streamTypeName, final SegmentInputStream segmentInputStream, final OffsetRange<Long> pageRange, final List<String> availableChildStreamTypes, final Severity... expandedSeverities) throws IOException {
         List<Marker> markersList;
 
         // Get the appropriate encoding for the stream type.
@@ -284,7 +289,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                 new SharedList<>(resultList));
     }
 
-    private FetchDataResult createDataResult(final String feedName, final String streamTypeName, final RASegmentInputStream segmentInputStream, final OffsetRange<Long> pageRange, final List<String> availableChildStreamTypes, final DocRef pipeline, final boolean showAsHtml, final StreamSource streamSource) throws IOException {
+    private FetchDataResult createDataResult(final String feedName, final String streamTypeName, final SegmentInputStream segmentInputStream, final OffsetRange<Long> pageRange, final List<String> availableChildStreamTypes, final DocRef pipeline, final boolean showAsHtml, final StreamSource streamSource) throws IOException {
         // Read the input stream into a string.
         // If the input stream has multiple segments then we are going to
         // read it in segment mode.
@@ -351,7 +356,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
     }
 
     private String getSegmentedData(final String feedName, final String streamTypeName, final OffsetRange<Long> pageRange,
-                                    final RASegmentInputStream segmentInputStream) {
+                                    final SegmentInputStream segmentInputStream) {
         // Get the appropriate encoding for the stream type.
         final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
 
@@ -385,7 +390,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
     }
 
     private String getNonSegmentedData(final String feedName, final String streamTypeName, final OffsetRange<Long> pageRange,
-                                       final RASegmentInputStream segmentInputStream) throws IOException {
+                                       final SegmentInputStream segmentInputStream) throws IOException {
         // Get the appropriate encoding for the stream type.
         final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
 
@@ -398,7 +403,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
 
         try (BOMRemovalInputStream bomRemovalIS = new BOMRemovalInputStream(segmentInputStream, encoding);
              final Reader reader = new InputStreamReader(bomRemovalIS, encoding)) {
-            final char[] buffer = new char[102400];
+            final char[] buffer = new char[STREAM_BUFFER_SIZE];
 
             final long maxLength = MAX_LINE_LENGTH * pageRange.getLength();
             while (lineNo < maxLineNo && (len = reader.read(buffer)) != -1) {

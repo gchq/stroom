@@ -16,8 +16,8 @@
 
 package stroom.data.store.impl.fs;
 
-import stroom.io.SeekableOutputStream;
 import stroom.io.BasicStreamCloser;
+import stroom.io.SeekableOutputStream;
 import stroom.io.StreamCloser;
 
 import java.io.BufferedOutputStream;
@@ -44,7 +44,7 @@ class LockingFileOutputStream extends OutputStream implements SeekableOutputStre
     // Use to help track non-closed streams
     private StreamCloser streamCloser = new BasicStreamCloser();
 
-    public LockingFileOutputStream(Path file, boolean lazy) throws IOException {
+    LockingFileOutputStream(Path file, boolean lazy) throws IOException {
         this.finalFile = file;
         Files.deleteIfExists(file);
         lockFile = Paths.get(file.toAbsolutePath().normalize().toString() + BlockGZIPConstants.LOCK_EXTENSION);
@@ -72,8 +72,6 @@ class LockingFileOutputStream extends OutputStream implements SeekableOutputStre
 
         try {
             streamCloser.close();
-        } catch (final IOException e) {
-            throw e;
         } finally {
             super.close();
 
@@ -90,12 +88,14 @@ class LockingFileOutputStream extends OutputStream implements SeekableOutputStre
         bytesWritten++;
     }
 
+    @SuppressWarnings("NullableProblems")
     @Override
     public void write(byte[] b) throws IOException {
         getOutputStream().write(b);
         bytesWritten += b.length;
     }
 
+    @SuppressWarnings("NullableProblems")
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
         getOutputStream().write(b, off, len);
@@ -108,17 +108,17 @@ class LockingFileOutputStream extends OutputStream implements SeekableOutputStre
     }
 
     @Override
-    public long getPosition() throws IOException {
+    public long getPosition() {
         return bytesWritten;
     }
 
     @Override
-    public long getSize() throws IOException {
+    public long getSize() {
         return bytesWritten;
     }
 
     @Override
-    public void seek(long pos) throws IOException {
+    public void seek(long pos) {
         throw new UnsupportedOperationException();
     }
 }

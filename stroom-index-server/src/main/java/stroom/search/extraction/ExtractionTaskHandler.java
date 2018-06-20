@@ -19,6 +19,9 @@ package stroom.search.extraction;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.store.api.SegmentInputStream;
+import stroom.data.store.api.StreamSource;
+import stroom.data.store.api.StreamStore;
 import stroom.docref.DocRef;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiver;
@@ -41,9 +44,6 @@ import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.search.SearchException;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.impl.fs.serializable.RASegmentInputStream;
 import stroom.task.TaskContext;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
@@ -201,7 +201,7 @@ public class ExtractionTaskHandler {
                 try {
                     // This is a valid stream so try and extract as many
                     // segments as we are allowed.
-                    try (final RASegmentInputStream segmentInputStream = new RASegmentInputStream(streamSource)) {
+                    try (final SegmentInputStream segmentInputStream = streamSource.getSegmentInputStream()) {
                         // Include the XML Header and footer.
                         segmentInputStream.include(0);
                         segmentInputStream.include(segmentInputStream.count() - 1);
@@ -240,7 +240,7 @@ public class ExtractionTaskHandler {
      * We do this one by one
      */
     private void extract(final DocRef pipelineRef, final Pipeline pipeline, final StreamSource source,
-                         final RASegmentInputStream segmentInputStream, final long count) {
+                         final SegmentInputStream segmentInputStream, final long count) {
         if (source != null && segmentInputStream != null) {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Reading " + count + " segments from stream " + source.getStream().getId());

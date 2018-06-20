@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs.serializable;
+package stroom.data.store.impl.fs;
 
+import stroom.data.store.api.CompoundInputStream;
+import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.StreamSource;
-import stroom.streamstore.shared.StreamTypeNames;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -28,38 +30,36 @@ import java.io.InputStream;
  * <p>
  * You can call getNextInputStream() multiple times to get each segment stream.
  */
-public class CompoundInputStream extends RANestedInputStream {
-    InputStream segIndex;
+class RACompoundInputStream implements CompoundInputStream {
+    private final RANestedInputStream nestedInputStream;
+    private InputStream segIndex;
 
-    public CompoundInputStream(InputStream data, InputStream bdyIndex, InputStream segIndex) {
-        super(data, bdyIndex);
+    RACompoundInputStream(final RANestedInputStream nestedInputStream, final InputStream segIndex) {
+        this.nestedInputStream = nestedInputStream;
         this.segIndex = segIndex;
     }
 
-    public CompoundInputStream(final StreamSource streamSource) {
-        this(streamSource.getInputStream(), streamSource.getChildStream(StreamTypeNames.BOUNDARY_INDEX).getInputStream(),
-                streamSource.getChildStream(StreamTypeNames.SEGMENT_INDEX).getInputStream());
+    @Override
+    public SegmentInputStream getNextInputStream(final long skipCount) throws IOException {
+        nestedInputStream.getNextEntry(skipCount);
+
+        final long segmentByteOffsetStart = nestedInputStream.entryByteOffsetStart();
+        final long segmentByteOffsetEnd =  nestedInputStream.entryByteOffsetEnd();
+
+        nestedInputStream.closeEntry();
+
+        return new RASegmentInputStream(nestedInputStream.data, segIndex, segmentByteOffsetStart, segmentByteOffsetEnd);
     }
 
-    public RASegmentInputStream getNextInputStream(final long skipCount) throws IOException {
-        getNextEntry(skipCount);
-
-        final long segmentByteOffsetStart = entryByteOffsetStart();
-        final long segmentByteOffsetEnd = entryByteOffsetEnd();
-
-        closeEntry();
-
-        return new RASegmentInputStream(data, segIndex, segmentByteOffsetStart, segmentByteOffsetEnd);
-    }
-
-    public long getInputStreamCount() throws IOException {
-        return getEntryCount();
+    @Override
+    public long getEntryCount() throws IOException {
+        return nestedInputStream.getEntryCount();
     }
 
     @Override
     public void close() throws IOException {
         try {
-            super.close();
+            nestedInputStream.close();
         } finally {
             segIndex.close();
         }

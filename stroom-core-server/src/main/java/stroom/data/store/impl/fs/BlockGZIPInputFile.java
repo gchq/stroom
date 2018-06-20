@@ -42,7 +42,7 @@ class BlockGZIPInputFile extends BlockGZIPInput {
     /**
      * Constructor to open a Block GZIP File.
      */
-    public BlockGZIPInputFile(final Path bgz) throws IOException {
+    BlockGZIPInputFile(final Path bgz) throws IOException {
         this.raFile = FileChannel.open(bgz, StandardOpenOption.READ);
         this.file = bgz;
 
@@ -56,7 +56,7 @@ class BlockGZIPInputFile extends BlockGZIPInput {
     /**
      * Constructor to open a Block GZIP File with a internal buffer size.
      */
-    public BlockGZIPInputFile(final Path bgz, final int rawBufferSize) throws IOException {
+    BlockGZIPInputFile(final Path bgz, final int rawBufferSize) throws IOException {
         super(rawBufferSize);
         this.raFile = FileChannel.open(bgz, StandardOpenOption.READ);
         this.file = bgz;
@@ -68,11 +68,11 @@ class BlockGZIPInputFile extends BlockGZIPInput {
         streamCloser.add(raFile);
     }
 
-    public static void main(final String[] args) throws IOException {
+    static void main(final String[] args) throws IOException {
         final BlockGZIPInputFile is = new BlockGZIPInputFile(Paths.get(args[0]));
 
         final byte[] buffer = new byte[1024];
-        int len = 0;
+        int len;
 
         while ((len = is.read(buffer)) != -1) {
             System.out.write(buffer, 0, len);
@@ -162,8 +162,6 @@ class BlockGZIPInputFile extends BlockGZIPInput {
     public void close() throws IOException {
         try {
             streamCloser.close();
-        } catch (final IOException e) {
-            throw e;
         } finally {
             super.close();
         }

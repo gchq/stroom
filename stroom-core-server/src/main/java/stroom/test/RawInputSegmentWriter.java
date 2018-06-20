@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs.serializable;
+package stroom.test;
 
+import stroom.data.store.api.SegmentOutputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.xml.SAXParserFactoryFactory;
 
@@ -53,7 +54,7 @@ public class RawInputSegmentWriter {
      * @param inputStream         The input stream to read.
      * @param segmentOutputStream The segment output stream to write to.
      */
-    public void write(final InputStream inputStream, final RASegmentOutputStream segmentOutputStream) {
+    public void write(final InputStream inputStream, final SegmentOutputStream segmentOutputStream) {
         write(inputStream, segmentOutputStream, true);
     }
 
@@ -66,7 +67,7 @@ public class RawInputSegmentWriter {
      * @param segmentOutputStream The segment output stream to write to.
      * @param close               both streams at end?
      */
-    public long write(final InputStream inputStream, final RASegmentOutputStream segmentOutputStream,
+    public long write(final InputStream inputStream, final SegmentOutputStream segmentOutputStream,
                       final boolean close) {
         long bytesWritten = 0;
         try {

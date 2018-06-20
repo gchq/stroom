@@ -17,8 +17,12 @@
 
 package stroom.pipeline.writer;
 
-import stroom.docref.DocRef;
 import stroom.data.meta.api.AttributeMap;
+import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.StreamProperties;
+import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.StreamTarget;
+import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
 import stroom.io.StreamCloser;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -32,11 +36,6 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaData;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
-import stroom.data.meta.api.StreamProperties;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
-import stroom.data.store.impl.fs.serializable.RASegmentOutputStream;
-import stroom.data.meta.api.Stream;
 import stroom.streamtask.shared.Processor;
 import stroom.util.io.WrappedOutputStream;
 import stroom.util.shared.Severity;
@@ -119,7 +118,7 @@ public class StreamAppender extends AbstractAppender {
         streamCloser.add(streamTarget);
 
         if (segmentOutput) {
-            targetOutputStream = new WrappedSegmentOutputStream(new RASegmentOutputStream(streamTarget)) {
+            targetOutputStream = new WrappedSegmentOutputStream(streamTarget.getSegmentOutputStream()) {
                 @Override
                 public void close() throws IOException {
                     super.flush();

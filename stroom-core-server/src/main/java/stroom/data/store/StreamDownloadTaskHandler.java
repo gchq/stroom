@@ -18,6 +18,12 @@ package stroom.data.store;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.meta.api.FindStreamCriteria;
+import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.StreamMetaService;
+import stroom.data.store.api.NestedInputStream;
+import stroom.data.store.api.StreamSource;
+import stroom.data.store.api.StreamStore;
 import stroom.entity.shared.BaseResultList;
 import stroom.proxy.repo.StroomFileNameUtil;
 import stroom.proxy.repo.StroomZipEntry;
@@ -25,14 +31,7 @@ import stroom.proxy.repo.StroomZipFileType;
 import stroom.proxy.repo.StroomZipOutputStream;
 import stroom.proxy.repo.StroomZipOutputStreamImpl;
 import stroom.security.Security;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.data.store.impl.fs.serializable.NestedInputStream;
-import stroom.data.store.impl.fs.serializable.RANestedInputStream;
-import stroom.data.meta.api.FindStreamCriteria;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamMetaService;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskContext;
 import stroom.task.TaskHandlerBean;
@@ -172,14 +171,14 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
             final StreamSource metaSource = dataSource.getChildStream(StreamTypeNames.META);
             final StreamSource contextSource = dataSource.getChildStream(StreamTypeNames.CONTEXT);
 
-            dataInputStream = new RANestedInputStream(dataSource);
+            dataInputStream = dataSource.getNestedInputStream();
             metaInputStream = null;
             if (metaSource != null) {
-                metaInputStream = new RANestedInputStream(metaSource);
+                metaInputStream = metaSource.getNestedInputStream();
             }
             contextInputStream = null;
             if (contextSource != null) {
-                contextInputStream = new RANestedInputStream(contextSource);
+                contextInputStream = contextSource.getNestedInputStream();
             }
 
             long entryProgress = 0;

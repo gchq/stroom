@@ -35,7 +35,7 @@ import java.util.Map;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-public abstract class ManualCheckStreamPerformance {
+abstract class ManualCheckStreamPerformance {
     static int testThreadCount = 10;
     static int testSize = 100000;
 
@@ -216,13 +216,13 @@ public abstract class ManualCheckStreamPerformance {
 
         @Override
         public InputStream getInputStream() throws IOException {
-            return new BufferedInputStream(new BlockGZIPInputFile(tempFile));
+            return new BlockGZIPInputFile(tempFile);
         }
 
         @Override
         public OutputStream getOutputStream() throws IOException {
             tempFile = getTempFile();
-            return new BufferedOutputStream(new BlockGZIPOutputFile(tempFile, blockSize));
+            return new BlockGZIPOutputFile(tempFile, blockSize);
         }
 
         @Override
@@ -232,7 +232,7 @@ public abstract class ManualCheckStreamPerformance {
 
         @Override
         public void onCloseOutput(final OutputStream arg0) {
-            blockCount = ((BlockGZipOutputStream) arg0).getBlockCount();
+            blockCount = ((BlockGZIPOutputFile) arg0).getBlockCount();
         }
 
         @Override
