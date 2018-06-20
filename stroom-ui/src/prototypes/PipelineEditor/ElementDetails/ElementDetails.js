@@ -55,9 +55,9 @@ const enhance = compose(
 const ElementDetails = enhance(({
   pipelineId, pipeline, selectedElementId, elements, onClose,
 }) => {
-  const element = pipeline.pipeline.elements.add.find(element => element.id === selectedElementId);
-  const elementProperties = pipeline.pipeline.properties.add.filter(property => property.element === selectedElementId);
-  const elementType = elements.elements[element.type];
+  const element = pipeline.pipeline.merged.elements.add.find(element => element.id === selectedElementId);
+  const elementProperties = pipeline.pipeline.merged.properties.add.filter(property => property.element === selectedElementId);
+  const elementType = elements.elements.find(e => e.type === element.type);
   const elementTypeProperties = elements.elementProperties[element.type];
 
   const title = (

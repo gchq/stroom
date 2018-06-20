@@ -126,12 +126,12 @@ export function getAllElementNames(pipeline) {
     .map(e => e.id)
     .map(id => id.toLowerCase())
     .forEach(id => names.push(id));
-  pipeline.configStack.forEach(cs => {
+  pipeline.configStack.forEach((cs) => {
     cs.elements.add
       .map(e => e.id)
       .map(id => id.toLowerCase())
       .forEach(id => names.push(id));
-  })
+  });
 
   return names;
 }
@@ -244,19 +244,22 @@ export function canMovePipelineElement(pipeline, pipelineAsTree, itemToMove, des
  */
 export function moveElementInPipeline(pipeline, itemToMove, destination) {
   return {
-    properties: pipeline.properties,
-    elements: pipeline.elements,
-    links: {
-      add: pipeline.links.add
-        // Remove any existing link that goes into the moving item
-        .filter(l => l.to !== itemToMove)
-        // add the new link
-        .concat([
-          {
-            from: destination,
-            to: itemToMove,
-          },
-        ]),
+    configStack: pipeline.configStack,
+    merged: {
+      properties: pipeline.merged.properties,
+      elements: pipeline.merged.elements,
+      links: {
+        add: pipeline.merged.links.add
+          // Remove any existing link that goes into the moving item
+          .filter(l => l.to !== itemToMove)
+          // add the new link
+          .concat([
+            {
+              from: destination,
+              to: itemToMove,
+            },
+          ]),
+      },
     },
   };
 }
@@ -272,22 +275,25 @@ export function deleteElementInPipeline(pipeline, itemToDelete) {
   const children = getDescendants(pipeline, itemToDelete);
 
   return {
-    properties: {
-      add: pipeline.properties.add
-        .filter(p => p.element !== itemToDelete)
-        .filter(p => !children.includes(p.element)),
-    },
-    elements: {
-      add: pipeline.elements.add
-        .filter(e => e.id !== itemToDelete)
-        .filter(e => !children.includes(e.id)),
-    },
-    links: {
-      add: pipeline.links.add
-        // Remove any existing link that goes into the deleting item
-        .filter(l => l.to !== itemToDelete)
-        .filter(l => l.from !== itemToDelete)
-        .filter(l => !children.includes(l.to)),
+    configStack: pipeline.configStack,
+    merged: {
+      properties: {
+        add: pipeline.merged.properties.add
+          .filter(p => p.element !== itemToDelete)
+          .filter(p => !children.includes(p.element)),
+      },
+      elements: {
+        add: pipeline.merged.elements.add
+          .filter(e => e.id !== itemToDelete)
+          .filter(e => !children.includes(e.id)),
+      },
+      links: {
+        add: pipeline.merged.links.add
+          // Remove any existing link that goes into the deleting item
+          .filter(l => l.to !== itemToDelete)
+          .filter(l => l.from !== itemToDelete)
+          .filter(l => !children.includes(l.to)),
+      },
     },
   };
 }
@@ -302,7 +308,9 @@ export function getDescendants(pipeline, parent) {
   let allChildren = [];
 
   const getAllChildren = (pipeline, element) => {
-    const thisElementsChildren = pipeline.links.add.filter(p => p.from === element).map(p => p.to);
+    const thisElementsChildren = pipeline.merged.links.add
+      .filter(p => p.from === element)
+      .map(p => p.to);
     allChildren = allChildren.concat(thisElementsChildren);
     for (const childIndex in thisElementsChildren) {
       getAllChildren(pipeline, thisElementsChildren[childIndex]);
@@ -316,7 +324,7 @@ export function getDescendants(pipeline, parent) {
 
 /**
  * Checks whether the give element is active in the pipeline. I.e. does anything link to it.
- * 
+ *
  * @param {pipeline} pipeline Pipeline definition
  * @param {element} elementToCheck The element to check for activity
  */

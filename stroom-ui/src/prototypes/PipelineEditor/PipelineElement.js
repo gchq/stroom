@@ -47,6 +47,8 @@ const dragSource = {
   beginDrag(props) {
     return {
       elementId: props.elementId,
+      elementDefinition: props.elementDefinition,
+      element: props.element
     };
   },
 };
@@ -60,15 +62,14 @@ function dragCollect(connect, monitor) {
 
 const dropTarget = {
   canDrop(props, monitor) {
-    const { pipeline, elementId } = props;
-    const thisElement = pipeline.pipeline.merged.elements.add.filter(element => element.id === elementId)[0];
-    const typeOfThisElement = props.elements.elements[thisElement.type];
+    const { pipeline, elementId, elementDefinition } = props;
+    
     switch (monitor.getItemType()) {
       case ItemTypes.ELEMENT:
         const dropeeId = monitor.getItem().elementId;
-        const dropee = pipeline.pipeline.merged.elements.add.filter(element => element.id === dropeeId)[0];
-        let dropeeType = props.elements.elements[dropee.type];
-        const isValidChild = isValidChildType(typeOfThisElement, dropeeType, 0);
+        const dropee = monitor.getItem().element;
+        const dropeeDefinition = monitor.getItem().elementDefinition;
+        const isValidChild = isValidChildType(elementDefinition, dropeeDefinition, 0);
 
         const isValid = canMovePipelineElement(pipeline.pipeline, pipeline.asTree, dropeeId, elementId);
 
@@ -76,7 +77,7 @@ const dropTarget = {
       case ItemTypes.PALLETE_ELEMENT:
         dropeeType = monitor.getItem().element;
         if (dropeeType) {
-          const isValidChild = isValidChildType(typeOfThisElement, dropeeType, 0);
+          const isValidChild = isValidChildType(elementDefinition, dropeeType, 0);
           return isValidChild;
         }
         return true;
@@ -122,6 +123,7 @@ const PipelineElement = ({
   pipeline,
   elementId,
   element,
+  elements,
   elementDefinition,
   pipelineElementSelected,
   selectedElementId,
@@ -129,7 +131,6 @@ const PipelineElement = ({
   newElementDefinition,
   setNewElementDefinition,
   dndIsHappening,
-  elements,
   hasFocus,
   setHasFocus,
   onClick
