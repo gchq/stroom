@@ -22,3 +22,4 @@ else
     echo -e "Using IP ${GREEN}${ip}${NC} as the IP, as determined from the operating system"
 fi
 sed "s/IP_ADDRESS/$ip/g" config.template.json > public/config.json
+sed "s/IP_ADDRESS/$ip/g" src/lib/storybook/IpAddress.template.js > src/lib/storybook/IpAddress.js

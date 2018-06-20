@@ -27,7 +27,7 @@ import TrackerDashboard from 'sections/TrackerDashboard';
 import AppChrome from 'sections/AppChrome';
 import { AuthenticationRequest, HandleAuthenticationResponse } from 'startup/Authentication';
 import { PipelineEditor } from 'prototypes/PipelineEditor';
-import { DocExplorer } from 'components/DocExplorer';
+import { DocExplorerFromServer } from 'components/DocExplorer';
 
 import PathNotFound from 'sections/PathNotFound';
 
@@ -120,7 +120,7 @@ class Routes extends Component {
             path="/explorerTree"
             render={({ match }) =>
               (this.isLoggedIn() ? (
-                <DocExplorer shouldFetchTreeFromServer explorerId="singleton" />
+                <DocExplorerFromServer explorerId="singleton" />
               ) : (
                 <AuthenticationRequest
                   referrer={match.url}

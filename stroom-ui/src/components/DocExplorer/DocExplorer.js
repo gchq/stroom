@@ -22,9 +22,8 @@ import { connect } from 'react-redux';
 import { Input, Loader } from 'semantic-ui-react';
 
 import Folder from './Folder';
-
+import { withRemoteDocTreeFetch } from './explorerClient';
 import { actionCreators } from './redux';
-import { fetchDocTree } from './explorerClient';
 
 const { searchTermUpdated, explorerTreeOpened } = actionCreators;
 
@@ -37,14 +36,16 @@ const enhance = compose(
     {
       searchTermUpdated,
       explorerTreeOpened,
-      fetchDocTree,
     },
+  ),
+  branch(
+    ({ documentTree }) => !documentTree,
+    renderComponent(() => <Loader active>Awaiting Document Tree</Loader>),
   ),
   lifecycle({
     componentDidMount() {
       const {
         shouldFetchTreeFromServer,
-        fetchDocTree,
         explorerTreeOpened,
         explorerId,
         allowMultiSelect,
@@ -52,17 +53,9 @@ const enhance = compose(
         typeFilter,
       } = this.props;
 
-      if (shouldFetchTreeFromServer) {
-        fetchDocTree();
-      }
-
       explorerTreeOpened(explorerId, allowMultiSelect, allowDragAndDrop, typeFilter);
     },
   }),
-  branch(
-    ({ documentTree }) => !documentTree,
-    renderComponent(() => <Loader active>Loading Document Tree</Loader>),
-  ),
   branch(
     ({ explorer }) => !explorer,
     renderComponent(() => <Loader active>Creating Explorer</Loader>),
@@ -84,12 +77,11 @@ const DocExplorer = enhance(({
 ));
 
 DocExplorer.propTypes = {
-  shouldFetchTreeFromServer: PropTypes.bool.isRequired,
   explorerId: PropTypes.string.isRequired,
 };
 
-DocExplorer.defaultProps = {
-  shouldFetchTreeFromServer: false, // only false will work
-};
-
 export default DocExplorer;
+
+export const DocExplorerFromServer = withRemoteDocTreeFetch((props) => (
+  <DocExplorer {...props} />
+));

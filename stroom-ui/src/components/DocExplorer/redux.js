@@ -98,7 +98,7 @@ const defaultExplorerState = {
 };
 
 const defaultState = {
-  documentTree: {}, // The hierarchy of doc refs in folders
+  documentTree: undefined, // The hierarchy of doc refs in folders
   explorers: {},
   pickedDocRefs: {}, // Picked Doc Refs by pickerId
   openDocRefs: [], // in response to user actions

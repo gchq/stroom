@@ -18,9 +18,7 @@ import $ from 'jquery';
 
 import { createActions, handleActions } from 'redux-actions';
 
-export const UPDATE_CONFIG = 'config/UPDATE_CONFIG';
-
-const initialState = {};
+const initialState = { isReady: false };
 
 const actionCreators = createActions({
   UPDATE_CONFIG: config => ({ config }),
@@ -31,6 +29,7 @@ const configReducer = handleActions(
     UPDATE_CONFIG: (state, action) => ({
       ...state,
       ...action.payload.config,
+      isReady: true,
     }),
   },
   initialState,

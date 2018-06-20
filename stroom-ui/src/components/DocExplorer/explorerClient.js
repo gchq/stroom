@@ -1,6 +1,10 @@
+import React from 'react';
 import { push } from 'react-router-redux';
-
+import { connect } from 'react-redux';
+import { lifecycle, branch, compose, renderComponent } from 'recompose';
 import { actionCreators } from './redux';
+
+import { Loader } from 'semantic-ui-react';
 
 import {
   setErrorMessageAction,
@@ -41,3 +45,23 @@ export const fetchDocTree = () => (dispatch, getState) => {
       dispatch(push('/error'));
     });
 };
+
+export const withRemoteDocTreeFetch = compose(
+  connect(
+    (state, props) => ({
+      config: state.config,
+    }),
+    {
+      fetchDocTree,
+    },
+  ),
+  branch(
+    ({ config }) => !config.isReady,
+    renderComponent(() => <Loader active>Awaiting Config</Loader>),
+  ),
+  lifecycle({
+    componentDidMount() {
+      this.props.fetchDocTree();
+    },
+  }),
+);

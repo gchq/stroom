@@ -20,7 +20,14 @@ import { storiesOf, addDecorator } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 import { withNotes } from '@storybook/addon-notes';
 
-import { DocExplorer, DocRef, Folder, DocRefModalPicker, DocRefDropdownPicker } from './index';
+import {
+  DocExplorer,
+  DocExplorerFromServer,
+  DocRef,
+  Folder,
+  DocRefModalPicker,
+  DocRefDropdownPicker,
+} from './index';
 
 import { actionCreators } from './redux';
 
@@ -30,7 +37,8 @@ import { fromSetupSampleData } from './documentTree.testData.large';
 
 import { pickRandomItem } from 'lib/treeUtils';
 
-import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
+import { ReduxDecoratorWithInitialisation, ReduxDecorator } from 'lib/storybook/ReduxDecorator';
+import { LocalConfigDecorator } from 'lib/storybook/LocalConfigDecorator';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
 import 'styles/main.css';
@@ -42,7 +50,13 @@ storiesOf('Document Explorer (Setup Sample Data)', module)
     store.dispatch(docTreeReceived(fromSetupSampleData));
   }))
   .addDecorator(DragDropDecorator)
-  .add('Explorer Tree', () => <DocExplorer explorerId='root'/>);
+  .add('Explorer Tree', () => <DocExplorer explorerId="root" />);
+
+const FuckYou = storiesOf('Document Explorer (Connect to Dev Server)', module)
+  .addDecorator(LocalConfigDecorator)
+  .addDecorator(ReduxDecorator)
+  .addDecorator(DragDropDecorator)
+  .add('Explorer Tree', () => <DocExplorerFromServer explorerId="dev-server" />);
 
 storiesOf('Document Explorer', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
