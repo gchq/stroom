@@ -18,14 +18,14 @@ const dragSource = {
   },
 };
 
-function dragCollect(connect, monitor) {
-  return {
-    connectDragSource: connect.dragSource(),
-    isDragging: monitor.isDragging(),
-  };
-}
+const dragCollect = (connect, monitor) => ({
+  connectDragSource: connect.dragSource(),
+  isDragging: monitor.isDragging(),
+});
 
-const NewElement = ({
+const enhance = compose(DragSource(ItemTypes.PALLETE_ELEMENT, dragSource, dragCollect), withFocus);
+
+const NewElement = enhance(({
   connectDragSource, isDragging, element, hasFocus, setHasFocus,
 }) =>
   connectDragSource(<div className={`element-palette-element ${hasFocus ? 'focus' : 'no-focus'}`}>
@@ -39,14 +39,10 @@ const NewElement = ({
         {element.type}
       </button>
     </div>
-                    </div>);
+  </div>));
 
 NewElement.propTypes = {
   element: PropTypes.object.isRequired,
-
-  // withFocus
-  hasFocus: PropTypes.bool.isRequired,
-  setHasFocus: PropTypes.func.isRequired,
 };
 
-export default compose(DragSource(ItemTypes.PALLETE_ELEMENT, dragSource, dragCollect), withFocus)(NewElement);
+export default NewElement;

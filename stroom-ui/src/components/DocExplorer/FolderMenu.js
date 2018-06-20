@@ -27,7 +27,20 @@ const { folderOpenToggled, docRefDeleted } = actionCreators;
 
 const withPendingDeletion = withState('pendingDeletion', 'setPendingDeletion', false);
 
-const FolderMenu = ({
+const enhance = compose(
+  connect(
+    state => ({
+      // state
+    }),
+    {
+      folderOpenToggled,
+      docRefDeleted,
+    },
+  ),
+  withPendingDeletion,
+);
+
+const FolderMenu = enhance(({
   explorerId,
   docRef,
   isOpen,
@@ -43,53 +56,35 @@ const FolderMenu = ({
       content="This will delete the doc ref, are you sure?"
       onCancel={() => setPendingDeletion(false)}
       onConfirm={() => {
-        docRefDeleted(explorerId, docRef);
-        setPendingDeletion(false);
-      }}
+          docRefDeleted(explorerId, docRef);
+          setPendingDeletion(false);
+        }}
     />
     <Dropdown inline icon={null} open={isOpen} onClose={() => closeContextMenu()}>
       <Dropdown.Menu>
         <Dropdown.Item
           onClick={() => {
-            folderOpenToggled(explorerId, docRef);
-            closeContextMenu();
-          }}
+              folderOpenToggled(explorerId, docRef);
+              closeContextMenu();
+            }}
         >
           <Icon name="folder" />
-          Open
+            Open
         </Dropdown.Item>
         <Dropdown.Item onClick={() => setPendingDeletion(true)}>
           <Icon name="trash" />
-          Delete
+            Delete
         </Dropdown.Item>
       </Dropdown.Menu>
     </Dropdown>
   </span>
-);
+));
 
 FolderMenu.propTypes = {
   explorerId: PropTypes.string.isRequired,
   docRef: PropTypes.object.isRequired,
   isOpen: PropTypes.bool.isRequired,
-
-  folderOpenToggled: PropTypes.func.isRequired,
-  docRefDeleted: PropTypes.func.isRequired,
   closeContextMenu: PropTypes.func.isRequired,
-
-  // withPendingDeletion
-  setPendingDeletion: PropTypes.func.isRequired,
-  pendingDeletion: PropTypes.bool.isRequired,
 };
 
-export default compose(
-  connect(
-    state => ({
-      // state
-    }),
-    {
-      folderOpenToggled,
-      docRefDeleted,
-    },
-  ),
-  withPendingDeletion,
-)(FolderMenu);
+export default FolderMenu;

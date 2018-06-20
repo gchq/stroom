@@ -146,5 +146,5 @@ export default compose(
       },
     }),
   ),
-  branch(props => !props.selectedTracker, renderComponent(() => <div />)),
+  branch(({selectedTracker}) => !selectedTracker, renderComponent(() => <div />)),
 )(TrackerDetails);

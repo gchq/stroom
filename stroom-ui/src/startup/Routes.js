@@ -100,8 +100,8 @@ class Routes extends Component {
             render={({ match }) =>
               (this.isLoggedIn() ? (
                 <PipelineEditor
-                  fetchElementsFromServer
-                  fetchPipelineFromServer
+                  shouldFetchElementsFromServer
+                  shouldFetchPipelineFromServer
                   pipelineId={match.params.pipelineId}
                 />
               ) : (
@@ -120,7 +120,7 @@ class Routes extends Component {
             path="/explorerTree"
             render={({ match }) =>
               (this.isLoggedIn() ? (
-                <DocExplorer fetchTreeFromServer explorerId="singleton" />
+                <DocExplorer shouldFetchTreeFromServer explorerId="singleton" />
               ) : (
                 <AuthenticationRequest
                   referrer={match.url}

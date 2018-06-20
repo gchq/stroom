@@ -41,7 +41,7 @@ const enhance = compose(
   ),
   reduxForm(),
   branch(
-    props => !props.selectedElementId,
+    ({selectedElementId}) => !selectedElementId,
     renderComponent(() => (
       <Container className="element-details">
         <Message>
@@ -112,11 +112,6 @@ ElementDetails.propTypes = {
   // Set by owner
   pipelineId: PropTypes.string.isRequired,
   onClose: PropTypes.func,
-
-  // Redux state
-  pipeline: PropTypes.object.isRequired,
-  selectedElementId: PropTypes.string,
-  elements: PropTypes.object.isRequired,
 };
 
 export default ElementDetails;

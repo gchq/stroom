@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 
 import { Icon } from 'semantic-ui-react';
 
-import { compose, lifecycle, withState, branch, renderComponent } from 'recompose';
+import { compose, lifecycle, withState, branch, renderComponent, withProps } from 'recompose';
 import { connect } from 'react-redux';
 import { Loader } from 'semantic-ui-react';
 
@@ -27,7 +27,7 @@ import { mapObject } from 'lib/treeUtils';
 import { getPipelineLayoutInformation } from './pipelineUtils';
 
 import PipelineElement from './PipelineElement';
-import { ElementPalette } from './ElementPalette';
+import ElementPalette from './ElementPalette';
 import RecycleBin from './RecycleBin';
 
 import lineElementCreators from './pipelineLineElementCreators';
@@ -48,60 +48,91 @@ const COMMON_ELEMENT_STYLE = {
 const withPaletteOpen = withState('isPaletteOpen', 'setPaletteOpen', true);
 const withElementDetailsOpen = withState('isElementDetailsOpen', 'setElementDetailsOpen', false);
 
-const PipelineEditor = ({
+const enhance = compose(
+  connect(
+    (state, props) => ({
+      pipeline: state.pipelines[props.pipelineId],
+    }),
+    {
+      // action, needed by lifecycle hook below
+      fetchPipeline,
+      fetchElements,
+      fetchElementProperties,
+    },
+  ),
+  lifecycle({
+    componentDidMount() {
+      const {
+        shouldFetchElementsFromServer,
+        shouldFetchPipelineFromServer,
+        fetchElements,
+        fetchElementProperties,
+        pipelineId,
+      } = this.props;
+      if (shouldFetchElementsFromServer) {
+        fetchElements();
+        fetchElementProperties();
+      }
+      if (shouldFetchPipelineFromServer) {
+        fetchPipeline(pipelineId);
+      }
+    },
+  }),
+  branch(({pipeline}) => !pipeline, renderComponent(() => <Loader active>Loading Pipeline</Loader>)),
+  branch(
+    ({pipeline}) => !pipeline.pipeline,
+    renderComponent(() => <Loader active>Loading Pipeline Data</Loader>),
+  ),
+  withPaletteOpen,
+  withElementDetailsOpen,
+  withProps(({ pipeline, setPaletteOpen, isPaletteOpen }) => ({
+    elementStyles: mapObject(getPipelineLayoutInformation(pipeline.asTree), (l) => {
+      const index = l.verticalPos - 1;
+      const fromTop = VERTICAL_START_PX + index * VERTICAL_SPACING;
+      const fromLeft = HORIZONTAL_START_PX + l.horizontalPos * HORIZONTAL_SPACING;
+
+      return {
+        ...COMMON_ELEMENT_STYLE,
+        top: `${fromTop}px`,
+        left: `${fromLeft}px`,
+      };
+    }),
+    togglePaletteOpen: () => setPaletteOpen(!isPaletteOpen),
+  })),
+);
+
+const PipelineEditor = enhance(({
   pipelineId,
   pipeline,
-  pendingElementIdToDelete,
-  layoutInformation,
   isPaletteOpen,
-  setPaletteOpen,
-  elementsByCategory,
+  togglePaletteOpen,
   isElementDetailsOpen,
   setElementDetailsOpen,
-}) => {
-  const togglePaletteOpen = () => setPaletteOpen(!isPaletteOpen);
+  editorClassName,
+  elementStyles,
+}) => (
+  <div
+    className={`Pipeline-editor  Pipeline-editor--palette-${isPaletteOpen ? 'open' : 'close'}`}
+  >
+    <div className="Pipeline-editor__element-palette">
+      <ElementPalette />
+    </div>
 
-  const elementStyles = mapObject(layoutInformation, (l) => {
-    const index = l.verticalPos - 1;
-    const fromTop = VERTICAL_START_PX + index * VERTICAL_SPACING;
-    const fromLeft = HORIZONTAL_START_PX + l.horizontalPos * HORIZONTAL_SPACING;
+    <button className="Pipeline-editor__palette-toggle" onClick={togglePaletteOpen}>
+      {isPaletteOpen ? <Icon name="caret left" /> : <Icon name="caret right" />}
+    </button>
 
-    return {
-      ...COMMON_ELEMENT_STYLE,
-      top: `${fromTop}px`,
-      left: `${fromLeft}px`,
-    };
-  });
-
-  let className = 'Pipeline-editor';
-
-  if (isPaletteOpen) {
-    className += ' Pipeline-editor--palette-open';
-  } else {
-    className += ' Pipeline-editor--palette-close';
-  }
-
-  return (
-    <div className={className}>
-      <div className="Pipeline-editor__element-palette">
-        <ElementPalette />
-      </div>
-
-      <button className="Pipeline-editor__palette-toggle" onClick={togglePaletteOpen}>
-        {isPaletteOpen ? <Icon name="caret left" /> : <Icon name="caret right" />}
-      </button>
-
-      <div className="Pipeline-editor__content">
-        <LineContainer
-          className="Pipeline-editor__graph"
-          lineContextId={`pipeline-lines-${pipelineId}`}
-          lineElementCreators={lineElementCreators}
-        >
-          <div className="Pipeline-editor__recycle-bin">
-            <RecycleBin pipelineId={pipelineId} />
-          </div>
-          <div className="Pipeline-editor__elements">
-            {pipeline.pipeline.merged.elements.add
+    <div className="Pipeline-editor__content">
+      <LineContainer
+        className="Pipeline-editor__graph"
+        lineContextId={`pipeline-lines-${pipelineId}`}
+        lineElementCreators={lineElementCreators}
+      >
+        <div className="Pipeline-editor__recycle-bin">
+          <RecycleBin pipelineId={pipelineId} />
+        </div>
+        <div className="Pipeline-editor__elements">
+          {pipeline.pipeline.merged.elements.add
               .filter(element => isActive(pipeline.pipeline, element))
               .map(e => (
                 <div key={e.id} id={e.id} style={elementStyles[e.id]}>
@@ -112,9 +143,9 @@ const PipelineEditor = ({
                   />
                 </div>
               ))}
-          </div>
-          <div className="Pipeline-editor__lines">
-            {pipeline.pipeline.merged.links.add
+        </div>
+        <div className="Pipeline-editor__lines">
+          {pipeline.pipeline.merged.links.add
               .map(l => ({ ...l, lineId: `${l.from}-${l.to}` }))
               .map(l => (
                 <LineTo
@@ -125,85 +156,30 @@ const PipelineEditor = ({
                   lineType="curve"
                 />
               ))}
-          </div>
-        </LineContainer>
-        {isElementDetailsOpen ? (
-          <ElementDetails
-            pipelineId={pipelineId}
-            className="Pipeline-editor__details"
-            onClose={() => setElementDetailsOpen(false)}
-          />
+        </div>
+      </LineContainer>
+      {isElementDetailsOpen ? (
+        <ElementDetails
+          pipelineId={pipelineId}
+          className="Pipeline-editor__details"
+          onClose={() => setElementDetailsOpen(false)}
+        />
         ) : (
           undefined
         )}
-      </div>
     </div>
-  );
-};
+  </div>
+));
 
 PipelineEditor.propTypes = {
-  // Set by owner
-  fetchElementsFromServer: PropTypes.bool.isRequired,
-  fetchPipelineFromServer: PropTypes.bool.isRequired,
+  shouldFetchElementsFromServer: PropTypes.bool.isRequired,
+  shouldFetchPipelineFromServer: PropTypes.bool.isRequired,
   pipelineId: PropTypes.string.isRequired,
-
-  // redux state
-  pipeline: PropTypes.object.isRequired,
-  layoutInformation: PropTypes.object.isRequired,
-  elementsByCategory: PropTypes.object.isRequired,
-
-  // withPaletteOpen
-  isPaletteOpen: PropTypes.bool.isRequired,
-  setPaletteOpen: PropTypes.func.isRequired,
 };
 
 PipelineEditor.defaultProps = {
-  fetchPipelineFromServer: false,
-  fetchElementsFromServer: false,
+  shouldFetchPipelineFromServer: false,
+  shouldFetchElementsFromServer: false,
 };
 
-export default compose(
-  connect(
-    (state, props) => {
-      const pipeline = state.pipelines[props.pipelineId];
-      let layoutInformation;
-      if (pipeline) {
-        layoutInformation = getPipelineLayoutInformation(pipeline.asTree);
-      }
-
-      return {
-        elementsByCategory: state.elements.byCategory || {},
-        pipeline,
-        layoutInformation,
-      };
-    },
-    {
-      // action, needed by lifecycle hook below
-      fetchPipeline,
-      fetchElements,
-      fetchElementProperties,
-    },
-  ),
-  lifecycle({
-    componentDidMount() {
-      if (this.props.fetchElementsFromServer) {
-        this.props.fetchElements();
-        this.props.fetchElementProperties();
-      }
-      if (this.props.fetchPipelineFromServer) {
-        this.props.fetchPipeline(this.props.pipelineId);
-      }
-    },
-  }),
-  branch(props => !props.pipeline, renderComponent(() => <Loader active>Loading Pipeline</Loader>)),
-  branch(
-    props => !props.pipeline.pipeline,
-    renderComponent(() => <Loader active>Loading Pipeline Data</Loader>),
-  ),
-  branch(
-    props => !props.layoutInformation,
-    renderComponent(() => <Loader active>Loading Pipeline Layout Information</Loader>),
-  ),
-  withPaletteOpen,
-  withElementDetailsOpen,
-)(PipelineEditor);
+export default PipelineEditor;

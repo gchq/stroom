@@ -48,22 +48,20 @@ const dragSource = {
     return {
       elementId: props.elementId,
       elementDefinition: props.elementDefinition,
-      element: props.element
+      element: props.element,
     };
   },
 };
 
-function dragCollect(connect, monitor) {
-  return {
-    connectDragSource: connect.dragSource(),
-    isDragging: monitor.isDragging(),
-  };
-}
+const dragCollect = (connect, monitor) => ({
+  connectDragSource: connect.dragSource(),
+  isDragging: monitor.isDragging(),
+});
 
 const dropTarget = {
   canDrop(props, monitor) {
     const { pipeline, elementId, elementDefinition } = props;
-    
+
     switch (monitor.getItemType()) {
       case ItemTypes.ELEMENT:
         const dropeeId = monitor.getItem().elementId;
@@ -71,11 +69,16 @@ const dropTarget = {
         const dropeeDefinition = monitor.getItem().elementDefinition;
         const isValidChild = isValidChildType(elementDefinition, dropeeDefinition, 0);
 
-        const isValid = canMovePipelineElement(pipeline.pipeline, pipeline.asTree, dropeeId, elementId);
+        const isValid = canMovePipelineElement(
+          pipeline.pipeline,
+          pipeline.asTree,
+          dropeeId,
+          elementId,
+        );
 
         return isValidChild && isValid;
       case ItemTypes.PALLETE_ELEMENT:
-        dropeeType = monitor.getItem().element;
+        let dropeeType = monitor.getItem().element;
         if (dropeeType) {
           const isValidChild = isValidChildType(elementDefinition, dropeeType, 0);
           return isValidChild;
@@ -104,36 +107,75 @@ const dropTarget = {
   },
 };
 
-function dropCollect(connect, monitor) {
-  return {
-    connectDropTarget: connect.dropTarget(),
-    isOver: monitor.isOver(),
-    canDrop: monitor.canDrop(),
-    dndIsHappening: monitor.getItem() !== null,
-  };
-}
+const dropCollect = (connect, monitor) => ({
+  connectDropTarget: connect.dropTarget(),
+  isOver: monitor.isOver(),
+  canDrop: monitor.canDrop(),
+  dndIsHappening: monitor.getItem() !== null,
+});
 
-const PipelineElement = ({
+const enhance = compose(
+  connect(
+    (state, props) => {
+      const pipeline = state.pipelines[props.pipelineId];
+      const elements = state.elements;
+
+      let selectedElementId;
+      let element;
+      let elementDefinition;
+
+      if (pipeline && pipeline.pipeline) {
+        selectedElementId = pipeline.selectedElementId;
+        element = pipeline.pipeline.merged.elements.add.find(e => e.id === props.elementId);
+        if (element) {
+          elementDefinition = Object.values(elements.elements).find(e => e.type === element.type);
+        }
+      }
+
+      return {
+        // state
+        pipeline,
+        selectedElementId,
+        element,
+        elementDefinition,
+        elements,
+      };
+    },
+    {
+      // actions
+      pipelineElementSelected,
+      pipelineElementMoved,
+    },
+  ),
+  branch(({pipeline}) => !pipeline, renderComponent(() => <Loader active>Loading Pipeline</Loader>)),
+  branch(({element}) => !element, renderComponent(() => <Loader active>Loading Element</Loader>)),
+  withNameNewElementModal,
+  withFocus,
+  DragSource(ItemTypes.ELEMENT, dragSource, dragCollect),
+  DropTarget([ItemTypes.ELEMENT, ItemTypes.PALLETE_ELEMENT], dropTarget, dropCollect),
+);
+
+const PipelineElement = enhance(({
+  pipelineId,
+  elementId,
+  onClick,
   connectDragSource,
-  connectDropTarget,
   isDragging,
+  connectDropTarget,
   isOver,
   canDrop,
-  pipelineId,
+  dndIsHappening,
   pipeline,
-  elementId,
   element,
   elements,
   elementDefinition,
-  pipelineElementSelected,
   selectedElementId,
   newElementForm,
+  pipelineElementSelected,
   newElementDefinition,
   setNewElementDefinition,
-  dndIsHappening,
   hasFocus,
   setHasFocus,
-  onClick
 }) => {
   let isIconDisabled = false;
   let className = 'Pipeline-element';
@@ -178,8 +220,11 @@ const PipelineElement = ({
   return compose(connectDragSource, connectDropTarget)(<div className={className} onClick={handleClick}>
     <AddElementModal
       {...{
- setNewElementDefinition, newElementDefinition, pipelineId, elementId,
-}}
+            setNewElementDefinition,
+            newElementDefinition,
+            pipelineId,
+            elementId,
+          }}
     />
     <Image
       className="Pipeline-element__icon"
@@ -196,75 +241,13 @@ const PipelineElement = ({
       {elementId}
     </button>
   </div>);
-};
+});
 
 PipelineElement.propTypes = {
-  // Set by container
   pipelineId: PropTypes.string.isRequired,
   elementId: PropTypes.string.isRequired,
   onClick: PropTypes.func,
-
   selectedElementId: PropTypes.string,
-
-  // redux state
-  pipeline: PropTypes.object.isRequired,
-  element: PropTypes.object.isRequired,
-  elements: PropTypes.object.isRequired,
-  elementDefinition: PropTypes.object.isRequired,
-
-  // Redux actions
-  pipelineElementSelected: PropTypes.func.isRequired,
-  pipelineElementMoved: PropTypes.func.isRequired,
-
-  // withNameNewElementModal
-  newElementDefinition: PropTypes.object,
-  setNewElementDefinition: PropTypes.func.isRequired,
-
-  // With Focus
-  hasFocus: PropTypes.bool.isRequired,
-  setHasFocus: PropTypes.func.isRequired,
 };
 
-export default compose(
-  connect(
-    (state, props) => {
-      const pipeline = state.pipelines[props.pipelineId];
-      const elements = state.elements;
-
-      let element;
-      let elementDefinition;
-
-      if (pipeline && pipeline.pipeline) {
-        element = pipeline.pipeline.merged.elements.add.find(e => e.id === props.elementId);
-        if (element) {
-          elementDefinition = Object.values(elements.elements).find(e => e.type === element.type);
-        }
-      }
-
-      return {
-        // state
-        pipeline,
-        element,
-        elementDefinition,
-        elements
-      };
-    },
-    {
-      // actions
-      pipelineElementSelected,
-      pipelineElementMoved,
-    },
-  ),
-  branch(
-    props => !props.pipeline,
-    renderComponent(() => <Loader active>Loading Pipeline</Loader>),
-  ),
-  branch(
-    props => !props.element,
-    renderComponent(() => <Loader active>Loading Element</Loader>),
-  ),
-  withNameNewElementModal,
-  withFocus,
-  DragSource(ItemTypes.ELEMENT, dragSource, dragCollect),
-  DropTarget([ItemTypes.ELEMENT, ItemTypes.PALLETE_ELEMENT], dropTarget, dropCollect),
-)(PipelineElement);
+export default PipelineElement;

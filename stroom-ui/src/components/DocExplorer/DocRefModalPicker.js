@@ -119,9 +119,13 @@ export default compose(
   ),
   lifecycle({
     componentDidMount() {
-      this.props.explorerTreeOpened(this.props.pickerId, false, false, this.props.typeFilter);
+      const { explorerTreeOpened, pickerId, typeFilter } = this.props;
+      explorerTreeOpened(pickerId, false, false, typeFilter);
     },
   }),
   withModal,
-  branch(props => !props.explorer, renderComponent(() => <Loader active>Loading Explorer</Loader>)),
+  branch(
+    ({ explorer }) => !explorer,
+    renderComponent(() => <Loader active>Loading Explorer</Loader>),
+  ),
 )(DocRefModalPicker);

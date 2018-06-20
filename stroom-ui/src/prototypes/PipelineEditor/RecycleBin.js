@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose, withState } from 'recompose';
+import { compose, withState, withProps } from 'recompose';
 import { connect } from 'react-redux';
 import { DropTarget } from 'react-dnd';
 import { Icon, Confirm } from 'semantic-ui-react';
@@ -28,67 +28,51 @@ const dropTarget = {
   },
 };
 
-function dropCollect(connect, monitor) {
-  return {
-    connectDropTarget: connect.dropTarget(),
-    isOver: monitor.isOver(),
-  };
-}
+const dropCollect = (connect, monitor) => ({
+  connectDropTarget: connect.dropTarget(),
+  isOver: monitor.isOver(),
+});
 
-const RecycleBin = ({
+const enhance = compose(
+  connect(state => ({}), { pipelineElementDeleted }),
+  withPendingDeletion,
+  DropTarget([ItemTypes.ELEMENT], dropTarget, dropCollect),
+  withProps(({
+    pipelineId,
+    isOver,
+    pendingElementToDelete,
+    setPendingElementToDelete,
+    pipelineElementDeleted,
+  }) => ({
+    onCancelDelete: () => setPendingElementToDelete(undefined),
+    onConfirmDelete: () => {
+      pipelineElementDeleted(pipelineId, pendingElementToDelete);
+      setPendingElementToDelete(undefined);
+    },
+  })),
+);
+
+const RecycleBin = enhance(({
+  pipelineId,
   connectDropTarget,
   isOver,
+  onCancelDelete,
+  onConfirmDelete,
   pendingElementToDelete,
-  setPendingElementToDelete,
-  pipelineElementDeleted,
-  pipelineId,
-}) => {
-  let className = 'recycle-bin__icon';
-  if (isOver) {
-    className = 'recycle-bin__icon__hover';
-  }
-
-  const onCancelDelete = () => setPendingElementToDelete(undefined);
-
-  const onConfirmDelete = () => {
-    pipelineElementDeleted(pipelineId, pendingElementToDelete);
-    setPendingElementToDelete(undefined);
-  };
-
-  let confirmDeleteContent;
-  if (pendingElementToDelete) {
-    confirmDeleteContent = `Delete ${pendingElementToDelete} from pipeline?`;
-  }
-
-  return connectDropTarget(<div>
+}) =>
+  connectDropTarget(<div>
     <Confirm
       open={!!pendingElementToDelete}
-      content={confirmDeleteContent}
+      content={`Delete ${pendingElementToDelete} from pipeline?`}
       onCancel={onCancelDelete}
       onConfirm={onConfirmDelete}
     />
-    <Icon className={className} size="huge" name="trash" />
-  </div>);
-};
+    <Icon className={`recycle-bin__icon${isOver ? '__hover' : ''}`} size="huge" name="trash" />
+  </div>));
 
 RecycleBin.propTypes = {
   // From container
   pipelineId: PropTypes.string.isRequired,
-
-  // Drop Target
-  connectDropTarget: PropTypes.func.isRequired,
-  isOver: PropTypes.bool.isRequired,
-
-  // Redux action
-  pipelineElementDeleted: PropTypes.func.isRequired,
-
-  // withPendingDeletion
-  pendingElementToDelete: PropTypes.string,
-  setPendingElementToDelete: PropTypes.func.isRequired,
 };
 
-export default compose(
-  connect(state => ({}), { pipelineElementDeleted }),
-  withPendingDeletion,
-  DropTarget([ItemTypes.ELEMENT], dropTarget, dropCollect),
-)(RecycleBin);
+export default RecycleBin;

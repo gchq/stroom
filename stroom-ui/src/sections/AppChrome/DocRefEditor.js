@@ -7,7 +7,7 @@ const DocRefEditor = ({ docRef }) => {
   switch (docRef.type) {
     case 'Pipeline':
       return (
-        <PipelineEditor fetchElementsFromServer fetchPipelineFromServer pipelineId={docRef.uuid} />
+        <PipelineEditor shouldFetchElementsFromServer shouldFetchPipelineFromServer pipelineId={docRef.uuid} />
       );
     default:
       return <div>Doc Ref Editor {JSON.stringify(docRef)}</div>;

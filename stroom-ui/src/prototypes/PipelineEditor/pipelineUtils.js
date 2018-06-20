@@ -180,24 +180,27 @@ export const uniqueElementName = (pipeline) => {
  */
 export function createNewElementInPipeline(pipeline, parentId, childDefinition, name) {
   return {
-    properties: pipeline.properties,
-    elements: {
-      add: pipeline.elements.add.concat([
-        {
-          id: name,
-          type: childDefinition.type,
-        },
-      ]),
-    },
-    links: {
-      add: pipeline.links.add
-        // add the new link
-        .concat([
+    configStack: pipeline.configStack,
+    merged: {
+      properties: pipeline.merged.properties,
+      elements: {
+        add: pipeline.merged.elements.add.concat([
           {
-            from: parentId,
-            to: name,
+            id: name,
+            type: childDefinition.type,
           },
         ]),
+      },
+      links: {
+        add: pipeline.merged.links.add
+          // add the new link
+          .concat([
+            {
+              from: parentId,
+              to: name,
+            },
+          ]),
+      },
     },
   };
 }

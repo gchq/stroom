@@ -62,6 +62,7 @@ const defaultExpressionState = {};
 
 const NEW_TERM = {
   type: 'term',
+  condition: 'EQUALS',
   enabled: true,
 };
 

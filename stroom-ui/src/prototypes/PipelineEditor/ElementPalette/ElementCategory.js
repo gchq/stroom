@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
 import { compose, withState } from 'recompose';
 
@@ -9,7 +10,9 @@ import { ElementCategories } from '../ElementCategories';
 
 const withCategoryIsOpen = withState('isOpen', 'setIsOpen', true);
 
-const ElementCategory = ({
+const enhance = compose(withCategoryIsOpen)
+
+const ElementCategory = enhance(({
   category, elements, isOpen, setIsOpen,
 }) => (
   <div className="element-palette-category">
@@ -24,6 +27,11 @@ const ElementCategory = ({
       </Accordion.Content>
     </Accordion>
   </div>
-);
+));
 
-export default compose(withCategoryIsOpen)(ElementCategory);
+ElementCategory.propTypes = {
+  category: PropTypes.string.isRequired,
+  elements: PropTypes.array.isRequired
+}
+
+export default ElementCategory;

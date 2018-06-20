@@ -17,10 +17,15 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 import { connect } from 'react-redux';
+import { compose, lifecycle, withProps, branch, renderComponent } from 'recompose';
+
+import { Loader } from 'semantic-ui-react';
 
 import LineContext from './LineContext';
 
-import { lineContainerCreated, lineContainerDestroyed } from './redux';
+import { actionCreators } from './redux';
+
+let { lineContainerCreated, lineContainerDestroyed } = actionCreators;
 
 /**
  * This function is the default line creation function.
@@ -66,84 +71,88 @@ function calculateLine(k) {
 
 const DEFAULT_LINE_TYPE = 'straight-line';
 
-class LineContainer extends Component {
-  static propTypes = {
-    lineContextId: PropTypes.string.isRequired,
-    lineElementCreators: PropTypes.object.isRequired, // {'someLineType': ({lineId, fromRect, toRect}) => (<div>)}
-  };
-
-  static defaultProps = {
-    lineElementCreators: {
-      [DEFAULT_LINE_TYPE]: straightLineCreator,
+const enhance = compose(
+  connect(
+    (state, props) => ({
+      // operators are nested, so take all their props from parent
+      lineContainer: state.lineContainer[props.lineContextId],
+    }),
+    {
+      lineContainerCreated,
+      lineContainerDestroyed,
     },
-  };
+  ),
+  lifecycle({
+    componentDidMount() {
+      this.props.lineContainerCreated(this.props.lineContextId);
+    },
 
-  state = {
-    lines: [],
-  };
-
-  static getDerivedStateFromProps(nextProps, prevState) {
-    const lineContainerState = nextProps.lineContainer[nextProps.lineContextId];
+    componentWillUnmount() {
+      this.props.lineContainerDestroyed(this.props.lineContextId);
+    },
+  }),
+  branch(({lineContainer}) => !lineContainer, renderComponent(() => <Loader active>Loading Pipeline</Loader>)),
+  withProps(({ lineContextId, lineContainer }) => {
     let lines = [];
 
-    const thisElement = document.getElementById(nextProps.lineContextId);
+    const thisElement = document.getElementById(lineContextId);
     let thisRect;
     if (thisElement) {
       thisRect = thisElement.getBoundingClientRect();
     }
 
-    if (lineContainerState) {
-      lines = Object.entries(lineContainerState).map(k => calculateLine(k));
+    if (lineContainer) {
+      lines = Object.entries(lineContainer).map(k => calculateLine(k));
     }
 
     return { lines, thisRect };
-  }
-
-  componentDidMount() {
-    lineContainerCreated(this.props.lineContextId);
-  }
-
-  componentWillUnmount() {
-    lineContainerDestroyed(this.props.lineContextId);
-  }
-
-  renderChildren() {
-    return this.state.lines.map((l) => {
-      const lt = l.lineType || DEFAULT_LINE_TYPE;
-      const ltf = this.props.lineElementCreators[lt];
-      if (!ltf) {
-        return <text key={l.lineId}>Invalid line type for known creators {lt}</text>;
-      }
-      return ltf(l, this.setLineRef);
-    });
-  }
-
-  render() {
-    // If the SVG has been scrolled, we need to translate the generated lines to cancel out that effect
-    let transform;
-    if (this.state.thisRect) {
-      transform = `translate(${this.state.thisRect.x * -1}, ${this.state.thisRect.y * -1})`;
-    }
-    return (
-      <LineContext.Provider value={this.props.lineContextId}>
-        <div className={this.props.className}>
-          <svg className="LineContainer-svg" id={this.props.lineContextId}>
-            <g transform={transform}>{this.renderChildren()}</g>
-          </svg>
-          {this.props.children}
-        </div>
-      </LineContext.Provider>
-    );
-  }
-}
-
-export default connect(
-  state => ({
-    // operators are nested, so take all their props from parent
-    lineContainer: state.lineContainer,
   }),
-  {
-    lineContainerCreated,
-    lineContainerDestroyed,
+);
+
+const LineContainer = enhance(({
+  lineContextId,
+  lineElementCreators,
+  className,
+  thisRect,
+  lines,
+  children
+}) => {
+  // If the SVG has been scrolled, we need to translate the generated lines to cancel out that effect
+  let transform;
+  if (thisRect) {
+    transform = `translate(${thisRect.x * -1}, ${thisRect.y * -1})`;
+  }
+  return (
+    <LineContext.Provider value={lineContextId}>
+      <div className={className}>
+        <svg className="LineContainer-svg" id={lineContextId}>
+          <g transform={transform}>
+            {lines.map((l) => {
+              const lt = l.lineType || DEFAULT_LINE_TYPE;
+              const ltf = lineElementCreators[lt];
+              if (!ltf) {
+                return <text key={l.lineId}>Invalid line type for known creators {lt}</text>;
+              }
+              return ltf(l);
+            })}
+          </g>
+        </svg>
+          {children}
+      </div>
+    </LineContext.Provider>
+  );
+});
+
+LineContainer.propTypes = {
+  lineContextId: PropTypes.string.isRequired,
+  lineElementCreators: PropTypes.object.isRequired, // {'someLineType': ({lineId, fromRect, toRect}) => (<div>)}
+  className: PropTypes.string
+};
+
+LineContainer.defaultProps = {
+  lineElementCreators: {
+    [DEFAULT_LINE_TYPE]: straightLineCreator,
   },
-)(LineContainer);
+};
+
+export default LineContainer;

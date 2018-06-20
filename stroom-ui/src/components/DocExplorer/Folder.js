@@ -70,7 +70,23 @@ function dropCollect(connect, monitor) {
   };
 }
 
-const Folder = ({
+const enhance = compose(
+  connect(
+    (state, props) => ({
+      // state
+      explorer: state.explorerTree.explorers[props.explorerId],
+    }),
+    {
+      moveExplorerItem,
+      folderOpenToggled,
+    },
+  ),
+  withContextMenu,
+  DragSource(ItemTypes.FOLDER, dragSource, dragCollect),
+  DropTarget([ItemTypes.FOLDER, ItemTypes.DOC_REF], dropTarget, dropCollect),
+);
+
+const Folder = enhance(({
   connectDragSource,
   isDragging,
   connectDropTarget,
@@ -127,61 +143,27 @@ const Folder = ({
           <Icon name={icon} />
           {folder.name}
         </span>
-      </span>))}
+                                           </span>))}
       {thisIsOpen && (
-        <div className="folder__children">
-          {folder.children
-            .filter(c => !!explorer.isVisible[c.uuid])
-            .map(c =>
-                (c.children ? (
-                  <DndFolder key={c.uuid} explorerId={explorerId} folder={c} />
-                ) : (
-                  <DocRef key={c.uuid} explorerId={explorerId} docRef={c} />
-                )))}
-        </div>
-      )}
+      <div className="folder__children">
+        {folder.children
+              .filter(c => !!explorer.isVisible[c.uuid])
+              .map(c =>
+                  (c.children ? (
+                    <Folder key={c.uuid} explorerId={explorerId} folder={c} />
+                  ) : (
+                    <DocRef key={c.uuid} explorerId={explorerId} docRef={c} />
+                  )))}
+      </div>
+        )}
     </div>
   );
-};
+});
 
 Folder.propTypes = {
   // props
   explorerId: PropTypes.string.isRequired,
   folder: PropTypes.object.isRequired,
-
-  // state
-  explorer: PropTypes.object.isRequired,
-
-  // actions
-  folderOpenToggled: PropTypes.func.isRequired,
-  moveExplorerItem: PropTypes.func.isRequired,
-
-  // withContextMenu
-  isContextMenuOpen: PropTypes.bool.isRequired,
-  setContextMenuOpen: PropTypes.func.isRequired,
-
-  // React DnD
-  connectDropTarget: PropTypes.func.isRequired,
-  isOver: PropTypes.bool.isRequired,
-  connectDragSource: PropTypes.func.isRequired,
-  isDragging: PropTypes.bool.isRequired,
 };
 
-// We need to use this ourself, so create a variable
-const DndFolder = compose(
-  connect(
-    (state, props) => ({
-      // state
-      explorer: state.explorerTree.explorers[props.explorerId]
-    }),
-    {
-      moveExplorerItem,
-      folderOpenToggled,
-    },
-  ),
-  withContextMenu,
-  DragSource(ItemTypes.FOLDER, dragSource, dragCollect),
-  DropTarget([ItemTypes.FOLDER, ItemTypes.DOC_REF], dropTarget, dropCollect),
-)(Folder);
-
-export default DndFolder;
+export default Folder;

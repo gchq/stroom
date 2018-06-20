@@ -13,46 +13,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { createAction, handleActions } from 'redux-actions';
+import { createActions, handleActions } from 'redux-actions';
 
 import { deleteItemFromObject } from 'lib/treeUtils';
 
-const lineContainerCreated = createAction('LINE_CONTAINER_CREATED', lineContextId => ({
-  lineContextId,
-}));
-const lineContainerDestroyed = createAction('LINE_CONTAINER_DESTROYED', lineContextId => ({
-  lineContextId,
-}));
-
-const lineCreated = createAction(
-  'LINE_CREATED',
-  (lineContextId, lineId, lineType, fromId, toId) => ({
+const actionCreators = createActions({
+  LINE_CONTAINER_CREATED: lineContextId => ({
+    lineContextId,
+  }),
+  LINE_CONTAINER_DESTROYED: lineContextId => ({
+    lineContextId,
+  }),
+  LINE_CREATED: (lineContextId, lineId, lineType, fromId, toId) => ({
     lineContextId,
     lineId,
     lineType,
     fromId,
     toId,
   }),
-);
-const lineDestroyed = createAction('LINE_DESTROYED', (lineContextId, lineId) => ({
-  lineContextId,
-  lineId,
-}));
+  LINE_DESTROYED: (lineContextId, lineId) => ({
+    lineContextId,
+    lineId,
+  }),
+});
 
 // State will be an object
 const defaultState = {};
 
 const lineContainerReducer = handleActions(
   {
-    [lineContainerCreated]: (state, action) => ({
+    LINE_CONTAINER_CREATED: (state, action) => ({
       ...state,
       [action.payload.lineContextId]: {},
     }),
 
-    [lineContainerDestroyed]: (state, action) =>
-      deleteItemFromObject(...state, action.payload.lineContextId),
+    LINE_CONTAINER_DESTROYED: (state, action) =>
+      deleteItemFromObject(state, action.payload.lineContextId),
 
-    [lineCreated]: (state, action) => ({
+    LINE_CREATED: (state, action) => ({
       ...state,
       [action.payload.lineContextId]: {
         ...state[action.payload.lineContextId],
@@ -64,21 +62,21 @@ const lineContainerReducer = handleActions(
       },
     }),
 
-    [lineDestroyed]: (state, action) => ({
-      ...state,
-      [action.payload.lineContextId]: deleteItemFromObject(
-        state[action.payload.lineContextId],
-        action.payload.lineId,
-      ),
-    }),
+    LINE_DESTROYED: (state, action) => {
+      if (state[action.payload.lineContextId]) {
+        return {
+          ...state,
+          [action.payload.lineContextId]: deleteItemFromObject(
+            state[action.payload.lineContextId],
+            action.payload.lineId,
+          ),
+        };
+      }
+      // May have already deleted the container
+      return state;
+    },
   },
   defaultState,
 );
 
-export {
-  lineContainerReducer,
-  lineCreated,
-  lineDestroyed,
-  lineContainerCreated,
-  lineContainerDestroyed,
-};
+export { lineContainerReducer, actionCreators };

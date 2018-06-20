@@ -44,14 +44,29 @@ ROExpressionBuilder.propTypes = {
   expression: PropTypes.object.isRequired,
 };
 
-const ExpressionBuilder = ({
-  expressionId,
-  dataSource,
-  expression,
+const enhance = compose(
+  connect(
+    (state, props) => ({
+      dataSource: state.dataSources[props.dataSourceUuid],
+      expression: state.expressions[props.expressionId],
+    }),
+    {
+      // actions
+    },
+  ),
+  withSetEditableByUser,
+  branch(
+    ({ expression }) => !expression,
+    renderComponent(() => <Loader active>Loading Expression</Loader>),
+  ),
+  withProps(({ allowEdit, dataSource }) => ({
+    allowEdit: allowEdit && !!dataSource,
+  })),
+  branch(({ allowEdit }) => !allowEdit, renderComponent(ROExpressionBuilder)),
+);
 
-  // withSetEditableByUser
-  inEditMode,
-  setEditableByUser,
+const ExpressionBuilder = enhance(({
+  expressionId, dataSource, expression, inEditMode, setEditableByUser,
 }) => {
   const roOperator = (
     <ROExpressionOperator expressionId={expressionId} isEnabled operator={expression} />
@@ -81,44 +96,16 @@ const ExpressionBuilder = ({
       {inEditMode ? editOperator : roOperator}
     </LineContainer>
   );
-};
+});
 
 ExpressionBuilder.propTypes = {
-  // Set by container
   dataSourceUuid: PropTypes.string, // if not set, the expression will be read only
   expressionId: PropTypes.string.isRequired,
   allowEdit: PropTypes.bool.isRequired,
-
-  // Redux state
-  dataSource: PropTypes.object, // if not found, the expression will be read only
-  expression: PropTypes.object.isRequired,
-
-  // withSetEditableByUser
-  setEditableByUser: PropTypes.func.isRequired,
-  inEditMode: PropTypes.bool.isRequired,
 };
 
 ExpressionBuilder.defaultProps = {
   allowEdit: false,
 };
 
-export default compose(
-  connect(
-    (state, props) => ({
-      dataSource: state.dataSources[props.dataSourceUuid],
-      expression: state.expressions[props.expressionId],
-    }),
-    {
-      // actions
-    },
-  ),
-  withSetEditableByUser,
-  branch(
-    props => !props.expression,
-    renderComponent(() => <Loader active>Loading Expression</Loader>),
-  ),
-  withProps(props => ({
-    allowEdit: props.allowEdit && !!props.dataSource,
-  })),
-  branch(props => !props.allowEdit, renderComponent(ROExpressionBuilder)),
-)(ExpressionBuilder);
+export default ExpressionBuilder;

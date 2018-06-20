@@ -88,10 +88,6 @@ $palette-width: 12rem;
   margin: 1rem;
 }
 
-.LineContainer-svg {
-  width: calc(100% + #{$palette-width} + 1em) !important;
-}
-
 .Pipeline-editor__content {
   //TODO: Hack. I'm not sure why the offset needs to be as much as 190px.
   width: calc(100% - 190px);

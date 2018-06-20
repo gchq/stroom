@@ -48,7 +48,22 @@ function dragCollect(connect, monitor) {
   };
 }
 
-const DocRef = ({
+const enhance = compose(
+  connect(
+    (state, props) => ({
+      // state
+      explorer: state.explorerTree.explorers[props.explorerId]
+    }),
+    {
+      docRefSelected,
+      docRefOpened,
+    },
+  ),
+  withContextMenu,
+  DragSource(ItemTypes.DOC_REF, dragSource, dragCollect),
+);
+
+const DocRef = enhance(({
   explorerId,
   explorer,
   docRef,
@@ -117,38 +132,11 @@ const DocRef = ({
       {docRef.name}
     </span>
   </div>);
-};
+});
 
 DocRef.propTypes = {
-  // Props
   explorerId: PropTypes.string.isRequired,
-  explorer: PropTypes.object.isRequired,
-  docRef: PropTypes.object.isRequired,
-
-  // Actions
-  docRefSelected: PropTypes.func.isRequired,
-  docRefOpened: PropTypes.func.isRequired,
-
-  // withContextMenu
-  isContextMenuOpen: PropTypes.bool.isRequired,
-  setContextMenuOpen: PropTypes.func.isRequired,
-
-  // React DnD
-  connectDragSource: PropTypes.func.isRequired,
-  isDragging: PropTypes.bool.isRequired,
+  docRef: PropTypes.object.isRequired
 };
 
-export default compose(
-  connect(
-    (state, props) => ({
-      // state
-      explorer: state.explorerTree.explorers[props.explorerId]
-    }),
-    {
-      docRefSelected,
-      docRefOpened,
-    },
-  ),
-  withContextMenu,
-  DragSource(ItemTypes.DOC_REF, dragSource, dragCollect),
-)(DocRef);
+export default DocRef;

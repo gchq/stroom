@@ -6,19 +6,7 @@ import { connect } from 'react-redux';
 
 import ElementCategory from './ElementCategory';
 
-const ElementPalette = ({ elementsByCategory }) => (
-  <div className="element-palette">
-    {Object.entries(elementsByCategory).map(k => (
-      <ElementCategory key={k[0]} category={k[0]} elements={k[1]} />
-    ))}
-  </div>
-);
-
-ElementPalette.propTypes = {
-  elementsByCategory: PropTypes.object.isRequired,
-};
-
-export default compose(connect(
+const enhance = compose(connect(
   state => ({
     // state
     elementsByCategory: state.elements.byCategory || {},
@@ -26,4 +14,14 @@ export default compose(connect(
   {
     // actions
   },
-))(ElementPalette);
+));
+
+const ElementPalette = enhance(({ elementsByCategory }) => (
+  <div className="element-palette">
+    {Object.entries(elementsByCategory).map(k => (
+      <ElementCategory key={k[0]} category={k[0]} elements={k[1]} />
+    ))}
+  </div>
+));
+
+export default ElementPalette;

@@ -56,48 +56,48 @@ function dragCollect(connect, monitor) {
  */
 const withPickedDocRef = () => (WrappedComponent) => {
   const WithPickedDocRef = class extends Component {
-      static propTypes = {
-        docRefPicked: PropTypes.func.isRequired,
-        pickedDocRefs: PropTypes.object.isRequired, // picked dictionary
-        expressionId: PropTypes.string.isRequired, // the ID of the overall expression
-        term: PropTypes.object.isRequired, // the operator that this particular element is to represent
-      };
+    static propTypes = {
+      docRefPicked: PropTypes.func.isRequired,
+      pickedDocRefs: PropTypes.object.isRequired, // picked dictionary
+      expressionId: PropTypes.string.isRequired, // the ID of the overall expression
+      term: PropTypes.object.isRequired, // the operator that this particular element is to represent
+    };
 
-      componentDidMount() {
-        this.checkDictionary();
-      }
+    componentDidMount() {
+      this.checkDictionary();
+    }
 
-      componentDidUpdate(prevProps, prevState, snapshot) {
-        this.checkDictionary();
-      }
+    componentDidUpdate(prevProps, prevState, snapshot) {
+      this.checkDictionary();
+    }
 
-      /**
-       * This functions is used to check that the picked doc ref matches the one from the expression.
-       * If it doesn't then it triggers a docRefPicked action to ensure that it then does match.
-       * From that point on the expressions and pickedDocRefs should both be monitoring the same state.
-       */
-      checkDictionary() {
-        const {
-          expressionId, term, pickedDocRefs, docRefPicked,
-        } = this.props;
-        const pickerId = joinDictionaryTermId(expressionId, term.uuid);
+    /**
+     * This functions is used to check that the picked doc ref matches the one from the expression.
+     * If it doesn't then it triggers a docRefPicked action to ensure that it then does match.
+     * From that point on the expressions and pickedDocRefs should both be monitoring the same state.
+     */
+    checkDictionary() {
+      const {
+        expressionId, term, pickedDocRefs, docRefPicked,
+      } = this.props;
+      const pickerId = joinDictionaryTermId(expressionId, term.uuid);
 
-        if (term.condition === 'IN_DICTIONARY') {
-          // Get the current state of the picked doc refs
-          const picked = pickedDocRefs[pickerId];
+      if (term.condition === 'IN_DICTIONARY') {
+        // Get the current state of the picked doc refs
+        const picked = pickedDocRefs[pickerId];
 
-          // If the dictionary is set on the term, but not set or equal to the 'picked' one, update it
-          if (term.dictionary) {
-            if (!picked || picked.uuid !== term.dictionary.uuid) {
-              docRefPicked(pickerId, term.dictionary);
-            }
+        // If the dictionary is set on the term, but not set or equal to the 'picked' one, update it
+        if (term.dictionary) {
+          if (!picked || picked.uuid !== term.dictionary.uuid) {
+            docRefPicked(pickerId, term.dictionary);
           }
         }
       }
+    }
 
-      render() {
-        return <WrappedComponent {...this.props} />;
-      }
+    render() {
+      return <WrappedComponent {...this.props} />;
+    }
   };
 
   return connect(
@@ -111,7 +111,22 @@ const withPickedDocRef = () => (WrappedComponent) => {
   )(WithPickedDocRef);
 };
 
-const ExpressionTerm = ({
+const enhance = compose(
+  connect(
+    state => ({
+      // state
+    }),
+    {
+      expressionItemUpdated,
+      expressionItemDeleted,
+    },
+  ),
+  DragSource(ItemTypes.TERM, dragSource, dragCollect),
+  withPickedDocRef(),
+  withPendingDeletion,
+);
+
+const ExpressionTerm = enhance(({
   connectDragSource,
   isDragging,
   term,
@@ -134,11 +149,11 @@ const ExpressionTerm = ({
   const onDeleteTerm = () => {
     expressionItemDeleted(expressionId, term.uuid);
     setPendingDeletion(false);
-  }
+  };
 
   const onCancelDeleteTerm = () => {
     setPendingDeletion(false);
-  }
+  };
 
   const onRequestDeleteTerm = () => {
     setPendingDeletion(true);
@@ -203,7 +218,7 @@ const ExpressionTerm = ({
   if (term.enabled) {
     enabledButton = <Button icon="checkmark" compact color="blue" onClick={onEnabledChange} />;
   } else {
-    enabledButton = <Button icon="checkmark" compact basic onClick={onEnabledChange} />;
+    enabledButton = <Button icon="checkmark" compact color="grey" onClick={onEnabledChange} />;
   }
 
   const fieldOptions = dataSource.fields.map(f => ({
@@ -232,7 +247,7 @@ const ExpressionTerm = ({
         valueType = 'datetime-local';
         break;
       default:
-        throw new Error('Invalid field type: ' + field.type);
+        throw new Error(`Invalid field type: ${field.type}`);
     }
   }
 
@@ -267,12 +282,7 @@ const ExpressionTerm = ({
             onChange={onFromValueChange}
           />
           <span className="input-between__divider">to</span>
-          <Input
-            placeholder="to"
-            type={valueType}
-            value={toValue}
-            onChange={onToValueChange}
-          />
+          <Input placeholder="to" type={valueType} value={toValue} onChange={onToValueChange} />
         </span>
       ); // some between selection
       break;
@@ -280,9 +290,7 @@ const ExpressionTerm = ({
     case 'IN': {
       const hasValues = !!term.value && term.value.length > 0;
       const splitValues = hasValues ? term.value.split(',') : [];
-      const keyedValues = hasValues
-        ? splitValues.map(s => ({ key: s, value: s, text: s }))
-        : [];
+      const keyedValues = hasValues ? splitValues.map(s => ({ key: s, value: s, text: s })) : [];
       valueWidget = (
         <Dropdown
           options={keyedValues}
@@ -301,7 +309,7 @@ const ExpressionTerm = ({
       break;
     }
     default:
-      throw new Error('Invalid condition: ' + term.condition);
+      throw new Error(`Invalid condition: ${term.condition}`);
   }
 
   return connectDragSource(<div className={className}>
@@ -334,38 +342,13 @@ const ExpressionTerm = ({
       <Button compact icon="trash" onClick={onRequestDeleteTerm} />
     </Button.Group>
                            </div>);
-};
+});
+
 ExpressionTerm.propTypes = {
-  // Props
   dataSource: PropTypes.object.isRequired, // complete definition of the data source
   expressionId: PropTypes.string.isRequired, // the ID of the overall expression
   term: PropTypes.object.isRequired, // the operator that this particular element is to represent
   isEnabled: PropTypes.bool.isRequired, // a combination of any parent enabled state, and its own
-
-  // Actions
-  expressionItemUpdated: PropTypes.func.isRequired,
-  expressionItemDeleted: PropTypes.func.isRequired,
-
-  // withPendingDeletion
-  pendingDeletion: PropTypes.bool.isRequired,
-  setPendingDeletion: PropTypes.func.isRequired,
-  
-  // React DnD
-  connectDragSource: PropTypes.func.isRequired,
-  isDragging: PropTypes.bool.isRequired,
 };
 
-export default compose(
-  connect(
-    state => ({
-      // state
-    }),
-    {
-      expressionItemUpdated,
-      expressionItemDeleted,
-    },
-  ),
-  DragSource(ItemTypes.TERM, dragSource, dragCollect),
-  withPickedDocRef(),
-  withPendingDeletion
-)(ExpressionTerm);
+export default ExpressionTerm;

@@ -27,7 +27,17 @@ import { actionCreators } from './redux';
 
 const { docRefPicked } = actionCreators;
 
-const DocRefDropdownPicker = ({
+const enhance = compose(connect(
+  (state, props) => ({
+    documentTree: state.explorerTree.documentTree,
+    docRef: state.explorerTree.pickedDocRefs[props.pickerId],
+  }),
+  {
+    docRefPicked,
+  },
+));
+
+const DocRefDropdownPicker = enhance(({
   pickerId, documentTree, typeFilter, docRef, docRefPicked,
 }) => {
   const value = docRef ? docRef.uuid : '';
@@ -46,7 +56,7 @@ const DocRefDropdownPicker = ({
       link: true,
     }));
 
-    // Don't include folders as pickable items
+      // Don't include folders as pickable items
     if (!node.children && node.uuid) {
       options.push({
         key: node.uuid,
@@ -77,23 +87,11 @@ const DocRefDropdownPicker = ({
       placeholder="Choose an option"
     />
   );
-};
+});
 
 DocRefDropdownPicker.propTypes = {
   pickerId: PropTypes.string.isRequired,
-  documentTree: PropTypes.object.isRequired,
-
   typeFilter: PropTypes.string,
-  docRef: PropTypes.object,
-  docRefPicked: PropTypes.func.isRequired,
 };
 
-export default compose(connect(
-  (state, props) => ({
-    documentTree: state.explorerTree.documentTree,
-    docRef: state.explorerTree.pickedDocRefs[props.pickerId],
-  }),
-  {
-    docRefPicked,
-  },
-))(DocRefDropdownPicker);
+export default DocRefDropdownPicker;

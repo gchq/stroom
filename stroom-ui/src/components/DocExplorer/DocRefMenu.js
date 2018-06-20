@@ -16,7 +16,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { withState, compose } from 'recompose';
+import { withState, compose, createEventHandlerWithConfig } from 'recompose';
 import { connect } from 'react-redux';
 
 import { Dropdown, Icon, Confirm } from 'semantic-ui-react';
@@ -27,7 +27,20 @@ const { docRefOpened, docRefDeleted } = actionCreators;
 
 const withPendingDeletion = withState('pendingDeletion', 'setPendingDeletion', false);
 
-const DocRefMenu = ({
+const enhance = compose(
+  connect(
+    state => ({
+      // state
+    }),
+    {
+      docRefOpened,
+      docRefDeleted,
+    },
+  ),
+  withPendingDeletion,
+);
+
+const DocRefMenu = enhance(({
   explorerId,
   docRef,
   isOpen,
@@ -65,31 +78,13 @@ const DocRefMenu = ({
       </Dropdown.Menu>
     </Dropdown>
   </span>
-);
+));
 
 DocRefMenu.propTypes = {
   explorerId: PropTypes.string.isRequired,
   docRef: PropTypes.object.isRequired,
   isOpen: PropTypes.bool.isRequired,
-
-  docRefOpened: PropTypes.func.isRequired,
-  docRefDeleted: PropTypes.func.isRequired,
-  closeContextMenu: PropTypes.func.isRequired,
-
-  // withPendingDeletion
-  pendingDeletion: PropTypes.bool.isRequired,
-  setPendingDeletion: PropTypes.func.isRequired,
+  closeContextMenu: PropTypes.func.isRequired
 };
 
-export default compose(
-  connect(
-    state => ({
-      // state
-    }),
-    {
-      docRefOpened,
-      docRefDeleted,
-    },
-  ),
-  withPendingDeletion,
-)(DocRefMenu);
+export default DocRefMenu;

@@ -14,21 +14,42 @@ import { required, minLength2, renderField } from 'lib/reduxFormUtils';
 
 const { pipelineElementAdded } = actionCreators;
 
-const AddElementModal = ({
-  // From redux state
+const enhance = compose(
+  connect(
+    (state, props) => ({
+      // state
+      newElementForm: state.form.newElementName,
+      pipeline: state.pipelines[props.pipelineId],
+    }),
+    { pipelineElementAdded },
+  ),
+  reduxForm({ form: 'newElementName' }),
+  withProps(({ // Properties from owner
+    pipelineId, elementId, // Redux action
+    pipelineElementAdded, // from withNewElementDefinition in owner
+    newElementDefinition, setNewElementDefinition, // Redux form
+    newElementForm, reset,
+  }) => ({
+    onConfirmNewElement: () => {
+      pipelineElementAdded(pipelineId, elementId, newElementDefinition, newElementForm.values.name);
+      setNewElementDefinition(undefined);
+      reset();
+    },
+    onCancelNewElement: () => {
+      setNewElementDefinition(undefined);
+      reset();
+    },
+  })),
+);
+
+const AddElementModal = enhance(({ // From redux state
   pipeline,
-
   // withNewElementDefinition from container
-  newElementDefinition,
-  setNewElementDefinition,
-
+  newElementDefinition, setNewElementDefinition,
   // Redux form
-  invalid,
-  submitting,
-
+  invalid, submitting,
   // withProps
-  onConfirmNewElement,
-  onCancelNewElement,
+  onConfirmNewElement, onCancelNewElement,
 }) => (
   <Modal size="tiny" open={!!newElementDefinition} onClose={onCancelNewElement} dimmer="inverted">
     <Header content="Add New Element" />
@@ -56,58 +77,12 @@ const AddElementModal = ({
       <Button negative content="Cancel" onClick={onCancelNewElement} />
     </Modal.Actions>
   </Modal>
-);
+));
 
 AddElementModal.propTypes = {
   // Set by container
   pipelineId: PropTypes.string.isRequired,
   elementId: PropTypes.string.isRequired,
-
-  // redux state
-  pipeline: PropTypes.object.isRequired,
-
-  // With New Element Definition from Container
-  newElementDefinition: PropTypes.object,
-  setNewElementDefinition: PropTypes.func.isRequired,
-
-  // Redux actions
-  pipelineElementAdded: PropTypes.func.isRequired,
-
-  // redux form
-  newElementForm: PropTypes.object,
-
-  // withProps will set the event handlers up
-  onConfirmNewElement: PropTypes.func.isRequired,
-  onCancelNewElement: PropTypes.func.isRequired,
 };
 
-export default compose(
-  connect(
-    (state, props) => ({
-      // state
-      newElementForm: state.form.newElementName,
-      pipeline: state.pipelines[props.pipelineId],
-    }),
-    { pipelineElementAdded },
-  ),
-  reduxForm({ form: 'newElementName' }),
-  withProps(({ // Properties from owner
-    pipelineId, elementId,
-    // Redux action
-    pipelineElementAdded,
-    // from withNewElementDefinition in owner
-    newElementDefinition, setNewElementDefinition,
-    // Redux form
-    newElementForm, reset,
-  }) => ({
-    onConfirmNewElement: () => {
-      pipelineElementAdded(pipelineId, elementId, newElementDefinition, newElementForm.values.name);
-      setNewElementDefinition(undefined);
-      reset();
-    },
-    onCancelNewElement: () => {
-      setNewElementDefinition(undefined);
-      reset();
-    },
-  })),
-)(AddElementModal);
+export default AddElementModal;
