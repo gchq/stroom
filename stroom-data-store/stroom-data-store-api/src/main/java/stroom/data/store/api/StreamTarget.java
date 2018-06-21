@@ -20,7 +20,6 @@ import stroom.data.meta.api.AttributeMap;
 import stroom.data.meta.api.Stream;
 
 import java.io.Closeable;
-import java.io.OutputStream;
 
 /**
  * <p>
@@ -30,19 +29,23 @@ import java.io.OutputStream;
  */
 public interface StreamTarget extends Closeable {
     /**
+     * Get the stream associated with this target.
+     *
      * @return the stream associated with this target
      */
     Stream getStream();
 
     /**
      * Any meta data attributes associated with the data.
+     *
+     * @return meta data attributes associated with the data.
      */
     AttributeMap getAttributes();
 
+    /**
+     * Get a supplier of output streams.
+     *
+     * @return a supplier of output streams.
+     */
     OutputStreamProvider getOutputStreamProvider();
-
-//    /**
-//     * @return the parent stream target for this child.
-//     */
-//    StreamTarget getParent();
 }
