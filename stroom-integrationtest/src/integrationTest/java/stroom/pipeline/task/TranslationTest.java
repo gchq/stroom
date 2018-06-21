@@ -26,10 +26,10 @@ import stroom.data.meta.api.Stream;
 import stroom.data.meta.api.StreamDataSource;
 import stroom.data.meta.api.StreamMetaService;
 import stroom.data.meta.api.StreamProperties;
-import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
+import stroom.data.store.api.StreamTargetUtil;
 import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.FeedDocCache;
@@ -65,7 +65,6 @@ import stroom.task.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.ComparisonHelper;
 import stroom.test.ContentImportService;
-import stroom.test.RawInputSegmentWriter;
 import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
@@ -298,11 +297,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             final StreamTarget target = streamStore.openStreamTarget(streamProperties);
 
             final InputStream inputStream = new BufferedInputStream(Files.newInputStream(file));
-            final SegmentOutputStream outputStream = target.getSegmentOutputStream();
-
-            final RawInputSegmentWriter writer = new RawInputSegmentWriter();
-            writer.write(inputStream, outputStream);
-
+            StreamTargetUtil.write(target, inputStream);
             streamStore.closeStreamTarget(target);
 
             // Check that what was written to the store is the same as the

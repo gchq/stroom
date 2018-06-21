@@ -21,12 +21,14 @@ import stroom.data.meta.api.FindStreamCriteria;
 import stroom.data.meta.api.Stream;
 import stroom.data.meta.api.StreamProperties;
 import stroom.data.meta.impl.mock.MockStreamMetaService;
+import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamTarget;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.io.StreamUtil;
 
 import java.io.IOException;
+import java.io.OutputStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -50,9 +52,15 @@ class TestMockStreamStore {
 
         final StreamTarget streamTarget = mockStreamStore.openStreamTarget(streamProperties);
         final Stream stream = streamTarget.getStream();
-        streamTarget.getOutputStream().write("PARENT".getBytes(StreamUtil.DEFAULT_CHARSET));
-        streamTarget.addChildStream(InternalStreamTypeNames.SEGMENT_INDEX).getOutputStream()
-                .write("CHILD".getBytes(StreamUtil.DEFAULT_CHARSET));
+
+        try (final OutputStreamProvider outputStreamProvider = streamTarget.getOutputStreamProvider()) {
+            try (final OutputStream outputStream = outputStreamProvider.next()) {
+                outputStream.write("PARENT".getBytes(StreamUtil.DEFAULT_CHARSET));
+            }
+            try (final OutputStream outputStream = outputStreamProvider.next(StreamTypeNames.CONTEXT)) {
+                outputStream.write("CHILD".getBytes(StreamUtil.DEFAULT_CHARSET));
+            }
+        }
 
         assertThat(mockStreamMetaService.find(FindStreamCriteria.createWithStream(stream)).size()).isEqualTo(0);
 

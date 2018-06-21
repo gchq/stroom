@@ -19,6 +19,15 @@ package stroom.data.store.impl.fs;
 
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.data.meta.api.StreamProperties;
+import stroom.data.store.FindStreamVolumeCriteria;
+import stroom.data.store.StreamDeleteExecutor;
+import stroom.data.store.StreamRetentionExecutor;
+import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.StreamTarget;
+import stroom.data.store.api.StreamTargetUtil;
+import stroom.data.volume.api.StreamVolumeService;
+import stroom.data.volume.api.StreamVolumeService.StreamVolume;
 import stroom.docref.DocRef;
 import stroom.feed.FeedStore;
 import stroom.feed.shared.FeedDoc;
@@ -27,14 +36,6 @@ import stroom.node.NodeCache;
 import stroom.node.NodeService;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
-import stroom.data.store.FindStreamVolumeCriteria;
-import stroom.data.store.StreamDeleteExecutor;
-import stroom.data.store.StreamRetentionExecutor;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
-import stroom.data.volume.api.StreamVolumeService;
-import stroom.data.volume.api.StreamVolumeService.StreamVolume;
-import stroom.data.meta.api.StreamProperties;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.config.StroomProperties;
@@ -70,7 +71,7 @@ public class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
     private NodeCache nodeCache;
     @Inject
     private NodeService nodeService;
-//    @Inject
+    //    @Inject
 //    private StreamTaskCreatorImpl streamTaskCreator;
     @Inject
     private StreamRetentionExecutor streamRetentionExecutor;
@@ -122,11 +123,11 @@ public class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
                 .build();
 
         final StreamTarget oldFileTarget = streamStore.openStreamTarget(oldFile);
-        oldFileTarget.getOutputStream().write("MyTest".getBytes());
+        StreamTargetUtil.write(oldFileTarget, "MyTest");
         streamStore.closeStreamTarget(oldFileTarget);
 
         final StreamTarget newFileTarget = streamStore.openStreamTarget(newFile);
-        newFileTarget.getOutputStream().write("MyTest".getBytes());
+        StreamTargetUtil.write(newFileTarget, "MyTest");
         streamStore.closeStreamTarget(newFileTarget);
 
 //        // Now we have added some data create some associated stream tasks.

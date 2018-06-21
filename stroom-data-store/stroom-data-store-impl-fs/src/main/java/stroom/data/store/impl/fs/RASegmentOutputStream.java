@@ -32,20 +32,17 @@ import java.nio.LongBuffer;
 class RASegmentOutputStream extends SegmentOutputStream {
     private static final int LONG_BYTES = 8;
 
+    private final OutputStream dataOutputStream;
+    private final SupplierWithIO<OutputStream> indexOutputStreamSupplier;
+    private OutputStream indexOutputStream;
     private byte[] buffer;
     private LongBuffer longBuffer;
-
-    private OutputStream dataOutputStream;
-    private OutputStream indexOutputStream;
     private long position;
     private long lastBoundary;
 
-    RASegmentOutputStream(final OutputStream dataFile, final OutputStream indexFile) {
-        dataOutputStream = dataFile;
-        indexOutputStream = indexFile;
-
-        buffer = new byte[LONG_BYTES];
-        longBuffer = ByteBuffer.wrap(buffer).asLongBuffer();
+    RASegmentOutputStream(final OutputStream dataOutputStream, final SupplierWithIO<OutputStream> indexOutputStreamSupplier) {
+        this.dataOutputStream = dataOutputStream;
+        this.indexOutputStreamSupplier = indexOutputStreamSupplier;
     }
 
     /**
@@ -67,12 +64,17 @@ class RASegmentOutputStream extends SegmentOutputStream {
      */
     @Override
     public void addSegment(final long position) throws IOException {
-        assert position >= lastBoundary;
-
         if (position < lastBoundary) {
             throw new IOException("The boundary position cannot be less than the previous boundary position.");
         }
         lastBoundary = position;
+
+        // Lazily initialise index output stream provider.
+        if (indexOutputStream == null) {
+            indexOutputStream = indexOutputStreamSupplier.getWithIO();
+            buffer = new byte[LONG_BYTES];
+            longBuffer = ByteBuffer.wrap(buffer).asLongBuffer();
+        }
 
         longBuffer.rewind();
         longBuffer.put(position);
@@ -103,7 +105,9 @@ class RASegmentOutputStream extends SegmentOutputStream {
         try {
             dataOutputStream.flush();
         } finally {
-            indexOutputStream.flush();
+            if (indexOutputStream != null) {
+                indexOutputStream.flush();
+            }
         }
     }
 
@@ -155,8 +159,10 @@ class RASegmentOutputStream extends SegmentOutputStream {
         return "RASegmentOutputStream" +
                 "\ndata = " +
                 dataOutputStream +
-                "\nindex = " +
-                indexOutputStream +
+//                if (indexOutputStream != null) {
+//                    "\nindex = " +
+//                            indexOutputStream +
+//                }
                 "\nposition = " +
                 position +
                 "\nlastBoundary = " +

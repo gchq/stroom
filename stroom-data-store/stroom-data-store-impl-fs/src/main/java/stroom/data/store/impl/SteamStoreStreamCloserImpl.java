@@ -47,19 +47,19 @@ public class SteamStoreStreamCloserImpl implements StreamCloser {
         this.streamStore = streamStore;
     }
 
-    public SteamStoreStreamCloserImpl() {
-        this.streamStore = null;
-    }
-
-    public SteamStoreStreamCloserImpl(final Closeable... closeables) {
-        this.streamStore = null;
-        add(closeables);
-    }
-
-    public SteamStoreStreamCloserImpl(final Closeable closeable) {
-        this.streamStore = null;
-        add(closeable);
-    }
+//    public SteamStoreStreamCloserImpl() {
+//        this.streamStore = null;
+//    }
+//
+//    public SteamStoreStreamCloserImpl(final Closeable... closeables) {
+//        this.streamStore = null;
+//        add(closeables);
+//    }
+//
+//    public SteamStoreStreamCloserImpl(final Closeable closeable) {
+//        this.streamStore = null;
+//        add(closeable);
+//    }
 
     public SteamStoreStreamCloserImpl add(final Closeable... closeables) {
         for (final Closeable closeable : closeables) {
@@ -121,13 +121,13 @@ public class SteamStoreStreamCloserImpl implements StreamCloser {
                         final StreamTarget streamTarget = (StreamTarget) closeable;
 
                         // Only call the API on the root parent stream
-                        if (streamTarget.getParent() == null) {
+//                        if (streamTarget.getParent() == null) {
                             if (delete) {
                                 streamStore.deleteStreamTarget(streamTarget);
                             } else {
                                 streamStore.closeStreamTarget(streamTarget);
                             }
-                        }
+//                        }
                     } else {
                         // Close the stream.
                         closeable.close();

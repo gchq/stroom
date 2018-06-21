@@ -20,11 +20,14 @@ package stroom.pipeline.writer;
 import stroom.data.meta.api.AttributeMap;
 import stroom.data.meta.api.Stream;
 import stroom.data.meta.api.StreamProperties;
+import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
+import stroom.data.store.api.WrappedSegmentOutputStream;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
 import stroom.io.StreamCloser;
+import stroom.pipeline.destination.Destination;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -37,7 +40,6 @@ import stroom.pipeline.state.MetaData;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.streamtask.shared.Processor;
-import stroom.util.io.WrappedOutputStream;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
@@ -59,6 +61,9 @@ public class StreamAppender extends AbstractAppender {
     private String streamType;
     private boolean segmentOutput = true;
     private StreamTarget streamTarget;
+
+    private SegmentOutputStream segmentOutputStream;
+    private boolean doneHeader;
 
     @Inject
     public StreamAppender(final ErrorReceiverProxy errorReceiverProxy,
@@ -112,33 +117,60 @@ public class StreamAppender extends AbstractAppender {
                 .build();
 
         streamTarget = streamStore.openStreamTarget(streamProperties);
-        OutputStream targetOutputStream;
 
         // Let the stream closer handle closing it
         streamCloser.add(streamTarget);
 
-        if (segmentOutput) {
-            targetOutputStream = new WrappedSegmentOutputStream(streamTarget.getSegmentOutputStream()) {
-                @Override
-                public void close() throws IOException {
-                    super.flush();
-                    super.close();
-                    StreamAppender.this.close();
-                }
-            };
+//        if (segmentOutput) {
+        segmentOutputStream = new WrappedSegmentOutputStream(streamTarget.getOutputStreamProvider().next()) {
+            @Override
+            public void close() throws IOException {
+                super.flush();
+                super.close();
+                StreamAppender.this.close();
+            }
+        };
 
-        } else {
-            targetOutputStream = new WrappedOutputStream(streamTarget.getOutputStream()) {
-                @Override
-                public void close() throws IOException {
-                    super.flush();
-                    super.close();
-                    StreamAppender.this.close();
-                }
-            };
+//        } else {
+//            targetOutputStream = new WrappedOutputStream(streamTarget.getOutputStream()) {
+//                @Override
+//                public void close() throws IOException {
+//                    super.flush();
+//                    super.close();
+//                    StreamAppender.this.close();
+//                }
+//            };
+//        }
+
+        return segmentOutputStream;
+    }
+
+    @Override
+    public OutputStream getOutputStream(final byte[] header, final byte[] footer) throws IOException {
+        final OutputStream outputStream = super.getOutputStream(header, footer);
+        if (!doneHeader) {
+            doneHeader = true;
+            insertSegmentMarker();
         }
+        return outputStream;
+    }
 
-        return targetOutputStream;
+    @Override
+    public void returnDestination(final Destination destination) throws IOException {
+        // We assume that the parent will write an entire segment when it borrows a destination so add a segment marker
+        // here after a segment is written.
+
+        // Writing a segment marker here ensures there is always a marker written before the footer regardless or
+        // whether a footer is actually written. We do this because we always make an allowance for a footer for data
+        // display purposes.
+        insertSegmentMarker();
+    }
+
+    private void insertSegmentMarker() throws IOException {
+        // Add a segment marker to the output stream if we are segmenting.
+        if (segmentOutput) {
+            segmentOutputStream.addSegment();
+        }
     }
 
     private void close() {
@@ -146,7 +178,7 @@ public class StreamAppender extends AbstractAppender {
         if (streamTarget != null) {
             // Write meta data.
             final AttributeMap attributeMap = metaData.getAttributeMap();
-            streamTarget.getAttributeMap().putAll(attributeMap);
+            streamTarget.getAttributes().putAll(attributeMap);
             // We leave the streamCloser to close the stream target as it may
             // want to delete it instead
         }

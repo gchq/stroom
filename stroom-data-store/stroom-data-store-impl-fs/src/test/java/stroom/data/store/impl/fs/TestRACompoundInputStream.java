@@ -19,7 +19,6 @@ package stroom.data.store.impl.fs;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import stroom.data.store.api.NestedOutputStream;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.util.io.FileUtil;
 import stroom.util.io.IgnoreCloseInputStream;
@@ -54,10 +53,10 @@ class TestRACompoundInputStream {
 
     private void setup(final int bdyCount, final int segPerBdy) throws IOException {
         final RASegmentOutputStream segmentStream = new RASegmentOutputStream(new BlockGZIPOutputFile(datFile),
-                new LockingFileOutputStream(segFile, true));
+                () ->new LockingFileOutputStream(segFile, true));
 
         final RANestedOutputStream boundaryStream = new RANestedOutputStream(segmentStream,
-                new LockingFileOutputStream(bdyFile, true));
+                () ->new LockingFileOutputStream(bdyFile, true));
 
         for (int b = 1; b <= bdyCount; b++) {
             boundaryStream.putNextEntry();
@@ -89,10 +88,10 @@ class TestRACompoundInputStream {
     // @Test BROKEN
     void testBlanks() throws IOException {
         final RASegmentOutputStream segmentStream = new RASegmentOutputStream(new BlockGZIPOutputFile(datFile),
-                new LockingFileOutputStream(segFile, true));
+                () -> new LockingFileOutputStream(segFile, true));
 
-        final NestedOutputStream boundaryStream = new RANestedOutputStream(segmentStream,
-                new LockingFileOutputStream(bdyFile, true));
+        final RANestedOutputStream boundaryStream = new RANestedOutputStream(segmentStream,
+                () -> new LockingFileOutputStream(bdyFile, true));
         // 1
         boundaryStream.putNextEntry();
         segmentStream.addSegment();

@@ -21,22 +21,22 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.StreamProperties;
+import stroom.data.store.FindStreamVolumeCriteria;
+import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.StreamTarget;
+import stroom.data.store.api.StreamTargetUtil;
 import stroom.data.volume.api.StreamVolumeService;
 import stroom.jobsystem.MockTask;
 import stroom.node.NodeService;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
-import stroom.data.store.FindStreamVolumeCriteria;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamProperties;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.FileUtil;
-import stroom.util.io.StreamUtil;
 import stroom.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
@@ -95,7 +95,7 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         //
         // Write some data
         final StreamTarget lockstreamTarget1 = streamStore.openStreamTarget(lockfile1);
-        lockstreamTarget1.getOutputStream().write("MyTest".getBytes(StreamUtil.DEFAULT_CHARSET));
+        StreamTargetUtil.write(lockstreamTarget1, "MyTest");
         // Close the file but not the stream (you should use the closeStream
         // API)
         lockstreamTarget1.close();
@@ -112,7 +112,7 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         // FILE2 UNLOCKED
         //
         final StreamTarget nolockstreamTarget1 = streamStore.openStreamTarget(nolockfile1);
-        nolockstreamTarget1.getOutputStream().write("MyTest".getBytes(StreamUtil.DEFAULT_CHARSET));
+        StreamTargetUtil.write(nolockstreamTarget1, "MyTest");
         // Close the file but not the stream (you should use the closeStream
         // API)
         streamStore.closeStreamTarget(nolockstreamTarget1);
@@ -215,7 +215,7 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
                     .createMs(time)
                     .build();
             final StreamTarget t = streamStore.openStreamTarget(streamProperties);
-            t.getOutputStream().write("TEST".getBytes(StreamUtil.DEFAULT_CHARSET));
+            StreamTargetUtil.write(t, "TEST");
             streamStore.closeStreamTarget(t);
         }
 

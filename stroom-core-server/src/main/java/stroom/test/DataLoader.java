@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
 import stroom.data.meta.api.StreamProperties;
+import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
@@ -33,8 +34,8 @@ import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamTargetStroomStreamHandler;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
+import stroom.util.io.StreamUtil;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -115,15 +116,16 @@ public class DataLoader {
 
             final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
 
-            try {
-                final SegmentOutputStream outputStream = streamTarget.getSegmentOutputStream();
-                final RawInputSegmentWriter writer = new RawInputSegmentWriter();
-                writer.write(new BufferedInputStream(inputStream), outputStream);
+            try (final OutputStreamProvider outputStreamProvider = streamTarget.getOutputStreamProvider()) {
+                try (final SegmentOutputStream outputStream = outputStreamProvider.next()) {
+                    StreamUtil.streamToStream(inputStream, outputStream);
+                }
 
-                final AttributeMap map = new AttributeMap();
-                map.put("TestData", "Loaded By SetupSampleData");
-
-                map.write(streamTarget.addChildStream(StreamTypeNames.META).getOutputStream(), true);
+                try (final SegmentOutputStream outputStream = outputStreamProvider.next(StreamTypeNames.META)) {
+                    final AttributeMap map = new AttributeMap();
+                    map.put("TestData", "Loaded By SetupSampleData");
+                    map.write(outputStream, true);
+                }
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }

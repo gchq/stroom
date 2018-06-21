@@ -35,7 +35,7 @@ class TestRASegmentStreamsNulls {
         final Path segFile = dir.resolve("test.seg.dat");
 
         final SegmentOutputStream segStream = new RASegmentOutputStream(new BlockGZIPOutputFile(datFile),
-                new LockingFileOutputStream(segFile, true));
+                () -> new LockingFileOutputStream(segFile, true));
 
         segStream.write("tom1".getBytes(StreamUtil.DEFAULT_CHARSET));
 

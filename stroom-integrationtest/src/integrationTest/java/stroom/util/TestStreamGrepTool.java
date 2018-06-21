@@ -17,12 +17,12 @@
 package stroom.util;
 
 import org.junit.Test;
+import stroom.data.meta.api.StreamProperties;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
-import stroom.data.meta.api.StreamProperties;
+import stroom.data.store.api.StreamTargetUtil;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.util.io.StreamUtil;
 import stroom.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
@@ -56,7 +56,7 @@ public class TestStreamGrepTool extends AbstractCoreIntegrationTest {
                 .streamTypeName(StreamTypeNames.RAW_EVENTS)
                 .build();
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
-        streamTarget.getOutputStream().write(data.getBytes(StreamUtil.DEFAULT_CHARSET));
+        StreamTargetUtil.write(streamTarget, data);
         streamStore.closeStreamTarget(streamTarget);
     }
 }

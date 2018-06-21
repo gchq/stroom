@@ -17,7 +17,7 @@
 package stroom.data.store.impl.fs;
 
 import stroom.data.store.api.SegmentOutputStream;
-import stroom.test.RawInputSegmentWriter;
+import stroom.data.store.api.StreamTargetUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
@@ -141,10 +141,10 @@ class BenchmarkIO {
                 os = new BlockGZIPOutputFile(file1);
                 break;
             case BGZIP_SEG:
-                os = new RASegmentOutputStream(new BlockGZIPOutputFile(file1), new LockingFileOutputStream(file2, false));
+                os = new RASegmentOutputStream(new BlockGZIPOutputFile(file1), () -> new LockingFileOutputStream(file2, false));
                 break;
             case BGZIP_SEG_COMPRESS:
-                os = new RASegmentOutputStream(new BlockGZIPOutputFile(file1), new BlockGZIPOutputFile(file2));
+                os = new RASegmentOutputStream(new BlockGZIPOutputFile(file1), () -> new BlockGZIPOutputFile(file2));
                 break;
             default:
                 throw new IllegalArgumentException("Unexpected stream type: " + streamType);
@@ -153,14 +153,11 @@ class BenchmarkIO {
         long startTime = System.currentTimeMillis();
 
         if (StreamType.RAW_SEG_TEXT.equals(streamType)) {
-            os = new RASegmentOutputStream(new BlockGZIPOutputFile(file1), new LockingFileOutputStream(file2, false));
-            final RawInputSegmentWriter wtr = new RawInputSegmentWriter();
-            wtr.write(new ByteArrayInputStream(data), (RASegmentOutputStream) os);
+            os = new RASegmentOutputStream(new BlockGZIPOutputFile(file1), () -> new LockingFileOutputStream(file2, false));
+            StreamTargetUtil.write(new ByteArrayInputStream(data), os, true);
         } else if (StreamType.RAW_SEG_XML.equals(streamType)) {
-            os = new RASegmentOutputStream(new BlockGZIPOutputFile(file1), new LockingFileOutputStream(file2, false));
-            final RawInputSegmentWriter wtr = new RawInputSegmentWriter();
-            wtr.write(new ByteArrayInputStream(data), (RASegmentOutputStream) os);
-
+            os = new RASegmentOutputStream(new BlockGZIPOutputFile(file1), () -> new LockingFileOutputStream(file2, false));
+            StreamTargetUtil.write(new ByteArrayInputStream(data), os, true);
         } else {
             int startPos = 0;
             int blockSize = 100;

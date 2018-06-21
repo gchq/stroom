@@ -49,9 +49,10 @@ public class TestRASegmentStreams {
     @BeforeEach
     void setup() throws IOException {
         dir = FileUtil.getTempDir();
-        try (OutputStream datStream = new BlockGZIPOutputFile(dir.resolve("test.dat"));
-             final OutputStream idxStream = Files.newOutputStream(dir.resolve("test.idx"))) {
-            try (SegmentOutputStream os = new RASegmentOutputStream(datStream, idxStream)) {
+        FileUtil.deleteContents(dir);
+
+        try (final OutputStream datStream = new BlockGZIPOutputFile(dir.resolve("test.dat"))) {
+            try (final SegmentOutputStream os = new RASegmentOutputStream(datStream, () -> Files.newOutputStream(dir.resolve("test.idx")))) {
                 os.write(A.getBytes(StreamUtil.DEFAULT_CHARSET));
                 os.addSegment();
                 os.write(B.getBytes(StreamUtil.DEFAULT_CHARSET));
@@ -66,7 +67,7 @@ public class TestRASegmentStreams {
     @Test
     void testBrokenBuffers() throws IOException {
         final RASegmentOutputStream outputStream = new RASegmentOutputStream(
-                Files.newOutputStream(dir.resolve("main.dat")), Files.newOutputStream(dir.resolve("main.idx")));
+                Files.newOutputStream(dir.resolve("main.dat")), () -> Files.newOutputStream(dir.resolve("main.idx")));
 
         for (int i = 0; i < 100; i++) {
             outputStream.write(("TEST STRING LINE " + i + "\n").getBytes(StreamUtil.DEFAULT_CHARSET));
@@ -95,7 +96,7 @@ public class TestRASegmentStreams {
     @Test
     void testBrokenBuffers1() throws IOException {
         final RASegmentOutputStream outputStream = new RASegmentOutputStream(
-                Files.newOutputStream(dir.resolve("main.dat")), Files.newOutputStream(dir.resolve("main.idx")));
+                Files.newOutputStream(dir.resolve("main.dat")), () -> Files.newOutputStream(dir.resolve("main.idx")));
 
         for (int i = 0; i < 100; i++) {
             outputStream.write(("TEST STRING LINE " + i + "\n").getBytes(StreamUtil.DEFAULT_CHARSET));
@@ -143,7 +144,7 @@ public class TestRASegmentStreams {
     @Test
     void testEmptySegmentedStream() throws IOException {
         try (SegmentOutputStream os = new RASegmentOutputStream(new BlockGZIPOutputFile(dir.resolve("test.dat")),
-                Files.newOutputStream(dir.resolve("test.idx")))) {
+                () -> Files.newOutputStream(dir.resolve("test.idx")))) {
             // 0
             os.addSegment();
             // 1
@@ -188,7 +189,7 @@ public class TestRASegmentStreams {
     @Test
     void testEmptySegmentedStream2() throws IOException {
         try (SegmentOutputStream os = new RASegmentOutputStream(new BlockGZIPOutputFile(dir.resolve("test.dat")),
-                Files.newOutputStream(dir.resolve("test.idx")))) {
+                () -> Files.newOutputStream(dir.resolve("test.idx")))) {
             // 0
             os.addSegment();
             // 1
@@ -238,8 +239,10 @@ public class TestRASegmentStreams {
 
     @Test
     void testNonSegmentedStream() throws IOException {
+        FileUtil.deleteContents(dir);
+
         try (SegmentOutputStream os = new RASegmentOutputStream(new BlockGZIPOutputFile(dir.resolve("test.dat")),
-                Files.newOutputStream(dir.resolve("test.idx")))) {
+                () -> Files.newOutputStream(dir.resolve("test.idx")))) {
             os.write(A.getBytes(StreamUtil.DEFAULT_CHARSET));
             os.write(B.getBytes(StreamUtil.DEFAULT_CHARSET));
             os.write(C.getBytes(StreamUtil.DEFAULT_CHARSET));

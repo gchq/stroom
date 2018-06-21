@@ -19,10 +19,12 @@ package stroom.data.store.tools;
 import org.junit.Assert;
 import stroom.data.meta.api.StreamDataSource;
 import stroom.data.meta.api.StreamProperties;
+import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
+import stroom.data.store.api.StreamTargetUtil;
 import stroom.docref.DocRef;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.FeedStore;
@@ -55,13 +57,11 @@ import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.Processor;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
-import stroom.test.RawInputSegmentWriter;
 import stroom.test.StroomCoreServerTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -165,13 +165,7 @@ public final class StoreCreationTool {
         final String data = StreamUtil.fileToString(dataLocation);
 
         final StreamTarget target = streamStore.openStreamTarget(streamProperties);
-
-        final InputStream inputStream = new ByteArrayInputStream(data.getBytes());
-        final SegmentOutputStream outputStream = target.getSegmentOutputStream();
-
-        final RawInputSegmentWriter writer = new RawInputSegmentWriter();
-        writer.write(inputStream, outputStream);
-
+        StreamTargetUtil.write(target, data);
         streamStore.closeStreamTarget(target);
 
         try {
@@ -313,25 +307,19 @@ public final class StoreCreationTool {
                 .build();
 
         final StreamTarget dataTarget = streamStore.openStreamTarget(streamProperties);
+        try (final OutputStreamProvider outputStreamProvider = dataTarget.getOutputStreamProvider()) {
+            try (final SegmentOutputStream outputStream = outputStreamProvider.next()) {
+                final InputStream dataInputStream = Files.newInputStream(dataLocation);
+                StreamUtil.streamToStream(dataInputStream, outputStream);
+            }
 
-        final InputStream dataInputStream = Files.newInputStream(dataLocation);
-
-        final SegmentOutputStream dataOutputStream = dataTarget.getSegmentOutputStream();
-
-        final RawInputSegmentWriter dataWriter = new RawInputSegmentWriter();
-        dataWriter.write(dataInputStream, dataOutputStream);
-
-        if (contextLocation != null) {
-            final StreamTarget contextTarget = dataTarget.addChildStream(StreamTypeNames.CONTEXT);
-
-            final InputStream contextInputStream = Files.newInputStream(contextLocation);
-
-            final SegmentOutputStream contextOutputStream = contextTarget.getSegmentOutputStream();
-
-            final RawInputSegmentWriter contextWriter = new RawInputSegmentWriter();
-            contextWriter.write(contextInputStream, contextOutputStream);
+            if (contextLocation != null) {
+                try (final SegmentOutputStream outputStream = outputStreamProvider.next(StreamTypeNames.CONTEXT)) {
+                    final InputStream contextInputStream = Files.newInputStream(contextLocation);
+                    StreamUtil.streamToStream(contextInputStream, outputStream);
+                }
+            }
         }
-
         streamStore.closeStreamTarget(dataTarget);
 
         // Check that the data was written ok.

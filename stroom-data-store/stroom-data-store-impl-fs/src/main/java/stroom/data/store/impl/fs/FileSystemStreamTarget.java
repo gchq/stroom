@@ -20,8 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
 import stroom.data.meta.api.Stream;
-import stroom.data.store.api.NestedStreamTarget;
-import stroom.data.store.api.SegmentOutputStream;
+import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.StreamException;
 import stroom.data.store.api.StreamTarget;
 import stroom.io.SeekableOutputStream;
@@ -35,14 +34,13 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
  * A file system implementation of StreamTarget.
  */
-final class FileSystemStreamTarget implements StreamTarget {
+final class FileSystemStreamTarget implements StreamTarget, NestedOutputStreamFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamTarget.class);
 
     private final FileSystemStreamPathHelper fileSystemStreamPathHelper;
@@ -169,7 +167,7 @@ final class FileSystemStreamTarget implements StreamTarget {
                 }
             } else {
                 files.addAll(parent.getFiles(false).stream()
-                        .map(pFile -> fileSystemStreamPathHelper.createChildStreamFile(pFile, getStreamTypeName()))
+                        .map(pFile -> fileSystemStreamPathHelper.createChildStreamFile(pFile, streamType))
                         .collect(Collectors.toList()));
             }
             if (LOGGER.isDebugEnabled()) {
@@ -179,6 +177,37 @@ final class FileSystemStreamTarget implements StreamTarget {
             }
         }
         return files;
+    }
+
+
+    @Override
+    public OutputStreamProvider getOutputStreamProvider() {
+        return new OutputStreamProviderImpl(stream, this);
+    }
+
+//    @Override
+//    SegmentOutputStream getSegmentOutputStream() {
+//        return new RASegmentOutputStream(getOutputStream(),
+//                () -> addChild(InternalStreamTypeNames.SEGMENT_INDEX).getOutputStream());
+//    }
+
+    void setMetaData(final Stream stream) {
+        this.stream = stream;
+    }
+
+    @Override
+    public NestedOutputStreamFactory addChild(final String streamTypeName) {
+        return add(streamTypeName);
+    }
+
+    FileSystemStreamTarget add(final String streamTypeName) {
+        if (!closed && InternalStreamTypeNames.MANIFEST.equals(streamTypeName)) {
+            throw new RuntimeException("Stream store is responsible for the child manifest stream");
+        }
+        final Set<Path> childFile = fileSystemStreamPathHelper.createChildStreamPath(getFiles(false), streamTypeName);
+        final FileSystemStreamTarget child = new FileSystemStreamTarget(fileSystemStreamPathHelper, this, streamTypeName, childFile);
+        childrenAccessed.add(child);
+        return child;
     }
 
     /**
@@ -207,61 +236,37 @@ final class FileSystemStreamTarget implements StreamTarget {
         return outputStream;
     }
 
-    @Override
-    public NestedStreamTarget getNestedStreamTarget(final boolean syncWriting) {
-        return new RANestedStreamTarget(this, syncWriting);
-    }
+//    @Override
+//    public StreamTarget addChildStream(final String streamTypeName) {
+//        return add(streamTypeName);
+//    }
 
-    @Override
-    public SegmentOutputStream getSegmentOutputStream() {
-        return new RASegmentOutputStream(getOutputStream(),
-                addChildStream(InternalStreamTypeNames.SEGMENT_INDEX).getOutputStream());
-    }
-
-    public void setMetaData(final Stream stream) {
-        this.stream = stream;
-    }
-
-    @Override
-    public StreamTarget addChildStream(final String streamTypeName) {
-        if (!closed && InternalStreamTypeNames.MANIFEST.equals(streamTypeName)) {
-            throw new RuntimeException("Stream store is responsible for the child manifest stream");
-        }
-        final Set<Path> childFile = fileSystemStreamPathHelper.createChildStreamPath(getFiles(false), streamTypeName);
-        final FileSystemStreamTarget child = new FileSystemStreamTarget(fileSystemStreamPathHelper, this, streamTypeName, childFile);
-        childrenAccessed.add(child);
-        return child;
-    }
-
-    @Override
-    public StreamTarget getParent() {
+    StreamTarget getParent() {
         return parent;
     }
 
-    @Override
-    public String getStreamTypeName() {
-        return streamType;
-    }
+//    private String getStreamTypeName() {
+//        return streamType;
+//    }
+//
+//    //    @Override
+//    StreamTarget getChildStream(final String streamTypeName) {
+//        for (final FileSystemStreamTarget child : childrenAccessed) {
+//            if (Objects.equals(child.getStreamTypeName(), streamTypeName)) {
+//                return child;
+//            }
+//        }
+//        return null;
+//    }
 
-    @Override
-    public StreamTarget getChildStream(final String streamTypeName) {
-        for (final FileSystemStreamTarget child : childrenAccessed) {
-            if (Objects.equals(child.getStreamTypeName(), streamTypeName)) {
-                return child;
-            }
-        }
-        return null;
-    }
-
-    @Override
-    public boolean isAppend() {
+    boolean isAppend() {
         return append;
     }
 
     @Override
-    public AttributeMap getAttributeMap() {
+    public AttributeMap getAttributes() {
         if (parent != null) {
-            return parent.getAttributeMap();
+            return parent.getAttributes();
         }
         if (attributeMap == null) {
             attributeMap = new AttributeMap();
@@ -272,7 +277,7 @@ final class FileSystemStreamTarget implements StreamTarget {
                     try (final InputStream inputStream = Files.newInputStream(manifestFile)) {
                         attributeMap.read(inputStream, true);
                     } catch (final IOException e) {
-                        LOGGER.error("getAttributeMap()", e);
+                        LOGGER.error("getAttributes()", e);
                     }
                 }
             }

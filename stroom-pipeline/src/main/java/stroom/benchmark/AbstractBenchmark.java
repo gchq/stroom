@@ -18,25 +18,24 @@ package stroom.benchmark;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.store.api.SegmentOutputStream;
+import stroom.data.meta.api.ExpressionUtil;
+import stroom.data.meta.api.FindStreamCriteria;
+import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.StreamDataSource;
+import stroom.data.meta.api.StreamMetaService;
+import stroom.data.meta.api.StreamProperties;
+import stroom.data.store.api.StreamSource;
+import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.StreamTarget;
+import stroom.data.store.api.StreamTargetUtil;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.util.XMLUtil;
 import stroom.feed.shared.FeedDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
-import stroom.data.meta.api.FindStreamCriteria;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamMetaService;
-import stroom.data.meta.api.StreamProperties;
-import stroom.data.meta.api.ExpressionUtil;
-import stroom.data.meta.api.StreamDataSource;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.task.TaskContext;
-import stroom.test.RawInputSegmentWriter;
 import stroom.util.io.StreamUtil;
 
 import java.io.IOException;
@@ -93,14 +92,7 @@ public abstract class AbstractBenchmark {
                 .build();
 
         final StreamTarget dataTarget = streamStore.openStreamTarget(streamProperties);
-
-        final InputStream dataInputStream = StreamUtil.stringToStream(data);
-
-        final SegmentOutputStream dataOutputStream = dataTarget.getSegmentOutputStream();
-
-        final RawInputSegmentWriter dataWriter = new RawInputSegmentWriter();
-        dataWriter.write(dataInputStream, dataOutputStream);
-
+        StreamTargetUtil.write(dataTarget, data);
         streamStore.closeStreamTarget(dataTarget);
 
         return dataTarget.getStream();

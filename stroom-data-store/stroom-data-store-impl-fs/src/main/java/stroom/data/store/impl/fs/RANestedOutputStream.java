@@ -16,8 +16,6 @@
 
 package stroom.data.store.impl.fs;
 
-import stroom.data.store.api.NestedOutputStream;
-
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -25,28 +23,21 @@ import java.io.OutputStream;
  * Class used to write multiple streams to a single stream separated by segments
  * by a segment marker (boundary).
  */
-class RANestedOutputStream extends NestedOutputStream {
+class RANestedOutputStream extends OutputStream {
     private final RASegmentOutputStream segmentOutputStream;
     private int segmentCount = 0;
     private boolean currentEntryClosed = true;
     private boolean closed = false;
 
-    RANestedOutputStream(final OutputStream dataFile, final OutputStream boundaryFile) {
-        segmentOutputStream = new RASegmentOutputStream(dataFile, boundaryFile);
+    RANestedOutputStream(final OutputStream dataFile, final SupplierWithIO<OutputStream> indexOutputStreamSupplier) {
+        segmentOutputStream = new RASegmentOutputStream(dataFile, indexOutputStreamSupplier);
     }
 
     int getNestCount() {
         return segmentCount;
     }
 
-    @Override
-    public void doClose() throws IOException {
-        flush();
-        segmentOutputStream.close();
-        closed = true;
-    }
-
-    public void closeEntry() throws IOException {
+    void closeEntry() throws IOException {
         flush();
         checkNotClosed();
         if (currentEntryClosed) {
@@ -55,7 +46,7 @@ class RANestedOutputStream extends NestedOutputStream {
         currentEntryClosed = true;
     }
 
-    public void putNextEntry() throws IOException {
+    void putNextEntry() throws IOException {
         checkNotClosed();
         if (!currentEntryClosed) {
             throw new IOException("Current nested stream is not closed");
@@ -74,11 +65,6 @@ class RANestedOutputStream extends NestedOutputStream {
         }
     }
 
-    @Override
-    public void flush() throws IOException {
-        segmentOutputStream.flush();
-    }
-
     @SuppressWarnings("NullableProblems")
     @Override
     public void write(byte[] b) throws IOException {
@@ -94,6 +80,18 @@ class RANestedOutputStream extends NestedOutputStream {
     @Override
     public void write(int b) throws IOException {
         segmentOutputStream.write(b);
+    }
+
+    @Override
+    public void flush() throws IOException {
+        segmentOutputStream.flush();
+    }
+
+    @Override
+    public void close() throws IOException {
+        flush();
+        segmentOutputStream.close();
+        closed = true;
     }
 
     @Override

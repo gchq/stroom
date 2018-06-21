@@ -32,7 +32,7 @@ class TestRASegmentStreamsByteSeeking {
     void testByteSeeking() throws IOException {
         final Path dir = FileUtil.getTempDir();
         try (SegmentOutputStream os = new RASegmentOutputStream(new BlockGZIPOutputFile(dir.resolve("test.dat")),
-                Files.newOutputStream(dir.resolve("test.idx")))) {
+                () -> Files.newOutputStream(dir.resolve("test.idx")))) {
             os.write("LINE ONE\n".getBytes(StreamUtil.DEFAULT_CHARSET));
             os.addSegment();
             os.write("LINE TWO\n".getBytes(StreamUtil.DEFAULT_CHARSET));

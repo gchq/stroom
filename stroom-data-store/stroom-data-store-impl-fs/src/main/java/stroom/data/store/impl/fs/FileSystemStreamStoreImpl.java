@@ -129,6 +129,8 @@ class FileSystemStreamStoreImpl implements StreamStore {
 
     @Override
     public void closeStreamTarget(final StreamTarget streamTarget) {
+        final FileSystemStreamTarget fileSystemStreamTarget = (FileSystemStreamTarget) streamTarget;
+
         // If we get error on closing the stream we must return it to the caller
         IOException streamCloseException = null;
 
@@ -140,23 +142,23 @@ class FileSystemStreamStoreImpl implements StreamStore {
             streamCloseException = e;
         }
 
-        updateAttribute(streamTarget, StreamDataSource.STREAM_SIZE,
+        updateAttribute(fileSystemStreamTarget, StreamDataSource.STREAM_SIZE,
                 String.valueOf(((FileSystemStreamTarget) streamTarget).getStreamSize()));
 
-        updateAttribute(streamTarget, StreamDataSource.FILE_SIZE,
+        updateAttribute(fileSystemStreamTarget, StreamDataSource.FILE_SIZE,
                 String.valueOf(((FileSystemStreamTarget) streamTarget).getTotalFileSize()));
 
         try {
             boolean doneManifest = false;
 
             // Are we appending?
-            if (streamTarget.isAppend()) {
+            if (fileSystemStreamTarget.isAppend()) {
                 final Set<Path> childFile = fileSystemStreamPathHelper.createChildStreamPath(
                         ((FileSystemStreamTarget) streamTarget).getFiles(false), InternalStreamTypeNames.MANIFEST);
 
                 // Does the manifest exist ... overwrite it
                 if (FileSystemUtil.isAllFile(childFile)) {
-                    streamTarget.getAttributeMap()
+                    fileSystemStreamTarget.getAttributes()
                             .write(fileSystemStreamPathHelper.getOutputStream(InternalStreamTypeNames.MANIFEST, childFile), true);
                     doneManifest = true;
                 }
@@ -165,8 +167,8 @@ class FileSystemStreamStoreImpl implements StreamStore {
             if (!doneManifest) {
                 // No manifest done yet ... output one if the parent dir's exist
                 if (FileSystemUtil.isAllParentDirectoryExist(((FileSystemStreamTarget) streamTarget).getFiles(false))) {
-                    streamTarget.getAttributeMap()
-                            .write(streamTarget.addChildStream(InternalStreamTypeNames.MANIFEST).getOutputStream(), true);
+                    fileSystemStreamTarget.getAttributes()
+                            .write(fileSystemStreamTarget.add(InternalStreamTypeNames.MANIFEST).getOutputStream(), true);
                 } else {
                     LOGGER.warn("closeStreamTarget() - Closing target file with no directory present");
                 }
@@ -180,7 +182,7 @@ class FileSystemStreamStoreImpl implements StreamStore {
             // Unlock will update the meta data so set it back on the stream
             // target so the client has the up to date copy
             ((FileSystemStreamTarget) streamTarget).setMetaData(
-                    unLock(streamTarget.getStream(), streamTarget.getAttributeMap()));
+                    unLock(streamTarget.getStream(), fileSystemStreamTarget.getAttributes()));
         } else {
             throw new UncheckedIOException(streamCloseException);
         }
@@ -332,9 +334,9 @@ class FileSystemStreamStoreImpl implements StreamStore {
         }
     }
 
-    private void updateAttribute(final StreamTarget target, final String key, final String value) {
-        if (!target.getAttributeMap().containsKey(key)) {
-            target.getAttributeMap().put(key, value);
+    private void updateAttribute(final FileSystemStreamTarget target, final String key, final String value) {
+        if (!target.getAttributes().containsKey(key)) {
+            target.getAttributes().put(key, value);
         }
     }
 

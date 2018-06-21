@@ -27,7 +27,7 @@ import stroom.data.meta.api.StreamStatus;
 import stroom.data.store.StreamDownloadSettings;
 import stroom.data.store.StreamDownloadTask;
 import stroom.data.store.StreamUploadTask;
-import stroom.data.store.api.NestedStreamTarget;
+import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
@@ -43,6 +43,7 @@ import stroom.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -113,33 +114,31 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
                 .build();
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
 
-        final NestedStreamTarget nestedStreamTarget = streamTarget.getNestedStreamTarget(true);
+        try (final OutputStreamProvider outputStreamProvider = streamTarget.getOutputStreamProvider()) {
+            try (final OutputStream outputStream = outputStreamProvider.next()) {
+                outputStream.write("DATA1".getBytes(StreamUtil.DEFAULT_CHARSET));
+            }
 
-        nestedStreamTarget.putNextEntry();
-        nestedStreamTarget.getOutputStream().write("DATA1".getBytes(StreamUtil.DEFAULT_CHARSET));
-        nestedStreamTarget.closeEntry();
+            try (final OutputStream outputStream = outputStreamProvider.next(StreamTypeNames.META)) {
+                outputStream.write("META:1\nX:1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
+            }
 
-        nestedStreamTarget.putNextEntry(StreamTypeNames.META);
-        nestedStreamTarget.getOutputStream(StreamTypeNames.META).write("META:1\nX:1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
-        nestedStreamTarget.closeEntry(StreamTypeNames.META);
+            try (final OutputStream outputStream = outputStreamProvider.next(StreamTypeNames.CONTEXT)) {
+                outputStream.write("CONTEXT1".getBytes(StreamUtil.DEFAULT_CHARSET));
+            }
 
-        nestedStreamTarget.putNextEntry(StreamTypeNames.CONTEXT);
-        nestedStreamTarget.getOutputStream(StreamTypeNames.CONTEXT).write("CONTEXT1".getBytes(StreamUtil.DEFAULT_CHARSET));
-        nestedStreamTarget.closeEntry(StreamTypeNames.CONTEXT);
+            try (final OutputStream outputStream = outputStreamProvider.next()) {
+                outputStream.write("DATA2".getBytes(StreamUtil.DEFAULT_CHARSET));
+            }
 
-        nestedStreamTarget.putNextEntry();
-        nestedStreamTarget.getOutputStream().write("DATA2".getBytes(StreamUtil.DEFAULT_CHARSET));
-        nestedStreamTarget.closeEntry();
+            try (final OutputStream outputStream = outputStreamProvider.next(StreamTypeNames.META)) {
+                outputStream.write("META:2\nY:2\n".getBytes(StreamUtil.DEFAULT_CHARSET));
+            }
 
-        nestedStreamTarget.putNextEntry(StreamTypeNames.META);
-        nestedStreamTarget.getOutputStream(StreamTypeNames.META).write("META:2\nY:2\n".getBytes(StreamUtil.DEFAULT_CHARSET));
-        nestedStreamTarget.closeEntry(StreamTypeNames.META);
-
-        nestedStreamTarget.putNextEntry(StreamTypeNames.CONTEXT);
-        nestedStreamTarget.getOutputStream(StreamTypeNames.CONTEXT).write("CONTEXT2".getBytes(StreamUtil.DEFAULT_CHARSET));
-        nestedStreamTarget.closeEntry(StreamTypeNames.CONTEXT);
-
-        nestedStreamTarget.close();
+            try (final OutputStream outputStream = outputStreamProvider.next(StreamTypeNames.CONTEXT)) {
+                outputStream.write("CONTEXT2".getBytes(StreamUtil.DEFAULT_CHARSET));
+            }
+        }
 
         streamStore.closeStreamTarget(streamTarget);
 

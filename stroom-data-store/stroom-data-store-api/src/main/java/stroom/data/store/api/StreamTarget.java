@@ -30,53 +30,19 @@ import java.io.OutputStream;
  */
 public interface StreamTarget extends Closeable {
     /**
-     * @return a type associated with the stream. Used to differentiate between
-     * child streams ("ctx", "idx", etc).
-     */
-    String getStreamTypeName();
-
-    /**
      * @return the stream associated with this target
      */
     Stream getStream();
 
     /**
-     * Any attributes regarding the stream
+     * Any meta data attributes associated with the data.
      */
-    AttributeMap getAttributeMap();
+    AttributeMap getAttributes();
 
-    /**
-     * @return the real IO output stream
-     */
-    OutputStream getOutputStream();
+    OutputStreamProvider getOutputStreamProvider();
 
-    NestedStreamTarget getNestedStreamTarget(boolean syncWriting);
-
-    SegmentOutputStream getSegmentOutputStream();
-
-    /**
-     * Add a child stream for this main stream.
-     *
-     * @param streamTypeName name of the child.
-     * @return target to write to.
-     */
-    StreamTarget addChildStream(String streamTypeName);
-
-    /**
-     * Get a child stream (null if addChildStream has not been called)
-     *
-     * @param streamTypeName
-     * @return
-     */
-    StreamTarget getChildStream(String streamTypeName);
-
-    /**
-     * @return the parent stream for this child.
-     */
-    StreamTarget getParent();
-
-    /**
-     * @return are we appending?
-     */
-    boolean isAppend();
+//    /**
+//     * @return the parent stream target for this child.
+//     */
+//    StreamTarget getParent();
 }

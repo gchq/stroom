@@ -20,29 +20,30 @@ package stroom.data.store.impl.fs;
 import org.hibernate.LazyInitializationException;
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.data.meta.api.EffectiveMetaDataCriteria;
+import stroom.data.meta.api.ExpressionUtil;
+import stroom.data.meta.api.FindStreamCriteria;
+import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.StreamDataRow;
+import stroom.data.meta.api.StreamDataSource;
+import stroom.data.meta.api.StreamMetaService;
+import stroom.data.meta.api.StreamProperties;
+import stroom.data.meta.api.StreamStatus;
+import stroom.data.store.FindStreamVolumeCriteria;
+import stroom.data.store.StreamMaintenanceService;
+import stroom.data.store.api.StreamException;
+import stroom.data.store.api.StreamSource;
+import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.StreamTarget;
+import stroom.data.store.api.StreamTargetUtil;
 import stroom.data.volume.api.StreamVolumeService;
+import stroom.data.volume.api.StreamVolumeService.StreamVolume;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.Period;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.data.store.FindStreamVolumeCriteria;
-import stroom.data.store.api.StreamException;
-import stroom.data.store.StreamMaintenanceService;
-import stroom.data.store.api.StreamSource;
-import stroom.data.store.api.StreamStore;
-import stroom.data.store.api.StreamTarget;
-import stroom.data.volume.api.StreamVolumeService.StreamVolume;
-import stroom.data.meta.api.EffectiveMetaDataCriteria;
-import stroom.data.meta.api.FindStreamCriteria;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamMetaService;
-import stroom.data.meta.api.StreamProperties;
-import stroom.data.meta.api.StreamStatus;
-import stroom.data.meta.api.ExpressionUtil;
-import stroom.data.meta.api.StreamDataRow;
-import stroom.data.meta.api.StreamDataSource;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamTaskCreator;
 import stroom.task.SimpleTaskContext;
@@ -50,7 +51,6 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.config.StroomProperties;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
-import stroom.util.io.StreamUtil;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.util.test.StroomExpectedException;
 import stroom.volume.VolumeServiceImpl;
@@ -211,7 +211,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                 .streamTypeName(StreamTypeNames.RAW_EVENTS)
                 .build();
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
-        streamTarget.getOutputStream().write(testString.getBytes(StreamUtil.DEFAULT_CHARSET));
+        StreamTargetUtil.write(streamTarget, testString);
         streamStore.closeStreamTarget(streamTarget);
 
         final StreamProperties childProperties = new StreamProperties.Builder()
@@ -220,7 +220,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                 .parent(streamTarget.getStream())
                 .build();
         final StreamTarget childTarget = streamStore.openStreamTarget(childProperties);
-        childTarget.getOutputStream().write(testString.getBytes(StreamUtil.DEFAULT_CHARSET));
+        StreamTargetUtil.write(childTarget, testString);
         streamStore.closeStreamTarget(childTarget);
 
         final StreamProperties grandChildProperties = new StreamProperties.Builder()
@@ -229,7 +229,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                 .parent(childTarget.getStream())
                 .build();
         final StreamTarget grandChildTarget = streamStore.openStreamTarget(grandChildProperties);
-        grandChildTarget.getOutputStream().write(testString.getBytes(StreamUtil.DEFAULT_CHARSET));
+        StreamTargetUtil.write(grandChildTarget, testString);
         streamStore.closeStreamTarget(grandChildTarget);
 
         FindStreamCriteria findStreamCriteria = FindStreamCriteria.createWithStream(childTarget.getStream());
@@ -291,7 +291,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                 .build();
 
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
-        streamTarget.getOutputStream().write(testString.getBytes(StreamUtil.DEFAULT_CHARSET));
+        StreamTargetUtil.write(streamTarget, testString);
         streamStore.closeStreamTarget(streamTarget);
         return streamTarget.getStream();
     }
@@ -331,7 +331,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
         streamTarget.getStream().getFeedName();
         Stream exactMetaData = streamTarget.getStream();
-        streamTarget.getOutputStream().write(testString.getBytes(StreamUtil.DEFAULT_CHARSET));
+        StreamTargetUtil.write(streamTarget, testString);
         streamStore.closeStreamTarget(streamTarget);
 
         // Refresh
@@ -389,7 +389,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
         final Stream stream = streamTarget.getStream();
-        streamTarget.getOutputStream().write(testString.getBytes(StreamUtil.DEFAULT_CHARSET));
+        StreamTargetUtil.write(streamTarget, testString);
         streamStore.closeStreamTarget(streamTarget);
 
         // Check we can read it back in
@@ -437,11 +437,11 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
             streamStore.deleteStreamTarget(streamTarget);
         }
         if (DeleteTestStyle.OPEN_TOUCHED.equals(style)) {
-            streamTarget.getOutputStream().write(testString.getBytes(StreamUtil.DEFAULT_CHARSET));
+            StreamTargetUtil.write(streamTarget, testString);
             streamStore.deleteStreamTarget(streamTarget);
         }
         if (DeleteTestStyle.OPEN_TOUCHED_CLOSED.equals(style)) {
-            streamTarget.getOutputStream().write(testString.getBytes(StreamUtil.DEFAULT_CHARSET));
+            StreamTargetUtil.write(streamTarget, testString);
             streamStore.closeStreamTarget(streamTarget);
             streamStore.deleteStreamTarget(streamTarget);
         }
@@ -509,9 +509,9 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
         final Stream exactMetaData = streamTarget.getStream();
-        streamTarget.getOutputStream().write(testString.getBytes(StreamUtil.DEFAULT_CHARSET));
-        streamTarget.getAttributeMap().put(StreamDataSource.REC_READ, "10");
-        streamTarget.getAttributeMap().put(StreamDataSource.REC_WRITE, "20");
+        StreamTargetUtil.write(streamTarget, testString);
+        streamTarget.getAttributes().put(StreamDataSource.REC_READ, "10");
+        streamTarget.getAttributes().put(StreamDataSource.REC_WRITE, "20");
         streamStore.closeStreamTarget(streamTarget);
 
         final Stream reloadMetaData = streamMetaService.find(FindStreamCriteria.createWithStream(exactMetaData)).get(0);
@@ -630,8 +630,8 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                 .build();
 
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
-        streamTarget.getOutputStream().write(testString.getBytes(StreamUtil.DEFAULT_CHARSET));
-        streamTarget.close();
+        StreamTargetUtil.write(streamTarget, testString);
+//        streamTarget.close();
         // Leave locked ?
         if (!lock) {
             streamStore.closeStreamTarget(streamTarget);
@@ -651,7 +651,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
-        streamTarget.getOutputStream().write(testString.getBytes(StreamUtil.DEFAULT_CHARSET));
+        StreamTargetUtil.write(streamTarget, testString);
         streamStore.closeStreamTarget(streamTarget);
 
         // Create tasks.
@@ -693,9 +693,9 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
 
-        streamTarget.getOutputStream().write("xyz".getBytes(StreamUtil.DEFAULT_CHARSET));
-        streamTarget.getAttributeMap().put(testString1, testString2);
-        streamTarget.getAttributeMap().put(StreamDataSource.REC_READ, "100");
+        StreamTargetUtil.write(streamTarget, "xyz");
+        streamTarget.getAttributes().put(testString1, testString2);
+        streamTarget.getAttributes().put(StreamDataSource.REC_READ, "100");
         streamStore.closeStreamTarget(streamTarget);
 
         Stream stream = streamTarget.getStream();
@@ -719,7 +719,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         Assert.assertTrue(FileSystemUtil.isAllFile(manifestFile));
 
         streamTarget = streamStore.openExistingStreamTarget(stream.getId());
-        streamTarget.getAttributeMap().put(testString3, testString4);
+        streamTarget.getAttributes().put(testString3, testString4);
         streamStore.closeStreamTarget(streamTarget);
         stream = streamTarget.getStream();
 
@@ -736,8 +736,8 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 //        }
 
         streamTarget = streamStore.openExistingStreamTarget(stream.getId());
-        streamTarget.getAttributeMap().put(testString5, testString6);
-        Assert.assertNull(streamTarget.getAttributeMap().get(testString3));
+        streamTarget.getAttributes().put(testString5, testString6);
+        Assert.assertNull(streamTarget.getAttributes().get(testString3));
         streamStore.closeStreamTarget(streamTarget);
         stream = streamTarget.getStream();
 
@@ -763,7 +763,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
                 .build();
 
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
-        streamTarget.getOutputStream().write(testString.getBytes(StreamUtil.DEFAULT_CHARSET));
+        StreamTargetUtil.write(streamTarget, testString);
         final Set<Path> dirSet = new HashSet<>();
         for (final Path file : ((FileSystemStreamTarget) streamTarget).getFiles(true)) {
             dirSet.add(file.getParent());

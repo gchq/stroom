@@ -31,8 +31,10 @@ class TestRASegmentStreamsWindow {
     @Test
     void testFullWindowNoDataSegments() throws IOException {
         final Path dir = FileUtil.getTempDir();
+        FileUtil.deleteContents(dir);
+
         final SegmentOutputStream os = new RASegmentOutputStream(new BlockGZIPOutputFile(dir.resolve("test.dat")),
-                Files.newOutputStream(dir.resolve("test.idx")));
+                () -> Files.newOutputStream(dir.resolve("test.idx")));
 
         os.addSegment();
         os.addSegment();
@@ -66,8 +68,10 @@ class TestRASegmentStreamsWindow {
     @Test
     void testFullWindowNoDataSegments1() throws IOException {
         final Path dir = FileUtil.getTempDir();
+        FileUtil.deleteContents(dir);
+
         final SegmentOutputStream os = new RASegmentOutputStream(new BlockGZIPOutputFile(dir.resolve("test.dat")),
-                Files.newOutputStream(dir.resolve("test.idx")));
+                () -> Files.newOutputStream(dir.resolve("test.idx")));
 
         os.write("TEST".getBytes(StreamUtil.DEFAULT_CHARSET));
         os.addSegment();
@@ -115,8 +119,10 @@ class TestRASegmentStreamsWindow {
     @Test
     void testPartailWindowSegments1() throws IOException {
         final Path dir = FileUtil.getTempDir();
+        FileUtil.deleteContents(dir);
+
         final SegmentOutputStream os = new RASegmentOutputStream(new BlockGZIPOutputFile(dir.resolve("test.dat")),
-                Files.newOutputStream(dir.resolve("test.idx")));
+                () -> Files.newOutputStream(dir.resolve("test.idx")));
 
         // 0
         os.write("TEST".getBytes(StreamUtil.DEFAULT_CHARSET));
@@ -168,8 +174,10 @@ class TestRASegmentStreamsWindow {
     @Test
     void testPartailWindowSegments2() throws IOException {
         final Path dir = FileUtil.getTempDir();
+        FileUtil.deleteContents(dir);
+
         try (SegmentOutputStream os = new RASegmentOutputStream(new BlockGZIPOutputFile(dir.resolve("test.dat")),
-                Files.newOutputStream(dir.resolve("test.idx")))) {
+                () -> Files.newOutputStream(dir.resolve("test.idx")))) {
             os.write("TEST".getBytes(StreamUtil.DEFAULT_CHARSET));
             os.addSegment();
             os.addSegment();
@@ -205,8 +213,10 @@ class TestRASegmentStreamsWindow {
     @Test
     void testFullWindowNoSegments() throws IOException {
         final Path dir = FileUtil.getTempDir();
+        FileUtil.deleteContents(dir);
+
         try (SegmentOutputStream os = new RASegmentOutputStream(new BlockGZIPOutputFile(dir.resolve("test.dat")),
-                Files.newOutputStream(dir.resolve("test.idx")))) {
+                () -> Files.newOutputStream(dir.resolve("test.idx")))) {
             // 0
             os.write("TEST".getBytes(StreamUtil.DEFAULT_CHARSET));
 
@@ -233,8 +243,10 @@ class TestRASegmentStreamsWindow {
     @Test
     void testPartailWindowNoSegments() throws IOException {
         final Path dir = FileUtil.getTempDir();
+        FileUtil.deleteContents(dir);
+
         try (SegmentOutputStream os = new RASegmentOutputStream(new BlockGZIPOutputFile(dir.resolve("test.dat")),
-                Files.newOutputStream(dir.resolve("test.idx")))) {
+                () -> Files.newOutputStream(dir.resolve("test.idx")))) {
             // 0
             os.write("TEST".getBytes(StreamUtil.DEFAULT_CHARSET));
 

@@ -198,7 +198,7 @@ final class FileSystemStreamSource implements StreamSource {
                     attributeMap.read(streamSource.getInputStream(), true);
                 }
             } catch (final RuntimeException | IOException e) {
-                LOGGER.error("getAttributeMap()", e);
+                LOGGER.error("getAttributes()", e);
             }
         }
         return attributeMap;

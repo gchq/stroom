@@ -23,6 +23,7 @@ import stroom.data.meta.api.StreamDataSource;
 import stroom.data.meta.api.StreamProperties;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
+import stroom.data.store.api.StreamTargetUtil;
 import stroom.docref.DocRef;
 import stroom.feed.StroomHeaderArguments;
 import stroom.index.IndexStore;
@@ -42,11 +43,8 @@ import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamProcessorFilterService;
 import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.shared.Processor;
-import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -142,13 +140,8 @@ public class CommonTestScenarioCreator {
                 .streamTypeName(streamType)
                 .build();
         final StreamTarget target = streamStore.openStreamTarget(streamProperties);
-
-        final InputStream inputStream = new ByteArrayInputStream("line1\nline2".getBytes(StreamUtil.DEFAULT_CHARSET));
-
-        final RawInputSegmentWriter writer = new RawInputSegmentWriter();
-        writer.write(inputStream, target.getSegmentOutputStream());
-
-        target.getAttributeMap().put(StroomHeaderArguments.FEED, feed);
+        StreamTargetUtil.write(target, "line1\nline2");
+        target.getAttributes().put(StroomHeaderArguments.FEED, feed);
 
         streamStore.closeStreamTarget(target);
         return target.getStream();
@@ -162,17 +155,14 @@ public class CommonTestScenarioCreator {
                 .build();
 
         final StreamTarget target = streamStore.openStreamTarget(streamProperties);
-
-        final InputStream inputStream = new ByteArrayInputStream(("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        final String data = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                 + "<Events xpath-default-namespace=\"records:2\" "
                 + "xmlns:stroom=\"stroom\" "
                 + "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
                 + "xmlns=\"event-logging:3\" "
                 + "xsi:schemaLocation=\"event-logging:3 file://event-logging-v3.0.0.xsd\" "
-                + "Version=\"3.0.0\"/>").getBytes(StreamUtil.DEFAULT_CHARSET));
-
-        final RawInputSegmentWriter writer = new RawInputSegmentWriter();
-        writer.write(inputStream, target.getSegmentOutputStream());
+                + "Version=\"3.0.0\"/>";
+        StreamTargetUtil.write(target, data);
         streamStore.closeStreamTarget(target);
         return target.getStream();
     }

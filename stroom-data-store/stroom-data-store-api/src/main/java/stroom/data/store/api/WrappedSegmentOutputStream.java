@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.writer;
-
-import stroom.data.store.api.SegmentOutputStream;
+package stroom.data.store.api;
 
 import java.io.IOException;
 

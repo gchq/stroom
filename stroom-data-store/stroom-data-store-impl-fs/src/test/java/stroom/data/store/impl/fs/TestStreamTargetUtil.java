@@ -17,7 +17,7 @@
 package stroom.data.store.impl.fs;
 
 import org.junit.jupiter.api.Test;
-import stroom.test.RawInputSegmentWriter;
+import stroom.data.store.api.StreamTargetUtil;
 import stroom.util.io.StreamUtil;
 
 import java.io.ByteArrayInputStream;
@@ -31,17 +31,15 @@ import static org.assertj.core.api.Assertions.assertThat;
  * type (XML and text) correctly and that it inserts segment boundaries in the
  * correct places.
  */
-class TestRawInputSegmentWriter {
+class TestStreamTargetUtil {
     @Test
     void testSimpleWriteThenRead() {
         final String text = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><records><record>text1</record><record>text2</record><record>text3</record></records>";
         final InputStream bais = new ByteArrayInputStream(text.getBytes(StreamUtil.DEFAULT_CHARSET));
 
         final ByteArrayOutputStream dataBuffer = new ByteArrayOutputStream();
-        final ByteArrayOutputStream indexBuffer = new ByteArrayOutputStream();
 
-        final RawInputSegmentWriter writer = new RawInputSegmentWriter();
-        writer.write(bais, new RASegmentOutputStream(dataBuffer, indexBuffer));
+        StreamTargetUtil.write(bais, new RASegmentOutputStream(dataBuffer, ByteArrayOutputStream::new), true);
 
         assertThat(new String(dataBuffer.toByteArray(), StreamUtil.DEFAULT_CHARSET)).isEqualTo(text);
     }

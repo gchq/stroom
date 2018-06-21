@@ -24,9 +24,8 @@ import stroom.data.meta.api.StreamStatus;
 import stroom.data.meta.impl.mock.MockStreamMetaService;
 import stroom.data.store.api.CompoundInputStream;
 import stroom.data.store.api.NestedInputStream;
-import stroom.data.store.api.NestedStreamTarget;
+import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
-import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.StreamException;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamSourceInputStreamProvider;
@@ -68,9 +67,9 @@ public class MockStreamStore implements StreamStore, Clearable {
         this.streamMetaService = streamMetaService;
     }
 
-    public MockStreamStore() {
-        this.streamMetaService = new MockStreamMetaService();
-    }
+//    public MockStreamStore() {
+//        this.streamMetaService = new MockStreamMetaService();
+//    }
 
 ////    @Override
 //    public StreamEntity createStream(final StreamProperties streamProperties) {
@@ -147,11 +146,14 @@ public class MockStreamStore implements StreamStore, Clearable {
         } catch (final IOException e) {
             throw new StreamException(e.getMessage());
         }
-        openInputStream.remove(source.getStream());
+        openInputStream.remove(source.getStream().getId());
     }
 
     @Override
     public void closeStreamTarget(final StreamTarget target) {
+        final MockStreamTarget mockStreamTarget = (MockStreamTarget) target;
+        final String streamTypeName = mockStreamTarget.getStreamTypeName();
+
         // Close the stream target.
         try {
             target.close();
@@ -173,11 +175,11 @@ public class MockStreamStore implements StreamStore, Clearable {
 
         if (typeMap != null) {
             // Add data from this stream to the data type map.
-            final ByteArrayOutputStream ba = typeMap.remove(target.getStreamTypeName());
+            final ByteArrayOutputStream ba = typeMap.remove(streamTypeName);
             if (ba != null && ba.toByteArray() != null) {
-                dataTypeMap.put(target.getStreamTypeName(), ba.toByteArray());
+                dataTypeMap.put(streamTypeName, ba.toByteArray());
             } else {
-                dataTypeMap.put(target.getStreamTypeName(), new byte[0]);
+                dataTypeMap.put(streamTypeName, new byte[0]);
             }
 
             // Clean up the open output streams if there are no more open types
@@ -186,12 +188,12 @@ public class MockStreamStore implements StreamStore, Clearable {
                 openOutputStream.remove(streamId);
             }
         } else {
-            dataTypeMap.put(target.getStreamTypeName(), new byte[0]);
+            dataTypeMap.put(streamTypeName, new byte[0]);
         }
 
         // Close child streams.
-        for (final String childType : ((MockStreamTarget) target).childMap.keySet()) {
-            closeStreamTarget(target.getChildStream(childType));
+        for (final String childType : mockStreamTarget.childMap.keySet()) {
+            closeStreamTarget(mockStreamTarget.getChildStream(childType));
         }
 
         // Set the status of the stream to be unlocked.
@@ -394,13 +396,13 @@ public class MockStreamStore implements StreamStore, Clearable {
         }
     }
 
-    private class MockStreamTarget implements StreamTarget {
+    private class MockStreamTarget implements StreamTarget, NestedOutputStreamFactory {
         private final Stream stream;
         private final String streamTypeName;
         private final AttributeMap attributeMap = new AttributeMap();
         private final Map<String, MockStreamTarget> childMap = new HashMap<>();
         private ByteArrayOutputStream outputStream = null;
-        private StreamTarget parent;
+//        private StreamTarget parent;
 
         MockStreamTarget(final Stream stream) {
             this.stream = stream;
@@ -408,7 +410,7 @@ public class MockStreamStore implements StreamStore, Clearable {
         }
 
         MockStreamTarget(final StreamTarget parent, final String streamTypeName) {
-            this.parent = parent;
+//            this.parent = parent;
             this.stream = parent.getStream();
             this.streamTypeName = streamTypeName;
         }
@@ -423,15 +425,15 @@ public class MockStreamStore implements StreamStore, Clearable {
         }
 
         @Override
-        public NestedStreamTarget getNestedStreamTarget(final boolean syncWriting) {
-            return new RANestedStreamTarget(this, syncWriting);
+        public OutputStreamProvider getOutputStreamProvider() {
+            return new OutputStreamProviderImpl(stream, this);
         }
 
-        @Override
-        public SegmentOutputStream getSegmentOutputStream() {
-            return new RASegmentOutputStream(getOutputStream(),
-                    addChildStream(InternalStreamTypeNames.SEGMENT_INDEX).getOutputStream());
-        }
+//        @Override
+//        public SegmentOutputStream getSegmentOutputStream() {
+//            return new RASegmentOutputStream(getOutputStream(),
+//                    () -> add(InternalStreamTypeNames.SEGMENT_INDEX).getOutputStream());
+//        }
 
         @Override
         public void close() {
@@ -450,38 +452,44 @@ public class MockStreamStore implements StreamStore, Clearable {
             return stream;
         }
 
+//        @Override
+//        public StreamTarget addChildStream(final String streamTypeName) {
+//            return add(streamTypeName);
+//        }
+
         @Override
-        public StreamTarget addChildStream(final String streamTypeName) {
+        public NestedOutputStreamFactory addChild(final String streamTypeName) {
+            return add(streamTypeName);
+        }
+
+        MockStreamTarget add(final String streamTypeName) {
             final TypedMap<String, ByteArrayOutputStream> typeMap = getOpenOutputStream().get(stream.getId());
             typeMap.put(streamTypeName, new ByteArrayOutputStream());
             childMap.put(streamTypeName, new MockStreamTarget(this, streamTypeName));
             return childMap.get(streamTypeName);
         }
 
-        @Override
-        public StreamTarget getChildStream(final String streamTypeName) {
+        StreamTarget getChildStream(final String streamTypeName) {
             return childMap.get(streamTypeName);
         }
 
-        @Override
-        public StreamTarget getParent() {
-            return parent;
-        }
+//        StreamTarget getParent() {
+//            return parent;
+//        }
 
-        @Override
-        public String getStreamTypeName() {
+        String getStreamTypeName() {
             return streamTypeName;
         }
 
         @Override
-        public AttributeMap getAttributeMap() {
+        public AttributeMap getAttributes() {
             return attributeMap;
         }
 
-        @Override
-        public boolean isAppend() {
-            return false;
-        }
+//        @Override
+//        public boolean isAppend() {
+//            return false;
+//        }
     }
 
     private class MockStreamSource implements StreamSource {

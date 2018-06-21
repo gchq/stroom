@@ -292,7 +292,7 @@ public final class RepositoryProcessor {
         } catch (final IOException ex) {
             // Unable to open file ... must be bad.
             stroomZipRepository.addErrorMessage(stroomZipFile, ex.getMessage(), true);
-            LOGGER.error("getAttributeMap", ex);
+            LOGGER.error("getAttributes", ex);
 
         } finally {
             CloseableUtil.closeLogAndIgnoreException(stroomZipFile);

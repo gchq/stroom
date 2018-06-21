@@ -52,10 +52,10 @@ class TestRASegmentStreamsWithBoundary {
     @Test
     void testSimpleLowLevelAPI() throws IOException {
         final RASegmentOutputStream segmentStream = new RASegmentOutputStream(new BlockGZIPOutputFile(datFile),
-                new LockingFileOutputStream(segFile, true));
+                () -> new LockingFileOutputStream(segFile, true));
 
         final RASegmentOutputStream boundaryStream = new RASegmentOutputStream(segmentStream,
-                new LockingFileOutputStream(bdyFile, true));
+                () -> new LockingFileOutputStream(bdyFile, true));
 
         boundaryStream.write("1A\n".getBytes(StreamUtil.DEFAULT_CHARSET));
         boundaryStream.write("1B\n".getBytes(StreamUtil.DEFAULT_CHARSET));
@@ -95,10 +95,10 @@ class TestRASegmentStreamsWithBoundary {
     @Test
     void testHighLevelAPI_Basic() throws IOException {
         final RASegmentOutputStream segmentStream = new RASegmentOutputStream(new BlockGZIPOutputFile(datFile),
-                new LockingFileOutputStream(segFile, true));
+                () -> new LockingFileOutputStream(segFile, true));
 
         final RANestedOutputStream boundaryStream = new RANestedOutputStream(segmentStream,
-                new LockingFileOutputStream(bdyFile, true));
+                () -> new LockingFileOutputStream(bdyFile, true));
 
         boundaryStream.putNextEntry();
         boundaryStream.write("1A\n".getBytes(StreamUtil.DEFAULT_CHARSET));
@@ -168,10 +168,10 @@ class TestRASegmentStreamsWithBoundary {
     @Test
     void testHighLevelAPI_RandomAccess() throws IOException {
         final RASegmentOutputStream segmentStream = new RASegmentOutputStream(new BlockGZIPOutputFile(datFile),
-                new LockingFileOutputStream(segFile, true));
+                () -> new LockingFileOutputStream(segFile, true));
 
         final RANestedOutputStream boundaryStream = new RANestedOutputStream(segmentStream,
-                new LockingFileOutputStream(bdyFile, true));
+                () -> new LockingFileOutputStream(bdyFile, true));
 
         boundaryStream.putNextEntry();
         boundaryStream.write("1A\n".getBytes(StreamUtil.DEFAULT_CHARSET));
@@ -223,10 +223,10 @@ class TestRASegmentStreamsWithBoundary {
     @Test
     void testHighLevelAPI_SingleBoundaryNoBoundaryIndex() throws IOException {
         final RASegmentOutputStream segmentStream = new RASegmentOutputStream(new BlockGZIPOutputFile(datFile),
-                new LockingFileOutputStream(segFile, true));
+                () -> new LockingFileOutputStream(segFile, true));
 
         final RANestedOutputStream boundaryStream = new RANestedOutputStream(segmentStream,
-                new LockingFileOutputStream(bdyFile, true));
+                () -> new LockingFileOutputStream(bdyFile, true));
 
         boundaryStream.putNextEntry();
         boundaryStream.write("1A\n".getBytes(StreamUtil.DEFAULT_CHARSET));
@@ -258,10 +258,10 @@ class TestRASegmentStreamsWithBoundary {
     @Test
     void testHighLevelAPI_MultipleBlankStreams() throws IOException {
         final RASegmentOutputStream segmentStream = new RASegmentOutputStream(new BlockGZIPOutputFile(datFile),
-                new LockingFileOutputStream(segFile, true));
+                () -> new LockingFileOutputStream(segFile, true));
 
         final RANestedOutputStream boundaryStream = new RANestedOutputStream(segmentStream,
-                new LockingFileOutputStream(bdyFile, true));
+                () -> new LockingFileOutputStream(bdyFile, true));
 
         // 1
         boundaryStream.putNextEntry();

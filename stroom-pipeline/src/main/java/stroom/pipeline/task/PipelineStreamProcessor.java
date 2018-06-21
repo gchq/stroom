@@ -28,11 +28,11 @@ import stroom.data.meta.api.StreamDataSource;
 import stroom.data.meta.api.StreamMetaService;
 import stroom.data.meta.api.StreamProperties;
 import stroom.data.meta.api.StreamStatus;
+import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.StreamSource;
+import stroom.data.store.api.StreamSourceInputStreamProvider;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
-import stroom.data.store.api.SegmentInputStream;
-import stroom.data.store.api.StreamSourceInputStreamProvider;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.feed.FeedProperties;
@@ -641,7 +641,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                 processInfoStreamTarget = streamStore.openStreamTarget(errorStreamProperties);
                 streamCloser.add(processInfoStreamTarget);
 
-                processInfoOutputStream = new WrappedOutputStream(processInfoStreamTarget.getOutputStream()) {
+                processInfoOutputStream = new WrappedOutputStream(processInfoStreamTarget.getOutputStreamProvider().next()) {
                     @Override
                     public void close() throws IOException {
                         super.flush();
@@ -651,7 +651,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
                         if (processInfoStreamTarget != null) {
                             // Write meta data.
                             final AttributeMap attributeMap = metaData.getAttributeMap();
-                            processInfoStreamTarget.getAttributeMap().putAll(attributeMap);
+                            processInfoStreamTarget.getAttributes().putAll(attributeMap);
                             // We let the streamCloser close the stream target
                             // with the stream store as it may want to delete it
                         }
