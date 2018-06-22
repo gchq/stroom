@@ -19,8 +19,6 @@ package stroom.search.server;
 
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import stroom.dashboard.expression.v1.FieldIndexMap;
@@ -50,7 +48,6 @@ import stroom.search.server.shard.IndexShardSearchTaskExecutor;
 import stroom.search.server.shard.IndexShardSearchTaskHandler;
 import stroom.search.server.shard.IndexShardSearchTaskProducer;
 import stroom.search.server.shard.IndexShardSearchTaskProperties;
-import stroom.search.server.shard.IndexShardSearcherCache;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
 import stroom.streamstore.server.StreamStore;
@@ -79,6 +76,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -93,8 +91,7 @@ import java.util.stream.Collectors;
 @TaskHandlerBean(task = ClusterSearchTask.class)
 @Scope(StroomScope.TASK)
 class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeResult>, ErrorReceiver {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterSearchTaskHandler.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ClusterSearchTaskHandler.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ClusterSearchTaskHandler.class);
 
     /**
      * We don't want to collect more than 1 million doc's data into the queue by
@@ -116,7 +113,6 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     private final CoprocessorFactory coprocessorFactory;
     private final IndexShardSearchTaskExecutor indexShardSearchTaskExecutor;
     private final IndexShardSearchTaskProperties indexShardSearchTaskProperties;
-    private final IndexShardSearcherCache indexShardSearcherCache;
     private final ExtractionTaskExecutor extractionTaskExecutor;
     private final ExtractionTaskProperties extractionTaskProperties;
     private final StreamStore streamStore;
@@ -142,7 +138,6 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                              final CoprocessorFactory coprocessorFactory,
                              final IndexShardSearchTaskExecutor indexShardSearchTaskExecutor,
                              final IndexShardSearchTaskProperties indexShardSearchTaskProperties,
-                             final IndexShardSearcherCache indexShardSearcherCache,
                              final ExtractionTaskExecutor extractionTaskExecutor,
                              final ExtractionTaskProperties extractionTaskProperties,
                              final StreamStore streamStore,
@@ -158,7 +153,6 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
         this.coprocessorFactory = coprocessorFactory;
         this.indexShardSearchTaskExecutor = indexShardSearchTaskExecutor;
         this.indexShardSearchTaskProperties = indexShardSearchTaskProperties;
-        this.indexShardSearcherCache = indexShardSearcherCache;
         this.extractionTaskExecutor = extractionTaskExecutor;
         this.extractionTaskProperties = extractionTaskProperties;
         this.streamStore = streamStore;
@@ -266,12 +260,12 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     // Start searching.
                     search(task, query, storedFieldNames, filterStreams, indexFieldsMap, extractionFieldIndexMap, extractionCoprocessorsMap);
 
-                } catch (final Throwable t) {
+                } catch (final RuntimeException e) {
                     try {
-                        callback.onFailure(t);
-                    } catch (final Throwable t2) {
+                        callback.onFailure(e);
+                    } catch (final RuntimeException e2) {
                         // If we failed to send the result or the source node rejected the result because the source task has been terminated then terminate the task.
-                        LOGGER.info("Terminating search because we were unable to send result");
+                        LOGGER.info(() -> "Terminating search because we were unable to send result");
                         task.terminate();
                     }
                 } finally {
@@ -296,7 +290,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                           final Executor executor) {
         final long now = System.currentTimeMillis();
 
-        LOGGER.trace("sendData() called");
+        LOGGER.trace(() -> "sendData() called");
 
         final Supplier<Boolean> supplier = () -> {
             // Find out if searching is complete.
@@ -349,7 +343,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     if (complete) {
                         // We have sent the last data we were expected to so tell the parent cluster search that we have finished sending data.
                         sendingData.set(false);
-                        LOGGER.debug("sendingData is false");
+                        LOGGER.debug(() -> "sendingData is false");
 
                     } else {
                         // If we aren't complete then send more using the supplied sending frequency.
@@ -362,9 +356,9 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                             //as the search completes and the latch is counted down.
                             //Compute the wait time as we may have used up some of the frequency getting to here
                             long waitTime = latestSendTimeMs - System.currentTimeMillis() + 1;
-                            LOGGER.trace("frequency [{}], waitTime [{}]", frequency, waitTime);
+                            LOGGER.trace(() -> "frequency [" + frequency + "], waitTime [" + waitTime + "]");
 
-                            boolean awaitResult = LAMBDA_LOGGER.logDurationIfTraceEnabled(
+                            boolean awaitResult = LOGGER.logDurationIfTraceEnabled(
                                     () -> {
                                         try {
                                             return searchCompleteLatch.await(waitTime, TimeUnit.MILLISECONDS);
@@ -375,7 +369,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                                         }
                                     },
                                     "sendData wait");
-                            LOGGER.trace("await finished with result {}", awaitResult);
+                            LOGGER.trace(() -> "await finished with result " + awaitResult);
                         }
 
                         // Make sure we don't continue to execute this task if it should have terminated.
@@ -388,7 +382,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                 .exceptionally(t -> {
                     // If we failed to send the result or the source node rejected the result because the source
                     // task has been terminated then terminate the task.
-                    LOGGER.info("Terminating search because we were unable to send result");
+                    LOGGER.info(() -> "Terminating search because we were unable to send result");
                     task.terminate();
                     return null;
                 });
@@ -402,10 +396,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                         final FieldIndexMap extractionFieldIndexMap,
                         final Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap) {
         taskContext.info("Searching...");
-
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Incoming search request:\n" + query.getExpression().toString());
-        }
+        LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
 
         try {
             if (extractionCoprocessorsMap != null && extractionCoprocessorsMap.size() > 0
@@ -416,20 +407,13 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                 }
 
                 // Search all index shards.
-                final Map<Version, SearchExpressionQuery> queryMap = new HashMap<>();
-
+                final Map<Version, Optional<SearchExpressionQuery>> queryMap = new HashMap<>();
                 final IndexShardQueryFactory queryFactory = createIndexShardQueryFactory(
                         task, query, indexFieldsMap, queryMap);
 
                 // Create a transfer list to capture stored data from the index that can be used by coprocessors.
                 storedData = new LinkedBlockingQueue<>(maxStoredDataQueueSize);
                 final AtomicLong hitCount = new AtomicLong();
-
-                // Update the configuration.
-                final int maxOpenShards = indexShardSearchTaskProperties.getMaxOpenShards();
-                if (indexShardSearcherCache.getMaxOpenShards() != maxOpenShards) {
-                    indexShardSearcherCache.setMaxOpenShards(maxOpenShards);
-                }
 
                 // Update config for the index shard search task executor.
                 indexShardSearchTaskExecutor.setMaxThreads(indexShardSearchTaskProperties.getMaxThreads());
@@ -439,7 +423,6 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                         indexShardSearchTaskExecutor,
                         task,
                         storedData,
-                        indexShardSearcherCache,
                         task.getShards(),
                         queryFactory,
                         storedFieldNames,
@@ -493,48 +476,42 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
         }
     }
 
-    private IndexShardQueryFactory createIndexShardQueryFactory(final ClusterSearchTask task, final stroom.query.api.v2.Query query, final IndexFieldsMap indexFieldsMap, final Map<Version, SearchExpressionQuery> queryMap) {
+    private IndexShardQueryFactory createIndexShardQueryFactory(final ClusterSearchTask task, final stroom.query.api.v2.Query query, final IndexFieldsMap indexFieldsMap, final Map<Version, Optional<SearchExpressionQuery>> queryMap) {
         return new IndexShardQueryFactory() {
 
             @Override
             public Query getQuery(final Version luceneVersion) {
-                SearchExpressionQuery searchExpressionQuery = queryMap.get(luceneVersion);
-                if (searchExpressionQuery == null) {
+                final Optional<SearchExpressionQuery> optional = queryMap.computeIfAbsent(luceneVersion, k -> {
                     // Get a query for the required lucene version.
-                    searchExpressionQuery = getQuery(luceneVersion, query.getExpression(), indexFieldsMap);
-                    queryMap.put(luceneVersion, searchExpressionQuery);
-                }
-
-                return searchExpressionQuery.getQuery();
+                    return getQuery(k, query.getExpression(), indexFieldsMap);
+                });
+                return optional.map(SearchExpressionQuery::getQuery).orElse(null);
             }
 
-            private SearchExpressionQuery getQuery(final Version version, final ExpressionOperator expression,
-                                                   final IndexFieldsMap indexFieldsMap1) {
-                SearchExpressionQuery query1 = null;
+            private Optional<SearchExpressionQuery> getQuery(final Version version, final ExpressionOperator expression,
+                                                             final IndexFieldsMap indexFieldsMap) {
                 try {
                     final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
                             dictionaryStore,
-                            indexFieldsMap1,
+                            indexFieldsMap,
                             maxBooleanClauseCount,
                             task.getDateTimeLocale(),
                             task.getNow());
-                    query1 = searchExpressionQueryBuilder.buildQuery(version, expression);
+                    final SearchExpressionQuery query = searchExpressionQueryBuilder.buildQuery(version, expression);
 
                     // Make sure the query was created successfully.
-                    if (query1.getQuery() == null) {
+                    if (query.getQuery() == null) {
                         throw new SearchException("Failed to build Lucene query given expression");
-                    } else if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("Lucene Query is " + query1.toString());
+                    } else {
+                        LOGGER.debug(() -> "Lucene Query is " + query.toString());
                     }
-                } catch (final Exception e) {
+
+                    return Optional.of(query);
+                } catch (final RuntimeException e) {
                     error(e.getMessage(), e);
                 }
 
-                if (query1 == null) {
-                    query1 = new SearchExpressionQuery(null, null);
-                }
-
-                return query1;
+                return Optional.empty();
             }
         };
     }
@@ -573,10 +550,10 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     public void log(final Severity severity, final Location location, final String elementId, final String message,
                     final Throwable e) {
         if (e != null) {
-            LOGGER.debug(e.getMessage(), e);
+            LOGGER.debug(e::getMessage, e);
         }
 
-        if (e == null || !(e instanceof TaskTerminatedException)) {
+        if (!(e instanceof TaskTerminatedException)) {
             final String msg = MessageUtil.getMessage(message, e);
             errors.offer(msg);
         }

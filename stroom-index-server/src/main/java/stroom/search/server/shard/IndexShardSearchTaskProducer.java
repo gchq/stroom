@@ -16,8 +16,6 @@
 
 package stroom.search.server.shard;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.dashboard.expression.v1.Val;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.search.server.ClusterSearchTask;
@@ -42,9 +40,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class IndexShardSearchTaskProducer extends TaskProducer {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardSearchTaskProducer.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(IndexShardSearchTaskProducer.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardSearchTaskProducer.class);
 
     static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
             "Search Index Shard",
@@ -53,7 +49,6 @@ public class IndexShardSearchTaskProducer extends TaskProducer {
             Integer.MAX_VALUE);
 
     private final ClusterSearchTask clusterSearchTask;
-    private final IndexShardSearcherCache indexShardSearcherCache;
     private final ErrorReceiver errorReceiver;
 
     private final Queue<IndexShardSearchRunnable> taskQueue = new ConcurrentLinkedQueue<>();
@@ -62,7 +57,6 @@ public class IndexShardSearchTaskProducer extends TaskProducer {
     public IndexShardSearchTaskProducer(final TaskExecutor taskExecutor,
                                         final ClusterSearchTask clusterSearchTask,
                                         final LinkedBlockingQueue<Val[]> storedData,
-                                        final IndexShardSearcherCache indexShardSearcherCache,
                                         final List<Long> shards,
                                         final IndexShardQueryFactory queryFactory,
                                         final String[] fieldNames,
@@ -73,7 +67,6 @@ public class IndexShardSearchTaskProducer extends TaskProducer {
                                         final Provider<IndexShardSearchTaskHandler> handlerProvider) {
         super(taskExecutor, maxThreadsPerTask, executorProvider.getExecutor(THREAD_POOL));
         this.clusterSearchTask = clusterSearchTask;
-        this.indexShardSearcherCache = indexShardSearcherCache;
         this.errorReceiver = errorReceiver;
 
         // Create a deque to capture stored data from the index that can be used by coprocessors.
@@ -84,7 +77,12 @@ public class IndexShardSearchTaskProducer extends TaskProducer {
                     // Loop until item is added or we terminate.
                     stored = storedData.offer(values, 1, TimeUnit.SECONDS);
                 }
-            } catch (final Throwable e) {
+            } catch (final InterruptedException e) {
+                // Continue to interrupt.
+                Thread.currentThread().interrupt();
+
+                error(e.getMessage(), e);
+            } catch (final RuntimeException e) {
                 error(e.getMessage(), e);
             }
         };
@@ -95,7 +93,7 @@ public class IndexShardSearchTaskProducer extends TaskProducer {
             final IndexShardSearchRunnable runnable = new IndexShardSearchRunnable(task, handlerProvider);
             taskQueue.add(runnable);
         }
-        LAMBDA_LOGGER.debug(() -> String.format("Queued %s index shard search tasks", shards.size()));
+        LOGGER.debug(() -> "Queued " + shards.size() + " index shard search tasks");
 
         // Attach to the supplied executor.
         attach();
@@ -119,21 +117,8 @@ public class IndexShardSearchTaskProducer extends TaskProducer {
                 getTasksCompleted().getAndIncrement();
             }
         } else {
-            // First try and get a task that will make use of an open shard.
-            for (final IndexShardSearchRunnable t : taskQueue) {
-                if (indexShardSearcherCache.isCached(t.getTask().getIndexShardId())) {
-                    if (taskQueue.remove(t)) {
-                        task = t;
-                        break;
-                    }
-                }
-            }
-
             // If there are no open shards that can be used for any tasks then just get the task at the head of the queue.
-            if (task == null) {
-                task = taskQueue.poll();
-            }
-
+            task = taskQueue.poll();
             if (task != null) {
                 final int no = tasksRequested.incrementAndGet();
                 task.getTask().setShardTotal(getTasksTotal().get());
