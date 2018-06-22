@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0-alpha.26]
+
+* Improve configurabilty of stroom-proxy.
+
 * Issue **#783** : Reverted code that ignored duplicate selection to fix double click in tables.
 
 * Issue **#782** : Fix for NPE thrown when using CountGroups when GroupKey string was null due to non grouped child rows.
@@ -945,7 +950,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#28** : Dashboard component dependencies are now listed with the component name plus the component id in brackets rather than just the component id.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.25...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.26...6.0
+[v6.0-alpha.26]: https://github.com/gchq/stroom/compare/v6.0-alpha.54...v6.0-alpha.26
 [v6.0-alpha.25]: https://github.com/gchq/stroom/compare/v6.0-alpha.24...v6.0-alpha.25
 [v6.0-alpha.24]: https://github.com/gchq/stroom/compare/v6.0-alpha.23...v6.0-alpha.24
 [v6.0-alpha.23]: https://github.com/gchq/stroom/compare/v6.0-alpha.22...v6.0-alpha.23
