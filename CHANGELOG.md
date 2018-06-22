@@ -6,10 +6,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#783** : Reverted code that ignored duplicate selection to fix double click in tables.
+
+* Issue **#782** : Fix for NPE thrown when using CountGroups when GroupKey string was null due to non grouped child rows.
+
+* Issue **#778** : Fix for text selection on tooltips etc in the latest version of Chrome.
+
+* Issue **#776** : Removal of index shard searcher caching to hopefully fix Lucene directory closing issue.
+
 ## [v6.0-alpha.25]
 
 * Issue **#779** : Fix permissions defect.
- 
+
 * Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Uplift stroom-expression to v1.4.1

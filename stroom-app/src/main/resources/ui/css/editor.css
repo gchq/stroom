@@ -25,5 +25,7 @@
     font-size: 13px;
     font-weight: 400;
     padding: 0 2px;
-    user-select: initial;
+  	-webkit-user-select: text;
+  	-moz-user-select: text;
+  	user-select: text;
 }
