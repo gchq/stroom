@@ -52,7 +52,7 @@ storiesOf('Document Explorer (Setup Sample Data)', module)
   .addDecorator(DragDropDecorator)
   .add('Explorer Tree', () => <DocExplorer explorerId="root" />);
 
-const FuckYou = storiesOf('Document Explorer (Connect to Dev Server)', module)
+storiesOf('Document Explorer (Connect to Dev Server)', module)
   .addDecorator(LocalConfigDecorator)
   .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator)
