@@ -586,8 +586,7 @@ public class MockStreamStore implements StreamStore, Clearable {
             return null;
         }
 
-        @Override
-        public StreamSource getParent() {
+        StreamSource getParent() {
             return parent;
         }
 
@@ -597,7 +596,7 @@ public class MockStreamStore implements StreamStore, Clearable {
         }
 
         @Override
-        public AttributeMap getAttributeMap() {
+        public AttributeMap getAttributes() {
             return attributeMap;
         }
     }

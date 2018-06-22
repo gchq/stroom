@@ -587,10 +587,9 @@ class RASegmentInputStream extends SegmentInputStream {
     }
 
     /**
-     * Return the byte position given a segment for.
+     * Return the byte offset in the underlying stream given a segment number
      */
-    @Override
-    public long byteOffset(final long segment) throws IOException {
+    long byteOffset(final long segment) throws IOException {
         return byteOffset(segment, true);
     }
 
@@ -618,8 +617,10 @@ class RASegmentInputStream extends SegmentInputStream {
         }
     }
 
-    @Override
-    public long segmentAtByteOffset(final long findBytePos) throws IOException {
+    /**
+     * Return the segment number given a byte position
+     */
+    long segmentAtByteOffset(final long findBytePos) throws IOException {
         return segmentAtByteOffset(findBytePos, true);
     }
 

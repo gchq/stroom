@@ -43,16 +43,6 @@ public abstract class SegmentInputStream extends InputStream {
     public abstract long count();
 
     /**
-     * Return the byte offset in the underlying stream given a segment number
-     */
-    public abstract long byteOffset(long segment) throws IOException;
-
-    /**
-     * Return the segment number given a byte position
-     */
-    public abstract long segmentAtByteOffset(long bytePos) throws IOException;
-
-    /**
      * Includes a specific segment number when reading from this input stream.
      */
     public abstract void include(long segment);

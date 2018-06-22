@@ -186,9 +186,9 @@ final class FileSystemStreamSource implements StreamSource {
     }
 
     @Override
-    public AttributeMap getAttributeMap() {
+    public AttributeMap getAttributes() {
         if (parent != null) {
-            return parent.getAttributeMap();
+            return parent.getAttributes();
         }
         if (attributeMap == null) {
             attributeMap = new AttributeMap();
@@ -204,8 +204,7 @@ final class FileSystemStreamSource implements StreamSource {
         return attributeMap;
     }
 
-    @Override
-    public StreamSource getParent() {
+    StreamSource getParent() {
         return parent;
     }
 }

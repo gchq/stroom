@@ -203,7 +203,7 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
 
                     // Write out the manifest
                     if (part == 1 || part == -1) {
-                        dataSource.getAttributeMap().write(stroomZipOutputStream
+                        dataSource.getAttributes().write(stroomZipOutputStream
                                 .addEntry(new StroomZipEntry(null, basePartName, StroomZipFileType.Manifest).getFullName()), true);
                     }
 

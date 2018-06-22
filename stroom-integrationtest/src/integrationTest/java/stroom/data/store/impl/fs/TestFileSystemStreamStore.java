@@ -711,7 +711,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         StreamSource streamSource = streamStore.openStreamSource(stream.getId());
         stream = streamSource.getStream();
-        Assert.assertEquals(testString2, streamSource.getAttributeMap().get(testString1));
+        Assert.assertEquals(testString2, streamSource.getAttributes().get(testString1));
         streamStore.closeStreamSource(streamSource);
 
         final Set<Path> manifestFile = fileSystemStreamPathHelper.createChildStreamPath(rootFile, InternalStreamTypeNames.MANIFEST);
@@ -725,8 +725,8 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         streamSource = streamStore.openStreamSource(stream.getId());
         stream = streamSource.getStream();
-        Assert.assertEquals(testString2, streamSource.getAttributeMap().get(testString1));
-        Assert.assertEquals(testString4, streamSource.getAttributeMap().get(testString3));
+        Assert.assertEquals(testString2, streamSource.getAttributes().get(testString1));
+        Assert.assertEquals(testString4, streamSource.getAttributes().get(testString3));
         streamStore.closeStreamSource(streamSource);
 
         Assert.assertTrue(FileSystemUtil.deleteAnyPath(manifestFile));
@@ -743,8 +743,8 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         streamSource = streamStore.openStreamSource(stream.getId());
         stream = streamSource.getStream();
-        Assert.assertEquals(testString6, streamSource.getAttributeMap().get(testString5));
-        Assert.assertNull(streamSource.getAttributeMap().get(testString3));
+        Assert.assertEquals(testString6, streamSource.getAttributes().get(testString5));
+        Assert.assertNull(streamSource.getAttributes().get(testString3));
         streamStore.closeStreamSource(streamSource);
     }
 

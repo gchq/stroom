@@ -57,7 +57,7 @@ public interface StreamSource extends Closeable {
     /**
      * Any attributes regarding the stream
      */
-    AttributeMap getAttributeMap();
+    AttributeMap getAttributes();
 
     /**
      * Depending on the type of stream we we may return back null if the stream
@@ -68,9 +68,4 @@ public interface StreamSource extends Closeable {
      * @return back the child stream based on type
      */
     StreamSource getChildStream(String streamTypeName);
-
-    /**
-     * @return the parent or null
-     */
-    StreamSource getParent();
 }
