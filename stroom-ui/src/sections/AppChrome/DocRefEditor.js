@@ -6,9 +6,7 @@ import PipelineEditor from 'prototypes/PipelineEditor';
 const DocRefEditor = ({ docRef }) => {
   switch (docRef.type) {
     case 'Pipeline':
-      return (
-        <PipelineEditor shouldFetchElementsFromServer shouldFetchPipelineFromServer pipelineId={docRef.uuid} />
-      );
+      return <PipelineEditor pipelineId={docRef.uuid} />;
     default:
       return <div>Doc Ref Editor {JSON.stringify(docRef)}</div>;
   }

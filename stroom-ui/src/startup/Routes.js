@@ -133,8 +133,6 @@ const Routes = enhance(({
         render={({ match }) =>
           (isLoggedIn ? (
             <PipelineEditor
-              shouldFetchElementsFromServer
-              shouldFetchPipelineFromServer
               pipelineId={match.params.pipelineId}
             />
           ) : (

@@ -20,7 +20,8 @@ import { storiesOf, addDecorator } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 import { withNotes } from '@storybook/addon-notes';
 
-import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
+import { ReduxDecoratorWithInitialisation, ReduxDecorator } from 'lib/storybook/ReduxDecorator';
+import { PollyDecorator } from 'lib/storybook/PollyDecorator';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
 import { PipelineEditor } from './index';
@@ -42,38 +43,39 @@ const {
   pipelineElementSelected,
 } = actionCreators;
 
-// Set up Pipeline Editor stories. The stories here are split up into different lines
-// because each story needs to dispatch it's own data, and a chained sequence of
-// dispatches and adds reads awkwardly.
-const pipelineEditorStories = storiesOf('Pipeline Editor', module).addDecorator(ReduxDecoratorWithInitialisation((store) => {
-  store.dispatch(elementsReceived(elements));
-  store.dispatch(elementPropertiesReceived(elementProperties));
-}));
-
-// Add storyfor a simple pipeline
-pipelineEditorStories
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(pipelineReceived('simplePipeline', testPipelines.simple));
-  })) // must be recorder after/outside of the test initialisation decorators
+storiesOf('Pipeline Editor', module)
+  .addDecorator(PollyDecorator((server, config) => {
+    server.get(`${config.elementServiceUrl}/elements`).intercept((req, res) => {
+      res.json(elements);
+    });
+    server.get(`${config.elementServiceUrl}/elementProperties`).intercept((req, res) => {
+      res.json(elementProperties);
+    });
+    server.get(`${config.pipelineServiceUrl}/simplePipeline`).intercept((req, res) => {
+      res.json(testPipelines.simple);
+    });
+    server.get(`${config.pipelineServiceUrl}/inheritedPipeline`).intercept((req, res) => {
+      res.json(testPipelines.inherited);
+    });
+    server.get(`${config.pipelineServiceUrl}/longPipeline`).intercept((req, res) => {
+      res.json(testPipelines.longPipeline);
+    });
+  }))
+  .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator)
-  .add('Simple', () => <PipelineEditor pipelineId="simplePipeline" />);
-
-// Add storyfor inherited pipeline
-pipelineEditorStories
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(pipelineReceived('inheritedPipeline', testPipelines.inherited));
-  })) // must be recorder after/outside of the test initialisation decorators
-  .addDecorator(DragDropDecorator)
-  .add('Inheritance', () => <PipelineEditor pipelineId="inheritedPipeline" />);
-
-// Add story for a pipeline copied from setupSampleData
-pipelineEditorStories
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(pipelineReceived('longPipeline', testPipelines.long));
-  })) // must be recorder after/outside of the test initialisation decorators
+  .add('Simple', () => <PipelineEditor pipelineId="simplePipeline" />)
+  .add('Inheritance', () => <PipelineEditor pipelineId="inheritedPipeline" />)
   .add('Long', () => <PipelineEditor pipelineId="longPipeline" />);
 
 storiesOf('Element Palette', module)
+  .addDecorator(PollyDecorator((server, config) => {
+    server.get(`${config.elementServiceUrl}/elements`).intercept((req, res) => {
+      res.json(elements);
+    });
+    server.get(`${config.elementServiceUrl}/elementProperties`).intercept((req, res) => {
+      res.json(elementProperties);
+    });
+  }))
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(elementsReceived(elements));
     store.dispatch(elementPropertiesReceived(elementProperties));
@@ -85,7 +87,7 @@ storiesOf('Element Details', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(elementsReceived(elements));
     store.dispatch(elementPropertiesReceived(elementProperties));
-    store.dispatch(pipelineReceived('longPipeline', pipeline01));
+    store.dispatch(pipelineReceived('longPipeline', testPipelines.longPipeline));
     store.dispatch(pipelineElementSelected('longPipeline', 'splitFilter', { splitDepth: 10, splitCount: 10 }));
   })) // must be recorder after/outside of the test initialisation decorators
   .addDecorator(DragDropDecorator)

@@ -20,19 +20,19 @@ export default {
       elements: {
         add: [
           {
-            id: 'dsParser',
+            id: 'pDsParser',
             type: 'DSParser',
           },
           {
-            id: 'xsltFilter',
+            id: 'pXsltFilter',
             type: 'XSLTFilter',
           },
           {
-            id: 'xmlWriter',
+            id: 'pXmlWriter',
             type: 'XMLWriter',
           },
           {
-            id: 'streamAppender',
+            id: 'pStreamAppender',
             type: 'StreamAppender',
           },
           {
@@ -54,19 +54,19 @@ export default {
         add: [
           {
             from: 'Source',
-            to: 'dsParser',
+            to: 'pDsParser',
           },
           {
-            from: 'dsParser',
-            to: 'xsltFilter',
+            from: 'pDsParser',
+            to: 'pXsltFilter',
           },
           {
-            from: 'xsltFilter',
-            to: 'xmlWriter',
+            from: 'pXsltFilter',
+            to: 'pXmlWriter',
           },
           {
-            from: 'xmlWriter',
-            to: 'streamAppender',
+            from: 'pXmlWriter',
+            to: 'pStreamAppender',
           },
         ],
         remove: [],
@@ -80,7 +80,7 @@ export default {
       properties: {
         add: [
           {
-            element: 'dsParser',
+            element: 'pDsParser',
             name: 'textConverter',
             value: {
               string: null,
@@ -95,7 +95,7 @@ export default {
             },
           },
           {
-            element: 'xsltFilter',
+            element: 'pXsltFilter',
             name: 'xslt',
             value: {
               string: null,
@@ -110,7 +110,7 @@ export default {
             },
           },
           {
-            element: 'streamAppender',
+            element: 'pStreamAppender',
             name: 'feed',
             value: {
               string: null,
@@ -125,7 +125,7 @@ export default {
             },
           },
           {
-            element: 'streamAppender',
+            element: 'pStreamAppender',
             name: 'streamType',
             value: {
               string: 'Events',
@@ -152,19 +152,19 @@ export default {
     elements: {
       add: [
         {
-          id: 'xsltFilter',
+          id: 'pXsltFilter',
           type: 'XSLTFilter',
         },
         {
-          id: 'streamAppender',
+          id: 'pStreamAppender',
           type: 'StreamAppender',
         },
         {
-          id: 'xmlWriter',
+          id: 'pXmlWriter',
           type: 'XMLWriter',
         },
         {
-          id: 'dsParser',
+          id: 'pDsParser',
           type: 'DSParser',
         },
         {
@@ -177,7 +177,7 @@ export default {
     properties: {
       add: [
         {
-          element: 'xsltFilter',
+          element: 'pXsltFilter',
           name: 'xslt',
           value: {
             string: null,
@@ -192,7 +192,7 @@ export default {
           },
         },
         {
-          element: 'streamAppender',
+          element: 'pStreamAppender',
           name: 'feed',
           value: {
             string: null,
@@ -207,7 +207,7 @@ export default {
           },
         },
         {
-          element: 'streamAppender',
+          element: 'pStreamAppender',
           name: 'streamType',
           value: {
             string: 'Events',
@@ -218,7 +218,7 @@ export default {
           },
         },
         {
-          element: 'dsParser',
+          element: 'pDsParser',
           name: 'textConverter',
           value: {
             string: null,
@@ -242,20 +242,20 @@ export default {
     links: {
       add: [
         {
-          from: 'xsltFilter',
-          to: 'xmlWriter',
+          from: 'pXsltFilter',
+          to: 'pXmlWriter',
         },
         {
-          from: 'xmlWriter',
-          to: 'streamAppender',
+          from: 'pXmlWriter',
+          to: 'pStreamAppender',
         },
         {
-          from: 'dsParser',
-          to: 'xsltFilter',
+          from: 'pDsParser',
+          to: 'pXsltFilter',
         },
         {
           from: 'Source',
-          to: 'dsParser',
+          to: 'pDsParser',
         },
       ],
       remove: [],

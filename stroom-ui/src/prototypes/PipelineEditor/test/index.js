@@ -1,7 +1,7 @@
 import inherited from './pipeline.inherited.testData';
 import simple from './pipeline.simple.testData';
 import singleElement from './pipeline.singleElement.testData';
-import long from './pipeline.long.testData';
+import longPipeline from './pipeline.longPipeline.testData';
 
 import elementProperties from './elementProperties.testData';
 import elements from './elements.testData';
@@ -11,7 +11,7 @@ module.exports = {
     inherited,
     simple,
     singleElement,
-    long,
+    longPipeline,
   },
   elementProperties,
   elements,
