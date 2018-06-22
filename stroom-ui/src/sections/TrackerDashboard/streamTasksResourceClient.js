@@ -10,8 +10,6 @@ import {
   setHttpErrorCodeAction,
 } from 'sections/ErrorPage';
 
-const fetch = window.fetch;
-
 export const TrackerSelection = Object.freeze({ first: 'first', last: 'last', none: 'none' });
 
 export const fetchTrackers = trackerSelection => (dispatch, getState) => {

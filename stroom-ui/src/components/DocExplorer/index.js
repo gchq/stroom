@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import DocExplorer, { DocExplorerFromServer } from './DocExplorer';
+import DocExplorer from './DocExplorer';
 import DocRefModalPicker from './DocRefModalPicker';
 import DocRefDropdownPicker from './DocRefDropdownPicker';
 import { actionCreators, explorerTreeReducer } from './redux';
@@ -22,7 +22,6 @@ import { testTree } from './documentTree.testData';
 
 export {
   DocExplorer,
-  DocExplorerFromServer,
   DocRefModalPicker,
   DocRefDropdownPicker,
   actionCreators,

@@ -12,8 +12,6 @@ import handleStatus from 'lib/handleStatus';
 
 const { elementsReceived, elementPropertiesReceived } = actionCreators;
 
-const fetch = window.fetch;
-
 export const fetchElements = () => (dispatch, getState) => {
   const state = getState();
   const jwsToken = state.authentication.idToken;

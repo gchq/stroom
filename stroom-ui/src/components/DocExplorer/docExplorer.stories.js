@@ -20,14 +20,7 @@ import { storiesOf, addDecorator } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 import { withNotes } from '@storybook/addon-notes';
 
-import {
-  DocExplorer,
-  DocExplorerFromServer,
-  DocRef,
-  Folder,
-  DocRefModalPicker,
-  DocRefDropdownPicker,
-} from './index';
+import { DocExplorer, DocRef, Folder, DocRefModalPicker, DocRefDropdownPicker } from './index';
 
 import { actionCreators } from './redux';
 
@@ -38,29 +31,30 @@ import { fromSetupSampleData } from './documentTree.testData.large';
 import { pickRandomItem } from 'lib/treeUtils';
 
 import { ReduxDecoratorWithInitialisation, ReduxDecorator } from 'lib/storybook/ReduxDecorator';
-import { LocalConfigDecorator } from 'lib/storybook/LocalConfigDecorator';
+import { PollyDecorator } from 'lib/storybook/PollyDecorator';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
 import 'styles/main.css';
 
-const { docTreeReceived, docRefPicked } = actionCreators;
+const { docRefPicked } = actionCreators;
 
-storiesOf('Document Explorer (Setup Sample Data)', module)
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(docTreeReceived(fromSetupSampleData));
+storiesOf('Document Explorer (small testTree)', module)
+  .addDecorator(PollyDecorator((server, config) => {
+    server.get(`${config.explorerServiceUrl}/all`).intercept((req, res) => {
+      res.json(testTree);
+    });
   }))
-  .addDecorator(DragDropDecorator)
-  .add('Explorer Tree', () => <DocExplorer explorerId="root" />);
-
-storiesOf('Document Explorer (Connect to Dev Server)', module)
-  .addDecorator(LocalConfigDecorator)
   .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator)
-  .add('Explorer Tree', () => <DocExplorerFromServer explorerId="dev-server" />);
+  .add('Explorer Tree', () => <DocExplorer explorerId="dev-server" />);
 
-storiesOf('Document Explorer', module)
+storiesOf('Document Explorer (from setupSampleData)', module)
+  .addDecorator(PollyDecorator((server, config) => {
+    server.get(`${config.explorerServiceUrl}/all`).intercept((req, res) => {
+      res.json(fromSetupSampleData);
+    });
+  }))
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(docTreeReceived(testTree));
     store.dispatch(docRefPicked(
       'dropdown2',
       pickRandomItem(testTree, (l, n) => n.type === DOC_REF_TYPES.XSLT),

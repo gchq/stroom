@@ -22,6 +22,7 @@ const initialState = { isReady: false };
 
 const actionCreators = createActions({
   UPDATE_CONFIG: config => ({ config }),
+  CLEAR_CONFIG: () => ({}),
 });
 
 const configReducer = handleActions(
@@ -30,6 +31,9 @@ const configReducer = handleActions(
       ...state,
       ...action.payload.config,
       isReady: true,
+    }),
+    CLEAR_CONFIG: (state, action) => ({
+      isReady: false,
     }),
   },
   initialState,

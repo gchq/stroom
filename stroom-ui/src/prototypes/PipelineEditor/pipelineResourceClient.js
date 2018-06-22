@@ -12,8 +12,6 @@ import handleStatus from 'lib/handleStatus';
 
 const { pipelineReceived } = actionCreators;
 
-const fetch = window.fetch;
-
 export const fetchPipeline = pipelineId => (dispatch, getState) => {
   const state = getState();
   const jwsToken = state.authentication.idToken;

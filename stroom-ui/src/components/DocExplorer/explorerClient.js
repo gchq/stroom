@@ -16,8 +16,6 @@ import handleStatus from 'lib/handleStatus';
 
 const { docTreeReceived } = actionCreators;
 
-const fetch = window.fetch;
-
 export const fetchDocTree = () => (dispatch, getState) => {
   const state = getState();
   const jwsToken = state.authentication.idToken;
@@ -45,23 +43,3 @@ export const fetchDocTree = () => (dispatch, getState) => {
       dispatch(push('/error'));
     });
 };
-
-export const withRemoteDocTreeFetch = compose(
-  connect(
-    (state, props) => ({
-      config: state.config,
-    }),
-    {
-      fetchDocTree,
-    },
-  ),
-  branch(
-    ({ config }) => !config.isReady,
-    renderComponent(() => <Loader active>Awaiting Config</Loader>),
-  ),
-  lifecycle({
-    componentDidMount() {
-      this.props.fetchDocTree();
-    },
-  }),
-);
