@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-alpha.27]
+
+* Fix data receipt policy defect
+
 * Issue **#791** : Search completion signal is now only sent to the UI once all pending search result merges are completed.
 
 * Issue **#795** : Import and export now works with appropriate application permissions. Read permission is required to export items and Create/Update permissions are required to import items depending on whether the update will create a new item or update an existing one.
@@ -955,8 +959,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.26...6.0
-[v6.0-alpha.26]: https://github.com/gchq/stroom/compare/v6.0-alpha.54...v6.0-alpha.26
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.27...6.0
+[v6.0-alpha.27]: https://github.com/gchq/stroom/compare/v6.0-alpha.26...v6.0-alpha.27
+[v6.0-alpha.26]: https://github.com/gchq/stroom/compare/v6.0-alpha.24...v6.0-alpha.26
 [v6.0-alpha.25]: https://github.com/gchq/stroom/compare/v6.0-alpha.24...v6.0-alpha.25
 [v6.0-alpha.24]: https://github.com/gchq/stroom/compare/v6.0-alpha.23...v6.0-alpha.24
 [v6.0-alpha.23]: https://github.com/gchq/stroom/compare/v6.0-alpha.22...v6.0-alpha.23
