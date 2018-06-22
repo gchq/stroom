@@ -593,23 +593,24 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         return maxElements;
     }
 
-    @PipelineProperty(description = "The XSLT to use.")
+    @PipelineProperty(description = "The XSLT to use.", displayPriority = 1)
     @PipelinePropertyDocRef(types = XsltDoc.DOCUMENT_TYPE)
     public void setXslt(final DocRef xsltRef) {
         this.xsltRef = xsltRef;
     }
 
-    @PipelineProperty(description = "A name pattern to load XSLT dynamically.")
+    @PipelineProperty(description = "A name pattern to load XSLT dynamically.", displayPriority = 2)
     public void setXsltNamePattern(final String xsltNamePattern) {
         this.xsltNamePattern = xsltNamePattern;
     }
 
-    @PipelineProperty(description = "If XSLT cannot be found to match the name pattern suppress warnings.", defaultValue = "false")
+    @PipelineProperty(description = "If XSLT cannot be found to match the name pattern suppress warnings.",
+            defaultValue = "false", displayPriority = 3)
     public void setSuppressXSLTNotFoundWarnings(final boolean suppressXSLTNotFoundWarnings) {
         this.suppressXSLTNotFoundWarnings = suppressXSLTNotFoundWarnings;
     }
 
-    @PipelineProperty(description = "A list of places to load reference data from if required.")
+    @PipelineProperty(description = "A list of places to load reference data from if required.", displayPriority = 1)
     public void setPipelineReference(final PipelineReference pipelineReference) {
         if (pipelineReferences == null) {
             pipelineReferences = new ArrayList<>();
@@ -618,7 +619,10 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         pipelineReferences.add(pipelineReference);
     }
 
-    @PipelineProperty(description = "Advanced: Choose whether or not you want to use cached XSLT templates to improve performance.", defaultValue = "true")
+    @PipelineProperty(
+            description = "Advanced: Choose whether or not you want to use cached XSLT templates to improve performance.",
+            defaultValue = "true",
+            displayPriority = 4)
     public void setUsePool(final boolean usePool) {
         this.usePool = usePool;
     }

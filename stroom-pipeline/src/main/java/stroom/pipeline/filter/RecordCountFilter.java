@@ -194,7 +194,10 @@ public class RecordCountFilter extends AbstractXMLFilter implements RecordCounte
     /**
      * @param countRead Sets whether we are counting records read or records written.
      */
-    @PipelineProperty(description = "Is this filter counting records read or records written?", defaultValue = "true")
+    @PipelineProperty(
+            description = "Is this filter counting records read or records written?",
+            defaultValue = "true",
+            displayPriority = 1)
     public void setCountRead(final boolean countRead) {
         this.countRead = countRead;
     }

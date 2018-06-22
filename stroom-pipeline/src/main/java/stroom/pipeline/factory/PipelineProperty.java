@@ -27,4 +27,11 @@ public @interface PipelineProperty {
     String defaultValue() default "";
 
     String description();
+
+    /**
+     * Omitting a default means anyone adding pipeline properties is forced to consider display order (gh-792).
+     * We want everyone to consider overall ordering when modifying or adding priperties.
+     * It also means we don't have senseless defaults like 999, so that anything new gets added to the end of the list.
+     */
+    int displayPriority();
 }

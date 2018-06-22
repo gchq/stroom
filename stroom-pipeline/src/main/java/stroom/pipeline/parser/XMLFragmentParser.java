@@ -146,7 +146,9 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
         this.injectedCode = injectedCode;
     }
 
-    @PipelineProperty(description = "The XML fragment wrapper that should be used to wrap the input XML.")
+    @PipelineProperty(
+            description = "The XML fragment wrapper that should be used to wrap the input XML.",
+            displayPriority = 1)
     @PipelinePropertyDocRef(types = TextConverterDoc.DOCUMENT_TYPE)
     public void setTextConverter(final DocRef textConverterRef) {
         this.textConverterRef = textConverterRef;

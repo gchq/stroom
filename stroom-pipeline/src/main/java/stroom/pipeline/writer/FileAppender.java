@@ -113,7 +113,9 @@ public class FileAppender extends AbstractAppender {
     /**
      * @param outputPaths the outputPaths to set
      */
-    @PipelineProperty(description = "One or more destination paths for output files separated with commas. Replacement variables can be used in path strings such as ${feed}.")
+    @PipelineProperty(
+            description = "One or more destination paths for output files separated with commas. Replacement variables can be used in path strings such as ${feed}.",
+            displayPriority = 1)
     public void setOutputPaths(final String outputPaths) {
         this.outputPaths = outputPaths.split(",");
     }

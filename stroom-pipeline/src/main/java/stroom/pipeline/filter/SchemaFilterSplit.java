@@ -86,17 +86,25 @@ public class SchemaFilterSplit extends AbstractXMLFilter {
         schemaFilter.setElementId(id);
     }
 
-    @PipelineProperty(description = "The schema language that the schema is written in.", defaultValue = XMLConstants.W3C_XML_SCHEMA_NS_URI)
+    @PipelineProperty(
+            description = "The schema language that the schema is written in.",
+            defaultValue = XMLConstants.W3C_XML_SCHEMA_NS_URI,
+            displayPriority = 4)
     public void setSchemaLanguage(final String schemaLanguage) {
         this.schemaLanguage = schemaLanguage;
     }
 
-    @PipelineProperty(description = "Should schema validation be performed?", defaultValue = "true")
+    @PipelineProperty(
+            description = "Should schema validation be performed?",
+            defaultValue = "true",
+            displayPriority = 5)
     public void setSchemaValidation(final boolean schemaValidation) {
         this.schemaValidation = schemaValidation;
     }
 
-    @PipelineProperty(description = "Limits the schemas that can be used to validate data to those with a matching schema group name.")
+    @PipelineProperty(
+            description = "Limits the schemas that can be used to validate data to those with a matching schema group name.",
+            displayPriority = 1)
     public void setSchemaGroup(final String schemaGroup) {
         if (schemaGroup != null && schemaGroup.trim().length() > 0) {
             schemaConstraint.setSchemaGroup(schemaGroup.trim());
@@ -105,7 +113,8 @@ public class SchemaFilterSplit extends AbstractXMLFilter {
         }
     }
 
-    @PipelineProperty(description = "Limits the schemas that can be used to validate data to those with a matching namespace URI.")
+    @PipelineProperty(description = "Limits the schemas that can be used to validate data to those with a matching namespace URI.",
+            displayPriority = 3)
     public void setNamespaceURI(final String namespaceURI) {
         if (namespaceURI != null && namespaceURI.trim().length() > 0) {
             schemaConstraint.setNamespaceURI(namespaceURI.trim());
@@ -114,7 +123,8 @@ public class SchemaFilterSplit extends AbstractXMLFilter {
         }
     }
 
-    @PipelineProperty(description = "Limits the schemas that can be used to validate data to those with a matching system id.")
+    @PipelineProperty(description = "Limits the schemas that can be used to validate data to those with a matching system id.",
+    displayPriority = 2)
     public void setSystemId(final String systemId) {
         if (systemId != null && systemId.trim().length() > 0) {
             schemaConstraint.setSystemId(systemId.trim());

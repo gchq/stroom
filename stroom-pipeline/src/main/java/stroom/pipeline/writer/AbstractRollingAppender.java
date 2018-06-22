@@ -105,7 +105,7 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
      */
     protected abstract Object getKey() throws IOException;
 
-    @PipelineProperty(description = "Choose how frequently files are rolled.", defaultValue = "1h")
+    @PipelineProperty(description = "Choose how frequently files are rolled.", defaultValue = "1h", displayPriority = 4)
     public void setFrequency(final String frequency) {
         if (frequency != null && frequency.trim().length() > 0) {
             try {
@@ -121,7 +121,10 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
         }
     }
 
-    @PipelineProperty(description = "Choose the maximum size that a file can be before it is rolled, e.g. 10M, 1G.", defaultValue = "100M")
+    @PipelineProperty(
+            description = "Choose the maximum size that a file can be before it is rolled, e.g. 10M, 1G.",
+            defaultValue = "100M",
+            displayPriority = 5)
     public void setMaxSize(final String maxSize) {
         if (maxSize != null && maxSize.trim().length() > 0) {
             try {

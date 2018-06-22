@@ -100,7 +100,9 @@ public class TextWriter extends AbstractWriter {
         }
     }
 
-    @PipelineProperty(description = "Header text that can be added to the output at the start.")
+    @PipelineProperty(
+            description = "Header text that can be added to the output at the start.",
+            displayPriority = 1)
     public void setHeader(final String header) {
         try {
             if (header == null) {
@@ -113,7 +115,9 @@ public class TextWriter extends AbstractWriter {
         }
     }
 
-    @PipelineProperty(description = "Footer text that can be added to the output at the end.")
+    @PipelineProperty(
+            description = "Footer text that can be added to the output at the end.",
+            displayPriority = 2)
     public void setFooter(final String footer) {
         try {
             if (footer == null) {
@@ -127,7 +131,10 @@ public class TextWriter extends AbstractWriter {
     }
 
     @Override
-    @PipelineProperty(description = "The output character encoding to use.", defaultValue = "UTF-8")
+    @PipelineProperty(
+            description = "The output character encoding to use.",
+            defaultValue = "UTF-8",
+            displayPriority = 3)
     public void setEncoding(final String encoding) {
         super.setEncoding(encoding);
     }

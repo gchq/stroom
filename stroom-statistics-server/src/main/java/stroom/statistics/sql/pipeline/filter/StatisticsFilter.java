@@ -350,7 +350,7 @@ public class StatisticsFilter extends AbstractXMLFilter {
         super.characters(ch, start, length);
     }
 
-    @PipelineProperty(description = "The statistics data source to record statistics against.")
+    @PipelineProperty(description = "The statistics data source to record statistics against.", displayPriority = 1)
     @PipelinePropertyDocRef(types = StatisticStoreDoc.DOCUMENT_TYPE)
     public void setStatisticsDataSource(final DocRef statisticStoreRef) {
         this.statisticStoreRef = statisticStoreRef;

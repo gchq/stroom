@@ -224,12 +224,18 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         super.characters(ch, start, length);
     }
 
-    @PipelineProperty(description = "Warn if there are duplicate keys found in the reference data?", defaultValue = "false")
+    @PipelineProperty(
+            description = "Warn if there are duplicate keys found in the reference data?",
+            defaultValue = "false",
+            displayPriority = 1)
     public void setWarnOnDuplicateKeys(final boolean warnOnDuplicateKeys) {
         this.warnOnDuplicateKeys = warnOnDuplicateKeys;
     }
 
-    @PipelineProperty(description = "Allow duplicate keys to override existing values?", defaultValue = "true")
+    @PipelineProperty(
+            description = "Allow duplicate keys to override existing values?",
+            defaultValue = "true",
+            displayPriority = 2)
     public void setOverrideExistingValues(final boolean overrideExistingValues) {
         this.overrideExistingValues = overrideExistingValues;
     }

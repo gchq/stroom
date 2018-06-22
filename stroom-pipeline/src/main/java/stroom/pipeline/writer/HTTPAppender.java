@@ -268,12 +268,12 @@ public class HTTPAppender extends AbstractAppender {
     }
 
 
-    @PipelineProperty(description = "The URL to send data to")
+    @PipelineProperty(description = "The URL to send data to", displayPriority = 1)
     public void setForwardUrl(final String forwardUrl) {
         this.forwardUrl = forwardUrl;
     }
 
-    @PipelineProperty(description = "How long to wait before we abort sending data due to connection timeout")
+    @PipelineProperty(description = "How long to wait before we abort sending data due to connection timeout", displayPriority = 3)
     public void setConnectionTimeout(final String string) {
         connectionTimeout = null;
         if (string != null && !string.isEmpty()) {
@@ -281,17 +281,20 @@ public class HTTPAppender extends AbstractAppender {
         }
     }
 
-    @PipelineProperty(description = "Should data be sent in chunks and if so how big should the chunks be")
+    @PipelineProperty(description = "Should data be sent in chunks and if so how big should the chunks be", displayPriority = 4)
     public void setForwardChunkSize(final String string) {
         this.forwardChunkSize = ModelStringUtil.parseIECByteSizeString(string);
     }
 
-    @PipelineProperty(description = "Should data be compressed when sending", defaultValue = "true")
+    @PipelineProperty(description = "Should data be compressed when sending", defaultValue = "true", displayPriority = 2)
     public void setUseCompression(final boolean useCompression) {
         this.useCompression = useCompression;
     }
 
-    @PipelineProperty(description = "Which meta data values will be logged in the send log", defaultValue = "guid,feed,system,environment,remotehost,remoteaddress")
+    @PipelineProperty(
+            description = "Which meta data values will be logged in the send log",
+            defaultValue = "guid,feed,system,environment,remotehost,remoteaddress",
+            displayPriority = 5)
     public void setLogMetaKeys(final String string) {
         metaKeySet = getMetaKeySet(string);
     }

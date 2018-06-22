@@ -225,18 +225,18 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
         this.injectedCode = injectedCode;
     }
 
-    @PipelineProperty(description = "The parser type, e.g. 'JSON', 'XML', 'Data Splitter'.")
+    @PipelineProperty(description = "The parser type, e.g. 'JSON', 'XML', 'Data Splitter'.", displayPriority = 1)
     public void setType(final String type) {
         this.type = type;
     }
 
-    @PipelineProperty(description = "The text converter configuration that should be used to parse the input data.")
+    @PipelineProperty(description = "The text converter configuration that should be used to parse the input data.", displayPriority = 2)
     @PipelinePropertyDocRef(types = TextConverterDoc.DOCUMENT_TYPE)
     public void setTextConverter(final DocRef textConverterRef) {
         this.textConverterRef = textConverterRef;
     }
 
-    @PipelineProperty(description = "Fix invalid XML characters from the input stream.", defaultValue = "false")
+    @PipelineProperty(description = "Fix invalid XML characters from the input stream.", defaultValue = "false", displayPriority = 3)
     public void setFixInvalidChars(final boolean fixInvalidChars) {
         this.fixInvalidChars = fixInvalidChars;
     }
