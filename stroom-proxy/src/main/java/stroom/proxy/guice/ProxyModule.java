@@ -60,6 +60,6 @@ public class ProxyModule extends AbstractModule {
 
     @Provides @Singleton
     Persistence providePersistence() {
-        return new FSPersistence(Paths.get("/Users/stroomdev66/tmp/proxy-conf"));
+        return new FSPersistence(Paths.get(proxyConfig.getProxyConfigDir()));
     }
 }
