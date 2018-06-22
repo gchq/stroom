@@ -42,8 +42,14 @@ public class ProxyRequestHandler implements RequestHandler {
                                final MetaMapFilterFactory metaMapFilterFactory,
                                final LogStream logStream) {
         this.streamHandlerFactory = streamHandlerFactory;
-        this.metaMapFilter = metaMapFilterFactory.create(proxyRequestConfig.getReceiptPolicyUuid());
         this.logStream = logStream;
+
+        if(proxyRequestConfig != null && proxyRequestConfig.getReceiptPolicyUuid() != null){
+            metaMapFilter = metaMapFilterFactory.create(proxyRequestConfig.getReceiptPolicyUuid());
+        }
+        else{
+            metaMapFilter = metaMapFilterFactory.create();
+        }
     }
 
     @Override

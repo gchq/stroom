@@ -18,5 +18,7 @@
 package stroom.datafeed.server;
 
 public interface MetaMapFilterFactory {
-    MetaMapFilter create(String uuid);
+    MetaMapFilter create();
+
+    MetaMapFilter create(String receiptPolicyUuid);
 }

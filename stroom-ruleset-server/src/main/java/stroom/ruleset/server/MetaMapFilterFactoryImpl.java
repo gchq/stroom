@@ -36,7 +36,12 @@ public class MetaMapFilterFactoryImpl implements MetaMapFilterFactory {
     }
 
     @Override
-    public MetaMapFilter create(final String uuid) {
-        return new MetaMapFilterImpl(new DataReceiptPolicyChecker(ruleSetService, dictionaryStore, uuid));
+    public MetaMapFilter create() {
+        return new MetaMapFilterImpl();
+    }
+
+    @Override
+    public MetaMapFilter create(final String dataReceiptPolicyUuid) {
+        return new MetaMapFilterImpl(new DataReceiptPolicyChecker(ruleSetService, dictionaryStore, dataReceiptPolicyUuid));
     }
 }

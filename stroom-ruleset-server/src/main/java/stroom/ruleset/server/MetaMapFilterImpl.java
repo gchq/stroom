@@ -24,7 +24,10 @@ import stroom.feed.StroomStreamException;
 import stroom.ruleset.shared.DataReceiptAction;
 
 class MetaMapFilterImpl implements MetaMapFilter {
-    private final DataReceiptPolicyChecker dataReceiptPolicyChecker;
+    private DataReceiptPolicyChecker dataReceiptPolicyChecker = null;
+
+    MetaMapFilterImpl() {
+    }
 
     MetaMapFilterImpl(final DataReceiptPolicyChecker dataReceiptPolicyChecker) {
         this.dataReceiptPolicyChecker = dataReceiptPolicyChecker;
@@ -32,14 +35,20 @@ class MetaMapFilterImpl implements MetaMapFilter {
 
     @Override
     public boolean filter(final MetaMap metaMap) {
-        // We need to examine the meta map and ensure we aren't dropping or rejecting this data.
-        final DataReceiptAction dataReceiptAction = dataReceiptPolicyChecker.check(metaMap);
+        boolean allowThrough = true;
 
-        if (DataReceiptAction.REJECT.equals(dataReceiptAction)) {
-            throw new StroomStreamException(StroomStatusCode.RECEIPT_POLICY_SET_TO_REJECT_DATA);
+        if(dataReceiptPolicyChecker != null) {
+            // We need to examine the meta map and ensure we aren't dropping or rejecting this data.
+            final DataReceiptAction dataReceiptAction = dataReceiptPolicyChecker.check(metaMap);
 
+            if (DataReceiptAction.REJECT.equals(dataReceiptAction)) {
+                throw new StroomStreamException(StroomStatusCode.RECEIPT_POLICY_SET_TO_REJECT_DATA);
+
+            }
+
+            allowThrough = DataReceiptAction.RECEIVE.equals(dataReceiptAction);
         }
 
-        return DataReceiptAction.RECEIVE.equals(dataReceiptAction);
+        return allowThrough;
     }
 }
