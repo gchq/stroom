@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes, { object } from 'prop-types';
 import { Route, Router, Switch, withRouter } from 'react-router-dom';
-import { bindActionCreators } from 'redux';
+import { compose, lifecycle, withProps } from 'recompose';
 import { connect } from 'react-redux';
 
 import ErrorPage from 'sections/ErrorPage';
@@ -27,117 +27,148 @@ import TrackerDashboard from 'sections/TrackerDashboard';
 import AppChrome from 'sections/AppChrome';
 import { AuthenticationRequest, HandleAuthenticationResponse } from 'startup/Authentication';
 import { PipelineEditor } from 'prototypes/PipelineEditor';
-import { DocExplorerFromServer } from 'components/DocExplorer';
+import DocExplorer from 'components/DocExplorer';
 
 import PathNotFound from 'sections/PathNotFound';
 
-class Routes extends Component {
-  isLoggedIn() {
-    return !!this.props.idToken;
-  }
+import { actionCreators as configActionCreators, withConfigReady } from './config';
 
-  render() {
-    const { history } = this.props;
-    return (
-      <Router history={history} basename="/">
-        <Switch>
-          {/* Authentication routes */}
-          <Route
-            exact
-            path="/handleAuthenticationResponse"
-            render={() => (
-              <HandleAuthenticationResponse
-                authenticationServiceUrl={this.props.authenticationServiceUrl}
-                authorisationServiceUrl={this.props.authorisationServiceUrl}
-              />
-            )}
+const { updateConfig } = configActionCreators;
+
+const enhance = compose(
+  connect((state, props) => ({}), {
+    updateConfig,
+  }),
+  lifecycle({
+    componentDidMount() {
+      fetch('/config.json', { method: 'get' })
+        .then(response => response.json())
+        .then(config => this.props.updateConfig(config));
+    },
+  }),
+  withConfigReady,
+  withRouter,
+  connect(
+    state => ({
+      idToken: state.authentication.idToken,
+      // showUnauthorizedDialog: state.login.showUnauthorizedDialog,
+      advertisedUrl: state.config.advertisedUrl,
+      appClientId: state.config.appClientId,
+      authenticationServiceUrl: state.config.authenticationServiceUrl,
+      authorisationServiceUrl: state.config.authorisationServiceUrl,
+    }),
+    {},
+  ),
+  withProps(({idToken}) => ({
+    isLoggedIn: !!idToken
+  }))
+);
+
+const Routes = enhance(({
+  isLoggedIn,
+  appClientId,
+  history,
+  authenticationServiceUrl,
+  authorisationServiceUrl,
+  advertisedUrl,
+}) => (
+  <Router history={history} basename="/">
+    <Switch>
+      {/* Authentication routes */}
+      <Route
+        exact
+        path="/handleAuthenticationResponse"
+        render={() => (
+          <HandleAuthenticationResponse
+            authenticationServiceUrl={authenticationServiceUrl}
+            authorisationServiceUrl={authorisationServiceUrl}
           />
+        )}
+      />
 
-          {/* Application routes - no authentication required */}
-          <Route exact path="/error" component={ErrorPage} />
-          <Route exact path="/prototypes/original_list" component={OriginalList} />
-          <Route exact path="/prototypes/graph" component={Graph} />
+      {/* Application routes - no authentication required */}
+      <Route exact path="/error" component={ErrorPage} />
+      <Route exact path="/prototypes/original_list" component={OriginalList} />
+      <Route exact path="/prototypes/graph" component={Graph} />
 
-          {/* Application Routes - require authentication */}
-          <Route
-            exact
-            path="/"
-            render={() =>
-              (this.isLoggedIn() ? (
-                <AppChrome />
-              ) : (
-                <AuthenticationRequest
-                  referrer="/"
-                  uiUrl={this.props.advertisedUrl}
-                  appClientId={this.props.appClientId}
-                  authenticationServiceUrl={this.props.authenticationServiceUrl}
-                />
-              ))
-            }
-          />
+      {/* Application Routes - require authentication */}
+      <Route
+        exact
+        path="/"
+        render={() =>
+          (isLoggedIn ? (
+            <AppChrome />
+          ) : (
+            <AuthenticationRequest
+              referrer="/"
+              uiUrl={advertisedUrl}
+              appClientId={appClientId}
+              authenticationServiceUrl={authenticationServiceUrl}
+            />
+          ))
+        }
+      />
 
-          <Route
-            exact
-            path="/trackers"
-            render={() =>
-              (this.isLoggedIn() ? (
-                <TrackerDashboard />
-              ) : (
-                <AuthenticationRequest
-                  referrer="/trackers"
-                  uiUrl={this.props.advertisedUrl}
-                  appClientId={this.props.appClientId}
-                  authenticationServiceUrl={this.props.authenticationServiceUrl}
-                  appPermission="MANAGE_USERS"
-                />
-              ))
-            }
-          />
+      <Route
+        exact
+        path="/trackers"
+        render={() =>
+          (isLoggedIn ? (
+            <TrackerDashboard />
+          ) : (
+            <AuthenticationRequest
+              referrer="/trackers"
+              uiUrl={advertisedUrl}
+              appClientId={appClientId}
+              authenticationServiceUrl={authenticationServiceUrl}
+              appPermission="MANAGE_USERS"
+            />
+          ))
+        }
+      />
 
-          <Route
-            exact
-            path="/pipelines/:pipelineId"
-            render={({ match }) =>
-              (this.isLoggedIn() ? (
-                <PipelineEditor
-                  shouldFetchElementsFromServer={true}
-                  shouldFetchPipelineFromServer={true}
-                  pipelineId={match.params.pipelineId}
-                />
-              ) : (
-                <AuthenticationRequest
-                  referrer={match.url}
-                  uiUrl={this.props.advertisedUrl}
-                  appClientId={this.props.appClientId}
-                  authenticationServiceUrl={this.props.authenticationServiceUrl}
-                />
-              ))
-            }
-          />
+      <Route
+        exact
+        path="/pipelines/:pipelineId"
+        render={({ match }) =>
+          (isLoggedIn ? (
+            <PipelineEditor
+              shouldFetchElementsFromServer
+              shouldFetchPipelineFromServer
+              pipelineId={match.params.pipelineId}
+            />
+          ) : (
+            <AuthenticationRequest
+              referrer={match.url}
+              uiUrl={advertisedUrl}
+              appClientId={appClientId}
+              authenticationServiceUrl={authenticationServiceUrl}
+            />
+          ))
+        }
+      />
 
-          <Route
-            exact
-            path="/explorerTree"
-            render={({ match }) =>
-              (this.isLoggedIn() ? (
-                <DocExplorerFromServer explorerId="singleton" />
-              ) : (
-                <AuthenticationRequest
-                  referrer={match.url}
-                  uiUrl={this.props.advertisedUrl}
-                  appClientId={this.props.appClientId}
-                  authenticationServiceUrl={this.props.authenticationServiceUrl}
-                />
-              ))
-            }
-          />
+      <Route
+        exact
+        path="/explorerTree"
+        render={({ match }) =>
+          (isLoggedIn ? (
+            <DocExplorer explorerId="singleton" />
+          ) : (
+            <AuthenticationRequest
+              referrer={match.url}
+              uiUrl={advertisedUrl}
+              appClientId={appClientId}
+              authenticationServiceUrl={authenticationServiceUrl}
+            />
+          ))
+        }
+      />
 
-          <Route component={PathNotFound} />
-        </Switch>
-      </Router>
-    );
-  }
-}
+      <Route component={PathNotFound} />
+    </Switch>
+  </Router>
+));
 
 Routes.contextTypes = {
   store: PropTypes.object,
@@ -146,26 +177,4 @@ Routes.contextTypes = {
   }),
 };
 
-Routes.propTypes = {
-  idToken: PropTypes.string.isRequired,
-  // showUnauthorizedDialog: PropTypes.bool.isRequired
-};
-
-const mapStateToProps = state => ({
-  idToken: state.authentication.idToken,
-  // showUnauthorizedDialog: state.login.showUnauthorizedDialog,
-  advertisedUrl: state.config.advertisedUrl,
-  appClientId: state.config.appClientId,
-  authenticationServiceUrl: state.config.authenticationServiceUrl,
-  authorisationServiceUrl: state.config.authorisationServiceUrl,
-});
-
-const mapDispatchToProps = dispatch =>
-  bindActionCreators(
-    {
-      // handleSessionTimeout
-    },
-    dispatch,
-  );
-
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(Routes));
+export default Routes;

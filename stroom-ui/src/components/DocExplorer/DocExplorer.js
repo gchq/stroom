@@ -24,25 +24,22 @@ import { Input, Loader } from 'semantic-ui-react';
 import Folder from './Folder';
 import { actionCreators } from './redux';
 import { fetchDocTree } from './explorerClient';
+import { withConfigReady } from 'startup/config';
 
 const { searchTermUpdated, explorerTreeOpened } = actionCreators;
 
 const enhance = compose(
+  withConfigReady,
   connect(
     (state, props) => ({
       documentTree: state.explorerTree.documentTree,
       explorer: state.explorerTree.explorers[props.explorerId],
-      configIsReady: state.config.isReady,
     }),
     {
       searchTermUpdated,
       explorerTreeOpened,
-      fetchDocTree
+      fetchDocTree,
     },
-  ),
-  branch(
-    ({ configIsReady }) => !configIsReady,
-    renderComponent(() => <Loader active>Awaiting Config</Loader>),
   ),
   lifecycle({
     componentDidMount() {

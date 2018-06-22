@@ -17,7 +17,7 @@ const ExplorerTabs = (props) => {
     },
     pane: (
       <Tab.Pane key="explorer">
-        <DocExplorer shouldFetchTreeFromServer explorerId={EXPLORER_ID} />
+        <DocExplorer explorerId={EXPLORER_ID} />
       </Tab.Pane>
     ),
   });

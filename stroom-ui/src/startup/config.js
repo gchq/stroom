@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import $ from 'jquery';
-
+import React from 'react';
 import { createActions, handleActions } from 'redux-actions';
+import { connect } from 'react-redux';
+import { branch, compose, renderComponent } from 'recompose';
+import { Loader } from 'semantic-ui-react';
 
 const initialState = { isReady: false };
 
@@ -45,19 +46,20 @@ export const fetchConfig = () => (dispatch) => {
     .then(config => dispatch(actionCreators.updateConfig(config)));
 };
 
-export const fetchConfigSynchronously = () => {
-  // This causes a console warning about synchronous calls degrading the user experience.
-  // In our case it's necessary -- we must retrieve the config before we bootstrap react and
-  // synchronous is the only way.
-  const result = $.ajax({
-    url: '/config.json',
-    contentType: 'application/json',
-    dataType: 'json',
-    method: 'GET',
-    async: false,
-  });
+/**
+ * Higher Order Component that ensures that the config has been set before making a call to fetchDocTree.
+ */
+const withConfigReady = compose(
+  connect(
+    (state, props) => ({
+      configIsReady: state.config.isReady,
+    }),
+    {},
+  ),
+  branch(
+    ({ configIsReady }) => !configIsReady,
+    renderComponent(() => <Loader active>Awaiting Config</Loader>),
+  ),
+);
 
-  return result.responseJSON;
-};
-
-export { actionCreators, configReducer };
+export { actionCreators, configReducer, withConfigReady };
