@@ -14,10 +14,19 @@
  * limitations under the License.
  */
 import React from 'react';
+import { push } from 'react-router-redux';
 import { createActions, handleActions } from 'redux-actions';
 import { connect } from 'react-redux';
-import { branch, compose, renderComponent } from 'recompose';
+import { branch, compose, renderComponent, lifecycle } from 'recompose';
 import { Loader } from 'semantic-ui-react';
+
+import {
+  setErrorMessageAction,
+  setStackTraceAction,
+  setHttpErrorCodeAction,
+} from 'sections/ErrorPage';
+
+import handleStatus from 'lib/handleStatus';
 
 const initialState = { isReady: false };
 
@@ -40,14 +49,22 @@ const configReducer = handleActions(
   initialState,
 );
 
-export const fetchConfig = () => (dispatch) => {
+export const fetchConfig = () => (dispatch, getState) => {
   fetch('/config.json', { method: 'get' })
+    .then(handleStatus)
     .then(response => response.json())
-    .then(config => dispatch(actionCreators.updateConfig(config)));
+    .then(config => dispatch(actionCreators.updateConfig(config)))
+    .catch((error) => {
+      dispatch(setErrorMessageAction(error.message));
+      dispatch(setStackTraceAction(error.stack));
+      dispatch(setHttpErrorCodeAction(error.status));
+      dispatch(push('/error'));
+    });
 };
 
 /**
  * Higher Order Component that ensures that the config has been set before making a call to fetchDocTree.
+ * Used by components which are deep into the application, that aren't responsible for actually loading the config.
  */
 const withConfigReady = compose(
   connect(
@@ -62,4 +79,28 @@ const withConfigReady = compose(
   ),
 );
 
-export { actionCreators, configReducer, withConfigReady };
+/**
+ * Higher Order Component that kicks off the fetch of the config, and waits by rendering a Loader until
+ * that config is returned. This will generally be used by top level components in the app.
+ */
+const requestConfigAndWait = compose(
+  connect(
+    (state, props) => ({
+      configIsReady: state.config.isReady,
+    }),
+    {
+      fetchConfig,
+    },
+  ),
+  lifecycle({
+    componentDidMount() {
+      this.props.fetchConfig();
+    },
+  }),
+  branch(
+    ({ configIsReady }) => !configIsReady,
+    renderComponent(() => <Loader active>Awaiting Config</Loader>),
+  ),
+);
+
+export { actionCreators, configReducer, withConfigReady, requestConfigAndWait };

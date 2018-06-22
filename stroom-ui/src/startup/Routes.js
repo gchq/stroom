@@ -17,7 +17,7 @@
 import React from 'react';
 import PropTypes, { object } from 'prop-types';
 import { Route, Router, Switch, withRouter } from 'react-router-dom';
-import { compose, lifecycle, withProps } from 'recompose';
+import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
 
 import ErrorPage from 'sections/ErrorPage';
@@ -31,22 +31,10 @@ import DocExplorer from 'components/DocExplorer';
 
 import PathNotFound from 'sections/PathNotFound';
 
-import { actionCreators as configActionCreators, withConfigReady } from './config';
-
-const { updateConfig } = configActionCreators;
+import { requestConfigAndWait } from './config';
 
 const enhance = compose(
-  connect((state, props) => ({}), {
-    updateConfig,
-  }),
-  lifecycle({
-    componentDidMount() {
-      fetch('/config.json', { method: 'get' })
-        .then(response => response.json())
-        .then(config => this.props.updateConfig(config));
-    },
-  }),
-  withConfigReady,
+  requestConfigAndWait,
   withRouter,
   connect(
     state => ({
