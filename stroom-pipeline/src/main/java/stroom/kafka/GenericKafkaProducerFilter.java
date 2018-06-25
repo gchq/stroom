@@ -16,15 +16,13 @@
 
 package stroom.kafka;
 
-import stroom.kafka.AbstractKafkaProducerFilter;
-import stroom.kafka.StroomKafkaProducerFactoryService;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
-import stroom.pipeline.writer.PathCreator;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.pipeline.writer.PathCreator;
 
 import javax.inject.Inject;
 
@@ -55,9 +53,9 @@ class GenericKafkaProducerFilter extends AbstractKafkaProducerFilter {
 
     @Inject
     GenericKafkaProducerFilter(final ErrorReceiverProxy errorReceiverProxy,
-                                      final LocationFactoryProxy locationFactory,
-                                      final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
-                                      final PathCreator pathCreator) {
+                               final LocationFactoryProxy locationFactory,
+                               final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
+                               final PathCreator pathCreator) {
         super(errorReceiverProxy, locationFactory, stroomKafkaProducerFactoryService);
         this.pathCreator = pathCreator;
     }

@@ -21,6 +21,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import stroom.cache.ParserFactoryPool;
 import stroom.cache.StoredParserFactory;
+import stroom.docref.DocRef;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.SupportsCodeInjection;
 import stroom.pipeline.TextConverterStore;
@@ -38,7 +39,6 @@ import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pool.PoolItem;
-import stroom.docref.DocRef;
 import stroom.xml.converter.ParserFactory;
 
 import javax.inject.Inject;

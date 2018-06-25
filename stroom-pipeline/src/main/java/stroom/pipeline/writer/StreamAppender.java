@@ -17,8 +17,9 @@
 
 package stroom.pipeline.writer;
 
-import stroom.feed.MetaMap;
+import stroom.docref.DocRef;
 import stroom.feed.FeedService;
+import stroom.feed.MetaMap;
 import stroom.feed.shared.Feed;
 import stroom.io.StreamCloser;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -32,7 +33,6 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaData;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
-import stroom.docref.DocRef;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.StreamTarget;
 import stroom.streamstore.StreamTypeService;
@@ -66,13 +66,13 @@ public class StreamAppender extends AbstractAppender {
 
     @Inject
     public StreamAppender(final ErrorReceiverProxy errorReceiverProxy,
-                   final StreamStore streamStore,
-                   final StreamHolder streamHolder,
-                   final FeedService feedService,
-                   final StreamTypeService streamTypeService,
-                   final StreamProcessorHolder streamProcessorHolder,
-                   final MetaData metaData,
-                   final StreamCloser streamCloser) {
+                          final StreamStore streamStore,
+                          final StreamHolder streamHolder,
+                          final FeedService feedService,
+                          final StreamTypeService streamTypeService,
+                          final StreamProcessorHolder streamProcessorHolder,
+                          final MetaData metaData,
+                          final StreamCloser streamCloser) {
         super(errorReceiverProxy);
         this.errorReceiverProxy = errorReceiverProxy;
         this.streamStore = streamStore;

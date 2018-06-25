@@ -1,15 +1,15 @@
 package stroom.statistics.stroomstats.pipeline.appender;
 
+import stroom.docref.DocRef;
+import stroom.kafka.AbstractKafkaAppender;
 import stroom.kafka.StroomKafkaProducerFactoryService;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
-import stroom.kafka.AbstractKafkaAppender;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.docref.DocRef;
 import stroom.statistics.stroomstats.entity.StroomStatsStoreStore;
 import stroom.statistics.stroomstats.kafka.TopicNameFactory;
 import stroom.stats.shared.StroomStatsStoreDoc;

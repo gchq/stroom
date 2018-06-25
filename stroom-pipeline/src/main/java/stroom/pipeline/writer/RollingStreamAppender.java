@@ -17,6 +17,7 @@
 
 package stroom.pipeline.writer;
 
+import stroom.docref.DocRef;
 import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.node.NodeCache;
@@ -33,7 +34,6 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.StreamHolder;
-import stroom.docref.DocRef;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.StreamTarget;
 import stroom.streamstore.StreamTypeService;

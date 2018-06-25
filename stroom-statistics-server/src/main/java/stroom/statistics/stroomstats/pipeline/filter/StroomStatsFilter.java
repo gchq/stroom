@@ -1,8 +1,8 @@
 package stroom.statistics.stroomstats.pipeline.filter;
 
-import stroom.kafka.StroomKafkaProducerFactoryService;
+import stroom.docref.DocRef;
 import stroom.kafka.AbstractKafkaProducerFilter;
-import stroom.properties.StroomPropertyService;
+import stroom.kafka.StroomKafkaProducerFactoryService;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
@@ -11,7 +11,7 @@ import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.docref.DocRef;
+import stroom.properties.StroomPropertyService;
 import stroom.statistics.stroomstats.entity.StroomStatsStoreStore;
 import stroom.statistics.stroomstats.kafka.TopicNameFactory;
 import stroom.stats.shared.StroomStatsStoreDoc;
@@ -38,11 +38,11 @@ public class StroomStatsFilter extends AbstractKafkaProducerFilter {
 
     @Inject
     StroomStatsFilter(final ErrorReceiverProxy errorReceiverProxy,
-                             final LocationFactoryProxy locationFactory,
-                             final StroomPropertyService stroomPropertyService,
-                             final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
-                             final TopicNameFactory topicNameFactory,
-                             final StroomStatsStoreStore stroomStatsStoreStore) {
+                      final LocationFactoryProxy locationFactory,
+                      final StroomPropertyService stroomPropertyService,
+                      final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
+                      final TopicNameFactory topicNameFactory,
+                      final StroomStatsStoreStore stroomStatsStoreStore) {
         super(errorReceiverProxy, locationFactory, stroomKafkaProducerFactoryService);
         this.topicNameFactory = topicNameFactory;
         this.stroomStatsStoreStore = stroomStatsStoreStore;

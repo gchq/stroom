@@ -86,7 +86,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
 
     @Inject
     public XMLWriter(final ErrorReceiverProxy errorReceiverProxy,
-              final LocationFactory locationFactory) {
+                     final LocationFactory locationFactory) {
         super(errorReceiverProxy);
         this.locationFactory = locationFactory;
     }

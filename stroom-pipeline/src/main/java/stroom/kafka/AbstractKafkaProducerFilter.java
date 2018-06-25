@@ -30,8 +30,8 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
     private Locator locator;
 
     protected AbstractKafkaProducerFilter(final ErrorReceiverProxy errorReceiverProxy,
-                                       final LocationFactoryProxy locationFactory,
-                                       final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService) {
+                                          final LocationFactoryProxy locationFactory,
+                                          final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService) {
 
         super(errorReceiverProxy, locationFactory);
         this.errorReceiverProxy = errorReceiverProxy;

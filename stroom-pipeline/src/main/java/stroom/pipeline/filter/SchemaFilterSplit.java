@@ -124,7 +124,7 @@ public class SchemaFilterSplit extends AbstractXMLFilter {
     }
 
     @PipelineProperty(description = "Limits the schemas that can be used to validate data to those with a matching system id.",
-    displayPriority = 2)
+            displayPriority = 2)
     public void setSystemId(final String systemId) {
         if (systemId != null && systemId.trim().length() > 0) {
             schemaConstraint.setSystemId(systemId.trim());

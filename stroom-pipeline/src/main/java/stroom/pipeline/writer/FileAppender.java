@@ -52,7 +52,7 @@ public class FileAppender extends AbstractAppender {
 
     @Inject
     public FileAppender(final ErrorReceiverProxy errorReceiverProxy,
-                 final PathCreator pathCreator) {
+                        final PathCreator pathCreator) {
         super(errorReceiverProxy);
         this.pathCreator = pathCreator;
     }
