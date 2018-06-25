@@ -36,7 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static stroom.data.meta.impl.db.stroom.tables.StreamFeed.STREAM_FEED;
 
 @Singleton
-class FeedServiceImpl implements FeedService, Clearable {
+class FeedServiceImpl implements FeedService {
     private static final Logger LOGGER = LoggerFactory.getLogger(FeedServiceImpl.class);
 
     private final Map<String, Integer> cache = new ConcurrentHashMap<>();
@@ -66,8 +66,8 @@ class FeedServiceImpl implements FeedService, Clearable {
     @Override
     public List<String> list() {
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
-            return context
+            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            return create
                     .select(STREAM_FEED.NAME)
                     .from(STREAM_FEED)
                     .fetch(STREAM_FEED.NAME);
@@ -85,8 +85,8 @@ class FeedServiceImpl implements FeedService, Clearable {
         }
 
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
-            id = context
+            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            id = create
                     .select(STREAM_FEED.ID)
                     .from(STREAM_FEED)
                     .where(STREAM_FEED.NAME.eq(name))
@@ -106,8 +106,8 @@ class FeedServiceImpl implements FeedService, Clearable {
 
     private Integer create(final String name) {
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
-            final Integer id = context
+            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            final Integer id = create
                     .insertInto(STREAM_FEED, STREAM_FEED.NAME)
                     .values(name)
                     .returning(STREAM_FEED.ID)
@@ -124,15 +124,15 @@ class FeedServiceImpl implements FeedService, Clearable {
         return null;
     }
 
-    @Override
-    public void clear() {
+    void clear() {
+        deleteAll();
         cache.clear();
     }
 
     int deleteAll() {
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
-            return context
+            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            return create
                     .delete(STREAM_FEED)
                     .execute();
         } catch (final SQLException e) {

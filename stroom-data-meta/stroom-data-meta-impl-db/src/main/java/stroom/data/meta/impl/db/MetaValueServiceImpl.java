@@ -25,6 +25,7 @@ import stroom.data.meta.api.AttributeMap;
 import stroom.data.meta.api.Stream;
 import stroom.data.meta.api.StreamDataRow;
 import stroom.data.meta.impl.db.stroom.tables.records.MetaNumericValueRecord;
+import stroom.entity.shared.Clearable;
 import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.lifecycle.StroomShutdown;
@@ -91,12 +92,6 @@ class MetaValueServiceImpl implements MetaValueService {
             }
         });
     }
-
-    @Override
-    public void clear() {
-        queue.clear();
-    }
-
 
     // TODO : @66 Add a shutdown hook in here to ensure attribute values are flushed on shutdown
     @StroomShutdown
@@ -225,8 +220,8 @@ class MetaValueServiceImpl implements MetaValueService {
         LOGGER.debug("Processing batch of {}, queue size is {}", records.size(), queue.size());
 
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
-            context
+            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            create
                     .batchStore(records)
                     .execute();
         } catch (final SQLException e) {
@@ -264,7 +259,7 @@ class MetaValueServiceImpl implements MetaValueService {
         int count;
 
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
+            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             // TODO : @66 Maybe try delete with limits again after un upgrade to MySQL 5.7.
 //            count = context
 //                    .delete(META_NUMERIC_VALUE)
@@ -278,7 +273,7 @@ class MetaValueServiceImpl implements MetaValueService {
 //                    .execute();
 
 
-            count = context.execute("DELETE FROM {0} WHERE {1} < {2} ORDER BY {3} LIMIT {4}",
+            count = create.execute("DELETE FROM {0} WHERE {1} < {2} ORDER BY {3} LIMIT {4}",
                     META_NUMERIC_VALUE,
                     META_NUMERIC_VALUE.CREATE_TIME,
                     age,
@@ -353,9 +348,8 @@ class MetaValueServiceImpl implements MetaValueService {
 
 
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
-
-            context
+            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            create
                     .select(
                             META_NUMERIC_VALUE.STREAM_ID,
                             META_NUMERIC_VALUE.META_KEY_ID,
@@ -424,10 +418,15 @@ class MetaValueServiceImpl implements MetaValueService {
 //        return result;
     }
 
+    void clear() {
+        queue.clear();
+        deleteAll();
+    }
+
     int deleteAll() {
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
-            return context
+            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            return create
                     .delete(META_NUMERIC_VALUE)
                     .execute();
         } catch (final SQLException e) {

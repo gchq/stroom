@@ -77,6 +77,23 @@ class StreamImpl implements Stream {
     public static class Builder {
         private final StreamImpl stream = new StreamImpl();
 
+        Builder() {
+        }
+
+        Builder(final Stream stream) {
+            id(stream.getId());
+            feedName(stream.getFeedName());
+            streamTypeName(stream.getStreamTypeName());
+            pipelineUuid(stream.getPipelineUuid());
+            parentStreamId(stream.getParentStreamId());
+            streamTaskId(stream.getStreamTaskId());
+            streamProcessorId(stream.getStreamProcessorId());
+            status(stream.getStatus());
+            statusMs(stream.getStatusMs());
+            createMs(stream.getCreateMs());
+            effectiveMs(stream.getEffectiveMs());
+        }
+
         public Builder id(final long id) {
             stream.id = id;
             return this;

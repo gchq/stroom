@@ -17,8 +17,8 @@
 package stroom.data.store.impl.fs;
 
 import com.google.inject.Inject;
-import stroom.data.volume.api.StreamVolumeService.StreamVolume;
 import stroom.data.meta.api.Stream;
+import stroom.data.volume.api.StreamVolumeService.StreamVolume;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
@@ -52,10 +52,13 @@ class FileSystemStreamPathHelper {
             StreamTypeNames.CONTEXT};
 
     private final FileSystemFeedPaths fileSystemFeedPaths;
+    private final FileSystemTypePaths fileSystemTypePaths;
 
     @Inject
-    FileSystemStreamPathHelper(final FileSystemFeedPaths fileSystemFeedPaths) {
+    FileSystemStreamPathHelper(final FileSystemFeedPaths fileSystemFeedPaths,
+                               final FileSystemTypePaths fileSystemTypePaths) {
         this.fileSystemFeedPaths = fileSystemFeedPaths;
+        this.fileSystemTypePaths = fileSystemTypePaths;
     }
 
     private String createFilePathBase(final String rootPath, final Stream stream, final String streamTypeName) {
@@ -163,7 +166,7 @@ class FileSystemStreamPathHelper {
 
     String getDirectory(Stream stream, String streamTypeName) {
         StringBuilder builder = new StringBuilder();
-        builder.append(FileSystemStreamTypePaths.getPath(streamTypeName));
+        builder.append(fileSystemTypePaths.getPath(streamTypeName));
         builder.append(FileSystemStreamPathHelper.SEPERATOR_CHAR);
         String utcDate = DateUtil.createNormalDateTimeString(stream.getCreateMs());
         builder.append(utcDate, 0, 4);

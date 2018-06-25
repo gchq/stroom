@@ -197,7 +197,7 @@ public class MockStreamStore implements StreamStore, Clearable {
         }
 
         // Set the status of the stream to be unlocked.
-        streamMetaService.updateStatus(stream.getId(), StreamStatus.UNLOCKED);
+        streamMetaService.updateStatus(stream, StreamStatus.UNLOCKED);
     }
 
 //    @Override
@@ -280,7 +280,6 @@ public class MockStreamStore implements StreamStore, Clearable {
     @Override
     public StreamTarget openStreamTarget(final StreamProperties streamProperties) {
         final Stream stream = streamMetaService.createStream(streamProperties);
-        streamMetaService.updateStatus(stream.getId(), StreamStatus.LOCKED);
 
         final TypedMap<String, ByteArrayOutputStream> typeMap = TypedMap.fromMap(new HashMap<>());
         typeMap.put(stream.getStreamTypeName(), new ByteArrayOutputStream());
@@ -292,9 +291,7 @@ public class MockStreamStore implements StreamStore, Clearable {
     }
 
     @Override
-    public StreamTarget openExistingStreamTarget(final long streamId) throws StreamException {
-        final Stream stream = streamMetaService.getStream(streamId);
-
+    public StreamTarget openExistingStreamTarget(final Stream stream) throws StreamException {
         final TypedMap<String, ByteArrayOutputStream> typeMap = TypedMap.fromMap(new HashMap<>());
         typeMap.put(stream.getStreamTypeName(), new ByteArrayOutputStream());
         openOutputStream.put(stream.getId(), typeMap);

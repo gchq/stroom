@@ -718,7 +718,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         Assert.assertTrue(FileSystemUtil.isAllFile(manifestFile));
 
-        streamTarget = streamStore.openExistingStreamTarget(stream.getId());
+        streamTarget = streamStore.openExistingStreamTarget(stream);
         streamTarget.getAttributes().put(testString3, testString4);
         streamStore.closeStreamTarget(streamTarget);
         stream = streamTarget.getStream();
@@ -735,7 +735,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 //            Assert.assertTrue(streamAttributeValueService.delete(value));
 //        }
 
-        streamTarget = streamStore.openExistingStreamTarget(stream.getId());
+        streamTarget = streamStore.openExistingStreamTarget(stream);
         streamTarget.getAttributes().put(testString5, testString6);
         Assert.assertNull(streamTarget.getAttributes().get(testString3));
         streamStore.closeStreamTarget(streamTarget);

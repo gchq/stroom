@@ -16,24 +16,22 @@
 
 package stroom.data.store;
 
+import stroom.data.meta.api.FindStreamCriteria;
+import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.StreamDataSource;
+import stroom.data.meta.api.StreamMetaService;
+import stroom.data.meta.api.StreamStatus;
 import stroom.entity.shared.BaseResultList;
 import stroom.jobsystem.ClusterLockService;
-import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.properties.api.StroomPropertyService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.data.meta.api.FindStreamCriteria;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamMetaService;
-import stroom.data.meta.api.StreamStatus;
-import stroom.data.meta.api.StreamDataSource;
-import stroom.streamstore.shared.StreamVolumeEntity;
 import stroom.streamtask.AbstractBatchDeleteExecutor;
 import stroom.streamtask.BatchIdTransactionHelper;
-import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.task.TaskContext;
 import stroom.util.date.DateUtil;
+import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.util.lifecycle.StroomSimpleCronSchedule;
 
 import javax.inject.Inject;
@@ -71,11 +69,15 @@ public class StreamDeleteExecutor extends AbstractBatchDeleteExecutor {
 
     @Override
     protected void deleteCurrentBatch(final long total) {
-        // Delete stream tasks.
-        deleteWithJoin(ProcessorFilterTask.TABLE_NAME, "FK_STRM_ID", "stream tasks", total);
+        // TODO : @66 MOVE THIS CODE INTO THE STREAM TASK SERVICE
 
-        // Delete stream volumes.
-        deleteWithJoin(StreamVolumeEntity.TABLE_NAME, "FK_STRM_ID", "stream volumes", total);
+//        // Delete stream tasks.
+//        deleteWithJoin(ProcessorFilterTask.TABLE_NAME, "FK_STRM_ID", "stream tasks", total);
+
+        // TODO : @66 MOVE THIS CODE INTO THE STREAM VOLUME SERVICE
+
+//        // Delete stream volumes.
+//        deleteWithJoin(StreamVolumeEntity.TABLE_NAME, "FK_STRM_ID", "stream volumes", total);
 
 
         // TODO : @66 MOVE THIS CODE INTO THE STREAM STORE META SERVICE

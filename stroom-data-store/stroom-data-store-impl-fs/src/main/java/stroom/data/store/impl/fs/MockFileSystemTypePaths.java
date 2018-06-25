@@ -6,8 +6,8 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
-class FileSystemStreamTypePaths {
-    private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamTypePaths.class);
+class MockFileSystemTypePaths implements FileSystemTypePaths {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MockFileSystemTypePaths.class);
     private static final Map<String, String> PATH_MAP = new HashMap<>();
     private static final Map<String, String> TYPE_MAP = new HashMap<>();
 
@@ -31,7 +31,8 @@ class FileSystemStreamTypePaths {
         TYPE_MAP.put(path, name);
     }
 
-    static String getPath(final String streamType) {
+    @Override
+    public String getPath(final String streamType) {
         String path = PATH_MAP.get(streamType);
         if (path == null) {
             path = streamType.toUpperCase().replaceAll("\\W", "_");
@@ -41,10 +42,11 @@ class FileSystemStreamTypePaths {
         return path;
     }
 
-    static String getType(final String path) {
+    @Override
+    public String getType(final String path) {
         String type = TYPE_MAP.get(path);
         if (type == null) {
-            LOGGER.error("Unknown stream type for path '"  + path + "'");
+            LOGGER.error("Unknown stream type for path '" + path + "'");
             return path;
         }
         return type;

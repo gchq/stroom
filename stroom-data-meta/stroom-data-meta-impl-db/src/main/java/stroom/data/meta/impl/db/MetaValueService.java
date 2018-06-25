@@ -24,7 +24,7 @@ import stroom.entity.shared.Flushable;
 
 import java.util.List;
 
-interface MetaValueService extends Flushable, Clearable {
+interface MetaValueService extends Flushable {
     void addAttributes(Stream stream, AttributeMap attributes);
 
     List<StreamDataRow> decorateStreamsWithAttributes(List<Stream> streamList);

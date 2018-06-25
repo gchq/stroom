@@ -81,8 +81,8 @@ public class TestDataRetentionStreamFinder extends AbstractCoreIntegrationTest {
                             .build());
 
             // Streams are locked initially so unlock.
-            streamMetaService.updateStatus(streamInsideRetention.getId(), StreamStatus.UNLOCKED);
-            streamMetaService.updateStatus(streamOutsideRetention.getId(), StreamStatus.UNLOCKED);
+            streamMetaService.updateStatus(streamInsideRetention, StreamStatus.UNLOCKED);
+            streamMetaService.updateStatus(streamOutsideRetention, StreamStatus.UNLOCKED);
 
             dumpStreams();
 

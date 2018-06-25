@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -103,13 +104,15 @@ public class MockStreamMetaService implements StreamMetaService, Clearable {
     }
 
     @Override
-    public Stream updateStatus(final long id, final StreamStatus streamStatus) {
-        MockStream stream = (MockStream) streamMap.get(id);
-        if (stream != null) {
-            stream.status = streamStatus;
-            stream.statusMs = System.currentTimeMillis();
+    public Stream updateStatus(final Stream stream, final StreamStatus streamStatus) {
+        Objects.requireNonNull(stream, "Null stream");
+
+        final MockStream result = (MockStream) streamMap.get(stream.getId());
+        if (result != null) {
+            result.status = streamStatus;
+            result.statusMs = System.currentTimeMillis();
         }
-        return stream;
+        return result;
     }
 
     @Override

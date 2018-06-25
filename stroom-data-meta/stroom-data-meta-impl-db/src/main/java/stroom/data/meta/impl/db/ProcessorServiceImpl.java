@@ -37,7 +37,7 @@ import static stroom.data.meta.impl.db.stroom.tables.StreamFeed.STREAM_FEED;
 import static stroom.data.meta.impl.db.stroom.tables.StreamProcessor.STREAM_PROCESSOR;
 
 @Singleton
-class ProcessorServiceImpl implements ProcessorService, Clearable {
+class ProcessorServiceImpl implements ProcessorService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorServiceImpl.class);
 
     private final Map<Integer, StreamProcessorRecord> cache = new ConcurrentHashMap<>();
@@ -71,7 +71,7 @@ class ProcessorServiceImpl implements ProcessorService, Clearable {
 //    @Override
 //    public List<String> list() {
 //        try (final Connection connection = dataSource.getConnection()) {
-//            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
+//            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
 //
 //            return create
 //                    .select(FD.NAME)
@@ -91,8 +91,8 @@ class ProcessorServiceImpl implements ProcessorService, Clearable {
         }
 
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
-            record = context
+            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            record = create
                     .selectFrom(STREAM_PROCESSOR)
                     .where(STREAM_PROCESSOR.PROCESSOR_ID.eq(processorId))
                     .fetchOne();
@@ -112,11 +112,11 @@ class ProcessorServiceImpl implements ProcessorService, Clearable {
 
     private Integer create(final int processorId, final String pipelineUuid) {
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
-            final StreamProcessorRecord record = context
+            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            final StreamProcessorRecord record = create
                     .insertInto(STREAM_PROCESSOR, STREAM_PROCESSOR.PROCESSOR_ID, STREAM_PROCESSOR.PIPELINE_UUID)
                     .values(processorId, pipelineUuid)
-                    .returning(STREAM_FEED.ID)
+                    .returning(STREAM_PROCESSOR.ID)
                     .fetchOne();
             cache.put(processorId, record);
             return record.getId();
@@ -129,8 +129,19 @@ class ProcessorServiceImpl implements ProcessorService, Clearable {
         return null;
     }
 
-    @Override
-    public void clear() {
+    void clear() {
+        deleteAll();
         cache.clear();
+    }
+
+    int deleteAll() {
+        try (final Connection connection = dataSource.getConnection()) {
+            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            return create
+                    .delete(STREAM_PROCESSOR)
+                    .execute();
+        } catch (final SQLException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 }

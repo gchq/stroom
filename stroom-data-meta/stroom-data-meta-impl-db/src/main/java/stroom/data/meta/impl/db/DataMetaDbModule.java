@@ -12,25 +12,19 @@ import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Singleton;
 
-public class StreamStoreMetaDbModule extends AbstractModule {
+public class DataMetaDbModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(FeedService.class).to(FeedServiceImpl.class);
         bind(StreamTypeService.class).to(StreamTypeServiceImpl.class);
         bind(ProcessorService.class).to(ProcessorServiceImpl.class);
+        bind(MetaKeyService.class).to(MetaKeyServiceImpl.class);
+        bind(MetaValueService.class).to(MetaValueServiceImpl.class);
         bind(StreamMetaService.class).to(StreamMetaServiceImpl.class);
         bind(StreamSecurityFilter.class).to(StreamSecurityFilterImpl.class);
 
-
-        bind(MetaKeyService.class).to(MetaKeyServiceImpl.class);
-//        bind(AttributeMapService.class).to(StreamDataRowService.class);
-//        bind(MetaValueFlush.class).to(MetaValueFlushImpl.class);
-        bind(MetaValueService.class).to(MetaValueServiceImpl.class);
-
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-//        clearableBinder.addBinding().to(MetaKeyServiceImpl.class);
-        clearableBinder.addBinding().to(MetaValueServiceImpl.class);
-
+        clearableBinder.addBinding().to(Cleanup.class);
     }
 
     @Provides

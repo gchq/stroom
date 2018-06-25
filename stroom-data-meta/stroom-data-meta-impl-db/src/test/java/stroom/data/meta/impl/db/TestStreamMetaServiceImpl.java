@@ -3,8 +3,6 @@ package stroom.data.meta.impl.db;
 import com.google.inject.Guice;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.impl.db.StreamMetaServiceImpl;
-import stroom.data.meta.impl.db.StreamStoreMetaDbModule;
 import stroom.entity.shared.BaseResultList;
 import stroom.properties.impl.mock.MockPropertyModule;
 import stroom.query.api.v2.ExpressionOperator;
@@ -27,7 +25,7 @@ class TestStreamMetaServiceImpl {
 
     @BeforeEach
     void setup() {
-        Guice.createInjector(new StreamStoreMetaDbModule(), new MockSecurityContextModule(), new MockPropertyModule()).injectMembers(this);
+        Guice.createInjector(new DataMetaDbModule(), new MockSecurityContextModule(), new MockPropertyModule()).injectMembers(this);
     }
 
     @Test

@@ -34,11 +34,11 @@ public interface StreamMetaService {
     /**
      * Change the status of the specified stream.
      *
-     * @param streamId The id of the stream to change the status for.
+     * @param stream The stream to change the status for.
      * @param streamStatus The new status.
      * @return The updated stream.
      */
-    Stream updateStatus(long streamId, StreamStatus streamStatus);
+    Stream updateStatus(Stream stream, StreamStatus streamStatus);
 
     /**
      * Add some additional attributes to a stream.

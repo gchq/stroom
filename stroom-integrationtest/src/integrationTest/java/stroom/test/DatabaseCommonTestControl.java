@@ -41,7 +41,6 @@ import stroom.security.DocumentPermission;
 import stroom.security.Permission;
 import stroom.security.User;
 import stroom.security.UserGroupUser;
-import stroom.streamstore.shared.StreamVolumeEntity;
 import stroom.streamtask.StreamTaskCreator;
 import stroom.streamtask.shared.Processor;
 import stroom.streamtask.shared.ProcessorFilter;
@@ -82,18 +81,18 @@ public class DatabaseCommonTestControl implements CommonTestControl {
             QueryEntity.TABLE_NAME,
             Rack.TABLE_NAME,
 
-            "STRM",
-            "stream_feed",
-            "stream_type",
-            "stream_processor",
-            "stream_attribute_key",
-            "stream_attribute_numeric_value",
+//            "stream",
+//            "stream_feed",
+//            "stream_type",
+//            "stream_processor",
+//            "meta_key",
+//            "meta_numeric_value",
 
             Processor.TABLE_NAME,
             ProcessorFilter.TABLE_NAME,
             ProcessorFilterTracker.TABLE_NAME,
             ProcessorFilterTask.TABLE_NAME,
-            StreamVolumeEntity.TABLE_NAME,
+            "STRM_VOL",
             User.TABLE_NAME,
             UserGroupUser.TABLE_NAME,
             VolumeEntity.TABLE_NAME,

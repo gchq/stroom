@@ -18,6 +18,7 @@ package stroom.util;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import stroom.data.meta.impl.db.DataMetaDbModule;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.streamtask.statistic.MetaDataStatistic;
@@ -56,7 +57,7 @@ public class ToolModule extends AbstractModule {
         install(new stroom.refdata.ReferenceDataModule());
         install(new stroom.resource.ResourceModule());
         install(new stroom.security.impl.mock.MockSecurityContextModule());
-        install(new stroom.data.meta.impl.db.StreamStoreMetaDbModule());
+        install(new DataMetaDbModule());
         install(new stroom.data.store.DataStoreHandlerModule());
         install(new stroom.data.store.impl.fs.FileSystemDataStoreModule());
         install(new stroom.streamtask.StreamTaskModule());

@@ -46,6 +46,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -101,28 +102,29 @@ class FileSystemStreamStoreImpl implements StreamStore {
         // Force Creation of the files
         target.getOutputStream();
 
-        syncAttributes(stream, stream, target);
+        syncAttributes(stream, target);
 
         return target;
     }
 
     @Override
-    public StreamTarget openExistingStreamTarget(final long streamId) throws StreamException {
-        LOGGER.debug("openExistingStreamTarget() " + streamId);
+    public StreamTarget openExistingStreamTarget(final Stream stream) throws StreamException {
+        Objects.requireNonNull(stream, "Null stream");
+        LOGGER.debug("openExistingStreamTarget() " + stream);
 
         // Lock the object
-        final Set<StreamVolume> streamVolumes = streamVolumeService.findStreamVolume(streamId);
+        final Set<StreamVolume> streamVolumes = streamVolumeService.findStreamVolume(stream.getId());
         if (streamVolumes.isEmpty()) {
             throw new StreamException("Not all volumes are unlocked");
         }
-        final Stream stream = streamMetaService.updateStatus(streamId, StreamStatus.LOCKED);
+        final Stream lockedStream = streamMetaService.updateStatus(stream, StreamStatus.LOCKED);
         final Set<String> rootPaths = streamVolumes.stream().map(StreamVolume::getVolumePath).collect(Collectors.toSet());
 
-        final String streamType = stream.getStreamTypeName();
+        final String streamType = lockedStream.getStreamTypeName();
         final FileSystemStreamTarget target = FileSystemStreamTarget.create(fileSystemStreamPathHelper, stream, rootPaths,
                 streamType, true);
 
-        syncAttributes(stream, stream, target);
+        syncAttributes(lockedStream, target);
 
         return target;
     }
@@ -318,16 +320,16 @@ class FileSystemStreamStoreImpl implements StreamStore {
         return null;
     }
 
-    private void syncAttributes(final Stream stream, final Stream dbStream, final FileSystemStreamTarget target) {
-        updateAttribute(target, StreamDataSource.STREAM_ID, String.valueOf(dbStream.getId()));
+    private void syncAttributes(final Stream stream, final FileSystemStreamTarget target) {
+        updateAttribute(target, StreamDataSource.STREAM_ID, String.valueOf(stream.getId()));
 
-        if (dbStream.getParentStreamId() != null) {
+        if (stream.getParentStreamId() != null) {
             updateAttribute(target, StreamDataSource.PARENT_STREAM_ID,
-                    String.valueOf(dbStream.getParentStreamId()));
+                    String.valueOf(stream.getParentStreamId()));
         }
 
-        updateAttribute(target, StreamDataSource.FEED, dbStream.getFeedName());
-        updateAttribute(target, StreamDataSource.STREAM_TYPE, dbStream.getStreamTypeName());
+        updateAttribute(target, StreamDataSource.FEED, stream.getFeedName());
+        updateAttribute(target, StreamDataSource.STREAM_TYPE, stream.getStreamTypeName());
         updateAttribute(target, StreamDataSource.CREATE_TIME, DateUtil.createNormalDateTimeString(stream.getCreateMs()));
         if (stream.getEffectiveMs() != null) {
             updateAttribute(target, StreamDataSource.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(stream.getEffectiveMs()));
@@ -355,6 +357,6 @@ class FileSystemStreamStoreImpl implements StreamStore {
         }
 
         LOGGER.debug("unlock() " + stream);
-        return streamMetaService.updateStatus(stream.getId(), StreamStatus.UNLOCKED);
+        return streamMetaService.updateStatus(stream, StreamStatus.UNLOCKED);
     }
 }

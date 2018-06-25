@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Clearable;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -34,7 +35,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static stroom.data.meta.impl.db.stroom.tables.StreamType.STREAM_TYPE;
 
-class StreamTypeServiceImpl implements StreamTypeService, Clearable {
+@Singleton
+class StreamTypeServiceImpl implements StreamTypeService {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamTypeServiceImpl.class);
 
     private final Map<String, Integer> cache = new ConcurrentHashMap<>();
@@ -64,8 +66,8 @@ class StreamTypeServiceImpl implements StreamTypeService, Clearable {
     @Override
     public List<String> list() {
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
-            return context
+            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            return create
                     .select(STREAM_TYPE.NAME)
                     .from(STREAM_TYPE)
                     .fetch(STREAM_TYPE.NAME);
@@ -83,8 +85,8 @@ class StreamTypeServiceImpl implements StreamTypeService, Clearable {
         }
 
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
-            id = context
+            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            id = create
                     .select(STREAM_TYPE.ID)
                     .from(STREAM_TYPE)
                     .where(STREAM_TYPE.NAME.eq(name))
@@ -104,8 +106,8 @@ class StreamTypeServiceImpl implements StreamTypeService, Clearable {
 
     private Integer create(final String name) {
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
-            final Integer id = context
+            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            final Integer id = create
                     .insertInto(STREAM_TYPE, STREAM_TYPE.NAME)
                     .values(name)
                     .returning(STREAM_TYPE.ID)
@@ -122,15 +124,15 @@ class StreamTypeServiceImpl implements StreamTypeService, Clearable {
         return null;
     }
 
-    @Override
-    public void clear() {
+    void clear() {
+        deleteAll();
         cache.clear();
     }
 
     int deleteAll() {
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
-            return context
+            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            return create
                     .delete(STREAM_TYPE)
                     .execute();
         } catch (final SQLException e) {

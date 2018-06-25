@@ -22,6 +22,7 @@ import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.StreamDataSource;
+import stroom.entity.shared.Clearable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -33,6 +34,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static stroom.data.meta.impl.db.stroom.tables.MetaKey.META_KEY;
+import static stroom.data.meta.impl.db.stroom.tables.MetaNumericValue.META_NUMERIC_VALUE;
 
 @Singleton
 class MetaKeyServiceImpl implements MetaKeyService {
@@ -79,7 +81,20 @@ class MetaKeyServiceImpl implements MetaKeyService {
     @Inject
     MetaKeyServiceImpl(final StreamMetaDataSource dataSource) {
         this.dataSource = dataSource;
+        setup();
+    }
 
+    @Override
+    public Optional<String> getNameForId(final int keyId) {
+        return Optional.ofNullable(idToNameCache.get(keyId));
+    }
+
+    @Override
+    public Optional<Integer> getIdForName(final String name) {
+        return Optional.ofNullable(nameToIdCache.get(name));
+    }
+
+    private void setup() {
         create(REC_READ, MetaType.COUNT_IN_DURATION_FIELD);
         create(REC_WRITE, MetaType.COUNT_IN_DURATION_FIELD);
         create(REC_INFO, MetaType.COUNT_IN_DURATION_FIELD);
@@ -95,20 +110,10 @@ class MetaKeyServiceImpl implements MetaKeyService {
         fillCache();
     }
 
-    @Override
-    public Optional<String> getNameForId(final int keyId) {
-        return Optional.ofNullable(idToNameCache.get(keyId));
-    }
-
-    @Override
-    public Optional<Integer> getIdForName(final String name) {
-        return Optional.ofNullable(nameToIdCache.get(name));
-    }
-
     private void fillCache() {
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
-            context
+            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            create
                     .select(META_KEY.ID, META_KEY.NAME)
                     .from(META_KEY)
                     .fetch()
@@ -130,7 +135,7 @@ class MetaKeyServiceImpl implements MetaKeyService {
 //        }
 //
 //        try (final Connection connection = dataSource.getConnection()) {
-//            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
+//            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
 //
 //            id = create
 //                    .select(STRM_TYPE.ID)
@@ -152,8 +157,8 @@ class MetaKeyServiceImpl implements MetaKeyService {
 
     private void create(final String name, final MetaType type) {
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
-            context
+            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            create
                     .insertInto(META_KEY, META_KEY.NAME, META_KEY.FIELD_TYPE)
                     .values(name, type.getPrimitiveValue())
                     .execute();
@@ -245,4 +250,22 @@ class MetaKeyServiceImpl implements MetaKeyService {
 //    protected String permission() {
 //        return null;
 //    }
+
+    void clear() {
+        idToNameCache.clear();
+        nameToIdCache.clear();
+        deleteAll();
+        setup();
+    }
+
+    int deleteAll() {
+        try (final Connection connection = dataSource.getConnection()) {
+            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            return create
+                    .delete(META_KEY)
+                    .execute();
+        } catch (final SQLException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
 }

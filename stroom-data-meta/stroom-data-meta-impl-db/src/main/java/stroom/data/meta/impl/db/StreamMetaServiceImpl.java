@@ -9,16 +9,6 @@ import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.IdSet;
-import stroom.entity.shared.PageRequest;
-import stroom.entity.shared.Sort.Direction;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.security.Security;
-import stroom.security.shared.DocumentPermissionNames;
-import stroom.security.shared.PermissionNames;
 import stroom.data.meta.api.EffectiveMetaDataCriteria;
 import stroom.data.meta.api.FindStreamCriteria;
 import stroom.data.meta.api.Stream;
@@ -35,6 +25,17 @@ import stroom.data.meta.impl.db.stroom.tables.MetaNumericValue;
 import stroom.data.meta.impl.db.stroom.tables.StreamFeed;
 import stroom.data.meta.impl.db.stroom.tables.StreamProcessor;
 import stroom.data.meta.impl.db.stroom.tables.StreamType;
+import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.Clearable;
+import stroom.entity.shared.IdSet;
+import stroom.entity.shared.PageRequest;
+import stroom.entity.shared.Sort.Direction;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm;
+import stroom.security.Security;
+import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.util.date.DateUtil;
 
 import javax.inject.Inject;
@@ -46,9 +47,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.jooq.impl.DSL.selectDistinct;
+import static stroom.data.meta.impl.db.stroom.tables.MetaKey.META_KEY;
 import static stroom.data.meta.impl.db.stroom.tables.MetaNumericValue.META_NUMERIC_VALUE;
 import static stroom.data.meta.impl.db.stroom.tables.Stream.STREAM;
 import static stroom.data.meta.impl.db.stroom.tables.StreamFeed.STREAM_FEED;
@@ -146,8 +149,8 @@ class StreamMetaServiceImpl implements StreamMetaService {
         final Integer processorId = processorService.getOrCreate(streamProperties.getStreamProcessorId(), streamProperties.getPipelineUuid());
 
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
-            final long id = context.insertInto(STREAM,
+            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            final long id = create.insertInto(STREAM,
                     STREAM.VER,
                     STREAM.CRT_MS,
                     STREAM.EFFECT_MS,
@@ -213,44 +216,54 @@ class StreamMetaServiceImpl implements StreamMetaService {
 //    }
 
     @Override
-    public Stream updateStatus(final long streamId, final StreamStatus streamStatus) {
-        return updateStatus(streamId, streamStatus, DocumentPermissionNames.UPDATE);
+    public Stream updateStatus(final Stream stream, final StreamStatus streamStatus) {
+        Objects.requireNonNull(stream, "Null stream");
+
+        final long now = System.currentTimeMillis();
+        final int result = updateStatus(stream.getId(), streamStatus, now, DocumentPermissionNames.UPDATE);
+        if (result > 0) {
+            return new Builder(stream).status(streamStatus).statusMs(now).build();
+        } else {
+            return null;
+        }
     }
 
-    private Stream updateStatus(final long streamId, final StreamStatus streamStatus, final String permission) {
+    private int updateStatus(final long streamId, final StreamStatus streamStatus, final long statusTime, final String permission) {
         final Condition condition = getIdCondition(streamId, true, permission);
 
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
-            return context
+            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            return create
                     .update(stream)
                     .set(stream.STAT, StreamStatusId.getPrimitiveValue(streamStatus))
-                    .set(stream.STAT_MS, System.currentTimeMillis())
+                    .set(stream.STAT_MS, statusTime)
                     .where(condition)
-                    .returning(stream.ID,
-                            streamFeed.NAME,
-                            streamType.NAME,
-                            streamProcessor.PIPELINE_UUID,
-                            stream.PARNT_STRM_ID,
-                            stream.STRM_TASK_ID,
-                            stream.FK_STRM_PROC_ID,
-                            stream.STAT,
-                            stream.STAT_MS,
-                            stream.CRT_MS,
-                            stream.EFFECT_MS)
-                    .fetchOne()
-                    .map(r -> new Builder().id(stream.ID.get(r))
-                            .feedName(streamFeed.NAME.get(r))
-                            .streamTypeName(streamType.NAME.get(r))
-                            .pipelineUuid(streamProcessor.PIPELINE_UUID.get(r))
-                            .parentStreamId(stream.PARNT_STRM_ID.get(r))
-                            .streamTaskId(stream.STRM_TASK_ID.get(r))
-                            .streamProcessorId(stream.FK_STRM_PROC_ID.get(r))
-                            .status(StreamStatusId.getStreamStatus(stream.STAT.get(r)))
-                            .statusMs(stream.STAT_MS.get(r))
-                            .createMs(stream.CRT_MS.get(r))
-                            .effectiveMs(stream.EFFECT_MS.get(r))
-                            .build());
+                    .execute();
+//                    .returning(stream.ID,
+//                            streamFeed.NAME,
+//                            streamType.NAME,
+//                            streamProcessor.PIPELINE_UUID,
+//                            stream.PARNT_STRM_ID,
+//                            stream.STRM_TASK_ID,
+//                            stream.FK_STRM_PROC_ID,
+//                            stream.STAT,
+//                            stream.STAT_MS,
+//                            stream.CRT_MS,
+//                            stream.EFFECT_MS)
+//                    .fetchOptional()
+//                    .map(r -> new Builder().id(stream.ID.get(r))
+//                            .feedName(streamFeed.NAME.get(r))
+//                            .streamTypeName(streamType.NAME.get(r))
+//                            .pipelineUuid(streamProcessor.PIPELINE_UUID.get(r))
+//                            .parentStreamId(stream.PARNT_STRM_ID.get(r))
+//                            .streamTaskId(stream.STRM_TASK_ID.get(r))
+//                            .streamProcessorId(stream.FK_STRM_PROC_ID.get(r))
+//                            .status(StreamStatusId.getStreamStatus(stream.STAT.get(r)))
+//                            .statusMs(stream.STAT_MS.get(r))
+//                            .createMs(stream.CRT_MS.get(r))
+//                            .effectiveMs(stream.EFFECT_MS.get(r))
+//                            .build())
+//                    .orElse(null);
 
         } catch (final SQLException e) {
             LOGGER.error(e.getMessage(), e);
@@ -289,12 +302,8 @@ class StreamMetaServiceImpl implements StreamMetaService {
         }
 
         // Ensure the user has permission to delete this stream.
-        final Stream stream = updateStatus(streamId, StreamStatus.DELETED, DocumentPermissionNames.DELETE);
-        if (stream != null) {
-            return 1;
-        }
-
-        return 0;
+        final long now = System.currentTimeMillis();
+        return updateStatus(streamId, StreamStatus.DELETED, now, DocumentPermissionNames.DELETE);
     }
 
     private SelectConditionStep<Record1<Long>> getMetaCondition(final ExpressionOperator expression) {
@@ -337,8 +346,8 @@ class StreamMetaServiceImpl implements StreamMetaService {
 
     private List<Stream> find(final Condition condition, final int offset, final int numberOfRows) {
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
-            return context
+            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            return create
                     .select(
                             stream.ID,
                             streamFeed.NAME,
@@ -387,7 +396,7 @@ class StreamMetaServiceImpl implements StreamMetaService {
 //        final Condition condition = expressionMapper.apply(secureExpression);
 //
 //        try (final Connection connection = dataSource.getConnection()) {
-//            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
+//            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
 //
 //            return create
 //                    .deleteFrom(stream)
@@ -410,8 +419,8 @@ class StreamMetaServiceImpl implements StreamMetaService {
         final Condition condition = createCondition(criteria, permission);
 
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
-            return context
+            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            return create
                     .update(stream)
                     .set(stream.STAT, StreamStatusId.getPrimitiveValue(streamStatus))
                     .set(stream.STAT_MS, System.currentTimeMillis())
@@ -428,8 +437,8 @@ class StreamMetaServiceImpl implements StreamMetaService {
         final Condition condition = createCondition(criteria, DocumentPermissionNames.DELETE);
 
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
-            return context
+            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            return create
                     .deleteFrom(stream)
                     .where(condition)
                     .execute();
@@ -466,8 +475,8 @@ class StreamMetaServiceImpl implements StreamMetaService {
     @Override
     public int getLockCount() {
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
-            return context
+            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            return create
                     .selectCount()
                     .from(stream)
                     .where(stream.STAT.eq(StreamStatusId.LOCKED))
@@ -484,7 +493,7 @@ class StreamMetaServiceImpl implements StreamMetaService {
 //    @Override
 //    public Period getCreatePeriod() {
 //        try (final Connection connection = dataSource.getConnection()) {
-//            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
+//            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
 //            return context
 //                    .select(stream.CRT_MS.min(), stream.CRT_MS.max())
 //                    .from(stream)
@@ -551,10 +560,14 @@ class StreamMetaServiceImpl implements StreamMetaService {
         });
     }
 
+    void clear() {
+        deleteAll();
+    }
+
     int deleteAll() {
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = DSL.using(connection, SQLDialect.MYSQL);
-            return context
+            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            return create
                     .delete(STREAM)
                     .execute();
         } catch (final SQLException e) {

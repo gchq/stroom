@@ -21,10 +21,6 @@ import com.google.inject.Guice;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import stroom.data.meta.api.AttributeMap;
-import stroom.data.meta.impl.db.MetaValueConfig;
-import stroom.data.meta.impl.db.MetaValueServiceImpl;
-import stroom.data.meta.impl.db.StreamMetaServiceImpl;
-import stroom.data.meta.impl.db.StreamStoreMetaDbModule;
 import stroom.properties.impl.mock.MockPropertyModule;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.impl.mock.MockSecurityContextModule;
@@ -36,8 +32,6 @@ import stroom.data.meta.api.StreamDataSource;
 import stroom.util.date.DateUtil;
 
 import javax.inject.Inject;
-import java.util.Collections;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -51,7 +45,7 @@ class TestMetaValueServiceImpl {
 
     @BeforeEach
     void setup() {
-        Guice.createInjector(new StreamStoreMetaDbModule(), new MockSecurityContextModule(), new MockPropertyModule()).injectMembers(this);
+        Guice.createInjector(new DataMetaDbModule(), new MockSecurityContextModule(), new MockPropertyModule()).injectMembers(this);
         metaValueConfig.setAddAsync(false);
     }
 

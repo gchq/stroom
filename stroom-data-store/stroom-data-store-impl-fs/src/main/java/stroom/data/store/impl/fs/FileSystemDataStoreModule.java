@@ -30,6 +30,7 @@ public class FileSystemDataStoreModule extends AbstractModule {
         bind(StreamMaintenanceService.class).to(FileSystemStreamMaintenanceService.class);
         bind(StreamStore.class).to(FileSystemStreamStoreImpl.class);
         bind(StreamCloser.class).to(SteamStoreStreamCloserImpl.class);
+        bind(FileSystemTypePaths.class).to(FileSystemTypePathsImpl.class);
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(FileSystemCleanSubTaskHandler.class);

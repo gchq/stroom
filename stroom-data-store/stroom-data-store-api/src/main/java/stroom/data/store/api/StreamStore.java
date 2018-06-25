@@ -56,7 +56,7 @@ public interface StreamStore {
      * @param append allow appending to the stream (or wipe it?)
      * @return the stream to write to
      */
-    StreamTarget openExistingStreamTarget(long streamId) throws StreamException;
+    StreamTarget openExistingStreamTarget(Stream stream) throws StreamException;
 
     /**
      * <p>

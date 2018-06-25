@@ -14,49 +14,60 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static stroom.data.store.impl.fs.db.stroom.tables.FileFeedPath.FILE_FEED_PATH;
+import static stroom.data.store.impl.fs.db.stroom.tables.FileTypePath.FILE_TYPE_PATH;
 
 /**
  * This class exists to map feed id's to file paths using old data from the DB.
  */
 @Singleton
-class FileSystemFeedPaths {
-    private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemFeedPaths.class);
+class FileSystemTypePathsImpl implements FileSystemTypePaths {
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemTypePathsImpl.class);
 
     private final DataSource dataSource;
 
-    private final Map<String, String> feedToPathMap = new HashMap<>();
+    private final Map<String, String> typeToPathMap = new HashMap<>();
+    private final Map<String, String> pathToTypeMap = new HashMap<>();
 
     @Inject
-    FileSystemFeedPaths(final DataSource dataSource) {
+    FileSystemTypePathsImpl(final DataSource dataSource) {
         this.dataSource = dataSource;
         refresh();
     }
 
-    String getPath(final String feedName) {
-        String path = feedToPathMap.get(feedName);
+    @Override
+    public String getPath(final String typeName) {
+        String path = typeToPathMap.get(typeName);
         if (path == null) {
-            insert(feedName);
-            path = feedToPathMap.get(feedName);
+            insert(typeName);
+            path = typeToPathMap.get(typeName);
 
             if (path == null) {
-                throw new RuntimeException("Unable to create path fragment from feed name");
+                throw new RuntimeException("Unable to create path from type");
             }
         }
 
         return path;
     }
 
-    private void insert(final String feedName) {
-        final String path = feedName.toUpperCase().replaceAll("\\W", "_");
-        if (!path.equals(feedName)) {
-            LOGGER.warn("A non standard feed name was found when registering a file path '" + feedName + "'");
+    @Override
+    public String getType(final String path) {
+        final String type = pathToTypeMap.get(path);
+        if (type == null) {
+            throw new RuntimeException("Unable to get type from path");
+        }
+        return type;
+    }
+
+    private void insert(final String typeName) {
+        final String path = typeName.toUpperCase().replaceAll("\\W", "_");
+        if (!path.equals(typeName)) {
+            LOGGER.warn("A non standard type name was found when registering a file path '" + typeName + "'");
         }
 
         try (final Connection connection = dataSource.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            create.insertInto(FILE_FEED_PATH, FILE_FEED_PATH.NAME, FILE_FEED_PATH.PATH)
-                    .values(feedName, path)
+            create.insertInto(FILE_TYPE_PATH, FILE_TYPE_PATH.NAME, FILE_TYPE_PATH.PATH)
+                    .values(typeName, path)
                     .execute();
         } catch (final SQLException e) {
             LOGGER.debug(e.getMessage(), e);
@@ -69,8 +80,8 @@ class FileSystemFeedPaths {
     private void refresh() {
         try (final Connection connection = dataSource.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            create.select(FILE_FEED_PATH.NAME, FILE_FEED_PATH.PATH)
-                    .from(FILE_FEED_PATH)
+            create.select(FILE_TYPE_PATH.NAME, FILE_TYPE_PATH.PATH)
+                    .from(FILE_TYPE_PATH)
                     .fetch()
                     .forEach(r -> put(r.value1(), r.value2()));
         } catch (final SQLException e) {
@@ -80,6 +91,7 @@ class FileSystemFeedPaths {
     }
 
     private void put(final String name, final String path) {
-        feedToPathMap.put(name, path);
+        typeToPathMap.put(name, path);
+        pathToTypeMap.put(path, name);
     }
 }
