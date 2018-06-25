@@ -15,6 +15,7 @@
  */
 import {
   getPipelineAsTree,
+  getRecycleBinItems,
   createNewElementInPipeline,
   removeElementFromPipeline,
   getAllChildren,
@@ -36,7 +37,7 @@ describe('Pipeline Utils', () => {
       const asTree = getPipelineAsTree(testPipelines.multiBranchChild);
 
       // Then
-      console.log('Multi Branch Child', JSON.stringify(asTree, null, 2));
+      //console.log('Multi Branch Child', JSON.stringify(asTree, null, 2));
     })
     test('should convert a pipeline to a tree and detect the correct root', () => {
       // Given
@@ -217,6 +218,22 @@ describe('Pipeline Utils', () => {
 
       expect(updatedPipeline.merged.elements.add.map(e => e.id).includes(itemToDelete)).toBeFalsy();
       expect(updatedPipeline.merged.elements.add.map(e => e.id).includes(itemToDeleteChild)).toBeTruthy();
+    });
+    test('should be able to get a pipeline as a tree after deletion', () => {
+      // Given
+      const testPipeline = testPipelines.multiBranchChild;
+      const itemToDelete = 'xmlWriter1';
+      const configStackThis = testPipeline.configStack[1];
+
+      // When
+      const updatedPipeline = removeElementFromPipeline(testPipeline, itemToDelete);
+      const updatedConfigStackThis = updatedPipeline.configStack[1];
+
+      const asTree = getPipelineAsTree(updatedPipeline);
+      const recycleBin = getRecycleBinItems(updatedPipeline);
+
+      console.log('Recycle Bin', recycleBin);
+
     });
     test('should hide an element that is ours, and delete the link', () => {
       // Given

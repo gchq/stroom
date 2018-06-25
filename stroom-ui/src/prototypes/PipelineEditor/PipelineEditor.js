@@ -112,7 +112,7 @@ const PipelineEditor = enhance(({
     className={`Pipeline-editor  Pipeline-editor--palette-${isPaletteOpen ? 'open' : 'close'}`}
   >
     <div className="Pipeline-editor__element-palette">
-      <ElementPalette />
+      <ElementPalette pipelineId={pipelineId} />
     </div>
 
     <button className="Pipeline-editor__palette-toggle" onClick={togglePaletteOpen}>

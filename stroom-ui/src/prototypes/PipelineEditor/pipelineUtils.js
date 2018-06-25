@@ -16,6 +16,12 @@
 
 import { findItem, findMatch, iterateNodes } from 'lib/treeUtils';
 
+export function getRecycleBinItems(pipeline, elementsByType) {
+  const thisConfigStack = pipeline.configStack[pipeline.configStack.length - 1];
+
+  return thisConfigStack.elements.remove.map(e => elementsByType[e.type]);
+}
+
 /**
  * This function takes the denormalised pipeline definition and creates
  * a tree like structure. The root element is the 'from' of the first link.
@@ -37,7 +43,7 @@ export function getPipelineAsTree(pipeline) {
   });
 
   // Create the tree using links
-  pipeline.merged.links.add.forEach((l) => {
+  pipeline.merged.links.add.filter(l => !!elements[l.from]).forEach((l) => {
     elements[l.from].children.push(elements[l.to]);
   });
 
@@ -375,4 +381,3 @@ export function getAllChildren(pipeline, parent) {
 
   return allChildren;
 }
-

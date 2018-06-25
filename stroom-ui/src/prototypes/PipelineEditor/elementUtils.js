@@ -36,6 +36,23 @@ export function groupByCategory(elements) {
 }
 
 /**
+ * This will take in the map of element types and return a new map
+ * of those types grouped by category
+ * @param {elementTypes} elements The element definitions from Stroom
+ */
+export function keyByType(elements) {
+  return Object.entries(elements)
+    .map(k => k[1])
+    .reduce(
+      (acc, next) => ({
+        ...acc,
+        [next.type]: next,
+      }),
+      {},
+    );
+}
+
+/**
  * This function determins if a particular child element type can be connected
  * to a parent type. It takes into the account the roles being played by both
  * elements, and the number of existing connections.

@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose, withState } from 'recompose';
+import { compose, withState, withProps } from 'recompose';
 
 import { Icon, Accordion } from 'semantic-ui-react';
 
@@ -10,15 +10,20 @@ import { ElementCategories } from '../ElementCategories';
 
 const withCategoryIsOpen = withState('isOpen', 'setIsOpen', true);
 
-const enhance = compose(withCategoryIsOpen)
+const enhance = compose(
+  withCategoryIsOpen,
+  withProps(({ category }) => ({
+    displayTitle: ElementCategories[category] ? ElementCategories[category].displayName : category,
+  })),
+);
 
 const ElementCategory = enhance(({
-  category, elements, isOpen, setIsOpen,
+  category, elements, isOpen, setIsOpen, displayTitle,
 }) => (
   <div className="element-palette-category">
     <Accordion styled>
       <Accordion.Title active={isOpen} onClick={() => setIsOpen(!isOpen)}>
-        <Icon name="dropdown" /> {ElementCategories[category].displayName}
+        <Icon name="dropdown" /> {displayTitle}
       </Accordion.Title>
       <Accordion.Content active={isOpen}>
         <div className={`element-palette-category__elements--${isOpen ? 'open' : 'closed'}`}>
@@ -31,7 +36,7 @@ const ElementCategory = enhance(({
 
 ElementCategory.propTypes = {
   category: PropTypes.string.isRequired,
-  elements: PropTypes.array.isRequired
-}
+  elements: PropTypes.array.isRequired,
+};
 
 export default ElementCategory;
