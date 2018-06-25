@@ -155,7 +155,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
     @PipelineProperty(
             description = "Shoud the output stream be marked with indexed segments to allow fast access to individual records?",
             defaultValue = "true",
-            displayPriority = 5)
+            displayPriority = 6)
     public void setSegmentOutput(final boolean segmentOutput) {
         this.segmentOutput = segmentOutput;
     }

@@ -610,7 +610,7 @@ public class XSLTFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         this.suppressXSLTNotFoundWarnings = suppressXSLTNotFoundWarnings;
     }
 
-    @PipelineProperty(description = "A list of places to load reference data from if required.", displayPriority = 1)
+    @PipelineProperty(description = "A list of places to load reference data from if required.", displayPriority = 5)
     public void setPipelineReference(final PipelineReference pipelineReference) {
         if (pipelineReferences == null) {
             pipelineReferences = new ArrayList<>();
