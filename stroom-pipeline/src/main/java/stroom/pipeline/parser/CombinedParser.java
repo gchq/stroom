@@ -22,6 +22,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import stroom.cache.ParserFactoryPool;
 import stroom.cache.StoredParserFactory;
+import stroom.docref.DocRef;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.SupportsCodeInjection;
 import stroom.pipeline.TextConverterStore;
@@ -33,14 +34,13 @@ import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
+import stroom.pipeline.reader.BOMRemovalInputStream;
 import stroom.pipeline.reader.InvalidCharFilterReader;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pool.PoolItem;
-import stroom.docref.DocRef;
-import stroom.pipeline.reader.BOMRemovalInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.xml.SAXParserFactoryFactory;
 import stroom.xml.converter.ParserFactory;
@@ -225,18 +225,18 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
         this.injectedCode = injectedCode;
     }
 
-    @PipelineProperty(description = "The parser type, e.g. 'JSON', 'XML', 'Data Splitter'.")
+    @PipelineProperty(description = "The parser type, e.g. 'JSON', 'XML', 'Data Splitter'.", displayPriority = 1)
     public void setType(final String type) {
         this.type = type;
     }
 
-    @PipelineProperty(description = "The text converter configuration that should be used to parse the input data.")
+    @PipelineProperty(description = "The text converter configuration that should be used to parse the input data.", displayPriority = 2)
     @PipelinePropertyDocRef(types = TextConverterDoc.DOCUMENT_TYPE)
     public void setTextConverter(final DocRef textConverterRef) {
         this.textConverterRef = textConverterRef;
     }
 
-    @PipelineProperty(description = "Fix invalid XML characters from the input stream.", defaultValue = "false")
+    @PipelineProperty(description = "Fix invalid XML characters from the input stream.", defaultValue = "false", displayPriority = 3)
     public void setFixInvalidChars(final boolean fixInvalidChars) {
         this.fixInvalidChars = fixInvalidChars;
     }

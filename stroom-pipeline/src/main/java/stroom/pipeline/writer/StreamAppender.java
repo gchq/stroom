@@ -17,8 +17,9 @@
 
 package stroom.pipeline.writer;
 
-import stroom.feed.MetaMap;
+import stroom.docref.DocRef;
 import stroom.feed.FeedService;
+import stroom.feed.MetaMap;
 import stroom.feed.shared.Feed;
 import stroom.io.StreamCloser;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -32,7 +33,6 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaData;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
-import stroom.docref.DocRef;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.StreamTarget;
 import stroom.streamstore.StreamTypeService;
@@ -66,13 +66,13 @@ public class StreamAppender extends AbstractAppender {
 
     @Inject
     public StreamAppender(final ErrorReceiverProxy errorReceiverProxy,
-                   final StreamStore streamStore,
-                   final StreamHolder streamHolder,
-                   final FeedService feedService,
-                   final StreamTypeService streamTypeService,
-                   final StreamProcessorHolder streamProcessorHolder,
-                   final MetaData metaData,
-                   final StreamCloser streamCloser) {
+                          final StreamStore streamStore,
+                          final StreamHolder streamHolder,
+                          final FeedService feedService,
+                          final StreamTypeService streamTypeService,
+                          final StreamProcessorHolder streamProcessorHolder,
+                          final MetaData metaData,
+                          final StreamCloser streamCloser) {
         super(errorReceiverProxy);
         this.errorReceiverProxy = errorReceiverProxy;
         this.streamStore = streamStore;
@@ -155,17 +155,24 @@ public class StreamAppender extends AbstractAppender {
     }
 
     @PipelinePropertyDocRef(types = Feed.ENTITY_TYPE)
-    @PipelineProperty(description = "The feed that output stream should be written to. If not specified the feed the input stream belongs to will be used.")
+    @PipelineProperty(
+            description = "The feed that output stream should be written to. If not specified the feed the input stream belongs to will be used.",
+            displayPriority = 2)
     public void setFeed(final DocRef feedRef) {
         this.feedRef = feedRef;
     }
 
-    @PipelineProperty(description = "The stream type that the output stream should be written as. This must be specified.")
+    @PipelineProperty(
+            description = "The stream type that the output stream should be written as. This must be specified.",
+            displayPriority = 1)
     public void setStreamType(final String streamType) {
         this.streamType = streamType;
     }
 
-    @PipelineProperty(description = "Should the output stream be marked with indexed segments to allow fast access to individual records?", defaultValue = "true")
+    @PipelineProperty(
+            description = "Should the output stream be marked with indexed segments to allow fast access to individual records?",
+            defaultValue = "true",
+            displayPriority = 3)
     public void setSegmentOutput(final boolean segmentOutput) {
         this.segmentOutput = segmentOutput;
     }

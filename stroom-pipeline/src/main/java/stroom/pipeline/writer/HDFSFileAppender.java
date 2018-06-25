@@ -267,17 +267,21 @@ public class HDFSFileAppender extends AbstractAppender {
     /**
      * @param outputPaths the outputPaths to set
      */
-    @PipelineProperty(description = "One or more destination paths for output files separated with commas. Replacement variables can be used in path strings such as ${feed}.")
+    @PipelineProperty(
+            description = "One or more destination paths for output files separated with commas. Replacement variables can be used in path strings such as ${feed}.",
+            displayPriority = 1)
     public void setOutputPaths(final String outputPaths) {
         this.outputPaths = outputPaths.split(",");
     }
 
-    @PipelineProperty(description = "URI for the Hadoop Distributed File System (HDFS) to connect to, e.g. hdfs://mynamenode.mydomain.com:8020")
+    @PipelineProperty(description = "URI for the Hadoop Distributed File System (HDFS) to connect to, e.g. hdfs://mynamenode.mydomain.com:8020",
+            displayPriority = 2)
     public void setFileSystemUri(final String hdfsUri) {
         this.hdfsUri = hdfsUri;
     }
 
-    @PipelineProperty(description = "The user to connect to HDFS as")
+    @PipelineProperty(description = "The user to connect to HDFS as",
+            displayPriority = 3)
     public void setRunAsUser(final String runAsUser) {
         this.runAsUser = runAsUser;
     }

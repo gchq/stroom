@@ -21,6 +21,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import stroom.cache.ParserFactoryPool;
 import stroom.cache.StoredParserFactory;
+import stroom.docref.DocRef;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.SupportsCodeInjection;
 import stroom.pipeline.TextConverterStore;
@@ -38,7 +39,6 @@ import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pool.PoolItem;
-import stroom.docref.DocRef;
 import stroom.xml.converter.ParserFactory;
 
 import javax.inject.Inject;
@@ -146,7 +146,9 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
         this.injectedCode = injectedCode;
     }
 
-    @PipelineProperty(description = "The XML fragment wrapper that should be used to wrap the input XML.")
+    @PipelineProperty(
+            description = "The XML fragment wrapper that should be used to wrap the input XML.",
+            displayPriority = 1)
     @PipelinePropertyDocRef(types = TextConverterDoc.DOCUMENT_TYPE)
     public void setTextConverter(final DocRef textConverterRef) {
         this.textConverterRef = textConverterRef;

@@ -79,7 +79,7 @@ public class HttpPostFilter extends AbstractSamplingFilter {
         }
     }
 
-    @PipelineProperty(description = "The URL of the receiving API.")
+    @PipelineProperty(description = "The URL of the receiving API.", displayPriority = 1)
     public void setReceivingApiUrl(final String receivingApiUrl) {
         this.receivingApiUrl = receivingApiUrl;
     }

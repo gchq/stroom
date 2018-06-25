@@ -30,8 +30,8 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
     private Locator locator;
 
     protected AbstractKafkaProducerFilter(final ErrorReceiverProxy errorReceiverProxy,
-                                       final LocationFactoryProxy locationFactory,
-                                       final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService) {
+                                          final LocationFactoryProxy locationFactory,
+                                          final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService) {
 
         super(errorReceiverProxy, locationFactory);
         this.errorReceiverProxy = errorReceiverProxy;
@@ -81,7 +81,8 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
 
     @PipelineProperty(
             description = "Wait for acknowledgement from the Kafka borker for each message sent. This is slower but catches errors sooner",
-            defaultValue = "false")
+            defaultValue = "false",
+            displayPriority = 3)
     public void setFlushOnSend(final boolean flushOnSend) {
         this.flushOnSend = flushOnSend;
     }

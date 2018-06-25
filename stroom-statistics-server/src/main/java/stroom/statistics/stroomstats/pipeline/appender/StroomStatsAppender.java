@@ -1,15 +1,15 @@
 package stroom.statistics.stroomstats.pipeline.appender;
 
+import stroom.docref.DocRef;
+import stroom.kafka.AbstractKafkaAppender;
 import stroom.kafka.StroomKafkaProducerFactoryService;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
-import stroom.kafka.AbstractKafkaAppender;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.docref.DocRef;
 import stroom.statistics.stroomstats.entity.StroomStatsStoreStore;
 import stroom.statistics.stroomstats.kafka.TopicNameFactory;
 import stroom.stats.shared.StroomStatsStoreDoc;
@@ -85,7 +85,9 @@ public class StroomStatsAppender extends AbstractKafkaAppender {
         super.startProcessing();
     }
 
-    @PipelineProperty(description = "The stroom-stats data source to record statistics against.")
+    @PipelineProperty(
+            description = "The stroom-stats data source to record statistics against.",
+            displayPriority = 1)
     @PipelinePropertyDocRef(types = StroomStatsStoreDoc.DOCUMENT_TYPE)
     public void setStatisticsDataSource(final DocRef stroomStatStoreRef) {
         this.stroomStatStoreRef = stroomStatStoreRef;
