@@ -43,7 +43,7 @@ const {
   pipelineElementSelected,
 } = actionCreators;
 
-storiesOf('Pipeline Editor', module)
+const pipelineStories = storiesOf('Pipeline Editor', module)
   .addDecorator(PollyDecorator((server, config) => {
     server.get(`${config.elementServiceUrl}/elements`).intercept((req, res) => {
       res.json(elements);
@@ -51,21 +51,16 @@ storiesOf('Pipeline Editor', module)
     server.get(`${config.elementServiceUrl}/elementProperties`).intercept((req, res) => {
       res.json(elementProperties);
     });
-    server.get(`${config.pipelineServiceUrl}/simplePipeline`).intercept((req, res) => {
-      res.json(testPipelines.simple);
-    });
-    server.get(`${config.pipelineServiceUrl}/inheritedPipeline`).intercept((req, res) => {
-      res.json(testPipelines.inherited);
-    });
-    server.get(`${config.pipelineServiceUrl}/longPipeline`).intercept((req, res) => {
-      res.json(testPipelines.longPipeline);
-    });
+    Object.entries(testPipelines).forEach(k =>
+      server.get(`${config.pipelineServiceUrl}/${k[0]}`).intercept((req, res) => {
+        res.json(k[1]);
+      }));
   }))
   .addDecorator(ReduxDecorator)
-  .addDecorator(DragDropDecorator)
-  .add('Simple', () => <PipelineEditor pipelineId="simplePipeline" />)
-  .add('Inheritance', () => <PipelineEditor pipelineId="inheritedPipeline" />)
-  .add('Long', () => <PipelineEditor pipelineId="longPipeline" />);
+  .addDecorator(DragDropDecorator);
+
+Object.keys(testPipelines).forEach(k =>
+  pipelineStories.add(k, () => <PipelineEditor pipelineId={k} />));
 
 storiesOf('Element Palette', module)
   .addDecorator(PollyDecorator((server, config) => {

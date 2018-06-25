@@ -27,38 +27,7 @@ export default {
         remove: [],
       },
       properties: {
-        add: [
-          {
-            element: 'dsParser',
-            name: 'textConverter',
-            value: {
-              string: null,
-              integer: null,
-              entity: {
-                type: 'TextConverter',
-                uuid: '4fde9c79-796c-4069-bbdb-e707ff558376',
-                name: 'dsParser',
-              },
-              long: null,
-              boolean: null,
-            },
-          },
-          {
-            element: 'xsltFilter',
-            name: 'xslt',
-            value: {
-              string: null,
-              integer: null,
-              entity: {
-                type: 'XSLT',
-                uuid: '5871080f-b5bb-49d2-9483-5a54f7fb4e7c',
-                name: 'xsltFilter',
-              },
-              long: null,
-              boolean: null,
-            },
-          },
-        ],
+        add: [],
         remove: [],
       },
       pipelineReferences: {
@@ -87,6 +56,43 @@ export default {
         remove: [],
       },
     },
+    {
+      elements: {
+        add: [
+          {
+            id: 'xmlParser',
+            type: 'XMLParser',
+          },
+        ],
+        remove: [],
+      },
+      properties: {
+        add: [],
+        remove: [],
+      },
+      pipelineReferences: {
+        add: [],
+        remove: [],
+      },
+      links: {
+        add: [
+          {
+            from: 'Source',
+            to: 'xmlParser',
+          },
+          {
+            from: 'xmlParser',
+            to: 'xsltFilter',
+          },
+        ],
+        remove: [
+          {
+            from: 'dsParser',
+            to: 'xsltFilter',
+          },
+        ],
+      },
+    },
   ],
   merged: {
     elements: {
@@ -98,6 +104,10 @@ export default {
         {
           id: 'streamAppender',
           type: 'StreamAppender',
+        },
+        {
+          id: 'xmlParser',
+          type: 'XMLParser',
         },
         {
           id: 'xmlWriter',
@@ -115,38 +125,7 @@ export default {
       remove: [],
     },
     properties: {
-      add: [
-        {
-          element: 'xsltFilter',
-          name: 'xslt',
-          value: {
-            string: null,
-            integer: null,
-            entity: {
-              type: 'XSLT',
-              uuid: '5871080f-b5bb-49d2-9483-5a54f7fb4e7c',
-              name: 'xsltFilter',
-            },
-            long: null,
-            boolean: null,
-          },
-        },
-        {
-          element: 'dsParser',
-          name: 'textConverter',
-          value: {
-            string: null,
-            integer: null,
-            entity: {
-              type: 'TextConverter',
-              uuid: '4fde9c79-796c-4069-bbdb-e707ff558376',
-              name: 'dsParser',
-            },
-            long: null,
-            boolean: null,
-          },
-        },
-      ],
+      add: [],
       remove: [],
     },
     pipelineReferences: {
@@ -160,16 +139,20 @@ export default {
           to: 'xmlWriter',
         },
         {
+          from: 'xmlParser',
+          to: 'xsltFilter',
+        },
+        {
           from: 'xmlWriter',
           to: 'streamAppender',
         },
         {
-          from: 'dsParser',
-          to: 'xsltFilter',
+          from: 'Source',
+          to: 'dsParser',
         },
         {
           from: 'Source',
-          to: 'dsParser',
+          to: 'xmlParser',
         },
       ],
       remove: [],

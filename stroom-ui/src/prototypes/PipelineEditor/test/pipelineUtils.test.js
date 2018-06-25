@@ -13,23 +13,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { getPipelineAsTree, deleteElementInPipeline, getAllChildren } from '../pipelineUtils';
+import {
+  getPipelineAsTree,
+  createNewElementInPipeline,
+  removeElementFromPipeline,
+  getAllChildren,
+} from '../pipelineUtils';
 
-import { testPipelines } from './index';
+import { testPipelines, elements } from './index';
 
 describe('Pipeline Utils', () => {
   describe('#getPipelineAsTree', () => {
-    test('should convert a pipeline to a tree', () => {
+    test('should convert a simple pipeline to a tree', () => {
       // When
       const asTree = getPipelineAsTree(testPipelines.simple);
 
       // Then
       expectsForSimplePipeline(asTree);
     });
+    test('should convert a multi branch child pipeline to a tree', () => {
+      // When
+      const asTree = getPipelineAsTree(testPipelines.multiBranchChild);
+
+      // Then
+      console.log('Multi Branch Child', JSON.stringify(asTree, null, 2));
+    })
     test('should convert a pipeline to a tree and detect the correct root', () => {
       // Given
       // Swap some entities over -- it shouldn't matter if they're not in the correct order
-      const testPipeline = testPipelines.simple;
+      const testPipeline = {
+        configStack: testPipelines.simple.configStack,
+        merged: {
+          ...testPipelines.simple.merged,
+          links: {
+            add: [...testPipelines.simple.merged.links.add],
+          },
+        },
+      };
       const first = testPipeline.merged.links.add[0];
       testPipeline.merged.links.add[0] = testPipeline.merged.links.add[2];
       testPipeline.merged.links.add[2] = first;
@@ -79,67 +99,164 @@ describe('Pipeline Utils', () => {
     });
   });
 
-  describe('#deleteElementInPipeline', () => {
-    test('should delete element and everything after', () => {
-      const itemToDelete = 'xmlWriter1';
-      const childToBeDeleted = 'streamAppender1';
-      const parentToBePresent = 'xsltFilter';
+  describe('#createNewElementInPipeline', () => {
+    test('should add item to merged and config stack', () => {
+      // Given
+      const testPipeline = testPipelines.simple;
+      const elementDefinition = elements.find(f => f.type === 'XSLTFilter');
+      const newElementName = 'New XSLT Filter';
+      const parentId = 'dsParser';
 
       // When
-      const newPipeline = deleteElementInPipeline(testPipelines.forkedPipeline, itemToDelete);
+      const updatedPipeline = createNewElementInPipeline(
+        testPipeline,
+        parentId,
+        elementDefinition,
+        newElementName,
+      );
 
-      // Then...
-      // ... for properties
-      // TODO I'm not sure we want to clear properties
-      expect(newPipeline.merged.properties.add.length).toBe(2);
-      expect(newPipeline.merged.properties.add[0].element).toBe(parentToBePresent);
-      expectMissing(newPipeline, 'properties', 'element', childToBeDeleted);
-      expectMissing(newPipeline, 'properties', 'element', itemToDelete);
+      // Then
+      const arrayContainingElement = expect.arrayContaining([
+        {
+          id: newElementName,
+          type: elementDefinition.type,
+        },
+      ]);
+      const arrayContainingLink = expect.arrayContaining([
+        {
+          from: parentId,
+          to: newElementName,
+        },
+      ]);
 
-      // ... for elements
-      expect(newPipeline.merged.elements.add.length).toBe(5);
-      expect(newPipeline.merged.elements.add[0].id).toBe(parentToBePresent);
-      expectMissing(newPipeline, 'elements', 'id', childToBeDeleted);
-      expectMissing(newPipeline, 'elements', 'id', itemToDelete);
+      expect(updatedPipeline.configStack[0].elements.add).toEqual(arrayContainingElement);
+      expect(updatedPipeline.configStack[0].links.add).toEqual(arrayContainingLink);
 
-      // ... for links
-      expect(newPipeline.merged.links.add.length).toBe(4);
-      expect(newPipeline.merged.links.add[0].from).toBe(parentToBePresent);
-      expectMissing(newPipeline, 'links', 'from', childToBeDeleted);
-      expectMissing(newPipeline, 'links', 'from', itemToDelete);
+      expect(updatedPipeline.merged.elements.add).toEqual(arrayContainingElement);
+      expect(updatedPipeline.merged.links.add).toEqual(arrayContainingLink);
     });
-    test('should delete element and everything after #1', () => {
-      const itemToDelete = 'xsltFilter';
-      const childToBeDeleted1 = 'streamAppender1';
-      const childToBeDeleted2 = 'streamAppender2';
-      const childToBeDeleted3 = 'xmlWriter1';
-      const childToBeDeleted4 = 'xmlWriter2';
-      const parentToBePresent = 'dsParser';
+  });
+
+  describe('#removeElementFromPipeline', () => {
+    test('should hide an element and link that are inherited', () => {
+      // Given
+      const testPipeline = testPipelines.inherited;
+      const itemToDelete = 'pXmlWriter';
+      const configStackThis = testPipeline.configStack[1];
 
       // When
-      const newPipeline = deleteElementInPipeline(testPipelines.forkedPipeline, itemToDelete);
+      const updatedPipeline = removeElementFromPipeline(testPipeline, itemToDelete);
+      const updatedConfigStackThis = updatedPipeline.configStack[1];
 
-      // Then...
-      // ... for properties
-      expect(newPipeline.merged.properties.add.length).toBe(1);
-      expect(newPipeline.merged.properties.add[0].element).toBe(parentToBePresent);
-      expectMissing(newPipeline, 'properties', 'element', childToBeDeleted1);
-      expectMissing(newPipeline, 'properties', 'element', childToBeDeleted2);
-      expectMissing(newPipeline, 'properties', 'element', childToBeDeleted3);
-      expectMissing(newPipeline, 'properties', 'element', childToBeDeleted4);
-      expectMissing(newPipeline, 'properties', 'element', itemToDelete);
+      // Then
+      // Check merged - elements
+      expect(testPipeline.merged.elements.add.map(e => e.id).includes(itemToDelete)).toBeTruthy();
+      expect(updatedPipeline.merged.elements.add.map(e => e.id).includes(itemToDelete)).toBeFalsy();
 
-      // ... for elements
-      expect(newPipeline.merged.elements.add.length).toBe(2);
-      expect(newPipeline.merged.elements.add[0].id).toBe(parentToBePresent);
-      expectMissing(newPipeline, 'elements', 'id', childToBeDeleted1);
-      expectMissing(newPipeline, 'elements', 'id', childToBeDeleted2);
-      expectMissing(newPipeline, 'elements', 'id', childToBeDeleted3);
-      expectMissing(newPipeline, 'elements', 'id', childToBeDeleted4);
-      expectMissing(newPipeline, 'elements', 'id', itemToDelete);
+      // Check merged - links
+      expect(testPipeline.merged.links.add.map(l => l.to).includes(itemToDelete)).toBeTruthy();
+      expect(updatedPipeline.merged.links.add.map(l => l.to).includes(itemToDelete)).toBeFalsy();
 
-      // ... for links
-      expect(newPipeline.merged.links.add.length).toBe(1);
+      // Check config stack - elements
+      expect(configStackThis.elements.add.map(e => e.id).includes(itemToDelete)).toBeFalsy();
+      expect(configStackThis.elements.remove.map(e => e.id).includes(itemToDelete)).toBeFalsy();
+      expect(updatedConfigStackThis.elements.add.map(e => e.id).includes(itemToDelete)).toBeFalsy();
+      expect(updatedConfigStackThis.elements.remove.map(e => e.id).includes(itemToDelete)).toBeTruthy();
+
+      // Check config stack - links
+      expect(configStackThis.links.add.map(l => l.to).includes(itemToDelete)).toBeFalsy();
+      expect(configStackThis.links.remove.map(l => l.to).includes(itemToDelete)).toBeFalsy();
+      expect(updatedConfigStackThis.links.add.map(l => l.to).includes(itemToDelete)).toBeFalsy();
+      expect(updatedConfigStackThis.links.remove.map(l => l.to).includes(itemToDelete)).toBeTruthy();
+
+      // Check that a follow on element & link are still just being added to merged picture
+      expect(updatedPipeline.merged.elements.add.map(e => e.id).includes('pStreamAppender')).toBeTruthy();
+      expect(updatedPipeline.merged.links.add).toEqual(expect.arrayContaining([
+        {
+          from: 'pXmlWriter',
+          to: 'pStreamAppender',
+        },
+      ]));
+    });
+    test('should hide an element that is inherited, but delete a link that is ours', () => {
+      // Given
+      const testPipeline = testPipelines.childRestoredLink;
+      const itemToDelete = 'xsltFilter'; // is a parent element, but the link was restored to an element we created
+      const itemToDeleteParent = 'xmlParser'; // this is our element which we restored the parent element onto
+      const itemToDeleteChild = 'xmlWriter'; // this is the element that are deleted element used as an output
+      const configStackThis = testPipeline.configStack[1];
+
+      // When
+      const updatedPipeline = removeElementFromPipeline(testPipeline, itemToDelete);
+      const updatedConfigStackThis = updatedPipeline.configStack[1];
+
+      // Then
+      // Check merged elements
+      expect(updatedPipeline.merged.elements.remove.map(e => e.id).includes(itemToDelete)).toBeFalsy();
+
+      // Check merged links
+      const testLink = [
+        {
+          from: itemToDeleteParent,
+          to: itemToDelete,
+        },
+      ];
+      expect(testPipeline.merged.links.add).toEqual(expect.arrayContaining(testLink));
+      expect(updatedPipeline.merged.links.add).not.toEqual(expect.arrayContaining(testLink));
+
+      const testFollowOnLink = [{
+        from: itemToDelete,
+        to: itemToDeleteChild
+      }]
+      expect(testPipeline.merged.links.add).toEqual(expect.arrayContaining(testFollowOnLink));
+      expect(updatedPipeline.merged.links.add).toEqual(expect.arrayContaining(testFollowOnLink));
+
+      // Check merged elements
+      expect(testPipeline.merged.elements.add.map(e => e.id).includes(itemToDelete)).toBeTruthy();
+      expect(testPipeline.merged.elements.add.map(e => e.id).includes(itemToDeleteChild)).toBeTruthy();
+
+      expect(updatedPipeline.merged.elements.add.map(e => e.id).includes(itemToDelete)).toBeFalsy();
+      expect(updatedPipeline.merged.elements.add.map(e => e.id).includes(itemToDeleteChild)).toBeTruthy();
+    });
+    test('should hide an element that is ours, and delete the link', () => {
+      // Given
+      const testPipeline = testPipelines.simple;
+      const itemToDelete = 'xmlWriter';
+      const configStackThis = testPipeline.configStack[0];
+
+      // When
+      const updatedPipeline = removeElementFromPipeline(testPipeline, itemToDelete);
+      const updatedConfigStackThis = updatedPipeline.configStack[0];
+
+      // Then
+      // Check merged - elements
+      expect(testPipeline.merged.elements.add.map(e => e.id).includes(itemToDelete)).toBeTruthy();
+      expect(updatedPipeline.merged.elements.add.map(e => e.id).includes(itemToDelete)).toBeFalsy();
+
+      // Check merged - links
+      expect(testPipeline.merged.links.add.map(l => l.to).includes(itemToDelete)).toBeTruthy();
+      expect(updatedPipeline.merged.links.add.map(l => l.to).includes(itemToDelete)).toBeFalsy();
+
+      // Check Config Stack - elements
+      expect(configStackThis.elements.add.map(e => e.id).includes(itemToDelete)).toBeTruthy();
+      expect(configStackThis.elements.remove.map(e => e.id).includes(itemToDelete)).toBeFalsy();
+      expect(updatedConfigStackThis.elements.add.map(e => e.id).includes(itemToDelete)).toBeFalsy();
+      expect(updatedConfigStackThis.elements.remove.map(e => e.id).includes(itemToDelete)).toBeTruthy();
+
+      // Check Config stack - links
+      expect(configStackThis.links.add.map(l => l.to).includes(itemToDelete)).toBeTruthy();
+      expect(configStackThis.links.remove.map(l => l.to).includes(itemToDelete)).toBeFalsy();
+      expect(updatedConfigStackThis.links.add.map(l => l.to).includes(itemToDelete)).toBeFalsy();
+      expect(updatedConfigStackThis.links.remove.map(l => l.to).includes(itemToDelete)).toBeFalsy();
+
+      // Check that a follow on element & link are still just being added to merged picture
+      expect(updatedPipeline.merged.elements.add.map(e => e.id).includes('streamAppender')).toBeTruthy();
+      expect(updatedPipeline.merged.links.add).toEqual(expect.arrayContaining([
+        {
+          from: 'xmlWriter',
+          to: 'streamAppender',
+        },
+      ]));
     });
   });
 });

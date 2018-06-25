@@ -74,7 +74,20 @@ export default {
     },
     {
       elements: {
-        add: [],
+        add: [
+          {
+            id: 'cXsltFilter',
+            type: 'XSLTFilter',
+          },
+          {
+            id: 'cXmlWriter',
+            type: 'XMLWriter',
+          },
+          {
+            id: 'cStreamAppender',
+            type: 'StreamAppender',
+          },
+        ],
         remove: [],
       },
       properties: {
@@ -143,7 +156,20 @@ export default {
         remove: [],
       },
       links: {
-        add: [],
+        add: [
+          {
+            from: 'pDsParser',
+            to: 'cXsltFilter',
+          },
+          {
+            from: 'cXsltFilter',
+            to: 'cXmlWriter',
+          },
+          {
+            from: 'cXmlWriter',
+            to: 'cStreamAppender',
+          },
+        ],
         remove: [],
       },
     },

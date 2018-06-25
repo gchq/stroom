@@ -41,24 +41,32 @@ export function getPipelineAsTree(pipeline) {
     elements[l.from].children.push(elements[l.to]);
   });
 
-  // Figure out the root -- if a link doesn't have anything going to it then it's the root.
-  const rootLinks = pipeline.merged.links.add.filter((fromLink) => {
-    const toLinks = pipeline.merged.links.add.filter(l => fromLink.from === l.to);
-    return toLinks.length === 0;
-  });
-
+  // Figure out the root
   let rootId;
-  if (rootLinks.length === 0) {
-    // Maybe there's only one thing and therefore no links?
-    if (pipeline.merged.elements.add.length !== 0) {
-      // If there're no links then we can use the first element.
-      rootId = pipeline.merged.elements.add[0].id;
-    } else {
-      // If there are no elements then we can't have a root node.
-      rootId = undefined;
-    }
+
+  // First, is there an element of type Source?
+  if (elements.Source) {
+    rootId = 'Source';
   } else {
-    rootId = rootLinks[0].from;
+    // if a link doesn't have anything going to it then it may be a root.
+    const rootLinks = pipeline.merged.links.add.filter((fromLink) => {
+      const toLinks = pipeline.merged.links.add.filter(l => fromLink.from === l.to);
+      return toLinks.length === 0;
+    });
+
+    if (rootLinks.length === 0) {
+      // Maybe there's only one thing and therefore no links?
+      if (pipeline.merged.elements.add.length !== 0) {
+        // If there're no links then we can use the first element.
+        rootId = pipeline.merged.elements.add[0].id;
+      } else {
+        // If there are no elements then we can't have a root node.
+        rootId = undefined;
+      }
+    } else {
+      // Just pick the first potential root? (not sure about this)
+      rootId = rootLinks[0].from;
+    }
   }
 
   return rootId ? elements[rootId] : undefined;
@@ -170,36 +178,113 @@ export const uniqueElementName = (pipeline) => {
 };
 
 /**
+ * Utility function for replacing the last item in an array by using a given map function.
+ * All the other items are left as they are.
+ */
+function mapLastItemInArray(input, mapFunc) {
+  return input.map((item, i, arr) => (i === arr.length - 1 ? mapFunc(item) : item));
+}
+
+/**
+ * Adds a new entry to a pipeline for the chosen element definition.
+ * Creates the link between the new element and the given parent.
+ * The new element will be given the name as it's unique ID.
  *
- *
- *
- * @param {pipeline} pipeline
- * @param {string} parentId
- * @param {element} childDefinition
+ * @param {pipeline} pipeline The current total picture of the pipeline
+ * @param {string} parentId The ID of the parent that the link is being added to.
+ * @param {element} childDefinition The definiton of the new element.
  * @param {string} name The name to give to the new element.
  */
 export function createNewElementInPipeline(pipeline, parentId, childDefinition, name) {
+  const newElement = {
+    id: name,
+    type: childDefinition.type,
+  };
+  const newLink = {
+    from: parentId,
+    to: name,
+  };
+
   return {
-    configStack: pipeline.configStack,
+    configStack: mapLastItemInArray(pipeline.configStack, stackItem => ({
+      properties: stackItem.properties,
+      elements: {
+        ...stackItem.elements,
+        add: stackItem.elements.add.concat([newElement]),
+      },
+      links: {
+        ...stackItem.links,
+        add: stackItem.links.add.concat([newLink]),
+      },
+    })),
     merged: {
       properties: pipeline.merged.properties,
       elements: {
-        add: pipeline.merged.elements.add.concat([
-          {
-            id: name,
-            type: childDefinition.type,
-          },
-        ]),
+        ...pipeline.merged.elements,
+        add: pipeline.merged.elements.add.concat([newElement]),
       },
       links: {
+        ...pipeline.merged.links,
         add: pipeline.merged.links.add
           // add the new link
-          .concat([
-            {
-              from: parentId,
-              to: name,
-            },
-          ]),
+          .concat([newLink]),
+      },
+    },
+  };
+}
+
+/**
+ * Used to delete an element from a pipeline.
+ *
+ * @param {pipeline} pipeline Pipeline definition before the deletion
+ * @param {string} itemToDelete ID of the item to delete
+ * @return The updated pipeline definition.
+ */
+export function removeElementFromPipeline(pipeline, itemToDelete) {
+  // Get hold of our entry in the config stack
+  const configStackThis = pipeline.configStack[pipeline.configStack.length - 1];
+
+  // Find the element in the merged picture (it should be there)
+  const elementFromMerged = pipeline.merged.elements.add.find(e => e.id === itemToDelete);
+  const linkFromMerged = pipeline.merged.links.add.find(l => l.to === itemToDelete);
+
+  // Find the element and link from our config stack (they may not be from our stack)
+  const linkIsOurs = configStackThis.links.add.find(l => l.to === itemToDelete);
+
+  // Determine the behaviour for removing the link, based on if it was ours or not
+  let calcNewLinks;
+  if (linkIsOurs) {
+    // we can simply filter out the add
+    calcNewLinks = ourStackLinks => ({
+      add: ourStackLinks.add.filter(l => l.to !== itemToDelete),
+      remove: ourStackLinks.remove,
+    });
+  } else {
+    // we will need to shadow the link we inherited
+    calcNewLinks = ourStackLinks => ({
+      add: ourStackLinks.add,
+      remove: ourStackLinks.remove.concat([linkFromMerged]),
+    });
+  }
+
+  return {
+    configStack: mapLastItemInArray(pipeline.configStack, stackItem => ({
+      properties: stackItem.properties,
+      elements: {
+        add: stackItem.elements.add.filter(e => e.id !== itemToDelete),
+        remove: stackItem.elements.remove.concat([elementFromMerged]),
+      },
+      links: calcNewLinks(stackItem.links),
+    })),
+    merged: {
+      properties: pipeline.merged.properties, // leave intact
+      elements: {
+        ...pipeline.merged.elements,
+        add: pipeline.merged.elements.add.filter(e => e.id !== itemToDelete), // simply remove itemToDelete
+      },
+      links: {
+        ...pipeline.merged.links,
+        add: pipeline.merged.links.add.filter(l => l.to !== itemToDelete), // simply remove the link where to=itemToDelete
       },
     },
   };
@@ -268,40 +353,6 @@ export function moveElementInPipeline(pipeline, itemToMove, destination) {
 }
 
 /**
- * Used to delete an element from a pipeline.
- *
- * @param {pipeline} pipeline Pipeline definition before the deletion
- * @param {string} itemToDelete ID of the item to delete
- * @return The updated pipeline definition.
- */
-export function deleteElementInPipeline(pipeline, itemToDelete) {
-  const children = getAllChildren(pipeline, itemToDelete);
-
-  return {
-    configStack: pipeline.configStack,
-    merged: {
-      properties: {
-        add: pipeline.merged.properties.add
-          .filter(p => p.element !== itemToDelete)
-          .filter(p => !children.includes(p.element)),
-      },
-      elements: {
-        add: pipeline.merged.elements.add
-          .filter(e => e.id !== itemToDelete)
-          .filter(e => !children.includes(e.id)),
-      },
-      links: {
-        add: pipeline.merged.links.add
-          // Remove any existing link that goes into the deleting item
-          .filter(l => l.to !== itemToDelete)
-          .filter(l => l.from !== itemToDelete)
-          .filter(l => !children.includes(l.to)),
-      },
-    },
-  };
-}
-
-/**
  * Gets an array of all descendents of the pipeline element
  *
  * @param {pipeline} pipeline Pipeline definition
@@ -325,13 +376,3 @@ export function getAllChildren(pipeline, parent) {
   return allChildren;
 }
 
-/**
- * Checks whether the give element is active in the pipeline. I.e. does anything link to it.
- *
- * @param {pipeline} pipeline Pipeline definition
- * @param {element} elementToCheck The element to check for activity
- */
-export function isActive(pipeline, elementToCheck) {
-  const linksInvolvingElement = pipeline.merged.links.add.filter(element => elementToCheck.id === element.from || elementToCheck.id === element.to);
-  return linksInvolvingElement.length > 0;
-}

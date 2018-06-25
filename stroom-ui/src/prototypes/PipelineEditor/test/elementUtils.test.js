@@ -14,26 +14,23 @@
  * limitations under the License.
  */
 import { groupByCategory, isValidChildType } from '../elementUtils';
-
 import { ElementCategories } from '../ElementCategories';
+import { elements, elementProperties } from './index';
 
-import testElementTypes from './elements.testData';
-import testElementProperties from './elementProperties.testData';
-
-const jsonWriter = testElementTypes.find(f => f.type === 'JSONWriter');
-const streamAppender = testElementTypes.find(f => f.type === 'StreamAppender');
-const fileAppender = testElementTypes.find(f => f.type === 'FileAppender');
-const recordCountFilter = testElementTypes.find(f => f.type === 'RecordCountFilter');
-const dsParser = testElementTypes.find(f => f.type === 'DSParser');
-const source = testElementTypes.find(f => f.type === 'Source');
-const jsonParser = testElementTypes.find(f => f.type === 'JSONParser');
-const schemaFilter = testElementTypes.find(f => f.type === 'SchemaFilter');
+const jsonWriter = elements.find(f => f.type === 'JSONWriter');
+const streamAppender = elements.find(f => f.type === 'StreamAppender');
+const fileAppender = elements.find(f => f.type === 'FileAppender');
+const recordCountFilter = elements.find(f => f.type === 'RecordCountFilter');
+const dsParser = elements.find(f => f.type === 'DSParser');
+const source = elements.find(f => f.type === 'Source');
+const jsonParser = elements.find(f => f.type === 'JSONParser');
+const schemaFilter = elements.find(f => f.type === 'SchemaFilter');
 
 describe('Element Utils', () => {
   describe('#groupByCategory', () => {
     test('should map by category', () => {
       // When
-      const byCategory = groupByCategory(testElementTypes);
+      const byCategory = groupByCategory(elements);
 
       // Then
       const expectedCategories = ['DESTINATION', 'WRITER', 'PARSER', 'FILTER'];

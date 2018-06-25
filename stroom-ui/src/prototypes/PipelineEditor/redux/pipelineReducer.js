@@ -2,7 +2,7 @@ import { createActions, handleActions } from 'redux-actions';
 
 import {
   moveElementInPipeline,
-  deleteElementInPipeline,
+  removeElementFromPipeline,
   createNewElementInPipeline,
 } from '../pipelineUtils';
 
@@ -60,7 +60,7 @@ const pipelineReducer = handleActions(
     PIPELINE_ELEMENT_DELETED: (state, action) => ({
       ...state,
       [action.payload.pipelineId]: {
-        ...updatePipeline(deleteElementInPipeline(
+        ...updatePipeline(removeElementFromPipeline(
           state[action.payload.pipelineId].pipeline,
           action.payload.elementId,
         )),

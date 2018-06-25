@@ -31,7 +31,6 @@ import ElementPalette from './ElementPalette';
 import RecycleBin from './RecycleBin';
 
 import lineElementCreators from './pipelineLineElementCreators';
-import { isActive } from './pipelineUtils';
 import { ElementDetails } from './ElementDetails';
 
 import { fetchPipeline } from './pipelineResourceClient';
@@ -65,37 +64,38 @@ const enhance = compose(
   lifecycle({
     componentDidMount() {
       const {
-        fetchElements,
-        fetchElementProperties,
-        fetchPipeline,
-        pipelineId,
+        fetchElements, fetchElementProperties, fetchPipeline, pipelineId,
       } = this.props;
       fetchElements();
       fetchElementProperties();
       fetchPipeline(pipelineId);
     },
   }),
-  branch(({pipeline}) => !pipeline, renderComponent(() => <Loader active>Loading Pipeline</Loader>)),
   branch(
-    ({pipeline}) => !pipeline.pipeline,
+    ({ pipeline }) => !pipeline,
+    renderComponent(() => <Loader active>Loading Pipeline</Loader>),
+  ),
+  branch(
+    ({ pipeline }) => !pipeline.pipeline,
     renderComponent(() => <Loader active>Loading Pipeline Data</Loader>),
   ),
   withPaletteOpen,
   withElementDetailsOpen,
   withProps(({ pipeline, setPaletteOpen, isPaletteOpen }) => ({
-    elementStyles: mapObject(getPipelineLayoutInformation(pipeline.asTree), (l) => {
-      const index = l.verticalPos - 1;
-      const fromTop = VERTICAL_START_PX + index * VERTICAL_SPACING;
-      const fromLeft = HORIZONTAL_START_PX + l.horizontalPos * HORIZONTAL_SPACING;
+      elementStyles: mapObject(getPipelineLayoutInformation(pipeline.asTree), (l) => {
+        const index = l.verticalPos - 1;
+        const fromTop = VERTICAL_START_PX + index * VERTICAL_SPACING;
+        const fromLeft = HORIZONTAL_START_PX + l.horizontalPos * HORIZONTAL_SPACING;
 
-      return {
-        ...COMMON_ELEMENT_STYLE,
-        top: `${fromTop}px`,
-        left: `${fromLeft}px`,
-      };
-    }),
-    togglePaletteOpen: () => setPaletteOpen(!isPaletteOpen),
-  })),
+        return {
+          ...COMMON_ELEMENT_STYLE,
+          top: `${fromTop}px`,
+          left: `${fromLeft}px`,
+        };
+      }),
+      togglePaletteOpen: () => setPaletteOpen(!isPaletteOpen),
+    }
+  )),
 );
 
 const PipelineEditor = enhance(({
@@ -106,7 +106,7 @@ const PipelineEditor = enhance(({
   isElementDetailsOpen,
   setElementDetailsOpen,
   editorClassName,
-  elementStyles,
+  elementStyles
 }) => (
   <div
     className={`Pipeline-editor  Pipeline-editor--palette-${isPaletteOpen ? 'open' : 'close'}`}
@@ -129,8 +129,8 @@ const PipelineEditor = enhance(({
           <RecycleBin pipelineId={pipelineId} />
         </div>
         <div className="Pipeline-editor__elements">
-          {pipeline.pipeline.merged.elements.add
-              .filter(element => isActive(pipeline.pipeline, element))
+          {Object.keys(elementStyles)
+              .map(es => pipeline.pipeline.merged.elements.add.find(e => e.id === es))
               .map(e => (
                 <div key={e.id} id={e.id} style={elementStyles[e.id]}>
                   <PipelineElement
@@ -143,6 +143,7 @@ const PipelineEditor = enhance(({
         </div>
         <div className="Pipeline-editor__lines">
           {pipeline.pipeline.merged.links.add
+              .filter(l => elementStyles[l.from] && elementStyles[l.to])
               .map(l => ({ ...l, lineId: `${l.from}-${l.to}` }))
               .map(l => (
                 <LineTo
