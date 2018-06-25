@@ -121,7 +121,7 @@ class FileSystemStreamStoreImpl implements StreamStore {
         final Set<String> rootPaths = streamVolumes.stream().map(StreamVolume::getVolumePath).collect(Collectors.toSet());
 
         final String streamType = lockedStream.getStreamTypeName();
-        final FileSystemStreamTarget target = FileSystemStreamTarget.create(fileSystemStreamPathHelper, stream, rootPaths,
+        final FileSystemStreamTarget target = FileSystemStreamTarget.create(fileSystemStreamPathHelper, lockedStream, rootPaths,
                 streamType, true);
 
         syncAttributes(lockedStream, target);

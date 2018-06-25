@@ -26,7 +26,6 @@ import stroom.data.meta.impl.db.stroom.tables.StreamFeed;
 import stroom.data.meta.impl.db.stroom.tables.StreamProcessor;
 import stroom.data.meta.impl.db.stroom.tables.StreamType;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.Clearable;
 import stroom.entity.shared.IdSet;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.Sort.Direction;
@@ -45,13 +44,14 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.jooq.impl.DSL.selectDistinct;
-import static stroom.data.meta.impl.db.stroom.tables.MetaKey.META_KEY;
 import static stroom.data.meta.impl.db.stroom.tables.MetaNumericValue.META_NUMERIC_VALUE;
 import static stroom.data.meta.impl.db.stroom.tables.Stream.STREAM;
 import static stroom.data.meta.impl.db.stroom.tables.StreamFeed.STREAM_FEED;
@@ -272,6 +272,31 @@ class StreamMetaServiceImpl implements StreamMetaService {
     }
 
     @Override
+    public int updateStatus(final FindStreamCriteria criteria, final StreamStatus streamStatus) {
+        // Decide which permission is needed for this update as logical deletes require delete permissions.
+        String permission = DocumentPermissionNames.UPDATE;
+        if (StreamStatus.DELETED.equals(streamStatus)) {
+            permission = DocumentPermissionNames.DELETE;
+        }
+
+        final Condition condition = createCondition(criteria, permission);
+
+        try (final Connection connection = dataSource.getConnection()) {
+            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            return create
+                    .update(stream)
+                    .set(stream.STAT, StreamStatusId.getPrimitiveValue(streamStatus))
+                    .set(stream.STAT_MS, System.currentTimeMillis())
+                    .where(condition)
+                    .execute();
+
+        } catch (final SQLException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+    @Override
     public void addAttributes(final Stream stream, final AttributeMap attributes) {
         metaValueService.addAttributes(stream, attributes);
     }
@@ -388,50 +413,28 @@ class StreamMetaServiceImpl implements StreamMetaService {
         }
     }
 
-    @Override
-    public int findDelete(final FindStreamCriteria criteria) {
-        return updateStatus(criteria, StreamStatus.DELETED);
-
-//        final ExpressionOperator secureExpression = addPermissionConstraints(criteria.getExpression(), DocumentPermissionNames.DELETE);
-//        final Condition condition = expressionMapper.apply(secureExpression);
+//    @Override
+//    public int updateStatus(final FindStreamCriteria criteria) {
+//        return updateStatus(criteria, StreamStatus.DELETED);
 //
-//        try (final Connection connection = dataSource.getConnection()) {
-//            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-//
-//            return create
-//                    .deleteFrom(stream)
-//                    .where(condition)
-//                    .execute();
-//
-//        } catch (final SQLException e) {
-//            LOGGER.error(e.getMessage(), e);
-//            throw new RuntimeException(e.getMessage(), e);
-//        }
-    }
+////        final ExpressionOperator secureExpression = addPermissionConstraints(criteria.getExpression(), DocumentPermissionNames.DELETE);
+////        final Condition condition = expressionMapper.apply(secureExpression);
+////
+////        try (final Connection connection = dataSource.getConnection()) {
+////            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+////
+////            return create
+////                    .deleteFrom(stream)
+////                    .where(condition)
+////                    .execute();
+////
+////        } catch (final SQLException e) {
+////            LOGGER.error(e.getMessage(), e);
+////            throw new RuntimeException(e.getMessage(), e);
+////        }
+//    }
 
-    private int updateStatus(final FindStreamCriteria criteria, final StreamStatus streamStatus) {
-        // Decide which permission is needed for this update as logical deletes require delete permissions.
-        String permission = DocumentPermissionNames.UPDATE;
-        if (StreamStatus.DELETED.equals(streamStatus)) {
-            permission = DocumentPermissionNames.DELETE;
-        }
 
-        final Condition condition = createCondition(criteria, permission);
-
-        try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            return create
-                    .update(stream)
-                    .set(stream.STAT, StreamStatusId.getPrimitiveValue(streamStatus))
-                    .set(stream.STAT_MS, System.currentTimeMillis())
-                    .where(condition)
-                    .execute();
-
-        } catch (final SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
-    }
 
     public int delete(final FindStreamCriteria criteria) {
         final Condition condition = createCondition(criteria, DocumentPermissionNames.DELETE);
@@ -450,16 +453,61 @@ class StreamMetaServiceImpl implements StreamMetaService {
     }
 
     @Override
-    public List<Stream> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
+    public Set<Stream> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
+        // See if we can find a stream that exists before the earliest specified time.
+        final Optional<Long> optionalId = getMaxEffectiveStreamIdBeforePeriod(criteria);
+
+        final Set<Stream> streams = new HashSet<>();
+        if (optionalId.isPresent()) {
+            // Get the stream that occurs just before or ast the start of the period.
+            final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+                    .addTerm(StreamDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, String.valueOf(optionalId.get()))
+                    .build();
+            // There is no need to apply security here are is has been applied when finding the stream id above.
+            final Condition condition = expressionMapper.apply(expression);
+            streams.addAll(find(condition, 0, 1000));
+        }
+
+        // Now add all streams that occur within the requested period.
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(StreamDataSource.EFFECTIVE_TIME, ExpressionTerm.Condition.GREATER_THAN_OR_EQUAL_TO, String.valueOf(criteria.getEffectivePeriod().getFromMs()))
-                .addTerm(StreamDataSource.EFFECTIVE_TIME, ExpressionTerm.Condition.LESS_THAN, String.valueOf(criteria.getEffectivePeriod().getToMs()))
+                .addTerm(StreamDataSource.EFFECTIVE_TIME, ExpressionTerm.Condition.GREATER_THAN, DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getFromMs()))
+                .addTerm(StreamDataSource.EFFECTIVE_TIME, ExpressionTerm.Condition.LESS_THAN, DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getToMs()))
                 .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, criteria.getFeed())
                 .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, criteria.getStreamType())
+                .addTerm(StreamDataSource.STATUS, ExpressionTerm.Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
                 .build();
+
         final ExpressionOperator secureExpression = addPermissionConstraints(expression, DocumentPermissionNames.READ);
         final Condition condition = expressionMapper.apply(secureExpression);
-        return find(condition, 0, 1000);
+        streams.addAll(find(condition, 0, 1000));
+
+        return streams;
+    }
+
+    private Optional<Long> getMaxEffectiveStreamIdBeforePeriod(final EffectiveMetaDataCriteria criteria) {
+        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
+                .addTerm(StreamDataSource.EFFECTIVE_TIME, ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getFromMs()))
+                .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, criteria.getFeed())
+                .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, criteria.getStreamType())
+                .addTerm(StreamDataSource.STATUS, ExpressionTerm.Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
+                .build();
+
+        final ExpressionOperator secureExpression = addPermissionConstraints(expression, DocumentPermissionNames.READ);
+        final Condition condition = expressionMapper.apply(secureExpression);
+
+        try (final Connection connection = dataSource.getConnection()) {
+            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            return create
+                    .select(stream.ID.max())
+                    .from(stream)
+                    .where(condition)
+                    .fetchOptional()
+                    .map(Record1::value1);
+
+        } catch (final SQLException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 
     @Override

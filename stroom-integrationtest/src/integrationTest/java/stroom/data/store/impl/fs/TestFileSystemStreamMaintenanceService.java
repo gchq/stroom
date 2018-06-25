@@ -18,10 +18,10 @@ package stroom.data.store.impl.fs;
 
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.data.meta.api.Stream;
+import stroom.data.store.FindStreamVolumeCriteria;
 import stroom.data.volume.api.StreamVolumeService;
 import stroom.jobsystem.MockTask;
-import stroom.data.store.FindStreamVolumeCriteria;
-import stroom.data.meta.api.Stream;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
@@ -57,12 +57,7 @@ public class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrat
 
         Assert.assertTrue(files.size() > 0);
 
-//        final String path = FileUtil.getCanonicalPath(files.get(0).getParent());
-//        final String volPath = path.substring(path.indexOf("RAW_EVENTS"));
-//
-//        final StreamRange streamRange = new StreamRange(volPath);
-        final FindStreamVolumeCriteria findStreamVolumeCriteria = new FindStreamVolumeCriteria();
-//        findStreamVolumeCriteria.setStreamRange(streamRange);
+        final FindStreamVolumeCriteria findStreamVolumeCriteria = FindStreamVolumeCriteria.create(md);
         Assert.assertTrue(streamVolumeService.find(findStreamVolumeCriteria).size() > 0);
 
         final Path dir = files.iterator().next().getParent();
@@ -73,23 +68,4 @@ public class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrat
 
         fileSystemCleanTaskExecutor.exec(new MockTask("Test"));
     }
-
-    // @Test
-    // public void testChartQuery() throws IOException {
-    //
-    // FindStreamChartCriteria findStreamChartCriteria = new
-    // FindStreamChartCriteria();
-    // findStreamChartCriteria.setPeriod(new Period(0L, Long.MAX_VALUE));
-    //
-    // ResultList<SharedString> chartList = streamMaintenanceService
-    // .getChartList(findStreamChartCriteria);
-    // ChartCriteria chartCriteria = new ChartCriteria();
-    // for (SharedString chartType : chartList) {
-    // chartCriteria.add(chartType.toString(), ChartFunc.MAX);
-    // chartCriteria.add(chartType.toString(), ChartFunc.MIN);
-    // chartCriteria.add(chartType.toString(), ChartFunc.AVG);
-    // }
-    // findStreamChartCriteria.setChartCriteria(chartCriteria);
-    // streamMaintenanceService.getChartData(findStreamChartCriteria);
-    // }
 }

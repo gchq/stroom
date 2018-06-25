@@ -24,6 +24,7 @@ import stroom.data.meta.api.Stream;
 import stroom.data.meta.api.StreamDataSource;
 import stroom.data.meta.api.StreamMetaService;
 import stroom.data.meta.api.StreamProperties;
+import stroom.data.meta.api.StreamStatus;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
@@ -162,7 +163,7 @@ public abstract class AbstractBenchmark {
     protected void deleteData(final String... feeds) {
         final FindStreamCriteria criteria = new FindStreamCriteria();
         criteria.setExpression(ExpressionUtil.createFeedsExpression(feeds));
-        streamMetaService.findDelete(criteria);
+        streamMetaService.updateStatus(criteria, StreamStatus.DELETED);
     }
 
     protected String createReferenceData(final int recordCount) {

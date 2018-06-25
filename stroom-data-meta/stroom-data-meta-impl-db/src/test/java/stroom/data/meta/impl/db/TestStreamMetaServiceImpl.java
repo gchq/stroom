@@ -3,6 +3,7 @@ package stroom.data.meta.impl.db;
 import com.google.inject.Guice;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import stroom.data.meta.api.StreamStatus;
 import stroom.entity.shared.BaseResultList;
 import stroom.properties.impl.mock.MockPropertyModule;
 import stroom.query.api.v2.ExpressionOperator;
@@ -45,7 +46,7 @@ class TestStreamMetaServiceImpl {
 
         assertThat(streams.size()).isEqualTo(1);
 
-        int deleted = streamMetaService.findDelete(new FindStreamCriteria());
+        int deleted = streamMetaService.updateStatus(new FindStreamCriteria(), StreamStatus.DELETED);
         assertThat(deleted).isEqualTo(2);
     }
 

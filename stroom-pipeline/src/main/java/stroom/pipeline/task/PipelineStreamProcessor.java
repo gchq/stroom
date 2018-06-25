@@ -346,7 +346,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
         }
         // If we have found any to delete then delete them now.
         if (findDeleteStreamCriteria.obtainSelectedIdSet().isConstrained()) {
-            final long deleteCount = streamMetaService.findDelete(findDeleteStreamCriteria);
+            final long deleteCount = streamMetaService.updateStatus(findDeleteStreamCriteria, StreamStatus.DELETED);
             LOGGER.info("checkSuperseded() - Removed {}", deleteCount);
         }
     }

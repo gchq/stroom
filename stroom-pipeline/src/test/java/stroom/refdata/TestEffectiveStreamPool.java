@@ -34,6 +34,7 @@ import stroom.util.test.StroomUnitTest;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -52,9 +53,9 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
 
         final InnerStreamMetaService mockStreamStore = new InnerStreamMetaService() {
             @Override
-            public List<Stream> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
+            public Set<Stream> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
                 findEffectiveStreamSourceCount++;
-                final ArrayList<Stream> results = new ArrayList<>();
+                final Set<Stream> results = new HashSet<>();
                 long workingDate = criteria.getEffectivePeriod().getFrom();
                 while (workingDate < criteria.getEffectivePeriod().getTo()) {
                     final Stream stream = createStream(
@@ -200,14 +201,14 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
         }
 
         @Override
-        public List<Stream> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
+        public Set<Stream> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
             callCount++;
 
             return streams.stream()
                     .filter(stream ->
                             stream.getEffectiveMs() >= criteria.getEffectivePeriod().getFromMs()
                                     && stream.getEffectiveMs() <= criteria.getEffectivePeriod().getToMs())
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toSet());
         }
 
         void addEffectiveStream(final String feedName, long effectiveTimeMs) {

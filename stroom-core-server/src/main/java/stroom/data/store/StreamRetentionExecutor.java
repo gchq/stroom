@@ -133,7 +133,7 @@ public class StreamRetentionExecutor {
             long total = 0;
             int deleted;
             do {
-                deleted = streamMetaService.findDelete(criteria);
+                deleted = streamMetaService.updateStatus(criteria, StreamStatus.DELETED);
                 total += deleted;
             } while (deleted >= DELETE_STREAM_BATCH_SIZE);
 

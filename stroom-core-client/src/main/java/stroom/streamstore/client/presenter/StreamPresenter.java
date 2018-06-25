@@ -32,6 +32,12 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.LocationManager;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
+import stroom.data.meta.api.ExpressionUtil;
+import stroom.data.meta.api.FindStreamCriteria;
+import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.StreamDataRow;
+import stroom.data.meta.api.StreamDataSource;
+import stroom.data.meta.api.StreamStatus;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.docref.DocRef;
@@ -49,15 +55,9 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.data.meta.api.FindStreamCriteria;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamStatus;
-import stroom.streamstore.shared.DeleteStreamAction;
 import stroom.streamstore.shared.DownloadDataAction;
-import stroom.data.meta.api.ExpressionUtil;
 import stroom.streamstore.shared.ReprocessDataInfo;
-import stroom.data.meta.api.StreamDataRow;
-import stroom.data.meta.api.StreamDataSource;
+import stroom.streamstore.shared.UpdateStatusAction;
 import stroom.streamtask.shared.ReprocessDataAction;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
@@ -295,20 +295,20 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         // Delete
         if (streamListDelete != null) {
             registerHandler(streamListDelete
-                    .addClickHandler(new DeleteStreamClickHandler(this, streamListPresenter, true, dispatcher)));
+                    .addClickHandler(new UpdateStatusClickHandler(this, streamListPresenter, true, dispatcher, StreamStatus.DELETED)));
         }
         if (streamRelationListDelete != null) {
             registerHandler(streamRelationListDelete.addClickHandler(
-                    new DeleteStreamClickHandler(this, streamRelationListPresenter, false, dispatcher)));
+                    new UpdateStatusClickHandler(this, streamRelationListPresenter, false, dispatcher, StreamStatus.DELETED)));
         }
         // UN-Delete
         if (streamListUndelete != null) {
             registerHandler(streamListUndelete
-                    .addClickHandler(new DeleteStreamClickHandler(this, streamListPresenter, true, dispatcher)));
+                    .addClickHandler(new UpdateStatusClickHandler(this, streamListPresenter, true, dispatcher, StreamStatus.UNLOCKED)));
         }
         if (streamRelationListUndelete != null) {
             registerHandler(streamRelationListUndelete.addClickHandler(
-                    new DeleteStreamClickHandler(this, streamRelationListPresenter, false, dispatcher)));
+                    new UpdateStatusClickHandler(this, streamRelationListPresenter, false, dispatcher, StreamStatus.UNLOCKED)));
         }
         // Process
         if (streamListProcess != null) {
@@ -602,20 +602,20 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         private final boolean useCriteria;
         private final ClientDispatchAsync dispatcher;
 
-        public AbstractStreamClickHandler(final StreamPresenter streamPresenter,
-                                          final AbstractStreamListPresenter streamListPresenter, final boolean useCriteria,
-                                          final ClientDispatchAsync dispatcher) {
+        AbstractStreamClickHandler(final StreamPresenter streamPresenter,
+                                   final AbstractStreamListPresenter streamListPresenter, final boolean useCriteria,
+                                   final ClientDispatchAsync dispatcher) {
             this.streamPresenter = streamPresenter;
             this.streamListPresenter = streamListPresenter;
             this.useCriteria = useCriteria;
             this.dispatcher = dispatcher;
         }
 
-        protected AbstractStreamListPresenter getStreamListPresenter() {
+        AbstractStreamListPresenter getStreamListPresenter() {
             return streamListPresenter;
         }
 
-        protected FindStreamCriteria createCriteria() {
+        FindStreamCriteria createCriteria() {
             final IdSet idSet = streamListPresenter.getSelectedEntityIdSet();
             // First make sure there is some sort of selection, either
             // individual streams have been selected or all streams have been
@@ -685,18 +685,23 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
         }
     }
 
-    private static class DeleteStreamClickHandler extends AbstractStreamClickHandler {
-        public DeleteStreamClickHandler(final StreamPresenter streamPresenter,
-                                        final AbstractStreamListPresenter streamListPresenter, final boolean useCriteria,
-                                        final ClientDispatchAsync dispatcher) {
+    private static class UpdateStatusClickHandler extends AbstractStreamClickHandler {
+        private final StreamStatus newStatus;
+
+        public UpdateStatusClickHandler(final StreamPresenter streamPresenter,
+                                        final AbstractStreamListPresenter streamListPresenter,
+                                        final boolean useCriteria,
+                                        final ClientDispatchAsync dispatcher,
+                                        final StreamStatus newStatus) {
             super(streamPresenter, streamListPresenter, useCriteria, dispatcher);
+            this.newStatus = newStatus;
         }
 
-        protected String getDeleteText(final FindStreamCriteria criteria, final boolean pastTense) {
-            if (StreamStatus.DELETED.equals(getSingleStatus(criteria))) {
-                return "Restore" + (pastTense ? "d" : "");
-            } else {
+        protected String getText(final boolean pastTense) {
+            if (StreamStatus.DELETED.equals(newStatus)) {
                 return "Delete" + (pastTense ? "d" : "");
+            } else {
+                return "Restore" + (pastTense ? "d" : "");
             }
         }
 
@@ -717,34 +722,34 @@ public class StreamPresenter extends MyPresenterWidget<StreamPresenter.StreamVie
                 AlertEvent.fireError(this, "Unable to action command on mixed status", null);
             } else {
                 ConfirmEvent.fire(this,
-                        "Are you sure you want to " + getDeleteText(deleteCriteria, false).toLowerCase() + " the selected items?",
+                        "Are you sure you want to " + getText(false).toLowerCase() + " the selected items?",
                         confirm -> {
                             if (confirm) {
                                 if (!deleteCriteria.getSelectedIdSet().isConstrained()) {
-                                    ConfirmEvent.fireWarn(DeleteStreamClickHandler.this,
+                                    ConfirmEvent.fireWarn(UpdateStatusClickHandler.this,
                                             "You have selected all items.  Are you sure you want to "
-                                                    + getDeleteText(deleteCriteria, false).toLowerCase() + " all the selected items?",
+                                                    + getText(false).toLowerCase() + " all the selected items?",
                                             confirm1 -> {
                                                 if (confirm1) {
-                                                    doDelete(deleteCriteria, dispatcher);
+                                                    doUpdate(deleteCriteria, dispatcher);
                                                 }
                                             });
 
                                 } else {
-                                    doDelete(deleteCriteria, dispatcher);
+                                    doUpdate(deleteCriteria, dispatcher);
                                 }
                             }
                         });
             }
         }
 
-        void doDelete(final FindStreamCriteria criteria, final ClientDispatchAsync dispatcher) {
-            dispatcher.exec(new DeleteStreamAction(criteria)).onSuccess(result -> {
+        void doUpdate(final FindStreamCriteria criteria, final ClientDispatchAsync dispatcher) {
+            dispatcher.exec(new UpdateStatusAction(criteria, newStatus)).onSuccess(result -> {
                 getStreamListPresenter().getSelectedEntityIdSet().clear();
                 getStreamListPresenter().getSelectedEntityIdSet().setMatchAll(false);
 
-                AlertEvent.fireInfo(DeleteStreamClickHandler.this,
-                        getDeleteText(criteria, true) + " " + result + " record" + ((result.longValue() > 1) ? "s" : ""), () -> refreshList());
+                AlertEvent.fireInfo(UpdateStatusClickHandler.this,
+                        getText(true) + " " + result + " record" + ((result.longValue() > 1) ? "s" : ""), this::refreshList);
             });
         }
     }

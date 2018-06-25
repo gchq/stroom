@@ -16,31 +16,29 @@
 
 package stroom.data.store;
 
-import stroom.security.Security;
 import stroom.data.meta.api.StreamMetaService;
-import stroom.streamstore.shared.DeleteStreamAction;
+import stroom.security.Security;
+import stroom.streamstore.shared.UpdateStatusAction;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.SharedInteger;
 
 import javax.inject.Inject;
 
-@TaskHandlerBean(task = DeleteStreamAction.class)
-class DeleteStreamHandler extends AbstractTaskHandler<DeleteStreamAction, SharedInteger> {
+@TaskHandlerBean(task = UpdateStatusAction.class)
+class UpdateStatusHandler extends AbstractTaskHandler<UpdateStatusAction, SharedInteger> {
     private final StreamMetaService streamMetaService;
     private final Security security;
 
     @Inject
-    DeleteStreamHandler(final StreamMetaService streamMetaService,
+    UpdateStatusHandler(final StreamMetaService streamMetaService,
                         final Security security) {
         this.streamMetaService = streamMetaService;
         this.security = security;
     }
 
     @Override
-    public SharedInteger exec(final DeleteStreamAction task) {
-        return security.secureResult(() -> {
-            return new SharedInteger(streamMetaService.findDelete(task.getCriteria()));
-        });
+    public SharedInteger exec(final UpdateStatusAction task) {
+        return security.secureResult(() -> new SharedInteger(streamMetaService.updateStatus(task.getCriteria(), task.getNewStatus())));
     }
 }

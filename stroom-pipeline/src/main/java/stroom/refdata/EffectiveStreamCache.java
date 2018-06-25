@@ -36,6 +36,7 @@ import javax.inject.Singleton;
 import java.util.Collections;
 import java.util.List;
 import java.util.NavigableSet;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
@@ -108,7 +109,7 @@ public class EffectiveStreamCache implements Clearable {
                 criteria.setEffectivePeriod(window);
 
                 // Locate all streams that fit the supplied criteria.
-                final List<Stream> streams = streamMetaService.findEffectiveStream(criteria);
+                final Set<Stream> streams = streamMetaService.findEffectiveStream(criteria);
 
                 // Add all streams that we have found to the effective stream set.
                 if (streams != null && streams.size() > 0) {

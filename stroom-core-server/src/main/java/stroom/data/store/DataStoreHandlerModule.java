@@ -24,7 +24,7 @@ public class DataStoreHandlerModule extends AbstractModule {
     @Override
     protected void configure() {
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(DeleteStreamHandler.class);
+        taskHandlerBinder.addBinding().to(UpdateStatusHandler.class);
         taskHandlerBinder.addBinding().to(DownloadDataHandler.class);
         taskHandlerBinder.addBinding().to(FetchFieldsHandler.class);
         taskHandlerBinder.addBinding().to(StreamDownloadTaskHandler.class);

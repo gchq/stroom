@@ -3,7 +3,7 @@ package stroom.data.meta.api;
 import stroom.entity.shared.BaseResultList;
 
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 public interface StreamMetaService {
     /**
@@ -34,16 +34,24 @@ public interface StreamMetaService {
     /**
      * Change the status of the specified stream.
      *
-     * @param stream The stream to change the status for.
+     * @param stream       The stream to change the status for.
      * @param streamStatus The new status.
      * @return The updated stream.
      */
     Stream updateStatus(Stream stream, StreamStatus streamStatus);
 
     /**
+     * Change the status of streams that match the supplied criteria.
+     *
+     * @param criteria The criteria to match streams with.
+     * @return The number of streams that are updated.
+     */
+    int updateStatus(FindStreamCriteria criteria, StreamStatus streamStatus);
+
+    /**
      * Add some additional attributes to a stream.
      *
-     * @param stream The stream to add attributes to.
+     * @param stream     The stream to add attributes to.
      * @param attributes A map of key/value attributes.
      */
     void addAttributes(Stream stream, AttributeMap attributes);
@@ -61,7 +69,7 @@ public interface StreamMetaService {
      * Delete a stream by id with an option to delete regardless of lock status.
      * Note that this method only changes the status of a stream to be deleted and does not actually delete the stream.
      *
-     * @param streamId The id of the stream to delete.
+     * @param streamId  The id of the stream to delete.
      * @param lockCheck Choose if the service should only delete unlocked streams.
      * @return The number of items deleted.
      */
@@ -73,13 +81,6 @@ public interface StreamMetaService {
      * @return A count of the number of locked streams.
      */
     int getLockCount();
-
-//    /**
-//     * Return the total period of streams in the stream store
-//     *
-//     * @return The total create time period.
-//     */
-//    Period getCreatePeriod();
 
     /**
      * Get a list of all unique feed names used by streams.
@@ -112,20 +113,11 @@ public interface StreamMetaService {
     BaseResultList<StreamDataRow> findRows(FindStreamCriteria criteria);
 
     /**
-     * Delete streams that match the supplied criteria.
-     * Note that this method only changes the status of matching streams to be deleted and does not actually delete streams.
-     *
-     * @param criteria The criteria to delete matching streams with.
-     * @return The number of streams that are marked as deleted.
-     */
-    int findDelete(FindStreamCriteria criteria);
-
-    /**
-     * Return back a list of streams that are effective for a period in
+     * Return back a aet of streams that are effective for a period in
      * question. This API is only really applicable for reference data searches.
      *
      * @param criteria the search criteria
      * @return the list of matches
      */
-    List<Stream> findEffectiveStream(EffectiveMetaDataCriteria criteria);
+    Set<Stream> findEffectiveStream(EffectiveMetaDataCriteria criteria);
 }

@@ -62,8 +62,8 @@ public class MockStreamMetaService implements StreamMetaService, Clearable {
     }
 
     @Override
-    public List<Stream> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
-        final ArrayList<Stream> results = new ArrayList<>();
+    public Set<Stream> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
+        final Set<Stream> results = new HashSet<>();
 
         try {
             for (final Stream stream : streamMap.values()) {
@@ -85,7 +85,7 @@ public class MockStreamMetaService implements StreamMetaService, Clearable {
             // Ignore ... just a mock
         }
 
-        return BaseResultList.createUnboundedList(results);
+        return results;
     }
 
 //    @Override
@@ -113,6 +113,11 @@ public class MockStreamMetaService implements StreamMetaService, Clearable {
             result.statusMs = System.currentTimeMillis();
         }
         return result;
+    }
+
+    @Override
+    public int updateStatus(final FindStreamCriteria criteria, final StreamStatus streamStatus) {
+        return 0;
     }
 
     @Override
@@ -160,11 +165,6 @@ public class MockStreamMetaService implements StreamMetaService, Clearable {
         return streamTypes.stream()
                 .sorted(Comparator.naturalOrder())
                 .collect(Collectors.toList());
-    }
-
-    @Override
-    public int findDelete(final FindStreamCriteria criteria) {
-        return 0;
     }
 
     @Override
