@@ -41,7 +41,7 @@ const enhance = compose(
   ),
   reduxForm(),
   branch(
-    ({selectedElementId}) => !selectedElementId,
+    ({ selectedElementId }) => !selectedElementId,
     renderComponent(() => (
       <Container className="element-details">
         <Message>
@@ -59,6 +59,8 @@ const ElementDetails = enhance(({
   const elementProperties = pipeline.pipeline.merged.properties.add.filter(property => property.element === selectedElementId);
   const elementType = elements.elements.find(e => e.type === element.type);
   const elementTypeProperties = elements.elementProperties[element.type];
+
+  const sortedElementTypeProperties = Object.values(elementTypeProperties).sort((a, b) => a.displayPriority > b.displayPriority);
 
   const title = (
     <React.Fragment>
@@ -80,14 +82,14 @@ const ElementDetails = enhance(({
         {Object.keys(elementTypeProperties).length === 0 ? (
           <p>There is nothing to configure for this element </p>
         ) : (
-          Object.keys(elementTypeProperties).map(key => (
+          sortedElementTypeProperties.map(elementTypeProperty => (
             <ElementField
-              key={key}
-              name={key}
-              type={elementTypeProperties[key].type}
-              description={elementTypeProperties[key].description}
-              defaultValue={parseInt(elementTypeProperties[key].defaultValue, 10)}
-              value={elementProperties.find(element => element.name === key)}
+              key={elementTypeProperty.name}
+              name={elementTypeProperty.name}
+              type={elementTypeProperty.type}
+              description={elementTypeProperty.description}
+              defaultValue={parseInt(elementTypeProperty.defaultValue, 10)}
+              value={elementProperties.find(element => element.name === elementTypeProperty.name)}
             />
           ))
         )}
