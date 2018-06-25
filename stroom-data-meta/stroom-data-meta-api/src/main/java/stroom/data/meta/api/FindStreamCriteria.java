@@ -151,7 +151,11 @@ public class FindStreamCriteria implements SharedObject, HasIsConstrained, Copya
             this.sortList = new ArrayList<>(other.sortList);
         }
         this.expression = ExpressionUtil.copyOperator(other.expression);
-        this.obtainSelectedIdSet().copyFrom(other.obtainSelectedIdSet());
+        if (other.selectedIdSet == null) {
+            this.selectedIdSet = null;
+        } else {
+            this.obtainSelectedIdSet().copyFrom(other.selectedIdSet);
+        }
     }
 
     @Override

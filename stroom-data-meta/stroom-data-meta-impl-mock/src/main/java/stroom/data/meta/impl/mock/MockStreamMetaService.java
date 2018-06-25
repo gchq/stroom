@@ -193,6 +193,11 @@ public class MockStreamMetaService implements StreamMetaService, Clearable {
     }
 
     @Override
+    public List<StreamDataRow> findRelatedData(final long streamId, final boolean anyStatus) {
+        return null;
+    }
+
+    @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
         for (final long streamId : streamMap.keySet()) {

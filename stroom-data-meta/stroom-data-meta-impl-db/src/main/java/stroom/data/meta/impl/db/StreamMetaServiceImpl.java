@@ -42,7 +42,9 @@ import javax.inject.Singleton;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -435,7 +437,6 @@ class StreamMetaServiceImpl implements StreamMetaService {
 //    }
 
 
-
     public int delete(final FindStreamCriteria criteria) {
         final Condition condition = createCondition(criteria, DocumentPermissionNames.DELETE);
 
@@ -608,6 +609,51 @@ class StreamMetaServiceImpl implements StreamMetaService {
         });
     }
 
+    @Override
+    public List<StreamDataRow> findRelatedData(final long streamId, final boolean anyStatus) {
+        // Get the starting row.
+        final FindStreamCriteria findStreamCriteria = new FindStreamCriteria(getIdExpression(streamId, anyStatus));
+        BaseResultList<Stream> rows = find(findStreamCriteria);
+        final List<Stream> result = new ArrayList<>(rows);
+
+        if (rows.size() > 0) {
+            Stream row = rows.getFirst();
+            addChildren(row, anyStatus, result);
+            addParents(row, anyStatus, result);
+        }
+
+        result.sort(Comparator.comparing(Stream::getId));
+
+        return metaValueService.decorateStreamsWithAttributes(result);
+    }
+
+    private void addChildren(final Stream parent, final boolean anyStatus, final List<Stream> result) {
+        final BaseResultList<Stream> children = find(new FindStreamCriteria(getParentIdExpression(parent.getId(), anyStatus)));
+        children.forEach(child -> {
+            result.add(child);
+            addChildren(child, anyStatus, result);
+        });
+    }
+
+    private void addParents(final Stream child, final boolean anyStatus, final List<Stream> result) {
+        if (child.getParentStreamId() != null) {
+            final BaseResultList<Stream> parents = find(new FindStreamCriteria(getIdExpression(child.getParentStreamId(), anyStatus)));
+            if (parents != null && parents.size() > 0) {
+                parents.forEach(parent -> {
+                    result.add(parent);
+                    addParents(parent, anyStatus, result);
+                });
+            } else {
+                // Add a dummy parent stream as we don't seem to be able to get the real parent.
+                // This might be because it is deleted or the user does not have access permissions.
+                final Stream stream = new StreamImpl.Builder()
+                        .id(child.getParentStreamId())
+                        .build();
+                result.add(stream);
+            }
+        }
+    }
+
     void clear() {
         deleteAll();
     }
@@ -637,6 +683,19 @@ class StreamMetaServiceImpl implements StreamMetaService {
 
         return new ExpressionOperator.Builder(Op.AND)
                 .addTerm(StreamDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, String.valueOf(streamId))
+                .addTerm(StreamDataSource.STATUS, ExpressionTerm.Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
+                .build();
+    }
+
+    private ExpressionOperator getParentIdExpression(final long streamId, final boolean anyStatus) {
+        if (anyStatus) {
+            return new ExpressionOperator.Builder(Op.AND)
+                    .addTerm(StreamDataSource.PARENT_STREAM_ID, ExpressionTerm.Condition.EQUALS, String.valueOf(streamId))
+                    .build();
+        }
+
+        return new ExpressionOperator.Builder(Op.AND)
+                .addTerm(StreamDataSource.PARENT_STREAM_ID, ExpressionTerm.Condition.EQUALS, String.valueOf(streamId))
                 .addTerm(StreamDataSource.STATUS, ExpressionTerm.Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
                 .build();
     }

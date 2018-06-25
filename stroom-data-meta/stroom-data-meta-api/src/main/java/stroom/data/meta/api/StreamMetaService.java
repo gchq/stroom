@@ -113,6 +113,14 @@ public interface StreamMetaService {
     BaseResultList<StreamDataRow> findRows(FindStreamCriteria criteria);
 
     /**
+     * Find streams and stream attributes that are related to the supplied stream.
+     *
+     * @param criteria The criteria to find matching streams with.
+     * @return A list of matching streams that includes stream attributes.
+     */
+    List<StreamDataRow> findRelatedData(long streamId, boolean anyStatus);
+
+    /**
      * Return back a aet of streams that are effective for a period in
      * question. This API is only really applicable for reference data searches.
      *

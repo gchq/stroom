@@ -209,20 +209,17 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         StreamTargetUtil.write(grandChildTarget, testString);
         streamStore.closeStreamTarget(grandChildTarget);
 
-        FindStreamCriteria findStreamCriteria = FindStreamCriteria.createWithStream(childTarget.getStream());
-        List<Stream> relationList = streamMetaService.find(findStreamCriteria);
+        List<StreamDataRow> relationList = streamMetaService.findRelatedData(childTarget.getStream().getId(), true);
 
-        Assert.assertEquals(streamTarget.getStream(), relationList.get(0));
-        Assert.assertEquals(childTarget.getStream(), relationList.get(1));
-        Assert.assertEquals(grandChildTarget.getStream(), relationList.get(2));
+        Assert.assertEquals(streamTarget.getStream(), relationList.get(0).getStream());
+        Assert.assertEquals(childTarget.getStream(), relationList.get(1).getStream());
+        Assert.assertEquals(grandChildTarget.getStream(), relationList.get(2).getStream());
 
-        findStreamCriteria = FindStreamCriteria.createWithStream(grandChildTarget.getStream());
+        relationList = streamMetaService.findRelatedData(grandChildTarget.getStream().getId(), true);
 
-        relationList = streamMetaService.find(findStreamCriteria);
-
-        Assert.assertEquals(streamTarget.getStream(), relationList.get(0));
-        Assert.assertEquals(childTarget.getStream(), relationList.get(1));
-        Assert.assertEquals(grandChildTarget.getStream(), relationList.get(2));
+        Assert.assertEquals(streamTarget.getStream(), relationList.get(0).getStream());
+        Assert.assertEquals(childTarget.getStream(), relationList.get(1).getStream());
+        Assert.assertEquals(grandChildTarget.getStream(), relationList.get(2).getStream());
     }
 
     @Test
@@ -249,7 +246,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         Assert.assertEquals(0L, streamMetaService.find(findStreamCriteria).size());
 
         // This will undelete
-        findStreamCriteria.setExpression(ExpressionUtil.createStatusExpression(StreamStatus.UNLOCKED));
+        findStreamCriteria.setExpression(ExpressionUtil.createStatusExpression(StreamStatus.DELETED));
         Assert.assertEquals(1L, streamMetaService.updateStatus(findStreamCriteria, StreamStatus.UNLOCKED));
 
         findStreamCriteria.setExpression(ExpressionUtil.createStatusExpression(StreamStatus.UNLOCKED));

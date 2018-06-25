@@ -65,4 +65,9 @@ public class StreamDataRow implements SharedObject {
     public int hashCode() {
         return stream.hashCode();
     }
+
+    @Override
+    public String toString() {
+        return stream.toString();
+    }
 }
