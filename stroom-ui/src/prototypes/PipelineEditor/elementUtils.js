@@ -35,23 +35,6 @@ export function groupByCategory(elements) {
     );
 }
 
-export function groupByCategoryFiltered(elements, parentType, currentChildCount, searchTerm) {
-  const searchRegex =
-    !!searchTerm && searchTerm.length > 0 ? new RegExp(_.escapeRegExp(searchTerm), 'i') : undefined;
-
-  return Object.entries(elements)
-    .map(k => k[1])
-    .filter(k => isValidChildType(parentType, k, currentChildCount))
-    .filter(k => (searchRegex ? searchRegex.test(k.type) : true))
-    .reduce(
-      (acc, next) => ({
-        ...acc,
-        [next.category]: [...(acc[next.category] || []), next],
-      }),
-      {},
-    );
-}
-
 /**
  * This function determins if a particular child element type can be connected
  * to a parent type. It takes into the account the roles being played by both

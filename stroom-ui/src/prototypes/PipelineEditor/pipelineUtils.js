@@ -275,7 +275,7 @@ export function moveElementInPipeline(pipeline, itemToMove, destination) {
  * @return The updated pipeline definition.
  */
 export function deleteElementInPipeline(pipeline, itemToDelete) {
-  const children = getDescendants(pipeline, itemToDelete);
+  const children = getAllChildren(pipeline, itemToDelete);
 
   return {
     configStack: pipeline.configStack,
@@ -307,7 +307,7 @@ export function deleteElementInPipeline(pipeline, itemToDelete) {
  * @param {pipeline} pipeline Pipeline definition
  * @param {string} parent The id of the parent
  */
-export function getDescendants(pipeline, parent) {
+export function getAllChildren(pipeline, parent) {
   let allChildren = [];
 
   const getAllChildren = (pipeline, element) => {
