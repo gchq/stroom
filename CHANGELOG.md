@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.4.4] - 2018-06-26
+
 * Issue **#791** : Search completion signal is now only sent to the UI once all pending search result merges are completed.
 
 * Issue **#795** : Import and export now works with appropriate application permissions. Read permission is required to export items and Create/Update permissions are required to import items depending on whether the update will create a new item or update an existing one.
@@ -832,7 +834,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.4.3...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.4.4...HEAD
+[v5.4.4]: https://github.com/gchq/stroom/compare/v5.4.3...v5.4.4
 [v5.4.3]: https://github.com/gchq/stroom/compare/v5.4.2...v5.4.3
 [v5.4.2]: https://github.com/gchq/stroom/compare/v5.4.1...v5.4.2
 [v5.4.1]: https://github.com/gchq/stroom/compare/v5.4.0...v5.4.1
