@@ -11,7 +11,7 @@ const enhance = connect((state, props) => ({}), {
 });
 
 const SavePipeline = enhance(({ pipelineId, savePipeline }) => (
-  <Button circular basic icon="save outline" size="huge" onClick={() => savePipeline(pipelineId)} />
+  <Button circular basic icon="save" size="huge" onClick={() => savePipeline(pipelineId)} />
 ));
 
 SavePipeline.propTypes = {

@@ -95,9 +95,10 @@ const AddElementModal = enhance(({ // From redux state
 ));
 
 AddElementModal.propTypes = {
-  // Set by container
   pipelineId: PropTypes.string.isRequired,
   elementId: PropTypes.string.isRequired,
+  setNewElementDefinition: PropTypes.func.isRequired,
+  newElementDefinition: PropTypes.object
 };
 
 export default AddElementModal;

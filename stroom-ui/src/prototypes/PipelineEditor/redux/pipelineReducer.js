@@ -4,6 +4,7 @@ import {
   moveElementInPipeline,
   removeElementFromPipeline,
   createNewElementInPipeline,
+  reinstateElementToPipeline,
 } from '../pipelineUtils';
 
 import { getPipelineAsTree } from '../pipelineUtils';
@@ -30,6 +31,11 @@ const actionCreators = createActions({
     name,
   }),
   PIPELINE_ELEMENT_DELETED: (pipelineId, elementId) => ({ pipelineId, elementId }),
+  PIPELINE_ELEMENT_REINSTATED: (pipelineId, parentId, recycleData) => ({
+    pipelineId,
+    parentId,
+    recycleData,
+  }),
 });
 
 // pipelines, keyed on ID, there may be several expressions on a page
@@ -63,6 +69,17 @@ const pipelineReducer = handleActions(
         ...updatePipeline(removeElementFromPipeline(
           state[action.payload.pipelineId].pipeline,
           action.payload.elementId,
+        )),
+      },
+    }),
+    PIPELINE_ELEMENT_REINSTATED: (state, action) => ({
+      ...state,
+      [action.payload.pipelineId]: {
+        ...state[action.payload.pipelineId],
+        ...updatePipeline(reinstateElementToPipeline(
+          state[action.payload.pipelineId].pipeline,
+          action.payload.parentId,
+          action.payload.recycleData,
         )),
       },
     }),

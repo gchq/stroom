@@ -26,9 +26,13 @@ const enhance = compose(
 
 const ElementPalette = enhance(({ elementsByCategory, recycleBinItems }) => (
   <div className="element-palette">
-    <ElementCategory category="Recycle Bin" elements={recycleBinItems} />
+    <ElementCategory category="Recycle Bin" elementsWithData={recycleBinItems} />
     {Object.entries(elementsByCategory).map(k => (
-      <ElementCategory key={k[0]} category={k[0]} elements={k[1]} />
+      <ElementCategory
+        key={k[0]}
+        category={k[0]}
+        elementsWithData={k[1].map(e => ({ element: e }))}
+      />
     ))}
   </div>
 ));
