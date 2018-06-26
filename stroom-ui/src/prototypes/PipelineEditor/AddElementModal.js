@@ -6,6 +6,7 @@ import { connect } from 'react-redux';
 import { Field, reduxForm } from 'redux-form';
 
 import { Modal, Header, Form, Button } from 'semantic-ui-react';
+import { InputField } from 'react-semantic-redux-form';
 
 import { actionCreators } from './redux';
 
@@ -30,11 +31,16 @@ const enhance = compose(
     form: 'newElementName',
     // We're re-using the same form for each element's modal so we need to permit reinitialization when using the initialValues prop
     enableReinitialize: true,
+    touchOnChange: true,
   }),
-  withProps(({ // Properties from owner
-    pipelineId, elementId, // Redux action
-    pipelineElementAdded, // from withNewElementDefinition in owner
-    newElementDefinition, setNewElementDefinition, // Redux form
+  // Properties from owner
+  withProps(({ 
+     // Redux action
+    pipelineId, elementId,
+    // from withNewElementDefinition in owner
+    pipelineElementAdded, 
+    // Redux form
+    newElementDefinition, setNewElementDefinition, 
     newElementForm, reset,
   }) => ({
     onConfirmNewElement: () => {
@@ -66,7 +72,7 @@ const AddElementModal = enhance(({ // From redux state
           <label>Name</label>
           <Field
             name="name"
-            component={renderField}
+            component={InputField}
             type="text"
             placeholder="Name"
             validate={[required, minLength2, uniqueElementName(pipeline.pipeline)]}
