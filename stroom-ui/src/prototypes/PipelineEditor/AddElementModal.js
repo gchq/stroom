@@ -20,10 +20,17 @@ const enhance = compose(
       // state
       newElementForm: state.form.newElementName,
       pipeline: state.pipelines[props.pipelineId],
+      initialValues: props.newElementDefinition
+        ? { name: props.newElementDefinition.type }
+        : undefined,
     }),
     { pipelineElementAdded },
   ),
-  reduxForm({ form: 'newElementName' }),
+  reduxForm({
+    form: 'newElementName',
+    // We're re-using the same form for each element's modal so we need to permit reinitialization when using the initialValues prop
+    enableReinitialize: true,
+  }),
   withProps(({ // Properties from owner
     pipelineId, elementId, // Redux action
     pipelineElementAdded, // from withNewElementDefinition in owner
@@ -39,7 +46,7 @@ const enhance = compose(
       setNewElementDefinition(undefined);
       reset();
     },
-  })),
+  })), 
 );
 
 const AddElementModal = enhance(({ // From redux state

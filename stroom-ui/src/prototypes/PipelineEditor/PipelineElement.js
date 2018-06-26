@@ -215,30 +215,32 @@ const PipelineElement = enhance(({
     return pipelineElementSelected(pipelineId, elementId, initalValues);
   };
 
-  return compose(connectDragSource, connectDropTarget)(<div className={className} onClick={handleClick}>
-    <AddElementModal
-      {...{
-            setNewElementDefinition,
-            newElementDefinition,
-            pipelineId,
-            elementId,
-          }}
-    />
-    <Image
-      className="Pipeline-element__icon"
-      alt="X"
-      src={require(`./images/${elementDefinition.icon}`)}
-      disabled={isIconDisabled}
-      size="mini"
-    />
-    <button
-      onFocus={() => setHasFocus(true)}
-      onBlur={() => setHasFocus(false)}
-      className="Pipeline-element__type"
-    >
-      {elementId}
-    </button>
-  </div>);
+  return compose(connectDragSource, connectDropTarget)(
+    <div className={className} onClick={handleClick}>
+      <AddElementModal
+        {...{
+              setNewElementDefinition,
+              newElementDefinition,
+              pipelineId,
+              elementId,
+            }}
+      />
+      <Image
+        className="Pipeline-element__icon"
+        alt="X"
+        src={require(`./images/${elementDefinition.icon}`)}
+        disabled={isIconDisabled}
+        size="mini"
+      />
+      <button
+        onFocus={() => setHasFocus(true)}
+        onBlur={() => setHasFocus(false)}
+        className="Pipeline-element__type"
+      >
+        {elementId}
+      </button>
+    </div>
+  );
 });
 
 PipelineElement.propTypes = {
