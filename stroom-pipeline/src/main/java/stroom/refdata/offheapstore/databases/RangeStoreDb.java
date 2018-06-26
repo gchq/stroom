@@ -63,7 +63,11 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
      * is found an empty Optional is returned.
      */
     public Optional<ValueStoreKey> get(final Txn<ByteBuffer> txn, final UID mapDefinitionUid, final long key) {
+        return getAsBytes(txn, mapDefinitionUid, key)
+                .map(valueSerde::deserialize);
+    }
 
+    public Optional<ByteBuffer> getAsBytes(final Txn<ByteBuffer> txn, final UID mapDefinitionUid, final long key) {
         LOGGER.trace("get called for {}, key {}", mapDefinitionUid, key);
 
         final KeyRange<ByteBuffer> keyRange = buildKeyRange(mapDefinitionUid, key);
@@ -103,7 +107,7 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
                                 uidOfFoundKey, mapDefinitionUid));
                     }
                     LOGGER.trace("key {} is in the range, found the required value after {} iterations", key, cnt);
-                    return Optional.of(valueSerde.deserialize(keyVal.val()));
+                    return Optional.of(keyVal.val());
                 }
             }
         }

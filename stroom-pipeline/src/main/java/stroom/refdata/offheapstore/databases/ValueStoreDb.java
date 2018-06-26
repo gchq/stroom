@@ -315,6 +315,11 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                 .map(valueSerde::deserialize);
     }
 
+    public Optional<ByteBuffer> getValueBytes(final Txn<ByteBuffer> txn, final ByteBuffer keyBuffer) {
+        return getAsBytes(txn, keyBuffer)
+                .map(valueSerde::extractValueBuffer);
+    }
+
     private ByteBuffer buildStartKeyBuffer(final RefDataValue value) {
         return keySerde.serialize(ValueStoreKey.lowestKey(value.valueHashCode()));
     }

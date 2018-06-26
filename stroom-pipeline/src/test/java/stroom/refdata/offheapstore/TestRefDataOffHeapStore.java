@@ -34,11 +34,11 @@ import stroom.entity.shared.Range;
 import stroom.properties.MockStroomPropertyService;
 import stroom.properties.StroomPropertyService;
 import stroom.refdata.offheapstore.databases.AbstractLmdbDbTest;
-import stroom.refdata.offheapstore.serdes.StringValueSerde;
 import stroom.util.ByteSizeUnit;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -570,9 +570,9 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
             assertThat((StringValue) refDataValue).isEqualTo(tuple3._3);
 
             // now consume the proxied value in a txn
-            valueProxy.consumeBytes(byteBuffer -> {
-                RefDataValue refDataValue2 = new StringValueSerde().deserialize(byteBuffer);
-                assertThat(refDataValue2).isEqualTo(tuple3._3);
+            valueProxy.consumeBytes(valueBuf -> {
+                String foundStrVal = StandardCharsets.UTF_8.decode(valueBuf).toString();
+                assertThat(foundStrVal).isEqualTo(tuple3._3.getValue());
             });
         });
     }
@@ -612,11 +612,10 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                     assertThat(refDataValue).isInstanceOf(StringValue.class);
                     assertThat((StringValue) refDataValue).isEqualTo(tuple3._3);
 
-                    valueProxy.consumeBytes(byteBuffer -> {
-                        RefDataValue refDataValue2 = new StringValueSerde().deserialize(byteBuffer);
-                        assertThat(refDataValue2).isEqualTo(tuple3._3);
+                    valueProxy.consumeBytes(valueBuf -> {
+                        String foundStrVal = StandardCharsets.UTF_8.decode(valueBuf).toString();
+                        assertThat(foundStrVal).isEqualTo(tuple3._3.getValue());
                     });
-
                 });
             });
         });
@@ -635,39 +634,42 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
 
         final int entriesPerMapDef = 1;
-        boolean didLoadHappen = refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, effectiveTimeMs, loader -> {
-            loader.initialise(overwriteExisting);
-            loader.setCommitInterval(commitInterval);
+        boolean didLoadHappen = refDataStore.doWithLoaderUnlessComplete(
+                refStreamDefinition,
+                effectiveTimeMs,
+                loader -> {
+                    loader.initialise(overwriteExisting);
+                    loader.setCommitInterval(commitInterval);
 
-            for (int i = 0; i < entriesPerMapDef; i++) {
-                // put key/values into two mapDefs
-                mapNames.stream()
-                        .map(name -> new MapDefinition(refStreamDefinition, name))
-                        .forEach(mapDefinition -> {
-                            int cnt = counter.incrementAndGet();
-                            String key = "key" + cnt;
-                            StringValue value = StringValue.of("value" + cnt);
-                            LOGGER.debug("Putting cnt {}, key {}, value {}", cnt, key, value);
-                            loader.put(mapDefinition, key, value);
+                    for (int i = 0; i < entriesPerMapDef; i++) {
+                        // put key/values into each mapDef
+                        mapNames.stream()
+                                .map(name -> new MapDefinition(refStreamDefinition, name))
+                                .forEach(mapDefinition -> {
+                                    int cnt = counter.incrementAndGet();
+                                    String key = "key" + cnt;
+                                    StringValue value = StringValue.of("value" + cnt);
+                                    LOGGER.debug("Putting cnt {}, key {}, value {}", cnt, key, value);
+                                    loader.put(mapDefinition, key, value);
 
-                            keyValueLoadedData.add(Tuple.of(mapDefinition, key, value));
-                        });
+                                    keyValueLoadedData.add(Tuple.of(mapDefinition, key, value));
+                                });
 
-                // put keyrange/values into two mapDefs
-                mapNames.stream()
-                        .map(name -> new MapDefinition(refStreamDefinition, name))
-                        .forEach(mapDefinition -> {
-                            int cnt = counter.incrementAndGet();
-                            Range<Long> keyRange = new Range<>((long) (cnt * 10), (long) ((cnt * 10) + 10));
-                            StringValue value = StringValue.of("value" + cnt);
-                            LOGGER.debug("Putting cnt {}, key-range {}, value {}", cnt, keyRange, value);
-                            loader.put(mapDefinition, keyRange, value);
-                            keyRangeValueLoadedData.add(Tuple.of(mapDefinition, keyRange, value));
-                        });
-            }
+                        // put keyrange/values into each mapDef
+                        mapNames.stream()
+                                .map(name -> new MapDefinition(refStreamDefinition, name))
+                                .forEach(mapDefinition -> {
+                                    int cnt = counter.incrementAndGet();
+                                    Range<Long> keyRange = new Range<>((long) (cnt * 10), (long) ((cnt * 10) + 10));
+                                    StringValue value = StringValue.of("value" + cnt);
+                                    LOGGER.debug("Putting cnt {}, key-range {}, value {}", cnt, keyRange, value);
+                                    loader.put(mapDefinition, keyRange, value);
+                                    keyRangeValueLoadedData.add(Tuple.of(mapDefinition, keyRange, value));
+                                });
+                    }
 
-            loader.completeProcessing();
-        });
+                    loader.completeProcessing();
+                });
 
         assertThat(didLoadHappen).isEqualTo(isLoadExpectedToHappen);
 

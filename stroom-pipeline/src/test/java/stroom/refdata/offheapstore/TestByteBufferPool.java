@@ -156,16 +156,21 @@ public class TestByteBufferPool {
     }
 
     @Test
-    public void testConcurrency() {
+    public void testConcurrency() throws InterruptedException {
         int threadCount = 50;
-        CountDownLatch countDownLatch = new CountDownLatch(threadCount);
-
         int minCapacity = 10;
+        final ByteBufferPool byteBufferPool = new ByteBufferPool();
 
-        ByteBufferPool byteBufferPool = new ByteBufferPool();
+        assertPoolSizeAfterMultipleConcurrentGetRequests(threadCount, minCapacity, byteBufferPool);
 
-        ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
-        List<CompletableFuture<Void>> completableFutures = new ArrayList<>();
+        //re-run the same thing and the pool size should be the same at the end
+        assertPoolSizeAfterMultipleConcurrentGetRequests(threadCount, minCapacity, byteBufferPool);
+    }
+
+    private void assertPoolSizeAfterMultipleConcurrentGetRequests(final int threadCount, final int minCapacity, final ByteBufferPool byteBufferPool) {
+        final CountDownLatch countDownLatch = new CountDownLatch(threadCount);
+        final ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+        final List<CompletableFuture<Void>> completableFutures = new ArrayList<>();
 
         for (int i = 0; i < threadCount; i++) {
 
@@ -196,27 +201,6 @@ public class TestByteBufferPool {
 
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(threadCount);
 
-        CountDownLatch countDownLatch2 = new CountDownLatch(threadCount);
-
-        for (int i = 0; i < threadCount; i++) {
-
-            CompletableFuture.runAsync(() -> {
-
-                ByteBuffer byteBuffer = byteBufferPool.getBuffer(minCapacity);
-                countDownLatch2.countDown();
-//                LOGGER.debug("latch count {}", countDownLatch.getCount());
-
-                try {
-                    // wait for all threads to have got a new buffer from the pool
-                    countDownLatch2.await();
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    throw new RuntimeException("Thread interrupted", e);
-                }
-            }, executorService);
-        }
-
-        // no new items should have been added
-        assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(threadCount);
+        completableFutures.clear();
     }
 }

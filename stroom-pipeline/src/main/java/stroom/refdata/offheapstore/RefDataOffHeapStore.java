@@ -211,9 +211,9 @@ public class RefDataOffHeapStore implements RefDataStore {
         return new RefDataValueProxy(this, mapDefinition, key);
     }
 
-    private Optional<ValueStoreKey> getValueStoreKey(final Txn<ByteBuffer> readTxn,
-                                                     final MapDefinition mapDefinition,
-                                                     final String key) {
+    private Optional<ByteBuffer> getValueStoreKey(final Txn<ByteBuffer> readTxn,
+                                                  final MapDefinition mapDefinition,
+                                                  final String key) {
 
         final UID mapUid = mapUidForwardDb.get(readTxn, mapDefinition)
                 .orElseThrow(() ->
@@ -223,7 +223,8 @@ public class RefDataOffHeapStore implements RefDataStore {
 
         //do the lookup in the kv store first
         final KeyValueStoreKey keyValueStoreKey = new KeyValueStoreKey(mapUid, key);
-        Optional<ValueStoreKey> optValueStoreKey = keyValueStoreDb.get(readTxn, keyValueStoreKey);
+        final ByteBuffer keyValueStoreKeyBuf = keyValueStoreDb.getKeySerde().serialize(keyValueStoreKey);
+        Optional<ByteBuffer> optValueStoreKey = keyValueStoreDb.getAsBytes(readTxn, keyValueStoreKeyBuf);
 
         if (!optValueStoreKey.isPresent()) {
             //not found in the kv store so look in the keyrange store instead
@@ -233,8 +234,9 @@ public class RefDataOffHeapStore implements RefDataStore {
                 // any ranges for this mapdef or not, but either way we need a call to LMDB so
                 // just do the range lookup
                 final long keyLong = Long.parseLong(key);
+
                 // look up our long key in the range store to see if it is part of a range
-                optValueStoreKey = rangeStoreDb.get(readTxn, mapUid, keyLong);
+                optValueStoreKey = rangeStoreDb.getAsBytes(readTxn, mapUid, keyLong);
 
             } catch (NumberFormatException e) {
                 // key could not be converted to a long, either this mapdef has no ranges or
@@ -266,11 +268,14 @@ public class RefDataOffHeapStore implements RefDataStore {
                                   final String key,
                                   final Consumer<ByteBuffer> valueBytesConsumer) {
 
-        // TODO  breakdown getValueProxy to use the bit that gets the valueStoreKey as a buffer
-        // then use this buffer to do the lookup in the valueStoreDb, all in one txn and sharing
-        // buffer where possible
-
-
+        // lookup the passed mapDefinition and key and if a valueStoreKey is found use that to
+        // lookup the value in the value store, passing the actual value part to the consumer.
+        // The consumer gets only the value, not the type or ref count and has to understand how
+        // to interpret the bytes in the buffer
+        LmdbUtils.doWithReadTxn(lmdbEnvironment, txn ->
+                getValueStoreKey(txn, mapDefinition, key)
+                        .flatMap(valueStoreKeyBuf -> valueStoreDb.getValueBytes(txn, valueStoreKeyBuf))
+                        .ifPresent(valueBytesConsumer));
     }
 
 //    @Override
@@ -309,7 +314,7 @@ public class RefDataOffHeapStore implements RefDataStore {
      * <pre>try (RefDataLoader refDataLoader = refDataOffHeapStore.getLoader(...)) { ... }</pre>
      */
     RefDataLoader loader(final RefStreamDefinition refStreamDefinition,
-                                final long effectiveTimeMs) {
+                         final long effectiveTimeMs) {
         //TODO should we pass in an ErrorReceivingProxy so we can log errors with it?
         RefDataLoader refDataLoader = new RefDataLoaderImpl(
                 this,
@@ -331,8 +336,8 @@ public class RefDataOffHeapStore implements RefDataStore {
 
     @Override
     public boolean doWithLoaderUnlessComplete(final RefStreamDefinition refStreamDefinition,
-                                           final long effectiveTimeMs,
-                                           final Consumer<RefDataLoader> work) {
+                                              final long effectiveTimeMs,
+                                              final Consumer<RefDataLoader> work) {
 
         boolean result = false;
         try (RefDataLoader refDataLoader = loader(refStreamDefinition, effectiveTimeMs)) {
@@ -631,7 +636,6 @@ public class RefDataOffHeapStore implements RefDataStore {
             beginTxnIfRequired();
 
 
-
             final UID mapUid = getOrCreateUid(mapDefinition);
             final KeyValueStoreKey keyValueStoreKey = new KeyValueStoreKey(mapUid, key);
 
@@ -645,7 +649,6 @@ public class RefDataOffHeapStore implements RefDataStore {
             // of buffer allocation, see info here https://github.com/lmdbjava/lmdbjava/issues/81
             // If the loader holds a key and value ByteBuffer then they can be used for all write ops
             // See TestByteBufferReusePerformance
-
 
 
             boolean didPutSucceed;

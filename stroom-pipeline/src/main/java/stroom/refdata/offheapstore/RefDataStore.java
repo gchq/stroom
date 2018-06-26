@@ -78,7 +78,9 @@ public interface RefDataStore {
 
     /**
      * Performs a lookup using the passed mapDefinition and key and then applies the valueBytesConsumer to
-     * the found value. If no value is found the valueBytesConsumer is not called
+     * the found value. If no value is found the valueBytesConsumer is not called. The consumer lambda must
+     * copy the bytes in the buffer if it wants to use them outside the lambda. The consumer must understand
+     * how to interpret the bytebuffer passed to it.
      */
     void consumeValueBytes(final MapDefinition mapDefinition,
                            final String key,

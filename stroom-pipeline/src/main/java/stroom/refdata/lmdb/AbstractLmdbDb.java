@@ -135,7 +135,7 @@ public abstract class AbstractLmdbDb<K, V> {
      */
     public Optional<ByteBuffer> getAsBytes(Txn<ByteBuffer> txn, final ByteBuffer keyBuffer) {
         try {
-            ByteBuffer valueBuffer = lmdbDbi.get(txn, keyBuffer);
+            final ByteBuffer valueBuffer = lmdbDbi.get(txn, keyBuffer);
             LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Get returned value [{}] for key [{}]",
                     ByteArrayUtils.byteBufferInfo(valueBuffer),
                     ByteArrayUtils.byteBufferInfo(keyBuffer)));
