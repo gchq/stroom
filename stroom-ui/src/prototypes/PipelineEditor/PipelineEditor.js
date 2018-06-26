@@ -29,6 +29,7 @@ import { getPipelineLayoutInformation } from './pipelineUtils';
 import PipelineElement from './PipelineElement';
 import ElementPalette from './ElementPalette';
 import RecycleBin from './RecycleBin';
+import SavePipeline from './SavePipeline';
 
 import lineElementCreators from './pipelineLineElementCreators';
 import { ElementDetails } from './ElementDetails';
@@ -106,10 +107,11 @@ const PipelineEditor = enhance(({
   isElementDetailsOpen,
   setElementDetailsOpen,
   editorClassName,
-  elementStyles
+  elementStyles,
+  savePipeline
 }) => (
   <div
-    className={`Pipeline-editor  Pipeline-editor--palette-${isPaletteOpen ? 'open' : 'close'}`}
+    className={`Pipeline-editor Pipeline-editor--palette-${isPaletteOpen ? 'open' : 'close'}`}
   >
     <div className="Pipeline-editor__element-palette">
       <ElementPalette pipelineId={pipelineId} />
@@ -126,6 +128,7 @@ const PipelineEditor = enhance(({
         lineElementCreators={lineElementCreators}
       >
         <div className="Pipeline-editor__recycle-bin">
+          <SavePipeline pipelineId={pipelineId}/>
           <RecycleBin pipelineId={pipelineId} />
         </div>
         <div className="Pipeline-editor__elements">

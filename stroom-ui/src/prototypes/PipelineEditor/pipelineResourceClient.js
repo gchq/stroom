@@ -38,3 +38,34 @@ export const fetchPipeline = pipelineId => (dispatch, getState) => {
       dispatch(push('/error'));
     });
 };
+
+export const savePipeline = pipelineId => (dispatch, getState) => {
+  const state = getState();
+  const jwsToken = state.authentication.idToken;
+  const url = `${state.config.pipelineServiceUrl}/${pipelineId}`;
+
+  const pipelineData = state.pipelines[pipelineId].pipeline;
+  const thisEntry = pipelineData.configStack[pipelineData.configStack.length - 1];
+
+  fetch(url, {
+    body: JSON.stringify(thisEntry),
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${jwsToken}`,
+    },
+    method: 'post',
+    mode: 'cors',
+  })
+    .then(handleStatus)
+    .then((response) => {
+      console.log('Pipeline Saved', response);
+      // dispatch(pipelineReceived(pipelineId, pipeline));
+    })
+    .catch((error) => {
+      dispatch(setErrorMessageAction(error.message));
+      dispatch(setStackTraceAction(error.stack));
+      dispatch(setHttpErrorCodeAction(error.status));
+      dispatch(push('/error'));
+    });
+};

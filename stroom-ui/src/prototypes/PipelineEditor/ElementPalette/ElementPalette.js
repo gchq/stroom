@@ -1,9 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose, renderComponent, withProps } from 'recompose';
+import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Loader } from 'semantic-ui-react';
 
 import ElementCategory from './ElementCategory';
 import { getRecycleBinItems } from '../pipelineUtils';

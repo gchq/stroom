@@ -11,7 +11,7 @@ import { InputField } from 'react-semantic-redux-form';
 import { actionCreators } from './redux';
 
 import { uniqueElementName } from './pipelineUtils';
-import { required, minLength2, renderField } from 'lib/reduxFormUtils';
+import { required, minLength2 } from 'lib/reduxFormUtils';
 
 const { pipelineElementAdded } = actionCreators;
 
