@@ -56,6 +56,7 @@ const DEFAULT_EXPLORER_ID = 'default';
 
 const actionCreators = createActions({
   DOC_TREE_RECEIVED: documentTree => ({ documentTree }),
+  DOC_REF_TYPES_RECEIVED: docRefTypes => ({ docRefTypes }),
   EXPLORER_TREE_OPENED: (explorerId, allowMultiSelect, allowDragAndDrop, typeFilter) => ({
     explorerId,
     allowMultiSelect,
@@ -220,6 +221,17 @@ const explorerTreeReducer = handleActions(
     // Receive the current state of the explorer tree
     DOC_TREE_RECEIVED: (state, action) =>
       getStateAfterTreeUpdate(state, action.payload.documentTree),
+    
+    // Receive the set of doc ref types used in the current tree
+    DOC_REF_TYPES_RECEIVED: (state, action) => {
+      var docRefTypes = {}
+      action.payload.docRefTypes.forEach(docRefType => docRefTypes[docRefType.toUpperCase()] = docRefType)
+      return {
+        ...state, 
+        docRefTypes
+      };
+    },
+
 
     // When an explorer is opened
     EXPLORER_TREE_OPENED: (state, action) => {

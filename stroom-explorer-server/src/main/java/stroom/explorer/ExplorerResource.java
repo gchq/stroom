@@ -14,6 +14,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Api(
         value = "explorer - /v1",
@@ -54,6 +55,24 @@ public class ExplorerResource {
         final SimpleDocRefTreeDTO result = getRoot(filteredModel);
 
         return Response.ok(result).build();
+    }
+
+    /**
+     * @return The DocRef types currently used in this tree.
+     */
+    @GET
+    @Path("/docRefTypes")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getDocRefTypes() {
+        explorerTreeModel.rebuild();
+        final TreeModel treeModel = explorerTreeModel.getModel();
+        List<String> docRefTypes = treeModel.getChildMap().values().stream()
+                .flatMap(List::stream)
+                .map(elementNode -> elementNode == null ? "" : elementNode.getType())
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
+        return Response.ok(docRefTypes).build();
     }
 
     private boolean filterDescendants(final ExplorerNode parent,

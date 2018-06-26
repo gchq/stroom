@@ -23,7 +23,7 @@ import { Input, Loader } from 'semantic-ui-react';
 
 import Folder from './Folder';
 import { actionCreators } from './redux';
-import { fetchDocTree } from './explorerClient';
+import { fetchDocTree, fetchDocRefTypes } from './explorerClient';
 import { withConfigReady } from 'startup/config';
 
 const { searchTermUpdated, explorerTreeOpened } = actionCreators;
@@ -39,11 +39,13 @@ const enhance = compose(
       searchTermUpdated,
       explorerTreeOpened,
       fetchDocTree,
+      fetchDocRefTypes,
     },
   ),
   lifecycle({
     componentDidMount() {
       this.props.fetchDocTree();
+      this.props.fetchDocRefTypes();
     },
   }),
   branch(
