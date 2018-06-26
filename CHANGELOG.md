@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#794** : Automatically suggest a pipeline element name when creating it 
+
+* Issue **#792** : Preferred order of properties for Pipeline Elements
+
 * Moved Index entities over to the new multi part document store.
 
 * Moved Pipeline entities over to the new multi part document store.
