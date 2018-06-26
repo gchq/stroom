@@ -409,13 +409,12 @@ public class RefDataOffHeapStore implements RefDataStore {
         // mapUID => ValueKeys
         // ValueKey => value
 
-        // <pipe uuid 16><pipe ver 1><stream id 8><stream no 8> => <create time 8><last access time 8><effective time 8><state 1>
-        // <pipe uuid 16><pipe ver 1><stream id 8><stream no 8><map name ?> => <mapUID 4>
-        // <mapUID 4> => <pipe uuid 16><pipe ver 1><stream id 8><stream no 8><map name ?>
+        // <pipe uuid 16><pipe ver 1><stream id 8> => <create time 8><last access time 8><effective time 8><state 1>
+        // <pipe uuid 16><pipe ver 1><stream id 8><map name ?> => <mapUID 4>
+        // <mapUID 4> => <pipe uuid 16><pipe ver 1><stream id 8><map name ?>
         // <mapUID 4><string Key ?> => <valueHash 4><id 2>
         // <mapUID 4><range start 8><range end 8> => <valueHash 4><id 2>
-        // <valueHash 4><id 2> => <value type 1><value bytes ?>
-        // <valueHash 4><id 2> => <reference count 4>
+        // <valueHash 4><id 2> => <value type 1><reference count 4><value bytes ?>
 
         // increment ref count when
         // - putting new key(Range)/Value entry + new value entry (set initial ref count at 1)
