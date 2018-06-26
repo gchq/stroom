@@ -29,17 +29,47 @@ import { fromSetupSampleData } from 'components/DocExplorer/documentTree.testDat
 
 import { actionCreators as docExplorerActionCreators } from 'components/DocExplorer/redux';
 
-import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
+import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
+import { PollyDecorator } from 'lib/storybook/PollyDecorator';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
+
+import { testTree } from './test';
+import { testPipelines } from 'prototypes/PipelineEditor/test';
 
 import 'styles/main.css';
 
 const { docTreeReceived, docRefPicked } = docExplorerActionCreators;
 
 storiesOf('App Chrome', module)
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(docTreeReceived(fromSetupSampleData));
+  .addDecorator(PollyDecorator((server, config) => {
+    // The Explorer Service
+    server.get(`${config.explorerServiceUrl}/all`).intercept((req, res) => {
+      res.json(testTree);
+    });
+
+    // Elements Resources
+    server.get(`${config.elementServiceUrl}/elements`).intercept((req, res) => {
+      res.json(elements);
+    });
+    server.get(`${config.elementServiceUrl}/elementProperties`).intercept((req, res) => {
+      res.json(elementProperties);
+    });
+
+    // Pipeline Resource
+    Object.entries(testPipelines)
+      .map(k => ({
+        url: `${config.pipelineServiceUrl}/${k[0]}`,
+        data: k[1],
+      }))
+      .forEach((pipeline) => {
+        console.log('Exposing test pipeline', pipeline);
+        server.get(pipeline.url).intercept((req, res) => {
+          res.json(pipeline.data);
+        });
+        server.post(pipeline.url).intercept((req, res) => res.sendStatus(200));
+      });
   }))
+  .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator)
   .add('App Chrome', () => <AppChrome />)
   .add('App Menu', () => <AppMenu />)

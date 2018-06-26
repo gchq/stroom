@@ -33,7 +33,7 @@ const ContentTabs = ({
   openDocRefs
     .map(docRef => ({
       menuItem: (
-        <Menu.Item>
+        <Menu.Item key={docRef.uuid}>
           {docRef.name}
           <button className="close-btn" onClick={() => docRefClosed(docRef)}>
             x

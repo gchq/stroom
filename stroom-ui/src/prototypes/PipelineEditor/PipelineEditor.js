@@ -54,6 +54,7 @@ const enhance = compose(
   connect(
     (state, props) => ({
       pipeline: state.pipelines[props.pipelineId],
+      elements: state.elements
     }),
     {
       // action, needed by lifecycle hook below
@@ -80,6 +81,7 @@ const enhance = compose(
     ({ pipeline }) => !pipeline.pipeline,
     renderComponent(() => <Loader active>Loading Pipeline Data</Loader>),
   ),
+  branch(({ elements }) => !elements, renderComponent(() => <Loader active>Loading Elements</Loader>)),
   withPaletteOpen,
   withElementDetailsOpen,
   withProps(({ pipeline, setPaletteOpen, isPaletteOpen }) => ({
