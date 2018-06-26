@@ -16,15 +16,15 @@
 
 package stroom.query;
 
+import stroom.mapreduce.UnsafePairQueue;
+import stroom.query.shared.CoprocessorSettings;
+import stroom.query.shared.TableSettings;
+import stroom.util.shared.HasTerminate;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import stroom.query.shared.CoprocessorSettings;
-import stroom.query.shared.TableSettings;
-import stroom.mapreduce.UnsafePairQueue;
-import stroom.util.shared.HasTerminate;
 
 public class SearchResultHandler implements ResultHandler {
     private final CoprocessorMap coprocessorMap;
@@ -95,7 +95,18 @@ public class SearchResultHandler implements ResultHandler {
 
     @Override
     public boolean isComplete() {
-        return complete.get();
+        final boolean complete = this.complete.get();
+        if (!complete) {
+            return false;
+        }
+
+        for (final TablePayloadHandler handler : handlerMap.values()) {
+            if (handler.busy()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     @Override

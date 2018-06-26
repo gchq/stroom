@@ -96,7 +96,7 @@ public class TablePayloadHandler implements PayloadHandler {
                 // Ensure remaining items children are also trimmed by cascading
                 // trim operation.
 
-                // // Lower levels of results should be reduced by increasing
+                // Lower levels of results should be reduced by increasing
                 // amounts so that we don't get an exponential number of
                 // results.
                 // int sz = size / 10;
@@ -318,5 +318,9 @@ public class TablePayloadHandler implements PayloadHandler {
 
     public ResultStore getResultStore() {
         return resultStore;
+    }
+
+    public boolean busy() {
+        return pendingMerges.size() > 0 || merging.get();
     }
 }
