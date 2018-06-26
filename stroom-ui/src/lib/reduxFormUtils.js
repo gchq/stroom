@@ -6,15 +6,20 @@ export const minLength = min => value =>
 export const minLength2 = minLength(2);
 
 export const renderField = ({
-  input, label, type, meta: { touched, error, warning },
+  input,
+  label,
+  type,
+  meta: { touched, error, warning },
+  ...otherProps
 }) => (
   <div>
     <label>{label}</label>
     <div>
-      <input {...input} placeholder={label} type={type} />
+      <input {...input} placeholder={label} type={type} {...otherProps} />
       {touched && ((error && <span>{error}</span>) || (warning && <span>{warning}</span>))}
     </div>
   </div>
 );
 
-export const truncate = (text, limit) => (text.length > limit ? `${text.substr(0, limit)}...` : text);
+export const truncate = (text, limit) =>
+  (text.length > limit ? `${text.substr(0, limit)}...` : text);

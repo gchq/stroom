@@ -58,35 +58,35 @@ const AddElementModal = enhance(({ // From redux state
   // withProps
   onConfirmNewElement, onCancelNewElement,
 }) => (
-    <Modal size="tiny" open={!!newElementDefinition} onClose={onCancelNewElement} dimmer="inverted">
-      <Header content="Add New Element" />
-      <Modal.Content>
-        <Form id="newElementForm">
-          <Form.Field>
-            <label>Name</label>
-            <Field
-              name="name"
-              component={renderField}
-              type="text"
-              placeholder="Name"
-              validate={[required, minLength2, uniqueElementName(pipeline.pipeline)]}
-              autoFocus
-            />
-          </Form.Field>
-        </Form>
-      </Modal.Content>
-      <Modal.Actions>
-        <Button
-          positive
-          content="Submit"
-          disabled={invalid || submitting}
-          onClick={onConfirmNewElement}
-          form="newElementForm"
-        />
-        <Button negative content="Cancel" onClick={onCancelNewElement} />
-      </Modal.Actions>
-    </Modal>
-  ));
+  <Modal size="tiny" open={!!newElementDefinition} onClose={onCancelNewElement} dimmer="inverted">
+    <Header content="Add New Element" />
+    <Modal.Content>
+      <Form id="newElementForm">
+        <Form.Field>
+          <label>Name</label>
+          <Field
+            name="name"
+            component={renderField}
+            type="text"
+            placeholder="Name"
+            validate={[required, minLength2, uniqueElementName(pipeline.pipeline)]}
+            autoFocus
+          />
+        </Form.Field>
+      </Form>
+    </Modal.Content>
+    <Modal.Actions>
+      <Button
+        positive
+        content="Submit"
+        disabled={invalid || submitting}
+        onClick={onConfirmNewElement}
+        form="newElementForm"
+      />
+      <Button negative content="Cancel" onClick={onCancelNewElement} />
+    </Modal.Actions>
+  </Modal>
+));
 
 AddElementModal.propTypes = {
   // Set by container
