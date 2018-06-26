@@ -171,13 +171,13 @@ export const uniqueElementName = (pipeline) => {
     if (!listsOfStringsAreEquals(namesForMemoizedFunction, namesNow)) {
       namesForMemoizedFunction = namesNow;
       memoizedUniqueName = value =>
-        (namesForMemoizedFunction.includes(value) ? 'must be unique name' : undefined);
+        (namesForMemoizedFunction.includes(value.toLowerCase()) ? 'must be unique name' : undefined);
     }
   } else {
     // Create a new memoized function
     namesForMemoizedFunction = getAllElementNames(pipeline);
     memoizedUniqueName = value =>
-      (namesForMemoizedFunction.includes(value) ? 'must be unique name' : undefined);
+      (namesForMemoizedFunction.includes(value.toLowerCase()) ? 'must be unique name' : undefined);
   }
 
   return memoizedUniqueName;
