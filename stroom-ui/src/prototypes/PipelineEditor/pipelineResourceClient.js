@@ -10,7 +10,7 @@ import {
 
 import handleStatus from 'lib/handleStatus';
 
-const { pipelineReceived } = actionCreators;
+const { pipelineReceived, pipelineSaved } = actionCreators;
 
 export const fetchPipeline = pipelineId => (dispatch, getState) => {
   const state = getState();
@@ -59,8 +59,7 @@ export const savePipeline = pipelineId => (dispatch, getState) => {
   })
     .then(handleStatus)
     .then((response) => {
-      console.log('Pipeline Saved', response);
-      // dispatch(pipelineReceived(pipelineId, pipeline));
+      dispatch(pipelineSaved(pipelineId));
     })
     .catch((error) => {
       dispatch(setErrorMessageAction(error.message));

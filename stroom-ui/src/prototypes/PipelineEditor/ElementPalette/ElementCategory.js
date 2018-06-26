@@ -18,7 +18,7 @@ const enhance = compose(
 );
 
 const ElementCategory = enhance(({
-  category, elementsWithData, isOpen, setIsOpen, displayTitle,
+  category, elementsWithData, isOpen, setIsOpen, displayTitle, icon,
 }) => (
   <div className="element-palette-category">
     <Accordion styled>

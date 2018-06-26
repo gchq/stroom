@@ -6,12 +6,27 @@ import { Button } from 'semantic-ui-react';
 
 import { savePipeline } from './pipelineResourceClient';
 
-const enhance = connect((state, props) => ({}), {
-  savePipeline,
-});
+const enhance = connect(
+  (state, props) => ({
+    isDirty: state.pipelines[props.pipelineId].isDirty,
+  }),
+  {
+    savePipeline,
+  },
+);
 
-const SavePipeline = enhance(({ pipelineId, savePipeline }) => (
-  <Button circular basic icon="save" size="huge" onClick={() => savePipeline(pipelineId)} />
+const SavePipeline = enhance(({ isDirty, pipelineId, savePipeline }) => (
+  <React.Fragment>
+    <Button
+      circular
+      disabled={!isDirty}
+      color="blue"
+      icon="save"
+      size="huge"
+      onClick={() => savePipeline(pipelineId)}
+    />
+    {isDirty ? '*' : undefined}
+  </React.Fragment>
 ));
 
 SavePipeline.propTypes = {

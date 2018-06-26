@@ -16,7 +16,7 @@
 
 import { findItem, findMatch, iterateNodes } from 'lib/treeUtils';
 
-export function getRecycleBinItems(pipeline, elementsByType) {
+export function getBinItems(pipeline, elementsByType) {
   const thisConfigStack = pipeline.configStack[pipeline.configStack.length - 1];
 
   return thisConfigStack.elements.remove.map(e => ({

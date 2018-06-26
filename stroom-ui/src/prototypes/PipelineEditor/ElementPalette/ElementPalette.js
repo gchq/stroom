@@ -5,7 +5,7 @@ import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
 
 import ElementCategory from './ElementCategory';
-import { getRecycleBinItems } from '../pipelineUtils';
+import { getBinItems } from '../pipelineUtils';
 
 const enhance = compose(
   connect(
@@ -20,13 +20,13 @@ const enhance = compose(
     },
   ),
   withProps(({ pipeline, elementsByType }) => ({
-    recycleBinItems: getRecycleBinItems(pipeline.pipeline, elementsByType),
+    recycleBinItems: getBinItems(pipeline.pipeline, elementsByType),
   })),
 );
 
 const ElementPalette = enhance(({ elementsByCategory, recycleBinItems }) => (
   <div className="element-palette">
-    <ElementCategory category="Recycle Bin" elementsWithData={recycleBinItems} />
+    <ElementCategory category="Bin" elementsWithData={recycleBinItems} />
     {Object.entries(elementsByCategory).map(k => (
       <ElementCategory
         key={k[0]}

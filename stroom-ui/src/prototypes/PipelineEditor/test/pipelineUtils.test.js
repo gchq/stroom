@@ -15,7 +15,7 @@
  */
 import {
   getPipelineAsTree,
-  getRecycleBinItems,
+  getBinItems,
   createNewElementInPipeline,
   removeElementFromPipeline,
   getAllChildren,
@@ -230,7 +230,7 @@ describe('Pipeline Utils', () => {
       const updatedConfigStackThis = updatedPipeline.configStack[1];
 
       const asTree = getPipelineAsTree(updatedPipeline);
-      const recycleBin = getRecycleBinItems(updatedPipeline);
+      const recycleBin = getBinItems(updatedPipeline);
 
       console.log('Recycle Bin', recycleBin);
 

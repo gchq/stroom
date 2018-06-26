@@ -28,7 +28,7 @@ import { getPipelineLayoutInformation } from './pipelineUtils';
 
 import PipelineElement from './PipelineElement';
 import ElementPalette from './ElementPalette';
-import RecycleBin from './RecycleBin';
+import Bin from './Bin';
 import SavePipeline from './SavePipeline';
 
 import lineElementCreators from './pipelineLineElementCreators';
@@ -127,9 +127,9 @@ const PipelineEditor = enhance(({
         lineContextId={`pipeline-lines-${pipelineId}`}
         lineElementCreators={lineElementCreators}
       >
-        <div className="Pipeline-editor__recycle-bin">
+        <div className="Pipeline-editor__bin">
           <SavePipeline pipelineId={pipelineId}/>
-          <RecycleBin pipelineId={pipelineId} />
+          <Bin pipelineId={pipelineId} />
         </div>
         <div className="Pipeline-editor__elements">
           {Object.keys(elementStyles)

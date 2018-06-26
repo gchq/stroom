@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { compose, withState, withProps } from 'recompose';
 import { connect } from 'react-redux';
 import { DropTarget } from 'react-dnd';
-import { Icon, Confirm } from 'semantic-ui-react';
+import { Icon, Confirm, Button } from 'semantic-ui-react';
 
 import { ItemTypes } from './dragDropTypes';
 import { actionCreators } from './redux';
@@ -31,6 +31,7 @@ const dropTarget = {
 const dropCollect = (connect, monitor) => ({
   connectDropTarget: connect.dropTarget(),
   isOver: monitor.isOver(),
+  dndIsHappening: monitor.getItem() !== null,
 });
 
 const enhance = compose(
@@ -52,10 +53,11 @@ const enhance = compose(
   })),
 );
 
-const RecycleBin = enhance(({
+const Bin = enhance(({
   pipelineId,
   connectDropTarget,
   isOver,
+  dndIsHappening,
   onCancelDelete,
   onConfirmDelete,
   pendingElementToDelete,
@@ -67,12 +69,18 @@ const RecycleBin = enhance(({
       onCancel={onCancelDelete}
       onConfirm={onConfirmDelete}
     />
-    <Icon className={`recycle-bin__icon${isOver ? '__hover' : ''}`} size="huge" name="trash" />
-  </div>));
+    <Button
+      size="huge"
+      circular
+      disabled={!dndIsHappening}
+      color={isOver ? 'black' : 'red'}
+      icon="trash"
+    />
+                    </div>));
 
-RecycleBin.propTypes = {
+Bin.propTypes = {
   // From container
   pipelineId: PropTypes.string.isRequired,
 };
 
-export default RecycleBin;
+export default Bin;
