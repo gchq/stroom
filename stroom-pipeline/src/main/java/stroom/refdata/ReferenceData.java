@@ -100,17 +100,19 @@ public class ReferenceData {
 
     /**
      * <p>
-     * Given a date and a map name get some reference data value.
+     * Given a {@link LookupIdentifier} and a list of ref data pipelines, ensure that
+     * the data required to perform the lookup is in the ref store. This method will not
+     * perform the lookup, instead it will populate the {@link ReferenceDataResult} with
+     * a proxy object that can later be used to do the lookup.
      * </p>
      *
      * @param pipelineReferences The references to look for reference data in.
      * @param lookupIdentifier   The identifier to lookup in the reference data
-     * @param result             The reference result object.
+     * @param result             The reference result object containing the proxy object for performing the lookup
      */
-    // TODO rename to ensureDataAvailability or something like that as we are not going to return a value
-    public void getValue(final List<PipelineReference> pipelineReferences,
-                         final LookupIdentifier lookupIdentifier,
-                         final ReferenceDataResult result) {
+    public void ensureReferenceDataAvailability(final List<PipelineReference> pipelineReferences,
+                                                final LookupIdentifier lookupIdentifier,
+                                                final ReferenceDataResult result) {
         // Do we have a nested token?
 
 //        final int splitPos = mapName.indexOf(NEST_SEPARATOR);
@@ -138,7 +140,7 @@ public class ReferenceData {
                     // use the value from this lookup as the key for the nested map
                     LookupIdentifier nestedIdentifier = lookupIdentifier.getNestedLookupIdentifier(stringValue);
 
-                    getValue(pipelineReferences, nestedIdentifier, result);
+                    ensureReferenceDataAvailability(pipelineReferences, nestedIdentifier, result);
                 } catch (ClassCastException e) {
                     result.log(Severity.ERROR, () -> LambdaLogger.buildMessage("Value is the wrong type, expected: {}, found: {}",
                             StringValue.class.getName(), refDataValue.getClass().getName()));
@@ -156,11 +158,13 @@ public class ReferenceData {
 //                            final String mapName,
 //                            final String keyName,
                             final ReferenceDataResult referenceDataResult) {
+
         for (final PipelineReference pipelineReference : pipelineReferences) {
             // Handle context data differently loading it from the
             // current stream context.
             if (pipelineReference.getStreamType() != null
                     && StreamType.CONTEXT.getName().equals(pipelineReference.getStreamType())) {
+
                 getNestedStreamEventList(
                         pipelineReference,
                         lookupIdentifier.getPrimaryMapName(),

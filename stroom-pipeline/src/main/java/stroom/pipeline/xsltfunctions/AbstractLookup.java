@@ -175,7 +175,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
         if (pipelineReferences == null || pipelineReferences.size() == 0) {
             result.log(Severity.ERROR, () -> "No pipeline references have been added to this XSLT step to perform a lookup");
         } else {
-            referenceData.getValue(pipelineReferences, lookupIdentifier, result);
+            referenceData.ensureReferenceDataAvailability(pipelineReferences, lookupIdentifier, result);
         }
 
         return result;

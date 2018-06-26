@@ -118,7 +118,7 @@ public class TestReferenceData extends StroomUnitTest {
                            final String mapName) {
         final ReferenceDataResult result = new ReferenceDataResult();
 
-        data.getValue(pipelineReferences, LookupIdentifier.of(mapName, "user1", "2010-01-01T09:47:00.111Z"), result);
+        data.ensureReferenceDataAvailability(pipelineReferences, LookupIdentifier.of(mapName, "user1", "2010-01-01T09:47:00.111Z"), result);
 
         Assert.assertEquals("B1111", lookup(data, pipelineReferences, "2010-01-01T09:47:00.111Z", mapName, "user1"));
         Assert.assertEquals("B1111", lookup(data, pipelineReferences, "2015-01-01T09:47:00.000Z", mapName, "user1"));
@@ -237,7 +237,7 @@ public class TestReferenceData extends StroomUnitTest {
                           final String mapName,
                           final String key) {
         final ReferenceDataResult result = new ReferenceDataResult();
-        data.getValue(pipelineReferences, LookupIdentifier.of(mapName, key, time), result);
+        data.ensureReferenceDataAvailability(pipelineReferences, LookupIdentifier.of(mapName, key, time), result);
 //        if (result.getEventListProxy() != null) {
 //            return result.getEventListProxy().toString();
 //        }
