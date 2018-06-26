@@ -21,6 +21,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -202,6 +203,7 @@ public class TestLmdbKeyValueStore {
         });
     }
 
+    @Ignore // this is a manual test given the size involved
     @Test
     public void testLargeDB() throws IOException {
         Path path = Paths.get("/disk2/testLargeDB");

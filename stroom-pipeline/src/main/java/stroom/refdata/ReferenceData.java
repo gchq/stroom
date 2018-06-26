@@ -438,24 +438,9 @@ public class ReferenceData {
                     }
 
                     // now we should have the required data in the store (unless the max age is set far to small)
-
-                    //TODO do we need to do this here?
-
-                    // now we have the data in the store we can do the lookup to get the proxy object
-//                    final Optional<RefDataValueProxy> optRefDataValueProxy = refDataStore.getValueProxy(mapDefinition, keyName);
-
                     final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
                     final RefDataValueProxy refDataValueProxy = refDataStore.getValueProxy(mapDefinition, keyName);
                     result.setRefDataValueProxy(refDataValueProxy);
-
-//                    LOGGER.debug("Lookup for mapDefinition {}, key {}, returned {}", mapDefinition, keyName, optRefDataValueProxy);
-
-//                    if (optRefDataValueProxy.isPresent()) {
-//                        result.log(Severity.INFO, () -> "Map store contains reference data (" + effectiveStream + ")");
-//                        result.setRefDataValueProxy(optRefDataValueProxy.get());
-//                    } else {
-//                        result.log(Severity.WARNING, () -> "Map store has no reference data (" + effectiveStream + ")");
-//                    }
                 } else {
                     result.log(Severity.WARNING, () -> "No effective streams can be found in the returned set (" + effectiveStreamKey + ")");
                 }
