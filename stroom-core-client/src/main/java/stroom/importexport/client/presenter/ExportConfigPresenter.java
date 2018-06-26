@@ -72,7 +72,7 @@ public class ExportConfigPresenter
 
     @Override
     protected void revealInParent() {
-        treePresenter.setRequiredPermissions(DocumentPermissionNames.READ, DocumentPermissionNames.EXPORT);
+        treePresenter.setRequiredPermissions(DocumentPermissionNames.READ);
         treePresenter.refresh();
 
         final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {

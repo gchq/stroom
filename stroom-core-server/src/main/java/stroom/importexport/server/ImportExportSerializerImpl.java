@@ -33,8 +33,8 @@ import stroom.entity.shared.ImportState;
 import stroom.entity.shared.ImportState.ImportMode;
 import stroom.entity.shared.ImportState.State;
 import stroom.entity.shared.PermissionException;
-import stroom.folder.server.FolderServiceImpl;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.pool.SecurityHelper;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.shared.StreamType;
@@ -190,12 +190,30 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
                 final Path explorerPath = parentExplorerPath.resolve(fileName);
 
                 if (Files.isDirectory(path)) {
-                    final String folderConfig = fileName + "." + Folder.ENTITY_TYPE + ".xml";
-                    if (Files.isRegularFile(parent.resolve(folderConfig))) {
+                    // IF we have already started forming a path then continue.
+                    if (parentExplorerPath.getFileName().toString().length() > 0) {
                         getPaths(path, sourcePath, explorerPath, entityType, map);
                     } else {
-                        // This isn't a config folder so recurse into sub directory with the same parent explorer folder.
-                        getPaths(path, sourcePath, parentExplorerPath, entityType, map);
+                        final String folderConfig = fileName + "." + Folder.ENTITY_TYPE + ".xml";
+                         if (Files.isRegularFile(parent.resolve(folderConfig))) {
+                             // If the path contains an entity file then this is a valid path.
+                             getPaths(path, sourcePath, explorerPath, entityType, map);
+                         } else {
+                             // See if this is a root folder.
+                             Folder folder = null;
+                             try (SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+                                 folder = folderService.loadByName(null, fileName);
+                             } catch (final RuntimeException e) {
+                                 // Ignore.
+                             }
+
+                             if (folder != null) {
+                                 getPaths(path, sourcePath, explorerPath, entityType, map);
+                             } else {
+                                 // This isn't a config folder so recurse into sub directory with the same parent explorer folder.
+                                 getPaths(path, sourcePath, parentExplorerPath, entityType, map);
+                             }
+                         }
                     }
                 } else if (fileName.endsWith(match)) {
                     map.computeIfAbsent(sourcePath, k -> explorerPath);
@@ -304,25 +322,28 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
                 // Find the nearest parent folder and see if we are allowed to import/create items in the parent folder.
                 int pathIndex = 0;
                 DocRef nearestFolder = SYSTEM_FOLDER;
-                if (explorerPath.getNameCount() == 1) {
-                    folderRef = nearestFolder;
-                } else {
-                    Folder parentFolder = null;
-                    for (pathIndex = 0; pathIndex < explorerPath.getNameCount() - 1; pathIndex++) {
-                        final String folderName = explorerPath.getName(pathIndex).toString();
-                        Folder folder = folderService.loadByName(DocRef.create(parentFolder), folderName);
-                        if (folder != null) {
-                            nearestFolder = DocRef.create(folder);
-                            folderRef = nearestFolder;
-                        } else {
-                            folderRef = null;
-                            break;
-                        }
 
-                        parentFolder = folder;
+                try (SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+                    if (explorerPath.getNameCount() == 1) {
+                        folderRef = nearestFolder;
+                    } else {
+                        Folder parentFolder = null;
+                        for (pathIndex = 0; pathIndex < explorerPath.getNameCount() - 1; pathIndex++) {
+                            final String folderName = explorerPath.getName(pathIndex).toString();
+                            Folder folder = folderService.loadByName(DocRef.create(parentFolder), folderName);
+                            if (folder != null) {
+                                nearestFolder = DocRef.create(folder);
+                                folderRef = nearestFolder;
+                            } else {
+                                folderRef = null;
+                                break;
+                            }
+
+                            parentFolder = folder;
+                        }
                     }
+                    LOGGER.debug("nearestFolder %s", nearestFolder);
                 }
-                LOGGER.debug("nearestFolder %s", nearestFolder);
 
                 // Only allow administrators to import documents with no folder.
                 // TODO : In v6 the root folder will be a real folder.
@@ -339,9 +360,9 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
                         throw new PermissionException(securityContext.getUserId(), "You do not have permission to create a folder in '" + nearestFolder);
                     }
 
-                    if (!securityContext.hasDocumentPermission(nearestFolder.getType(), nearestFolder.getUuid(), DocumentPermissionNames.IMPORT)) {
-                        throw new PermissionException(securityContext.getUserId(), "You do not have permission to import folders into '" + nearestFolder);
-                    }
+//                    if (!securityContext.hasDocumentPermission(nearestFolder.getType(), nearestFolder.getUuid(), DocumentPermissionNames.IMPORT)) {
+//                        throw new PermissionException(securityContext.getUserId(), "You do not have permission to import folders into '" + nearestFolder);
+//                    }
 
                     // Add the required folders for this new item.
                     if (importMode == ImportMode.IGNORE_CONFIRMATION
@@ -365,9 +386,9 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
                         throw new PermissionException(securityContext.getUserId(), "You do not have permission to create '" + docRef + "' in '" + folderRef);
                     }
 
-                    if (!securityContext.hasDocumentPermission(folderRef.getType(), folderRef.getUuid(), DocumentPermissionNames.IMPORT)) {
-                        throw new PermissionException(securityContext.getUserId(), "You do not have permission to import '" + docRef + "' into '" + folderRef);
-                    }
+//                    if (!securityContext.hasDocumentPermission(folderRef.getType(), folderRef.getUuid(), DocumentPermissionNames.IMPORT)) {
+//                        throw new PermissionException(securityContext.getUserId(), "You do not have permission to import '" + docRef + "' into '" + folderRef);
+//                    }
                 }
 
 //                        if (importMode == ImportMode.CREATE_CONFIRMATION) {
@@ -378,9 +399,9 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
                     throw new PermissionException(securityContext.getUserId(), "You do not have permission to update '" + docRef + "'");
                 }
 
-                if (!securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.IMPORT)) {
-                    throw new PermissionException(securityContext.getUserId(), "You do not have permission to import '" + docRef + "'");
-                }
+//                if (!securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.IMPORT)) {
+//                    throw new PermissionException(securityContext.getUserId(), "You do not have permission to import '" + docRef + "'");
+//                }
 
 //                        if (importMode == ImportMode.CREATE_CONFIRMATION) {
 //                            importState.setState(State.UPDATE);
@@ -408,9 +429,11 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
                 // TODO : In v6 we won't pass down the folder.
                 Folder folder = null;
                 if (!SYSTEM_FOLDER.equals(folderRef)) {
-                    folder = folderService.loadByUuid(folderRef.getUuid());
-                    if (folder == null) {
-                        throw new RuntimeException("Unable to find parent folder: " + folderRef);
+                    try (SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+                        folder = folderService.loadByUuid(folderRef.getUuid());
+                        if (folder == null) {
+                            throw new RuntimeException("Unable to find parent folder: " + folderRef);
+                        }
                     }
                 }
                 final DocRef imported = documentEntityService.importDocument(folder, dataMap, importState, importMode);
@@ -424,7 +447,8 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
             }
 
         } catch (final Exception e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.debug(e.getMessage(), e);
+            LOGGER.warn(e.getMessage());
             if (importState != null) {
                 importState.addMessage(Severity.ERROR, e.getMessage());
             }
@@ -441,57 +465,61 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
     }
 
     private DocRef getExistingFolder(final DocRef docRef) {
-        // TODO : In v6 replace this method with calls to local explorer service to get folder.
-        final DocumentEntityService documentEntityService = getService(docRef);
-        if (documentEntityService == null) {
-            throw new RuntimeException("Unable to find service to import " + docRef);
-        }
-
-        final Entity entity = documentEntityService.loadByUuid(docRef.getUuid());
-        if (entity != null && entity instanceof HasFolder) {
-            final Folder folder = ((HasFolder) entity).getFolder();
-            if (folder == null) {
-                // Return the root folder.
-                return SYSTEM_FOLDER;
+        try (SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+            // TODO : In v6 replace this method with calls to local explorer service to get folder.
+            final DocumentEntityService documentEntityService = getService(docRef);
+            if (documentEntityService == null) {
+                throw new RuntimeException("Unable to find service to import " + docRef);
             }
-            return DocRef.create(folderService.load(folder));
-        }
 
-        return null;
+            final Entity entity = documentEntityService.loadByUuid(docRef.getUuid());
+            if (entity != null && entity instanceof HasFolder) {
+                final Folder folder = ((HasFolder) entity).getFolder();
+                if (folder == null) {
+                    // Return the root folder.
+                    return SYSTEM_FOLDER;
+                }
+                return DocRef.create(folderService.loadById(folder.getId(), Collections.emptySet()));
+            }
+
+            return null;
+        }
     }
 
     private String getFolderPath(final DocRef docRef) {
-        final StringBuilder path = new StringBuilder();
+        try (SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+            final StringBuilder path = new StringBuilder();
 
-        // TODO : In v6 replace this method with calls to local explorer service to get folder.
-        final DocumentEntityService documentEntityService = getService(docRef);
-        if (documentEntityService == null) {
-            throw new RuntimeException("Unable to find service to import " + docRef);
-        }
+            // TODO : In v6 replace this method with calls to local explorer service to get folder.
+            final DocumentEntityService documentEntityService = getService(docRef);
+            if (documentEntityService == null) {
+                throw new RuntimeException("Unable to find service to import " + docRef);
+            }
 
-        final Entity entity = documentEntityService.loadByUuid(docRef.getUuid());
-        if (entity != null && entity instanceof HasFolder) {
-            if (docRef.getName() != null) {
-                path.append(docRef.getName());
-            } else if (entity instanceof DocumentEntity) {
-                final DocumentEntity documentEntity = (DocumentEntity) entity;
-                if (documentEntity.getName() != null) {
-                    path.append(documentEntity.getName());
+            final Entity entity = documentEntityService.loadByUuid(docRef.getUuid());
+            if (entity != null && entity instanceof HasFolder) {
+                if (docRef.getName() != null) {
+                    path.append(docRef.getName());
+                } else if (entity instanceof DocumentEntity) {
+                    final DocumentEntity documentEntity = (DocumentEntity) entity;
+                    if (documentEntity.getName() != null) {
+                        path.append(documentEntity.getName());
+                    }
+                }
+
+                Folder folder = ((HasFolder) entity).getFolder();
+                while (folder != null) {
+                    folder = folderService.load(folder);
+                    if (folder != null) {
+                        path.insert(0, "/");
+                        path.insert(0, folder.getName());
+                        folder = folder.getFolder();
+                    }
                 }
             }
 
-            Folder folder = ((HasFolder) entity).getFolder();
-            while (folder != null) {
-                folder = folderService.load(folder);
-                if (folder != null) {
-                    path.insert(0, "/");
-                    path.insert(0, folder.getName());
-                    folder = folder.getFolder();
-                }
-            }
+            return path.toString();
         }
-
-        return path.toString();
     }
 
     /**
@@ -523,7 +551,7 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
     }
 
     private void expandDocRefSet(final DocRef docRef, final DocRefs set) {
-        if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.EXPORT)) {
+        if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.READ)) {
             set.add(docRef);
         }
 
@@ -563,7 +591,7 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
                         if (object instanceof DocumentEntity) {
                             final DocumentEntity documentEntity = (DocumentEntity) object;
                             final DocRef docRef = DocRef.create(documentEntity);
-                            if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.EXPORT)) {
+                            if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.READ)) {
                                 set.add(docRef);
                             }
                         }
@@ -615,22 +643,19 @@ public class ImportExportSerializerImpl implements ImportExportSerializer {
     }
 
     private List<Folder> getFolderPath(final DocumentEntity documentEntity) {
-        // Find the folder path to this entity.
-        final List<Folder> path = new ArrayList<>();
-        Folder folder = documentEntity.getFolder();
-        while (folder != null) {
-            if (folderService instanceof FolderServiceImpl) {
-                folder = ((FolderServiceImpl) folderService).loadByIdInsecure(folder.getId(), Collections.emptySet());
-            } else {
+        try (SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+            // Find the folder path to this entity.
+            final List<Folder> path = new ArrayList<>();
+            Folder folder = documentEntity.getFolder();
+            while (folder != null) {
                 folder = folderService.loadById(folder.getId(), Collections.emptySet());
+                if (folder != null) {
+                    path.add(0, folder);
+                    folder = folder.getFolder();
+                }
             }
-
-            if (folder != null) {
-                path.add(0, folder);
-                folder = folder.getFolder();
-            }
+            return path;
         }
-        return path;
     }
 
     private Path createDirs(final Path dir, final List<Folder> folders, final List<Message> messageList) throws IOException {

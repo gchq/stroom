@@ -577,6 +577,9 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
                 if (importMode == ImportMode.CREATE_CONFIRMATION) {
                     importState.setState(State.NEW);
                 }
+
+                // We don't want to overwrite any marshaled data so disable marshalling on creation.
+                setFolder(entity, DocRef.create(folder));
             } else {
                 if (importMode == ImportMode.CREATE_CONFIRMATION) {
                     importState.setState(State.UPDATE);
@@ -586,20 +589,14 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
                 LOGGER.debug("Import state is %s for uuid %s", importState.getState(), uuid);
             }
 
-
             importExportHelper.performImport(entity, dataMap, mainConfigPath, importState, importMode);
 
             validateNameUniqueness(folder, importState, importMode, config, uuid);
-
-            // We don't want to overwrite any marshaled data so disable marshalling on creation.
-            setFolder(entity, DocRef.create(folder));
 
             // Save directly so there is no marshalling of objects that would destroy imported data.
             if (importMode == ImportMode.IGNORE_CONFIRMATION
                     || (importMode == ImportMode.ACTION_CONFIRMATION && importState.isAction())) {
                 entity = getEntityManager().saveEntity(entity);
-
-
 
                 // TODO : Make it possible to choose the permission inheritance.
                 // Create the initial user permissions for this new document.
@@ -618,10 +615,6 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
                 } catch (final Exception e) {
                     LOGGER.error(e.getMessage(), e);
                 }
-
-
-
-
             }
 
         } catch (final Exception e) {
@@ -663,7 +656,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
     @Override
     public Map<String, String> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
-        if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.EXPORT)) {
+        if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.READ)) {
             final E entity = entityServiceHelper.loadByUuid(docRef.getUuid());
             if (entity != null) {
                 return importExportHelper.performExport(entity, omitAuditFields, messageList);

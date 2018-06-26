@@ -41,11 +41,11 @@ import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.importexport.client.event.ImportConfigConfirmEvent;
 import stroom.importexport.shared.ImportConfigAction;
 import stroom.streamstore.client.presenter.ColumnSizeConstants;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Message;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.Severity;
-import stroom.svg.client.SvgPreset;
-import stroom.svg.client.SvgPresets;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -171,9 +171,13 @@ public class ImportConfigConfirmPresenter extends
                 TickBoxCell.create(tickBoxAppearance, false, false)) {
             @Override
             public TickBoxState getValue(final ImportState object) {
+                final Severity severity = object.getSeverity();
+                if (severity != null && severity.greaterThanOrEqual(Severity.ERROR)) {
+                    return null;
+                }
+
                 return TickBoxState.fromBoolean(object.isAction());
             }
-
         };
         final Header<TickBoxState> header = new Header<TickBoxState>(TickBoxCell.create(tickBoxAppearance, false, false)) {
             @Override
@@ -263,16 +267,18 @@ public class ImportConfigConfirmPresenter extends
                         builder.append(msg.getMessage());
                         builder.append("<br/>");
                     }
-                    builder.append("<br/>");
                 }
 
                 if (action.getUpdatedFieldList().size() > 0) {
+                    if (builder.length() > 0) {
+                        builder.append("<br/>");
+                    }
+
                     builder.append("<b>Fields Updated:</b><br/>");
                     for (final String string : action.getUpdatedFieldList()) {
                         builder.append(string);
                         builder.append("<br/>");
                     }
-                    builder.append("<br/>");
                 }
                 tooltipPresenter.setHTML(builder.toString());
 
@@ -289,7 +295,10 @@ public class ImportConfigConfirmPresenter extends
                 new TextCell()) {
             @Override
             public String getValue(final ImportState action) {
-                return action.getState().getDisplayValue();
+                if (action.getState() != null) {
+                    return action.getState().getDisplayValue();
+                }
+                return "Error";
             }
         };
         dataGridView.addResizableColumn(column, "Action", 50);
