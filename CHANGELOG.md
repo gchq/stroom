@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#795** : Import and export now works with appropriate application permissions. Read permission is required to export items and Create/Update permissions are required to import items depending on whether the update will create a new item or update an existing one.
+
 ## [v5.4.3] - 2018-06-08
 
 * Issue **#783** : Reverted code that ignored duplicate selection to fix double click in tables.
