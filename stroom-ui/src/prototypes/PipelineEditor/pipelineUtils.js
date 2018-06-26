@@ -254,7 +254,7 @@ export function reinstateElementToPipeline(pipeline, parentId, recycleData) {
     from: parentId,
     to: recycleData.id,
   };
-  console.log('Adding new link', newLink);
+
   return {
     configStack: mapLastItemInArray(pipeline.configStack, stackItem => ({
       properties: stackItem.properties,

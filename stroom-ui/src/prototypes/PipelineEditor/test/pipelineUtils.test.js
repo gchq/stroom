@@ -17,11 +17,18 @@ import {
   getPipelineAsTree,
   getBinItems,
   createNewElementInPipeline,
+  reinstateElementToPipeline,
   removeElementFromPipeline,
   getAllChildren,
 } from '../pipelineUtils';
 
+import {
+  keyByType
+} from '../elementUtils';
+
 import { testPipelines, elements } from './index';
+
+const elementsByType = keyByType(elements);
 
 describe('Pipeline Utils', () => {
   describe('#getPipelineAsTree', () => {
@@ -138,6 +145,28 @@ describe('Pipeline Utils', () => {
     });
   });
 
+  describe('#reinstateElementToPipeline', () => {
+    test('it should restore an element and add a link to the correct parent', () => {
+      // Given
+      const testPipeline = testPipelines.forkRemoved;
+      const parentId = 'dsParser';
+      const itemToReinstate = testPipelines.forkRemoved.configStack[0].elements.remove[0];
+
+      // When
+      const updatedPipeline = reinstateElementToPipeline(testPipeline, parentId, itemToReinstate);
+      const updatedConfigStackThis = updatedPipeline.configStack[0];
+
+      // Then
+      const expectedLink = {
+        from: parentId,
+        to: itemToReinstate.id
+      }
+
+      expect(updatedConfigStackThis.elements.remove.length).toBe(0);
+      expect(updatedConfigStackThis.links.add).toEqual(expect.arrayContaining([expectedLink]))
+    })
+  });
+
   describe('#removeElementFromPipeline', () => {
     test('should hide an element and link that are inherited', () => {
       // Given
@@ -230,9 +259,7 @@ describe('Pipeline Utils', () => {
       const updatedConfigStackThis = updatedPipeline.configStack[1];
 
       const asTree = getPipelineAsTree(updatedPipeline);
-      const recycleBin = getBinItems(updatedPipeline);
-
-      console.log('Recycle Bin', recycleBin);
+      const recycleBin = getBinItems(updatedPipeline, elementsByType);
 
     });
     test('should hide an element that is ours, and delete the link', () => {
