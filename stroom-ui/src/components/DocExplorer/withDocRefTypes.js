@@ -19,6 +19,8 @@ import { branch, compose, renderComponent, lifecycle } from 'recompose';
 import { Loader } from 'semantic-ui-react';
 import { fetchDocRefTypes } from './explorerClient';
 
+const loader = <Loader active>Awaiting DocRef type list </Loader>;
+
 /**
  * Higher Order Component that ensures that the doc ref types have been set.
  */
@@ -29,10 +31,7 @@ const withDocRefTypesReady = compose(
     }),
     {},
   ),
-  branch(
-    ({ isDocRefTypeListReady }) => !isDocRefTypeListReady,
-    renderComponent(() => <Loader active />),
-  ),
+  branch(({ isDocRefTypeListReady }) => !isDocRefTypeListReady, renderComponent(() => loader)),
 );
 
 /**
@@ -53,10 +52,7 @@ const requestDocRefTypesAndWait = compose(
       this.props.fetchDocRefTypes();
     },
   }),
-  branch(
-    ({ isDocRefTypeListReady }) => !isDocRefTypeListReady,
-    renderComponent(() => <Loader active />),
-  ),
+  branch(({ isDocRefTypeListReady }) => !isDocRefTypeListReady, renderComponent(() => loader)),
 );
 
 export { withDocRefTypesReady, requestDocRefTypesAndWait };
