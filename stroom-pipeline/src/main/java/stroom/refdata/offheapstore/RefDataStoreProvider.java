@@ -17,8 +17,11 @@
 
 package stroom.refdata.offheapstore;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.properties.StroomPropertyService;
 import stroom.util.ByteSizeUnit;
+import stroom.util.config.StroomProperties;
 import stroom.util.logging.LambdaLogger;
 
 import javax.inject.Inject;
@@ -33,11 +36,15 @@ import java.util.Objects;
 @Singleton
 public class RefDataStoreProvider implements Provider<RefDataStore> {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(RefDataStoreProvider.class);
+
     public static final String OFF_HEAP_STORE_DIR_PROP_KEY = "stroom.refloader.offheapstore.localDir";
     public static final String MAX_STORE_SIZE_BYTES_PROP_KEY = "stroom.refloader.offheapstore.maxStoreSize";
     public static final String MAX_READERS_PROP_KEY = "stroom.refloader.offheapstore.maxReaders";
     public static final String MAX_PUTS_BEFORE_COMMIT_PROP_KEY = "stroom.refloader.offheapstore.maxPutsBeforeCommit";
     public static final String VALUE_BUFFER_CAPACITY_PROP_KEY = "stroom.refloader.offheapstore.valueBufferCapacity";
+
+    private static final String DEFAULT_STORE_SUB_DIR_NAME = "refDataOffHeapStore";
 
     public static final int VALUE_BUFFER_CAPACITY_DEFAULT_VALUE = 1_000;
     private static final long MAX_STORE_SIZE_BYTES_DEFAULT = ByteSizeUnit.GIBIBYTE.longBytes(10);
@@ -80,11 +87,20 @@ public class RefDataStoreProvider implements Provider<RefDataStore> {
     }
 
     private Path getStoreDir() {
-        final String storeDirStr = stroomPropertyService.getProperty(OFF_HEAP_STORE_DIR_PROP_KEY);
-        Objects.requireNonNull(storeDirStr);
-        Path storeDir = Paths.get(storeDirStr);
+        String storeDirStr = stroomPropertyService.getProperty(OFF_HEAP_STORE_DIR_PROP_KEY);
+        LOGGER.info("Property {} is not set, falling back to {}", OFF_HEAP_STORE_DIR_PROP_KEY, StroomProperties.STROOM_TEMP);
+        Path storeDir;
+        if (storeDirStr == null) {
+            String stroomTempDirStr = stroomPropertyService.getProperty(StroomProperties.STROOM_TEMP);
+            Objects.requireNonNull(stroomTempDirStr, () ->
+                    LambdaLogger.buildMessage("Property {} is not set", StroomProperties.STROOM_TEMP));
+            storeDir = Paths.get(stroomTempDirStr).resolve(DEFAULT_STORE_SUB_DIR_NAME);
+        } else {
+            storeDir = Paths.get(storeDirStr);
+        }
 
         try {
+            LOGGER.debug("Ensuring directory {}", storeDir);
             Files.createDirectories(storeDir);
         } catch (IOException e) {
             throw new RuntimeException(LambdaLogger.buildMessage("Error ensuring store directory {} exists", storeDirStr), e);

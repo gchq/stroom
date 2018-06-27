@@ -62,8 +62,14 @@ public class RefDataValueProxy {
 //        refDataStore.consumeValue(valueStoreKey, valueConsumer);
 //    }
 
-    public void consumeBytes(final Consumer<ByteBuffer> bytesConsumer) {
-        refDataStore.consumeValueBytes(mapDefinition, key, bytesConsumer);
+    /**
+     * If a reference data entry exists for this {@link RefDataValueProxy} pass its value to the consumer
+     * as a {@link ByteBuffer}.
+     * @param bytesConsumer
+     * @return True if the entry is found and the consumer is called.
+     */
+    public boolean consumeBytes(final Consumer<ByteBuffer> bytesConsumer) {
+        return refDataStore.consumeValueBytes(mapDefinition, key, bytesConsumer);
     }
 
     @Override
@@ -85,7 +91,6 @@ public class RefDataValueProxy {
     @Override
     public String toString() {
         return "RefDataValueProxy{" +
-                "refDataStore=" + refDataStore +
                 ", mapDefinition=" + mapDefinition +
                 ", key='" + key + '\'' +
                 '}';

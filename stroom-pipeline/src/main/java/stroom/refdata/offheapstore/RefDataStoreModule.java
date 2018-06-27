@@ -66,6 +66,8 @@ public class RefDataStoreModule extends AbstractModule {
         install(new FactoryModuleBuilder().build(ProcessingInfoDb.Factory.class));
         install(new FactoryModuleBuilder().build(ValueReferenceCountDb.Factory.class));
 
+        install(new FactoryModuleBuilder().build(RefDataValueProxyConsumer.Factory.class));
+
         install(new FactoryModuleBuilder()
                 .implement(RefDataStore.class, RefDataOffHeapStore.class)
                 .build(RefDataOffHeapStore.Factory.class));

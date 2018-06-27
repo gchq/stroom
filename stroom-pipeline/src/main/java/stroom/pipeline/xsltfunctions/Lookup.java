@@ -62,18 +62,20 @@ class Lookup extends AbstractLookup {
         if (refDataValueProxy != null) {
             sequenceMaker.open();
 
-            // TODO need to change the ReferenceDataResult to hold the value proxy
-            // then here we can pass our consume method (changed to accept a ByteBuffer (or maybe InputStream))
-            // to the OffHeapPool to consume inside a txn
-            sequenceMaker.consume(refDataValueProxy);
+            try {
+                boolean wasFound = sequenceMaker.consume(refDataValueProxy);
+                if (!wasFound && !ignoreWarnings) {
+                    outputInfo(Severity.WARNING, "Lookup failed ", lookupIdentifier, trace, result, context);
+                }
+            } catch (XPathException e) {
+                outputInfo(Severity.ERROR, "Lookup errored: " + e.getMessage(), lookupIdentifier, trace, result, context);
+            }
 
             sequenceMaker.close();
 
             if (trace) {
                 outputInfo(Severity.INFO, "Lookup success ", lookupIdentifier, trace, result, context);
             }
-        } else if (!ignoreWarnings) {
-            outputInfo(Severity.WARNING, "Lookup failed ", lookupIdentifier, trace, result, context);
         }
 
         return sequenceMaker.toSequence();

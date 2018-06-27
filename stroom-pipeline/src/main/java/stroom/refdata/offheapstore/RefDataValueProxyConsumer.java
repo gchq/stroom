@@ -4,14 +4,20 @@ import com.google.inject.assistedinject.Assisted;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
 import net.sf.saxon.trans.XPathException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.refdata.offheapstore.serdes.RefDataValueSerde;
+import stroom.util.logging.LambdaLogger;
 
 import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 
 public class RefDataValueProxyConsumer {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(RefDataValueProxyConsumer.class);
 
     private final Receiver receiver;
     private final PipelineConfiguration pipelineConfiguration;
@@ -33,20 +39,23 @@ public class RefDataValueProxyConsumer {
     }
 
     public void startDocument() throws XPathException {
+        LOGGER.trace("startDocument");
         receiver.setPipelineConfiguration(pipelineConfiguration);
         receiver.open();
         receiver.startDocument(0);
     }
 
     public void endDocument() throws XPathException {
+        LOGGER.trace("endDocument");
         receiver.endDocument();
         receiver.close();
     }
 
-    public void consume(final RefDataValueProxy refDataValueProxy) throws XPathException {
+    public boolean consume(final RefDataValueProxy refDataValueProxy) throws XPathException {
+        LOGGER.trace("consume({})", refDataValueProxy);
 
         //
-        refDataValueProxy.consumeBytes(byteBuffer -> {
+        return refDataValueProxy.consumeBytes(byteBuffer -> {
 
             // find out what type of value we are dealing with
             final Integer typeId = RefDataValueSerde.getTypeId(byteBuffer);
@@ -57,6 +66,8 @@ public class RefDataValueProxyConsumer {
                             typeToByteBufferConsumerFactoryMap.get(typeIdKey)
                                     .create(receiver, pipelineConfiguration)
             );
+
+            Objects.requireNonNull(consumer, () -> LambdaLogger.buildMessage("No consumer for typeId {}", typeId));
 
             // now we have the appropriate consumer for the value type, consume the value
             consumer.consumeBytes(receiver, byteBuffer);

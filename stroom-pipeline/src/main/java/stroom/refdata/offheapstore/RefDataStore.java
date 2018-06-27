@@ -82,9 +82,9 @@ public interface RefDataStore {
      * copy the bytes in the buffer if it wants to use them outside the lambda. The consumer must understand
      * how to interpret the bytebuffer passed to it.
      */
-    void consumeValueBytes(final MapDefinition mapDefinition,
-                           final String key,
-                           final Consumer<ByteBuffer> valueBytesConsumer);
+    boolean consumeValueBytes(final MapDefinition mapDefinition,
+                              final String key,
+                              final Consumer<ByteBuffer> valueBytesConsumer);
 
 //    void consumeValue(final ValueStoreKey valueStoreKey,
 //                      final Consumer<RefDataValue> valueConsumer);
@@ -112,6 +112,7 @@ public interface RefDataStore {
      * The passed {@link Consumer} will be called with the new {@link RefDataLoader} only if
      * the {@link RefDataProcessingInfo} for the {@link RefStreamDefinition} is not marked as complete. This test
      * will be performed under a lock on the passed {@link RefStreamDefinition}.
+     *
      * @return True if work was executed
      */
     boolean doWithLoaderUnlessComplete(final RefStreamDefinition refStreamDefinition,

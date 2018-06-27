@@ -20,6 +20,7 @@ package stroom.refdata.offheapstore;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Striped;
 import com.google.inject.assistedinject.Assisted;
+import org.apache.commons.io.FileUtils;
 import org.lmdbjava.Env;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
@@ -116,8 +117,13 @@ public class RefDataOffHeapStore implements RefDataStore {
         this.maxPutsBeforeCommit = maxPutsBeforeCommit;
         this.valueBufferCapacity = valueBufferCapacity;
 
-        LOGGER.debug("Creating LMDB environment with maxSize: {}, dbDir {}, maxReaders {}",
-                maxSize, dbDir.toAbsolutePath().toString(), maxReaders);
+        LOGGER.info(
+                "Creating RefDataOffHeapStore with maxSize: {}, dbDir {}, maxReaders {}, maxPutsBeforeCommit {}, valueBufferCapacity {}",
+                FileUtils.byteCountToDisplaySize(maxSize),
+                dbDir.toAbsolutePath().toString(),
+                maxReaders,
+                maxPutsBeforeCommit,
+                FileUtils.byteCountToDisplaySize(valueBufferCapacity));
 
         // By default LMDB opens with readonly mmaps so you cannot mutate the bytebuffers inside a txn.
         // Instead you need to create a new bytebuffer for the value and put that. If you want faster writes
@@ -169,6 +175,7 @@ public class RefDataOffHeapStore implements RefDataStore {
                 processingInfoDb.updateLastAccessedTime(refStreamDefinition);
             }
         });
+        LOGGER.trace("getProcessingInfo({}) - {}", refStreamDefinition, optProcessingInfo);
         return optProcessingInfo;
     }
 
@@ -177,10 +184,13 @@ public class RefDataOffHeapStore implements RefDataStore {
 
         // TODO we could optimise this so that it doesn't deser the whole object, instead just
         // extract the state value while in a txn
-        return getProcessingInfo(refStreamDefinition)
+        boolean result = getProcessingInfo(refStreamDefinition)
                 .map(RefDataProcessingInfo::getProcessingState)
                 .filter(Predicate.isEqual(RefDataProcessingInfo.ProcessingState.COMPLETE))
                 .isPresent();
+
+        LOGGER.trace("isDataLoaded({}) - {}", refStreamDefinition, result);
+        return result;
     }
 
     @Override
@@ -188,10 +198,15 @@ public class RefDataOffHeapStore implements RefDataStore {
                                            final String key) {
 
         //TODO refactor to share the pooled key buffer
-        return byteBufferPool.getWithBuffer(lmdbEnvironment.getMaxKeySize(), keyBuffer ->
-                LmdbUtils.getWithReadTxn(lmdbEnvironment, readTxn ->
-                        getValueStoreKey(readTxn, mapDefinition, key)
-                                .flatMap(valueStoreKey -> valueStoreDb.get(readTxn, valueStoreKey))));
+        Optional<RefDataValue> optionalRefDataValue = byteBufferPool.getWithBuffer(
+                lmdbEnvironment.getMaxKeySize(), keyBuffer ->
+                        LmdbUtils.getWithReadTxn(lmdbEnvironment, readTxn ->
+                                getValueStoreKey(readTxn, mapDefinition, key)
+                                        .flatMap(valueStoreKey ->
+                                                valueStoreDb.get(readTxn, valueStoreKey))));
+
+        LOGGER.trace("getValue({}, {}) - {}", mapDefinition, key, optionalRefDataValue);
+        return optionalRefDataValue;
     }
 
 //    public Optional<RefDataValue> getValue(final ValueStoreKey valueStoreKey) {
@@ -264,18 +279,27 @@ public class RefDataOffHeapStore implements RefDataStore {
 //    }
 
     @Override
-    public void consumeValueBytes(final MapDefinition mapDefinition,
-                                  final String key,
-                                  final Consumer<ByteBuffer> valueBytesConsumer) {
+    public boolean consumeValueBytes(final MapDefinition mapDefinition,
+                                     final String key,
+                                     final Consumer<ByteBuffer> valueBytesConsumer) {
+
 
         // lookup the passed mapDefinition and key and if a valueStoreKey is found use that to
         // lookup the value in the value store, passing the actual value part to the consumer.
         // The consumer gets only the value, not the type or ref count and has to understand how
         // to interpret the bytes in the buffer
-        LmdbUtils.doWithReadTxn(lmdbEnvironment, txn ->
+        boolean wasValueFound = LmdbUtils.getWithReadTxn(lmdbEnvironment, txn ->
                 getValueStoreKey(txn, mapDefinition, key)
-                        .flatMap(valueStoreKeyBuf -> valueStoreDb.getValueBytes(txn, valueStoreKeyBuf))
-                        .ifPresent(valueBytesConsumer));
+                        .flatMap(valueStoreKeyBuf ->
+                                valueStoreDb.getValueBytes(txn, valueStoreKeyBuf))
+                        .map(valueBuf -> {
+                            valueBytesConsumer.accept(valueBuf);
+                            return true;
+                        })
+                        .orElse(false));
+
+        LOGGER.trace("consumeValueBytes({}, {}) - ", mapDefinition, key, wasValueFound);
+        return wasValueFound;
     }
 
 //    @Override
@@ -626,6 +650,7 @@ public class RefDataOffHeapStore implements RefDataStore {
         public boolean put(final MapDefinition mapDefinition,
                            final String key,
                            final RefDataValue refDataValue) {
+            LOGGER.trace("put({}, {}, {}", mapDefinition, key, refDataValue);
 
             Objects.requireNonNull(mapDefinition);
             Objects.requireNonNull(key);
@@ -710,6 +735,7 @@ public class RefDataOffHeapStore implements RefDataStore {
         public boolean put(final MapDefinition mapDefinition,
                            final Range<Long> keyRange,
                            final RefDataValue refDataValue) {
+            LOGGER.trace("put({}, {}, {}", mapDefinition, keyRange, refDataValue);
             Objects.requireNonNull(mapDefinition);
             Objects.requireNonNull(keyRange);
             Objects.requireNonNull(refDataValue);
@@ -825,7 +851,7 @@ public class RefDataOffHeapStore implements RefDataStore {
             // get the UID for this mapDefinition, and as we should only have a handful of mapDefinitions
             // per loader it makes sense to cache the MapDefinition=>UID mappings on heap for quicker access.
             final UID uid = mapDefinitionToUIDMap.computeIfAbsent(mapDefinition, mapDef -> {
-                LOGGER.trace("MapDefinition {} not found in local cache so getting it from the store");
+                LOGGER.trace("MapDefinition not found in local cache so getting it from the store, {}", mapDefinition);
                 // cloning the UID in case we leave the txn
                 beginTxnIfRequired();
                 return mapDefinitionUIDStore.getOrCreateUid(writeTxn, mapDef).clone();

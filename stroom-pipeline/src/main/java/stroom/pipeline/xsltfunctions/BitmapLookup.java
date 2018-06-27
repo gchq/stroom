@@ -83,21 +83,28 @@ class BitmapLookup extends AbstractLookup {
                         sequenceMaker = new SequenceMaker(context, getRefDataStore(), getConsumerFactory());
                         sequenceMaker.open();
                     }
-                    sequenceMaker.consume(refDataValueProxy);
+                    boolean wasFound = false;
+                    try {
+                        wasFound = sequenceMaker.consume(refDataValueProxy);
+                    } catch (XPathException e) {
+                        outputInfo(Severity.ERROR, "Lookup errored: " + e.getMessage(), lookupIdentifier, trace, result, context);
+                    }
+
+                    if (!wasFound && !ignoreWarnings) {
+                        if (trace) {
+                            outputInfo(Severity.WARNING, "Lookup failed ", lookupIdentifier, trace, result, context);
+                        }
+
+                        if (failedBits == null) {
+                            failedBits = new StringBuilder();
+                        }
+                        failedBits.append(k);
+                        failedBits.append(",");
+                    }
 
                     if (trace) {
                         outputInfo(Severity.INFO, "Lookup success ", lookupIdentifier, trace, result, context);
                     }
-                } else if (!ignoreWarnings) {
-                    if (trace) {
-                        outputInfo(Severity.WARNING, "Lookup failed ", lookupIdentifier, trace, result, context);
-                    }
-
-                    if (failedBits == null) {
-                        failedBits = new StringBuilder();
-                    }
-                    failedBits.append(k);
-                    failedBits.append(",");
                 }
             }
 

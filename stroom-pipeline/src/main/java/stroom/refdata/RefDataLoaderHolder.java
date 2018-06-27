@@ -32,10 +32,6 @@ public class RefDataLoaderHolder {
     // to be already loaded within this pipeline processing instance
     private Set<RefStreamDefinition> availableRefStreamDefinitions = new HashSet<>();
 
-    RefDataLoaderHolder(final RefDataLoader refDataLoader) {
-        this.refDataLoader = refDataLoader;
-    }
-
     public RefDataLoader getRefDataLoader() {
         return refDataLoader;
     }

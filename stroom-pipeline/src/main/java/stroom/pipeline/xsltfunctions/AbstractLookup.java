@@ -68,6 +68,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
 
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {
+        LOGGER.trace("call({}, {}, {}", functionName, context, arguments);
         Sequence result = EmptyAtomicSequence.getInstance();
 
         try {
@@ -136,21 +137,17 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                 try {
                     result = doLookup(context, ignoreWarnings, traceLookup, lookupIdentifier);
                 } catch (final RuntimeException e) {
-                    if (!ignoreWarnings) {
-                        createLookupFailWarning(context, lookupIdentifier, e);
-                    }
+                    createLookupFailError(context, lookupIdentifier, e);
                 }
             } catch (RuntimeException e) {
-                if (!ignoreWarnings) {
-                    final StringBuilder sb = new StringBuilder();
-                    sb.append("Identifier must have a map and a key (map = ");
-                    sb.append(map);
-                    sb.append(", key = ");
-                    sb.append(key);
-                    sb.append(", eventTime = ");
-                    sb.append(ms);
-                    log(context, Severity.ERROR, e.getMessage(), e);
-                }
+                final StringBuilder sb = new StringBuilder();
+                sb.append("Identifier must have a map and a key (map = ");
+                sb.append(map);
+                sb.append(", key = ");
+                sb.append(key);
+                sb.append(", eventTime = ");
+                sb.append(ms);
+                log(context, Severity.ERROR, e.getMessage(), e);
             }
 
         } catch (final XPathException | RuntimeException e) {
@@ -179,6 +176,17 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
         }
 
         return result;
+    }
+
+    private void createLookupFailError(final XPathContext context,
+                                       final LookupIdentifier lookupIdentifier,
+                                       final Throwable e) {
+        // Create the message.
+        final StringBuilder sb = new StringBuilder();
+        sb.append("Lookup errored ");
+        lookupIdentifier.append(sb);
+
+        outputError(context, sb, e);
     }
 
     private void createLookupFailWarning(final XPathContext context,
@@ -232,6 +240,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
         }
 
         void open() throws XPathException {
+            LOGGER.trace("open()");
             // Make sure we have made a consumer.
             ensureConsumer();
 
@@ -241,15 +250,17 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
         }
 
         void close() throws XPathException {
+            LOGGER.trace("close()");
             consumer.endDocument();
         }
 
-        void consume(final RefDataValueProxy refDataValueProxy) throws XPathException {
+        boolean consume(final RefDataValueProxy refDataValueProxy) throws XPathException {
             // TODO : Possibly replace NPEventList with TinyTree to improve performance.
-            consumer.consume(refDataValueProxy);
+            return consumer.consume(refDataValueProxy);
         }
 
         private void ensureConsumer() {
+            LOGGER.trace("ensureConsumer()");
             if (consumer == null) {
                 // We have some reference data so build a tiny tree.
                 final Configuration configuration = context.getConfiguration();
@@ -262,6 +273,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
         }
 
         Sequence toSequence() {
+            LOGGER.trace("toSequence()");
             if (builder == null) {
                 return EmptyAtomicSequence.getInstance();
             }

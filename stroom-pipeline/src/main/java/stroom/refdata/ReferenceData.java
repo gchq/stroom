@@ -113,6 +113,9 @@ public class ReferenceData {
     public void ensureReferenceDataAvailability(final List<PipelineReference> pipelineReferences,
                                                 final LookupIdentifier lookupIdentifier,
                                                 final ReferenceDataResult result) {
+
+        LOGGER.trace("ensureReferenceDataAvailability({}, {}", pipelineReferences, lookupIdentifier);
+
         // Do we have a nested token?
 
 //        final int splitPos = mapName.indexOf(NEST_SEPARATOR);

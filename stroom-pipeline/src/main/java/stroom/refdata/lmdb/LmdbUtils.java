@@ -59,7 +59,8 @@ public class LmdbUtils {
         try (final Txn<ByteBuffer> txn = env.txnRead()) {
             return work.apply(txn);
         } catch (RuntimeException e) {
-            throw new RuntimeException("Error performing work in read transaction", e);
+            throw new RuntimeException(LambdaLogger.buildMessage("Error performing work in read transaction: {}",
+                    e.getMessage()), e);
         }
     }
 
@@ -70,7 +71,8 @@ public class LmdbUtils {
         try (final Txn<ByteBuffer> txn = env.txnRead()) {
             work.accept(txn);
         } catch (RuntimeException e) {
-            throw new RuntimeException("Error performing work in read transaction", e);
+            throw new RuntimeException(LambdaLogger.buildMessage("Error performing work in read transaction: {}",
+                    e.getMessage()), e);
         }
     }
 
@@ -83,7 +85,8 @@ public class LmdbUtils {
             txn.commit();
             return result;
         } catch (RuntimeException e) {
-            throw new RuntimeException("Error performing work in write transaction", e);
+            throw new RuntimeException(LambdaLogger.buildMessage("Error performing work in write transaction: {}",
+                    e.getMessage()), e);
         }
     }
 
@@ -96,7 +99,8 @@ public class LmdbUtils {
             work.accept(txn);
             txn.commit();
         } catch (RuntimeException e) {
-            throw new RuntimeException("Error performing work in write transaction", e);
+            throw new RuntimeException(LambdaLogger.buildMessage("Error performing work in write transaction: {}",
+                    e.getMessage()), e);
         }
     }
 

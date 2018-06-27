@@ -22,15 +22,17 @@ import net.sf.saxon.event.Receiver;
 import net.sf.saxon.event.ReceiverOptions;
 import net.sf.saxon.expr.parser.Location;
 import net.sf.saxon.trans.XPathException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.refdata.offheapstore.serdes.StringValueSerde;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 
 public class StringByteBufferConsumer extends AbstractByteBufferConsumer {
+    private static final Logger LOGGER = LoggerFactory.getLogger(StringByteBufferConsumer.class);
 
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(StringByteBufferConsumer.class);
 
@@ -44,6 +46,7 @@ public class StringByteBufferConsumer extends AbstractByteBufferConsumer {
 
     @Override
     public void consumeBytes(final Receiver receiver, final ByteBuffer byteBuffer) {
+        LOGGER.trace("consumeBytes()");
 
         // we should only be consuming string type values
         final String str = StringValueSerde.extractStringValue(byteBuffer);

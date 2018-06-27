@@ -83,7 +83,9 @@ public class MapDefinition {
     @Override
     public String toString() {
         return "MapDefinition{" +
-                "refStreamDefinition=" + refStreamDefinition +
+                "pipelineDocRef=" + refStreamDefinition.getPipelineDocRef() +
+                ", pipelineVer=" + (int) (refStreamDefinition.getPipelineVersion()) +
+                ", streamId=" + refStreamDefinition.getStreamId() +
                 ", mapName='" + mapName + '\'' +
                 '}';
     }

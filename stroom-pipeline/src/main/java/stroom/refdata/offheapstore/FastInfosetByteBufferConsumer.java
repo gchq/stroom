@@ -5,12 +5,15 @@ import com.sun.xml.fastinfoset.sax.SAXDocumentParser;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
 import org.jvnet.fastinfoset.FastInfosetException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public class FastInfosetByteBufferConsumer extends AbstractByteBufferConsumer {
+    private static final Logger LOGGER = LoggerFactory.getLogger(FastInfosetByteBufferConsumer.class);
 
     private final SAXDocumentParser saxDocumentParser;
 
@@ -28,6 +31,7 @@ public class FastInfosetByteBufferConsumer extends AbstractByteBufferConsumer {
 
     @Override
     public void consumeBytes(final Receiver receiver, final ByteBuffer byteBuffer) {
+        LOGGER.trace("consumeBytes()");
         final ByteBufferInputStream inputStream = new ByteBufferInputStream(byteBuffer);
         try {
             // do the parsing which will output to the tinyBuilder
