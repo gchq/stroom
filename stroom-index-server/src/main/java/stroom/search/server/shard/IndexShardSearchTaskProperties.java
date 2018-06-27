@@ -25,7 +25,6 @@ import javax.inject.Inject;
 public class IndexShardSearchTaskProperties {
     private static final int DEFAULT_MAX_THREADS = 4;
     private static final int DEFAULT_MAX_THREADS_PER_TASK = 2;
-    private static final int DEFAULT_MAX_OPEN_SHARDS = 5;
 
     private final StroomPropertyService propertyService;
 
@@ -40,20 +39,5 @@ public class IndexShardSearchTaskProperties {
 
     public int getMaxThreadsPerTask() {
         return propertyService.getIntProperty("stroom.search.shard.maxThreadsPerTask", DEFAULT_MAX_THREADS_PER_TASK);
-    }
-
-    public int getMaxOpenShards() {
-        int maxOpenShards = propertyService.getIntProperty("stroom.search.shard.maxOpen", DEFAULT_MAX_OPEN_SHARDS);
-        final int maxThreadsPerTask = getMaxThreadsPerTask();
-
-        // Ensure we have at least as many cached shards as we have concurrent
-        // search tasks or else some shards
-        // will close as they are removed from the pool while we are still
-        // searching them.
-        if (maxOpenShards < maxThreadsPerTask) {
-            maxOpenShards = maxThreadsPerTask;
-        }
-
-        return maxOpenShards;
     }
 }

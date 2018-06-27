@@ -300,13 +300,7 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
 
-        // SEARCH SHARD 
-        list.add(new GlobalProperty.Builder()
-                .name("stroom.search.shard.maxOpen")
-                .value("5")
-                .description("The number of open Lucene index shards to cache on each node")
-                .editable(true)
-                .build());
+        // SEARCH SHARD
         list.add(new GlobalProperty.Builder()
                 .name("stroom.search.shard.maxDocIdQueueSize")
                 .value("1000")
