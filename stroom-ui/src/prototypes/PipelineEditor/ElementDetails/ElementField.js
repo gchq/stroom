@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose } from 'recompose';
+import { compose, lifecycle } from 'recompose';
 import { connect } from 'react-redux';
 
 import { Form, Popup, Icon } from 'semantic-ui-react';
@@ -12,9 +12,35 @@ import { Field } from 'redux-form';
 
 import { getActualValue } from './elementDetailsUtils';
 
-import { DocRefModalPicker } from 'components/DocExplorer';
+import { DocRefModalPicker, actionCreators } from 'components/DocExplorer';
 
 import NumericInput from 'prototypes/NumericInput';
+
+const { docRefPicked } = actionCreators;
+
+const camelize = str => str.replace(/\W+(.)/g, (match, chr) => chr.toUpperCase());
+
+const getPickerName = (elementName, settingName) =>
+  `${camelize(elementName)}_${settingName}_docRefModalPicker`;
+
+const enhance = compose(
+  connect(
+    (state, props) => ({
+      // state
+    }),
+    {
+      docRefPicked,
+    },
+  ),
+  lifecycle({
+    componentDidMount() {
+      this.props.docRefPicked(
+        getPickerName(this.props.value.element, this.props.name),
+        this.props.value.value.entity,
+      );
+    },
+  }),
+);
 
 const ElementFieldType = ({
   name, type, value, defaultValue, docRefTypes,
@@ -37,7 +63,10 @@ const ElementFieldType = ({
       // TODO potential bug: I'm not sure why elementTypeProperties have multiple
       // docRefTypes, but we can only use one so we'll choose the first.
       return (
-        <DocRefModalPicker pickerId={`${name}_docRefModalPicker`} typeFilter={docRefTypes[0]} />
+        <DocRefModalPicker
+          pickerId={getPickerName(value.element, name)}
+          typeFilter={docRefTypes[0]}
+        />
       );
     case 'String':
     case 'PipelineReference':
@@ -49,7 +78,7 @@ const ElementFieldType = ({
   }
 };
 
-const ElementField = ({
+const ElementField = enhance(({
   name, description, type, defaultValue, value, docRefTypes,
 }) => (
   <Form.Group>
@@ -84,7 +113,7 @@ const ElementField = ({
       }
     />
   </Form.Group>
-);
+));
 
 ElementField.propTypes = {
   name: PropTypes.string.isRequired,
@@ -95,11 +124,4 @@ ElementField.propTypes = {
   value: PropTypes.object,
 };
 
-export default compose(connect(
-  state => ({
-    // state
-  }),
-  {
-    // actions
-  },
-))(ElementField);
+export default ElementField;
