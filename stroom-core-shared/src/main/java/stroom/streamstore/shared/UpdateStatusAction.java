@@ -1,27 +1,27 @@
 package stroom.streamstore.shared;
 
-import stroom.data.meta.api.StreamStatus;
+import stroom.data.meta.api.DataStatus;
 import stroom.entity.shared.Action;
-import stroom.data.meta.api.FindStreamCriteria;
+import stroom.data.meta.api.FindDataCriteria;
 import stroom.util.shared.SharedInteger;
 
 public class UpdateStatusAction extends Action<SharedInteger> {
-    private FindStreamCriteria criteria;
-    private StreamStatus newStatus;
+    private FindDataCriteria criteria;
+    private DataStatus newStatus;
 
     public UpdateStatusAction() {
     }
 
-    public UpdateStatusAction(final FindStreamCriteria criteria, final StreamStatus newStatus) {
+    public UpdateStatusAction(final FindDataCriteria criteria, final DataStatus newStatus) {
         this.criteria = criteria;
         this.newStatus = newStatus;
     }
 
-    public FindStreamCriteria getCriteria() {
+    public FindDataCriteria getCriteria() {
         return criteria;
     }
 
-    public StreamStatus getNewStatus() {
+    public DataStatus getNewStatus() {
         return newStatus;
     }
 

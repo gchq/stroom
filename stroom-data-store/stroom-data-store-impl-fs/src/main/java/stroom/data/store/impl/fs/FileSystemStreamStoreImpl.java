@@ -22,11 +22,11 @@ import event.logging.util.DateUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamDataSource;
-import stroom.data.meta.api.StreamMetaService;
-import stroom.data.meta.api.StreamProperties;
-import stroom.data.meta.api.StreamStatus;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.MetaDataSource;
+import stroom.data.meta.api.DataMetaService;
+import stroom.data.meta.api.DataProperties;
+import stroom.data.meta.api.DataStatus;
 import stroom.data.store.api.StreamException;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
@@ -64,14 +64,14 @@ class FileSystemStreamStoreImpl implements StreamStore {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamStoreImpl.class);
 
     private final FileSystemStreamPathHelper fileSystemStreamPathHelper;
-    private final StreamMetaService streamMetaService;
+    private final DataMetaService streamMetaService;
     private final NodeCache nodeCache;
     private final VolumeService volumeService;
     private final StreamVolumeService streamVolumeService;
 
     @Inject
     FileSystemStreamStoreImpl(final FileSystemStreamPathHelper fileSystemStreamPathHelper,
-                              final StreamMetaService streamMetaService,
+                              final DataMetaService streamMetaService,
                               final NodeCache nodeCache,
                               final VolumeService volumeService,
                               final StreamVolumeService streamVolumeService) {
@@ -83,7 +83,7 @@ class FileSystemStreamStoreImpl implements StreamStore {
     }
 
     @Override
-    public StreamTarget openStreamTarget(final StreamProperties streamProperties) {
+    public StreamTarget openStreamTarget(final DataProperties streamProperties) {
         LOGGER.debug("openStreamTarget() " + streamProperties);
 
         final Set<VolumeEntity> volumeSet = volumeService.getStreamVolumeSet(nodeCache.getDefaultNode());
@@ -92,11 +92,11 @@ class FileSystemStreamStoreImpl implements StreamStore {
         }
 
         // First time call (no file yet exists)
-        final Stream stream = streamMetaService.createStream(streamProperties);
+        final Data stream = streamMetaService.create(streamProperties);
 
         final Set<StreamVolume> streamVolumes = streamVolumeService.createStreamVolumes(stream.getId(), volumeSet);
         final Set<String> rootPaths = streamVolumes.stream().map(StreamVolume::getVolumePath).collect(Collectors.toSet());
-        final String streamType = stream.getStreamTypeName();
+        final String streamType = stream.getTypeName();
         final FileSystemStreamTarget target = FileSystemStreamTarget.create(fileSystemStreamPathHelper, stream, rootPaths, streamType, false);
 
         // Force Creation of the files
@@ -108,7 +108,7 @@ class FileSystemStreamStoreImpl implements StreamStore {
     }
 
     @Override
-    public StreamTarget openExistingStreamTarget(final Stream stream) throws StreamException {
+    public StreamTarget openExistingStreamTarget(final Data stream) throws StreamException {
         Objects.requireNonNull(stream, "Null stream");
         LOGGER.debug("openExistingStreamTarget() " + stream);
 
@@ -117,10 +117,10 @@ class FileSystemStreamStoreImpl implements StreamStore {
         if (streamVolumes.isEmpty()) {
             throw new StreamException("Not all volumes are unlocked");
         }
-        final Stream lockedStream = streamMetaService.updateStatus(stream, StreamStatus.LOCKED);
+        final Data lockedStream = streamMetaService.updateStatus(stream, DataStatus.LOCKED);
         final Set<String> rootPaths = streamVolumes.stream().map(StreamVolume::getVolumePath).collect(Collectors.toSet());
 
-        final String streamType = lockedStream.getStreamTypeName();
+        final String streamType = lockedStream.getTypeName();
         final FileSystemStreamTarget target = FileSystemStreamTarget.create(fileSystemStreamPathHelper, lockedStream, rootPaths,
                 streamType, true);
 
@@ -144,10 +144,10 @@ class FileSystemStreamStoreImpl implements StreamStore {
             streamCloseException = e;
         }
 
-        updateAttribute(fileSystemStreamTarget, StreamDataSource.STREAM_SIZE,
+        updateAttribute(fileSystemStreamTarget, MetaDataSource.STREAM_SIZE,
                 String.valueOf(((FileSystemStreamTarget) streamTarget).getStreamSize()));
 
-        updateAttribute(fileSystemStreamTarget, StreamDataSource.FILE_SIZE,
+        updateAttribute(fileSystemStreamTarget, MetaDataSource.FILE_SIZE,
                 String.valueOf(((FileSystemStreamTarget) streamTarget).getTotalFileSize()));
 
         try {
@@ -200,7 +200,7 @@ class FileSystemStreamStoreImpl implements StreamStore {
         }
 
         // Make sure the stream data is deleted.
-        return streamMetaService.deleteStream(target.getStream().getId(), false);
+        return streamMetaService.delete(target.getStream().getId(), false);
     }
 
     /**
@@ -237,7 +237,7 @@ class FileSystemStreamStoreImpl implements StreamStore {
     public StreamSource openStreamSource(final long streamId, final boolean anyStatus) throws StreamException {
         StreamSource streamSource = null;
 
-        final Stream stream = streamMetaService.getStream(streamId, anyStatus);
+        final Data stream = streamMetaService.getData(streamId, anyStatus);
         if (stream != null) {
             LOGGER.debug("openStreamSource() {}", stream.getId());
 
@@ -255,7 +255,7 @@ class FileSystemStreamStoreImpl implements StreamStore {
                 LOGGER.warn(message);
                 throw new StreamException(message);
             }
-            streamSource = FileSystemStreamSource.create(fileSystemStreamPathHelper, stream, streamVolume.getVolumePath(), stream.getStreamTypeName());
+            streamSource = FileSystemStreamSource.create(fileSystemStreamPathHelper, stream, streamVolume.getVolumePath(), stream.getTypeName());
         }
 
         return streamSource;
@@ -272,7 +272,7 @@ class FileSystemStreamStoreImpl implements StreamStore {
     }
 
     @Override
-    public AttributeMap getStoredMeta(final Stream stream) {
+    public AttributeMap getStoredMeta(final Data stream) {
         final Set<StreamVolume> volumeSet = streamVolumeService.findStreamVolume(stream.getId());
         if (volumeSet != null && volumeSet.size() > 0) {
             final StreamVolume streamVolume = volumeSet.iterator().next();
@@ -298,7 +298,7 @@ class FileSystemStreamStoreImpl implements StreamStore {
 
                 try {
                     final Path rootFile = fileSystemStreamPathHelper.createRootStreamFile(streamVolume.getVolumePath(),
-                            stream, stream.getStreamTypeName());
+                            stream, stream.getTypeName());
 
                     final List<Path> allFiles = fileSystemStreamPathHelper.findAllDescendantStreamFileList(rootFile);
                     attributeMap.put("Files", allFiles.stream().map(FileUtil::getCanonicalPath).collect(Collectors.joining(",")));
@@ -320,19 +320,19 @@ class FileSystemStreamStoreImpl implements StreamStore {
         return null;
     }
 
-    private void syncAttributes(final Stream stream, final FileSystemStreamTarget target) {
-        updateAttribute(target, StreamDataSource.STREAM_ID, String.valueOf(stream.getId()));
+    private void syncAttributes(final Data stream, final FileSystemStreamTarget target) {
+        updateAttribute(target, MetaDataSource.STREAM_ID, String.valueOf(stream.getId()));
 
-        if (stream.getParentStreamId() != null) {
-            updateAttribute(target, StreamDataSource.PARENT_STREAM_ID,
-                    String.valueOf(stream.getParentStreamId()));
+        if (stream.getParentDataId() != null) {
+            updateAttribute(target, MetaDataSource.PARENT_STREAM_ID,
+                    String.valueOf(stream.getParentDataId()));
         }
 
-        updateAttribute(target, StreamDataSource.FEED, stream.getFeedName());
-        updateAttribute(target, StreamDataSource.STREAM_TYPE, stream.getStreamTypeName());
-        updateAttribute(target, StreamDataSource.CREATE_TIME, DateUtil.createNormalDateTimeString(stream.getCreateMs()));
+        updateAttribute(target, MetaDataSource.FEED, stream.getFeedName());
+        updateAttribute(target, MetaDataSource.STREAM_TYPE, stream.getTypeName());
+        updateAttribute(target, MetaDataSource.CREATE_TIME, DateUtil.createNormalDateTimeString(stream.getCreateMs()));
         if (stream.getEffectiveMs() != null) {
-            updateAttribute(target, StreamDataSource.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(stream.getEffectiveMs()));
+            updateAttribute(target, MetaDataSource.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(stream.getEffectiveMs()));
         }
     }
 
@@ -342,8 +342,8 @@ class FileSystemStreamStoreImpl implements StreamStore {
         }
     }
 
-    private Stream unLock(final Stream stream, final AttributeMap attributeMap) {
-        if (StreamStatus.UNLOCKED.equals(stream.getStatus())) {
+    private Data unLock(final Data stream, final AttributeMap attributeMap) {
+        if (DataStatus.UNLOCKED.equals(stream.getStatus())) {
             throw new IllegalStateException("Attempt to unlock a stream that is already unlocked");
         }
 
@@ -357,6 +357,6 @@ class FileSystemStreamStoreImpl implements StreamStore {
         }
 
         LOGGER.debug("unlock() " + stream);
-        return streamMetaService.updateStatus(stream, StreamStatus.UNLOCKED);
+        return streamMetaService.updateStatus(stream, DataStatus.UNLOCKED);
     }
 }

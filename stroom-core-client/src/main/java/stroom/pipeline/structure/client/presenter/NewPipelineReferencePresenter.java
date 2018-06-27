@@ -73,7 +73,7 @@ public class NewPipelineReferencePresenter
 
         pipelinePresenter.setSelectedEntityReference(pipelineReference.getPipeline());
         feedPresenter.setSelectedEntityReference(pipelineReference.getFeed());
-//        updateStreamTypes(pipelineReference.getStreamType());
+//        updateStreamTypes(pipelineReference.getType());
 
         pipelinePresenter.addDataSelectionHandler(event -> {
 //            if (initialised) {
@@ -97,9 +97,9 @@ public class NewPipelineReferencePresenter
         streamTypesWidget.addChangeHandler(event -> {
 //            if (initialised) {
 //                final String selection = streamTypesWidget.getSelected();
-//                if ((pipelineReference.getStreamType() == null && selection != null)
-//                        || (pipelineReference.getStreamType() != null
-//                        && !pipelineReference.getStreamType().equals(selection))) {
+//                if ((pipelineReference.getType() == null && selection != null)
+//                        || (pipelineReference.getType() != null
+//                        && !pipelineReference.getType().equals(selection))) {
                     setDirty(true);
 //                }
 //            }

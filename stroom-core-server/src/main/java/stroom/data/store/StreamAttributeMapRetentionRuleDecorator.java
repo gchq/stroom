@@ -19,8 +19,8 @@ package stroom.data.store;
 
 import stroom.dictionary.DictionaryStore;
 import stroom.ruleset.shared.DataRetentionRule;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamDataSource;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.util.date.DateUtil;
 
 import java.time.Instant;
@@ -39,10 +39,10 @@ public class StreamAttributeMapRetentionRuleDecorator {
 
     public StreamAttributeMapRetentionRuleDecorator(final DictionaryStore dictionaryStore, final List<DataRetentionRule> rules) {
         this.rules = rules;
-        expressionMatcher = new ExpressionMatcher(StreamDataSource.getFieldMap(), dictionaryStore);
+        expressionMatcher = new ExpressionMatcher(MetaDataSource.getFieldMap(), dictionaryStore);
     }
 
-    public void addMatchingRetentionRuleInfo(final Stream stream, final Map<String, String> attributeMap) {
+    public void addMatchingRetentionRuleInfo(final Data stream, final Map<String, String> attributeMap) {
         int index = -1;
 
         // If there are no active rules then we aren't going to process anything.

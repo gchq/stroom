@@ -18,10 +18,8 @@
 package stroom.data.store.api;
 
 import stroom.data.meta.api.AttributeMap;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamProperties;
-
-import java.util.Map;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataProperties;
 
 /**
  * <p>
@@ -46,7 +44,7 @@ public interface StreamStore {
      *
      * @return the stream to write to
      */
-    StreamTarget openStreamTarget(StreamProperties streamProperties) throws StreamException;
+    StreamTarget openStreamTarget(DataProperties streamProperties) throws StreamException;
 
     /**
      * <p>
@@ -56,7 +54,7 @@ public interface StreamStore {
      * @param append allow appending to the stream (or wipe it?)
      * @return the stream to write to
      */
-    StreamTarget openExistingStreamTarget(Stream stream) throws StreamException;
+    StreamTarget openExistingStreamTarget(Data stream) throws StreamException;
 
     /**
      * <p>
@@ -117,5 +115,5 @@ public interface StreamStore {
      * @param streamId
      * @return
      */
-    AttributeMap getStoredMeta(Stream stream);
+    AttributeMap getStoredMeta(Data stream);
 }

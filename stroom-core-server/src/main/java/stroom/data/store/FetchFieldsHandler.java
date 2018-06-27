@@ -19,7 +19,7 @@ package stroom.data.store;
 import stroom.entity.shared.DataSourceFields;
 import stroom.security.Security;
 import stroom.streamstore.shared.FetchFieldsAction;
-import stroom.data.meta.api.StreamDataSource;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 
@@ -36,6 +36,6 @@ class FetchFieldsHandler extends AbstractTaskHandler<FetchFieldsAction, DataSour
 
     @Override
     public DataSourceFields exec(final FetchFieldsAction task) {
-        return security.secureResult(() -> new DataSourceFields(StreamDataSource.getFields()));
+        return security.secureResult(() -> new DataSourceFields(MetaDataSource.getFields()));
     }
 }

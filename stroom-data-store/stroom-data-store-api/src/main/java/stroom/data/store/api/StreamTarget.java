@@ -17,7 +17,7 @@
 package stroom.data.store.api;
 
 import stroom.data.meta.api.AttributeMap;
-import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.Data;
 
 import java.io.Closeable;
 
@@ -33,7 +33,7 @@ public interface StreamTarget extends Closeable {
      *
      * @return the stream associated with this target
      */
-    Stream getStream();
+    Data getStream();
 
     /**
      * Any meta data attributes associated with the data.

@@ -18,7 +18,7 @@ package stroom.data.store;
 
 import stroom.security.Security;
 import stroom.data.store.api.StreamStore;
-import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.Data;
 import stroom.streamstore.shared.FetchFullStreamInfoAction;
 import stroom.streamstore.shared.FullStreamInfoResult;
 import stroom.streamstore.shared.FullStreamInfoResult.Entry;
@@ -53,21 +53,21 @@ class FetchFullStreamInfoHandler extends AbstractTaskHandler<FetchFullStreamInfo
         return DateUtil.createNormalDateTimeString(ms) + " (" + ms + ")";
     }
 
-    private List<Entry> getStreamEntries(final Stream stream) {
+    private List<Entry> getStreamEntries(final Data stream) {
         final List<Entry> entries = new ArrayList<>();
 
         entries.add(new Entry("Stream Id", String.valueOf(stream.getId())));
         entries.add(new Entry("Status", stream.getStatus().getDisplayValue()));
         entries.add(new Entry("Status Ms", getDateTimeString(stream.getStatusMs())));
-        entries.add(new Entry("Stream Task Id", String.valueOf(stream.getStreamTaskId())));
-        entries.add(new Entry("Parent Stream Id", String.valueOf(stream.getParentStreamId())));
+        entries.add(new Entry("Stream Task Id", String.valueOf(stream.getProcessTaskId())));
+        entries.add(new Entry("Parent Stream Id", String.valueOf(stream.getParentDataId())));
         entries.add(new Entry("Created", getDateTimeString(stream.getCreateMs())));
         entries.add(new Entry("Effective", getDateTimeString(stream.getEffectiveMs())));
-        entries.add(new Entry("Stream Type", stream.getStreamTypeName()));
+        entries.add(new Entry("Stream Type", stream.getTypeName()));
         entries.add(new Entry("Feed", stream.getFeedName()));
 
-        if (stream.getStreamProcessorId() != null) {
-            entries.add(new Entry("Stream Processor Id", String.valueOf(stream.getStreamProcessorId())));
+        if (stream.getProcessorId() != null) {
+            entries.add(new Entry("Stream Processor Id", String.valueOf(stream.getProcessorId())));
         }
         if (stream.getPipelineUuid() != null) {
             entries.add(new Entry("Stream Processor Pipeline", String.valueOf(stream.getPipelineUuid())));
@@ -75,7 +75,7 @@ class FetchFullStreamInfoHandler extends AbstractTaskHandler<FetchFullStreamInfo
         return entries;
     }
 
-    private List<Entry> getDataRententionEntries(final Stream stream, final Map<String, String> attributeMap) {
+    private List<Entry> getDataRententionEntries(final Data stream, final Map<String, String> attributeMap) {
         final List<Entry> entries = new ArrayList<>();
 
         // Add additional data retention information.
@@ -90,7 +90,7 @@ class FetchFullStreamInfoHandler extends AbstractTaskHandler<FetchFullStreamInfo
 
     @Override
     public FullStreamInfoResult exec(final FetchFullStreamInfoAction action) {
-        final Stream stream = action.getStream();
+        final Data stream = action.getStream();
         final List<Section> sections = new ArrayList<>();
 
         final Map<String, String> attributeMap = streamStore.getStoredMeta(stream);

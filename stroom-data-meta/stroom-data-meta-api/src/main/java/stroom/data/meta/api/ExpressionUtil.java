@@ -17,7 +17,7 @@ public final class ExpressionUtil {
     }
 
     public static ExpressionOperator createSimpleExpression() {
-        return createSimpleExpression(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue());
+        return createSimpleExpression(MetaDataSource.STATUS, Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue());
     }
 
     public static ExpressionOperator createSimpleExpression(final String field, final Condition condition, final String value) {
@@ -26,32 +26,32 @@ public final class ExpressionUtil {
                 .build();
     }
 
-    public static ExpressionOperator createStatusExpression(final StreamStatus streamStatus) {
+    public static ExpressionOperator createStatusExpression(final DataStatus status) {
         return new ExpressionOperator.Builder(Op.AND)
-                .addTerm(StreamDataSource.STATUS, Condition.EQUALS, streamStatus.getDisplayValue())
+                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, status.getDisplayValue())
                 .build();
     }
 
-    public static ExpressionOperator createStreamExpression(final long streamId) {
+    public static ExpressionOperator createDataIdExpression(final long id) {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(StreamDataSource.STREAM_ID, Condition.EQUALS, String.valueOf(streamId))
-                .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
+                .addTerm(MetaDataSource.STREAM_ID, Condition.EQUALS, String.valueOf(id))
+                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue())
                 .build();
         return expression;
     }
 
-    public static ExpressionOperator createParentStreamExpression(final long parentStreamId) {
+    public static ExpressionOperator createParentIdExpression(final long parentId) {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(StreamDataSource.PARENT_STREAM_ID, Condition.EQUALS, String.valueOf(parentStreamId))
-                .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
+                .addTerm(MetaDataSource.PARENT_STREAM_ID, Condition.EQUALS, String.valueOf(parentId))
+                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue())
                 .build();
         return expression;
     }
 
-    public static ExpressionOperator createStreamTypeExpression(final String streamTypeName) {
+    public static ExpressionOperator createTypeExpression(final String typeName) {
         return new ExpressionOperator.Builder(Op.AND)
-                .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, streamTypeName)
-                .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
+                .addTerm(MetaDataSource.STREAM_TYPE, Condition.EQUALS, typeName)
+                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue())
                 .build();
     }
 
@@ -64,25 +64,25 @@ public final class ExpressionUtil {
 
         if (feedNames != null) {
             if (feedNames.length == 1) {
-                builder.addTerm(StreamDataSource.FEED, Condition.EQUALS, feedNames[0]);
+                builder.addTerm(MetaDataSource.FEED, Condition.EQUALS, feedNames[0]);
             } else {
                 final ExpressionOperator.Builder or = new ExpressionOperator.Builder(Op.OR);
                 for (final String feedName : feedNames) {
-                    or.addTerm(StreamDataSource.FEED, Condition.EQUALS, feedName);
+                    or.addTerm(MetaDataSource.FEED, Condition.EQUALS, feedName);
                 }
                 builder.addOperator(or.build());
             }
         }
 
-        builder.addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue());
+        builder.addTerm(MetaDataSource.STATUS, Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue());
         return builder.build();
     }
 
 
     public static ExpressionOperator createPipelineExpression(final DocRef pipelineRef) {
         return new ExpressionOperator.Builder(Op.AND)
-                .addTerm(StreamDataSource.PIPELINE, Condition.EQUALS, pipelineRef.getUuid())
-                .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
+                .addTerm(MetaDataSource.PIPELINE, Condition.EQUALS, pipelineRef.getUuid())
+                .addTerm(MetaDataSource.STATUS, Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue())
                 .build();
     }
 

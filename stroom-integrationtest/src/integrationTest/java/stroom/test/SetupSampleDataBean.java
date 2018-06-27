@@ -43,7 +43,7 @@ import stroom.statistics.stroomstats.entity.StroomStatsStoreStore;
 import stroom.data.store.api.StreamStore;
 import stroom.data.meta.impl.db.MetaKeyService;
 import stroom.streamstore.shared.QueryData;
-import stroom.data.meta.api.StreamDataSource;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamProcessorFilterService;
 import stroom.util.io.FileUtil;
@@ -194,9 +194,9 @@ public final class SetupSampleDataBean {
 
                 // Create a processor for this index.
                 final QueryData criteria = new QueryData.Builder()
-                        .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
+                        .dataSource(MetaDataSource.STREAM_STORE_DOC_REF)
                         .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                                .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
+                                .addTerm(MetaDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
                                 .build())
                         .build();
 
@@ -243,12 +243,12 @@ public final class SetupSampleDataBean {
 
                 // Create a processor for this feed.
                 final QueryData criteria = new QueryData.Builder()
-                        .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
+                        .dataSource(MetaDataSource.STREAM_STORE_DOC_REF)
                         .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                                .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed.getName())
+                                .addTerm(MetaDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed.getName())
                                 .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                                        .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
-                                        .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
+                                        .addTerm(MetaDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                                        .addTerm(MetaDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
                                         .build())
                                 .build())
                         .build();

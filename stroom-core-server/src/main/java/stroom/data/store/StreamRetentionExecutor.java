@@ -19,22 +19,22 @@ package stroom.data.store;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.MetaDataSource;
+import stroom.data.meta.api.DataMetaService;
+import stroom.data.meta.api.DataStatus;
 import stroom.docref.DocRef;
 import stroom.entity.shared.Period;
 import stroom.entity.util.PeriodUtil;
 import stroom.feed.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.jobsystem.ClusterLockService;
-import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.data.meta.api.FindStreamCriteria;
-import stroom.data.meta.api.StreamMetaService;
-import stroom.data.meta.api.StreamStatus;
-import stroom.data.meta.api.StreamDataSource;
 import stroom.task.TaskContext;
 import stroom.util.date.DateUtil;
+import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.logging.LogExecutionTime;
 
@@ -51,13 +51,13 @@ public class StreamRetentionExecutor {
     private static final int DELETE_STREAM_BATCH_SIZE = 1000;
 
     private final FeedStore feedStore;
-    private final StreamMetaService streamMetaService;
+    private final DataMetaService streamMetaService;
     private final TaskContext taskContext;
     private final ClusterLockService clusterLockService;
 
     @Inject
     StreamRetentionExecutor(final FeedStore feedStore,
-                            final StreamMetaService streamMetaService,
+                            final DataMetaService streamMetaService,
                             final TaskContext taskContext,
                             final ClusterLockService clusterLockService) {
         this.feedStore = feedStore;
@@ -66,11 +66,6 @@ public class StreamRetentionExecutor {
         this.clusterLockService = clusterLockService;
     }
 
-    /**
-     * Gets a task if one is available, returns null otherwise.
-     *
-     * @return A task.
-     */
     @StroomSimpleCronSchedule(cron = "0 0 *")
     @JobTrackedSchedule(jobName = "Stream Retention", description = "Delete data that exceeds the retention period specified by feed")
     public void exec() {
@@ -117,23 +112,22 @@ public class StreamRetentionExecutor {
                     DateUtil.createNormalDateTimeString(createPeriod.getTo())
             });
 
-            final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                    .addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(createPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(createPeriod.getToMs()))
-                    .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed.getName())
+            final ExpressionOperator expression = periodToExpression(MetaDataSource.CREATE_TIME, createPeriod)
+                    .addTerm(MetaDataSource.FEED, Condition.EQUALS, feed.getName())
                     // we only want it to logically delete UNLOCKED items and not ones
                     // already marked as DELETED
-                    .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
+                    .addTerm(MetaDataSource.STATUS, Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue())
                     .build();
 
             // Delete anything received older than -1 * retention age
-            final FindStreamCriteria criteria = new FindStreamCriteria();
+            final FindDataCriteria criteria = new FindDataCriteria();
             criteria.setExpression(expression);
             criteria.obtainPageRequest().setLength(DELETE_STREAM_BATCH_SIZE);
 
             long total = 0;
             int deleted;
             do {
-                deleted = streamMetaService.updateStatus(criteria, StreamStatus.DELETED);
+                deleted = streamMetaService.updateStatus(criteria, DataStatus.DELETED);
                 total += deleted;
             } while (deleted >= DELETE_STREAM_BATCH_SIZE);
 
@@ -141,5 +135,25 @@ public class StreamRetentionExecutor {
         } catch (final RuntimeException e) {
             LOGGER.error("processFeed() - {} Error", feed.getName(), e);
         }
+    }
+
+    private ExpressionOperator.Builder periodToExpression(final String field, final Period period) {
+        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
+        if (period != null) {
+            if (period.getFromMs() != null && period.getToMs() != null) {
+                builder
+                        .addTerm(field, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(period.getFromMs()))
+                        .addTerm(field, Condition.LESS_THAN, DateUtil.createNormalDateTimeString(period.getToMs()));
+            }
+            if (period.getFromMs() != null) {
+                builder
+                        .addTerm(field, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(period.getFromMs()));
+            }
+            if (period.getToMs() != null) {
+                builder
+                        .addTerm(field, Condition.LESS_THAN, DateUtil.createNormalDateTimeString(period.getToMs()));
+            }
+        }
+        return builder;
     }
 }

@@ -23,7 +23,7 @@ import stroom.node.shared.Node;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.streamstore.shared.QueryData;
-import stroom.data.meta.api.StreamDataSource;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.task.SimpleTaskContext;
@@ -106,13 +106,13 @@ public class TestStreamTaskCreator extends AbstractCoreIntegrationTest {
         Assert.assertFalse(streamTaskCreator.getStreamTaskCreatorRecentStreamDetails().hasRecentDetail());
 
         final QueryData findStreamQueryData = new QueryData.Builder()
-                .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
+                .dataSource(MetaDataSource.STREAM_STORE_DOC_REF)
                 .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
                         .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                                .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feedName1)
-                                .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feedName2)
+                                .addTerm(MetaDataSource.FEED, ExpressionTerm.Condition.EQUALS, feedName1)
+                                .addTerm(MetaDataSource.FEED, ExpressionTerm.Condition.EQUALS, feedName2)
                                 .build())
-                        .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                        .addTerm(MetaDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                         .build())
                 .build();
 

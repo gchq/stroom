@@ -58,12 +58,15 @@ public class BatchIdTransactionHelper {
     }
 
     public long insertIntoTempIdTable(final String tempIdTable, final List<Long> idList) {
+        if (idList == null || idList.size() == 0) {
+            return 0;
+        }
+
         final SqlBuilder sql = new SqlBuilder();
         sql.append("INSERT INTO ");
         sql.append(tempIdTable);
         sql.append(" (ID)");
-        sql.append(") ");
-        sql.append("(");
+        sql.append(" VALUES (");
 
         if (idList.size() > 0) {
             for (Long id : idList) {

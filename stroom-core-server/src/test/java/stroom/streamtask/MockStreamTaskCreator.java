@@ -20,9 +20,9 @@ package stroom.streamtask;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.node.shared.Node;
-import stroom.data.meta.api.FindStreamCriteria;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamMetaService;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataMetaService;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.ProcessorFilter;
@@ -39,11 +39,11 @@ import java.util.List;
 
 @Singleton
 public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
-    private final StreamMetaService streamMetaService;
+    private final DataMetaService streamMetaService;
     private final StreamProcessorFilterService streamProcessorFilterService;
 
     @Inject
-    MockStreamTaskCreator(final StreamMetaService streamMetaService,
+    MockStreamTaskCreator(final DataMetaService streamMetaService,
                           final StreamProcessorFilterService streamProcessorFilterService) {
         this.streamMetaService = streamMetaService;
         this.streamProcessorFilterService = streamProcessorFilterService;
@@ -69,14 +69,14 @@ public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
             for (final ProcessorFilter filter : streamProcessorFilters) {
                 final QueryData queryData = filter.getQueryData();
 
-                final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
+                final FindDataCriteria findStreamCriteria = new FindDataCriteria();
                 findStreamCriteria.setExpression(queryData.getExpression());
-                final BaseResultList<Stream> streams = streamMetaService.find(findStreamCriteria);
+                final BaseResultList<Data> streams = streamMetaService.find(findStreamCriteria);
 
-                streams.sort(Comparator.comparing(Stream::getId));
+                streams.sort(Comparator.comparing(Data::getId));
 
                 if (streams.size() > 0) {
-                    for (final Stream stream : streams) {
+                    for (final Data stream : streams) {
                         if (stream.getId() >= filter.getStreamProcessorFilterTracker().getMinStreamId()) {
                             // Only process streams with an id of 1 or more
                             // greater than this stream in future.

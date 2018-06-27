@@ -48,8 +48,8 @@ import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
 import stroom.streamstore.client.presenter.ClassificationUiHandlers;
 import stroom.streamstore.client.presenter.DataPresenter;
-import stroom.data.meta.api.FindStreamCriteria;
-import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.Data;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.task.client.TaskEndEvent;
@@ -84,7 +84,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     private SteppingResult currentResult;
     private ButtonPanel leftButtons;
 
-    private Stream stream;
+    private Data stream;
 
     @Inject
     public SteppingPresenter(final EventBus eventBus, final SteppingView view,
@@ -272,7 +272,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         }
     }
 
-    public void read(final DocRef pipeline, final Stream stream, final long eventId,
+    public void read(final DocRef pipeline, final Data stream, final long eventId,
                      final String childStreamType) {
         this.stream = stream;
 
@@ -283,7 +283,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         action.setPipeline(pipeline);
 
         // Set the stream id on the stepping action.
-        final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
+        final FindDataCriteria findStreamCriteria = new FindDataCriteria();
         findStreamCriteria.obtainSelectedIdSet().add(stream.getId());
         action.setCriteria(findStreamCriteria);
         action.setChildStreamType(childStreamType);

@@ -29,15 +29,15 @@ import stroom.entity.shared.Document;
 import stroom.entity.shared.NamedEntity;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.Data;
 
 class BasicEventInfoProvider implements EventInfoProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(BasicEventInfoProvider.class);
 
     @Override
     public BaseObject createBaseObject(final java.lang.Object obj) {
-        if (obj instanceof Stream) {
-            final Stream stream = (Stream) obj;
+        if (obj instanceof Data) {
+            final Data stream = (Data) obj;
 
             final Object object = new Object();
             object.setType("Stream");
@@ -45,8 +45,8 @@ class BasicEventInfoProvider implements EventInfoProvider {
             if (stream.getFeedName() != null) {
                 EventLoggingUtil.createData("Feed", stream.getFeedName());
             }
-            if (stream.getStreamTypeName() != null) {
-                object.getData().add(EventLoggingUtil.createData("StreamType", stream.getStreamTypeName()));
+            if (stream.getTypeName() != null) {
+                object.getData().add(EventLoggingUtil.createData("StreamType", stream.getTypeName()));
             }
             return object;
 

@@ -28,7 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestFeedServiceImpl {
     @Inject
-    private StreamMetaServiceImpl streamMetaService;
+    private DataMetaServiceImpl dataMetaService;
     @Inject
     private FeedServiceImpl feedService;
 
@@ -40,7 +40,7 @@ class TestFeedServiceImpl {
     @Test
     void test() {
         // Delete everything.
-        streamMetaService.deleteAll();
+        dataMetaService.deleteAll();
         feedService.deleteAll();
 
         String feedName = "TEST";

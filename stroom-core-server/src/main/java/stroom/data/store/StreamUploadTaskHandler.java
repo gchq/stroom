@@ -20,7 +20,7 @@ package stroom.data.store;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
-import stroom.data.meta.api.StreamProperties;
+import stroom.data.meta.api.DataProperties;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
@@ -184,9 +184,9 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
             final StreamProgressMonitor streamProgressMonitor = new StreamProgressMonitor(taskContext,
                     "Read");
 
-            final StreamProperties streamProperties = new StreamProperties.Builder()
+            final DataProperties streamProperties = new DataProperties.Builder()
                     .feedName(task.getFeedName())
-                    .streamTypeName(task.getStreamTypeName())
+                    .typeName(task.getStreamTypeName())
                     .effectiveMs(effectiveMs)
                     .build();
 

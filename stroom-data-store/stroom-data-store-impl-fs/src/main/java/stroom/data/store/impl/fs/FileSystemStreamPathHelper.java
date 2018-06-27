@@ -17,7 +17,7 @@
 package stroom.data.store.impl.fs;
 
 import com.google.inject.Inject;
-import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.Data;
 import stroom.data.volume.api.StreamVolumeService.StreamVolume;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.date.DateUtil;
@@ -61,7 +61,7 @@ class FileSystemStreamPathHelper {
         this.fileSystemTypePaths = fileSystemTypePaths;
     }
 
-    private String createFilePathBase(final String rootPath, final Stream stream, final String streamTypeName) {
+    private String createFilePathBase(final String rootPath, final Data stream, final String streamTypeName) {
         return rootPath +
                 SEPERATOR_CHAR +
                 STORE_NAME +
@@ -136,11 +136,11 @@ class FileSystemStreamPathHelper {
     /**
      * Create a child file for a parent.
      */
-    Path createChildStreamFile(final Stream stream, final StreamVolume streamVolume, final String streamTypeName) {
+    Path createChildStreamFile(final Data stream, final StreamVolume streamVolume, final String streamTypeName) {
         final String path = createFilePathBase(streamVolume.getVolumePath(), stream,
-                stream.getStreamTypeName()) +
+                stream.getTypeName()) +
                 "." +
-                StreamTypeExtensions.getExtension(stream.getStreamTypeName()) +
+                StreamTypeExtensions.getExtension(stream.getTypeName()) +
                 "." +
                 StreamTypeExtensions.getExtension(streamTypeName) +
                 "." +
@@ -157,14 +157,14 @@ class FileSystemStreamPathHelper {
      * [feedid]_[streamid]
      * </p>
      */
-    String getBaseName(Stream stream) {
+    String getBaseName(Data stream) {
         final String feedPath = fileSystemFeedPaths.getPath(stream.getFeedName());
         return feedPath +
                 FILE_SEPERATOR_CHAR +
                 FileSystemPrefixUtil.padId(stream.getId());
     }
 
-    String getDirectory(Stream stream, String streamTypeName) {
+    String getDirectory(Data stream, String streamTypeName) {
         StringBuilder builder = new StringBuilder();
         builder.append(fileSystemTypePaths.getPath(streamTypeName));
         builder.append(FileSystemStreamPathHelper.SEPERATOR_CHAR);
@@ -207,7 +207,7 @@ class FileSystemStreamPathHelper {
     /**
      * Return a File IO object.
      */
-    Path createRootStreamFile(final String rootPath, final Stream stream, final String streamTypeName) {
+    Path createRootStreamFile(final String rootPath, final Data stream, final String streamTypeName) {
         final String path = createFilePathBase(rootPath, stream, streamTypeName) +
                 "." +
                 StreamTypeExtensions.getExtension(streamTypeName) +

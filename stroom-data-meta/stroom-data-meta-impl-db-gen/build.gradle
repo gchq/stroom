@@ -31,7 +31,7 @@ if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
                     database {
                         name = 'org.jooq.util.mysql.MySQLDatabase'
                         // Add anything you want included in generation below
-                        includes = 'stream|stream_feed|stream_type|stream_processor|meta_key|meta_numeric_value'
+                        includes = 'data|data_feed|data_type|data_processor|meta_key|meta_val'
                         // We don't want to include flyway versioning
                         excludes = 'schema_version'
                     }

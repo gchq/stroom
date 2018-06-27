@@ -32,12 +32,12 @@ import stroom.security.Security;
 import stroom.security.UserTokenUtil;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamMetaService;
-import stroom.data.meta.api.StreamStatus;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataMetaService;
+import stroom.data.meta.api.DataStatus;
 import stroom.streamstore.shared.Limits;
 import stroom.streamstore.shared.QueryData;
-import stroom.data.meta.api.StreamDataSource;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.streamtask.StreamTaskCreatorTransactionHelper.CreatedTasks;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
@@ -100,7 +100,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     private final StreamTaskHelper streamTaskHelper;
     private final StroomPropertyService propertyService;
     private final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider;
-    private final StreamMetaService streamMetaService;
+    private final DataMetaService streamMetaService;
     private final Security security;
 
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
@@ -151,7 +151,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                           final StreamTaskHelper streamTaskHelper,
                           final StroomPropertyService propertyService,
                           final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider,
-                          final StreamMetaService streamMetaService,
+                          final DataMetaService streamMetaService,
                           final Security security) {
 
         this.streamProcessorFilterService = streamProcessorFilterService;
@@ -530,7 +530,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                             final int requiredTasks = tasksToCreate;
                             if (requiredTasks > 0 && !Thread.currentThread().isInterrupted()) {
                                 final QueryData queryData = loadedFilter.getQueryData();
-                                boolean isStreamStoreSearch = (queryData.getDataSource() != null) && queryData.getDataSource().getType().equals(StreamDataSource.STREAM_STORE_TYPE);
+                                boolean isStreamStoreSearch = (queryData.getDataSource() != null) && queryData.getDataSource().getType().equals(MetaDataSource.STREAM_STORE_TYPE);
 
                                 // Record the time before we are going to query for
                                 // streams for tracking purposes.
@@ -650,7 +650,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
             final FindStreamTaskCriteria findStreamTaskCriteria = new FindStreamTaskCriteria();
             findStreamTaskCriteria.obtainStreamTaskStatusSet().add(TaskStatus.UNPROCESSED);
             findStreamTaskCriteria.obtainNodeIdSet().setMatchNull(true);
-            findStreamTaskCriteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
+            findStreamTaskCriteria.obtainStatusSet().add(DataStatus.UNLOCKED);
             findStreamTaskCriteria.obtainStreamProcessorFilterIdSet().add(filter.getId());
             findStreamTaskCriteria.obtainPageRequest().setLength(tasksToCreate);
 
@@ -771,7 +771,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                 tracker = streamTaskTransactionHelper.saveTracker(tracker);
 
                 // Create a task for each stream reference.
-                final Map<Stream, InclusiveRanges> map = createStreamMap(result);
+                final Map<Data, InclusiveRanges> map = createStreamMap(result);
                 final CreatedTasks createdTasks = streamTaskTransactionHelper.createNewTasks(filter, tracker,
                         streamQueryTime, map, node, reachedLimit);
                 // Transfer the newly created (and available) tasks to the
@@ -803,14 +803,14 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         final ProcessorFilterTracker updatedTracker = streamTaskTransactionHelper.saveTracker(tracker);
 
         // This will contain locked and unlocked streams
-        final List<Stream> streamList = streamTaskTransactionHelper.runSelectStreamQuery(
+        final List<Data> streamList = streamTaskTransactionHelper.runSelectStreamQuery(
                 queryData.getExpression(),
                 updatedTracker.getMinStreamId(),
                 requiredTasks);
 
         // Just create regular stream processing tasks.
-        final Map<Stream, InclusiveRanges> map = new HashMap<>();
-        for (final Stream stream : streamList) {
+        final Map<Data, InclusiveRanges> map = new HashMap<>();
+        for (final Data stream : streamList) {
             map.put(stream, null);
         }
 
@@ -821,13 +821,13 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         exhaustedFilterMap.put(filter.getId(), createdTasks.getTotalTasksCreated() == 0);
     }
 
-    private Map<Stream, InclusiveRanges> createStreamMap(final EventRefs eventRefs) {
+    private Map<Data, InclusiveRanges> createStreamMap(final EventRefs eventRefs) {
         final int maxRangesPerStream = 1000;
-        final Map<Stream, InclusiveRanges> streamMap = new HashMap<>();
+        final Map<Data, InclusiveRanges> streamMap = new HashMap<>();
 
         if (eventRefs != null) {
             long currentStreamId = -1;
-            Stream currentStream = null;
+            Data currentStream = null;
             InclusiveRanges ranges = null;
             boolean trimmed = false;
             for (final EventRef ref : eventRefs) {
@@ -847,7 +847,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                         }
 
                         currentStreamId = ref.getStreamId();
-                        currentStream = streamMetaService.getStream(currentStreamId);
+                        currentStream = streamMetaService.getData(currentStreamId);
                         ranges = new InclusiveRanges();
                     }
 

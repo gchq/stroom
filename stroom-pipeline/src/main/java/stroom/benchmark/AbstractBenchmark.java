@@ -19,12 +19,12 @@ package stroom.benchmark;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.ExpressionUtil;
-import stroom.data.meta.api.FindStreamCriteria;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamDataSource;
-import stroom.data.meta.api.StreamMetaService;
-import stroom.data.meta.api.StreamProperties;
-import stroom.data.meta.api.StreamStatus;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.MetaDataSource;
+import stroom.data.meta.api.DataMetaService;
+import stroom.data.meta.api.DataProperties;
+import stroom.data.meta.api.DataStatus;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
@@ -51,11 +51,11 @@ public abstract class AbstractBenchmark {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractBenchmark.class);
 
     private final StreamStore streamStore;
-    private final StreamMetaService streamMetaService;
+    private final DataMetaService streamMetaService;
     private final TaskContext taskContext;
 
     AbstractBenchmark(final StreamStore streamStore,
-                      final StreamMetaService streamMetaService,
+                      final DataMetaService streamMetaService,
                       final TaskContext taskContext) {
         this.streamStore = streamStore;
         this.streamMetaService = streamMetaService;
@@ -85,11 +85,11 @@ public abstract class AbstractBenchmark {
         Arrays.asList(args).forEach(arg -> LOGGER.info(arg.toString()));
     }
 
-    protected Stream writeData(final String feedName, final String streamTypeName, final String data) {
+    protected Data writeData(final String feedName, final String streamTypeName, final String data) {
         // Add the associated data to the stream store.
-        final StreamProperties streamProperties = new StreamProperties.Builder()
+        final DataProperties streamProperties = new DataProperties.Builder()
                 .feedName(feedName)
-                .streamTypeName(streamTypeName)
+                .typeName(streamTypeName)
                 .build();
 
         final StreamTarget dataTarget = streamStore.openStreamTarget(streamProperties);
@@ -133,16 +133,16 @@ public abstract class AbstractBenchmark {
 
     protected void verifyData(final FeedDoc feed, final String verificationString) throws IOException {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
-        builder.addTerm(StreamDataSource.FEED, Condition.EQUALS, feed.getName());
+        builder.addTerm(MetaDataSource.FEED, Condition.EQUALS, feed.getName());
         if (feed.isReference()) {
-            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeNames.REFERENCE);
+            builder.addTerm(MetaDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeNames.REFERENCE);
         } else {
-            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeNames.EVENTS);
+            builder.addTerm(MetaDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeNames.EVENTS);
         }
-        final FindStreamCriteria criteria = new FindStreamCriteria();
+        final FindDataCriteria criteria = new FindDataCriteria();
         criteria.setExpression(builder.build());
-        final BaseResultList<Stream> streams = streamMetaService.find(criteria);
-        final Stream targetStream = streams.getFirst();
+        final BaseResultList<Data> streams = streamMetaService.find(criteria);
+        final Data targetStream = streams.getFirst();
 
         // Get back translated result.
         final StreamSource target = streamStore.openStreamSource(targetStream.getId());
@@ -161,9 +161,9 @@ public abstract class AbstractBenchmark {
     }
 
     protected void deleteData(final String... feeds) {
-        final FindStreamCriteria criteria = new FindStreamCriteria();
+        final FindDataCriteria criteria = new FindDataCriteria();
         criteria.setExpression(ExpressionUtil.createFeedsExpression(feeds));
-        streamMetaService.updateStatus(criteria, StreamStatus.DELETED);
+        streamMetaService.updateStatus(criteria, DataStatus.DELETED);
     }
 
     protected String createReferenceData(final int recordCount) {

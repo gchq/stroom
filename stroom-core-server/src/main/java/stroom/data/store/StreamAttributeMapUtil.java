@@ -2,8 +2,8 @@ package stroom.data.store;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamDataSource;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.util.date.DateUtil;
 
 import java.util.HashMap;
@@ -19,27 +19,27 @@ class StreamAttributeMapUtil {
     /**
      * Turns a stream attribute map object into a generic map of attributes for use by an expression filter.
      */
-    static Map<String, Object> createAttributeMap(final Stream stream, final Map<String, String> attributeMap) {
+    static Map<String, Object> createAttributeMap(final Data stream, final Map<String, String> attributeMap) {
         final Map<String, Object> map = new HashMap<>();
 
         if (stream != null) {
-            map.put(StreamDataSource.STREAM_ID, stream.getId());
-            map.put(StreamDataSource.CREATE_TIME, stream.getCreateMs());
-            map.put(StreamDataSource.EFFECTIVE_TIME, stream.getEffectiveMs());
-            map.put(StreamDataSource.STATUS_TIME, stream.getStatusMs());
-            map.put(StreamDataSource.STATUS, stream.getStatus().getDisplayValue());
-            if (stream.getParentStreamId() != null) {
-                map.put(StreamDataSource.PARENT_STREAM_ID, stream.getParentStreamId());
+            map.put(MetaDataSource.STREAM_ID, stream.getId());
+            map.put(MetaDataSource.CREATE_TIME, stream.getCreateMs());
+            map.put(MetaDataSource.EFFECTIVE_TIME, stream.getEffectiveMs());
+            map.put(MetaDataSource.STATUS_TIME, stream.getStatusMs());
+            map.put(MetaDataSource.STATUS, stream.getStatus().getDisplayValue());
+            if (stream.getParentDataId() != null) {
+                map.put(MetaDataSource.PARENT_STREAM_ID, stream.getParentDataId());
             }
-            if (stream.getStreamTypeName() != null) {
-                map.put(StreamDataSource.STREAM_TYPE, stream.getStreamTypeName());
+            if (stream.getTypeName() != null) {
+                map.put(MetaDataSource.STREAM_TYPE, stream.getTypeName());
             }
             final String feedName = stream.getFeedName();
             if (feedName != null) {
-                map.put(StreamDataSource.FEED, feedName);
+                map.put(MetaDataSource.FEED, feedName);
             }
             final String pipelineName = stream.getPipelineUuid();
-            map.put(StreamDataSource.PIPELINE, pipelineName);
+            map.put(MetaDataSource.PIPELINE, pipelineName);
 //            if (streamProcessor != null) {
 //                final String pipelineUuid = streamProcessor.getPipelineUuid();
 //                if (pipelineUuid != null) {
@@ -48,7 +48,7 @@ class StreamAttributeMapUtil {
 //            }
         }
 
-        StreamDataSource.getExtendedFields().forEach(field -> {
+        MetaDataSource.getExtendedFields().forEach(field -> {
             final String value = attributeMap.get(field.getName());
             if (value != null) {
                 try {

@@ -21,7 +21,7 @@ import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.StepType;
 import stroom.pipeline.shared.SteppingFilterSettings;
 import stroom.pipeline.shared.SteppingResult;
-import stroom.data.meta.api.FindStreamCriteria;
+import stroom.data.meta.api.FindDataCriteria;
 import stroom.task.ServerTask;
 
 import java.util.Map;
@@ -29,7 +29,7 @@ import java.util.Map.Entry;
 
 public class SteppingTask extends ServerTask<SteppingResult> {
     // This is what chooses the input to the translation.
-    private FindStreamCriteria criteria;
+    private FindDataCriteria criteria;
     private String childStreamType;
     private StepLocation stepLocation;
     private StepType stepType;
@@ -44,11 +44,11 @@ public class SteppingTask extends ServerTask<SteppingResult> {
         super(null, userToken);
     }
 
-    public FindStreamCriteria getCriteria() {
+    public FindDataCriteria getCriteria() {
         return criteria;
     }
 
-    public void setCriteria(final FindStreamCriteria criteria) {
+    public void setCriteria(final FindDataCriteria criteria) {
         this.criteria = criteria;
     }
 

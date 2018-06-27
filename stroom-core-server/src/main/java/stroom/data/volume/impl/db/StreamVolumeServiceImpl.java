@@ -98,7 +98,7 @@ public class StreamVolumeServiceImpl implements StreamVolumeService {
             }
 
 //            final StreamRange streamRange = criteria.getStreamRange();
-//            final boolean joinStreamType = streamRange != null && streamRange.getStreamTypeName() != null;
+//            final boolean joinStreamType = streamRange != null && streamRange.getTypeName() != null;
 //            final boolean joinStream = (streamRange != null && streamRange.getCreatePeriod() != null) || (criteria.getStreamStatusSet() != null && criteria.getStreamStatusSet().isConstrained());
 
             final SqlBuilder sql = new SqlBuilder();
@@ -125,7 +125,7 @@ public class StreamVolumeServiceImpl implements StreamVolumeService {
 //            if (streamRange != null) {
 //                if (joinStreamType) {
 //                    sql.append(" AND st.NAME = ");
-//                    sql.arg(streamRange.getStreamTypeName());
+//                    sql.arg(streamRange.getTypeName());
 //                }
 //                if (streamRange.isFileLocation()) {
 //                    sql.appendRangeQuery("sv.FK_STRM_ID", streamRange);
@@ -154,7 +154,7 @@ public class StreamVolumeServiceImpl implements StreamVolumeService {
 //            }
 //
 //            final StreamRange streamRange = criteria.getStreamRange();
-//            final boolean joinStreamType = streamRange != null && streamRange.getStreamTypeName() != null;
+//            final boolean joinStreamType = streamRange != null && streamRange.getTypeName() != null;
 //            final boolean joinStream = streamRange != null && streamRange.getCreatePeriod() != null;
 //
 //            final SqlBuilder sql = new SqlBuilder();
@@ -213,7 +213,7 @@ public class StreamVolumeServiceImpl implements StreamVolumeService {
 //            if (streamRange != null) {
 //                if (joinStreamType) {
 //                    sql.append(" AND st.NAME = ");
-//                    sql.arg(streamRange.getStreamTypeName());
+//                    sql.arg(streamRange.getTypeName());
 //                }
 //                if (streamRange.isFileLocation()) {
 //                    sql.appendRangeQuery("sv.FK_STRM_ID", streamRange);

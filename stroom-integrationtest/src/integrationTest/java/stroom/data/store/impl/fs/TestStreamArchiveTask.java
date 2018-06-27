@@ -19,7 +19,7 @@ package stroom.data.store.impl.fs;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.data.meta.api.StreamProperties;
+import stroom.data.meta.api.DataProperties;
 import stroom.data.store.FindStreamVolumeCriteria;
 import stroom.data.store.StreamDeleteExecutor;
 import stroom.data.store.StreamRetentionExecutor;
@@ -111,14 +111,14 @@ public class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
         feedDoc.setRetentionDayAge(FIFTY_FIVE);
         feedStore.writeDocument(feedDoc);
 
-        final StreamProperties oldFile = new StreamProperties.Builder()
+        final DataProperties oldFile = new DataProperties.Builder()
                 .feedName(feedName)
-                .streamTypeName(StreamTypeNames.RAW_EVENTS)
+                .typeName(StreamTypeNames.RAW_EVENTS)
                 .createMs(oldDate.toInstant().toEpochMilli())
                 .build();
-        final StreamProperties newFile = new StreamProperties.Builder()
+        final DataProperties newFile = new DataProperties.Builder()
                 .feedName(feedName)
-                .streamTypeName(StreamTypeNames.RAW_EVENTS)
+                .typeName(StreamTypeNames.RAW_EVENTS)
                 .createMs(newDate.toInstant().toEpochMilli())
                 .build();
 

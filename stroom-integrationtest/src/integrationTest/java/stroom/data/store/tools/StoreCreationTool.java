@@ -17,8 +17,8 @@
 package stroom.data.store.tools;
 
 import org.junit.Assert;
-import stroom.data.meta.api.StreamDataSource;
-import stroom.data.meta.api.StreamProperties;
+import stroom.data.meta.api.MetaDataSource;
+import stroom.data.meta.api.DataProperties;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.StreamSource;
@@ -156,9 +156,9 @@ public final class StoreCreationTool {
         effectiveMs += effectiveMsOffset++;
 
         // Add the associated data to the stream store.
-        final StreamProperties streamProperties = new StreamProperties.Builder()
+        final DataProperties streamProperties = new DataProperties.Builder()
                 .feedName(referenceFeed.getName())
-                .streamTypeName(StreamTypeNames.RAW_REFERENCE)
+                .typeName(StreamTypeNames.RAW_REFERENCE)
                 .createMs(effectiveMs)
                 .build();
 
@@ -212,10 +212,10 @@ public final class StoreCreationTool {
 
             // Setup the stream processor filter.
             final QueryData findStreamQueryData = new QueryData.Builder()
-                    .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
+                    .dataSource(MetaDataSource.STREAM_STORE_DOC_REF)
                     .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                            .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
-                            .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
+                            .addTerm(MetaDataSource.FEED, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
+                            .addTerm(MetaDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
                             .build())
                     .build();
             streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 2, findStreamQueryData);
@@ -301,9 +301,9 @@ public final class StoreCreationTool {
                 flatteningXsltLocation, referenceFeeds);
 
         // Add the associated data to the stream store.
-        final StreamProperties streamProperties = new StreamProperties.Builder()
+        final DataProperties streamProperties = new DataProperties.Builder()
                 .feedName(feedName)
-                .streamTypeName(StreamTypeNames.RAW_EVENTS)
+                .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
 
         final StreamTarget dataTarget = streamStore.openStreamTarget(streamProperties);
@@ -378,10 +378,10 @@ public final class StoreCreationTool {
 
             // Setup the stream processor filter.
             final QueryData findStreamQueryData = new QueryData.Builder()
-                    .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
+                    .dataSource(MetaDataSource.STREAM_STORE_DOC_REF)
                     .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                            .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, docRef.getName())
-                            .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                            .addTerm(MetaDataSource.FEED, ExpressionTerm.Condition.EQUALS, docRef.getName())
+                            .addTerm(MetaDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                             .build())
                     .build();
 
@@ -616,9 +616,9 @@ public final class StoreCreationTool {
 
             // Setup the stream processor filter.
             final QueryData findStreamQueryData = new QueryData.Builder()
-                    .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
+                    .dataSource(MetaDataSource.STREAM_STORE_DOC_REF)
                     .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                            .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
+                            .addTerm(MetaDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
                             .build())
                     .build();
             streamProcessorFilterService.addFindStreamCriteria(streamProcessor, 1, findStreamQueryData);

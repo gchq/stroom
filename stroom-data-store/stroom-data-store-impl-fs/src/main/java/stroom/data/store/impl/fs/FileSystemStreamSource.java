@@ -19,8 +19,8 @@ package stroom.data.store.impl.fs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamStatus;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataStatus;
 import stroom.data.store.api.CompoundInputStream;
 import stroom.data.store.api.NestedInputStream;
 import stroom.data.store.api.SegmentInputStream;
@@ -42,7 +42,7 @@ final class FileSystemStreamSource implements StreamSource {
 
     private final FileSystemStreamPathHelper fileSystemStreamPathHelper;
     private final StreamCloser streamCloser = new BasicStreamCloser();
-    private Stream stream;
+    private Data stream;
     private String rootPath;
     private String streamType;
     private AttributeMap attributeMap;
@@ -51,7 +51,7 @@ final class FileSystemStreamSource implements StreamSource {
     private FileSystemStreamSource parent;
 
     private FileSystemStreamSource(final FileSystemStreamPathHelper fileSystemStreamPathHelper,
-                                   final Stream stream,
+                                   final Data stream,
                                    final String rootPath,
                                    final String streamType) {
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
@@ -82,7 +82,7 @@ final class FileSystemStreamSource implements StreamSource {
      * created.
      */
     static FileSystemStreamSource create(final FileSystemStreamPathHelper fileSystemStreamPathHelper,
-                                         final Stream stream,
+                                         final Data stream,
                                          final String rootPath,
                                          final String streamType) {
         return new FileSystemStreamSource(fileSystemStreamPathHelper, stream, rootPath, streamType);
@@ -119,7 +119,7 @@ final class FileSystemStreamSource implements StreamSource {
                 streamCloser.add(inputStream);
             } catch (IOException ioEx) {
                 // Don't log this as an error if we expect this stream to have been deleted or be locked.
-                if (stream == null || StreamStatus.UNLOCKED.equals(stream.getStatus())) {
+                if (stream == null || DataStatus.UNLOCKED.equals(stream.getStatus())) {
                     LOGGER.error("getInputStream", ioEx);
                 }
 
@@ -158,11 +158,11 @@ final class FileSystemStreamSource implements StreamSource {
     }
 
     @Override
-    public Stream getStream() {
+    public Data getStream() {
         return stream;
     }
 
-    public void setStream(final Stream stream) {
+    public void setStream(final Data stream) {
         this.stream = stream;
     }
 

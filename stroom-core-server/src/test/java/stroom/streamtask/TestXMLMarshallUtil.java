@@ -21,7 +21,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.data.meta.api.StreamDataSource;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.ProcessorFilter;
 import stroom.util.test.StroomJUnit4ClassRunner;
@@ -36,18 +36,18 @@ public class TestXMLMarshallUtil extends StroomUnitTest {
         final String createdPeriod = String.format("%d%s%d", 1L, ExpressionTerm.Condition.IN_CONDITION_DELIMITER, 2L);
 
         final QueryData queryData1 = new QueryData.Builder()
-                .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
+                .dataSource(MetaDataSource.STREAM_STORE_DOC_REF)
                 .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
                     .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                        .addTerm(StreamDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(999L))
-                        .addTerm(StreamDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(7L))
-                        .addTerm(StreamDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(77L))
+                        .addTerm(MetaDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(999L))
+                        .addTerm(MetaDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(7L))
+                        .addTerm(MetaDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(77L))
                         .build())
                     .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                        .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, Long.toString(88L))
-                        .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, Long.toString(889L))
+                        .addTerm(MetaDataSource.FEED, ExpressionTerm.Condition.EQUALS, Long.toString(88L))
+                        .addTerm(MetaDataSource.FEED, ExpressionTerm.Condition.EQUALS, Long.toString(889L))
                         .build())
-                    .addTerm(StreamDataSource.CREATE_TIME, ExpressionTerm.Condition.BETWEEN, createdPeriod)
+                    .addTerm(MetaDataSource.CREATE_TIME, ExpressionTerm.Condition.BETWEEN, createdPeriod)
                     .build())
                 .build();
 

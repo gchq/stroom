@@ -126,7 +126,7 @@ public class TestTranslationTaskContextAndFlattening extends AbstractProcessInte
     // criteria.setNode(nodeCache.getDefaultNode());
     // criteria.getPageRequest().setLength(1);
     // criteria.setStreamTaskStatus(TaskStatus.UNPROCESSED);
-    // criteria.setStreamType(StreamType.RAW_REFERENCE);
+    // criteria.setType(StreamType.RAW_REFERENCE);
     // List<TranslationStreamTask> processTasks = translationStreamTaskService
     // .assignUnprocessed(criteria);
     //
@@ -136,7 +136,7 @@ public class TestTranslationTaskContextAndFlattening extends AbstractProcessInte
     // task = new StreamProcessorTask(processTask.getElementId());
     // } else {
     // // Otherwise look for some raw event streams that need processing.
-    // criteria.setStreamType(StreamType.RAW_EVENTS);
+    // criteria.setType(StreamType.RAW_EVENTS);
     // processTasks = translationStreamTaskService
     // .assignUnprocessed(criteria);
     //

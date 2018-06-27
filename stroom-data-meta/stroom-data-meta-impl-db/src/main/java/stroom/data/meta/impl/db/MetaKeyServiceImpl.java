@@ -21,8 +21,7 @@ import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.StreamDataSource;
-import stroom.entity.shared.Clearable;
+import stroom.data.meta.api.MetaDataSource;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -34,7 +33,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import static stroom.data.meta.impl.db.stroom.tables.MetaKey.META_KEY;
-import static stroom.data.meta.impl.db.stroom.tables.MetaNumericValue.META_NUMERIC_VALUE;
 
 @Singleton
 class MetaKeyServiceImpl implements MetaKeyService {
@@ -42,17 +40,17 @@ class MetaKeyServiceImpl implements MetaKeyService {
 
 //    private static final Map<String, MetaFieldUse> SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP;
 
-    private static final String REC_READ = StreamDataSource.REC_READ;
-    private static final String REC_WRITE = StreamDataSource.REC_WRITE;
-    private static final String REC_INFO = StreamDataSource.REC_INFO;
-    private static final String REC_WARN = StreamDataSource.REC_WARN;
-    private static final String REC_ERROR = StreamDataSource.REC_ERROR;
-    private static final String REC_FATAL = StreamDataSource.REC_FATAL;
-    private static final String DURATION = StreamDataSource.DURATION;
+    private static final String REC_READ = MetaDataSource.REC_READ;
+    private static final String REC_WRITE = MetaDataSource.REC_WRITE;
+    private static final String REC_INFO = MetaDataSource.REC_INFO;
+    private static final String REC_WARN = MetaDataSource.REC_WARN;
+    private static final String REC_ERROR = MetaDataSource.REC_ERROR;
+    private static final String REC_FATAL = MetaDataSource.REC_FATAL;
+    private static final String DURATION = MetaDataSource.DURATION;
     //    private static final String NODE = StreamDataSource.NODE;
 //    private static final String FEED = StreamDataSource.FEED;
-    private static final String FILE_SIZE = StreamDataSource.FILE_SIZE;
-    private static final String STREAM_SIZE = StreamDataSource.STREAM_SIZE;
+    private static final String FILE_SIZE = MetaDataSource.FILE_SIZE;
+    private static final String STREAM_SIZE = MetaDataSource.STREAM_SIZE;
 
 //    static {
 //        final HashMap<String, MetaFieldUse> map = new HashMap<>();
@@ -79,7 +77,7 @@ class MetaKeyServiceImpl implements MetaKeyService {
     private final Map<String, Integer> nameToIdCache = new HashMap<>();
 
     @Inject
-    MetaKeyServiceImpl(final StreamMetaDataSource dataSource) {
+    MetaKeyServiceImpl(final DataMetaDataSource dataSource) {
         this.dataSource = dataSource;
         setup();
     }

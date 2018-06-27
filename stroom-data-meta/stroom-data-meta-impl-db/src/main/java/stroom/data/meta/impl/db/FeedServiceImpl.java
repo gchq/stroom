@@ -22,7 +22,6 @@ import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.shared.Clearable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -33,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static stroom.data.meta.impl.db.stroom.tables.StreamFeed.STREAM_FEED;
+import static stroom.data.meta.impl.db.stroom.tables.DataFeed.DATA_FEED;
 
 @Singleton
 class FeedServiceImpl implements FeedService {
@@ -44,7 +43,7 @@ class FeedServiceImpl implements FeedService {
     private final DataSource dataSource;
 
     @Inject
-    FeedServiceImpl(final StreamMetaDataSource dataSource) {
+    FeedServiceImpl(final DataMetaDataSource dataSource) {
         this.dataSource = dataSource;
     }
 
@@ -68,9 +67,9 @@ class FeedServiceImpl implements FeedService {
         try (final Connection connection = dataSource.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             return create
-                    .select(STREAM_FEED.NAME)
-                    .from(STREAM_FEED)
-                    .fetch(STREAM_FEED.NAME);
+                    .select(DATA_FEED.NAME)
+                    .from(DATA_FEED)
+                    .fetch(DATA_FEED.NAME);
 
         } catch (final SQLException e) {
             LOGGER.error(e.getMessage(), e);
@@ -87,10 +86,10 @@ class FeedServiceImpl implements FeedService {
         try (final Connection connection = dataSource.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             id = create
-                    .select(STREAM_FEED.ID)
-                    .from(STREAM_FEED)
-                    .where(STREAM_FEED.NAME.eq(name))
-                    .fetchOne(STREAM_FEED.ID);
+                    .select(DATA_FEED.ID)
+                    .from(DATA_FEED)
+                    .where(DATA_FEED.NAME.eq(name))
+                    .fetchOne(DATA_FEED.ID);
 
         } catch (final SQLException e) {
             LOGGER.error(e.getMessage(), e);
@@ -108,9 +107,9 @@ class FeedServiceImpl implements FeedService {
         try (final Connection connection = dataSource.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             final Integer id = create
-                    .insertInto(STREAM_FEED, STREAM_FEED.NAME)
+                    .insertInto(DATA_FEED, DATA_FEED.NAME)
                     .values(name)
-                    .returning(STREAM_FEED.ID)
+                    .returning(DATA_FEED.ID)
                     .fetchOne()
                     .getId();
             cache.put(name, id);
@@ -133,7 +132,7 @@ class FeedServiceImpl implements FeedService {
         try (final Connection connection = dataSource.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             return create
-                    .delete(STREAM_FEED)
+                    .delete(DATA_FEED)
                     .execute();
         } catch (final SQLException e) {
             throw new RuntimeException(e.getMessage(), e);

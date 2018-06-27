@@ -40,7 +40,7 @@ import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.StreamHolder;
-import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.Data;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
@@ -116,7 +116,7 @@ public class TestIndexingPipeline extends AbstractProcessIntegrationTest {
             // Set the stream for decoration purposes.
             final long id = (long) (Math.random() * 1000);
 
-            final Stream stream = mock(Stream.class);
+            final Data stream = mock(Data.class);
             when(stream.getId()).thenReturn(id);
             streamHolderProvider.get().setStream(stream);
 

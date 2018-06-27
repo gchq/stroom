@@ -18,8 +18,8 @@ package stroom.pipeline.task;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.impl.mock.MockStreamMetaService;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.impl.mock.MockDataMetaService;
 import stroom.data.store.impl.fs.MockStreamStore;
 import stroom.data.store.tools.StoreCreationTool;
 import stroom.node.NodeCache;
@@ -50,7 +50,7 @@ public class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegr
     @Inject
     private MockStreamStore streamStore;
     @Inject
-    private MockStreamMetaService streamMetaService;
+    private MockDataMetaService streamMetaService;
     @Inject
     private NodeCache nodeCache;
     @Inject
@@ -86,11 +86,11 @@ public class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegr
         final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(DIR);
         final Path outputDir = StroomPipelineTestFileUtil.getTestOutputDir().resolve(DIR);
 
-        for (final Entry<Long, Stream> entry : streamMetaService.getStreamMap().entrySet()) {
+        for (final Entry<Long, Data> entry : streamMetaService.getDataMap().entrySet()) {
             final long streamId = entry.getKey();
-            final Stream stream = entry.getValue();
-            if (StreamTypeNames.EVENTS.equals(stream.getStreamTypeName())) {
-                final byte[] data = streamStore.getFileData().get(streamId).get(stream.getStreamTypeName());
+            final Data stream = entry.getValue();
+            if (StreamTypeNames.EVENTS.equals(stream.getTypeName())) {
+                final byte[] data = streamStore.getFileData().get(streamId).get(stream.getTypeName());
 
                 // Write the actual XML out.
                 final OutputStream os = StroomPipelineTestFileUtil.getOutputStream(outputDir, "TestTask.out");

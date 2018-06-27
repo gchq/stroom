@@ -1,11 +1,11 @@
 package stroom.headless;
 
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamStatus;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataStatus;
 
 import java.util.Objects;
 
-class StreamImpl implements Stream {
+class StreamImpl implements Data {
     private long id;
     private String feedName;
     private String streamTypeName;
@@ -13,7 +13,7 @@ class StreamImpl implements Stream {
     private Long parentStreamId;
     private Long streamTaskId;
     private Integer streamProcessorId;
-    private StreamStatus status;
+    private DataStatus status;
     private Long statusMs;
     private long createMs;
     private Long effectiveMs;
@@ -32,7 +32,7 @@ class StreamImpl implements Stream {
     }
 
     @Override
-    public String getStreamTypeName() {
+    public String getTypeName() {
         return streamTypeName;
     }
 
@@ -42,22 +42,22 @@ class StreamImpl implements Stream {
     }
 
     @Override
-    public Long getParentStreamId() {
+    public Long getParentDataId() {
         return parentStreamId;
     }
 
     @Override
-    public Long getStreamTaskId() {
+    public Long getProcessTaskId() {
         return streamTaskId;
     }
 
     @Override
-    public Integer getStreamProcessorId() {
+    public Integer getProcessorId() {
         return streamProcessorId;
     }
 
     @Override
-    public StreamStatus getStatus() {
+    public DataStatus getStatus() {
         return status;
     }
 
@@ -132,7 +132,7 @@ class StreamImpl implements Stream {
             return this;
         }
 
-        public Builder status(final StreamStatus status) {
+        public Builder status(final DataStatus status) {
             stream.status = status;
             return this;
         }
@@ -152,7 +152,7 @@ class StreamImpl implements Stream {
             return this;
         }
 
-        public Stream build() {
+        public Data build() {
             return stream;
         }
     }

@@ -18,17 +18,20 @@
 package stroom.data.meta.impl.db;
 
 import com.google.inject.Guice;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import stroom.data.meta.api.AttributeMap;
+import stroom.data.meta.api.ExpressionUtil;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.MetaDataSource;
+import stroom.data.meta.api.DataProperties;
 import stroom.properties.impl.mock.MockPropertyModule;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.impl.mock.MockSecurityContextModule;
-import stroom.data.meta.api.FindStreamCriteria;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamProperties;
-import stroom.data.meta.api.ExpressionUtil;
-import stroom.data.meta.api.StreamDataSource;
+import stroom.util.config.StroomProperties;
 import stroom.util.date.DateUtil;
 
 import javax.inject.Inject;
@@ -37,109 +40,119 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestMetaValueServiceImpl {
     @Inject
-    private StreamMetaServiceImpl streamMetaService;
+    private DataMetaServiceImpl dataMetaService;
     @Inject
     private MetaValueServiceImpl metaValueService;
     @Inject
     private MetaValueConfig metaValueConfig;
 
+    @BeforeAll
+    static void setProperties() {
+        // Make sure attributes get flushed straight away.
+        StroomProperties.setOverrideBooleanProperty("stroom.meta.addAsync", false, StroomProperties.Source.TEST);
+    }
+
+    @AfterAll
+    static void unsetProperties() {
+        StroomProperties.removeOverrides();
+    }
+
     @BeforeEach
     void setup() {
         Guice.createInjector(new DataMetaDbModule(), new MockSecurityContextModule(), new MockPropertyModule()).injectMembers(this);
-        metaValueConfig.setAddAsync(false);
     }
 
     @Test
     void testFind() {
         // Delete everything
-        streamMetaService.deleteAll();
+        dataMetaService.deleteAll();
         metaValueService.deleteAll();
 
-        final Stream stream = streamMetaService.createStream(createProperties("FEED1"));
+        final Data data = dataMetaService.create(createProperties("FEED1"));
 
-        streamMetaService.addAttributes(stream, createAttributes());
+        dataMetaService.addAttributes(data, createAttributes());
 
-        FindStreamCriteria criteria = new FindStreamCriteria();
-        criteria.obtainSelectedIdSet().add(stream.getId());
-        criteria.setExpression(ExpressionUtil.createSimpleExpression(StreamDataSource.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(stream.getCreateMs())));
+        FindDataCriteria criteria = new FindDataCriteria();
+        criteria.obtainSelectedIdSet().add(data.getId());
+        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaDataSource.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(data.getCreateMs())));
 
-        assertThat(streamMetaService.find(criteria).size()).isEqualTo(1);
+        assertThat(dataMetaService.find(criteria).size()).isEqualTo(1);
 
-        criteria = new FindStreamCriteria();
-        criteria.obtainSelectedIdSet().add(stream.getId());
-        criteria.setExpression(ExpressionUtil.createSimpleExpression(StreamDataSource.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(0L)));
+        criteria = new FindDataCriteria();
+        criteria.obtainSelectedIdSet().add(data.getId());
+        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaDataSource.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(0L)));
 
-        assertThat(streamMetaService.find(criteria).size()).isEqualTo(0);
+        assertThat(dataMetaService.find(criteria).size()).isEqualTo(0);
 
-        criteria = new FindStreamCriteria();
-        criteria.obtainSelectedIdSet().add(stream.getId());
-        criteria.setExpression(ExpressionUtil.createSimpleExpression(StreamDataSource.FILE_SIZE, Condition.GREATER_THAN, "0"));
+        criteria = new FindDataCriteria();
+        criteria.obtainSelectedIdSet().add(data.getId());
+        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaDataSource.FILE_SIZE, Condition.GREATER_THAN, "0"));
 
-        assertThat(streamMetaService.find(criteria).size()).isEqualTo(1);
+        assertThat(dataMetaService.find(criteria).size()).isEqualTo(1);
 
-        criteria = new FindStreamCriteria();
-        criteria.obtainSelectedIdSet().add(stream.getId());
-        criteria.setExpression(ExpressionUtil.createSimpleExpression(StreamDataSource.FILE_SIZE, Condition.BETWEEN, "0,1000000"));
+        criteria = new FindDataCriteria();
+        criteria.obtainSelectedIdSet().add(data.getId());
+        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaDataSource.FILE_SIZE, Condition.BETWEEN, "0,1000000"));
 
-        assertThat(streamMetaService.find(criteria).size()).isEqualTo(1);
+        assertThat(dataMetaService.find(criteria).size()).isEqualTo(1);
     }
 
     @Test
     void testDeleteOld() {
         // Delete everything
-        streamMetaService.deleteAll();
+        dataMetaService.deleteAll();
         metaValueService.deleteAll();
 
-        final Stream stream = streamMetaService.createStream(createProperties("FEED1"));
+        final Data data = dataMetaService.create(createProperties("FEED1"));
 
-        streamMetaService.addAttributes(stream, createAttributes());
+        dataMetaService.addAttributes(data, createAttributes());
 
-        FindStreamCriteria criteria = new FindStreamCriteria();
-        criteria.obtainSelectedIdSet().add(stream.getId());
-        criteria.setExpression(ExpressionUtil.createSimpleExpression(StreamDataSource.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(stream.getCreateMs())));
+        FindDataCriteria criteria = new FindDataCriteria();
+        criteria.obtainSelectedIdSet().add(data.getId());
+        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaDataSource.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(data.getCreateMs())));
 
-        assertThat(streamMetaService.find(criteria).size()).isEqualTo(1);
+        assertThat(dataMetaService.find(criteria).size()).isEqualTo(1);
 
-        criteria = new FindStreamCriteria();
-        criteria.obtainSelectedIdSet().add(stream.getId());
-        criteria.setExpression(ExpressionUtil.createSimpleExpression(StreamDataSource.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(0L)));
+        criteria = new FindDataCriteria();
+        criteria.obtainSelectedIdSet().add(data.getId());
+        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaDataSource.CREATE_TIME, Condition.EQUALS, DateUtil.createNormalDateTimeString(0L)));
 
-        assertThat(streamMetaService.find(criteria).size()).isEqualTo(0);
+        assertThat(dataMetaService.find(criteria).size()).isEqualTo(0);
 
-        criteria = new FindStreamCriteria();
-        criteria.obtainSelectedIdSet().add(stream.getId());
-        criteria.setExpression(ExpressionUtil.createSimpleExpression(StreamDataSource.FILE_SIZE, Condition.GREATER_THAN, "0"));
+        criteria = new FindDataCriteria();
+        criteria.obtainSelectedIdSet().add(data.getId());
+        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaDataSource.FILE_SIZE, Condition.GREATER_THAN, "0"));
 
-        assertThat(streamMetaService.find(criteria).size()).isEqualTo(1);
+        assertThat(dataMetaService.find(criteria).size()).isEqualTo(1);
 
-        criteria = new FindStreamCriteria();
-        criteria.obtainSelectedIdSet().add(stream.getId());
-        criteria.setExpression(ExpressionUtil.createSimpleExpression(StreamDataSource.FILE_SIZE, Condition.BETWEEN, "0,1000000"));
+        criteria = new FindDataCriteria();
+        criteria.obtainSelectedIdSet().add(data.getId());
+        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaDataSource.FILE_SIZE, Condition.BETWEEN, "0,1000000"));
 
-        assertThat(streamMetaService.find(criteria).size()).isEqualTo(1);
+        assertThat(dataMetaService.find(criteria).size()).isEqualTo(1);
 
         metaValueService.deleteOldValues();
 
-        criteria = new FindStreamCriteria();
-        criteria.obtainSelectedIdSet().add(stream.getId());
-        criteria.setExpression(ExpressionUtil.createSimpleExpression(StreamDataSource.FILE_SIZE, Condition.BETWEEN, "0,1000000"));
+        criteria = new FindDataCriteria();
+        criteria.obtainSelectedIdSet().add(data.getId());
+        criteria.setExpression(ExpressionUtil.createSimpleExpression(MetaDataSource.FILE_SIZE, Condition.BETWEEN, "0,1000000"));
 
-        assertThat(streamMetaService.find(criteria).size()).isEqualTo(0);
+        assertThat(dataMetaService.find(criteria).size()).isEqualTo(0);
     }
 
-    private StreamProperties createProperties(final String feedName) {
-        return new StreamProperties.Builder()
+    private DataProperties createProperties(final String feedName) {
+        return new DataProperties.Builder()
                 .createMs(1000L)
                 .feedName(feedName)
                 .pipelineUuid("PIPELINE_UUID")
-                .streamProcessorId(1)
-                .streamTypeName("TEST_STREAM_TYPE")
+                .processorId(1)
+                .typeName("TEST_STREAM_TYPE")
                 .build();
     }
 
     private AttributeMap createAttributes() {
         final AttributeMap attributeMap = new AttributeMap();
-        attributeMap.put(StreamDataSource.FILE_SIZE, "100");
+        attributeMap.put(MetaDataSource.FILE_SIZE, "100");
         return attributeMap;
     }
 }

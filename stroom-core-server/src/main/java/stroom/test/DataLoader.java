@@ -20,7 +20,7 @@ package stroom.test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
-import stroom.data.meta.api.StreamProperties;
+import stroom.data.meta.api.DataProperties;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.StreamStore;
@@ -108,9 +108,9 @@ public class DataLoader {
                 streamTypeName = StreamTypeNames.RAW_REFERENCE;
             }
 
-            final StreamProperties streamProperties = new StreamProperties.Builder()
+            final DataProperties streamProperties = new DataProperties.Builder()
                     .feedName(feed.getName())
-                    .streamTypeName(streamTypeName)
+                    .typeName(streamTypeName)
                     .effectiveMs(effectiveMs)
                     .build();
 

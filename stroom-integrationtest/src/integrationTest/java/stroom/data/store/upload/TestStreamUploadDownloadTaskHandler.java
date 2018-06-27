@@ -19,11 +19,11 @@ package stroom.data.store.upload;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.data.meta.api.ExpressionUtil;
-import stroom.data.meta.api.FindStreamCriteria;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamMetaService;
-import stroom.data.meta.api.StreamProperties;
-import stroom.data.meta.api.StreamStatus;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataMetaService;
+import stroom.data.meta.api.DataProperties;
+import stroom.data.meta.api.DataStatus;
 import stroom.data.store.StreamDownloadSettings;
 import stroom.data.store.StreamDownloadTask;
 import stroom.data.store.StreamUploadTask;
@@ -54,7 +54,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
     @Inject
     private StreamStore streamStore;
     @Inject
-    private StreamMetaService streamMetaService;
+    private DataMetaService streamMetaService;
     @Inject
     private TaskManager taskManager;
 
@@ -65,7 +65,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
         commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
 
         final Path file = Files.createTempFile(getCurrentTestDir(), "TestStreamDownloadTaskHandler", ".zip");
-        final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
+        final FindDataCriteria findStreamCriteria = new FindDataCriteria();
         findStreamCriteria.setExpression(ExpressionUtil.createFeedExpression(feedName));
         final StreamDownloadSettings streamDownloadSettings = new StreamDownloadSettings();
 
@@ -91,7 +91,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
     @Test
     public void testUploadFlatFile() throws IOException {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
+        final FindDataCriteria findStreamCriteria = new FindDataCriteria();
         findStreamCriteria.setExpression(ExpressionUtil.createFeedExpression(feedName));
 
         final Path file = Files.createTempFile(getCurrentTestDir(), "TestStreamDownloadTaskHandler", ".dat");
@@ -108,9 +108,9 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
         final Path file = Files.createTempFile(getCurrentTestDir(), "TestStreamDownloadTaskHandler", ".zip");
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
-        final StreamProperties streamProperties = new StreamProperties.Builder()
+        final DataProperties streamProperties = new DataProperties.Builder()
                 .feedName(feedName)
-                .streamTypeName(StreamTypeNames.RAW_EVENTS)
+                .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
 
@@ -142,7 +142,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
 
         streamStore.closeStreamTarget(streamTarget);
 
-        final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
+        final FindDataCriteria findStreamCriteria = new FindDataCriteria();
         findStreamCriteria.setExpression(ExpressionUtil.createFeedExpression(feedName));
         final StreamDownloadSettings streamDownloadSettings = new StreamDownloadSettings();
 
@@ -165,14 +165,14 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
         taskManager.exec(new StreamUploadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, "test.zip", file, feedName,
                 StreamTypeNames.RAW_EVENTS, null, extraMeta));
 
-        final List<Stream> streamList = streamMetaService.find(findStreamCriteria);
+        final List<Data> streamList = streamMetaService.find(findStreamCriteria);
 
         Assert.assertEquals(2, streamList.size());
 
-        final Stream originalStream = streamTarget.getStream();
+        final Data originalStream = streamTarget.getStream();
 
-        for (final Stream stream : streamList) {
-            Assert.assertEquals(StreamStatus.UNLOCKED, stream.getStatus());
+        for (final Data stream : streamList) {
+            Assert.assertEquals(DataStatus.UNLOCKED, stream.getStatus());
             final StreamSource streamSource = streamStore.openStreamSource(stream.getId());
 
             Assert.assertEquals("DATA1DATA2", StreamUtil.streamToString(streamSource.getInputStream(), false));

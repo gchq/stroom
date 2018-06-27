@@ -29,12 +29,12 @@ public class TestBaseEntityDeProxyProcessor extends StroomUnitTest {
 //        final DummyStreamType streamType = new DummyStreamType();
 //        streamType.setId(100L);
 //        final StreamEntity stream = new StreamEntity();
-//        stream.setStreamType(streamType);
+//        stream.setType(streamType);
 //
 //        final StreamEntity deproxy = (StreamEntity) (new BaseEntityDeProxyProcessor(true).process(stream));
 //
-//        Assert.assertEquals(deproxy.getStreamType().getClass(), StreamTypeEntity.class);
-//        Assert.assertEquals(100L, deproxy.getStreamType().getId());
+//        Assert.assertEquals(deproxy.getType().getClass(), StreamTypeEntity.class);
+//        Assert.assertEquals(100L, deproxy.getType().getId());
 //    }
 //
 //    public static class DummyStreamType extends StreamTypeEntity implements HibernateProxy {

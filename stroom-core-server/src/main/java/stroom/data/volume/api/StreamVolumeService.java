@@ -32,7 +32,7 @@ public interface StreamVolumeService extends FindService<StreamVolume, FindStrea
 
 
 //    interface StreamAndVolumes extends SharedObject {
-//        Stream getStream();
+//        Stream getData();
 //
 //        Set<Volume> getVolumes();
 //    }
@@ -47,7 +47,7 @@ public interface StreamVolumeService extends FindService<StreamVolume, FindStrea
 //            this.volumes = volumes;
 //        }
 //
-//        public Stream getStream() {
+//        public Stream getData() {
 //            return stream;
 //        }
 //

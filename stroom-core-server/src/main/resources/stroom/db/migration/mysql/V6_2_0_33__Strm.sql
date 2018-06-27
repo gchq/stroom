@@ -1,1 +1,0 @@
-RENAME TABLE STRM TO stream;

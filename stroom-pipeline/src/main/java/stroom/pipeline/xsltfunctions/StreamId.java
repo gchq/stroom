@@ -21,7 +21,7 @@ import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.StringValue;
 import stroom.pipeline.state.StreamHolder;
-import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.Data;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
@@ -39,7 +39,7 @@ class StreamId extends StroomExtensionFunctionCall {
         String result = null;
 
         try {
-            final Stream stream = streamHolder.getStream();
+            final Data stream = streamHolder.getStream();
             if (stream != null) {
                 result = String.valueOf(streamHolder.getStream().getId());
             }

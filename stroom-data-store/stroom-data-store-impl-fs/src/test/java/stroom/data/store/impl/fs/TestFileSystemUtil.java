@@ -17,7 +17,7 @@
 package stroom.data.store.impl.fs;
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.Data;
 import stroom.node.shared.Node;
 import stroom.node.shared.VolumeEntity;
 import stroom.streamstore.shared.StreamTypeNames;
@@ -89,9 +89,9 @@ class TestFileSystemUtil {
 
     @Test
     void testCreateRootStreamFile() {
-        final Stream stream = mock(Stream.class);
+        final Data stream = mock(Data.class);
         when(stream.getId()).thenReturn(1001001L);
-        when(stream.getStreamTypeName()).thenReturn(StreamTypeNames.EVENTS);
+        when(stream.getTypeName()).thenReturn(StreamTypeNames.EVENTS);
         when(stream.getFeedName()).thenReturn("TEST_FEED");
         when(stream.getCreateMs()).thenReturn(DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z"));
 
@@ -108,9 +108,9 @@ class TestFileSystemUtil {
 
     @Test
     void testCreateChildStreamFile() throws IOException {
-        final Stream stream = mock(Stream.class);
+        final Data stream = mock(Data.class);
         when(stream.getId()).thenReturn(1001001L);
-        when(stream.getStreamTypeName()).thenReturn(StreamTypeNames.RAW_EVENTS);
+        when(stream.getTypeName()).thenReturn(StreamTypeNames.RAW_EVENTS);
         when(stream.getFeedName()).thenReturn("TEST_FEED");
         when(stream.getCreateMs()).thenReturn(DateUtil.parseNormalDateTimeString("2010-01-01T12:00:00.000Z"));
 
@@ -250,9 +250,9 @@ class TestFileSystemUtil {
 
     @Test
     void testDirPath() {
-        final Stream stream = mock(Stream.class);
+        final Data stream = mock(Data.class);
         when(stream.getId()).thenReturn(100100L);
-        when(stream.getStreamTypeName()).thenReturn(StreamTypeNames.EVENTS);
+        when(stream.getTypeName()).thenReturn(StreamTypeNames.EVENTS);
         when(stream.getFeedName()).thenReturn("TEST_FEED");
         when(stream.getCreateMs()).thenReturn(DateUtil.parseNormalDateTimeString("2008-11-18T10:00:00.000Z"));
 
@@ -267,9 +267,9 @@ class TestFileSystemUtil {
 
     @Test
     void testDirPath2() {
-        final Stream stream = mock(Stream.class);
+        final Data stream = mock(Data.class);
         when(stream.getId()).thenReturn(1100100L);
-        when(stream.getStreamTypeName()).thenReturn(StreamTypeNames.EVENTS);
+        when(stream.getTypeName()).thenReturn(StreamTypeNames.EVENTS);
         when(stream.getFeedName()).thenReturn("TEST_FEED");
         when(stream.getCreateMs()).thenReturn(DateUtil.parseNormalDateTimeString("2008-11-18T10:00:00.000Z"));
 

@@ -29,9 +29,9 @@
         </g:customCell>
       </g:row>
       <g:row>
-        <g:cell>Stream Type:</g:cell>
+        <g:cell>Type:</g:cell>
         <g:customCell>
-          <l:StringListBox ui:field="streamType" />
+          <l:StringListBox ui:field="type" />
         </g:customCell>
       </g:row>
       <g:row>

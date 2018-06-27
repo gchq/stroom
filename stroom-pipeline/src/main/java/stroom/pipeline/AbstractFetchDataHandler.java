@@ -18,8 +18,8 @@ package stroom.pipeline;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamStatus;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataStatus;
 import stroom.data.store.api.CompoundInputStream;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.StreamSource;
@@ -221,10 +221,10 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
             } catch (final IOException | RuntimeException e) {
                 writeEventLog(streamSource.getStream(), feedName, streamTypeName, e);
 
-                if (StreamStatus.LOCKED.equals(streamSource.getStream().getStatus())) {
+                if (DataStatus.LOCKED.equals(streamSource.getStream().getStatus())) {
                     return createErrorResult("You cannot view locked streams.");
                 }
-                if (StreamStatus.DELETED.equals(streamSource.getStream().getStatus())) {
+                if (DataStatus.DELETED.equals(streamSource.getStream().getStatus())) {
                     return createErrorResult("This data may no longer exist.");
                 }
 
@@ -346,7 +346,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                 streamsRowCount, resultPageRange, pageRowCount, null, error, false);
     }
 
-    private void writeEventLog(final Stream stream, final String feedName, final String streamTypeName,
+    private void writeEventLog(final Data stream, final String feedName, final String streamTypeName,
                                final Exception e) {
         try {
             streamEventLog.viewStream(stream, feedName, streamTypeName, e);

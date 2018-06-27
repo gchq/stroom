@@ -21,7 +21,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.data.store.ExpressionMatcher;
-import stroom.data.meta.api.StreamDataSource;
+import stroom.data.meta.api.MetaDataSource;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -50,7 +50,7 @@ public class TestExpressionMatcher {
     }
 
     private void test(final Map<String, Object> attributeMap, final ExpressionOperator expression, final boolean outcome) {
-        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamDataSource.getFieldMap(), null);
+        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(MetaDataSource.getFieldMap(), null);
         assertThat(expressionMatcher.match(attributeMap, expression)).isEqualTo(outcome);
     }
 
@@ -62,8 +62,8 @@ public class TestExpressionMatcher {
 
     private Map<String, Object> createAttributeMap() {
         final Map<String, Object> attributeMap = new HashMap<>();
-        attributeMap.put(StreamDataSource.FEED, "TEST_FEED");
-        attributeMap.put(StreamDataSource.STREAM_TYPE, "Raw Events");
+        attributeMap.put(MetaDataSource.FEED, "TEST_FEED");
+        attributeMap.put(MetaDataSource.STREAM_TYPE, "Raw Events");
         return attributeMap;
     }
 }

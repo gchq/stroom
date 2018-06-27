@@ -16,7 +16,7 @@
 
 package stroom.data.store;
 
-import stroom.data.meta.api.StreamMetaService;
+import stroom.data.meta.api.DataMetaService;
 import stroom.security.Security;
 import stroom.streamstore.shared.UpdateStatusAction;
 import stroom.task.AbstractTaskHandler;
@@ -27,11 +27,11 @@ import javax.inject.Inject;
 
 @TaskHandlerBean(task = UpdateStatusAction.class)
 class UpdateStatusHandler extends AbstractTaskHandler<UpdateStatusAction, SharedInteger> {
-    private final StreamMetaService streamMetaService;
+    private final DataMetaService streamMetaService;
     private final Security security;
 
     @Inject
-    UpdateStatusHandler(final StreamMetaService streamMetaService,
+    UpdateStatusHandler(final DataMetaService streamMetaService,
                         final Security security) {
         this.streamMetaService = streamMetaService;
         this.security = security;

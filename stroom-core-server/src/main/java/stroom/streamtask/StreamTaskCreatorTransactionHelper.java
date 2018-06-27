@@ -34,11 +34,11 @@ import stroom.persist.EntityManagerSupport;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.data.meta.api.FindStreamCriteria;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamMetaService;
-import stroom.data.meta.api.StreamStatus;
-import stroom.data.meta.api.StreamDataSource;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataMetaService;
+import stroom.data.meta.api.DataStatus;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.streamtask.InclusiveRanges.InclusiveRange;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.ProcessorFilter;
@@ -77,7 +77,7 @@ class StreamTaskCreatorTransactionHelper {
     private final NodeCache nodeCache;
     private final ClusterLockService clusterLockService;
     private final StreamTaskService streamTaskService;
-    private final StreamMetaService streamMetaService;
+    private final DataMetaService streamMetaService;
     private final StroomEntityManager stroomEntityManager;
     private final EntityManagerSupport entityManagerSupport;
 
@@ -85,7 +85,7 @@ class StreamTaskCreatorTransactionHelper {
     StreamTaskCreatorTransactionHelper(final NodeCache nodeCache,
                                        final ClusterLockService clusterLockService,
                                        final StreamTaskService streamTaskService,
-                                       final StreamMetaService streamMetaService,
+                                       final DataMetaService streamMetaService,
                                        final StroomEntityManager stroomEntityManager,
                                        final EntityManagerSupport entityManagerSupport) {
         this.nodeCache = nodeCache;
@@ -128,18 +128,18 @@ class StreamTaskCreatorTransactionHelper {
      * @return streams that have not yet got a stream task for a particular
      * stream processor
      */
-    public List<Stream> runSelectStreamQuery(final ExpressionOperator expression,
-                                             final long minStreamId,
-                                             final int max) {
+    public List<Data> runSelectStreamQuery(final ExpressionOperator expression,
+                                           final long minStreamId,
+                                           final int max) {
         final ExpressionOperator streamIdExpression = new ExpressionOperator.Builder(Op.AND)
                 .addOperator(expression)
-                .addTerm(StreamDataSource.STREAM_ID, Condition.GREATER_THAN_OR_EQUAL_TO, String.valueOf(minStreamId))
+                .addTerm(MetaDataSource.STREAM_ID, Condition.GREATER_THAN_OR_EQUAL_TO, String.valueOf(minStreamId))
                 .build();
 
         // Copy the filter
-        final FindStreamCriteria findStreamCriteria = new FindStreamCriteria(streamIdExpression);
+        final FindDataCriteria findStreamCriteria = new FindDataCriteria(streamIdExpression);
 //        findStreamCriteria.copyFrom(criteria);
-        findStreamCriteria.setSort(StreamDataSource.STREAM_ID, Direction.ASCENDING, false);
+        findStreamCriteria.setSort(MetaDataSource.STREAM_ID, Direction.ASCENDING, false);
 //        findStreamCriteria.setStreamIdRange(new IdRange(minStreamId, null));
 //        // Don't care about status
 //        findStreamCriteria.obtainStatusSet().add(StreamStatus.LOCKED);
@@ -216,7 +216,7 @@ class StreamTaskCreatorTransactionHelper {
     public CreatedTasks createNewTasks(final ProcessorFilter filter,
                                        final ProcessorFilterTracker tracker,
                                        final long streamQueryTime,
-                                       final Map<Stream, InclusiveRanges> streams,
+                                       final Map<Data, InclusiveRanges> streams,
                                        final Node thisNode,
                                        final boolean reachedLimit) {
         return entityManagerSupport.transactionResult(em -> {
@@ -252,8 +252,8 @@ class StreamTaskCreatorTransactionHelper {
                     final List<List<Object>> allArgs = new ArrayList<>();
 
 
-                    for (final Entry<Stream, InclusiveRanges> entry : streams.entrySet()) {
-                        final Stream stream = entry.getKey();
+                    for (final Entry<Data, InclusiveRanges> entry : streams.entrySet()) {
+                        final Data stream = entry.getKey();
                         final InclusiveRanges eventRanges = entry.getValue();
 
                         String eventRangeData = null;
@@ -282,7 +282,7 @@ class StreamTaskCreatorTransactionHelper {
                         rowArgs.add(TaskStatus.UNPROCESSED.getPrimitiveValue()); //stat
                         rowArgs.add(streamTaskCreateMs); //stat_ms
 
-                        if (StreamStatus.UNLOCKED.equals(stream.getStatus())) {
+                        if (DataStatus.UNLOCKED.equals(stream.getStatus())) {
                             // If the stream is unlocked then take ownership of the
                             // task, i.e. set the node to this node.
                             rowArgs.add(thisNode.getId()); //fk_node_id

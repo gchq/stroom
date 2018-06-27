@@ -17,26 +17,26 @@
 package stroom.streamstore.shared;
 
 import stroom.entity.shared.Action;
-import stroom.data.meta.api.FindStreamCriteria;
+import stroom.data.meta.api.FindDataCriteria;
 import stroom.util.shared.ResourceGeneration;
 
 public class DownloadDataAction extends Action<ResourceGeneration> {
     private static final long serialVersionUID = -3560107233301674555L;
 
-    private FindStreamCriteria criteria;
+    private FindDataCriteria criteria;
 
     public DownloadDataAction() {
     }
 
-    public DownloadDataAction(final FindStreamCriteria criteria) {
+    public DownloadDataAction(final FindDataCriteria criteria) {
         this.criteria = criteria;
     }
 
-    public FindStreamCriteria getCriteria() {
+    public FindDataCriteria getCriteria() {
         return criteria;
     }
 
-    public void setCriteria(FindStreamCriteria criteria) {
+    public void setCriteria(FindDataCriteria criteria) {
         this.criteria = criteria;
     }
 

@@ -22,8 +22,7 @@ import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.impl.db.stroom.tables.records.StreamProcessorRecord;
-import stroom.entity.shared.Clearable;
+import stroom.data.meta.impl.db.stroom.tables.records.DataProcessorRecord;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -33,19 +32,18 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static stroom.data.meta.impl.db.stroom.tables.StreamFeed.STREAM_FEED;
-import static stroom.data.meta.impl.db.stroom.tables.StreamProcessor.STREAM_PROCESSOR;
+import static stroom.data.meta.impl.db.stroom.tables.DataProcessor.DATA_PROCESSOR;
 
 @Singleton
 class ProcessorServiceImpl implements ProcessorService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorServiceImpl.class);
 
-    private final Map<Integer, StreamProcessorRecord> cache = new ConcurrentHashMap<>();
+    private final Map<Integer, DataProcessorRecord> cache = new ConcurrentHashMap<>();
 
     private final DataSource dataSource;
 
     @Inject
-    ProcessorServiceImpl(final StreamMetaDataSource dataSource) {
+    ProcessorServiceImpl(final DataMetaDataSource dataSource) {
         this.dataSource = dataSource;
     }
 
@@ -85,7 +83,7 @@ class ProcessorServiceImpl implements ProcessorService {
 //    }
 
     private Integer get(final Integer processorId, final String pipelineUuid) {
-        StreamProcessorRecord record = cache.get(processorId);
+        DataProcessorRecord record = cache.get(processorId);
         if (record != null) {
             return record.getId();
         }
@@ -93,8 +91,8 @@ class ProcessorServiceImpl implements ProcessorService {
         try (final Connection connection = dataSource.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             record = create
-                    .selectFrom(STREAM_PROCESSOR)
-                    .where(STREAM_PROCESSOR.PROCESSOR_ID.eq(processorId))
+                    .selectFrom(DATA_PROCESSOR)
+                    .where(DATA_PROCESSOR.PROCESSOR_ID.eq(processorId))
                     .fetchOne();
 
         } catch (final SQLException e) {
@@ -113,10 +111,10 @@ class ProcessorServiceImpl implements ProcessorService {
     private Integer create(final int processorId, final String pipelineUuid) {
         try (final Connection connection = dataSource.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
-            final StreamProcessorRecord record = create
-                    .insertInto(STREAM_PROCESSOR, STREAM_PROCESSOR.PROCESSOR_ID, STREAM_PROCESSOR.PIPELINE_UUID)
+            final DataProcessorRecord record = create
+                    .insertInto(DATA_PROCESSOR, DATA_PROCESSOR.PROCESSOR_ID, DATA_PROCESSOR.PIPELINE_UUID)
                     .values(processorId, pipelineUuid)
-                    .returning(STREAM_PROCESSOR.ID)
+                    .returning(DATA_PROCESSOR.ID)
                     .fetchOne();
             cache.put(processorId, record);
             return record.getId();
@@ -138,7 +136,7 @@ class ProcessorServiceImpl implements ProcessorService {
         try (final Connection connection = dataSource.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             return create
-                    .delete(STREAM_PROCESSOR)
+                    .delete(DATA_PROCESSOR)
                     .execute();
         } catch (final SQLException e) {
             throw new RuntimeException(e.getMessage(), e);

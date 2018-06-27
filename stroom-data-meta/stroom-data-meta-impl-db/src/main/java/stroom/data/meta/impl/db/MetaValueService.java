@@ -17,15 +17,14 @@
 package stroom.data.meta.impl.db;
 
 import stroom.data.meta.api.AttributeMap;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamDataRow;
-import stroom.entity.shared.Clearable;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataRow;
 import stroom.entity.shared.Flushable;
 
 import java.util.List;
 
 interface MetaValueService extends Flushable {
-    void addAttributes(Stream stream, AttributeMap attributes);
+    void addAttributes(Data data, AttributeMap attributes);
 
-    List<StreamDataRow> decorateStreamsWithAttributes(List<Stream> streamList);
+    List<DataRow> decorateDataWithAttributes(List<Data> list);
 }

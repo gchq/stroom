@@ -18,9 +18,9 @@ package stroom.data.store;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.FindStreamCriteria;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamMetaService;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataMetaService;
 import stroom.data.store.api.NestedInputStream;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
@@ -56,13 +56,13 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
 
     private final TaskContext taskContext;
     private final StreamStore streamStore;
-    private final StreamMetaService streamMetaService;
+    private final DataMetaService streamMetaService;
     private final Security security;
 
     @Inject
     StreamDownloadTaskHandler(final TaskContext taskContext,
                               final StreamStore streamStore,
-                              final StreamMetaService streamMetaService,
+                              final DataMetaService streamMetaService,
                               final Security security) {
         this.taskContext = taskContext;
         this.streamStore = streamStore;
@@ -79,10 +79,10 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
     }
 
     private StreamDownloadResult downloadData(final StreamDownloadTask task,
-                                              final FindStreamCriteria findStreamCriteria,
+                                              final FindDataCriteria findStreamCriteria,
                                               Path data,
                                               final StreamDownloadSettings settings) {
-        final BaseResultList<Stream> list = streamMetaService.find(findStreamCriteria);
+        final BaseResultList<Data> list = streamMetaService.find(findStreamCriteria);
 
         final StreamDownloadResult result = new StreamDownloadResult();
 
@@ -102,7 +102,7 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
             final LogItemProgress logItemProgress = new LogItemProgress(0, list.size());
             taskContext.info("Stream {}", logItemProgress);
 
-            for (final Stream stream : list) {
+            for (final Data stream : list) {
                 result.incrementRecordsWritten();
                 logItemProgress.incrementProgress();
 

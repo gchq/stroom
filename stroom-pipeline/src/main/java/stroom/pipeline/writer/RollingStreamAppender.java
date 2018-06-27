@@ -33,10 +33,10 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.StreamHolder;
-import stroom.data.meta.api.StreamProperties;
+import stroom.data.meta.api.DataProperties;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
-import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.Data;
 import stroom.task.TaskContext;
 
 import javax.inject.Inject;
@@ -81,9 +81,9 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
 
         // Don't set the processor or the task or else this rolling stream will be deleted automatically because the
         // system will think it is superseded output.
-        final StreamProperties streamProperties = new StreamProperties.Builder()
+        final DataProperties streamProperties = new DataProperties.Builder()
                 .feedName(key.getFeed())
-                .streamTypeName(key.getStreamType())
+                .typeName(key.getStreamType())
                 .parent(streamHolder.getStream())
                 .build();
 
@@ -113,7 +113,7 @@ public class RollingStreamAppender extends AbstractRollingAppender implements Ro
             if (feedRef != null) {
                 feed = feedRef.getName();
             } else {
-                final Stream parentStream = streamHolder.getStream();
+                final Data parentStream = streamHolder.getStream();
                 if (parentStream == null) {
                     throw new ProcessException("Unable to determine feed as no parent stream set");
                 }

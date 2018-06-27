@@ -22,10 +22,9 @@ import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamDataRow;
-import stroom.data.meta.impl.db.stroom.tables.records.MetaNumericValueRecord;
-import stroom.entity.shared.Clearable;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataRow;
+import stroom.data.meta.impl.db.stroom.tables.records.MetaValRecord;
 import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.lifecycle.StroomShutdown;
@@ -45,7 +44,7 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import static stroom.data.meta.impl.db.stroom.tables.MetaNumericValue.META_NUMERIC_VALUE;
+import static stroom.data.meta.impl.db.stroom.tables.MetaVal.META_VAL;
 
 @Singleton
 class MetaValueServiceImpl implements MetaValueService {
@@ -57,10 +56,10 @@ class MetaValueServiceImpl implements MetaValueService {
     private final MetaKeyService metaKeyService;
     private final MetaValueConfig metaValueConfig;
 
-    private final Queue<MetaNumericValueRecord> queue = new ConcurrentLinkedQueue<>();
+    private final Queue<MetaValRecord> queue = new ConcurrentLinkedQueue<>();
 
     @Inject
-    MetaValueServiceImpl(final StreamMetaDataSource dataSource,
+    MetaValueServiceImpl(final DataMetaDataSource dataSource,
                          final MetaKeyService metaKeyService,
                          final MetaValueConfig metaValueConfig) {
         this.dataSource = dataSource;
@@ -69,15 +68,15 @@ class MetaValueServiceImpl implements MetaValueService {
     }
 
     @Override
-    public void addAttributes(final Stream stream, final AttributeMap attributes) {
+    public void addAttributes(final Data data, final AttributeMap attributes) {
         attributes.forEach((k, v) -> {
             try {
                 final Long longValue = Long.valueOf(v);
                 final Optional<Integer> optional = metaKeyService.getIdForName(k);
                 optional.ifPresent(keyId -> {
-                    MetaNumericValueRecord record = new MetaNumericValueRecord();
-                    record.setCreateTime(stream.getCreateMs());
-                    record.setStreamId(stream.getId());
+                    MetaValRecord record = new MetaValRecord();
+                    record.setCreateTime(data.getCreateMs());
+                    record.setDataId(data.getId());
                     record.setMetaKeyId(keyId);
                     record.setVal(longValue);
 
@@ -109,8 +108,8 @@ class MetaValueServiceImpl implements MetaValueService {
 //        final long applicableStreamAgeMs = getApplicableStreamAgeMs();
 
         while (!ranOutOfItems) {
-            final List<MetaNumericValueRecord> records = new ArrayList<>();
-            MetaNumericValueRecord record;
+            final List<MetaValRecord> records = new ArrayList<>();
+            MetaValRecord record;
             while ((record = queue.poll()) != null && records.size() < metaValueConfig.getFlushBatchSize()) {
                 records.add(record);
             }
@@ -127,11 +126,11 @@ class MetaValueServiceImpl implements MetaValueService {
 //            final FindStreamCriteria criteria = new FindStreamCriteria();
 //
 //            final ArrayList<AsyncFlush> batchInsert = new ArrayList<>();
-//            final Set<Long> streamIdSet = new HashSet<>();
+//            final Set<Long> idSet = new HashSet<>();
 //            AsyncFlush item;
 //            while ((item = queue.poll()) != null && batchInsert.size() < DEFAULT_FLUSH_BATCH_SIZE) {
 //                batchInsert.add(item);
-//                streamIdSet.add(item.getStreamId());
+//                idSet.add(item.getStreamId());
 //            }
 //
 //            if (batchInsert.size() < DEFAULT_FLUSH_BATCH_SIZE) {
@@ -144,32 +143,32 @@ class MetaValueServiceImpl implements MetaValueService {
 //                int skipCount = 0;
 //
 //                // Key by the MetaKey pk
-//                final Map<Long, Map<Long, Meta>> streamToAttributeMap = new HashMap<>();
+//                final Map<Long, Map<Long, Meta>> dataToAttributeMap = new HashMap<>();
 //                for (final Meta value : metaValueService.find(criteria)) {
-//                    streamToAttributeMap.computeIfAbsent(value.getStreamId(), k -> new HashMap<>())
+//                    dataToAttributeMap.computeIfAbsent(value.getStreamId(), k -> new HashMap<>())
 //                            .put(value.getMetaKeyId(), value);
 //                }
 //
 //                final List<Meta> batchUpdate = new ArrayList<>();
 //
 //                // Work out the batch inserts
-//                for (final MetaKey streamMDKey : keys) {
+//                for (final MetaKey metaKey : keys) {
 //                    for (final AsyncFlush asyncFlush : batchInsert) {
-//                        if (asyncFlush.getStream().getCreateMs() > applicableStreamAgeMs) {
+//                        if (asyncFlush.getData().getCreateMs() > applicableStreamAgeMs) {
 //                            // Found a key
-//                            if (asyncFlush.getAttributeMap().containsKey(streamMDKey.getName())) {
-//                                final String newValue = asyncFlush.getAttributeMap().get(streamMDKey.getName());
+//                            if (asyncFlush.getAttributeMap().containsKey(metaKey.getName())) {
+//                                final String newValue = asyncFlush.getAttributeMap().get(metaKey.getName());
 //                                boolean dirty = false;
 //                                Meta metaValue = null;
-//                                final Map<Long, Meta> map = streamToAttributeMap
-//                                        .get(asyncFlush.getStream().getId());
+//                                final Map<Long, Meta> map = dataToAttributeMap
+//                                        .get(asyncFlush.getData().getId());
 //                                if (map != null) {
-//                                    metaValue = map.get(streamMDKey.getId());
+//                                    metaValue = map.get(metaKey.getId());
 //                                }
 //
 //                                // Existing Item
 //                                if (metaValue != null) {
-//                                    if (streamMDKey.getFieldType().isNumeric()) {
+//                                    if (metaKey.getFieldType().isNumeric()) {
 //                                        final Long oldValueLong = metaValue.getValueNumber();
 //                                        final Long newValueLong = Long.parseLong(newValue);
 //
@@ -188,7 +187,7 @@ class MetaValueServiceImpl implements MetaValueService {
 //
 //                                } else {
 //                                    dirty = true;
-//                                    metaValue = new Meta(asyncFlush.getStream().getId(), streamMDKey,
+//                                    metaValue = new Meta(asyncFlush.getData().getId(), metaKey,
 //                                            newValue);
 //                                }
 //
@@ -199,8 +198,8 @@ class MetaValueServiceImpl implements MetaValueService {
 //                            }
 //                        } else {
 //                            skipCount++;
-//                            LOGGER.debug("flush() - Skipping flush of old stream attributes {} {}",
-//                                    asyncFlush.getStream(), DateUtil.createNormalDateTimeString(applicableStreamAgeMs));
+//                            LOGGER.debug("flush() - Skipping flush of old data attributes {} {}",
+//                                    asyncFlush.getData(), DateUtil.createNormalDateTimeString(applicableStreamAgeMs));
 //                        }
 //                    }
 //                }
@@ -215,7 +214,7 @@ class MetaValueServiceImpl implements MetaValueService {
         }
     }
 
-    private void insertRecords(final List<MetaNumericValueRecord> records) {
+    private void insertRecords(final List<MetaValRecord> records) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         LOGGER.debug("Processing batch of {}, queue size is {}", records.size(), queue.size());
 
@@ -238,7 +237,7 @@ class MetaValueServiceImpl implements MetaValueService {
 
     // TODO : @66 MAKE SURE THIS GETS CALLED
     @StroomFrequencySchedule("1h")
-    @JobTrackedSchedule(jobName = "Stream Attributes Retention", description = "Delete attributes older than system property stroom.meta.deleteAge)")
+    @JobTrackedSchedule(jobName = "Data Attributes Retention", description = "Delete attributes older than system property stroom.meta.deleteAge)")
     public void deleteOldValues() {
         // TODO : @66 ACQUIRE A CLUSTER LOCK BEFORE PERFORMING A BATCH DELETE TO REDUCE DB CONTENTION AND TO LET A SINGLE NODE DO THE JOB.
 
@@ -262,22 +261,22 @@ class MetaValueServiceImpl implements MetaValueService {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             // TODO : @66 Maybe try delete with limits again after un upgrade to MySQL 5.7.
 //            count = context
-//                    .delete(META_NUMERIC_VALUE)
-//                    .where(META_NUMERIC_VALUE.ID.in(
-//                            context.select(META_NUMERIC_VALUE.ID)
-//                                    .from(META_NUMERIC_VALUE)
-//                                    .where(META_NUMERIC_VALUE.CREATE_TIME.lessThan(age))
-//                                    .orderBy(META_NUMERIC_VALUE.ID)
+//                    .delete(META_VAL)
+//                    .where(META_VAL.ID.in(
+//                            context.select(META_VAL.ID)
+//                                    .from(META_VAL)
+//                                    .where(META_VAL.CREATE_TIME.lessThan(age))
+//                                    .orderBy(META_VAL.ID)
 //                                    .limit(batchSize)
 //                    ))
 //                    .execute();
 
 
             count = create.execute("DELETE FROM {0} WHERE {1} < {2} ORDER BY {3} LIMIT {4}",
-                    META_NUMERIC_VALUE,
-                    META_NUMERIC_VALUE.CREATE_TIME,
+                    META_VAL,
+                    META_VAL.CREATE_TIME,
                     age,
-                    META_NUMERIC_VALUE.ID,
+                    META_VAL.ID,
                     batchSize);
 
         } catch (final SQLException e) {
@@ -311,7 +310,7 @@ class MetaValueServiceImpl implements MetaValueService {
 
 
     /**
-     * @return The oldest stream attribute that we should keep
+     * @return The oldest data attribute that we should keep
      */
     private Long getAttributeDatabaseAgeMs() {
         final long age = metaValueConfig.getDeleteAge();
@@ -319,24 +318,24 @@ class MetaValueServiceImpl implements MetaValueService {
     }
 
     /**
-     * Convert a basic stream list to a list of stream meta data using stream attribute keys and values.
+     * Convert a basic data list to a list of meta data using data attribute keys and values.
      */
     @Override
-    public List<StreamDataRow> decorateStreamsWithAttributes(final List<Stream> streamList) {
+    public List<DataRow> decorateDataWithAttributes(final List<Data> list) {
 
 //        final List<StreamDataRow> result = new ArrayList<>();
-        final Map<Long, StreamDataRow> streamMap = new HashMap<>();
+        final Map<Long, DataRow> rowMap = new HashMap<>();
 
-        // Get a list of valid stream ids.
+        // Get a list of valid data ids.
 //        final Map<EntityRef, Optional<Object>> entityCache = new HashMap<>();
 //        final Map<DocRef, Optional<Object>> uuidCache = new HashMap<>();
-        final List<Long> streamIds = new ArrayList<>();
-        for (final Stream stream : streamList) {
-            streamMap.put(stream.getId(), new StreamDataRow(stream));
-            streamIds.add(stream.getId());
+        final List<Long> idList = new ArrayList<>();
+        for (final Data data : list) {
+            rowMap.put(data.getId(), new DataRow(data));
+            idList.add(data.getId());
         }
 
-//        if (streamMap.size() == 0) {
+//        if (rowMap.size() == 0) {
 //            return;
 //        }
 
@@ -351,21 +350,21 @@ class MetaValueServiceImpl implements MetaValueService {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             create
                     .select(
-                            META_NUMERIC_VALUE.STREAM_ID,
-                            META_NUMERIC_VALUE.META_KEY_ID,
-                            META_NUMERIC_VALUE.VAL
+                            META_VAL.DATA_ID,
+                            META_VAL.META_KEY_ID,
+                            META_VAL.VAL
                     )
-                    .from(META_NUMERIC_VALUE)
-                    .where(META_NUMERIC_VALUE.STREAM_ID.in(streamIds))
+                    .from(META_VAL)
+                    .where(META_VAL.DATA_ID.in(idList))
                     .fetch()
                     .forEach(r -> {
-                        final long streamId = r.component1();
+                        final long dataId = r.component1();
                         final int keyId = r.component2();
 
                         final Optional<String> optional = metaKeyService.getNameForId(keyId);
                         if (optional.isPresent()) {
                             final String value = String.valueOf(r.component3());
-                            streamMap.get(streamId).addAttribute(optional.get(), value);
+                            rowMap.get(dataId).addAttribute(optional.get(), value);
                         }
                     });
 
@@ -374,7 +373,7 @@ class MetaValueServiceImpl implements MetaValueService {
             throw new RuntimeException(e.getMessage(), e);
         }
 
-        return new ArrayList<>(streamMap.values());
+        return new ArrayList<>(rowMap.values());
 
 
 //        final SqlBuilder sql = new SqlBuilder();
@@ -391,7 +390,7 @@ class MetaValueServiceImpl implements MetaValueService {
 //        sql.append(" WHERE ");
 //        sql.append(MetaValue.STREAM_ID);
 //        sql.append(" in (");
-//        sql.append(streamIds.toString());
+//        sql.append(idList.toString());
 //        sql.append(")");
 //
 //        // Status is a mandatory search
@@ -399,7 +398,7 @@ class MetaValueServiceImpl implements MetaValueService {
 //        @SuppressWarnings("unchecked") final List<Object[]> list = entityManager.executeNativeQueryResultList(sql);
 //
 //        for (final Object[] row : list) {
-//            final long streamId = ((Number) row[0]).longValue();
+//            final long dataId = ((Number) row[0]).longValue();
 //            final String key = String.valueOf(row[1]);
 //            String value = String.valueOf(row[2]);
 //            if (row[3] != null) {
@@ -408,12 +407,12 @@ class MetaValueServiceImpl implements MetaValueService {
 //
 //            final MetaKey metaKey = keyMap.get(Long.parseLong(key));
 //            if (metaKey != null) {
-//                streamMap.get(streamId).addAttribute(metaKey.getName(), value);
+//                rowMap.get(dataId).addAttribute(metaKey.getName(), value);
 //            }
 //        }
 
 //        // Add additional data retention information.
-//        streamMap.values().parallelStream().forEach(ruleDecorator::addMatchingRetentionRuleInfo);
+//        rowMap.values().parallelStream().forEach(ruleDecorator::addMatchingRetentionRuleInfo);
 //
 //        return result;
     }
@@ -427,7 +426,7 @@ class MetaValueServiceImpl implements MetaValueService {
         try (final Connection connection = dataSource.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             return create
-                    .delete(META_NUMERIC_VALUE)
+                    .delete(META_VAL)
                     .execute();
         } catch (final SQLException e) {
             throw new RuntimeException(e.getMessage(), e);

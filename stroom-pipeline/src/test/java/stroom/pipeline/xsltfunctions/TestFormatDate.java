@@ -20,7 +20,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import stroom.pipeline.state.StreamHolder;
-import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.Data;
 import stroom.util.date.DateUtil;
 import stroom.util.test.StroomExpectedException;
 import stroom.util.test.StroomJUnit4ClassRunner;
@@ -121,7 +121,7 @@ public class TestFormatDate extends StroomUnitTest {
 
     @Test
     public void testDateWithNoYear() {
-        final Stream stream = mock(Stream.class);
+        final Data stream = mock(Data.class);
         when(stream.getCreateMs()).thenReturn(DateUtil.parseNormalDateTimeString("2010-03-01T12:45:22.643Z"));
 
         final StreamHolder streamHolder = new StreamHolder(null);
@@ -184,7 +184,7 @@ public class TestFormatDate extends StroomUnitTest {
 
 
     private ZonedDateTime parseUtcDate(final String pattern, final String dateStr) {
-        final Stream stream = mock(Stream.class);
+        final Data stream = mock(Data.class);
         when(stream.getCreateMs()).thenReturn(DateUtil.parseNormalDateTimeString("2010-03-01T12:45:22.643Z"));
 
         final StreamHolder streamHolder = new StreamHolder(null);
@@ -202,7 +202,7 @@ public class TestFormatDate extends StroomUnitTest {
 //        stream.setCreateMs(DateUtil.parseNormalDateTimeString("2010-03-01T12:45:22.643Z"));
 //
 //        final StreamHolder streamHolder = new StreamHolder();
-//        streamHolder.setStream(stream);
+//        streamHolder.setData(stream);
 //
 //        final FormatDate formatDate = new FormatDate(streamHolder);
 //        formatDate.configure(
@@ -246,7 +246,7 @@ public class TestFormatDate extends StroomUnitTest {
 //        stream.setCreateMs(DateUtil.parseNormalDateTimeString("2010-03-01T12:45:22.643Z"));
 //
 //        final StreamHolder streamHolder = new StreamHolder();
-//        streamHolder.setStream(stream);
+//        streamHolder.setData(stream);
 //
 //        final FormatDate formatDate = new FormatDate(streamHolder);
 //

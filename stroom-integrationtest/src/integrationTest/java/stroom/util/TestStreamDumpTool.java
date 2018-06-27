@@ -17,7 +17,7 @@
 package stroom.util;
 
 import org.junit.Test;
-import stroom.data.meta.api.StreamProperties;
+import stroom.data.meta.api.DataProperties;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.data.store.api.StreamTargetUtil;
@@ -51,9 +51,9 @@ public class TestStreamDumpTool extends AbstractCoreIntegrationTest {
     }
 
     private void addData(final String feedName, final String data) throws IOException {
-        final StreamProperties streamProperties = new StreamProperties.Builder()
+        final DataProperties streamProperties = new DataProperties.Builder()
                 .feedName(feedName)
-                .streamTypeName(StreamTypeNames.RAW_EVENTS)
+                .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
         final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
         StreamTargetUtil.write(streamTarget, data);

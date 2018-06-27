@@ -24,12 +24,12 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
-import stroom.data.meta.api.FindStreamCriteria;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamMetaService;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataMetaService;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.ReprocessDataInfo;
-import stroom.data.meta.api.StreamDataSource;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.streamtask.shared.Processor;
 import stroom.streamtask.shared.ReprocessDataAction;
 import stroom.task.AbstractTaskHandler;
@@ -50,13 +50,13 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
 
     private final StreamProcessorService streamProcessorService;
     private final StreamProcessorFilterService streamProcessorFilterService;
-    private final StreamMetaService streamMetaService;
+    private final DataMetaService streamMetaService;
     private final Security security;
 
     @Inject
     ReprocessDataHandler(final StreamProcessorService streamProcessorService,
                          final StreamProcessorFilterService streamProcessorFilterService,
-                         final StreamMetaService streamMetaService,
+                         final DataMetaService streamMetaService,
                          final Security security) {
         this.streamProcessorService = streamProcessorService;
         this.streamProcessorFilterService = streamProcessorFilterService;
@@ -70,13 +70,13 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
             final List<ReprocessDataInfo> info = new ArrayList<>();
 
             try {
-                final FindStreamCriteria criteria = action.getCriteria();
+                final FindDataCriteria criteria = action.getCriteria();
                 // We only want 1000 streams to be
                 // reprocessed at a maximum.
                 criteria.obtainPageRequest().setOffset(0L);
                 criteria.obtainPageRequest().setLength(MAX_STREAM_TO_REPROCESS);
 
-                final BaseResultList<Stream> streams = streamMetaService.find(criteria);
+                final BaseResultList<Data> streams = streamMetaService.find(criteria);
 
                 if (!streams.isExact()) {
                     info.add(new ReprocessDataInfo(Severity.ERROR, "Results exceed " + MAX_STREAM_TO_REPROCESS
@@ -89,12 +89,12 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
 
                     final Map<Processor, CriteriaSet<Long>> streamToProcessorSet = new HashMap<>();
 
-                    for (final Stream stream : streams) {
+                    for (final Data stream : streams) {
                         // We can only reprocess streams that have a stream
                         // processor and a parent stream id.
-                        if (stream.getStreamProcessorId() != null && stream.getParentStreamId() != null) {
-                            final Processor streamProcessor = streamProcessorService.loadByIdInsecure(stream.getStreamProcessorId());
-                            streamToProcessorSet.computeIfAbsent(streamProcessor, k -> new CriteriaSet<>()).add(stream.getParentStreamId());
+                        if (stream.getProcessorId() != null && stream.getParentDataId() != null) {
+                            final Processor streamProcessor = streamProcessorService.loadByIdInsecure(stream.getProcessorId());
+                            streamToProcessorSet.computeIfAbsent(streamProcessor, k -> new CriteriaSet<>()).add(stream.getParentDataId());
                         } else {
                             skippingCount++;
                         }
@@ -110,10 +110,10 @@ class ReprocessDataHandler extends AbstractTaskHandler<ReprocessDataAction, Shar
                         final ExpressionOperator.Builder operator = new ExpressionOperator.Builder(ExpressionOperator.Op.AND);
 
                         final ExpressionOperator.Builder streamIdTerms = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
-                        streamIdSet.forEach(streamId -> streamIdTerms.addTerm(StreamDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(streamId)));
+                        streamIdSet.forEach(streamId -> streamIdTerms.addTerm(MetaDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(streamId)));
                         operator.addOperator(streamIdTerms.build());
 
-                        queryData.setDataSource(StreamDataSource.STREAM_STORE_DOC_REF);
+                        queryData.setDataSource(MetaDataSource.STREAM_STORE_DOC_REF);
                         queryData.setExpression(operator.build());
 
                         if (!streamProcessor.isEnabled()) {

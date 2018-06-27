@@ -17,10 +17,10 @@
 package stroom.data.store.impl.fs;
 
 import org.junit.jupiter.api.Test;
-import stroom.data.meta.api.FindStreamCriteria;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamProperties;
-import stroom.data.meta.impl.mock.MockStreamMetaService;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataProperties;
+import stroom.data.meta.impl.mock.MockDataMetaService;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamTarget;
@@ -40,18 +40,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestMockStreamStore {
     @Test
     void testExample() throws IOException {
-        final MockStreamMetaService mockStreamMetaService = new MockStreamMetaService();
+        final MockDataMetaService mockStreamMetaService = new MockDataMetaService();
         final MockStreamStore mockStreamStore = new MockStreamStore(mockStreamMetaService);
 
         mockStreamStore.clear();
 
-        final StreamProperties streamProperties = new StreamProperties.Builder()
+        final DataProperties streamProperties = new DataProperties.Builder()
                 .feedName("TEST")
-                .streamTypeName(StreamTypeNames.EVENTS)
+                .typeName(StreamTypeNames.EVENTS)
                 .build();
 
         final StreamTarget streamTarget = mockStreamStore.openStreamTarget(streamProperties);
-        final Stream stream = streamTarget.getStream();
+        final Data stream = streamTarget.getStream();
 
         try (final OutputStreamProvider outputStreamProvider = streamTarget.getOutputStreamProvider()) {
             try (final OutputStream outputStream = outputStreamProvider.next()) {
@@ -62,13 +62,13 @@ class TestMockStreamStore {
             }
         }
 
-        assertThat(mockStreamMetaService.find(FindStreamCriteria.createWithStream(stream)).size()).isEqualTo(0);
+        assertThat(mockStreamMetaService.find(FindDataCriteria.createWithData(stream)).size()).isEqualTo(0);
 
         mockStreamStore.closeStreamTarget(streamTarget);
 
-        assertThat(mockStreamMetaService.find(FindStreamCriteria.createWithStream(stream)).size()).isEqualTo(1);
+        assertThat(mockStreamMetaService.find(FindDataCriteria.createWithData(stream)).size()).isEqualTo(1);
 
-        final Stream reload = mockStreamMetaService.find(FindStreamCriteria.createWithStream(stream)).get(0);
+        final Data reload = mockStreamMetaService.find(FindDataCriteria.createWithData(stream)).get(0);
 
         final StreamSource streamSource = mockStreamStore.openStreamSource(reload.getId());
 

@@ -21,8 +21,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamProperties;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataProperties;
 import stroom.data.store.FindStreamVolumeCriteria;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
@@ -82,13 +82,13 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
 
         // Write a file 2 files ... on we leave locked and the other not locked
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        final StreamProperties lockfile1 = new StreamProperties.Builder()
+        final DataProperties lockfile1 = new DataProperties.Builder()
                 .feedName(feedName)
-                .streamTypeName(StreamTypeNames.RAW_EVENTS)
+                .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
-        final StreamProperties nolockfile1 = new StreamProperties.Builder()
+        final DataProperties nolockfile1 = new DataProperties.Builder()
                 .feedName(feedName)
-                .streamTypeName(StreamTypeNames.RAW_EVENTS)
+                .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
         //
         // FILE1 LOCKED
@@ -161,7 +161,7 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
     public void testArchiveRemovedFile() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
-        final Stream stream = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
+        final Data stream = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
 
         Collection<Path> files = streamMaintenanceService.findAllStreamFile(stream);
 
@@ -209,9 +209,9 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         final long tenMin = 1000 * 60 * 10;
         final long startTime = endTime - twoDaysTime;
         for (long time = startTime; time < endTime; time += tenMin) {
-            final StreamProperties streamProperties = new StreamProperties.Builder()
+            final DataProperties streamProperties = new DataProperties.Builder()
                     .feedName(feedName)
-                    .streamTypeName(StreamTypeNames.RAW_EVENTS)
+                    .typeName(StreamTypeNames.RAW_EVENTS)
                     .createMs(time)
                     .build();
             final StreamTarget t = streamStore.openStreamTarget(streamProperties);

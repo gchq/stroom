@@ -24,7 +24,7 @@ import stroom.node.NodeCache;
 import stroom.security.Security;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
-import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.Data;
 import stroom.streamtask.shared.Processor;
 import stroom.streamtask.shared.ProcessorFilter;
 import stroom.streamtask.shared.ProcessorFilterTask;
@@ -87,7 +87,7 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
                 // Open the stream source.
                 streamSource = streamStore.openStreamSource(streamTask.getStreamId());
                 if (streamSource != null) {
-                    final Stream stream = streamSource.getStream();
+                    final Data stream = streamSource.getStream();
 
                     Processor destStreamProcessor = null;
                     ProcessorFilter destStreamProcessorFilter = null;
@@ -114,7 +114,7 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
                     }
 
                     // Don't process any streams that we have already created
-                    if (stream.getStreamProcessorId() != null && stream.getStreamProcessorId() == destStreamProcessor.getId()) {
+                    if (stream.getProcessorId() != null && stream.getProcessorId() == destStreamProcessor.getId()) {
                         complete = true;
                         LOGGER.warn("Skipping stream that we seem to have created (avoid processing forever) {} {}", stream,
                                 destStreamProcessor);

@@ -18,8 +18,8 @@
 package stroom.pipeline.writer;
 
 import stroom.data.meta.api.AttributeMap;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamProperties;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataProperties;
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
@@ -83,7 +83,7 @@ public class StreamAppender extends AbstractAppender {
 
     @Override
     protected OutputStream createOutputStream() {
-        final Stream parentStream = streamHolder.getStream();
+        final Data parentStream = streamHolder.getStream();
 
         if (feed == null && parentStream != null && parentStream.getFeedName() != null) {
             feed = parentStream.getFeedName();
@@ -107,13 +107,13 @@ public class StreamAppender extends AbstractAppender {
             streamTaskId = streamProcessorHolder.getStreamTask().getId();
         }
 
-        final StreamProperties streamProperties = new StreamProperties.Builder()
+        final DataProperties streamProperties = new DataProperties.Builder()
                 .feedName(feed)
-                .streamTypeName(streamType)
+                .typeName(streamType)
                 .parent(parentStream)
-                .streamProcessorId(processorId)
+                .processorId(processorId)
                 .pipelineUuid(pipelineUuid)
-                .streamTaskId(streamTaskId)
+                .processorTaskId(streamTaskId)
                 .build();
 
         streamTarget = streamStore.openStreamTarget(streamProperties);

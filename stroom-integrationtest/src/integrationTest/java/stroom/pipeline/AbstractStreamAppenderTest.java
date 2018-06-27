@@ -17,9 +17,9 @@
 package stroom.pipeline;
 
 import org.junit.Assert;
-import stroom.data.meta.api.FindStreamCriteria;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamMetaService;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataMetaService;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
@@ -37,7 +37,7 @@ public abstract class AbstractStreamAppenderTest extends AbstractAppenderTest {
     @Inject
     private StreamStore streamStore;
     @Inject
-    private StreamMetaService streamMetaService;
+    private DataMetaService streamMetaService;
 
     void test(final DocRef pipelineRef,
               final String dir,
@@ -47,7 +47,7 @@ public abstract class AbstractStreamAppenderTest extends AbstractAppenderTest {
               final String encoding) {
         super.test(pipelineRef, dir, name, type, outputReference, encoding);
 
-        final List<Stream> streams = streamMetaService.find(new FindStreamCriteria());
+        final List<Data> streams = streamMetaService.find(new FindDataCriteria());
         Assert.assertEquals(1, streams.size());
 
         try {

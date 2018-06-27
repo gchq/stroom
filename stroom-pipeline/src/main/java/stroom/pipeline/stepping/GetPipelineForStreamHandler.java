@@ -24,9 +24,9 @@ import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;
 import stroom.security.Security;
-import stroom.data.meta.api.FindStreamCriteria;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamMetaService;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataMetaService;
 import stroom.data.meta.api.ExpressionUtil;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
@@ -36,12 +36,12 @@ import java.util.List;
 
 @TaskHandlerBean(task = GetPipelineForStreamAction.class)
 class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStreamAction, SharedDocRef> {
-    private final StreamMetaService streamMetaService;
+    private final DataMetaService streamMetaService;
     private final PipelineStore pipelineStore;
     private final Security security;
 
     @Inject
-    GetPipelineForStreamHandler(final StreamMetaService streamMetaService,
+    GetPipelineForStreamHandler(final DataMetaService streamMetaService,
                                 final PipelineStore pipelineStore,
                                 final Security security) {
         this.streamMetaService = streamMetaService;
@@ -55,7 +55,7 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
             DocRef docRef = null;
 
             // First try and get the pipeline from the selected child stream.
-            Stream childStream = getStream(action.getChildStreamId());
+            Data childStream = getStream(action.getChildStreamId());
             if (childStream != null) {
                 docRef = getPipeline(childStream);
             }
@@ -73,7 +73,7 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
 //            // If we still don't have a pipeline docRef then just try and find the
 //            // first pipeline we can in the folder that the stream belongs
 //            // to.
-//            final Stream stream = getStream(action.getStreamId());
+//            final Stream stream = getData(action.getStreamId());
 //            if (stream != null) {
 //                final Feed feed = feedService.load(stream.getFeed());
 //                if (feed != null) {
@@ -97,14 +97,14 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
         });
     }
 
-    private Stream getStream(final Long id) {
+    private Data getStream(final Long id) {
         if (id == null) {
             return null;
         }
 
         return security.asProcessingUserResult(() -> {
-            final FindStreamCriteria criteria = new FindStreamCriteria(ExpressionUtil.createStreamExpression(id));
-            final List<Stream> streamList = streamMetaService.find(criteria);
+            final FindDataCriteria criteria = new FindDataCriteria(ExpressionUtil.createDataIdExpression(id));
+            final List<Data> streamList = streamMetaService.find(criteria);
             if (streamList != null && streamList.size() > 0) {
                 return streamList.get(0);
             }
@@ -113,18 +113,18 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
         });
     }
 
-    private Stream getFirstChildStream(final Long id) {
+    private Data getFirstChildStream(final Long id) {
         if (id == null) {
             return null;
         }
 
         return security.asProcessingUserResult(() -> {
-            final FindStreamCriteria criteria = new FindStreamCriteria(ExpressionUtil.createParentStreamExpression(id));
+            final FindDataCriteria criteria = new FindDataCriteria(ExpressionUtil.createParentIdExpression(id));
             return streamMetaService.find(criteria).getFirst();
         });
     }
 
-    private DocRef getPipeline(final Stream stream) {
+    private DocRef getPipeline(final Data stream) {
         DocRef docRef = null;
 
         // So we have got the stream so try and get the first pipeline that was

@@ -18,9 +18,9 @@
 package stroom.test;
 
 import org.junit.Assert;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamDataSource;
-import stroom.data.meta.api.StreamProperties;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.MetaDataSource;
+import stroom.data.meta.api.DataProperties;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.data.store.api.StreamTargetUtil;
@@ -80,10 +80,10 @@ public class CommonTestScenarioCreator {
 
     public void createBasicTranslateStreamProcessor(final String feed) {
         final QueryData findStreamQueryData = new QueryData.Builder()
-                .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
+                .dataSource(MetaDataSource.STREAM_STORE_DOC_REF)
                 .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                        .addTerm(StreamDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed)
-                        .addTerm(StreamDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                        .addTerm(MetaDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed)
+                        .addTerm(MetaDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                         .build())
                 .build();
 
@@ -134,10 +134,10 @@ public class CommonTestScenarioCreator {
      * @param feed related
      * @return a basic raw file
      */
-    public Stream createSample2LineRawFile(final String feed, final String streamType) {
-        final StreamProperties streamProperties = new StreamProperties.Builder()
+    public Data createSample2LineRawFile(final String feed, final String streamType) {
+        final DataProperties streamProperties = new DataProperties.Builder()
                 .feedName(feed)
-                .streamTypeName(streamType)
+                .typeName(streamType)
                 .build();
         final StreamTarget target = streamStore.openStreamTarget(streamProperties);
         StreamTargetUtil.write(target, "line1\nline2");
@@ -147,10 +147,10 @@ public class CommonTestScenarioCreator {
         return target.getStream();
     }
 
-    public Stream createSampleBlankProcessedFile(final String feed, final Stream sourceStream) {
-        final StreamProperties streamProperties = new StreamProperties.Builder()
+    public Data createSampleBlankProcessedFile(final String feed, final Data sourceStream) {
+        final DataProperties streamProperties = new DataProperties.Builder()
                 .feedName(feed)
-                .streamTypeName(StreamTypeNames.EVENTS)
+                .typeName(StreamTypeNames.EVENTS)
                 .parent(sourceStream)
                 .build();
 

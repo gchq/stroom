@@ -35,7 +35,7 @@ import stroom.entity.shared.Sort.Direction;
 import stroom.feed.shared.FeedDoc;
 import stroom.node.shared.Node;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.data.meta.api.StreamStatus;
+import stroom.data.meta.api.DataStatus;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.Processor;
 import stroom.streamtask.shared.ProcessorFilterTask;
@@ -78,13 +78,13 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Proc
 
 //                TooltipUtil.addBreak(html);
 //                TooltipUtil.addHeading(html, "Stream");
-//                TooltipUtil.addRowData(html, "Stream Id", row.getStream().getId());
-//                TooltipUtil.addRowData(html, "Status", row.getStream().getStatus().getDisplayValue());
-//                TooltipUtil.addRowData(html, "Parent Stream Id", row.getStream().getParentStreamId());
-//                TooltipUtil.addRowData(html, "Created", toDateString(row.getStream().getCreateMs()));
-//                TooltipUtil.addRowData(html, "Effective", toDateString(row.getStream().getEffectiveMs()));
-//                TooltipUtil.addRowData(html, "Stream Type", row.getStream().getStreamTypeName());
-//                TooltipUtil.addRowData(html, "Feed", row.getStream().getFeedName());
+//                TooltipUtil.addRowData(html, "Stream Id", row.getData().getId());
+//                TooltipUtil.addRowData(html, "Status", row.getData().getStatus().getDisplayValue());
+//                TooltipUtil.addRowData(html, "Parent Stream Id", row.getData().getParentDataId());
+//                TooltipUtil.addRowData(html, "Created", toDateString(row.getData().getCreateMs()));
+//                TooltipUtil.addRowData(html, "Effective", toDateString(row.getData().getEffectiveMs()));
+//                TooltipUtil.addRowData(html, "Stream Type", row.getData().getTypeName());
+//                TooltipUtil.addRowData(html, "Feed", row.getData().getFeedName());
 
                 if (row.getStreamProcessorFilter() != null) {
                     if (row.getStreamProcessorFilter().getStreamProcessor() != null) {
@@ -249,7 +249,7 @@ public class StreamTaskListPresenter extends MyPresenterWidget<DataGridView<Proc
         criteria.getFetchSet().add(Node.ENTITY_TYPE);
         criteria.obtainStreamTaskStatusSet().setMatchAll(Boolean.FALSE);
         // Only show unlocked stuff
-        criteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
+        criteria.obtainStatusSet().add(DataStatus.UNLOCKED);
 
 //        if (feedName != null) {
 //            criteria.obtainFeedNameSet().add(feedName);

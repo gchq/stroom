@@ -19,10 +19,10 @@ package stroom.util;
 import com.google.inject.Injector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.FindStreamCriteria;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamDataSource;
-import stroom.data.meta.api.StreamMetaService;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.MetaDataSource;
+import stroom.data.meta.api.DataMetaService;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.persist.PersistService;
@@ -121,33 +121,33 @@ public class StreamGrepTool extends AbstractCommandLineTool {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
 
         if (createPeriodFrom != null && !createPeriodFrom.isEmpty() && createPeriodTo != null && !createPeriodTo.isEmpty()) {
-            builder.addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, createPeriodFrom + "," + createPeriodTo);
+            builder.addTerm(MetaDataSource.CREATE_TIME, Condition.BETWEEN, createPeriodFrom + "," + createPeriodTo);
         } else if (createPeriodFrom != null && !createPeriodFrom.isEmpty()) {
-            builder.addTerm(StreamDataSource.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, createPeriodFrom);
+            builder.addTerm(MetaDataSource.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, createPeriodFrom);
         } else if (createPeriodTo != null && !createPeriodTo.isEmpty()) {
-            builder.addTerm(StreamDataSource.CREATE_TIME, Condition.LESS_THAN_OR_EQUAL_TO, createPeriodTo);
+            builder.addTerm(MetaDataSource.CREATE_TIME, Condition.LESS_THAN_OR_EQUAL_TO, createPeriodTo);
         }
 
-        final StreamMetaService streamMetaService = injector.getInstance(StreamMetaService.class);
+        final DataMetaService streamMetaService = injector.getInstance(DataMetaService.class);
         final StreamStore streamStore = injector.getInstance(StreamStore.class);
 
         if (feed != null) {
-            builder.addTerm(StreamDataSource.FEED, Condition.EQUALS, feed);
+            builder.addTerm(MetaDataSource.FEED, Condition.EQUALS, feed);
         }
 
         if (streamType != null) {
-            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, streamType);
+            builder.addTerm(MetaDataSource.STREAM_TYPE, Condition.EQUALS, streamType);
         } else {
-            builder.addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS);
+            builder.addTerm(MetaDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS);
         }
 
         // Query the stream store
-        final FindStreamCriteria criteria = new FindStreamCriteria();
+        final FindDataCriteria criteria = new FindDataCriteria();
         criteria.setExpression(builder.build());
-        final List<Stream> results = streamMetaService.find(criteria);
+        final List<Data> results = streamMetaService.find(criteria);
 
         int count = 0;
-        for (final Stream stream : results) {
+        for (final Data stream : results) {
             count++;
             LOGGER.info("processing() - " + count + "/" + results.size() + " " + stream);
 

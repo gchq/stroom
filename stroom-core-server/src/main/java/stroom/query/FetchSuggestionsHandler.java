@@ -27,9 +27,9 @@ import stroom.node.NodeService;
 import stroom.pipeline.PipelineStore;
 import stroom.query.shared.FetchSuggestionsAction;
 import stroom.security.Security;
-import stroom.data.meta.api.StreamMetaService;
-import stroom.data.meta.api.StreamStatus;
-import stroom.data.meta.api.StreamDataSource;
+import stroom.data.meta.api.DataMetaService;
+import stroom.data.meta.api.DataStatus;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.SharedList;
@@ -44,13 +44,13 @@ import java.util.stream.Collectors;
 
 @TaskHandlerBean(task = FetchSuggestionsAction.class)
 class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction, SharedList<SharedString>> {
-    private final StreamMetaService streamMetaService;
+    private final DataMetaService streamMetaService;
     private final PipelineStore pipelineStore;
     private final NodeService nodeService;
     private final Security security;
 
     @Inject
-    FetchSuggestionsHandler(final StreamMetaService streamMetaService,
+    FetchSuggestionsHandler(final DataMetaService streamMetaService,
                             @Named("cachedPipelineStore") final PipelineStore pipelineStore,
                             @Named("cachedNodeService") final NodeService nodeService,
                             final Security security) {
@@ -64,12 +64,12 @@ class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction
     public SharedList<SharedString> exec(final FetchSuggestionsAction task) {
         return security.secureResult(() -> {
             if (task.getDataSource() != null) {
-                if (StreamDataSource.STREAM_STORE_DOC_REF.equals(task.getDataSource())) {
-                    if (task.getField().getName().equals(StreamDataSource.FEED)) {
+                if (MetaDataSource.STREAM_STORE_DOC_REF.equals(task.getDataSource())) {
+                    if (task.getField().getName().equals(MetaDataSource.FEED)) {
                         return createFeedList(task.getText());
                     }
 
-                    if (task.getField().getName().equals(StreamDataSource.PIPELINE)) {
+                    if (task.getField().getName().equals(MetaDataSource.PIPELINE)) {
                         return new SharedList<>(pipelineStore.list().stream()
                                 .filter(docRef -> docRef.getName().contains(task.getText()))
                                 .map(DocRef::getName)
@@ -78,13 +78,13 @@ class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction
                                 .collect(Collectors.toList()));
                     }
 
-                    if (task.getField().getName().equals(StreamDataSource.STREAM_TYPE)) {
+                    if (task.getField().getName().equals(MetaDataSource.STREAM_TYPE)) {
                         return createStreamTypeList(task.getText());
                     }
 
-                    if (task.getField().getName().equals(StreamDataSource.STATUS)) {
-                        return new SharedList<>(Arrays.stream(StreamStatus.values())
-                                .map(StreamStatus::getDisplayValue)
+                    if (task.getField().getName().equals(MetaDataSource.STATUS)) {
+                        return new SharedList<>(Arrays.stream(DataStatus.values())
+                                .map(DataStatus::getDisplayValue)
                                 .map(SharedString::wrap)
                                 .sorted()
                                 .collect(Collectors.toList()));
@@ -123,7 +123,7 @@ class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction
     }
 
     private SharedList<SharedString> createStreamTypeList(final String text) {
-        return streamMetaService.getStreamTypes()
+        return streamMetaService.getTypes()
                 .parallelStream()
                 .filter(name -> name.startsWith(text))
                 .sorted(Comparator.naturalOrder())

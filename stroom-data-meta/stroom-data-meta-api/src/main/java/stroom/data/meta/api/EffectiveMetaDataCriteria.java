@@ -34,7 +34,7 @@ public class EffectiveMetaDataCriteria implements Serializable {
 
     private Period effectivePeriod;
     private String feed;
-    private String streamType;
+    private String type;
 
     public String getFeed() {
         return feed;
@@ -44,12 +44,12 @@ public class EffectiveMetaDataCriteria implements Serializable {
         this.feed = feed;
     }
 
-    public String getStreamType() {
-        return streamType;
+    public String getType() {
+        return type;
     }
 
-    public void setStreamType(final String streamType) {
-        this.streamType = streamType;
+    public void setType(final String type) {
+        this.type = type;
     }
 
     public Period getEffectivePeriod() {

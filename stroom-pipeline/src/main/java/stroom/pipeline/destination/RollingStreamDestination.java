@@ -16,7 +16,7 @@
 
 package stroom.pipeline.destination;
 
-import stroom.data.meta.api.StreamDataSource;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
@@ -83,7 +83,7 @@ public class RollingStreamDestination extends RollingDestination {
 
         // TODO : @66 DO WE REALLY NEED TO KNOW WHAT NODE PROCESSED A STREAM AS THE DATA IS AVAILABLE ON STREAM TASK???
 //        attributeMap.put(StreamAttributeConstants.NODE, nodeName);
-        streamTarget.getAttributes().put(StreamDataSource.REC_WRITE, recordCount.toString());
+        streamTarget.getAttributes().put(MetaDataSource.REC_WRITE, recordCount.toString());
         streamStore.closeStreamTarget(streamTarget);
     }
 

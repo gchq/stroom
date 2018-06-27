@@ -6,12 +6,12 @@ package stroom.data.meta.impl.db.stroom;
 
 import javax.annotation.Generated;
 
+import stroom.data.meta.impl.db.stroom.tables.Data;
+import stroom.data.meta.impl.db.stroom.tables.DataFeed;
+import stroom.data.meta.impl.db.stroom.tables.DataProcessor;
+import stroom.data.meta.impl.db.stroom.tables.DataType;
 import stroom.data.meta.impl.db.stroom.tables.MetaKey;
-import stroom.data.meta.impl.db.stroom.tables.MetaNumericValue;
-import stroom.data.meta.impl.db.stroom.tables.Stream;
-import stroom.data.meta.impl.db.stroom.tables.StreamFeed;
-import stroom.data.meta.impl.db.stroom.tables.StreamProcessor;
-import stroom.data.meta.impl.db.stroom.tables.StreamType;
+import stroom.data.meta.impl.db.stroom.tables.MetaVal;
 
 
 /**
@@ -28,32 +28,32 @@ import stroom.data.meta.impl.db.stroom.tables.StreamType;
 public class Tables {
 
     /**
+     * The table <code>stroom.data</code>.
+     */
+    public static final Data DATA = stroom.data.meta.impl.db.stroom.tables.Data.DATA;
+
+    /**
+     * The table <code>stroom.data_feed</code>.
+     */
+    public static final DataFeed DATA_FEED = stroom.data.meta.impl.db.stroom.tables.DataFeed.DATA_FEED;
+
+    /**
+     * The table <code>stroom.data_processor</code>.
+     */
+    public static final DataProcessor DATA_PROCESSOR = stroom.data.meta.impl.db.stroom.tables.DataProcessor.DATA_PROCESSOR;
+
+    /**
+     * The table <code>stroom.data_type</code>.
+     */
+    public static final DataType DATA_TYPE = stroom.data.meta.impl.db.stroom.tables.DataType.DATA_TYPE;
+
+    /**
      * The table <code>stroom.meta_key</code>.
      */
     public static final MetaKey META_KEY = stroom.data.meta.impl.db.stroom.tables.MetaKey.META_KEY;
 
     /**
-     * The table <code>stroom.meta_numeric_value</code>.
+     * The table <code>stroom.meta_val</code>.
      */
-    public static final MetaNumericValue META_NUMERIC_VALUE = stroom.data.meta.impl.db.stroom.tables.MetaNumericValue.META_NUMERIC_VALUE;
-
-    /**
-     * The table <code>stroom.stream</code>.
-     */
-    public static final Stream STREAM = stroom.data.meta.impl.db.stroom.tables.Stream.STREAM;
-
-    /**
-     * The table <code>stroom.stream_feed</code>.
-     */
-    public static final StreamFeed STREAM_FEED = stroom.data.meta.impl.db.stroom.tables.StreamFeed.STREAM_FEED;
-
-    /**
-     * The table <code>stroom.stream_processor</code>.
-     */
-    public static final StreamProcessor STREAM_PROCESSOR = stroom.data.meta.impl.db.stroom.tables.StreamProcessor.STREAM_PROCESSOR;
-
-    /**
-     * The table <code>stroom.stream_type</code>.
-     */
-    public static final StreamType STREAM_TYPE = stroom.data.meta.impl.db.stroom.tables.StreamType.STREAM_TYPE;
+    public static final MetaVal META_VAL = stroom.data.meta.impl.db.stroom.tables.MetaVal.META_VAL;
 }

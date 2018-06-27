@@ -18,7 +18,7 @@
 package stroom.headless;
 
 import stroom.data.meta.api.AttributeMap;
-import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.Data;
 import stroom.docref.DocRef;
 import stroom.feed.FeedStore;
 import stroom.feed.StroomHeaderArguments;
@@ -163,7 +163,7 @@ class CLITranslationTaskHandler extends AbstractTaskHandler<CLITranslationTask, 
                 }
 
                 // Create the stream.
-                final Stream stream = new StreamImpl.Builder()
+                final Data stream = new StreamImpl.Builder()
                         .effectiveMs(effectiveMs)
                         .feedName(feedName)
                         .build();

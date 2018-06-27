@@ -20,8 +20,8 @@ package stroom.streamtask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamProperties;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataProperties;
 import stroom.data.store.StreamFactory;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.StreamStore;
@@ -43,6 +43,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -72,10 +73,10 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     private final StreamStore streamStore;
     private final FeedDocCache feedDocCache;
     private final MetaDataStatistic metaDataStatistics;
-    private final HashSet<Stream> streamSet;
+    private final HashSet<Data> streamSet;
     private final StroomZipNameSet stroomZipNameSet;
-    private final Map<String, OutputStreamProvider> outputStreamProviderMap = new HashMap<>();
-    private final Map<String, OutputStream> outputStreamMap = new HashMap<>();
+    //    private final Map<String, OutputStreamProvider> outputStreamProviderMap = new HashMap<>();
+    private final Map<String, OutputStreamSet> outputStreamMap = new HashMap<>();
     private final Map<String, StreamTarget> feedStreamTarget = new HashMap<>();
     private final ByteArrayOutputStream currentHeaderByteArrayOutputStream = new ByteArrayOutputStream();
     private boolean oneByOne;
@@ -87,6 +88,8 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
     private String currentStreamTypeName;
     private AttributeMap globalAttributeMap;
     private AttributeMap currentAttributeMap;
+
+    private OutputStream currentOutputStream;
 
     public StreamTargetStroomStreamHandler(final StreamStore streamStore,
                                            final FeedDocCache feedDocCache,
@@ -126,9 +129,8 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
         if (currentFileType.equals(StroomZipFileType.Meta)) {
             currentHeaderByteArrayOutputStream.write(data, off, len);
         } else {
-            final OutputStream outputStream = getOutputStream();
-            if (outputStream != null) {
-                outputStream.write(data, off, len);
+            if (currentOutputStream != null) {
+                currentOutputStream.write(data, off, len);
             }
         }
     }
@@ -138,6 +140,9 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("handleEntryStart() - " + stroomZipEntry);
         }
+
+        // Ensure we close the current output stream.
+        closeCurrentOutput();
 
         currentFileType = stroomZipEntry.getStroomZipFileType();
 
@@ -162,12 +167,8 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
         if (StroomZipFileType.Meta.equals(currentFileType)) {
             // Header we just buffer up
             currentHeaderByteArrayOutputStream.reset();
-        }
-        if (StroomZipFileType.Data.equals(currentFileType)) {
-            nextOutputStream();
-        }
-        if (StroomZipFileType.Context.equals(currentFileType)) {
-            nextOutputStream(StreamTypeNames.CONTEXT);
+        } else if (StroomZipFileType.Data.equals(currentFileType) || StroomZipFileType.Context.equals(currentFileType)) {
+            currentOutputStream = getOutputStreamSet().next(currentFileType);
         }
     }
 
@@ -224,15 +225,13 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
                 }
             }
 
-            try (final OutputStream outputStream = getOutputStreamProvider().next(StreamTypeNames.META)) {
+            try (final OutputStream outputStream = getOutputStreamSet().next(currentFileType)) {
                 outputStream.write(currentHeaderByteArrayOutputStream.toByteArray());
             }
         }
 
-        final OutputStream outputStream = getOutputStream();
-        if (outputStream != null) {
-            outputStream.close();
-        }
+        // Ensure we close the current output stream.
+        closeCurrentOutput();
 
         if (StroomZipFileType.Data.equals(currentFileType)) {
             lastDatStroomZipEntry = currentStroomZipEntry;
@@ -242,18 +241,29 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
         }
     }
 
+    private void closeCurrentOutput() {
+        try {
+            if (currentOutputStream != null) {
+                currentOutputStream.close();
+                currentOutputStream = null;
+            }
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
     public void closeDelete() {
         feedStreamTarget.values().forEach(streamStore::deleteStreamTarget);
-        outputStreamProviderMap.clear();
+        outputStreamMap.clear();
         feedStreamTarget.clear();
     }
 
     @Override
     public void close() {
-        outputStreamProviderMap.values().forEach(CloseableUtil::closeLogAndIgnoreException);
+        outputStreamMap.values().forEach(CloseableUtil::closeLogAndIgnoreException);
         feedStreamTarget.values().forEach(streamStore::closeStreamTarget);
 
-        outputStreamProviderMap.clear();
+        outputStreamMap.clear();
         feedStreamTarget.clear();
     }
 
@@ -261,11 +271,11 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("closeCurrentFeed() - " + currentFeedName);
         }
-        CloseableUtil.closeLogAndIgnoreException(outputStreamProviderMap.remove(currentFeedName));
+        CloseableUtil.closeLogAndIgnoreException(outputStreamMap.remove(currentFeedName));
         streamStore.closeStreamTarget(feedStreamTarget.remove(currentFeedName));
     }
 
-    public Set<Stream> getStreamSet() {
+    public Set<Data> getStreamSet() {
         return Collections.unmodifiableSet(streamSet);
     }
 
@@ -276,24 +286,23 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
         return globalAttributeMap;
     }
 
-    private void nextOutputStream() {
-        final OutputStream outputStream = getOutputStreamProvider().next();
-        outputStreamMap.put(currentFeedName, outputStream);
-    }
+//    private void nextOutputStream(final String feedName, final StroomZipFileType stroomZipFileType) {
+//        final OutputStream outputStream = getOutputStreamProvider().next();
+//        outputStreamMap.put(currentFeedName, outputStream);
+//    }
+//
+//    private void nextOutputStream(final String type) {
+//        final OutputStream outputStream = getOutputStreamProvider().next(type);
+//        outputStreamMap.put(currentFeedName, outputStream);
+//    }
+//
+//    private OutputStream getOutputStream(final String feedName, final StroomZipFileType stroomZipFileType) {
+//        return outputStreamMap.get(currentFeedName);
+//    }
 
-    private void nextOutputStream(final String type) {
-        final OutputStream outputStream = getOutputStreamProvider().next(type);
-        outputStreamMap.put(currentFeedName, outputStream);
-    }
+    private OutputStreamSet getOutputStreamSet() {
+        return outputStreamMap.computeIfAbsent(currentFeedName, k -> {
 
-    private OutputStream getOutputStream() {
-        return outputStreamMap.get(currentFeedName);
-    }
-
-    private OutputStreamProvider getOutputStreamProvider() {
-        OutputStreamProvider outputStreamProvider = outputStreamProviderMap.get(currentFeedName);
-
-        if (outputStreamProvider == null) {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("getOutputStreamProvider() - open stream for " + currentFeedName);
             }
@@ -306,18 +315,50 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
                 currentStreamTypeName = getStreamTypeName(currentFeedName);
             }
 
-            final StreamProperties streamProperties = new StreamProperties.Builder()
+            final DataProperties streamProperties = new DataProperties.Builder()
                     .feedName(currentFeedName)
-                    .streamTypeName(currentStreamTypeName)
+                    .typeName(currentStreamTypeName)
                     .effectiveMs(effectiveMs)
                     .build();
 
             final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
             feedStreamTarget.put(currentFeedName, streamTarget);
             streamSet.add(streamTarget.getStream());
-            outputStreamProvider = streamTarget.getOutputStreamProvider();
-            outputStreamProviderMap.put(currentFeedName, outputStreamProvider);
-        }
-        return outputStreamProvider;
+            final OutputStreamProvider outputStreamProvider = streamTarget.getOutputStreamProvider();
+            return new OutputStreamSet(outputStreamProvider);
+
+
+//            outputStreamProviderMap.put(currentFeedName, outputStreamProvider);
+
+        });
+
+//        OutputStreamProvider outputStreamProvider = outputStreamProviderMap.get(currentFeedName);
+//
+//        if (outputStreamProvider == null) {
+//            if (LOGGER.isDebugEnabled()) {
+//                LOGGER.debug("getOutputStreamProvider() - open stream for " + currentFeedName);
+//            }
+//
+//            // Get the effective time if one has been provided.
+//            final Long effectiveMs = StreamFactory.getReferenceEffectiveTime(getCurrentAttributeMap(), true);
+//
+//            // Make sure the stream type is not null.
+//            if (currentStreamTypeName == null) {
+//                currentStreamTypeName = getStreamTypeName(currentFeedName);
+//            }
+//
+//            final DataProperties streamProperties = new DataProperties.Builder()
+//                    .feedName(currentFeedName)
+//                    .typeName(currentStreamTypeName)
+//                    .effectiveMs(effectiveMs)
+//                    .build();
+//
+//            final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
+//            feedStreamTarget.put(currentFeedName, streamTarget);
+//            streamSet.add(streamTarget.getStream());
+//            outputStreamProvider = streamTarget.getOutputStreamProvider();
+//            outputStreamProviderMap.put(currentFeedName, outputStreamProvider);
+//        }
+//        return outputStreamProvider;
     }
 }

@@ -26,15 +26,14 @@ import stroom.entity.shared.Period;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.security.Security;
 import stroom.data.meta.api.EffectiveMetaDataCriteria;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamMetaService;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataMetaService;
 import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.Collections;
-import java.util.List;
 import java.util.NavigableSet;
 import java.util.Set;
 import java.util.TreeSet;
@@ -47,13 +46,13 @@ public class EffectiveStreamCache implements Clearable {
     private static final int MAX_CACHE_ENTRIES = 1000;
 
     private final LoadingCache<EffectiveStreamKey, NavigableSet> cache;
-    private final StreamMetaService streamMetaService;
+    private final DataMetaService streamMetaService;
     private final EffectiveStreamInternPool internPool;
     private final Security security;
 
     @Inject
     EffectiveStreamCache(final CacheManager cacheManager,
-                         final StreamMetaService streamMetaService,
+                         final DataMetaService streamMetaService,
                          final EffectiveStreamInternPool internPool,
                          final Security security) {
         this(cacheManager, streamMetaService, internPool, security, 10, TimeUnit.MINUTES);
@@ -61,7 +60,7 @@ public class EffectiveStreamCache implements Clearable {
 
     @SuppressWarnings("unchecked")
     EffectiveStreamCache(final CacheManager cacheManager,
-                         final StreamMetaService streamMetaService,
+                         final DataMetaService streamMetaService,
                          final EffectiveStreamInternPool internPool,
                          final Security security,
                          final long duration,
@@ -102,19 +101,19 @@ public class EffectiveStreamCache implements Clearable {
                 // Only find streams for the supplied feed and stream type.
                 final EffectiveMetaDataCriteria criteria = new EffectiveMetaDataCriteria();
                 criteria.setFeed(key.getFeed());
-                criteria.setStreamType(key.getStreamType());
+                criteria.setType(key.getStreamType());
 
                 // Limit the stream set to the requested effective time window.
                 final Period window = new Period(key.getFromMs(), key.getToMs());
                 criteria.setEffectivePeriod(window);
 
                 // Locate all streams that fit the supplied criteria.
-                final Set<Stream> streams = streamMetaService.findEffectiveStream(criteria);
+                final Set<Data> streams = streamMetaService.findEffectiveData(criteria);
 
                 // Add all streams that we have found to the effective stream set.
                 if (streams != null && streams.size() > 0) {
                     effectiveStreamSet = new TreeSet<>();
-                    for (final Stream stream : streams) {
+                    for (final Data stream : streams) {
                         EffectiveStream effectiveStream;
 
                         if (stream.getEffectiveMs() != null) {

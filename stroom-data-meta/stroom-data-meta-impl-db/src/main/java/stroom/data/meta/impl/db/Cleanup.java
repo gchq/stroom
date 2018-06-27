@@ -7,23 +7,23 @@ import javax.inject.Inject;
 public class Cleanup implements Clearable {
     private final MetaValueServiceImpl metaValueService;
     private final MetaKeyServiceImpl metaKeyService;
-    private final StreamMetaServiceImpl streamMetaService;
+    private final DataMetaServiceImpl dataMetaService;
     private final ProcessorServiceImpl processorService;
-    private final StreamTypeServiceImpl streamTypeService;
+    private final DataTypeServiceImpl dataTypeService;
     private final FeedServiceImpl feedService;
 
     @Inject
     Cleanup(final MetaValueServiceImpl metaValueService,
             final MetaKeyServiceImpl metaKeyService,
-            final StreamMetaServiceImpl streamMetaService,
+            final DataMetaServiceImpl dataMetaService,
             final ProcessorServiceImpl processorService,
-            final StreamTypeServiceImpl streamTypeService,
+            final DataTypeServiceImpl dataTypeService,
             final FeedServiceImpl feedService) {
         this.metaValueService = metaValueService;
         this.metaKeyService = metaKeyService;
-        this.streamMetaService = streamMetaService;
+        this.dataMetaService = dataMetaService;
         this.processorService = processorService;
-        this.streamTypeService = streamTypeService;
+        this.dataTypeService = dataTypeService;
         this.feedService = feedService;
     }
 
@@ -31,9 +31,9 @@ public class Cleanup implements Clearable {
     public void clear() {
         metaValueService.clear();
         metaKeyService.clear();
-        streamMetaService.clear();
+        dataMetaService.clear();
         processorService.clear();
-        streamTypeService.clear();
+        dataTypeService.clear();
         feedService.clear();
     }
 }

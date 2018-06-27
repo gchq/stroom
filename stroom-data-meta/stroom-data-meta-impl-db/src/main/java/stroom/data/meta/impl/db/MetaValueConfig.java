@@ -1,41 +1,34 @@
 package stroom.data.meta.impl.db;
 
+import stroom.properties.api.StroomPropertyService;
+import stroom.util.shared.ModelStringUtil;
+
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
 class MetaValueConfig {
-    private final long deleteAge;
-    private final int deleteBatchSize;
-    private final int flushBatchSize;
-    private boolean addAsync = true;
+    private final StroomPropertyService stroomPropertyService;
 
-    MetaValueConfig(final long deleteAge,
-                    final int deleteBatchSize,
-                    final int flushBatchSize,
-                    final boolean addAsync) {
-        this.deleteAge = deleteAge;
-        this.deleteBatchSize = deleteBatchSize;
-        this.flushBatchSize = flushBatchSize;
-        this.addAsync = addAsync;
+    @Inject
+    MetaValueConfig(final StroomPropertyService stroomPropertyService) {
+        this.stroomPropertyService = stroomPropertyService;
     }
 
     long getDeleteAge() {
-        return deleteAge;
+        final String metaDatabaseAge = stroomPropertyService.getProperty("stroom.meta.deleteAge", "30d");
+        return ModelStringUtil.parseDurationString(metaDatabaseAge);
     }
 
     int getDeleteBatchSize() {
-        return deleteBatchSize;
+        return stroomPropertyService.getIntProperty("stroom.meta.deleteBatchSize", 1000);
     }
 
     int getFlushBatchSize() {
-        return flushBatchSize;
+        return stroomPropertyService.getIntProperty("stroom.meta.flushBatchSize", 1000);
     }
 
     boolean isAddAsync() {
-        return addAsync;
-    }
-
-    void setAddAsync(final boolean addAsync) {
-        this.addAsync = addAsync;
+        return stroomPropertyService.getBooleanProperty("stroom.meta.addAsync", true);
     }
 }

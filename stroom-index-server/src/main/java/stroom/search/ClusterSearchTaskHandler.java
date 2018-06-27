@@ -51,7 +51,7 @@ import stroom.search.shard.IndexShardSearchTaskProducer;
 import stroom.search.shard.IndexShardSearchTaskProperties;
 import stroom.search.shard.IndexShardSearcherCache;
 import stroom.security.Security;
-import stroom.data.meta.api.StreamMetaService;
+import stroom.data.meta.api.DataMetaService;
 import stroom.task.ExecutorProvider;
 import stroom.task.TaskCallback;
 import stroom.task.TaskContext;
@@ -103,7 +103,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     private final IndexShardSearcherCache indexShardSearcherCache;
     private final ExtractionTaskExecutor extractionTaskExecutor;
     private final ExtractionTaskProperties extractionTaskProperties;
-    private final StreamMetaService streamMetaService;
+    private final DataMetaService streamMetaService;
     private final Security security;
     private final int maxBooleanClauseCount;
     private final int maxStoredDataQueueSize;
@@ -127,7 +127,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                              final IndexShardSearcherCache indexShardSearcherCache,
                              final ExtractionTaskExecutor extractionTaskExecutor,
                              final ExtractionTaskProperties extractionTaskProperties,
-                             final StreamMetaService streamMetaService,
+                             final DataMetaService streamMetaService,
                              final Security security,
                              final StroomPropertyService propertyService,
                              final Provider<IndexShardSearchTaskHandler> indexShardSearchTaskHandlerProvider,

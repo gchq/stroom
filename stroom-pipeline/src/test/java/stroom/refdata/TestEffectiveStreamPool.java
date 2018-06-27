@@ -22,9 +22,9 @@ import org.junit.runner.RunWith;
 import stroom.security.Security;
 import stroom.security.impl.mock.MockSecurityContext;
 import stroom.data.meta.api.EffectiveMetaDataCriteria;
-import stroom.data.meta.api.Stream;
-import stroom.data.meta.api.StreamProperties;
-import stroom.data.meta.impl.mock.MockStreamMetaService;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataProperties;
+import stroom.data.meta.impl.mock.MockDataMetaService;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.cache.CacheManager;
 import stroom.util.date.DateUtil;
@@ -53,15 +53,15 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
 
         final InnerStreamMetaService mockStreamStore = new InnerStreamMetaService() {
             @Override
-            public Set<Stream> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
+            public Set<Data> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
                 findEffectiveStreamSourceCount++;
-                final Set<Stream> results = new HashSet<>();
+                final Set<Data> results = new HashSet<>();
                 long workingDate = criteria.getEffectivePeriod().getFrom();
                 while (workingDate < criteria.getEffectivePeriod().getTo()) {
-                    final Stream stream = createStream(
-                            new StreamProperties.Builder()
+                    final Data stream = create(
+                            new DataProperties.Builder()
                                     .feedName(refFeedName)
-                                    .streamTypeName(StreamTypeNames.RAW_REFERENCE)
+                                    .typeName(StreamTypeNames.RAW_REFERENCE)
                                     .createMs(workingDate)
                                     .build());
 
@@ -192,16 +192,16 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
         return fromMs + APPROX_TEN_DAYS;
     }
 
-    private static class InnerStreamMetaService extends MockStreamMetaService {
+    private static class InnerStreamMetaService extends MockDataMetaService {
         private long callCount = 0;
-        private final List<Stream> streams = new ArrayList<>();
+        private final List<Data> streams = new ArrayList<>();
 
         InnerStreamMetaService() {
             super();
         }
 
         @Override
-        public Set<Stream> findEffectiveStream(final EffectiveMetaDataCriteria criteria) {
+        public Set<Data> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
             callCount++;
 
             return streams.stream()
@@ -212,10 +212,10 @@ public class TestEffectiveStreamPool extends StroomUnitTest {
         }
 
         void addEffectiveStream(final String feedName, long effectiveTimeMs) {
-            final Stream stream = createStream(
-                    new StreamProperties.Builder()
+            final Data stream = create(
+                    new DataProperties.Builder()
                             .feedName(feedName)
-                            .streamTypeName(StreamTypeNames.RAW_REFERENCE)
+                            .typeName(StreamTypeNames.RAW_REFERENCE)
                             .createMs(effectiveTimeMs)
                             .build());
             streams.add(stream);

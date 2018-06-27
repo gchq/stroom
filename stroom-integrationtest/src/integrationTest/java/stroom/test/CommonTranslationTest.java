@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.node.NodeCache;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
-import stroom.data.meta.api.StreamMetaService;
+import stroom.data.meta.api.DataMetaService;
 import stroom.data.store.tools.StoreCreationTool;
 import stroom.streamtask.StreamProcessorTask;
 import stroom.streamtask.StreamProcessorTaskExecutor;
@@ -76,14 +76,14 @@ public class CommonTranslationTest {
     private final StreamTaskCreator streamTaskCreator;
     private final StoreCreationTool storeCreationTool;
     private final TaskManager taskManager;
-    private final StreamMetaService streamMetaService;
+    private final DataMetaService streamMetaService;
 
     @Inject
     CommonTranslationTest(final NodeCache nodeCache,
                           final StreamTaskCreator streamTaskCreator,
                           final StoreCreationTool storeCreationTool,
                           final TaskManager taskManager,
-                          final StreamMetaService streamMetaService) {
+                          final DataMetaService streamMetaService) {
         this.nodeCache = nodeCache;
         this.streamTaskCreator = streamTaskCreator;
         this.storeCreationTool = storeCreationTool;

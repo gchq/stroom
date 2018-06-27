@@ -31,10 +31,10 @@ import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.pipeline.stepping.client.presenter.SteppingContentTabPresenter;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.data.meta.api.FindStreamCriteria;
-import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.Data;
 import stroom.streamstore.shared.FindStreamAction;
-import stroom.data.meta.api.StreamDataRow;
+import stroom.data.meta.api.DataRow;
 
 public class PipelineSteppingPlugin extends Plugin implements BeginPipelineSteppingEvent.Handler {
     private final Provider<EntityChooser> pipelineSelection;
@@ -81,13 +81,13 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
         chooser.addDataSelectionHandler(event -> {
             final DocRef pipeline = chooser.getSelectedEntityReference();
             if (pipeline != null) {
-                final FindStreamCriteria streamAttributeMapCriteria = new FindStreamCriteria();
+                final FindDataCriteria streamAttributeMapCriteria = new FindDataCriteria();
                 streamAttributeMapCriteria.obtainSelectedIdSet().add(streamId);
 
                 dispatcher.exec(new FindStreamAction(streamAttributeMapCriteria)).onSuccess(result -> {
                     if (result != null && result.size() == 1) {
-                        final StreamDataRow row = result.get(0);
-                        openEditor(pipeline, row.getStream(), eventId, childStreamType);
+                        final DataRow row = result.get(0);
+                        openEditor(pipeline, row.getData(), eventId, childStreamType);
                     }
                 });
             }
@@ -100,7 +100,7 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
         chooser.show();
     }
 
-    private void openEditor(final DocRef pipeline, final Stream stream, final long eventId,
+    private void openEditor(final DocRef pipeline, final Data stream, final long eventId,
                             final String childStreamType) {
         final SteppingContentTabPresenter editor = editorProvider.get();
         editor.read(pipeline, stream, eventId, childStreamType);

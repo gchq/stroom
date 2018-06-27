@@ -33,7 +33,7 @@ import stroom.entity.shared.ResultList;
 import stroom.entity.shared.SummaryDataRow;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.data.meta.api.StreamStatus;
+import stroom.data.meta.api.DataStatus;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.TaskStatus;
 import stroom.util.shared.ModelStringUtil;
@@ -175,7 +175,7 @@ public class StreamTaskSummaryPresenter extends MyPresenterWidget<DataGridView<S
 
     private FindStreamTaskCriteria initCriteria() {
         final FindStreamTaskCriteria criteria = new FindStreamTaskCriteria();
-        criteria.obtainStatusSet().setSingleItem(StreamStatus.UNLOCKED);
+        criteria.obtainStatusSet().setSingleItem(DataStatus.UNLOCKED);
         return criteria;
     }
 }

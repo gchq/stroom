@@ -31,7 +31,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.DataRetentionRule;
 import stroom.data.store.DataRetentionAgeUtil;
-import stroom.data.meta.api.StreamDataSource;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.task.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
@@ -384,8 +384,8 @@ public class DataRetentionExecutor {
             final List<DataRetentionRule> activeRules = new ArrayList<>();
 
             // Find out which fields are used by the expressions so we don't have to do unnecessary joins.
-            fieldSet.add(StreamDataSource.STREAM_ID);
-            fieldSet.add(StreamDataSource.CREATE_TIME);
+            fieldSet.add(MetaDataSource.STREAM_ID);
+            fieldSet.add(MetaDataSource.CREATE_TIME);
 
             // Also make sure we create a list of rules that are enabled and have at least one enabled term.
             rules.forEach(rule -> {

@@ -43,7 +43,7 @@ import stroom.data.store.api.StreamStore;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.data.store.api.StreamSourceInputStream;
 import stroom.data.store.api.StreamSourceInputStreamProvider;
-import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.Data;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.Severity;
@@ -132,7 +132,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                 // Open the stream source.
                 final StreamSource streamSource = streamStore.openStreamSource(mapStorePoolKey.getStreamId());
                 if (streamSource != null) {
-                    final Stream stream = streamSource.getStream();
+                    final Data stream = streamSource.getStream();
                     try {
                         // Load the feed.
                         final String feedName = stream.getFeedName();
@@ -149,7 +149,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                         final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
                         final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
-                        populateMaps(pipeline, stream, streamSource, feedName, stream.getStreamTypeName(), mapStoreBuilder);
+                        populateMaps(pipeline, stream, streamSource, feedName, stream.getTypeName(), mapStoreBuilder);
                         if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug("Finished loading reference data: " + mapStorePoolKey.toString());
                         }
@@ -173,7 +173,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
     }
 
     private void populateMaps(final Pipeline pipeline,
-                              final Stream stream,
+                              final Data stream,
                               final StreamSource streamSource,
                               final String feedName,
                               final String streamTypeName,

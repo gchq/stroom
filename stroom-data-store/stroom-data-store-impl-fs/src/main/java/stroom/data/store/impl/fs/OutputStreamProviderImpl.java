@@ -18,7 +18,7 @@ package stroom.data.store.impl.fs;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.Stream;
+import stroom.data.meta.api.Data;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.WrappedSegmentOutputStream;
@@ -30,11 +30,11 @@ import java.util.HashMap;
 class OutputStreamProviderImpl implements OutputStreamProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(OutputStreamProviderImpl.class);
 
-    private final Stream stream;
+    private final Data stream;
     private final NestedOutputStreamFactory rootStreamTarget;
     private final HashMap<String, OS> nestedOutputStreamMap = new HashMap<>(10);
 
-    OutputStreamProviderImpl(final Stream stream,
+    OutputStreamProviderImpl(final Data stream,
                              final NestedOutputStreamFactory streamTarget) {
         this.stream = stream;
         this.rootStreamTarget = streamTarget;
