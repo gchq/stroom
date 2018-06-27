@@ -60,7 +60,7 @@ const enhanceLocal = compose(
   }),
 );
 
-const PollyComponent = enhanceLocal(({ children }) => <div>{children}</div>);
+const PollyComponent = enhanceLocal(({ children }) => <div className="fill-space">{children}</div>);
 
 export const PollyDecorator = serverInit => storyFn => (
   <PollyComponent serverInit={serverInit}>{storyFn()}</PollyComponent>

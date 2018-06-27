@@ -14,32 +14,53 @@
  * limitations under the License.
  */
 import React from 'react';
-import { connect } from 'react-redux';
-import { Button } from 'semantic-ui-react';
+import { compose, withState } from 'recompose';
+import { Button, Sidebar, Segment, Menu, Icon, Header } from 'semantic-ui-react';
 
 import ContentTabs from './ContentTabs';
-import { actionCreators } from './redux';
 
-const { setSidebarOpen } = actionCreators;
+const withIsOpen = withState('isMenuOpen', 'setIsMenuOpen', false);
 
-const enhance = connect(
-  (state, props) => ({
-    sideBarOpen: state.appChrome.sideBarOpen,
-  }),
-  {
-    setSidebarOpen,
-  },
-);
+const enhance = compose(withIsOpen);
 
-const AppChrome = ({ setSidebarOpen, sideBarOpen }) => (
+const AppChrome = enhance(({ isMenuOpen, setIsMenuOpen }) => (
   <div className="app-chrome">
-    <div className="app-chrome__menu">
-      <Button size="large" color="blue" icon="bars" />
-    </div>
-    <div className="app-chrome__tabs">
-      <ContentTabs />
-    </div>
+    <Sidebar.Pushable as={Segment}>
+      <Sidebar
+        as={Menu}
+        animation="push"
+        width="thin"
+        visible={isMenuOpen}
+        icon="labeled"
+        vertical
+        inverted
+        color="blue"
+      >
+        <Menu.Item onClick={() => setIsMenuOpen(false)}>
+          <Menu.Header content="Stroom" />
+        </Menu.Item>
+        <Menu.Item name="explorer">
+          <Icon name="eye" />
+          Explorer
+        </Menu.Item>
+        <Menu.Item name="user">
+          <Icon name="user" />
+          User
+        </Menu.Item>
+      </Sidebar>
+      <Sidebar.Pusher>
+        <Segment className="app-chrome__content">
+          <ContentTabs />
+        </Segment>
+      </Sidebar.Pusher>
+    </Sidebar.Pushable>
+    <Button
+      className="app-chrome__hamburger-menu-btn"
+      color="blue"
+      icon="bars"
+      onClick={() => setIsMenuOpen(!isMenuOpen)}
+    />
   </div>
-);
+));
 
 export default AppChrome;

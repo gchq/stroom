@@ -15,43 +15,26 @@
  */
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import { lifecycle } from 'recompose';
 import { Provider } from 'react-redux';
 import { action } from '@storybook/addon-actions';
 
 import store from 'startup/store';
 
-export const ReduxDecorator = (storyFn) => (
-  <Provider store={store}>
-      {storyFn()}
-  </Provider>
-)
+export const ReduxDecorator = storyFn => <Provider store={store}>{storyFn()}</Provider>;
 
-class ReduxWithInit extends Component {
-  static propTypes = {
-    storeInit : PropTypes.func.isRequired,
-    store : PropTypes.object.isRequired
-  }
-
+const enhanceLocal = lifecycle({
   componentDidMount() {
-    let {
-      storeInit,
-      store
-    } = this.props;
+    this.props.storeInit(this.props.store);
+  },
+});
 
-    storeInit(store);
-  }
+const ReduxWithInit = enhanceLocal(({ children }) => <div className="fill-space">{children}</div>);
 
-  render() {
-    return <div>{this.props.children}</div>
-  }
-}
-
-export const ReduxDecoratorWithInitialisation = (storeInit) => {
-  return (storyFn) => (
-    <Provider store={store}>
-      <ReduxWithInit storeInit={storeInit} store={store}>
-        {storyFn()}
-      </ReduxWithInit>
-    </Provider>
-  )
-}
+export const ReduxDecoratorWithInitialisation = storeInit => storyFn => (
+  <Provider store={store}>
+    <ReduxWithInit storeInit={storeInit} store={store}>
+      {storyFn()}
+    </ReduxWithInit>
+  </Provider>
+);

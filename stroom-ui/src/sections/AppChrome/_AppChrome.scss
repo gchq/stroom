@@ -1,37 +1,16 @@
 .app-chrome {
   display: flex;
   flex-direction: column;
+  height: 100%;
+  width: 100%;
 }
 
-.app-chrome__menu {
+.app-chrome__hamburger-menu-btn {
+  position: absolute;
+  top: 1px;
+  left: 1px;
 }
 
-.app-bar {
-  background-color: $primary-bg-colour;
-  color: $primary-text-colour;
-  padding: $small-spacing;
-}
-
-.app-bar__user-dropdown {
-  float: right;
-}
-
-.app-bar__title {
-  margin-left: 1rem;
-  font-size: 2rem;
-  vertical-align: middle;
-}
-
-.tab-item__icon {
-  width: 0.7rem;
-  margin-right: 0.3rem;
-}
-
-.app-chrome__content-tab .close-btn {
-  padding-left: 1rem;
-  border: none;
-}
-
-.close-btn:hover {
-  color: red;
+.app-chrome__content {
+  height: 100%;
 }

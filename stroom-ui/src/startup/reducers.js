@@ -33,7 +33,6 @@ import {
 } from 'components/PipelineEditor';
 import { reducer as trackerDashboard } from 'sections/TrackerDashboard';
 import { reducer as errorPage } from 'sections/ErrorPage';
-import { reducer as appChrome } from 'sections/AppChrome';
 import { reducer as config } from './config';
 
 export default combineReducers({
@@ -50,5 +49,4 @@ export default combineReducers({
   elements,
   errorPage,
   lineContainer,
-  appChrome,
 });

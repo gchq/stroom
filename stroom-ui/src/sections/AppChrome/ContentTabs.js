@@ -39,7 +39,11 @@ const ContentTabs = enhance(({ openDocRefs, docRefClosed }) => {
     }))
     .forEach(p => panes.push(p));
 
-  return <Tab renderActiveOnly={false} panes={panes} />;
+  return panes.length > 0 ? (
+    <Tab renderActiveOnly={false} panes={panes} />
+  ) : (
+    <div className="fill-space" />
+  );
 });
 
 ContentTabs.propTypes = {};
