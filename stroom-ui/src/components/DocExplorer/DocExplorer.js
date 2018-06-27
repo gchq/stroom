@@ -23,14 +23,13 @@ import { Input, Loader } from 'semantic-ui-react';
 
 import Folder from './Folder';
 import { actionCreators } from './redux';
-import { fetchDocTree, fetchDocRefTypes } from './explorerClient';
 import { withConfigReady } from 'startup/config';
-import { withTreeReady } from './withExplorerTree';
+import { requestTreeAndWait } from './withExplorerTree';
 
 const { searchTermUpdated, explorerTreeOpened } = actionCreators;
 
 const enhance = compose(
-  withTreeReady,
+  requestTreeAndWait,
   withConfigReady,
   connect(
     (state, props) => ({
@@ -40,8 +39,6 @@ const enhance = compose(
     {
       searchTermUpdated,
       explorerTreeOpened,
-      fetchDocTree,
-      fetchDocRefTypes,
     },
   ),
 
