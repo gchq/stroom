@@ -22,8 +22,6 @@ import { withNotes } from '@storybook/addon-notes';
 
 import { AppChrome } from './index';
 import ContentTabs from './ContentTabs';
-import ExplorerTabs from './ExplorerTabs';
-import AppMenu from './AppMenu';
 
 import { fromSetupSampleData } from 'components/DocExplorer/documentTree.testData.large';
 
@@ -62,7 +60,6 @@ storiesOf('App Chrome', module)
         data: k[1],
       }))
       .forEach((pipeline) => {
-        console.log('Exposing test pipeline', pipeline);
         server.get(pipeline.url).intercept((req, res) => {
           res.json(pipeline.data);
         });
@@ -72,6 +69,4 @@ storiesOf('App Chrome', module)
   .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator)
   .add('App Chrome', () => <AppChrome />)
-  .add('App Menu', () => <AppMenu />)
-  .add('Explorer Tabs', () => <ExplorerTabs />)
   .add('Content Tabs', () => <ContentTabs />);

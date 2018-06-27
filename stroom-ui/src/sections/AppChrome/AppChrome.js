@@ -15,22 +15,17 @@
  */
 import React from 'react';
 
-import AppMenu from './AppMenu';
+import { Button } from 'semantic-ui-react';
+
 import ContentTabs from './ContentTabs';
-import ExplorerTabs from './ExplorerTabs';
 
 const AppChrome = props => (
   <div className="app-chrome">
     <div className="app-chrome__menu">
-      <AppMenu />
+      <Button size="large" color="blue" icon="bars" />
     </div>
     <div className="app-chrome__tabs">
-      <div className="app-chrome__explorer-tab">
-        <ExplorerTabs />
-      </div>
-      <div className="app-chrome__content-tab">
-        <ContentTabs />
-      </div>
+      <ContentTabs />
     </div>
   </div>
 );

@@ -1,3 +1,3 @@
-import { dataSourceReducer, actionCreators } from './redux';
+import { reducer, actionCreators } from './redux';
 
-export { dataSourceReducer, actionCreators };
+export { reducer, actionCreators };

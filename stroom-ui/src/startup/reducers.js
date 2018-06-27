@@ -21,17 +21,20 @@ import {
   authenticationReducer as authentication,
   authorisationReducer as authorisation,
 } from 'startup/Authentication';
-import { lineContainerReducer as lineContainer } from 'components/LineTo';
-import { explorerTreeReducer as explorerTree } from 'components/DocExplorer';
-import { dataSourceReducer as dataSources } from 'components/ExpressionBuilder';
-import { expressionReducer as expressions } from 'components/ExpressionBuilder';
+import { reducer as lineContainer } from 'components/LineTo';
+import { reducer as explorerTree } from 'components/DocExplorer';
+import {
+  expressionReducer as expressions,
+  dataSourceReducer as dataSources,
+} from 'components/ExpressionBuilder';
 import {
   pipelineReducer as pipelines,
   elementReducer as elements,
 } from 'prototypes/PipelineEditor';
-import { trackerDashboardReducer as trackerDashboard } from 'sections/TrackerDashboard';
-import { errorPageReducer as errorPage } from 'sections/ErrorPage';
-import { configReducer as config } from './config';
+import { reducer as trackerDashboard } from 'sections/TrackerDashboard';
+import { reducer as errorPage } from 'sections/ErrorPage';
+import { reducer as appChrome } from 'sections/AppChrome';
+import { reducer as config } from './config';
 
 export default combineReducers({
   routing: routerReducer,
@@ -47,4 +50,5 @@ export default combineReducers({
   elements,
   errorPage,
   lineContainer,
+  appChrome,
 });

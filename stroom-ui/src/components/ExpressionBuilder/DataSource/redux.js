@@ -26,7 +26,7 @@ const actionCreators = createActions({
 // data source definitions, keyed on doc ref UUID
 const defaultDataSourceState = {};
 
-const dataSourceReducer = handleActions(
+const reducer = handleActions(
   {
     RECEIVE_DATA_SOURCE: (state, action) => ({
       ...state,
@@ -36,4 +36,4 @@ const dataSourceReducer = handleActions(
   defaultDataSourceState,
 );
 
-export { actionCreators, dataSourceReducer };
+export { actionCreators, reducer };

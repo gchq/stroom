@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { createActions, handleActions } from 'redux-actions';
 
-import ErrorPage from './ErrorPage';
+export const actionCreators = createActions({});
 
-export {
-  default as reducer,
-  setErrorMessageAction,
-  setStackTraceAction,
-  setHttpErrorCodeAction,
-} from './redux';
-export default ErrorPage;
+const defaultState = {
+  sideBarOpen: false,
+};
+
+export const reducer = handleActions({}, defaultState);

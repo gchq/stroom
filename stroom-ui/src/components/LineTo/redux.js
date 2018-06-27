@@ -40,7 +40,7 @@ const actionCreators = createActions({
 // State will be an object
 const defaultState = {};
 
-const lineContainerReducer = handleActions(
+const reducer = handleActions(
   {
     LINE_CONTAINER_CREATED: (state, action) => ({
       ...state,
@@ -79,4 +79,4 @@ const lineContainerReducer = handleActions(
   defaultState,
 );
 
-export { lineContainerReducer, actionCreators };
+export { reducer, actionCreators };

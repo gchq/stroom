@@ -10,24 +10,15 @@ import DocRefEditor from './DocRefEditor';
 
 const { docRefClosed } = docExplorerActionCreators;
 
-const withWelcomeTab = withState('welcomeIsOpen', 'setWelcomeIsOpen', true);
+const enhance = compose(connect(
+  (state, props) => ({
+    openDocRefs: state.explorerTree.openDocRefs,
+  }),
+  { docRefClosed },
+));
 
-const ContentTabs = ({
-  openDocRefs, setWelcomeIsOpen, welcomeIsOpen, docRefClosed,
-}) => {
+const ContentTabs = enhance(({ openDocRefs, docRefClosed }) => {
   const panes = [];
-
-  if (welcomeIsOpen) {
-    panes.push({
-      menuItem: {
-        key: 'welcome',
-        content: 'Welcome',
-      },
-      pane: (
-        <Tab.Pane key="welcome">Stroom is designed to receive data from multiple systems.</Tab.Pane>
-      ),
-    });
-  }
 
   // Add all the open doc refs
   openDocRefs
@@ -49,25 +40,8 @@ const ContentTabs = ({
     .forEach(p => panes.push(p));
 
   return <Tab renderActiveOnly={false} panes={panes} />;
-};
+});
 
-ContentTabs.propTypes = {
-  openDocRefs: PropTypes.array.isRequired,
+ContentTabs.propTypes = {};
 
-  // Redux actions
-  docRefClosed: PropTypes.func.isRequired,
-
-  // with Welcome
-  setWelcomeIsOpen: PropTypes.func.isRequired,
-  welcomeIsOpen: PropTypes.bool.isRequired,
-};
-
-export default compose(
-  connect(
-    (state, props) => ({
-      openDocRefs: state.explorerTree.openDocRefs,
-    }),
-    { docRefClosed },
-  ),
-  withWelcomeTab,
-)(ContentTabs);
+export default ContentTabs;

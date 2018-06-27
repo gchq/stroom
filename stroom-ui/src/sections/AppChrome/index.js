@@ -1,5 +1,6 @@
 import AppChrome from './AppChrome';
+import { actionCreators, reducer } from './redux';
 
-export { AppChrome };
+export { AppChrome, actionCreators, reducer };
 
 export default AppChrome;

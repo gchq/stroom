@@ -16,5 +16,5 @@
 
 import TrackerDashboard from './TrackerDashboard/TrackerDashboard';
 
-export { default as trackerDashboardReducer } from './redux';
+export { default as reducer } from './redux';
 export default TrackerDashboard;

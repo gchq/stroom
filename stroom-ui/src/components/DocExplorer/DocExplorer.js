@@ -29,8 +29,8 @@ import { requestTreeAndWait } from './withExplorerTree';
 const { searchTermUpdated, explorerTreeOpened } = actionCreators;
 
 const enhance = compose(
-  requestTreeAndWait,
   withConfigReady,
+  requestTreeAndWait,
   connect(
     (state, props) => ({
       documentTree: state.explorerTree.documentTree,
@@ -40,11 +40,6 @@ const enhance = compose(
       searchTermUpdated,
       explorerTreeOpened,
     },
-  ),
-
-  branch(
-    ({ documentTree }) => !documentTree,
-    renderComponent(() => <Loader active>Awaiting Document Tree</Loader>),
   ),
   lifecycle({
     componentDidMount() {

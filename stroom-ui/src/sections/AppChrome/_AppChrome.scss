@@ -6,23 +6,25 @@
 .app-chrome__menu {
 }
 
+.app-bar {
+  background-color: $primary-bg-colour;
+  color: $primary-text-colour;
+  padding: $small-spacing;
+}
+
+.app-bar__user-dropdown {
+  float: right;
+}
+
+.app-bar__title {
+  margin-left: 1rem;
+  font-size: 2rem;
+  vertical-align: middle;
+}
+
 .tab-item__icon {
   width: 0.7rem;
   margin-right: 0.3rem;
-}
-
-.app-chrome__tabs {
-  display: flex;
-  flex-direction: row;
-}
-
-.app-chrome__explorer-tab {
-  flex-grow: 0;
-  flex-basis: 10rem;
-}
-
-.app-chrome__content-tab {
-  flex-grow: 1;
 }
 
 .app-chrome__content-tab .close-btn {

@@ -35,7 +35,7 @@ const actionCreators = createActions({
   CLEAR_CONFIG: () => ({}),
 });
 
-const configReducer = handleActions(
+const reducer = handleActions(
   {
     UPDATE_CONFIG: (state, action) => ({
       ...state,
@@ -103,4 +103,4 @@ const requestConfigAndWait = compose(
   ),
 );
 
-export { actionCreators, configReducer, withConfigReady, requestConfigAndWait };
+export { actionCreators, reducer, withConfigReady, requestConfigAndWait };

@@ -52,9 +52,9 @@ function getToggledState(currentState, isUser) {
   }
 }
 
-const DEFAULT_EXPLORER_ID = 'default';
+export const DEFAULT_EXPLORER_ID = 'default';
 
-const actionCreators = createActions({
+export const actionCreators = createActions({
   DOC_TREE_RECEIVED: documentTree => ({ documentTree }),
   DOC_REF_TYPES_RECEIVED: docRefTypes => ({ docRefTypes }),
   EXPLORER_TREE_OPENED: (explorerId, allowMultiSelect, allowDragAndDrop, typeFilter) => ({
@@ -219,7 +219,7 @@ function getStateAfterTreeUpdate(state, documentTree) {
   };
 }
 
-const explorerTreeReducer = handleActions(
+export const reducer = handleActions(
   {
     // Receive the current state of the explorer tree
     DOC_TREE_RECEIVED: (state, action) =>
@@ -368,4 +368,3 @@ const explorerTreeReducer = handleActions(
   defaultState,
 );
 
-export { DEFAULT_EXPLORER_ID, actionCreators, explorerTreeReducer };

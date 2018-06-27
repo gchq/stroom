@@ -119,7 +119,7 @@ const splitDictionaryTermId = (value) => {
 const joinDictionaryTermId = (expressionId, termUuid) =>
   EXPRESSION_PREFIX + PICKER_DELIM + expressionId + PICKER_DELIM + termUuid;
 
-const expressionReducer = handleActions(
+const reducer = handleActions(
   {
     // Expression Changed
     EXPRESSION_CHANGED: (state, action) => ({
@@ -195,4 +195,4 @@ const expressionReducer = handleActions(
   defaultExpressionState,
 );
 
-export { actionCreators, expressionReducer, joinDictionaryTermId };
+export { actionCreators, reducer, joinDictionaryTermId };
