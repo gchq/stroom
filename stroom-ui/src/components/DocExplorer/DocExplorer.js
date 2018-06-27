@@ -25,10 +25,12 @@ import Folder from './Folder';
 import { actionCreators } from './redux';
 import { fetchDocTree, fetchDocRefTypes } from './explorerClient';
 import { withConfigReady } from 'startup/config';
+import { withTreeReady } from './withExplorerTree';
 
 const { searchTermUpdated, explorerTreeOpened } = actionCreators;
 
 const enhance = compose(
+  withTreeReady,
   withConfigReady,
   connect(
     (state, props) => ({
@@ -42,12 +44,7 @@ const enhance = compose(
       fetchDocRefTypes,
     },
   ),
-  lifecycle({
-    componentDidMount() {
-      this.props.fetchDocTree();
-      this.props.fetchDocRefTypes();
-    },
-  }),
+
   branch(
     ({ documentTree }) => !documentTree,
     renderComponent(() => <Loader active>Awaiting Document Tree</Loader>),

@@ -12,10 +12,12 @@ import { Field } from 'redux-form';
 
 import { getActualValue } from './elementDetailsUtils';
 
+import { DocRefModalPicker } from 'components/DocExplorer';
+
 import NumericInput from 'prototypes/NumericInput';
 
 const ElementFieldType = ({
-  name, type, value, defaultValue,
+  name, type, value, defaultValue, docRefTypes,
 }) => {
   let actualValue;
   switch (type) {
@@ -28,14 +30,16 @@ const ElementFieldType = ({
         <Field
           name={name}
           value={actualValue}
-          component={(props) => {
-            console.log({ props });
-            return <NumericInput {...props.input} />;
-          }}
+          component={props => <NumericInput {...props.input} />}
         />
       );
-    case 'String':
     case 'DocRef':
+      // TODO potential bug: I'm not sure why elementTypeProperties have multiple
+      // docRefTypes, but we can only use one so we'll choose the first.
+      return (
+        <DocRefModalPicker pickerId={`${name}_docRefModalPicker`} typeFilter={docRefTypes[0]} />
+      );
+    case 'String':
     case 'PipelineReference':
       actualValue = getActualValue(value, defaultValue, 'string');
       return <Field name={name} component={InputField} value={actualValue} />;
@@ -46,13 +50,19 @@ const ElementFieldType = ({
 };
 
 const ElementField = ({
-  name, description, type, defaultValue, value,
+  name, description, type, defaultValue, value, docRefTypes,
 }) => (
   <Form.Group>
     <Form.Field className="element-details__field">
       <label>{description}</label>
 
-      <ElementFieldType name={name} type={type} value={value} defaultValue={defaultValue} />
+      <ElementFieldType
+        name={name}
+        type={type}
+        docRefTypes={docRefTypes}
+        value={value}
+        defaultValue={defaultValue}
+      />
     </Form.Field>
     <Popup
       trigger={<Icon name="question circle" color="blue" size="large" />}
@@ -80,6 +90,7 @@ ElementField.propTypes = {
   name: PropTypes.string.isRequired,
   description: PropTypes.string.isRequired,
   type: PropTypes.string.isRequired,
+  docRefTypes: PropTypes.array,
   defaultValue: PropTypes.number.isRequired,
   value: PropTypes.object,
 };

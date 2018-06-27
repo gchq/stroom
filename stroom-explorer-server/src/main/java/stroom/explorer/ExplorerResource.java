@@ -66,12 +66,14 @@ public class ExplorerResource {
     public Response getDocRefTypes() {
         explorerTreeModel.rebuild();
         final TreeModel treeModel = explorerTreeModel.getModel();
+
         List<String> docRefTypes = treeModel.getChildMap().values().stream()
                 .flatMap(List::stream)
                 .map(elementNode -> elementNode == null ? "" : elementNode.getType())
                 .distinct()
                 .sorted()
                 .collect(Collectors.toList());
+
         return Response.ok(docRefTypes).build();
     }
 
@@ -102,7 +104,7 @@ public class ExplorerResource {
         return (added > 0);
     }
 
-    private boolean checkSecurity(final ExplorerNode explorerNode, final String ... requiredPermissions) {
+    private boolean checkSecurity(final ExplorerNode explorerNode, final String... requiredPermissions) {
         if (requiredPermissions == null || requiredPermissions.length == 0) {
             return false;
         }

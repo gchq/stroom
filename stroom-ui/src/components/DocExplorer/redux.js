@@ -105,6 +105,8 @@ const defaultState = {
   openDocRefs: [], // in response to user actions
   allowMultiSelect: true,
   allowDragAndDrop: true,
+  isTreeReady: false,
+  isDocRefTypeListReady:false
 };
 
 function getIsValidFilterTerm(filterTerm) {
@@ -213,6 +215,7 @@ function getStateAfterTreeUpdate(state, documentTree) {
     ...state,
     documentTree,
     explorers,
+    isTreeReady:true
   };
 }
 
@@ -228,7 +231,8 @@ const explorerTreeReducer = handleActions(
       action.payload.docRefTypes.forEach(docRefType => docRefTypes[docRefType.toUpperCase()] = docRefType)
       return {
         ...state, 
-        docRefTypes
+        docRefTypes,
+        isDocRefTypeListReady: true
       };
     },
 

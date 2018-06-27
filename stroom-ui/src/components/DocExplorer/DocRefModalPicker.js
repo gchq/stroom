@@ -25,6 +25,8 @@ import { findItem } from 'lib/treeUtils';
 import { actionCreators } from './redux';
 
 import DocExplorer from './DocExplorer';
+import { requestTreeAndWait } from './withExplorerTree';
+import { requestDocRefTypesAndWait } from './withDocRefTypes';
 
 const { docRefPicked, explorerTreeOpened } = actionCreators;
 
@@ -105,6 +107,8 @@ DocRefModalPicker.propTypes = {
 };
 
 export default compose(
+  requestTreeAndWait,
+  requestDocRefTypesAndWait,
   connect(
     (state, props) => ({
       documentTree: state.explorerTree.documentTree,
