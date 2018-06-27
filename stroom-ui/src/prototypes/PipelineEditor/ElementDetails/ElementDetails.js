@@ -88,7 +88,7 @@ const ElementDetails = enhance(({
               name={elementTypeProperty.name}
               type={elementTypeProperty.type}
               docRefTypes={
-                elementTypeProperty.docRefTypes ? elementTypeProperty.docRefTypes: undefined
+                elementTypeProperty.docRefTypes ? elementTypeProperty.docRefTypes : undefined
               }
               description={elementTypeProperty.description}
               defaultValue={parseInt(elementTypeProperty.defaultValue, 10)}

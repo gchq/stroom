@@ -16,66 +16,17 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose, lifecycle, branch, renderComponent } from 'recompose';
-import { connect } from 'react-redux';
+import { compose } from 'recompose';
 
-import { Input, Loader } from 'semantic-ui-react';
+import BasicDocExplorer from './BasicDocExplorer';
 
-import Folder from './Folder';
-import { actionCreators } from './redux';
-import { withConfigReady } from 'startup/config';
 import { requestTreeAndWait } from './withExplorerTree';
 
-const { searchTermUpdated, explorerTreeOpened } = actionCreators;
+const enhance = compose(requestTreeAndWait);
 
-const enhance = compose(
-  requestTreeAndWait,
-  withConfigReady,
-  connect(
-    (state, props) => ({
-      documentTree: state.explorerTree.documentTree,
-      explorer: state.explorerTree.explorers[props.explorerId],
-    }),
-    {
-      searchTermUpdated,
-      explorerTreeOpened,
-    },
-  ),
-
-  branch(
-    ({ documentTree }) => !documentTree,
-    renderComponent(() => <Loader active>Awaiting Document Tree</Loader>),
-  ),
-  lifecycle({
-    componentDidMount() {
-      const {
-        explorerTreeOpened,
-        explorerId,
-        allowMultiSelect,
-        allowDragAndDrop,
-        typeFilter,
-      } = this.props;
-
-      explorerTreeOpened(explorerId, allowMultiSelect, allowDragAndDrop, typeFilter);
-    },
-  }),
-  branch(
-    ({ explorer }) => !explorer,
-    renderComponent(() => <Loader active>Creating Explorer</Loader>),
-  ),
-);
-
-const DocExplorer = enhance(({
-  documentTree, explorerId, explorer, searchTermUpdated,
-}) => (
+const DocExplorer = enhance(props => (
   <div>
-    <Input
-      icon="search"
-      placeholder="Search..."
-      value={explorer.searchTerm}
-      onChange={e => searchTermUpdated(explorerId, e.target.value)}
-    />
-    <Folder explorerId={explorerId} folder={documentTree} />
+    <BasicDocExplorer {...props} />
   </div>
 ));
 

@@ -20,8 +20,7 @@ const { docRefPicked } = actionCreators;
 
 const camelize = str => str.replace(/\W+(.)/g, (match, chr) => chr.toUpperCase());
 
-const getPickerName = (elementName, settingName) =>
-  `${camelize(elementName)}_${settingName}_docRefModalPicker`;
+const getPickerName = settingName => `${settingName}_docRefModalPicker`;
 
 const enhance = compose(
   connect(
@@ -34,10 +33,9 @@ const enhance = compose(
   ),
   lifecycle({
     componentDidMount() {
-      this.props.docRefPicked(
-        getPickerName(this.props.value.element, this.props.name),
-        this.props.value.value.entity,
-      );
+      if (this.props.value) {
+        this.props.docRefPicked(getPickerName(this.props.name), this.props.value.value.entity);
+      }
     },
   }),
 );
@@ -62,12 +60,7 @@ const ElementFieldType = ({
     case 'DocRef':
       // TODO potential bug: I'm not sure why elementTypeProperties have multiple
       // docRefTypes, but we can only use one so we'll choose the first.
-      return (
-        <DocRefModalPicker
-          pickerId={getPickerName(value.element, name)}
-          typeFilter={docRefTypes[0]}
-        />
-      );
+      return <DocRefModalPicker pickerId={getPickerName(name)} typeFilter={docRefTypes[0]} />;
     case 'String':
     case 'PipelineReference':
       actualValue = getActualValue(value, defaultValue, 'string');

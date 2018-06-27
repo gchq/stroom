@@ -24,9 +24,10 @@ import { Button, Modal, Input, Loader } from 'semantic-ui-react';
 import { findItem } from 'lib/treeUtils';
 import { actionCreators } from './redux';
 
-import DocExplorer from './DocExplorer';
+import BasicDocExplorer from './BasicDocExplorer';
 import { requestTreeAndWait } from './withExplorerTree';
 import { requestDocRefTypesAndWait } from './withDocRefTypes';
+import { withConfigReady } from 'startup/config';
 
 const { docRefPicked, explorerTreeOpened } = actionCreators;
 
@@ -69,7 +70,7 @@ const DocRefModalPicker = ({
     >
       <Modal.Header>Select a Doc Ref</Modal.Header>
       <Modal.Content scrolling>
-        <DocExplorer
+        <BasicDocExplorer
           tree={tree}
           explorerId={pickerId}
           allowMultiSelect={false}
@@ -107,6 +108,7 @@ DocRefModalPicker.propTypes = {
 };
 
 export default compose(
+  withConfigReady,
   requestTreeAndWait,
   requestDocRefTypesAndWait,
   connect(
