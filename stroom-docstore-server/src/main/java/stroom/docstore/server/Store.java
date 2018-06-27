@@ -220,7 +220,7 @@ public class Store<D extends Doc> implements ExplorerActionHandler, DocumentActi
     public Set<DocRef> listDocuments() {
         final List<DocRef> list = list();
         return list.stream()
-                .filter(docRef -> securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.READ) && securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.EXPORT))
+                .filter(docRef -> securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.READ))
                 .collect(Collectors.toSet());
     }
 
@@ -228,7 +228,7 @@ public class Store<D extends Doc> implements ExplorerActionHandler, DocumentActi
     public Map<DocRef, Set<DocRef>> getDependencies() {
         final List<DocRef> list = list();
         return list.stream()
-                .filter(docRef -> securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.READ) && securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.EXPORT))
+                .filter(docRef -> securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.READ))
                 .map(d -> {
                     // We need to read the document to get the name.
                     DocRef docRef = null;
@@ -283,8 +283,6 @@ public class Store<D extends Doc> implements ExplorerActionHandler, DocumentActi
             // Check that the user has permission to read this item.
             if (!securityContext.hasDocumentPermission(type, uuid, DocumentPermissionNames.READ)) {
                 throw new PermissionException(securityContext.getUserId(), "You are not authorised to read this document " + docRef);
-            } else if (!securityContext.hasDocumentPermission(type, uuid, DocumentPermissionNames.EXPORT)) {
-                throw new PermissionException(securityContext.getUserId(), "You are not authorised to export this document " + docRef);
             } else {
                 D document = read(uuid);
                 if (document == null) {

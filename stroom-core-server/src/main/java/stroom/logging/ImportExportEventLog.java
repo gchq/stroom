@@ -31,9 +31,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.DocRefs;
-import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ExportConfigAction;
 import stroom.importexport.shared.ImportConfigAction;
+import stroom.importexport.shared.ImportState;
 import stroom.security.Insecure;
 
 import javax.annotation.Resource;
@@ -77,12 +77,16 @@ public class ImportExportEventLog {
                     try {
                         final Event event = eventLoggingService.createAction("ImportConfig", "Importing Configuration");
 
+                        String state = "Error";
+                        if (confirmation.getState() != null) {
+                            state = confirmation.getState().getDisplayValue();
+                        }
+
                         final event.logging.Object object = new event.logging.Object();
                         object.setType(confirmation.getDocRef().getType());
                         object.setId(confirmation.getDocRef().getUuid());
                         object.setName(confirmation.getSourcePath());
-                        object.getData().add(EventLoggingUtil.createData("ImportAction",
-                                confirmation.getState().getDisplayValue()));
+                        object.getData().add(EventLoggingUtil.createData("ImportAction", state));
 
                         final MultiObject multiObject = new MultiObject();
                         multiObject.getObjects().add(object);
