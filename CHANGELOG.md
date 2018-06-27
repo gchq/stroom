@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#791** : Search completion signal is now only sent to the UI once all pending search result merges are completed.
+
+* Issue **#795** : Import and export now works with appropriate application permissions. Read permission is required to export items and Create/Update permissions are required to import items depending on whether the update will create a new item or update an existing one.
 
 ## [v6.0-alpha.26]
 
@@ -949,6 +952,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#22** : Dashboard table columns can now be configured to wrap text via the format options.
 
 * Issue **#28** : Dashboard component dependencies are now listed with the component name plus the component id in brackets rather than just the component id.
+
+* Issue **#202** : Initial release of the new data retention policy functionality.
 
 [Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.26...6.0
 [v6.0-alpha.26]: https://github.com/gchq/stroom/compare/v6.0-alpha.54...v6.0-alpha.26

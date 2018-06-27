@@ -359,13 +359,13 @@ public class DefaultProperties {
         list.add(new GlobalProperty.Builder()
                 .name("stroom.search.process.defaultTimeLimit")
                 .value("30")
-                .description("The default number of minutes that search processing will be limited by.")
+                .description("The default number of minutes that batch search processing will be limited by.")
                 .editable(true)
                 .build());
         list.add(new GlobalProperty.Builder()
                 .name("stroom.search.process.defaultRecordLimit")
                 .value("1000000")
-                .description("The default number of records that search processing will be limited by.")
+                .description("The default number of records that batch search processing will be limited by.")
                 .editable(true)
                 .build());
 
