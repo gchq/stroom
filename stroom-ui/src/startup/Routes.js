@@ -26,7 +26,7 @@ import Graph from 'prototypes/Graph';
 import TrackerDashboard from 'sections/TrackerDashboard';
 import AppChrome from 'sections/AppChrome';
 import { AuthenticationRequest, HandleAuthenticationResponse } from 'startup/Authentication';
-import { PipelineEditor } from 'prototypes/PipelineEditor';
+import { PipelineEditor } from 'components/PipelineEditor';
 import DocExplorer from 'components/DocExplorer';
 
 import PathNotFound from 'sections/PathNotFound';

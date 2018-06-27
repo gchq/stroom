@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { testPipelines } from 'prototypes/PipelineEditor/test';
+import { testPipelines } from 'components/PipelineEditor/test';
 
 const DOC_REF_TYPES = {
   FOLDER: 'Folder',

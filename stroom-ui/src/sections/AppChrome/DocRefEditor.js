@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import PipelineEditor from 'prototypes/PipelineEditor';
+import PipelineEditor from 'components/PipelineEditor';
 
 const DocRefEditor = ({ docRef }) => {
   switch (docRef.type) {

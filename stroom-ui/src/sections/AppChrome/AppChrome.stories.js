@@ -32,7 +32,7 @@ import { PollyDecorator } from 'lib/storybook/PollyDecorator';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
 import { testTree } from './test';
-import { testPipelines } from 'prototypes/PipelineEditor/test';
+import { testPipelines } from 'components/PipelineEditor/test';
 
 import 'styles/main.css';
 

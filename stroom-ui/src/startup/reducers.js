@@ -30,7 +30,7 @@ import {
 import {
   pipelineReducer as pipelines,
   elementReducer as elements,
-} from 'prototypes/PipelineEditor';
+} from 'components/PipelineEditor';
 import { reducer as trackerDashboard } from 'sections/TrackerDashboard';
 import { reducer as errorPage } from 'sections/ErrorPage';
 import { reducer as appChrome } from 'sections/AppChrome';
