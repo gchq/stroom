@@ -224,12 +224,32 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                     final StreamType streamType = streamTypeService.load(stream.getStreamType());
                     if (streamType.isStreamTypeProcessed()) {
                         processedStreams.add(stream);
+                    } else if (streamType.isStreamTypeError()) {
+                        try (StreamSource errorStreamSource = streamStore.openStreamSource(streamId)) {
+                            //got an error stream so dump it to console
+
+                            Stream parentStream = streamStore.loadStreamById(stream.getParentStreamId());
+                            StreamType parentStreamType = streamTypeService.load(parentStream.getStreamType());
+
+                            String errorStreamStr = StreamUtil.streamToString(errorStreamSource.getInputStream());
+                            java.util.stream.Stream<String> errorStreamLines = StreamUtil.streamToLines(errorStreamSource.getInputStream());
+                            LOGGER.warn("Stream {} with parent {} of type {} has errors:\n{}",
+                                    stream, parentStream.getId(), parentStreamType.getName(), errorStreamStr);
+
+//                            // only dump warning if debug enabled
+//                            if (LOGGER.isDebugEnabled()) {
+//                                errorStreamLines.forEach(System.out::println);
+//
+//                            } else {
+//                                errorStreamLines
+//                                        .filter(line -> line.contains("ERROR:"))
+//                                        .forEach(System.out::println);
+//                            }
+                        }
                     }
                 }
 
                 // Make sure we have at least one processed stream else it indicates an error in processing somewhere
-                // TODO : If we get an error stream would be good to dump it out to make debugging easier
-                // or you can just run the pipeline in stroom
                 Assert.assertTrue(processedStreams.size() > 0);
 
                 // Copy the contents of the latest written stream to the output.
