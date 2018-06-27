@@ -19,6 +19,8 @@ import { branch, compose, renderComponent, lifecycle } from 'recompose';
 import { Loader } from 'semantic-ui-react';
 import { fetchDocTree } from './explorerClient';
 
+const loader = <Loader active>Awaiting explorer tree data </Loader>;
+
 /**
  * Higher Order Component that ensures that the explorer tree has been set.
  */
@@ -29,7 +31,7 @@ const withTreeReady = compose(
     }),
     {},
   ),
-  branch(({ treeIsReady }) => !treeIsReady, renderComponent(() => <Loader active />)),
+  branch(({ treeIsReady }) => !treeIsReady, renderComponent(() => loader)),
 );
 
 /**
@@ -50,7 +52,7 @@ const requestTreeAndWait = compose(
       this.props.fetchDocTree();
     },
   }),
-  branch(({ treeIsReady }) => !treeIsReady, renderComponent(() => <Loader active />)),
+  branch(({ treeIsReady }) => !treeIsReady, renderComponent(() => loader)),
 );
 
 export { withTreeReady, requestTreeAndWait };

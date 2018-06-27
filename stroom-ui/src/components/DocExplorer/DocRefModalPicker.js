@@ -24,15 +24,45 @@ import { Button, Modal, Input, Loader } from 'semantic-ui-react';
 import { findItem } from 'lib/treeUtils';
 import { actionCreators } from './redux';
 
-import DocExplorer from './DocExplorer';
+import BasicDocExplorer from './BasicDocExplorer';
 import { requestTreeAndWait } from './withExplorerTree';
 import { requestDocRefTypesAndWait } from './withDocRefTypes';
+import { withConfigReady } from 'startup/config';
 
 const { docRefPicked, explorerTreeOpened } = actionCreators;
 
 const withModal = withState('isOpen', 'setIsOpen', false);
 
-const DocRefModalPicker = ({
+const enhance = compose(
+  withConfigReady,
+  requestTreeAndWait,
+  requestDocRefTypesAndWait,
+  connect(
+    (state, props) => ({
+      documentTree: state.explorerTree.documentTree,
+      docRef: state.explorerTree.pickedDocRefs[props.pickerId],
+      explorer: state.explorerTree.explorers[props.pickerId],
+    }),
+    {
+      // actions
+      docRefPicked,
+      explorerTreeOpened,
+    },
+  ),
+  lifecycle({
+    componentDidMount() {
+      const { explorerTreeOpened, pickerId, typeFilter } = this.props;
+      explorerTreeOpened(pickerId, false, false, typeFilter);
+    },
+  }),
+  withModal,
+  branch(
+    ({ explorer }) => !explorer,
+    renderComponent(() => <Loader active>Loading Explorer</Loader>),
+  ),
+);
+
+const DocRefModalPicker = enhance(({
   isSelected,
   documentTree,
   docRefPicked,
@@ -69,7 +99,7 @@ const DocRefModalPicker = ({
     >
       <Modal.Header>Select a Doc Ref</Modal.Header>
       <Modal.Content scrolling>
-        <DocExplorer
+        <BasicDocExplorer
           tree={tree}
           explorerId={pickerId}
           allowMultiSelect={false}
@@ -91,45 +121,11 @@ const DocRefModalPicker = ({
       </Modal.Actions>
     </Modal>
   );
-};
+});
 
 DocRefModalPicker.propTypes = {
   pickerId: PropTypes.string.isRequired,
-  documentTree: PropTypes.object.isRequired,
-  explorer: PropTypes.object.isRequired,
-
   typeFilter: PropTypes.string,
-  docRef: PropTypes.object,
-  docRefPicked: PropTypes.func.isRequired,
-  isOpen: PropTypes.bool.isRequired,
-
-  setIsOpen: PropTypes.func.isRequired,
 };
 
-export default compose(
-  requestTreeAndWait,
-  requestDocRefTypesAndWait,
-  connect(
-    (state, props) => ({
-      documentTree: state.explorerTree.documentTree,
-      docRef: state.explorerTree.pickedDocRefs[props.pickerId],
-      explorer: state.explorerTree.explorers[props.pickerId],
-    }),
-    {
-      // actions
-      docRefPicked,
-      explorerTreeOpened,
-    },
-  ),
-  lifecycle({
-    componentDidMount() {
-      const { explorerTreeOpened, pickerId, typeFilter } = this.props;
-      explorerTreeOpened(pickerId, false, false, typeFilter);
-    },
-  }),
-  withModal,
-  branch(
-    ({ explorer }) => !explorer,
-    renderComponent(() => <Loader active>Loading Explorer</Loader>),
-  ),
-)(DocRefModalPicker);
+export default DocRefModalPicker;

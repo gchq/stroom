@@ -15,10 +15,20 @@
  */
 import { createActions, handleActions } from 'redux-actions';
 
-export const actionCreators = createActions({});
+export const actionCreators = createActions({
+  SET_SIDEBAR_OPEN: sideBarOpen => ({ sideBarOpen }),
+});
 
 const defaultState = {
   sideBarOpen: false,
 };
 
-export const reducer = handleActions({}, defaultState);
+export const reducer = handleActions(
+  {
+    SET_SIDEBAR_OPEN: (state, action) => ({
+      ...state,
+      sideBarOpen: action.payload.sideBarOpen,
+    }),
+  },
+  defaultState,
+);

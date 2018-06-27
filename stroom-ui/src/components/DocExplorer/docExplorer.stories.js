@@ -26,7 +26,7 @@ import { actionCreators } from './redux';
 
 import markdown from './docExplorer.md';
 import { testTree, DOC_REF_TYPES } from './documentTree.testData';
-import { fromSetupSampleData } from './documentTree.testData.large';
+import { fromSetupSampleData, docRefsFromSetupSampleData } from './documentTree.testData.large';
 
 import { pickRandomItem } from 'lib/treeUtils';
 
@@ -52,6 +52,11 @@ storiesOf('Document Explorer (from setupSampleData)', module)
   .addDecorator(PollyDecorator((server, config) => {
     server.get(`${config.explorerServiceUrl}/all`).intercept((req, res) => {
       res.json(fromSetupSampleData);
+    });
+  }))
+  .addDecorator(PollyDecorator((server, config) => {
+    server.get(`${config.explorerServiceUrl}/docRefTypes`).intercept((req, res) => {
+      res.json(docRefsFromSetupSampleData);
     });
   }))
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {

@@ -14,12 +14,24 @@
  * limitations under the License.
  */
 import React from 'react';
-
+import { connect } from 'react-redux';
 import { Button } from 'semantic-ui-react';
 
 import ContentTabs from './ContentTabs';
+import { actionCreators } from './redux';
 
-const AppChrome = props => (
+const { setSidebarOpen } = actionCreators;
+
+const enhance = connect(
+  (state, props) => ({
+    sideBarOpen: state.appChrome.sideBarOpen,
+  }),
+  {
+    setSidebarOpen,
+  },
+);
+
+const AppChrome = ({ setSidebarOpen, sideBarOpen }) => (
   <div className="app-chrome">
     <div className="app-chrome__menu">
       <Button size="large" color="blue" icon="bars" />
