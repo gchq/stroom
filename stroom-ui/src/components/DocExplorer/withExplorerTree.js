@@ -18,6 +18,7 @@ import { connect } from 'react-redux';
 import { branch, compose, renderComponent, lifecycle } from 'recompose';
 import { Loader } from 'semantic-ui-react';
 import { fetchDocTree } from './explorerClient';
+import { withConfigReady } from 'startup/config';
 
 const loader = <Loader active>Awaiting explorer tree data </Loader>;
 
@@ -47,6 +48,7 @@ const requestTreeAndWait = compose(
       fetchDocTree,
     },
   ),
+  withConfigReady,
   lifecycle({
     componentDidMount() {
       this.props.fetchDocTree();

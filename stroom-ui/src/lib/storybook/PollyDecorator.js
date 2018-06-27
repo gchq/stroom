@@ -48,6 +48,8 @@ const enhanceLocal = compose(
   }),
   lifecycle({
     componentDidMount() {
+      // server.any().passthrough();
+
       // Registers any custom API endpoints
       this.props.serverInit(server, testConfig);
 

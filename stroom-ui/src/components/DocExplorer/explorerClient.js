@@ -16,7 +16,7 @@ export const fetchDocTree = () => (dispatch, getState) => {
   const jwsToken = state.authentication.idToken;
 
   const url = `${state.config.explorerServiceUrl}/all`;
-
+  console.log('Fetching Doc Tree with ', url);
   fetch(url, {
     headers: {
       Accept: 'application/json',

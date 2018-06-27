@@ -25,8 +25,7 @@ import { DocExplorer, DocRef, Folder, DocRefModalPicker, DocRefDropdownPicker } 
 import { actionCreators } from './redux';
 
 import markdown from './docExplorer.md';
-import { testTree, DOC_REF_TYPES } from './documentTree.testData';
-import { fromSetupSampleData, docRefsFromSetupSampleData } from './documentTree.testData.large';
+import { testTree, DOC_REF_TYPES, fromSetupSampleData, docRefsFromSetupSampleData } from './test';
 
 import { pickRandomItem } from 'lib/treeUtils';
 
@@ -43,6 +42,9 @@ storiesOf('Document Explorer (small testTree)', module)
     server.get(`${config.explorerServiceUrl}/all`).intercept((req, res) => {
       res.json(testTree);
     });
+    server.get(`${config.explorerServiceUrl}/docRefTypes`).intercept((req, res) => {
+      res.json(docRefsFromSetupSampleData);
+    });
   }))
   .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator)
@@ -53,8 +55,6 @@ storiesOf('Document Explorer (from setupSampleData)', module)
     server.get(`${config.explorerServiceUrl}/all`).intercept((req, res) => {
       res.json(fromSetupSampleData);
     });
-  }))
-  .addDecorator(PollyDecorator((server, config) => {
     server.get(`${config.explorerServiceUrl}/docRefTypes`).intercept((req, res) => {
       res.json(docRefsFromSetupSampleData);
     });

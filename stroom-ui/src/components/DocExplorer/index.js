@@ -17,8 +17,7 @@ import DocExplorer from './DocExplorer';
 import DocRefModalPicker from './DocRefModalPicker';
 import DocRefDropdownPicker from './DocRefDropdownPicker';
 import { actionCreators, reducer } from './redux';
-
-import { testTree } from './documentTree.testData';
+import { withTreeReady, requestTreeAndWait } from './withExplorerTree';
 
 export {
   DocExplorer,
@@ -26,8 +25,8 @@ export {
   DocRefDropdownPicker,
   actionCreators,
   reducer,
-  // Test exports
-  testTree,
+  withTreeReady,
+  requestTreeAndWait,
 };
 
 export default DocExplorer;

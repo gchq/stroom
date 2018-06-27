@@ -73,6 +73,12 @@ $palette-width: 12rem;
   padding-left: 2px;
 }
 
+.Pipeline-editor__top-bar {
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: row;
+}
+
 .Pipeline-editor__graph {
   background-color: #fafafa;
   flex: 1;
@@ -81,11 +87,6 @@ $palette-width: 12rem;
   overflow: scroll;
   overflow-y: scroll;
   overflow-x: auto;
-}
-
-.Pipeline-editor__bin {
-  align-self: flex-end;
-  margin: 1rem;
 }
 
 .Pipeline-editor__content {

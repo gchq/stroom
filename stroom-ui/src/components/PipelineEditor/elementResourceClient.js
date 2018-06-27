@@ -17,7 +17,7 @@ export const fetchElements = () => (dispatch, getState) => {
   const jwsToken = state.authentication.idToken;
 
   const url = `${state.config.elementServiceUrl}/elements`;
-
+  
   fetch(url, {
     headers: {
       Accept: 'application/json',

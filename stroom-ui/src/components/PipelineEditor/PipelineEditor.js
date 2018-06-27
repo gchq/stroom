@@ -20,7 +20,7 @@ import { Icon } from 'semantic-ui-react';
 
 import { compose, lifecycle, withState, branch, renderComponent, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Loader } from 'semantic-ui-react';
+import { Loader, Form } from 'semantic-ui-react';
 
 import { LineContainer, LineTo } from 'components/LineTo';
 import { mapObject } from 'lib/treeUtils';
@@ -33,6 +33,7 @@ import SavePipeline from './SavePipeline';
 
 import lineElementCreators from './pipelineLineElementCreators';
 import { ElementDetails } from './ElementDetails';
+import { DocRefModalPicker, actionCreators as docExplorerActionCreators } from '../DocExplorer';
 
 import { fetchPipeline } from './pipelineResourceClient';
 import { fetchElements, fetchElementProperties } from './elementResourceClient';
@@ -54,7 +55,7 @@ const enhance = compose(
   connect(
     (state, props) => ({
       pipeline: state.pipelines[props.pipelineId],
-      elements: state.elements
+      elements: state.elements,
     }),
     {
       // action, needed by lifecycle hook below
@@ -68,6 +69,7 @@ const enhance = compose(
       const {
         fetchElements, fetchElementProperties, fetchPipeline, pipelineId,
       } = this.props;
+      
       fetchElements();
       fetchElementProperties();
       fetchPipeline(pipelineId);
@@ -81,24 +83,26 @@ const enhance = compose(
     ({ pipeline }) => !pipeline.pipeline,
     renderComponent(() => <Loader active>Loading Pipeline Data</Loader>),
   ),
-  branch(({ elements }) => !elements, renderComponent(() => <Loader active>Loading Elements</Loader>)),
+  branch(
+    ({ elements }) => !elements.elements,
+    renderComponent(() => <Loader active>Loading Elements</Loader>),
+  ),
   withPaletteOpen,
   withElementDetailsOpen,
   withProps(({ pipeline, setPaletteOpen, isPaletteOpen }) => ({
-      elementStyles: mapObject(getPipelineLayoutInformation(pipeline.asTree), (l) => {
-        const index = l.verticalPos - 1;
-        const fromTop = VERTICAL_START_PX + index * VERTICAL_SPACING;
-        const fromLeft = HORIZONTAL_START_PX + l.horizontalPos * HORIZONTAL_SPACING;
+    elementStyles: mapObject(getPipelineLayoutInformation(pipeline.asTree), (l) => {
+      const index = l.verticalPos - 1;
+      const fromTop = VERTICAL_START_PX + index * VERTICAL_SPACING;
+      const fromLeft = HORIZONTAL_START_PX + l.horizontalPos * HORIZONTAL_SPACING;
 
-        return {
-          ...COMMON_ELEMENT_STYLE,
-          top: `${fromTop}px`,
-          left: `${fromLeft}px`,
-        };
-      }),
-      togglePaletteOpen: () => setPaletteOpen(!isPaletteOpen),
-    }
-  )),
+      return {
+        ...COMMON_ELEMENT_STYLE,
+        top: `${fromTop}px`,
+        left: `${fromLeft}px`,
+      };
+    }),
+    togglePaletteOpen: () => setPaletteOpen(!isPaletteOpen),
+  })),
 );
 
 const PipelineEditor = enhance(({
@@ -110,11 +114,9 @@ const PipelineEditor = enhance(({
   setElementDetailsOpen,
   editorClassName,
   elementStyles,
-  savePipeline
+  savePipeline,
 }) => (
-  <div
-    className={`Pipeline-editor Pipeline-editor--palette-${isPaletteOpen ? 'open' : 'close'}`}
-  >
+  <div className={`Pipeline-editor Pipeline-editor--palette-${isPaletteOpen ? 'open' : 'close'}`}>
     <div className="Pipeline-editor__element-palette">
       <ElementPalette pipelineId={pipelineId} />
     </div>
@@ -124,15 +126,22 @@ const PipelineEditor = enhance(({
     </button>
 
     <div className="Pipeline-editor__content">
+      <div className="Pipeline-editor__top-bar">
+        <SavePipeline pipelineId={pipelineId} />
+        <Bin pipelineId={pipelineId} />
+        <Form>
+          <Form.Field>
+            <label>Parent Pipeline</label>
+            <DocRefModalPicker pickerId={pipelineId} typeFilter="Pipeline" />
+          </Form.Field>
+        </Form>
+      </div>
       <LineContainer
         className="Pipeline-editor__graph"
         lineContextId={`pipeline-lines-${pipelineId}`}
         lineElementCreators={lineElementCreators}
       >
-        <div className="Pipeline-editor__bin">
-          <SavePipeline pipelineId={pipelineId}/>
-          <Bin pipelineId={pipelineId} />
-        </div>
+        <div className="Pipeline-editor__bin" />
         <div className="Pipeline-editor__elements">
           {Object.keys(elementStyles)
               .map(es => pipeline.pipeline.merged.elements.add.find(e => e.id === es))

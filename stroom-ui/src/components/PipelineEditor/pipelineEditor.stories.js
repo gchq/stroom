@@ -20,6 +20,8 @@ import { storiesOf, addDecorator } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 import { withNotes } from '@storybook/addon-notes';
 
+import { compose } from 'recompose';
+
 import { ReduxDecoratorWithInitialisation, ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 import { PollyDecorator } from 'lib/storybook/PollyDecorator';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
@@ -30,21 +32,31 @@ import PipelineElement from './PipelineElement';
 import { ElementPalette } from './ElementPalette';
 import { ElementDetails } from './ElementDetails';
 
-import { actionCreators } from './redux';
+import { actionCreators as pipelineActionCreators } from './redux';
+import { actionCreators as docExplorerActionCreators } from 'components/DocExplorer';
 
 import 'styles/main.css';
 
-import { testPipelines, elements, elementProperties } from './test';
+import { testTree, testPipelines, elements, elementProperties } from './test';
+
+import { requestTreeAndWait } from 'components/DocExplorer';
+
+import { docRefsFromSetupSampleData } from 'components/DocExplorer/test';
 
 const {
   pipelineReceived,
   elementsReceived,
   elementPropertiesReceived,
   pipelineElementSelected,
-} = actionCreators;
+} = pipelineActionCreators;
+
+const { docTreeReceived } = docExplorerActionCreators;
 
 const pipelineStories = storiesOf('Pipeline Editor', module)
   .addDecorator(PollyDecorator((server, config) => {
+    server.get(`${config.explorerServiceUrl}/docRefTypes`).intercept((req, res) => {
+      res.json(docRefsFromSetupSampleData);
+    });
     server.get(`${config.elementServiceUrl}/elements`).intercept((req, res) => {
       res.json(elements);
     });
@@ -63,7 +75,9 @@ const pipelineStories = storiesOf('Pipeline Editor', module)
         server.post(pipeline.url).intercept((req, res) => res.sendStatus(200));
       });
   }))
-  .addDecorator(ReduxDecorator)
+  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
+    store.dispatch(docTreeReceived(testTree));
+  })) // must be recorder after/outside of the test initialisation decorators
   .addDecorator(DragDropDecorator);
 
 Object.keys(testPipelines).forEach(k =>
@@ -71,16 +85,29 @@ Object.keys(testPipelines).forEach(k =>
 
 storiesOf('Element Palette', module)
   .addDecorator(PollyDecorator((server, config) => {
+    server.get(`${config.explorerServiceUrl}/docRefTypes`).intercept((req, res) => {
+      res.json(docRefsFromSetupSampleData);
+    });
     server.get(`${config.elementServiceUrl}/elements`).intercept((req, res) => {
       res.json(elements);
     });
     server.get(`${config.elementServiceUrl}/elementProperties`).intercept((req, res) => {
       res.json(elementProperties);
     });
+    Object.entries(testPipelines)
+      .map(k => ({
+        url: `${config.pipelineServiceUrl}/${k[0]}`,
+        data: k[1],
+      }))
+      .forEach((pipeline) => {
+        server.get(pipeline.url).intercept((req, res) => {
+          res.json(pipeline.data);
+        });
+        server.post(pipeline.url).intercept((req, res) => res.sendStatus(200));
+      });
   }))
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(elementsReceived(elements));
-    store.dispatch(elementPropertiesReceived(elementProperties));
+    store.dispatch(docTreeReceived(testTree));
   })) // must be recorder after/outside of the test initialisation decorators
   .addDecorator(DragDropDecorator)
   .add('Element Palette', () => <ElementPalette />);

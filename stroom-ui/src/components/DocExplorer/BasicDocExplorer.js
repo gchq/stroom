@@ -23,13 +23,11 @@ import { Input, Loader } from 'semantic-ui-react';
 
 import Folder from './Folder';
 import { actionCreators } from './redux';
-import { withConfigReady } from 'startup/config';
 import { withTreeReady } from './withExplorerTree';
 
 const { searchTermUpdated, explorerTreeOpened } = actionCreators;
 
 const enhance = compose(
-  withConfigReady,
   withTreeReady,
   connect(
     (state, props) => ({

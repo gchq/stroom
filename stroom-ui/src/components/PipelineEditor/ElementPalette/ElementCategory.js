@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose, withState, withProps } from 'recompose';
+import { compose, withState, withProps, branch, renderNothing } from 'recompose';
 
 import { Icon, Accordion } from 'semantic-ui-react';
 
@@ -15,6 +15,7 @@ const enhance = compose(
   withProps(({ category }) => ({
     displayTitle: ElementCategories[category] ? ElementCategories[category].displayName : category,
   })),
+  branch(({ elementsWithData }) => elementsWithData.length === 0, renderNothing),
 );
 
 const ElementCategory = enhance(({

@@ -23,7 +23,7 @@ import { withNotes } from '@storybook/addon-notes';
 import { AppChrome } from './index';
 import ContentTabs from './ContentTabs';
 
-import { fromSetupSampleData } from 'components/DocExplorer/documentTree.testData.large';
+import { fromSetupSampleData } from 'components/DocExplorer/test';
 
 import { actionCreators as docExplorerActionCreators } from 'components/DocExplorer/redux';
 
@@ -31,8 +31,7 @@ import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 import { PollyDecorator } from 'lib/storybook/PollyDecorator';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
-import { testTree } from './test';
-import { testPipelines } from 'components/PipelineEditor/test';
+import { testTree, testPipelines } from 'components/PipelineEditor/test';
 
 import 'styles/main.css';
 

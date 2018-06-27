@@ -14,25 +14,12 @@
  * limitations under the License.
  */
 
-import { testPipelines } from 'components/PipelineEditor/test';
+import testPipelines from './testPipelines';
 
-const DOC_REF_TYPES = {
-  FOLDER: 'Folder',
-  DICTIONARY: 'Dictionary',
-  XSLT: 'XSLT',
-  TextConverter: 'TextConverter',
-  ElasticIndex: 'ElasticIndex',
-  AnnotationsIndex: 'AnnotationsIndex',
-  Pipeline: 'Pipeline',
-  Index: 'Index',
-  Dashboard: 'Dashboard',
-  Visualisation: 'Visualisation',
-};
-
-const testTree = {
+export default {
   uuid: 'root1234567890',
   name: 'Stroom',
-  type: DOC_REF_TYPES.FOLDER,
+  type: 'Folder',
   children: Object.entries(testPipelines)
     .map(k => ({
       uuid: k[0],
@@ -40,9 +27,7 @@ const testTree = {
     }))
     .map(pipeline => ({
       uuid: pipeline.uuid,
-      type: DOC_REF_TYPES.Pipeline,
+      type: 'Pipeline',
       name: pipeline.uuid,
     })),
 };
-
-export { DOC_REF_TYPES, testTree };

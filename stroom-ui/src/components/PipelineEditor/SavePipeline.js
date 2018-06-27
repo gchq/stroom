@@ -16,17 +16,13 @@ const enhance = connect(
 );
 
 const SavePipeline = enhance(({ isDirty, pipelineId, savePipeline }) => (
-  <React.Fragment>
-    <Button
-      circular
-      disabled={!isDirty}
-      color="blue"
-      icon="save"
-      size="huge"
-      onClick={() => savePipeline(pipelineId)}
-    />
-    {isDirty ? '*' : undefined}
-  </React.Fragment>
+  <Button
+    disabled={!isDirty}
+    color="blue"
+    icon="save"
+    size="huge"
+    onClick={() => savePipeline(pipelineId)}
+  />
 ));
 
 SavePipeline.propTypes = {

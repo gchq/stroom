@@ -27,14 +27,12 @@ import { actionCreators } from './redux';
 import BasicDocExplorer from './BasicDocExplorer';
 import { requestTreeAndWait } from './withExplorerTree';
 import { requestDocRefTypesAndWait } from './withDocRefTypes';
-import { withConfigReady } from 'startup/config';
 
 const { docRefPicked, explorerTreeOpened } = actionCreators;
 
 const withModal = withState('isOpen', 'setIsOpen', false);
 
 const enhance = compose(
-  withConfigReady,
   requestTreeAndWait,
   requestDocRefTypesAndWait,
   connect(
