@@ -17,7 +17,6 @@
 
 package stroom.refdata.offheapstore;
 
-import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -84,7 +83,7 @@ public interface RefDataStore {
      */
     boolean consumeValueBytes(final MapDefinition mapDefinition,
                               final String key,
-                              final Consumer<ByteBuffer> valueBytesConsumer);
+                              final Consumer<TypedByteBuffer> valueBytesConsumer);
 
 //    void consumeValue(final ValueStoreKey valueStoreKey,
 //                      final Consumer<RefDataValue> valueConsumer);

@@ -165,6 +165,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
 
 
     ReferenceDataResult getReferenceData(final LookupIdentifier lookupIdentifier) {
+        LOGGER.trace("getReferenceData({})", lookupIdentifier);
         final ReferenceDataResult result = new ReferenceDataResult();
 
         result.log(Severity.INFO, () -> "Doing lookup " + lookupIdentifier);

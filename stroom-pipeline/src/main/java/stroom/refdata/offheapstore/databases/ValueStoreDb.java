@@ -31,6 +31,7 @@ import stroom.refdata.lmdb.LmdbUtils;
 import stroom.refdata.offheapstore.ByteArrayUtils;
 import stroom.refdata.offheapstore.ByteBufferPool;
 import stroom.refdata.offheapstore.RefDataValue;
+import stroom.refdata.offheapstore.TypedByteBuffer;
 import stroom.refdata.offheapstore.ValueStoreKey;
 import stroom.refdata.offheapstore.serdes.RefDataValueSerde;
 import stroom.refdata.offheapstore.serdes.ValueStoreKeySerde;
@@ -315,9 +316,9 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                 .map(valueSerde::deserialize);
     }
 
-    public Optional<ByteBuffer> getValueBytes(final Txn<ByteBuffer> txn, final ByteBuffer keyBuffer) {
+    public Optional<TypedByteBuffer> getValueBytes(final Txn<ByteBuffer> txn, final ByteBuffer keyBuffer) {
         return getAsBytes(txn, keyBuffer)
-                .map(valueSerde::extractValueBuffer);
+                .map(valueSerde::extractTypedValueBuffer);
     }
 
     private ByteBuffer buildStartKeyBuffer(final RefDataValue value) {

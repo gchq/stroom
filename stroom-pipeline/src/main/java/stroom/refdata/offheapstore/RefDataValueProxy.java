@@ -17,7 +17,6 @@
 
 package stroom.refdata.offheapstore;
 
-import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -64,12 +63,12 @@ public class RefDataValueProxy {
 
     /**
      * If a reference data entry exists for this {@link RefDataValueProxy} pass its value to the consumer
-     * as a {@link ByteBuffer}.
-     * @param bytesConsumer
+     * as a {@link TypedByteBuffer}.
+     * @param typedByteBufferConsumer
      * @return True if the entry is found and the consumer is called.
      */
-    public boolean consumeBytes(final Consumer<ByteBuffer> bytesConsumer) {
-        return refDataStore.consumeValueBytes(mapDefinition, key, bytesConsumer);
+    public boolean consumeBytes(final Consumer<TypedByteBuffer> typedByteBufferConsumer) {
+        return refDataStore.consumeValueBytes(mapDefinition, key, typedByteBufferConsumer);
     }
 
     @Override

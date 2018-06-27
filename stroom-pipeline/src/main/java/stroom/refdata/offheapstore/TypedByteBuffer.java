@@ -18,6 +18,7 @@
 package stroom.refdata.offheapstore;
 
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 public class TypedByteBuffer {
 
@@ -26,7 +27,7 @@ public class TypedByteBuffer {
 
     public TypedByteBuffer(final int typeId, final ByteBuffer byteBuffer) {
         this.typeId = typeId;
-        this.byteBuffer = byteBuffer;
+        this.byteBuffer = Objects.requireNonNull(byteBuffer);
     }
 
     int getTypeId() {

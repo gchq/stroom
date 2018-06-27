@@ -229,43 +229,49 @@ public class RefDataOffHeapStore implements RefDataStore {
     private Optional<ByteBuffer> getValueStoreKey(final Txn<ByteBuffer> readTxn,
                                                   final MapDefinition mapDefinition,
                                                   final String key) {
+        LOGGER.trace("getValueStoreKey({}, {})", mapDefinition, key);
 
-        final UID mapUid = mapUidForwardDb.get(readTxn, mapDefinition)
-                .orElseThrow(() ->
-                        new RuntimeException(LambdaLogger.buildMessage(
-                                "Could not find UID for mapDefinition {}", mapDefinition
-                        )));
+        final Optional<UID> optMapUid = mapUidForwardDb.get(readTxn, mapDefinition);
 
-        //do the lookup in the kv store first
-        final KeyValueStoreKey keyValueStoreKey = new KeyValueStoreKey(mapUid, key);
-        final ByteBuffer keyValueStoreKeyBuf = keyValueStoreDb.getKeySerde().serialize(keyValueStoreKey);
-        Optional<ByteBuffer> optValueStoreKey = keyValueStoreDb.getAsBytes(readTxn, keyValueStoreKeyBuf);
+        Optional<ByteBuffer> optValueStoreKey;
+        if (optMapUid.isPresent()) {
+            LOGGER.trace("Found map UID {}", optMapUid);
+            //do the lookup in the kv store first
+            final UID mapUid = optMapUid.get();
+            final KeyValueStoreKey keyValueStoreKey = new KeyValueStoreKey(optMapUid.get(), key);
+            final ByteBuffer keyValueStoreKeyBuf = keyValueStoreDb.getKeySerde().serialize(keyValueStoreKey);
+            optValueStoreKey = keyValueStoreDb.getAsBytes(readTxn, keyValueStoreKeyBuf);
 
-        if (!optValueStoreKey.isPresent()) {
-            //not found in the kv store so look in the keyrange store instead
+            if (!optValueStoreKey.isPresent()) {
+                //not found in the kv store so look in the keyrange store instead
 
-            try {
-                // speculative lookup in the range store. At this point we don't know if we have
-                // any ranges for this mapdef or not, but either way we need a call to LMDB so
-                // just do the range lookup
-                final long keyLong = Long.parseLong(key);
+                try {
+                    // speculative lookup in the range store. At this point we don't know if we have
+                    // any ranges for this mapdef or not, but either way we need a call to LMDB so
+                    // just do the range lookup
+                    final long keyLong = Long.parseLong(key);
 
-                // look up our long key in the range store to see if it is part of a range
-                optValueStoreKey = rangeStoreDb.getAsBytes(readTxn, mapUid, keyLong);
+                    // look up our long key in the range store to see if it is part of a range
+                    optValueStoreKey = rangeStoreDb.getAsBytes(readTxn, mapUid, keyLong);
 
-            } catch (NumberFormatException e) {
-                // key could not be converted to a long, either this mapdef has no ranges or
-                // an invalid key was used. See if we have any ranges at all for this mapdef
-                // to determine whether to error or not.
-                boolean doesStoreContainRanges = rangeStoreDb.containsMapDefinition(readTxn, mapUid);
-                if (doesStoreContainRanges) {
-                    // we have ranges for this map def so we would expect to be able to convert the key
-                    throw new RuntimeException(LambdaLogger.buildMessage(
-                            "Key {} cannot be used with the range store as it cannot be converted to a long", key), e);
+                } catch (NumberFormatException e) {
+                    // key could not be converted to a long, either this mapdef has no ranges or
+                    // an invalid key was used. See if we have any ranges at all for this mapdef
+                    // to determine whether to error or not.
+                    boolean doesStoreContainRanges = rangeStoreDb.containsMapDefinition(readTxn, mapUid);
+                    if (doesStoreContainRanges) {
+                        // we have ranges for this map def so we would expect to be able to convert the key
+                        throw new RuntimeException(LambdaLogger.buildMessage(
+                                "Key {} cannot be used with the range store as it cannot be converted to a long", key), e);
+                    }
+                    // no ranges for this map def so the fact that we could not convert the key to a long
+                    // is not a problem. Do nothing.
                 }
-                // no ranges for this map def so the fact that we could not convert the key to a long
-                // is not a problem. Do nothing.
             }
+        } else {
+            LOGGER.trace("Couldn't find map UID");
+            // no map UID so can't look in key/range stores without one
+            optValueStoreKey = Optional.empty();
         }
         return optValueStoreKey;
     }
@@ -281,7 +287,7 @@ public class RefDataOffHeapStore implements RefDataStore {
     @Override
     public boolean consumeValueBytes(final MapDefinition mapDefinition,
                                      final String key,
-                                     final Consumer<ByteBuffer> valueBytesConsumer) {
+                                     final Consumer<TypedByteBuffer> valueBytesConsumer) {
 
 
         // lookup the passed mapDefinition and key and if a valueStoreKey is found use that to
@@ -298,7 +304,7 @@ public class RefDataOffHeapStore implements RefDataStore {
                         })
                         .orElse(false));
 
-        LOGGER.trace("consumeValueBytes({}, {}) - ", mapDefinition, key, wasValueFound);
+        LOGGER.trace("consumeValueBytes({}, {}) - {}", mapDefinition, key, wasValueFound);
         return wasValueFound;
     }
 

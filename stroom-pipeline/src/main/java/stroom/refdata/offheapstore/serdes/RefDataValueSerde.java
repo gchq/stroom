@@ -21,6 +21,7 @@ import stroom.refdata.lmdb.serde.Deserializer;
 import stroom.refdata.lmdb.serde.Serde;
 import stroom.refdata.lmdb.serde.Serializer;
 import stroom.refdata.offheapstore.RefDataValue;
+import stroom.refdata.offheapstore.TypedByteBuffer;
 import stroom.util.logging.LambdaLogger;
 
 import javax.inject.Inject;
@@ -90,6 +91,7 @@ public class RefDataValueSerde implements
 
     /**
      * Compares the value portion of each of the passed {@link ByteBuffer} instances.
+     *
      * @return True if the bytes of the value portion of each buffer are equal
      */
     public boolean areValuesEqual(final ByteBuffer thisBuffer, final ByteBuffer thatBuffer) {
@@ -143,6 +145,14 @@ public class RefDataValueSerde implements
 
     public ByteBuffer extractValueBuffer(final ByteBuffer byteBuffer) {
         return mapWithSubSerde(byteBuffer, (subSerde, subBuffer) ->
-        subSerde.extractValueBuffer(subBuffer));
+                subSerde.extractValueBuffer(subBuffer));
+    }
+
+    public TypedByteBuffer extractTypedValueBuffer(final ByteBuffer byteBuffer) {
+        int typeId = getTypeId(byteBuffer);
+        ByteBuffer subBuffer = byteBuffer.slice();
+        byteBuffer.rewind();
+        ByteBuffer valueBuffer = getSubSerde(typeId).extractValueBuffer(subBuffer);
+        return new TypedByteBuffer(typeId, valueBuffer);
     }
 }

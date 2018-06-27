@@ -6,7 +6,6 @@ import net.sf.saxon.event.Receiver;
 import net.sf.saxon.trans.XPathException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.refdata.offheapstore.serdes.RefDataValueSerde;
 import stroom.util.logging.LambdaLogger;
 
 import javax.inject.Inject;
@@ -55,10 +54,10 @@ public class RefDataValueProxyConsumer {
         LOGGER.trace("consume({})", refDataValueProxy);
 
         //
-        return refDataValueProxy.consumeBytes(byteBuffer -> {
+        return refDataValueProxy.consumeBytes(typedByteBuffer -> {
 
             // find out what type of value we are dealing with
-            final Integer typeId = RefDataValueSerde.getTypeId(byteBuffer);
+            final int typeId = typedByteBuffer.getTypeId();
 
             // work out which byteBufferConsumer to use based on the typeId in the value byteBuffer
             final RefDataValueByteBufferConsumer consumer = typeToConsumerMap.computeIfAbsent(
@@ -70,7 +69,7 @@ public class RefDataValueProxyConsumer {
             Objects.requireNonNull(consumer, () -> LambdaLogger.buildMessage("No consumer for typeId {}", typeId));
 
             // now we have the appropriate consumer for the value type, consume the value
-            consumer.consumeBytes(receiver, byteBuffer);
+            consumer.consumeBytes(receiver, typedByteBuffer.getByteBuffer());
         });
     }
 

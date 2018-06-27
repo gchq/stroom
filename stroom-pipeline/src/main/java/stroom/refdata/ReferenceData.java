@@ -120,6 +120,7 @@ public class ReferenceData {
 
 //        final int splitPos = mapName.indexOf(NEST_SEPARATOR);
         if (lookupIdentifier.isMapNested()) {
+            LOGGER.trace("lookupIdentifier is nested {}", lookupIdentifier);
 //        if (splitPos != -1) {
             // Yes ... pull out the first map
 //            final String startMap = mapName.substring(0, splitPos);
@@ -134,14 +135,16 @@ public class ReferenceData {
             // string so we can use it as the key for the next map
 
             if (!optValue.isPresent()) {
+                LOGGER.trace("sub-map not found for {}", lookupIdentifier);
                 // map broken ... no link found
                 result.log(Severity.WARNING, () -> "No map found for '" + lookupIdentifier + "'");
             } else {
                 final RefDataValue refDataValue = optValue.get();
                 try {
-                    final String stringValue = ((StringValue) refDataValue).getValue();
+                    final String mapName = ((StringValue) refDataValue).getValue();
+                    LOGGER.trace("Found sub-map {}", mapName);
                     // use the value from this lookup as the key for the nested map
-                    LookupIdentifier nestedIdentifier = lookupIdentifier.getNestedLookupIdentifier(stringValue);
+                    LookupIdentifier nestedIdentifier = lookupIdentifier.getNestedLookupIdentifier(mapName);
 
                     ensureReferenceDataAvailability(pipelineReferences, nestedIdentifier, result);
                 } catch (ClassCastException e) {
@@ -150,6 +153,7 @@ public class ReferenceData {
                 }
             }
         } else {
+            LOGGER.trace("lookupIdentifier is not nested {}", lookupIdentifier);
             // non-nested map so just do a lookup
             doGetValue(pipelineReferences, lookupIdentifier, result);
         }

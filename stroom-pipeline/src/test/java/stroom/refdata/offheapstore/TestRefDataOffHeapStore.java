@@ -570,8 +570,9 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
             assertThat((StringValue) refDataValue).isEqualTo(tuple3._3);
 
             // now consume the proxied value in a txn
-            valueProxy.consumeBytes(valueBuf -> {
-                String foundStrVal = StandardCharsets.UTF_8.decode(valueBuf).toString();
+            valueProxy.consumeBytes(typedByteBuffer -> {
+                assertThat(typedByteBuffer.getTypeId()).isEqualTo(StringValue.TYPE_ID);
+                String foundStrVal = StandardCharsets.UTF_8.decode(typedByteBuffer.getByteBuffer()).toString();
                 assertThat(foundStrVal).isEqualTo(tuple3._3.getValue());
             });
         });
@@ -603,7 +604,6 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
                 boolean isValueExpected = tuple2._2;
 
-
                 Optional<RefDataValue> optRefDataValue = valueProxy.supplyValue();
 
                 assertThat(optRefDataValue.isPresent()).isEqualTo(isValueExpected);
@@ -612,8 +612,9 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                     assertThat(refDataValue).isInstanceOf(StringValue.class);
                     assertThat((StringValue) refDataValue).isEqualTo(tuple3._3);
 
-                    valueProxy.consumeBytes(valueBuf -> {
-                        String foundStrVal = StandardCharsets.UTF_8.decode(valueBuf).toString();
+                    valueProxy.consumeBytes(typedByteBuffer -> {
+                        assertThat(typedByteBuffer.getTypeId()).isEqualTo(StringValue.TYPE_ID);
+                        String foundStrVal = StandardCharsets.UTF_8.decode(typedByteBuffer.getByteBuffer()).toString();
                         assertThat(foundStrVal).isEqualTo(tuple3._3.getValue());
                     });
                 });
