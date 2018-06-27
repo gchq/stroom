@@ -15,6 +15,7 @@ import stroom.pipeline.shared.data.*;
 import stroom.security.Security;
 import stroom.util.HasHealthCheck;
 import stroom.util.shared.SharedList;
+import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -194,15 +195,19 @@ public class PipelineResource implements HasHealthCheck  {
         this.pipelineScopeRunnable = pipelineScopeRunnable;
     }
 
+    private DocRef getDocRef(final String pipelineId) {
+        return new DocRef.Builder()
+                .uuid(pipelineId)
+                .type(PipelineDoc.DOCUMENT_TYPE)
+                .build();
+    }
+
     @GET
     @Path("/{pipelineId}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response fetch(@PathParam("pipelineId") final String pipelineId) {
         return security.secureResult(() -> {
-            final PipelineDoc pipelineDoc = pipelineStore.readDocument(new DocRef.Builder()
-                    .uuid(pipelineId)
-                    .type(PipelineDoc.DOCUMENT_TYPE)
-                    .build());
+            final PipelineDoc pipelineDoc = pipelineStore.readDocument(getDocRef(pipelineId));
             final List<PipelineData> configStack = new ArrayList<>();
 
             pipelineScopeRunnable.scopeRunnable(() -> {
@@ -228,6 +233,27 @@ public class PipelineResource implements HasHealthCheck  {
             final PipelineDTO dto  = new PipelineDTO(configStack);
             return Response.ok(dto).build();
         });
+    }
+
+    @POST
+    @Path("/{pipelineId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response save(@PathParam("pipelineId") final String pipelineId,
+                         final PipelineData pipelineData) {
+        pipelineScopeRunnable.scopeRunnable(() -> {
+            // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
+            security.useAsRead(() -> {
+                final PipelineDoc pipelineDoc = pipelineStore.readDocument(getDocRef(pipelineId));
+
+                if (pipelineDoc != null) {
+                    pipelineDoc.setPipelineData(pipelineData);
+                    pipelineStore.writeDocument(pipelineDoc);
+                }
+            });
+        });
+
+        return Response.ok().build();
     }
 
     @Override

@@ -51,10 +51,17 @@ const pipelineStories = storiesOf('Pipeline Editor', module)
     server.get(`${config.elementServiceUrl}/elementProperties`).intercept((req, res) => {
       res.json(elementProperties);
     });
-    Object.entries(testPipelines).forEach(k =>
-      server.get(`${config.pipelineServiceUrl}/${k[0]}`).intercept((req, res) => {
-        res.json(k[1]);
-      }));
+    Object.entries(testPipelines)
+      .map(k => ({
+        url: `${config.pipelineServiceUrl}/${k[0]}`,
+        data: k[1],
+      }))
+      .forEach((pipeline) => {
+        server.get(pipeline.url).intercept((req, res) => {
+          res.json(pipeline.data);
+        });
+        server.post(pipeline.url).intercept((req, res) => res.sendStatus(200));
+      });
   }))
   .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator);

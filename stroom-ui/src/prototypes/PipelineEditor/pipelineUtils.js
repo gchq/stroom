@@ -16,10 +16,13 @@
 
 import { findItem, findMatch, iterateNodes } from 'lib/treeUtils';
 
-export function getRecycleBinItems(pipeline, elementsByType) {
+export function getBinItems(pipeline, elementsByType) {
   const thisConfigStack = pipeline.configStack[pipeline.configStack.length - 1];
 
-  return thisConfigStack.elements.remove.map(e => elementsByType[e.type]);
+  return thisConfigStack.elements.remove.map(e => ({
+    recycleData: e,
+    element: elementsByType[e.type],
+  }));
 }
 
 /**
@@ -228,6 +231,47 @@ export function createNewElementInPipeline(pipeline, parentId, childDefinition, 
       elements: {
         ...pipeline.merged.elements,
         add: pipeline.merged.elements.add.concat([newElement]),
+      },
+      links: {
+        ...pipeline.merged.links,
+        add: pipeline.merged.links.add
+          // add the new link
+          .concat([newLink]),
+      },
+    },
+  };
+}
+
+/**
+ * Reinstates an element into the pipeline that had previously been removed.
+ *
+ * @param {pipeline} pipeline The current definition of the pipeline.
+ * @param {string} parentId The ID of the element that the new connection will be made from.
+ * @param {object} recycleData {id, type} The identifying information for the element being re-instated
+ */
+export function reinstateElementToPipeline(pipeline, parentId, recycleData) {
+  const newLink = {
+    from: parentId,
+    to: recycleData.id,
+  };
+
+  return {
+    configStack: mapLastItemInArray(pipeline.configStack, stackItem => ({
+      properties: stackItem.properties,
+      elements: {
+        add: stackItem.elements.add.concat([recycleData]),
+        remove: stackItem.elements.remove.filter(e => e.id != recycleData.id),
+      },
+      links: {
+        ...stackItem.links,
+        add: stackItem.links.add.concat([newLink]),
+      },
+    })),
+    merged: {
+      properties: pipeline.merged.properties,
+      elements: {
+        add: pipeline.merged.elements.add.concat([recycleData]),
+        remove: pipeline.merged.elements.remove.filter(e => e.id != recycleData.id),
       },
       links: {
         ...pipeline.merged.links,

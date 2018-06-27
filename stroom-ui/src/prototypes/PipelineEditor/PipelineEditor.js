@@ -28,7 +28,8 @@ import { getPipelineLayoutInformation } from './pipelineUtils';
 
 import PipelineElement from './PipelineElement';
 import ElementPalette from './ElementPalette';
-import RecycleBin from './RecycleBin';
+import Bin from './Bin';
+import SavePipeline from './SavePipeline';
 
 import lineElementCreators from './pipelineLineElementCreators';
 import { ElementDetails } from './ElementDetails';
@@ -53,6 +54,7 @@ const enhance = compose(
   connect(
     (state, props) => ({
       pipeline: state.pipelines[props.pipelineId],
+      elements: state.elements
     }),
     {
       // action, needed by lifecycle hook below
@@ -79,6 +81,7 @@ const enhance = compose(
     ({ pipeline }) => !pipeline.pipeline,
     renderComponent(() => <Loader active>Loading Pipeline Data</Loader>),
   ),
+  branch(({ elements }) => !elements, renderComponent(() => <Loader active>Loading Elements</Loader>)),
   withPaletteOpen,
   withElementDetailsOpen,
   withProps(({ pipeline, setPaletteOpen, isPaletteOpen }) => ({
@@ -106,10 +109,11 @@ const PipelineEditor = enhance(({
   isElementDetailsOpen,
   setElementDetailsOpen,
   editorClassName,
-  elementStyles
+  elementStyles,
+  savePipeline
 }) => (
   <div
-    className={`Pipeline-editor  Pipeline-editor--palette-${isPaletteOpen ? 'open' : 'close'}`}
+    className={`Pipeline-editor Pipeline-editor--palette-${isPaletteOpen ? 'open' : 'close'}`}
   >
     <div className="Pipeline-editor__element-palette">
       <ElementPalette pipelineId={pipelineId} />
@@ -125,8 +129,9 @@ const PipelineEditor = enhance(({
         lineContextId={`pipeline-lines-${pipelineId}`}
         lineElementCreators={lineElementCreators}
       >
-        <div className="Pipeline-editor__recycle-bin">
-          <RecycleBin pipelineId={pipelineId} />
+        <div className="Pipeline-editor__bin">
+          <SavePipeline pipelineId={pipelineId}/>
+          <Bin pipelineId={pipelineId} />
         </div>
         <div className="Pipeline-editor__elements">
           {Object.keys(elementStyles)

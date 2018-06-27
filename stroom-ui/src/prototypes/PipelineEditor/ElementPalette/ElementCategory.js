@@ -18,7 +18,7 @@ const enhance = compose(
 );
 
 const ElementCategory = enhance(({
-  category, elements, isOpen, setIsOpen, displayTitle,
+  category, elementsWithData, isOpen, setIsOpen, displayTitle, icon,
 }) => (
   <div className="element-palette-category">
     <Accordion styled>
@@ -27,7 +27,7 @@ const ElementCategory = enhance(({
       </Accordion.Title>
       <Accordion.Content active={isOpen}>
         <div className={`element-palette-category__elements--${isOpen ? 'open' : 'closed'}`}>
-          {elements.map(e => <NewElement key={e.type} element={e} />)}
+          {elementsWithData.map(e => <NewElement key={e.element.type} elementWithData={e} />)}
         </div>
       </Accordion.Content>
     </Accordion>
@@ -36,7 +36,7 @@ const ElementCategory = enhance(({
 
 ElementCategory.propTypes = {
   category: PropTypes.string.isRequired,
-  elements: PropTypes.array.isRequired,
+  elementsWithData: PropTypes.array.isRequired,
 };
 
 export default ElementCategory;

@@ -31,7 +31,7 @@ import { isValidChildType } from './elementUtils';
 
 import { getInitialValues } from './ElementDetails';
 
-const { pipelineElementSelected, pipelineElementMoved } = actionCreators;
+const { pipelineElementSelected, pipelineElementMoved, pipelineElementReinstated } = actionCreators;
 
 const withFocus = withState('hasFocus', 'setHasFocus', false);
 const withNameNewElementModal = withState(
@@ -47,7 +47,7 @@ const dragSource = {
   beginDrag(props) {
     return {
       elementId: props.elementId,
-      elementDefinition: props.elementDefinition
+      elementDefinition: props.elementDefinition,
     };
   },
 };
@@ -76,7 +76,7 @@ const dropTarget = {
 
         return isValidChild && isValid;
       case ItemTypes.PALLETE_ELEMENT:
-        let dropeeType = monitor.getItem().element;
+        const dropeeType = monitor.getItem().element;
         if (dropeeType) {
           const isValidChild = isValidChildType(elementDefinition, dropeeType, 0);
           return isValidChild;
@@ -88,17 +88,30 @@ const dropTarget = {
     }
   },
   drop(props, monitor) {
+    const {
+      elementId,
+      pipelineId,
+      pipelineElementMoved,
+      setNewElementDefinition,
+      pipelineElementReinstated,
+    } = props;
+
     switch (monitor.getItemType()) {
-      case ItemTypes.ELEMENT:
+      case ItemTypes.ELEMENT: {
         const newElementId = monitor.getItem().elementId;
-        const { elementId, pipelineId, pipelineElementMoved } = props;
         pipelineElementMoved(pipelineId, newElementId, elementId);
         break;
-      case ItemTypes.PALLETE_ELEMENT:
-        const newElementDefinition = monitor.getItem().element;
-        const { setNewElementDefinition } = props;
-        setNewElementDefinition(newElementDefinition);
+      }
+      case ItemTypes.PALLETE_ELEMENT: {
+        const { element, recycleData } = monitor.getItem();
+
+        if (recycleData) {
+          pipelineElementReinstated(pipelineId, elementId, recycleData);
+        } else {
+          setNewElementDefinition(element);
+        }
         break;
+      }
       default:
         break;
     }
@@ -143,10 +156,14 @@ const enhance = compose(
       // actions
       pipelineElementSelected,
       pipelineElementMoved,
+      pipelineElementReinstated,
     },
   ),
-  branch(({pipeline}) => !pipeline, renderComponent(() => <Loader active>Loading Pipeline</Loader>)),
-  branch(({element}) => !element, renderComponent(() => <Loader active>Loading Element</Loader>)),
+  branch(
+    ({ pipeline }) => !pipeline,
+    renderComponent(() => <Loader active>Loading Pipeline</Loader>),
+  ),
+  branch(({ element }) => !element, renderComponent(() => <Loader active>Loading Element</Loader>)),
   withNameNewElementModal,
   withFocus,
   DragSource(ItemTypes.ELEMENT, dragSource, dragCollect),
@@ -215,32 +232,30 @@ const PipelineElement = enhance(({
     return pipelineElementSelected(pipelineId, elementId, initalValues);
   };
 
-  return compose(connectDragSource, connectDropTarget)(
-    <div className={className} onClick={handleClick}>
-      <AddElementModal
-        {...{
-              setNewElementDefinition,
-              newElementDefinition,
-              pipelineId,
-              elementId,
-            }}
-      />
-      <Image
-        className="Pipeline-element__icon"
-        alt="X"
-        src={require(`./images/${elementDefinition.icon}`)}
-        disabled={isIconDisabled}
-        size="mini"
-      />
-      <button
-        onFocus={() => setHasFocus(true)}
-        onBlur={() => setHasFocus(false)}
-        className="Pipeline-element__type"
-      >
-        {elementId}
-      </button>
-    </div>
-  );
+  return compose(connectDragSource, connectDropTarget)(<div className={className} onClick={handleClick}>
+    <AddElementModal
+      {...{
+            setNewElementDefinition,
+            newElementDefinition,
+            pipelineId,
+            elementId,
+          }}
+    />
+    <Image
+      className="Pipeline-element__icon"
+      alt="X"
+      src={require(`./images/${elementDefinition.icon}`)}
+      disabled={isIconDisabled}
+      size="mini"
+    />
+    <button
+      onFocus={() => setHasFocus(true)}
+      onBlur={() => setHasFocus(false)}
+      className="Pipeline-element__type"
+    >
+      {elementId}
+    </button>
+                                                       </div>);
 });
 
 PipelineElement.propTypes = {

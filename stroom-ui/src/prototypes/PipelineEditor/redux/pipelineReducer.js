@@ -4,6 +4,7 @@ import {
   moveElementInPipeline,
   removeElementFromPipeline,
   createNewElementInPipeline,
+  reinstateElementToPipeline,
 } from '../pipelineUtils';
 
 import { getPipelineAsTree } from '../pipelineUtils';
@@ -12,6 +13,9 @@ const actionCreators = createActions({
   PIPELINE_RECEIVED: (pipelineId, pipeline) => ({
     pipelineId,
     pipeline,
+  }),
+  PIPELINE_SAVED: pipelineId => ({
+    pipelineId,
   }),
   PIPELINE_ELEMENT_SELECTED: (pipelineId, elementId, initialValues) => ({
     pipelineId,
@@ -30,6 +34,11 @@ const actionCreators = createActions({
     name,
   }),
   PIPELINE_ELEMENT_DELETED: (pipelineId, elementId) => ({ pipelineId, elementId }),
+  PIPELINE_ELEMENT_REINSTATED: (pipelineId, parentId, recycleData) => ({
+    pipelineId,
+    parentId,
+    recycleData,
+  }),
 });
 
 // pipelines, keyed on ID, there may be several expressions on a page
@@ -47,6 +56,14 @@ const pipelineReducer = handleActions(
       [action.payload.pipelineId]: {
         ...defaultPipelineState,
         ...updatePipeline(action.payload.pipeline),
+        isDirty: false,
+      },
+    }),
+    PIPELINE_SAVED: (state, action) => ({
+      ...state,
+      [action.payload.pipelineId]: {
+        ...state[action.payload.pipelineId],
+        isDirty: false,
       },
     }),
     PIPELINE_ELEMENT_SELECTED: (state, action) => ({
@@ -64,6 +81,19 @@ const pipelineReducer = handleActions(
           state[action.payload.pipelineId].pipeline,
           action.payload.elementId,
         )),
+        isDirty: true,
+      },
+    }),
+    PIPELINE_ELEMENT_REINSTATED: (state, action) => ({
+      ...state,
+      [action.payload.pipelineId]: {
+        ...state[action.payload.pipelineId],
+        ...updatePipeline(reinstateElementToPipeline(
+          state[action.payload.pipelineId].pipeline,
+          action.payload.parentId,
+          action.payload.recycleData,
+        )),
+        isDirty: true,
       },
     }),
     PIPELINE_ELEMENT_ADDED: (state, action) => ({
@@ -76,6 +106,7 @@ const pipelineReducer = handleActions(
           action.payload.childDefinition,
           action.payload.name,
         )),
+        isDirty: true,
       },
     }),
     PIPELINE_ELEMENT_MOVED: (state, action) => ({
@@ -87,6 +118,7 @@ const pipelineReducer = handleActions(
           action.payload.itemToMove,
           action.payload.destination,
         )),
+        isDirty: true,
       },
     }),
   },

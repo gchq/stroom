@@ -11,7 +11,7 @@ import { InputField } from 'react-semantic-redux-form';
 import { actionCreators } from './redux';
 
 import { uniqueElementName } from './pipelineUtils';
-import { required, minLength2, renderField } from 'lib/reduxFormUtils';
+import { required, minLength2 } from 'lib/reduxFormUtils';
 
 const { pipelineElementAdded } = actionCreators;
 
@@ -95,9 +95,10 @@ const AddElementModal = enhance(({ // From redux state
 ));
 
 AddElementModal.propTypes = {
-  // Set by container
   pipelineId: PropTypes.string.isRequired,
   elementId: PropTypes.string.isRequired,
+  setNewElementDefinition: PropTypes.func.isRequired,
+  newElementDefinition: PropTypes.object
 };
 
 export default AddElementModal;

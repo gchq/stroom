@@ -1,7 +1,7 @@
 @import "./ElementPalette/ElementPalette";
 @import "./ElementDetails/ElementDetails";
 @import "./PipelineElement";
-@import "./RecycleBin";
+@import "./Bin";
 $palette-width: 12rem;
 .Pipeline-editor {
   height: 100vh;
@@ -83,7 +83,7 @@ $palette-width: 12rem;
   overflow-x: auto;
 }
 
-.Pipeline-editor__recycle-bin {
+.Pipeline-editor__bin {
   align-self: flex-end;
   margin: 1rem;
 }
