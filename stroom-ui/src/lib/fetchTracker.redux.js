@@ -17,7 +17,8 @@ export const FETCH_STATES = {
 };
 
 export const actionCreators = createActions({
-  URL_RESET: url => ({ url, fetchState: UNREQUESTED }),
+  RESET_ALL_URLS: () => ({}),
+  URL_RESET: url => ({ url, fetchState: FETCH_STATES.UNREQUESTED }),
   URL_REQUESTED: url => ({ url, fetchState: FETCH_STATES.REQUESTED }),
   URL_RESPONDED: url => ({ url, fetchState: FETCH_STATES.RESPONDED }),
   URL_FAILED: url => ({ url, fetchState: FETCH_STATES.FAILED }),
@@ -39,6 +40,7 @@ export const reducer = handleActions(
     ) {
       return { ...state, [url]: fetchState };
     },
+    RESET_ALL_URLS: (state, action) => ({})
   },
   defaultState,
 );
@@ -81,6 +83,9 @@ export const wrappedGet = (dispatch, state, url, successCallback) => {
     case FETCH_STATES.RESPONDED:
       console.log('Already got it, dont ask again', url);
       needToFetch = false;
+      break;
+    default:
+      console.log('Default state? Nonsense');
       break;
   }
 
@@ -140,9 +145,10 @@ export const wrappedFetchWithBody = (dispatch, state, url, method, body, success
     mode: 'cors',
   })
     .then(handleStatus)
+    .then(response => response.json())
     .then((response) => {
       dispatch(urlResponded(url));
-      successCallback(pipelineId);
+      successCallback(response);
     })
     .catch((error) => {
       dispatch(urlFailed(url));

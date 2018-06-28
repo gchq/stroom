@@ -1,5 +1,3 @@
-import { push } from 'react-router-redux';
-
 import { actionCreators } from './redux';
 import { wrappedGet } from 'lib/fetchTracker.redux';
 

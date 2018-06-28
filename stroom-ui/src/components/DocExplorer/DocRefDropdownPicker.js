@@ -25,9 +25,10 @@ import { iterateNodes, findItem } from 'lib/treeUtils';
 
 import { actionCreators } from './redux';
 
-const { docRefPicked } = actionCreators;
 import withExplorerTree from './withExplorerTree';
 import withDocRefTypes from './withDocRefTypes';
+
+const { docRefPicked } = actionCreators;
 
 const enhance = compose(
   withExplorerTree,

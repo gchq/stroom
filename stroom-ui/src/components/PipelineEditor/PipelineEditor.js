@@ -33,7 +33,7 @@ import SavePipeline from './SavePipeline';
 
 import lineElementCreators from './pipelineLineElementCreators';
 import { ElementDetails } from './ElementDetails';
-import { DocRefModalPicker, actionCreators as docExplorerActionCreators } from '../DocExplorer';
+import { DocRefModalPicker } from '../DocExplorer';
 
 import { fetchPipeline } from './pipelineResourceClient';
 import { fetchElements, fetchElementProperties } from './elementResourceClient';

@@ -1,5 +1,3 @@
-import { push } from 'react-router-redux';
-
 import { actionCreators } from './redux';
 import { wrappedGet, wrappedPatch } from 'lib/fetchTracker.redux';
 
@@ -7,7 +5,6 @@ export const TrackerSelection = Object.freeze({ first: 'first', last: 'last', no
 
 export const fetchTrackers = trackerSelection => (dispatch, getState) => {
   const state = getState();
-  const jwsToken = state.authentication.idToken;
 
   const rowsToFetch = getRowsPerPage(state.trackerDashboard.selectedTrackerId !== undefined);
   dispatch(actionCreators.updatePageSize(rowsToFetch));
@@ -50,7 +47,8 @@ export const enableToggle = (filterId, isCurrentlyEnabled) => (dispatch, getStat
   const url = `${state.config.streamTaskServiceUrl}/${filterId}`;
   const body = JSON.stringify({ op: 'replace', path: 'enabled', value: !isCurrentlyEnabled });
 
-  wrappedPatch(dispatch, state, url, body, r => dispatch(actionCreators.updateEnabled(filterId, !isCurrentlyEnabled)));
+  wrappedPatch(dispatch, state, url, body, r =>
+    dispatch(actionCreators.updateEnabled(filterId, !isCurrentlyEnabled)));
 };
 
 const getRowsPerPage = (isDetailsVisible) => {

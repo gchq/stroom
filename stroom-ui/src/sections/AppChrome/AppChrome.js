@@ -15,7 +15,7 @@
  */
 import React from 'react';
 import { compose, withState } from 'recompose';
-import { Button, Sidebar, Segment, Menu, Icon, Header } from 'semantic-ui-react';
+import { Button, Sidebar, Segment, Menu, Icon } from 'semantic-ui-react';
 
 import ContentTabs from './ContentTabs';
 

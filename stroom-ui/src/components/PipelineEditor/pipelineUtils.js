@@ -260,7 +260,7 @@ export function reinstateElementToPipeline(pipeline, parentId, recycleData) {
       properties: stackItem.properties,
       elements: {
         add: stackItem.elements.add.concat([recycleData]),
-        remove: stackItem.elements.remove.filter(e => e.id != recycleData.id),
+        remove: stackItem.elements.remove.filter(e => e.id !== recycleData.id),
       },
       links: {
         ...stackItem.links,
@@ -271,7 +271,7 @@ export function reinstateElementToPipeline(pipeline, parentId, recycleData) {
       properties: pipeline.merged.properties,
       elements: {
         add: pipeline.merged.elements.add.concat([recycleData]),
-        remove: pipeline.merged.elements.remove.filter(e => e.id != recycleData.id),
+        remove: pipeline.merged.elements.remove.filter(e => e.id !== recycleData.id),
       },
       links: {
         ...pipeline.merged.links,

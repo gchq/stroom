@@ -39,7 +39,7 @@ import 'styles/main.css';
 
 import { testTree, testPipelines, elements, elementProperties } from './test';
 
-import { docRefsFromSetupSampleData } from 'components/DocExplorer/test';
+import { testDocRefsTypes } from 'components/DocExplorer/test';
 
 const {
   pipelineReceived,
@@ -50,14 +50,16 @@ const {
 
 const { docTreeReceived } = docExplorerActionCreators;
 
+const PollyDecoratorWithTestData = PollyDecorator({
+  documentTree: testTree,
+  docRefTypes: testDocRefsTypes,
+  elements,
+  elementProperties,
+  pipelines: testPipelines,
+});
+
 const pipelineStories = storiesOf('Pipeline Editor', module)
-  .addDecorator(PollyDecorator({
-    documentTree: testTree,
-    docRefTypes: docRefsFromSetupSampleData,
-    elements,
-    elementProperties,
-    pipelines: testPipelines,
-  }))
+  .addDecorator(PollyDecoratorWithTestData)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(docTreeReceived(testTree));
   })) // must be recorder after/outside of the test initialisation decorators
@@ -67,24 +69,16 @@ Object.keys(testPipelines).forEach(k =>
   pipelineStories.add(k, () => <PipelineEditor pipelineId={k} />));
 
 storiesOf('Element Palette', module)
-  .addDecorator(PollyDecorator({
-    documentTree: testTree,
-    docRefTypes: docRefsFromSetupSampleData,
-    elements,
-    elementProperties,
-    pipelines: testPipelines,
-  }))
+  .addDecorator(PollyDecoratorWithTestData)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(docTreeReceived(testTree));
   })) // must be recorder after/outside of the test initialisation decorators
   .addDecorator(DragDropDecorator)
-  .add('Element Palette', () => <ElementPalette />);
+  .add('Element Palette', () => <ElementPalette pipelineId="longPipeline" />);
 
 storiesOf('Element Details', module)
+  .addDecorator(PollyDecoratorWithTestData)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(elementsReceived(elements));
-    store.dispatch(elementPropertiesReceived(elementProperties));
-    store.dispatch(pipelineReceived('longPipeline', testPipelines.longPipeline));
     store.dispatch(pipelineElementSelected('longPipeline', 'splitFilter', { splitDepth: 10, splitCount: 10 }));
   })) // must be recorder after/outside of the test initialisation decorators
   .addDecorator(DragDropDecorator)

@@ -1,8 +1,7 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 
 import { connect } from 'react-redux';
-import { compose, withState } from 'recompose';
+import { compose } from 'recompose';
 import { Tab, Menu } from 'semantic-ui-react';
 
 import { actionCreators as docExplorerActionCreators } from 'components/DocExplorer';

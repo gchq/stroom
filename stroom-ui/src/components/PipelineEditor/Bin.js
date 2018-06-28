@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { compose, withState, withProps } from 'recompose';
 import { connect } from 'react-redux';
 import { DropTarget } from 'react-dnd';
-import { Icon, Confirm, Button } from 'semantic-ui-react';
+import { Confirm, Button } from 'semantic-ui-react';
 
 import { ItemTypes } from './dragDropTypes';
 import { actionCreators } from './redux';

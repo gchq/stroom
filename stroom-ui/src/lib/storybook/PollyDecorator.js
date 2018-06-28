@@ -19,6 +19,10 @@ import { connect } from 'react-redux';
 import { compose, lifecycle } from 'recompose';
 import { Polly } from '@pollyjs/core';
 
+import { actionCreators as fetchActionCreators } from 'lib/fetchTracker.redux';
+
+const { resetAllUrls } = fetchActionCreators;
+
 export const DevServerDecorator = storyFn => <DevServerComponent>{storyFn()}</DevServerComponent>;
 
 const testConfig = {
@@ -79,12 +83,24 @@ server
   .post(`${testConfig.pipelineServiceUrl}/:pipelineId`)
   .intercept((req, res) => res.sendStatus(200));
 
-const enhanceLocal = compose(lifecycle({
-  componentDidMount() {
-    // Replace all the 'server side data' with the properties passed in
-    testCache.data = this.props;
-  },
-}));
+const enhanceLocal = compose(
+  connect(state => ({}), {
+    resetAllUrls,
+  }),
+  lifecycle({
+    componentWillMount() {
+      // must be done before any children have mounted, but the docs say this function is unsafe...
+      // We can't hook the constructor in the lifecycle thing, so if we need to replace this later then
+      // we can make a little custom component
+      this.props.resetAllUrls();
+      testCache.data = {}; // force clear, each test must set it's own stuff up
+    },
+    componentDidMount() {
+      // Replace all the 'server side data' with the properties passed in
+      testCache.data = this.props;
+    },
+  }),
+);
 
 const PollyComponent = enhanceLocal(({ children }) => <div className="fill-space">{children}</div>);
 

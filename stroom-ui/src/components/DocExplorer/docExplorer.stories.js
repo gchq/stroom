@@ -25,7 +25,7 @@ import { DocExplorer, DocRef, Folder, DocRefModalPicker, DocRefDropdownPicker } 
 import { actionCreators } from './redux';
 
 import markdown from './docExplorer.md';
-import { testTree, DOC_REF_TYPES, fromSetupSampleData, docRefsFromSetupSampleData } from './test';
+import { testTree, DOC_REF_TYPES, fromSetupSampleData, testDocRefsTypes } from './test';
 
 import { pickRandomItem } from 'lib/treeUtils';
 
@@ -38,13 +38,13 @@ import 'styles/main.css';
 const { docRefPicked } = actionCreators;
 
 storiesOf('Document Explorer (small testTree)', module)
-  .addDecorator(PollyDecorator({ documentTree: testTree, docRefTypes: docRefsFromSetupSampleData }))
+  .addDecorator(PollyDecorator({ documentTree: testTree, docRefTypes: testDocRefsTypes }))
   .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator)
   .add('Explorer Tree', () => <DocExplorer explorerId="dev-server" />);
 
 storiesOf('Document Explorer (from setupSampleData)', module)
-  .addDecorator(PollyDecorator({ documentTree: fromSetupSampleData, docRefTypes: docRefsFromSetupSampleData }))
+  .addDecorator(PollyDecorator({ documentTree: fromSetupSampleData, docRefTypes: testDocRefsTypes }))
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(docRefPicked(
       'dropdown2',

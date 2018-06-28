@@ -1,5 +1,5 @@
 import { actionCreators } from './redux';
-import { wrappedGet } from 'lib/fetchTracker.redux';
+import { wrappedGet, wrappedPost } from 'lib/fetchTracker.redux';
 
 const { pipelineReceived, pipelineSaved } = actionCreators;
 

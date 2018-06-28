@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const docRefsFromSetupSampleData = [
+const testDocRefsTypes = [
   'Dashboard',
   'Dictionary',
   'Feed',
@@ -1265,4 +1265,4 @@ const fromSetupSampleData = {
   ],
 };
 
-export { fromSetupSampleData, docRefsFromSetupSampleData };
+export { fromSetupSampleData, testDocRefsTypes };

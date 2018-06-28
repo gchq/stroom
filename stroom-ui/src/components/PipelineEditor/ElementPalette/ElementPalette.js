@@ -20,7 +20,7 @@ const enhance = compose(
     },
   ),
   withProps(({ pipeline, elementsByType }) => ({
-    recycleBinItems: getBinItems(pipeline.pipeline, elementsByType),
+    recycleBinItems: pipeline ? getBinItems(pipeline.pipeline, elementsByType) : [],
   })),
 );
 

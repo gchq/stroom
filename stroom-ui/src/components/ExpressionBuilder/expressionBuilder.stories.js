@@ -22,15 +22,16 @@ import { withNotes } from '@storybook/addon-notes';
 
 import { connect } from 'react-redux';
 
+import { PollyDecorator } from 'lib/storybook/PollyDecorator';
 import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
-
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
 import { ExpressionTerm, ExpressionOperator, ExpressionBuilder } from './index';
 
 import { actionCreators as expressionActionCreators } from './redux';
 import { actionCreators as dataSourceActionCreators } from './DataSource';
-import { actionCreators as docExplorerActionCreators, testTree } from 'components/DocExplorer';
+import { actionCreators as docExplorerActionCreators } from 'components/DocExplorer';
+import { testTree, testDocRefsTypes } from 'components/DocExplorer/test';
 
 const { expressionChanged } = expressionActionCreators;
 const { receiveDataSource } = dataSourceActionCreators;
@@ -52,8 +53,11 @@ import { testDataSource } from './dataSource.testData';
 import markdown from './expressionBuilder.md';
 
 storiesOf('Expression Builder', module)
+  .addDecorator(PollyDecorator({
+    documentTree: testTree,
+    docRefTypes: testDocRefsTypes,
+  }))
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(docTreeReceived(testTree));
     store.dispatch(receiveDataSource('testDs', testDataSource));
     store.dispatch(expressionChanged('populatedExEdit', testExpression));
     store.dispatch(expressionChanged('populatedExRO', testExpression));
