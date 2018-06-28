@@ -1,14 +1,7 @@
 import { push } from 'react-router-redux';
 
-import handleStatus from 'lib/handleStatus';
-
 import { actionCreators } from './redux';
-
-import {
-  setErrorMessageAction,
-  setStackTraceAction,
-  setHttpErrorCodeAction,
-} from 'sections/ErrorPage';
+import { wrappedGet, wrappedPatch } from 'lib/fetchTracker.redux';
 
 export const TrackerSelection = Object.freeze({ first: 'first', last: 'last', none: 'none' });
 
@@ -34,63 +27,30 @@ export const fetchTrackers = trackerSelection => (dispatch, getState) => {
     url += `&filter=${state.trackerDashboard.searchCriteria}`;
   }
 
-  fetch(url, {
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${jwsToken}`,
-    },
-    method: 'get',
-    mode: 'cors',
-  })
-    .then(handleStatus)
-    .then(response => response.json())
-    .then((trackers) => {
-      dispatch(actionCreators.updateTrackers(trackers.streamTasks, trackers.totalStreamTasks));
-      switch (trackerSelection) {
-        case TrackerSelection.first:
-          dispatch(actionCreators.selectFirst());
-          break;
-        case TrackerSelection.last:
-          dispatch(actionCreators.selectLast());
-          break;
-        case TrackerSelection.none:
-          dispatch(actionCreators.selectNone());
-          break;
-        default:
-          break;
-      }
-    })
-    .catch((error) => {
-      dispatch(setErrorMessageAction(error.message));
-      dispatch(setStackTraceAction(error.stack));
-      dispatch(setHttpErrorCodeAction(error.status));
-      dispatch(push('/error'));
-    });
+  wrappedGet(dispatch, state, url, (trackers) => {
+    dispatch(actionCreators.updateTrackers(trackers.streamTasks, trackers.totalStreamTasks));
+    switch (trackerSelection) {
+      case TrackerSelection.first:
+        dispatch(actionCreators.selectFirst());
+        break;
+      case TrackerSelection.last:
+        dispatch(actionCreators.selectLast());
+        break;
+      case TrackerSelection.none:
+        dispatch(actionCreators.selectNone());
+        break;
+      default:
+        break;
+    }
+  });
 };
 
 export const enableToggle = (filterId, isCurrentlyEnabled) => (dispatch, getState) => {
   const state = getState();
-  const jwsToken = state.authentication.idToken;
   const url = `${state.config.streamTaskServiceUrl}/${filterId}`;
+  const body = JSON.stringify({ op: 'replace', path: 'enabled', value: !isCurrentlyEnabled });
 
-  fetch(url, {
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${jwsToken}`,
-    },
-    method: 'PATCH',
-    mode: 'cors',
-    body: JSON.stringify({ op: 'replace', path: 'enabled', value: !isCurrentlyEnabled }),
-  })
-    .then(handleStatus)
-    .then((response) => {
-      dispatch(actionCreators.updateEnabled(filterId, !isCurrentlyEnabled));
-    })
-    .catch((error) => {
-      dispatch(push('/error'));
-    });
+  wrappedPatch(dispatch, state, url, body, r => dispatch(actionCreators.updateEnabled(filterId, !isCurrentlyEnabled)));
 };
 
 const getRowsPerPage = (isDetailsVisible) => {

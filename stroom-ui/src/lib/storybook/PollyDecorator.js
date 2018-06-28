@@ -18,10 +18,6 @@ import { connect } from 'react-redux';
 import { compose, lifecycle } from 'recompose';
 import { Polly } from '@pollyjs/core';
 
-import { actionCreators as configActionCreators } from 'startup/config';
-
-const { updateConfig, clearConfig } = configActionCreators;
-
 export const DevServerDecorator = storyFn => <DevServerComponent>{storyFn()}</DevServerComponent>;
 
 const testConfig = {
@@ -41,26 +37,16 @@ polly.configure({
 });
 const { server } = polly;
 
-const enhanceLocal = compose(
-  connect((state, props) => ({}), {
-    updateConfig,
-    clearConfig,
-  }),
-  lifecycle({
-    componentDidMount() {
-      // server.any().passthrough();
+server.get('/config.json').intercept((req, res) => {
+  res.json(testConfig);
+});
 
-      // Registers any custom API endpoints
-      this.props.serverInit(server, testConfig);
-
-      // Safe to call update config now that the server is up
-      this.props.updateConfig(testConfig);
-    },
-    componentWillUnmount() {
-      this.props.clearConfig();
-    },
-  }),
-);
+const enhanceLocal = compose(lifecycle({
+  componentDidMount() {
+    // Registers any custom API endpoints
+    this.props.serverInit(server, testConfig);
+  },
+}));
 
 const PollyComponent = enhanceLocal(({ children }) => <div className="fill-space">{children}</div>);
 

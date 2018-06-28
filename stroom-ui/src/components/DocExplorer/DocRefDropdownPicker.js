@@ -26,12 +26,12 @@ import { iterateNodes, findItem } from 'lib/treeUtils';
 import { actionCreators } from './redux';
 
 const { docRefPicked } = actionCreators;
-import { requestTreeAndWait } from './withExplorerTree';
-import { requestDocRefTypesAndWait } from './withDocRefTypes';
+import withExplorerTree from './withExplorerTree';
+import withDocRefTypes from './withDocRefTypes';
 
 const enhance = compose(
-  requestTreeAndWait,
-  requestDocRefTypesAndWait,
+  withExplorerTree,
+  withDocRefTypes,
   connect(
     (state, props) => ({
       documentTree: state.explorerTree.documentTree,
@@ -47,7 +47,7 @@ const DocRefDropdownPicker = enhance(({
   pickerId, documentTree, typeFilter, docRef, docRefPicked,
 }) => {
   const value = docRef ? docRef.uuid : '';
-  
+
   const options = [];
   iterateNodes(documentTree, (lineage, node) => {
     // If we are filtering on type, check this now

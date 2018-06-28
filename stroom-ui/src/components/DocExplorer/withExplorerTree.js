@@ -18,28 +18,13 @@ import { connect } from 'react-redux';
 import { branch, compose, renderComponent, lifecycle } from 'recompose';
 import { Loader } from 'semantic-ui-react';
 import { fetchDocTree } from './explorerClient';
-import { withConfigReady } from 'startup/config';
-
-const loader = <Loader active>Awaiting explorer tree data </Loader>;
-
-/**
- * Higher Order Component that ensures that the explorer tree has been set.
- */
-const withTreeReady = compose(
-  connect(
-    (state, props) => ({
-      treeIsReady: state.explorerTree.isTreeReady,
-    }),
-    {},
-  ),
-  branch(({ treeIsReady }) => !treeIsReady, renderComponent(() => loader)),
-);
+import { withConfig } from 'startup/config';
 
 /**
  * Higher Order Component that kicks off the fetch of the doc tree, and waits by rendering a Loader until
  * the tree is returned.
  */
-const requestTreeAndWait = compose(
+export default compose(
   connect(
     (state, props) => ({
       treeIsReady: state.explorerTree.isTreeReady,
@@ -48,13 +33,14 @@ const requestTreeAndWait = compose(
       fetchDocTree,
     },
   ),
-  withConfigReady,
+  withConfig,
   lifecycle({
     componentDidMount() {
       this.props.fetchDocTree();
     },
   }),
-  branch(({ treeIsReady }) => !treeIsReady, renderComponent(() => loader)),
+  branch(
+    ({ treeIsReady }) => !treeIsReady,
+    renderComponent(() => <Loader active>Awaiting explorer tree data </Loader>),
+  ),
 );
-
-export { withTreeReady, requestTreeAndWait };

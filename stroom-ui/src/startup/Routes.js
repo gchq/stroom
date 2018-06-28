@@ -31,10 +31,10 @@ import DocExplorer from 'components/DocExplorer';
 
 import PathNotFound from 'sections/PathNotFound';
 
-import { requestConfigAndWait } from './config';
+import { withConfig } from './config';
 
 const enhance = compose(
-  requestConfigAndWait,
+  withConfig,
   withRouter,
   connect(
     state => ({

@@ -24,17 +24,17 @@ import { Button, Modal, Input, Loader } from 'semantic-ui-react';
 import { findItem } from 'lib/treeUtils';
 import { actionCreators } from './redux';
 
-import BasicDocExplorer from './BasicDocExplorer';
-import { requestTreeAndWait } from './withExplorerTree';
-import { requestDocRefTypesAndWait } from './withDocRefTypes';
+import withExplorerTree from './withExplorerTree';
+import withDocRefTypes from './withDocRefTypes';
+import DocExplorer from './DocExplorer';
 
 const { docRefPicked, explorerTreeOpened } = actionCreators;
 
 const withModal = withState('isOpen', 'setIsOpen', false);
 
 const enhance = compose(
-  requestTreeAndWait,
-  requestDocRefTypesAndWait,
+  withExplorerTree,
+  withDocRefTypes,
   connect(
     (state, props) => ({
       documentTree: state.explorerTree.documentTree,
@@ -97,7 +97,7 @@ const DocRefModalPicker = enhance(({
     >
       <Modal.Header>Select a Doc Ref</Modal.Header>
       <Modal.Content scrolling>
-        <BasicDocExplorer
+        <DocExplorer
           tree={tree}
           explorerId={pickerId}
           allowMultiSelect={false}

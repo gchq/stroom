@@ -37,7 +37,7 @@ import { DocRefModalPicker, actionCreators as docExplorerActionCreators } from '
 
 import { fetchPipeline } from './pipelineResourceClient';
 import { fetchElements, fetchElementProperties } from './elementResourceClient';
-import { withConfigReady } from 'startup/config';
+import { withConfig } from 'startup/config';
 
 const HORIZONTAL_SPACING = 150;
 const VERTICAL_SPACING = 70;
@@ -51,7 +51,7 @@ const withPaletteOpen = withState('isPaletteOpen', 'setPaletteOpen', true);
 const withElementDetailsOpen = withState('isElementDetailsOpen', 'setElementDetailsOpen', false);
 
 const enhance = compose(
-  withConfigReady,
+  withConfig,
   connect(
     (state, props) => ({
       pipeline: state.pipelines[props.pipelineId],

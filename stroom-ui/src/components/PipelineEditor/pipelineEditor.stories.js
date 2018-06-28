@@ -39,8 +39,6 @@ import 'styles/main.css';
 
 import { testTree, testPipelines, elements, elementProperties } from './test';
 
-import { requestTreeAndWait } from 'components/DocExplorer';
-
 import { docRefsFromSetupSampleData } from 'components/DocExplorer/test';
 
 const {
@@ -54,6 +52,9 @@ const { docTreeReceived } = docExplorerActionCreators;
 
 const pipelineStories = storiesOf('Pipeline Editor', module)
   .addDecorator(PollyDecorator((server, config) => {
+    server.get(`${config.explorerServiceUrl}/all`).intercept((req, res) => {
+      res.json(testTree);
+    });
     server.get(`${config.explorerServiceUrl}/docRefTypes`).intercept((req, res) => {
       res.json(docRefsFromSetupSampleData);
     });
@@ -85,6 +86,9 @@ Object.keys(testPipelines).forEach(k =>
 
 storiesOf('Element Palette', module)
   .addDecorator(PollyDecorator((server, config) => {
+    server.get(`${config.explorerServiceUrl}/all`).intercept((req, res) => {
+      res.json(testTree);
+    });
     server.get(`${config.explorerServiceUrl}/docRefTypes`).intercept((req, res) => {
       res.json(docRefsFromSetupSampleData);
     });

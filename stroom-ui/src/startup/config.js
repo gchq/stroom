@@ -14,19 +14,12 @@
  * limitations under the License.
  */
 import React from 'react';
-import { push } from 'react-router-redux';
 import { createActions, handleActions } from 'redux-actions';
 import { connect } from 'react-redux';
 import { branch, compose, renderComponent, lifecycle } from 'recompose';
 import { Loader } from 'semantic-ui-react';
 
-import {
-  setErrorMessageAction,
-  setStackTraceAction,
-  setHttpErrorCodeAction,
-} from 'sections/ErrorPage';
-
-import handleStatus from 'lib/handleStatus';
+import { wrappedGet } from 'lib/fetchTracker.redux';
 
 const initialState = { isReady: false };
 
@@ -49,41 +42,16 @@ const reducer = handleActions(
   initialState,
 );
 
-export const fetchConfig = () => (dispatch, getState) => {
-  fetch('/config.json', { method: 'get' })
-    .then(handleStatus)
-    .then(response => response.json())
-    .then(config => dispatch(actionCreators.updateConfig(config)))
-    .catch((error) => {
-      dispatch(setErrorMessageAction(error.message));
-      dispatch(setStackTraceAction(error.stack));
-      dispatch(setHttpErrorCodeAction(error.status));
-      dispatch(push('/error'));
-    });
+const fetchConfig = () => (dispatch, getState) => {
+  const url = '/config.json';
+  wrappedGet(dispatch, getState(), url, config => dispatch(actionCreators.updateConfig(config)));
 };
-
-/**
- * Higher Order Component that ensures that the config has been set before making a call to fetchDocTree.
- * Used by components which are deep into the application, that aren't responsible for actually loading the config.
- */
-const withConfigReady = compose(
-  connect(
-    (state, props) => ({
-      configIsReady: state.config.isReady,
-    }),
-    {},
-  ),
-  branch(
-    ({ configIsReady }) => !configIsReady,
-    renderComponent(() => <Loader active>Awaiting Config</Loader>),
-  ),
-);
 
 /**
  * Higher Order Component that kicks off the fetch of the config, and waits by rendering a Loader until
  * that config is returned. This will generally be used by top level components in the app.
  */
-const requestConfigAndWait = compose(
+const withConfig = compose(
   connect(
     (state, props) => ({
       configIsReady: state.config.isReady,
@@ -103,4 +71,4 @@ const requestConfigAndWait = compose(
   ),
 );
 
-export { actionCreators, reducer, withConfigReady, requestConfigAndWait };
+export { actionCreators, reducer, fetchConfig, withConfig };

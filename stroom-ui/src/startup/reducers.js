@@ -34,6 +34,7 @@ import {
 import { reducer as trackerDashboard } from 'sections/TrackerDashboard';
 import { reducer as errorPage } from 'sections/ErrorPage';
 import { reducer as config } from './config';
+import { reducer as fetch } from 'lib/fetchTracker.redux';
 
 export default combineReducers({
   routing: routerReducer,
@@ -49,4 +50,5 @@ export default combineReducers({
   elements,
   errorPage,
   lineContainer,
+  fetch,
 });
