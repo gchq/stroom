@@ -16,7 +16,7 @@
 
 package stroom.dashboard.logging;
 
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 
 public interface SearchEventLog {

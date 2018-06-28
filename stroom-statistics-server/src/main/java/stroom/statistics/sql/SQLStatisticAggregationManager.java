@@ -18,16 +18,16 @@ package stroom.statistics.sql;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.entity.StroomDatabaseInfo;
+import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.jobsystem.ClusterLockService;
 import stroom.jobsystem.JobTrackedSchedule;
 import stroom.properties.StroomPropertyService;
+import stroom.task.TaskContext;
 import stroom.util.date.DateUtil;
+import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.lifecycle.StroomSimpleCronSchedule;
-import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 import java.sql.SQLException;
@@ -127,9 +127,9 @@ public class SQLStatisticAggregationManager {
                         processedCount = helper.aggregateConfigStage1(taskContext, "Iteration: " + ++iteration + "",
                                 batchSize, timeNow);
 
-                    } while (processedCount == batchSize && !taskContext.isTerminated());
+                    } while (processedCount == batchSize && !Thread.currentThread().isInterrupted());
 
-                    if (!taskContext.isTerminated()) {
+                    if (!Thread.currentThread().isInterrupted()) {
                         helper.aggregateConfigStage2(taskContext, "Final Reduce", timeNow);
                     }
 

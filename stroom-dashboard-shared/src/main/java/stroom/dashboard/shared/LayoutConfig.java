@@ -16,35 +16,37 @@
 
 package stroom.dashboard.shared;
 
-import stroom.util.shared.SharedObject;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import stroom.docref.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "layout", propOrder = {"preferredSize"})
+@XmlType(name = "LayoutConfig")
 @XmlSeeAlso({SplitLayoutConfig.class, TabLayoutConfig.class})
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "type"
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = SplitLayoutConfig.class, name = "splitLayout"),
+        @JsonSubTypes.Type(value = TabLayoutConfig.class, name = "tabLayout")
+})
 public abstract class LayoutConfig implements SharedObject {
     private static final long serialVersionUID = 8743223047838956165L;
 
-    /**
-     * The preferred size of this layout in width, height.
-     */
-    @XmlElement(name = "preferredSize")
-    private Size preferredSize = new Size();
-
+    @JsonIgnore
     private transient SplitLayoutConfig parent;
 
-    public Size getPreferredSize() {
-        return preferredSize;
-    }
+    public abstract Size getPreferredSize();
 
-    public void setPreferredSize(final Size preferredSize) {
-        this.preferredSize = preferredSize;
-    }
+    public abstract void setPreferredSize(Size preferredSize);
 
     public SplitLayoutConfig getParent() {
         return parent;

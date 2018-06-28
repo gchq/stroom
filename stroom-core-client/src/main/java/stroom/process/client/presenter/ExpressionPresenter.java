@@ -24,7 +24,7 @@ import com.gwtplatform.mvp.client.View;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.process.client.presenter.ExpressionPresenter.ExpressionView;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.ruleset.client.presenter.EditExpressionPresenter;

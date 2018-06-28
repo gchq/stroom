@@ -17,13 +17,13 @@
 
 package stroom.pipeline.stepping;
 
-import stroom.entity.shared.DocRefUtil;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.SharedDocRef;
 import stroom.feed.shared.Feed;
-import stroom.pipeline.PipelineService;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.PipelineStore;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.Security;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.shared.ExpressionUtil;
@@ -39,15 +39,15 @@ import java.util.List;
 @TaskHandlerBean(task = GetPipelineForStreamAction.class)
 class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStreamAction, SharedDocRef> {
     private final StreamStore streamStore;
-    private final PipelineService pipelineService;
+    private final PipelineStore pipelineStore;
     private final Security security;
 
     @Inject
     GetPipelineForStreamHandler(final StreamStore streamStore,
-                                final PipelineService pipelineService,
+                                final PipelineStore pipelineStore,
                                 final Security security) {
         this.streamStore = streamStore;
-        this.pipelineService = pipelineService;
+        this.pipelineStore = pipelineStore;
         this.security = security;
     }
 
@@ -85,10 +85,10 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
 //                    if (folder != null) {
 //                        final FindPipelineEntityCriteria findPipelineCriteria = new FindPipelineEntityCriteria();
 //                        findPipelineCriteria.getFolderIdSet().add(folder);
-//                        final List<PipelineEntity> pipelines = pipelineService.find(findPipelineCriteria);
+//                        final List<PipelineEntity> pipelines = pipelineStore.find(findPipelineCriteria);
 //                        if (pipelines != null && pipelines.size() > 0) {
-//                            final PipelineEntity pipelineEntity = pipelines.get(0);
-//                            docRef = DocRefUtil.create(pipelineEntity);
+//                            final PipelineEntity pipelineDoc = pipelines.get(0);
+//                            docRef = DocRefUtil.create(pipelineDoc);
 //                        }
 //                    }
 //                }
@@ -108,7 +108,7 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
             final FindStreamCriteria criteria = new FindStreamCriteria();
             criteria.setExpression(ExpressionUtil.createStreamExpression(id));
             criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
-            criteria.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
+            criteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
             criteria.getFetchSet().add(Feed.ENTITY_TYPE);
 
             final List<Stream> streamList = streamStore.find(criteria);
@@ -129,7 +129,7 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
             final FindStreamCriteria criteria = new FindStreamCriteria();
             criteria.setExpression(ExpressionUtil.createParentStreamExpression(id));
             criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
-            criteria.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
+            criteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
 
             return streamStore.find(criteria).getFirst();
         });
@@ -142,12 +142,12 @@ class GetPipelineForStreamHandler extends AbstractTaskHandler<GetPipelineForStre
         // used to produce children for this stream.
         final StreamProcessor streamProcessor = stream.getStreamProcessor();
         if (streamProcessor != null) {
-            PipelineEntity pipelineEntity = streamProcessor.getPipeline();
-            if (pipelineEntity != null) {
+            String pipelineUuid = streamProcessor.getPipelineUuid();
+            if (pipelineUuid != null) {
                 try {
                     // Ensure the current user is allowed to load this pipeline.
-                    pipelineEntity = pipelineService.loadByUuid(pipelineEntity.getUuid());
-                    docRef = DocRefUtil.create(pipelineEntity);
+                    final PipelineDoc pipelineDoc = pipelineStore.readDocument(new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid));
+                    docRef = DocRefUtil.create(pipelineDoc);
                 } catch (final RuntimeException e) {
                     // Ignore.
                 }

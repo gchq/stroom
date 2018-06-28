@@ -27,7 +27,7 @@ import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.index.shared.Index;
+import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShard;
@@ -40,12 +40,21 @@ import stroom.util.concurrent.SimpleExecutor;
 import stroom.util.io.FileUtil;
 import stroom.util.test.StroomUnitTest;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TestIndexShardPoolImpl extends StroomUnitTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestIndexShardPoolImpl.class);
+
+    private static AtomicLong indexShardId = new AtomicLong(0);
+    private AtomicInteger indexShardsCreated = new AtomicInteger(0);
+    private AtomicInteger failedThreads = new AtomicInteger(0);
+
+    public static int getRandomNumber(final int size) {
+        return (int) Math.floor((Math.random() * size));
+    }
 
     @Mock
     private NodeCache nodeCache;
@@ -86,18 +95,10 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
         Assert.assertTrue("Expected 20 to 22 but was " + size, size >= 20 && size <= 22);
     }
 
-    static AtomicLong indexShardId = new AtomicLong(0);
-    AtomicInteger indexShardsCreated = new AtomicInteger(0);
-    AtomicInteger failedThreads = new AtomicInteger(0);
-
-    public static int getRandomNumber(final int size) {
-        return (int) Math.floor((Math.random() * size));
-    }
-
     private void doTest(final int threadSize, final int jobSize, final int numberOfIndexes,
                         final int shardsPerPartition, final int maxDocumentsPerIndexShard) throws InterruptedException {
         final IndexField indexField = IndexField.createField("test");
-        final IndexFields indexFields = IndexFields.createStreamIndexFields();
+        final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(indexField);
 
         // final Set<IndexShard> closedSet = new HashSet<>();
@@ -113,7 +114,7 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
                 indexShardsCreated.incrementAndGet();
                 // checkedLimit.increment();
                 final IndexShard indexShard = new IndexShard();
-                indexShard.setIndex(indexShardKey.getIndex());
+                indexShard.setIndexUuid(indexShardKey.getIndexUuid());
                 indexShard.setPartition(indexShardKey.getPartition());
                 indexShard.setPartitionFromTime(indexShardKey.getPartitionFromTime());
                 indexShard.setPartitionToTime(indexShardKey.getPartitionToTime());
@@ -138,16 +139,16 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
         final SimpleExecutor simpleExecutor = new SimpleExecutor(threadSize);
 
         for (int i = 0; i < numberOfIndexes; i++) {
-            final Index index = new Index();
-            index.setName("Index " + i);
-            index.setIndexFieldsObject(indexFields);
+            final IndexDoc index = new IndexDoc();
+            index.setUuid("uuid" + i);
+            index.setName("index " + i);
+            index.setIndexFields(indexFields);
             index.setMaxDocsPerShard(maxDocumentsPerIndexShard);
             index.setShardsPerPartition(shardsPerPartition);
 
             for (int j = 0; j < jobSize; j++) {
-                final int testNumber = i;
                 final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
-                simpleExecutor.execute(new IndexThread(indexer, indexShardKey, indexField, testNumber));
+                simpleExecutor.execute(new IndexThread(indexer, indexShardKey, indexField, i));
             }
         }
 
@@ -167,7 +168,7 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
         private final IndexField indexField;
         private final int testNumber;
 
-        public IndexThread(final Indexer indexer, final IndexShardKey indexShardKey,
+        IndexThread(final Indexer indexer, final IndexShardKey indexShardKey,
                            final IndexField indexField, final int testNumber) {
             this.indexer = indexer;
             this.indexShardKey = indexShardKey;

@@ -17,7 +17,7 @@
 
 package stroom.explorer.shared;
 
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 public class DocumentType implements SharedObject {
     public static final String DOC_IMAGE_URL = "document/";

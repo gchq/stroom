@@ -16,24 +16,42 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlElements;
+import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
 import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "splitLayout", propOrder = {"dimension", "children"})
+@JsonPropertyOrder({"preferredSize", "dimension", "children"})
+@JsonInclude(Include.NON_EMPTY)
+@XmlRootElement(name = "splitLayout")
+@XmlType(name = "SplitLayoutConfig", propOrder = {"preferredSize", "dimension", "children"})
 public class SplitLayoutConfig extends LayoutConfig {
     private static final long serialVersionUID = 8201392610412513780L;
+
+    /**
+     * The preferred size of this layout in width, height.
+     */
+    @XmlElement(name = "preferredSize")
+    @JsonProperty("preferredSize")
+    private Size preferredSize = new Size();
     @XmlElement(name = "dimension")
+    @JsonProperty("dimension")
     private int dimension;
     @XmlElementWrapper(name = "children")
     @XmlElements({@XmlElement(name = "splitLayout", type = SplitLayoutConfig.class),
             @XmlElement(name = "tabLayout", type = TabLayoutConfig.class)})
+    @JsonProperty("children")
     private List<LayoutConfig> children;
 
     public SplitLayoutConfig() {
@@ -47,6 +65,16 @@ public class SplitLayoutConfig extends LayoutConfig {
                 add(child);
             }
         }
+    }
+
+    @Override
+    public Size getPreferredSize() {
+        return preferredSize;
+    }
+
+    @Override
+    public void setPreferredSize(final Size preferredSize) {
+        this.preferredSize = preferredSize;
     }
 
     public int getDimension() {

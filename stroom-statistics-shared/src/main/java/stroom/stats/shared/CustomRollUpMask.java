@@ -16,8 +16,12 @@
 
 package stroom.stats.shared;
 
-import stroom.util.shared.HasDisplayValue;
-import stroom.util.shared.SharedObject;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import stroom.docref.HasDisplayValue;
+import stroom.docref.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -29,6 +33,8 @@ import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "customRollUpMask")
+@JsonPropertyOrder({"rolledUpTagPosition"})
+@JsonInclude(Include.NON_EMPTY)
 public class CustomRollUpMask implements HasDisplayValue, SharedObject {
 
     private static final long serialVersionUID = -7146872949794428854L;
@@ -36,12 +42,13 @@ public class CustomRollUpMask implements HasDisplayValue, SharedObject {
     /**
      * Holds a list of the positions of tags that are rolled up, zero based. The
      * position number is based on the alphanumeric sorted list of tag/field
-     * names in the {@link StroomStatsStoreEntity}. Would use a SortedSet but that
+     * names in the {@link StroomStatsStoreDoc}. Would use a SortedSet but that
      * is not supported by GWT. Must ensure the contents of this are sorted so
      * that when contains is called on lists of these objects it works
      * correctly.
      */
     @XmlElement(name = "rolledUpTagPosition")
+    @JsonProperty("rolledUpTagPosition")
     private List<Integer> rolledUpTagPositions = new ArrayList<>();
 
     public CustomRollUpMask() {

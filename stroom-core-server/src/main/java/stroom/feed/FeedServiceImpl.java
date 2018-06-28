@@ -30,7 +30,7 @@ import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.importexport.ImportExportHelper;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.SecurityContext;
 import stroom.persist.EntityManagerSupport;
 import stroom.streamstore.shared.StreamType;

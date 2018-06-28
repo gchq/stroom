@@ -6,25 +6,34 @@ import stroom.util.lifecycle.StroomShutdown;
 import stroom.util.lifecycle.StroomStartup;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+@Singleton
 public class PersistLifecycle {
     private static final Logger LOGGER = LoggerFactory.getLogger(PersistLifecycle.class);
-    private final PersistService persistService;
+    private final Provider<PersistService> persistServiceProvider;
+    private final AtomicBoolean running = new AtomicBoolean();
 
     @Inject
-    PersistLifecycle(final PersistService persistService) {
-        this.persistService = persistService;
+    PersistLifecycle(final Provider<PersistService> persistServiceProvider) {
+        this.persistServiceProvider = persistServiceProvider;
     }
 
     @StroomStartup(priority = 1000)
     public void startPersistence() {
-        LOGGER.info("Starting persistence");
-        persistService.start();
+        if (running.compareAndSet(false, true)) {
+            LOGGER.info("Starting persistence");
+            persistServiceProvider.get().start();
+        }
     }
 
     @StroomShutdown
     public void stopPersistence() {
-        LOGGER.info("Stopping persistence");
-        persistService.stop();
+        if (running.compareAndSet(true, false)) {
+            LOGGER.info("Stopping persistence");
+            persistServiceProvider.get().stop();
+        }
     }
 }

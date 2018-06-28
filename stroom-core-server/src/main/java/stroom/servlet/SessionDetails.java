@@ -16,7 +16,7 @@
 
 package stroom.servlet;
 
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 public class SessionDetails implements SharedObject {
     private static final long serialVersionUID = -7654691243590208784L;

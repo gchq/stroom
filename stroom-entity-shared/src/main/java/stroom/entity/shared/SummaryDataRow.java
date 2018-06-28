@@ -18,7 +18,7 @@ package stroom.entity.shared;
 
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,7 +71,7 @@ public class SummaryDataRow implements SharedObject {
     public boolean equals(final Object o) {
         if (o == this) {
             return true;
-        } else if (o == null || !(o instanceof SummaryDataRow)) {
+        } else if (!(o instanceof SummaryDataRow)) {
             return false;
         }
 

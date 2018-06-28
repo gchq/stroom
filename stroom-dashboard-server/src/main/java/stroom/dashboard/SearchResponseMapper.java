@@ -17,7 +17,7 @@
 package stroom.dashboard;
 
 import stroom.dashboard.VisResult.Store;
-import stroom.dashboard.expression.v1.TypeConverter;
+import stroom.dashboard.download.TypeConverter;
 import stroom.dashboard.shared.Format.Type;
 import stroom.dashboard.shared.SearchResponse;
 import stroom.query.api.v2.Field;
@@ -142,9 +142,7 @@ public class SearchResponseMapper {
                             group = entry.getKey();
                         }
 
-                        String[] row = new String[entry.getValue().size()];
-                        row = entry.getValue().toArray(row);
-                        types[group] = row;
+                        types[group] = entry.getValue().toArray(new String[0]);
                     }
 
                     final int valueCount = fields.size() - valueOffset;
@@ -206,7 +204,7 @@ public class SearchResponseMapper {
                 store.key = list.get(list.size() - 1);
             }
             store.keyType = types[depth][0];
-            store.values = values.toArray(new Object[values.size()]);
+            store.values = values.toArray(new Object[0]);
             store.types = types[types.length - 1];
             store.min = min;
             store.max = max;

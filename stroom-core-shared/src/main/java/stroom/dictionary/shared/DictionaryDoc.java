@@ -16,33 +16,39 @@
 
 package stroom.dictionary.shared;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docstore.shared.Doc;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import java.util.List;
 import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "includes"})
+@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "imports"})
+@JsonInclude(Include.NON_EMPTY)
 @XmlRootElement(name = "dictionary")
-@XmlType(name = "DictionaryDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "imports"})
+@XmlType(name = "DictionaryDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "imports"})
 public class DictionaryDoc extends Doc {
-    public static final String ENTITY_TYPE = "Dictionary";
-
     private static final long serialVersionUID = -4208920620555926044L;
+
+    public static final String ENTITY_TYPE = "Dictionary";
 
     @XmlElement(name = "description")
     private String description;
-    @XmlElement(name = "data")
+    @XmlTransient
+    @JsonIgnore
     private String data;
-    @XmlElementWrapper(name="imports")
+    @XmlElementWrapper(name = "imports")
     @XmlElement(name = "docRef")
     private List<DocRef> imports;
 

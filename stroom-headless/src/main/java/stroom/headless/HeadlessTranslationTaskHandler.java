@@ -25,7 +25,7 @@ import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.Feed;
 import stroom.feed.shared.FindFeedCriteria;
 import stroom.pipeline.ErrorWriterProxy;
-import stroom.pipeline.PipelineService;
+import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ErrorStatistics;
 import stroom.pipeline.errorhandler.LoggedException;
@@ -39,19 +39,22 @@ import stroom.pipeline.filter.RecordOutputFilter;
 import stroom.pipeline.filter.SchemaFilter;
 import stroom.pipeline.filter.XMLFilter;
 import stroom.pipeline.filter.XSLTFilter;
-import stroom.pipeline.shared.FindPipelineEntityCriteria;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaData;
+import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
+import stroom.pipeline.task.StreamMetaDataProvider;
+import stroom.docref.DocRef;
 import stroom.security.Security;
 import stroom.streamstore.fs.serializable.RASegmentInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStream;
 import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
+import stroom.streamtask.StreamProcessorService;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.date.DateUtil;
@@ -69,41 +72,47 @@ import java.util.List;
 class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTranslationTask, VoidResult> {
     private final PipelineFactory pipelineFactory;
     private final FeedService feedService;
-    private final PipelineService pipelineService;
+    private final PipelineStore pipelineStore;
     private final MetaData metaData;
     private final PipelineHolder pipelineHolder;
     private final FeedHolder feedHolder;
+    private final MetaDataHolder metaDataHolder;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final ErrorWriterProxy errorWriterProxy;
     private final RecordErrorReceiver recordErrorReceiver;
     private final PipelineDataCache pipelineDataCache;
     private final StreamHolder streamHolder;
+    private final StreamProcessorService streamProcessorService;
     private final Security security;
 
     @Inject
     HeadlessTranslationTaskHandler(final PipelineFactory pipelineFactory,
                                    @Named("cachedFeedService") final FeedService feedService,
-                                   @Named("cachedPipelineService") final PipelineService pipelineService,
+                                   @Named("cachedPipelineStore") final PipelineStore pipelineStore,
                                    final MetaData metaData,
                                    final PipelineHolder pipelineHolder,
                                    final FeedHolder feedHolder,
+                                   final MetaDataHolder metaDataHolder,
                                    final ErrorReceiverProxy errorReceiverProxy,
                                    final ErrorWriterProxy errorWriterProxy,
                                    final RecordErrorReceiver recordErrorReceiver,
                                    final PipelineDataCache pipelineDataCache,
                                    final StreamHolder streamHolder,
+                                   final StreamProcessorService streamProcessorService,
                                    final Security security) {
         this.pipelineFactory = pipelineFactory;
         this.feedService = feedService;
-        this.pipelineService = pipelineService;
+        this.pipelineStore = pipelineStore;
         this.metaData = metaData;
         this.pipelineHolder = pipelineHolder;
         this.feedHolder = feedHolder;
+        this.metaDataHolder = metaDataHolder;
         this.errorReceiverProxy = errorReceiverProxy;
         this.errorWriterProxy = errorWriterProxy;
         this.recordErrorReceiver = recordErrorReceiver;
         this.pipelineDataCache = pipelineDataCache;
         this.streamHolder = streamHolder;
+        this.streamProcessorService = streamProcessorService;
         this.security = security;
     }
 
@@ -131,9 +140,11 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
                 final Feed feed = getFeed(feedName);
                 feedHolder.setFeed(feed);
 
+                // Setup the meta data holder.
+                metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
+
                 // Set the pipeline so it can be used by a filter if needed.
-                final FindPipelineEntityCriteria findPipelineCriteria = new FindPipelineEntityCriteria(feedName);
-                final BaseResultList<PipelineEntity> pipelines = pipelineService.find(findPipelineCriteria);
+                final List<DocRef> pipelines = pipelineStore.findByName(feedName);
                 if (pipelines == null || pipelines.size() == 0) {
                     throw new ProcessException("No pipeline found for feed name '" + feedName + "'");
                 }
@@ -141,18 +152,19 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
                     throw new ProcessException("More than one pipeline found for feed name '" + feedName + "'");
                 }
 
-                final PipelineEntity pipelineEntity = pipelines.getFirst();
-                pipelineHolder.setPipeline(pipelineEntity);
+                final DocRef pipelineRef = pipelines.get(0);
+                pipelineHolder.setPipeline(pipelineRef);
 
                 // Create the parser.
-                final PipelineData pipelineData = pipelineDataCache.get(pipelineEntity);
+                final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+                final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
                 final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
                 // Find last XSLT filter.
                 final XMLFilter lastFilter = getLastFilter(pipeline);
                 if (!(lastFilter instanceof HasTargets)) {
                     throw new ProcessException(
-                            "No appendable filters can be found in pipeline '" + pipelineEntity.getName() + "'");
+                            "No appendable filters can be found in pipeline '" + pipelineRef.getName() + "'");
                 }
                 ((HasTargets) lastFilter).setTarget(task.getHeadlessFilter());
 

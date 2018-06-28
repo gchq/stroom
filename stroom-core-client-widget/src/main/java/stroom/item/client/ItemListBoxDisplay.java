@@ -17,7 +17,7 @@
 package stroom.item.client;
 
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
-import stroom.util.shared.HasDisplayValue;
+import stroom.docref.HasDisplayValue;
 
 import java.util.Collection;
 

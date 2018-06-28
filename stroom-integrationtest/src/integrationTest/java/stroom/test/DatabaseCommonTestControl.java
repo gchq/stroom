@@ -19,15 +19,14 @@ package stroom.test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cache.StroomCacheManager;
-import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.QueryEntity;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
-import stroom.entity.shared.Res;
 import stroom.feed.shared.Feed;
+import stroom.guice.StroomBeanStore;
 import stroom.index.IndexShardManager;
 import stroom.index.IndexShardWriterCache;
-import stroom.index.shared.Index;
+import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.jobsystem.shared.ClusterLock;
 import stroom.jobsystem.shared.Job;
@@ -39,18 +38,12 @@ import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
 import stroom.node.shared.Volume;
 import stroom.node.shared.VolumeState;
-import stroom.pipeline.shared.PipelineEntity;
-import stroom.pipeline.shared.TextConverter;
-import stroom.pipeline.shared.XSLT;
 import stroom.ruleset.shared.Policy;
-import stroom.script.shared.Script;
 import stroom.security.AppPermission;
 import stroom.security.DocumentPermission;
 import stroom.security.Permission;
 import stroom.security.User;
 import stroom.security.UserGroupUser;
-import stroom.statistics.shared.StatisticStoreEntity;
-import stroom.stats.shared.StroomStatsStoreEntity;
 import stroom.streamstore.StreamAttributeKeyService;
 import stroom.streamstore.fs.FileSystemUtil;
 import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
@@ -65,9 +58,6 @@ import stroom.streamtask.shared.StreamProcessorFilter;
 import stroom.streamtask.shared.StreamProcessorFilterTracker;
 import stroom.streamtask.shared.StreamTask;
 import stroom.util.io.FileUtil;
-import stroom.guice.StroomBeanStore;
-import stroom.visualisation.shared.Visualisation;
-import stroom.xmlschema.shared.XMLSchema;
 
 import javax.inject.Inject;
 import java.time.Duration;
@@ -88,43 +78,32 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     private static final List<String> TABLES_TO_CLEAR = Arrays.asList(
             AppPermission.TABLE_NAME,
             ClusterLock.TABLE_NAME,
-            Dashboard.TABLE_NAME,
             "doc",
             DocumentPermission.TABLE_NAME,
             "explorerTreeNode",
             "explorerTreePath",
             Feed.TABLE_NAME,
-            Index.TABLE_NAME,
-            Index.TABLE_NAME_INDEX_VOLUME, //link table between IDX and VOL so no entity of its own
+            "IDX_VOL", //link table between IDX and VOL so no entity of its own
             IndexShard.TABLE_NAME,
             Job.TABLE_NAME,
             JobNode.TABLE_NAME,
             Node.TABLE_NAME,
             Permission.TABLE_NAME,
-            PipelineEntity.TABLE_NAME,
             Policy.TABLE_NAME,
             QueryEntity.TABLE_NAME,
             Rack.TABLE_NAME,
-            Res.TABLE_NAME,
-            Script.TABLE_NAME,
-            StatisticStoreEntity.TABLE_NAME,
             Stream.TABLE_NAME,
             StreamAttributeKey.TABLE_NAME,
             StreamAttributeValue.TABLE_NAME,
             StreamProcessor.TABLE_NAME,
             StreamProcessorFilter.TABLE_NAME,
             StreamProcessorFilterTracker.TABLE_NAME,
-            StroomStatsStoreEntity.TABLE_NAME,
             StreamTask.TABLE_NAME,
             StreamVolume.TABLE_NAME,
-            TextConverter.TABLE_NAME,
             User.TABLE_NAME,
             UserGroupUser.TABLE_NAME,
-            Visualisation.TABLE_NAME,
             Volume.TABLE_NAME,
-            VolumeState.TABLE_NAME,
-            XMLSchema.TABLE_NAME,
-            XSLT.TABLE_NAME);
+            VolumeState.TABLE_NAME);
 
     private final VolumeService volumeService;
     private final ContentImportService contentImportService;
@@ -234,10 +213,10 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         return databaseCommonTestControlTransactionHelper.countEntity(clazz);
     }
 
-    @Override
-    public void deleteEntity(final Class<?> clazz) {
-        databaseCommonTestControlTransactionHelper.deleteClass(clazz);
-    }
+//    @Override
+//    public int countDocs(final String type) {
+//        return databaseCommonTestControlTransactionHelper.countDocs(type);
+//    }
 
     @Override
     public void shutdown() {

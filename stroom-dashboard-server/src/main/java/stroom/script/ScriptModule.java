@@ -22,27 +22,27 @@ import com.google.inject.multibindings.Multibinder;
 import stroom.entity.FindService;
 import stroom.explorer.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
-import stroom.script.shared.Script;
+import stroom.script.shared.ScriptDoc;
 import stroom.task.TaskHandler;
 
 public class ScriptModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(ScriptService.class).to(ScriptServiceImpl.class);
+        bind(ScriptStore.class).to(ScriptStoreImpl.class);
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.script.FetchScriptHandler.class);
 
         final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
-        explorerActionHandlerBinder.addBinding().to(stroom.script.ScriptServiceImpl.class);
+        explorerActionHandlerBinder.addBinding().to(stroom.script.ScriptStoreImpl.class);
 
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
-        importExportActionHandlerBinder.addBinding().to(stroom.script.ScriptServiceImpl.class);
+        importExportActionHandlerBinder.addBinding().to(stroom.script.ScriptStoreImpl.class);
 
         final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
-        entityServiceByTypeBinder.addBinding(Script.ENTITY_TYPE).to(stroom.script.ScriptServiceImpl.class);
+        entityServiceByTypeBinder.addBinding(ScriptDoc.DOCUMENT_TYPE).to(stroom.script.ScriptStoreImpl.class);
 
-        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
-        findServiceBinder.addBinding().to(stroom.script.ScriptServiceImpl.class);
+//        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
+//        findServiceBinder.addBinding().to(stroom.script.ScriptStoreImpl.class);
     }
 }

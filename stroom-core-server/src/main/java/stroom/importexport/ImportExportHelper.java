@@ -19,6 +19,7 @@ package stroom.importexport;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.docstore.EncodingUtil;
 import stroom.entity.GenericEntityService;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRefUtil;
@@ -27,14 +28,12 @@ import stroom.entity.shared.Entity;
 import stroom.entity.shared.EntityDependencyServiceException;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.NamedEntity;
-import stroom.entity.shared.Res;
 import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.importexport.shared.ImportState.State;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.util.date.DateUtil;
-import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
@@ -57,8 +56,6 @@ public class ImportExportHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportExportHelper.class);
 
     private final Provider<GenericEntityService> genericEntityServiceProvider;
-//    private final ClassTypeMap classTypeMap = new ClassTypeMap();
-//    private volatile boolean entitiesInitialised = false;
 
     @Inject
     public ImportExportHelper(final Provider<GenericEntityService> genericEntityServiceProvider) {
@@ -66,7 +63,7 @@ public class ImportExportHelper {
     }
 
     @SuppressWarnings("unchecked")
-    public <E extends DocumentEntity> void performImport(final E entity, final Map<String, String> dataMap,
+    public <E extends DocumentEntity> void performImport(final E entity, final Map<String, byte[]> dataMap,
                                                          final ImportState importState, final ImportMode importMode) {
         try {
 //            init();
@@ -74,7 +71,7 @@ public class ImportExportHelper {
             final List<Property> propertyList = BeanPropertyUtil.getPropertyList(entity.getClass(), false);
 
             final Config config = new Config();
-            config.read(new StringReader(dataMap.get("xml")));
+            config.read(new StringReader(EncodingUtil.asString(dataMap.get("xml"))));
 
 //            final BaseEntityBeanWrapper beanWrapper = new BaseEntityBeanWrapper(entity);
 
@@ -121,7 +118,7 @@ public class ImportExportHelper {
                 if (property.isExternalFile()) {
                     final String fileExtension = property.getExtensionProvider().getExtension(entity, propertyName);
                     final String dataKey = propertyName + "." + fileExtension;
-                    final String data = dataMap.get(dataKey);
+                    final String data = EncodingUtil.asString(dataMap.get(dataKey));
                     if (data != null) {
                         final List<Object> newDataList = new ArrayList<>();
                         newDataList.add(data);
@@ -211,12 +208,7 @@ public class ImportExportHelper {
                 }
 
                 if (obj != null) {
-                    if (obj instanceof String) {
-                        final String string = (String) obj;
-                        if (string != null && !string.isEmpty()) {
-                            setStringProperty(entity, property, string, importState, importMode);
-                        }
-                    } else if (obj instanceof DocRef) {
+                    if (obj instanceof DocRef) {
                         final DocRef docRef = (DocRef) obj;
                         setDocRefProperty(entity, property, docRef, importState, importMode);
                     }
@@ -323,34 +315,6 @@ public class ImportExportHelper {
         }
     }
 
-    private void setStringProperty(final Entity entity,
-                                   final Property property,
-                                   final String value,
-                                   final ImportState importState,
-                                   final ImportMode importMode) throws IllegalAccessException, InvocationTargetException {
-
-        // See if this property is a resource. If it is then create
-        // a new resource or update an existing one.
-        if (Res.class.equals(property.getType())) {
-            Res res;
-            final Object existing = property.get(entity);
-            if (existing == null) {
-                res = new Res();
-            } else {
-                res = (Res) existing;
-            }
-
-            if (importMode == ImportMode.CREATE_CONFIRMATION) {
-                if (!EqualsUtil.isEquals(res.getData(), value)) {
-                    importState.getUpdatedFieldList().add(property.getName());
-                }
-            } else {
-                res.setData(value);
-                property.set(entity, res);
-            }
-        }
-    }
-
     private void setDocRefProperty(final Entity entity,
                                    final Property property,
                                    final DocRef docRef,
@@ -412,9 +376,9 @@ public class ImportExportHelper {
 //    private String toPath(final Folder folder, final String name) {
 //        if (folder != null) {
 //            if (name != null) {
-//                return entityPathResolver.getEntityPath(Folder.ENTITY_TYPE, null, folder) + "/" + name;
+//                return entityPathResolver.getEntityPath(Folder.DOCUMENT_TYPE, null, folder) + "/" + name;
 //            } else {
-//                return entityPathResolver.getEntityPath(Folder.ENTITY_TYPE, null, folder);
+//                return entityPathResolver.getEntityPath(Folder.DOCUMENT_TYPE, null, folder);
 //            }
 //        } else {
 //            return "/" + name;
@@ -435,9 +399,9 @@ public class ImportExportHelper {
 //    }
 
 
-    public Map<String, String> performExport(final DocumentEntity entity,
+    public Map<String, byte[]> performExport(final DocumentEntity entity,
                                              final boolean omitAuditFields, final List<Message> messageList) {
-        final Map<String, String> dataMap = new HashMap<>();
+        final Map<String, byte[]> dataMap = new HashMap<>();
         final List<Property> propertyList = BeanPropertyUtil.getPropertyList(entity.getClass(), omitAuditFields);
 
         try {
@@ -455,19 +419,12 @@ public class ImportExportHelper {
                 // do so.
                 if (property.isExternalFile()) {
                     if (value != null) {
-                        String data;
-                        if (value instanceof Res) {
-                            final Res res = (Res) value;
-                            data = res.getData();
-                        } else {
-                            data = String.valueOf(value);
-                        }
-
+                        final String data = String.valueOf(value);
                         if (data != null) {
                             final String fileExtension = property.getExtensionProvider().getExtension(entity,
                                     propertyName);
                             if (fileExtension != null) {
-                                dataMap.put(propertyName + "." + fileExtension, data);
+                                dataMap.put(propertyName + "." + fileExtension, EncodingUtil.asBytes(data));
                             }
                         }
                     }
@@ -525,7 +482,7 @@ public class ImportExportHelper {
 
             final StringWriter writer = new StringWriter();
             config.write(writer, entity.getType());
-            dataMap.put("xml", writer.toString());
+            dataMap.put("xml", EncodingUtil.asBytes(writer.toString()));
 
         } catch (final RuntimeException | IllegalAccessException | InvocationTargetException | IOException e) {
             messageList.add(new Message(Severity.ERROR, EntityServiceExceptionUtil.getDefaultMessage(e, e)));

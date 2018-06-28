@@ -24,6 +24,8 @@ import org.apache.lucene.search.SearcherManager;
 import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValString;
 import stroom.index.LuceneVersionUtil;
 import stroom.index.shared.IndexShard;
 import stroom.properties.StroomPropertyService;
@@ -66,7 +68,7 @@ public class IndexShardSearchTaskHandler {
                 () -> {
                     try {
                         taskContext.setName("Search Index Shard");
-                        if (!taskContext.isTerminated()) {
+                        if (!Thread.currentThread().isInterrupted()) {
                             taskContext.info("Searching shard " + task.getShardNumber() + " of " + task.getShardTotal() + " (id="
                                     + task.getIndexShardId() + ")");
 
@@ -167,7 +169,7 @@ public class IndexShardSearchTaskHandler {
         final String[] fieldNames = task.getFieldNames();
         try {
             final Document document = searcher.doc(docId);
-            String[] values = null;
+            Val[] values = null;
 
             for (int i = 0; i < fieldNames.length; i++) {
                 final String storedField = fieldNames[i];
@@ -180,9 +182,9 @@ public class IndexShardSearchTaskHandler {
                         final String trimmed = value.trim();
                         if (trimmed.length() > 0) {
                             if (values == null) {
-                                values = new String[fieldNames.length];
+                                values = new Val[fieldNames.length];
                             }
-                            values[i] = trimmed;
+                            values[i] = ValString.create(trimmed);
                         }
                     }
                 }

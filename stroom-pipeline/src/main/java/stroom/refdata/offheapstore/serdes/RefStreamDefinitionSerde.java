@@ -25,7 +25,7 @@ import com.esotericsoftware.kryo.pool.KryoPool;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.refdata.lmdb.serde.AbstractKryoSerde;
 import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.util.logging.LambdaLogger;
@@ -68,7 +68,7 @@ public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinit
         public void write(final Kryo kryo,
                           final Output output,
                           final RefStreamDefinition refStreamDefinition) {
-            Preconditions.checkArgument(refStreamDefinition.getPipelineDocRef().getType().equals(PipelineEntity.ENTITY_TYPE));
+            Preconditions.checkArgument(refStreamDefinition.getPipelineDocRef().getType().equals(PipelineDoc.DOCUMENT_TYPE));
             uuidKryoSerializer.write(kryo, output, refStreamDefinition.getPipelineDocRef().getUuid());
 
             // We are only ever dealing with pipeline DocRefs so we don't need

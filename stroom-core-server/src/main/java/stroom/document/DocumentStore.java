@@ -22,5 +22,4 @@ import stroom.explorer.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
 
 public interface DocumentStore<D> extends ExplorerActionHandler, ImportExportActionHandler, DocumentActionHandler<D> {
-    String getDocType();
 }

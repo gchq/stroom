@@ -16,8 +16,10 @@
 
 package stroom.index.shared;
 
+import java.util.Objects;
+
 public class IndexShardKey {
-    private final Index index;
+    private final String indexUuid;
     private final String partition;
     private final int shardNo;
 
@@ -26,17 +28,20 @@ public class IndexShardKey {
     // The time that the partition that this shard belongs to ends
     private final Long partitionToTime;
 
-    public IndexShardKey(final Index index, final String partition, final Long partitionFromTime,
-                         final Long partitionToTime, final int shardNo) {
-        this.index = index;
+    public IndexShardKey(final String indexUuid,
+                         final String partition,
+                         final Long partitionFromTime,
+                         final Long partitionToTime,
+                         final int shardNo) {
+        this.indexUuid = indexUuid;
         this.partition = partition;
         this.partitionFromTime = partitionFromTime;
         this.partitionToTime = partitionToTime;
         this.shardNo = shardNo;
     }
 
-    public Index getIndex() {
-        return index;
+    public String getIndexUuid() {
+        return indexUuid;
     }
 
     public String getPartition() {
@@ -59,19 +64,14 @@ public class IndexShardKey {
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         final IndexShardKey that = (IndexShardKey) o;
-
-        if (shardNo != that.shardNo) return false;
-        if (!index.equals(that.index)) return false;
-        return partition.equals(that.partition);
+        return shardNo == that.shardNo &&
+                Objects.equals(indexUuid, that.indexUuid) &&
+                Objects.equals(partition, that.partition);
     }
 
     @Override
     public int hashCode() {
-        int result = index.hashCode();
-        result = 31 * result + partition.hashCode();
-        result = 31 * result + shardNo;
-        return result;
+        return Objects.hash(indexUuid, partition, shardNo);
     }
 }

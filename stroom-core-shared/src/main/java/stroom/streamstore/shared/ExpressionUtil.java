@@ -1,7 +1,7 @@
 package stroom.streamstore.shared;
 
 import stroom.feed.shared.Feed;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -10,7 +10,6 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class ExpressionUtil {
@@ -52,7 +51,7 @@ public final class ExpressionUtil {
 
     public static ExpressionOperator createStreamTypeExpression(final StreamType streamType) {
         return new ExpressionOperator.Builder(Op.AND)
-                .addTerm(StreamDataSource.STREAM_TYPE, Condition.EQUALS, streamType.getDisplayValue())
+                .addTerm(StreamDataSource.STREAM_TYPE_NAME, Condition.EQUALS, streamType.getDisplayValue())
                 .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
                 .build();
     }
@@ -66,11 +65,11 @@ public final class ExpressionUtil {
 
         if (feeds != null) {
             if (feeds.length == 1) {
-                builder.addTerm(StreamDataSource.FEED, Condition.EQUALS, feeds[0].getName());
+                builder.addTerm(StreamDataSource.FEED_NAME, Condition.EQUALS, feeds[0].getName());
             } else {
                 final ExpressionOperator.Builder or = new ExpressionOperator.Builder(Op.OR);
                 for (final Feed feed : feeds) {
-                    or.addTerm(StreamDataSource.FEED, Condition.EQUALS, feed.getName());
+                    or.addTerm(StreamDataSource.FEED_NAME, Condition.EQUALS, feed.getName());
                 }
                 builder.addOperator(or.build());
             }
@@ -81,9 +80,9 @@ public final class ExpressionUtil {
     }
 
 
-    public static ExpressionOperator createPipelineExpression(final PipelineEntity pipelineEntity) {
+    public static ExpressionOperator createPipelineExpression(final PipelineDoc pipelineDoc) {
         return new ExpressionOperator.Builder(Op.AND)
-                .addTerm(StreamDataSource.PIPELINE, Condition.EQUALS, pipelineEntity.getUuid())
+                .addTerm(StreamDataSource.PIPELINE_UUID, Condition.EQUALS, pipelineDoc.getUuid())
                 .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())
                 .build();
     }

@@ -20,6 +20,7 @@ package stroom.index;
 import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
@@ -28,16 +29,17 @@ import stroom.entity.shared.PermissionException;
 import stroom.entity.util.FieldMap;
 import stroom.entity.util.HqlBuilder;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.Index;
+import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.node.VolumeService;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
+import stroom.docref.DocRef;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
-import stroom.security.shared.PermissionNames;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.PermissionNames;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -53,28 +55,36 @@ public class IndexShardServiceImpl
 
     private final Security security;
     private final VolumeService volumeService;
+    private final IndexVolumeService indexVolumeService;
+    private final IndexConfigCache indexConfigCache;
     private final SecurityContext securityContext;
 
     @Inject
     IndexShardServiceImpl(final StroomEntityManager entityManager,
                           final Security security,
                           final VolumeService volumeService,
+                          final IndexVolumeService indexVolumeService,
+                          final IndexConfigCache indexConfigCache,
                           final SecurityContext securityContext) {
         super(entityManager, security);
         this.security = security;
         this.volumeService = volumeService;
+        this.indexVolumeService = indexVolumeService;
+        this.indexConfigCache = indexConfigCache;
         this.securityContext = securityContext;
     }
 
     @Override
     public IndexShard createIndexShard(final IndexShardKey indexShardKey, final Node ownerNode) {
-        final Index index = indexShardKey.getIndex();
-        if (index.getVolumes() == null || index.getVolumes().size() == 0) {
+        final IndexConfig indexConfig = indexConfigCache.get(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
+        final IndexDoc index = indexConfig.getIndex();
+        final Set<Volume> allowedVolumes = indexVolumeService.getVolumesForIndex(DocRefUtil.create(index));
+        if (allowedVolumes == null || allowedVolumes.size() == 0) {
             LOGGER.debug(VOLUME_ERROR);
             throw new IndexException(VOLUME_ERROR);
         }
 
-        final Set<Volume> volumes = volumeService.getIndexVolumeSet(ownerNode, index.getVolumes());
+        final Set<Volume> volumes = volumeService.getIndexVolumeSet(ownerNode, allowedVolumes);
 
         // The first set should be a set of cache volumes unless no caches have
         // been defined or they are full.
@@ -85,11 +95,11 @@ public class IndexShardServiceImpl
         }
         if (volume == null) {
             throw new IndexException("No shard can be created as no volumes are available for index: " + index.getName()
-                    + " (" + index.getId() + ")");
+                    + " (" + index.getUuid() + ")");
         }
 
         final IndexShard indexShard = new IndexShard();
-        indexShard.setIndex(index);
+        indexShard.setIndexUuid(index.getUuid());
         indexShard.setNode(ownerNode);
         indexShard.setPartition(indexShardKey.getPartition());
         indexShard.setPartitionFromTime(indexShardKey.getPartitionFromTime());
@@ -125,8 +135,7 @@ public class IndexShardServiceImpl
     @Override
     public Boolean delete(final IndexShard entity) {
         return security.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
-            final Index index = entity.getIndex();
-            if (!securityContext.hasDocumentPermission(index.getType(), index.getUuid(), DocumentPermissionNames.DELETE)) {
+            if (!securityContext.hasDocumentPermission(IndexDoc.DOCUMENT_TYPE, entity.getIndexUuid(), DocumentPermissionNames.DELETE)) {
                 throw new PermissionException(securityContext.getUserId(), "You do not have permission to delete index shard");
             }
 
@@ -173,7 +182,7 @@ public class IndexShardServiceImpl
                                            final FindIndexShardCriteria criteria) {
             super.appendBasicCriteria(sql, alias, criteria);
 
-            sql.appendDocRefSetQuery(alias + ".index", criteria.getIndexSet());
+            sql.appendDocRefSetQuery(alias + ".indexUuid", criteria.getIndexSet());
             sql.appendEntityIdSetQuery(alias, criteria.getIndexShardSet());
             sql.appendEntityIdSetQuery(alias + ".node", criteria.getNodeIdSet());
             sql.appendEntityIdSetQuery(alias + ".volume", criteria.getVolumeIdSet());

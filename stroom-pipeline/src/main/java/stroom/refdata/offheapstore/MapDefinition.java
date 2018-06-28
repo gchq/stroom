@@ -19,7 +19,7 @@ package stroom.refdata.offheapstore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 

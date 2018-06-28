@@ -19,7 +19,7 @@ package stroom.entity.util;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.EntityIdSet;
 import stroom.entity.shared.HasPrimitiveValue;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 public class HqlBuilder extends AbstractSqlBuilder {
     public HqlBuilder() {
@@ -95,7 +95,7 @@ public class HqlBuilder extends AbstractSqlBuilder {
     @Override
     void appendDocRefSet(final String fieldOrEntity, final CriteriaSet<DocRef> set) {
         append(fieldOrEntity);
-        append(".uuid IN (");
+        append(" IN (");
 
         boolean added = false;
         for (final DocRef item : set) {

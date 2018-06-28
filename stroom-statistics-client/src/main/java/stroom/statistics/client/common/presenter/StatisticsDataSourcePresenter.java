@@ -24,19 +24,19 @@ import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.TabContentProvider;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.client.ClientSecurityContext;
-import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
-public class StatisticsDataSourcePresenter extends DocumentEditTabPresenter<LinkTabPanelView, StatisticStoreEntity> {
+public class StatisticsDataSourcePresenter extends DocumentEditTabPresenter<LinkTabPanelView, StatisticStoreDoc> {
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData FIELDS = new TabDataImpl("Fields");
     private static final TabData CUSTOM_ROLLUPS = new TabDataImpl("Custom Roll-ups");
 
-    private final TabContentProvider<StatisticStoreEntity> tabContentProvider = new TabContentProvider<>();
+    private final TabContentProvider<StatisticStoreDoc> tabContentProvider = new TabContentProvider<>();
 
     @Inject
     public StatisticsDataSourcePresenter(final EventBus eventBus, final LinkTabPanelView view,
@@ -70,11 +70,11 @@ public class StatisticsDataSourcePresenter extends DocumentEditTabPresenter<Link
     }
 
     @Override
-    public void onRead(final DocRef docRef, final StatisticStoreEntity statisticsDataSource) {
+    public void onRead(final DocRef docRef, final StatisticStoreDoc statisticsDataSource) {
         super.onRead(docRef, statisticsDataSource);
         if (statisticsDataSource != null) {
-            if (statisticsDataSource.getStatisticDataSourceDataObject() == null) {
-                statisticsDataSource.setStatisticDataSourceDataObject(new StatisticsDataSourceData());
+            if (statisticsDataSource.getConfig() == null) {
+                statisticsDataSource.setConfig(new StatisticsDataSourceData());
             }
         }
 
@@ -87,7 +87,7 @@ public class StatisticsDataSourcePresenter extends DocumentEditTabPresenter<Link
     }
 
     @Override
-    protected void onWrite(final StatisticStoreEntity statisticsDataSource) {
+    protected void onWrite(final StatisticStoreDoc statisticsDataSource) {
         tabContentProvider.write(statisticsDataSource);
     }
 
@@ -99,6 +99,6 @@ public class StatisticsDataSourcePresenter extends DocumentEditTabPresenter<Link
 
     @Override
     public String getType() {
-        return StatisticStoreEntity.ENTITY_TYPE;
+        return StatisticStoreDoc.DOCUMENT_TYPE;
     }
 }

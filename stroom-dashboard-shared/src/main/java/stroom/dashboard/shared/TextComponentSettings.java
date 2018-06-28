@@ -16,23 +16,34 @@
 
 package stroom.dashboard.shared;
 
-import stroom.query.api.v2.DocRef;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import stroom.docref.DocRef;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "text", propOrder = {"tableId", "pipeline", "showAsHtml"})
+@JsonPropertyOrder({"tableId", "pipeline", "showAsHtml"})
+@JsonInclude(Include.NON_EMPTY)
+@XmlRootElement(name = "text")
+@XmlType(name = "TextComponentSettings", propOrder = {"tableId", "pipeline", "showAsHtml"})
 public class TextComponentSettings extends ComponentSettings {
     private static final long serialVersionUID = -2530827581046882396L;
 
     @XmlElement(name = "tableId")
+    @JsonProperty("tableId")
     private String tableId;
     @XmlElement(name = "pipeline")
+    @JsonProperty("pipeline")
     private DocRef pipeline;
     @XmlElement(name = "showAsHtml")
+    @JsonProperty("showAsHtml")
     private boolean showAsHtml;
 
     public TextComponentSettings() {

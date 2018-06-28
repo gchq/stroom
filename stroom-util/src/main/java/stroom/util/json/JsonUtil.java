@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 
 public final class JsonUtil {
@@ -52,16 +53,14 @@ public final class JsonUtil {
     public static void writeValue(final Path outputFile, final Object object) {
         Preconditions.checkNotNull(object);
         Preconditions.checkNotNull(outputFile);
-        if (object != null) {
-            try {
-                getMapper().writeValue(outputFile.toFile(), object);
-            } catch (final JsonProcessingException e) {
-                throw new RuntimeException(String.format("Error serialising object %s to json",
-                        object.toString()), e);
-            } catch (IOException e) {
-                throw new RuntimeException(String.format("Error writing json to file %s",
-                        outputFile.toAbsolutePath().toString()), e);
-            }
+        try {
+            getMapper().writeValue(outputFile.toFile(), object);
+        } catch (final JsonProcessingException e) {
+            throw new RuntimeException(String.format("Error serialising object %s to json",
+                    object.toString()), e);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(String.format("Error writing json to file %s",
+                    outputFile.toAbsolutePath().toString()), e);
         }
     }
 
@@ -72,8 +71,6 @@ public final class JsonUtil {
         final ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(module);
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
-        mapper.setSerializationInclusion(Include.NON_NULL);
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         mapper.setSerializationInclusion(Include.NON_NULL);
         return mapper;

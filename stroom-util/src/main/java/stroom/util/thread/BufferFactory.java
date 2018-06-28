@@ -30,18 +30,15 @@ public class BufferFactory {
      */
     private static final int DEFAULT_BUFFER_SIZE = 8192;
 
-//    private static ThreadLocal<byte[]> threadLocalBuffer = new ThreadLocal<>();
+//    private static ThreadLocal<byte[]> threadLocalBuffer = ThreadLocal.withInitial(() -> {
+//        int size = StroomProperties.getIntProperty("stroom.bufferSize", DEFAULT_BUFFER_SIZE);
+//        return new byte[size];
+//    });
 
     public static byte[] create() {
         int size = StroomProperties.getIntProperty("stroom.bufferSize", DEFAULT_BUFFER_SIZE);
         return new byte[size];
 
-//        byte[] buffer = threadLocalBuffer.get();
-//        if (buffer == null) {
-//            int size = StroomProperties.getIntProperty("stroom.bufferSize", DEFAULT_BUFFER_SIZE);
-//            buffer = new byte[size];
-//            threadLocalBuffer.set(buffer);
-//        }
-//        return buffer;
+//        return threadLocalBuffer.get();
     }
 }

@@ -92,7 +92,7 @@ public class VolumeState extends BaseEntitySmall {
     public Long getPercentUsed() {
         Long percent = null;
         if (bytesUsed != null && bytesTotal != null) {
-            percent = new Double(((double) bytesUsed) / ((double) bytesTotal) * ONE_HUNDRED).longValue();
+            percent = Double.valueOf(((double) bytesUsed) / ((double) bytesTotal) * ONE_HUNDRED).longValue();
         }
         return percent;
     }

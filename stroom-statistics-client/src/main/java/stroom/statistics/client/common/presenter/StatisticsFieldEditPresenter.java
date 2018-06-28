@@ -23,7 +23,6 @@ import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
-import stroom.statistics.shared.StatisticStoreEntity;
 import stroom.statistics.shared.common.StatisticField;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -35,6 +34,8 @@ import java.util.List;
 
 public class StatisticsFieldEditPresenter
         extends MyPresenterWidget<StatisticsFieldEditPresenter.StatisticsFieldEditView> {
+    private static final String DEFAULT_NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
+
     private String fieldNamePattern;
     private List<StatisticField> otherFields;
 
@@ -50,7 +51,7 @@ public class StatisticsFieldEditPresenter
                     String fieldNamePattern = result.get(ClientProperties.NAME_PATTERN);
 
                     if (fieldNamePattern == null || fieldNamePattern.isEmpty()) {
-                        fieldNamePattern = StatisticStoreEntity.DEFAULT_NAME_PATTERN_VALUE;
+                        fieldNamePattern = DEFAULT_NAME_PATTERN_VALUE;
                     }
 
                     thisPresenter.setFieldNamePattern(fieldNamePattern);
@@ -79,7 +80,7 @@ public class StatisticsFieldEditPresenter
             return false;
         }
         if (fieldNamePattern != null && !fieldNamePattern.isEmpty()) {
-            if (name == null || !name.matches(fieldNamePattern)) {
+            if (!name.matches(fieldNamePattern)) {
                 AlertEvent.fireWarn(this,
                         "Invalid name \"" + name + "\" (valid name pattern: " + fieldNamePattern + ")", null);
                 return false;
@@ -88,16 +89,16 @@ public class StatisticsFieldEditPresenter
         return true;
     }
 
-    public void show(final String caption, final PopupUiHandlers uiHandlers) {
+    void show(final String caption, final PopupUiHandlers uiHandlers) {
         final PopupSize popupSize = new PopupSize(305, 78, 305, 78, 800, 78, true);
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, caption, uiHandlers);
     }
 
-    public void hide() {
+    void hide() {
         HidePopupEvent.fire(this, this);
     }
 
-    public void setFieldNamePattern(final String fieldNamePattern) {
+    private void setFieldNamePattern(final String fieldNamePattern) {
         this.fieldNamePattern = fieldNamePattern;
     }
 

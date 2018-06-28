@@ -16,7 +16,7 @@
 
 package stroom.entity.shared;
 
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 public class FetchDirective implements SharedObject {
     private static final long serialVersionUID = -4779926421987605511L;

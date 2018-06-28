@@ -52,6 +52,7 @@ public class ClientPropertiesServiceImpl implements ClientPropertiesService {
         addProperty(props, ClientProperties.ADVERTISED_HOST_URL);
         addProperty(props, ClientProperties.USERS_UI_URL);
         addProperty(props, ClientProperties.API_KEYS_UI_URL);
+        addProperty(props, ClientProperties.STROOM_UI_URL);
         addProperty(props, ClientProperties.CHANGE_PASSWORD_UI_URL);
         addProperty(props, ClientProperties.URL_KIBANA_UI);
 

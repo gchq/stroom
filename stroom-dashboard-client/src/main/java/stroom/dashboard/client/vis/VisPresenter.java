@@ -46,11 +46,11 @@ import stroom.dashboard.shared.FetchVisualisationAction;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dashboard.shared.VisResultRequest;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.script.client.ScriptCache;
 import stroom.script.shared.FetchScriptAction;
-import stroom.script.shared.Script;
+import stroom.script.shared.ScriptDoc;
 import stroom.util.client.JSONUtil;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.SharedList;
@@ -59,9 +59,6 @@ import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 import stroom.visualisation.client.presenter.VisFunction.StatusHandler;
 import stroom.visualisation.client.presenter.VisFunctionCache;
 import stroom.widget.tab.client.presenter.LayerContainer;
-
-import java.util.HashSet;
-import java.util.Set;
 
 public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisView>
         implements ResultComponent, StatusHandler {
@@ -191,7 +188,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         visSettings.setTableId(tableId);
 
         final Component component = getComponents().get(visSettings.getTableId());
-        if (component != null && component instanceof TablePresenter) {
+        if (component instanceof TablePresenter) {
             final TablePresenter tablePresenter = (TablePresenter) component;
             visSettings.setTableSettings(tablePresenter.getSettings());
             final String queryId = tablePresenter.getSettings().getQueryId();
@@ -204,7 +201,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
 
         if (queryId != null) {
             final Component component = getComponents().get(queryId);
-            if (component != null && component instanceof QueryPresenter) {
+            if (component instanceof QueryPresenter) {
                 final QueryPresenter queryPresenter = (QueryPresenter) component;
                 currentSearchModel = queryPresenter.getSearchModel();
                 if (currentSearchModel != null) {
@@ -392,14 +389,11 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     private void loadScripts(final VisFunction function, final DocRef scriptRef) {
         function.setStatus(LoadStatus.LOADING_SCRIPT);
 
-        final Set<String> fetchSet = new HashSet<>();
-
-        final FetchScriptAction fetchScriptAction = new FetchScriptAction(scriptRef,
-                scriptCache.getLoadedScripts(), fetchSet);
+        final FetchScriptAction fetchScriptAction = new FetchScriptAction(scriptRef, scriptCache.getLoadedScripts());
         dispatcher.exec(fetchScriptAction).onSuccess(result -> startInjectingScripts(result, function));
     }
 
-    private void startInjectingScripts(final SharedList<Script> scripts, final VisFunction function) {
+    private void startInjectingScripts(final SharedList<ScriptDoc> scripts, final VisFunction function) {
         function.setStatus(LoadStatus.INJECTING_SCRIPT);
         // Inject returned scripts.
         visPane.injectScripts(scripts, function);
@@ -548,7 +542,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     @Override
     public VisComponentSettings getSettings() {
         ComponentSettings settings = getComponentData().getSettings();
-        if (settings == null || !(settings instanceof VisComponentSettings)) {
+        if (!(settings instanceof VisComponentSettings)) {
             settings = createSettings();
             getComponentData().setSettings(settings);
         }

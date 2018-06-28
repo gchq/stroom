@@ -23,7 +23,7 @@ import stroom.entity.shared.EntityServiceException;
 import stroom.explorer.ExplorerNodeService;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.shared.ChangeDocumentPermissionsAction;
 import stroom.security.shared.ChangeSet;
 import stroom.security.shared.DocumentPermissionNames;

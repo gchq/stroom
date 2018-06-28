@@ -19,7 +19,7 @@ package stroom.entity;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.EntityServiceFindReferenceAction;
 import stroom.entity.shared.ResultList;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.Security;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;

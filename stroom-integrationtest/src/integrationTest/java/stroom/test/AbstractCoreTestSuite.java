@@ -3,11 +3,13 @@ package stroom.test;
 import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
+import stroom.dashboard.TestDashboardStoreImpl;
+import stroom.xmlschema.TestXMLSchemaStoreImpl;
 
 @Ignore("Don't run this test suite automatically as the tests are already run on their own")
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-        stroom.dashboard.TestDashboardServiceImpl.class,
+        TestDashboardStoreImpl.class,
         stroom.docstore.db.TestDBPersistence.class,
         stroom.entity.TestEntityServiceImpl.class,
         stroom.explorer.TestExplorerTree.class,
@@ -18,7 +20,7 @@ import org.junit.runners.Suite;
         stroom.importexport.TestImportExportServiceImpl.class,
         stroom.importexport.TestImportExportServiceImpl2.class,
         stroom.importexport.TestImportExportServiceImpl3.class,
-        stroom.index.TestIndexServiceImpl.class,
+        stroom.index.TestIndexStoreImpl.class,
         stroom.index.TestIndexShardServiceImpl.class,
         stroom.index.TestIndexShardWriterImpl.class,
         stroom.jobsystem.TestClusterLockService.class,
@@ -31,7 +33,7 @@ import org.junit.runners.Suite;
         stroom.pipeline.task.TestTranslationStepping.class,
         stroom.policy.TestDataRetentionStreamFinder.class,
         stroom.refdata.TestReferenceDataWithCache.class,
-        stroom.script.TestScriptServiceImpl.class,
+        stroom.script.TestScriptStoreImpl.class,
         stroom.search.TestBasicSearch.class,
         stroom.search.TestBasicSearch_EndToEnd.class,
         stroom.search.TestDictionaryStoreImpl.class,
@@ -67,7 +69,7 @@ import org.junit.runners.Suite;
         stroom.streamtask.TestTranslationStreamTaskServiceImportExport.class,
         stroom.task.TestTaskManagerImpl.class,
         stroom.test.TestAbstractCoreIntegrationTest.class,
-        stroom.xmlschema.TestXMLSchemaServiceImpl.class
+        TestXMLSchemaStoreImpl.class
 })
 public class AbstractCoreTestSuite {
 }

@@ -17,8 +17,10 @@
 
 package stroom.docstore.shared;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -27,6 +29,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser"})
+@JsonInclude(Include.NON_EMPTY)
 @XmlRootElement(name = "doc")
 @XmlType(name = "Doc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser"})
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -151,5 +154,14 @@ public class Doc implements SharedObject {
         result = 31 * result + (createUser != null ? createUser.hashCode() : 0);
         result = 31 * result + (updateUser != null ? updateUser.hashCode() : 0);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "DocRef{" +
+                "type='" + type + '\'' +
+                ", uuid='" + uuid + '\'' +
+                ", name='" + name + '\'' +
+                '}';
     }
 }

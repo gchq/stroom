@@ -6,6 +6,7 @@ import stroom.util.shared.Version;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -61,8 +62,8 @@ public class ContentImportService {
         Path contentPackDir = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(CONTENT_PACK_IMPORT_DIR);
         try {
             Files.createDirectories(contentPackDir);
-        } catch (IOException e) {
-            throw new RuntimeException(String.format("Error creating directory %s for content packs",
+        } catch (final IOException e) {
+            throw new UncheckedIOException(String.format("Error creating directory %s for content packs",
                     FileUtil.getCanonicalPath(contentPackDir)), e);
         }
         return contentPackDir;

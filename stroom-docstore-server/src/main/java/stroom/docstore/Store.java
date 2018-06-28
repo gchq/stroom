@@ -19,11 +19,12 @@ package stroom.docstore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.PermissionException;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -31,33 +32,33 @@ import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.charset.Charset;
+import java.io.UncheckedIOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Store<D extends Doc> implements DocumentActionHandler<D> {
     private static final Logger LOGGER = LoggerFactory.getLogger(Store.class);
 
-    private static final Charset CHARSET = Charset.forName("UTF-8");
-    private static final String KEY = "dat";
-
     private final SecurityContext securityContext;
     private final Persistence persistence;
 
-    private Serialiser<D> serialiser;
+    private Serialiser2<D> serialiser;
     private String type;
     private Class<D> clazz;
+
+    private final AtomicBoolean dirty = new AtomicBoolean();
+//    private volatile List<DocRef> cached = Collections.emptyList();
+//    private volatile long lastUpdate;
 
     @Inject
     public Store(final Persistence persistence, final SecurityContext securityContext) {
@@ -65,7 +66,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
         this.securityContext = securityContext;
     }
 
-    public void setSerialiser(final Serialiser<D> serialiser) {
+    public void setSerialiser(final Serialiser2<D> serialiser) {
         this.serialiser = serialiser;
     }
 
@@ -147,9 +148,10 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
             throw new PermissionException(securityContext.getUserId(), "You are not authorised to delete this item");
         }
 
-        try (final RWLock lock = persistence.getLockFactory().lock(uuid)) {
+        persistence.getLockFactory().lock(uuid, () -> {
             persistence.delete(new DocRef(type, uuid));
-        }
+            dirty.set(true);
+        });
     }
 
     public DocRefInfo info(final String uuid) {
@@ -222,7 +224,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
                 .collect(Collectors.toMap(Function.identity(), d -> Collections.emptySet()));
     }
 
-    public DocRef importDocument(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
+    public DocRef importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
         final String uuid = docRef.getUuid();
         try {
             final boolean exists = persistence.exists(docRef);
@@ -231,26 +233,27 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
             }
 
             if (importState.ok(importMode)) {
-                final byte[] data = dataMap.get(KEY).getBytes(CHARSET);
-
-                try (final RWLock lock = persistence.getLockFactory().lock(uuid)) {
-                    try (final OutputStream outputStream = persistence.getOutputStream(docRef, exists)) {
-                        outputStream.write(data);
+                persistence.getLockFactory().lock(uuid, () -> {
+                    try {
+                        persistence.write(docRef, exists, dataMap);
+                        dirty.set(true);
+                    } catch (final IOException e) {
+                        throw new UncheckedIOException(e);
                     }
-                }
+                });
             }
 
-        } catch (final IOException e) {
+        } catch (final RuntimeException e) {
             importState.addMessage(Severity.ERROR, e.getMessage());
         }
 
         return docRef;
     }
 
-    public Map<String, String> exportDocument(final DocRef docRef,
+    public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        Map<String, String> data = Collections.emptyMap();
+        Map<String, byte[]> data = Collections.emptyMap();
 
         final String uuid = docRef.getUuid();
 
@@ -273,11 +276,7 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
                     document.setUpdateUser(null);
                 }
 
-                final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                serialiser.write(byteArrayOutputStream, document);
-
-                data = new HashMap<>();
-                data.put(KEY, new String(byteArrayOutputStream.toByteArray(), CHARSET));
+                data = serialiser.write(document);
             }
         } catch (final IOException e) {
             messageList.add(new Message(Severity.ERROR, e.getMessage()));
@@ -299,86 +298,154 @@ public class Store<D extends Doc> implements DocumentActionHandler<D> {
     }
 
     private D create(final D document) {
-        final DocRef docRef = createDocRef(document);
         try {
-            try (final RWLock lock = persistence.getLockFactory().lock(document.getUuid())) {
-                serialiser.write(persistence.getOutputStream(docRef, false), document);
-            }
-
-            return document;
-
-        } catch (final RuntimeException e) {
-            throw e;
+            final DocRef docRef = createDocRef(document);
+            final Map<String, byte[]> data = serialiser.write(document);
+            persistence.getLockFactory().lock(document.getUuid(), () -> {
+                try {
+                    persistence.write(docRef, false, data);
+                    dirty.set(true);
+                } catch (final IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            });
         } catch (final IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
+            throw new UncheckedIOException(e);
         }
+
+        return document;
     }
 
     private D create(final String type, final String uuid, final String name) {
         try {
-            final D document = clazz.newInstance();
+            final D document = clazz.getDeclaredConstructor(new Class[0]).newInstance();
             document.setType(type);
             document.setUuid(uuid);
             document.setName(name);
             return document;
-        } catch (final InstantiationException | IllegalAccessException e) {
+        } catch (final InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
     }
 
-    public D read(final String uuid) {
-        try (final RWLock lock = persistence.getLockFactory().lock(uuid)) {
-            // Check that the user has permission to read this item.
-            if (!securityContext.hasDocumentPermission(type, uuid, DocumentPermissionNames.READ)) {
-                throw new PermissionException(securityContext.getUserId(), "You are not authorised to read this document");
-            }
+    private D read(final String uuid) {
+        // Check that the user has permission to read this item.
+        if (!securityContext.hasDocumentPermission(type, uuid, DocumentPermissionNames.READ)) {
+            throw new PermissionException(securityContext.getUserId(), "You are not authorised to read this document");
+        }
 
-            final InputStream inputStream = persistence.getInputStream(new DocRef(type, uuid));
-            return serialiser.read(inputStream, clazz);
+        final Map<String, byte[]> data = persistence.getLockFactory().lockResult(uuid, () -> {
+            try {
+                return persistence.read(new DocRef(type, uuid));
+            } catch (final IOException e) {
+                LOGGER.error(e.getMessage(), e);
+                throw new UncheckedIOException(e);
+            }
+        });
+
+        try {
+            return serialiser.read(data);
         } catch (final IOException e) {
             LOGGER.error(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
+            throw new UncheckedIOException(e);
         }
     }
 
-    public D update(final D document) {
+    private D update(final D document) {
         final DocRef docRef = createDocRef(document);
-        try (final RWLock lock = persistence.getLockFactory().lock(document.getUuid())) {
-            // Check that the user has permission to update this item.
-            if (!securityContext.hasDocumentPermission(type, document.getUuid(), DocumentPermissionNames.UPDATE)) {
-                throw new PermissionException(securityContext.getUserId(), "You are not authorised to update this document");
-            }
 
-            try (final InputStream inputStream = persistence.getInputStream(docRef)) {
-                final D existingDocument = serialiser.read(inputStream, clazz);
-
-                // Perform version check to ensure the item hasn't been updated by somebody else before we try to update it.
-                if (!existingDocument.getVersion().equals(document.getVersion())) {
-                    throw new RuntimeException("Document has already been updated");
-                }
-
-                final long now = System.currentTimeMillis();
-                final String userId = securityContext.getUserId();
-
-                document.setVersion(UUID.randomUUID().toString());
-                document.setUpdateTime(now);
-                document.setUpdateUser(userId);
-
-                try (final OutputStream outputStream = persistence.getOutputStream(docRef, true)) {
-                    serialiser.write(outputStream, document);
-                }
-
-                return document;
-            }
-
-        } catch (final RuntimeException e) {
-            throw e;
-        } catch (final IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
+        // Check that the user has permission to update this item.
+        if (!securityContext.hasDocumentPermission(type, document.getUuid(), DocumentPermissionNames.UPDATE)) {
+            throw new PermissionException(securityContext.getUserId(), "You are not authorised to update this document");
         }
+
+        try {
+            // Get the current document version to make sure the document hasn't been changed by somebody else since we last read it.
+            final String currentVersion = document.getVersion();
+
+            final long now = System.currentTimeMillis();
+            final String userId = securityContext.getUserId();
+
+            document.setVersion(UUID.randomUUID().toString());
+            document.setUpdateTime(now);
+            document.setUpdateUser(userId);
+
+            final Map<String, byte[]> newData = serialiser.write(document);
+
+            persistence.getLockFactory().lock(document.getUuid(), () -> {
+                try {
+                    // Read existing data for this document.
+                    final Map<String, byte[]> data = persistence.read(docRef);
+
+                    // Perform version check to ensure the item hasn't been updated by somebody else before we try to update it.
+                    if (data == null) {
+                        throw new RuntimeException("Document does not exist " + docRef);
+                    }
+
+                    final D existingDocument = serialiser.read(data);
+
+                    // Perform version check to ensure the item hasn't been updated by somebody else before we try to update it.
+                    if (!existingDocument.getVersion().equals(currentVersion)) {
+                        throw new RuntimeException("Document has already been updated " + docRef);
+                    }
+
+                    persistence.write(docRef, true, newData);
+                    dirty.set(true);
+                } catch (final IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            });
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+
+        return document;
     }
 
     public List<DocRef> list() {
-        return persistence.list(type);
+        return createDocRefList();
+
+//        final long now = System.currentTimeMillis();
+//        if (lastUpdate + 60000 < now) {
+//            dirty.set(true);
+//        }
+//
+//        if (dirty.get()) {
+//            synchronized(this) {
+//                if (dirty.compareAndSet(true, false)) {
+//                    lastUpdate = now;
+//                    cached = createList();
+//                }
+//            }
+//        }
+//        return cached;
+    }
+
+    public List<DocRef> findByName(final String name) {
+        if (name == null) {
+            return Collections.emptyList();
+        }
+        return list().stream().filter(docRef -> name.equals(docRef.getName())).collect(Collectors.toList());
+    }
+
+    private List<DocRef> createDocRefList() {
+        final Stream<Optional<DocRef>> refs = persistence.list(type)
+                .stream()
+                .map(docRef -> {
+                    try {
+                        final D doc = read(docRef.getUuid());
+                        if (doc != null) {
+                            return Optional.of(DocRefUtil.create(doc));
+                        }
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(e.getMessage(), e);
+                    }
+
+                    return Optional.empty();
+                });
+        return refs.filter(Optional::isPresent)
+                .map(Optional::get)
+                .sorted()
+                .collect(Collectors.toList());
     }
 }

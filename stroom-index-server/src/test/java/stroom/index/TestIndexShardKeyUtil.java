@@ -18,8 +18,8 @@ package stroom.index;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.index.shared.Index;
-import stroom.index.shared.Index.PartitionBy;
+import stroom.index.shared.IndexDoc;
+import stroom.index.shared.IndexDoc.PartitionBy;
 import stroom.index.shared.IndexShardKey;
 import stroom.util.date.DateUtil;
 import stroom.util.test.StroomUnitTest;
@@ -27,11 +27,11 @@ import stroom.util.test.StroomUnitTest;
 public class TestIndexShardKeyUtil extends StroomUnitTest {
     @Test
     public void testMultishard() {
-        final Index index = new Index();
+        final IndexDoc index = new IndexDoc();
         index.setShardsPerPartition(5);
         final IndexShardKey indexShardKey = IndexShardKeyUtil.createTestKey(index);
 
-        Assert.assertEquals(index, indexShardKey.getIndex());
+        Assert.assertEquals(index.getUuid(), indexShardKey.getIndexUuid());
         Assert.assertTrue(indexShardKey.getShardNo() >= 0);
     }
 
@@ -74,7 +74,7 @@ public class TestIndexShardKeyUtil extends StroomUnitTest {
     }
 
     private String getPartition(final PartitionBy partitionBy, final int partitionSize, final long millis) {
-        final Index index = new Index();
+        final IndexDoc index = new IndexDoc();
         index.setShardsPerPartition(5);
         index.setPartitionBy(partitionBy);
         index.setPartitionSize(partitionSize);

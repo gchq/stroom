@@ -16,7 +16,11 @@
 
 package stroom.dashboard.shared;
 
-import stroom.query.api.v2.DocRef;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import stroom.docref.DocRef;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 import stroom.util.shared.ToStringBuilder;
@@ -26,30 +30,39 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlElements;
+import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "table", propOrder = {"queryId", "fields", "extractValues", "extractionPipeline", "maxResults",
-        "showDetail"})
+@JsonPropertyOrder({"queryId", "fields", "extractValues", "extractionPipeline", "maxResults", "showDetail"})
+@JsonInclude(Include.NON_EMPTY)
+@XmlRootElement(name = "table")
+@XmlType(name = "TableComponentSettings", propOrder = {"queryId", "fields", "extractValues", "extractionPipeline", "maxResults", "showDetail"})
 public class TableComponentSettings extends ComponentSettings {
     public static final int[] DEFAULT_MAX_RESULTS = {1000000};
     private static final long serialVersionUID = -2530827581046882396L;
     @XmlElement(name = "queryId")
+    @JsonProperty("queryId")
     private String queryId;
     @XmlElementWrapper(name = "fields")
     @XmlElements({@XmlElement(name = "field", type = Field.class)})
+    @JsonProperty("fields")
     private List<Field> fields;
     @XmlElement(name = "extractValues")
+    @JsonProperty("extractValues")
     private Boolean extractValues;
     @XmlElement(name = "extractionPipeline")
+    @JsonProperty("extractionPipeline")
     private DocRef extractionPipeline;
     @XmlElementWrapper(name = "maxResults")
     @XmlElement(name = "level")
+    @JsonProperty("maxResults")
     private int[] maxResults = DEFAULT_MAX_RESULTS;
     @XmlElement(name = "showDetail")
+    @JsonProperty("showDetail")
     private Boolean showDetail;
 
     public TableComponentSettings() {

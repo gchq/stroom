@@ -16,7 +16,11 @@
 
 package stroom.dashboard.shared;
 
-import stroom.util.shared.SharedObject;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import stroom.docref.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -25,18 +29,23 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "automate", propOrder = {"open", "refresh", "refreshInterval"})
+@JsonPropertyOrder({"open", "refresh", "refreshInterval"})
+@JsonInclude(Include.NON_EMPTY)
 @XmlRootElement(name = "automate")
+@XmlType(name = "Automate", propOrder = {"open", "refresh", "refreshInterval"})
 public class Automate implements SharedObject {
     private static final long serialVersionUID = -2530827581046882396L;
 
     @XmlElement(name = "open")
+    @JsonProperty("open")
     private boolean open;
 
     @XmlElement(name = "refresh")
+    @JsonProperty("refresh")
     private boolean refresh;
 
     @XmlElement(name = "refreshInterval")
+    @JsonProperty("refreshInterval")
     private String refreshInterval = "10s";
 
     public Automate() {

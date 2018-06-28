@@ -18,7 +18,7 @@
 package stroom.streamtask;
 
 import stroom.entity.MockEntityService;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.docref.DocRef;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.StreamProcessor;
@@ -50,7 +50,7 @@ public class MockStreamProcessorFilterService
     }
 
     @Override
-    public StreamProcessorFilter createNewFilter(final PipelineEntity pipelineEntity,
+    public StreamProcessorFilter createNewFilter(final DocRef pipelineRef,
                                                  final QueryData findStreamCriteria,
                                                  final boolean enabled,
                                                  final int priority) {

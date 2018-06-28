@@ -19,6 +19,8 @@ plugins {
     id 'org.flywaydb.flyway' version '5.0.7'
 }
 
+ext.moduleName = 'stroom.app'
+
 def uiDir = project.file('src/main/resources/ui')
 def swaggerDir = "${uiDir}/swagger"
 def jarName = 'stroom-app.jar'
@@ -81,6 +83,7 @@ dependencies {
     compile project(':stroom-elastic-server')
     compile project(':stroom-ruleset-server')
 
+    compile libs.stroomDocRef
     compile libs.stroomQueryApi
 
     compile libs.dropwizard_lifecycle

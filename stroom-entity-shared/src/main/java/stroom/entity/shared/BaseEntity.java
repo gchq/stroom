@@ -19,7 +19,7 @@ package stroom.entity.shared;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HasId;
 import stroom.util.shared.HasType;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;

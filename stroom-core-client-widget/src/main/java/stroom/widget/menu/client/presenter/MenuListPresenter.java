@@ -127,9 +127,7 @@ public class MenuListPresenter extends MenuPresenter {
                         // Add this as an auto hide partner
                         autoHidePartners.add(element);
                         presenter.setAutoHidePartners(autoHidePartners);
-
-                        Element[] partners = new Element[autoHidePartners.size()];
-                        partners = autoHidePartners.toArray(partners);
+                        final Element[] partners = autoHidePartners.toArray(new Element[0]);
 
                         final PopupPosition popupPosition = new PopupPosition(element.getAbsoluteRight(),
                                 element.getAbsoluteLeft(), element.getAbsoluteTop(), element.getAbsoluteTop(),

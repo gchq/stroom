@@ -18,6 +18,8 @@
 package stroom.streamtask;
 
 import stroom.entity.MockEntityService;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.docref.DocRef;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.StreamProcessor;
 
@@ -41,7 +43,7 @@ public class MockStreamProcessorService extends MockEntityService<StreamProcesso
         if (!super.isMatch(criteria, entity)) {
             return false;
         }
-        return criteria.obtainPipelineIdSet().isMatch(entity.getPipeline());
+        return criteria.obtainPipelineSet().isMatch(new DocRef(PipelineDoc.DOCUMENT_TYPE, entity.getPipelineUuid()));
     }
 
     @Override

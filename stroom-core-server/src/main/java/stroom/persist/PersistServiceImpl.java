@@ -24,8 +24,6 @@ import java.util.Properties;
 
 @Singleton
 public class PersistServiceImpl implements Provider<EntityManager>, PersistService {
-//    private static final String PACKAGE = "stroom";
-
     private final DataSource dataSource;
 
     private volatile EntityManagerFactory emFactory;
@@ -113,13 +111,10 @@ public class PersistServiceImpl implements Provider<EntityManager>, PersistServi
 //                .scan();
 
         final List<String> entityClassNames = Arrays.asList(
-                "stroom.dashboard.shared.Dashboard",
                 "stroom.dashboard.shared.QueryEntity",
-                "stroom.entity.shared.Res",
                 "stroom.explorer.ExplorerTreeNode",
                 "stroom.explorer.ExplorerTreePath",
                 "stroom.feed.shared.Feed",
-                "stroom.index.shared.Index",
                 "stroom.index.shared.IndexShard",
                 "stroom.jobsystem.shared.ClusterLock",
                 "stroom.jobsystem.shared.Job",
@@ -129,18 +124,12 @@ public class PersistServiceImpl implements Provider<EntityManager>, PersistServi
                 "stroom.node.shared.Rack",
                 "stroom.node.shared.Volume",
                 "stroom.node.shared.VolumeState",
-                "stroom.pipeline.shared.PipelineEntity",
-                "stroom.pipeline.shared.TextConverter",
-                "stroom.pipeline.shared.XSLT",
                 "stroom.ruleset.shared.Policy",
-                "stroom.script.shared.Script",
                 "stroom.security.AppPermission",
                 "stroom.security.DocumentPermission",
                 "stroom.security.Permission",
                 "stroom.security.User",
                 "stroom.security.UserGroupUser",
-                "stroom.statistics.shared.StatisticStoreEntity",
-                "stroom.stats.shared.StroomStatsStoreEntity",
                 "stroom.streamstore.shared.Stream",
                 "stroom.streamstore.shared.StreamAttributeKey",
                 "stroom.streamstore.shared.StreamAttributeValue",
@@ -149,9 +138,7 @@ public class PersistServiceImpl implements Provider<EntityManager>, PersistServi
                 "stroom.streamtask.shared.StreamProcessor",
                 "stroom.streamtask.shared.StreamProcessorFilter",
                 "stroom.streamtask.shared.StreamProcessorFilterTracker",
-                "stroom.streamtask.shared.StreamTask",
-                "stroom.visualisation.shared.Visualisation",
-                "stroom.xmlschema.shared.XMLSchema"
+                "stroom.streamtask.shared.StreamTask"
         );
 
         return new PersistenceUnitInfoImpl(name, entityClassNames, properties(dataSource));

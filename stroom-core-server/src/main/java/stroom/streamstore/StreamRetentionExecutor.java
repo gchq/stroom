@@ -32,10 +32,10 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
-import stroom.util.date.DateUtil;
-import stroom.util.logging.LogExecutionTime;
-import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.task.TaskContext;
+import stroom.util.date.DateUtil;
+import stroom.util.lifecycle.StroomSimpleCronSchedule;
+import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -80,7 +80,7 @@ public class StreamRetentionExecutor {
                 final FindFeedCriteria findFeedCriteria = new FindFeedCriteria();
                 final List<Feed> feedList = feedService.find(findFeedCriteria);
                 for (final Feed feed : feedList) {
-                    if (!taskContext.isTerminated()) {
+                    if (!Thread.currentThread().isInterrupted()) {
                         processFeed(feed);
                     }
                 }
@@ -117,7 +117,7 @@ public class StreamRetentionExecutor {
 
             final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
                     .addTerm(StreamDataSource.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(createPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(createPeriod.getToMs()))
-                    .addTerm(StreamDataSource.FEED, Condition.EQUALS, feed.getName())
+                    .addTerm(StreamDataSource.FEED_NAME, Condition.EQUALS, feed.getName())
                     // we only want it to logically delete UNLOCKED items and not ones
                     // already marked as DELETED
                     .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue())

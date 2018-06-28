@@ -28,8 +28,9 @@ import stroom.entity.util.FieldMap;
 import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
 import stroom.importexport.ImportExportHelper;
-import stroom.security.SecurityContext;
 import stroom.persist.EntityManagerSupport;
+import stroom.security.Security;
+import stroom.security.SecurityContext;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -41,15 +42,18 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
     private static final Logger LOGGER = LoggerFactory.getLogger(QueryServiceImpl.class);
     private final StroomEntityManager entityManager;
     private final SecurityContext securityContext;
+    private final Security security;
 
     @Inject
     public QueryServiceImpl(final StroomEntityManager entityManager,
                             final EntityManagerSupport entityManagerSupport,
                             final ImportExportHelper importExportHelper,
-                            final SecurityContext securityContext) {
+                            final SecurityContext securityContext,
+                            final Security security) {
         super(entityManager, entityManagerSupport, importExportHelper, securityContext);
         this.entityManager = entityManager;
         this.securityContext = securityContext;
+        this.security = security;
     }
 
     @Override
@@ -64,12 +68,14 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
 
     @Override
     public QueryEntity create(final String name) {
-        final QueryEntity entity = super.create(name);
+        return security.asProcessingUserResult(() -> {
+            final QueryEntity entity = super.create(name);
 
-        // Create the initial user permissions for this new document.
-        securityContext.addDocumentPermissions(null, null, entity.getType(), entity.getUuid(), true);
+            // Create the initial user permissions for this new document.
+            securityContext.addDocumentPermissions(null, null, entity.getType(), entity.getUuid(), true);
 
-        return entity;
+            return entity;
+        });
     }
 
     @Override
@@ -172,7 +178,7 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
 
 //    @Override
 //    public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindQueryCriteria criteria) {
-//        CriteriaLoggingUtil.appendLongTerm(items, "dashboardId", criteria.getDashboardId());
+//        CriteriaLoggingUtil.appendLongTerm(items, "dashboardId", criteria.getDashboardUuid());
 //        CriteriaLoggingUtil.appendStringTerm(items, "queryId", criteria.getQueryId());
 //        super.appendCriteria(items, criteria);
 //    }
@@ -210,7 +216,7 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
                 sql.appendValueQuery(alias + ".favourite", criteria.getFavourite());
             }
 
-            sql.appendValueQuery(alias + ".dashboardId", criteria.getDashboardId());
+            sql.appendValueQuery(alias + ".dashboardUuid", criteria.getDashboardUuid());
             sql.appendValueQuery(alias + ".queryId", criteria.getQueryId());
         }
 

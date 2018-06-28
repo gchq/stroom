@@ -24,8 +24,9 @@ import io.vavr.Tuple2;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.StroomDatabaseInfo;
-import stroom.entity.shared.DocRefUtil;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.Field;
@@ -37,11 +38,11 @@ import stroom.query.api.v2.TableResult;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.shared.v2.ParamUtil;
 import stroom.security.Security;
-import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.shared.StatisticType;
 import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.statistics.shared.common.StatisticField;
-import stroom.statistics.sql.entity.StatisticStoreEntityService;
+import stroom.statistics.sql.entity.StatisticStoreStore;
 import stroom.statistics.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.sql.rollup.RolledUpStatisticEvent;
 import stroom.task.TaskContext;
@@ -88,14 +89,14 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
 
     private static final Map<String, List<String>> COMPONENT_ID_TO_FIELDS_MAP = ImmutableMap.of(
             COMPONENT_ID_1, Arrays.asList(
-                    StatisticStoreEntity.FIELD_NAME_DATE_TIME, //0
-                    StatisticStoreEntity.FIELD_NAME_VALUE, //1
-                    StatisticStoreEntity.FIELD_NAME_PRECISION_MS, //2
+                    StatisticStoreDoc.FIELD_NAME_DATE_TIME, //0
+                    StatisticStoreDoc.FIELD_NAME_VALUE, //1
+                    StatisticStoreDoc.FIELD_NAME_PRECISION_MS, //2
                     TAG1), //3
             COMPONENT_ID_2, Arrays.asList(
-                    StatisticStoreEntity.FIELD_NAME_DATE_TIME,
-                    StatisticStoreEntity.FIELD_NAME_COUNT, //4
-                    StatisticStoreEntity.FIELD_NAME_PRECISION_MS,
+                    StatisticStoreDoc.FIELD_NAME_DATE_TIME,
+                    StatisticStoreDoc.FIELD_NAME_COUNT, //4
+                    StatisticStoreDoc.FIELD_NAME_PRECISION_MS,
                     TAG1,
                     TAG2)); //5
 
@@ -103,7 +104,7 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
             TAG1, 3,
             TAG2, 5);
 
-//    private static final DocRef DOC_REF = new DocRef(StatisticStoreEntity.ENTITY_TYPE, UUID.randomUUID().toString(), STAT_NAME);
+//    private static final DocRef DOC_REF = new DocRef(StatisticStoreDoc.DOCUMENT_TYPE, UUID.randomUUID().toString(), STAT_NAME);
 
 
     @Inject
@@ -126,13 +127,13 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
     @Inject
     private TaskContext taskContext;
     @Inject
-    private StatisticStoreEntityService statisticStoreEntityService;
+    private StatisticStoreStore statisticStoreStore;
     @Inject
     private StatisticsQueryService statisticsQueryService;
     @Inject
     private Security security;
 
-    private StatisticStoreEntity statisticStoreEntity;
+    private StatisticStoreDoc statisticStoreDoc;
 
     private boolean ignoreAllTests = false;
 
@@ -154,14 +155,15 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
             commonTestControl.teardown();
             commonTestControl.setup();
 
-            final StatisticStoreEntity statisticStoreEntity = statisticStoreEntityService.create(STAT_NAME);
-            statisticStoreEntity.setDescription("My Description");
-            statisticStoreEntity.setStatisticType(StatisticType.VALUE);
-            statisticStoreEntity.setStatisticDataSourceDataObject(new StatisticsDataSourceData());
-            statisticStoreEntity.getStatisticDataSourceDataObject().addStatisticField(new StatisticField(TAG1));
-            statisticStoreEntity.getStatisticDataSourceDataObject().addStatisticField(new StatisticField(TAG2));
-            statisticStoreEntityService.save(statisticStoreEntity);
-            this.statisticStoreEntity = statisticStoreEntity;
+            final DocRef statisticStoreRef = statisticStoreStore.createDocument(STAT_NAME);
+            final StatisticStoreDoc statisticStoreDoc = statisticStoreStore.readDocument(statisticStoreRef);
+            statisticStoreDoc.setDescription("My Description");
+            statisticStoreDoc.setStatisticType(StatisticType.VALUE);
+            statisticStoreDoc.setConfig(new StatisticsDataSourceData());
+            statisticStoreDoc.getConfig().addStatisticField(new StatisticField(TAG1));
+            statisticStoreDoc.getConfig().addStatisticField(new StatisticField(TAG2));
+            statisticStoreStore.writeDocument(statisticStoreDoc);
+            this.statisticStoreDoc = statisticStoreDoc;
         }
     }
 
@@ -332,7 +334,7 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
 
                     assertThat(tableResult.getRows()).hasSize(expectedRowCount);
 
-                    final Map<String,Integer> fieldMap = IntStream.range(0, fields.size())
+                    final Map<String, Integer> fieldMap = IntStream.range(0, fields.size())
                             .boxed()
                             .map(i -> Tuple.of(fields.get(i), i))
                             .collect(Collectors.toMap(Tuple2::_1, Tuple2::_2));
@@ -346,7 +348,7 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
                                     .map(row -> row.getValues().get(idx))
                                     .collect(Collectors.toList());
 
-                            assertThat(actualValues).contains(expectedValues.toArray(new String[expectedValues.size()]));
+                            assertThat(actualValues).contains(expectedValues.toArray(new String[0]));
                         }
                     });
                 });
@@ -378,7 +380,7 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
 
         final ExpressionOperator.Builder operatorBuilder = new ExpressionOperator.Builder(op);
         operatorBuilder
-                .addTerm(StatisticStoreEntity.FIELD_NAME_DATE_TIME, ExpressionTerm.Condition.BETWEEN, DATE_RANGE);
+                .addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, ExpressionTerm.Condition.BETWEEN, DATE_RANGE);
 
         for (final StatisticTag tag : searchTags) {
             operatorBuilder.addTerm(tag.getTag(), ExpressionTerm.Condition.EQUALS, tag.getValue());
@@ -389,7 +391,7 @@ public class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest 
                 .incremental(isIncremental)
                 .query(new Query.Builder()
                         .expression(operatorBuilder.build())
-                        .dataSource(DocRefUtil.create(statisticStoreEntity))
+                        .dataSource(DocRefUtil.create(statisticStoreDoc))
                         .build());
 
         optTimeout.ifPresent(searchBuilder::timeout);

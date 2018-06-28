@@ -18,6 +18,7 @@ package stroom.pipeline;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceException;
 import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
@@ -35,16 +36,18 @@ import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataAction;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.FetchMarkerResult;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.FeedHolder;
+import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
+import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.pipeline.writer.AbstractWriter;
 import stroom.pipeline.writer.OutputStreamAppender;
 import stroom.pipeline.writer.TextWriter;
 import stroom.pipeline.writer.XMLWriter;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.Security;
 import stroom.streamstore.StreamSource;
 import stroom.streamstore.StreamStore;
@@ -54,6 +57,7 @@ import stroom.streamstore.fs.serializable.RASegmentInputStream;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
+import stroom.streamtask.StreamProcessorService;
 import stroom.task.AbstractTaskHandler;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Marker;
@@ -84,10 +88,12 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
 
     private final StreamStore streamStore;
     private final FeedService feedService;
+    private final StreamProcessorService streamProcessorService;
     private final Provider<FeedHolder> feedHolderProvider;
+    private final Provider<MetaDataHolder> metaDataHolderProvider;
     private final Provider<PipelineHolder> pipelineHolderProvider;
     private final Provider<StreamHolder> streamHolderProvider;
-    private final PipelineService pipelineService;
+    private final PipelineStore pipelineStore;
     private final Provider<PipelineFactory> pipelineFactoryProvider;
     private final Provider<ErrorReceiverProxy> errorReceiverProxyProvider;
     private final PipelineDataCache pipelineDataCache;
@@ -104,10 +110,12 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
 
     AbstractFetchDataHandler(final StreamStore streamStore,
                              final FeedService feedService,
+                             final StreamProcessorService streamProcessorService,
                              final Provider<FeedHolder> feedHolderProvider,
+                             final Provider<MetaDataHolder> metaDataHolderProvider,
                              final Provider<PipelineHolder> pipelineHolderProvider,
                              final Provider<StreamHolder> streamHolderProvider,
-                             final PipelineService pipelineService,
+                             final PipelineStore pipelineStore,
                              final Provider<PipelineFactory> pipelineFactoryProvider,
                              final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
                              final PipelineDataCache pipelineDataCache,
@@ -116,10 +124,12 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                              final PipelineScopeRunnable pipelineScopeRunnable) {
         this.streamStore = streamStore;
         this.feedService = feedService;
+        this.streamProcessorService = streamProcessorService;
         this.feedHolderProvider = feedHolderProvider;
+        this.metaDataHolderProvider = metaDataHolderProvider;
         this.pipelineHolderProvider = pipelineHolderProvider;
         this.streamHolderProvider = streamHolderProvider;
-        this.pipelineService = pipelineService;
+        this.pipelineStore = pipelineStore;
         this.pipelineFactoryProvider = pipelineFactoryProvider;
         this.errorReceiverProxyProvider = errorReceiverProxyProvider;
         this.pipelineDataCache = pipelineDataCache;
@@ -431,6 +441,7 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                 String data;
 
                 final FeedHolder feedHolder = feedHolderProvider.get();
+                final MetaDataHolder metaDataHolder = metaDataHolderProvider.get();
                 final PipelineHolder pipelineHolder = pipelineHolderProvider.get();
                 final StreamHolder streamHolder = streamHolderProvider.get();
                 final PipelineFactory pipelineFactory = pipelineFactoryProvider.get();
@@ -440,13 +451,15 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
                 errorReceiverProxy.setErrorReceiver(errorReceiver);
 
                 // Set the pipeline so it can be used by a filter if needed.
-                final PipelineEntity loadedPipeline = pipelineService.loadByUuid(pipelineRef.getUuid());
+                final PipelineDoc loadedPipeline = pipelineStore.readDocument(pipelineRef);
                 if (loadedPipeline == null) {
                     throw new EntityServiceException("Unable to load pipeline");
                 }
 
                 feedHolder.setFeed(feed);
-                pipelineHolder.setPipeline(loadedPipeline);
+                // Setup the meta data holder.
+                metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
+                pipelineHolder.setPipeline(DocRefUtil.create(loadedPipeline));
                 // Get the stream providers.
                 streamHolder.setStream(streamSource.getStream());
                 streamHolder.addProvider(streamSource);

@@ -23,12 +23,20 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
+import stroom.docstore.Persistence;
+import stroom.docstore.Store;
+import stroom.docstore.memory.MemoryPersistence;
 import stroom.entity.shared.DocRefUtil;
 import stroom.feed.MockFeedService;
 import stroom.feed.shared.Feed;
-import stroom.pipeline.MockPipelineService;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.PipelineStore;
+import stroom.pipeline.PipelineStoreImpl;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
+import stroom.docref.DocRef;
+import stroom.refdata.impl.MockReferenceDataLoader;
+import stroom.security.MockSecurityContext;
+import stroom.security.SecurityContext;
 import stroom.streamstore.shared.StreamType;
 import stroom.util.cache.CacheManager;
 import stroom.util.date.DateUtil;
@@ -47,19 +55,22 @@ public class TestReferenceData extends StroomUnitTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestReferenceData.class);
 
     private final MockFeedService feedService = new MockFeedService();
-    private final MockPipelineService pipelineService = new MockPipelineService();
+
+    private final SecurityContext securityContext = new MockSecurityContext();
+    private final Persistence persistence = new MemoryPersistence();
+    private final PipelineStore pipelineStore = new PipelineStoreImpl(new Store<>(persistence, securityContext), securityContext, persistence);
 
     @Test
     public void testSimple() {
         final Feed feed1 = feedService.create("TEST_FEED_1");
         final Feed feed2 = feedService.create("TEST_FEED_2");
-        final PipelineEntity pipeline1 = pipelineService.create("TEST_PIPELINE_1");
-        final PipelineEntity pipeline2 = pipelineService.create("TEST_PIPELINE_2");
+        final DocRef pipeline1Ref = pipelineStore.createDocument("TEST_PIPELINE_1");
+        final DocRef pipeline2Ref = pipelineStore.createDocument("TEST_PIPELINE_2");
 
         final List<PipelineReference> pipelineReferences = new ArrayList<>();
-        pipelineReferences.add(new PipelineReference(DocRefUtil.create(pipeline1), DocRefUtil.create(feed1),
+        pipelineReferences.add(new PipelineReference(pipeline1Ref, DocRefUtil.create(feed1),
                 StreamType.REFERENCE.getName()));
-        pipelineReferences.add(new PipelineReference(DocRefUtil.create(pipeline2), DocRefUtil.create(feed2),
+        pipelineReferences.add(new PipelineReference(pipeline2Ref, DocRefUtil.create(feed2),
                 StreamType.REFERENCE.getName()));
 
         final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
@@ -91,7 +102,7 @@ public class TestReferenceData extends StroomUnitTest {
         }
     }
 
-    private void addData(final ReferenceData referenceData, final PipelineEntity pipeline, final String[] mapNames) {
+    private void addData(final ReferenceData referenceData, final DocRef pipelineRef, final String[] mapNames) {
         MapStoreBuilder mapStoreBuilder = new MapStoreBuilderImpl(null);
         for (final String mapName : mapNames) {
 //            mapStoreBuilder.setEvents(mapName, "user1", getEventsFromString("1111"), false);
@@ -137,10 +148,10 @@ public class TestReferenceData extends StroomUnitTest {
         feed1.setReference(true);
         feed1 = feedService.save(feed1);
 
-        final PipelineEntity pipelineEntity = new PipelineEntity();
+        final DocRef pipelineRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, "12345");
         final List<PipelineReference> pipelineReferences = new ArrayList<>();
 
-        pipelineReferences.add(new PipelineReference(DocRefUtil.create(pipelineEntity),
+        pipelineReferences.add(new PipelineReference(pipelineRef,
                 DocRefUtil.create(feed1), StreamType.REFERENCE.getName()));
 
         final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
@@ -175,11 +186,10 @@ public class TestReferenceData extends StroomUnitTest {
         feed1.setReference(true);
         feed1 = feedService.save(feed1);
 
-        final PipelineEntity pipelineEntity = new PipelineEntity();
+        final DocRef pipelineRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, "12345");
         final List<PipelineReference> pipelineReferences = new ArrayList<>();
 
-        pipelineReferences.add(new PipelineReference(DocRefUtil.create(pipelineEntity),
-                DocRefUtil.create(feed1), StreamType.REFERENCE.getName()));
+        pipelineReferences.add(new PipelineReference(pipelineRef, DocRefUtil.create(feed1), StreamType.REFERENCE.getName()));
 
         final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
         streamSet.add(new EffectiveStream(0, 0L));

@@ -26,7 +26,6 @@ import stroom.entity.shared.Range;
 import stroom.entity.util.PreparedStatementUtil;
 import stroom.entity.util.SqlBuilder;
 import stroom.feed.shared.Feed;
-import stroom.pipeline.shared.PipelineEntity;
 import stroom.policy.DataRetentionExecutor.ActiveRules;
 import stroom.policy.DataRetentionExecutor.Progress;
 import stroom.ruleset.shared.DataRetentionRule;
@@ -35,7 +34,6 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
-import stroom.streamtask.shared.StreamProcessor;
 import stroom.task.TaskContext;
 
 import java.sql.Connection;
@@ -110,7 +108,7 @@ public class DataRetentionStreamFinder implements AutoCloseable {
         }
 
         try (final ResultSet resultSet = preparedStatement.executeQuery()) {
-            while (resultSet.next() && !taskContext.isTerminated()) {
+            while (resultSet.next() && !Thread.currentThread().isInterrupted()) {
                 final Map<String, Object> attributeMap = createAttributeMap(resultSet, activeRules.getFieldSet());
                 final Long streamId = (Long) attributeMap.get(StreamDataSource.STREAM_ID);
                 final Long createMs = (Long) attributeMap.get(StreamDataSource.CREATE_TIME);
@@ -150,7 +148,7 @@ public class DataRetentionStreamFinder implements AutoCloseable {
         final boolean includeStream = addFieldsToQuery(StreamDataSource.getStreamFields(), fieldSet, sql, "S");
         final boolean includeFeed = addFieldsToQuery(StreamDataSource.getFeedFields(), fieldSet, sql, "F");
         final boolean includeStreamType = addFieldsToQuery(StreamDataSource.getStreamTypeFields(), fieldSet, sql, "ST");
-        final boolean includePipeline = addFieldsToQuery(StreamDataSource.getPipelineFields(), fieldSet, sql, "P");
+//        final boolean includePipeline = addFieldsToQuery(StreamDataSource.getPipelineFields(), fieldSet, sql, "P");
 
         if (count) {
             sql.setLength(0);
@@ -171,10 +169,10 @@ public class DataRetentionStreamFinder implements AutoCloseable {
         if (includeStreamType) {
             sql.join(StreamType.TABLE_NAME, "ST", "S", StreamType.FOREIGN_KEY, "ST", StreamType.ID);
         }
-        if (includePipeline) {
-            sql.leftOuterJoin(StreamProcessor.TABLE_NAME, "SP", "S", StreamProcessor.FOREIGN_KEY, "SP", StreamProcessor.ID);
-            sql.leftOuterJoin(PipelineEntity.TABLE_NAME, "p", "SP", PipelineEntity.FOREIGN_KEY, "p", PipelineEntity.ID);
-        }
+//        if (includePipeline) {
+//            sql.leftOuterJoin(StreamProcessor.TABLE_NAME, "SP", "S", StreamProcessor.FOREIGN_KEY, "SP", StreamProcessor.ID);
+//            sql.leftOuterJoin(PipelineDoc.TABLE_NAME, "p", "SP", PipelineDoc.FOREIGN_KEY, "p", PipelineDoc.ID);
+//        }
 
         sql.append(" WHERE 1=1");
         sql.appendRangeQuery("S." + Stream.CREATE_MS, ageRange);

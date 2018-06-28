@@ -39,13 +39,13 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.explorer.shared.FetchDocRefsAction;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.shared.data.SourcePipeline;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -80,7 +80,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
     private final ClientDispatchAsync dispatcher;
 
     private Map<PipelineElementType, Map<String, PipelinePropertyType>> allPropertyTypes;
-    private PipelineEntity pipeline;
+    private PipelineDoc pipeline;
     private PipelineModel pipelineModel;
     private PipelineElement currentElement;
     private PipelinePropertyType propertyType;
@@ -224,7 +224,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
         return builder.toSafeHtml();
     }
 
-    public void setPipeline(final PipelineEntity pipeline) {
+    public void setPipeline(final PipelineDoc pipeline) {
         this.pipeline = pipeline;
     }
 
@@ -260,7 +260,6 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
         if (currentElement != null) {
             final PipelineReference pipelineReference = new PipelineReference(currentElement.getId(),
                     propertyType.getName(), null, null, null);
-            pipelineReference.setPropertyType(propertyType);
             pipelineReference.setSource(new SourcePipeline(pipeline));
             showEditor(pipelineReference, true);
         }

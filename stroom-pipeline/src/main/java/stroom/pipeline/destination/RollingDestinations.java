@@ -50,7 +50,7 @@ public class RollingDestinations {
 
     public RollingDestination borrow(final TaskContext taskContext, final Object key,
                                      final RollingDestinationFactory destinationFactory) throws IOException {
-        if (taskContext != null && taskContext.isTerminated()) {
+        if (taskContext != null && Thread.currentThread().isInterrupted()) {
             throw new TerminatedException();
         }
 

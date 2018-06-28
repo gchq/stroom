@@ -23,10 +23,11 @@ import org.apache.lucene.document.FieldType;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.Index;
+import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
+import stroom.docref.DocRef;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
@@ -47,6 +48,8 @@ public class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
     private Indexer indexer;
     @Inject
     private CommonTestControl commonTestControl;
+    @Inject
+    private IndexStore indexStore;
 
     @Override
     public void onBefore() {
@@ -63,10 +66,12 @@ public class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         final Document document = new Document();
         document.add(field);
 
-        final Index index1 = commonTestScenarioCreator.createIndex("TEST_2010");
+        final DocRef indexRef1 = commonTestScenarioCreator.createIndex("TEST_2010");
+        final IndexDoc index1 = indexStore.readDocument(indexRef1);
         final IndexShardKey indexShardKey1 = IndexShardKeyUtil.createTestKey(index1);
 
-        final Index index2 = commonTestScenarioCreator.createIndex("TEST_2011");
+        final DocRef indexRef2 = commonTestScenarioCreator.createIndex("TEST_2011");
+        final IndexDoc index2 = indexStore.readDocument(indexRef2);
         final IndexShardKey indexShardKey2 = IndexShardKeyUtil.createTestKey(index2);
 
         // Create 2 writers in the pool.
@@ -146,9 +151,8 @@ public class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         final Document document = new Document();
         document.add(field);
 
-        final Index index1 = commonTestScenarioCreator.createIndex("TEST_2010",
-                commonTestScenarioCreator.createIndexFields(), 10);
-
+        final DocRef indexRef1 = commonTestScenarioCreator.createIndex("TEST_2010", commonTestScenarioCreator.createIndexFields(), 10);
+        final IndexDoc index1 = indexStore.readDocument(indexRef1);
         final IndexShardKey indexShardKey1 = IndexShardKeyUtil.createTestKey(index1);
 
         final IndexShardWriter writer1 = indexShardWriterCache.getWriterByShardKey(indexShardKey1);

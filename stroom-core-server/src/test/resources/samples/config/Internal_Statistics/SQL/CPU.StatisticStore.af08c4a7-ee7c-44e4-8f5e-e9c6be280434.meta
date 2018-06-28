@@ -1,0 +1,19 @@
+{
+  "type" : "StatisticStore",
+  "uuid" : "af08c4a7-ee7c-44e4-8f5e-e9c6be280434",
+  "name" : "CPU",
+  "version" : "6ef2da5f-214e-45d9-88ef-265d38f0d419",
+  "description" : "CPU",
+  "statisticType" : "VALUE",
+  "rollUpType" : "NONE",
+  "precision" : 60000,
+  "enabled" : true,
+  "config" : {
+    "fields" : [ {
+      "fieldName" : "Node"
+    }, {
+      "fieldName" : "Type"
+    } ],
+    "customRollUpMasks" : [ { } ]
+  }
+}

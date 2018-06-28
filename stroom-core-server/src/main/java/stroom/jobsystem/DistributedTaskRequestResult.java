@@ -17,7 +17,7 @@
 package stroom.jobsystem;
 
 import stroom.jobsystem.shared.JobNode;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 import java.util.List;
 import java.util.Map;

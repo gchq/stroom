@@ -16,21 +16,31 @@
 
 package stroom.dashboard.shared;
 
-import stroom.util.shared.SharedObject;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import stroom.docref.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import java.util.Arrays;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "size", propOrder = {"width", "height"})
+@JsonPropertyOrder({"width", "height"})
+@JsonInclude(Include.NON_EMPTY)
+@XmlRootElement(name = "size")
+@XmlType(name = "Size", propOrder = {"width", "height"})
 public class Size implements SharedObject {
     private static final long serialVersionUID = 8201392610412513780L;
 
     @XmlTransient
+    @JsonIgnore
     private int[] size = new int[]{200, 200};
 
     public Size() {
@@ -38,6 +48,7 @@ public class Size implements SharedObject {
     }
 
     @XmlElement(name = "width")
+    @JsonProperty("width")
     public int getWidth() {
         return size[0];
     }
@@ -47,6 +58,7 @@ public class Size implements SharedObject {
     }
 
     @XmlElement(name = "height")
+    @JsonProperty("height")
     public int getHeight() {
         return size[1];
     }

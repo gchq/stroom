@@ -16,48 +16,42 @@
 
 package stroom.pipeline;
 
-import stroom.pipeline.shared.PipelineEntity;
-import stroom.query.api.v2.DocRef;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.data.PipelineData;
+import stroom.docref.DocRef;
 
 public final class PipelineTestUtil {
-    private static final PipelineMarshaller pipelineMarshaller = new PipelineMarshaller();
+    private static final PipelineSerialiser SERIALISER = new PipelineSerialiser();
 
     private PipelineTestUtil() {
     }
 
-    public static PipelineEntity createBasicPipeline(final String data) {
-        PipelineEntity pipelineEntity = new PipelineEntity();
-        pipelineEntity.setName("test");
-        pipelineEntity.setDescription("test");
+    public static PipelineDoc createBasicPipeline(final String data) {
+        PipelineDoc pipelineDoc = new PipelineDoc();
+        pipelineDoc.setName("test");
+        pipelineDoc.setDescription("test");
         if (data != null) {
-            pipelineEntity.setData(data);
-            pipelineEntity = pipelineMarshaller.unmarshal(pipelineEntity);
+            final PipelineData pipelineData = SERIALISER.getPipelineDataFromXml(data);
+            pipelineDoc.setPipelineData(pipelineData);
         }
-        return pipelineEntity;
+        return pipelineDoc;
     }
 
-
-    public static PipelineEntity createTestPipeline(final PipelineService pipelineService, final String data) {
-        return createTestPipeline(pipelineService, "test", "test", data);
+    public static DocRef createTestPipeline(final PipelineStore pipelineStore, final String data) {
+        return createTestPipeline(pipelineStore, "test", "test", data);
     }
 
-    public static PipelineEntity createTestPipeline(final PipelineService pipelineService, final String name,
-                                                    final String description, final String data) {
-        PipelineEntity pipelineEntity = pipelineService.create(name);
-        pipelineEntity.setName(name);
-        pipelineEntity.setDescription(description);
+    public static DocRef createTestPipeline(final PipelineStore pipelineStore, final String name,
+                                            final String description, final String data) {
+        final DocRef docRef = pipelineStore.createDocument(name);
+        final PipelineDoc pipelineDoc = pipelineStore.readDocument(docRef);
+        pipelineDoc.setName(name);
+        pipelineDoc.setDescription(description);
         if (data != null) {
-            pipelineEntity.setData(data);
-            pipelineEntity = pipelineMarshaller.unmarshal(pipelineEntity);
+            final PipelineData pipelineData = SERIALISER.getPipelineDataFromXml(data);
+            pipelineDoc.setPipelineData(pipelineData);
         }
-        return pipelineService.save(pipelineEntity);
-    }
-
-    public static PipelineEntity loadPipeline(final PipelineEntity pipeline) {
-        return pipelineMarshaller.unmarshal(pipeline);
-    }
-
-    public static PipelineEntity savePipeline(final PipelineEntity pipeline) {
-        return pipelineMarshaller.marshal(pipeline);
+        pipelineStore.writeDocument(pipelineDoc);
+        return docRef;
     }
 }

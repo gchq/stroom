@@ -33,7 +33,7 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.StreamHolder;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.StreamTarget;
 import stroom.streamstore.StreamTypeService;

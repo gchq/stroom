@@ -21,7 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.feed.shared.Feed;
 import stroom.node.NodeCache;
-import stroom.pipeline.shared.TextConverter.TextConverterType;
+import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.streamstore.StreamStore;
 import stroom.streamstore.tools.StoreCreationTool;
 import stroom.streamtask.StreamProcessorTask;
@@ -34,6 +34,7 @@ import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,11 +46,11 @@ public class CommonTranslationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(CommonTranslationTest.class);
     public static final String FEED_NAME = "TEST_FEED";
     private static final String DIR = "CommonTranslationTest/";
-    public static final Path VALID_RESOURCE_NAME = StroomPipelineTestFileUtil
+    private static final Path VALID_RESOURCE_NAME = StroomPipelineTestFileUtil
             .getTestResourcesFile(DIR + "NetworkMonitoringSample.in");
     public static final Path INVALID_RESOURCE_NAME = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "Invalid.in");
 
-    private static final Path CSV = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "CSV.ds");
+//    private static final Path CSV = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "CSV.ds");
     private static final Path CSV_WITH_HEADING = StroomPipelineTestFileUtil.getTestResourcesFile(DIR + "CSVWithHeading.ds");
     private static final Path XSLT_HOST_NAME_TO_LOCATION = StroomPipelineTestFileUtil
             .getTestResourcesFile(DIR + "SampleRefData-HostNameToLocation.xsl");
@@ -92,9 +93,7 @@ public class CommonTranslationTest {
 
     public List<StreamProcessorTaskExecutor> processAll() {
         // Force creation of stream tasks.
-        if (streamTaskCreator instanceof StreamTaskCreator) {
-            streamTaskCreator.createTasks(new SimpleTaskContext());
-        }
+        streamTaskCreator.createTasks(new SimpleTaskContext());
 
         final List<StreamProcessorTaskExecutor> results = new ArrayList<>();
         List<StreamTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getDefaultNode(), 100);
@@ -148,8 +147,8 @@ public class CommonTranslationTest {
                 LOGGER.info("Adding data from file {}", FileUtil.getCanonicalPath(dataLocation));
                 storeCreationTool.addEventData(feedName, TextConverterType.DATA_SPLITTER, CSV_WITH_HEADING,
                         XSLT_NETWORK_MONITORING, dataLocation, referenceFeeds);
-            } catch (IOException e) {
-                throw new RuntimeException(String.format("Error adding event data for file %s",
+            } catch (final IOException e) {
+                throw new UncheckedIOException(String.format("Error adding event data for file %s",
                         FileUtil.getCanonicalPath(dataLocation)), e);
             }
         });

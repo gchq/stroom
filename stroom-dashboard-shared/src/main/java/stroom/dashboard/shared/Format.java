@@ -16,30 +16,43 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HasDisplayValue;
+import stroom.docref.HasDisplayValue;
 import stroom.util.shared.HashCodeBuilder;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElements;
+import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "format", propOrder = {"type", "settings", "wrap"})
+@JsonPropertyOrder({"type", "settings", "wrap"})
+@JsonInclude(Include.NON_EMPTY)
+@XmlRootElement(name = "format")
+@XmlType(name = "Format", propOrder = {"type", "settings", "wrap"})
 public class Format implements Serializable {
     private static final long serialVersionUID = -5380825645719299089L;
+
     public static List<Type> TYPES = Arrays.asList(Type.GENERAL, Type.NUMBER, Type.DATE_TIME, Type.TEXT);
+
     @XmlElement(name = "type")
+    @JsonProperty("type")
     private Type type;
     @XmlElements({@XmlElement(name = "numberFormatSettings", type = NumberFormatSettings.class),
             @XmlElement(name = "dateTimeFormatSettings", type = DateTimeFormatSettings.class)})
+    @JsonProperty("settings")
     private FormatSettings settings;
     @XmlElement(name = "wrap")
+    @JsonProperty("wrap")
     private Boolean wrap;
 
     public Format() {

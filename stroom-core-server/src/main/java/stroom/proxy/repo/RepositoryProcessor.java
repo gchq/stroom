@@ -135,7 +135,7 @@ public final class RepositoryProcessor {
         final Set<CompletableFuture> futures = new HashSet<>();
 
         final Iterator<Entry<String, List<Path>>> iter = feedPathMap.getMap().entrySet().iterator();
-        while (iter.hasNext() && !taskContext.isTerminated()) {
+        while (iter.hasNext() && !Thread.currentThread().isInterrupted()) {
             final Entry<String, List<Path>> entry = iter.next();
             final String feedName = entry.getKey();
             final List<Path> fileList = entry.getValue();
@@ -151,7 +151,7 @@ public final class RepositoryProcessor {
                     ")";
 
             final Runnable runnable = () -> {
-                if (!taskContext.isTerminated()) {
+                if (!Thread.currentThread().isInterrupted()) {
                     taskContext.info(msg);
                     feedFileProcessor.processFeedFiles(stroomZipRepository, feedName, fileList);
                 } else {
@@ -163,7 +163,7 @@ public final class RepositoryProcessor {
         }
 
         // Wait for all processes to complete.
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()])).join();
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
     }
 
     private FeedPathMap createFeedPathMap(final StroomZipRepository stroomZipRepository) {
@@ -179,7 +179,7 @@ public final class RepositoryProcessor {
         }
 
         // Wait for all of the feed name extraction tasks to complete.
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()])).join();
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
         LOGGER.debug("Found Feeds {}", map.keySet());
 
@@ -210,7 +210,7 @@ public final class RepositoryProcessor {
 
     private void processPath(final Path path, final StroomZipRepository stroomZipRepository, final Map<String, List<Path>> feedPaths, final Set<CompletableFuture> futures) {
         final Runnable runnable = () -> {
-            if (!taskContext.isTerminated()) {
+            if (!Thread.currentThread().isInterrupted()) {
                 LOGGER.debug("Processing file: {}", path);
                 final String feed = getFeed(stroomZipRepository, path);
                 if (feed == null || feed.length() == 0) {

@@ -2,12 +2,11 @@ package stroom.importexport;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
@@ -28,12 +27,12 @@ public class DocumentData implements Serializable {
     @ApiModelProperty(
             value = "A map of file extensions to file contents that are used to represent all of the document contents",
             required = true)
-    private Map<String, String> dataMap;
+    private Map<String, byte[]> dataMap;
 
     private DocumentData() {
     }
 
-    public DocumentData(final DocRef docRef, final Map<String, String> dataMap) {
+    public DocumentData(final DocRef docRef, final Map<String, byte[]> dataMap) {
         this.docRef = docRef;
         this.dataMap = dataMap;
     }
@@ -42,7 +41,7 @@ public class DocumentData implements Serializable {
         return docRef;
     }
 
-    public Map<String, String> getDataMap() {
+    public Map<String, byte[]> getDataMap() {
         return dataMap;
     }
 }

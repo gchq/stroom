@@ -19,7 +19,7 @@ package stroom.entity.cluster;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.ResultList;
 import stroom.task.cluster.ClusterTask;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 public class FindServiceClusterTask<C extends BaseCriteria, E extends SharedObject> extends ClusterTask<ResultList<E>> {
     private static final long serialVersionUID = 3442806159160286110L;

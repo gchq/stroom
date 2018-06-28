@@ -16,6 +16,8 @@
 
 package stroom.util.shared;
 
+import stroom.docref.SharedObject;
+
 public class SharedDouble extends Number implements SharedObject, Comparable<SharedDouble> {
     private static final long serialVersionUID = -8596914617295376525L;
 

@@ -7,7 +7,7 @@ import stroom.dictionary.shared.DictionaryDoc;
 import stroom.entity.util.XMLMarshallerUtil;
 import stroom.entity.shared.IdRange;
 import stroom.entity.shared.Range;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.stream.OldFindStreamCriteria;
@@ -96,13 +96,13 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
         }
 
         // Get all the feed ID's to Names
-        final Map<Long, String> feedNamesById = getNamesById(connection, "FD");
+        final Map<Long, String> feedNamesById = getStringFieldById(connection, "FD", "NAME");
 
         // Get all the stream type ID's to names
-        final Map<Long, String> streamTypeNamesById = getNamesById(connection, "STRM_TP");
+        final Map<Long, String> streamTypeNamesById = getStringFieldById(connection, "STRM_TP", "NAME");
 
         // Get all the stream type ID's to names
-        final Map<Long, String> pipeNamesById = getNamesById(connection, "PIPE");
+        final Map<Long, String> pipeUuidsById = getStringFieldById(connection, "PIPE", "UUID");
 
         // Get all the feed to folder names
         final Map<Long, Long> folderByFeedId = getFkById(connection, "FD", "FK_FOLDER_ID");
@@ -122,7 +122,7 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
                         criteriaEntry.getValue(),
                         l -> Optional.ofNullable(feedNamesById.get(l)),
                         l -> Optional.ofNullable(streamTypeNamesById.get(l)),
-                        l -> Optional.ofNullable(pipeNamesById.get(l)),
+                        l -> Optional.ofNullable(pipeUuidsById.get(l)),
                         folderByFeedId,
                         l -> Optional.ofNullable(folders.get(l)),
                         dictionariesByFolder);
@@ -175,7 +175,7 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
                                                 final OldFindStreamCriteria criteria,
                                                 final Function<Long, Optional<String>> feedNamesById,
                                                 final Function<Long, Optional<String>> streamTypeNamesById,
-                                                final Function<Long, Optional<String>> pipeNamesById,
+                                                final Function<Long, Optional<String>> pipeUuidsById,
                                                 final Map<Long, Long> folderByFeedId,
                                                 final Function<Long, Optional<IdTreeNode>> folders,
                                                 final ConcurrentHashMap<Long, Optional<DocRef>> dictionariesByFolder) {
@@ -216,13 +216,13 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
         final Set<Long> includeFeedIds = criteria.obtainFeeds().obtainInclude().getSet();
         if ((includeFeedIds.size() > 0) && (feedDictionariesToInclude.size() > 0)) {
             final ExpressionOperator.Builder or = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
-            applyIncludesTerm(or, includeFeedIds, feedNamesById, StreamDataSource.FEED);
+            applyIncludesTerm(or, includeFeedIds, feedNamesById, StreamDataSource.FEED_NAME);
             feedDictionariesToInclude.stream()
                     .filter(Optional::isPresent)
                     .map(Optional::get)
                     .forEach(dict ->
                             or.addTerm(new ExpressionTerm.Builder()
-                                    .field(StreamDataSource.FEED)
+                                    .field(StreamDataSource.FEED_NAME)
                                     .condition(ExpressionTerm.Condition.IN_DICTIONARY)
                                     .dictionary(dict)
                                     .build()
@@ -230,7 +230,7 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
                     );
             rootAnd.addOperator(or.build());
         } else if (includeFeedIds.size() > 0) {
-            applyIncludesTerm(rootAnd, includeFeedIds, feedNamesById, StreamDataSource.FEED);
+            applyIncludesTerm(rootAnd, includeFeedIds, feedNamesById, StreamDataSource.FEED_NAME);
         } else if (feedDictionariesToInclude.size() > 0) {
             final ExpressionOperator.Builder or = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
             feedDictionariesToInclude.stream()
@@ -238,7 +238,7 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
                     .map(Optional::get)
                     .forEach(dict ->
                             or.addTerm(new ExpressionTerm.Builder()
-                            .field(StreamDataSource.FEED)
+                            .field(StreamDataSource.FEED_NAME)
                             .condition(ExpressionTerm.Condition.IN_DICTIONARY)
                             .dictionary(dict)
                             .build()
@@ -251,17 +251,17 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
         final Set<Long> excludeFeedIds = criteria.obtainFeeds().obtainExclude().getSet();
         if (excludeFeedIds.size() > 0) {
             final ExpressionOperator.Builder not = new ExpressionOperator.Builder(ExpressionOperator.Op.NOT);
-            applyIncludesTerm(not, excludeFeedIds, feedNamesById, StreamDataSource.FEED);
+            applyIncludesTerm(not, excludeFeedIds, feedNamesById, StreamDataSource.FEED_NAME);
             rootAnd.addOperator(not.build());
         }
 
         // Stream Types
         final Set<Long> streamTypeIds = criteria.obtainStreamTypeIdSet().getSet();
-        applyIncludesTerm(rootAnd, streamTypeIds, streamTypeNamesById, StreamDataSource.STREAM_TYPE);
+        applyIncludesTerm(rootAnd, streamTypeIds, streamTypeNamesById, StreamDataSource.STREAM_TYPE_NAME);
 
         // Pipeline
         final Set<Long> pipelineIds = criteria.obtainPipelineIdSet().getSet();
-        applyIncludesTerm(rootAnd, pipelineIds, pipeNamesById, StreamDataSource.PIPELINE);
+        applyIncludesTerm(rootAnd, pipelineIds, pipeUuidsById, StreamDataSource.PIPELINE_UUID);
 
         // Parent Stream ID
         final Set<Long> parentStreamIds = criteria.obtainParentStreamIdSet().getSet();
@@ -399,8 +399,8 @@ public class V6_0_0_9__ProcessingFilter implements JdbcMigration {
     }
 
     // This function takes a table name and picks all the values of ID, NAME and puts them in a map
-    private Map<Long, String> getNamesById(final Connection connection, final String tableName) throws Exception {
-        final String sql = String.format("SELECT ID, NAME FROM %s", tableName);
+    private Map<Long, String> getStringFieldById(final Connection connection, final String tableName, final String fieldName) throws Exception {
+        final String sql = String.format("SELECT ID, %s FROM %s", fieldName, tableName);
         try (final PreparedStatement stmt = connection.prepareStatement(sql)) {
             try (final ResultSet rs = stmt.executeQuery()) {
                 final Map<Long, String> namesById = new HashMap<>();

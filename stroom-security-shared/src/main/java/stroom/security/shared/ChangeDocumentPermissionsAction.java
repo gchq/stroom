@@ -17,8 +17,8 @@
 package stroom.security.shared;
 
 import stroom.entity.shared.Action;
-import stroom.query.api.v2.DocRef;
-import stroom.util.shared.HasDisplayValue;
+import stroom.docref.DocRef;
+import stroom.docref.HasDisplayValue;
 import stroom.util.shared.VoidResult;
 
 public class ChangeDocumentPermissionsAction extends Action<VoidResult> {

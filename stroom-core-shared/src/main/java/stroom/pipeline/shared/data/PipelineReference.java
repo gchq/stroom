@@ -16,18 +16,18 @@
 
 package stroom.pipeline.shared.data;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import stroom.entity.shared.Copyable;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.util.shared.CompareBuilder;
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
+import java.util.Objects;
 
 /**
  * <p>
@@ -55,7 +55,7 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "PipelineReference", propOrder = {"element", "name", "pipeline", "feed", "streamType"})
-public class PipelineReference implements Comparable<PipelineReference>, SharedObject, Copyable<PipelineReference> {
+public final class PipelineReference implements Comparable<PipelineReference>, SharedObject, Copyable<PipelineReference> {
     private static final long serialVersionUID = -8037614920682819123L;
     @XmlElement(name = "element", required = true)
     protected String element;
@@ -67,10 +67,13 @@ public class PipelineReference implements Comparable<PipelineReference>, SharedO
     protected DocRef feed;
     @XmlElement(name = "streamType", required = true)
     protected String streamType;
-    @XmlTransient
-    private PipelinePropertyType propertyType;
+
     @XmlTransient
     private SourcePipeline source;
+
+    @XmlTransient
+    @JsonIgnore
+    private int hashCode = -1;
 
     public PipelineReference() {
         // Default constructor necessary for GWT serialisation.
@@ -139,32 +142,23 @@ public class PipelineReference implements Comparable<PipelineReference>, SharedO
     }
 
     @Override
-    public int hashCode() {
-        final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(element);
-        builder.append(name);
-        builder.append(pipeline);
-        builder.append(feed);
-        builder.append(streamType);
-        return builder.toHashCode();
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final PipelineReference that = (PipelineReference) o;
+        return Objects.equals(element, that.element) &&
+                Objects.equals(name, that.name) &&
+                Objects.equals(pipeline, that.pipeline) &&
+                Objects.equals(feed, that.feed) &&
+                Objects.equals(streamType, that.streamType);
     }
 
     @Override
-    public boolean equals(final Object o) {
-        if (o == this) {
-            return true;
-        } else if (!(o instanceof PipelineReference)) {
-            return false;
+    public int hashCode() {
+        if (hashCode == -1) {
+            hashCode = Objects.hash(element, name, pipeline, feed, streamType);
         }
-
-        final PipelineReference pipelineReference = (PipelineReference) o;
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(element, pipelineReference.element);
-        builder.append(name, pipelineReference.name);
-        builder.append(pipeline, pipelineReference.pipeline);
-        builder.append(feed, pipelineReference.feed);
-        builder.append(streamType, pipelineReference.streamType);
-        return builder.isEquals();
+        return hashCode;
     }
 
     @Override
@@ -184,17 +178,8 @@ public class PipelineReference implements Comparable<PipelineReference>, SharedO
                 + streamType;
     }
 
-    public PipelinePropertyType getPropertyType() {
-        return propertyType;
-    }
-
-    public void setPropertyType(final PipelinePropertyType propertyType) {
-        this.propertyType = propertyType;
-    }
-
     @Override
     public void copyFrom(final PipelineReference other) {
-        this.propertyType = other.propertyType;
         this.source = other.source;
         this.element = other.element;
         this.name = other.name;

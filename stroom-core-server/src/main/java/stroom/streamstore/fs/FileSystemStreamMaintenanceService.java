@@ -128,18 +128,18 @@ public class FileSystemStreamMaintenanceService
     }
 
 //    @Override
-////    @Secured(feature = Stream.ENTITY_TYPE, permission = DocumentPermissionNames.UPDATE)
+////    @Secured(feature = Stream.DOCUMENT_TYPE, permission = DocumentPermissionNames.UPDATE)
 //    public StreamVolume save(final StreamVolume streamVolume) {
 //        return entityManager.saveEntity(streamVolume);
 //    }
 
     //    @Override
-//    @Secured(feature = Stream.ENTITY_TYPE, permission = DocumentPermissionNames.UPDATE)
+//    @Secured(feature = Stream.DOCUMENT_TYPE, permission = DocumentPermissionNames.UPDATE)
     public Stream save(final Stream stream) {
         return entityManager.saveEntity(stream);
     }
 
-//    //    @Secured(feature = Stream.ENTITY_TYPE, permission = DocumentPermissionNames.DELETE)
+//    //    @Secured(feature = Stream.DOCUMENT_TYPE, permission = DocumentPermissionNames.DELETE)
 //    public Long deleteStreamVolume(final Collection<StreamVolume> toDelete) {
 //        if (deleteFileSystemFiles(toDelete)) {
 //            for (final StreamVolume metaDataVolume : toDelete) {

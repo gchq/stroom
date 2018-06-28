@@ -44,7 +44,7 @@ class Meta extends StroomExtensionFunctionCall {
             try {
                 key = getSafeString(functionName, context, arguments, 0);
                 result = metaDataHolder.get(key);
-            } catch (final IOException | XPathException | RuntimeException e) {
+            } catch (final XPathException | RuntimeException e) {
                 outputWarning(context, new StringBuilder("Error fetching meta value for key '" + key + "'"), e);
             }
         } catch (final RuntimeException e) {

@@ -17,8 +17,8 @@
 
 package stroom.script;
 
-import stroom.entity.shared.Res;
-import stroom.script.shared.Script;
+import stroom.docref.DocRef;
+import stroom.script.shared.ScriptDoc;
 import stroom.security.Security;
 
 import javax.inject.Inject;
@@ -31,7 +31,6 @@ import java.io.UncheckedIOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * <p>
@@ -41,15 +40,13 @@ import java.util.Set;
 public class ScriptServlet extends HttpServlet {
     private static final long serialVersionUID = 2912973031600581055L;
 
-    private static final Set<String> FETCH_SET = Collections.singleton(Script.FETCH_RESOURCE);
-
-    private final ScriptService scriptService;
+    private final ScriptStore scriptStore;
     private final Security security;
 
     @Inject
-    ScriptServlet(final ScriptService scriptService,
+    ScriptServlet(final ScriptStore scriptStore,
                   final Security security) {
-        this.scriptService = scriptService;
+        this.scriptStore = scriptStore;
         this.security = security;
     }
 
@@ -67,11 +64,10 @@ public class ScriptServlet extends HttpServlet {
 
                     final String uuid = queryParamMap.get("uuid");
                     if (uuid != null && !uuid.isEmpty()) {
-                        final Script script = getScript(uuid);
-                        final Res res = script.getResource();
-                        if (res != null && res.getData() != null) {
+                        final ScriptDoc script = getScript(uuid);
+                        if (script.getData() != null) {
                             final PrintWriter pw = response.getWriter();
-                            pw.write(res.getData());
+                            pw.write(script.getData());
                             pw.close();
                         }
                     }
@@ -82,8 +78,8 @@ public class ScriptServlet extends HttpServlet {
         });
     }
 
-    private Script getScript(final String uuid) {
-        return scriptService.loadByUuidInsecure(uuid, FETCH_SET);
+    private ScriptDoc getScript(final String uuid) {
+        return scriptStore.readDocument(new DocRef(ScriptDoc.DOCUMENT_TYPE, uuid));
     }
 
     private Map<String, String> createQueryParamMap(final String query) {

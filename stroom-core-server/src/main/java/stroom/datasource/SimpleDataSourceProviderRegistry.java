@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.shared.ExternalDocRefConstants;
 import stroom.node.shared.ClientProperties;
 import stroom.properties.StroomPropertyService;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.SecurityContext;
 import stroom.servlet.HttpServletRequestHolder;
 

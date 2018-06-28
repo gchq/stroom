@@ -24,22 +24,24 @@ import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.docstore.shared.DocRefUtil;
+import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
-import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.entity.shared.DocRefUtil;
+import stroom.docref.DocRef;
 import stroom.statistics.shared.StatisticType;
 import stroom.stats.client.presenter.StroomStatsStorePresenter;
 import stroom.stats.shared.CustomRollUpMask;
+import stroom.stats.shared.EventStoreTimeIntervalEnum;
 import stroom.stats.shared.StatisticField;
 import stroom.stats.shared.StatisticRollUpType;
-import stroom.stats.shared.StroomStatsStoreEntity;
+import stroom.stats.shared.StroomStatsStoreDoc;
 
 import java.util.List;
 import java.util.Set;
 
-public class StroomStatsStorePlugin extends EntityPlugin<StroomStatsStoreEntity> {
+public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> {
     private final Provider<StroomStatsStorePresenter> editorProvider;
 
     @Inject
@@ -54,7 +56,12 @@ public class StroomStatsStorePlugin extends EntityPlugin<StroomStatsStoreEntity>
 
     @Override
     public String getType() {
-        return StroomStatsStoreEntity.ENTITY_TYPE;
+        return StroomStatsStoreDoc.DOCUMENT_TYPE;
+    }
+
+    @Override
+    protected DocRef getDocRef(final StroomStatsStoreDoc document) {
+        return DocRefUtil.create(document);
     }
 
     @Override
@@ -64,10 +71,10 @@ public class StroomStatsStorePlugin extends EntityPlugin<StroomStatsStoreEntity>
 
     @Override
     public void save(final DocumentTabData tabData) {
-        if (tabData != null && tabData instanceof DocumentEditPresenter<?, ?>) {
-            final DocumentEditPresenter<?, StroomStatsStoreEntity> presenter = (DocumentEditPresenter<?, StroomStatsStoreEntity>) tabData;
+        if (tabData instanceof DocumentEditPresenter<?, ?>) {
+            final DocumentEditPresenter<?, StroomStatsStoreDoc> presenter = (DocumentEditPresenter<?, StroomStatsStoreDoc>) tabData;
             if (presenter.isDirty()) {
-                final StroomStatsStoreEntity entity = presenter.getEntity();
+                final StroomStatsStoreDoc entity = presenter.getEntity();
 
                 // re-load the entity from the database so we have the
                 // persistent version, and not one that has had
@@ -77,12 +84,12 @@ public class StroomStatsStorePlugin extends EntityPlugin<StroomStatsStoreEntity>
         }
     }
 
-    private void doConfirmSave(final DocumentEditPresenter<?, StroomStatsStoreEntity> presenter,
-                               final StroomStatsStoreEntity entity, final StroomStatsStoreEntity entityFromDb) {
+    private void doConfirmSave(final DocumentEditPresenter<?, StroomStatsStoreDoc> presenter,
+                               final StroomStatsStoreDoc entity, final StroomStatsStoreDoc entityFromDb) {
         // get the persisted versions of the fields we care about
         final StatisticType prevType = entityFromDb.getStatisticType();
         final StatisticRollUpType prevRollUpType = entityFromDb.getRollUpType();
-        final String prevInterval = entityFromDb.getPrecision();
+        final EventStoreTimeIntervalEnum prevInterval = entityFromDb.getPrecision();
         final List<StatisticField> prevFieldList = entityFromDb.getStatisticFields();
         final Set<CustomRollUpMask> prevMaskSet = entityFromDb.getCustomRollUpMasks();
 
@@ -116,8 +123,8 @@ public class StroomStatsStorePlugin extends EntityPlugin<StroomStatsStoreEntity>
         }
     }
 
-    private void doSave(final DocumentEditPresenter<?, StroomStatsStoreEntity> presenter,
-                        final StroomStatsStoreEntity entity) {
+    private void doSave(final DocumentEditPresenter<?, StroomStatsStoreDoc> presenter,
+                        final StroomStatsStoreDoc entity) {
         save(DocRefUtil.create(entity), entity).onSuccess(doc -> presenter.read(DocRefUtil.create(doc), doc));
     }
 }

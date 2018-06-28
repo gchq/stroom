@@ -22,6 +22,7 @@ import org.junit.runner.RunWith;
 import stroom.pipeline.state.StreamHolder;
 import stroom.streamstore.shared.Stream;
 import stroom.util.date.DateUtil;
+import stroom.util.test.StroomExpectedException;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
@@ -32,6 +33,89 @@ import java.time.ZonedDateTime;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestFormatDate extends StroomUnitTest {
+    @Test
+    public void testParseManualTimeZones() {
+        long date;
+
+        final FormatDate formatDate = new FormatDate(null);
+
+        date = formatDate.parseDate(null, "2001/08/01", "yyyy/MM/dd", "-07:00");
+        Assert.assertEquals("2001-08-01T07:00:00.000Z", DateUtil.createNormalDateTimeString(date));
+
+        date = formatDate.parseDate(null, "2001/08/01 01:00:00", "yyyy/MM/dd HH:mm:ss", "-08:00");
+        Assert.assertEquals("2001-08-01T09:00:00.000Z", DateUtil.createNormalDateTimeString(date));
+
+        date = formatDate.parseDate(null, "2001/08/01 01:00:00", "yyyy/MM/dd HH:mm:ss", "+01:00");
+        Assert.assertEquals("2001-08-01T00:00:00.000Z", DateUtil.createNormalDateTimeString(date));
+    }
+
+    @Test
+    public void testParse() {
+        long date;
+
+        final FormatDate formatDate = new FormatDate(null);
+
+        date = formatDate.parseDate(null, "2001/01/01", "yyyy/MM/dd", null);
+        Assert.assertEquals("2001-01-01T00:00:00.000Z", DateUtil.createNormalDateTimeString(date));
+
+        date = formatDate.parseDate(null, "2001/08/01", "yyyy/MM/dd", "GMT");
+        Assert.assertEquals("2001-08-01T00:00:00.000Z", DateUtil.createNormalDateTimeString(date));
+
+        date = formatDate.parseDate(null, "2001/08/01 00:00:00.000", "yyyy/MM/dd HH:mm:ss.SSS", "GMT");
+        Assert.assertEquals("2001-08-01T00:00:00.000Z", DateUtil.createNormalDateTimeString(date));
+
+        date = formatDate.parseDate(null, "2001/08/01 00:00:00", "yyyy/MM/dd HH:mm:ss", "Europe/London");
+        Assert.assertEquals("2001-07-31T23:00:00.000Z", DateUtil.createNormalDateTimeString(date));
+
+        date = formatDate.parseDate(null, "2001/01/01", "yyyy/MM/dd", "GMT");
+        Assert.assertEquals("2001-01-01T00:00:00.000Z", DateUtil.createNormalDateTimeString(date));
+
+        date = formatDate.parseDate(null, "2008/08/08:00:00:00", "yyyy/MM/dd:HH:mm:ss", "Europe/London");
+        Assert.assertEquals("2008-08-07T23:00:00.000Z", DateUtil.createNormalDateTimeString(date));
+
+        date = formatDate.parseDate(null, "2008/08/08", "yyyy/MM/dd", "Europe/London");
+        Assert.assertEquals("2008-08-07T23:00:00.000Z", DateUtil.createNormalDateTimeString(date));
+    }
+
+    @Test
+    @StroomExpectedException(exception = IllegalArgumentException.class)
+    public void testParseGMTBSTGuess() {
+        // Null
+        boolean thrownException = false;
+        try {
+            doGMTBSTGuessTest(null, "");
+        } catch (final RuntimeException e) {
+            thrownException = true;
+        }
+        Assert.assertTrue(thrownException);
+
+        // Winter
+        doGMTBSTGuessTest("2011-01-01T00:00:00.999Z", "2011/01/01 00:00:00.999");
+
+        // MID Point Summer Time 1 Aug
+        doGMTBSTGuessTest("2001-08-01T03:00:00.000Z", "2001/08/01 04:00:00.000");
+        doGMTBSTGuessTest("2011-08-01T03:00:00.000Z", "2011/08/01 04:00:00.000");
+
+        // Boundary WINTER TO SUMMER
+        doGMTBSTGuessTest("2011-03-26T22:59:59.999Z", "2011/03/26 22:59:59.999");
+        doGMTBSTGuessTest("2011-03-26T23:59:59.999Z", "2011/03/26 23:59:59.999");
+        doGMTBSTGuessTest("2011-03-27T00:00:00.000Z", "2011/03/27 00:00:00.000");
+        doGMTBSTGuessTest("2011-03-27T00:59:59.000Z", "2011/03/27 00:59:59.000");
+        // Lost an hour!
+        doGMTBSTGuessTest("2011-03-27T00:00:00.000Z", "2011/03/27 00:00:00.000");
+        doGMTBSTGuessTest("2011-03-27T01:59:00.999Z", "2011/03/27 01:59:00.999");
+        doGMTBSTGuessTest("2011-03-27T02:00:00.999Z", "2011/03/27 03:00:00.999");
+
+        // Boundary SUMMER TO WINTER
+        doGMTBSTGuessTest("2011-10-29T23:59:59.999Z", "2011/10/30 00:59:59.999");
+    }
+
+    private void doGMTBSTGuessTest(final String expected, final String value) {
+        final FormatDate formatDate = new FormatDate(null);
+        final long date = formatDate.parseDate(null, value, "yyyy/MM/dd HH:mm:ss.SSS", "GMT/BST");
+        Assert.assertEquals(expected, DateUtil.createNormalDateTimeString(date));
+    }
+
     @Test
     public void testDateWithNoYear() {
         final Stream stream = new Stream();
@@ -77,22 +161,22 @@ public class TestFormatDate extends StroomUnitTest {
 
     @Test
     public void testWithTimeZoneInStr2() {
-        ZonedDateTime time = parseUtcDate("dd-MM-yy HH:mm:ss Z", "18-04-18 01:01:01 +0000");
+        parseUtcDate("dd-MM-yy HH:mm:ss Z", "18-04-18 01:01:01 +0000");
     }
 
     @Test
     public void testWithTimeZoneInStr3() {
-        ZonedDateTime time = parseUtcDate("dd-MM-yy HH:mm:ss Z", "18-04-18 01:01:01 -0000");
+        parseUtcDate("dd-MM-yy HH:mm:ss Z", "18-04-18 01:01:01 -0000");
     }
 
     @Test
     public void testWithTimeZoneInStr4() {
-        ZonedDateTime time = parseUtcDate("dd-MM-yy HH:mm:ss xxx", "18-04-18 01:01:01 -00:00");
+        parseUtcDate("dd-MM-yy HH:mm:ss xxx", "18-04-18 01:01:01 -00:00");
     }
 
     @Test
     public void testWithTimeZoneInStr5() {
-        ZonedDateTime time = parseUtcDate("dd-MM-yy HH:mm:ss VV", "18-04-18 01:01:01 Europe/London");
+        parseUtcDate("dd-MM-yy HH:mm:ss VV", "18-04-18 01:01:01 Europe/London");
     }
 
 
@@ -105,9 +189,8 @@ public class TestFormatDate extends StroomUnitTest {
 
         final FormatDate formatDate = new FormatDate(streamHolder);
 
-        long timeMs = formatDate.parseDate(null, "UTC", pattern , dateStr);
-        ZonedDateTime time = ZonedDateTime.ofInstant(Instant.ofEpochMilli(timeMs), ZoneOffset.UTC);
-        return time;
+        long timeMs = formatDate.parseDate(null, dateStr, pattern, "UTC");
+        return ZonedDateTime.ofInstant(Instant.ofEpochMilli(timeMs), ZoneOffset.UTC);
     }
 
     //TODO didn't have time to get this working so we can test via the front door
@@ -170,6 +253,6 @@ public class TestFormatDate extends StroomUnitTest {
 //    }
 
     private String test(final FormatDate formatDate, final String pattern, final String date) {
-        return DateUtil.createNormalDateTimeString(formatDate.parseDate(null, "UTC", pattern, date));
+        return DateUtil.createNormalDateTimeString(formatDate.parseDate(null, date, pattern, "UTC"));
     }
 }

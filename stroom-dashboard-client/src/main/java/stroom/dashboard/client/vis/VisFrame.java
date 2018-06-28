@@ -27,7 +27,7 @@ import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.ui.Frame;
-import stroom.script.shared.Script;
+import stroom.script.shared.ScriptDoc;
 import stroom.visualisation.client.presenter.VisFunction;
 import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 
@@ -64,11 +64,11 @@ public class VisFrame extends Frame implements VisPane {
     }
 
     @Override
-    public void injectScripts(final List<Script> scripts, final VisFunction function) {
+    public void injectScripts(final List<ScriptDoc> scripts, final VisFunction function) {
         injectScriptsFromURL(scripts, function);
     }
 
-    private void injectScriptsFromURL(final List<Script> scripts, final VisFunction function) {
+    private void injectScriptsFromURL(final List<ScriptDoc> scripts, final VisFunction function) {
         this.function = function;
 
         if (scripts == null || scripts.size() == 0) {
@@ -100,7 +100,7 @@ public class VisFrame extends Frame implements VisPane {
 
                 final JSONArray arr = new JSONArray();
                 for (int i = 0; i < scripts.size(); i++) {
-                    final Script script = scripts.get(i);
+                    final ScriptDoc script = scripts.get(i);
                     final String url = createURL(script);
 
                     final JSONObject obj = new JSONObject();
@@ -125,13 +125,11 @@ public class VisFrame extends Frame implements VisPane {
         }
     }
 
-    private String createURL(final Script script) {
+    private String createURL(final ScriptDoc script) {
         final StringBuilder sb = new StringBuilder();
         sb.append("script?");
         sb.append("uuid=");
         sb.append(script.getUuid());
-        sb.append("&id=");
-        sb.append(script.getId());
         sb.append("&name=");
         sb.append(script.getName());
         sb.append("&ver=");

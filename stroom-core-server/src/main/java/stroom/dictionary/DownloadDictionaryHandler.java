@@ -57,7 +57,7 @@ class DownloadDictionaryHandler extends AbstractTaskHandler<DownloadDictionaryAc
     public ResourceGeneration exec(final DownloadDictionaryAction action) {
         return security.secureResult(() -> {
             // Get dictionary.
-            final DictionaryDoc dictionary = dictionaryStore.read(action.getUuid());
+            final DictionaryDoc dictionary = dictionaryStore.readDocument(action.getDictrionaryRef());
             if (dictionary == null) {
                 throw new EntityServiceException("Unable to find dictionary");
             }

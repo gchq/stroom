@@ -16,6 +16,10 @@
 
 package stroom.util.shared;
 
+import stroom.docref.SharedObject;
+
+import java.util.Objects;
+
 public class RowCount<T extends Number> implements SharedObject {
     private static final long serialVersionUID = 1435183608704221253L;
 
@@ -40,26 +44,17 @@ public class RowCount<T extends Number> implements SharedObject {
     }
 
     @Override
-    public int hashCode() {
-        final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(count);
-        builder.append(exact);
-        return builder.toHashCode();
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final RowCount<?> rowCount = (RowCount<?>) o;
+        return exact == rowCount.exact &&
+                Objects.equals(count, rowCount.count);
     }
 
     @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null || !(obj instanceof RowCount<?>)) {
-            return false;
-        }
-        final RowCount<?> rowCount = (RowCount<?>) obj;
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(count, rowCount.count);
-        builder.append(exact, rowCount.exact);
-        return builder.isEquals();
+    public int hashCode() {
+        return Objects.hash(count, exact);
     }
 
     @Override

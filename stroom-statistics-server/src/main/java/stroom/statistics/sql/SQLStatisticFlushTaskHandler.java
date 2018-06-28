@@ -83,7 +83,7 @@ public class SQLStatisticFlushTaskHandler extends AbstractTaskHandler<SQLStatist
             final List<SQLStatisticValueSourceDO> batchInsert = new ArrayList<>();
             // Store all aggregated entries.
             for (final Entry<SQLStatKey, MutableLong> entry : map.countEntrySet()) {
-                if (!taskContext.isTerminated()) {
+                if (!Thread.currentThread().isInterrupted()) {
                     final long ms = entry.getKey().getMs();
                     final String name = entry.getKey().getName();
                     final long value = entry.getValue().longValue();
@@ -104,7 +104,7 @@ public class SQLStatisticFlushTaskHandler extends AbstractTaskHandler<SQLStatist
                 }
             }
             for (final Entry<SQLStatKey, Double> entry : map.valueEntrySet()) {
-                if (!taskContext.isTerminated()) {
+                if (!Thread.currentThread().isInterrupted()) {
                     final long ms = entry.getKey().getMs();
                     final String name = entry.getKey().getName();
                     final long value = entry.getValue().longValue();
@@ -125,7 +125,7 @@ public class SQLStatisticFlushTaskHandler extends AbstractTaskHandler<SQLStatist
                 }
             }
 
-            if (!taskContext.isTerminated()) {
+            if (!Thread.currentThread().isInterrupted()) {
                 if (batchInsert.size() > 0) {
                     doSaveBatch(batchInsert);
                 }

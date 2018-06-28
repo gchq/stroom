@@ -13,6 +13,7 @@ stroom.temp=/tmp/stroom/
 
 #Uncomment this to enable browser's right click menu for development
 #stroom.ui.oncontextmenu=
+stroom.ui.url=http://IP_ADDRESS:3001
 
 #Hibernate properties
 #~~~~~~~~~~~~~~~~~~~~

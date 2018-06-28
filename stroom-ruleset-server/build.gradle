@@ -1,5 +1,6 @@
-dependencies {
+ext.moduleName = 'stroom.ruleset.server'
 
+dependencies {
     compile project(':stroom-explorer-api')
     compile project(':stroom-ruleset-shared')
 
@@ -7,6 +8,7 @@ dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-docstore-server')
 
+    compile libs.stroomDocRef
     compile libs.stroomQueryApi
     compile libs.slf4j_api
     compile libs.javax_inject

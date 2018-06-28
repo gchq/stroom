@@ -17,7 +17,7 @@
 package stroom.jobsystem.shared;
 
 import stroom.jobsystem.shared.JobNode.JobType;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 public class TaskType implements SharedObject {
     private static final long serialVersionUID = -520024408007948736L;

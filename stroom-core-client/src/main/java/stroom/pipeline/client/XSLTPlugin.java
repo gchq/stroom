@@ -22,13 +22,15 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.docstore.shared.DocRefUtil;
+import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.pipeline.client.presenter.XSLTPresenter;
-import stroom.pipeline.shared.XSLT;
+import stroom.pipeline.shared.XsltDoc;
+import stroom.docref.DocRef;
 
-public class XSLTPlugin extends EntityPlugin<XSLT> {
+public class XSLTPlugin extends DocumentPlugin<XsltDoc> {
     private final Provider<XSLTPresenter> editorProvider;
 
     @Inject
@@ -48,6 +50,11 @@ public class XSLTPlugin extends EntityPlugin<XSLT> {
 
     @Override
     public String getType() {
-        return XSLT.ENTITY_TYPE;
+        return XsltDoc.DOCUMENT_TYPE;
+    }
+
+    @Override
+    protected DocRef getDocRef(final XsltDoc document) {
+        return DocRefUtil.create(document);
     }
 }

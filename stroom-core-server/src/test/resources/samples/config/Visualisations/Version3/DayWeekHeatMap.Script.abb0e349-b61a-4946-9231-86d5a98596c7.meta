@@ -1,0 +1,11 @@
+{
+  "type" : "Script",
+  "uuid" : "abb0e349-b61a-4946-9231-86d5a98596c7",
+  "name" : "DayWeekHeatMap",
+  "version" : "e85dfcf2-7d84-49e9-bbf9-f66a5972d9e7",
+  "dependencies" : [ {
+    "type" : "Script",
+    "uuid" : "49a5f46c-f627-49ed-afb9-0066b99e235a",
+    "name" : "Common"
+  } ]
+}

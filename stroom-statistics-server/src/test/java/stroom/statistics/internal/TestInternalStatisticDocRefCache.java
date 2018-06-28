@@ -3,7 +3,7 @@ package stroom.statistics.internal;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import stroom.properties.MockStroomPropertyService;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 import java.util.List;
 import java.util.UUID;

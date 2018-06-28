@@ -58,9 +58,11 @@ public class TestHeadless {
             FileUtil.deleteDir(tmpPath);
             Files.createDirectories(tmpPath);
 
+            final Path contentDirPath = tmpPath.resolve("content");
             final Path inputDirPath = tmpPath.resolve("input");
             final Path outputDirPath = tmpPath.resolve("output");
 
+            Files.createDirectories(contentDirPath);
             Files.createDirectories(inputDirPath);
             Files.createDirectories(outputDirPath);
 
@@ -107,6 +109,7 @@ public class TestHeadless {
             final Headless headless = new Headless();
 
             headless.setConfig(FileUtil.getCanonicalPath(configFilePath));
+            headless.setContent(FileUtil.getCanonicalPath(contentDirPath));
             headless.setInput(FileUtil.getCanonicalPath(inputDirPath));
             headless.setOutput(FileUtil.getCanonicalPath(outputFilePath));
             headless.setTmp(FileUtil.getCanonicalPath(newTempDir));

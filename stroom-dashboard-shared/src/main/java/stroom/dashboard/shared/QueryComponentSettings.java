@@ -16,7 +16,11 @@
 
 package stroom.dashboard.shared;
 
-import stroom.query.api.v2.DocRef;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -26,16 +30,21 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "query", propOrder = {"dataSource", "expression", "automate"})
+@JsonPropertyOrder({"dataSource", "expression", "automate"})
+@JsonInclude(Include.NON_EMPTY)
 @XmlRootElement(name = "query")
+@XmlType(name = "QueryComponentSettings", propOrder = {"dataSource", "expression", "automate"})
 public class QueryComponentSettings extends ComponentSettings {
     private static final long serialVersionUID = -2530827581046882396L;
 
     @XmlElement(name = "dataSource")
+    @JsonProperty("dataSource")
     private DocRef dataSource;
     @XmlElement(name = "expression")
+    @JsonProperty("expression")
     private ExpressionOperator expression;
     @XmlElement(name = "automate")
+    @JsonProperty("automate")
     private Automate automate;
 
     public QueryComponentSettings() {

@@ -24,14 +24,14 @@ import stroom.properties.StroomPropertyService;
 import stroom.proxy.repo.RepositoryProcessor;
 import stroom.proxy.repo.StroomZipRepository;
 import stroom.task.ExecutorProvider;
+import stroom.task.TaskContext;
 import stroom.task.ThreadPoolImpl;
 import stroom.util.date.DateUtil;
+import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Task;
 import stroom.util.shared.ThreadPool;
-import stroom.util.lifecycle.StroomSimpleCronSchedule;
-import stroom.task.TaskContext;
 
 import javax.inject.Inject;
 import java.util.concurrent.Executor;
@@ -100,7 +100,7 @@ class ProxyAggregationExecutor {
             LOGGER.info("exec() - started");
 
             boolean complete = false;
-            while (!complete && !taskContext.isTerminated()) {
+            while (!complete && !Thread.interrupted()) {
                 taskContext.info("Aggregate started {}, maxAggregation {}, maxAggregationScan {}, maxStreamSize {}",
                         DateUtil.createNormalDateTimeString(System.currentTimeMillis()),
                         ModelStringUtil.formatCsv(maxAggregation),

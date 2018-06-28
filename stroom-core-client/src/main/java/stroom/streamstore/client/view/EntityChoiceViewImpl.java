@@ -22,7 +22,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.entity.client.EntityItemListBox;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.streamstore.client.presenter.EntityChoicePresenter.EntityChoiceView;
 
 import java.util.List;

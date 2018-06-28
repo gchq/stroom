@@ -16,8 +16,8 @@
 
 package stroom.refdata;
 
+import stroom.docref.DocRef;
 import stroom.feed.shared.Feed;
-import stroom.query.api.v2.DocRef;
 import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.streamstore.shared.Stream;
 

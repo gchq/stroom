@@ -16,7 +16,7 @@
 
 package stroom.node.shared;
 
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -50,6 +50,7 @@ public class ClientProperties implements SharedObject {
     public static final String URL_KIBANA_UI = "stroom.url.kibana-ui";
     public static final String AUTH_SERVICE_URL = "stroom.auth.service.url";
     public static final String AUTH_UI_URL = "stroom.auth.ui.url";
+    public static final String STROOM_UI_URL = "stroom.ui.url";
 
     public static final String URL_LIST = "stroom.url.list";
     public static final String URL_BASE = "stroom.url.";

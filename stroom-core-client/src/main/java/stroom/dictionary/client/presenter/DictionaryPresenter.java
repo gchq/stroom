@@ -27,7 +27,7 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
@@ -44,6 +44,7 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
     private final ClientDispatchAsync dispatcher;
     private final LocationManager locationManager;
 
+    private DocRef docRef;
     private DictionaryDoc doc;
 
     private final DictionarySettingsPresenter settingsPresenter;
@@ -81,7 +82,7 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
     @java.lang.Override
     protected void onBind() {
         super.onBind();
-        registerHandler(downloadButton.addClickHandler(clickEvent -> dispatcher.exec(new DownloadDictionaryAction(doc.getUuid())).onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, null, result))));
+        registerHandler(downloadButton.addClickHandler(clickEvent -> dispatcher.exec(new DownloadDictionaryAction(docRef)).onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, null, result))));
     }
 
     @Override
@@ -98,6 +99,7 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
     @Override
     public void onRead(final DocRef docRef, final DictionaryDoc doc) {
         super.onRead(docRef, doc);
+        this.docRef = docRef;
         this.doc = doc;
         downloadButton.setEnabled(true);
         settingsPresenter.read(docRef, doc);

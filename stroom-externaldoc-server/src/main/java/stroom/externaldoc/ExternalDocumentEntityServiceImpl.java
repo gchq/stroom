@@ -18,18 +18,19 @@ package stroom.externaldoc;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.eclipse.jetty.http.HttpStatus;
+import stroom.docstore.EncodingUtil;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.SharedDocRef;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
 import stroom.node.shared.ClientProperties;
 import stroom.properties.StroomPropertyService;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.query.audit.ExportDTO;
 import stroom.query.audit.client.DocRefResourceHttpClient;
 import stroom.query.audit.model.DocRefEntity;
-import stroom.query.audit.security.ServiceUser;
+import stroom.query.security.ServiceUser;
 import stroom.security.SecurityContext;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
@@ -39,6 +40,7 @@ import javax.ws.rs.core.Response;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
@@ -190,7 +192,7 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
 
     @Override
     public DocRef importDocument(final DocRef docRef,
-                                 final Map<String, String> dataMap,
+                                 final Map<String, byte[]> dataMap,
                                  final ImportState importState,
                                  final ImportState.ImportMode importMode) {
         final Response response = docRefHttpClient.importDocument(serviceUser(),
@@ -203,7 +205,7 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
     }
 
     @Override
-    public Map<String, String> exportDocument(final DocRef docRef, boolean omitAuditFields, List<Message> messageList) {
+    public Map<String, byte[]> exportDocument(final DocRef docRef, boolean omitAuditFields, List<Message> messageList) {
         final Response response = docRefHttpClient.exportDocument(serviceUser(), docRef.getUuid());
 
         final ExportDTO exportDTO = response.readEntity(ExportDTO.class);
@@ -212,7 +214,7 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
                 .map(m -> new Message(Severity.INFO, m))
                 .forEach(messageList::add);
 
-        return exportDTO.getValues();
+        return exportDTO.getValues().entrySet().stream().collect(Collectors.toMap(Entry::getKey, e -> EncodingUtil.asBytes(e.getValue())));
     }
 
     @Override

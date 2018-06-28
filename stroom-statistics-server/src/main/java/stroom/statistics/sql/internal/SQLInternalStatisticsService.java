@@ -5,7 +5,7 @@ import io.vavr.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.properties.StroomPropertyService;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsService;
 import stroom.statistics.sql.StatisticEvent;

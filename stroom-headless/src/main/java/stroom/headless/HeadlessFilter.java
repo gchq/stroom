@@ -53,6 +53,7 @@ public class HeadlessFilter extends AbstractXMLFilter implements ErrorWriter {
     private static final String ELEMENT_ID = "ElementId";
     private static final String TYPE = "Type";
     private static final String ERROR = "Error";
+    private static final String ERRORS = "Errors";
     private static final String SPACE = " ";
     private static final String COLON = ":";
     private final Deque<StartPrefixMapping> prefixDeque = new ArrayDeque<>();
@@ -62,7 +63,7 @@ public class HeadlessFilter extends AbstractXMLFilter implements ErrorWriter {
     private int depth;
     private StartElement root;
 
-    public void beginOutput() throws SAXException {
+    public void beginOutput() {
     }
 
     public void endOutput() throws SAXException {
@@ -82,6 +83,18 @@ public class HeadlessFilter extends AbstractXMLFilter implements ErrorWriter {
                 final StartPrefixMapping prefixMapping = prefixDeque.pop();
                 super.endPrefixMapping(prefixMapping.getPrefix());
             }
+
+            // End the document.
+            super.endDocument();
+
+        } else {
+            // Start the document.
+            super.startDocument();
+
+            super.startElement(URI, ERRORS, ERRORS, new AttributesImpl());
+            writeMetaData();
+            writeErrors();
+            super.endElement(URI, ERRORS, ERRORS);
 
             // End the document.
             super.endDocument();
@@ -130,7 +143,7 @@ public class HeadlessFilter extends AbstractXMLFilter implements ErrorWriter {
     }
 
     @Override
-    public void endDocument() throws SAXException {
+    public void endDocument() {
         // Deliberately suppressed.
     }
 
@@ -229,9 +242,20 @@ public class HeadlessFilter extends AbstractXMLFilter implements ErrorWriter {
                     if (error.getLocation() != null) {
                         atts.addAttribute(BLANK, LOCATION, LOCATION, STRING, error.getLocation().toString());
                     }
-                    atts.addAttribute(BLANK, ELEMENT_ID, ELEMENT_ID, STRING, error.getElementId());
-                    atts.addAttribute(BLANK, MESSAGE, MESSAGE, STRING,
-                            getMessage(error.getElementId() + COLON + SPACE + error.getMessage()));
+                    if (error.getElementId() != null) {
+                        atts.addAttribute(BLANK, ELEMENT_ID, ELEMENT_ID, STRING, error.getElementId());
+                    }
+
+                    String message = error.getMessage();
+                    if (message == null) {
+                        message = "";
+                    }
+                    if (error.getElementId() != null) {
+                        message = error.getElementId() + COLON + SPACE + message;
+                    }
+                    message = getMessage(message);
+                    atts.addAttribute(BLANK, MESSAGE, MESSAGE, STRING, message);
+
                     super.startElement(URI, ERROR, ERROR, atts);
                     super.endElement(URI, ERROR, ERROR);
                 } catch (final SAXException e) {
@@ -247,8 +271,7 @@ public class HeadlessFilter extends AbstractXMLFilter implements ErrorWriter {
         if (message != null) {
             // We have a message so print it without new lines.
             final char[] chars = message.toCharArray();
-            for (int i = 0; i < chars.length; i++) {
-                final char c = chars[i];
+            for (final char c : chars) {
                 switch (c) {
                     case '\n':
                         sb.append(' ');

@@ -16,12 +16,13 @@
 
 package stroom.pipeline.factory;
 
+import stroom.docref.DocRef;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.query.api.v2.DocRef;
 import stroom.util.shared.HasType;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.HashMap;
@@ -148,8 +149,8 @@ public class ElementRegistry {
 
         if (HasType.class.isAssignableFrom(paramType)) {
             try {
-                typeName = ((HasType) paramType.newInstance()).getType();
-            } catch (final InstantiationException | IllegalAccessException e) {
+                typeName = ((HasType) paramType.getDeclaredConstructor(new Class[0]).newInstance()).getType();
+            } catch (final InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
                 throw new PipelineFactoryException("Unable to create global property for type " + typeName + " (reason: " + e.getMessage() + ")");
             }
         }

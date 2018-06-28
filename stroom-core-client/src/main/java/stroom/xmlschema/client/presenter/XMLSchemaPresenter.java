@@ -24,15 +24,15 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 import stroom.widget.xsdbrowser.client.presenter.XSDBrowserPresenter;
 import stroom.widget.xsdbrowser.client.view.XSDModel;
-import stroom.xmlschema.shared.XMLSchema;
+import stroom.xmlschema.shared.XmlSchemaDoc;
 
-public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelView, XMLSchema> {
+public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelView, XmlSchemaDoc> {
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData GRAPHICAL = new TabDataImpl("Graphical");
     private static final TabData TEXT = new TabDataImpl("Text");
@@ -110,7 +110,7 @@ public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final XMLSchema xmlSchema) {
+    protected void onRead(final DocRef docRef, final XmlSchemaDoc xmlSchema) {
         super.onRead(docRef, xmlSchema);
         settingsPresenter.read(docRef, xmlSchema);
 
@@ -121,7 +121,7 @@ public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
     }
 
     @Override
-    protected void onWrite(final XMLSchema xmlSchema) {
+    protected void onWrite(final XmlSchemaDoc xmlSchema) {
         settingsPresenter.write(xmlSchema);
         if (shownText) {
             xmlSchema.setData(codePresenter.getText().trim());
@@ -143,6 +143,6 @@ public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
 
     @Override
     public String getType() {
-        return XMLSchema.ENTITY_TYPE;
+        return XmlSchemaDoc.DOCUMENT_TYPE;
     }
 }

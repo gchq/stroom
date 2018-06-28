@@ -16,7 +16,7 @@
 
 package stroom.streamstore;
 
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 import java.nio.file.Path;
 import java.util.ArrayList;

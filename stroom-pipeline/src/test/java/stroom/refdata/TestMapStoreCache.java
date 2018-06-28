@@ -19,9 +19,12 @@ package stroom.refdata;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.entity.shared.DocRefUtil;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.docref.DocRef;
+import stroom.security.MockSecurityContext;
+import stroom.security.Security;
 import stroom.util.cache.CacheManager;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
@@ -42,8 +45,7 @@ public class TestMapStoreCache extends StroomUnitTest {
 
             String eventString = null;
 
-            PipelineEntity pipelineEntity = new PipelineEntity();
-            pipelineEntity.setUuid("12345");
+            DocRef pipelineRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, "12345");
 
             long time = System.currentTimeMillis();
             for (int i = 0; i < MAX_CACHE_ITEMS; i++) {

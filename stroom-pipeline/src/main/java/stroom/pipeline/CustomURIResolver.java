@@ -17,9 +17,8 @@
 
 package stroom.pipeline;
 
-import stroom.entity.shared.BaseResultList;
-import stroom.pipeline.shared.FindXSLTCriteria;
-import stroom.pipeline.shared.XSLT;
+import stroom.pipeline.shared.XsltDoc;
+import stroom.docref.DocRef;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
@@ -28,6 +27,7 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.URIResolver;
 import javax.xml.transform.stream.StreamSource;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * <p>
@@ -43,11 +43,11 @@ class CustomURIResolver implements URIResolver {
     private static final String RESOURCE_NOT_FOUND = "Resource not found: \"";
     private static final String RESOURCE_NOT_FOUND_END = "\"";
 
-    private final XSLTService xsltService;
+    private final XsltStore xsltStore;
 
     @Inject
-    CustomURIResolver(final XSLTService xsltService) {
-        this.xsltService = xsltService;
+    CustomURIResolver(final XsltStore xsltStore) {
+        this.xsltStore = xsltStore;
     }
 
     /**
@@ -64,13 +64,13 @@ class CustomURIResolver implements URIResolver {
     public Source resolve(final String href, final String base) throws TransformerException {
         try {
             // Try and locate a translation with this name
-            final FindXSLTCriteria findXSLTCriteria = new FindXSLTCriteria();
-            findXSLTCriteria.getName().setString(href);
-            final BaseResultList<XSLT> results = xsltService.find(findXSLTCriteria);
+            final List<DocRef> docRefs = xsltStore.findByName(href);
 
-            if (results != null && results.size() > 0) {
-                final XSLT xslt = results.getFirst();
-                return new StreamSource(StreamUtil.stringToStream(xslt.getData()));
+            if (docRefs != null && docRefs.size() > 0) {
+                final XsltDoc document = xsltStore.readDocument(docRefs.get(0));
+                if (document != null) {
+                    return new StreamSource(StreamUtil.stringToStream(document.getData()));
+                }
             }
 
             final StringBuilder sb = new StringBuilder();
@@ -79,7 +79,7 @@ class CustomURIResolver implements URIResolver {
             sb.append(RESOURCE_NOT_FOUND_END);
             throw new IOException(sb.toString());
 
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new TransformerException(e);
         }
     }

@@ -55,7 +55,7 @@ class FileSystemCleanSubTaskHandler extends AbstractTaskHandler<FileSystemCleanS
         return security.secureResult(() -> {
             taskContext.info("Cleaning: {} - {}", task.getVolume().getPath(), task.getPath());
 
-            if (taskContext.isTerminated()) {
+            if (Thread.currentThread().isInterrupted()) {
                 LOGGER.info("exec() - Been asked to Quit");
                 return VoidResult.INSTANCE;
             }
@@ -74,7 +74,7 @@ class FileSystemCleanSubTaskHandler extends AbstractTaskHandler<FileSystemCleanS
                         + task.getTaskProgress().traceInfo());
             }
 
-            if (taskContext.isTerminated()) {
+            if (Thread.currentThread().isInterrupted()) {
                 LOGGER.info("exec() - Been asked to Quit");
                 return VoidResult.INSTANCE;
             }
@@ -86,7 +86,7 @@ class FileSystemCleanSubTaskHandler extends AbstractTaskHandler<FileSystemCleanS
                 for (final String subPath : result.getChildDirectoryList()) {
                     final FileSystemCleanSubTask subTask = new FileSystemCleanSubTask(task.getParentHandler(),
                             task.getParentTask(), task.getTaskProgress(), task.getVolume(), subPath, task.getLogPrefix());
-                    if (!taskContext.isTerminated()) {
+                    if (!Thread.currentThread().isInterrupted()) {
                         task.getParentHandler().getAsyncTaskHelper().fork(subTask,
                                 new FileSystemCleanProgressCallback(task.getTaskProgress()));
                     }

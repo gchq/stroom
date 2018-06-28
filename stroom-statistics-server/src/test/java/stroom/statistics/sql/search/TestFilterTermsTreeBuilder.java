@@ -22,10 +22,10 @@ import org.junit.Test;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.statistics.sql.entity.StatisticStoreEntityService;
+import stroom.statistics.sql.entity.StatisticStoreStore;
 import stroom.statistics.sql.search.FilterTermsTree.OperatorNode;
 import stroom.statistics.sql.search.FilterTermsTree.TermNode;
-import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.util.test.StroomUnitTest;
 
 import java.util.Arrays;
@@ -33,7 +33,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class TestFilterTermsTreeBuilder extends StroomUnitTest {
-    Set<String> fieldBlackList = new HashSet<>(Arrays.asList(StatisticStoreEntity.FIELD_NAME_DATE_TIME));
+    Set<String> fieldBlackList = new HashSet<>(Arrays.asList(StatisticStoreDoc.FIELD_NAME_DATE_TIME));
 
     /**
      * Verify that a tree of {@link stroom.query.api.v2.ExpressionItem} objects can be converted
@@ -136,7 +136,7 @@ public class TestFilterTermsTreeBuilder extends StroomUnitTest {
         // --term2 - field1 between 1 and 2
 
         final ExpressionOperator.Builder and = new ExpressionOperator.Builder(Op.AND);
-        and.addTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.EQUALS, "123456789");
+        and.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.EQUALS, "123456789");
         and.addTerm("term2field", Condition.BETWEEN, "1,2");
 
         FilterTermsTreeBuilder.convertExpresionItemsTree(and.build(), fieldBlackList);
@@ -149,7 +149,7 @@ public class TestFilterTermsTreeBuilder extends StroomUnitTest {
         // --term2 - field1 equals 123456789
 
         final ExpressionOperator.Builder and = new ExpressionOperator.Builder(Op.AND);
-        and.addTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, "1,2");
+        and.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, "1,2");
         and.addTerm("term2field", Condition.EQUALS, "123456789");
 
         final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder.convertExpresionItemsTree(and.build(), fieldBlackList);
@@ -162,7 +162,7 @@ public class TestFilterTermsTreeBuilder extends StroomUnitTest {
     @Test
     public void testInConditionOneValue() {
         final ExpressionOperator.Builder and = new ExpressionOperator.Builder(Op.AND);
-        and.addTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, "1,2");
+        and.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, "1,2");
         and.addTerm("term1field", Condition.IN, "123456789");
 
         final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder.convertExpresionItemsTree(and.build(), fieldBlackList);
@@ -177,7 +177,7 @@ public class TestFilterTermsTreeBuilder extends StroomUnitTest {
     @Test
     public void testInConditionNoValue() {
         final ExpressionOperator.Builder and = new ExpressionOperator.Builder(Op.AND);
-        and.addTerm(StatisticStoreEntityService.FIELD_NAME_DATE_TIME, Condition.BETWEEN, "1,2");
+        and.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, "1,2");
         and.addTerm("term1field", Condition.IN, "");
 
         final FilterTermsTree filterTermsTree = FilterTermsTreeBuilder.convertExpresionItemsTree(and.build(), fieldBlackList);

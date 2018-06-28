@@ -16,6 +16,8 @@
 
 package stroom.util.shared;
 
+import stroom.docref.SharedObject;
+
 public enum OutputState implements HasDisplayValue, SharedObject {
     NOT_EMPTY("not empty"), EMPTY("empty");
 

@@ -38,14 +38,14 @@ import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.StepType;
 import stroom.pipeline.shared.SteppingResult;
-import stroom.pipeline.shared.TextConverter;
-import stroom.pipeline.shared.XSLT;
+import stroom.pipeline.shared.TextConverterDoc;
+import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.streamstore.client.presenter.ClassificationUiHandlers;
 import stroom.streamstore.client.presenter.DataPresenter;
 import stroom.streamstore.shared.FindStreamCriteria;
@@ -176,9 +176,9 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                             value = replace(value, "pipeline", action.getPipeline().getName());
 
                             if (element.getElementType().getType().equalsIgnoreCase("XSLTFilter")) {
-                                fuzzyDocRef = new DocRef(XSLT.ENTITY_TYPE, null, value);
+                                fuzzyDocRef = new DocRef(XsltDoc.DOCUMENT_TYPE, null, value);
                             } else {
-                                fuzzyDocRef = new DocRef(TextConverter.ENTITY_TYPE, null, value);
+                                fuzzyDocRef = new DocRef(TextConverterDoc.DOCUMENT_TYPE, null, value);
                             }
                         }
                     }

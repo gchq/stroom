@@ -30,7 +30,7 @@ import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.dashboard.shared.TimeZone;
 import stroom.entity.shared.SharedDocRef;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -43,11 +43,11 @@ public class SearchRequestTestData {
     static stroom.query.api.v2.SearchRequest apiSearchRequest() {
         stroom.dashboard.shared.SearchRequest dashboardSearchRequest = dashboardSearchRequest();
 
-        SearchRequestMapper searchRequestMapper = new SearchRequestMapper(new MockVisualisationService());
+        SearchRequestMapper searchRequestMapper = new SearchRequestMapper(null);
         stroom.query.api.v2.SearchRequest apiSearchRequest = searchRequestMapper.mapRequest(
                 DashboardQueryKey.create(
                         "queryKeyUuid",
-                        1l,
+                        "0",
                         "queryId-1"),
                 dashboardSearchRequest);
 

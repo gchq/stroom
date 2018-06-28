@@ -17,17 +17,12 @@
 package stroom.ruleset;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Singleton;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import stroom.datafeed.MetaMapFilterFactory;
-import stroom.dictionary.DictionaryStore;
-import stroom.docstore.Store;
-import stroom.entity.FindService;
 import stroom.explorer.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.ruleset.shared.RuleSet;
-import stroom.xmlschema.shared.XMLSchema;
 
 public class RulesetModule extends AbstractModule {
     @Override

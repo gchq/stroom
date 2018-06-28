@@ -745,7 +745,7 @@ public class DefaultProperties {
                 .build());
         list.add(new GlobalProperty.Builder()
                 .name("stroom.theme.background-image")
-                .value("url(../images/theme/grid.png)")
+                .value("none")
                 .description("GUI")
                 .editable(true)
                 .requireUiRestart(true)

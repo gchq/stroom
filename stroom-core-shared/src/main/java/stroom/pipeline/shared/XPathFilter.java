@@ -16,7 +16,7 @@
 
 package stroom.pipeline.shared;
 
-import stroom.util.shared.HasDisplayValue;
+import stroom.docref.HasDisplayValue;
 
 import java.io.Serializable;
 import java.util.HashMap;

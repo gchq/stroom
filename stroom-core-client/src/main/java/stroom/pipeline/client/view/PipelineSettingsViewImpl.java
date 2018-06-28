@@ -17,7 +17,6 @@
 package stroom.pipeline.client.view;
 
 import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
@@ -25,10 +24,8 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.item.client.ItemListBox;
 import stroom.pipeline.client.presenter.PipelineSettingsPresenter.PipelineSettingsView;
 import stroom.pipeline.client.presenter.PipelineSettingsUiHandlers;
-import stroom.pipeline.shared.PipelineEntity;
 import stroom.util.shared.HasReadOnly;
 
 public class PipelineSettingsViewImpl extends ViewWithUiHandlers<PipelineSettingsUiHandlers>

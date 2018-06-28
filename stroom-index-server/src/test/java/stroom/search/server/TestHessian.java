@@ -2,6 +2,9 @@ package stroom.search.server;
 
 import com.caucho.hessian.io.Hessian2Output;
 import org.junit.Test;
+import stroom.dashboard.expression.v1.Generator;
+import stroom.dashboard.expression.v1.StaticValueFunction;
+import stroom.dashboard.expression.v1.ValString;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexField.AnalyzerType;
 import stroom.index.shared.IndexFields;
@@ -9,7 +12,7 @@ import stroom.mapreduce.v2.UnsafePairQueue;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
 import stroom.query.api.v2.DateTimeFormat;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
@@ -23,8 +26,8 @@ import stroom.query.api.v2.TimeZone;
 import stroom.query.api.v2.TimeZone.Use;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
+import stroom.query.common.v2.GroupKey;
 import stroom.query.common.v2.Item;
-import stroom.query.common.v2.Key;
 import stroom.query.common.v2.Payload;
 import stroom.query.common.v2.TableCoprocessorSettings;
 import stroom.query.common.v2.TablePayload;
@@ -37,6 +40,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class TestHessian {
@@ -59,8 +63,8 @@ public class TestHessian {
         final Rack rack = Rack.create("rack");
         final Node node = Node.create(rack, "node");
 
-        final IndexFields indexFields = createIndexFields();
-        final IndexField[] fields = indexFields.getIndexFields().toArray(new IndexField[0]);
+        final List<IndexField> indexFields = createIndexFields();
+        final IndexField[] fields = indexFields.toArray(new IndexField[0]);
 
         final Field field = new Field(
                 "test",
@@ -115,11 +119,11 @@ public class TestHessian {
 
     @Test
     public void testNodeResult() throws IOException {
-        final Key key = new Key("test");
-        final UnsafePairQueue<Key, Item> pairQueue = new UnsafePairQueue<>();
-        pairQueue.collect(key, new Item(key, new String[]{"v1", "v2"}, 0));
-        pairQueue.collect(key, new Item(key, new String[]{"v4", "v6"}, 0));
-        pairQueue.collect(key, new Item(key, new String[]{"v7", "v8"}, 0));
+        final GroupKey key = new GroupKey(ValString.create("test"));
+        final UnsafePairQueue<GroupKey, Item> pairQueue = new UnsafePairQueue<>();
+        pairQueue.collect(key, new Item(key, new Generator[]{getGenerator("v1"), getGenerator("v2")}, 0));
+        pairQueue.collect(key, new Item(key, new Generator[]{getGenerator("v4"), getGenerator("v6")}, 0));
+        pairQueue.collect(key, new Item(key, new Generator[]{getGenerator("v7"), getGenerator("v8")}, 0));
         final CoprocessorKey coprocessorKey = new CoprocessorKey(100, new String[]{"c1, c2"});
         final TablePayload tablePayload = new TablePayload(pairQueue);
         final Map<CoprocessorKey, Payload> payloadMap = new HashMap<>();
@@ -134,8 +138,12 @@ public class TestHessian {
         out.close();
     }
 
-    private IndexFields createIndexFields() {
-        final IndexFields indexFields = IndexFields.createStreamIndexFields();
+    private Generator getGenerator(final String string) {
+        return new StaticValueFunction(ValString.create(string)).createGenerator();
+    }
+
+    private List<IndexField> createIndexFields() {
+        final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(IndexField.createField("Feed"));
         indexFields.add(IndexField.createField("Feed (Keyword)", AnalyzerType.KEYWORD));
         indexFields.add(IndexField.createField("Action"));

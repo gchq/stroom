@@ -16,7 +16,7 @@
 
 package stroom.pool.shared;
 
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 public class PoolInfo implements SharedObject {
     private static final String DELIM = ",";

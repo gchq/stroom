@@ -26,7 +26,7 @@ import stroom.entity.shared.Range;
 import stroom.entity.shared.Sort;
 import stroom.entity.shared.Sort.Direction;
 import stroom.entity.shared.StringCriteria;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 import javax.persistence.Query;
 import java.util.HashSet;

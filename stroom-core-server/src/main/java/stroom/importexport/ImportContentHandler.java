@@ -19,7 +19,7 @@ package stroom.importexport;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 public abstract class ImportContentHandler extends DefaultHandler {
     int depth = 0;

@@ -35,7 +35,7 @@ import stroom.importexport.ImportExportHelper;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.persist.EntityManagerSupport;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -390,7 +390,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     // START OF ImportExportActionHandler
     ////////////////////////////////////////////////////////////////////////
 
-    public DocRef importDocument(final DocRef docRef, final Map<String, String> dataMap, final ImportState importState, final ImportMode importMode) {
+    public DocRef importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
         E entity = null;
 
         try {
@@ -414,7 +414,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
         return DocRefUtil.create(entity);
     }
 
-    public Map<String, String> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
+    public Map<String, byte[]> exportDocument(final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) {
         if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.EXPORT)) {
             return entityManagerSupport.executeResult(em -> {
                 final E entity = entityServiceHelper.loadByUuid(docRef.getUuid(), Collections.emptySet(), queryAppender);

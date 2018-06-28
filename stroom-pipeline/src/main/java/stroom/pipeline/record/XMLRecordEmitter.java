@@ -154,8 +154,7 @@ public class XMLRecordEmitter extends XMLFilterAdaptor implements HasElementId {
 
         if (root == null) {
             root = new StartElement(uri, localName, qName, atts);
-            prefixes = new StartPrefixMapping[prefixList.size()];
-            prefixes = prefixList.toArray(prefixes);
+            prefixes = prefixList.toArray(new StartPrefixMapping[0]);
         }
 
         if (depth > 2) {

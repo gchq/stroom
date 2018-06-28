@@ -167,9 +167,7 @@ public class MenubarPresenter extends MyPresenter<MenubarPresenter.MenubarView, 
                         autoHidePartners.add(autoHidePartner);
                         presenter.setAutoHidePartners(autoHidePartners);
 
-                        Element[] partners = new Element[autoHidePartners.size()];
-                        partners = autoHidePartners.toArray(partners);
-
+                        final Element[] partners = autoHidePartners.toArray(new Element[0]);
                         final PopupPosition popupPosition = new PopupPosition(x, y);
                         ShowPopupEvent.fire(MenubarPresenter.this, presenter, PopupType.POPUP, popupPosition,
                                 popupUiHandlers, partners);

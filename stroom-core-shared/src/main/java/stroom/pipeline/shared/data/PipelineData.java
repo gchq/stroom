@@ -16,7 +16,8 @@
 
 package stroom.pipeline.shared.data;
 
-import stroom.util.shared.SharedObject;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import stroom.docref.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -132,34 +133,42 @@ public class PipelineData implements SharedObject {
     /**
      * Convenience methods
      */
+    @JsonIgnore
     public List<PipelineElement> getAddedElements() {
         return elements.getAdd();
     }
 
+    @JsonIgnore
     public List<PipelineElement> getRemovedElements() {
         return elements.getRemove();
     }
 
+    @JsonIgnore
     public List<PipelineProperty> getAddedProperties() {
         return properties.getAdd();
     }
 
+    @JsonIgnore
     public List<PipelineProperty> getRemovedProperties() {
         return properties.getRemove();
     }
 
+    @JsonIgnore
     public List<PipelineReference> getAddedPipelineReferences() {
         return pipelineReferences.getAdd();
     }
 
+    @JsonIgnore
     public List<PipelineReference> getRemovedPipelineReferences() {
         return pipelineReferences.getRemove();
     }
 
+    @JsonIgnore
     public List<PipelineLink> getAddedLinks() {
         return links.getAdd();
     }
 
+    @JsonIgnore
     public List<PipelineLink> getRemovedLinks() {
         return links.getRemove();
     }

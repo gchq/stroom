@@ -1,0 +1,13 @@
+{
+  "type" : "Visualisation",
+  "uuid" : "1666949a-2b32-4a95-a25f-64916b4ace56",
+  "name" : "RAGStatus",
+  "version" : "d857388b-43ad-4cdd-b7f7-6834ce33eead",
+  "description" : "Git commit: a1e3bba4e658189a7de874fd1c6748624084d7e4\nGit commit time: 2016-09-21 17:03:32 +0100",
+  "functionName" : "visualisations.RAGStatus",
+  "scriptRef" : {
+    "type" : "Script",
+    "uuid" : "9bc156e3-2655-4fb3-a809-16fbaeda3022",
+    "name" : "RAGStatus"
+  }
+}

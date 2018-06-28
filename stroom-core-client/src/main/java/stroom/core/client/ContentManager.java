@@ -58,8 +58,7 @@ public class ContentManager implements HasHandlers {
             }
         } else {
             // Stick the keys in an array to prevent comod exception.
-            TabData[] arr = new TabData[handlerMap.entrySet().size()];
-            arr = handlerMap.keySet().toArray(arr);
+            final TabData[] arr = handlerMap.keySet().toArray(new TabData[0]);
 
             // If there are tabs then iterate around them trying
             // to close each one.

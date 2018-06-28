@@ -18,7 +18,7 @@ package stroom.streamstore.shared;
 
 import stroom.entity.shared.HasPrimitiveValue;
 import stroom.entity.shared.PrimitiveValueConverter;
-import stroom.util.shared.HasDisplayValue;
+import stroom.docref.HasDisplayValue;
 
 public enum StreamAttributeFieldUse implements HasDisplayValue, HasPrimitiveValue {
     FIELD("Text", 1, false), NUMERIC_FIELD("Number", 2, true), DATE_FIELD("Date", 3, false), ID("Id", 4,

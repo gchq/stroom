@@ -21,7 +21,7 @@ import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.ListBox;
-import stroom.util.shared.HasDisplayValue;
+import stroom.docref.HasDisplayValue;
 
 import java.util.ArrayList;
 import java.util.Collection;

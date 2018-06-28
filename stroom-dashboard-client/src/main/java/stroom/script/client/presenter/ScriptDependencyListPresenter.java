@@ -28,27 +28,25 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
-import stroom.entity.shared.DocRefs;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.node.client.view.WrapperView;
-import stroom.query.api.v2.DocRef;
-import stroom.script.shared.Script;
+import stroom.docref.DocRef;
+import stroom.script.shared.ScriptDoc;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView>
-        implements HasDocumentRead<Script>, HasWrite<Script>, HasDirtyHandlers {
+        implements HasDocumentRead<ScriptDoc>, HasWrite<ScriptDoc>, HasDirtyHandlers {
     private final ScriptListPresenter scriptListPresenter;
     private final EntityChooser explorerDropDownTreePresenter;
     private final ButtonView addButton;
     private final ButtonView removeButton;
-    private DocRefs scripts;
+    private List<DocRef> scripts;
 
     @Inject
     public ScriptDependencyListPresenter(final EventBus eventBus, final WrapperView view,
@@ -58,7 +56,7 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
         this.scriptListPresenter = scriptListPresenter;
         this.explorerDropDownTreePresenter = explorerDropDownTreePresenter;
 
-        explorerDropDownTreePresenter.setIncludedTypes(Script.ENTITY_TYPE);
+        explorerDropDownTreePresenter.setIncludedTypes(ScriptDoc.DOCUMENT_TYPE);
         explorerDropDownTreePresenter.setRequiredPermissions(DocumentPermissionNames.USE);
 
         view.setView(scriptListPresenter.getView());
@@ -73,18 +71,18 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
     protected void onBind() {
         super.onBind();
 
-        registerHandler(addButton.addClickHandler(event -> onAdd(event)));
-        registerHandler(removeButton.addClickHandler(event -> onRemove(event)));
+        registerHandler(addButton.addClickHandler(this::onAdd));
+        registerHandler(removeButton.addClickHandler(this::onRemove));
         registerHandler(scriptListPresenter.getSelectionModel().addSelectionHandler(event -> {
             final DocRef selected = scriptListPresenter.getSelectionModel().getSelected();
             removeButton.setEnabled(selected != null);
         }));
         registerHandler(explorerDropDownTreePresenter.addDataSelectionHandler(event -> {
-            final ExplorerNode selectedItem = (ExplorerNode) event.getSelectedItem();
+            final ExplorerNode selectedItem = event.getSelectedItem();
             if (selectedItem != null) {
                 final DocRef script = selectedItem.getDocRef();
                 if (script != null) {
-                    if (scripts.add(script)) {
+                    if (!scripts.contains(script) && scripts.add(script)) {
                         DirtyEvent.fire(ScriptDependencyListPresenter.this, true);
                         refresh();
                     }
@@ -97,7 +95,7 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
         explorerDropDownTreePresenter.show();
     }
 
-    public void onRemove(final ClickEvent event) {
+    private void onRemove(final ClickEvent event) {
         final List<DocRef> list = scriptListPresenter.getSelectionModel().getSelectedItems();
         if (list != null && list.size() > 0) {
             String message = "Are you sure you want to remove this script dependency?";
@@ -120,8 +118,8 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
     }
 
     @Override
-    public void read(final DocRef docRef, final Script script) {
-        scripts = new DocRefs();
+    public void read(final DocRef docRef, final ScriptDoc script) {
+        scripts = new ArrayList<>();
         if (script != null) {
             if (script.getDependencies() != null) {
                 scripts = script.getDependencies();
@@ -131,14 +129,14 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
     }
 
     @Override
-    public void write(final Script script) {
+    public void write(final ScriptDoc script) {
         script.setDependencies(scripts);
     }
 
     private void refresh() {
         if (scripts != null) {
-            final List<DocRef> list = new ArrayList<>(scripts.getDoc());
-            Collections.sort(list, DocRef::compareTo);
+            final List<DocRef> list = new ArrayList<>(scripts);
+            list.sort(DocRef::compareTo);
             scriptListPresenter.setData(list);
         } else {
             scriptListPresenter.setData(new ArrayList<>());

@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.io.UncheckedIOException;
 import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -395,7 +396,7 @@ public final class StreamUtil {
                 outputStream.close();
             }
         } catch (final IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -405,7 +406,7 @@ public final class StreamUtil {
                 inputStream.close();
             }
         } catch (final IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
     }
 

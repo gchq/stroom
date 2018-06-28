@@ -18,7 +18,7 @@ package stroom.statistics.sql.entity;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.shared.StatisticType;
 
 class StatisticsDataSourceValidatorImpl implements StatisticStoreValidator {
@@ -27,7 +27,7 @@ class StatisticsDataSourceValidatorImpl implements StatisticStoreValidator {
     @Override
     public boolean validateStatisticDataSource(final String statisticName,
                                                final StatisticType statisticType,
-                                               final StatisticStoreEntity statisticsDataSource) {
+                                               final StatisticStoreDoc statisticsDataSource) {
         if (statisticsDataSource == null) {
             LOGGER.warn(
                     "No StatisticDataSource could be found with name {} and so no statistics will be recorded for it.",

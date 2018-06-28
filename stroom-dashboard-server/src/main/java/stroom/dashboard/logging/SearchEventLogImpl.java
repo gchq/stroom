@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 import stroom.dictionary.DictionaryStore;
 import stroom.entity.QueryDataLogUtil;
 import stroom.logging.StroomEventLoggingService;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.security.Security;
 

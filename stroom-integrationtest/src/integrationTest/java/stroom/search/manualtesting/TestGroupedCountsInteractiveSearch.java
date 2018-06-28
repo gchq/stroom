@@ -24,11 +24,9 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dashboard.expression.v1.Count;
 import stroom.dictionary.DictionaryStore;
-import stroom.entity.shared.DocRefUtil;
-import stroom.index.IndexService;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.index.IndexStore;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.Field;
@@ -73,7 +71,7 @@ public class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationT
     @Inject
     private CommonIndexingTest commonIndexingTest;
     @Inject
-    private IndexService indexService;
+    private IndexStore indexStore;
     @Inject
     private DictionaryStore dictionaryStore;
     @Inject
@@ -171,7 +169,7 @@ public class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationT
                 resultMapConsumer,
                 5,
                 5,
-                indexService,
+                indexStore,
                 searchResponseCreatorManager);
 
         LOGGER.info("Completed search");
@@ -205,17 +203,17 @@ public class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationT
 
         final Field countField = new Field.Builder()
                 .name("Count")
-                .expression(Count.NAME + "()")
+                .expression("count()")
                 .format(new Format(Format.Type.NUMBER))
                 .build();
 
         List<Field> fields = Arrays.asList(groupedUserId, countField);
-        final PipelineEntity resultPipeline = commonIndexingTest.getSearchResultPipeline();
+        final DocRef resultPipeline = commonIndexingTest.getSearchResultPipeline();
 
         final TableSettings tableSettings = new TableSettings.Builder()
                 .addFields(fields)
                 .extractValues(extractValues)
-                .extractionPipeline(DocRefUtil.create(resultPipeline))
+                .extractionPipeline(resultPipeline)
                 .build();
 
         return tableSettings;

@@ -17,7 +17,7 @@
 package stroom.entity.shared;
 
 import stroom.entity.shared.Sort.Direction;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -107,6 +107,12 @@ public abstract class BaseCriteria implements SharedObject {
             sortList = new ArrayList<>();
         }
         sortList.add(sort);
+    }
+
+    public void removeSorts() {
+        if (sortList != null) {
+            sortList.clear();
+        }
     }
 
     public List<Sort> getSortList() {

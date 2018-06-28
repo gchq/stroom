@@ -31,10 +31,10 @@ import stroom.entity.shared.DocumentServiceReadAction;
 import stroom.entity.shared.DocumentServiceWriteAction;
 import stroom.explorer.client.event.HighlightExplorerNodeEvent;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 import stroom.widget.util.client.Future;
 
 import java.util.HashMap;

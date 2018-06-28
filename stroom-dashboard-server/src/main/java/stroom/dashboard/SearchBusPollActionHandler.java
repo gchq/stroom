@@ -28,7 +28,7 @@ import stroom.dashboard.shared.SearchRequest;
 import stroom.dashboard.shared.SearchResponse;
 import stroom.datasource.DataSourceProvider;
 import stroom.datasource.DataSourceProviderRegistry;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Query;
 import stroom.security.Security;
@@ -205,7 +205,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
 
                 final QueryEntity queryEntity = queryService.create("History");
 
-                queryEntity.setDashboardId(queryKey.getDashboardId());
+                queryEntity.setDashboardUuid(queryKey.getDashboardUuid());
                 queryEntity.setQueryId(queryKey.getQueryId());
                 queryEntity.setQuery(query);
                 queryService.save(queryEntity);

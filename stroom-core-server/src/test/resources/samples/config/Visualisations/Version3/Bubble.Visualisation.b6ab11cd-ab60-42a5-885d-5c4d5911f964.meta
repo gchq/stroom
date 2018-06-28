@@ -1,0 +1,13 @@
+{
+  "type" : "Visualisation",
+  "uuid" : "b6ab11cd-ab60-42a5-885d-5c4d5911f964",
+  "name" : "Bubble",
+  "version" : "e80715f1-ad20-4188-8fdb-f764a2b6d767",
+  "description" : "Git commit: a1e3bba4e658189a7de874fd1c6748624084d7e4\nGit commit time: 2016-09-21 17:03:32 +0100",
+  "functionName" : "visualisations.Bubble",
+  "scriptRef" : {
+    "type" : "Script",
+    "uuid" : "866a3f1d-26e3-44d1-819e-968bc767a4af",
+    "name" : "Bubble"
+  }
+}

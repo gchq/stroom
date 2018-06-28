@@ -28,7 +28,7 @@ import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
 import stroom.feed.shared.Feed;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;

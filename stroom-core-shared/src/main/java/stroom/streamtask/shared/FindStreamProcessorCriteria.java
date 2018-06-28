@@ -17,8 +17,9 @@
 package stroom.streamtask.shared;
 
 import stroom.entity.shared.BaseCriteria;
-import stroom.entity.shared.EntityIdSet;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.entity.shared.CriteriaSet;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.docref.DocRef;
 
 /**
  * Class used to find translations.
@@ -26,24 +27,24 @@ import stroom.pipeline.shared.PipelineEntity;
 public class FindStreamProcessorCriteria extends BaseCriteria {
     private static final long serialVersionUID = 1L;
 
-    private EntityIdSet<PipelineEntity> pipelineIdSet = null;
+    private CriteriaSet<DocRef> pipelineSet = null;
 
     public FindStreamProcessorCriteria() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public FindStreamProcessorCriteria(final PipelineEntity pipeline) {
-        obtainPipelineIdSet().add(pipeline);
+    public FindStreamProcessorCriteria(final DocRef pipeline) {
+        obtainPipelineSet().add(pipeline);
     }
 
-    public EntityIdSet<PipelineEntity> getPipelineIdSet() {
-        return pipelineIdSet;
+    public CriteriaSet<DocRef> getPipelineSet() {
+        return pipelineSet;
     }
 
-    public EntityIdSet<PipelineEntity> obtainPipelineIdSet() {
-        if (pipelineIdSet == null) {
-            pipelineIdSet = new EntityIdSet<>();
+    public CriteriaSet<DocRef> obtainPipelineSet() {
+        if (pipelineSet == null) {
+            pipelineSet = new CriteriaSet<>();
         }
-        return pipelineIdSet;
+        return pipelineSet;
     }
 }

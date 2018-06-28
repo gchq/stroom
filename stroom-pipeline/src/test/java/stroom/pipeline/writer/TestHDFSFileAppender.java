@@ -34,6 +34,7 @@ import stroom.util.test.StroomUnitTest;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.util.Optional;
 
 public class TestHDFSFileAppender extends StroomUnitTest {
@@ -68,7 +69,7 @@ public class TestHDFSFileAppender extends StroomUnitTest {
                     hdfs.delete(rootPath, true);
                 }
             } catch (final IOException e) {
-                throw new RuntimeException(e);
+                throw new UncheckedIOException(e);
             }
         });
     }
@@ -86,7 +87,7 @@ public class TestHDFSFileAppender extends StroomUnitTest {
             try {
                 hdfs.exists(path);
             } catch (final IOException e) {
-                throw new RuntimeException(e);
+                throw new UncheckedIOException(e);
             }
         });
 
@@ -124,7 +125,7 @@ public class TestHDFSFileAppender extends StroomUnitTest {
                 try {
                     Assert.assertTrue(hdfs.exists(file));
                 } catch (final IOException e) {
-                    throw new RuntimeException(e);
+                    throw new UncheckedIOException(e);
                 }
             });
 

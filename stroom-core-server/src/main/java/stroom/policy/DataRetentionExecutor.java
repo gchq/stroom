@@ -33,12 +33,12 @@ import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.DataRetentionRule;
 import stroom.streamstore.DataRetentionAgeUtil;
 import stroom.streamstore.shared.StreamDataSource;
+import stroom.task.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.LogExecutionTime;
 import stroom.util.lifecycle.StroomSimpleCronSchedule;
-import stroom.task.TaskContext;
+import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;
@@ -170,7 +170,7 @@ public class DataRetentionExecutor {
                     // Process the different data ages separately as they can consider different sets of streams.
                     ages.forEach(age -> {
                         // Skip if we have terminated processing.
-                        if (!taskContext.isTerminated()) {
+                        if (!Thread.currentThread().isInterrupted()) {
                             final boolean success = processAge(connection, age, timeElapsedSinceLastRun, rules, batchSize, ageMap);
                             if (!success) {
                                 allSuccessful.set(false);
@@ -179,7 +179,7 @@ public class DataRetentionExecutor {
                     });
 
                     // If we finished running then save the tracker for use next time.
-                    if (!taskContext.isTerminated() && allSuccessful.get()) {
+                    if (!Thread.currentThread().isInterrupted() && allSuccessful.get()) {
                         tracker.save();
                     }
                 } catch (final SQLException e) {
@@ -235,7 +235,7 @@ public class DataRetentionExecutor {
                         boolean more = true;
                         final Progress progress = new Progress(ageRange, rowCount);
                         Range<Long> streamIdRange = new Range<>(0L, null);
-                        while (more && !taskContext.isTerminated()) {
+                        while (more && !Thread.currentThread().isInterrupted()) {
                             if (progress.getStreamId() != null) {
                                 // Process from the next stream id onwards.
                                 streamIdRange = new Range<>(progress.getStreamId() + 1, null);

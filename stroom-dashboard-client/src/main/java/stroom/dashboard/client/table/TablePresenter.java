@@ -141,7 +141,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final ClientSecurityContext securityContext,
                           final LocationManager locationManager,
                           final MenuListPresenter menuListPresenter,
-                          final ExpressionPresenter expressionPresenter,
+                          final Provider<ExpressionPresenter> expressionPresenterProvider,
                           final FormatPresenter formatPresenter,
                           final FilterPresenter filterPresenter,
                           final Provider<FieldAddPresenter> fieldAddPresenterProvider,
@@ -174,7 +174,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         downloadButton = dataGrid.addButton(SvgPresets.DOWNLOAD);
         downloadButton.setVisible(securityContext.hasAppPermission(PermissionNames.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
 
-        fieldsManager = new FieldsManager(this, menuListPresenter, expressionPresenter, formatPresenter,
+        fieldsManager = new FieldsManager(this, menuListPresenter, expressionPresenterProvider, formatPresenter,
                 filterPresenter);
         dataGrid.setHeadingListener(fieldsManager);
 

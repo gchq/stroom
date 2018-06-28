@@ -20,16 +20,16 @@ package stroom.index;
 import stroom.entity.event.EntityEvent;
 import stroom.entity.event.EntityEventHandler;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.Index;
+import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 import javax.inject.Inject;
 import java.util.List;
 
-@EntityEventHandler(type = Index.ENTITY_TYPE)
+@EntityEventHandler(type = IndexDoc.DOCUMENT_TYPE)
 class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
     private final NodeCache nodeCache;
     private final IndexConfigCacheImpl indexConfigCache;
@@ -49,7 +49,7 @@ class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
 
     @Override
     public void onChange(final EntityEvent event) {
-        if (Index.ENTITY_TYPE.equals(event.getDocRef().getType())) {
+        if (IndexDoc.DOCUMENT_TYPE.equals(event.getDocRef().getType())) {
             indexConfigCache.remove(event.getDocRef());
             updateIndex(event.getDocRef());
         }
@@ -58,7 +58,7 @@ class IndexConfigCacheEntityEventHandler implements EntityEvent.Handler {
     private void updateIndex(final DocRef indexRef) {
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
         criteria.getNodeIdSet().add(nodeCache.getDefaultNode());
-        criteria.getFetchSet().add(Index.ENTITY_TYPE);
+        criteria.getFetchSet().add(IndexDoc.DOCUMENT_TYPE);
         criteria.getFetchSet().add(Node.ENTITY_TYPE);
         criteria.getIndexSet().add(indexRef);
 

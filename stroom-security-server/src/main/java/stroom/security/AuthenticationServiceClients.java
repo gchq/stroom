@@ -27,7 +27,6 @@ import stroom.auth.service.api.model.CreateTokenRequest;
 import stroom.auth.service.api.model.SearchRequest;
 import stroom.auth.service.api.model.SearchResponse;
 import stroom.auth.service.api.model.Token;
-import stroom.properties.StroomPropertyService;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -50,21 +49,21 @@ class AuthenticationServiceClients {
     private final boolean enableAuth;
 
     @Inject
-    AuthenticationServiceClients(final StroomPropertyService propertyService) {
-        enableAuth = propertyService.getBooleanProperty("stroom.authentication.required", true);
+    AuthenticationServiceClients(final SecurityConfig securityConfig) {
+        enableAuth = securityConfig.isAuthenticationRequired();
         if (enableAuth) {
-            if (Strings.isNullOrEmpty(propertyService.getProperty("stroom.security.apiToken"))) {
+            if (Strings.isNullOrEmpty(securityConfig.getApiToken())) {
                 throw new RuntimeException("Missing API key! Please configure using 'stroom.security.apiToken'");
             }
 
-            if (Strings.isNullOrEmpty(propertyService.getProperty("stroom.auth.services.url"))) {
+            if (Strings.isNullOrEmpty(securityConfig.getAuthServicesBaseUrl())) {
                 throw new RuntimeException("Missing auth service URL! Please configure using 'stroom.auth.services.url'");
             }
         }
 
         authServiceClient = new ApiClient();
-        authServiceClient.setBasePath(propertyService.getProperty("stroom.auth.services.url"));
-        authServiceClient.addDefaultHeader("Authorization", "Bearer " + propertyService.getProperty("stroom.security.apiToken"));
+        authServiceClient.setBasePath(securityConfig.getAuthServicesBaseUrl());
+        authServiceClient.addDefaultHeader("Authorization", "Bearer " + securityConfig.getApiToken());
     }
 
     AuthenticationApi newAuthenticationApi() {

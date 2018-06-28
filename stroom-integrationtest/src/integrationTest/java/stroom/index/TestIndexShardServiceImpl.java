@@ -20,12 +20,11 @@ package stroom.index;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.DocRefUtil;
 import stroom.entity.shared.Range;
 import stroom.entity.shared.Sort.Direction;
 import stroom.index.shared.FindIndexShardCriteria;
-import stroom.index.shared.Index;
-import stroom.index.shared.Index.PartitionBy;
+import stroom.index.shared.IndexDoc;
+import stroom.index.shared.IndexDoc.PartitionBy;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.node.NodeCache;
@@ -33,20 +32,24 @@ import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Volume;
+import stroom.docref.DocRef;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
 
 import javax.inject.Inject;
+import java.util.Collections;
 
 public class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
     @Inject
-    private IndexService indexService;
+    private IndexStore indexStore;
     @Inject
     private IndexShardService indexShardService;
     @Inject
     private NodeCache nodeCache;
     @Inject
     private VolumeService volumeService;
+    @Inject
+    private IndexVolumeService indexVolumeService;
 
     @Override
     protected void onBefore() {
@@ -60,14 +63,14 @@ public class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
     public void test() {
         final Volume volume = volumeService.find(new FindVolumeCriteria()).getFirst();
 
-        Index index1 = indexService.create("Test Index 1");
-        index1.getVolumes().add(volume);
-        index1 = indexService.save(index1);
+        final DocRef indexRef1 = indexStore.createDocument("Test Index 1");
+        final IndexDoc index1 = indexStore.readDocument(indexRef1);
+        indexVolumeService.setVolumesForIndex(indexRef1, Collections.singleton(volume));
         final IndexShardKey indexShardKey1 = IndexShardKeyUtil.createTestKey(index1);
 
-        Index index2 = indexService.create("Test Index 2");
-        index2.getVolumes().add(volume);
-        index2 = indexService.save(index2);
+        final DocRef indexRef2 = indexStore.createDocument("Test Index 2");
+        final IndexDoc index2 = indexStore.readDocument(indexRef2);
+        indexVolumeService.setVolumesForIndex(indexRef2, Collections.singleton(volume));
         final IndexShardKey indexShardKey2 = IndexShardKeyUtil.createTestKey(index2);
 
         final Node node = nodeCache.getDefaultNode();
@@ -88,12 +91,12 @@ public class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
 
         // Find shards for index 1
         criteria.getIndexSet().clear();
-        criteria.getIndexSet().add(DocRefUtil.create(index1));
+        criteria.getIndexSet().add(indexRef1);
         Assert.assertEquals(3, indexShardService.find(criteria).size());
 
         // Find shards for index 2
         criteria.getIndexSet().clear();
-        criteria.getIndexSet().add(DocRefUtil.create(index2));
+        criteria.getIndexSet().add(indexRef2);
         Assert.assertEquals(1, indexShardService.find(criteria).size());
 
         // Set all the filters
@@ -105,11 +108,12 @@ public class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
     public void testOrderBy() {
         final Volume volume = volumeService.find(new FindVolumeCriteria()).getFirst();
 
-        Index index = indexService.create("Test Index 1");
-        index.getVolumes().add(volume);
+        final DocRef indexRef = indexStore.createDocument("Test Index 1");
+        final IndexDoc index = indexStore.readDocument(indexRef);
+        indexVolumeService.setVolumesForIndex(indexRef, Collections.singleton(volume));
         index.setPartitionBy(PartitionBy.MONTH);
         index.setPartitionSize(1);
-        index = indexService.save(index);
+        indexStore.writeDocument(index);
 
         final Node node = nodeCache.getDefaultNode();
 
@@ -149,7 +153,7 @@ public class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
         }
     }
 
-    private void createShard(final Index index, final Node node, final String dateTime, final int shardNo) {
+    private void createShard(final IndexDoc index, final Node node, final String dateTime, final int shardNo) {
         final long timeMs = DateUtil.parseNormalDateTimeString(dateTime);
         final IndexShardKey key = IndexShardKeyUtil.createTimeBasedKey(index, timeMs, shardNo);
         indexShardService.createIndexShard(key, node);

@@ -16,7 +16,7 @@
 
 package stroom.pipeline.factory;
 
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.PipelineDoc;
 
 import java.util.List;
 
@@ -29,9 +29,9 @@ public interface PipelineStackLoader {
      * This method will prevent circular pipeline references by ensuring only
      * unique items are added to the list.
      *
-     * @param pipelineEntity The pipeline that we want to load the inheritance chain for.
+     * @param pipelineDoc The pipeline that we want to load the inheritance chain for.
      * @return The inheritance chain for the supplied pipeline. The supplied
      * pipeline will be the last element in the list.
      */
-    List<PipelineEntity> loadPipelineStack(PipelineEntity pipelineEntity);
+    List<PipelineDoc> loadPipelineStack(PipelineDoc pipelineDoc);
 }

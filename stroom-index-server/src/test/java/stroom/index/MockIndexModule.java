@@ -22,7 +22,7 @@ import com.google.inject.multibindings.Multibinder;
 import stroom.entity.FindService;
 import stroom.entity.shared.Clearable;
 import stroom.importexport.ImportExportActionHandler;
-import stroom.index.shared.Index;
+import stroom.index.shared.IndexDoc;
 import stroom.pipeline.factory.Element;
 
 public class MockIndexModule extends AbstractModule {
@@ -31,7 +31,8 @@ public class MockIndexModule extends AbstractModule {
 //        bind(IndexShardManager.class).to(MockIndexShardManagerImpl.class);
         bind(IndexShardWriterCache.class).to(MockIndexShardWriterCache.class);
         bind(IndexConfigCache.class).to(IndexConfigCacheImpl.class);
-        bind(IndexService.class).to(MockIndexService.class);
+        bind(IndexStore.class).to(IndexStoreImpl.class);
+        bind(IndexVolumeService.class).to(MockIndexVolumeService.class);
         bind(IndexShardService.class).to(MockIndexShardService.class);
         bind(Indexer.class).to(MockIndexer.class);
 //
@@ -45,23 +46,23 @@ public class MockIndexModule extends AbstractModule {
 //
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-        clearableBinder.addBinding().to(MockIndexService.class);
+//        clearableBinder.addBinding().to(IndexStoreImpl.class);
         clearableBinder.addBinding().to(MockIndexShardService.class);
 
         final Multibinder<Element> elementBinder = Multibinder.newSetBinder(binder(), Element.class);
         elementBinder.addBinding().to(IndexingFilter.class);
 //
 //        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
-//        explorerActionHandlerBinder.addBinding().to(IndexServiceImpl.class);
+//        explorerActionHandlerBinder.addBinding().to(IndexStoreImpl.class);
 
         final Multibinder<ImportExportActionHandler> importExportActionHandlerBinder = Multibinder.newSetBinder(binder(), ImportExportActionHandler.class);
-        importExportActionHandlerBinder.addBinding().to(MockIndexService.class);
+        importExportActionHandlerBinder.addBinding().to(IndexStoreImpl.class);
 
         final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
-        entityServiceByTypeBinder.addBinding(Index.ENTITY_TYPE).to(MockIndexService.class);
+        entityServiceByTypeBinder.addBinding(IndexDoc.DOCUMENT_TYPE).to(IndexStoreImpl.class);
 
-        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
-        findServiceBinder.addBinding().to(MockIndexService.class);
+//        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
+//        findServiceBinder.addBinding().to(IndexStoreImpl.class);
     }
     //    @Bean
 //    @Scope(StroomScope.TASK)
@@ -101,8 +102,8 @@ public class MockIndexModule extends AbstractModule {
 //
 //    @Bean
 //    public StroomIndexQueryResource stroomIndexQueryResource(final SearchResultCreatorManager searchResultCreatorManager,
-//                                                             final IndexService indexService,
+//                                                             final IndexStore indexStore,
 //                                                             final SecurityContext securityContext) {
-//        return new StroomIndexQueryResource(searchResultCreatorManager, indexService, securityContext);
+//        return new StroomIndexQueryResource(searchResultCreatorManager, indexStore, securityContext);
 //    }
 }

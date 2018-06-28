@@ -16,26 +16,28 @@
 
 package stroom.index;
 
-import stroom.index.shared.Index;
-import stroom.index.shared.IndexFields;
+import stroom.index.shared.IndexDoc;
+import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
 
+import java.util.List;
+
 public class IndexConfig {
-    private final Index index;
-    private final IndexFields indexFields;
+    private final IndexDoc index;
+    private final List<IndexField> indexFields;
     private final IndexFieldsMap indexFieldsMap;
 
-    public IndexConfig(final Index index, final IndexFields indexFields, final IndexFieldsMap indexFieldsMap) {
+    public IndexConfig(final IndexDoc index, final List<IndexField> indexFields, final IndexFieldsMap indexFieldsMap) {
         this.index = index;
         this.indexFields = indexFields;
         this.indexFieldsMap = indexFieldsMap;
     }
 
-    public Index getIndex() {
+    public IndexDoc getIndex() {
         return index;
     }
 
-    public IndexFields getIndexFields() {
+    public List<IndexField> getIndexFields() {
         return indexFields;
     }
 

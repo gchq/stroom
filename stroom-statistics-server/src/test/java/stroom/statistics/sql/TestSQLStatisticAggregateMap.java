@@ -21,7 +21,7 @@ import org.junit.Test;
 import stroom.statistics.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.sql.rollup.RollUpBitMask;
 import stroom.statistics.sql.rollup.RolledUpStatisticEvent;
-import stroom.statistics.shared.StatisticStoreEntity;
+import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.shared.StatisticsDataSourceData;
 import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.shared.common.StatisticRollUpType;
@@ -438,8 +438,8 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
         return tagList;
     }
 
-    private StatisticStoreEntity buildStatisticDataSource(final StatisticRollUpType statisticRollUpType) {
-        final StatisticStoreEntity statisticsDataSource = new StatisticStoreEntity();
+    private StatisticStoreDoc buildStatisticDataSource(final StatisticRollUpType statisticRollUpType) {
+        final StatisticStoreDoc statisticsDataSource = new StatisticStoreDoc();
 
         final StatisticsDataSourceData statisticFields = new StatisticsDataSourceData();
 
@@ -451,7 +451,7 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
 
         statisticFields.setStatisticFields(fields);
 
-        statisticsDataSource.setStatisticDataSourceDataObject(statisticFields);
+        statisticsDataSource.setConfig(statisticFields);
         statisticsDataSource.setRollUpType(statisticRollUpType);
 
         return statisticsDataSource;

@@ -26,8 +26,8 @@ import com.gwtplatform.mvp.client.View;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
-import stroom.pipeline.shared.XSLT;
-import stroom.query.api.v2.DocRef;
+import stroom.pipeline.shared.XsltDoc;
+import stroom.docref.DocRef;
 import stroom.security.client.ClientSecurityContext;
 
 public class DictionarySettingsPresenter extends DocumentSettingsPresenter<DictionarySettingsPresenter.DictionarySettingsView, DictionaryDoc> {
@@ -58,7 +58,7 @@ public class DictionarySettingsPresenter extends DocumentSettingsPresenter<Dicti
 
     @Override
     public String getType() {
-        return XSLT.ENTITY_TYPE;
+        return XsltDoc.DOCUMENT_TYPE;
     }
 
     @Override

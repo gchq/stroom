@@ -1,7 +1,23 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <pipeline>
-   <description/>
-   <name>Reference Loader</name>
-   <parentPipelineXML/>
-   <uuid>da1c7351-086f-493b-866a-b42dbe990700</uuid>
+   <elements>
+      <add>
+         <element>
+            <id>combinedParser</id>
+            <type>CombinedParser</type>
+         </element>
+         <element>
+            <id>referenceDataFilter</id>
+            <type>ReferenceDataFilter</type>
+         </element>
+      </add>
+   </elements>
+   <links>
+      <add>
+         <link>
+            <from>combinedParser</from>
+            <to>referenceDataFilter</to>
+         </link>
+      </add>
+   </links>
 </pipeline>

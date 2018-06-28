@@ -23,7 +23,7 @@ import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
 import stroom.dictionary.DictionaryStore;
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;

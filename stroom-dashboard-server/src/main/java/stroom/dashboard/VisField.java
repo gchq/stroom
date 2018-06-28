@@ -16,6 +16,8 @@
 
 package stroom.dashboard;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.query.api.v2.Sort;
 
@@ -24,6 +26,7 @@ import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
 @JsonPropertyOrder({"id", "sort"})
+@JsonInclude(Include.NON_EMPTY)
 @XmlType(name = "VisField", propOrder = {"id", "sort"})
 public class VisField implements Serializable {
     private static final long serialVersionUID = 1272545271946712570L;

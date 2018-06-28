@@ -20,7 +20,7 @@ import org.apache.commons.lang.mutable.MutableLong;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 

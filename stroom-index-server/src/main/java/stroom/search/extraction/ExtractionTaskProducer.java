@@ -19,8 +19,9 @@ package stroom.search.extraction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.dashboard.expression.v1.Val;
+import stroom.docref.DocRef;
 import stroom.pipeline.errorhandler.ErrorReceiver;
-import stroom.query.api.v2.DocRef;
 import stroom.query.common.v2.Coprocessor;
 import stroom.search.Event;
 import stroom.search.extraction.ExtractionTask.ResultReceiver;
@@ -30,7 +31,6 @@ import stroom.search.taskqueue.TaskProducer;
 import stroom.task.TaskContext;
 import stroom.task.ThreadPoolImpl;
 import stroom.util.shared.Severity;
-import stroom.util.shared.Task;
 import stroom.util.shared.ThreadPool;
 
 import javax.inject.Provider;
@@ -83,7 +83,7 @@ public class ExtractionTaskProducer extends AbstractTaskProducer implements Task
     public ExtractionTaskProducer(final TaskExecutor taskExecutor,
                                   final TaskContext taskContext,
                                   final StreamMapCreator streamMapCreator,
-                                  final LinkedBlockingQueue<Optional<String[]>> storedData,
+                                  final LinkedBlockingQueue<Optional<Val[]>> storedData,
                                   final FieldIndexMap extractionFieldIndexMap,
                                   final Map<DocRef, Set<Coprocessor>> extractionCoprocessorsMap,
                                   final ErrorReceiver errorReceiver,
@@ -105,7 +105,7 @@ public class ExtractionTaskProducer extends AbstractTaskProducer implements Task
                 while (!completedEventMapping.get()) {
                     try {
                         // Poll for the next set of values.
-                        final Optional<String[]> values = storedData.take();
+                        final Optional<Val[]> values = storedData.take();
                         if (values.isPresent()) {
                             // If we have some values then map them.
                             streamMapCreator.addEvent(streamEventMap, values.get());
@@ -129,7 +129,7 @@ public class ExtractionTaskProducer extends AbstractTaskProducer implements Task
                 }
 
                 // Clear the event map if we have terminated so that other processing does not occur.
-                if (taskContext.isTerminated()) {
+                if (Thread.currentThread().isInterrupted()) {
                     terminate();
                 }
 
@@ -209,7 +209,7 @@ public class ExtractionTaskProducer extends AbstractTaskProducer implements Task
 
 //        LOGGER.info("ExtractionTaskProducer - getNext {finishedAddingTasks=" + finishedAddingTasks + ", completedEventMapping="+ completedEventMapping.get() + "}");
 
-        if (taskContext.isTerminated()) {
+        if (Thread.currentThread().isInterrupted()) {
 //            LOGGER.info("ExtractionTaskProducer - getNext isTerminated()");
             terminate();
         } else {
@@ -321,7 +321,7 @@ public class ExtractionTaskProducer extends AbstractTaskProducer implements Task
     }
 
     private boolean testComplete() {
-        return taskContext.isTerminated() || (finishedAddingTasks && (tasksTotal.get() - tasksCompleted.get()) == 0);
+        return Thread.currentThread().isInterrupted() || (finishedAddingTasks && (tasksTotal.get() - tasksCompleted.get()) == 0);
     }
 
     @Override

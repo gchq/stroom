@@ -16,7 +16,7 @@
 
 package stroom.index;
 
-import stroom.query.api.v2.DocRef;
+import stroom.docref.DocRef;
 
 public interface IndexConfigCache {
     IndexConfig get(DocRef key);

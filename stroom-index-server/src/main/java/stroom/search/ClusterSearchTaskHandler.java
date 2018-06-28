@@ -22,15 +22,16 @@ import org.apache.lucene.util.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.dashboard.expression.v1.Val;
 import stroom.dictionary.DictionaryStore;
-import stroom.index.IndexService;
-import stroom.index.shared.Index;
+import stroom.docref.DocRef;
+import stroom.index.IndexStore;
+import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.MessageUtil;
 import stroom.properties.StroomPropertyService;
-import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Param;
 import stroom.query.common.v2.Coprocessor;
@@ -93,7 +94,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     private static final int DEFAULT_MAX_STORED_DATA_QUEUE_SIZE = 1000;
     private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
 
-    private final IndexService indexService;
+    private final IndexStore indexStore;
     private final DictionaryStore dictionaryStore;
     private final TaskContext taskContext;
     private final CoprocessorFactory coprocessorFactory;
@@ -114,10 +115,10 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
     private ClusterSearchTask task;
 
-    private LinkedBlockingQueue<Optional<String[]>> storedData;
+    private LinkedBlockingQueue<Optional<Val[]>> storedData;
 
     @Inject
-    ClusterSearchTaskHandler(final IndexService indexService,
+    ClusterSearchTaskHandler(final IndexStore indexStore,
                              final DictionaryStore dictionaryStore,
                              final TaskContext taskContext,
                              final CoprocessorFactory coprocessorFactory,
@@ -132,7 +133,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                              final Provider<IndexShardSearchTaskHandler> indexShardSearchTaskHandlerProvider,
                              final Provider<ExtractionTaskHandler> extractionTaskHandlerProvider,
                              final ExecutorProvider executorProvider) {
-        this.indexService = indexService;
+        this.indexStore = indexStore;
         this.dictionaryStore = dictionaryStore;
         this.taskContext = taskContext;
         this.coprocessorFactory = coprocessorFactory;
@@ -153,7 +154,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     @Override
     public void exec(final ClusterSearchTask task, final TaskCallback<NodeResult> callback) {
         security.useAsRead(() -> {
-            if (!taskContext.isTerminated()) {
+            if (!Thread.currentThread().isInterrupted()) {
                 taskContext.info("Initialising...");
 
                 this.task = task;
@@ -164,7 +165,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     final long frequency = task.getResultSendFrequency();
 
                     // Reload the index.
-                    final Index index = indexService.loadByUuid(query.getDataSource().getUuid());
+                    final IndexDoc index = indexStore.readDocument(query.getDataSource());
 
                     // Make sure we have a search index.
                     if (index == null) {
@@ -196,7 +197,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     filterStreams = true;
 
                     // Create a map of index fields keyed by name.
-                    final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(index.getIndexFieldsObject());
+                    final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(index.getIndexFields());
 
                     // Compile all of the result component options to optimise pattern matching etc.
                     if (task.getCoprocessorMap() != null) {
@@ -441,7 +442,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
             boolean complete = false;
             while (!complete) {
                 // Take the next stored data result.
-                final Optional<String[]> values = storedData.take();
+                final Optional<Val[]> values = storedData.take();
                 if (values.isPresent()) {
                     // Send the data to all coprocessors.
                     for (final Coprocessor coprocessor : coprocessors) {
@@ -529,7 +530,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     final boolean searchComplete = searchCompleteLatch.await(waitTime, TimeUnit.MILLISECONDS);
 
                     try {
-                        if (!taskContext.isTerminated()) {
+                        if (!Thread.currentThread().isInterrupted()) {
                             taskContext.setName("Search Result Sender");
                             taskContext.info("Creating search result");
 
@@ -567,7 +568,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                         }
 
                         // Make sure we don't continue to execute this task if it should have terminated.
-                        if (taskContext.isTerminated() || searchComplete) {
+                        if (Thread.currentThread().isInterrupted() || searchComplete) {
                             complete();
                         } else {
                             // Try to send more data.

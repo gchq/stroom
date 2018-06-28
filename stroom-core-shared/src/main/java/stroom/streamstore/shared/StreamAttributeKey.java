@@ -19,7 +19,7 @@ package stroom.streamstore.shared;
 import stroom.entity.shared.AuditedEntity;
 import stroom.entity.shared.HasName;
 import stroom.entity.shared.SQLNameConstants;
-import stroom.util.shared.HasDisplayValue;
+import stroom.docref.HasDisplayValue;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.persistence.Column;

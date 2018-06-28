@@ -23,7 +23,7 @@ import stroom.entity.shared.IdRange;
 import stroom.entity.shared.IncludeExcludeEntityIdSet;
 import stroom.entity.shared.Period;
 import stroom.feed.shared.Feed;
-import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.OldPipelineEntity;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeCondition;
@@ -59,7 +59,7 @@ public class OldFindStreamCriteria extends BaseCriteria {
     private EntityIdSet<Feed> feedIdSet;
 
     private IncludeExcludeEntityIdSet<Feed> feeds;
-    private EntityIdSet<PipelineEntity> pipelineIdSet;
+    private EntityIdSet<OldPipelineEntity> pipelineIdSet;
     private EntityIdSet<StreamType> streamTypeIdSet;
     private EntityIdSet<Stream> streamIdSet;
     private CriteriaSet<StreamStatus> statusSet;
@@ -168,15 +168,15 @@ public class OldFindStreamCriteria extends BaseCriteria {
         this.feedIdSet = null;
     }
 
-    public EntityIdSet<PipelineEntity> getPipelineIdSet() {
+    public EntityIdSet<OldPipelineEntity> getPipelineIdSet() {
         return pipelineIdSet;
     }
 
-    public void setPipelineIdSet(final EntityIdSet<PipelineEntity> pipelineIdSet) {
+    public void setPipelineIdSet(final EntityIdSet<OldPipelineEntity> pipelineIdSet) {
         this.pipelineIdSet = pipelineIdSet;
     }
 
-    public EntityIdSet<PipelineEntity> obtainPipelineIdSet() {
+    public EntityIdSet<OldPipelineEntity> obtainPipelineIdSet() {
         if (pipelineIdSet == null) {
             pipelineIdSet = new EntityIdSet<>();
         }

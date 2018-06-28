@@ -17,7 +17,7 @@
 package stroom.entity.shared;
 
 import stroom.util.shared.SharedLong;
-import stroom.util.shared.SharedObject;
+import stroom.docref.SharedObject;
 
 public class EntityServiceFindDeleteAction<C extends BaseCriteria, E extends SharedObject> extends Action<SharedLong> {
     private static final long serialVersionUID = 800905016214418723L;

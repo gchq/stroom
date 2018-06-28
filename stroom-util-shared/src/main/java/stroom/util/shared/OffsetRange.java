@@ -16,6 +16,8 @@
 
 package stroom.util.shared;
 
+import stroom.docref.SharedObject;
+
 public class OffsetRange<T extends Number> implements SharedObject {
     private static final long serialVersionUID = 5045453517852867315L;
 
