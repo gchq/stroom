@@ -27,6 +27,9 @@ public class RefStreamDefinition {
 
     // TODO consider getting rid of DocRef and just storing the uuid
     private final DocRef pipelineDocRef;
+
+
+    //TODO change to a String (UUID)
     private final byte pipelineVersion;
     private final long streamId;
 
