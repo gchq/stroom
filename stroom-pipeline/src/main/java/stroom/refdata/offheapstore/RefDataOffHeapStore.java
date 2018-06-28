@@ -269,7 +269,8 @@ public class RefDataOffHeapStore implements RefDataStore {
                 }
             }
         } else {
-            LOGGER.trace("Couldn't find map UID");
+            LOGGER.warn("Couldn't find map UID which means the data for this map has not been loaded {}",
+                    mapDefinition);
             // no map UID so can't look in key/range stores without one
             optValueStoreKey = Optional.empty();
         }
