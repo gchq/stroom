@@ -38,27 +38,13 @@ import 'styles/main.css';
 const { docRefPicked } = actionCreators;
 
 storiesOf('Document Explorer (small testTree)', module)
-  .addDecorator(PollyDecorator((server, config) => {
-    server.get(`${config.explorerServiceUrl}/all`).intercept((req, res) => {
-      res.json(testTree);
-    });
-    server.get(`${config.explorerServiceUrl}/docRefTypes`).intercept((req, res) => {
-      res.json(docRefsFromSetupSampleData);
-    });
-  }))
+  .addDecorator(PollyDecorator({ documentTree: testTree, docRefTypes: docRefsFromSetupSampleData }))
   .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator)
   .add('Explorer Tree', () => <DocExplorer explorerId="dev-server" />);
 
 storiesOf('Document Explorer (from setupSampleData)', module)
-  .addDecorator(PollyDecorator((server, config) => {
-    server.get(`${config.explorerServiceUrl}/all`).intercept((req, res) => {
-      res.json(fromSetupSampleData);
-    });
-    server.get(`${config.explorerServiceUrl}/docRefTypes`).intercept((req, res) => {
-      res.json(docRefsFromSetupSampleData);
-    });
-  }))
+  .addDecorator(PollyDecorator({ documentTree: fromSetupSampleData, docRefTypes: docRefsFromSetupSampleData }))
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(docRefPicked(
       'dropdown2',

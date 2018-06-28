@@ -31,39 +31,23 @@ import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 import { PollyDecorator } from 'lib/storybook/PollyDecorator';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
-import { testTree, testPipelines } from 'components/PipelineEditor/test';
+import {
+  testTree,
+  testPipelines,
+  elements,
+  elementProperties,
+} from 'components/PipelineEditor/test';
 
 import 'styles/main.css';
 
 const { docTreeReceived, docRefPicked } = docExplorerActionCreators;
 
 storiesOf('App Chrome', module)
-  .addDecorator(PollyDecorator((server, config) => {
-    // The Explorer Service
-    server.get(`${config.explorerServiceUrl}/all`).intercept((req, res) => {
-      res.json(testTree);
-    });
-
-    // Elements Resources
-    server.get(`${config.elementServiceUrl}/elements`).intercept((req, res) => {
-      res.json(elements);
-    });
-    server.get(`${config.elementServiceUrl}/elementProperties`).intercept((req, res) => {
-      res.json(elementProperties);
-    });
-
-    // Pipeline Resource
-    Object.entries(testPipelines)
-      .map(k => ({
-        url: `${config.pipelineServiceUrl}/${k[0]}`,
-        data: k[1],
-      }))
-      .forEach((pipeline) => {
-        server.get(pipeline.url).intercept((req, res) => {
-          res.json(pipeline.data);
-        });
-        server.post(pipeline.url).intercept((req, res) => res.sendStatus(200));
-      });
+  .addDecorator(PollyDecorator({
+    documentTree: testTree,
+    elements,
+    elementProperties,
+    pipelines: testPipelines,
   }))
   .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator)

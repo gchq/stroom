@@ -51,30 +51,12 @@ const {
 const { docTreeReceived } = docExplorerActionCreators;
 
 const pipelineStories = storiesOf('Pipeline Editor', module)
-  .addDecorator(PollyDecorator((server, config) => {
-    server.get(`${config.explorerServiceUrl}/all`).intercept((req, res) => {
-      res.json(testTree);
-    });
-    server.get(`${config.explorerServiceUrl}/docRefTypes`).intercept((req, res) => {
-      res.json(docRefsFromSetupSampleData);
-    });
-    server.get(`${config.elementServiceUrl}/elements`).intercept((req, res) => {
-      res.json(elements);
-    });
-    server.get(`${config.elementServiceUrl}/elementProperties`).intercept((req, res) => {
-      res.json(elementProperties);
-    });
-    Object.entries(testPipelines)
-      .map(k => ({
-        url: `${config.pipelineServiceUrl}/${k[0]}`,
-        data: k[1],
-      }))
-      .forEach((pipeline) => {
-        server.get(pipeline.url).intercept((req, res) => {
-          res.json(pipeline.data);
-        });
-        server.post(pipeline.url).intercept((req, res) => res.sendStatus(200));
-      });
+  .addDecorator(PollyDecorator({
+    documentTree: testTree,
+    docRefTypes: docRefsFromSetupSampleData,
+    elements,
+    elementProperties,
+    pipelines: testPipelines,
   }))
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(docTreeReceived(testTree));
@@ -85,30 +67,12 @@ Object.keys(testPipelines).forEach(k =>
   pipelineStories.add(k, () => <PipelineEditor pipelineId={k} />));
 
 storiesOf('Element Palette', module)
-  .addDecorator(PollyDecorator((server, config) => {
-    server.get(`${config.explorerServiceUrl}/all`).intercept((req, res) => {
-      res.json(testTree);
-    });
-    server.get(`${config.explorerServiceUrl}/docRefTypes`).intercept((req, res) => {
-      res.json(docRefsFromSetupSampleData);
-    });
-    server.get(`${config.elementServiceUrl}/elements`).intercept((req, res) => {
-      res.json(elements);
-    });
-    server.get(`${config.elementServiceUrl}/elementProperties`).intercept((req, res) => {
-      res.json(elementProperties);
-    });
-    Object.entries(testPipelines)
-      .map(k => ({
-        url: `${config.pipelineServiceUrl}/${k[0]}`,
-        data: k[1],
-      }))
-      .forEach((pipeline) => {
-        server.get(pipeline.url).intercept((req, res) => {
-          res.json(pipeline.data);
-        });
-        server.post(pipeline.url).intercept((req, res) => res.sendStatus(200));
-      });
+  .addDecorator(PollyDecorator({
+    documentTree: testTree,
+    docRefTypes: docRefsFromSetupSampleData,
+    elements,
+    elementProperties,
+    pipelines: testPipelines,
   }))
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(docTreeReceived(testTree));
