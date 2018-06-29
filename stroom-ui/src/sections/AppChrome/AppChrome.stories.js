@@ -21,7 +21,6 @@ import { action } from '@storybook/addon-actions';
 import { withNotes } from '@storybook/addon-notes';
 
 import { AppChrome } from './index';
-import ContentTabs from './ContentTabs';
 
 import { fromSetupSampleData } from 'components/DocExplorer/test';
 
@@ -37,19 +36,22 @@ import {
   elements,
   elementProperties,
 } from 'components/PipelineEditor/test';
+import { testDocRefsTypes } from 'components/DocExplorer/test';
 
 import 'styles/main.css';
 
 const { docTreeReceived, docRefPicked } = docExplorerActionCreators;
 
+const PollyDecoratorWithTestData = PollyDecorator({
+  documentTree: testTree,
+  docRefTypes: testDocRefsTypes,
+  elements,
+  elementProperties,
+  pipelines: testPipelines,
+});
+
 storiesOf('App Chrome', module)
-  .addDecorator(PollyDecorator({
-    documentTree: testTree,
-    elements,
-    elementProperties,
-    pipelines: testPipelines,
-  }))
+  .addDecorator(PollyDecoratorWithTestData)
   .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator)
-  .add('App Chrome', () => <AppChrome />)
-  .add('Content Tabs', () => <ContentTabs />);
+  .add('App Chrome', () => <AppChrome />);

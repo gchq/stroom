@@ -28,10 +28,9 @@ const {
   explorerTreeOpened,
   moveExplorerItem,
   folderOpenToggled,
-  docRefOpened,
+  tabOpened,
   searchTermUpdated,
   docRefSelected,
-  docRefOpenedContextMenu,
   closeContextMenu,
 } = actionCreators;
 

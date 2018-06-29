@@ -13,22 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React from 'react';
-import PropTypes from 'prop-types';
 
-import PipelineEditor from 'components/PipelineEditor';
+import XsltEditor from './XsltEditor';
+import { actionCreators, reducer } from './redux';
 
-const DocRefEditor = ({ docRef }) => {
-  switch (docRef.type) {
-    case 'Pipeline':
-      return <PipelineEditor pipelineId={docRef.uuid} />;
-    default:
-      return <div>Doc Ref Editor {JSON.stringify(docRef)}</div>;
-  }
-};
+export {
+  XsltEditor,
+  actionCreators,
+  reducer
+}
 
-DocRefEditor.propTypes = {
-  docRef: PropTypes.object.isRequired,
-};
-
-export default DocRefEditor;
+export default XsltEditor;

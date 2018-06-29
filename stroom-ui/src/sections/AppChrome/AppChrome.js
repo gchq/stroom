@@ -14,16 +14,24 @@
  * limitations under the License.
  */
 import React from 'react';
+import { connect } from 'react-redux';
 import { compose, withState } from 'recompose';
 import { Button, Sidebar, Segment, Menu, Icon } from 'semantic-ui-react';
 
+import { actionCreators, TAB_TYPES } from './redux';
 import ContentTabs from './ContentTabs';
 
+const { tabOpened } = actionCreators;
 const withIsOpen = withState('isMenuOpen', 'setIsMenuOpen', false);
 
-const enhance = compose(withIsOpen);
+const enhance = compose(
+  connect((state, props) => ({}), {
+    tabOpened,
+  }),
+  withIsOpen,
+);
 
-const AppChrome = enhance(({ isMenuOpen, setIsMenuOpen }) => (
+const AppChrome = enhance(({ tabOpened, isMenuOpen, setIsMenuOpen }) => (
   <div className="app-chrome">
     <Sidebar.Pushable as={Segment}>
       <Sidebar
@@ -39,7 +47,7 @@ const AppChrome = enhance(({ isMenuOpen, setIsMenuOpen }) => (
         <Menu.Item onClick={() => setIsMenuOpen(false)}>
           <Menu.Header content="Stroom" />
         </Menu.Item>
-        <Menu.Item name="explorer">
+        <Menu.Item name="explorer" onClick={() => tabOpened(TAB_TYPES.EXPLORER_TREE)}>
           <Icon name="eye" />
           Explorer
         </Menu.Item>
@@ -58,7 +66,10 @@ const AppChrome = enhance(({ isMenuOpen, setIsMenuOpen }) => (
       className="app-chrome__hamburger-menu-btn"
       color="blue"
       icon="bars"
-      onClick={() => setIsMenuOpen(!isMenuOpen)}
+      onClick={(e) => {
+        e.target.blur(); // makes the button go back to normal colour, bit of a hack
+        setIsMenuOpen(!isMenuOpen);
+      }}
     />
   </div>
 ));

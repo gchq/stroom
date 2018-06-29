@@ -38,7 +38,6 @@ import { actionCreators as docExplorerActionCreators } from 'components/DocExplo
 import 'styles/main.css';
 
 import { testTree, testPipelines, elements, elementProperties } from './test';
-
 import { testDocRefsTypes } from 'components/DocExplorer/test';
 
 const {

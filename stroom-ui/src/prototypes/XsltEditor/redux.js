@@ -13,21 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import DocExplorer from './DocExplorer';
-import DocRefModalPicker from './DocRefModalPicker';
-import DocRefDropdownPicker from './DocRefDropdownPicker';
-import { actionCreators, reducer } from './redux';
-import withExplorerTree from './withExplorerTree';
-import withDocRefTypes from './withDocRefTypes';
+import { createActions, handleActions } from 'redux-actions';
 
-export {
-  DocExplorer,
-  DocRefModalPicker,
-  DocRefDropdownPicker,
+const actionCreators = createActions({
+  XSLT_RECEIVED: (xsltId, xsltData) => ({xsltId, xsltData}),
+  XSLT_SAVED: (xsltId) => ({xsltId})
+})
+
+const defaultState = {};
+
+const reducer = handleActions({
+  XSLT_RECEIVED: (state, action) => ({
+    ...state,
+    [action.payload.xsltId] : {
+      xsltData: action.payload.xsltData,
+      isDirty: false
+    }
+  }),
+  XSLT_SAVED: (state, action) => ({
+    ...state,
+    [action.payload.xsltId]: {
+      ...state[action.payload.xsltId],
+      isDirty: false
+    }
+  })
+}, defaultState);
+
+export { 
   actionCreators,
-  reducer,
-  withExplorerTree,
-  withDocRefTypes,
-};
-
-export default DocExplorer;
+  reducer
+}

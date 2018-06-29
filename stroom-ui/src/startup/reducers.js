@@ -31,6 +31,10 @@ import {
   pipelineReducer as pipelines,
   elementReducer as elements,
 } from 'components/PipelineEditor';
+import {
+  reducer as xslt
+} from 'prototypes/XsltEditor';
+import { reducer as appChrome } from 'sections/AppChrome/redux';
 import { reducer as trackerDashboard } from 'sections/TrackerDashboard';
 import { reducer as errorPage } from 'sections/ErrorPage';
 import { reducer as config } from './config';
@@ -47,8 +51,10 @@ export default combineReducers({
   dataSources,
   expressions,
   pipelines,
+  xslt,
   elements,
   errorPage,
   lineContainer,
   fetch,
+  appChrome
 });

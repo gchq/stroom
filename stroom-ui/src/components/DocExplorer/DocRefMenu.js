@@ -21,9 +21,11 @@ import { connect } from 'react-redux';
 
 import { Dropdown, Icon, Confirm } from 'semantic-ui-react';
 
-import { actionCreators } from './redux';
+import { actionCreators as docExplorerActionCreators } from './redux';
+import { actionCreators as contentTabActionCreators, TAB_TYPES } from 'sections/AppChrome/redux'
 
-const { docRefOpened, docRefDeleted } = actionCreators;
+const { docRefDeleted } = docExplorerActionCreators;
+const { tabOpened } = contentTabActionCreators;
 
 const withPendingDeletion = withState('pendingDeletion', 'setPendingDeletion', false);
 
@@ -33,7 +35,7 @@ const enhance = compose(
       // state
     }),
     {
-      docRefOpened,
+      tabOpened,
       docRefDeleted,
     },
   ),
@@ -44,7 +46,7 @@ const DocRefMenu = enhance(({
   explorerId,
   docRef,
   isOpen,
-  docRefOpened,
+  tabOpened,
   docRefDeleted,
   closeContextMenu,
   pendingDeletion,
@@ -64,7 +66,7 @@ const DocRefMenu = enhance(({
       <Dropdown.Menu>
         <Dropdown.Item
           onClick={() => {
-              docRefOpened(docRef);
+            tabOpened(TAB_TYPES.DOC_REF, docRef);
               closeContextMenu();
             }}
         >

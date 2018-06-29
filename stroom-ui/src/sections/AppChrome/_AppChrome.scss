@@ -14,3 +14,15 @@
 .app-chrome__content {
   height: 100%;
 }
+
+.app-chrome__content .ui.segment.active.tab {
+  overflow: hidden;
+}
+
+.close-btn {
+  border: none;
+}
+
+.close-btn:hover {
+  color: red;
+}

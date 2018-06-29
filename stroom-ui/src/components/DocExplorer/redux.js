@@ -80,8 +80,6 @@ export const actionCreators = createActions({
     explorerId,
     docRef,
   }),
-  DOC_REF_OPENED: docRef => ({ docRef }),
-  DOC_REF_CLOSED: docRef => ({ docRef }),
   DOC_REF_DELETED: (explorerId, docRef) => ({
     explorerId,
     docRef,
@@ -102,7 +100,6 @@ const defaultState = {
   documentTree: undefined, // The hierarchy of doc refs in folders
   explorers: {},
   pickedDocRefs: {}, // Picked Doc Refs by pickerId
-  openDocRefs: [], // in response to user actions
   allowMultiSelect: true,
   allowDragAndDrop: true,
   isTreeReady: false,
@@ -334,18 +331,6 @@ export const reducer = handleActions(
         },
       };
     },
-
-    // Open Doc Ref
-    DOC_REF_OPENED: (state, action) => ({
-      ...state,
-      openDocRefs: state.openDocRefs.concat([action.payload.docRef]),
-    }),
-
-    // Close Doc Ref
-    DOC_REF_CLOSED: (state, action) => ({
-      ...state,
-      openDocRefs: state.openDocRefs.filter(d => d.uuid !== action.payload.docRef.uuid),
-    }),
 
     // Confirm Delete Doc Ref
     DOC_REF_DELETED: (state, action) => {

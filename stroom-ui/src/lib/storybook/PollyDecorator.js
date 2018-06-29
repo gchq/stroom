@@ -30,6 +30,7 @@ const testConfig = {
   authorisationServiceUrl: '/api/authorisation/v1',
   streamTaskServiceUrl: '/api/streamtasks/v1',
   pipelineServiceUrl: '/api/pipelines/v1',
+  xsltServiceUrl: '/api/xslt/v1',
   explorerServiceUrl: '/api/explorer/v1',
   elementServiceUrl: '/api/elements/v1',
   advertisedUrl: '/',

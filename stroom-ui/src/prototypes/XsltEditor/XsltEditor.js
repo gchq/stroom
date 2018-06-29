@@ -16,19 +16,18 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import PipelineEditor from 'components/PipelineEditor';
+import { compose } from 'recompose';
+import { connect } from 'react-redux';
 
-const DocRefEditor = ({ docRef }) => {
-  switch (docRef.type) {
-    case 'Pipeline':
-      return <PipelineEditor pipelineId={docRef.uuid} />;
-    default:
-      return <div>Doc Ref Editor {JSON.stringify(docRef)}</div>;
-  }
-};
+const enhance = compose(connect((state, props) => ({}), {}));
 
-DocRefEditor.propTypes = {
-  docRef: PropTypes.object.isRequired,
-};
+const XsltEditor = enhance((props) => (
+  <div>XsltEditor</div>
+));
 
-export default DocRefEditor;
+XsltEditor.propTypes = {
+  xsltId : PropTypes.string.isRequired
+}
+
+export default XsltEditor;
+

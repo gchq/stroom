@@ -13,23 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import { actionCreators } from './redux';
 import { wrappedGet, wrappedPost } from 'lib/fetchTracker.redux';
 
-const { pipelineReceived, pipelineSaved } = actionCreators;
+const { xsltReceived, xsltSaved } = actionCreators;
 
-export const fetchPipeline = pipelineId => (dispatch, getState) => {
+export const fetchXslt = xsltId => (dispatch, getState) => {
   const state = getState();
-  const url = `${state.config.pipelineServiceUrl}/${pipelineId}`;
-  wrappedGet(dispatch, state, url, pipeline => dispatch(pipelineReceived(pipelineId, pipeline)));
+  const url = `${state.config.xsltServiceUrl}/${xsltId}`;
+  wrappedGet(dispatch, state, url, xslt => dispatch(xsltReceived(xsltId, xslt)));
 };
 
-export const savePipeline = pipelineId => (dispatch, getState) => {
+export const saveXslt = xsltId => (dispatch, getState) => {
   const state = getState();
-  const url = `${state.config.pipelineServiceUrl}/${pipelineId}`;
+  const url = `${state.config.xsltServiceUrl}/${xsltId}`;
 
-  const pipelineData = state.pipelines[pipelineId].pipeline;
-  const body = pipelineData.configStack[pipelineData.configStack.length - 1];
+  const body = state.xslt[xsltId].xsltData;
 
-  wrappedPost(dispatch, state, url, body, pipelineId => dispatch(pipelineSaved(pipelineId)));
+  wrappedPost(dispatch, state, url, body, xsltId => dispatch(xsltSaved(xsltId)));
 };
