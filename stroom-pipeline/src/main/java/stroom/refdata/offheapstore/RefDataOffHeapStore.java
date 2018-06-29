@@ -223,7 +223,7 @@ public class RefDataOffHeapStore implements RefDataStore {
 //            return optValueStoreKey.map(valueStoreKey ->
 //                    new RefDataValueProxy(this, valueStoreKey, mapDefinition));
 //        });
-        return new RefDataValueProxy(this, mapDefinition, key);
+        return new SingleRefDataValueProxy(this, mapDefinition, key);
     }
 
     private Optional<ByteBuffer> getValueStoreKey(final Txn<ByteBuffer> readTxn,
@@ -269,7 +269,7 @@ public class RefDataOffHeapStore implements RefDataStore {
                 }
             }
         } else {
-            LOGGER.warn("Couldn't find map UID which means the data for this map has not been loaded {}",
+            LOGGER.warn("Couldn't find map UID which means the data for this map has not been loaded or the map name is wrong {}",
                     mapDefinition);
             // no map UID so can't look in key/range stores without one
             optValueStoreKey = Optional.empty();

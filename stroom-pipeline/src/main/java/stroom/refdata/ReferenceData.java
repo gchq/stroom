@@ -26,6 +26,7 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.refdata.offheapstore.MapDefinition;
+import stroom.refdata.offheapstore.MultiRefDataValueProxy;
 import stroom.refdata.offheapstore.RefDataStore;
 import stroom.refdata.offheapstore.RefDataValue;
 import stroom.refdata.offheapstore.RefDataValueProxy;
@@ -44,6 +45,7 @@ import stroom.util.shared.Severity;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -86,7 +88,7 @@ public class ReferenceData {
                   final RefDataStore refDataStore,
                   final RefDataLoaderHolder refDataLoaderHolder,
                   final Security security,
-                  @Named("cachedPipelineService") final PipelineStore pipelineStore) {
+                  @Named("cachedPipelineStore") final PipelineStore pipelineStore) {
 
         this.effectiveStreamCache = effectiveStreamCache;
         this.feedHolder = feedHolder;
@@ -168,9 +170,14 @@ public class ReferenceData {
 //                            final String keyName,
                             final ReferenceDataResult referenceDataResult) {
 
-        //
+        List<RefDataValueProxy> refDataValueProxies = new ArrayList<>();
+
+        // A data feed can have multiple ref pipelines associated with it and we don't know which
+        // contains the map/key we are after. None-all could. At the moment we ensure the data is loaded
+        // for the effective stream of all associated ref pipelines. Given that the user probably included
+        // multiple ref pipelines for a reason it is probably reasonable to load them all, then do the lookups.
         for (final PipelineReference pipelineReference : pipelineReferences) {
-            LOGGER.trace("doGetValue - processing pipelineReference {} for ");
+            LOGGER.trace("doGetValue - processing pipelineReference {} for {}", pipelineReference, lookupIdentifier);
             // Handle context data differently loading it from the
             // current stream context.
             if (pipelineReference.getStreamType() != null
@@ -190,10 +197,17 @@ public class ReferenceData {
                         referenceDataResult);
             }
 
-            // If we have a list of events then we are done.
-            if (referenceDataResult.getRefDataValueProxy() != null) {
-                return;
+            // We are dealing with multiple ref pipelines so collect all the value proxies
+            if (pipelineReferences.size() > 1 && referenceDataResult.getRefDataValueProxy() != null) {
+                refDataValueProxies.add(referenceDataResult.getRefDataValueProxy());
             }
+        }
+        // We are dealing with multiple ref pipelines so replace the current value proxy with a
+        // multi one that will perform a lookup on each one in turn
+        if (!refDataValueProxies.isEmpty()) {
+            LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage(
+                    "Replacing value proxy with multi proxy ({})", refDataValueProxies.size()));
+            referenceDataResult.setRefDataValueProxy(new MultiRefDataValueProxy(refDataValueProxies));
         }
     }
 

@@ -17,7 +17,6 @@
 
 package stroom.refdata;
 
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -71,6 +70,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestReferenceData.class);
+    private static final String USER_1 = "user1";
+    private static final String VALUE_1 = "value1";
+    private static final String VALUE_2 = "value2";
+    private static final String SID_TO_PF_1 = "SID_TO_PF_1";
+    private static final String SID_TO_PF_2 = "SID_TO_PF_2";
+    private static final String SID_TO_PF_3 = "SID_TO_PF_3";
+    private static final String SID_TO_PF_4 = "SID_TO_PF_4";
 
     private final MockFeedService feedService = new MockFeedService();
 
@@ -83,8 +89,6 @@ public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
     private DocumentPermissionCache mockDocumentPermissionCache;
     @Mock
     private ReferenceDataLoader mockReferenceDataLoader;
-//    @Mock
-//    private PipelineStore mockPipelineStore;
 
     @Before
     public void setup() {
@@ -121,13 +125,6 @@ public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
                 .map(this::buildPipelineDoc)
                 .collect(Collectors.toList());
 
-        // make the PipelineStore return the appropriate PipelineDoc when called
-//        for (int i = 0; i < pipelineReferences.size(); i++) {
-//            PipelineReference pipelineReference = pipelineReferences.get(i);
-//            Mockito.when(mockPipelineStore.readDocument(pipelineReference.getPipeline()))
-//                    .thenReturn(pipelineDocs.get(i));
-//        }
-
         // Set up the effective streams to be used for each
         final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
         streamSet.add(new EffectiveStream(1, DateUtil.parseNormalDateTimeString("2008-01-01T09:47:00.000Z")));
@@ -162,14 +159,14 @@ public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
                     pipeline1Ref,
                     pipelineDocs.get(0),
                     streamSet,
-                    Arrays.asList("SID_TO_PF_1", "SID_TO_PF_2"),
+                    Arrays.asList(SID_TO_PF_1, SID_TO_PF_2),
                     mockLoaderActionsMap);
 
             addDataToMockReferenceDataLoader(
                     pipeline2Ref,
                     pipelineDocs.get(1),
                     streamSet,
-                    Arrays.asList("SID_TO_PF_3", "SID_TO_PF_4"),
+                    Arrays.asList(SID_TO_PF_3, SID_TO_PF_4),
                     mockLoaderActionsMap);
 
             Mockito.doAnswer(invocation -> {
@@ -180,10 +177,10 @@ public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
                 return null;
             }).when(mockReferenceDataLoader).load(Mockito.any(RefStreamDefinition.class));
 
-            checkData(referenceData, pipelineReferences, "SID_TO_PF_1");
-//            checkData(referenceData, pipelineReferences, "SID_TO_PF_2");
-//            checkData(referenceData, pipelineReferences, "SID_TO_PF_3");
-//            checkData(referenceData, pipelineReferences, "SID_TO_PF_4");
+            checkData(referenceData, pipelineReferences, SID_TO_PF_1);
+            checkData(referenceData, pipelineReferences, SID_TO_PF_2);
+            checkData(referenceData, pipelineReferences, SID_TO_PF_3);
+            checkData(referenceData, pipelineReferences, SID_TO_PF_4);
         } catch (final RuntimeException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
@@ -198,7 +195,6 @@ public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
         for (EffectiveStream effectiveStream : effectiveStreams) {
 
             RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
-//                    pipelineRef, pipelineDoc.getVersion(), effectiveStream.getStreamId());
                     pipelineRef, pipelineStore.readDocument(pipelineRef).getVersion(), effectiveStream.getStreamId());
 
 
@@ -211,60 +207,17 @@ public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
                                 MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
                                 refDataLoader.put(
                                         mapDefinition,
-                                        "user1",
-                                        buildValue(mapDefinition, "value1"));
+                                        USER_1,
+                                        buildValue(mapDefinition, VALUE_1));
                                 refDataLoader.put(
                                         mapDefinition,
                                         "user2",
-                                        buildValue(mapDefinition, "value2"));
+                                        buildValue(mapDefinition, VALUE_2));
                             }
                             refDataLoader.completeProcessing();
                         });
             });
-
-//            // set up mockito to load the required data when called
-//            Mockito.doAnswer(invocation -> {
-//                refDataStore.doWithLoaderUnlessComplete(
-//                        refStreamDefinition, effectiveStream.getEffectiveMs(), refDataLoader -> {
-//
-//                            refDataLoader.initialise(false);
-//                            for (String mapName : mapNames) {
-//                                MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
-//                                refDataLoader.put(
-//                                        mapDefinition,
-//                                        "user1",
-//                                        buildValue(mapDefinition, "value1"));
-//                                refDataLoader.put(
-//                                        mapDefinition,
-//                                        "user2",
-//                                        buildValue(mapDefinition, "value2"));
-//                            }
-//                            refDataLoader.completeProcessing();
-//                        });
-//                return null;
-////                }).when(mockReferenceDataLoader).load(Mockito.same(refStreamDefinition));
-//            }).when(mockReferenceDataLoader).load(Mockito.any());
         }
-
-//        for (final String mapName : mapNames) {
-//            mapStoreBuilder.setEvents(mapName, "user1", getEventsFromString("1111"), false);
-//            mapStoreBuilder.setEvents(mapName, "user2", getEventsFromString("2222"), false);
-//        }
-//        referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipeline), 1), mapStoreBuilder.getMapStore());
-
-//        mapStoreBuilder = new MapStoreBuilderImpl(null);
-//        for (final String mapName : mapNames) {
-//            mapStoreBuilder.setEvents(mapName, "user1", getEventsFromString("A1111"), false);
-//            mapStoreBuilder.setEvents(mapName, "user2", getEventsFromString("A2222"), false);
-//        }
-//        referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipeline), 2), mapStoreBuilder.getMapStore());
-
-//        mapStoreBuilder = new MapStoreBuilderImpl(null);
-//        for (final String mapName : mapNames) {
-//            mapStoreBuilder.setEvents(mapName, "user1", getEventsFromString("B1111"), false);
-//            mapStoreBuilder.setEvents(mapName, "user2", getEventsFromString("B2222"), false);
-//        }
-//        referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipeline), 3), mapStoreBuilder.getMapStore());
     }
 
     private StringValue buildValue(MapDefinition mapDefinition, String value) {
@@ -278,37 +231,33 @@ public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
 
     private void checkData(final ReferenceData data, final List<PipelineReference> pipelineReferences,
                            final String mapName) {
-        final ReferenceDataResult result = new ReferenceDataResult();
-
-//        data.ensureReferenceDataAvailability(
-//                pipelineReferences,
-//                LookupIdentifier.of(mapName, "user1", "2010-01-01T09:47:00.111Z"),
-//                result);
-
-        String expectedValuePart = "value1";
+        String expectedValuePart = VALUE_1;
 
         Optional<String> optFoundValue;
 
-        optFoundValue = lookup(data, pipelineReferences, "2010-01-01T09:47:00.111Z", mapName, "user1");
+        optFoundValue = lookup(data, pipelineReferences, "2010-01-01T09:47:00.111Z", mapName, USER_1);
         doValueAsserts(optFoundValue, 3, mapName, expectedValuePart);
 
-        optFoundValue = lookup(data, pipelineReferences, "2015-01-01T09:47:00.000Z", mapName, "user1");
+        optFoundValue = lookup(data, pipelineReferences, "2015-01-01T09:47:00.000Z", mapName, USER_1);
+        doValueAsserts(optFoundValue, 3, mapName, expectedValuePart);
+
+        optFoundValue = lookup(data, pipelineReferences, "2009-10-01T09:47:00.000Z", mapName, USER_1);
         doValueAsserts(optFoundValue, 2, mapName, expectedValuePart);
 
-        Assert.assertEquals("B1111", lookup(data, pipelineReferences, "", mapName, "user1"));
-        Assert.assertEquals("A1111", lookup(data, pipelineReferences, "2009-10-01T09:47:00.000Z", mapName, "user1"));
-        Assert.assertEquals("A1111", lookup(data, pipelineReferences, "2009-01-01T09:47:00.000Z", mapName, "user1"));
-        Assert.assertEquals("1111", lookup(data, pipelineReferences, "2008-01-01T09:47:00.000Z", mapName, "user1"));
+        optFoundValue = lookup(data, pipelineReferences, "2009-01-01T09:47:00.000Z", mapName, USER_1);
+        doValueAsserts(optFoundValue, 2, mapName, expectedValuePart);
 
-        Assert.assertEquals("B1111", lookup(data, pipelineReferences, "2010-01-01T09:47:00.111Z", mapName, "user1"));
-        Assert.assertEquals("B1111", lookup(data, pipelineReferences, "2015-01-01T09:47:00.000Z", mapName, "user1"));
-        Assert.assertEquals("A1111", lookup(data, pipelineReferences, "2009-10-01T09:47:00.000Z", mapName, "user1"));
-        Assert.assertEquals("A1111", lookup(data, pipelineReferences, "2009-01-01T09:47:00.000Z", mapName, "user1"));
-        Assert.assertEquals("1111", lookup(data, pipelineReferences, "2008-01-01T09:47:00.000Z", mapName, "user1"));
+        optFoundValue = lookup(data, pipelineReferences, "2008-01-01T09:47:00.000Z", mapName, USER_1);
+        doValueAsserts(optFoundValue, 1, mapName, expectedValuePart);
 
-        Assert.assertNull(lookup(data, pipelineReferences, "2006-01-01T09:47:00.000Z", mapName, "user1"));
-        Assert.assertNull(lookup(data, pipelineReferences, "2009-01-01T09:47:00.000Z", mapName, "user1_X"));
-        Assert.assertNull(lookup(data, pipelineReferences, "2009-01-01T09:47:00.000Z", "SID_TO_PF_X", "user1"));
+        optFoundValue = lookup(data, pipelineReferences, "2006-01-01T09:47:00.000Z", mapName, USER_1);
+        assertThat(optFoundValue).isEmpty();
+
+        optFoundValue = lookup(data, pipelineReferences, "2009-01-01T09:47:00.000Z", mapName, "user1_X");
+        assertThat(optFoundValue).isEmpty();
+
+        optFoundValue = lookup(data, pipelineReferences, "2009-01-01T09:47:00.000Z", "SID_TO_PF_X", USER_1);
+        assertThat(optFoundValue).isEmpty();
     }
 
     private void doValueAsserts(final Optional<String> optFoundValue,
@@ -435,8 +384,12 @@ public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
 
         referenceData.ensureReferenceDataAvailability(pipelineReferences, LookupIdentifier.of(mapName, key, time), result);
 
-        return result.getRefDataValueProxy()
-                .supplyValue()
-                .flatMap(val -> Optional.of(((StringValue) val).getValue()));
+        if (result.getRefDataValueProxy() != null) {
+            return result.getRefDataValueProxy()
+                    .supplyValue()
+                    .flatMap(val -> Optional.of(((StringValue) val).getValue()));
+        } else {
+            return Optional.empty();
+        }
     }
 }
