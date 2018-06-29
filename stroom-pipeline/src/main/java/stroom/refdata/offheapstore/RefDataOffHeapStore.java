@@ -53,6 +53,7 @@ import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class RefDataOffHeapStore implements RefDataStore {
 
@@ -231,6 +232,8 @@ public class RefDataOffHeapStore implements RefDataStore {
                                                   final String key) {
         LOGGER.trace("getValueStoreKey({}, {})", mapDefinition, key);
 
+        // TODO we could could consider a short lived on-heap cache for this as it
+        // will be hit MANY times for the same entry
         final Optional<UID> optMapUid = mapUidForwardDb.get(readTxn, mapDefinition);
 
         Optional<ByteBuffer> optValueStoreKey;
@@ -269,7 +272,7 @@ public class RefDataOffHeapStore implements RefDataStore {
                 }
             }
         } else {
-            LOGGER.warn("Couldn't find map UID which means the data for this map has not been loaded or the map name is wrong {}",
+            LOGGER.debug("Couldn't find map UID which means the data for this map has not been loaded or the map name is wrong {}",
                     mapDefinition);
             // no map UID so can't look in key/range stores without one
             optValueStoreKey = Optional.empty();
@@ -497,7 +500,19 @@ public class RefDataOffHeapStore implements RefDataStore {
     }
 
 
+
+
+
+
+
+
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+
+
+
 
     /**
      * Class for adding multiple items to the {@link RefDataOffHeapStore} within a single
@@ -642,8 +657,12 @@ public class RefDataOffHeapStore implements RefDataStore {
                     writeTxn, refStreamDefinition, RefDataProcessingInfo.ProcessingState.COMPLETE);
 
             final Duration loadDuration = Duration.between(startTime, Instant.now());
-            LOGGER.info("Successfully Loaded {} entries out of {} attempts in {} for {}",
-                    successfulPutsCounter, putsCounter, loadDuration, refStreamDefinition);
+            final String mapNames = mapDefinitionToUIDMap.keySet()
+                    .stream()
+                    .map(MapDefinition::getMapName)
+                    .collect(Collectors.joining(","));
+            LOGGER.info("Successfully Loaded {} entries out of {} attempts with map names [{}] in {} for {}",
+                    successfulPutsCounter, putsCounter, mapNames, loadDuration, refStreamDefinition);
             currentLoaderState = LoaderState.COMPLETED;
         }
 
@@ -828,6 +847,9 @@ public class RefDataOffHeapStore implements RefDataStore {
 
             LOGGER.debug("Releasing semaphore permit for {}", refStreamDefinition);
             refStreamDefReentrantLock.unlock();
+
+            // uncomment this for development testing
+            //refDataOffHeapStore.logAllContents();
         }
 
         private void beginTxn() {
