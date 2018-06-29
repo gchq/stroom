@@ -21,6 +21,7 @@ import stroom.xml.event.EventList;
 import stroom.xml.event.EventListBuilder;
 import stroom.xml.event.EventListBuilderFactory;
 
+@Deprecated
 public class MapStoreTestUtil {
     public static MapStore createMapStore() {
         return createMapStore(createEventList());

@@ -110,11 +110,7 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
     @Test
     public void isDataLoaded_false() {
-        byte version = 0;
-        final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
-                UUID.randomUUID().toString(),
-                version,
-                123456L);
+        final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
 
         boolean isLoaded = refDataStore.isDataLoaded(refStreamDefinition);
 
@@ -174,10 +170,7 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                                          final StringValue value2,
                                          final StringValue expectedFinalValue) throws Exception {
 
-        final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
-                UUID.randomUUID().toString(),
-                (byte) 0,
-                123456L);
+        final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
         long effectiveTimeMs = System.currentTimeMillis();
         MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "map1");
         String key = "myKey";
@@ -208,10 +201,7 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                                               final StringValue value2,
                                               final StringValue expectedFinalValue) throws Exception {
 
-        final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
-                UUID.randomUUID().toString(),
-                (byte) 0,
-                123456L);
+        final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
         long effectiveTimeMs = System.currentTimeMillis();
         MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "map1");
         Range<Long> range = new Range<>(1L, 100L);
@@ -261,10 +251,7 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     public void loader_noOverwriteWithDuplicateData() throws Exception {
         int commitInterval = Integer.MAX_VALUE;
 
-        RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
-                UUID.randomUUID().toString(),
-                (byte) 0,
-                123456L);
+        RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
 
         // same refStreamDefinition twice to imitate a re-load
         List<RefStreamDefinition> refStreamDefinitions = Arrays.asList(
@@ -277,10 +264,7 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     public void loader_overwriteWithDuplicateData() throws Exception {
         int commitInterval = Integer.MAX_VALUE;
 
-        RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
-                UUID.randomUUID().toString(),
-                (byte) 0,
-                123456L);
+        RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
 
         // same refStreamDefinition twice to imitate a re-load
         List<RefStreamDefinition> refStreamDefinitions = Arrays.asList(
@@ -293,10 +277,7 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     @Test
     public void testLoaderConcurrency() {
 
-        final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
-                UUID.randomUUID().toString(),
-                (byte) 0,
-                123456L);
+        final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
         final long effectiveTimeMs = System.currentTimeMillis();
 
         final MapDefinition mapDefinitionKey = new MapDefinition(refStreamDefinition, "MyKeyMap");
@@ -427,10 +408,7 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                 .boxed()
                 .map(i -> {
                     LOGGER.debug("Running async task on thread {}", Thread.currentThread().getName());
-                    RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
-                            UUID.randomUUID().toString(),
-                            (byte) 0,
-                            123456L);
+                    RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
                     final CompletableFuture<Void> future = CompletableFuture.runAsync(
                             () ->
                                     loadTask.accept(refStreamDefinition),
@@ -454,10 +432,7 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     @Test
     public void testDoWithRefStreamDefinitionLock() {
 
-        final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
-                UUID.randomUUID().toString(),
-                (byte) 0,
-                123456L);
+        final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
 
         // ensure reentrance works
         refDataStore.doWithRefStreamDefinitionLock(refStreamDefinition, () -> {
@@ -468,18 +443,19 @@ public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         });
     }
 
+    private RefStreamDefinition buildUniqueRefStreamDefinition() {
+        return new RefStreamDefinition(
+                    UUID.randomUUID().toString(),
+                    UUID.randomUUID().toString(),
+                    123456L);
+    }
+
     private void bulkLoadAndAssert(final boolean overwriteExisting,
                                    final int commitInterval) {
         // two different ref stream definitions
         List<RefStreamDefinition> refStreamDefinitions = Arrays.asList(
-                new RefStreamDefinition(
-                        UUID.randomUUID().toString(),
-                        (byte) 0,
-                        123456L),
-                new RefStreamDefinition(
-                        UUID.randomUUID().toString(),
-                        (byte) 0,
-                        123456L));
+                buildUniqueRefStreamDefinition(),
+                buildUniqueRefStreamDefinition());
 
         bulkLoadAndAssert(refStreamDefinitions, overwriteExisting, commitInterval);
     }

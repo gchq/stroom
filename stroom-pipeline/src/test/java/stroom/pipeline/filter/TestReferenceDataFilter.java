@@ -242,7 +242,7 @@ public class TestReferenceDataFilter extends StroomUnitTest {
     private LoadedRefDataValues doTest(String inputPath, String expectedOutputPath) {
 
         Mockito.when(refDataLoader.getRefStreamDefinition())
-                .thenReturn(new RefStreamDefinition(UUID.randomUUID().toString(), (byte) 1, 123L));
+                .thenReturn(buildUniqueRefStreamDefinition());
         Mockito.when(refDataLoader.initialise(Mockito.anyBoolean()))
                 .thenReturn(true);
         Mockito.when(refDataLoader.put(Mockito.any(), keyValueKeyCaptor.capture(), keyValueValueCaptor.capture()))
@@ -333,6 +333,13 @@ public class TestReferenceDataFilter extends StroomUnitTest {
         }
 
         return testSAXEventFilter.getOutput();
+    }
+
+    private RefStreamDefinition buildUniqueRefStreamDefinition() {
+        return new RefStreamDefinition(
+                UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(),
+                123456L);
     }
 
 

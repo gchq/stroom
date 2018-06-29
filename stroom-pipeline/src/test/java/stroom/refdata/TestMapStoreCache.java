@@ -20,15 +20,13 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import stroom.feed.shared.Feed;
-import stroom.pipeline.shared.PipelineEntity;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.docref.DocRef;
-import stroom.security.MockSecurityContext;
-import stroom.security.Security;
 import stroom.util.cache.CacheManager;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
+@Deprecated
 @Ignore
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestMapStoreCache extends StroomUnitTest {
@@ -53,7 +51,7 @@ public class TestMapStoreCache extends StroomUnitTest {
                 feed.setName("test " + i);
                 feed.setReference(true);
                 feed.setId(i);
-                final MapStoreCacheKey mapStorePoolKey = new MapStoreCacheKey(DocRefUtil.create(pipelineEntity), 1);
+//                final MapStoreCacheKey mapStorePoolKey = new MapStoreCacheKey(DocRefUtil.create(pipelineEntity), 1);
 //                final MapStore mapStore = mapStoreCache.get(mapStorePoolKey);
 //                final EventList eventList = mapStore.getEvents("TEST_MAP_NAME", "TEST_KEY_NAME");
 //                if (eventString == null) {
@@ -70,7 +68,7 @@ public class TestMapStoreCache extends StroomUnitTest {
                 feed.setName("test " + i);
                 feed.setReference(true);
                 feed.setId(i);
-                final MapStoreCacheKey mapStoreCacheKey = new MapStoreCacheKey(DocRefUtil.create(pipelineEntity), 1);
+//                final MapStoreCacheKey mapStoreCacheKey = new MapStoreCacheKey(DocRefUtil.create(pipelineEntity), 1);
 //                final MapStore mapStore = mapStoreCache.get(mapStoreCacheKey);
 
 //                final EventList eventList = mapStore.getEvents("TEST_MAP_NAME", "TEST_KEY_NAME");

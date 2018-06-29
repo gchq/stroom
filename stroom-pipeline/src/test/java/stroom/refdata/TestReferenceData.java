@@ -34,7 +34,6 @@ import stroom.pipeline.PipelineStoreImpl;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.docref.DocRef;
-import stroom.refdata.impl.MockReferenceDataLoader;
 import stroom.security.MockSecurityContext;
 import stroom.security.SecurityContext;
 import stroom.streamstore.shared.StreamType;

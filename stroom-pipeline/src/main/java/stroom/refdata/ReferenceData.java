@@ -18,6 +18,7 @@ package stroom.refdata;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.docref.DocRef;
 import stroom.entity.DocumentPermissionCache;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.PipelineStore;
@@ -25,7 +26,6 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.StreamHolder;
-import stroom.docref.DocRef;
 import stroom.refdata.offheapstore.MapDefinition;
 import stroom.refdata.offheapstore.RefDataStore;
 import stroom.refdata.offheapstore.RefDataValue;
@@ -42,13 +42,12 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Optional;
 
@@ -417,11 +416,11 @@ public class ReferenceData {
                 // If we have an effective time then use it.
                 if (effectiveStream != null) {
 
-                    final PipelineEntity pipelineEntity = pipelineStore.loadByUuid(pipelineReference.getPipeline().getUuid());
+                    final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineReference.getPipeline());
 
                     final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                             pipelineReference.getPipeline(),
-                            pipelineEntity.getVersion(),
+                            pipelineDoc.getVersion(),
                             effectiveStream.getStreamId());
 
                     // First check the pipeline scoped object to save us hitting the store for every lookup in a
@@ -498,24 +497,24 @@ public class ReferenceData {
 //    void setMapStorePool(final MapStoreCache mapStorePool) {
 //        this.mapStoreCache = mapStorePool;
 //    }
-    void setMapStorePool(final MapStoreCache mapStorePool) {
-        this.mapStoreCache = mapStorePool;
-    }
+//    void setMapStorePool(final MapStoreCache mapStorePool) {
+//        this.mapStoreCache = mapStorePool;
+//    }
 
-    private static class CachedMapStore {
-        private final long streamNo;
-        private final MapStore mapStore;
-        private final int hashCode;
-
-        CachedMapStore(final long streamNo, final MapStore mapStore) {
-            this.streamNo = streamNo;
-            this.mapStore = mapStore;
-            hashCode = Long.hashCode(streamNo);
-        }
-
-        public long getStreamNo() {
-            return streamNo;
-        }
+//    private static class CachedMapStore {
+//        private final long streamNo;
+//        private final MapStore mapStore;
+//        private final int hashCode;
+//
+//        CachedMapStore(final long streamNo, final MapStore mapStore) {
+//            this.streamNo = streamNo;
+//            this.mapStore = mapStore;
+//            hashCode = Long.hashCode(streamNo);
+//        }
+//
+//        public long getStreamNo() {
+//            return streamNo;
+//        }
 
 //    private static class CachedMapStore {
 //        private final long streamNo;
@@ -550,21 +549,21 @@ public class ReferenceData {
 //            return cachedMapStore.streamNo == streamNo;
 //        }
 //    }
-        public MapStore getMapStore() {
-            return mapStore;
-        }
+//        public MapStore getMapStore() {
+//            return mapStore;
+//        }
 
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            final CachedMapStore that = (CachedMapStore) o;
-            return streamNo == that.streamNo;
-        }
-
-        @Override
-        public int hashCode() {
-            return hashCode;
-        }
-    }
+//        @Override
+//        public boolean equals(final Object o) {
+//            if (this == o) return true;
+//            if (o == null || getClass() != o.getClass()) return false;
+//            final CachedMapStore that = (CachedMapStore) o;
+//            return streamNo == that.streamNo;
+//        }
+//
+//        @Override
+//        public int hashCode() {
+//            return hashCode;
+//        }
+//    }
 }

@@ -27,17 +27,15 @@ public class RefStreamDefinition {
 
     // TODO consider getting rid of DocRef and just storing the uuid
     private final DocRef pipelineDocRef;
-
-
-    //TODO change to a String (UUID)
-    private final byte pipelineVersion;
+    private final String pipelineVersion;
     private final long streamId;
 
     private final int hashCode;
 
     public RefStreamDefinition(final String pipelineUuid,
-                               final byte pipelineVersion,
+                               final String pipelineVersion,
                                final long streamId) {
+
         this.pipelineDocRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid);
         this.pipelineVersion = pipelineVersion;
         this.streamId = streamId;
@@ -45,7 +43,7 @@ public class RefStreamDefinition {
     }
 
     public RefStreamDefinition(final DocRef pipelineDocRef,
-                               final byte pipelineVersion,
+                               final String pipelineVersion,
                                final long streamId) {
         this.pipelineDocRef = pipelineDocRef;
         this.pipelineVersion = pipelineVersion;
@@ -57,7 +55,7 @@ public class RefStreamDefinition {
         return pipelineDocRef;
     }
 
-    public byte getPipelineVersion() {
+    public String getPipelineVersion() {
         return pipelineVersion;
     }
 

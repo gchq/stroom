@@ -20,7 +20,6 @@ package stroom.refdata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.entity.shared.DocRefUtil;
 import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.io.StreamCloser;
@@ -40,10 +39,10 @@ import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
+import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.refdata.offheapstore.RefDataStore;
 import stroom.refdata.offheapstore.RefDataStoreProvider;
 import stroom.refdata.offheapstore.RefStreamDefinition;
-import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.Security;
 import stroom.streamstore.StreamSource;
 import stroom.streamstore.StreamStore;
@@ -220,12 +219,12 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                 final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
                 locationFactory.setLocationFactory(streamLocationFactory);
 
-                final PipelineDoc pipelineDoc = Objects.requireNonNull(pipelineHolder.getPipeline());
-                final DocRef pipelineDocRef = DocRefUtil.create(pipelineEntity);
+                final DocRef pipelineDocRef = Objects.requireNonNull(pipelineHolder.getPipeline());
+                PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineDocRef);
 
                 final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                         pipelineDocRef,
-                        pipelineEntity.getVersion(),
+                        pipelineDoc.getVersion(),
                         streamHolder.getStream().getId());
 
                 refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, stream.getEffectiveMs(), refDataLoader -> {

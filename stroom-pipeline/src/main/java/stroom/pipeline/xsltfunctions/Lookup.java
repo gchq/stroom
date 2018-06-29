@@ -31,6 +31,7 @@ import stroom.util.shared.Severity;
 import javax.inject.Inject;
 
 class Lookup extends AbstractLookup {
+
     @Inject
     Lookup(final ReferenceData referenceData,
            final RefDataStoreProvider refDataStoreProvider,

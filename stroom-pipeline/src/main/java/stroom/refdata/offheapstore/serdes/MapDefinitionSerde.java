@@ -37,7 +37,9 @@ public class MapDefinitionSerde extends AbstractKryoSerde<MapDefinition> {
     private static final Logger LOGGER = LoggerFactory.getLogger(MapDefinitionSerde.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(MapDefinitionSerde.class);
 
-    private static final KryoFactory kryoFactory = buildKryoFactory(MapDefinition.class, MapDefinitionKryoSerializer::new);
+    private static final KryoFactory kryoFactory = buildKryoFactory(
+            MapDefinition.class,
+            MapDefinitionKryoSerializer::new);
 
     private static final KryoPool pool = new KryoPool.Builder(kryoFactory)
             .softReferences()
@@ -71,8 +73,8 @@ public class MapDefinitionSerde extends AbstractKryoSerde<MapDefinition> {
         @Override
         public MapDefinition read(final Kryo kryo, final Input input, final Class<MapDefinition> type) {
             // first de-serialise the refStreamDefinition part
-            final RefStreamDefinition refStreamDefinition =
-                    refStreamDefinitionSerializer.read(kryo, input, RefStreamDefinition.class);
+            final RefStreamDefinition refStreamDefinition = refStreamDefinitionSerializer.read(
+                    kryo, input, RefStreamDefinition.class);
             final String mapName = input.readString();
             return new MapDefinition(refStreamDefinition, mapName);
         }

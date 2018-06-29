@@ -45,7 +45,7 @@ public class MapDefinition {
         return refStreamDefinition.getPipelineDocRef();
     }
 
-    byte getPipelineVersion() {
+    String getPipelineVersion() {
         return refStreamDefinition.getPipelineVersion();
     }
 
@@ -84,7 +84,7 @@ public class MapDefinition {
     public String toString() {
         return "MapDefinition{" +
                 "pipelineDocRef=" + refStreamDefinition.getPipelineDocRef() +
-                ", pipelineVer=" + (int) (refStreamDefinition.getPipelineVersion()) +
+                ", pipelineVer=" + refStreamDefinition.getPipelineVersion() +
                 ", streamId=" + refStreamDefinition.getStreamId() +
                 ", mapName='" + mapName + '\'' +
                 '}';

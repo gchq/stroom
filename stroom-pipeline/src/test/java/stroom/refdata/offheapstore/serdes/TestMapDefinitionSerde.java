@@ -18,7 +18,6 @@
 package stroom.refdata.offheapstore.serdes;
 
 import org.junit.Test;
-import stroom.query.api.v2.DocRef;
 import stroom.refdata.offheapstore.MapDefinition;
 import stroom.refdata.offheapstore.RefStreamDefinition;
 
@@ -28,10 +27,9 @@ public class TestMapDefinitionSerde extends AbstractSerdeTest {
 
     @Test
     public void serialize() {
-        byte version = 0;
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 UUID.randomUUID().toString(),
-                version,
+                UUID.randomUUID().toString(),
                 123456L);
         final MapDefinition mapDefinition1 = new MapDefinition(refStreamDefinition,
                 "MyMapName");

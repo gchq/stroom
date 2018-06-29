@@ -116,10 +116,9 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
     @Test
     public void getOrCreateId_emptyDB() {
 
-        byte version = 0;
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 UUID.randomUUID().toString(),
-                version,
+                UUID.randomUUID().toString(),
                 123456L);
         final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition,
                 "MyMapName");
@@ -165,11 +164,11 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
         final List<MapDefinition> mapDefinitions = IntStream.rangeClosed(1, putCount)
                 .boxed()
                 .map(i -> {
-                    byte version = 0;
+                    String versionUuid = UUID.randomUUID().toString();
                     // each one is different by the streamId
                     final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                             uuidStr,
-                            version,
+                            versionUuid,
                             i);
                     return new MapDefinition(refStreamDefinition, "MyMapName");
 
@@ -210,12 +209,12 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
     @Test
     public void testGet_notFound() {
 
-        byte version = 0;
         String uuidStr = UUID.randomUUID().toString();
+        String versionUuidStr = UUID.randomUUID().toString();
         // each one is different by the streamNo
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 uuidStr,
-                version,
+                versionUuidStr,
                 123456L);
 
         loadEntries(Collections.singletonList(new MapDefinition(refStreamDefinition, "MyMapName")));
@@ -229,12 +228,12 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
     @Test
     public void testGet_found() {
 
-        byte version = 0;
         String uuidStr = UUID.randomUUID().toString();
+        String versionUuidStr = UUID.randomUUID().toString();
         // each one is different by the streamNo
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 uuidStr,
-                version,
+                versionUuidStr,
                 123456L);
         MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, "MyMapName");
 

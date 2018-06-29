@@ -56,14 +56,8 @@ public class TestProcessingInfoDb extends AbstractLmdbDbTest {
     public void testPutAndGet() {
 
         byte version = 0;
-        final RefStreamDefinition refStreamDefinitionA = new RefStreamDefinition(
-                UUID.randomUUID().toString(),
-                version,
-                123456L);
-        final RefStreamDefinition refStreamDefinitionB = new RefStreamDefinition(
-                UUID.randomUUID().toString(),
-                version,
-                654321L);
+        final RefStreamDefinition refStreamDefinitionA = buildUniqueRefStreamDefinition();
+        final RefStreamDefinition refStreamDefinitionB = buildUniqueRefStreamDefinition();
 
         final RefDataProcessingInfo refDataProcessingInfoA = new RefDataProcessingInfo(
                 1234567890L,
@@ -98,10 +92,7 @@ public class TestProcessingInfoDb extends AbstractLmdbDbTest {
     public void updateState() {
 
         byte version = 0;
-        final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
-                UUID.randomUUID().toString(),
-                version,
-                123456L);
+        final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
 
         final RefDataProcessingInfo refDataProcessingInfoBefore = new RefDataProcessingInfo(
                 234L,
@@ -138,10 +129,7 @@ public class TestProcessingInfoDb extends AbstractLmdbDbTest {
     public void testUpdateLastAccessTime() {
 
         byte version = 0;
-        final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
-                UUID.randomUUID().toString(),
-                version,
-                123456L);
+        final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
 
         final RefDataProcessingInfo refDataProcessingInfoBefore = new RefDataProcessingInfo(
                 234L,
@@ -163,5 +151,12 @@ public class TestProcessingInfoDb extends AbstractLmdbDbTest {
                 .isEqualTo(refDataProcessingInfoBefore.getProcessingState());
         assertThat(refDataProcessingInfoAfter.getLastAccessedTimeEpochMs())
                 .isGreaterThan(refDataProcessingInfoBefore.getLastAccessedTimeEpochMs());
+    }
+
+    private RefStreamDefinition buildUniqueRefStreamDefinition() {
+        return new RefStreamDefinition(
+                UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(),
+                123456L);
     }
 }

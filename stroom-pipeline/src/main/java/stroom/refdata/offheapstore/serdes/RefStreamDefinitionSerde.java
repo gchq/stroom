@@ -58,26 +58,31 @@ public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinit
 
     static class RefStreamDefinitionKryoSerializer extends com.esotericsoftware.kryo.Serializer<RefStreamDefinition> {
 
-        private final UUIDKryoSerializer uuidKryoSerializer;
+        private final VariableLengthUUIDKryoSerializer pipelineDocRefUuidVariableLengthSerializer;
+        private final VariableLengthUUIDKryoSerializer pieplineVersionUuidVariableLengthSerializer;
 
         RefStreamDefinitionKryoSerializer() {
-            this.uuidKryoSerializer = new UUIDKryoSerializer();
+            this.pipelineDocRefUuidVariableLengthSerializer = new VariableLengthUUIDKryoSerializer();
+            this.pieplineVersionUuidVariableLengthSerializer = new VariableLengthUUIDKryoSerializer();
         }
 
         @Override
         public void write(final Kryo kryo,
                           final Output output,
                           final RefStreamDefinition refStreamDefinition) {
+
             Preconditions.checkArgument(refStreamDefinition.getPipelineDocRef().getType().equals(PipelineDoc.DOCUMENT_TYPE));
-            uuidKryoSerializer.write(kryo, output, refStreamDefinition.getPipelineDocRef().getUuid());
+            pipelineDocRefUuidVariableLengthSerializer.write(kryo, output, refStreamDefinition.getPipelineDocRef().getUuid());
 
             // We are only ever dealing with pipeline DocRefs so we don't need
             // the type as the uuid will be unique over all pipelines. The Type is only needed
             // if we have more than one type in there
 //            output.writeString(refStreamDefinition.getPipelineDocRef().getType());
-            output.writeByte(refStreamDefinition.getPipelineVersion());
+            pieplineVersionUuidVariableLengthSerializer.write(kryo, output, refStreamDefinition.getPipelineVersion());
+
             // write as fixed length bytes so we can scan down the mapUidForwardDb looking for keys
-            // with the same RefStreamDefinition
+            // with the same RefStreamDefinition TODO why do we need to do this scan?
+
             output.writeLong(refStreamDefinition.getStreamId(), true);
         }
 
@@ -86,9 +91,9 @@ public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinit
                                         final Input input,
                                         final Class<RefStreamDefinition> type) {
 
-            final String pipelineUuid = uuidKryoSerializer.read(kryo, input, String.class);
+            final String pipelineUuid = pipelineDocRefUuidVariableLengthSerializer.read(kryo, input, String.class);
 //            final String pipelineType = input.readString();
-            final byte pipelineVersion = input.readByte();
+            final String pipelineVersion = pieplineVersionUuidVariableLengthSerializer.read(kryo, input, String.class);
             final long streamId = input.readLong(true);
 
             return new RefStreamDefinition(

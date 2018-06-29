@@ -20,6 +20,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import stroom.util.test.StroomUnitTest;
 
+@Deprecated
 public class TestMapStoreKey extends StroomUnitTest {
     @Test
     public void testEquality() {
