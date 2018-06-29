@@ -16,30 +16,38 @@
 import { createActions, handleActions } from 'redux-actions';
 
 const actionCreators = createActions({
-  XSLT_RECEIVED: (xsltId, xsltData) => ({xsltId, xsltData}),
-  XSLT_SAVED: (xsltId) => ({xsltId})
-})
+  XSLT_RECEIVED: (xsltId, xsltData) => ({ xsltId, xsltData }),
+  XSLT_UPDATED: (xsltId, xsltData) => ({ xsltId, xsltData }),
+  XSLT_SAVED: xsltId => ({ xsltId }),
+});
 
 const defaultState = {};
 
-const reducer = handleActions({
-  XSLT_RECEIVED: (state, action) => ({
-    ...state,
-    [action.payload.xsltId] : {
-      xsltData: action.payload.xsltData,
-      isDirty: false
-    }
-  }),
-  XSLT_SAVED: (state, action) => ({
-    ...state,
-    [action.payload.xsltId]: {
-      ...state[action.payload.xsltId],
-      isDirty: false
-    }
-  })
-}, defaultState);
+const reducer = handleActions(
+  {
+    XSLT_RECEIVED: (state, action) => ({
+      ...state,
+      [action.payload.xsltId]: {
+        xsltData: action.payload.xsltData,
+        isDirty: false,
+      },
+    }),
+    XSLT_UPDATED: (state, action) => ({
+      ...state,
+      [action.payload.xsltId]: {
+        xsltData: action.payload.xsltData,
+        isDirty: true,
+      },
+    }),
+    XSLT_SAVED: (state, action) => ({
+      ...state,
+      [action.payload.xsltId]: {
+        ...state[action.payload.xsltId],
+        isDirty: false,
+      },
+    }),
+  },
+  defaultState,
+);
 
-export { 
-  actionCreators,
-  reducer
-}
+export { actionCreators, reducer };

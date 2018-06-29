@@ -24,21 +24,23 @@ export const fetchTrackers = trackerSelection => (dispatch, getState) => {
     url += `&filter=${state.trackerDashboard.searchCriteria}`;
   }
 
-  wrappedGet(dispatch, state, url, (trackers) => {
-    dispatch(actionCreators.updateTrackers(trackers.streamTasks, trackers.totalStreamTasks));
-    switch (trackerSelection) {
-      case TrackerSelection.first:
-        dispatch(actionCreators.selectFirst());
-        break;
-      case TrackerSelection.last:
-        dispatch(actionCreators.selectLast());
-        break;
-      case TrackerSelection.none:
-        dispatch(actionCreators.selectNone());
-        break;
-      default:
-        break;
-    }
+  wrappedGet(dispatch, state, url, (response) => {
+    response.json().then((trackers) => {
+      dispatch(actionCreators.updateTrackers(trackers.streamTasks, trackers.totalStreamTasks));
+      switch (trackerSelection) {
+        case TrackerSelection.first:
+          dispatch(actionCreators.selectFirst());
+          break;
+        case TrackerSelection.last:
+          dispatch(actionCreators.selectLast());
+          break;
+        case TrackerSelection.none:
+          dispatch(actionCreators.selectNone());
+          break;
+        default:
+          break;
+      }
+    });
   });
 };
 

@@ -22,14 +22,37 @@ const { xsltReceived, xsltSaved } = actionCreators;
 export const fetchXslt = xsltId => (dispatch, getState) => {
   const state = getState();
   const url = `${state.config.xsltServiceUrl}/${xsltId}`;
-  wrappedGet(dispatch, state, url, xslt => dispatch(xsltReceived(xsltId, xslt)));
+  wrappedGet(
+    dispatch,
+    state,
+    url,
+    response => response.text().then(xslt => dispatch(xsltReceived(xsltId, xslt))),
+    {
+      headers: {
+        Accept: 'application/xml',
+        'Content-Type': 'application/xml',
+      },
+    },
+  );
 };
 
 export const saveXslt = xsltId => (dispatch, getState) => {
   const state = getState();
   const url = `${state.config.xsltServiceUrl}/${xsltId}`;
 
-  const body = state.xslt[xsltId].xsltData;
+  const body = JSON.stringify(state.xslt[xsltId].xsltData);
 
-  wrappedPost(dispatch, state, url, body, xsltId => dispatch(xsltSaved(xsltId)));
+  wrappedPost(
+    dispatch,
+    state,
+    url,
+    response => response.text().then(xsltId => dispatch(xsltSaved(xsltId))),
+    {
+      body,
+      headers: {
+        Accept: 'application/xml',
+        'Content-Type': 'application/xml',
+      },
+    },
+  );
 };

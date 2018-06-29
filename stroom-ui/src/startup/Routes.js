@@ -25,8 +25,9 @@ import OriginalList from 'prototypes/OriginalList';
 import Graph from 'prototypes/Graph';
 import TrackerDashboard from 'sections/TrackerDashboard';
 import AppChrome from 'sections/AppChrome';
+import XsltEditor from 'prototypes/XsltEditor';
 import { AuthenticationRequest, HandleAuthenticationResponse } from 'startup/Authentication';
-import { PipelineEditor } from 'components/PipelineEditor';
+import PipelineEditor from 'components/PipelineEditor';
 import DocExplorer from 'components/DocExplorer';
 
 import PathNotFound from 'sections/PathNotFound';
@@ -130,8 +131,22 @@ const Routes = enhance(({
               appClientId={appClientId}
               authenticationServiceUrl={authenticationServiceUrl}
             />
-          ))
-        }
+          ))}
+      />
+
+      <Route
+        exact
+        path="/xslt/:xsltId"
+        render={({match}) => (isLoggedIn ? (
+          <XsltEditor xsltId={match.params.xsltId} />
+        ) : (
+          <AuthenticationRequest
+              referrer={match.url}
+              uiUrl={advertisedUrl}
+              appClientId={appClientId}
+              authenticationServiceUrl={authenticationServiceUrl}
+            />
+        ))}
       />
 
       <Route

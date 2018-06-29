@@ -15,19 +15,60 @@
  */
 import React from 'react';
 import PropTypes from 'prop-types';
+import brace from 'brace';
 
-import { compose } from 'recompose';
+import 'brace/mode/xml';
+import 'brace/theme/github';
+
+import { compose, lifecycle, renderComponent, branch } from 'recompose';
 import { connect } from 'react-redux';
+import AceEditor from 'react-ace';
+import { Loader } from 'semantic-ui-react';
 
-const enhance = compose(connect((state, props) => ({}), {}));
+import SaveXslt from './SaveXslt';
+import { fetchXslt, saveXslt } from './xsltResourceClient';
+import { withConfig } from 'startup/config';
 
-const XsltEditor = enhance((props) => (
-  <div>XsltEditor</div>
+import { actionCreators } from './redux';
+
+const { xsltUpdated } = actionCreators;
+
+const enhance = compose(
+  withConfig,
+  connect(
+    (state, props) => ({
+      xslt: state.xslt[props.xsltId],
+    }),
+    { fetchXslt, xsltUpdated, saveXslt },
+  ),
+  lifecycle({
+    componentDidMount() {
+      const { fetchXslt, xsltId } = this.props;
+
+      fetchXslt(xsltId);
+    },
+  }),
+  branch(({ xslt }) => !xslt, renderComponent(() => <Loader active>Loading XSLT</Loader>)),
+);
+
+const XsltEditor = enhance(({ xsltId, xslt, xsltUpdated }) => (
+  <div>
+    XsltEditor
+    <SaveXslt xsltId={xsltId} />
+    <AceEditor
+      name={`${xsltId}-ace-editor`}
+      mode="xml"
+      theme="github"
+      value={xslt.xsltData}
+      onChange={(newValue) => {
+        if (newValue !== xslt.xsltData) xsltUpdated(xsltId, newValue);
+      }}
+    />
+  </div>
 ));
 
 XsltEditor.propTypes = {
-  xsltId : PropTypes.string.isRequired
-}
+  xsltId: PropTypes.string.isRequired,
+};
 
 export default XsltEditor;
-
