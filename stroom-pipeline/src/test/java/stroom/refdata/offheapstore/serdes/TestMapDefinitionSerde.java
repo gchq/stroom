@@ -36,5 +36,4 @@ public class TestMapDefinitionSerde extends AbstractSerdeTest {
 
         doSerialisationDeserialisationTest(mapDefinition1, MapDefinitionSerde::new);
     }
-
 }
