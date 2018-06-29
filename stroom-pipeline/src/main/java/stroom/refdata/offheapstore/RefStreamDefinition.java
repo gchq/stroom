@@ -77,7 +77,7 @@ public class RefStreamDefinition {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final RefStreamDefinition that = (RefStreamDefinition) o;
-        return pipelineVersion == that.pipelineVersion &&
+        return Objects.equals(pipelineVersion, that.pipelineVersion) &&
                 streamId == that.streamId &&
                 Objects.equals(pipelineDocRef, that.pipelineDocRef);
     }
