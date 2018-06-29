@@ -17,29 +17,17 @@
 
 package stroom.refdata.offheapstore;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Inject;
-import com.google.inject.Injector;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.Tuple3;
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Range;
-import stroom.properties.MockStroomPropertyService;
-import stroom.properties.StroomPropertyService;
-import stroom.refdata.offheapstore.databases.AbstractLmdbDbTest;
-import stroom.util.ByteSizeUnit;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -59,46 +47,10 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
+public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestRefDataOffHeapStore.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(TestRefDataOffHeapStore.class);
-
-    private static final long DB_MAX_SIZE = ByteSizeUnit.MEBIBYTE.longBytes(5);
-
-    @Rule
-    public final TemporaryFolder tmpDir = new TemporaryFolder();
-
-    @Inject
-    private RefDataStore refDataStore;
-
-    private final MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
-
-    @Override
-    protected long getMaxSizeBytes() {
-        return DB_MAX_SIZE;
-    }
-
-    @Before
-    public void setup() {
-
-        Path dbDir = tmpDir.getRoot().toPath();
-        LOGGER.debug("Creating LMDB environment in dbDir {}", dbDir.toAbsolutePath().toString());
-
-        mockStroomPropertyService.setProperty(RefDataStoreProvider.OFF_HEAP_STORE_DIR_PROP_KEY,
-                dbDir.toAbsolutePath().toString());
-        mockStroomPropertyService.setProperty(RefDataStoreProvider.MAX_STORE_SIZE_BYTES_PROP_KEY,
-                Long.toString(DB_MAX_SIZE));
-
-        final Injector injector = Guice.createInjector(
-                new AbstractModule() {
-                    @Override
-                    protected void configure() {
-                        bind(StroomPropertyService.class).toInstance(mockStroomPropertyService);
-                        install(new RefDataStoreModule());
-                    }
-                });
-        injector.injectMembers(this);
-    }
 
     @Test
     public void getProcessingInfo() {
