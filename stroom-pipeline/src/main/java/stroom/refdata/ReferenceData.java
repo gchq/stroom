@@ -22,7 +22,6 @@ import stroom.docref.DocRef;
 import stroom.entity.DocumentPermissionCache;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.PipelineStore;
-import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.StreamHolder;
@@ -169,7 +168,9 @@ public class ReferenceData {
 //                            final String keyName,
                             final ReferenceDataResult referenceDataResult) {
 
+        //
         for (final PipelineReference pipelineReference : pipelineReferences) {
+            LOGGER.trace("doGetValue - processing pipelineReference {} for ");
             // Handle context data differently loading it from the
             // current stream context.
             if (pipelineReference.getStreamType() != null
@@ -214,8 +215,6 @@ public class ReferenceData {
             final String streamTypeString = pipelineReference.getStreamType();
             final long streamNo = streamHolder.getStreamNo();
 
-            final PipelineDoc pipelineDoc = pipelineStore.readDocument(
-                    pipelineReference.getPipeline());
 
             LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("StreamId {}, parentStreamId {}",
                     streamHolder.getStream().getId(),
@@ -224,7 +223,7 @@ public class ReferenceData {
             // this is a nested stream so use the parent stream Id
             final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                     pipelineReference.getPipeline(),
-                    pipelineDoc.getVersion(),
+                    getPipelineVersion(pipelineReference),
                     streamHolder.getStream().getParentStreamId());
 
 
@@ -416,11 +415,9 @@ public class ReferenceData {
                 // If we have an effective time then use it.
                 if (effectiveStream != null) {
 
-                    final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineReference.getPipeline());
-
                     final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                             pipelineReference.getPipeline(),
-                            pipelineDoc.getVersion(),
+                            getPipelineVersion(pipelineReference),
                             effectiveStream.getStreamId());
 
                     // First check the pipeline scoped object to save us hitting the store for every lookup in a
@@ -463,6 +460,16 @@ public class ReferenceData {
             }
         } else {
             result.log(Severity.ERROR, () -> "User does not have permission to use data from feed '" + pipelineReference.getFeed().getName() + "'");
+        }
+    }
+
+
+    private String getPipelineVersion(PipelineReference pipelineReference) {
+        try {
+            return pipelineStore.readDocument(pipelineReference.getPipeline()).getVersion();
+        } catch (Exception e) {
+            throw new RuntimeException(LambdaLogger.buildMessage(
+                    "pipelineReference not found in store {}", pipelineReference), e);
         }
     }
 
