@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0-beta.1]
+
+* Issue **#802** : Restore lucene-backward-codecs to the build
+
 * Issue **#800** : Add DB migration script 33 to replace references to the `Stream Type` type in the STRM_PROC_FILT table with `streamTypeName`.
 
 * Issue **#798** : Add DB migration script 32 to replace references to the `NStatFilter` type in the PIPE table with `StatisticsFilter`.
@@ -963,7 +967,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-alpha.27...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0-beta.1...6.0
+[v6.0-beta.1]: https://github.com/gchq/stroom/compare/v6.0-alpha.27...v6.0-beta.1
 [v6.0-alpha.27]: https://github.com/gchq/stroom/compare/v6.0-alpha.26...v6.0-alpha.27
 [v6.0-alpha.26]: https://github.com/gchq/stroom/compare/v6.0-alpha.24...v6.0-alpha.26
 [v6.0-alpha.25]: https://github.com/gchq/stroom/compare/v6.0-alpha.24...v6.0-alpha.25
