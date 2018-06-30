@@ -182,6 +182,7 @@ ext.libs = [
     lucene_analyzers_common: "org.apache.lucene:lucene-analyzers-common:$versions.lucene",
     lucene_core: "org.apache.lucene:lucene-core:$versions.lucene",
     lucene_queryparser: "org.apache.lucene:lucene-queryparser:$versions.lucene",
+    lucene_backward_codecs: "org.apache.lucene:lucene-backward-codecs:$versions.lucene",
     mockito_core: "org.mockito:mockito-core:2.0.2-beta",
     mysql_connector_java: "mysql:mysql-connector-java:5.1.40",
     poi: "org.apache.poi:poi:3.17",
