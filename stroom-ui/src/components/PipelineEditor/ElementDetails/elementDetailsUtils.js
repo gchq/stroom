@@ -1,5 +1,5 @@
 const getActualValue = (value, defaultValue, type) => {
-  // In case the type of the element doesn't not macth the type in the data.
+  // In case the type of the element doesn't match the type in the data.
   type = type === 'int' ? 'integer' : type;
   let actualValue;
   if (value) {

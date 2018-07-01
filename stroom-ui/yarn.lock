@@ -168,6 +168,12 @@
     prop-types "^15.6.1"
     util-deprecate "^1.0.2"
 
+"@storybook/addon-options@^3.4.8":
+  version "3.4.8"
+  resolved "https://registry.yarnpkg.com/@storybook/addon-options/-/addon-options-3.4.8.tgz#e2b79605bb8674e8d67e3ad695f4b7a489bcd06a"
+  dependencies:
+    babel-runtime "^6.26.0"
+
 "@storybook/addons@3.4.5", "@storybook/addons@^3.4.4":
   version "3.4.5"
   resolved "https://registry.yarnpkg.com/@storybook/addons/-/addons-3.4.5.tgz#8dd6eb93ae26b4498a9b1e2b890316944efa41da"

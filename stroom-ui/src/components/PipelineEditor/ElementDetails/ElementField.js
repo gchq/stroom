@@ -18,9 +18,6 @@ import NumericInput from 'prototypes/NumericInput';
 
 const { docRefPicked } = actionCreators;
 
-// NOT USED?
-//const camelize = str => str.replace(/\W+(.)/g, (match, chr) => chr.toUpperCase());
-
 const getPickerName = settingName => `${settingName}_docRefModalPicker`;
 
 const enhance = compose(
