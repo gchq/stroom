@@ -84,6 +84,17 @@ server
   .post(`${testConfig.pipelineServiceUrl}/:pipelineId`)
   .intercept((req, res) => res.sendStatus(200));
 
+// XSLT Resource
+server.get(`${testConfig.xsltServiceUrl}/:xsltId`).intercept((req, res) => {
+  const xslt = testCache.data.xslt[req.params.xsltId];
+  if (xslt) {
+    res.json(xslt);
+  } else {
+    res.sendStatus(404);
+  }
+});
+server.post(`${testConfig.xsltServiceUrl}/:xsltId`).intercept((req, res) => res.sendStatus(200));
+
 const enhanceLocal = compose(
   connect(state => ({}), {
     resetAllUrls,

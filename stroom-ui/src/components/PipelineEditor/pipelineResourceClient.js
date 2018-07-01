@@ -21,7 +21,8 @@ const { pipelineReceived, pipelineSaved } = actionCreators;
 export const fetchPipeline = pipelineId => (dispatch, getState) => {
   const state = getState();
   const url = `${state.config.pipelineServiceUrl}/${pipelineId}`;
-  wrappedGet(dispatch, state, url, pipeline => dispatch(pipelineReceived(pipelineId, pipeline)));
+  wrappedGet(dispatch, state, url, response =>
+    response.json().then(pipeline => dispatch(pipelineReceived(pipelineId, pipeline))));
 };
 
 export const savePipeline = pipelineId => (dispatch, getState) => {
@@ -29,7 +30,15 @@ export const savePipeline = pipelineId => (dispatch, getState) => {
   const url = `${state.config.pipelineServiceUrl}/${pipelineId}`;
 
   const pipelineData = state.pipelines[pipelineId].pipeline;
-  const body = pipelineData.configStack[pipelineData.configStack.length - 1];
+  const body = JSON.stringify(pipelineData.configStack[pipelineData.configStack.length - 1]);
 
-  wrappedPost(dispatch, state, url, body, pipelineId => dispatch(pipelineSaved(pipelineId)));
+  wrappedPost(
+    dispatch,
+    state,
+    url,
+    response => response.text().then(pipelineId => dispatch(pipelineSaved(pipelineId))),
+    {
+      body,
+    },
+  );
 };

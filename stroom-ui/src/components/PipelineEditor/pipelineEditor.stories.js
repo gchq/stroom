@@ -59,9 +59,7 @@ const PollyDecoratorWithTestData = PollyDecorator({
 
 const pipelineStories = storiesOf('Pipeline Editor', module)
   .addDecorator(PollyDecoratorWithTestData)
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(docTreeReceived(testTree));
-  })) // must be recorder after/outside of the test initialisation decorators
+  .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator);
 
 Object.keys(testPipelines).forEach(k =>

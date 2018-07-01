@@ -40,7 +40,7 @@ export const reducer = handleActions(
     ) {
       return { ...state, [url]: fetchState };
     },
-    RESET_ALL_URLS: (state, action) => ({})
+    RESET_ALL_URLS: (state, action) => ({}),
   },
   defaultState,
 );
@@ -55,7 +55,7 @@ export const reducer = handleActions(
  * @param {string} url The URL to fetch
  * @param {function} successCallback The function to call with the response if successful. Failures will be handled generically
  */
-export const wrappedGet = (dispatch, state, url, successCallback) => {
+export const wrappedGet = (dispatch, state, url, successCallback, options) => {
   const jwsToken = state.authentication.idToken;
   const currentState = state.fetch[url];
   let needToFetch = false;
@@ -93,16 +93,17 @@ export const wrappedGet = (dispatch, state, url, successCallback) => {
     dispatch(urlRequested(url));
 
     fetch(url, {
+      method: 'get',
+      mode: 'cors',
+      ...options,
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
         Authorization: `Bearer ${jwsToken}`,
+        ...(options ? options.headers : {}),
       },
-      method: 'get',
-      mode: 'cors',
     })
       .then(handleStatus)
-      .then(response => response.json())
       .then((responseBody) => {
         dispatch(urlResponded(url));
         successCallback(responseBody);
@@ -131,21 +132,20 @@ export const wrappedGet = (dispatch, state, url, successCallback) => {
  * @param {object} body The string to send as the request body
  * @param {function} successCallback The function to call with the response if successful. Failures will be handled
  */
-export const wrappedFetchWithBody = (dispatch, state, url, method, body, successCallback) => {
+export const wrappedFetchWithBody = (dispatch, state, url, successCallback, options) => {
   const jwsToken = state.authentication.idToken;
 
   fetch(url, {
-    body: JSON.stringify(body),
+    mode: 'cors',
+    ...options,
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
       Authorization: `Bearer ${jwsToken}`,
+      ...(options ? options.headers : {}),
     },
-    method,
-    mode: 'cors',
   })
     .then(handleStatus)
-    .then(response => response.json())
     .then((response) => {
       dispatch(urlResponded(url));
       successCallback(response);
@@ -159,10 +159,10 @@ export const wrappedFetchWithBody = (dispatch, state, url, method, body, success
     });
 };
 
-export const wrappedPost = (dispatch, state, url, body, successCallback) => {
-  wrappedFetchWithBody(dispatch, state, url, 'post', body, successCallback);
+export const wrappedPost = (dispatch, state, url, successCallback, options) => {
+  wrappedFetchWithBody(dispatch, state, url, successCallback, { method: 'post', ...options });
 };
 
-export const wrappedPatch = (dispatch, state, url, body, successCallback) => {
-  wrappedFetchWithBody(dispatch, state, url, 'patch', body, successCallback);
+export const wrappedPatch = (dispatch, state, url, successCallback, options) => {
+  wrappedFetchWithBody(dispatch, state, url, successCallback, { method: 'patch', ...options });
 };

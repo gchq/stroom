@@ -20,8 +20,6 @@ import { storiesOf, addDecorator } from '@storybook/react';
 import { action } from '@storybook/addon-actions';
 import { withNotes } from '@storybook/addon-notes';
 
-import { connect } from 'react-redux';
-
 import { PollyDecorator } from 'lib/storybook/PollyDecorator';
 import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';

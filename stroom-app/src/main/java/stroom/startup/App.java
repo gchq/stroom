@@ -55,6 +55,7 @@ import stroom.proxy.servlet.ProxyStatusServlet;
 import stroom.proxy.servlet.ProxyWelcomeServlet;
 import stroom.resource.ElementResource;
 import stroom.resource.SessionResourceStoreImpl;
+import stroom.resource.XsltResource;
 import stroom.ruleset.RuleSetResource;
 import stroom.ruleset.RuleSetResource2;
 import stroom.ruleset.RuleSetService;
@@ -237,6 +238,7 @@ public class App extends Application<Config> {
         GuiceUtil.addResource(environment.jersey(), injector, AuthorisationResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, StreamTaskResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, PipelineResource.class);
+        GuiceUtil.addResource(environment.jersey(), injector, XsltResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, ExplorerResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, ElementResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, SessionResource.class);
