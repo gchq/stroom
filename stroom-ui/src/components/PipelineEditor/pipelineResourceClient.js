@@ -16,7 +16,7 @@
 import { actionCreators } from './redux';
 import { wrappedGet, wrappedPost } from 'lib/fetchTracker.redux';
 
-const { pipelineReceived, pipelineSaved } = actionCreators;
+const { pipelineReceived, pipelineSaveRequested, pipelineSaved } = actionCreators;
 
 export const fetchPipeline = pipelineId => (dispatch, getState) => {
   const state = getState();
@@ -29,14 +29,16 @@ export const savePipeline = pipelineId => (dispatch, getState) => {
   const state = getState();
   const url = `${state.config.pipelineServiceUrl}/${pipelineId}`;
 
-  const pipelineData = state.pipelines[pipelineId].pipeline;
+  const pipelineData = state.pipelineEditor.pipelines[pipelineId].pipeline;
   const body = JSON.stringify(pipelineData.configStack[pipelineData.configStack.length - 1]);
+
+  dispatch(pipelineSaveRequested(pipelineId));
 
   wrappedPost(
     dispatch,
     state,
     url,
-    response => response.text().then(pipelineId => dispatch(pipelineSaved(pipelineId))),
+    response => response.text().then(response => dispatch(pipelineSaved(pipelineId))),
     {
       body,
     },

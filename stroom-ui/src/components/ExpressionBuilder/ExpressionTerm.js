@@ -23,9 +23,9 @@ import { Input, Button, Icon, Dropdown, Confirm } from 'semantic-ui-react';
 
 import { DragSource } from 'react-dnd';
 
-import { ItemTypes } from './dragDropTypes';
+import ItemTypes from './dragDropTypes';
 import { displayValues } from './conditions';
-import { DocRefModalPicker } from '../DocExplorer';
+import { DocPickerModal } from '../DocExplorer';
 import { actionCreators as docExplorerActionCreators } from '../DocExplorer/redux';
 import { actionCreators, joinDictionaryTermId } from './redux';
 
@@ -104,7 +104,7 @@ const withPickedDocRef = () => (WrappedComponent) => {
   return connect(
     state => ({
       // terms are nested, so take all their props from parent
-      pickedDocRefs: state.explorerTree.pickedDocRefs,
+      pickedDocRefs: state.docExplorer.docRefPicker,
     }),
     {
       docRefPicked,
@@ -306,7 +306,7 @@ const ExpressionTerm = ({
       break;
     }
     case 'IN_DICTIONARY': {
-      valueWidget = <DocRefModalPicker pickerId={pickerId} typeFilter="Dictionary" />;
+      valueWidget = <DocPickerModal pickerId={pickerId} typeFilters={["Dictionary"]} />;
       break;
     }
     default:

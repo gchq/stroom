@@ -9,7 +9,7 @@ import withExplorerTree from 'components/DocExplorer/withExplorerTree';
 import { actionCreators as appChromeActionCreators } from 'sections/AppChrome/redux';
 import { TabTypes } from 'sections/AppChrome/TabTypes';
 
-const { appSearchOpened, appSearchClosed, appSearchTermUpdated } = appSearchActionCreators;
+const { appSearchClosed, appSearchTermUpdated } = appSearchActionCreators;
 const { tabOpened } = appChromeActionCreators;
 
 const enhance = compose(
@@ -42,25 +42,29 @@ const AppSearch = ({
         onChange={e => appSearchTermUpdated(e.target.value)}
       />
       <Menu vertical fluid>
-        {searchResults.map((searchResult, i, arr) => (
-          <Menu.Item
-            key={i}
-            onClick={() => {
-              tabOpened(TabTypes.DOC_REF, searchResult.uuid, searchResult);
-              appSearchClosed();
-            }}
-          >
-            <Breadcrumb>
-              {searchResult.lineage.map((l, i, arr) => (
-                <React.Fragment key={l.uuid}>
-                  <Breadcrumb.Section>{l.name}</Breadcrumb.Section>
-                  <Breadcrumb.Divider />
-                </React.Fragment>
-              ))}
-              <Breadcrumb.Section>{searchResult.name}</Breadcrumb.Section>
-            </Breadcrumb>
-          </Menu.Item>
-        ))}
+        {searchResults.map((searchResult, i, arr) => {
+          // Compose the data that provides the breadcrumb to this node
+          const sections = searchResult.lineage.map(l => ({
+            key: l.name,
+            content: l.name,
+            link: false,
+          }));
+
+          return (
+            <Menu.Item
+              key={i}
+              onClick={() => {
+                tabOpened(TabTypes.DOC_REF, searchResult.uuid, searchResult);
+                appSearchClosed();
+              }}
+            >
+              <div style={{ width: '50rem' }}>
+                <Breadcrumb size="mini" icon="right angle" sections={sections} />
+                <div className="doc-ref-dropdown__item-name">{searchResult.name}</div>
+              </div>
+            </Menu.Item>
+          );
+        })}
       </Menu>
     </Modal.Content>
     <Modal.Actions>

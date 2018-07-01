@@ -16,7 +16,9 @@
 
 $header-height: 46px;
 .horizontal-panel__container {
-  overflow: hidden;
+  height: 100%;
+  width: 100%;
+  position: relative;
 }
 
 .horizontal-panel__container .grid {
@@ -35,11 +37,19 @@ $header-height: 46px;
 }
 
 .horizontal-panel__content {
+  height: 100%;
   width: 100%;
-  height: calc(100% - #{$header-height});
   padding-left: 10px;
   padding-right: 10px;
-  overflow: auto;
+  overflow-y: auto;
+}
+
+.horizontal-panel__content__container {
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  padding-top: 4.5rem;
 }
 
 .horizontal-panel_close-button {

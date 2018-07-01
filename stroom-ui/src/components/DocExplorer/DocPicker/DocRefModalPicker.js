@@ -22,13 +22,13 @@ import { connect } from 'react-redux';
 import { Button, Modal, Input, Loader } from 'semantic-ui-react';
 
 import { findItem } from 'lib/treeUtils';
-import { actionCreators } from './redux';
+import { actionCreators } from '../redux';
 
-import withExplorerTree from './withExplorerTree';
-import withDocRefTypes from './withDocRefTypes';
-import DocExplorer from './DocExplorer';
+import withExplorerTree from '../withExplorerTree';
+import withDocRefTypes from '../withDocRefTypes';
+import DocPicker from './DocPicker';
 
-const { docRefPicked, explorerTreeOpened } = actionCreators;
+const { docRefPicked, docExplorerOpened } = actionCreators;
 
 const withModal = withState('isOpen', 'setIsOpen', false);
 
@@ -37,20 +37,20 @@ const enhance = compose(
   withDocRefTypes,
   connect(
     (state, props) => ({
-      documentTree: state.explorerTree.documentTree,
-      docRef: state.explorerTree.pickedDocRefs[props.pickerId],
-      explorer: state.explorerTree.explorers[props.pickerId],
+      documentTree: state.docExplorer.explorerTree.documentTree,
+      docRef: state.docExplorer.docRefPicker[props.pickerId],
+      explorer: state.docExplorer.explorerTree.explorers[props.pickerId],
     }),
     {
       // actions
       docRefPicked,
-      explorerTreeOpened,
+      docExplorerOpened,
     },
   ),
   lifecycle({
     componentDidMount() {
-      const { explorerTreeOpened, pickerId, typeFilter } = this.props;
-      explorerTreeOpened(pickerId, false, false, typeFilter);
+      const { docExplorerOpened, pickerId, typeFilters } = this.props;
+      docExplorerOpened(pickerId, false, false, typeFilters);
     },
   }),
   withModal,
@@ -60,17 +60,17 @@ const enhance = compose(
   ),
 );
 
-const DocRefModalPicker = ({
+const DocPickerModal = ({
   isSelected,
   documentTree,
   docRefPicked,
   docRef,
   isOpen,
-  tree,
   pickerId,
-  typeFilter,
+  typeFilters,
   setIsOpen,
   explorer,
+  onChange,
 }) => {
   const value = docRef ? docRef.name : '';
 
@@ -81,7 +81,11 @@ const DocRefModalPicker = ({
   const onDocRefSelected = () => {
     Object.keys(explorer.isSelected).forEach((pickedUuid) => {
       const picked = findItem(documentTree, pickedUuid);
+      // The 'children' property is just for the tree. It's not part of the DocRef and we need to remove it.
+      // If left in it will get sent to the server and cause deserialisation errors.
+      delete picked.children;
       docRefPicked(pickerId, picked);
+      onChange(picked);
     });
 
     handleClose();
@@ -97,13 +101,7 @@ const DocRefModalPicker = ({
     >
       <Modal.Header>Select a Doc Ref</Modal.Header>
       <Modal.Content scrolling>
-        <DocExplorer
-          tree={tree}
-          explorerId={pickerId}
-          allowMultiSelect={false}
-          allowDragAndDrop={false}
-          typeFilter={typeFilter}
-        />
+        <DocPicker explorerId={pickerId} typeFilters={typeFilters} />
       </Modal.Content>
       <Modal.Actions>
         <Button negative onClick={handleClose}>
@@ -121,9 +119,10 @@ const DocRefModalPicker = ({
   );
 };
 
-DocRefModalPicker.propTypes = {
+DocPickerModal.propTypes = {
   pickerId: PropTypes.string.isRequired,
-  typeFilter: PropTypes.string,
+  typeFilters: PropTypes.array,
+  onChange: PropTypes.func,
 };
 
-export default enhance(DocRefModalPicker);
+export default enhance(DocPickerModal);

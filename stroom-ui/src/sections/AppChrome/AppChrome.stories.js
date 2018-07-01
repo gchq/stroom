@@ -17,6 +17,7 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 import { storiesOf, addDecorator } from '@storybook/react';
+import StoryRouter from 'storybook-react-router';
 
 import { AppChrome } from './index';
 
@@ -52,4 +53,5 @@ storiesOf('App Chrome', module)
   .addDecorator(PollyDecoratorWithTestData)
   .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator)
+  .addDecorator(StoryRouter())
   .add('App Chrome', () => <AppChrome />);

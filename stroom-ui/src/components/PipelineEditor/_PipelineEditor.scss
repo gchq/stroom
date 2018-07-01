@@ -80,12 +80,13 @@ $palette-width: 12rem;
 }
 
 .Pipeline-editor__graph {
+  height: 100%;
   background-color: #fafafa;
   flex: 1;
   display: flex;
   position: relative;
   overflow: scroll;
-  overflow-y: scroll;
+  overflow-y: auto;
   overflow-x: auto;
 }
 
@@ -94,4 +95,8 @@ $palette-width: 12rem;
   width: calc(100% - 190px);
   display: flex;
   flex-direction: column;
+}
+
+.Pipeline-editor__topPanel {
+  width: 100%;
 }

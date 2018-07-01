@@ -16,7 +16,7 @@ import ElementField from './ElementField';
 const enhance = compose(
   connect(
     (state, props) => {
-      const pipeline = state.pipelines[props.pipelineId];
+      const pipeline = state.pipelineEditor.pipelines[props.pipelineId];
       let initialValues;
       let selectedElementId;
       if (pipeline) {
@@ -27,7 +27,7 @@ const enhance = compose(
 
       return {
         // for our component
-        elements: state.elements,
+        elements: state.pipelineEditor.elements,
         selectedElementId,
         pipeline,
         // for redux-form
@@ -55,11 +55,12 @@ const enhance = compose(
 const ElementDetails = ({
   pipelineId, pipeline, selectedElementId, elements, onClose,
 }) => {
+  // These next few lines involve extracting the relevant properties from the pipeline.
+  // The types of the properties and their values are in different places.
   const element = pipeline.pipeline.merged.elements.add.find(element => element.id === selectedElementId);
   const elementProperties = pipeline.pipeline.merged.properties.add.filter(property => property.element === selectedElementId);
   const elementType = elements.elements.find(e => e.type === element.type);
   const elementTypeProperties = elements.elementProperties[element.type];
-
   const sortedElementTypeProperties = Object.values(elementTypeProperties).sort((a, b) => a.displayPriority > b.displayPriority);
 
   const title = (
@@ -82,19 +83,27 @@ const ElementDetails = ({
         {Object.keys(elementTypeProperties).length === 0 ? (
           <p>There is nothing to configure for this element </p>
         ) : (
-          sortedElementTypeProperties.map(elementTypeProperty => (
-            <ElementField
-              key={elementTypeProperty.name}
-              name={elementTypeProperty.name}
-              type={elementTypeProperty.type}
-              docRefTypes={
-                elementTypeProperty.docRefTypes ? elementTypeProperty.docRefTypes : undefined
-              }
-              description={elementTypeProperty.description}
-              defaultValue={parseInt(elementTypeProperty.defaultValue, 10)}
-              value={elementProperties.find(element => element.name === elementTypeProperty.name)}
-            />
-          ))
+          sortedElementTypeProperties.map((elementTypeProperty) => {
+            const docRefTypes = elementTypeProperty.docRefTypes
+              ? elementTypeProperty.docRefTypes
+              : undefined;
+
+            const defaultValue = elementTypeProperty.defaultValue;
+            const property = elementProperties.find(element => element.name === elementTypeProperty.name);
+            return (
+              <ElementField
+                pipelineId={pipelineId}
+                elementId={element.id}
+                key={elementTypeProperty.name}
+                name={elementTypeProperty.name}
+                type={elementTypeProperty.type}
+                docRefTypes={docRefTypes}
+                description={elementTypeProperty.description}
+                defaultValue={defaultValue}
+                value={property}
+              />
+            );
+          })
         )}
       </Form>
     </React.Fragment>

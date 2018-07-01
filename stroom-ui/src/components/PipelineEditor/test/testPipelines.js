@@ -7,6 +7,15 @@ import forkRemoved from './pipeline.forkRemoved.testData';
 import childRestoredLink from './pipeline.childRestoredLink.testData';
 import multiBranchChild from './pipeline.multiBranchChild.testData';
 import multiBranchParent from './pipeline.multiBranchParent.testData';
+import {
+  noParent,
+  parentNoProperty,
+  parentWithProperty,
+  parentNoPropertyParentNoProperty,
+  parentNoPropertyParentWithProperty,
+  parentWithPropertyParentNoProperty,
+  parentWithPropertyParentWithProperty,
+} from './pipeline.propertyInheritance.testData';
 
 export default {
   inherited,
@@ -18,4 +27,11 @@ export default {
   multiBranchParent,
   singleElement,
   longPipeline,
+  noParent,
+  parentNoProperty,
+  parentWithProperty,
+  parentNoPropertyParentNoProperty,
+  parentNoPropertyParentWithProperty,
+  parentWithPropertyParentNoProperty,
+  parentWithPropertyParentWithProperty,
 };

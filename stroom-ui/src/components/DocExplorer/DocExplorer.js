@@ -19,24 +19,30 @@ import PropTypes from 'prop-types';
 import { compose, lifecycle, branch, renderComponent } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Input, Loader } from 'semantic-ui-react';
+import { Input, Loader, Button, Popup } from 'semantic-ui-react';
 
 import Folder from './Folder';
+import MoveDocRefDialog from './MoveDocRefDialog';
+import RenameDocRefDialog from './RenameDocRefDialog';
+import CopyDocRefDialog from './CopyDocRefDialog';
+import DeleteDocRefDialog from './DeleteDocRefDialog';
+import DocRefInfoModal from './DocRefInfoModal';
+import DocTypeFilters from './DocTypeFilters';
 import { actionCreators } from './redux';
 import withExplorerTree from './withExplorerTree';
 
-const { searchTermUpdated, explorerTreeOpened } = actionCreators;
+const { searchTermUpdated, docExplorerOpened } = actionCreators;
 
 const enhance = compose(
   withExplorerTree,
   connect(
     (state, props) => ({
-      documentTree: state.explorerTree.documentTree,
-      explorer: state.explorerTree.explorers[props.explorerId],
+      documentTree: state.docExplorer.explorerTree.documentTree,
+      explorer: state.docExplorer.explorerTree.explorers[props.explorerId],
     }),
     {
       searchTermUpdated,
-      explorerTreeOpened,
+      docExplorerOpened,
     },
   ),
 
@@ -46,15 +52,11 @@ const enhance = compose(
   ),
   lifecycle({
     componentDidMount() {
-      const {
-        explorerTreeOpened,
-        explorerId,
-        allowMultiSelect,
-        allowDragAndDrop,
-        typeFilter,
-      } = this.props;
+      const { docExplorerOpened, explorerId } = this.props;
+      const typeFilters = [];
+      const allowMultiSelect = true;
 
-      explorerTreeOpened(explorerId, allowMultiSelect, allowDragAndDrop, typeFilter);
+      docExplorerOpened(explorerId, allowMultiSelect, typeFilters);
     },
   }),
   branch(
@@ -67,12 +69,21 @@ const DocExplorer = ({
   documentTree, explorerId, explorer, searchTermUpdated,
 }) => (
   <div>
+    <DocRefInfoModal />
+    <MoveDocRefDialog explorerId={explorerId} />
+    <RenameDocRefDialog />
+    <DeleteDocRefDialog />
+    <CopyDocRefDialog explorerId={explorerId} />
     <Input
       icon="search"
       placeholder="Search..."
       value={explorer.searchTerm}
       onChange={e => searchTermUpdated(explorerId, e.target.value)}
     />
+    <Popup trigger={<Button icon="filter" />} flowing hoverable>
+      <DocTypeFilters explorerId={explorerId} />
+    </Popup>
+
     <Folder explorerId={explorerId} folder={documentTree} />
   </div>
 );

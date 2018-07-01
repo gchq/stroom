@@ -17,19 +17,6 @@ import loremIpsum from 'lorem-ipsum';
 
 import { guid } from 'lib/treeUtils';
 
-const DOC_REF_TYPES = {
-  FOLDER: 'Folder',
-  DICTIONARY: 'Dictionary',
-  XSLT: 'XSLT',
-  TextConverter: 'TextConverter',
-  ElasticIndex: 'ElasticIndex',
-  AnnotationsIndex: 'AnnotationsIndex',
-  Pipeline: 'Pipeline',
-  Index: 'Index',
-  Dashboard: 'Dashboard',
-  Visualisation: 'Visualisation',
-};
-
 function createRandomItem(docRefType) {
   return {
     uuid: guid(),
@@ -43,93 +30,93 @@ const LOREM_CONFIG = { count: 3, units: 'words' };
 const testTree = {
   uuid: guid(),
   name: 'Stroom',
-  type: DOC_REF_TYPES.FOLDER,
+  type: 'Folder',
   children: [
     {
       uuid: guid(),
-      type: DOC_REF_TYPES.FOLDER,
+      type: 'Folder',
       name: 'Some Examples',
       children: [
         {
           uuid: guid(),
-          type: DOC_REF_TYPES.FOLDER,
+          type: 'Folder',
           name: 'Stroom 101',
           children: [
-            createRandomItem(DOC_REF_TYPES.DICTIONARY),
-            createRandomItem(DOC_REF_TYPES.Pipeline),
-            createRandomItem(DOC_REF_TYPES.XSLT),
-            createRandomItem(DOC_REF_TYPES.Index),
-            createRandomItem(DOC_REF_TYPES.Dashboard),
+            createRandomItem('Dictionary'),
+            createRandomItem('Pipeline'),
+            createRandomItem('XSLT'),
+            createRandomItem('Index'),
+            createRandomItem('Dashboard'),
           ],
         },
         {
           uuid: guid(),
-          type: DOC_REF_TYPES.FOLDER,
+          type: 'Folder',
           name: 'Stroom Elastic Example',
           children: [
-            createRandomItem(DOC_REF_TYPES.DICTIONARY),
-            createRandomItem(DOC_REF_TYPES.Pipeline),
-            createRandomItem(DOC_REF_TYPES.TextConverter),
-            createRandomItem(DOC_REF_TYPES.ElasticIndex),
-            createRandomItem(DOC_REF_TYPES.Dashboard),
+            createRandomItem('Dictionary'),
+            createRandomItem('Pipeline'),
+            createRandomItem('TextConverter'),
+            createRandomItem('ElasticIndex'),
+            createRandomItem('Dashboard'),
           ],
         },
       ],
     },
     {
       uuid: guid(),
-      type: DOC_REF_TYPES.FOLDER,
+      type: 'Folder',
       name: 'Yet More Examples',
       children: [
         {
           uuid: guid(),
-          type: DOC_REF_TYPES.FOLDER,
+          type: 'Folder',
           name: 'Stroom 102',
           children: [
-            createRandomItem(DOC_REF_TYPES.DICTIONARY),
-            createRandomItem(DOC_REF_TYPES.Pipeline),
-            createRandomItem(DOC_REF_TYPES.XSLT),
-            createRandomItem(DOC_REF_TYPES.Index),
-            createRandomItem(DOC_REF_TYPES.Dashboard),
+            createRandomItem('Dictionary'),
+            createRandomItem('Pipeline'),
+            createRandomItem('XSLT'),
+            createRandomItem('Index'),
+            createRandomItem('Dashboard'),
             {
               uuid: guid(),
-              type: DOC_REF_TYPES.Visualisation,
+              type: 'Visualisation',
               name: 'abababababababa',
             },
           ],
         },
         {
           uuid: guid(),
-          type: DOC_REF_TYPES.FOLDER,
+          type: 'Folder',
           name: 'Stroom Annotations Example',
           children: [
-            createRandomItem(DOC_REF_TYPES.DICTIONARY),
-            createRandomItem(DOC_REF_TYPES.Pipeline),
-            createRandomItem(DOC_REF_TYPES.TextConverter),
-            createRandomItem(DOC_REF_TYPES.AnnotationsIndex),
-            createRandomItem(DOC_REF_TYPES.Dashboard),
+            createRandomItem('Dictionary'),
+            createRandomItem('Pipeline'),
+            createRandomItem('TextConverter'),
+            createRandomItem('AnnotationsIndex'),
+            createRandomItem('Dashboard'),
           ],
         },
       ],
     },
     {
       uuid: guid(),
-      type: DOC_REF_TYPES.FOLDER,
+      type: 'Folder',
       name: 'Stuff that wont match for tests',
       children: [
         {
           uuid: guid(),
-          type: DOC_REF_TYPES.Visualisation,
+          type: 'Visualisation',
           name: 'abcdefghijklmnopqrstuvwxyz',
         },
       ],
     },
     {
       uuid: guid(),
-      type: DOC_REF_TYPES.Dashboard,
+      type: 'Dashboard',
       name: 'ababababababababa',
     },
   ],
 };
 
-export { DOC_REF_TYPES, testTree };
+export default testTree;

@@ -21,11 +21,11 @@ import { actionCreators } from './redux';
 
 import { testTree, DOC_REF_TYPES } from './documentTree.testData';
 
-import { explorerTreeReducer, DEFAULT_EXPLORER_ID } from './redux';
+import { docExplorerReducer, DEFAULT_EXPLORER_ID } from './redux';
 
 const {
   docTreeReceived,
-  explorerTreeOpened,
+  docExplorerOpened,
   moveExplorerItem,
   folderOpenToggled,
   tabOpened,
@@ -39,7 +39,7 @@ let store;
 
 describe('Doc Explorer Reducer', () => {
   beforeEach(() => {
-    store = createStore(explorerTreeReducer);
+    store = createStore(docExplorerReducer);
   });
 
   describe('Explorer Tree', () => {
@@ -54,20 +54,18 @@ describe('Doc Explorer Reducer', () => {
       // Given
       const explorerId = guid();
       const allowMultiSelect = true;
-      const allowDragAndDrop = true;
-      let typeFilter;
+      let typeFilters = [];
 
       // When
       store.dispatch(docTreeReceived(testTree));
-      store.dispatch(explorerTreeOpened(explorerId, allowMultiSelect, allowDragAndDrop, typeFilter));
+      store.dispatch(docExplorerOpened(explorerId, allowMultiSelect, typeFilters));
 
       // Then
       const state = store.getState();
       expect(state.explorers).toHaveProperty(explorerId);
       const explorer = state.explorers[explorerId];
-      expect(explorer.typeFilter).toBe(undefined);
+      expect(explorer.typeFilters).toBe([]);
       expect(explorer.allowMultiSelect).toBe(true);
-      expect(explorer.allowDragAndDrop).toBe(true);
     });
   });
 
@@ -76,12 +74,11 @@ describe('Doc Explorer Reducer', () => {
       // Given
       const explorerId = guid();
       const allowMultiSelect = true;
-      const allowDragAndDrop = true;
-      let typeFilter;
+      let typeFilters;
 
       // When
       store.dispatch(docTreeReceived(testTree));
-      store.dispatch(explorerTreeOpened(explorerId, allowMultiSelect, allowDragAndDrop, typeFilter));
+      store.dispatch(docExplorerOpened(explorerId, allowMultiSelect, typeFilters));
       const state = store.getState();
       const explorer = state.explorers[explorerId];
 
@@ -94,12 +91,11 @@ describe('Doc Explorer Reducer', () => {
       // Given
       const explorerId = guid();
       const allowMultiSelect = true;
-      const allowDragAndDrop = true;
-      const typeFilter = DOC_REF_TYPES.XSLT;
+      const typeFilters = [DOC_REF_TYPES.XSLT];
 
       // When
       store.dispatch(docTreeReceived(testTree));
-      store.dispatch(explorerTreeOpened(explorerId, allowMultiSelect, allowDragAndDrop, typeFilter));
+      store.dispatch(docExplorerOpened(explorerId, allowMultiSelect, typeFilters));
 
       // Then
       const state = store.getState();
@@ -122,13 +118,12 @@ describe('Doc Explorer Reducer', () => {
       // Given
       const explorerId = guid();
       const allowMultiSelect = true;
-      const allowDragAndDrop = true;
-      const typeFilter = DOC_REF_TYPES.DICTIONARY;
+      const typeFilters = [DOC_REF_TYPES.DICTIONARY];
       const searchTerm = testTree.children[0].children[1].children[0].name;
 
       // When
       store.dispatch(docTreeReceived(testTree));
-      store.dispatch(explorerTreeOpened(explorerId, allowMultiSelect, allowDragAndDrop, typeFilter));
+      store.dispatch(docExplorerOpened(explorerId, allowMultiSelect, typeFilters));
       store.dispatch(searchTermUpdated(explorerId, searchTerm));
       store.dispatch(searchTermUpdated(explorerId, undefined));
 
@@ -153,14 +148,13 @@ describe('Doc Explorer Reducer', () => {
       // Given
       const explorerId = guid();
       const allowMultiSelect = true;
-      const allowDragAndDrop = true;
-      const typeFilter = DOC_REF_TYPES.Index;
+      const typeFilters = [DOC_REF_TYPES.Index];
       const subTree = testTree.children[1];
       const searchTerm = subTree.children[0].children[3].name;
 
       // When
       store.dispatch(docTreeReceived(subTree));
-      store.dispatch(explorerTreeOpened(explorerId, allowMultiSelect, allowDragAndDrop, typeFilter));
+      store.dispatch(docExplorerOpened(explorerId, allowMultiSelect, typeFilters));
       store.dispatch(searchTermUpdated(explorerId, searchTerm));
       store.dispatch(searchTermUpdated(explorerId, undefined));
 

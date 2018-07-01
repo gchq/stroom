@@ -20,24 +20,23 @@ import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
 
 import { canMove } from '../../lib/treeUtils';
-import { ItemTypes } from './dragDropTypes';
+import ItemTypes from './dragDropTypes';
 import { DragSource, DropTarget } from 'react-dnd';
 
 import { Icon } from 'semantic-ui-react';
 
+import ClickCounter from 'lib/ClickCounter';
 import DocRef from './DocRef';
-
 import FolderMenu from './FolderMenu';
+import { actionCreators } from './redux/explorerTreeReducer';
 
-import { actionCreators } from './redux';
-
-const { moveExplorerItem, folderOpenToggled } = actionCreators;
+const { moveExplorerItem, folderOpenToggled, docRefSelected } = actionCreators;
 
 const withContextMenu = withState('isContextMenuOpen', 'setContextMenuOpen', false);
 
 const dragSource = {
   canDrag(props) {
-    return props.explorer.allowDragAndDrop;
+    return true;
   },
   beginDrag(props) {
     return {
@@ -55,7 +54,7 @@ function dragCollect(connect, monitor) {
 
 const dropTarget = {
   canDrop(props, monitor) {
-    return props.explorer.allowDragAndDrop && canMove(monitor.getItem(), props.folder);
+    return canMove(monitor.getItem(), props.folder);
   },
   drop(props, monitor) {
     props.moveExplorerItem(props.explorerId, monitor.getItem(), props.folder);
@@ -74,11 +73,12 @@ const enhance = compose(
   connect(
     (state, props) => ({
       // state
-      explorer: state.explorerTree.explorers[props.explorerId],
+      explorer: state.docExplorer.explorerTree.explorers[props.explorerId],
     }),
     {
       moveExplorerItem,
       folderOpenToggled,
+      docRefSelected,
     },
   ),
   withContextMenu,
@@ -96,12 +96,14 @@ const _Folder = ({
   explorer,
   folder,
   folderOpenToggled,
+  docRefSelected,
   moveExplorerItem,
   isContextMenuOpen,
   setContextMenuOpen,
 }) => {
   const thisIsOpen = !!explorer.isFolderOpen[folder.uuid];
   const icon = thisIsOpen ? 'caret down' : 'caret right';
+  const isSelected = explorer.isSelected[folder.uuid];
 
   let className = '';
   if (isOver) {
@@ -120,6 +122,13 @@ const _Folder = ({
   if (isContextMenuOpen) {
     className += ' doc-ref__context-menu-open';
   }
+  if (isSelected) {
+    className += ' doc-ref__selected';
+  }
+
+  const clickCounter = new ClickCounter()
+    .withOnSingleClick(() => docRefSelected(explorerId, folder))
+    .withOnDoubleClick(() => folderOpenToggled(explorerId, folder));
 
   const onRightClick = (e) => {
     setContextMenuOpen(true);
@@ -128,20 +137,19 @@ const _Folder = ({
 
   return (
     <div>
-      {connectDragSource(connectDropTarget(<span
-        className={className}
-        onContextMenu={onRightClick}
-        onClick={() => folderOpenToggled(explorerId, folder)}
-      >
+      {connectDragSource(connectDropTarget(<span className={className} onContextMenu={onRightClick}>
         <FolderMenu
           explorerId={explorerId}
           docRef={folder}
           isOpen={isContextMenuOpen}
           closeContextMenu={() => setContextMenuOpen(false)}
         />
-        <span>
+        <span
+          onClick={() => clickCounter.onSingleClick()}
+          onDoubleClick={() => clickCounter.onDoubleClick()}
+        >
           <Icon name={icon} />
-          {folder.name}
+          <span>{folder.name}</span>
         </span>
                                            </span>))}
       {thisIsOpen && (
@@ -149,7 +157,7 @@ const _Folder = ({
           {folder.children
             .filter(c => !!explorer.isVisible[c.uuid])
             .map(c =>
-                (c.children ? (
+                (c.type === 'Folder' ? (
                   <Folder key={c.uuid} explorerId={explorerId} folder={c} />
                 ) : (
                   <DocRef key={c.uuid} explorerId={explorerId} docRef={c} />
@@ -167,4 +175,4 @@ Folder.propTypes = {
   folder: PropTypes.object.isRequired,
 };
 
-export default Folder
+export default Folder;

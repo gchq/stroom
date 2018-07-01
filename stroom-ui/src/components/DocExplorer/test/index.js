@@ -1,4 +1,5 @@
-import { DOC_REF_TYPES, testTree } from './documentTree.testData';
-import { fromSetupSampleData, testDocRefsTypes } from './documentTree.testData.large';
+import testTree from './documentTree.testData';
+import fromSetupSampleData from './documentTree.testData.large';
+import testDocRefsTypes from './testDocRefTypes';
 
-export { DOC_REF_TYPES, testTree, fromSetupSampleData, testDocRefsTypes };
+export { testTree, fromSetupSampleData, testDocRefsTypes };

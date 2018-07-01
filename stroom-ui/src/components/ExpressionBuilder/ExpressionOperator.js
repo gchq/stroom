@@ -24,7 +24,7 @@ import { Icon, Button, Confirm } from 'semantic-ui-react';
 import { DragSource, DropTarget } from 'react-dnd';
 
 import { canMove } from 'lib/treeUtils';
-import { ItemTypes } from './dragDropTypes';
+import ItemTypes from './dragDropTypes';
 
 import ExpressionTerm from './ExpressionTerm';
 

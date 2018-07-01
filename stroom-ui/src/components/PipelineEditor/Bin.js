@@ -1,30 +1,22 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 
-import { compose, withState, withProps } from 'recompose';
+import { compose } from 'recompose';
 import { connect } from 'react-redux';
 import { DropTarget } from 'react-dnd';
-import { Confirm, Button } from 'semantic-ui-react';
+import { Button } from 'semantic-ui-react';
 
-import { ItemTypes } from './dragDropTypes';
+import ItemTypes from './dragDropTypes';
 import { actionCreators } from './redux';
 
-const { pipelineElementDeleted } = actionCreators;
-
-const withPendingDeletion = withState(
-  'pendingElementToDelete',
-  'setPendingElementToDelete',
-  undefined,
-);
+const { pipelineElementDeleteRequested } = actionCreators;
 
 const dropTarget = {
   canDrop(props, monitor) {
     return true;
   },
-  drop(props, monitor) {
-    const { elementId } = monitor.getItem();
-    const { setPendingElementToDelete } = props;
-    setPendingElementToDelete(elementId);
+  drop({ pipelineElementDeleteRequested }, monitor) {
+    const { pipelineId, elementId } = monitor.getItem();
+    pipelineElementDeleteRequested(pipelineId, elementId);
   },
 };
 
@@ -35,51 +27,19 @@ const dropCollect = (connect, monitor) => ({
 });
 
 const enhance = compose(
-  connect(state => ({}), { pipelineElementDeleted }),
-  withPendingDeletion,
+  connect((state, props) => ({}), { pipelineElementDeleteRequested }),
   DropTarget([ItemTypes.ELEMENT], dropTarget, dropCollect),
-  withProps(({
-    pipelineId,
-    isOver,
-    pendingElementToDelete,
-    setPendingElementToDelete,
-    pipelineElementDeleted,
-  }) => ({
-    onCancelDelete: () => setPendingElementToDelete(undefined),
-    onConfirmDelete: () => {
-      pipelineElementDeleted(pipelineId, pendingElementToDelete);
-      setPendingElementToDelete(undefined);
-    },
-  })),
 );
 
-const Bin = ({
-  pipelineId,
-  connectDropTarget,
-  isOver,
-  dndIsHappening,
-  onCancelDelete,
-  onConfirmDelete,
-  pendingElementToDelete,
-}) =>
+const Bin = ({ connectDropTarget, isOver, dndIsHappening }) =>
   connectDropTarget(<div>
-    <Confirm
-      open={!!pendingElementToDelete}
-      content={`Delete ${pendingElementToDelete} from pipeline?`}
-      onCancel={onCancelDelete}
-      onConfirm={onConfirmDelete}
-    />
     <Button
-      size="huge"
       circular
       disabled={!dndIsHappening}
       color={isOver ? 'black' : 'red'}
+      size="huge"
       icon="trash"
     />
-  </div>);
-
-Bin.propTypes = {
-  pipelineId: PropTypes.string.isRequired,
-};
+                    </div>);
 
 export default enhance(Bin);

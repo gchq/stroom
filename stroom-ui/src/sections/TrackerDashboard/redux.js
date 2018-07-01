@@ -16,8 +16,9 @@
 
 import { createActions, handleActions } from 'redux-actions';
 
-import { dataSourceActionCreators } from 'components/ExpressionBuilder';
-const { receiveDataSource } = dataSourceActionCreators;
+import { actionCreators as expressionBuilderActionCreators } from 'components/ExpressionBuilder';
+
+const { receiveDataSource } = expressionBuilderActionCreators;
 
 const initialState = {
   trackers: [],
@@ -34,7 +35,11 @@ const initialState = {
 };
 
 export const Directions = Object.freeze({ ascending: 'ascending', descending: 'descending' });
-export const SortByOptions = { pipelineUuid: 'pipelineUuid', priority: 'Priority', progress: 'progress' };
+export const SortByOptions = {
+  pipelineUuid: 'pipelineUuid',
+  priority: 'Priority',
+  progress: 'progress',
+};
 
 export const actionCreators = createActions({
   UPDATE_SORT: (sortBy, sortDirection) => ({ sortBy, sortDirection }),

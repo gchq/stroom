@@ -19,6 +19,7 @@ import { connect } from 'react-redux';
 import { compose, lifecycle } from 'recompose';
 import { Polly } from '@pollyjs/core';
 
+import { guid, findItem } from 'lib/treeUtils';
 import { actionCreators as fetchActionCreators } from 'lib/fetchTracker.redux';
 
 const { resetAllUrls } = fetchActionCreators;
@@ -54,17 +55,72 @@ const testCache = {
   data: {},
 };
 
+const startTime = Date.now();
+
+// Hot loading should pass through
+server.get('*.hot-update.json').passthrough();
+
 // This is normally deployed as part of the server
 server.get('/config.json').intercept((req, res) => {
   res.json(testConfig);
 });
 
 // Explorer Resource
+// // Get Explorer Tree
 server.get(`${testConfig.explorerServiceUrl}/all`).intercept((req, res) => {
   res.json(testCache.data.documentTree);
 });
+// // Get Info
+server
+  .get(`${testConfig.explorerServiceUrl}/info/:docRefType/:docRefUuid`)
+  .intercept((req, res) => {
+    const docRef = findItem(testCache.data.documentTree, req.params.docRefUuid);
+    const info = {
+      docRef,
+      createTime: startTime,
+      updateTime: Date.now(),
+      createUser: 'testGuy',
+      updateUser: 'testGuy',
+      otherInfo: 'pet peeves - crying babies',
+    };
+    res.json(info);
+  });
+// // Get Document Types
 server.get(`${testConfig.explorerServiceUrl}/docRefTypes`).intercept((req, res) => {
   res.json(testCache.data.docRefTypes);
+});
+// // Copy Document
+server.post(`${testConfig.explorerServiceUrl}/copy`).intercept((req, res) => {
+  const { docRefs } = JSON.parse(req.body);
+  res.json({
+    docRefs: docRefs.map(docRef => ({
+      uuid: guid(),
+      type: docRef.type,
+      name: `${docRef.name}-copy-${guid()}`,
+    })),
+    message: '',
+  });
+});
+// // Move Document
+server.put(`${testConfig.explorerServiceUrl}/move`).intercept((req, res) => {
+  const { docRefs } = JSON.parse(req.body);
+  res.json({
+    docRefs,
+    message: '',
+  });
+});
+// // Rename Document
+server.put(`${testConfig.explorerServiceUrl}/rename`).intercept((req, res) => {
+  const { docRef, name } = JSON.parse(req.body);
+  res.json({ ...docRef, name });
+});
+// // Delete Document
+server.delete(`${testConfig.explorerServiceUrl}/delete`).intercept((req, res) => {
+  const { docRefs } = JSON.parse(req.body);
+  res.json({
+    docRefs,
+    message: '',
+  });
 });
 
 // Elements Resource

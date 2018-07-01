@@ -1,15 +1,17 @@
 package stroom.explorer;
 
 import io.swagger.annotations.Api;
+import stroom.docref.DocRef;
+import stroom.entity.shared.PermissionInheritance;
+import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.HasNodeState;
 
 import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
@@ -21,29 +23,23 @@ import java.util.stream.Collectors;
         description = "Stroom Explorer API")
 @Path("/explorer/v1")
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class ExplorerResource {
-    private final ExplorerNodeService explorerNodeService;
+    private final ExplorerService explorerService;
     private final ExplorerTreeModel explorerTreeModel;
-    private final ExplorerActionHandlers explorerActionHandlers;
     private final SecurityContext securityContext;
-    private final ExplorerEventLog explorerEventLog;
 
     @Inject
-    public ExplorerResource(final ExplorerNodeService explorerNodeService,
+    public ExplorerResource(final ExplorerService explorerService,
                             final ExplorerTreeModel explorerTreeModel,
-                            final ExplorerActionHandlers explorerActionHandlers,
-                            final SecurityContext securityContext,
-                            final ExplorerEventLog explorerEventLog) {
-        this.explorerNodeService = explorerNodeService;
+                            final SecurityContext securityContext) {
+        this.explorerService = explorerService;
         this.explorerTreeModel = explorerTreeModel;
-        this.explorerActionHandlers = explorerActionHandlers;
         this.securityContext = securityContext;
-        this.explorerEventLog = explorerEventLog;
     }
 
     @GET
     @Path("/all")
-    @Produces(MediaType.APPLICATION_JSON)
     public Response getExplorerTree() {
         // For now, just do this every time the whole tree is fetched
         explorerTreeModel.rebuild();
@@ -57,12 +53,23 @@ public class ExplorerResource {
         return Response.ok(result).build();
     }
 
+    @GET
+    @Path("/info/{type}/{uuid}")
+    public Response getDocInfo(@PathParam("type") final String type,
+                               @PathParam("uuid") final String uuid) {
+        final DocRefInfo info = explorerService.info(new DocRef.Builder()
+                .type(type)
+                .uuid(uuid)
+                .build());
+
+        return Response.ok(info).build();
+    }
+
     /**
      * @return The DocRef types currently used in this tree.
      */
     @GET
     @Path("/docRefTypes")
-    @Produces(MediaType.APPLICATION_JSON)
     public Response getDocRefTypes() {
         explorerTreeModel.rebuild();
         final TreeModel treeModel = explorerTreeModel.getModel();
@@ -75,6 +82,119 @@ public class ExplorerResource {
                 .collect(Collectors.toList());
 
         return Response.ok(docRefTypes).build();
+    }
+
+    static class CopyOp {
+        private List<DocRef> docRefs;
+        private DocRef destinationFolderRef;
+        private PermissionInheritance permissionInheritance;
+
+        public List<DocRef> getDocRefs() {
+            return docRefs;
+        }
+
+        public void setDocRefs(List<DocRef> docRefs) {
+            this.docRefs = docRefs;
+        }
+
+        public DocRef getDestinationFolderRef() {
+            return destinationFolderRef;
+        }
+
+        public void setDestinationFolderRef(DocRef destinationFolderRef) {
+            this.destinationFolderRef = destinationFolderRef;
+        }
+
+        public PermissionInheritance getPermissionInheritance() {
+            return permissionInheritance;
+        }
+
+        public void setPermissionInheritance(PermissionInheritance permissionInheritance) {
+            this.permissionInheritance = permissionInheritance;
+        }
+    }
+
+    @POST
+    @Path("/copy")
+    public Response copyDocument(final CopyOp op) {
+        final BulkActionResult result = explorerService.copy(op.docRefs, op.destinationFolderRef, op.permissionInheritance);
+
+        return Response.ok(result).build();
+    }
+
+    static class MoveOp {
+        private List<DocRef> docRefs;
+        private DocRef destinationFolderRef;
+        private PermissionInheritance permissionInheritance;
+
+        public List<DocRef> getDocRefs() {
+            return docRefs;
+        }
+
+        public void setDocRefs(List<DocRef> docRefs) {
+            this.docRefs = docRefs;
+        }
+
+        public DocRef getDestinationFolderRef() {
+            return destinationFolderRef;
+        }
+
+        public void setDestinationFolderRef(DocRef destinationFolderRef) {
+            this.destinationFolderRef = destinationFolderRef;
+        }
+
+        public PermissionInheritance getPermissionInheritance() {
+            return permissionInheritance;
+        }
+
+        public void setPermissionInheritance(PermissionInheritance permissionInheritance) {
+            this.permissionInheritance = permissionInheritance;
+        }
+    }
+
+    @PUT
+    @Path("/move")
+    public Response moveDocument(final MoveOp op) {
+        final BulkActionResult result = explorerService.move(op.docRefs, op.destinationFolderRef, op.permissionInheritance);
+
+        return Response.ok(result).build();
+    }
+
+    static class RenameOp {
+        private DocRef docRef;
+        private String name;
+
+        public DocRef getDocRef() {
+            return docRef;
+        }
+
+        public void setDocRef(DocRef docRef) {
+            this.docRef = docRef;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+    }
+
+    @PUT
+    @Path("/rename")
+    public Response renameDocument(final RenameOp renameOp) {
+        final DocRef result = explorerService.rename(renameOp.docRef, renameOp.name);
+
+        return Response.ok(result).build();
+    }
+
+    @DELETE
+    @Path("/delete")
+    public Response deleteDocument(final List<DocRef> docRefs) {
+        final BulkActionResult result = explorerService.delete(docRefs);
+
+        return Response.ok(result).build();
     }
 
     private boolean filterDescendants(final ExplorerNode parent,

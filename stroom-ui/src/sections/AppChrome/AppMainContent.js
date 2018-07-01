@@ -16,20 +16,26 @@
 import React from 'react';
 
 import { connect } from 'react-redux';
-import { compose } from 'recompose';
-import { Menu, Header, Icon } from 'semantic-ui-react';
+import { compose, withProps } from 'recompose';
+import { Header, Icon, Divider, Grid, Button, Popup } from 'semantic-ui-react';
 
 import DocExplorer from 'components/DocExplorer';
 import TrackerDashboard from 'sections/TrackerDashboard';
 import DocRefEditor from './DocRefEditor';
 import UserSettings from 'prototypes/UserSettings';
 import IFrame from './IFrame';
+import Welcome from './Welcome';
 
-import { actionCreators } from './redux';
+import { actionCreators as appChromeActionCreators } from './redux';
+import { actionCreators as appSearchActionCreators } from 'prototypes/AppSearch/redux';
+import { actionCreators as recentItemsActionCreators } from 'prototypes/RecentItems/redux';
+
 import TabTypes, { TabTypeDisplayInfo } from './TabTypes';
 import { withConfig } from 'startup/config';
 
-const { tabSelected, tabClosed } = actionCreators;
+const { appSearchOpened } = appSearchActionCreators;
+const { recentItemsOpened } = recentItemsActionCreators;
+const { tabSelected, tabClosed } = appChromeActionCreators;
 
 const enhance = compose(
   withConfig,
@@ -39,13 +45,26 @@ const enhance = compose(
       authUsersUiUrl: state.config.authUsersUiUrl,
       authTokensUiUrl: state.config.authTokensUiUrl,
     }),
-    { tabSelected, tabClosed },
+    {
+      tabSelected,
+      tabClosed,
+      appSearchOpened,
+      recentItemsOpened,
+    },
   ),
+  withProps(({ openTabs }) => ({
+    openTabs:
+      openTabs.length > 0
+        ? openTabs
+        : openTabs.concat([{ tabId: TabTypes.WELCOME, type: TabTypes.WELCOME }]),
+  })),
 );
 
 const AppMainContent = ({
   tabSelected,
   tabClosed,
+  appSearchOpened,
+  recentItemsOpened,
   openTabs,
   tabSelectionStack,
   authUsersUiUrl,
@@ -54,34 +73,17 @@ const AppMainContent = ({
   let selectedTab;
   if (tabSelectionStack.length > 0) {
     selectedTab = tabSelectionStack[0];
+  } else if (openTabs.length > 0) {
+    selectedTab = openTabs[0];
   }
-
-  const menuItems = openTabs.map((openTab, index, arr) => {
-    const title = TabTypeDisplayInfo[openTab.type].getTitle(openTab.data);
-
-    const closeTab = (e) => {
-      tabClosed(openTab.tabId);
-      e.preventDefault();
-    };
-
-    return (
-      <Menu.Item
-        key={openTab.tabId}
-        onClick={() => tabSelected(openTab.tabId)}
-        active={openTab.tabId === selectedTab.tabId}
-      >
-        {title}
-        <button className="content-tabs__close-btn" onClick={closeTab}>
-          x
-        </button>
-      </Menu.Item>
-    );
-  });
 
   const tabContents = openTabs.map((openTab) => {
     let tabContent;
 
     switch (openTab.type) {
+      case TabTypes.WELCOME:
+        tabContent = <Welcome />;
+        break;
       case TabTypes.DOC_REF:
         tabContent = <DocRefEditor docRef={openTab.data} />;
         break;
@@ -113,10 +115,34 @@ const AppMainContent = ({
         }`}
         key={openTab.tabId}
       >
-        <Header as="h1">
-          <Icon name={TabTypeDisplayInfo[selectedTab.type].icon} />
-          {TabTypeDisplayInfo[selectedTab.type].getTitle(selectedTab.data)}
-        </Header>
+        <Grid>
+          <Grid.Column width={12}>
+            <Header as="h3">
+              <Icon name={TabTypeDisplayInfo[selectedTab.type].icon} color="grey" />
+              {TabTypeDisplayInfo[selectedTab.type].getTitle(selectedTab.data)}
+            </Header>
+          </Grid.Column>
+          <Grid.Column width={4}>
+            <Popup
+              trigger={
+                <Button
+                  floated="right"
+                  circular
+                  icon="file outline"
+                  onClick={() => recentItemsOpened()}
+                />
+              }
+              content="Recently opened items"
+            />
+            <Popup
+              trigger={
+                <Button floated="right" circular icon="search" onClick={() => appSearchOpened()} />
+              }
+              content="Search for things"
+            />
+          </Grid.Column>
+        </Grid>
+        <Divider />
         {tabContent}
       </div>
     );
@@ -124,7 +150,6 @@ const AppMainContent = ({
 
   return (
     <div className="content-tabs">
-      {/* <Menu tabular>{menuItems}</Menu> */}
       <div className="content-tabs__content">{tabContents}</div>
     </div>
   );

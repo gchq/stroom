@@ -21,18 +21,18 @@ import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
 
 import ErrorPage from 'sections/ErrorPage';
-import OriginalList from 'prototypes/OriginalList';
-import Graph from 'prototypes/Graph';
 import TrackerDashboard from 'sections/TrackerDashboard';
-import AppChrome from 'sections/AppChrome';
+import { TabTypeDisplayInfo, AppChrome } from 'sections/AppChrome';
 import XsltEditor from 'prototypes/XsltEditor';
-import { AuthenticationRequest, HandleAuthenticationResponse } from 'startup/Authentication';
+import { HandleAuthenticationResponse } from 'startup/Authentication';
 import PipelineEditor from 'components/PipelineEditor';
 import DocExplorer from 'components/DocExplorer';
 
 import PathNotFound from 'sections/PathNotFound';
 
 import { withConfig } from './config';
+
+import { PrivateRoute } from './Authentication';
 
 const enhance = compose(
   withConfig,
@@ -63,7 +63,6 @@ const Routes = ({
 }) => (
   <Router history={history} basename="/">
     <Switch>
-      {/* Authentication routes */}
       <Route
         exact
         path="/handleAuthenticationResponse"
@@ -75,96 +74,36 @@ const Routes = ({
         )}
       />
 
-      {/* Application routes - no authentication required */}
       <Route exact path="/error" component={ErrorPage} />
-      <Route exact path="/prototypes/original_list" component={OriginalList} />
-      <Route exact path="/prototypes/graph" component={Graph} />
 
-      {/* Application Routes - require authentication */}
-      <Route
-        exact
-        path="/"
-        render={() =>
-          (isLoggedIn ? (
-            <AppChrome />
-          ) : (
-            <AuthenticationRequest
-              referrer="/"
-              uiUrl={advertisedUrl}
-              appClientId={appClientId}
-              authenticationServiceUrl={authenticationServiceUrl}
-            />
-          ))
-        }
-      />
+      {/* AppChrome paths -- these paths load the relevent sections. */}
+      <PrivateRoute exact path="/" referrer="/" component={AppChrome} />
+      {Object.values(TabTypeDisplayInfo)
+        .map(t => t.path)
+        .map(path => (
+          <PrivateRoute key={path} exact path={path} referrer={path} component={AppChrome} />
+        ))}
 
-      <Route
-        exact
-        path="/trackers"
-        render={() =>
-          (isLoggedIn ? (
-            <TrackerDashboard />
-          ) : (
-            <AuthenticationRequest
-              referrer="/trackers"
-              uiUrl={advertisedUrl}
-              appClientId={appClientId}
-              authenticationServiceUrl={authenticationServiceUrl}
-              appPermission="MANAGE_USERS"
-            />
-          ))
-        }
-      />
+      {/* Direct paths -- these paths make sections accessible outside the AppChrome
+        i.e. for when we want to embed them in Stroom. */}
+      <PrivateRoute exact path="/trackers" referrer="/trackers" component={TrackerDashboard} />
+      {/* TODO: What path do we want for docExplorer? */}
+      <PrivateRoute exact path="/explorerTree" referrer="/explorerTree" component={DocExplorer} />
+      <PrivateRoute exact path="/docExplorer" referrer="/docExplorer" component={DocExplorer} />
 
-      <Route
+      {/* TODO: There are no AppChrome routes for the following because the do not have
+        TabTypes. Content must to be anchored to something on the sidebar. Otherwise it's
+        disconnected from the obvious flow of the app and the mental model of the flow
+        the user used to get to the data is broken. Bad. So we could either add an XSLT
+        and pipeline sections or we could map them to something deeper, e.g.
+           /pipelines/<pipelienId>/xslt/<xsltId>
+        Obviously this needs more thinking about. */}
+      <PrivateRoute exact path="/xslt/:xsltId" referrer="/xslt" component={XsltEditor} />
+      <PrivateRoute
         exact
         path="/pipelines/:pipelineId"
-        render={({ match }) =>
-          (isLoggedIn ? (
-            <PipelineEditor pipelineId={match.params.pipelineId} />
-          ) : (
-            <AuthenticationRequest
-              referrer={match.url}
-              uiUrl={advertisedUrl}
-              appClientId={appClientId}
-              authenticationServiceUrl={authenticationServiceUrl}
-            />
-          ))
-        }
-      />
-
-      <Route
-        exact
-        path="/xslt/:xsltId"
-        render={({ match }) =>
-          (isLoggedIn ? (
-            <XsltEditor xsltId={match.params.xsltId} />
-          ) : (
-            <AuthenticationRequest
-              referrer={match.url}
-              uiUrl={advertisedUrl}
-              appClientId={appClientId}
-              authenticationServiceUrl={authenticationServiceUrl}
-            />
-          ))
-        }
-      />
-
-      <Route
-        exact
-        path="/explorerTree"
-        render={({ match }) =>
-          (isLoggedIn ? (
-            <DocExplorer explorerId="singleton" />
-          ) : (
-            <AuthenticationRequest
-              referrer={match.url}
-              uiUrl={advertisedUrl}
-              appClientId={appClientId}
-              authenticationServiceUrl={authenticationServiceUrl}
-            />
-          ))
-        }
+        referrer="/pipelines"
+        component={PipelineEditor}
       />
 
       <Route component={PathNotFound} />

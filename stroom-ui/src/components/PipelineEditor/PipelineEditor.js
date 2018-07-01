@@ -16,11 +16,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { Icon } from 'semantic-ui-react';
-
 import { compose, lifecycle, withState, branch, renderComponent, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Loader, Form } from 'semantic-ui-react';
+import { Form, Button, Icon, Confirm, Loader } from 'semantic-ui-react';
+
+import PanelGroup from 'react-panelgroup';
 
 import { LineContainer, LineTo } from 'components/LineTo';
 import { mapObject } from 'lib/treeUtils';
@@ -29,15 +29,17 @@ import { getPipelineLayoutInformation } from './pipelineUtils';
 import PipelineElement from './PipelineElement';
 import ElementPalette from './ElementPalette';
 import Bin from './Bin';
-import SavePipeline from './SavePipeline';
 
 import lineElementCreators from './pipelineLineElementCreators';
 import { ElementDetails } from './ElementDetails';
-import { DocRefModalPicker } from '../DocExplorer';
+import { DocPickerModal } from '../DocExplorer';
 
-import { fetchPipeline } from './pipelineResourceClient';
+import { fetchPipeline, savePipeline } from './pipelineResourceClient';
 import { fetchElements, fetchElementProperties } from './elementResourceClient';
 import { withConfig } from 'startup/config';
+import { actionCreators } from './redux';
+
+const { pipelineElementDeleteCancelled, pipelineElementDeleted } = actionCreators;
 
 const HORIZONTAL_SPACING = 150;
 const VERTICAL_SPACING = 70;
@@ -54,14 +56,17 @@ const enhance = compose(
   withConfig,
   connect(
     (state, props) => ({
-      pipeline: state.pipelines[props.pipelineId],
-      elements: state.elements,
+      pipeline: state.pipelineEditor.pipelines[props.pipelineId],
+      elements: state.pipelineEditor.elements,
     }),
     {
       // action, needed by lifecycle hook below
       fetchPipeline,
       fetchElements,
       fetchElementProperties,
+      savePipeline,
+      pipelineElementDeleteCancelled,
+      pipelineElementDeleted,
     },
   ),
   lifecycle({
@@ -89,7 +94,14 @@ const enhance = compose(
   ),
   withPaletteOpen,
   withElementDetailsOpen,
-  withProps(({ pipeline, setPaletteOpen, isPaletteOpen }) => ({
+  withProps(({
+    pipelineId,
+    pipeline,
+    setPaletteOpen,
+    isPaletteOpen,
+    pipelineElementDeleteCancelled,
+    pipelineElementDeleted,
+  }) => ({
     elementStyles: mapObject(getPipelineLayoutInformation(pipeline.asTree), (l) => {
       const index = l.verticalPos - 1;
       const fromTop = VERTICAL_START_PX + index * VERTICAL_SPACING;
@@ -101,7 +113,14 @@ const enhance = compose(
         left: `${fromLeft}px`,
       };
     }),
+    isDirty: pipeline.isDirty,
+    isSaving: pipeline.isSaving,
+    pendingElementToDelete: pipeline.pendingElementToDelete,
     togglePaletteOpen: () => setPaletteOpen(!isPaletteOpen),
+    onCancelDelete: () => pipelineElementDeleteCancelled(pipelineId),
+    onConfirmDelete: () => {
+      pipelineElementDeleted(pipelineId, pipeline.pendingElementToDelete);
+    },
   })),
 );
 
@@ -115,73 +134,106 @@ const PipelineEditor = ({
   editorClassName,
   elementStyles,
   savePipeline,
-}) => (
-  <div className={`Pipeline-editor Pipeline-editor--palette-${isPaletteOpen ? 'open' : 'close'}`}>
-    <div className="Pipeline-editor__element-palette">
-      <ElementPalette pipelineId={pipelineId} />
-    </div>
-
-    <button className="Pipeline-editor__palette-toggle" onClick={togglePaletteOpen}>
-      {isPaletteOpen ? <Icon name="caret left" /> : <Icon name="caret right" />}
-    </button>
-
-    <div className="Pipeline-editor__content">
-      <div className="Pipeline-editor__top-bar">
-        <SavePipeline pipelineId={pipelineId} />
-        <Bin pipelineId={pipelineId} />
-        <Form>
-          <Form.Field>
-            <label>Parent Pipeline</label>
-            <DocRefModalPicker pickerId={pipelineId} typeFilter="Pipeline" />
-          </Form.Field>
-        </Form>
+  isDirty,
+  isSaving,
+  pendingElementToDelete,
+  onCancelDelete,
+  onConfirmDelete,
+}) => {
+  const settingsPanelSize = isElementDetailsOpen ? '50%' : 0;
+  const panelSizes = [
+    {},
+    {
+      resize: 'dynamic',
+      size: settingsPanelSize,
+    },
+  ];
+  return (
+    <div className={`Pipeline-editor Pipeline-editor--palette-${isPaletteOpen ? 'open' : 'close'}`}>
+      <Confirm
+        open={!!pendingElementToDelete}
+        content={`Delete ${pendingElementToDelete} from pipeline?`}
+        onCancel={onCancelDelete}
+        onConfirm={onConfirmDelete}
+      />
+      <div className="Pipeline-editor__element-palette">
+        <ElementPalette pipelineId={pipelineId} />
       </div>
-      <LineContainer
-        className="Pipeline-editor__graph"
-        lineContextId={`pipeline-lines-${pipelineId}`}
-        lineElementCreators={lineElementCreators}
-      >
-        <div className="Pipeline-editor__bin" />
-        <div className="Pipeline-editor__elements">
-          {Object.keys(elementStyles)
-            .map(es => pipeline.pipeline.merged.elements.add.find(e => e.id === es))
-            .map(e => (
-              <div key={e.id} id={e.id} style={elementStyles[e.id]}>
-                <PipelineElement
-                  pipelineId={pipelineId}
-                  elementId={e.id}
-                  onClick={() => setElementDetailsOpen(true)}
-                />
-              </div>
-            ))}
-        </div>
-        <div className="Pipeline-editor__lines">
-          {pipeline.pipeline.merged.links.add
-            .filter(l => elementStyles[l.from] && elementStyles[l.to])
-            .map(l => ({ ...l, lineId: `${l.from}-${l.to}` }))
-            .map(l => (
-              <LineTo
-                lineId={l.lineId}
-                key={l.lineId}
-                fromId={l.from}
-                toId={l.to}
-                lineType="curve"
+
+      <button className="Pipeline-editor__palette-toggle" onClick={togglePaletteOpen}>
+        {isPaletteOpen ? <Icon name="caret left" /> : <Icon name="caret right" />}
+      </button>
+
+      <PanelGroup direction="column" className="Pipeline-editor__content" panelWidths={panelSizes}>
+        <div className="Pipeline-editor__topPanel">
+          <div className="Pipeline-editor__top-bar">
+            <div>
+              <Button
+                icon='save'
+                loading={isSaving}
+                disabled={!isDirty}
+                color="blue"
+                size="huge"
+                circular
+                onClick={() => savePipeline(pipelineId)}
               />
-            ))}
+            </div>
+            <Bin />
+            <Form>
+              <Form.Field>
+                <label>Parent Pipeline</label>
+                <DocPickerModal pickerId={pipelineId} typeFilters={["Pipeline"]} />
+              </Form.Field>
+            </Form>
+          </div>
+          <LineContainer
+            className="Pipeline-editor__graph"
+            lineContextId={`pipeline-lines-${pipelineId}`}
+            lineElementCreators={lineElementCreators}
+          >
+            <div className="Pipeline-editor__bin" />
+            <div className="Pipeline-editor__elements">
+              {Object.keys(elementStyles)
+                .map(es => pipeline.pipeline.merged.elements.add.find(e => e.id === es))
+                .map(e => (
+                  <div key={e.id} id={e.id} style={elementStyles[e.id]}>
+                    <PipelineElement
+                      pipelineId={pipelineId}
+                      elementId={e.id}
+                      onClick={() => setElementDetailsOpen(true)}
+                    />
+                  </div>
+                ))}
+            </div>
+            <div className="Pipeline-editor__lines">
+              {pipeline.pipeline.merged.links.add
+                .filter(l => elementStyles[l.from] && elementStyles[l.to])
+                .map(l => ({ ...l, lineId: `${l.from}-${l.to}` }))
+                .map(l => (
+                  <LineTo
+                    lineId={l.lineId}
+                    key={l.lineId}
+                    fromId={l.from}
+                    toId={l.to}
+                    lineType="curve"
+                  />
+                ))}
+            </div>
+          </LineContainer>
         </div>
-      </LineContainer>
-      {isElementDetailsOpen ? (
-        <ElementDetails
-          pipelineId={pipelineId}
-          className="Pipeline-editor__details"
-          onClose={() => setElementDetailsOpen(false)}
-        />
-      ) : (
-        undefined
-      )}
+        {isElementDetailsOpen ? (
+          <ElementDetails
+            pipelineId={pipelineId}
+            className="Pipeline-editor__details"
+            onClose={() => setElementDetailsOpen(false)}
+          />
+        ) : (
+          <div />
+        )}
+      </PanelGroup>
     </div>
-  </div>
-);
+  );
+};
 
 PipelineEditor.propTypes = {
   pipelineId: PropTypes.string.isRequired,

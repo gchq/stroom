@@ -16,53 +16,52 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { withState, compose } from 'recompose';
+import { compose } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Dropdown, Icon, Confirm } from 'semantic-ui-react';
+import { Dropdown, Icon } from 'semantic-ui-react';
 
 import { actionCreators as docExplorerActionCreators } from './redux';
 import { actionCreators as contentTabActionCreators } from 'sections/AppChrome/redux';
 import { TabTypes } from 'sections/AppChrome/TabTypes';
 
-const { docRefDeleted } = docExplorerActionCreators;
+import { fetchDocInfo } from './explorerClient';
+
+const {
+  prepareDocRefDelete,
+  prepareDocRefCopy,
+  prepareDocRefMove,
+  prepareDocRefRename,
+} = docExplorerActionCreators;
 const { tabOpened } = contentTabActionCreators;
 
-const withPendingDeletion = withState('pendingDeletion', 'setPendingDeletion', false);
-
-const enhance = compose(
-  connect(
-    state => ({
-      // state
-    }),
-    {
-      tabOpened,
-      docRefDeleted,
-    },
-  ),
-  withPendingDeletion,
-);
+const enhance = compose(connect(
+  state => ({
+    // state
+  }),
+  {
+    tabOpened,
+    prepareDocRefMove,
+    prepareDocRefCopy,
+    prepareDocRefDelete,
+    prepareDocRefRename,
+    fetchDocInfo,
+  },
+));
 
 const DocRefMenu = ({
   explorerId,
   docRef,
   isOpen,
   tabOpened,
-  docRefDeleted,
+  prepareDocRefMove,
+  prepareDocRefRename,
+  prepareDocRefDelete,
+  prepareDocRefCopy,
+  fetchDocInfo,
   closeContextMenu,
-  pendingDeletion,
-  setPendingDeletion,
 }) => (
   <span>
-    <Confirm
-      open={!!pendingDeletion}
-      content="This will delete the doc ref, are you sure?"
-      onCancel={() => setPendingDeletion(false)}
-      onConfirm={() => {
-        docRefDeleted(explorerId, docRef);
-        setPendingDeletion(false);
-      }}
-    />
     <Dropdown inline icon={null} open={isOpen} onClose={() => closeContextMenu()}>
       <Dropdown.Menu>
         <Dropdown.Item
@@ -74,7 +73,35 @@ const DocRefMenu = ({
           <Icon name="file" />
           Open
         </Dropdown.Item>
-        <Dropdown.Item onClick={() => setPendingDeletion(true)}>
+        <Dropdown.Item onClick={() => fetchDocInfo(docRef)}>
+          <Icon name="info" />
+          Info
+        </Dropdown.Item>
+        <Dropdown.Item
+          onClick={() => {
+            prepareDocRefRename(docRef);
+          }}
+        >
+          <Icon name="pencil" />
+          Rename
+        </Dropdown.Item>
+        <Dropdown.Item
+          onClick={() => {
+            prepareDocRefCopy([docRef]);
+          }}
+        >
+          <Icon name="copy" />
+          Copy
+        </Dropdown.Item>
+        <Dropdown.Item
+          onClick={() => {
+            prepareDocRefMove([docRef]);
+          }}
+        >
+          <Icon name="move" />
+          Move
+        </Dropdown.Item>
+        <Dropdown.Item onClick={() => prepareDocRefDelete([docRef])}>
           <Icon name="trash" />
           Delete
         </Dropdown.Item>

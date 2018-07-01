@@ -24,9 +24,6 @@ import TrackerDetails from './TrackerDetails';
 import { actionCreators } from '../redux';
 import { trackers } from '../tracker.testData';
 
-const containerStyle = {
-  border: '30px solid green',
-};
 
 storiesOf('TrackerDetails', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
@@ -34,7 +31,7 @@ storiesOf('TrackerDetails', module)
     store.dispatch(actionCreators.updateTrackers([trackers.minimalTracker_undefinedLastPollAge]));
   }))
   .add('Minimal tracker with undefined last poll age', () => (
-    <div style={containerStyle}>
+    <div>
       <TrackerDetails />
     </div>
   ));
@@ -45,7 +42,7 @@ storiesOf('TrackerDetails', module)
     store.dispatch(actionCreators.updateTrackers([trackers.minimalTracker_nullLastPollAge]));
   }))
   .add('Minimal tracker with null last poll age', () => (
-    <div style={containerStyle}>
+    <div>
       <TrackerDetails />
     </div>
   ));
@@ -56,7 +53,7 @@ storiesOf('TrackerDetails', module)
     store.dispatch(actionCreators.updateTrackers([trackers.minimalTracker_emptyLastPollAge]));
   }))
   .add('Minimal tracker with empty last poll age', () => (
-    <div style={containerStyle}>
+    <div>
       <TrackerDetails />
     </div>
   ));
@@ -67,7 +64,7 @@ storiesOf('TrackerDetails', module)
     store.dispatch(actionCreators.updateTrackers([trackers.maximalTracker]));
   }))
   .add('Maximal tracker', () => (
-    <div style={containerStyle}>
+    <div>
       <TrackerDetails />
     </div>
   ));
@@ -78,7 +75,7 @@ storiesOf('TrackerDetails', module)
     store.dispatch(actionCreators.updateTrackers([trackers.maximalTracker_withLongName]));
   }))
   .add('Maximal tracker with a long name', () => (
-    <div style={containerStyle}>
+    <div>
       <TrackerDetails />
     </div>
   ));

@@ -14,15 +14,20 @@
  * limitations under the License.
  */
 import DocExplorer from './DocExplorer';
-import DocRefModalPicker from './DocRefModalPicker';
-import DocRefDropdownPicker from './DocRefDropdownPicker';
+import DocRefInfoModal from './DocRefInfoModal';
+import DocPicker, { DocPickerModal } from './DocPicker/index';
+import PermissionInheritancePicker from './PermissionInheritancePicker';
+import permissionInheritanceValues from './permissionInheritanceValues';
 import withExplorerTree from './withExplorerTree';
 import withDocRefTypes from './withDocRefTypes';
 
 export {
   DocExplorer,
-  DocRefModalPicker,
-  DocRefDropdownPicker,
+  DocRefInfoModal,
+  DocPickerModal,
+  DocPicker,
+  PermissionInheritancePicker,
+  permissionInheritanceValues,
   withExplorerTree,
   withDocRefTypes,
 };

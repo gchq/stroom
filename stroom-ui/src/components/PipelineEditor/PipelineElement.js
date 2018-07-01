@@ -26,7 +26,7 @@ import { Image, Loader } from 'semantic-ui-react';
 import AddElementModal from './AddElementModal';
 import { actionCreators } from './redux';
 import { canMovePipelineElement } from './pipelineUtils';
-import { ItemTypes } from './dragDropTypes';
+import ItemTypes from './dragDropTypes';
 import { isValidChildType } from './elementUtils';
 
 import { getInitialValues } from './ElementDetails';
@@ -46,6 +46,7 @@ const dragSource = {
   },
   beginDrag(props) {
     return {
+      pipelineId: props.pipelineId,
       elementId: props.elementId,
       elementDefinition: props.elementDefinition,
     };
@@ -128,8 +129,8 @@ const dropCollect = (connect, monitor) => ({
 const enhance = compose(
   connect(
     (state, props) => {
-      const pipeline = state.pipelines[props.pipelineId];
-      const elements = state.elements;
+      const pipeline = state.pipelineEditor.pipelines[props.pipelineId];
+      const elements = state.pipelineEditor.elements;
 
       let selectedElementId;
       let element;

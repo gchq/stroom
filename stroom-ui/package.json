@@ -17,6 +17,7 @@
     "react-dnd": "^2.6.0",
     "react-dnd-html5-backend": "^2.6.0",
     "react-dom": "^16.3.2",
+    "react-panelgroup": "^1.0.7",
     "react-redux": "^5.0.7",
     "react-router-dom": "^4.2.2",
     "react-router-redux": "^5.0.0-alpha.9",
@@ -41,7 +42,7 @@
     "build": "npm-run-all build-css build-js",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
-    "storybook-js": "./config.template.sh && start-storybook -p 9001 -c .storybook",
+    "storybook-js": "start-storybook -p 9001 -c .storybook",
     "storybook": "npm-run-all -p storybook-js watch-css",
     "build-storybook": "build-storybook -s public"
   },

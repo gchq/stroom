@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 import React from 'react';
+import PropTypes, { object } from 'prop-types';
+
 import { connect } from 'react-redux';
-import { compose, withState, lifecycle } from 'recompose';
+import { compose, lifecycle } from 'recompose';
 import { Button, Menu, Icon } from 'semantic-ui-react';
 import Mousetrap from 'mousetrap';
+import { withRouter } from 'react-router-dom';
 
 import { actionCreators as appChromeActionCreators } from './redux';
 import { actionCreators as recentItemsActionCreators } from 'prototypes/RecentItems/redux';
@@ -26,20 +29,38 @@ import TabTypes, { TabTypeDisplayInfo } from './TabTypes';
 import AppMainContent from './AppMainContent';
 import RecentItems from 'prototypes/RecentItems';
 import AppSearch from 'prototypes/AppSearch';
+import withLocalStorage from 'lib/withLocalStorage';
 
 const { tabOpened } = appChromeActionCreators;
 const { recentItemsOpened } = recentItemsActionCreators;
 const { appSearchOpened } = appSearchActionCreators;
-const withIsExpanded = withState('isExpanded', 'setIsExpanded', false);
+const withIsExpanded = withLocalStorage('isExpanded', 'setIsExpanded', true);
+
+const SIDE_BAR_COLOUR = 'blue';
 
 const enhance = compose(
-  connect((state, props) => ({}), {
-    tabOpened,
-    recentItemsOpened,
-    appSearchOpened,
-  }),
+  connect(
+    (state, props) => ({
+      currentTab: state.appChrome.tabSelectionStack[0],
+    }),
+    {
+      tabOpened,
+      recentItemsOpened,
+      appSearchOpened,
+    },
+  ),
+  withRouter,
   withIsExpanded,
   lifecycle({
+    componentWillMount() {
+      if (this.props.match) {
+        // We're going to see if we've got a matching tab type to display,
+        // and if we have we're going to make sure it opens.
+        const { path } = this.props.match;
+        const tabType = Object.keys(TabTypeDisplayInfo).find(tabTypeKey => TabTypeDisplayInfo[tabTypeKey].path === path);
+        if (tabType) this.props.tabOpened(parseInt(tabType, 10));
+      }
+    },
     componentDidMount() {
       Mousetrap.bind('ctrl+e', () => this.props.recentItemsOpened());
       Mousetrap.bind('ctrl+f', () => this.props.appSearchOpened());
@@ -53,6 +74,8 @@ const AppChrome = ({
   appSearchOpened,
   isExpanded,
   setIsExpanded,
+  currentTab,
+  history,
 }) => {
   const menuItems = [
     {
@@ -60,37 +83,42 @@ const AppChrome = ({
       icon: 'bars',
       onClick: () => setIsExpanded(!isExpanded),
     },
-    {
-      title: 'Recent Items',
-      icon: 'file outline',
-      onClick: recentItemsOpened,
-    },
-    {
-      title: 'Search',
-      icon: 'search',
-      onClick: appSearchOpened,
-    },
   ].concat(Object.values(TabTypes)
     .filter(t => t !== TabTypes.DOC_REF) // this type is used to cover individual open doc refs
     .map(tabType => ({
       title: TabTypeDisplayInfo[tabType].getTitle(),
       icon: TabTypeDisplayInfo[tabType].icon,
-      onClick: () => tabOpened(tabType),
+      onClick: () => {
+        // If we open a tab we need to make sure we update the route.
+        history.push(TabTypeDisplayInfo[tabType].path);
+        tabOpened(tabType);
+      },
+      selected: currentTab && currentTab.type === tabType,
     })));
 
   const menu = isExpanded ? (
-    <Menu vertical fluid color="blue" inverted>
+    <Menu vertical fluid color={SIDE_BAR_COLOUR} inverted>
       {menuItems.map(menuItem => (
-        <Menu.Item key={menuItem.title} name={menuItem.title} onClick={menuItem.onClick}>
+        <Menu.Item
+          key={menuItem.title}
+          active={menuItem.selected}
+          name={menuItem.title}
+          onClick={menuItem.onClick}
+        >
           <Icon name={menuItem.icon} />
           {menuItem.title}
         </Menu.Item>
       ))}
     </Menu>
   ) : (
-    <Button.Group vertical color="blue" size="large">
+    <Button.Group vertical color={SIDE_BAR_COLOUR} size="large">
       {menuItems.map(menuItem => (
-        <Button key={menuItem.title} icon={menuItem.icon} onClick={menuItem.onClick} />
+        <Button
+          key={menuItem.title}
+          active={menuItem.selected}
+          icon={menuItem.icon}
+          onClick={menuItem.onClick}
+        />
       ))}
     </Button.Group>
   );
@@ -105,6 +133,13 @@ const AppChrome = ({
       </div>
     </div>
   );
+};
+
+AppChrome.contextTypes = {
+  store: PropTypes.object,
+  router: PropTypes.shape({
+    history: object.isRequired,
+  }),
 };
 
 export default enhance(AppChrome);

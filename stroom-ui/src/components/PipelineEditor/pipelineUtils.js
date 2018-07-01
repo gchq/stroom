@@ -243,6 +243,74 @@ export function createNewElementInPipeline(pipeline, parentId, childDefinition, 
 }
 
 /**
+ * Adds or updates a property on the element of a pipeline.
+ *
+ * @param {pipeline} pipeline The current definition of the pipeline.
+ * @param {string} element The name of the element to update.
+ * @param {string} name The name of the property on the element to update
+ * @param {string} propertyType The type of the property to update, one of boolean, entity, integer, long, or string.
+ * @param {boolean|entity|integer|long|string} propertyValue The value to add or update
+ */
+export function setElementPropertyValueInPipeline(
+  pipeline,
+  element,
+  name,
+  propertyType,
+  propertyValue,
+) {
+
+  // Create the 'value' property.
+  let value = {boolean: null, entity: null, integer: null, long: null, string: null}
+  value[propertyType.toLowerCase()] = propertyValue
+
+  const property = {
+    element,
+    name,
+    value,
+  };
+
+
+  const stackAdd = pipeline.configStack[pipeline.configStack.length - 1].properties.add;
+  addToProperties(stackAdd, property)
+
+  const mergeAdd = pipeline.merged.properties.add;
+  addToProperties(mergeAdd, property)
+
+  return {
+    configStack: mapLastItemInArray(pipeline.configStack, stackItem => ({
+      elements: stackItem.elements,
+      links: stackItem.links,
+      properties: {
+        ...stackItem.properties,
+        add: stackAdd,
+      },
+    })),
+    merged: {
+      elements: pipeline.merged.elements,
+      links: pipeline.merged.links,
+      properties: {
+        ...pipeline.merged.properties,
+        add: mergeAdd,
+      }
+    }
+  };
+}
+
+function addToProperties(properties, property){
+  let index = properties.findIndex(item => item.element === property.element && item.name === property.name);
+  let addOrReplace; // The deleteCount param for splice, i.e. 0 for insert, 1 for replace
+
+  if (index === -1) {
+    addOrReplace = 0;
+    index = properties.length; // Insert at the end
+  } else {
+    addOrReplace = 1;
+  }
+
+  properties.splice(index, addOrReplace, property);
+}
+
+/**
  * Reinstates an element into the pipeline that had previously been removed.
  *
  * @param {pipeline} pipeline The current definition of the pipeline.
@@ -424,4 +492,34 @@ export function getAllChildren(pipeline, parent) {
   getAllChildren(pipeline, parent);
 
   return allChildren;
+}
+
+
+/**
+ * Looks through the parents in the stack until it finds the first time this property has been set.
+ * It'll return that value but if it's never been set it'll return undefined.
+ * 
+ * @param {pipeline} pipeline The pipeline 
+ * @param {string} elementId The elementId of the
+ * @param {string} propertyName The name of the property to search for
+ */
+export function getParentProperty(stack, elementId, propertyName) {
+  const getFromParent = (index) =>{
+    console.log({index})
+    const property = stack[index].properties.add.find(element => element.element === elementId && element.name === propertyName);
+    console.log({property})
+    if(property !== undefined){
+      // We return the first matching property we find.
+      return property;
+    } else {
+      // If we haven't found one we might need to continue looking up the stack
+      if( index -1 >= 0){
+        return getFromParent(index - 1)
+      }
+      else return undefined;
+    }
+  }
+
+  if(stack.length < 2) return undefined;
+  else return getFromParent(stack.length - 2);
 }
