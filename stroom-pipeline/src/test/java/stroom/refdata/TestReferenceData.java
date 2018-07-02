@@ -17,6 +17,8 @@
 
 package stroom.refdata;
 
+import io.vavr.Tuple;
+import io.vavr.Tuple3;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,6 +34,7 @@ import stroom.docstore.Store;
 import stroom.docstore.memory.MemoryPersistence;
 import stroom.entity.DocumentPermissionCache;
 import stroom.entity.shared.DocRefUtil;
+import stroom.entity.shared.Range;
 import stroom.feed.MockFeedService;
 import stroom.feed.shared.Feed;
 import stroom.pipeline.PipelineStore;
@@ -54,8 +57,8 @@ import stroom.xml.event.EventList;
 import stroom.xml.event.EventListBuilder;
 import stroom.xml.event.EventListBuilderFactory;
 
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -77,6 +80,9 @@ public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
     private static final String SID_TO_PF_2 = "SID_TO_PF_2";
     private static final String SID_TO_PF_3 = "SID_TO_PF_3";
     private static final String SID_TO_PF_4 = "SID_TO_PF_4";
+    public static final String IP_TO_LOC_MAP_NAME = "IP_TO_LOC_MAP_NAME";
+    public static final String VALUE_HERE = "here";
+    public static final String VALUE_THERE = "there";
 
     private final MockFeedService feedService = new MockFeedService();
 
@@ -155,14 +161,14 @@ public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
             Map<RefStreamDefinition, Runnable> mockLoaderActionsMap = new HashMap<>();
 
             // Add multiple reference data items to prove that looping over maps works.
-            addDataToMockReferenceDataLoader(
+            addUserDataToMockReferenceDataLoader(
                     pipeline1Ref,
                     pipelineDocs.get(0),
                     streamSet,
                     Arrays.asList(SID_TO_PF_1, SID_TO_PF_2),
                     mockLoaderActionsMap);
 
-            addDataToMockReferenceDataLoader(
+            addUserDataToMockReferenceDataLoader(
                     pipeline2Ref,
                     pipelineDocs.get(1),
                     streamSet,
@@ -186,11 +192,11 @@ public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
         }
     }
 
-    private void addDataToMockReferenceDataLoader(final DocRef pipelineRef,
-                                                  final PipelineDoc pipelineDoc,
-                                                  final TreeSet<EffectiveStream> effectiveStreams,
-                                                  final List<String> mapNames,
-                                                  final Map<RefStreamDefinition, Runnable> mockLoaderActions) {
+    private void addUserDataToMockReferenceDataLoader(final DocRef pipelineRef,
+                                                      final PipelineDoc pipelineDoc,
+                                                      final TreeSet<EffectiveStream> effectiveStreams,
+                                                      final List<String> mapNames,
+                                                      final Map<RefStreamDefinition, Runnable> mockLoaderActions) {
 
         for (EffectiveStream effectiveStream : effectiveStreams) {
 
@@ -213,6 +219,66 @@ public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
                                         mapDefinition,
                                         "user2",
                                         buildValue(mapDefinition, VALUE_2));
+                            }
+                            refDataLoader.completeProcessing();
+                        });
+            });
+        }
+    }
+
+    private void addKeyValueDataToMockReferenceDataLoader(final DocRef pipelineRef,
+                                                          final PipelineDoc pipelineDoc,
+                                                          final TreeSet<EffectiveStream> effectiveStreams,
+                                                          final List<Tuple3<String, String, String>> mapKeyValueTuples,
+                                                          final Map<RefStreamDefinition, Runnable> mockLoaderActions) {
+
+        for (EffectiveStream effectiveStream : effectiveStreams) {
+
+            RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
+                    pipelineRef, pipelineStore.readDocument(pipelineRef).getVersion(), effectiveStream.getStreamId());
+
+
+            mockLoaderActions.put(refStreamDefinition, () -> {
+                refDataStore.doWithLoaderUnlessComplete(
+                        refStreamDefinition, effectiveStream.getEffectiveMs(), refDataLoader -> {
+
+                            refDataLoader.initialise(false);
+                            for (Tuple3<String, String, String> mapKeyValueTuple : mapKeyValueTuples) {
+                                String mapName = mapKeyValueTuple._1();
+                                String key = mapKeyValueTuple._2();
+                                String value = mapKeyValueTuple._3();
+                                MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
+                                refDataLoader.put(mapDefinition, key, StringValue.of(value));
+                            }
+                            refDataLoader.completeProcessing();
+                        });
+            });
+        }
+    }
+
+    private void addRangeValueDataToMockReferenceDataLoader(final DocRef pipelineRef,
+                                                            final PipelineDoc pipelineDoc,
+                                                            final TreeSet<EffectiveStream> effectiveStreams,
+                                                            final List<Tuple3<String, Range<Long>, String>> mapRangeValueTuples,
+                                                            final Map<RefStreamDefinition, Runnable> mockLoaderActions) {
+
+        for (EffectiveStream effectiveStream : effectiveStreams) {
+
+            RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
+                    pipelineRef, pipelineStore.readDocument(pipelineRef).getVersion(), effectiveStream.getStreamId());
+
+
+            mockLoaderActions.put(refStreamDefinition, () -> {
+                refDataStore.doWithLoaderUnlessComplete(
+                        refStreamDefinition, effectiveStream.getEffectiveMs(), refDataLoader -> {
+
+                            refDataLoader.initialise(false);
+                            for (Tuple3<String, Range<Long>, String> mapKeyValueTuple : mapRangeValueTuples) {
+                                String mapName = mapKeyValueTuple._1();
+                                Range<Long> range = mapKeyValueTuple._2();
+                                String value = mapKeyValueTuple._3();
+                                MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
+                                refDataLoader.put(mapDefinition, range, StringValue.of(value));
                             }
                             refDataLoader.completeProcessing();
                         });
@@ -278,11 +344,11 @@ public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
         feed1.setReference(true);
         feed1 = feedService.save(feed1);
 
-        final DocRef pipelineRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, "12345");
-        final List<PipelineReference> pipelineReferences = new ArrayList<>();
-
-        pipelineReferences.add(new PipelineReference(pipelineRef,
-                DocRefUtil.create(feed1), StreamType.REFERENCE.getName()));
+        final DocRef pipelineRef = pipelineStore.createDocument("12345");
+        final PipelineReference pipelineReference = new PipelineReference(pipelineRef,
+                DocRefUtil.create(feed1), StreamType.REFERENCE.getName());
+        final List<PipelineReference> pipelineReferences = Collections.singletonList(pipelineReference);
+        final PipelineDoc pipelineDoc = buildPipelineDoc(pipelineReference);
 
         final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
         streamSet.add(new EffectiveStream(0, 0L));
@@ -293,18 +359,53 @@ public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
                     return streamSet;
                 }
             };
-//            final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, new MockReferenceDataLoader(), null, null);
-//            final ReferenceData referenceData = new ReferenceData(effectiveStreamCache, mapStoreCache, null, null, null, null, refDataStore);
 
-            final MapStoreBuilder mapStoreBuilder = new MapStoreBuilderImpl(null);
-//            mapStoreBuilder.setEvents("CARD_NUMBER_TO_PF_NUMBER", "011111", getEventsFromString("091111"), false);
-//            mapStoreBuilder.setEvents("NUMBER_TO_SID", "091111", getEventsFromString("user1"), false);
-//            referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipelineEntity), 0), mapStoreBuilder.getMapStore());
+            final ReferenceData referenceData = new ReferenceData(
+                    effectiveStreamCache,
+                    new FeedHolder(),
+                    null,
+                    null,
+                    mockDocumentPermissionCache,
+                    mockReferenceDataLoader,
+                    refDataStore,
+                    new RefDataLoaderHolder(),
+                    new Security(new MockSecurityContext()),
+                    pipelineStore);
 
-//            Assert.assertEquals("091111", lookup(referenceData, pipelineReferences, 0, "CARD_NUMBER_TO_PF_NUMBER", "011111"));
-//            Assert.assertEquals("user1", lookup(referenceData, pipelineReferences, 0, "NUMBER_TO_SID", "091111"));
-//
-//            Assert.assertEquals("user1", lookup(referenceData, pipelineReferences, 0, "CARD_NUMBER_TO_PF_NUMBER/NUMBER_TO_SID", "011111"));
+            Map<RefStreamDefinition, Runnable> mockLoaderActionsMap = new HashMap<>();
+
+            // Add multiple reference data items to prove that looping over maps works.
+            addKeyValueDataToMockReferenceDataLoader(
+                    pipelineRef,
+                    pipelineDoc,
+                    streamSet,
+                    Arrays.asList(
+                            Tuple.of("CARD_NUMBER_TO_PF_NUMBER", "011111", "091111"),
+                            Tuple.of("NUMBER_TO_SID", "091111", USER_1)
+                    ),
+                    mockLoaderActionsMap);
+
+            Mockito.doAnswer(invocation -> {
+                RefStreamDefinition refStreamDefinition = invocation.getArgumentAt(0, RefStreamDefinition.class);
+
+                Runnable action = mockLoaderActionsMap.get(refStreamDefinition);
+                action.run();
+                return null;
+            }).when(mockReferenceDataLoader).load(Mockito.any(RefStreamDefinition.class));
+
+            Optional<String> optFoundValue;
+            optFoundValue = lookup(
+                    referenceData, pipelineReferences, 0, "CARD_NUMBER_TO_PF_NUMBER", "011111");
+            assertThat(optFoundValue).contains("091111");
+
+            optFoundValue = lookup(
+                    referenceData, pipelineReferences, 0, "NUMBER_TO_SID", "091111");
+            assertThat(optFoundValue).contains(USER_1);
+
+            optFoundValue = lookup(referenceData, pipelineReferences, 0,
+                    "CARD_NUMBER_TO_PF_NUMBER/NUMBER_TO_SID", "011111");
+            assertThat(optFoundValue).contains(USER_1);
+
         } catch (final Exception e) {
             throw new RuntimeException(e.getMessage(), e);
         }
@@ -316,10 +417,11 @@ public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
         feed1.setReference(true);
         feed1 = feedService.save(feed1);
 
-        final DocRef pipelineRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, "12345");
-        final List<PipelineReference> pipelineReferences = new ArrayList<>();
-
-        pipelineReferences.add(new PipelineReference(pipelineRef, DocRefUtil.create(feed1), StreamType.REFERENCE.getName()));
+        final DocRef pipelineRef = pipelineStore.createDocument("12345");
+        final PipelineReference pipelineReference = new PipelineReference(pipelineRef,
+                DocRefUtil.create(feed1), StreamType.REFERENCE.getName());
+        final List<PipelineReference> pipelineReferences = Collections.singletonList(pipelineReference);
+        final PipelineDoc pipelineDoc = buildPipelineDoc(pipelineReference);
 
         final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
         streamSet.add(new EffectiveStream(0, 0L));
@@ -330,20 +432,58 @@ public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
                     return streamSet;
                 }
             };
-//            final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, new MockReferenceDataLoader(), null, null);
-//            final ReferenceData referenceData = new ReferenceData(effectiveStreamCache, mapStoreCache, null, null, null, null, refDataStore);
 
-            final MapStoreBuilder mapStoreBuilder = new MapStoreBuilderImpl(null);
-//            mapStoreBuilder.setEvents("IP_TO_LOC", new Range<>(2L, 30L), getEventsFromString("here"), false);
-//            mapStoreBuilder.setEvents("IP_TO_LOC", new Range<>(500L, 2000L), getEventsFromString("there"), false);
-//            referenceData.put(new MapStoreCacheKey(DocRefUtil.create(pipelineEntity), 0), mapStoreBuilder.getMapStore());
+            final ReferenceData referenceData = new ReferenceData(
+                    effectiveStreamCache,
+                    new FeedHolder(),
+                    null,
+                    null,
+                    mockDocumentPermissionCache,
+                    mockReferenceDataLoader,
+                    refDataStore,
+                    new RefDataLoaderHolder(),
+                    new Security(new MockSecurityContext()),
+                    pipelineStore);
 
-//            Assert.assertEquals("here", lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC", "10"));
-//            Assert.assertEquals("here", lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC", "30"));
-//            Assert.assertEquals("there", lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC", "500"));
-//            Assert.assertEquals("there", lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC", "1000"));
-//            Assert.assertEquals("there", lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC", "2000"));
-//            Assert.assertEquals(null, lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC", "2001"));
+            Map<RefStreamDefinition, Runnable> mockLoaderActionsMap = new HashMap<>();
+
+            // Add multiple reference data items to prove that looping over maps works.
+            addRangeValueDataToMockReferenceDataLoader(
+                    pipelineRef,
+                    pipelineDoc,
+                    streamSet,
+                    Arrays.asList(
+                            Tuple.of(IP_TO_LOC_MAP_NAME, Range.of(2L, 30L), VALUE_HERE),
+                            Tuple.of(IP_TO_LOC_MAP_NAME, Range.of(500L, 2000L), VALUE_THERE)
+                    ),
+                    mockLoaderActionsMap);
+
+            Mockito.doAnswer(invocation -> {
+                RefStreamDefinition refStreamDefinition = invocation.getArgumentAt(0, RefStreamDefinition.class);
+
+                Runnable action = mockLoaderActionsMap.get(refStreamDefinition);
+                action.run();
+                return null;
+            }).when(mockReferenceDataLoader).load(Mockito.any(RefStreamDefinition.class));
+
+            assertThat(lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC_MAP_NAME", "1"))
+                    .isEmpty();
+            assertThat(lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC_MAP_NAME", "2"))
+                    .contains(VALUE_HERE);
+            assertThat(lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC_MAP_NAME", "10"))
+                    .contains(VALUE_HERE);
+            assertThat(lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC_MAP_NAME", "29"))
+                    .contains(VALUE_HERE);
+            assertThat(lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC_MAP_NAME", "30"))
+                    .isEmpty();
+            assertThat(lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC_MAP_NAME", "500"))
+                    .contains(VALUE_THERE);
+            assertThat(lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC_MAP_NAME", "1000"))
+                    .contains(VALUE_THERE);
+            assertThat(lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC_MAP_NAME", "1999"))
+                    .contains(VALUE_THERE);
+            assertThat(lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC_MAP_NAME", "2000"))
+                    .isEmpty();
         } catch (final Exception e) {
             throw new RuntimeException(e.getMessage(), e);
         }
@@ -376,10 +516,10 @@ public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
     }
 
     private Optional<String> lookup(final ReferenceData referenceData,
-                          final List<PipelineReference> pipelineReferences,
-                          final long time,
-                          final String mapName,
-                          final String key) {
+                                    final List<PipelineReference> pipelineReferences,
+                                    final long time,
+                                    final String mapName,
+                                    final String key) {
         final ReferenceDataResult result = new ReferenceDataResult();
 
         referenceData.ensureReferenceDataAvailability(pipelineReferences, LookupIdentifier.of(mapName, key, time), result);
