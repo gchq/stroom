@@ -40,13 +40,13 @@ export const saveXslt = xsltId => (dispatch, getState) => {
   const state = getState();
   const url = `${state.config.xsltServiceUrl}/${xsltId}`;
 
-  const body = JSON.stringify(state.xslt[xsltId].xsltData);
+  const body = state.xslt[xsltId].xsltData;
 
   wrappedPost(
     dispatch,
     state,
     url,
-    response => response.text().then(xsltId => dispatch(xsltSaved(xsltId))),
+    response => response.text().then(response => dispatch(xsltSaved(xsltId))),
     {
       body,
       headers: {

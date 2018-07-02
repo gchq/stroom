@@ -19,6 +19,7 @@ import brace from 'brace';
 
 import 'brace/mode/xml';
 import 'brace/theme/github';
+import 'brace/keybinding/vim';
 
 import { compose, lifecycle, renderComponent, branch } from 'recompose';
 import { connect } from 'react-redux';
@@ -52,18 +53,23 @@ const enhance = compose(
 );
 
 const XsltEditor = enhance(({ xsltId, xslt, xsltUpdated }) => (
-  <div>
-    XsltEditor
-    <SaveXslt xsltId={xsltId} />
-    <AceEditor
-      name={`${xsltId}-ace-editor`}
-      mode="xml"
-      theme="github"
-      value={xslt.xsltData}
-      onChange={(newValue) => {
-        if (newValue !== xslt.xsltData) xsltUpdated(xsltId, newValue);
-      }}
-    />
+  <div className="xslt-editor">
+    <div className="xslt-editor__header">
+      <SaveXslt xsltId={xsltId} />
+    </div>
+    <div className="xslt-editor__ace-container">
+      <AceEditor
+        style={{ width: '100%', height: '100%' }}
+        name={`${xsltId}-ace-editor`}
+        mode="xml"
+        theme="github"
+        keyboardHandler="vim"
+        value={xslt.xsltData}
+        onChange={(newValue) => {
+          if (newValue !== xslt.xsltData) xsltUpdated(xsltId, newValue);
+        }}
+      />
+    </div>
   </div>
 ));
 

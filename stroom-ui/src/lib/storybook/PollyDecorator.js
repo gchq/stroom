@@ -88,7 +88,8 @@ server
 server.get(`${testConfig.xsltServiceUrl}/:xsltId`).intercept((req, res) => {
   const xslt = testCache.data.xslt[req.params.xsltId];
   if (xslt) {
-    res.json(xslt);
+    res.setHeader('Content-Type', 'application/xml');
+    res.send(xslt);
   } else {
     res.sendStatus(404);
   }

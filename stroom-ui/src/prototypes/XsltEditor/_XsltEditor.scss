@@ -1,0 +1,27 @@
+.xslt-editor {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  opacity: 1;
+}
+
+// I don't particularly like having to specify this value
+$header-size: 4rem;
+
+.xslt-editor__header {
+  position: absolute;
+  overflow: hidden;
+  left: 0px;
+  top: 0px;
+  right: 0px;
+  height: $header-size;
+}
+
+.xslt-editor__ace-container {
+  position: absolute;
+  overflow: hidden;
+  left: 0px;
+  top: $header-size;
+  right: 0px;
+  bottom: 0px;
+}

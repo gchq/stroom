@@ -46,7 +46,6 @@ const fetchConfig = () => (dispatch, getState) => {
   const url = '/config.json';
   wrappedGet(dispatch, getState(), url, (response) => {
     response.json().then((config) => {
-      console.log('Config response', config);
       dispatch(actionCreators.updateConfig(config));
     });
   });
