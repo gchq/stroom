@@ -23,28 +23,45 @@ const TAB_TYPES = {
 };
 
 const actionCreators = createActions({
-  TAB_OPENED: (type, data) => ({ type, data }),
-  TAB_CLOSED: tabUuid => ({ tabUuid }),
+  TAB_OPENED: (type, tabId, data) => ({ type, tabId, data }),
+  TAB_SELECTED: tabId => ({ tabId }),
+  TAB_CLOSED: tabId => ({ tabId }),
 });
 
 const defaultState = {
   openTabs: [],
+  tabIdSelected: undefined,
 };
 
 const reducer = handleActions(
   {
-    TAB_OPENED: (state, action) => ({
+    TAB_SELECTED: (state, action) => ({
       ...state,
-      openTabs: state.openTabs.concat([
-        {
-          tabUuid: guid(),
-          ...action.payload,
-        },
-      ]),
+      tabIdSelected: action.payload.tabId,
     }),
+    TAB_OPENED: (state, action) => {
+      const tabId = action.payload.tabId || action.payload.type;
+      if (state.openTabs.find(t => t.tabId === tabId)) {
+        return {
+          ...state,
+          tabIdSelected: tabId,
+        };
+      }
+      return {
+        ...state,
+        tabIdSelected: tabId,
+        openTabs: state.openTabs.concat([
+          {
+            type: action.payload.type,
+            tabId,
+            data: action.payload.data,
+          },
+        ]),
+      };
+    },
     TAB_CLOSED: (state, action) => ({
       ...state,
-      openTabs: state.openTabs.filter(t => t.tabUuid !== action.payload.tabUuid),
+      openTabs: state.openTabs.filter(t => t.tabId !== action.payload.tabId),
     }),
   },
   defaultState,

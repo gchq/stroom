@@ -1,3 +1,3 @@
-import bitmapReference from './bitmap-reference';
+import testXslt from './testXslt';
 
-export { bitmapReference };
+export { testXslt };

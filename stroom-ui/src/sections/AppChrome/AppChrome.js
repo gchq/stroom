@@ -22,56 +22,49 @@ import { actionCreators, TAB_TYPES } from './redux';
 import ContentTabs from './ContentTabs';
 
 const { tabOpened } = actionCreators;
-const withIsOpen = withState('isMenuOpen', 'setIsMenuOpen', false);
+const withIsExpanded = withState('isExpanded', 'setIsExpanded', false);
 
 const enhance = compose(
   connect((state, props) => ({}), {
     tabOpened,
   }),
-  withIsOpen,
+  withIsExpanded,
 );
 
-const AppChrome = enhance(({ tabOpened, isMenuOpen, setIsMenuOpen }) => (
-  <div className="app-chrome">
-    <Sidebar.Pushable as={Segment}>
-      <Sidebar
-        as={Menu}
-        animation="push"
-        width="thin"
-        visible={isMenuOpen}
-        icon="labeled"
-        vertical
-        inverted
-        color="blue"
-      >
-        <Menu.Item onClick={() => setIsMenuOpen(false)}>
-          <Menu.Header content="Stroom" />
-        </Menu.Item>
-        <Menu.Item name="explorer" onClick={() => tabOpened(TAB_TYPES.EXPLORER_TREE)}>
-          <Icon name="eye" />
-          Explorer
-        </Menu.Item>
-        <Menu.Item name="user">
-          <Icon name="user" />
-          User
-        </Menu.Item>
-      </Sidebar>
-      <Sidebar.Pusher>
-        <Segment className="app-chrome__content">
-          <ContentTabs />
-        </Segment>
-      </Sidebar.Pusher>
-    </Sidebar.Pushable>
-    <Button
-      className="app-chrome__hamburger-menu-btn"
-      color="blue"
-      icon="bars"
-      onClick={(e) => {
-        e.target.blur(); // makes the button go back to normal colour, bit of a hack
-        setIsMenuOpen(!isMenuOpen);
-      }}
-    />
-  </div>
-));
+const AppChrome = enhance(({ tabOpened, isExpanded, setIsExpanded }) => {
+  const toggleExpanded = () => setIsExpanded(!isExpanded);
+
+  const menu = isExpanded ? (
+    <Menu vertical fluid color="blue" inverted>
+      <Menu.Item onClick={toggleExpanded}>
+        <Icon name="bars" />
+        Stroom
+      </Menu.Item>
+      <Menu.Item name="explorer" onClick={() => tabOpened(TAB_TYPES.EXPLORER_TREE)}>
+        <Icon name="eye" />
+        Explorer
+      </Menu.Item>
+      <Menu.Item name="user">
+        <Icon name="user" />
+        User
+      </Menu.Item>
+    </Menu>
+  ) : (
+    <Button.Group vertical color="blue" size="large">
+      <Button icon="bars" onClick={toggleExpanded} />
+      <Button icon="eye" onClick={() => tabOpened(TAB_TYPES.EXPLORER_TREE)} />
+      <Button icon="user" />
+    </Button.Group>
+  );
+
+  return (
+    <div className="app-chrome">
+      <div className="app-chrome__sidebar">{menu}</div>
+      <div className="app-chrome__content">
+        <ContentTabs />
+      </div>
+    </div>
+  );
+});
 
 export default AppChrome;

@@ -19,3 +19,47 @@
   background-color: white;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
+
+.expand-manual__container {
+  display: inline-block;
+  width: 100%;
+  height: 100%;
+  background: lime;
+}
+
+.expand-manual__sidebar {
+  float: left;
+  height: inherit;
+  background: red;
+  color: lime;
+}
+
+.expand-manual__content {
+  display: block;
+  width: auto;
+  height: inherit;
+  background: lime;
+  color: red;
+}
+
+.expand-flex__container {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100%;
+  background: lime;
+}
+
+.expand-flex__sidebar {
+  height: inherit;
+  background: red;
+  color: lime;
+}
+
+.expand-flex__content {
+  flex-grow: 1;
+  width: auto;
+  height: inherit;
+  background: lime;
+  color: red;
+}

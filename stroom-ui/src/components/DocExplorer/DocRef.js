@@ -96,7 +96,7 @@ const DocRef = enhance(({
   const onDoubleClick = () => {
     clearTimeout(timer);
     prevent = true;
-    tabOpened(TAB_TYPES.DOC_REF, docRef);
+    tabOpened(TAB_TYPES.DOC_REF, docRef.uuid, docRef);
   };
 
   const onRightClick = (e) => {

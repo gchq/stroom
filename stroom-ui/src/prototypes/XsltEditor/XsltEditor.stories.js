@@ -22,19 +22,19 @@ import { withNotes } from '@storybook/addon-notes';
 import { PollyDecorator } from 'lib/storybook/PollyDecorator';
 import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 
-import * as testXsltFiles from './test';
+import { testXslt } from './test';
 
 import XsltEditor from './XsltEditor';
 
 const PollyDecoratorWithTestData = PollyDecorator({
-  xslt: testXsltFiles,
+  xslt: testXslt,
 });
 
 const stories = storiesOf('XSLT Editor', module)
   .addDecorator(PollyDecoratorWithTestData)
   .addDecorator(ReduxDecorator);
 
-Object.entries(testXsltFiles)
+Object.entries(testXslt)
   .map(k => ({
     name: k[0],
     data: k[1],

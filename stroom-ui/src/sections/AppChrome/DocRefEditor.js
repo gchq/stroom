@@ -17,11 +17,14 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import PipelineEditor from 'components/PipelineEditor';
+import XsltEditor from 'prototypes/XsltEditor';
 
 const DocRefEditor = ({ docRef }) => {
   switch (docRef.type) {
     case 'Pipeline':
       return <PipelineEditor pipelineId={docRef.uuid} />;
+    case 'XSLT':
+      return <XsltEditor xsltId={docRef.uuid} />;
     default:
       return <div>Doc Ref Editor {JSON.stringify(docRef)}</div>;
   }

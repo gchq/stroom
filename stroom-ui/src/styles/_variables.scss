@@ -10,7 +10,8 @@ $animation-duration: 0.3s;
 $low-priority-component-color: rgb(152, 155, 160);
 $low-priority-component-color-hover: rgb(118, 121, 126);
 
-$primary-bg-colour: rgb(52, 147, 255);
+$semantic-blue: #2185d0;
+$primary-bg-colour: $semantic-blue;
 $primary-text-colour: white;
 
 $small-spacing: 1rem;

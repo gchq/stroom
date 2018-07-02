@@ -1,28 +1,29 @@
 .app-chrome {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   height: 100%;
   width: 100%;
 }
 
-.app-chrome__hamburger-menu-btn {
-  position: absolute;
-  top: 1px;
-  left: 1px;
+.app-chrome__sidebar {
+  height: inherit;
+  background-color: $semantic-blue;
 }
 
 .app-chrome__content {
-  height: 100%;
+  flex-grow: 1;
+  width: auto;
+  height: inherit;
 }
 
 .app-chrome__content .ui.segment.active.tab {
   overflow: hidden;
 }
 
-.close-btn {
+.content-tabs__close-btn {
   border: none;
 }
 
-.close-btn:hover {
+.content-tabs__close-btn:hover {
   color: red;
 }

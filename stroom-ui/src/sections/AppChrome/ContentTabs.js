@@ -24,23 +24,30 @@ import DocRefEditor from './DocRefEditor';
 
 import { actionCreators, TAB_TYPES } from './redux';
 
-const { tabClosed } = actionCreators;
+const { tabSelected, tabOpened, tabClosed } = actionCreators;
 
 const enhance = compose(connect(
   (state, props) => ({
-    openTabs: state.appChrome.openTabs,
+    ...state.appChrome,
   }),
-  { tabClosed },
+  { tabSelected, tabClosed },
 ));
 
-const ContentTabs = enhance(({ tabClosed, openTabs }) => {
-  const panes = openTabs.map((t) => {
+const ContentTabs = enhance(({
+  tabSelected, tabClosed, openTabs, tabIdSelected,
+}) => {
+  let activeIndex;
+  const panes = openTabs.map((openTab, index, arr) => {
+    if (openTab.tabId === tabIdSelected) {
+      activeIndex = index;
+    }
+
     let paneContent;
     let title;
 
-    switch (t.type) {
+    switch (openTab.type) {
       case TAB_TYPES.DOC_REF:
-        const docRef = t.data;
+        const docRef = openTab.data;
         title = docRef.name;
         paneContent = <DocRefEditor docRef={docRef} />;
         break;
@@ -56,19 +63,26 @@ const ContentTabs = enhance(({ tabClosed, openTabs }) => {
 
     return {
       menuItem: (
-        <Menu.Item key={t.tabUuid}>
+        <Menu.Item key={openTab.tabId}>
           {title}
-          <button className="close-btn" onClick={() => tabClosed(t.tabUuid)}>
+          <button className="content-tabs__close-btn" onClick={() => tabClosed(openTab.tabId)}>
             x
           </button>
         </Menu.Item>
       ),
-      pane: <Tab.Pane key={t.tabUuid}>{paneContent}</Tab.Pane>,
+      pane: <Tab.Pane key={openTab.tabId}>{paneContent}</Tab.Pane>,
     };
   });
 
+  const handleTabChange = (e, { activeIndex }) => tabSelected(openTabs[activeIndex].tabId);
+
   return panes.length > 0 ? (
-    <Tab renderActiveOnly={false} panes={panes} />
+    <Tab
+      activeIndex={activeIndex}
+      renderActiveOnly={false}
+      panes={panes}
+      onTabChange={handleTabChange}
+    />
   ) : (
     <div className="fill-space" />
   );

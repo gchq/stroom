@@ -30,13 +30,10 @@ import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 import { PollyDecorator } from 'lib/storybook/PollyDecorator';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
-import {
-  testTree,
-  testPipelines,
-  elements,
-  elementProperties,
-} from 'components/PipelineEditor/test';
+import { testPipelines, elements, elementProperties } from 'components/PipelineEditor/test';
 import { testDocRefsTypes } from 'components/DocExplorer/test';
+import { testXslt } from 'prototypes/XsltEditor/test';
+import { testTree } from './test';
 
 import 'styles/main.css';
 
@@ -48,6 +45,7 @@ const PollyDecoratorWithTestData = PollyDecorator({
   elements,
   elementProperties,
   pipelines: testPipelines,
+  xslt: testXslt,
 });
 
 storiesOf('App Chrome', module)

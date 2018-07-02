@@ -66,7 +66,7 @@ const DocRefMenu = enhance(({
       <Dropdown.Menu>
         <Dropdown.Item
           onClick={() => {
-            tabOpened(TAB_TYPES.DOC_REF, docRef);
+            tabOpened(TAB_TYPES.DOC_REF, docRef.uuid, docRef);
               closeContextMenu();
             }}
         >
