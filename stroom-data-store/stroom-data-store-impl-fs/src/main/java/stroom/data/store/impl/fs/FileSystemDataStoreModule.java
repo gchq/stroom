@@ -76,7 +76,7 @@ public class FileSystemDataStoreModule extends AbstractModule {
         final Flyway flyway = new Flyway();
         flyway.setDataSource(dataSource);
         flyway.setLocations("stroom/data/store/impl/db/migration");
-        flyway.setTable("data_store_schema");
+        flyway.setTable("data_store_schema_history");
         flyway.setBaselineOnMigrate(true);
         flyway.migrate();
         return flyway;

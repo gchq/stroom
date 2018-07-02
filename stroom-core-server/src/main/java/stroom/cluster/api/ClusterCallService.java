@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.cluster;
+package stroom.cluster.api;
 
 import stroom.node.shared.Node;
 

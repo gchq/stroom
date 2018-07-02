@@ -19,6 +19,7 @@ package stroom.headless;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.multibindings.Multibinder;
+import stroom.cluster.impl.ClusterModule;
 import stroom.entity.event.EntityClusterTaskModule;
 import stroom.explorer.ExplorerActionHandlerFactory;
 import stroom.persist.EntityManagerModule;
@@ -32,7 +33,7 @@ public class HeadlessModule extends AbstractModule {
     protected void configure() {
         install(new stroom.cache.CacheModule());
         install(new stroom.cache.PipelineCacheModule());
-        install(new stroom.cluster.ClusterModule());
+        install(new ClusterModule());
         install(new stroom.dictionary.DictionaryModule());
         install(new stroom.dictionary.DictionaryHandlerModule());
         install(new stroom.docstore.fs.FSPersistenceModule());

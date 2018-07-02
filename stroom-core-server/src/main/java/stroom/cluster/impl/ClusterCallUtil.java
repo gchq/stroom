@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package stroom.cluster;
+package stroom.cluster.impl;
 
 import stroom.node.shared.Node;
 import stroom.util.shared.ModelStringUtil;
 
-public abstract class ClusterCallUtil {
-    public static String logString(final String prefix, final Node sourceNode, final Node targetNode,
+abstract class ClusterCallUtil {
+    static String logString(final String prefix, final Node sourceNode, final Node targetNode,
                                    final String beanName, final String methodName, final Long ms) {
         return prefix + " " + sourceNode.getName() + "->" + targetNode.getName() + " - " + beanName + "." + methodName
                 + " took " + ModelStringUtil.formatDurationString(ms);
     }
 
-    public static String logString(final String prefix, final Node sourceNode, final Node targetNode,
+    static String logString(final String prefix, final Node sourceNode, final Node targetNode,
                                    final String beanName, final String methodName) {
         return prefix + " " + sourceNode.getName() + "->" + targetNode.getName() + " - " + beanName + "." + methodName;
     }

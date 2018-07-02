@@ -17,8 +17,8 @@
 
 package stroom.node;
 
-import stroom.cluster.ClusterNodeManager;
-import stroom.cluster.ClusterState;
+import stroom.cluster.api.ClusterNodeManager;
+import stroom.cluster.api.ClusterState;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
 import stroom.entity.util.EntityServiceExceptionUtil;

@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.cluster;
+package stroom.cluster.impl;
 
 import com.caucho.hessian.client.HessianProxyFactory;
 import com.caucho.hessian.client.HessianRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.cluster.api.ClusterCallService;
 import stroom.feed.StroomHessianProxyFactory;
 import stroom.guice.StroomBeanStore;
 import stroom.node.NodeCache;

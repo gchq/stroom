@@ -26,6 +26,7 @@ import stroom.entity.EntityModule;
 import stroom.entity.FindService;
 import stroom.node.shared.Node;
 import stroom.persist.EntityManagerModule;
+import stroom.properties.PropertyModule;
 import stroom.properties.api.StroomPropertyService;
 import stroom.security.Security;
 
@@ -33,6 +34,7 @@ public class NodeServiceModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new EntityManagerModule());
+        install(new PropertyModule());
 
         bind(NodeService.class).to(NodeServiceImpl.class);
         bind(NodeServiceGetDefaultNode.class).to(NodeServiceImpl.class);

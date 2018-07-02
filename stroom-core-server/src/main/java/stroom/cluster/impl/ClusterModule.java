@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.cluster;
+package stroom.cluster.impl;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
+import stroom.cluster.api.ClusterCallService;
+import stroom.cluster.api.ClusterNodeManager;
 import stroom.entity.event.EntityEvent;
 import stroom.properties.PropertyModule;
 import stroom.task.TaskHandler;

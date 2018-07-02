@@ -15,10 +15,12 @@
  *
  */
 
-package stroom.cluster;
+package stroom.cluster.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.cluster.api.ClusterNodeManager;
+import stroom.cluster.api.ClusterState;
 import stroom.node.NodeCache;
 import stroom.node.NodeService;
 import stroom.node.shared.FindNodeCriteria;

@@ -14,31 +14,32 @@
  * limitations under the License.
  */
 
-package stroom.cluster;
+package stroom.cluster.impl;
 
+import stroom.cluster.api.ClusterState;
 import stroom.util.shared.VoidResult;
 import stroom.task.ServerTask;
 
-public class UpdateClusterStateTask extends ServerTask<VoidResult> {
+class UpdateClusterStateTask extends ServerTask<VoidResult> {
     private ClusterState clusterState;
     private int delay;
     private boolean testActiveNodes;
 
-    public UpdateClusterStateTask(final ClusterState clusterState, final int delay, final boolean testActiveNodes) {
+    UpdateClusterStateTask(final ClusterState clusterState, final int delay, final boolean testActiveNodes) {
         this.clusterState = clusterState;
         this.delay = delay;
         this.testActiveNodes = testActiveNodes;
     }
 
-    public ClusterState getClusterState() {
+    ClusterState getClusterState() {
         return clusterState;
     }
 
-    public int getDelay() {
+    int getDelay() {
         return delay;
     }
 
-    public boolean isTestActiveNodes() {
+    boolean isTestActiveNodes() {
         return testActiveNodes;
     }
 

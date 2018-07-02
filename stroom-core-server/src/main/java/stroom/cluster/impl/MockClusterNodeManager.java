@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.cluster;
+package stroom.cluster.impl;
 
+import stroom.cluster.api.ClusterNodeManager;
+import stroom.cluster.api.ClusterState;
 import stroom.node.NodeCache;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.Node;

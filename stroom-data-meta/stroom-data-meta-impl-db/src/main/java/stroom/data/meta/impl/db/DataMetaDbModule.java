@@ -46,7 +46,7 @@ public class DataMetaDbModule extends AbstractModule {
         final Flyway flyway = new Flyway();
         flyway.setDataSource(dataSource);
         flyway.setLocations("stroom/data/meta/impl/db");
-        flyway.setTable("data_meta_schema");
+        flyway.setTable("data_meta_schema_history");
         flyway.setBaselineOnMigrate(true);
         flyway.migrate();
         return flyway;

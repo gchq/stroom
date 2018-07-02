@@ -19,15 +19,12 @@ package stroom.task.cluster;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
-import stroom.cluster.ClusterModule;
 import stroom.entity.shared.Clearable;
 import stroom.task.TaskHandler;
 
 public class ClusterTaskModule extends AbstractModule {
     @Override
     protected void configure() {
-        install(new ClusterModule());
-
         bind(ClusterDispatchAsync.class).to(ClusterDispatchAsyncImpl.class);
         bind(Object.class).annotatedWith(Names.named(ClusterDispatchAsyncImpl.BEAN_NAME)).to(ClusterDispatchAsyncImpl.class);
         bind(Object.class).annotatedWith(Names.named(ClusterWorkerImpl.BEAN_NAME)).to(ClusterWorkerImpl.class);

@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.cluster;
+package stroom.cluster.impl;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
+import stroom.cluster.api.ClusterCallService;
+import stroom.cluster.api.ClusterNodeManager;
 
 public class MockClusterModule extends AbstractModule {
     @Override

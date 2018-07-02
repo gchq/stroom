@@ -7,8 +7,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.Properties;
 
-public class V6_0_0_9__ProcessingFilterIT {
-
+@Ignore
+public class TestProcessingFilterMigration {
     private static final String TEST_USER = "stroomuser";
     private static final String TEST_PASSWORD = "stroompassword1";
 
@@ -34,6 +34,5 @@ public class V6_0_0_9__ProcessingFilterIT {
         filter.migrate(conn);
 
         conn.close();
-
     }
 }

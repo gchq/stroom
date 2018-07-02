@@ -24,5 +24,6 @@ public class ToolModule extends AbstractModule {
         install(new stroom.data.meta.impl.db.DataMetaDbModule());
         install(new stroom.data.store.impl.fs.FileSystemDataStoreModule());
         install(new stroom.security.impl.mock.MockSecurityContextModule());
+        install(new stroom.cluster.impl.MockClusterModule());
     }
 }
