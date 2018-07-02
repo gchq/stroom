@@ -17,7 +17,7 @@ import React from 'react';
 
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
-import { Tab, Menu } from 'semantic-ui-react';
+import { Menu } from 'semantic-ui-react';
 
 import DocExplorer from 'components/DocExplorer';
 import TrackerDashboard from 'sections/TrackerDashboard';
@@ -35,61 +35,78 @@ const enhance = compose(connect(
 ));
 
 const ContentTabs = enhance(({
-  tabSelected, tabClosed, openTabs, tabIdSelected,
+  tabSelected, tabClosed, openTabs, tabSelectionStack,
 }) => {
-  let activeIndex;
-  const panes = openTabs.map((openTab, index, arr) => {
-    if (openTab.tabId === tabIdSelected) {
-      activeIndex = index;
-    }
+  let tabIdSelected;
+  if (tabSelectionStack.length > 0) {
+    tabIdSelected = tabSelectionStack[tabSelectionStack.length - 1];
+  }
+  console.log('Tab Selected', tabIdSelected);
 
-    let paneContent;
+  const menuItems = openTabs.map((openTab, index, arr) => {
     let title;
 
     switch (openTab.type) {
       case TAB_TYPES.DOC_REF:
         const docRef = openTab.data;
         title = docRef.name;
-        paneContent = <DocRefEditor docRef={docRef} />;
         break;
       case TAB_TYPES.EXPLORER_TREE:
         title = 'Explorer';
-        paneContent = <DocExplorer explorerId="content-tab-tree" />;
         break;
       case TAB_TYPES.TRACKER_DASHBOARD:
         title = 'Trackers';
-        paneContent = <TrackerDashboard />;
         break;
       default:
         // sad times
-        paneContent = <div>Invalid tab</div>;
+        title = 'UNKNOWN';
         break;
     }
 
-    return {
-      menuItem: (
-        <Menu.Item key={openTab.tabId}>
-          {title}
-          <button className="content-tabs__close-btn" onClick={() => tabClosed(openTab.tabId)}>
-            x
-          </button>
-        </Menu.Item>
-      ),
-      pane: <Tab.Pane key={openTab.tabId}>{paneContent}</Tab.Pane>,
-    };
+    const closeTab = (e) => {
+      tabClosed(openTab.tabId);
+      e.preventDefault();
+    }
+
+    return (
+      <Menu.Item
+        key={openTab.tabId}
+        onClick={() => tabSelected(openTab.tabId)}
+        active={openTab.tabId === tabIdSelected}
+      >
+        {title}
+        <button className="content-tabs__close-btn" onClick={closeTab}>
+          x
+        </button>
+      </Menu.Item>
+    );
   });
 
-  const handleTabChange = (e, { activeIndex }) => tabSelected(openTabs[activeIndex].tabId);
+  let tabContent;
+  const selectedTab = openTabs.find(t => t.tabId === tabIdSelected);
+  if (selectedTab) {
+    switch (selectedTab.type) {
+      case TAB_TYPES.DOC_REF:
+        tabContent = <DocRefEditor docRef={selectedTab.data} />;
+        break;
+      case TAB_TYPES.EXPLORER_TREE:
+        tabContent = <DocExplorer explorerId="content-tab-tree" />;
+        break;
+      case TAB_TYPES.TRACKER_DASHBOARD:
+        tabContent = <TrackerDashboard />;
+        break;
+      default:
+        // sad times
+        tabContent = <div>Invalid tab</div>;
+        break;
+    }
+  }
 
-  return panes.length > 0 ? (
-    <Tab
-      activeIndex={activeIndex}
-      renderActiveOnly={false}
-      panes={panes}
-      onTabChange={handleTabChange}
-    />
-  ) : (
-    <div className="fill-space" />
+  return (
+    <div className="content-tabs">
+      <Menu tabular>{menuItems}</Menu>
+      <div className="content-tabs__content">{tabContent}</div>
+    </div>
   );
 });
 

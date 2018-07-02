@@ -19,11 +19,14 @@ import { storiesOf } from '@storybook/react';
 import { withNotes } from '@storybook/addon-notes';
 import TrackerDashboard from './TrackerDashboard';
 import StoryRouter from 'storybook-react-router';
-import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
+import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
+import { PollyDecorator } from 'lib/storybook/PollyDecorator';
 
 import { trackers, generateGenericTracker } from '../tracker.testData';
 
 import { actionCreators } from '../redux';
+
+import 'styles/main.css';
 
 const containerStyle = {
   height: '500px',
@@ -33,12 +36,10 @@ const notes =
   "This is the tracker dashboard. Sorting, searching, and paging happen remotely so they don't work without further customisation.";
 
 storiesOf('TrackerDashboard', module)
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(actionCreators.updateTrackers(
-      [trackers.minimalTracker_undefinedLastPollAge, trackers.maximalTracker],
-      2,
-    ));
+  .addDecorator(PollyDecorator({
+    trackers: [trackers.minimalTracker_undefinedLastPollAge, trackers.maximalTracker],
   }))
+  .addDecorator(ReduxDecorator)
   .addDecorator(StoryRouter())
   .add(
     'basic',
@@ -50,9 +51,10 @@ storiesOf('TrackerDashboard', module)
   );
 
 storiesOf('TrackerDashboard', module)
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(actionCreators.updateTrackers([], undefined));
+  .addDecorator(PollyDecorator({
+    trackers: undefined,
   }))
+  .addDecorator(ReduxDecorator)
   .addDecorator(StoryRouter())
   .add(
     'No trackers',
@@ -69,9 +71,10 @@ const lotsOfTrackers = [];
 });
 
 storiesOf('TrackerDashboard', module)
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(actionCreators.updateTrackers(lotsOfTrackers, 100));
+  .addDecorator(PollyDecorator({
+    trackers: lotsOfTrackers,
   }))
+  .addDecorator(ReduxDecorator)
   .addDecorator(StoryRouter())
   .add(
     'Lots of trackers',

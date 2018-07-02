@@ -17,6 +17,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
+import { compose, lifecycle } from 'recompose';
 import Mousetrap from 'mousetrap';
 
 import { Label, Table, Progress, Button, Input, Menu, Pagination } from 'semantic-ui-react';
@@ -26,23 +27,20 @@ import { actionCreators, Directions, SortByOptions } from '../redux';
 import { expressionActionCreators } from 'components/ExpressionBuilder';
 import { fetchTrackers, TrackerSelection } from '../streamTasksResourceClient';
 import TrackerDetails from '../TrackerDetails/TrackerDetails';
+import { withConfig } from 'startup/config';
 
-import './TrackerDashboard.css';
+const {
+  updateSort,
+  updateTrackerSelection,
+  moveSelection,
+  resetPaging,
+  updateSearchCriteria,
+  changePage,
+  pageRight,
+  pageLeft,
+} = actionCreators;
 
 class TrackerDashboard extends Component {
-  componentDidMount() {
-    this.context.store.dispatch(fetchTrackers());
-
-    // This component monitors window size. For every change it will fetch the
-    // trackers. The fetch trackers function will only fetch trackers that fit
-    // in the viewport, which means the view will update to fit.
-    window.addEventListener('resize', (event) => {
-      // Resizing the window is another time when paging gets reset.
-      this.context.store.dispatch(actionCreators.resetPaging());
-      this.context.store.dispatch(fetchTrackers());
-    });
-  }
-
   handleSort(newSortBy, currentSortBy, currentDirection) {
     if (currentSortBy === newSortBy) {
       if (currentDirection === Directions.ascending) {
@@ -210,12 +208,14 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
+  fetchTrackers: () => dispatch(fetchTrackers()),
+  resetPaging: () => dispatch(resetPaging()),
   onHandleSort: (sortBy, sortDirection) => {
-    dispatch(actionCreators.updateSort(sortBy, sortDirection));
+    dispatch(updateSort(sortBy, sortDirection));
     dispatch(fetchTrackers());
   },
   onHandleTrackerSelection: (filterId, trackers) => {
-    dispatch(actionCreators.updateTrackerSelection(filterId));
+    dispatch(updateTrackerSelection(filterId));
 
     let expression;
     if (filterId !== undefined) {
@@ -228,11 +228,11 @@ const mapDispatchToProps = dispatch => ({
     dispatch(expressionActionCreators.expressionChanged('trackerDetailsExpression', expression));
   },
   onMoveSelection: (direction) => {
-    dispatch(actionCreators.moveSelection(direction));
+    dispatch(moveSelection(direction));
   },
   onHandleSearchChange: (data) => {
-    dispatch(actionCreators.resetPaging());
-    dispatch(actionCreators.updateSearchCriteria(data.value));
+    dispatch(resetPaging());
+    dispatch(updateSearchCriteria(data.value));
     // This line enables search as you type. Whether we want it or not depends on performance
     dispatch(fetchTrackers());
   },
@@ -243,18 +243,36 @@ const mapDispatchToProps = dispatch => ({
   },
   onHandlePageChange: (data) => {
     if (data.activePage < data.totalPages) {
-      dispatch(actionCreators.changePage(data.activePage - 1));
+      dispatch(changePage(data.activePage - 1));
       dispatch(fetchTrackers());
     }
   },
   onHandlePageRight: () => {
-    dispatch(actionCreators.pageRight());
+    dispatch(pageRight());
     dispatch(fetchTrackers(TrackerSelection.first));
   },
   onHandlePageLeft: () => {
-    dispatch(actionCreators.pageLeft());
+    dispatch(pageLeft());
     dispatch(fetchTrackers(TrackerSelection.first));
   },
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(TrackerDashboard);
+export default compose(
+  withConfig,
+  connect(mapStateToProps, mapDispatchToProps),
+  lifecycle({
+    componentDidMount() {
+      console.log('Mounted the component, time to fetch trackers');
+      this.props.fetchTrackers();
+
+      // This component monitors window size. For every change it will fetch the
+      // trackers. The fetch trackers function will only fetch trackers that fit
+      // in the viewport, which means the view will update to fit.
+      window.addEventListener('resize', (event) => {
+        // Resizing the window is another time when paging gets reset.
+        this.props.resetPaging();
+        this.props.fetchTrackers();
+      });
+    },
+  }),
+)(TrackerDashboard);

@@ -20,6 +20,18 @@
   overflow: hidden;
 }
 
+.content-tabs {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.content-tabs__content {
+  height: inherit;
+  flex-grow: 1;
+}
+
 .content-tabs__close-btn {
   border: none;
 }

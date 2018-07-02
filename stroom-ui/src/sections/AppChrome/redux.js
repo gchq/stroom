@@ -30,15 +30,23 @@ const actionCreators = createActions({
 
 const defaultState = {
   openTabs: [],
-  tabIdSelected: undefined,
+  tabSelectionStack: [],
 };
 
 const reducer = handleActions(
   {
-    TAB_SELECTED: (state, action) => ({
-      ...state,
-      tabIdSelected: action.payload.tabId,
-    }),
+    TAB_SELECTED: (state, action) => {
+      const openTab = state.openTabs.find(t => t.tabId === action.payload.tabId);
+      if (openTab) {
+        return {
+          ...state,
+          tabSelectionStack: state.tabSelectionStack
+            .filter(t => t !== action.payload.tabId)
+            .concat([action.payload.tabId]),
+        };
+      }
+      return state;
+    },
     TAB_OPENED: (state, action) => {
       const tabId = action.payload.tabId || action.payload.type;
       if (state.openTabs.find(t => t.tabId === tabId)) {
@@ -49,7 +57,7 @@ const reducer = handleActions(
       }
       return {
         ...state,
-        tabIdSelected: tabId,
+        tabSelectionStack: state.tabSelectionStack.filter(t => t !== tabId).concat([tabId]),
         openTabs: state.openTabs.concat([
           {
             type: action.payload.type,
@@ -61,6 +69,7 @@ const reducer = handleActions(
     },
     TAB_CLOSED: (state, action) => ({
       ...state,
+      tabSelectionStack: state.tabSelectionStack.filter(t => t !== action.payload.tabId),
       openTabs: state.openTabs.filter(t => t.tabId !== action.payload.tabId),
     }),
   },

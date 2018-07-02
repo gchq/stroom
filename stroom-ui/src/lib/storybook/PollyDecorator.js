@@ -96,6 +96,13 @@ server.get(`${testConfig.xsltServiceUrl}/:xsltId`).intercept((req, res) => {
 });
 server.post(`${testConfig.xsltServiceUrl}/:xsltId`).intercept((req, res) => res.sendStatus(200));
 
+// Stream Task Resource (for Tracker Dashboard)
+server.get(`${testConfig.streamTaskServiceUrl}/`).intercept((req, res) =>
+  res.json({
+    streamTasks: testCache.data.trackers || [],
+    totalStreamTasks: testCache.data.trackers ? testCache.data.trackers.length : 0,
+  }));
+
 const enhanceLocal = compose(
   connect(state => ({}), {
     resetAllUrls,
