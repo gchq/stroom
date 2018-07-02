@@ -76,12 +76,13 @@ public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
     private static final String USER_1 = "user1";
     private static final String VALUE_1 = "value1";
     private static final String VALUE_2 = "value2";
+    private static final String VALUE_3 = "value3";
+    private static final String VALUE_4 = "value4";
     private static final String SID_TO_PF_1 = "SID_TO_PF_1";
     private static final String SID_TO_PF_2 = "SID_TO_PF_2";
     private static final String SID_TO_PF_3 = "SID_TO_PF_3";
     private static final String SID_TO_PF_4 = "SID_TO_PF_4";
     public static final String IP_TO_LOC_MAP_NAME = "IP_TO_LOC_MAP_NAME";
-    public static final String VALUE_HERE = "here";
     public static final String VALUE_THERE = "there";
 
     private final MockFeedService feedService = new MockFeedService();
@@ -456,9 +457,10 @@ public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
                     pipelineDoc,
                     streamSet,
                     Arrays.asList(
-                            Tuple.of(IP_TO_LOC_MAP_NAME, Range.of(2L, 30L), VALUE_HERE),
-                            Tuple.of(IP_TO_LOC_MAP_NAME, Range.of(500L, 2000L), VALUE_THERE)
-                    ),
+                            Tuple.of(IP_TO_LOC_MAP_NAME, Range.of(2L, 30L), VALUE_1),
+                            Tuple.of(IP_TO_LOC_MAP_NAME, Range.of(40L, 41L), VALUE_2),
+                            Tuple.of(IP_TO_LOC_MAP_NAME, Range.of(500L, 2000L), VALUE_3),
+                            Tuple.of(IP_TO_LOC_MAP_NAME, Range.of(3000L, 3001L), VALUE_4)),
                     mockLoaderActionsMap);
 
             Mockito.doAnswer(invocation -> {
@@ -472,21 +474,25 @@ public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
             assertThat(lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC_MAP_NAME", "1"))
                     .isEmpty();
             assertThat(lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC_MAP_NAME", "2"))
-                    .contains(VALUE_HERE);
+                    .contains(VALUE_1);
             assertThat(lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC_MAP_NAME", "10"))
-                    .contains(VALUE_HERE);
+                    .contains(VALUE_1);
             assertThat(lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC_MAP_NAME", "29"))
-                    .contains(VALUE_HERE);
+                    .contains(VALUE_1);
             assertThat(lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC_MAP_NAME", "30"))
                     .isEmpty();
+            assertThat(lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC_MAP_NAME", "40"))
+                    .contains(VALUE_2);
             assertThat(lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC_MAP_NAME", "500"))
-                    .contains(VALUE_THERE);
+                    .contains(VALUE_3);
             assertThat(lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC_MAP_NAME", "1000"))
-                    .contains(VALUE_THERE);
+                    .contains(VALUE_3);
             assertThat(lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC_MAP_NAME", "1999"))
-                    .contains(VALUE_THERE);
+                    .contains(VALUE_3);
             assertThat(lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC_MAP_NAME", "2000"))
                     .isEmpty();
+            assertThat(lookup(referenceData, pipelineReferences, 0, "IP_TO_LOC_MAP_NAME", "3000"))
+                    .contains(VALUE_4);
         } catch (final Exception e) {
             throw new RuntimeException(e.getMessage(), e);
         }
