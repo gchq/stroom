@@ -24,9 +24,8 @@ import 'brace/keybinding/vim';
 import { compose, lifecycle, renderComponent, branch } from 'recompose';
 import { connect } from 'react-redux';
 import AceEditor from 'react-ace';
-import { Loader } from 'semantic-ui-react';
+import { Loader, Button } from 'semantic-ui-react';
 
-import SaveXslt from './SaveXslt';
 import { fetchXslt, saveXslt } from './xsltResourceClient';
 import { withConfig } from 'startup/config';
 
@@ -52,14 +51,16 @@ const enhance = compose(
   branch(({ xslt }) => !xslt, renderComponent(() => <Loader active>Loading XSLT</Loader>)),
 );
 
-const XsltEditor = enhance(({ xsltId, xslt, xsltUpdated }) => (
+const XsltEditor = enhance(({
+  xsltId, xslt, xsltUpdated, saveXslt,
+}) => (
   <div className="xslt-editor">
     <div className="xslt-editor__header">
-      <SaveXslt xsltId={xsltId} />
+      <Button disabled={!xslt.isDirty} color="blue" icon="save" onClick={() => saveXslt(xsltId)} />
     </div>
     <div className="xslt-editor__ace-container">
       <AceEditor
-        style={{ width: '100%', height: '100%' }}
+        style={{ width: '100%', height: '100%', minHeight: '25rem' }}
         name={`${xsltId}-ace-editor`}
         mode="xml"
         theme="github"

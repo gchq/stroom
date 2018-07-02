@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 import { createActions, handleActions } from 'redux-actions';
-import { guid } from 'lib/treeUtils';
 
 // Enumerate the tab types that can be opened
 const TAB_TYPES = {
   DOC_REF: 0,
   EXPLORER_TREE: 1,
+  TRACKER_DASHBOARD: 2,
 };
 
 const actionCreators = createActions({

@@ -16,7 +16,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { compose, withState } from 'recompose';
-import { Button, Sidebar, Segment, Menu, Icon } from 'semantic-ui-react';
+import { Button, Menu, Icon } from 'semantic-ui-react';
 
 import { actionCreators, TAB_TYPES } from './redux';
 import ContentTabs from './ContentTabs';
@@ -44,6 +44,10 @@ const AppChrome = enhance(({ tabOpened, isExpanded, setIsExpanded }) => {
         <Icon name="eye" />
         Explorer
       </Menu.Item>
+      <Menu.Item name="trackers" onClick={() => tabOpened(TAB_TYPES.TRACKER_DASHBOARD)}>
+        <Icon name="tasks" />
+        Trackers
+      </Menu.Item>
       <Menu.Item name="user">
         <Icon name="user" />
         User
@@ -53,6 +57,7 @@ const AppChrome = enhance(({ tabOpened, isExpanded, setIsExpanded }) => {
     <Button.Group vertical color="blue" size="large">
       <Button icon="bars" onClick={toggleExpanded} />
       <Button icon="eye" onClick={() => tabOpened(TAB_TYPES.EXPLORER_TREE)} />
+      <Button icon="tasks" onClick={() => tabOpened(TAB_TYPES.TRACKER_DASHBOARD)} />
       <Button icon="user" />
     </Button.Group>
   );

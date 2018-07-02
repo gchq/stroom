@@ -19,12 +19,13 @@ import { connect } from 'react-redux';
 import { compose } from 'recompose';
 import { Tab, Menu } from 'semantic-ui-react';
 
-import { DocExplorer } from 'components/DocExplorer';
+import DocExplorer from 'components/DocExplorer';
+import TrackerDashboard from 'sections/TrackerDashboard';
 import DocRefEditor from './DocRefEditor';
 
 import { actionCreators, TAB_TYPES } from './redux';
 
-const { tabSelected, tabOpened, tabClosed } = actionCreators;
+const { tabSelected, tabClosed } = actionCreators;
 
 const enhance = compose(connect(
   (state, props) => ({
@@ -54,6 +55,10 @@ const ContentTabs = enhance(({
       case TAB_TYPES.EXPLORER_TREE:
         title = 'Explorer';
         paneContent = <DocExplorer explorerId="content-tab-tree" />;
+        break;
+      case TAB_TYPES.TRACKER_DASHBOARD:
+        title = 'Trackers';
+        paneContent = <TrackerDashboard />;
         break;
       default:
         // sad times
