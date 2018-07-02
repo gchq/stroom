@@ -23,21 +23,18 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.EntityReferenceFindAction;
+import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.feed.shared.FeedDoc;
-import stroom.item.client.StringListBox;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 
 public class NewPipelineReferencePresenter
         extends MyPresenterWidget<NewPipelineReferencePresenter.NewPipelineReferenceView> {
     private final EntityDropDownPresenter pipelinePresenter;
     private final EntityDropDownPresenter feedPresenter;
-//    private final ClientDispatchAsync dispatcher;
+    //    private final ClientDispatchAsync dispatcher;
     private final TextBox streamTypesWidget;
     private boolean dirty;
 //    private boolean initialised;
@@ -77,21 +74,21 @@ public class NewPipelineReferencePresenter
 
         pipelinePresenter.addDataSelectionHandler(event -> {
 //            if (initialised) {
-                final DocRef selection = pipelinePresenter.getSelectedEntityReference();
-                if ((pipelineReference.getPipeline() == null && selection != null)
-                        || (pipelineReference.getPipeline() != null
-                        && !pipelineReference.getPipeline().equals(selection))) {
-                    setDirty(true);
-                }
+            final DocRef selection = pipelinePresenter.getSelectedEntityReference();
+            if ((pipelineReference.getPipeline() == null && selection != null)
+                    || (pipelineReference.getPipeline() != null
+                    && !pipelineReference.getPipeline().equals(selection))) {
+                setDirty(true);
+            }
 //            }
         });
         feedPresenter.addDataSelectionHandler(event -> {
 //            if (initialised) {
-                final DocRef selection = feedPresenter.getSelectedEntityReference();
-                if ((pipelineReference.getFeed() == null && selection != null)
-                        || (pipelineReference.getFeed() != null && !pipelineReference.getFeed().equals(selection))) {
-                    setDirty(true);
-                }
+            final DocRef selection = feedPresenter.getSelectedEntityReference();
+            if ((pipelineReference.getFeed() == null && selection != null)
+                    || (pipelineReference.getFeed() != null && !pipelineReference.getFeed().equals(selection))) {
+                setDirty(true);
+            }
 //            }
         });
         streamTypesWidget.addChangeHandler(event -> {
@@ -100,7 +97,7 @@ public class NewPipelineReferencePresenter
 //                if ((pipelineReference.getType() == null && selection != null)
 //                        || (pipelineReference.getType() != null
 //                        && !pipelineReference.getType().equals(selection))) {
-                    setDirty(true);
+            setDirty(true);
 //                }
 //            }
         });

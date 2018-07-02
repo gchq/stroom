@@ -58,6 +58,7 @@ public class Keys {
     public static final UniqueKey<DataFeedRecord> KEY_DATA_FEED_PRIMARY = UniqueKeys0.KEY_DATA_FEED_PRIMARY;
     public static final UniqueKey<DataFeedRecord> KEY_DATA_FEED_NAME = UniqueKeys0.KEY_DATA_FEED_NAME;
     public static final UniqueKey<DataProcessorRecord> KEY_DATA_PROCESSOR_PRIMARY = UniqueKeys0.KEY_DATA_PROCESSOR_PRIMARY;
+    public static final UniqueKey<DataProcessorRecord> KEY_DATA_PROCESSOR_PROCESSOR_ID = UniqueKeys0.KEY_DATA_PROCESSOR_PROCESSOR_ID;
     public static final UniqueKey<DataTypeRecord> KEY_DATA_TYPE_PRIMARY = UniqueKeys0.KEY_DATA_TYPE_PRIMARY;
     public static final UniqueKey<DataTypeRecord> KEY_DATA_TYPE_NAME = UniqueKeys0.KEY_DATA_TYPE_NAME;
     public static final UniqueKey<MetaKeyRecord> KEY_META_KEY_PRIMARY = UniqueKeys0.KEY_META_KEY_PRIMARY;
@@ -68,9 +69,9 @@ public class Keys {
     // FOREIGN KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final ForeignKey<DataRecord, DataFeedRecord> STRM_FK_FD_ID = ForeignKeys0.STRM_FK_FD_ID;
-    public static final ForeignKey<DataRecord, DataProcessorRecord> STRM_FK_STRM_PROC_ID = ForeignKeys0.STRM_FK_STRM_PROC_ID;
-    public static final ForeignKey<DataRecord, DataTypeRecord> STRM_FK_STRM_TP_ID = ForeignKeys0.STRM_FK_STRM_TP_ID;
+    public static final ForeignKey<DataRecord, DataFeedRecord> DATA_FEED_ID = ForeignKeys0.DATA_FEED_ID;
+    public static final ForeignKey<DataRecord, DataTypeRecord> DATA_YPE_ID = ForeignKeys0.DATA_YPE_ID;
+    public static final ForeignKey<DataRecord, DataProcessorRecord> DATA_PROCESSOR_ID = ForeignKeys0.DATA_PROCESSOR_ID;
 
     // -------------------------------------------------------------------------
     // [#1459] distribute members to avoid static initialisers > 64kb
@@ -88,18 +89,19 @@ public class Keys {
     private static class UniqueKeys0 extends AbstractKeys {
         public static final UniqueKey<DataRecord> KEY_DATA_PRIMARY = createUniqueKey(Data.DATA, "KEY_data_PRIMARY", Data.DATA.ID);
         public static final UniqueKey<DataFeedRecord> KEY_DATA_FEED_PRIMARY = createUniqueKey(DataFeed.DATA_FEED, "KEY_data_feed_PRIMARY", DataFeed.DATA_FEED.ID);
-        public static final UniqueKey<DataFeedRecord> KEY_DATA_FEED_NAME = createUniqueKey(DataFeed.DATA_FEED, "KEY_data_feed_NAME", DataFeed.DATA_FEED.NAME);
+        public static final UniqueKey<DataFeedRecord> KEY_DATA_FEED_NAME = createUniqueKey(DataFeed.DATA_FEED, "KEY_data_feed_name", DataFeed.DATA_FEED.NAME);
         public static final UniqueKey<DataProcessorRecord> KEY_DATA_PROCESSOR_PRIMARY = createUniqueKey(DataProcessor.DATA_PROCESSOR, "KEY_data_processor_PRIMARY", DataProcessor.DATA_PROCESSOR.ID);
+        public static final UniqueKey<DataProcessorRecord> KEY_DATA_PROCESSOR_PROCESSOR_ID = createUniqueKey(DataProcessor.DATA_PROCESSOR, "KEY_data_processor_processor_id", DataProcessor.DATA_PROCESSOR.PROCESSOR_ID);
         public static final UniqueKey<DataTypeRecord> KEY_DATA_TYPE_PRIMARY = createUniqueKey(DataType.DATA_TYPE, "KEY_data_type_PRIMARY", DataType.DATA_TYPE.ID);
-        public static final UniqueKey<DataTypeRecord> KEY_DATA_TYPE_NAME = createUniqueKey(DataType.DATA_TYPE, "KEY_data_type_NAME", DataType.DATA_TYPE.NAME);
+        public static final UniqueKey<DataTypeRecord> KEY_DATA_TYPE_NAME = createUniqueKey(DataType.DATA_TYPE, "KEY_data_type_name", DataType.DATA_TYPE.NAME);
         public static final UniqueKey<MetaKeyRecord> KEY_META_KEY_PRIMARY = createUniqueKey(MetaKey.META_KEY, "KEY_meta_key_PRIMARY", MetaKey.META_KEY.ID);
         public static final UniqueKey<MetaKeyRecord> KEY_META_KEY_NAME = createUniqueKey(MetaKey.META_KEY, "KEY_meta_key_name", MetaKey.META_KEY.NAME);
         public static final UniqueKey<MetaValRecord> KEY_META_VAL_PRIMARY = createUniqueKey(MetaVal.META_VAL, "KEY_meta_val_PRIMARY", MetaVal.META_VAL.ID);
     }
 
     private static class ForeignKeys0 extends AbstractKeys {
-        public static final ForeignKey<DataRecord, DataFeedRecord> STRM_FK_FD_ID = createForeignKey(stroom.data.meta.impl.db.stroom.Keys.KEY_DATA_FEED_PRIMARY, Data.DATA, "STRM_FK_FD_ID", Data.DATA.FK_FD_ID);
-        public static final ForeignKey<DataRecord, DataProcessorRecord> STRM_FK_STRM_PROC_ID = createForeignKey(stroom.data.meta.impl.db.stroom.Keys.KEY_DATA_PROCESSOR_PRIMARY, Data.DATA, "STRM_FK_STRM_PROC_ID", Data.DATA.FK_STRM_PROC_ID);
-        public static final ForeignKey<DataRecord, DataTypeRecord> STRM_FK_STRM_TP_ID = createForeignKey(stroom.data.meta.impl.db.stroom.Keys.KEY_DATA_TYPE_PRIMARY, Data.DATA, "STRM_FK_STRM_TP_ID", Data.DATA.FK_STRM_TP_ID);
+        public static final ForeignKey<DataRecord, DataFeedRecord> DATA_FEED_ID = createForeignKey(stroom.data.meta.impl.db.stroom.Keys.KEY_DATA_FEED_PRIMARY, Data.DATA, "data_feed_id", Data.DATA.FEED_ID);
+        public static final ForeignKey<DataRecord, DataTypeRecord> DATA_YPE_ID = createForeignKey(stroom.data.meta.impl.db.stroom.Keys.KEY_DATA_TYPE_PRIMARY, Data.DATA, "data_ype_id", Data.DATA.TYPE_ID);
+        public static final ForeignKey<DataRecord, DataProcessorRecord> DATA_PROCESSOR_ID = createForeignKey(stroom.data.meta.impl.db.stroom.Keys.KEY_DATA_PROCESSOR_PRIMARY, Data.DATA, "data_processor_id", Data.DATA.PROCESSOR_ID);
     }
 }

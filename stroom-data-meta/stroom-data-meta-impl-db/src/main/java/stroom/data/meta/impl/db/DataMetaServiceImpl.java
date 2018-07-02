@@ -39,7 +39,6 @@ import stroom.util.date.DateUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -64,7 +63,7 @@ import static stroom.data.meta.impl.db.stroom.tables.DataType.DATA_TYPE;
 class DataMetaServiceImpl implements DataMetaService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataMetaServiceImpl.class);
 
-    private final DataSource dataSource;
+    private final ConnectionProvider connectionProvider;
     private final FeedService feedService;
     private final DataTypeService dataTypeService;
     private final ProcessorService processorService;
@@ -83,7 +82,7 @@ class DataMetaServiceImpl implements DataMetaService {
     private final MetaExpressionMapper metaExpressionMapper;
 
     @Inject
-    DataMetaServiceImpl(final DataMetaDataSource dataSource,
+    DataMetaServiceImpl(final ConnectionProvider connectionProvider,
                         final FeedService feedService,
                         final DataTypeService dataTypeService,
                         final ProcessorService processorService,
@@ -91,7 +90,7 @@ class DataMetaServiceImpl implements DataMetaService {
                         final MetaValueService metaValueService,
                         final DataSecurityFilter dataSecurityFilter,
                         final Security security) {
-        this.dataSource = dataSource;
+        this.connectionProvider = connectionProvider;
         this.feedService = feedService;
         this.dataTypeService = dataTypeService;
         this.processorService = processorService;
@@ -103,17 +102,17 @@ class DataMetaServiceImpl implements DataMetaService {
         // Standard fields.
         final Map<String, TermHandler<?>> termHandlers = new HashMap<>();
         termHandlers.put(MetaDataSource.STREAM_ID, new TermHandler<>(data.ID, Long::valueOf));
-        termHandlers.put(MetaDataSource.FEED, new TermHandler<>(data.FK_FD_ID, feedService::getOrCreate));
-        termHandlers.put(MetaDataSource.FEED_ID, new TermHandler<>(data.FK_FD_ID, Integer::valueOf));
-        termHandlers.put(MetaDataSource.STREAM_TYPE, new TermHandler<>(data.FK_STRM_TP_ID, dataTypeService::getOrCreate));
+        termHandlers.put(MetaDataSource.FEED, new TermHandler<>(data.FEED_ID, feedService::getOrCreate));
+        termHandlers.put(MetaDataSource.FEED_ID, new TermHandler<>(data.FEED_ID, Integer::valueOf));
+        termHandlers.put(MetaDataSource.STREAM_TYPE, new TermHandler<>(data.TYPE_ID, dataTypeService::getOrCreate));
         termHandlers.put(MetaDataSource.PIPELINE, new TermHandler<>(dataProcessor.PIPELINE_UUID, value -> value));
-        termHandlers.put(MetaDataSource.PARENT_STREAM_ID, new TermHandler<>(data.PARNT_STRM_ID, Long::valueOf));
-        termHandlers.put(MetaDataSource.STREAM_TASK_ID, new TermHandler<>(data.STRM_TASK_ID, Long::valueOf));
-        termHandlers.put(MetaDataSource.STREAM_PROCESSOR_ID, new TermHandler<>(data.FK_STRM_PROC_ID, Integer::valueOf));
-        termHandlers.put(MetaDataSource.STATUS, new TermHandler<>(data.STAT, value -> DataStatusId.getPrimitiveValue(DataStatus.valueOf(value.toUpperCase()))));
-        termHandlers.put(MetaDataSource.STATUS_TIME, new TermHandler<>(data.STAT_MS, DateUtil::parseNormalDateTimeString));
-        termHandlers.put(MetaDataSource.CREATE_TIME, new TermHandler<>(data.CRT_MS, DateUtil::parseNormalDateTimeString));
-        termHandlers.put(MetaDataSource.EFFECTIVE_TIME, new TermHandler<>(data.EFFECT_MS, DateUtil::parseNormalDateTimeString));
+        termHandlers.put(MetaDataSource.PARENT_STREAM_ID, new TermHandler<>(data.PARENT_ID, Long::valueOf));
+        termHandlers.put(MetaDataSource.STREAM_TASK_ID, new TermHandler<>(data.TASK_ID, Long::valueOf));
+        termHandlers.put(MetaDataSource.STREAM_PROCESSOR_ID, new TermHandler<>(data.PROCESSOR_ID, Integer::valueOf));
+        termHandlers.put(MetaDataSource.STATUS, new TermHandler<>(data.STATUS, value -> DataStatusId.getPrimitiveValue(DataStatus.valueOf(value.toUpperCase()))));
+        termHandlers.put(MetaDataSource.STATUS_TIME, new TermHandler<>(data.STATUS_TIME, DateUtil::parseNormalDateTimeString));
+        termHandlers.put(MetaDataSource.CREATE_TIME, new TermHandler<>(data.CREATE_TIME, DateUtil::parseNormalDateTimeString));
+        termHandlers.put(MetaDataSource.EFFECTIVE_TIME, new TermHandler<>(data.EFFECTIVE_TIME, DateUtil::parseNormalDateTimeString));
         expressionMapper = new ExpressionMapper(termHandlers);
 
 
@@ -150,21 +149,19 @@ class DataMetaServiceImpl implements DataMetaService {
         final Integer typeId = dataTypeService.getOrCreate(dataProperties.getTypeName());
         final Integer processorId = processorService.getOrCreate(dataProperties.getProcessorId(), dataProperties.getPipelineUuid());
 
-        try (final Connection connection = dataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             final long id = create.insertInto(DATA,
-                    DATA.VER,
-                    DATA.CRT_MS,
-                    DATA.EFFECT_MS,
-                    DATA.PARNT_STRM_ID,
-                    DATA.STAT,
-                    DATA.STAT_MS,
-                    DATA.STRM_TASK_ID,
-                    DATA.FK_FD_ID,
-                    DATA.FK_STRM_TP_ID,
-                    DATA.FK_STRM_PROC_ID)
+                    DATA.CREATE_TIME,
+                    DATA.EFFECTIVE_TIME,
+                    DATA.PARENT_ID,
+                    DATA.STATUS,
+                    DATA.STATUS_TIME,
+                    DATA.TASK_ID,
+                    DATA.FEED_ID,
+                    DATA.TYPE_ID,
+                    DATA.PROCESSOR_ID)
                     .values(
-                            (byte) 1,
                             dataProperties.getCreateMs(),
                             dataProperties.getEffectiveMs(),
                             dataProperties.getParentId(),
@@ -228,12 +225,12 @@ class DataMetaServiceImpl implements DataMetaService {
     private int updateStatus(final long id, final DataStatus status, final long statusTime, final String permission) {
         final Condition condition = getIdCondition(id, true, permission);
 
-        try (final Connection connection = dataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             return create
                     .update(data)
-                    .set(data.STAT, DataStatusId.getPrimitiveValue(status))
-                    .set(data.STAT_MS, statusTime)
+                    .set(data.STATUS, DataStatusId.getPrimitiveValue(status))
+                    .set(data.STATUS_TIME, statusTime)
                     .where(condition)
                     .execute();
 //                    .returning(data.ID,
@@ -278,12 +275,12 @@ class DataMetaServiceImpl implements DataMetaService {
 
         final Condition condition = createCondition(criteria, permission);
 
-        try (final Connection connection = dataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             return create
                     .update(data)
-                    .set(data.STAT, DataStatusId.getPrimitiveValue(status))
-                    .set(data.STAT_MS, System.currentTimeMillis())
+                    .set(data.STATUS, DataStatusId.getPrimitiveValue(status))
+                    .set(data.STATUS_TIME, System.currentTimeMillis())
                     .where(condition)
                     .execute();
 
@@ -367,7 +364,7 @@ class DataMetaServiceImpl implements DataMetaService {
     }
 
     private List<Data> find(final Condition condition, final int offset, final int numberOfRows) {
-        try (final Connection connection = dataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             return create
                     .select(
@@ -375,18 +372,18 @@ class DataMetaServiceImpl implements DataMetaService {
                             dataFeed.NAME,
                             dataType.NAME,
                             dataProcessor.PIPELINE_UUID,
-                            data.PARNT_STRM_ID,
-                            data.STRM_TASK_ID,
-                            data.FK_STRM_PROC_ID,
-                            data.STAT,
-                            data.STAT_MS,
-                            data.CRT_MS,
-                            data.EFFECT_MS
+                            data.PARENT_ID,
+                            data.TASK_ID,
+                            data.PROCESSOR_ID,
+                            data.STATUS,
+                            data.STATUS_TIME,
+                            data.CREATE_TIME,
+                            data.EFFECTIVE_TIME
                     )
                     .from(data)
-                    .join(dataFeed).on(data.FK_FD_ID.eq(dataFeed.ID))
-                    .join(dataType).on(data.FK_STRM_TP_ID.eq(dataType.ID))
-                    .leftOuterJoin(dataProcessor).on(data.FK_STRM_PROC_ID.eq(dataProcessor.ID))
+                    .join(dataFeed).on(data.FEED_ID.eq(dataFeed.ID))
+                    .join(dataType).on(data.TYPE_ID.eq(dataType.ID))
+                    .leftOuterJoin(dataProcessor).on(data.PROCESSOR_ID.eq(dataProcessor.ID))
                     .where(condition)
                     .orderBy(data.ID)
                     .limit(offset, numberOfRows)
@@ -417,7 +414,7 @@ class DataMetaServiceImpl implements DataMetaService {
 ////        final ExpressionOperator secureExpression = addPermissionConstraints(criteria.getExpression(), DocumentPermissionNames.DELETE);
 ////        final Condition condition = expressionMapper.apply(secureExpression);
 ////
-////        try (final Connection connection = dataSource.getConnection()) {
+////        try (final Connection connection = connectionProvider.getConnection()) {
 ////            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
 ////
 ////            return create
@@ -435,7 +432,7 @@ class DataMetaServiceImpl implements DataMetaService {
     public int delete(final FindDataCriteria criteria) {
         final Condition condition = createCondition(criteria, DocumentPermissionNames.DELETE);
 
-        try (final Connection connection = dataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             return create
                     .deleteFrom(data)
@@ -491,7 +488,7 @@ class DataMetaServiceImpl implements DataMetaService {
         final ExpressionOperator secureExpression = addPermissionConstraints(expression, DocumentPermissionNames.READ);
         final Condition condition = expressionMapper.apply(secureExpression);
 
-        try (final Connection connection = dataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             return create
                     .select(data.ID.max())
@@ -518,12 +515,12 @@ class DataMetaServiceImpl implements DataMetaService {
 
     @Override
     public int getLockCount() {
-        try (final Connection connection = dataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             return create
                     .selectCount()
                     .from(data)
-                    .where(data.STAT.eq(DataStatusId.LOCKED))
+                    .where(data.STATUS.eq(DataStatusId.LOCKED))
                     .fetchOptional()
                     .map(Record1::value1)
                     .orElse(0);
@@ -536,7 +533,7 @@ class DataMetaServiceImpl implements DataMetaService {
 
 //    @Override
 //    public Period getCreatePeriod() {
-//        try (final Connection connection = dataSource.getConnection()) {
+//        try (final Connection connection = connectionProvider.getConnection()) {
 //            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
 //            return context
 //                    .select(data.CRT_MS.min(), data.CRT_MS.max())
@@ -654,7 +651,7 @@ class DataMetaServiceImpl implements DataMetaService {
     }
 
     int deleteAll() {
-        try (final Connection connection = dataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             return create
                     .delete(DATA)

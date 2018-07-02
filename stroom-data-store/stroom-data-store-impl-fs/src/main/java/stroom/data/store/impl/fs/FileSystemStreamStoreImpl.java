@@ -31,8 +31,7 @@ import stroom.data.store.api.StreamException;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
-import stroom.data.volume.api.StreamVolumeService;
-import stroom.data.volume.api.StreamVolumeService.StreamVolume;
+import stroom.data.store.impl.fs.DataVolumeService.DataVolume;
 import stroom.node.NodeCache;
 import stroom.node.VolumeService;
 import stroom.node.shared.Node;
@@ -67,14 +66,14 @@ class FileSystemStreamStoreImpl implements StreamStore {
     private final DataMetaService streamMetaService;
     private final NodeCache nodeCache;
     private final VolumeService volumeService;
-    private final StreamVolumeService streamVolumeService;
+    private final DataVolumeService streamVolumeService;
 
     @Inject
     FileSystemStreamStoreImpl(final FileSystemStreamPathHelper fileSystemStreamPathHelper,
                               final DataMetaService streamMetaService,
                               final NodeCache nodeCache,
                               final VolumeService volumeService,
-                              final StreamVolumeService streamVolumeService) {
+                              final DataVolumeService streamVolumeService) {
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.streamMetaService = streamMetaService;
         this.nodeCache = nodeCache;
@@ -94,8 +93,8 @@ class FileSystemStreamStoreImpl implements StreamStore {
         // First time call (no file yet exists)
         final Data stream = streamMetaService.create(streamProperties);
 
-        final Set<StreamVolume> streamVolumes = streamVolumeService.createStreamVolumes(stream.getId(), volumeSet);
-        final Set<String> rootPaths = streamVolumes.stream().map(StreamVolume::getVolumePath).collect(Collectors.toSet());
+        final Set<DataVolume> streamVolumes = streamVolumeService.createStreamVolumes(stream.getId(), volumeSet);
+        final Set<String> rootPaths = streamVolumes.stream().map(DataVolume::getVolumePath).collect(Collectors.toSet());
         final String streamType = stream.getTypeName();
         final FileSystemStreamTarget target = FileSystemStreamTarget.create(fileSystemStreamPathHelper, stream, rootPaths, streamType, false);
 
@@ -113,12 +112,12 @@ class FileSystemStreamStoreImpl implements StreamStore {
         LOGGER.debug("openExistingStreamTarget() " + stream);
 
         // Lock the object
-        final Set<StreamVolume> streamVolumes = streamVolumeService.findStreamVolume(stream.getId());
+        final Set<DataVolume> streamVolumes = streamVolumeService.findStreamVolume(stream.getId());
         if (streamVolumes.isEmpty()) {
             throw new StreamException("Not all volumes are unlocked");
         }
         final Data lockedStream = streamMetaService.updateStatus(stream, DataStatus.LOCKED);
-        final Set<String> rootPaths = streamVolumes.stream().map(StreamVolume::getVolumePath).collect(Collectors.toSet());
+        final Set<String> rootPaths = streamVolumes.stream().map(DataVolume::getVolumePath).collect(Collectors.toSet());
 
         final String streamType = lockedStream.getTypeName();
         final FileSystemStreamTarget target = FileSystemStreamTarget.create(fileSystemStreamPathHelper, lockedStream, rootPaths,
@@ -241,14 +240,14 @@ class FileSystemStreamStoreImpl implements StreamStore {
         if (stream != null) {
             LOGGER.debug("openStreamSource() {}", stream.getId());
 
-            final Set<StreamVolume> volumeSet = streamVolumeService.findStreamVolume(stream.getId());
+            final Set<DataVolume> volumeSet = streamVolumeService.findStreamVolume(stream.getId());
             if (volumeSet.isEmpty()) {
                 final String message = "Unable to find any volume for " + stream;
                 LOGGER.warn(message);
                 throw new StreamException(message);
             }
             final Node node = nodeCache.getDefaultNode();
-            final StreamVolume streamVolume = streamVolumeService.pickBestVolume(volumeSet, node.getId(), node.getRack().getId());
+            final DataVolume streamVolume = streamVolumeService.pickBestVolume(volumeSet, node.getId(), node.getRack().getId());
             if (streamVolume == null) {
                 final String message = "Unable to access any volume for " + stream
                         + " perhaps the stream is on a private volume";
@@ -273,9 +272,9 @@ class FileSystemStreamStoreImpl implements StreamStore {
 
     @Override
     public AttributeMap getStoredMeta(final Data stream) {
-        final Set<StreamVolume> volumeSet = streamVolumeService.findStreamVolume(stream.getId());
+        final Set<DataVolume> volumeSet = streamVolumeService.findStreamVolume(stream.getId());
         if (volumeSet != null && volumeSet.size() > 0) {
-            final StreamVolume streamVolume = volumeSet.iterator().next();
+            final DataVolume streamVolume = volumeSet.iterator().next();
             final Path manifest = fileSystemStreamPathHelper.createChildStreamFile(stream, streamVolume, InternalStreamTypeNames.MANIFEST);
 
             if (Files.isRegularFile(manifest)) {

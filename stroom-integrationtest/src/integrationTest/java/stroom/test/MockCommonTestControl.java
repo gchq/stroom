@@ -61,11 +61,11 @@ public class MockCommonTestControl implements CommonTestControl {
 //    public int countDocs(final String type) {
 //        return 0;
 //    }
-
-    @Override
-    public void shutdown() {
-        // NA
-    }
+//
+//    @Override
+//    public void shutdown() {
+//        // NA
+//    }
 
     @Override
     public void createRequiredXMLSchemas() {

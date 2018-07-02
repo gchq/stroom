@@ -4,9 +4,10 @@ dependencies {
     compile project(':stroom-data-store:stroom-data-store-impl-fs-db-gen')
     compile project(':stroom-data-store:stroom-data-store-api')
     compile project(':stroom-core-server')
+        compile project(':stroom-core-shared')
 //    compile project(':stroom-properties-api')
 //    compile project(':stroom-security-api')
-//    compile project(':stroom-util') // TODO : @66 TRY AND REMOVE THIS
+    compile project(':stroom-util') // TODO : @66 TRY AND REMOVE THIS
 //    compile libs.stroomQueryApi
 //
 //    compile libs.flyway_core

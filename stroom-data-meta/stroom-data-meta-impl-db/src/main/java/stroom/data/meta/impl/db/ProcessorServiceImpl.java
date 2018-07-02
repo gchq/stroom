@@ -26,7 +26,6 @@ import stroom.data.meta.impl.db.stroom.tables.records.DataProcessorRecord;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Map;
@@ -40,11 +39,11 @@ class ProcessorServiceImpl implements ProcessorService {
 
     private final Map<Integer, DataProcessorRecord> cache = new ConcurrentHashMap<>();
 
-    private final DataSource dataSource;
+    private final ConnectionProvider connectionProvider;
 
     @Inject
-    ProcessorServiceImpl(final DataMetaDataSource dataSource) {
-        this.dataSource = dataSource;
+    ProcessorServiceImpl(final ConnectionProvider connectionProvider) {
+        this.connectionProvider = connectionProvider;
     }
 
     @Override
@@ -68,7 +67,7 @@ class ProcessorServiceImpl implements ProcessorService {
 
 //    @Override
 //    public List<String> list() {
-//        try (final Connection connection = dataSource.getConnection()) {
+//        try (final Connection connection = connectionProvider.getConnection()) {
 //            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
 //
 //            return create
@@ -88,7 +87,7 @@ class ProcessorServiceImpl implements ProcessorService {
             return record.getId();
         }
 
-        try (final Connection connection = dataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             record = create
                     .selectFrom(DATA_PROCESSOR)
@@ -109,7 +108,7 @@ class ProcessorServiceImpl implements ProcessorService {
     }
 
     private Integer create(final int processorId, final String pipelineUuid) {
-        try (final Connection connection = dataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             final DataProcessorRecord record = create
                     .insertInto(DATA_PROCESSOR, DATA_PROCESSOR.PROCESSOR_ID, DATA_PROCESSOR.PIPELINE_UUID)
@@ -133,7 +132,7 @@ class ProcessorServiceImpl implements ProcessorService {
     }
 
     int deleteAll() {
-        try (final Connection connection = dataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             return create
                     .delete(DATA_PROCESSOR)

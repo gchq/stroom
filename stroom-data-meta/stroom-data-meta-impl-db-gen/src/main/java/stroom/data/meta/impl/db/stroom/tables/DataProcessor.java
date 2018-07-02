@@ -39,7 +39,7 @@ import stroom.data.meta.impl.db.stroom.tables.records.DataProcessorRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class DataProcessor extends TableImpl<DataProcessorRecord> {
 
-    private static final long serialVersionUID = 1552414355;
+    private static final long serialVersionUID = 1861298697;
 
     /**
      * The reference instance of <code>stroom.data_processor</code>
@@ -111,7 +111,7 @@ public class DataProcessor extends TableImpl<DataProcessorRecord> {
      */
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.DATA_PROCESSOR_PRIMARY);
+        return Arrays.<Index>asList(Indexes.DATA_PROCESSOR_PRIMARY, Indexes.DATA_PROCESSOR_PROCESSOR_ID);
     }
 
     /**
@@ -135,7 +135,7 @@ public class DataProcessor extends TableImpl<DataProcessorRecord> {
      */
     @Override
     public List<UniqueKey<DataProcessorRecord>> getKeys() {
-        return Arrays.<UniqueKey<DataProcessorRecord>>asList(Keys.KEY_DATA_PROCESSOR_PRIMARY);
+        return Arrays.<UniqueKey<DataProcessorRecord>>asList(Keys.KEY_DATA_PROCESSOR_PRIMARY, Keys.KEY_DATA_PROCESSOR_PROCESSOR_ID);
     }
 
     /**

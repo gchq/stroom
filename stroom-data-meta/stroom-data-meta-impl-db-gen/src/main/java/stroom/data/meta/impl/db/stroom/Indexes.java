@@ -35,23 +35,20 @@ public class Indexes {
     // INDEX definitions
     // -------------------------------------------------------------------------
 
+    public static final Index DATA_DATA_FEED_ID = Indexes0.DATA_DATA_FEED_ID;
+    public static final Index DATA_DATA_PROCESSOR_ID = Indexes0.DATA_DATA_PROCESSOR_ID;
+    public static final Index DATA_DATA_YPE_ID = Indexes0.DATA_DATA_YPE_ID;
     public static final Index DATA_PRIMARY = Indexes0.DATA_PRIMARY;
-    public static final Index DATA_STRM_CRT_MS_IDX = Indexes0.DATA_STRM_CRT_MS_IDX;
-    public static final Index DATA_STRM_FK_FD_ID_CRT_MS_IDX = Indexes0.DATA_STRM_FK_FD_ID_CRT_MS_IDX;
-    public static final Index DATA_STRM_FK_FD_ID_EFFECT_MS_IDX = Indexes0.DATA_STRM_FK_FD_ID_EFFECT_MS_IDX;
-    public static final Index DATA_STRM_FK_STRM_PROC_ID_CRT_MS_IDX = Indexes0.DATA_STRM_FK_STRM_PROC_ID_CRT_MS_IDX;
-    public static final Index DATA_STRM_FK_STRM_TP_ID = Indexes0.DATA_STRM_FK_STRM_TP_ID;
-    public static final Index DATA_STRM_PARNT_STRM_ID_IDX = Indexes0.DATA_STRM_PARNT_STRM_ID_IDX;
-    public static final Index DATA_STRM_STAT_IDX = Indexes0.DATA_STRM_STAT_IDX;
     public static final Index DATA_FEED_NAME = Indexes0.DATA_FEED_NAME;
     public static final Index DATA_FEED_PRIMARY = Indexes0.DATA_FEED_PRIMARY;
     public static final Index DATA_PROCESSOR_PRIMARY = Indexes0.DATA_PROCESSOR_PRIMARY;
+    public static final Index DATA_PROCESSOR_PROCESSOR_ID = Indexes0.DATA_PROCESSOR_PROCESSOR_ID;
     public static final Index DATA_TYPE_NAME = Indexes0.DATA_TYPE_NAME;
     public static final Index DATA_TYPE_PRIMARY = Indexes0.DATA_TYPE_PRIMARY;
     public static final Index META_KEY_NAME = Indexes0.META_KEY_NAME;
     public static final Index META_KEY_PRIMARY = Indexes0.META_KEY_PRIMARY;
-    public static final Index META_VAL_META_VALUE_CREATE_TIME_IDX = Indexes0.META_VAL_META_VALUE_CREATE_TIME_IDX;
-    public static final Index META_VAL_META_VALUE_DATA_ID_IDX = Indexes0.META_VAL_META_VALUE_DATA_ID_IDX;
+    public static final Index META_VAL_META_VAL_CREATE_TIME_IDX = Indexes0.META_VAL_META_VAL_CREATE_TIME_IDX;
+    public static final Index META_VAL_META_VAL_DATA_ID_IDX = Indexes0.META_VAL_META_VAL_DATA_ID_IDX;
     public static final Index META_VAL_PRIMARY = Indexes0.META_VAL_PRIMARY;
 
     // -------------------------------------------------------------------------
@@ -59,23 +56,20 @@ public class Indexes {
     // -------------------------------------------------------------------------
 
     private static class Indexes0 extends AbstractKeys {
+        public static Index DATA_DATA_FEED_ID = createIndex("data_feed_id", Data.DATA, new OrderField[] { Data.DATA.FEED_ID }, false);
+        public static Index DATA_DATA_PROCESSOR_ID = createIndex("data_processor_id", Data.DATA, new OrderField[] { Data.DATA.PROCESSOR_ID }, false);
+        public static Index DATA_DATA_YPE_ID = createIndex("data_ype_id", Data.DATA, new OrderField[] { Data.DATA.TYPE_ID }, false);
         public static Index DATA_PRIMARY = createIndex("PRIMARY", Data.DATA, new OrderField[] { Data.DATA.ID }, true);
-        public static Index DATA_STRM_CRT_MS_IDX = createIndex("STRM_CRT_MS_IDX", Data.DATA, new OrderField[] { Data.DATA.CRT_MS }, false);
-        public static Index DATA_STRM_FK_FD_ID_CRT_MS_IDX = createIndex("STRM_FK_FD_ID_CRT_MS_IDX", Data.DATA, new OrderField[] { Data.DATA.FK_FD_ID, Data.DATA.CRT_MS }, false);
-        public static Index DATA_STRM_FK_FD_ID_EFFECT_MS_IDX = createIndex("STRM_FK_FD_ID_EFFECT_MS_IDX", Data.DATA, new OrderField[] { Data.DATA.FK_FD_ID, Data.DATA.EFFECT_MS }, false);
-        public static Index DATA_STRM_FK_STRM_PROC_ID_CRT_MS_IDX = createIndex("STRM_FK_STRM_PROC_ID_CRT_MS_IDX", Data.DATA, new OrderField[] { Data.DATA.FK_STRM_PROC_ID, Data.DATA.CRT_MS }, false);
-        public static Index DATA_STRM_FK_STRM_TP_ID = createIndex("STRM_FK_STRM_TP_ID", Data.DATA, new OrderField[] { Data.DATA.FK_STRM_TP_ID }, false);
-        public static Index DATA_STRM_PARNT_STRM_ID_IDX = createIndex("STRM_PARNT_STRM_ID_IDX", Data.DATA, new OrderField[] { Data.DATA.PARNT_STRM_ID }, false);
-        public static Index DATA_STRM_STAT_IDX = createIndex("STRM_STAT_IDX", Data.DATA, new OrderField[] { Data.DATA.STAT }, false);
-        public static Index DATA_FEED_NAME = createIndex("NAME", DataFeed.DATA_FEED, new OrderField[] { DataFeed.DATA_FEED.NAME }, true);
+        public static Index DATA_FEED_NAME = createIndex("name", DataFeed.DATA_FEED, new OrderField[] { DataFeed.DATA_FEED.NAME }, true);
         public static Index DATA_FEED_PRIMARY = createIndex("PRIMARY", DataFeed.DATA_FEED, new OrderField[] { DataFeed.DATA_FEED.ID }, true);
         public static Index DATA_PROCESSOR_PRIMARY = createIndex("PRIMARY", DataProcessor.DATA_PROCESSOR, new OrderField[] { DataProcessor.DATA_PROCESSOR.ID }, true);
-        public static Index DATA_TYPE_NAME = createIndex("NAME", DataType.DATA_TYPE, new OrderField[] { DataType.DATA_TYPE.NAME }, true);
+        public static Index DATA_PROCESSOR_PROCESSOR_ID = createIndex("processor_id", DataProcessor.DATA_PROCESSOR, new OrderField[] { DataProcessor.DATA_PROCESSOR.PROCESSOR_ID }, true);
+        public static Index DATA_TYPE_NAME = createIndex("name", DataType.DATA_TYPE, new OrderField[] { DataType.DATA_TYPE.NAME }, true);
         public static Index DATA_TYPE_PRIMARY = createIndex("PRIMARY", DataType.DATA_TYPE, new OrderField[] { DataType.DATA_TYPE.ID }, true);
         public static Index META_KEY_NAME = createIndex("name", MetaKey.META_KEY, new OrderField[] { MetaKey.META_KEY.NAME }, true);
         public static Index META_KEY_PRIMARY = createIndex("PRIMARY", MetaKey.META_KEY, new OrderField[] { MetaKey.META_KEY.ID }, true);
-        public static Index META_VAL_META_VALUE_CREATE_TIME_IDX = createIndex("meta_value_create_time_idx", MetaVal.META_VAL, new OrderField[] { MetaVal.META_VAL.CREATE_TIME }, false);
-        public static Index META_VAL_META_VALUE_DATA_ID_IDX = createIndex("meta_value_data_id_idx", MetaVal.META_VAL, new OrderField[] { MetaVal.META_VAL.DATA_ID }, false);
+        public static Index META_VAL_META_VAL_CREATE_TIME_IDX = createIndex("meta_val_create_time_idx", MetaVal.META_VAL, new OrderField[] { MetaVal.META_VAL.CREATE_TIME }, false);
+        public static Index META_VAL_META_VAL_DATA_ID_IDX = createIndex("meta_val_data_id_idx", MetaVal.META_VAL, new OrderField[] { MetaVal.META_VAL.DATA_ID }, false);
         public static Index META_VAL_PRIMARY = createIndex("PRIMARY", MetaVal.META_VAL, new OrderField[] { MetaVal.META_VAL.ID }, true);
     }
 }

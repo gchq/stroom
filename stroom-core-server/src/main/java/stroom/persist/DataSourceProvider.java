@@ -79,6 +79,7 @@ public class DataSourceProvider implements Provider<DataSource> {
             final Flyway flyway = new Flyway();
             flyway.setDataSource(dataSource);
             flyway.setLocations("stroom/db/migration/mysql");
+            flyway.setBaselineOnMigrate(true);
 
             Version version = null;
             boolean usingFlyWay = false;

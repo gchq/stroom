@@ -13,6 +13,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import static stroom.data.store.impl.fs.db.stroom.tables.FileTypePath.FILE_TYPE_PATH;
 
@@ -23,14 +24,14 @@ import static stroom.data.store.impl.fs.db.stroom.tables.FileTypePath.FILE_TYPE_
 class FileSystemTypePathsImpl implements FileSystemTypePaths {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemTypePathsImpl.class);
 
-    private final DataSource dataSource;
+    private final ConnectionProvider connectionProvider;
 
     private final Map<String, String> typeToPathMap = new HashMap<>();
     private final Map<String, String> pathToTypeMap = new HashMap<>();
 
     @Inject
-    FileSystemTypePathsImpl(final DataSource dataSource) {
-        this.dataSource = dataSource;
+    FileSystemTypePathsImpl(final ConnectionProvider connectionProvider) {
+        this.connectionProvider = connectionProvider;
         refresh();
     }
 
@@ -64,7 +65,7 @@ class FileSystemTypePathsImpl implements FileSystemTypePaths {
             LOGGER.warn("A non standard type name was found when registering a file path '" + typeName + "'");
         }
 
-        try (final Connection connection = dataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             create.insertInto(FILE_TYPE_PATH, FILE_TYPE_PATH.NAME, FILE_TYPE_PATH.PATH)
                     .values(typeName, path)
@@ -78,7 +79,7 @@ class FileSystemTypePathsImpl implements FileSystemTypePaths {
     }
 
     private void refresh() {
-        try (final Connection connection = dataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             create.select(FILE_TYPE_PATH.NAME, FILE_TYPE_PATH.PATH)
                     .from(FILE_TYPE_PATH)

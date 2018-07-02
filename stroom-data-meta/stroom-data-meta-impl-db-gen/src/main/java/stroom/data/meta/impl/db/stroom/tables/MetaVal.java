@@ -39,7 +39,7 @@ import stroom.data.meta.impl.db.stroom.tables.records.MetaValRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class MetaVal extends TableImpl<MetaValRecord> {
 
-    private static final long serialVersionUID = -841699856;
+    private static final long serialVersionUID = -667872528;
 
     /**
      * The reference instance of <code>stroom.meta_val</code>
@@ -121,7 +121,7 @@ public class MetaVal extends TableImpl<MetaValRecord> {
      */
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.META_VAL_META_VALUE_CREATE_TIME_IDX, Indexes.META_VAL_META_VALUE_DATA_ID_IDX, Indexes.META_VAL_PRIMARY);
+        return Arrays.<Index>asList(Indexes.META_VAL_META_VAL_CREATE_TIME_IDX, Indexes.META_VAL_META_VAL_DATA_ID_IDX, Indexes.META_VAL_PRIMARY);
     }
 
     /**

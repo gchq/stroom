@@ -32,7 +32,6 @@ import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -52,17 +51,17 @@ class MetaValueServiceImpl implements MetaValueService {
 
     private static final String LOCK_NAME = "MetaDeleteExecutor";
 
-    private final DataSource dataSource;
+    private final ConnectionProvider connectionProvider;
     private final MetaKeyService metaKeyService;
     private final MetaValueConfig metaValueConfig;
 
     private final Queue<MetaValRecord> queue = new ConcurrentLinkedQueue<>();
 
     @Inject
-    MetaValueServiceImpl(final DataMetaDataSource dataSource,
+    MetaValueServiceImpl(final ConnectionProvider connectionProvider,
                          final MetaKeyService metaKeyService,
                          final MetaValueConfig metaValueConfig) {
-        this.dataSource = dataSource;
+        this.connectionProvider = connectionProvider;
         this.metaKeyService = metaKeyService;
         this.metaValueConfig = metaValueConfig;
     }
@@ -218,7 +217,7 @@ class MetaValueServiceImpl implements MetaValueService {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         LOGGER.debug("Processing batch of {}, queue size is {}", records.size(), queue.size());
 
-        try (final Connection connection = dataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             create
                     .batchStore(records)
@@ -257,7 +256,7 @@ class MetaValueServiceImpl implements MetaValueService {
 
         int count;
 
-        try (final Connection connection = dataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             // TODO : @66 Maybe try delete with limits again after un upgrade to MySQL 5.7.
 //            count = context
@@ -346,7 +345,7 @@ class MetaValueServiceImpl implements MetaValueService {
 //        }
 
 
-        try (final Connection connection = dataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             create
                     .select(
@@ -423,7 +422,7 @@ class MetaValueServiceImpl implements MetaValueService {
     }
 
     int deleteAll() {
-        try (final Connection connection = dataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             return create
                     .delete(META_VAL)

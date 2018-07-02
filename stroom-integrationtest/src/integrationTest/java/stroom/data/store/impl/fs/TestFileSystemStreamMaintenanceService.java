@@ -19,8 +19,6 @@ package stroom.data.store.impl.fs;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.data.meta.api.Data;
-import stroom.data.store.FindStreamVolumeCriteria;
-import stroom.data.volume.api.StreamVolumeService;
 import stroom.jobsystem.MockTask;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -37,7 +35,7 @@ public class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrat
     @Inject
     private FileSystemStreamMaintenanceService streamMaintenanceService;
     @Inject
-    private StreamVolumeService streamVolumeService;
+    private DataVolumeService streamVolumeService;
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
@@ -57,7 +55,7 @@ public class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrat
 
         Assert.assertTrue(files.size() > 0);
 
-        final FindStreamVolumeCriteria findStreamVolumeCriteria = FindStreamVolumeCriteria.create(md);
+        final FindDataVolumeCriteria findStreamVolumeCriteria = FindDataVolumeCriteria.create(md);
         Assert.assertTrue(streamVolumeService.find(findStreamVolumeCriteria).size() > 0);
 
         final Path dir = files.iterator().next().getParent();

@@ -1,6 +1,7 @@
 package stroom.datafeed;
 
 import com.google.inject.AbstractModule;
+import stroom.data.meta.impl.mock.MockDataMetaModule;
 import stroom.data.store.impl.fs.MockStreamStoreModule;
 import stroom.dictionary.DictionaryModule;
 import stroom.docstore.memory.MemoryPersistenceModule;
@@ -23,6 +24,7 @@ public class TestBaseModule extends AbstractModule {
         install(new MemoryPersistenceModule());
         install(new MockMetaDataStatisticModule());
         install(new MockPropertyModule());
+        install(new MockDataMetaModule());
         install(new MockStreamStoreModule());
     }
 }

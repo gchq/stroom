@@ -31,15 +31,13 @@ import stroom.data.meta.api.MetaDataSource;
 import stroom.data.meta.api.DataMetaService;
 import stroom.data.meta.api.DataProperties;
 import stroom.data.meta.api.DataStatus;
-import stroom.data.store.FindStreamVolumeCriteria;
 import stroom.data.store.StreamMaintenanceService;
 import stroom.data.store.api.StreamException;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.data.store.api.StreamTargetUtil;
-import stroom.data.volume.api.StreamVolumeService;
-import stroom.data.volume.api.StreamVolumeService.StreamVolume;
+import stroom.data.store.impl.fs.DataVolumeService.DataVolume;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.Period;
@@ -78,7 +76,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     @Inject
     private DataMetaService streamMetaService;
     @Inject
-    private StreamVolumeService streamVolumeService;
+    private DataVolumeService streamVolumeService;
     @Inject
     private StreamMaintenanceService streamMaintenanceService;
     @Inject
@@ -346,7 +344,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         Assert.assertTrue("Expecting to find at least 1 with UNLOCKED criteria",
                 streamMetaService.find(new FindDataCriteria(expression)).size() >= 1);
 
-        final FindStreamVolumeCriteria volumeCriteria = new FindStreamVolumeCriteria();
+        final FindDataVolumeCriteria volumeCriteria = new FindDataVolumeCriteria();
 //        volumeCriteria.obtainStreamStatusSet().add(StreamStatus.UNLOCKED);
         volumeCriteria.obtainStreamIdSet().add(exactMetaData.getId());
         Assert.assertTrue("Expecting to find at least 1 with day old criteria",
@@ -674,10 +672,10 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         Data stream = streamTarget.getStream();
 
-        final Set<StreamVolume> streamVolumes = streamVolumeService.findStreamVolume(stream.getId());
+        final Set<DataVolume> streamVolumes = streamVolumeService.findStreamVolume(stream.getId());
         final Set<Path> rootFile = new HashSet<>();
 
-        for (final StreamVolume streamVolume : streamVolumes) {
+        for (final DataVolume streamVolume : streamVolumes) {
             rootFile.add(fileSystemStreamPathHelper.createRootStreamFile(streamVolume.getVolumePath(), stream,
                     StreamTypeNames.RAW_EVENTS));
         }

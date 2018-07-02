@@ -25,7 +25,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
@@ -40,11 +39,11 @@ class FeedServiceImpl implements FeedService {
 
     private final Map<String, Integer> cache = new ConcurrentHashMap<>();
 
-    private final DataSource dataSource;
+    private final ConnectionProvider connectionProvider;
 
     @Inject
-    FeedServiceImpl(final DataMetaDataSource dataSource) {
-        this.dataSource = dataSource;
+    FeedServiceImpl(final ConnectionProvider connectionProvider) {
+        this.connectionProvider = connectionProvider;
     }
 
     @Override
@@ -64,7 +63,7 @@ class FeedServiceImpl implements FeedService {
 
     @Override
     public List<String> list() {
-        try (final Connection connection = dataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             return create
                     .select(DATA_FEED.NAME)
@@ -83,7 +82,7 @@ class FeedServiceImpl implements FeedService {
             return id;
         }
 
-        try (final Connection connection = dataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             id = create
                     .select(DATA_FEED.ID)
@@ -104,7 +103,7 @@ class FeedServiceImpl implements FeedService {
     }
 
     private Integer create(final String name) {
-        try (final Connection connection = dataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             final Integer id = create
                     .insertInto(DATA_FEED, DATA_FEED.NAME)
@@ -129,7 +128,7 @@ class FeedServiceImpl implements FeedService {
     }
 
     int deleteAll() {
-        try (final Connection connection = dataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             return create
                     .delete(DATA_FEED)

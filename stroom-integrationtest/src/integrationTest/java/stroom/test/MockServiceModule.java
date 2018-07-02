@@ -1,6 +1,7 @@
 package stroom.test;
 
 import com.google.inject.AbstractModule;
+import stroom.pipeline.factory.PipelineFactoryModule;
 
 public class MockServiceModule extends AbstractModule {
     @Override
@@ -18,7 +19,7 @@ public class MockServiceModule extends AbstractModule {
         install(new stroom.node.MockNodeServiceModule());
         install(new stroom.persist.MockPersistenceModule());
         install(new stroom.pipeline.MockPipelineModule());
-        install(new stroom.pipeline.factory.FactoryModule());
+        install(new PipelineFactoryModule());
         install(new stroom.pipeline.task.PipelineStreamTaskModule());
         install(new stroom.properties.impl.mock.MockPropertyModule());
         install(new stroom.refdata.ReferenceDataModule());

@@ -40,7 +40,7 @@ import stroom.data.meta.impl.db.stroom.tables.records.DataRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Data extends TableImpl<DataRecord> {
 
-    private static final long serialVersionUID = -594528547;
+    private static final long serialVersionUID = 896300110;
 
     /**
      * The reference instance of <code>stroom.data</code>
@@ -56,59 +56,54 @@ public class Data extends TableImpl<DataRecord> {
     }
 
     /**
-     * The column <code>stroom.data.ID</code>.
+     * The column <code>stroom.data.id</code>.
      */
-    public final TableField<DataRecord, Long> ID = createField("ID", org.jooq.impl.SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<DataRecord, Long> ID = createField("id", org.jooq.impl.SQLDataType.BIGINT.nullable(false).identity(true), this, "");
 
     /**
-     * The column <code>stroom.data.VER</code>.
+     * The column <code>stroom.data.create_time</code>.
      */
-    public final TableField<DataRecord, Byte> VER = createField("VER", org.jooq.impl.SQLDataType.TINYINT.nullable(false), this, "");
+    public final TableField<DataRecord, Long> CREATE_TIME = createField("create_time", org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>stroom.data.CRT_MS</code>.
+     * The column <code>stroom.data.effective_time</code>.
      */
-    public final TableField<DataRecord, Long> CRT_MS = createField("CRT_MS", org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
+    public final TableField<DataRecord, Long> EFFECTIVE_TIME = createField("effective_time", org.jooq.impl.SQLDataType.BIGINT, this, "");
 
     /**
-     * The column <code>stroom.data.EFFECT_MS</code>.
+     * The column <code>stroom.data.parent_id</code>.
      */
-    public final TableField<DataRecord, Long> EFFECT_MS = createField("EFFECT_MS", org.jooq.impl.SQLDataType.BIGINT, this, "");
+    public final TableField<DataRecord, Long> PARENT_ID = createField("parent_id", org.jooq.impl.SQLDataType.BIGINT, this, "");
 
     /**
-     * The column <code>stroom.data.PARNT_STRM_ID</code>.
+     * The column <code>stroom.data.status</code>.
      */
-    public final TableField<DataRecord, Long> PARNT_STRM_ID = createField("PARNT_STRM_ID", org.jooq.impl.SQLDataType.BIGINT, this, "");
+    public final TableField<DataRecord, Byte> STATUS = createField("status", org.jooq.impl.SQLDataType.TINYINT.nullable(false), this, "");
 
     /**
-     * The column <code>stroom.data.STAT</code>.
+     * The column <code>stroom.data.status_time</code>.
      */
-    public final TableField<DataRecord, Byte> STAT = createField("STAT", org.jooq.impl.SQLDataType.TINYINT.nullable(false), this, "");
+    public final TableField<DataRecord, Long> STATUS_TIME = createField("status_time", org.jooq.impl.SQLDataType.BIGINT, this, "");
 
     /**
-     * The column <code>stroom.data.STAT_MS</code>.
+     * The column <code>stroom.data.task_id</code>.
      */
-    public final TableField<DataRecord, Long> STAT_MS = createField("STAT_MS", org.jooq.impl.SQLDataType.BIGINT, this, "");
+    public final TableField<DataRecord, Long> TASK_ID = createField("task_id", org.jooq.impl.SQLDataType.BIGINT, this, "");
 
     /**
-     * The column <code>stroom.data.STRM_TASK_ID</code>.
+     * The column <code>stroom.data.feed_id</code>.
      */
-    public final TableField<DataRecord, Long> STRM_TASK_ID = createField("STRM_TASK_ID", org.jooq.impl.SQLDataType.BIGINT, this, "");
+    public final TableField<DataRecord, Integer> FEED_ID = createField("feed_id", org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
-     * The column <code>stroom.data.FK_FD_ID</code>.
+     * The column <code>stroom.data.type_id</code>.
      */
-    public final TableField<DataRecord, Integer> FK_FD_ID = createField("FK_FD_ID", org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
+    public final TableField<DataRecord, Integer> TYPE_ID = createField("type_id", org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
-     * The column <code>stroom.data.FK_STRM_PROC_ID</code>.
+     * The column <code>stroom.data.processor_id</code>.
      */
-    public final TableField<DataRecord, Integer> FK_STRM_PROC_ID = createField("FK_STRM_PROC_ID", org.jooq.impl.SQLDataType.INTEGER, this, "");
-
-    /**
-     * The column <code>stroom.data.FK_STRM_TP_ID</code>.
-     */
-    public final TableField<DataRecord, Integer> FK_STRM_TP_ID = createField("FK_STRM_TP_ID", org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
+    public final TableField<DataRecord, Integer> PROCESSOR_ID = createField("processor_id", org.jooq.impl.SQLDataType.INTEGER, this, "");
 
     /**
      * Create a <code>stroom.data</code> table reference
@@ -152,7 +147,7 @@ public class Data extends TableImpl<DataRecord> {
      */
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.DATA_PRIMARY, Indexes.DATA_STRM_CRT_MS_IDX, Indexes.DATA_STRM_FK_FD_ID_CRT_MS_IDX, Indexes.DATA_STRM_FK_FD_ID_EFFECT_MS_IDX, Indexes.DATA_STRM_FK_STRM_PROC_ID_CRT_MS_IDX, Indexes.DATA_STRM_FK_STRM_TP_ID, Indexes.DATA_STRM_PARNT_STRM_ID_IDX, Indexes.DATA_STRM_STAT_IDX);
+        return Arrays.<Index>asList(Indexes.DATA_DATA_FEED_ID, Indexes.DATA_DATA_PROCESSOR_ID, Indexes.DATA_DATA_YPE_ID, Indexes.DATA_PRIMARY);
     }
 
     /**
@@ -184,7 +179,7 @@ public class Data extends TableImpl<DataRecord> {
      */
     @Override
     public List<ForeignKey<DataRecord, ?>> getReferences() {
-        return Arrays.<ForeignKey<DataRecord, ?>>asList(Keys.STRM_FK_FD_ID, Keys.STRM_FK_STRM_PROC_ID, Keys.STRM_FK_STRM_TP_ID);
+        return Arrays.<ForeignKey<DataRecord, ?>>asList(Keys.DATA_FEED_ID, Keys.DATA_YPE_ID, Keys.DATA_PROCESSOR_ID);
     }
 
     /**

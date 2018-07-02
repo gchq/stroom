@@ -225,11 +225,6 @@ public class LifecycleServiceImpl implements LifecycleService {
 
             taskManager.shutdown();
 
-            // Finally shutdown the entity manager.
-            if (entityManager != null) {
-                entityManager.shutdown();
-            }
-
             LOGGER.info("Stopped Stroom Lifecycle service");
         } catch (final InterruptedException e) {
             LOGGER.info("Interrupted");

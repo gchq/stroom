@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -23,13 +22,13 @@ import static stroom.data.store.impl.fs.db.stroom.tables.FileFeedPath.FILE_FEED_
 class FileSystemFeedPaths {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemFeedPaths.class);
 
-    private final DataSource dataSource;
+    private final ConnectionProvider connectionProvider;
 
     private final Map<String, String> feedToPathMap = new HashMap<>();
 
     @Inject
-    FileSystemFeedPaths(final DataSource dataSource) {
-        this.dataSource = dataSource;
+    FileSystemFeedPaths(final ConnectionProvider connectionProvider) {
+        this.connectionProvider = connectionProvider;
         refresh();
     }
 
@@ -53,7 +52,7 @@ class FileSystemFeedPaths {
             LOGGER.warn("A non standard feed name was found when registering a file path '" + feedName + "'");
         }
 
-        try (final Connection connection = dataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             create.insertInto(FILE_FEED_PATH, FILE_FEED_PATH.NAME, FILE_FEED_PATH.PATH)
                     .values(feedName, path)
@@ -67,7 +66,7 @@ class FileSystemFeedPaths {
     }
 
     private void refresh() {
-        try (final Connection connection = dataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             create.select(FILE_FEED_PATH.NAME, FILE_FEED_PATH.PATH)
                     .from(FILE_FEED_PATH)

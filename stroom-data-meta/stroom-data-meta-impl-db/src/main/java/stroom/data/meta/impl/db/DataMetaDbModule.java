@@ -4,11 +4,13 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.multibindings.Multibinder;
 import com.zaxxer.hikari.HikariConfig;
+import org.flywaydb.core.Flyway;
 import stroom.data.meta.api.DataMetaService;
 import stroom.data.meta.api.DataSecurityFilter;
 import stroom.entity.shared.Clearable;
 
 import javax.inject.Singleton;
+import javax.sql.DataSource;
 
 public class DataMetaDbModule extends AbstractModule {
     @Override
@@ -27,7 +29,7 @@ public class DataMetaDbModule extends AbstractModule {
 
     @Provides
     @Singleton
-    DataMetaDataSource getDataMetaDataSource() {
+    ConnectionProvider getConnectionProvider() {
         final HikariConfig config = new HikariConfig();
         config.setJdbcUrl("jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8");
         config.setUsername("stroomuser");
@@ -35,6 +37,18 @@ public class DataMetaDbModule extends AbstractModule {
         config.addDataSourceProperty("cachePrepStmts", "true");
         config.addDataSourceProperty("prepStmtCacheSize", "250");
         config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
-        return new DataMetaDataSource(config);
+        final ConnectionProvider connectionProvider = new ConnectionProvider(config);
+        flyway(connectionProvider);
+        return connectionProvider;
+    }
+
+    private Flyway flyway(final DataSource dataSource) {
+        final Flyway flyway = new Flyway();
+        flyway.setDataSource(dataSource);
+        flyway.setLocations("stroom/data/meta/impl/db");
+        flyway.setTable("data_meta_schema");
+        flyway.setBaselineOnMigrate(true);
+        flyway.migrate();
+        return flyway;
     }
 }

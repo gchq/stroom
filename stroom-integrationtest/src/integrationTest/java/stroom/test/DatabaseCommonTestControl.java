@@ -207,11 +207,11 @@ public class DatabaseCommonTestControl implements CommonTestControl {
 //    public int countDocs(final String type) {
 //        return databaseCommonTestControlTransactionHelper.countDocs(type);
 //    }
-
-    @Override
-    public void shutdown() {
-        databaseCommonTestControlTransactionHelper.shutdown();
-    }
+//
+//    @Override
+//    public void shutdown() {
+//        databaseCommonTestControlTransactionHelper.shutdown();
+//    }
 
     // @Override
     @Override

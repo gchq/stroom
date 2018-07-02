@@ -57,7 +57,10 @@ public class PersistServiceImpl implements Provider<EntityManager>, PersistServi
         if (currentContext != null) {
             context = new ChildContext(currentContext);
         } else {
-            Preconditions.checkState(null != emFactory, "Persistence service has not been initialized.");
+            if (emFactory == null) {
+                start();
+            }
+//            Preconditions.checkState(null != emFactory, "Persistence service has not been initialized.");
 
             final EntityManager entityManager = emFactory.createEntityManager();
             context = new RootContext(entityManager);
@@ -80,8 +83,11 @@ public class PersistServiceImpl implements Provider<EntityManager>, PersistServi
 
     @Override
     public synchronized void start() {
-        Preconditions.checkState(null == emFactory, "Persistence service was already initialized.");
-        this.emFactory = entityManagerFactory(dataSource);
+//        Preconditions.checkState(null == emFactory, "Persistence service was already initialized.");
+
+        if (emFactory == null) {
+            this.emFactory = entityManagerFactory(dataSource);
+        }
     }
 
     @Override

@@ -23,11 +23,9 @@ import stroom.data.meta.api.FindDataCriteria;
 import stroom.data.meta.api.Data;
 import stroom.data.meta.api.MetaDataSource;
 import stroom.data.meta.api.DataMetaService;
-import stroom.data.store.FindStreamVolumeCriteria;
 import stroom.data.store.ScanVolumePathResult;
 import stroom.data.store.StreamMaintenanceService;
-import stroom.data.volume.api.StreamVolumeService;
-import stroom.data.volume.api.StreamVolumeService.StreamVolume;
+import stroom.data.store.impl.fs.DataVolumeService.DataVolume;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.CriteriaSet;
 import stroom.entity.shared.PageRequest;
@@ -65,7 +63,7 @@ class FileSystemStreamMaintenanceService
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystemStreamMaintenanceService.class);
 
     private final FileSystemStreamPathHelper fileSystemStreamPathHelper;
-    private final StreamVolumeService streamVolumeService;
+    private final DataVolumeService streamVolumeService;
     private final DataMetaService streamMetaService;
     private final Security security;
 
@@ -76,7 +74,7 @@ class FileSystemStreamMaintenanceService
     public FileSystemStreamMaintenanceService(final FileSystemStreamPathHelper fileSystemStreamPathHelper,
                                               final FileSystemFeedPaths fileSystemFeedPaths,
                                               final FileSystemTypePaths fileSystemTypePaths,
-                                              final StreamVolumeService streamVolumeService,
+                                              final DataVolumeService streamVolumeService,
                                               final DataMetaService streamMetaService,
                                               final Security security) {
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
@@ -88,9 +86,9 @@ class FileSystemStreamMaintenanceService
     }
 
     List<Path> findAllStreamFile(final Data stream) {
-        final Set<StreamVolume> streamVolumes = streamVolumeService.findStreamVolume(stream.getId());
+        final Set<DataVolume> streamVolumes = streamVolumeService.findStreamVolume(stream.getId());
         final List<Path> results = new ArrayList<>();
-        for (final StreamVolume streamVolume : streamVolumes) {
+        for (final DataVolume streamVolume : streamVolumes) {
             final Path rootFile = fileSystemStreamPathHelper.createRootStreamFile(streamVolume.getVolumePath(),
                     stream, stream.getTypeName());
             if (Files.isRegularFile(rootFile)) {
@@ -114,7 +112,7 @@ class FileSystemStreamMaintenanceService
             final long oldFileTime = System.currentTimeMillis() - oldFileAge;
 
             final Map<String, List<String>> filesKeyedByBaseName = new HashMap<>();
-            final Map<String, StreamVolume> streamsKeyedByBaseName = new HashMap<>();
+            final Map<String, DataVolume> streamsKeyedByBaseName = new HashMap<>();
             final Path directory;
 
             if (repoPath != null && !repoPath.isEmpty()) {
@@ -162,7 +160,7 @@ class FileSystemStreamMaintenanceService
 
     private void buildStreamsKeyedByBaseName(final VolumeEntity volume,
                                              final String repoPath,
-                                             final Map<String, StreamVolume> streamsKeyedByBaseName) {
+                                             final Map<String, DataVolume> streamsKeyedByBaseName) {
         try {
             // We need to find streams that match the repo path.
             final BaseResultList<Data> matchingStreams = findMatchingStreams(repoPath);
@@ -171,7 +169,7 @@ class FileSystemStreamMaintenanceService
             if (matchingStreams.size() > 0) {
                 // OK we have build up a list of files located in the directory
                 // Now see what is there as per the database.
-                final FindStreamVolumeCriteria criteria = new FindStreamVolumeCriteria();
+                final FindDataVolumeCriteria criteria = new FindDataVolumeCriteria();
 
                 final Map<Long, Data> streamMap = new HashMap<>();
                 final CriteriaSet<Long> streamIdSet = criteria.obtainStreamIdSet();
@@ -182,9 +180,9 @@ class FileSystemStreamMaintenanceService
                 });
                 criteria.obtainVolumeIdSet().add(volume.getId());
 
-                final List<StreamVolume> matches = streamVolumeService.find(criteria);
+                final List<DataVolume> matches = streamVolumeService.find(criteria);
 
-                for (final StreamVolume streamVolume : matches) {
+                for (final DataVolume streamVolume : matches) {
                     final Data stream = streamMap.get(streamVolume.getStreamId());
                     if (stream != null) {
                         streamsKeyedByBaseName.put(fileSystemStreamPathHelper.getBaseName(stream), streamVolume);
@@ -353,14 +351,14 @@ class FileSystemStreamMaintenanceService
                                     final Path directory,
                                     final long oldFileTime,
                                     final Map<String, List<String>> filesKeyedByBaseName,
-                                    final Map<String, StreamVolume> streamsKeyedByBaseName) {
+                                    final Map<String, DataVolume> streamsKeyedByBaseName) {
         // OK now we can go through all the files that exist on the file
         // system and delete out as required
         for (final Entry<String, List<String>> entry : filesKeyedByBaseName.entrySet()) {
             final String fsBaseName = entry.getKey();
             final List<String> files = entry.getValue();
 
-            final StreamVolume md = streamsKeyedByBaseName.get(fsBaseName);
+            final DataVolume md = streamsKeyedByBaseName.get(fsBaseName);
             // Case 1 - No stream volume found !
             if (md == null) {
                 for (final String file : files) {

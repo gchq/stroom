@@ -275,9 +275,9 @@ public final class SetupSampleDataBean {
             LOGGER.error(e.getMessage());
         }
 
-        if (shutdown) {
-            commonTestControl.shutdown();
-        }
+//        if (shutdown) {
+//            commonTestControl.shutdown();
+//        }
     }
 
     private static void logDocRefs(List<DocRef> entities, String entityTypes) {

@@ -39,6 +39,7 @@ include 'stroom-data-store:stroom-data-store-api'
 include 'stroom-data-store:stroom-data-store-impl-fs'
 include 'stroom-data-store:stroom-data-store-impl-fs-db-gen'
 include 'stroom-data-store:stroom-data-store-impl-mock'
+include 'stroom-data-store:stroom-data-store-util'
 
 // API projects
 include 'stroom-security-api'

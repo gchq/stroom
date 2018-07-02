@@ -18,7 +18,7 @@ package stroom.data.store.impl.fs;
 
 import com.google.inject.Inject;
 import stroom.data.meta.api.Data;
-import stroom.data.volume.api.StreamVolumeService.StreamVolume;
+import stroom.data.store.impl.fs.DataVolumeService.DataVolume;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
@@ -136,7 +136,7 @@ class FileSystemStreamPathHelper {
     /**
      * Create a child file for a parent.
      */
-    Path createChildStreamFile(final Data stream, final StreamVolume streamVolume, final String streamTypeName) {
+    Path createChildStreamFile(final Data stream, final DataVolume streamVolume, final String streamTypeName) {
         final String path = createFilePathBase(streamVolume.getVolumePath(), stream,
                 stream.getTypeName()) +
                 "." +

@@ -23,11 +23,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.Data;
 import stroom.data.meta.api.DataProperties;
-import stroom.data.store.FindStreamVolumeCriteria;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.data.store.api.StreamTargetUtil;
-import stroom.data.volume.api.StreamVolumeService;
 import stroom.jobsystem.MockTask;
 import stroom.node.NodeService;
 import stroom.node.shared.FindNodeCriteria;
@@ -59,7 +57,7 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
     @Inject
     private FileSystemStreamMaintenanceService streamMaintenanceService;
     @Inject
-    private StreamVolumeService streamVolumeService;
+    private DataVolumeService streamVolumeService;
     @Inject
     private FileSystemCleanExecutor fileSystemCleanTaskExecutor;
     @Inject
@@ -101,7 +99,7 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         lockstreamTarget1.close();
         final Collection<Path> lockedFiles = streamMaintenanceService.findAllStreamFile(lockstreamTarget1.getStream());
         FileSystemUtil.updateLastModified(lockedFiles, oldDate.toInstant().toEpochMilli());
-        streamVolumeService.find(FindStreamVolumeCriteria.create(lockstreamTarget1.getStream()));
+        streamVolumeService.find(FindDataVolumeCriteria.create(lockstreamTarget1.getStream()));
         // // Hack making the last access time quite old
         // for (StreamVolume volume : volumeList) {
         // volume.setLastAccessMs(oldDate.toDate().getTime());
@@ -169,7 +167,7 @@ public class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
             Assert.assertTrue(FileUtil.delete(file));
         }
 
-        final FindStreamVolumeCriteria streamVolumeCriteria = new FindStreamVolumeCriteria();
+        final FindDataVolumeCriteria streamVolumeCriteria = new FindDataVolumeCriteria();
         streamVolumeCriteria.obtainStreamIdSet().add(stream.getId());
 
         Assert.assertTrue("Must be saved to at least one volume",

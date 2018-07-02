@@ -22,14 +22,18 @@ import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import stroom.entity.CachingEntityManager;
+import stroom.entity.EntityModule;
 import stroom.entity.FindService;
 import stroom.node.shared.Node;
+import stroom.persist.EntityManagerModule;
 import stroom.properties.api.StroomPropertyService;
 import stroom.security.Security;
 
 public class NodeServiceModule extends AbstractModule {
     @Override
     protected void configure() {
+        install(new EntityManagerModule());
+
         bind(NodeService.class).to(NodeServiceImpl.class);
         bind(NodeServiceGetDefaultNode.class).to(NodeServiceImpl.class);
 
@@ -47,5 +51,17 @@ public class NodeServiceModule extends AbstractModule {
                                          final NodeServiceTransactionHelper nodeServiceTransactionHelper,
                                          final StroomPropertyService propertyService) {
         return new NodeServiceImpl(entityManager, security, nodeServiceTransactionHelper, propertyService);
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return 0;
     }
 }

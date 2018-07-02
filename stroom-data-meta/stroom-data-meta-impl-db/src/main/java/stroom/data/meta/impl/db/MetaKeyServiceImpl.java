@@ -25,7 +25,6 @@ import stroom.data.meta.api.MetaDataSource;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -72,13 +71,13 @@ class MetaKeyServiceImpl implements MetaKeyService {
 //
 //
 
-    private final DataSource dataSource;
+    private final ConnectionProvider connectionProvider;
     private final Map<Integer, String> idToNameCache = new HashMap<>();
     private final Map<String, Integer> nameToIdCache = new HashMap<>();
 
     @Inject
-    MetaKeyServiceImpl(final DataMetaDataSource dataSource) {
-        this.dataSource = dataSource;
+    MetaKeyServiceImpl(final ConnectionProvider connectionProvider) {
+        this.connectionProvider = connectionProvider;
         setup();
     }
 
@@ -109,7 +108,7 @@ class MetaKeyServiceImpl implements MetaKeyService {
     }
 
     private void fillCache() {
-        try (final Connection connection = dataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             create
                     .select(META_KEY.ID, META_KEY.NAME)
@@ -132,7 +131,7 @@ class MetaKeyServiceImpl implements MetaKeyService {
 //            return id;
 //        }
 //
-//        try (final Connection connection = dataSource.getConnection()) {
+//        try (final Connection connection = connectionProvider.getConnection()) {
 //            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
 //
 //            id = create
@@ -154,7 +153,7 @@ class MetaKeyServiceImpl implements MetaKeyService {
 //    }
 
     private void create(final String name, final MetaType type) {
-        try (final Connection connection = dataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             create
                     .insertInto(META_KEY, META_KEY.NAME, META_KEY.FIELD_TYPE)
@@ -257,7 +256,7 @@ class MetaKeyServiceImpl implements MetaKeyService {
     }
 
     int deleteAll() {
-        try (final Connection connection = dataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
             return create
                     .delete(META_KEY)

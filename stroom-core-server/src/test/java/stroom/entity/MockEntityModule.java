@@ -18,10 +18,7 @@ package stroom.entity;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.entity.event.EntityEventBus;
-import stroom.entity.event.EntityEventBusImpl;
 import stroom.entity.shared.Clearable;
-import stroom.task.TaskHandler;
 
 public class MockEntityModule extends AbstractModule {
     @Override

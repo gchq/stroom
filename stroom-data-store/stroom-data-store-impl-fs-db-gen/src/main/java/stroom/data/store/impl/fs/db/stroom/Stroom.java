@@ -15,8 +15,13 @@ import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
 import stroom.data.store.impl.fs.db.DefaultCatalog;
+import stroom.data.store.impl.fs.db.stroom.tables.DataVolume;
 import stroom.data.store.impl.fs.db.stroom.tables.FileFeedPath;
 import stroom.data.store.impl.fs.db.stroom.tables.FileTypePath;
+import stroom.data.store.impl.fs.db.stroom.tables.Nd;
+import stroom.data.store.impl.fs.db.stroom.tables.Rk;
+import stroom.data.store.impl.fs.db.stroom.tables.Vol;
+import stroom.data.store.impl.fs.db.stroom.tables.VolState;
 
 
 /**
@@ -32,12 +37,17 @@ import stroom.data.store.impl.fs.db.stroom.tables.FileTypePath;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Stroom extends SchemaImpl {
 
-    private static final long serialVersionUID = -1762851864;
+    private static final long serialVersionUID = 88535931;
 
     /**
      * The reference instance of <code>stroom</code>
      */
     public static final Stroom STROOM = new Stroom();
+
+    /**
+     * The table <code>stroom.data_volume</code>.
+     */
+    public final DataVolume DATA_VOLUME = stroom.data.store.impl.fs.db.stroom.tables.DataVolume.DATA_VOLUME;
 
     /**
      * The table <code>stroom.file_feed_path</code>.
@@ -48,6 +58,26 @@ public class Stroom extends SchemaImpl {
      * The table <code>stroom.file_type_path</code>.
      */
     public final FileTypePath FILE_TYPE_PATH = stroom.data.store.impl.fs.db.stroom.tables.FileTypePath.FILE_TYPE_PATH;
+
+    /**
+     * The table <code>stroom.ND</code>.
+     */
+    public final Nd ND = stroom.data.store.impl.fs.db.stroom.tables.Nd.ND;
+
+    /**
+     * The table <code>stroom.RK</code>.
+     */
+    public final Rk RK = stroom.data.store.impl.fs.db.stroom.tables.Rk.RK;
+
+    /**
+     * The table <code>stroom.VOL</code>.
+     */
+    public final Vol VOL = stroom.data.store.impl.fs.db.stroom.tables.Vol.VOL;
+
+    /**
+     * The table <code>stroom.VOL_STATE</code>.
+     */
+    public final VolState VOL_STATE = stroom.data.store.impl.fs.db.stroom.tables.VolState.VOL_STATE;
 
     /**
      * No further instances allowed
@@ -74,7 +104,12 @@ public class Stroom extends SchemaImpl {
 
     private final List<Table<?>> getTables0() {
         return Arrays.<Table<?>>asList(
+            DataVolume.DATA_VOLUME,
             FileFeedPath.FILE_FEED_PATH,
-            FileTypePath.FILE_TYPE_PATH);
+            FileTypePath.FILE_TYPE_PATH,
+            Nd.ND,
+            Rk.RK,
+            Vol.VOL,
+            VolState.VOL_STATE);
     }
 }

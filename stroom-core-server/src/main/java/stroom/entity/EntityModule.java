@@ -18,17 +18,16 @@ package stroom.entity;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.entity.event.EntityEventBus;
-import stroom.entity.event.EntityEventBusImpl;
 import stroom.entity.shared.Clearable;
+import stroom.logging.LoggingModule;
 import stroom.task.TaskHandler;
 
 public class EntityModule extends AbstractModule {
     @Override
     protected void configure() {
+        install(new LoggingModule());
+
         bind(GenericEntityService.class).to(GenericEntityServiceImpl.class);
-        bind(StroomEntityManager.class).to(StroomEntityManagerImpl.class);
-        bind(EntityEventBus.class).to(EntityEventBusImpl.class);
         bind(DocumentPermissionCache.class).to(DocumentPermissionCacheImpl.class);
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
@@ -36,7 +35,6 @@ public class EntityModule extends AbstractModule {
         clearableBinder.addBinding().to(DocumentPermissionCacheImpl.class);
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-        taskHandlerBinder.addBinding().to(stroom.entity.EntityReferenceFindHandler.class);
         taskHandlerBinder.addBinding().to(stroom.entity.EntityServiceDeleteHandler.class);
         taskHandlerBinder.addBinding().to(stroom.entity.EntityServiceFindDeleteHandler.class);
         taskHandlerBinder.addBinding().to(stroom.entity.EntityServiceFindHandler.class);
@@ -52,4 +50,16 @@ public class EntityModule extends AbstractModule {
 //        return new GenericEntityMarshallerImpl();
 //    }
 //
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return 0;
+    }
 }

@@ -2,6 +2,9 @@ package stroom.guice;
 
 import com.google.inject.AbstractModule;
 import stroom.data.meta.impl.db.DataMetaDbModule;
+import stroom.entity.event.EntityClusterTaskModule;
+import stroom.persist.EntityManagerModule;
+import stroom.pipeline.factory.PipelineFactoryModule;
 
 public class CoreModule extends AbstractModule {
     @Override
@@ -18,8 +21,9 @@ public class CoreModule extends AbstractModule {
         install(new stroom.document.DocumentModule());
         install(new stroom.elastic.ElasticModule());
         install(new stroom.entity.EntityModule());
-        install(new stroom.entity.cluster.EntityClusterModule());
         install(new stroom.entity.event.EntityEventModule());
+        install(new stroom.entity.cluster.EntityClusterModule());
+        install(new EntityClusterTaskModule());
         install(new stroom.explorer.ExplorerModule());
         install(new stroom.externaldoc.ExternalDocRefModule());
         install(new stroom.feed.FeedModule());
@@ -33,9 +37,9 @@ public class CoreModule extends AbstractModule {
         install(new stroom.node.NodeModule());
         install(new stroom.node.NodeHandlerModule());
         install(new stroom.node.NodeServiceModule());
-        install(new stroom.persist.PersistenceModule());
+        install(new EntityManagerModule());
         install(new stroom.pipeline.PipelineModule());
-        install(new stroom.pipeline.factory.FactoryModule());
+        install(new PipelineFactoryModule());
         install(new stroom.pipeline.stepping.PipelineSteppingModule());
         install(new stroom.pipeline.task.PipelineStreamTaskModule());
         install(new stroom.policy.PolicyModule());
@@ -60,7 +64,6 @@ public class CoreModule extends AbstractModule {
         install(new stroom.statistics.stroomstats.rollup.StroomStatsRollupModule());
         install(new DataMetaDbModule());
         install(new stroom.data.store.DataStoreHandlerModule());
-        install(new stroom.data.volume.impl.db.DataVolumeDbModule());
         install(new stroom.data.store.impl.fs.FileSystemDataStoreModule());
         install(new stroom.streamtask.StreamTaskModule());
         install(new stroom.task.TaskModule());

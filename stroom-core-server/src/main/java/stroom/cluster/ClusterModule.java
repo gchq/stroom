@@ -20,11 +20,14 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import stroom.entity.event.EntityEvent;
+import stroom.properties.PropertyModule;
 import stroom.task.TaskHandler;
 
 public class ClusterModule extends AbstractModule {
     @Override
     protected void configure() {
+        install(new PropertyModule());
+
         bind(ClusterCallService.class).annotatedWith(Names.named("clusterCallServiceLocal")).to(ClusterCallServiceLocal.class);
         bind(ClusterCallService.class).annotatedWith(Names.named("clusterCallServiceRemote")).to(ClusterCallServiceRemote.class);
         bind(ClusterNodeManager.class).to(ClusterNodeManagerImpl.class);
@@ -34,5 +37,17 @@ public class ClusterModule extends AbstractModule {
 
         final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(ClusterNodeManagerImpl.class);
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return 0;
     }
 }
