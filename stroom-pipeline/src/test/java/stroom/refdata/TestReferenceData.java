@@ -175,6 +175,7 @@ public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
                     Arrays.asList(SID_TO_PF_3, SID_TO_PF_4),
                     mockLoaderActionsMap);
 
+            // set up the mock loader to load the appropriate data when triggered by a lookup call
             Mockito.doAnswer(invocation -> {
                 RefStreamDefinition refStreamDefinition = invocation.getArgumentAt(0, RefStreamDefinition.class);
 
@@ -183,10 +184,12 @@ public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
                 return null;
             }).when(mockReferenceDataLoader).load(Mockito.any(RefStreamDefinition.class));
 
+            // perform lookups (which will trigger a load if required) and assert the result
             checkData(referenceData, pipelineReferences, SID_TO_PF_1);
             checkData(referenceData, pipelineReferences, SID_TO_PF_2);
             checkData(referenceData, pipelineReferences, SID_TO_PF_3);
             checkData(referenceData, pipelineReferences, SID_TO_PF_4);
+
         } catch (final RuntimeException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
