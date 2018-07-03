@@ -19,7 +19,7 @@ package stroom.dictionary;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.db.migration.OldDictionaryDoc;
+import stroom.db.migration.doc.dictionary.OldDictionaryDoc;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docstore.EncodingUtil;
 import stroom.docstore.JsonSerialiser2;

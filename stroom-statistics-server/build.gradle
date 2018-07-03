@@ -21,7 +21,7 @@ dependencies {
     compile libs.stroomQueryCommon
     compile libs.stroomStatsSchema
 
-    compile libs.c3p0
+    compile libs.hikari
     compile libs.commons_lang
     compile libs.commons_pool2
     compile libs.dropwizard_metrics_annotation

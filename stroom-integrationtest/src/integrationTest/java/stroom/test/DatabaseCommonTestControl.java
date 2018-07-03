@@ -92,7 +92,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
             ProcessorFilter.TABLE_NAME,
             ProcessorFilterTracker.TABLE_NAME,
             ProcessorFilterTask.TABLE_NAME,
-            "STRM_VOL",
+//            "STRM_VOL",
             User.TABLE_NAME,
             UserGroupUser.TABLE_NAME,
             VolumeEntity.TABLE_NAME,

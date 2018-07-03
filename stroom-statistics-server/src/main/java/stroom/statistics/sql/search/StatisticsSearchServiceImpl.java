@@ -16,6 +16,7 @@ import stroom.entity.util.SqlBuilder;
 import stroom.properties.api.StroomPropertyService;
 import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.shared.StatisticType;
+import stroom.statistics.sql.ConnectionProvider;
 import stroom.statistics.sql.SQLStatisticConstants;
 import stroom.statistics.sql.SQLStatisticNames;
 import stroom.statistics.sql.rollup.RollUpBitMask;
@@ -23,7 +24,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -58,7 +58,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     private static final String ALIASED_COUNT_COL = VALUE_TABLE_ALIAS + "." + SQLStatisticNames.COUNT;
     private static final String ALIASED_VALUE_COL = VALUE_TABLE_ALIAS + "." + SQLStatisticNames.VALUE;
 
-    private final DataSource statisticsDataSource;
+    private final ConnectionProvider connectionProvider;
     private final StroomPropertyService propertyService;
 
     //defines how the entity fields relate to the table columns
@@ -71,9 +71,9 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
     @SuppressWarnings("unused") // Called by DI
     @Inject
-    StatisticsSearchServiceImpl(@Named("statisticsDataSource") final DataSource statisticsDataSource,
+    StatisticsSearchServiceImpl(final ConnectionProvider connectionProvider,
                                 final StroomPropertyService propertyService) {
-        this.statisticsDataSource = statisticsDataSource;
+        this.connectionProvider = connectionProvider;
         this.propertyService = propertyService;
     }
 
@@ -358,7 +358,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         // will have mode on each time.
         Flowable<Val[]> resultSetFlowable = Flowable
                 .using(
-                        () -> new PreparedStatementResourceHolder(statisticsDataSource, sql, propertyService),
+                        () -> new PreparedStatementResourceHolder(connectionProvider, sql, propertyService),
                         factory -> {
                             LOGGER.debug("Converting factory to a flowable");
                             Preconditions.checkNotNull(factory);

@@ -18,21 +18,19 @@ package stroom.statistics.sql;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.entity.StroomDatabaseInfo;
 import stroom.entity.util.ConnectionUtil;
 import stroom.entity.util.SqlUtil;
-import stroom.entity.StroomDatabaseInfo;
 import stroom.properties.api.StroomPropertyService;
 import stroom.statistics.shared.StatisticType;
+import stroom.task.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.scheduler.SimpleCronScheduler;
 import stroom.util.shared.ModelStringUtil;
-import stroom.task.TaskContext;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.inject.Singleton;
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -215,7 +213,7 @@ public class SQLStatisticAggregationTransactionHelper {
             .append("AND PRES = ? ")
             .append("AND VAL_TP = ?")
             .toString();
-    private final DataSource statisticsDataSource;
+    private final ConnectionProvider connectionProvider;
     private final StroomDatabaseInfo stroomDatabaseInfo;
     private final StroomPropertyService stroomPropertyService;
 
@@ -252,10 +250,10 @@ public class SQLStatisticAggregationTransactionHelper {
     };
 
     @Inject
-    SQLStatisticAggregationTransactionHelper(@Named("statisticsDataSource") final DataSource statisticsDataSource,
+    SQLStatisticAggregationTransactionHelper(final ConnectionProvider connectionProvider,
                                              final StroomDatabaseInfo stroomDatabaseInfo,
                                              final StroomPropertyService stroomPropertyService) {
-        this.statisticsDataSource = statisticsDataSource;
+        this.connectionProvider = connectionProvider;
         this.stroomDatabaseInfo = stroomDatabaseInfo;
         this.stroomPropertyService = stroomPropertyService;
     }
@@ -301,19 +299,19 @@ public class SQLStatisticAggregationTransactionHelper {
     }
 
     public Long getAggregateMinId() throws SQLException {
-        try (final Connection connection = statisticsDataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             return doAggregateSQL_LongResult(connection, AGGREGATE_MIN_ID, null);
         }
     }
 
     public Long getAggregateMaxId() throws SQLException {
-        try (final Connection connection = statisticsDataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             return doAggregateSQL_LongResult(connection, AGGREGATE_MAX_ID, null);
         }
     }
 
     public Long getAggregateCount() throws SQLException {
-        try (final Connection connection = statisticsDataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             return doAggregateSQL_LongResult(connection, AGGREGATE_COUNT, null);
         }
     }
@@ -334,7 +332,7 @@ public class SQLStatisticAggregationTransactionHelper {
             // convert the max age into a time bucket so we can delete
             // everything older than that time bucket
             final long oldestTimeBucketToKeep = mostCoarseLevel.getAggregateToMs(timeNowMs - retentionAgeMs);
-            try (final Connection connection = statisticsDataSource.getConnection()) {
+            try (final Connection connection = connectionProvider.getConnection()) {
                 final long rowsAffected = doAggregateSQL_Update(connection, taskContext, "", DELETE_OLD_STATS,
                         Arrays.asList((Object) oldestTimeBucketToKeep));
                 LOGGER.info("Deleted {} stats with a time older than {}", rowsAffected,
@@ -358,7 +356,7 @@ public class SQLStatisticAggregationTransactionHelper {
 
         long processCount = 0;
 
-        try (final Connection connection = statisticsDataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             // mark a set of records in STATVAL_SRC as being processed so all
             // DML below can filter by them
             // records are chosen at random to avoid overhead of a sort
@@ -425,7 +423,7 @@ public class SQLStatisticAggregationTransactionHelper {
             throw new UnsupportedOperationException("Need MySQL to do statistics aggregation");
         }
 
-        try (final Connection connection = statisticsDataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             // Stage 2 is about moving stats from one precision in STAT_VAL to a
             // coarser one once they have become too old for their current
             // precision
@@ -495,7 +493,7 @@ public class SQLStatisticAggregationTransactionHelper {
         LOGGER.debug(">>> {}", tableName);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-        try (final Connection connection = statisticsDataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             try (final Statement statement = connection.createStatement()) {
                 final String sql = TRUNCATE_TABLE_SQL + tableName;
                 // (TRUNCATE_TABLE_SQL
@@ -515,7 +513,7 @@ public class SQLStatisticAggregationTransactionHelper {
     public void clearTable(final String tableName) throws SQLException {
         LOGGER.debug(">>> {}", tableName);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        try (final Connection connection = statisticsDataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             try (final Statement statement = connection.createStatement()) {
                 final String sql = CLEAR_TABLE_SQL + tableName;
                 statement.execute(sql);

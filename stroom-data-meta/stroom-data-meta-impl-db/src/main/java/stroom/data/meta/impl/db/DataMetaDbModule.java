@@ -8,11 +8,18 @@ import org.flywaydb.core.Flyway;
 import stroom.data.meta.api.DataMetaService;
 import stroom.data.meta.api.DataSecurityFilter;
 import stroom.entity.shared.Clearable;
+import stroom.properties.api.ConnectionConfig;
+import stroom.properties.api.ConnectionPoolConfig;
+import stroom.properties.api.StroomPropertyService;
 
 import javax.inject.Singleton;
 import javax.sql.DataSource;
 
 public class DataMetaDbModule extends AbstractModule {
+    private static final String FLYWAY_LOCATIONS = "stroom/data/meta/impl/db";
+    private static final String FLYWAY_TABLE = "data_meta_schema_history";
+    private static final String CONNECTION_PROPERTY_PREFIX = "stroom.data.meta.";
+
     @Override
     protected void configure() {
         bind(FeedService.class).to(FeedServiceImpl.class);
@@ -29,14 +36,17 @@ public class DataMetaDbModule extends AbstractModule {
 
     @Provides
     @Singleton
-    ConnectionProvider getConnectionProvider() {
+    ConnectionProvider getConnectionProvider(final StroomPropertyService stroomPropertyService) {
+        final ConnectionConfig connectionConfig = getConnectionConfig(stroomPropertyService);
+        final ConnectionPoolConfig connectionPoolConfig = getConnectionPoolConfig(stroomPropertyService);
+
         final HikariConfig config = new HikariConfig();
-        config.setJdbcUrl("jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8");
-        config.setUsername("stroomuser");
-        config.setPassword("stroompassword1");
-        config.addDataSourceProperty("cachePrepStmts", "true");
-        config.addDataSourceProperty("prepStmtCacheSize", "250");
-        config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+        config.setJdbcUrl(connectionConfig.getJdbcDriverUrl());
+        config.setUsername(connectionConfig.getJdbcDriverUsername());
+        config.setPassword(connectionConfig.getJdbcDriverPassword());
+        config.addDataSourceProperty("cachePrepStmts", String.valueOf(connectionPoolConfig.isCachePrepStmts()));
+        config.addDataSourceProperty("prepStmtCacheSize", String.valueOf(connectionPoolConfig.getPrepStmtCacheSize()));
+        config.addDataSourceProperty("prepStmtCacheSqlLimit", String.valueOf(connectionPoolConfig.getPrepStmtCacheSqlLimit()));
         final ConnectionProvider connectionProvider = new ConnectionProvider(config);
         flyway(connectionProvider);
         return connectionProvider;
@@ -45,10 +55,30 @@ public class DataMetaDbModule extends AbstractModule {
     private Flyway flyway(final DataSource dataSource) {
         final Flyway flyway = new Flyway();
         flyway.setDataSource(dataSource);
-        flyway.setLocations("stroom/data/meta/impl/db");
-        flyway.setTable("data_meta_schema_history");
+        flyway.setLocations(FLYWAY_LOCATIONS);
+        flyway.setTable(FLYWAY_TABLE);
         flyway.setBaselineOnMigrate(true);
         flyway.migrate();
         return flyway;
+    }
+
+    private ConnectionConfig getConnectionConfig(final StroomPropertyService stroomPropertyService) {
+        return new ConnectionConfig(CONNECTION_PROPERTY_PREFIX, stroomPropertyService);
+    }
+
+    private ConnectionPoolConfig getConnectionPoolConfig(final StroomPropertyService stroomPropertyService) {
+        return new ConnectionPoolConfig(CONNECTION_PROPERTY_PREFIX, stroomPropertyService);
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return 0;
     }
 }

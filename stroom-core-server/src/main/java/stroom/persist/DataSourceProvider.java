@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import stroom.properties.GlobalProperties;
+import stroom.properties.api.ConnectionConfig;
 import stroom.properties.api.StroomPropertyService;
 import stroom.util.config.StroomProperties;
 import stroom.util.shared.Version;
@@ -38,7 +39,7 @@ public class DataSourceProvider implements Provider<DataSource> {
             dataSource.setDataSourceName("stroom");
             dataSource.setDescription("Stroom data source");
 
-            final DataSourceConfig dataSourceConfig = getDataSourceConfig();
+            final ConnectionConfig dataSourceConfig = getDataSourceConfig();
             dataSource.setDriverClass(dataSourceConfig.getJdbcDriverClassName());
             dataSource.setJdbcUrl(dataSourceConfig.getJdbcDriverUrl());
             dataSource.setUser(dataSourceConfig.getJdbcDriverUsername());
@@ -217,8 +218,8 @@ public class DataSourceProvider implements Provider<DataSource> {
         return dataSource;
     }
 
-    private DataSourceConfig getDataSourceConfig() {
-        return new DataSourceConfig("stroom.", stroomPropertyService);
+    private ConnectionConfig getDataSourceConfig() {
+        return new ConnectionConfig("stroom.", stroomPropertyService);
     }
 
     private C3P0Config getC3P0Config() {

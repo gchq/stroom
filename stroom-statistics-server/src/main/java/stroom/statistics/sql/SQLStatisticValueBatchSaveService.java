@@ -22,8 +22,6 @@ import org.slf4j.LoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
-import javax.inject.Named;
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -35,9 +33,9 @@ import java.util.List;
  * Table
  */
 // @Transactional
-public class SQLStatisticValueBatchSaveService {
+class SQLStatisticValueBatchSaveService {
     private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticValueBatchSaveService.class);
-    public static final String SAVE_CALL;
+    private static final String SAVE_CALL;
 
     static {
         final StringBuilder sql = new StringBuilder();
@@ -55,15 +53,15 @@ public class SQLStatisticValueBatchSaveService {
         SAVE_CALL = sql.toString();
     }
 
-    private final DataSource statisticsDataSource;
+    private final ConnectionProvider connectionProvider;
 
     @Inject
-    SQLStatisticValueBatchSaveService(@Named("statisticsDataSource") final DataSource statisticsDataSource) {
-        this.statisticsDataSource = statisticsDataSource;
+    SQLStatisticValueBatchSaveService(final ConnectionProvider connectionProvider) {
+        this.connectionProvider = connectionProvider;
     }
 
     @SuppressWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
-    public void saveBatchStatisticValueSource_String(final List<SQLStatisticValueSourceDO> batch) {
+    void saveBatchStatisticValueSource_String(final List<SQLStatisticValueSourceDO> batch) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
         try (final Connection connection = getConnection()) {
@@ -108,7 +106,7 @@ public class SQLStatisticValueBatchSaveService {
         }
     }
 
-    public void saveBatchStatisticValueSource_PreparedStatement(final List<SQLStatisticValueSourceDO> batch)
+    void saveBatchStatisticValueSource_PreparedStatement(final List<SQLStatisticValueSourceDO> batch)
             throws SQLException {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
@@ -136,7 +134,7 @@ public class SQLStatisticValueBatchSaveService {
      * slow as it is inserting them one by one. Any failures will be logged and
      * processing will carry on hopefully some records will get through
      */
-    public int saveBatchStatisticValueSource_IndividualPreparedStatements(final List<SQLStatisticValueSourceDO> batch) {
+    int saveBatchStatisticValueSource_IndividualPreparedStatements(final List<SQLStatisticValueSourceDO> batch) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
         int savedCount = 0;
@@ -181,6 +179,6 @@ public class SQLStatisticValueBatchSaveService {
     }
 
     Connection getConnection() throws SQLException {
-        return statisticsDataSource.getConnection();
+        return connectionProvider.getConnection();
     }
 }

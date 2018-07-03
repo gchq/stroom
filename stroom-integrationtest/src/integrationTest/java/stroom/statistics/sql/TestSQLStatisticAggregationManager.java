@@ -33,8 +33,6 @@ import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
-import javax.inject.Named;
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -53,8 +51,7 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
     @Inject
     private CommonTestControl commonTestControl;
     @Inject
-    @Named("statisticsDataSource")
-    private DataSource statisticsDataSource;
+    private ConnectionProvider connectionProvider;
     @Inject
     private SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService;
     @Inject
@@ -676,7 +673,7 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
     private int getRowCount(final String tableName) throws SQLException {
         int count;
 
-        try (final Connection connection = statisticsDataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement("select count(*) from " + tableName)) {
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     resultSet.next();
@@ -689,7 +686,7 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
 
     private int getAggregateByPrecision(final String colName, final byte precision) throws SQLException {
         int count;
-        try (final Connection connection = statisticsDataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement("select sum(" + colName + ") from " + SQLStatisticNames.SQL_STATISTIC_VALUE_TABLE_NAME + " where PRES = " + precision)) {
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     resultSet.next();
@@ -702,7 +699,7 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
 
     private int getAggregateTotal(final String colName) throws SQLException {
         int count;
-        try (final Connection connection = statisticsDataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement("select sum(" + colName + ") from " + SQLStatisticNames.SQL_STATISTIC_VALUE_TABLE_NAME)) {
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     resultSet.next();
@@ -714,7 +711,7 @@ public class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationT
     }
 
 //    private void deleteRows(final String tableName) throws SQLException {
-//        try (final Connection connection = statisticsDataSource.getConnection()) {
+//        try (final Connection connection = connectionProvider.getConnection()) {
 //            try (final PreparedStatement preparedStatement = connection.prepareStatement("delete from " + tableName)) {
 //                preparedStatement.execute();
 //            }

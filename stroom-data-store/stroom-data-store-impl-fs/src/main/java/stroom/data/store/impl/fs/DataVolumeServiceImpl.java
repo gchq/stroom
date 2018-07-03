@@ -87,7 +87,7 @@ public class DataVolumeServiceImpl implements DataVolumeService {
             return Optional.empty();
         }
 
-        if (criteriaSet.getMatchNull()) {
+        if (criteriaSet.getMatchNull() != null && criteriaSet.getMatchNull()) {
             return Optional.of(field.isNull());
         }
 

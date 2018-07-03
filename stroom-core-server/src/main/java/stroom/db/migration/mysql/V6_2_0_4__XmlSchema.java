@@ -17,8 +17,8 @@
 package stroom.db.migration.mysql;
 
 import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
-import stroom.xmlschema.XmlSchemaSerialiser;
-import stroom.xmlschema.shared.XmlSchemaDoc;
+import stroom.db.migration.doc.xmlschema.XmlSchemaDoc;
+import stroom.db.migration.doc.xmlschema.XmlSchemaSerialiser;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

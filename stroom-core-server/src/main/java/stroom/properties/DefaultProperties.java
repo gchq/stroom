@@ -645,6 +645,52 @@ public class DefaultProperties {
                 .requireRestart(true)
                 .build());
 
+        // DATA META DATABASE PROPERTIES
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.data.meta.jdbcDriverClassName")
+                .value("org.hsqldb.jdbcDriver")
+                .description("Should only be set per node in application property file")
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.data.meta.jdbcDriverUrl")
+                .value("jdbc:hsqldb:file:${stroom.temp}/statistics/HSQLDB.DAT;shutdown=true")
+                .description("Should only be set per node in application property file")
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.data.meta.jdbcDriverUsername")
+                .value("sa")
+                .description("Should only be set per node in application property file")
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.data.meta.jdbcDriverPassword")
+                .value("")
+                .description("Should only be set per node in application property file")
+                .password(true)
+                .build());
+
+        // DATA STORE DATABASE PROPERTIES
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.data.store.jdbcDriverClassName")
+                .value("org.hsqldb.jdbcDriver")
+                .description("Should only be set per node in application property file")
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.data.store.jdbcDriverUrl")
+                .value("jdbc:hsqldb:file:${stroom.temp}/statistics/HSQLDB.DAT;shutdown=true")
+                .description("Should only be set per node in application property file")
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.data.store.jdbcDriverUsername")
+                .value("sa")
+                .description("Should only be set per node in application property file")
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.data.store.jdbcDriverPassword")
+                .value("")
+                .description("Should only be set per node in application property file")
+                .password(true)
+                .build());
+
         // Entity Names
         list.add(new GlobalProperty.Builder()
                 .name("stroom.namePattern")

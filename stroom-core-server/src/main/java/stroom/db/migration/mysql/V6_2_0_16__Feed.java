@@ -17,9 +17,9 @@
 package stroom.db.migration.mysql;
 
 import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
-import stroom.feed.FeedSerialiser;
-import stroom.feed.shared.FeedDoc;
-import stroom.feed.shared.FeedDoc.FeedStatus;
+import stroom.db.migration.doc.feed.FeedDoc;
+import stroom.db.migration.doc.feed.FeedDoc.FeedStatus;
+import stroom.db.migration.doc.feed.FeedSerialiser;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

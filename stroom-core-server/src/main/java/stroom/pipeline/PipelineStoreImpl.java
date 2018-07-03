@@ -17,6 +17,7 @@
 
 package stroom.pipeline;
 
+import stroom.db.migration.doc.pipeline.OldPipelineEntity;
 import stroom.docref.DocRef;
 import stroom.docstore.EncodingUtil;
 import stroom.docstore.Persistence;

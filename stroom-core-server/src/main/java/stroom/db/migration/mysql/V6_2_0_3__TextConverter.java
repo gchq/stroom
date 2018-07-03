@@ -17,10 +17,10 @@
 package stroom.db.migration.mysql;
 
 import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
-import stroom.pipeline.OldTextConverter;
-import stroom.pipeline.TextConverterSerialiser;
-import stroom.pipeline.shared.TextConverterDoc;
-import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
+import stroom.db.migration.doc.textconverter.OldTextConverter;
+import stroom.db.migration.doc.textconverter.TextConverterDoc;
+import stroom.db.migration.doc.textconverter.TextConverterDoc.TextConverterType;
+import stroom.db.migration.doc.textconverter.TextConverterSerialiser;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

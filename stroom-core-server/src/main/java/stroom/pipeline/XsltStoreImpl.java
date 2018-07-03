@@ -17,6 +17,7 @@
 
 package stroom.pipeline;
 
+import stroom.db.migration.doc.pipeline.OldXslt;
 import stroom.docref.DocRef;
 import stroom.docstore.Persistence;
 import stroom.docstore.Serialiser2;
