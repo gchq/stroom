@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import React from 'react';
 
 import { storiesOf, addDecorator } from '@storybook/react';
@@ -20,21 +21,11 @@ import { storiesOf, addDecorator } from '@storybook/react';
 import { PollyDecorator } from 'lib/storybook/PollyDecorator';
 import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 
-import { testXslt } from './test';
+import UserSettings from './UserSettings';
 
-import XsltEditor from './XsltEditor';
+const PollyDecoratorWithTestData = PollyDecorator({});
 
-const PollyDecoratorWithTestData = PollyDecorator({
-  xslt: testXslt,
-});
-
-const stories = storiesOf('XSLT Editor', module)
+const stories = storiesOf('User Settings', module)
   .addDecorator(PollyDecoratorWithTestData)
-  .addDecorator(ReduxDecorator);
-
-Object.entries(testXslt)
-  .map(k => ({
-    name: k[0],
-    data: k[1],
-  }))
-  .forEach(xslt => stories.add(xslt.name, () => <XsltEditor xsltId={xslt.name} />));
+  .addDecorator(ReduxDecorator)
+  .add('Logged in', () => <UserSettings />);

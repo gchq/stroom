@@ -16,7 +16,6 @@
 
 import React from 'react';
 import { storiesOf } from '@storybook/react';
-import { withNotes } from '@storybook/addon-notes';
 import TrackerDashboard from './TrackerDashboard';
 import StoryRouter from 'storybook-react-router';
 import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
@@ -32,23 +31,17 @@ const containerStyle = {
   height: '500px',
 };
 
-const notes =
-  "This is the tracker dashboard. Sorting, searching, and paging happen remotely so they don't work without further customisation.";
-
 storiesOf('TrackerDashboard', module)
   .addDecorator(PollyDecorator({
     trackers: [trackers.minimalTracker_undefinedLastPollAge, trackers.maximalTracker],
   }))
   .addDecorator(ReduxDecorator)
   .addDecorator(StoryRouter())
-  .add(
-    'basic',
-    withNotes(notes)(() => (
-      <div style={containerStyle}>
-        <TrackerDashboard />
-      </div>
-    )),
-  );
+  .add('basic', () => (
+    <div style={containerStyle}>
+      <TrackerDashboard />
+    </div>
+  ));
 
 storiesOf('TrackerDashboard', module)
   .addDecorator(PollyDecorator({
@@ -56,14 +49,11 @@ storiesOf('TrackerDashboard', module)
   }))
   .addDecorator(ReduxDecorator)
   .addDecorator(StoryRouter())
-  .add(
-    'No trackers',
-    withNotes(notes)(() => (
-      <div style={containerStyle}>
-        <TrackerDashboard />
-      </div>
-    )),
-  );
+  .add('No trackers', () => (
+    <div style={containerStyle}>
+      <TrackerDashboard />
+    </div>
+  ));
 
 const lotsOfTrackers = [...Array(10).keys()].map(i => generateGenericTracker(i));
 
@@ -73,11 +63,8 @@ storiesOf('TrackerDashboard', module)
   }))
   .addDecorator(ReduxDecorator)
   .addDecorator(StoryRouter())
-  .add(
-    'Lots of trackers',
-    withNotes(notes)(() => (
-      <div style={containerStyle}>
-        <TrackerDashboard />
-      </div>
-    )),
-  );
+  .add('Lots of trackers', () => (
+    <div style={containerStyle}>
+      <TrackerDashboard />
+    </div>
+  ));

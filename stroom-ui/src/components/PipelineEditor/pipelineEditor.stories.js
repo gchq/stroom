@@ -17,8 +17,6 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 import { storiesOf, addDecorator } from '@storybook/react';
-import { action } from '@storybook/addon-actions';
-import { withNotes } from '@storybook/addon-notes';
 
 import { compose } from 'recompose';
 

@@ -17,7 +17,6 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { lifecycle } from 'recompose';
 import { Provider } from 'react-redux';
-import { action } from '@storybook/addon-actions';
 
 import store from 'startup/store';
 

@@ -17,16 +17,10 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 import { storiesOf, addDecorator } from '@storybook/react';
-import { action } from '@storybook/addon-actions';
-import { withNotes } from '@storybook/addon-notes';
 
 import { DocExplorer, DocRef, Folder, DocRefModalPicker, DocRefDropdownPicker } from './index';
-
 import { actionCreators } from './redux';
-
-import markdown from './docExplorer.md';
 import { testTree, DOC_REF_TYPES, fromSetupSampleData, testDocRefsTypes } from './test';
-
 import { pickRandomItem } from 'lib/treeUtils';
 
 import { ReduxDecoratorWithInitialisation, ReduxDecorator } from 'lib/storybook/ReduxDecorator';

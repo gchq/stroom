@@ -17,7 +17,6 @@
 import React from 'react';
 import { storiesOf } from '@storybook/react';
 import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
-import { withNotes } from '@storybook/addon-notes';
 import ErrorPage from 'sections/ErrorPage';
 
 import { setErrorMessageAction, setStackTraceAction, setHttpErrorCodeAction } from './redux';
@@ -49,9 +48,9 @@ const httpErrorStatus = 501;
 
 storiesOf('ErrorPage', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(setErrorMessageAction())
-    store.dispatch(setStackTraceAction())
-    store.dispatch(setHttpErrorCodeAction())
+    store.dispatch(setErrorMessageAction());
+    store.dispatch(setStackTraceAction());
+    store.dispatch(setHttpErrorCodeAction());
   }))
   .add('No details', () => (
     <div className="container">
@@ -61,9 +60,9 @@ storiesOf('ErrorPage', module)
 
 storiesOf('ErrorPage', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(setErrorMessageAction(errorMessage))
-    store.dispatch(setStackTraceAction())
-    store.dispatch(setHttpErrorCodeAction())
+    store.dispatch(setErrorMessageAction(errorMessage));
+    store.dispatch(setStackTraceAction());
+    store.dispatch(setHttpErrorCodeAction());
   }))
   .add('Just error message', () => (
     <div className="container">
@@ -73,9 +72,9 @@ storiesOf('ErrorPage', module)
 
 storiesOf('ErrorPage', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(setErrorMessageAction(errorMessage))
-    store.dispatch(setStackTraceAction(stackTrace))
-    store.dispatch(setHttpErrorCodeAction())
+    store.dispatch(setErrorMessageAction(errorMessage));
+    store.dispatch(setStackTraceAction(stackTrace));
+    store.dispatch(setHttpErrorCodeAction());
   }))
   .add('Error message and stack trace', () => (
     <div className="container">
@@ -85,9 +84,9 @@ storiesOf('ErrorPage', module)
 
 storiesOf('ErrorPage', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(setErrorMessageAction(errorMessage))
-    store.dispatch(setStackTraceAction(stackTrace))
-    store.dispatch(setHttpErrorCodeAction(httpErrorStatus))
+    store.dispatch(setErrorMessageAction(errorMessage));
+    store.dispatch(setStackTraceAction(stackTrace));
+    store.dispatch(setHttpErrorCodeAction(httpErrorStatus));
   }))
   .add('Everything', () => (
     <div className="container">

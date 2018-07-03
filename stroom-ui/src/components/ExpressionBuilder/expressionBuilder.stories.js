@@ -17,8 +17,6 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 import { storiesOf, addDecorator } from '@storybook/react';
-import { action } from '@storybook/addon-actions';
-import { withNotes } from '@storybook/addon-notes';
 
 import { PollyDecorator } from 'lib/storybook/PollyDecorator';
 import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
@@ -47,8 +45,6 @@ import {
 } from './queryExpression.testData';
 
 import { testDataSource } from './dataSource.testData';
-
-import markdown from './expressionBuilder.md';
 
 storiesOf('Expression Builder', module)
   .addDecorator(PollyDecorator({
