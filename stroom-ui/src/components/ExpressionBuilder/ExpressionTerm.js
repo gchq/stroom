@@ -25,7 +25,8 @@ import { DragSource } from 'react-dnd';
 
 import { ItemTypes } from './dragDropTypes';
 import { displayValues } from './conditions';
-import { DocRefModalPicker, actionCreators as docExplorerActionCreators } from '../DocExplorer';
+import { DocRefModalPicker } from '../DocExplorer';
+import { actionCreators as docExplorerActionCreators } from '../DocExplorer/redux';
 import { actionCreators, joinDictionaryTermId } from './redux';
 
 const { docRefPicked } = docExplorerActionCreators;

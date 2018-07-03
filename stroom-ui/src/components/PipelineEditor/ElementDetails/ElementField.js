@@ -12,11 +12,12 @@ import { Field } from 'redux-form';
 
 import { getActualValue } from './elementDetailsUtils';
 
-import { DocRefModalPicker, actionCreators } from 'components/DocExplorer';
+import { DocRefModalPicker, } from 'components/DocExplorer';
+import { actionCreators as docExplorerActionCreators } from 'components/DocExplorer/redux';
 
 import NumericInput from 'prototypes/NumericInput';
 
-const { docRefPicked } = actionCreators;
+const { docRefPicked } = docExplorerActionCreators;
 
 const getPickerName = settingName => `${settingName}_docRefModalPicker`;
 

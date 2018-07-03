@@ -22,7 +22,7 @@ import {
   authorisationReducer as authorisation,
 } from 'startup/Authentication';
 import { reducer as lineContainer } from 'components/LineTo';
-import { reducer as explorerTree } from 'components/DocExplorer';
+import { reducer as explorerTree } from 'components/DocExplorer/redux';
 import {
   expressionReducer as expressions,
   dataSourceReducer as dataSources,
@@ -31,9 +31,7 @@ import {
   pipelineReducer as pipelines,
   elementReducer as elements,
 } from 'components/PipelineEditor';
-import {
-  reducer as xslt
-} from 'prototypes/XsltEditor';
+import { reducer as xslt } from 'prototypes/XsltEditor';
 import { reducer as appChrome } from 'sections/AppChrome/redux';
 import { reducer as trackerDashboard } from 'sections/TrackerDashboard';
 import { reducer as errorPage } from 'sections/ErrorPage';
@@ -56,5 +54,5 @@ export default combineReducers({
   errorPage,
   lineContainer,
   fetch,
-  appChrome
+  appChrome,
 });

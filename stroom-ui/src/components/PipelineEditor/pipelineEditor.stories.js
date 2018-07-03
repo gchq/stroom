@@ -45,8 +45,6 @@ const {
   pipelineElementSelected,
 } = pipelineActionCreators;
 
-const { docTreeReceived } = docExplorerActionCreators;
-
 const PollyDecoratorWithTestData = PollyDecorator({
   documentTree: testTree,
   docRefTypes: testDocRefsTypes,
@@ -65,9 +63,7 @@ Object.keys(testPipelines).forEach(k =>
 
 storiesOf('Element Palette', module)
   .addDecorator(PollyDecoratorWithTestData)
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(docTreeReceived(testTree));
-  })) // must be recorder after/outside of the test initialisation decorators
+  .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator)
   .add('Element Palette', () => <ElementPalette pipelineId="longPipeline" />);
 
@@ -75,6 +71,6 @@ storiesOf('Element Details', module)
   .addDecorator(PollyDecoratorWithTestData)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
     store.dispatch(pipelineElementSelected('longPipeline', 'splitFilter', { splitDepth: 10, splitCount: 10 }));
-  })) // must be recorder after/outside of the test initialisation decorators
+  }))
   .addDecorator(DragDropDecorator)
   .add('Simple element details page', () => <ElementDetails pipelineId="longPipeline" />);
