@@ -23,12 +23,12 @@ import { ItemTypes } from './dragDropTypes';
 import { DragSource } from 'react-dnd';
 
 import { actionCreators as docExplorerActionCreators } from './redux';
-import { actionCreators as contentTabActionCreators } from 'sections/AppChrome/redux';
+import { actionCreators as contentTabActionCreators, TAB_TYPES } from 'sections/AppChrome/redux';
 
 import DocRefMenu from './DocRefMenu';
 
 const { docRefSelected } = docExplorerActionCreators;
-const { docRefOpened } = contentTabActionCreators;
+const { tabOpened } = contentTabActionCreators;
 
 const withContextMenu = withState('isContextMenuOpen', 'setContextMenuOpen', false);
 
@@ -58,7 +58,7 @@ const enhance = compose(
     }),
     {
       docRefSelected,
-      docRefOpened,
+      tabOpened,
     },
   ),
   withContextMenu,
@@ -71,7 +71,7 @@ const DocRef = enhance(({
   docRef,
 
   docRefSelected,
-  docRefOpened,
+  tabOpened,
 
   isContextMenuOpen,
   setContextMenuOpen,
@@ -96,7 +96,7 @@ const DocRef = enhance(({
   const onDoubleClick = () => {
     clearTimeout(timer);
     prevent = true;
-    docRefOpened(docRef);
+    tabOpened(TAB_TYPES.DOC_REF, docRef.uuid, docRef);
   };
 
   const onRightClick = (e) => {

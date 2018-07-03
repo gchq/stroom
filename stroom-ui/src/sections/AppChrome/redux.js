@@ -17,7 +17,7 @@ import { createActions, handleActions } from 'redux-actions';
 
 // Enumerate the tab types that can be opened
 const TAB_TYPES = {
-  OPEN_DOC_REFS: 0,
+  DOC_REF: 0,
   EXPLORER_TREE: 1,
   TRACKER_DASHBOARD: 2,
   USER_ME: 3,
@@ -26,87 +26,55 @@ const TAB_TYPES = {
 };
 
 const actionCreators = createActions({
-  TAB_WAS_SELECTED: tabType => ({ tabType }),
-  DOC_REF_OPENED: docRef => ({ docRef }),
-  DOC_REF_TAB_SELECTED: docRef => ({ docRef }),
-  DOC_REF_CLOSED: docRef => ({ docRef }),
+  TAB_OPENED: (type, tabId, data) => ({ type, tabId, data }),
+  TAB_SELECTED: tabId => ({ tabId }),
+  TAB_CLOSED: tabId => ({ tabId }),
 });
 
 const defaultState = {
-  selectedTab: undefined,
   openTabs: [],
-  selectedDocRef: undefined,
-  docSelectionStack: [],
-  openDocRefTabs: [],
+  tabSelectionStack: [],
 };
 
 const reducer = handleActions(
   {
-    TAB_WAS_SELECTED: (state, action) => ({
-      ...state,
-      selectedTab: action.payload.tabType,
-      openTabs: state.openTabs
-        .filter(t => t !== action.payload.tabType)
-        .concat([action.payload.tabType]),
-    }),
-    DOC_REF_OPENED: (state, action) => {
-      const { docRef } = action.payload;
-
-      const docRefIsOpen = state.openDocRefTabs.find(d => d.uuid === docRef.uuid);
-      const openDocRefTabs = docRefIsOpen
-        ? state.openDocRefTabs
-        : state.openDocRefTabs.concat([docRef]);
-
-      return {
-        ...state,
-        selectedTab: TAB_TYPES.OPEN_DOC_REFS,
-        openTabs: state.openTabs
-          .filter(t => t !== TAB_TYPES.OPEN_DOC_REFS)
-          .concat([TAB_TYPES.OPEN_DOC_REFS]),
-        openDocRefTabs,
-        selectedDocRef: docRef,
-        docSelectionStack: state.docSelectionStack
-          .filter(t => t.uuid !== docRef.uuid)
-          .concat([docRef]),
-      };
-    },
-    DOC_REF_TAB_SELECTED: (state, action) => {
-      const { docRef } = action.payload;
-
-      // The selection action gets fired even when a tab is closed, so only act if its still open
-      if (state.openDocRefTabs.find(d => d.uuid === docRef.uuid)) {
-        const docSelectionStack = state.docSelectionStack
-          .filter(t => t.uuid !== docRef.uuid)
-          .concat([docRef]);
-        let selectedDocRef;
-        if (docSelectionStack.length > 0) {
-          selectedDocRef = docSelectionStack[docSelectionStack.length - 1];
-        }
-
+    TAB_SELECTED: (state, action) => {
+      const openTab = state.openTabs.find(t => t.tabId === action.payload.tabId);
+      if (openTab) {
         return {
           ...state,
-          selectedDocRef,
-          docSelectionStack,
+          tabSelectionStack: state.tabSelectionStack
+            .filter(t => t !== action.payload.tabId)
+            .concat([action.payload.tabId]),
         };
       }
       return state;
     },
-    DOC_REF_CLOSED: (state, action) => {
-      const docRefFilter = t => t.uuid !== action.payload.docRef.uuid;
-      const openDocRefTabs = state.openDocRefTabs.filter(docRefFilter);
-      const docSelectionStack = state.docSelectionStack.filter(docRefFilter);
-      let selectedDocRef;
-      if (docSelectionStack.length > 0) {
-        selectedDocRef = docSelectionStack[docSelectionStack.length - 1];
+    TAB_OPENED: (state, action) => {
+      const tabId = action.payload.tabId || action.payload.type;
+      if (state.openTabs.find(t => t.tabId === tabId)) {
+        return {
+          ...state,
+          tabSelectionStack: state.tabSelectionStack.filter(t => t !== tabId).concat([tabId]),
+        };
       }
-
       return {
         ...state,
-        openDocRefTabs,
-        selectedDocRef,
-        docSelectionStack,
+        tabSelectionStack: state.tabSelectionStack.filter(t => t !== tabId).concat([tabId]),
+        openTabs: state.openTabs.concat([
+          {
+            type: action.payload.type,
+            tabId,
+            data: action.payload.data,
+          },
+        ]),
       };
     },
+    TAB_CLOSED: (state, action) => ({
+      ...state,
+      tabSelectionStack: state.tabSelectionStack.filter(t => t !== action.payload.tabId),
+      openTabs: state.openTabs.filter(t => t.tabId !== action.payload.tabId),
+    }),
   },
   defaultState,
 );
