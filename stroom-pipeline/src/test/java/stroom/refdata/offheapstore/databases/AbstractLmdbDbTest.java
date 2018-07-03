@@ -30,7 +30,7 @@ import stroom.util.test.StroomUnitTest;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 
-public class AbstractLmdbDbTest extends StroomUnitTest {
+public abstract class AbstractLmdbDbTest extends StroomUnitTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractLmdbDbTest.class);
     private static final long DB_MAX_SIZE = ByteSizeUnit.KIBIBYTE.longBytes(1000);

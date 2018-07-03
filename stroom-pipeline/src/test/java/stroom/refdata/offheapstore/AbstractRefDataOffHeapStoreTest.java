@@ -33,7 +33,7 @@ import stroom.util.ByteSizeUnit;
 
 import java.nio.file.Path;
 
-public class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest {
+public abstract class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractRefDataOffHeapStoreTest.class);
     private static final long DB_MAX_SIZE = ByteSizeUnit.MEBIBYTE.longBytes(5);
