@@ -34,6 +34,7 @@ import { testPipelines, elements, elementProperties } from 'components/PipelineE
 import { testDocRefsTypes } from 'components/DocExplorer/test';
 import { testXslt } from 'prototypes/XsltEditor/test';
 import { testTree } from './test';
+import { generateGenericTracker } from 'sections/TrackerDashboard/tracker.testData';
 
 import 'styles/main.css';
 
@@ -46,6 +47,7 @@ const PollyDecoratorWithTestData = PollyDecorator({
   elementProperties,
   pipelines: testPipelines,
   xslt: testXslt,
+  trackers: [...Array(10).keys()].map(i => generateGenericTracker(i)),
 });
 
 storiesOf('App Chrome', module)

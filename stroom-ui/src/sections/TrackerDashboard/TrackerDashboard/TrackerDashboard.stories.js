@@ -65,10 +65,7 @@ storiesOf('TrackerDashboard', module)
     )),
   );
 
-const lotsOfTrackers = [];
-[...Array(10).keys()].forEach((i) => {
-  lotsOfTrackers[i] = generateGenericTracker(i);
-});
+const lotsOfTrackers = [...Array(10).keys()].map(i => generateGenericTracker(i));
 
 storiesOf('TrackerDashboard', module)
   .addDecorator(PollyDecorator({
