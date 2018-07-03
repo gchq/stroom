@@ -68,7 +68,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 
     /*
         Example xml data
-        <referenceData>
+        <referenceData xmlns="reference-data:2" xmlns:evt="event-logging:3">
             <reference>
                 <map>cityToCountry</map>
                 <key>cardiff</key>
@@ -94,7 +94,12 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         </referenceData>
 
         Note: <Value> can contain either XML or plain string data, e.g.
-            <value><country>UK></country></value>
+            <value>
+                <evt:Location>
+                    <evt:Country>UK></evt:Country>
+                </evt:Location>
+            </value>
+        or
             <value>UK</value>
      */
     private static final String REFERENCE_ELEMENT = "reference";
@@ -125,6 +130,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     private Set<String> appliedUris = new HashSet<>();
     private boolean insideElement = false;
     private boolean isFastInfosetDocStarted = false;
+    private String valueXmlDefaultNamespaceUri = null;
 
     private enum ValueElementType {
         XML, STRING
@@ -224,6 +230,9 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 
         LOGGER.trace("startElement {} {} {}", uri, localName, qName);
 
+        String newUri = uri;
+        String newQName = qName;
+        Attributes newAtts = atts;
         if (VALUE_ELEMENT.equalsIgnoreCase(localName)) {
             insideValueElement = true;
         } else if (insideValueElement) {
@@ -233,26 +242,49 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                 LOGGER.trace("first XML element inside {} element", VALUE_ELEMENT);
                 // This is the first startElement inside the value element so we are dealing with XML refdata
                 haveSeenXmlInValueElement = true;
+                // As this is the first element in our value we need to make its namespace the default and
+                // assume whatever doc it is later injected into will have the same default namespace. Thus
+                // we need to strip the prefix.
+                valueXmlDefaultNamespaceUri = uri;
+
                 LOGGER.trace("saxDocumentSerializer - reset()");
                 startFastInfosetDocIfNeeded();
+
+//                newAtts = new AttributesImpl(atts);
+//                ((AttributesImpl)newAtts).addAttribute(
+//                        "http://www.w3.org/2000/xmlns/",
+//                        "xmlns",
+//                        "xmlns",
+//                        "CDATA",
+//                        uri);
             }
 
             LOGGER.trace("appliedUris {}", appliedUris);
-            if (!appliedUris.contains(uri)) {
+//            if (!appliedUris.contains(uri) && !uri.equals(valueXmlDefaultNamespaceUri)) {
+                if (!appliedUris.contains(uri) ) {
                 // we haven't seen this uri before so find its prefix and call startPrefixMapping on the
                 // serializer so it understands them
                 String prefix = prefixMap.get(uri);
                 if (prefix != null) {
                     LOGGER.trace("saxDocumentSerializer - startPrefixMapping({}, {})", prefix, uri);
-                    saxDocumentSerializer.startPrefixMapping(prefix, uri);
+//                    saxDocumentSerializer.startPrefixMapping(prefix, uri);
                 }
                 appliedUris.add(uri);
             }
-            LOGGER.trace("saxDocumentSerializer - startElement({}, {}, {}, {})", uri, localName, qName, atts);
-            saxDocumentSerializer.startElement(uri, localName, qName, atts);
+
+            if (uri.equals(valueXmlDefaultNamespaceUri)) {
+                // This is the default namespace so remove it from the element
+//                newUri = "";
+                newQName = localName;
+                LOGGER.trace("saxDocumentSerializer - startPrefixMapping({}, {})", "", uri);
+                saxDocumentSerializer.startPrefixMapping("", uri);
+            }
+
+            LOGGER.trace("saxDocumentSerializer - startElement({}, {}, {}, {})", newUri, localName, newQName, newAtts);
+            saxDocumentSerializer.startElement(newUri, localName, newQName, newAtts);
         }
 
-        super.startElement(uri, localName, qName, atts);
+        super.startElement(newUri, localName, newQName, newAtts);
     }
 
     /**
@@ -279,8 +311,15 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         }
 
         if (insideValueElement) {
-            LOGGER.trace("saxDocumentSerializer - endElement({}, {}, {})", uri, localName, qName);
-            saxDocumentSerializer.endElement(uri, localName, qName);
+            String newUri = uri;
+            String newQName = qName;
+            if (uri.equals(valueXmlDefaultNamespaceUri)) {
+                // This is the default namespace so remove it from the element
+                newQName = localName;
+                newUri = "";
+            }
+            LOGGER.trace("saxDocumentSerializer - endElement({}, {}, {})", newUri, localName, newQName);
+            saxDocumentSerializer.endElement(newUri, localName, newQName);
         } else {
             if (MAP_ELEMENT.equalsIgnoreCase(localName)) {
                 // capture the name of the map that the subsequent values will belong to. A ref
@@ -374,6 +413,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                 rangeFrom = null;
                 rangeTo = null;
                 haveSeenXmlInValueElement = false;
+                valueXmlDefaultNamespaceUri = null;
 
                 // reset our buffers ready for the next ref data item
 //                contentBuffer.clear();
