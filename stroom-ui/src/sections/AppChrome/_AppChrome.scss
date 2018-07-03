@@ -16,23 +16,30 @@
   height: inherit;
 }
 
-.content-tabs {
+.app-content {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.doc-ref-content {
   height: 100%;
   width: 100%;
   display: flex;
   flex-direction: column;
 }
 
-.content-tabs__content {
+.doc-ref-content__content {
   height: inherit;
   flex-grow: 1;
   overflow: hidden;
 }
 
-.content-tabs__close-btn {
+.doc-ref-content__close-btn {
   border: none;
+  margin-left: $small-spacing;
 }
 
-.content-tabs__close-btn:hover {
+.doc-ref-content__close-btn:hover {
   color: red;
 }

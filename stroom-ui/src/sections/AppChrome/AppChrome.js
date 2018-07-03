@@ -19,22 +19,34 @@ import { compose, withState } from 'recompose';
 import { Button, Menu, Icon } from 'semantic-ui-react';
 
 import { actionCreators, TAB_TYPES } from './redux';
-import ContentTabs from './ContentTabs';
+import AppContent from './AppContent';
 
-const { tabOpened } = actionCreators;
+const { tabWasSelected } = actionCreators;
 const withIsExpanded = withState('isExpanded', 'setIsExpanded', false);
 
 const enhance = compose(
-  connect((state, props) => ({}), {
-    tabOpened,
-  }),
+  connect(
+    (state, props) => ({
+      selectedTab: state.appChrome.selectedTab,
+    }),
+    {
+      tabWasSelected,
+    },
+  ),
   withIsExpanded,
 );
 
-const AppChrome = enhance(({ tabOpened, isExpanded, setIsExpanded }) => {
+const AppChrome = enhance(({
+  tabWasSelected, selectedTab, isExpanded, setIsExpanded,
+}) => {
   const toggleExpanded = () => setIsExpanded(!isExpanded);
 
   const menuItems = [
+    {
+      name: 'Open Docs',
+      icon: 'file outline',
+      tab: TAB_TYPES.OPEN_DOC_REFS,
+    },
     {
       name: 'Explorer',
       icon: 'eye',
@@ -63,13 +75,18 @@ const AppChrome = enhance(({ tabOpened, isExpanded, setIsExpanded }) => {
   ];
 
   const menu = isExpanded ? (
-    <Menu vertical fluid color="blue" inverted>
+    <Menu pointing secondary vertical color="blue" inverted>
       <Menu.Item onClick={toggleExpanded}>
         <Icon name="bars" />
         Stroom
       </Menu.Item>
       {menuItems.map(menuItem => (
-        <Menu.Item key={menuItem.name} name={menuItem.name} onClick={() => tabOpened(menuItem.tab)}>
+        <Menu.Item
+          active={selectedTab === menuItem.tab}
+          key={menuItem.name}
+          name={menuItem.name}
+          onClick={() => tabWasSelected(menuItem.tab)}
+        >
           <Icon name={menuItem.icon} />
           {menuItem.name}
         </Menu.Item>
@@ -79,7 +96,11 @@ const AppChrome = enhance(({ tabOpened, isExpanded, setIsExpanded }) => {
     <Button.Group vertical color="blue" size="large">
       <Button icon="bars" onClick={toggleExpanded} />
       {menuItems.map(menuItem => (
-        <Button key={menuItem.name} icon={menuItem.icon} onClick={() => tabOpened(menuItem.tab)} />
+        <Button
+          key={menuItem.name}
+          icon={menuItem.icon}
+          onClick={() => tabWasSelected(menuItem.tab)}
+        />
       ))}
     </Button.Group>
   );
@@ -88,7 +109,7 @@ const AppChrome = enhance(({ tabOpened, isExpanded, setIsExpanded }) => {
     <div className="app-chrome">
       <div className="app-chrome__sidebar">{menu}</div>
       <div className="app-chrome__content">
-        <ContentTabs />
+        <AppContent />
       </div>
     </div>
   );
