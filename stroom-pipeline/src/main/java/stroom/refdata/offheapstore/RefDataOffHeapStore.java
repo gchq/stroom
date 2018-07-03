@@ -848,8 +848,8 @@ public class RefDataOffHeapStore implements RefDataStore {
             LOGGER.debug("Releasing semaphore permit for {}", refStreamDefinition);
             refStreamDefReentrantLock.unlock();
 
-            // uncomment this for development testing
-            //refDataOffHeapStore.logAllContents();
+            // uncomment this for development testing, handy for seeing what is in the stores post load
+//            refDataOffHeapStore.logAllContents();
         }
 
         private void beginTxn() {

@@ -59,6 +59,10 @@ public class MultiRefDataValueProxy implements RefDataValueProxy {
     public boolean consumeBytes(final Consumer<TypedByteBuffer> typedByteBufferConsumer) {
         // try each of our proxies in turn and as soon as one finds a result break out
         boolean result = false;
+        // TODO We could construct this object with a pipeline scoped object to hold a
+        // map of mapName to refDataValueProxy which we could populate when we find a
+        // result. Thus for any future lookups we could try that one first before looping over
+        // the rest.  For pipelines with a lot of ref loaders this should speed things up.
         for (RefDataValueProxy refDataValueProxy : refDataValueProxies) {
             LOGGER.trace("Attempting to consumeBytes with sub-proxy {}", refDataValueProxy);
             result = refDataValueProxy.consumeBytes(typedByteBufferConsumer);
@@ -66,6 +70,11 @@ public class MultiRefDataValueProxy implements RefDataValueProxy {
                 LOGGER.trace("Found result with sub-proxy {}", refDataValueProxy);
                 break;
             }
+        }
+        if (result) {
+            LOGGER.trace("Result found for proxy {}", this);
+        } else {
+            LOGGER.trace("No result found for proxy {}", this);
         }
         return result;
     }
