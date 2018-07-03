@@ -49,7 +49,11 @@ public class StringByteBufferConsumer extends AbstractByteBufferConsumer {
         LOGGER.trace("consumeBytes()");
 
         // we should only be consuming string type values
-        final String str = StringValueSerde.extractStringValue(byteBuffer);
+        final String str = StringValueSerde.decodeString(byteBuffer);
+        byteBuffer.flip();
+
+        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("str {}, byteBuffer {}",
+                str, ByteArrayUtils.byteBufferInfo(byteBuffer)));
 
         try {
             receiver.characters(str, NULL_LOCATION, ReceiverOptions.WHOLE_TEXT_NODE);

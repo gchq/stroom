@@ -17,14 +17,12 @@
 
 package stroom.refdata.offheapstore.serdes;
 
-import stroom.refdata.offheapstore.ByteArrayUtils;
 import stroom.refdata.offheapstore.FastInfosetValue;
 import stroom.refdata.offheapstore.RefDataValue;
 import stroom.refdata.offheapstore.StringValue;
 import stroom.util.logging.LambdaLogger;
 
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 
 public class StringValueSerde implements RefDatValueSubSerde {
@@ -32,7 +30,7 @@ public class StringValueSerde implements RefDatValueSubSerde {
     @Override
     public RefDataValue deserialize(final ByteBuffer subBuffer) {
         int referenceCount = getReferenceCount(subBuffer);
-        String str = StandardCharsets.UTF_8.decode(subBuffer).toString();
+        String str = decodeString(subBuffer);
         subBuffer.flip();
         return new StringValue(referenceCount, str);
     }
@@ -60,5 +58,15 @@ public class StringValueSerde implements RefDatValueSubSerde {
         final ByteBuffer valueBuffer = subBuffer.slice();
         subBuffer.rewind();
         return StandardCharsets.UTF_8.decode(valueBuffer).toString();
+
+    }
+
+    /**
+     * Reads a string from the passed buffer. Teh buffer is expected to have its position
+     * set to the begining of the string portion. The position will be changed by this
+     * method.
+     */
+    public static String decodeString(final ByteBuffer byteBuffer) {
+        return StandardCharsets.UTF_8.decode(byteBuffer).toString();
     }
 }
