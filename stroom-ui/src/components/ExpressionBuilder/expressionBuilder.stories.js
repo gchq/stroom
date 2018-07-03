@@ -31,7 +31,6 @@ import { testTree, testDocRefsTypes } from 'components/DocExplorer/test';
 
 const { expressionChanged } = expressionActionCreators;
 const { receiveDataSource } = dataSourceActionCreators;
-const { docTreeReceived } = docExplorerActionCreators;
 
 import 'styles/main.css';
 

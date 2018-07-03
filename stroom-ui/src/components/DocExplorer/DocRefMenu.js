@@ -22,7 +22,8 @@ import { connect } from 'react-redux';
 import { Dropdown, Icon, Confirm } from 'semantic-ui-react';
 
 import { actionCreators as docExplorerActionCreators } from './redux';
-import { actionCreators as contentTabActionCreators, TAB_TYPES } from 'sections/AppChrome/redux'
+import { actionCreators as contentTabActionCreators } from 'sections/AppChrome/redux'
+import { TabTypes } from 'sections/AppChrome/TabTypes';
 
 const { docRefDeleted } = docExplorerActionCreators;
 const { tabOpened } = contentTabActionCreators;
@@ -66,7 +67,7 @@ const DocRefMenu = enhance(({
       <Dropdown.Menu>
         <Dropdown.Item
           onClick={() => {
-            tabOpened(TAB_TYPES.DOC_REF, docRef.uuid, docRef);
+            tabOpened(TabTypes.DOC_REF, docRef.uuid, docRef);
               closeContextMenu();
             }}
         >

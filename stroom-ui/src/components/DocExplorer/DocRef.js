@@ -23,7 +23,8 @@ import { ItemTypes } from './dragDropTypes';
 import { DragSource } from 'react-dnd';
 
 import { actionCreators as docExplorerActionCreators } from './redux';
-import { actionCreators as contentTabActionCreators, TAB_TYPES } from 'sections/AppChrome/redux';
+import { actionCreators as contentTabActionCreators } from 'sections/AppChrome/redux';
+import { TabTypes } from 'sections/AppChrome/TabTypes';
 
 import DocRefMenu from './DocRefMenu';
 
@@ -96,7 +97,7 @@ const DocRef = enhance(({
   const onDoubleClick = () => {
     clearTimeout(timer);
     prevent = true;
-    tabOpened(TAB_TYPES.DOC_REF, docRef.uuid, docRef);
+    tabOpened(TabTypes.DOC_REF, docRef.uuid, docRef);
   };
 
   const onRightClick = (e) => {

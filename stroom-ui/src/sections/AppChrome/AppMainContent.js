@@ -25,7 +25,8 @@ import DocRefEditor from './DocRefEditor';
 import UserSettings from 'prototypes/UserSettings';
 import IFrame from './IFrame';
 
-import { actionCreators, TAB_TYPES } from './redux';
+import { actionCreators } from './redux';
+import { TabTypes, getTabTitle } from './TabTypes';
 import { withConfig } from 'startup/config';
 
 const { tabSelected, tabClosed } = actionCreators;
@@ -42,42 +43,16 @@ const enhance = compose(
   ),
 );
 
-const ContentTabs = enhance(({
+const AppMainContent = enhance(({
   tabSelected, tabClosed, openTabs, tabSelectionStack, authUsersUiUrl, authTokensUiUrl,
 }) => {
-  let tabIdSelected;
+  let selectedTab;
   if (tabSelectionStack.length > 0) {
-    tabIdSelected = tabSelectionStack[tabSelectionStack.length - 1];
+    selectedTab = tabSelectionStack[0];
   }
 
   const menuItems = openTabs.map((openTab, index, arr) => {
-    let title;
-
-    switch (openTab.type) {
-      case TAB_TYPES.DOC_REF:
-        const docRef = openTab.data;
-        title = docRef.name;
-        break;
-      case TAB_TYPES.EXPLORER_TREE:
-        title = 'Explorer';
-        break;
-      case TAB_TYPES.TRACKER_DASHBOARD:
-        title = 'Trackers';
-        break;
-      case TAB_TYPES.USER_ME:
-        title = 'Me';
-        break;
-      case TAB_TYPES.AUTH_USERS:
-        title = 'Users';
-        break;
-      case TAB_TYPES.AUTH_TOKENS:
-        title = 'API Keys';
-        break;
-      default:
-        // sad times
-        title = 'UNKNOWN';
-        break;
-    }
+    let title = getTabTitle(openTab);
 
     const closeTab = (e) => {
       tabClosed(openTab.tabId);
@@ -88,7 +63,7 @@ const ContentTabs = enhance(({
       <Menu.Item
         key={openTab.tabId}
         onClick={() => tabSelected(openTab.tabId)}
-        active={openTab.tabId === tabIdSelected}
+        active={openTab.tabId === selectedTab.tabId}
       >
         {title}
         <button className="content-tabs__close-btn" onClick={closeTab}>
@@ -102,22 +77,22 @@ const ContentTabs = enhance(({
     let tabContent;
 
     switch (openTab.type) {
-      case TAB_TYPES.DOC_REF:
+      case TabTypes.DOC_REF:
         tabContent = <DocRefEditor docRef={openTab.data} />;
         break;
-      case TAB_TYPES.EXPLORER_TREE:
+      case TabTypes.EXPLORER_TREE:
         tabContent = <DocExplorer explorerId="content-tab-tree" />;
         break;
-      case TAB_TYPES.TRACKER_DASHBOARD:
+      case TabTypes.TRACKER_DASHBOARD:
         tabContent = <TrackerDashboard />;
         break;
-      case TAB_TYPES.USER_ME:
+      case TabTypes.USER_ME:
         tabContent = <UserSettings />;
         break;
-      case TAB_TYPES.AUTH_USERS:
+      case TabTypes.AUTH_USERS:
         tabContent = <IFrame url={authUsersUiUrl}/>;
         break;
-      case TAB_TYPES.AUTH_TOKENS:
+      case TabTypes.AUTH_TOKENS:
         tabContent = <IFrame url={authTokensUiUrl}/>;
         break;
       default:
@@ -126,7 +101,7 @@ const ContentTabs = enhance(({
         break;
     }
 
-    const display = openTab.tabId === tabIdSelected ? 'block' : 'none';
+    const display = openTab.tabId === selectedTab.tabId ? 'block' : 'none';
     return <div key={openTab.tabId} style={{display}}>{tabContent}</div>
   })
 
@@ -138,6 +113,6 @@ const ContentTabs = enhance(({
   );
 });
 
-ContentTabs.propTypes = {};
+AppMainContent.propTypes = {};
 
-export default ContentTabs;
+export default AppMainContent;

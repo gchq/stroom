@@ -16,7 +16,6 @@
 import DocExplorer from './DocExplorer';
 import DocRefModalPicker from './DocRefModalPicker';
 import DocRefDropdownPicker from './DocRefDropdownPicker';
-import { actionCreators, reducer } from './redux';
 import withExplorerTree from './withExplorerTree';
 import withDocRefTypes from './withDocRefTypes';
 
@@ -24,8 +23,6 @@ export {
   DocExplorer,
   DocRefModalPicker,
   DocRefDropdownPicker,
-  actionCreators,
-  reducer,
   withExplorerTree,
   withDocRefTypes,
 };
