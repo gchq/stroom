@@ -34,31 +34,53 @@ const enhance = compose(
 const AppChrome = enhance(({ tabOpened, isExpanded, setIsExpanded }) => {
   const toggleExpanded = () => setIsExpanded(!isExpanded);
 
+  const menuItems = [
+    {
+      name: 'Explorer',
+      icon: 'eye',
+      tab: TAB_TYPES.EXPLORER_TREE,
+    },
+    {
+      name: 'Trackers',
+      icon: 'tasks',
+      tab: TAB_TYPES.TRACKER_DASHBOARD,
+    },
+    {
+      name: 'User',
+      icon: 'user',
+      tab: TAB_TYPES.USER_ME,
+    },
+    {
+      name: 'Users',
+      icon: 'users',
+      tab: TAB_TYPES.AUTH_USERS,
+    },
+    {
+      name: 'API Keys',
+      icon: 'key',
+      tab: TAB_TYPES.AUTH_TOKENS,
+    },
+  ];
+
   const menu = isExpanded ? (
     <Menu vertical fluid color="blue" inverted>
       <Menu.Item onClick={toggleExpanded}>
         <Icon name="bars" />
         Stroom
       </Menu.Item>
-      <Menu.Item name="explorer" onClick={() => tabOpened(TAB_TYPES.EXPLORER_TREE)}>
-        <Icon name="eye" />
-        Explorer
-      </Menu.Item>
-      <Menu.Item name="trackers" onClick={() => tabOpened(TAB_TYPES.TRACKER_DASHBOARD)}>
-        <Icon name="tasks" />
-        Trackers
-      </Menu.Item>
-      <Menu.Item name="user">
-        <Icon name="user" />
-        User
-      </Menu.Item>
+      {menuItems.map(menuItem => (
+        <Menu.Item key={menuItem.name} name={menuItem.name} onClick={() => tabOpened(menuItem.tab)}>
+          <Icon name={menuItem.icon} />
+          {menuItem.name}
+        </Menu.Item>
+      ))}
     </Menu>
   ) : (
     <Button.Group vertical color="blue" size="large">
       <Button icon="bars" onClick={toggleExpanded} />
-      <Button icon="eye" onClick={() => tabOpened(TAB_TYPES.EXPLORER_TREE)} />
-      <Button icon="tasks" onClick={() => tabOpened(TAB_TYPES.TRACKER_DASHBOARD)} />
-      <Button icon="user" />
+      {menuItems.map(menuItem => (
+        <Button key={menuItem.name} icon={menuItem.icon} onClick={() => tabOpened(menuItem.tab)} />
+      ))}
     </Button.Group>
   );
 

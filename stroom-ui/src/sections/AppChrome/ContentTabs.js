@@ -22,26 +22,33 @@ import { Menu } from 'semantic-ui-react';
 import DocExplorer from 'components/DocExplorer';
 import TrackerDashboard from 'sections/TrackerDashboard';
 import DocRefEditor from './DocRefEditor';
+import UserSettings from 'prototypes/UserSettings';
+import IFrame from './IFrame';
 
 import { actionCreators, TAB_TYPES } from './redux';
+import { withConfig } from 'startup/config';
 
 const { tabSelected, tabClosed } = actionCreators;
 
-const enhance = compose(connect(
-  (state, props) => ({
-    ...state.appChrome,
-  }),
-  { tabSelected, tabClosed },
-));
+const enhance = compose(
+  withConfig,
+  connect(
+    (state, props) => ({
+      ...state.appChrome,
+      authUsersUiUrl: state.config.authUsersUiUrl,
+      authTokensUiUrl: state.config.authTokensUiUrl,
+    }),
+    { tabSelected, tabClosed },
+  ),
+);
 
 const ContentTabs = enhance(({
-  tabSelected, tabClosed, openTabs, tabSelectionStack,
+  tabSelected, tabClosed, openTabs, tabSelectionStack, authUsersUiUrl, authTokensUiUrl,
 }) => {
   let tabIdSelected;
   if (tabSelectionStack.length > 0) {
     tabIdSelected = tabSelectionStack[tabSelectionStack.length - 1];
   }
-  console.log('Tab Selected', tabIdSelected);
 
   const menuItems = openTabs.map((openTab, index, arr) => {
     let title;
@@ -57,6 +64,15 @@ const ContentTabs = enhance(({
       case TAB_TYPES.TRACKER_DASHBOARD:
         title = 'Trackers';
         break;
+      case TAB_TYPES.USER_ME:
+        title = 'Me';
+        break;
+      case TAB_TYPES.AUTH_USERS:
+        title = 'Users';
+        break;
+      case TAB_TYPES.AUTH_TOKENS:
+        title = 'API Keys';
+        break;
       default:
         // sad times
         title = 'UNKNOWN';
@@ -66,7 +82,7 @@ const ContentTabs = enhance(({
     const closeTab = (e) => {
       tabClosed(openTab.tabId);
       e.preventDefault();
-    }
+    };
 
     return (
       <Menu.Item
@@ -76,18 +92,18 @@ const ContentTabs = enhance(({
       >
         {title}
         <button className="content-tabs__close-btn" onClick={closeTab}>
-          x
+            x
         </button>
       </Menu.Item>
     );
   });
 
-  let tabContent;
-  const selectedTab = openTabs.find(t => t.tabId === tabIdSelected);
-  if (selectedTab) {
-    switch (selectedTab.type) {
+  let tabContents = openTabs.map(openTab => {
+    let tabContent;
+
+    switch (openTab.type) {
       case TAB_TYPES.DOC_REF:
-        tabContent = <DocRefEditor docRef={selectedTab.data} />;
+        tabContent = <DocRefEditor docRef={openTab.data} />;
         break;
       case TAB_TYPES.EXPLORER_TREE:
         tabContent = <DocExplorer explorerId="content-tab-tree" />;
@@ -95,17 +111,29 @@ const ContentTabs = enhance(({
       case TAB_TYPES.TRACKER_DASHBOARD:
         tabContent = <TrackerDashboard />;
         break;
+      case TAB_TYPES.USER_ME:
+        tabContent = <UserSettings />;
+        break;
+      case TAB_TYPES.AUTH_USERS:
+        tabContent = <IFrame url={authUsersUiUrl}/>;
+        break;
+      case TAB_TYPES.AUTH_TOKENS:
+        tabContent = <IFrame url={authTokensUiUrl}/>;
+        break;
       default:
-        // sad times
+        // sad time s
         tabContent = <div>Invalid tab</div>;
         break;
     }
-  }
+
+    const display = openTab.tabId === tabIdSelected ? 'block' : 'none';
+    return <div key={openTab.tabId} style={{display}}>{tabContent}</div>
+  })
 
   return (
     <div className="content-tabs">
       <Menu tabular>{menuItems}</Menu>
-      <div className="content-tabs__content">{tabContent}</div>
+      <div className="content-tabs__content">{tabContents}</div>
     </div>
   );
 });

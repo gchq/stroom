@@ -20,6 +20,9 @@ const TAB_TYPES = {
   DOC_REF: 0,
   EXPLORER_TREE: 1,
   TRACKER_DASHBOARD: 2,
+  USER_ME: 3,
+  AUTH_USERS: 4,
+  AUTH_TOKENS: 5,
 };
 
 const actionCreators = createActions({
@@ -52,7 +55,7 @@ const reducer = handleActions(
       if (state.openTabs.find(t => t.tabId === tabId)) {
         return {
           ...state,
-          tabIdSelected: tabId,
+          tabSelectionStack: state.tabSelectionStack.filter(t => t !== tabId).concat([tabId]),
         };
       }
       return {

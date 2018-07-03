@@ -16,10 +16,6 @@
   height: inherit;
 }
 
-.app-chrome__content .ui.segment.active.tab {
-  overflow: hidden;
-}
-
 .content-tabs {
   height: 100%;
   width: 100%;
@@ -30,6 +26,7 @@
 .content-tabs__content {
   height: inherit;
   flex-grow: 1;
+  overflow: hidden;
 }
 
 .content-tabs__close-btn {

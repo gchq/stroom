@@ -7,5 +7,7 @@
   "explorerServiceUrl": "http://IP_ADDRESS:8080/api/explorer/v1",
   "elementServiceUrl": "http://IP_ADDRESS:8080/api/elements/v1",
   "advertisedUrl": "http://IP_ADDRESS:5001",
+  "authUsersUiUrl": "https://IP_ADDRESS:9443/userSearch",
+  "authTokensUiUrl": "https://IP_ADDRESS:9443/tokens",
   "appClientId": "stroom-ui"
 }
