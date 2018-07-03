@@ -220,25 +220,25 @@ public class ReferenceData {
                                           final String keyName,
                                           final ReferenceDataResult result) {
 
-        LOGGER.trace("getNestedStreamEventList called, pipe: {}, map {}, key {}",
+        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("getNestedStreamEventList called, pipe: {}, map {}, key {}",
                 pipelineReference.getName(),
                 mapName,
-                keyName);
+                keyName));
         try {
             // Get nested stream.
             final String streamTypeString = pipelineReference.getStreamType();
             final long streamNo = streamHolder.getStreamNo();
 
-
             LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("StreamId {}, parentStreamId {}",
                     streamHolder.getStream().getId(),
                     streamHolder.getStream().getParentStreamId()));
 
-            // this is a nested stream so use the parent stream Id
+            // the parent stream appears to be null at this point so just use the stream id
             final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                     pipelineReference.getPipeline(),
                     getPipelineVersion(pipelineReference),
-                    streamHolder.getStream().getParentStreamId());
+//                    streamHolder.getStream().getParentStreamId());
+                    streamHolder.getStream().getId());
 
 
             // TODO we may want to implement some sort of on-heap store that fronts our off-heap store
