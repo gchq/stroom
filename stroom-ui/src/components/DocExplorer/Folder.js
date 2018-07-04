@@ -86,7 +86,7 @@ const enhance = compose(
   DropTarget([ItemTypes.FOLDER, ItemTypes.DOC_REF], dropTarget, dropCollect),
 );
 
-const Folder = enhance(({
+const _Folder = ({
   connectDragSource,
   isDragging,
   connectDropTarget,
@@ -145,25 +145,26 @@ const Folder = enhance(({
         </span>
                                            </span>))}
       {thisIsOpen && (
-      <div className="folder__children">
-        {folder.children
-              .filter(c => !!explorer.isVisible[c.uuid])
-              .map(c =>
-                  (c.children ? (
-                    <Folder key={c.uuid} explorerId={explorerId} folder={c} />
-                  ) : (
-                    <DocRef key={c.uuid} explorerId={explorerId} docRef={c} />
-                  )))}
-      </div>
-        )}
+        <div className="folder__children">
+          {folder.children
+            .filter(c => !!explorer.isVisible[c.uuid])
+            .map(c =>
+                (c.children ? (
+                  <Folder key={c.uuid} explorerId={explorerId} folder={c} />
+                ) : (
+                  <DocRef key={c.uuid} explorerId={explorerId} docRef={c} />
+                )))}
+        </div>
+      )}
     </div>
   );
-});
+};
+
+const Folder = enhance(_Folder);
 
 Folder.propTypes = {
-  // props
   explorerId: PropTypes.string.isRequired,
   folder: PropTypes.object.isRequired,
 };
 
-export default Folder;
+export default Folder

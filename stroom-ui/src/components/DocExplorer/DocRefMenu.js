@@ -22,7 +22,7 @@ import { connect } from 'react-redux';
 import { Dropdown, Icon, Confirm } from 'semantic-ui-react';
 
 import { actionCreators as docExplorerActionCreators } from './redux';
-import { actionCreators as contentTabActionCreators } from 'sections/AppChrome/redux'
+import { actionCreators as contentTabActionCreators } from 'sections/AppChrome/redux';
 import { TabTypes } from 'sections/AppChrome/TabTypes';
 
 const { docRefDeleted } = docExplorerActionCreators;
@@ -43,7 +43,7 @@ const enhance = compose(
   withPendingDeletion,
 );
 
-const DocRefMenu = enhance(({
+const DocRefMenu = ({
   explorerId,
   docRef,
   isOpen,
@@ -59,29 +59,29 @@ const DocRefMenu = enhance(({
       content="This will delete the doc ref, are you sure?"
       onCancel={() => setPendingDeletion(false)}
       onConfirm={() => {
-          docRefDeleted(explorerId, docRef);
-          setPendingDeletion(false);
-        }}
+        docRefDeleted(explorerId, docRef);
+        setPendingDeletion(false);
+      }}
     />
     <Dropdown inline icon={null} open={isOpen} onClose={() => closeContextMenu()}>
       <Dropdown.Menu>
         <Dropdown.Item
           onClick={() => {
             tabOpened(TabTypes.DOC_REF, docRef.uuid, docRef);
-              closeContextMenu();
-            }}
+            closeContextMenu();
+          }}
         >
           <Icon name="file" />
-            Open
+          Open
         </Dropdown.Item>
         <Dropdown.Item onClick={() => setPendingDeletion(true)}>
           <Icon name="trash" />
-            Delete
+          Delete
         </Dropdown.Item>
       </Dropdown.Menu>
     </Dropdown>
   </span>
-));
+);
 
 DocRefMenu.propTypes = {
   explorerId: PropTypes.string.isRequired,
@@ -90,4 +90,4 @@ DocRefMenu.propTypes = {
   closeContextMenu: PropTypes.func.isRequired,
 };
 
-export default DocRefMenu;
+export default enhance(DocRefMenu);

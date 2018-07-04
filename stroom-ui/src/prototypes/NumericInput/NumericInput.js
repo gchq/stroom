@@ -37,9 +37,9 @@ const getFallBackValue = (defaultValue, placeholder) => {
 const setButtonDisabledStates = (max, min, value, setUpDisabled, setDownDisabled) => {
   if (max) setUpDisabled(value >= max);
   if (min) setDownDisabled(value <= min);
- };
+};
 
-const NumericInput = enhance(({
+const NumericInput = ({
   min,
   max,
   defaultValue,
@@ -75,57 +75,45 @@ const NumericInput = enhance(({
                 placeholder={placeholder || 0}
                 className="numeric-input"
                 value={value}
-                  // defaultValue={defaultValue || null}
+                // defaultValue={defaultValue || null}
                 onChange={(e, props) => {
-                    let newValue = parseInt(props.value, 10); // 10 = the radix, indicating decimal
-                    if (isNaN(newValue)) {
-                      newValue = props.value;
-                    }
-                    setButtonDisabledStates(max, min, newValue, setUpDisabled, setDownDisabled);
-                    onChange(newValue);
-                  }}
+                  let newValue = parseInt(props.value, 10); // 10 = the radix, indicating decimal
+                  if (isNaN(newValue)) {
+                    newValue = props.value;
+                  }
+                  setButtonDisabledStates(max, min, newValue, setUpDisabled, setDownDisabled);
+                  onChange(newValue);
+                }}
                 action={
                   <div>
-                      <Button
-                        className="button-top"
-                        onClick={(e, props) => {
-                          const newValue =
-                            parseInt(value || getFallBackValue(defaultValue, placeholder), 10) + 1; // 10 = the radix, indicating decimal
-                          setButtonDisabledStates(
-                            max,
-                            min,
-                            newValue,
-                            setUpDisabled,
-                            setDownDisabled,
-                          );
-                          onChange(newValue);
-                        }}
-                        disabled={isUpDisabled}
-                      >
-                        <Icon name="angle up" />
-                      </Button>
-                      <Button
-                        className="button-bottom"
-                        onClick={(e, props) => {
-                          const newValue =
-                            parseInt(value || getFallBackValue(defaultValue, placeholder), 10) - 1; // 10 = the radix, indicating decimal
-                          setButtonDisabledStates(
-                            max,
-                            min,
-                            newValue,
-                            setUpDisabled,
-                            setDownDisabled,
-                          );
-                          onChange(newValue);
-                        }}
-                        disabled={isDownDisabled}
-                      >
-                        <Icon name="angle down" />
-                      </Button>
-                    </div>
-                  }
+                    <Button
+                      className="button-top"
+                      onClick={(e, props) => {
+                        const newValue =
+                          parseInt(value || getFallBackValue(defaultValue, placeholder), 10) + 1; // 10 = the radix, indicating decimal
+                        setButtonDisabledStates(max, min, newValue, setUpDisabled, setDownDisabled);
+                        onChange(newValue);
+                      }}
+                      disabled={isUpDisabled}
+                    >
+                      <Icon name="angle up" />
+                    </Button>
+                    <Button
+                      className="button-bottom"
+                      onClick={(e, props) => {
+                        const newValue =
+                          parseInt(value || getFallBackValue(defaultValue, placeholder), 10) - 1; // 10 = the radix, indicating decimal
+                        setButtonDisabledStates(max, min, newValue, setUpDisabled, setDownDisabled);
+                        onChange(newValue);
+                      }}
+                      disabled={isDownDisabled}
+                    >
+                      <Icon name="angle down" />
+                    </Button>
+                  </div>
+                }
               />
-              }
+            }
             content={valueIsBadMessage}
             open={valueIsBad}
             style={{ borderColor: 'red' }}
@@ -134,7 +122,7 @@ const NumericInput = enhance(({
       </div>
     </div>
   );
-});
+};
 
 NumericInput.propTypes = {
   min: PropTypes.number,
@@ -144,4 +132,4 @@ NumericInput.propTypes = {
   value: PropTypes.number,
 };
 
-export default NumericInput;
+export default enhance(NumericInput);

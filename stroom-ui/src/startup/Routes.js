@@ -48,12 +48,12 @@ const enhance = compose(
     }),
     {},
   ),
-  withProps(({idToken}) => ({
-    isLoggedIn: !!idToken
-  }))
+  withProps(({ idToken }) => ({
+    isLoggedIn: !!idToken,
+  })),
 );
 
-const Routes = enhance(({
+const Routes = ({
   isLoggedIn,
   appClientId,
   history,
@@ -121,9 +121,7 @@ const Routes = enhance(({
         path="/pipelines/:pipelineId"
         render={({ match }) =>
           (isLoggedIn ? (
-            <PipelineEditor
-              pipelineId={match.params.pipelineId}
-            />
+            <PipelineEditor pipelineId={match.params.pipelineId} />
           ) : (
             <AuthenticationRequest
               referrer={match.url}
@@ -131,22 +129,25 @@ const Routes = enhance(({
               appClientId={appClientId}
               authenticationServiceUrl={authenticationServiceUrl}
             />
-          ))}
+          ))
+        }
       />
 
       <Route
         exact
         path="/xslt/:xsltId"
-        render={({match}) => (isLoggedIn ? (
-          <XsltEditor xsltId={match.params.xsltId} />
-        ) : (
-          <AuthenticationRequest
+        render={({ match }) =>
+          (isLoggedIn ? (
+            <XsltEditor xsltId={match.params.xsltId} />
+          ) : (
+            <AuthenticationRequest
               referrer={match.url}
               uiUrl={advertisedUrl}
               appClientId={appClientId}
               authenticationServiceUrl={authenticationServiceUrl}
             />
-        ))}
+          ))
+        }
       />
 
       <Route
@@ -169,7 +170,7 @@ const Routes = enhance(({
       <Route component={PathNotFound} />
     </Switch>
   </Router>
-));
+);
 
 Routes.contextTypes = {
   store: PropTypes.object,
@@ -178,4 +179,4 @@ Routes.contextTypes = {
   }),
 };
 
-export default Routes;
+export default enhance(Routes);

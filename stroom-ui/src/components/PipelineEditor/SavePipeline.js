@@ -15,7 +15,7 @@ const enhance = connect(
   },
 );
 
-const SavePipeline = enhance(({ isDirty, pipelineId, savePipeline }) => (
+const SavePipeline = ({ isDirty, pipelineId, savePipeline }) => (
   <Button
     disabled={!isDirty}
     color="blue"
@@ -23,10 +23,10 @@ const SavePipeline = enhance(({ isDirty, pipelineId, savePipeline }) => (
     size="huge"
     onClick={() => savePipeline(pipelineId)}
   />
-));
+);
 
 SavePipeline.propTypes = {
   pipelineId: PropTypes.string.isRequired,
 };
 
-export default SavePipeline;
+export default enhance(SavePipeline);

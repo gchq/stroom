@@ -51,7 +51,7 @@ const enhance = compose(
   branch(({ xslt }) => !xslt, renderComponent(() => <Loader active>Loading XSLT</Loader>)),
 );
 
-const XsltEditor = enhance(({
+const XsltEditor = ({
   xsltId, xslt, xsltUpdated, saveXslt,
 }) => (
   <div className="xslt-editor">
@@ -72,10 +72,10 @@ const XsltEditor = enhance(({
       />
     </div>
   </div>
-));
+);
 
 XsltEditor.propTypes = {
   xsltId: PropTypes.string.isRequired,
 };
 
-export default XsltEditor;
+export default enhance(XsltEditor);

@@ -13,17 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { createActions, handleActions, combineActions } from 'redux-actions';
+import { createActions, handleActions } from 'redux-actions';
 
 const actionCreators = createActions({
   TAB_OPENED: (type, tabId, data) => ({ type, tabId, data }),
   TAB_SELECTED: tabId => ({ tabId }),
   TAB_CLOSED: tabId => ({ tabId }),
-  OPEN_RECENT_ITEMS: () => ({ recentItemsOpen: true }),
-  CLOSE_RECENT_ITEMS: () => ({ recentItemsOpen: false }),
 });
-
-const { openRecentItems, closeRecentItems } = actionCreators;
 
 const defaultState = {
   openTabs: [], // this will remember the tabs in the order they were opened
@@ -33,25 +29,16 @@ const defaultState = {
 
 const reducer = handleActions(
   {
-    [combineActions(openRecentItems, closeRecentItems)]: (
-      state,
-      { payload: { recentItemsOpen } },
-    ) => ({
-      ...state,
-      recentItemsOpen,
-    }),
     TAB_SELECTED: (state, action) => {
       const openTabs = state.openTabs.filter(t => t.tabId === action.payload.tabId);
       if (openTabs.length > 0) {
         return {
           ...state,
-          recentItemsOpen: false,
           tabSelectionStack: openTabs.concat(state.tabSelectionStack.filter(t => t.tabId !== action.payload.tabId)),
         };
       }
       return {
         ...state,
-        recentItemsOpen: false,
       };
     },
     TAB_OPENED: (state, action) => {

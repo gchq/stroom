@@ -52,7 +52,7 @@ const enhance = compose(
   ),
 );
 
-const ElementDetails = enhance(({
+const ElementDetails = ({
   pipelineId, pipeline, selectedElementId, elements, onClose,
 }) => {
   const element = pipeline.pipeline.merged.elements.add.find(element => element.id === selectedElementId);
@@ -111,7 +111,7 @@ const ElementDetails = enhance(({
       headerSize="h3"
     />
   );
-});
+};
 
 ElementDetails.propTypes = {
   // Set by owner
@@ -119,4 +119,4 @@ ElementDetails.propTypes = {
   onClose: PropTypes.func,
 };
 
-export default ElementDetails;
+export default enhance(ElementDetails);

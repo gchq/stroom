@@ -25,8 +25,6 @@ import {
 
 import { actionCreators as docExplorerActionCreators } from 'components/DocExplorer/redux';
 
-console.log('Action Creators in Expression Redux', docExplorerActionCreators);
-
 const { docRefPicked } = docExplorerActionCreators;
 
 // Expression Editors

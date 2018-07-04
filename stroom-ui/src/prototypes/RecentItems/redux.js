@@ -13,14 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React from 'react';
-import PropTypes from 'prop-types';
+import { createActions, combineActions, handleActions } from 'redux-actions';
 
-import { connect } from 'react-redux';
-import { compose } from 'recompose';
+const actionCreators = createActions({
+  RECENT_ITEMS_OPENED: () => ({ isOpen: true }),
+  RECENT_ITEMS_CLOSED: () => ({ isOpen: false }),
+});
 
-const enhance = compose(connect(({ state, props }) => ({}), {}));
+const { recentItemsOpened, recentItemsClosed } = actionCreators;
 
-const UserSettings = props => <div>User Settings</div>;
+const defaultState = {
+  isOpen: false,
+};
 
-export default enhance(UserSettings);
+const reducer = handleActions(
+  {
+    [combineActions(recentItemsOpened, recentItemsClosed)]: (state, { payload: { isOpen } }) => ({
+      ...state,
+      isOpen,
+    }),
+  },
+  defaultState,
+);
+
+export { actionCreators, reducer };

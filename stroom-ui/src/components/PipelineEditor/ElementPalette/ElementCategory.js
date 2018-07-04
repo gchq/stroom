@@ -18,7 +18,7 @@ const enhance = compose(
   branch(({ elementsWithData }) => elementsWithData.length === 0, renderNothing),
 );
 
-const ElementCategory = enhance(({
+const ElementCategory = ({
   category, elementsWithData, isOpen, setIsOpen, displayTitle, icon,
 }) => (
   <div className="element-palette-category">
@@ -33,11 +33,11 @@ const ElementCategory = enhance(({
       </Accordion.Content>
     </Accordion>
   </div>
-));
+);
 
 ElementCategory.propTypes = {
   category: PropTypes.string.isRequired,
   elementsWithData: PropTypes.array.isRequired,
 };
 
-export default ElementCategory;
+export default enhance(ElementCategory);

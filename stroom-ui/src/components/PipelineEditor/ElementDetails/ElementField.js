@@ -12,7 +12,7 @@ import { Field } from 'redux-form';
 
 import { getActualValue } from './elementDetailsUtils';
 
-import { DocRefModalPicker, } from 'components/DocExplorer';
+import { DocRefModalPicker } from 'components/DocExplorer';
 import { actionCreators as docExplorerActionCreators } from 'components/DocExplorer/redux';
 
 import NumericInput from 'prototypes/NumericInput';
@@ -70,7 +70,7 @@ const ElementFieldType = ({
   }
 };
 
-const ElementField = enhance(({
+const ElementField = ({
   name, description, type, defaultValue, value, docRefTypes,
 }) => (
   <Form.Group>
@@ -105,7 +105,7 @@ const ElementField = enhance(({
       }
     />
   </Form.Group>
-));
+);
 
 ElementField.propTypes = {
   name: PropTypes.string.isRequired,
@@ -116,4 +116,4 @@ ElementField.propTypes = {
   value: PropTypes.object,
 };
 
-export default ElementField;
+export default enhance(ElementField);

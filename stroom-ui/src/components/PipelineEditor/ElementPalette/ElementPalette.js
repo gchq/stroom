@@ -24,7 +24,7 @@ const enhance = compose(
   })),
 );
 
-const ElementPalette = enhance(({ elementsByCategory, recycleBinItems }) => (
+const ElementPalette = ({ elementsByCategory, recycleBinItems }) => (
   <div className="element-palette">
     <ElementCategory category="Bin" elementsWithData={recycleBinItems} />
     {Object.entries(elementsByCategory).map(k => (
@@ -35,10 +35,10 @@ const ElementPalette = enhance(({ elementsByCategory, recycleBinItems }) => (
       />
     ))}
   </div>
-));
+);
 
 ElementPalette.propTypes = {
   pipelineId: PropTypes.string.isRequired,
 };
 
-export default ElementPalette;
+export default enhance(ElementPalette);

@@ -97,7 +97,7 @@ const enhance = compose(
   withPendingDeletion,
 );
 
-const ExpressionOperator = enhance(({
+const _ExpressionOperator = ({
   expressionId,
   operator,
   isRoot,
@@ -265,7 +265,9 @@ const ExpressionOperator = enhance(({
       </div>
     </div>
   );
-});
+};
+
+const ExpressionOperator = enhance(_ExpressionOperator);
 
 ExpressionOperator.propTypes = {
   dataSource: PropTypes.object.isRequired, // complete definition of the data source
@@ -279,4 +281,4 @@ ExpressionOperator.defaultProps = {
   isRoot: false,
 };
 
-export default ExpressionOperator;
+export default enhance(ExpressionOperator);

@@ -31,6 +31,8 @@ import {
   pipelineReducer as pipelines,
   elementReducer as elements,
 } from 'components/PipelineEditor';
+import { reducer as recentItems } from 'prototypes/RecentItems';
+import { reducer as appSearch } from 'prototypes/AppSearch';
 import { reducer as xslt } from 'prototypes/XsltEditor';
 import { reducer as appChrome } from 'sections/AppChrome/redux';
 import { reducer as trackerDashboard } from 'sections/TrackerDashboard';
@@ -55,4 +57,6 @@ export default combineReducers({
   lineContainer,
   fetch,
   appChrome,
+  recentItems,
+  appSearch,
 });

@@ -17,7 +17,7 @@ import React from 'react';
 
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
-import { Menu } from 'semantic-ui-react';
+import { Menu, Header, Icon } from 'semantic-ui-react';
 
 import DocExplorer from 'components/DocExplorer';
 import TrackerDashboard from 'sections/TrackerDashboard';
@@ -26,7 +26,7 @@ import UserSettings from 'prototypes/UserSettings';
 import IFrame from './IFrame';
 
 import { actionCreators } from './redux';
-import { TabTypes, getTabTitle } from './TabTypes';
+import TabTypes, { TabTypeDisplayInfo } from './TabTypes';
 import { withConfig } from 'startup/config';
 
 const { tabSelected, tabClosed } = actionCreators;
@@ -43,8 +43,13 @@ const enhance = compose(
   ),
 );
 
-const AppMainContent = enhance(({
-  tabSelected, tabClosed, openTabs, tabSelectionStack, authUsersUiUrl, authTokensUiUrl,
+const AppMainContent = ({
+  tabSelected,
+  tabClosed,
+  openTabs,
+  tabSelectionStack,
+  authUsersUiUrl,
+  authTokensUiUrl,
 }) => {
   let selectedTab;
   if (tabSelectionStack.length > 0) {
@@ -52,7 +57,7 @@ const AppMainContent = enhance(({
   }
 
   const menuItems = openTabs.map((openTab, index, arr) => {
-    let title = getTabTitle(openTab);
+    const title = TabTypeDisplayInfo[openTab.type].getTitle(openTab.data);
 
     const closeTab = (e) => {
       tabClosed(openTab.tabId);
@@ -67,13 +72,13 @@ const AppMainContent = enhance(({
       >
         {title}
         <button className="content-tabs__close-btn" onClick={closeTab}>
-            x
+          x
         </button>
       </Menu.Item>
     );
   });
 
-  let tabContents = openTabs.map(openTab => {
+  const tabContents = openTabs.map((openTab) => {
     let tabContent;
 
     switch (openTab.type) {
@@ -90,10 +95,10 @@ const AppMainContent = enhance(({
         tabContent = <UserSettings />;
         break;
       case TabTypes.AUTH_USERS:
-        tabContent = <IFrame url={authUsersUiUrl}/>;
+        tabContent = <IFrame url={authUsersUiUrl} />;
         break;
       case TabTypes.AUTH_TOKENS:
-        tabContent = <IFrame url={authTokensUiUrl}/>;
+        tabContent = <IFrame url={authTokensUiUrl} />;
         break;
       default:
         // sad time s
@@ -101,18 +106,30 @@ const AppMainContent = enhance(({
         break;
     }
 
-    const display = openTab.tabId === selectedTab.tabId ? 'block' : 'none';
-    return <div key={openTab.tabId} style={{display}}>{tabContent}</div>
-  })
+    return (
+      <div
+        className={`content-tabs__tab${
+          openTab.tabId === selectedTab.tabId ? '--chosen' : '--hidden'
+        }`}
+        key={openTab.tabId}
+      >
+        <Header as="h1">
+          <Icon name={TabTypeDisplayInfo[selectedTab.type].icon} />
+          {TabTypeDisplayInfo[selectedTab.type].getTitle(selectedTab.data)}
+        </Header>
+        {tabContent}
+      </div>
+    );
+  });
 
   return (
     <div className="content-tabs">
-      <Menu tabular>{menuItems}</Menu>
+      {/* <Menu tabular>{menuItems}</Menu> */}
       <div className="content-tabs__content">{tabContents}</div>
     </div>
   );
-});
+};
 
 AppMainContent.propTypes = {};
 
-export default AppMainContent;
+export default enhance(AppMainContent);

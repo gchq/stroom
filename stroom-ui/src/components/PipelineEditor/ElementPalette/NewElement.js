@@ -33,16 +33,17 @@ const enhance = compose(
   DragSource(ItemTypes.PALLETE_ELEMENT, dragSource, dragCollect),
 );
 
-const NewElement = enhance(({
-  connectDragSource, isDragging, element, recycleData, hasFocus, setHasFocus,
+const NewElement = ({
+  connectDragSource,
+  isDragging,
+  element,
+  recycleData,
+  hasFocus,
+  setHasFocus,
 }) =>
   connectDragSource(<div className={`element-palette-element ${hasFocus ? 'focus' : 'no-focus'}`}>
     <div className="element-palette-element__button-contents">
-      <img
-        className="element-palette__icon"
-        alt="X"
-        src={require(`../images/${element.icon}`)}
-      />
+      <img className="element-palette__icon" alt="X" src={require(`../images/${element.icon}`)} />
       <button
         className="element-palette__type"
         onFocus={() => setHasFocus(true)}
@@ -51,10 +52,10 @@ const NewElement = enhance(({
         {recycleData ? recycleData.id : element.type}
       </button>
     </div>
-                    </div>));
+                    </div>);
 
 NewElement.propTypes = {
   elementWithData: PropTypes.object.isRequired,
 };
 
-export default NewElement;
+export default enhance(NewElement);

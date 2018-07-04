@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React from 'react';
-import PropTypes from 'prop-types';
 
-import { connect } from 'react-redux';
-import { compose } from 'recompose';
+import RecentItems from './RecentItems';
 
-const enhance = compose(connect(({ state, props }) => ({}), {}));
+import { actionCreators, reducer } from './redux';
 
-const UserSettings = props => <div>User Settings</div>;
+export {
+  RecentItems,
+  actionCreators,
+  reducer
+}
 
-export default enhance(UserSettings);
+export default RecentItems;

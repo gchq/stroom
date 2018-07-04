@@ -25,7 +25,7 @@ import LineContext from './LineContext';
 
 import { actionCreators } from './redux';
 
-let { lineContainerCreated, lineContainerDestroyed } = actionCreators;
+const { lineContainerCreated, lineContainerDestroyed } = actionCreators;
 
 /**
  * This function is the default line creation function.
@@ -91,7 +91,10 @@ const enhance = compose(
       this.props.lineContainerDestroyed(this.props.lineContextId);
     },
   }),
-  branch(({lineContainer}) => !lineContainer, renderComponent(() => <Loader active>Loading Pipeline</Loader>)),
+  branch(
+    ({ lineContainer }) => !lineContainer,
+    renderComponent(() => <Loader active>Loading Pipeline</Loader>),
+  ),
   withProps(({ lineContextId, lineContainer }) => {
     let lines = [];
 
@@ -109,13 +112,13 @@ const enhance = compose(
   }),
 );
 
-const LineContainer = enhance(({
+const LineContainer = ({
   lineContextId,
   lineElementCreators,
   className,
   thisRect,
   lines,
-  children
+  children,
 }) => {
   // If the SVG has been scrolled, we need to translate the generated lines to cancel out that effect
   let transform;
@@ -137,16 +140,16 @@ const LineContainer = enhance(({
             })}
           </g>
         </svg>
-          {children}
+        {children}
       </div>
     </LineContext.Provider>
   );
-});
+};
 
 LineContainer.propTypes = {
   lineContextId: PropTypes.string.isRequired,
   lineElementCreators: PropTypes.object.isRequired, // {'someLineType': ({lineId, fromRect, toRect}) => (<div>)}
-  className: PropTypes.string
+  className: PropTypes.string,
 };
 
 LineContainer.defaultProps = {
@@ -155,4 +158,4 @@ LineContainer.defaultProps = {
   },
 };
 
-export default LineContainer;
+export default enhance(LineContainer);

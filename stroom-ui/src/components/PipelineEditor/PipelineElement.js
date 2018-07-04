@@ -170,7 +170,7 @@ const enhance = compose(
   DropTarget([ItemTypes.ELEMENT, ItemTypes.PALLETE_ELEMENT], dropTarget, dropCollect),
 );
 
-const PipelineElement = enhance(({
+const PipelineElement = ({
   pipelineId,
   elementId,
   onClick,
@@ -235,11 +235,11 @@ const PipelineElement = enhance(({
   return compose(connectDragSource, connectDropTarget)(<div className={className} onClick={handleClick}>
     <AddElementModal
       {...{
-            setNewElementDefinition,
-            newElementDefinition,
-            pipelineId,
-            elementId,
-          }}
+          setNewElementDefinition,
+          newElementDefinition,
+          pipelineId,
+          elementId,
+        }}
     />
     <Image
       className="Pipeline-element__icon"
@@ -255,8 +255,8 @@ const PipelineElement = enhance(({
     >
       {elementId}
     </button>
-                                                       </div>);
-});
+  </div>);
+};
 
 PipelineElement.propTypes = {
   pipelineId: PropTypes.string.isRequired,
@@ -265,4 +265,4 @@ PipelineElement.propTypes = {
   selectedElementId: PropTypes.string,
 };
 
-export default PipelineElement;
+export default enhance(PipelineElement);

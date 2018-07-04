@@ -34,14 +34,10 @@ const enhance = compose(
     touchOnChange: true,
   }),
   // Properties from owner
-  withProps(({ 
-     // Redux action
-    pipelineId, elementId,
-    // from withNewElementDefinition in owner
-    pipelineElementAdded, 
-    // Redux form
-    newElementDefinition, setNewElementDefinition, 
-    newElementForm, reset,
+  withProps(({ // Redux action
+    pipelineId, elementId, // from withNewElementDefinition in owner
+    pipelineElementAdded, // Redux form
+    newElementDefinition, setNewElementDefinition, newElementForm, reset,
   }) => ({
     onConfirmNewElement: () => {
       pipelineElementAdded(pipelineId, elementId, newElementDefinition, newElementForm.values.name);
@@ -55,14 +51,14 @@ const enhance = compose(
   })),
 );
 
-const AddElementModal = enhance(({ // From redux state
+const AddElementModal = ({
   pipeline,
-  // withNewElementDefinition from container
-  newElementDefinition, setNewElementDefinition,
-  // Redux form
-  invalid, submitting,
-  // withProps
-  onConfirmNewElement, onCancelNewElement,
+  newElementDefinition,
+  setNewElementDefinition,
+  invalid,
+  submitting,
+  onConfirmNewElement,
+  onCancelNewElement,
 }) => (
   <Modal size="tiny" open={!!newElementDefinition} onClose={onCancelNewElement} dimmer="inverted">
     <Header content="Add New Element" />
@@ -92,13 +88,13 @@ const AddElementModal = enhance(({ // From redux state
       <Button negative content="Cancel" onClick={onCancelNewElement} />
     </Modal.Actions>
   </Modal>
-));
+);
 
 AddElementModal.propTypes = {
   pipelineId: PropTypes.string.isRequired,
   elementId: PropTypes.string.isRequired,
   setNewElementDefinition: PropTypes.func.isRequired,
-  newElementDefinition: PropTypes.object
+  newElementDefinition: PropTypes.object,
 };
 
-export default AddElementModal;
+export default enhance(AddElementModal);

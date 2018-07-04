@@ -55,7 +55,7 @@ const enhance = compose(
   connect(
     (state, props) => ({
       // state
-      explorer: state.explorerTree.explorers[props.explorerId]
+      explorer: state.explorerTree.explorers[props.explorerId],
     }),
     {
       docRefSelected,
@@ -66,7 +66,7 @@ const enhance = compose(
   DragSource(ItemTypes.DOC_REF, dragSource, dragCollect),
 );
 
-const DocRef = enhance(({
+const DocRef = ({
   explorerId,
   explorer,
   docRef,
@@ -135,11 +135,11 @@ const DocRef = enhance(({
       {docRef.name}
     </span>
   </div>);
-});
+};
 
 DocRef.propTypes = {
   explorerId: PropTypes.string.isRequired,
-  docRef: PropTypes.object.isRequired
+  docRef: PropTypes.object.isRequired,
 };
 
-export default DocRef;
+export default enhance(DocRef);

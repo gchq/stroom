@@ -8,38 +8,33 @@ const TabTypes = {
   AUTH_TOKENS: 5,
 };
 
-const getTabTitle = (tabData) => {
-  let title;
-
-  switch (tabData.type) {
-    case TabTypes.DOC_REF:
-      const docRef = tabData.data;
-      title = docRef.name;
-      break;
-    case TabTypes.EXPLORER_TREE:
-      title = 'Explorer';
-      break;
-    case TabTypes.TRACKER_DASHBOARD:
-      title = 'Trackers';
-      break;
-    case TabTypes.USER_ME:
-      title = 'Me';
-      break;
-    case TabTypes.AUTH_USERS:
-      title = 'Users';
-      break;
-    case TabTypes.AUTH_TOKENS:
-      title = 'API Keys';
-      break;
-    default:
-      // sad times
-      title = 'UNKNOWN';
-      break;
-  }
-
-  return title;
+const TabTypeDisplayInfo = {
+  [TabTypes.DOC_REF]: {
+    getTitle: tabData => tabData.name,
+    icon: 'file outline',
+  },
+  [TabTypes.EXPLORER_TREE]: {
+    getTitle: () => 'Explorer',
+    icon: 'eye',
+  },
+  [TabTypes.TRACKER_DASHBOARD]: {
+    getTitle: () => 'Trackers',
+    icon: 'tasks',
+  },
+  [TabTypes.USER_ME]: {
+    getTitle: () => 'Me',
+    icon: 'user',
+  },
+  [TabTypes.AUTH_USERS]: {
+    getTitle: () => 'Users',
+    icon: 'users',
+  },
+  [TabTypes.AUTH_TOKENS]: {
+    getTitle: () => 'API Keys',
+    icon: 'key',
+  },
 };
 
-export { TabTypes, getTabTitle };
+export { TabTypes, TabTypeDisplayInfo };
 
 export default TabTypes;

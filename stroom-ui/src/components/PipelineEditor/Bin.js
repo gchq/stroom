@@ -53,7 +53,7 @@ const enhance = compose(
   })),
 );
 
-const Bin = enhance(({
+const Bin = ({
   pipelineId,
   connectDropTarget,
   isOver,
@@ -76,11 +76,10 @@ const Bin = enhance(({
       color={isOver ? 'black' : 'red'}
       icon="trash"
     />
-                    </div>));
+  </div>);
 
 Bin.propTypes = {
-  // From container
   pipelineId: PropTypes.string.isRequired,
 };
 
-export default Bin;
+export default enhance(Bin);

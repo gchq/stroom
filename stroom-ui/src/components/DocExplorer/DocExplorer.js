@@ -63,7 +63,7 @@ const enhance = compose(
   ),
 );
 
-const DocExplorer = enhance(({
+const DocExplorer = ({
   documentTree, explorerId, explorer, searchTermUpdated,
 }) => (
   <div>
@@ -75,10 +75,10 @@ const DocExplorer = enhance(({
     />
     <Folder explorerId={explorerId} folder={documentTree} />
   </div>
-));
+);
 
 DocExplorer.propTypes = {
   explorerId: PropTypes.string.isRequired,
 };
 
-export default DocExplorer;
+export default enhance(DocExplorer);

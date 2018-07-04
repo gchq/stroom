@@ -40,7 +40,7 @@ const enhance = compose(
   withPendingDeletion,
 );
 
-const FolderMenu = enhance(({
+const FolderMenu = ({
   explorerId,
   docRef,
   isOpen,
@@ -56,29 +56,29 @@ const FolderMenu = enhance(({
       content="This will delete the doc ref, are you sure?"
       onCancel={() => setPendingDeletion(false)}
       onConfirm={() => {
-          docRefDeleted(explorerId, docRef);
-          setPendingDeletion(false);
-        }}
+        docRefDeleted(explorerId, docRef);
+        setPendingDeletion(false);
+      }}
     />
     <Dropdown inline icon={null} open={isOpen} onClose={() => closeContextMenu()}>
       <Dropdown.Menu>
         <Dropdown.Item
           onClick={() => {
-              folderOpenToggled(explorerId, docRef);
-              closeContextMenu();
-            }}
+            folderOpenToggled(explorerId, docRef);
+            closeContextMenu();
+          }}
         >
           <Icon name="folder" />
-            Open
+          Open
         </Dropdown.Item>
         <Dropdown.Item onClick={() => setPendingDeletion(true)}>
           <Icon name="trash" />
-            Delete
+          Delete
         </Dropdown.Item>
       </Dropdown.Menu>
     </Dropdown>
   </span>
-));
+);
 
 FolderMenu.propTypes = {
   explorerId: PropTypes.string.isRequired,
@@ -87,4 +87,4 @@ FolderMenu.propTypes = {
   closeContextMenu: PropTypes.func.isRequired,
 };
 
-export default FolderMenu;
+export default enhance(FolderMenu);

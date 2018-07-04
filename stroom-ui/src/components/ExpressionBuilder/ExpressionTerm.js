@@ -127,7 +127,7 @@ const enhance = compose(
   withPendingDeletion,
 );
 
-const ExpressionTerm = enhance(({
+const ExpressionTerm = ({
   connectDragSource,
   isDragging,
   term,
@@ -342,8 +342,8 @@ const ExpressionTerm = enhance(({
       {enabledButton}
       <Button compact icon="trash" onClick={onRequestDeleteTerm} />
     </Button.Group>
-                           </div>);
-});
+  </div>);
+};
 
 ExpressionTerm.propTypes = {
   dataSource: PropTypes.object.isRequired, // complete definition of the data source
@@ -352,4 +352,4 @@ ExpressionTerm.propTypes = {
   isEnabled: PropTypes.bool.isRequired, // a combination of any parent enabled state, and its own
 };
 
-export default ExpressionTerm;
+export default enhance(ExpressionTerm);

@@ -15,79 +15,82 @@
  */
 import React from 'react';
 import { connect } from 'react-redux';
-import { compose, withState } from 'recompose';
+import { compose, withState, lifecycle } from 'recompose';
 import { Button, Menu, Icon } from 'semantic-ui-react';
+import Mousetrap from 'mousetrap';
 
-import { actionCreators } from './redux';
-import TabTypes from './TabTypes';
+import { actionCreators as appChromeActionCreators } from './redux';
+import { actionCreators as recentItemsActionCreators } from 'prototypes/RecentItems/redux';
+import { actionCreators as appSearchActionCreators } from 'prototypes/AppSearch/redux';
+import TabTypes, { TabTypeDisplayInfo } from './TabTypes';
 import AppMainContent from './AppMainContent';
-import RecentItems from './RecentItems';
+import RecentItems from 'prototypes/RecentItems';
+import AppSearch from 'prototypes/AppSearch';
 
-const { tabOpened, openRecentItems } = actionCreators;
+const { tabOpened } = appChromeActionCreators;
+const { recentItemsOpened } = recentItemsActionCreators;
+const { appSearchOpened } = appSearchActionCreators;
 const withIsExpanded = withState('isExpanded', 'setIsExpanded', false);
 
 const enhance = compose(
   connect((state, props) => ({}), {
     tabOpened,
-    openRecentItems,
+    recentItemsOpened,
+    appSearchOpened,
   }),
   withIsExpanded,
+  lifecycle({
+    componentDidMount() {
+      Mousetrap.bind('ctrl+e', () => this.props.recentItemsOpened());
+      Mousetrap.bind('ctrl+f', () => this.props.appSearchOpened());
+    },
+  }),
 );
 
-const AppChrome = enhance(({
-  tabOpened, openRecentItems, isExpanded, setIsExpanded,
+const AppChrome = ({
+  tabOpened,
+  recentItemsOpened,
+  appSearchOpened,
+  isExpanded,
+  setIsExpanded,
 }) => {
   const menuItems = [
     {
-      name: 'Stroom',
+      title: 'Stroom',
       icon: 'bars',
       onClick: () => setIsExpanded(!isExpanded),
     },
     {
-      name: 'Open Doc Ref',
+      title: 'Recent Items',
       icon: 'file outline',
-      onClick: openRecentItems,
+      onClick: recentItemsOpened,
     },
     {
-      name: 'Explorer',
-      icon: 'eye',
-      onClick: () => tabOpened(TabTypes.EXPLORER_TREE),
+      title: 'Search',
+      icon: 'search',
+      onClick: appSearchOpened,
     },
-    {
-      name: 'Trackers',
-      icon: 'tasks',
-      onClick: () => tabOpened(TabTypes.TRACKER_DASHBOARD),
-    },
-    {
-      name: 'User',
-      icon: 'user',
-      onClick: () => tabOpened(TabTypes.USER_ME),
-    },
-    {
-      name: 'Users',
-      icon: 'users',
-      onClick: () => tabOpened(TabTypes.AUTH_USERS),
-    },
-    {
-      name: 'API Keys',
-      icon: 'key',
-      onClick: () => tabOpened(TabTypes.AUTH_TOKENS),
-    },
-  ];
+  ].concat(Object.values(TabTypes)
+    .filter(t => t !== TabTypes.DOC_REF) // this type is used to cover individual open doc refs
+    .map(tabType => ({
+      title: TabTypeDisplayInfo[tabType].getTitle(),
+      icon: TabTypeDisplayInfo[tabType].icon,
+      onClick: () => tabOpened(tabType),
+    })));
 
   const menu = isExpanded ? (
     <Menu vertical fluid color="blue" inverted>
       {menuItems.map(menuItem => (
-        <Menu.Item key={menuItem.name} name={menuItem.name} onClick={menuItem.onClick}>
+        <Menu.Item key={menuItem.title} name={menuItem.title} onClick={menuItem.onClick}>
           <Icon name={menuItem.icon} />
-          {menuItem.name}
+          {menuItem.title}
         </Menu.Item>
       ))}
     </Menu>
   ) : (
     <Button.Group vertical color="blue" size="large">
       {menuItems.map(menuItem => (
-        <Button key={menuItem.name} icon={menuItem.icon} onClick={menuItem.onClick} />
+        <Button key={menuItem.title} icon={menuItem.icon} onClick={menuItem.onClick} />
       ))}
     </Button.Group>
   );
@@ -98,9 +101,10 @@ const AppChrome = enhance(({
       <div className="app-chrome__content">
         <AppMainContent />
         <RecentItems />
+        <AppSearch />
       </div>
     </div>
   );
-});
+};
 
-export default AppChrome;
+export default enhance(AppChrome);

@@ -65,8 +65,12 @@ const enhance = compose(
   branch(({ allowEdit }) => !allowEdit, renderComponent(ROExpressionBuilder)),
 );
 
-const ExpressionBuilder = enhance(({
-  expressionId, dataSource, expression, inEditMode, setEditableByUser,
+const ExpressionBuilder = ({
+  expressionId,
+  dataSource,
+  expression,
+  inEditMode,
+  setEditableByUser,
 }) => {
   const roOperator = (
     <ROExpressionOperator expressionId={expressionId} isEnabled operator={expression} />
@@ -96,7 +100,7 @@ const ExpressionBuilder = enhance(({
       {inEditMode ? editOperator : roOperator}
     </LineContainer>
   );
-});
+};
 
 ExpressionBuilder.propTypes = {
   dataSourceUuid: PropTypes.string, // if not set, the expression will be read only
@@ -108,4 +112,4 @@ ExpressionBuilder.defaultProps = {
   allowEdit: false,
 };
 
-export default ExpressionBuilder;
+export default enhance(ExpressionBuilder);

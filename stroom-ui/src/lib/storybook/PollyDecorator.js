@@ -34,9 +34,9 @@ const testConfig = {
   explorerServiceUrl: '/api/explorer/v1',
   elementServiceUrl: '/api/elements/v1',
   authUsersUiUrl:
-    "auth/users/because/they're/loaded/in/an/iframe/which/is/beyond/scope/of/these/tests",
+    'auth/users/because/they/are/loaded/in/an/iframe/which/is/beyond/scope/of/these/tests',
   authTokensUiUrl:
-    "auth/tokens/because/they're/loaded/in/an/iframe/which/is/beyond/scope/of/these/tests",
+    'auth/tokens/because/they/are/loaded/in/an/iframe/which/is/beyond/scope/of/these/tests',
   advertisedUrl: '/',
   appClientId: 'stroom-ui',
 };

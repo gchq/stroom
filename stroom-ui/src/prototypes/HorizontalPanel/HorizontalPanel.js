@@ -5,7 +5,7 @@ import { compose, withState } from 'recompose';
 
 const enhance = compose(withState('activeItem', 'setActiveItem', 'home'));
 
-const HorizontalPanel = enhance(({
+const HorizontalPanel = ({
   title,
   headerMenuItems,
   content,
@@ -36,7 +36,7 @@ const HorizontalPanel = enhance(({
 
     <div className="horizontal-panel__content">{content}</div>
   </div>
-));
+);
 
 HorizontalPanel.propTypes = {
   content: PropTypes.object.isRequired,
@@ -48,4 +48,4 @@ HorizontalPanel.propTypes = {
   headerSize: PropTypes.string,
 };
 
-export default HorizontalPanel;
+export default enhance(HorizontalPanel);

@@ -69,7 +69,7 @@ const enhance = compose(
       const {
         fetchElements, fetchElementProperties, fetchPipeline, pipelineId,
       } = this.props;
-      
+
       fetchElements();
       fetchElementProperties();
       fetchPipeline(pipelineId);
@@ -105,7 +105,7 @@ const enhance = compose(
   })),
 );
 
-const PipelineEditor = enhance(({
+const PipelineEditor = ({
   pipelineId,
   pipeline,
   isPaletteOpen,
@@ -144,30 +144,30 @@ const PipelineEditor = enhance(({
         <div className="Pipeline-editor__bin" />
         <div className="Pipeline-editor__elements">
           {Object.keys(elementStyles)
-              .map(es => pipeline.pipeline.merged.elements.add.find(e => e.id === es))
-              .map(e => (
-                <div key={e.id} id={e.id} style={elementStyles[e.id]}>
-                  <PipelineElement
-                    pipelineId={pipelineId}
-                    elementId={e.id}
-                    onClick={() => setElementDetailsOpen(true)}
-                  />
-                </div>
-              ))}
+            .map(es => pipeline.pipeline.merged.elements.add.find(e => e.id === es))
+            .map(e => (
+              <div key={e.id} id={e.id} style={elementStyles[e.id]}>
+                <PipelineElement
+                  pipelineId={pipelineId}
+                  elementId={e.id}
+                  onClick={() => setElementDetailsOpen(true)}
+                />
+              </div>
+            ))}
         </div>
         <div className="Pipeline-editor__lines">
           {pipeline.pipeline.merged.links.add
-              .filter(l => elementStyles[l.from] && elementStyles[l.to])
-              .map(l => ({ ...l, lineId: `${l.from}-${l.to}` }))
-              .map(l => (
-                <LineTo
-                  lineId={l.lineId}
-                  key={l.lineId}
-                  fromId={l.from}
-                  toId={l.to}
-                  lineType="curve"
-                />
-              ))}
+            .filter(l => elementStyles[l.from] && elementStyles[l.to])
+            .map(l => ({ ...l, lineId: `${l.from}-${l.to}` }))
+            .map(l => (
+              <LineTo
+                lineId={l.lineId}
+                key={l.lineId}
+                fromId={l.from}
+                toId={l.to}
+                lineType="curve"
+              />
+            ))}
         </div>
       </LineContainer>
       {isElementDetailsOpen ? (
@@ -176,15 +176,15 @@ const PipelineEditor = enhance(({
           className="Pipeline-editor__details"
           onClose={() => setElementDetailsOpen(false)}
         />
-        ) : (
-          undefined
-        )}
+      ) : (
+        undefined
+      )}
     </div>
   </div>
-));
+);
 
 PipelineEditor.propTypes = {
   pipelineId: PropTypes.string.isRequired,
 };
 
-export default PipelineEditor;
+export default enhance(PipelineEditor);

@@ -44,7 +44,7 @@ const enhance = compose(
   ),
 );
 
-const DocRefDropdownPicker = enhance(({
+const DocRefDropdownPicker = ({
   pickerId, documentTree, typeFilter, docRef, docRefPicked,
 }) => {
   const value = docRef ? docRef.uuid : '';
@@ -63,7 +63,7 @@ const DocRefDropdownPicker = enhance(({
       link: true,
     }));
 
-      // Don't include folders as pickable items
+    // Don't include folders as pickable items
     if (!node.children && node.uuid) {
       options.push({
         key: node.uuid,
@@ -94,11 +94,11 @@ const DocRefDropdownPicker = enhance(({
       placeholder="Choose an option"
     />
   );
-});
+};
 
 DocRefDropdownPicker.propTypes = {
   pickerId: PropTypes.string.isRequired,
   typeFilter: PropTypes.string,
 };
 
-export default DocRefDropdownPicker;
+export default enhance(DocRefDropdownPicker);
