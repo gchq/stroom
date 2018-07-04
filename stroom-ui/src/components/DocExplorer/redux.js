@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import _ from 'lodash';
 import { createActions, handleActions } from 'redux-actions';
+import * as JsSearch from 'js-search';
 
 import {
   moveItemInTree,
@@ -89,6 +89,8 @@ export const actionCreators = createActions({
 
 const defaultExplorerState = {
   searchTerm: '',
+  searchExecutor: undefined,
+  searchResults: [],
   isFolderOpen: {}, // in response to user actions and searches
   isSelected: {},
   isVisible: {}, // based on search
@@ -103,11 +105,11 @@ const defaultState = {
   allowMultiSelect: true,
   allowDragAndDrop: true,
   isTreeReady: false,
-  isDocRefTypeListReady:false
+  isDocRefTypeListReady: false,
 };
 
 function getIsValidFilterTerm(filterTerm) {
-  return !!filterTerm && filterTerm.length > 0;
+  return !!filterTerm && filterTerm.length > 1; // at least 2 characters
 }
 
 function getIsVisibleMap(documentTree, isInTypeFilterMap, isInSearchMap) {
@@ -157,21 +159,13 @@ function getFolderIsOpenMap(
   return isFolderOpen;
 }
 
-function getUpdatedExplorer(documentTree, optExplorer, searchTerm, typeFilter) {
-  const explorer = optExplorer || defaultExplorerState;
-
-  let searchRegex;
-
-  if (getIsValidFilterTerm(searchTerm)) {
-    searchRegex = new RegExp(_.escapeRegExp(searchTerm), 'i');
+function getUpdatedExplorer(documentTree, explorer, searchExecutor, searchTerm, typeFilter) {
+  let searchResults;
+  if (searchExecutor && searchTerm) {
+    searchResults = searchExecutor
+      .search(searchTerm)
+      .reduce((acc, curr) => ({ ...acc, [curr.uuid]: true }), {});
   }
-
-  const searchFilterFunction = (lineage, node) => {
-    if (searchRegex) {
-      return searchRegex.test(node.name);
-    }
-    return true;
-  };
 
   const typeFilterFunction = (lineage, node) => {
     if (getIsValidFilterTerm(typeFilter)) {
@@ -181,7 +175,10 @@ function getUpdatedExplorer(documentTree, optExplorer, searchTerm, typeFilter) {
   };
 
   const isSearching = getIsValidFilterTerm(searchTerm);
-  const isInSearchMap = getIsInFilteredMap(documentTree, searchFilterFunction);
+  const isInSearchMap = getIsInFilteredMap(
+    documentTree,
+    (l, n) => !isSearching || !!searchResults[n.uuid],
+  );
   const isInTypeFilterMap = getIsInFilteredMap(documentTree, typeFilterFunction);
 
   return {
@@ -202,17 +199,43 @@ function getUpdatedExplorer(documentTree, optExplorer, searchTerm, typeFilter) {
 }
 
 function getStateAfterTreeUpdate(state, documentTree) {
+  console.log('Tree received', documentTree);
+
+  // Create the search index
+  const rawSearchData = [];
+  iterateNodes(documentTree, (lineage, node) => {
+    rawSearchData.push({
+      name: node.name,
+      type: node.type,
+      uuid: node.uuid,
+      lineage,
+      lineageNames: lineage.reduce((acc, curr) => `${acc} ${curr.name}`, ''),
+    });
+  });
+
+  const searchExecutor = new JsSearch.Search('uuid');
+  searchExecutor.addIndex('name');
+  searchExecutor.addIndex('lineageNames');
+  searchExecutor.addDocuments(rawSearchData);
+
   // Update all the explorers with the new tree
   const explorers = {};
   Object.entries(state.explorers).forEach((k) => {
-    explorers[k[0]] = getUpdatedExplorer(documentTree, k[1], k[1].searchTerm, k[1].typeFilter);
+    explorers[k[0]] = getUpdatedExplorer(
+      documentTree,
+      k[1],
+      searchExecutor,
+      k[1].searchTerm,
+      k[1].typeFilter,
+    );
   });
 
   return {
     ...state,
     documentTree,
     explorers,
-    isTreeReady:true
+    isTreeReady: true,
+    searchExecutor,
   };
 }
 
@@ -221,18 +244,16 @@ export const reducer = handleActions(
     // Receive the current state of the explorer tree
     DOC_TREE_RECEIVED: (state, action) =>
       getStateAfterTreeUpdate(state, action.payload.documentTree),
-    
     // Receive the set of doc ref types used in the current tree
     DOC_REF_TYPES_RECEIVED: (state, action) => {
-      var docRefTypes = {}
-      action.payload.docRefTypes.forEach(docRefType => docRefTypes[docRefType.toUpperCase()] = docRefType)
+      const docRefTypes = {};
+      action.payload.docRefTypes.forEach(docRefType => (docRefTypes[docRefType.toUpperCase()] = docRefType));
       return {
-        ...state, 
+        ...state,
         docRefTypes,
-        isDocRefTypeListReady: true
+        isDocRefTypeListReady: true,
       };
     },
-
 
     // When an explorer is opened
     EXPLORER_TREE_OPENED: (state, action) => {
@@ -244,7 +265,13 @@ export const reducer = handleActions(
         explorers: {
           ...state.explorers,
           [explorerId]: {
-            ...getUpdatedExplorer(state.documentTree, undefined, '', typeFilter),
+            ...getUpdatedExplorer(
+              state.documentTree,
+              defaultExplorerState,
+              state.searchExecutor,
+              '',
+              typeFilter,
+            ),
             allowMultiSelect,
             allowDragAndDrop,
           },
@@ -290,6 +317,7 @@ export const reducer = handleActions(
       const explorer = getUpdatedExplorer(
         state.documentTree,
         state.explorers[explorerId],
+        state.searchExecutor,
         searchTerm,
         state.explorers[explorerId].typeFilter,
       );
@@ -352,4 +380,3 @@ export const reducer = handleActions(
   },
   defaultState,
 );
-
