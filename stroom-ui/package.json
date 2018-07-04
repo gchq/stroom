@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "js-search": "^1.4.2",
     "jwt-decode": "^2.2.0",
     "moment": "^2.22.1",
     "mousetrap": "^1.6.1",

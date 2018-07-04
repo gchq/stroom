@@ -37,10 +37,10 @@ const enhance = compose(connect(
 const RecentItems = ({
   isOpen, recentItemsClosed, tabSelectionStack, tabSelected,
 }) => (
-  <Modal open={isOpen} onClose={recentItemsClosed} basic size="small" dimmer="inverted">
+  <Modal open={isOpen} onClose={recentItemsClosed} size="small" dimmer="inverted">
     <Header icon="file outline" content="Recent Items" />
     <Modal.Content>
-      <Menu vertical>
+      <Menu vertical fluid>
         {tabSelectionStack.map((tab) => {
           const title = TabTypeDisplayInfo[tab.type].getTitle(tab.data);
           return (
