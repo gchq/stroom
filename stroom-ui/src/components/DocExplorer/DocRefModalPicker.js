@@ -22,7 +22,7 @@ import { connect } from 'react-redux';
 import { Button, Modal, Input, Loader } from 'semantic-ui-react';
 
 import { findItem } from 'lib/treeUtils';
-import { actionCreators } from './redux/explorerTreeReducer';
+import { actionCreators } from './redux';
 
 import withExplorerTree from './withExplorerTree';
 import withDocRefTypes from './withDocRefTypes';

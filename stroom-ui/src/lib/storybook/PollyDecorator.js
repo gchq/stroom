@@ -54,6 +54,9 @@ const testCache = {
   data: {},
 };
 
+// Hot loading should pass through
+server.get('*.hot-update.json').passthrough();
+
 // This is normally deployed as part of the server
 server.get('/config.json').intercept((req, res) => {
   res.json(testConfig);

@@ -48,8 +48,11 @@ storiesOf('Document Explorer (small testTree)', module)
 storiesOf('Document Explorer (from setupSampleData)', module)
   .addDecorator(PollyDecorator({ documentTree: fromSetupSampleData, docRefTypes: testDocRefsTypes }))
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(docRefPicked('dropdown2', pickRandomItem(testTree, (l, n) => n.type === 'XSLT')));
-    store.dispatch(docRefPicked('modal2', pickRandomItem(testTree, (l, n) => n.type === 'Pipeline')));
+    store.dispatch(docRefPicked('dropdown2', pickRandomItem(fromSetupSampleData, (l, n) => n.type === 'XSLT')));
+    store.dispatch(docRefPicked(
+      'modal2',
+      pickRandomItem(fromSetupSampleData, (l, n) => n.type === 'Pipeline'),
+    ));
     store.dispatch(permissionInheritancePicked('pi2', PermissionInheritance.DESTINATION));
   }))
   .addDecorator(DragDropDecorator)
@@ -65,7 +68,7 @@ storiesOf('Document Explorer (from setupSampleData)', module)
     <DocExplorer explorerId="filtered-xslt" typeFilter="XSLT" />
   ))
   .add('Explorer Tree (type filter to dictionary)', () => (
-    <DocExplorer explorerId="filtered-dict" typeFilter="DICTIONARY" />
+    <DocExplorer explorerId="filtered-dict" typeFilter="Dictionary" />
   ))
   .add('Doc Ref Picker (dropdown, no choice made)', () => (
     <DocRefDropdownPicker pickerId="dropdown1" />
@@ -74,12 +77,12 @@ storiesOf('Document Explorer (from setupSampleData)', module)
     <DocRefDropdownPicker pickerId="dropdown2" />
   ))
   .add('Doc Ref Picker (dropdown, filter to dictionaries)', () => (
-    <DocRefDropdownPicker pickerId="dropdown3" typeFilter="DICTIONARY" />
+    <DocRefDropdownPicker pickerId="dropdown3" typeFilter="Dictionary" />
   ))
   .add('Doc Ref Picker (modal, no choice made)', () => <DocRefModalPicker pickerId="modal1" />)
   .add('Doc Ref Picker (modal, choice made)', () => <DocRefModalPicker pickerId="modal2" />)
-  .add('Doc Ref Picker (modal, filter to annotations)', () => (
-    <DocRefModalPicker pickerId="modal3" typeFilter="AnnotationsIndex" />
+  .add('Doc Ref Picker (modal, filter to pipeline)', () => (
+    <DocRefModalPicker pickerId="modal3" typeFilter="Pipeline" />
   ))
   .add('Permission Inheritance Picker', () => <PermissionInheritancePicker pickerId="pi1" />)
   .add('Permission Inheritance Picker (choice made)', () => (

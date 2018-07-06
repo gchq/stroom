@@ -19,11 +19,11 @@ import PropTypes from 'prop-types';
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Dropdown, Breadcrumb } from 'semantic-ui-react';
+import { Select, Breadcrumb } from 'semantic-ui-react';
 
 import { iterateNodes, findItem } from 'lib/treeUtils';
 
-import { actionCreators } from './redux/explorerTreeReducer';
+import { actionCreators } from './redux';
 
 import withExplorerTree from './withExplorerTree';
 import withDocRefTypes from './withDocRefTypes';
@@ -48,6 +48,7 @@ const DocRefDropdownPicker = ({
   pickerId, documentTree, typeFilter, docRef, docRefPicked,
 }) => {
   const value = docRef ? docRef.uuid : '';
+  console.log({ pickerId, value });
 
   const options = [];
   iterateNodes(documentTree, (lineage, node) => {
@@ -79,14 +80,13 @@ const DocRefDropdownPicker = ({
     }
   });
 
-  const onDocRefSelected = (event, data) => {
-    const picked = findItem(documentTree, data.value);
+  const onDocRefSelected = (e, { value }) => {
+    const picked = findItem(documentTree, value);
     docRefPicked(pickerId, picked);
   };
 
   return (
-    <Dropdown
-      selection
+    <Select
       search
       options={options}
       value={value}
