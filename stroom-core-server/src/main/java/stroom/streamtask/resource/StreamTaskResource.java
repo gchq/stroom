@@ -187,13 +187,6 @@ public class StreamTaskResource implements HasHealthCheck {
 
         final StreamTasks response = new StreamTasks(pageToReturn, values.size());
 
-        try {
-            final String fuckIt = new ObjectMapper().writeValueAsString(response);
-            System.out.println(fuckIt);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
         return Response.ok(response).build();
     }
 
