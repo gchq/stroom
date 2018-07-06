@@ -198,8 +198,6 @@ function getUpdatedExplorer(documentTree, explorer, searchExecutor, searchTerm, 
 }
 
 function getStateAfterTreeUpdate(state, documentTree) {
-  console.log('Tree received', documentTree);
-
   // Create the search index
   const rawSearchData = [];
   iterateNodes(documentTree, (lineage, node) => {

@@ -21,7 +21,7 @@ import { connect } from 'react-redux';
 
 import { Input, Loader } from 'semantic-ui-react';
 
-import Folder from './Folder';
+import FolderToPick from './FolderToPick';
 import MoveDocRef from './MoveDocRef';
 import { actionCreators } from './redux/explorerTreeReducer';
 import withExplorerTree from './withExplorerTree';
@@ -47,15 +47,9 @@ const enhance = compose(
   ),
   lifecycle({
     componentDidMount() {
-      const {
-        explorerTreeOpened,
-        explorerId,
-        allowMultiSelect,
-        allowDragAndDrop,
-        typeFilter,
-      } = this.props;
+      const { explorerTreeOpened, explorerId, typeFilter } = this.props;
 
-      explorerTreeOpened(explorerId, allowMultiSelect, allowDragAndDrop, typeFilter);
+      explorerTreeOpened(explorerId, false, false, typeFilter);
     },
   }),
   branch(
@@ -64,23 +58,27 @@ const enhance = compose(
   ),
 );
 
-const DocExplorer = ({
-  documentTree, explorerId, explorer, searchTermUpdated,
+const DocPicker = ({
+  documentTree, explorerId, explorer, searchTermUpdated, foldersOnly,
 }) => (
   <div>
-    <MoveDocRef explorerId={explorerId} />
     <Input
       icon="search"
       placeholder="Search..."
       value={explorer.searchTerm}
       onChange={e => searchTermUpdated(explorerId, e.target.value)}
     />
-    <Folder explorerId={explorerId} folder={documentTree} />
+    <FolderToPick explorerId={explorerId} folder={documentTree} foldersOnly={foldersOnly} />
   </div>
 );
 
-DocExplorer.propTypes = {
+DocPicker.propTypes = {
   explorerId: PropTypes.string.isRequired,
+  foldersOnly: PropTypes.bool.isRequired,
 };
 
-export default enhance(DocExplorer);
+DocPicker.defaultProps = {
+  foldersOnly: false,
+};
+
+export default enhance(DocPicker);

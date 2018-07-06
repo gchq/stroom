@@ -26,6 +26,7 @@ import {
   explorerTreeReducer as explorerTree,
   permissionInheritancePickerReducer as permissionInheritancePicker,
   docRefPickerReducer as docRefPicker,
+  moveDocRefReducer as moveDocRef
 } from 'components/DocExplorer/redux';
 import {
   expressionReducer as expressions,
@@ -54,6 +55,7 @@ export default combineReducers({
   explorerTree,
   permissionInheritancePicker,
   docRefPicker,
+  moveDocRef,
   dataSources,
   expressions,
   pipelines,

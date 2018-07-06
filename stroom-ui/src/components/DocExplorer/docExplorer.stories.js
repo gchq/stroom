@@ -26,6 +26,7 @@ import {
   DocRefDropdownPicker,
   PermissionInheritancePicker,
   PermissionInheritance,
+  DocPicker,
 } from './index';
 import { actionCreators } from './redux';
 import { testTree, fromSetupSampleData, testDocRefsTypes } from './test';
@@ -84,6 +85,11 @@ storiesOf('Document Explorer (from setupSampleData)', module)
   .add('Doc Ref Picker (modal, filter to pipeline)', () => (
     <DocRefModalPicker pickerId="modal3" typeFilter="Pipeline" />
   ))
+  .add('Doc Ref Picker (modal, filter to folders)', () => (
+    <DocRefModalPicker pickerId="modal4" typeFilter="Folder" />
+  ))
+  .add('Doc Picker', () => <DocPicker explorerId="picker1" />)
+  .add('Doc Picker (folders only)', () => <DocPicker explorerId="picker2" foldersOnly />)
   .add('Permission Inheritance Picker', () => <PermissionInheritancePicker pickerId="pi1" />)
   .add('Permission Inheritance Picker (choice made)', () => (
     <PermissionInheritancePicker pickerId="pi2" />

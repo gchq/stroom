@@ -10,11 +10,16 @@ import {
   actionCreators as docRefPickerActionCreators,
   reducer as docRefPickerReducer,
 } from './docRefPickerReducer';
+import {
+  actionCreators as moveDocRefActionCreators,
+  reducer as moveDocRefReducer,
+} from './moveDocRefReducer';
 
 const actionCreators = {
   ...explorerTreeActionCreators,
   ...permissionInheritancePickerActionCreators,
   ...docRefPickerActionCreators,
+  ...moveDocRefActionCreators,
 };
 
 export {
@@ -22,4 +27,5 @@ export {
   explorerTreeReducer,
   permissionInheritancePickerReducer,
   docRefPickerReducer,
+  moveDocRefReducer,
 };

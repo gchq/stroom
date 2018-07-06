@@ -26,7 +26,7 @@ import { actionCreators } from './redux';
 
 import withExplorerTree from './withExplorerTree';
 import withDocRefTypes from './withDocRefTypes';
-import DocExplorer from './DocExplorer';
+import DocPicker from './DocPicker';
 
 const { docRefPicked, explorerTreeOpened } = actionCreators;
 
@@ -66,7 +66,6 @@ const DocRefModalPicker = ({
   docRefPicked,
   docRef,
   isOpen,
-  tree,
   pickerId,
   typeFilter,
   setIsOpen,
@@ -97,13 +96,7 @@ const DocRefModalPicker = ({
     >
       <Modal.Header>Select a Doc Ref</Modal.Header>
       <Modal.Content scrolling>
-        <DocExplorer
-          tree={tree}
-          explorerId={pickerId}
-          allowMultiSelect={false}
-          allowDragAndDrop={false}
-          typeFilter={typeFilter}
-        />
+        <DocPicker explorerId={pickerId} typeFilter={typeFilter} />
       </Modal.Content>
       <Modal.Actions>
         <Button negative onClick={handleClose}>
