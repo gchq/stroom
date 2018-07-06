@@ -49,7 +49,7 @@ const updatePipeline = pipeline => ({
   asTree: getPipelineAsTree(pipeline),
 });
 
-const pipelineReducer = handleActions(
+const reducer = handleActions(
   {
     PIPELINE_RECEIVED: (state, action) => ({
       ...state,
@@ -125,4 +125,4 @@ const pipelineReducer = handleActions(
   defaultPipelineState,
 );
 
-export { actionCreators, pipelineReducer };
+export { actionCreators, reducer };

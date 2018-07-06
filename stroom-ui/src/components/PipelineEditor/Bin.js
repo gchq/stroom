@@ -6,7 +6,7 @@ import { connect } from 'react-redux';
 import { DropTarget } from 'react-dnd';
 import { Confirm, Button } from 'semantic-ui-react';
 
-import { ItemTypes } from './dragDropTypes';
+import ItemTypes from './dragDropTypes';
 import { actionCreators } from './redux';
 
 const { pipelineElementDeleted } = actionCreators;

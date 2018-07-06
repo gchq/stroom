@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 import { compose, withState, withProps } from 'recompose';
 import { DragSource } from 'react-dnd';
-import { ItemTypes } from '../dragDropTypes';
+import ItemTypes from '../dragDropTypes';
 
 const withFocus = withState('hasFocus', 'setHasFocus', false);
 

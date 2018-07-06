@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 export default {
-  ELEMENT: 'element',
-  PALLETE_ELEMENT: 'paletteElement',
-  RECYCLE_BIN: 'recycleBin',
+  NONE: 'None',
+  SOURCE: 'Source',
+  DESTINATION: 'Destination',
+  COMBINED: 'Combined',
 };

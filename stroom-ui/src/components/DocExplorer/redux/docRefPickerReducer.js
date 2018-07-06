@@ -13,8 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-export default {
-  ELEMENT: 'element',
-  PALLETE_ELEMENT: 'paletteElement',
-  RECYCLE_BIN: 'recycleBin',
-};
+import { createActions, handleActions } from 'redux-actions';
+
+export const actionCreators = createActions({
+  DOC_REF_PICKED: (pickerId, docRef) => ({ pickerId, docRef }),
+});
+
+const defaultState = {};
+
+export const reducer = handleActions(
+  {
+    DOC_REF_PICKED: (state, action) => ({
+      ...state,
+      [action.payload.pickerId]: action.payload.docRef,
+    }),
+  },
+  defaultState,
+);

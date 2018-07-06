@@ -23,10 +23,10 @@ import { Input, Button, Icon, Dropdown, Confirm } from 'semantic-ui-react';
 
 import { DragSource } from 'react-dnd';
 
-import { ItemTypes } from './dragDropTypes';
+import ItemTypes from './dragDropTypes';
 import { displayValues } from './conditions';
 import { DocRefModalPicker } from '../DocExplorer';
-import { actionCreators as docExplorerActionCreators } from '../DocExplorer/redux';
+import { actionCreators as docExplorerActionCreators } from '../DocExplorer/redux/explorerTreeReducer';
 import { actionCreators, joinDictionaryTermId } from './redux';
 
 const { docRefPicked } = docExplorerActionCreators;
@@ -104,7 +104,7 @@ const withPickedDocRef = () => (WrappedComponent) => {
   return connect(
     state => ({
       // terms are nested, so take all their props from parent
-      pickedDocRefs: state.explorerTree.pickedDocRefs,
+      pickedDocRefs: state.docRefPicker,
     }),
     {
       docRefPicked,

@@ -23,7 +23,7 @@ import { Dropdown, Breadcrumb } from 'semantic-ui-react';
 
 import { iterateNodes, findItem } from 'lib/treeUtils';
 
-import { actionCreators } from './redux';
+import { actionCreators } from './redux/explorerTreeReducer';
 
 import withExplorerTree from './withExplorerTree';
 import withDocRefTypes from './withDocRefTypes';
@@ -36,7 +36,7 @@ const enhance = compose(
   connect(
     (state, props) => ({
       documentTree: state.explorerTree.documentTree,
-      docRef: state.explorerTree.pickedDocRefs[props.pickerId],
+      docRef: state.docRefPicker[props.pickerId],
     }),
     {
       docRefPicked,

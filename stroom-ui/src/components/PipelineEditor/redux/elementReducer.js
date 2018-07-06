@@ -9,7 +9,7 @@ const actionCreators = createActions({
   ELEMENT_PROPERTIES_RECEIVED: elementProperties => ({ elementProperties }),
 });
 
-const elementReducer = handleActions(
+const reducer = handleActions(
   {
     ELEMENTS_RECEIVED: (state, action) => ({
       ...state,
@@ -26,4 +26,4 @@ const elementReducer = handleActions(
   defaultElementState,
 );
 
-export { actionCreators, elementReducer };
+export { actionCreators, reducer };
