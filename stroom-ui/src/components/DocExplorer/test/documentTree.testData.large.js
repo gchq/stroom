@@ -14,23 +14,6 @@
  * limitations under the License.
  */
 
-const testDocRefsTypes = [
-  'Dashboard',
-  'Dictionary',
-  'Feed',
-  'Folder',
-  'Index',
-  'Pipeline',
-  'Script',
-  'StatisticStore',
-  'StroomStatsStore',
-  'System',
-  'TextConverter',
-  'Visualisation',
-  'XMLSchema',
-  'XSLT',
-];
-
 const fromSetupSampleData = {
   uuid: '0',
   type: 'System',
@@ -1265,4 +1248,4 @@ const fromSetupSampleData = {
   ],
 };
 
-export { fromSetupSampleData, testDocRefsTypes };
+export default fromSetupSampleData;

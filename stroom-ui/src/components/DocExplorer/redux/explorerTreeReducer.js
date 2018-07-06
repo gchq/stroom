@@ -21,7 +21,7 @@ import {
   iterateNodes,
   getIsInFilteredMap,
   deleteItemFromTree,
-} from '../../lib/treeUtils';
+} from 'lib/treeUtils';
 
 const OPEN_STATES = {
   closed: 0,
@@ -84,7 +84,6 @@ export const actionCreators = createActions({
     explorerId,
     docRef,
   }),
-  DOC_REF_PICKED: (pickerId, docRef) => ({ pickerId, docRef }),
 });
 
 const defaultExplorerState = {
@@ -368,15 +367,6 @@ export const reducer = handleActions(
 
       return getStateAfterTreeUpdate(state, documentTree);
     },
-
-    // Pick Doc Ref
-    DOC_REF_PICKED: (state, action) => ({
-      ...state,
-      pickedDocRefs: {
-        ...state.pickedDocRefs,
-        [action.payload.pickerId]: action.payload.docRef,
-      },
-    }),
   },
   defaultState,
 );

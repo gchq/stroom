@@ -1,15 +1,15 @@
 package stroom.explorer;
 
 import io.swagger.annotations.Api;
+import stroom.docref.DocRef;
+import stroom.entity.shared.PermissionInheritance;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.HasNodeState;
 
 import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.ArrayList;
@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 @Path("/explorer/v1")
 @Produces(MediaType.APPLICATION_JSON)
 public class ExplorerResource {
+    private final ExplorerService explorerService;
     private final ExplorerNodeService explorerNodeService;
     private final ExplorerTreeModel explorerTreeModel;
     private final ExplorerActionHandlers explorerActionHandlers;
@@ -29,11 +30,13 @@ public class ExplorerResource {
     private final ExplorerEventLog explorerEventLog;
 
     @Inject
-    public ExplorerResource(final ExplorerNodeService explorerNodeService,
+    public ExplorerResource(final ExplorerService explorerService,
+                            final ExplorerNodeService explorerNodeService,
                             final ExplorerTreeModel explorerTreeModel,
                             final ExplorerActionHandlers explorerActionHandlers,
                             final SecurityContext securityContext,
                             final ExplorerEventLog explorerEventLog) {
+        this.explorerService = explorerService;
         this.explorerNodeService = explorerNodeService;
         this.explorerTreeModel = explorerTreeModel;
         this.explorerActionHandlers = explorerActionHandlers;
@@ -75,6 +78,24 @@ public class ExplorerResource {
                 .collect(Collectors.toList());
 
         return Response.ok(docRefTypes).build();
+    }
+
+
+    /**
+     * Move a set of doc refs to another folder.
+     *
+     * @param docRefs The doc refs to move
+     *
+     * @return HTTP 204 if it works.
+     */
+    @PUT
+    @Path("/move/{uuid}")
+    public Response moveDocument(@FormParam("docRefs") final List<DocRef> docRefs,
+                                 @FormParam("destinationFolderRef")  final DocRef destinationFolderRef,
+                                 @FormParam("permissionInheritance")  final PermissionInheritance permissionInheritance) {
+        explorerService.move(docRefs, destinationFolderRef, permissionInheritance);
+
+        return Response.ok().build();
     }
 
     private boolean filterDescendants(final ExplorerNode parent,

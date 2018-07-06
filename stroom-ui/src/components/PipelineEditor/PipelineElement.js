@@ -26,7 +26,7 @@ import { Image, Loader } from 'semantic-ui-react';
 import AddElementModal from './AddElementModal';
 import { actionCreators } from './redux';
 import { canMovePipelineElement } from './pipelineUtils';
-import { ItemTypes } from './dragDropTypes';
+import ItemTypes from './dragDropTypes';
 import { isValidChildType } from './elementUtils';
 
 import { getInitialValues } from './ElementDetails';

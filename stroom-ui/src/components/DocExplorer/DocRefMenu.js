@@ -21,7 +21,7 @@ import { connect } from 'react-redux';
 
 import { Dropdown, Icon, Confirm } from 'semantic-ui-react';
 
-import { actionCreators as docExplorerActionCreators } from './redux';
+import { actionCreators as docExplorerActionCreators } from './redux/explorerTreeReducer';
 import { actionCreators as contentTabActionCreators } from 'sections/AppChrome/redux';
 import { TabTypes } from 'sections/AppChrome/TabTypes';
 

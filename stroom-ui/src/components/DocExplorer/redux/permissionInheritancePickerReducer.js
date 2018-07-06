@@ -13,8 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-export default {
-  ELEMENT: 'element',
-  PALLETE_ELEMENT: 'paletteElement',
-  RECYCLE_BIN: 'recycleBin',
-};
+import { createActions, handleActions } from 'redux-actions';
+
+export const actionCreators = createActions({
+  PERMISSION_INHERITANCE_PICKED: (pickerId, permissionInheritance) => ({
+    pickerId,
+    permissionInheritance,
+  }),
+});
+
+const defaultState = {};
+
+export const reducer = handleActions(
+  {
+    PERMISSION_INHERITANCE_PICKED: (state, action) => ({
+      ...state,
+      [action.payload.pickerId]: action.payload.permissionInheritance,
+    }),
+  },
+  defaultState,
+);

@@ -20,7 +20,7 @@ import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
 
 import { canMove } from '../../lib/treeUtils';
-import { ItemTypes } from './dragDropTypes';
+import ItemTypes from './dragDropTypes';
 import { DragSource, DropTarget } from 'react-dnd';
 
 import { Icon } from 'semantic-ui-react';
@@ -29,7 +29,7 @@ import DocRef from './DocRef';
 
 import FolderMenu from './FolderMenu';
 
-import { actionCreators } from './redux';
+import { actionCreators } from './redux/explorerTreeReducer';
 
 const { moveExplorerItem, folderOpenToggled } = actionCreators;
 
@@ -149,7 +149,7 @@ const _Folder = ({
           {folder.children
             .filter(c => !!explorer.isVisible[c.uuid])
             .map(c =>
-                (c.children ? (
+                (c.type === 'Folder' ? (
                   <Folder key={c.uuid} explorerId={explorerId} folder={c} />
                 ) : (
                   <DocRef key={c.uuid} explorerId={explorerId} docRef={c} />

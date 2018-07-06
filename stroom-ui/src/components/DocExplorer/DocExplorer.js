@@ -22,7 +22,7 @@ import { connect } from 'react-redux';
 import { Input, Loader } from 'semantic-ui-react';
 
 import Folder from './Folder';
-import { actionCreators } from './redux';
+import { actionCreators } from './redux/explorerTreeReducer';
 import withExplorerTree from './withExplorerTree';
 
 const { searchTermUpdated, explorerTreeOpened } = actionCreators;

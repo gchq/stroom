@@ -22,7 +22,11 @@ import {
   authorisationReducer as authorisation,
 } from 'startup/Authentication';
 import { reducer as lineContainer } from 'components/LineTo';
-import { reducer as explorerTree } from 'components/DocExplorer/redux';
+import {
+  explorerTreeReducer as explorerTree,
+  permissionInheritancePickerReducer as permissionInheritancePicker,
+  docRefPickerReducer as docRefPicker,
+} from 'components/DocExplorer/redux';
 import {
   expressionReducer as expressions,
   dataSourceReducer as dataSources,
@@ -48,6 +52,8 @@ export default combineReducers({
   config,
   trackerDashboard,
   explorerTree,
+  permissionInheritancePicker,
+  docRefPicker,
   dataSources,
   expressions,
   pipelines,
