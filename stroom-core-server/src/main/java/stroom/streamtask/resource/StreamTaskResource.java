@@ -30,7 +30,6 @@ import stroom.entity.shared.Sort;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
-import stroom.streamstore.StreamAttributeMapServiceImpl;
 import stroom.streamtask.StreamProcessorFilterService;
 import stroom.streamtask.StreamProcessorService;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
@@ -64,7 +63,7 @@ import static stroom.streamtask.resource.SearchKeywords.addFiltering;
 @Path("/streamtasks/v1")
 @Produces(MediaType.APPLICATION_JSON)
 public class StreamTaskResource implements HasHealthCheck {
-    private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeMapServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StreamTaskResource.class);
 
     private final StreamProcessorFilterService streamProcessorFilterService;
     private final StreamProcessorService streamProcessorService;

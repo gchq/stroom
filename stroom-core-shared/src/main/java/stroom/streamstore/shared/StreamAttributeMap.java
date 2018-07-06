@@ -70,6 +70,10 @@ public class StreamAttributeMap implements SharedObject {
         return nameValueMap.keySet();
     }
 
+    public Map<String, String> asMap(){
+        return nameValueMap;
+    }
+
     public String formatAttribute(String name) {
         StreamAttributeKey streamAttributeKey = nameKeyMap.get(name);
         if (streamAttributeKey == null) {

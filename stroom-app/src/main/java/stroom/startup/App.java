@@ -81,6 +81,7 @@ import stroom.servlet.SessionListServlet;
 import stroom.servlet.StatusServlet;
 import stroom.servlet.StroomServlet;
 import stroom.statistics.sql.search.SqlStatisticsQueryResource;
+import stroom.streamstore.resource.StreamStoreResource;
 import stroom.streamtask.resource.StreamTaskResource;
 
 import javax.servlet.DispatcherType;
@@ -237,6 +238,7 @@ public class App extends Application<Config> {
         GuiceUtil.addResource(environment.jersey(), injector, SqlStatisticsQueryResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, AuthorisationResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, StreamTaskResource.class);
+        GuiceUtil.addResource(environment.jersey(), injector, StreamStoreResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, PipelineResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, XsltResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, ExplorerResource.class);
