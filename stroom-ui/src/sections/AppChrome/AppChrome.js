@@ -32,12 +32,19 @@ const { recentItemsOpened } = recentItemsActionCreators;
 const { appSearchOpened } = appSearchActionCreators;
 const withIsExpanded = withState('isExpanded', 'setIsExpanded', false);
 
+const SIDE_BAR_COLOUR = 'blue';
+
 const enhance = compose(
-  connect((state, props) => ({}), {
-    tabOpened,
-    recentItemsOpened,
-    appSearchOpened,
-  }),
+  connect(
+    (state, props) => ({
+      currentTab: state.appChrome.tabSelectionStack[0],
+    }),
+    {
+      tabOpened,
+      recentItemsOpened,
+      appSearchOpened,
+    },
+  ),
   withIsExpanded,
   lifecycle({
     componentDidMount() {
@@ -53,11 +60,8 @@ const AppChrome = ({
   appSearchOpened,
   isExpanded,
   setIsExpanded,
+  currentTab,
 }) => {
-  // This sets the default tab that opens when the app opens.
-  // TODO: It should probably be configurable. Maybe we could store their most recent tab in localStorage.
-  tabOpened(TabTypes.EXPLORER_TREE);
-
   const menuItems = [
     {
       title: 'Stroom',
@@ -70,21 +74,32 @@ const AppChrome = ({
       title: TabTypeDisplayInfo[tabType].getTitle(),
       icon: TabTypeDisplayInfo[tabType].icon,
       onClick: () => tabOpened(tabType),
+      selected: currentTab && currentTab.type == tabType,
     })));
 
   const menu = isExpanded ? (
-    <Menu vertical fluid color="blue" inverted>
+    <Menu vertical fluid color={SIDE_BAR_COLOUR} inverted>
       {menuItems.map(menuItem => (
-        <Menu.Item key={menuItem.title} name={menuItem.title} onClick={menuItem.onClick}>
+        <Menu.Item
+          key={menuItem.title}
+          active={menuItem.selected}
+          name={menuItem.title}
+          onClick={menuItem.onClick}
+        >
           <Icon name={menuItem.icon} />
           {menuItem.title}
         </Menu.Item>
       ))}
     </Menu>
   ) : (
-    <Button.Group vertical color="blue" size="large">
+    <Button.Group vertical color={SIDE_BAR_COLOUR} size="large">
       {menuItems.map(menuItem => (
-        <Button key={menuItem.title} icon={menuItem.icon} onClick={menuItem.onClick} />
+        <Button
+          key={menuItem.title}
+          active={menuItem.selected}
+          icon={menuItem.icon}
+          onClick={menuItem.onClick}
+        />
       ))}
     </Button.Group>
   );
