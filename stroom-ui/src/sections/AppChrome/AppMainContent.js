@@ -17,7 +17,7 @@ import React from 'react';
 
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
-import { Menu, Header, Icon } from 'semantic-ui-react';
+import { Menu, Header, Icon, Divider, Grid, Button, Popup } from 'semantic-ui-react';
 
 import DocExplorer from 'components/DocExplorer';
 import TrackerDashboard from 'sections/TrackerDashboard';
@@ -25,11 +25,16 @@ import DocRefEditor from './DocRefEditor';
 import UserSettings from 'prototypes/UserSettings';
 import IFrame from './IFrame';
 
-import { actionCreators } from './redux';
+import { actionCreators as appChromeActionCreators } from './redux';
+import { actionCreators as appSearchActionCreators } from 'prototypes/AppSearch/redux';
+import { actionCreators as recentItemsActionCreators } from 'prototypes/RecentItems/redux';
+
 import TabTypes, { TabTypeDisplayInfo } from './TabTypes';
 import { withConfig } from 'startup/config';
 
-const { tabSelected, tabClosed } = actionCreators;
+const { appSearchOpened } = appSearchActionCreators;
+const { recentItemsOpened } = recentItemsActionCreators;
+const { tabSelected, tabClosed } = appChromeActionCreators;
 
 const enhance = compose(
   withConfig,
@@ -39,13 +44,15 @@ const enhance = compose(
       authUsersUiUrl: state.config.authUsersUiUrl,
       authTokensUiUrl: state.config.authTokensUiUrl,
     }),
-    { tabSelected, tabClosed },
+    { tabSelected, tabClosed, appSearchOpened, recentItemsOpened },
   ),
 );
 
 const AppMainContent = ({
   tabSelected,
   tabClosed,
+  appSearchOpened,
+  recentItemsOpened,
   openTabs,
   tabSelectionStack,
   authUsersUiUrl,
@@ -113,10 +120,19 @@ const AppMainContent = ({
         }`}
         key={openTab.tabId}
       >
-        <Header as="h1">
-          <Icon name={TabTypeDisplayInfo[selectedTab.type].icon} />
-          {TabTypeDisplayInfo[selectedTab.type].getTitle(selectedTab.data)}
-        </Header>
+        <Grid>
+          <Grid.Column width={12}>
+            <Header as="h3">
+              <Icon name={TabTypeDisplayInfo[selectedTab.type].icon} color="grey" />
+              {TabTypeDisplayInfo[selectedTab.type].getTitle(selectedTab.data)}
+            </Header>
+          </Grid.Column>
+          <Grid.Column width={4}>
+            <Popup trigger={<Button floated="right" circular icon="file outline" onClick={() => recentItemsOpened()}/>} content="Recently opened items"/>
+            <Popup trigger={<Button floated="right" circular icon="search" onClick={()=> appSearchOpened()}/>} content="Search for things"/>
+          </Grid.Column>
+        </Grid>
+        <Divider />
         {tabContent}
       </div>
     );

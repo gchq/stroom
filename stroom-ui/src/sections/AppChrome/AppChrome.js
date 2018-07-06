@@ -54,21 +54,15 @@ const AppChrome = ({
   isExpanded,
   setIsExpanded,
 }) => {
+  // This sets the default tab that opens when the app opens.
+  // TODO: It should probably be configurable. Maybe we could store their most recent tab in localStorage.
+  tabOpened(TabTypes.EXPLORER_TREE);
+
   const menuItems = [
     {
       title: 'Stroom',
       icon: 'bars',
       onClick: () => setIsExpanded(!isExpanded),
-    },
-    {
-      title: 'Recent Items',
-      icon: 'file outline',
-      onClick: recentItemsOpened,
-    },
-    {
-      title: 'Search',
-      icon: 'search',
-      onClick: appSearchOpened,
     },
   ].concat(Object.values(TabTypes)
     .filter(t => t !== TabTypes.DOC_REF) // this type is used to cover individual open doc refs
