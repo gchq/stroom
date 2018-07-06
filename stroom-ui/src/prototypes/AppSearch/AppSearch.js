@@ -9,7 +9,7 @@ import withExplorerTree from 'components/DocExplorer/withExplorerTree';
 import { actionCreators as appChromeActionCreators } from 'sections/AppChrome/redux';
 import { TabTypes } from 'sections/AppChrome/TabTypes';
 
-const { appSearchOpened, appSearchClosed, appSearchTermUpdated } = appSearchActionCreators;
+const { appSearchClosed, appSearchTermUpdated } = appSearchActionCreators;
 const { tabOpened } = appChromeActionCreators;
 
 const enhance = compose(
