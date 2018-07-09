@@ -57,7 +57,7 @@ export const DEFAULT_EXPLORER_ID = 'default';
 export const actionCreators = createActions({
   DOC_TREE_RECEIVED: documentTree => ({ documentTree }),
   DOC_REF_TYPES_RECEIVED: docRefTypes => ({ docRefTypes }),
-  EXPLORER_TREE_OPENED: (explorerId, allowMultiSelect, allowDragAndDrop, typeFilter) => ({
+  DOC_EXPLORER_OPENED: (explorerId, allowMultiSelect, allowDragAndDrop, typeFilter) => ({
     explorerId,
     allowMultiSelect,
     allowDragAndDrop,
@@ -253,7 +253,7 @@ export const reducer = handleActions(
     },
 
     // When an explorer is opened
-    EXPLORER_TREE_OPENED: (state, action) => {
+    DOC_EXPLORER_OPENED: (state, action) => {
       const {
         explorerId, allowMultiSelect, allowDragAndDrop, typeFilter,
       } = action.payload;

@@ -23,7 +23,7 @@ import {
 } from 'startup/Authentication';
 import { reducer as lineContainer } from 'components/LineTo';
 import {
-  explorerTreeReducer as explorerTree,
+  docExplorerReducer as docExplorer,
   permissionInheritancePickerReducer as permissionInheritancePicker,
   docRefPickerReducer as docRefPicker,
   moveDocRefReducer as moveDocRef
@@ -52,7 +52,7 @@ export default combineReducers({
   authorisation,
   config,
   trackerDashboard,
-  explorerTree,
+  docExplorer,
   permissionInheritancePicker,
   docRefPicker,
   moveDocRef,

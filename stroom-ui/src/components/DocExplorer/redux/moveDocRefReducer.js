@@ -1,8 +1,8 @@
 import { createActions, combineActions, handleActions } from 'redux-actions';
 
-import { actionCreators as explorerTreeActionCreators } from './explorerTreeReducer';
+import { actionCreators as docExplorerActionCreators } from './docExplorerReducer';
 
-const { explorerTreeOpened } = explorerTreeActionCreators;
+const { docExplorerOpened } = docExplorerActionCreators;
 
 const actionCreators = createActions({
   PREPARE_DOC_REF_MOVES: (explorerId, docRefs) => ({ explorerId, docRefs }),
@@ -24,7 +24,7 @@ const reducer = handleActions(
       ...state,
       [explorerId]: docRefs,
     }),
-    [explorerTreeOpened]: (state, action) => ({
+    [docExplorerOpened]: (state, action) => ({
       ...state,
       [action.payload.explorerId]: [],
     }),

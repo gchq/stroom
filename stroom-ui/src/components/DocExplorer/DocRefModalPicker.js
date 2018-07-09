@@ -28,7 +28,7 @@ import withExplorerTree from './withExplorerTree';
 import withDocRefTypes from './withDocRefTypes';
 import DocPicker from './DocPicker';
 
-const { docRefPicked, explorerTreeOpened } = actionCreators;
+const { docRefPicked, docExplorerOpened } = actionCreators;
 
 const withModal = withState('isOpen', 'setIsOpen', false);
 
@@ -37,20 +37,20 @@ const enhance = compose(
   withDocRefTypes,
   connect(
     (state, props) => ({
-      documentTree: state.explorerTree.documentTree,
+      documentTree: state.docExplorer.documentTree,
       docRef: state.docRefPicker[props.pickerId],
-      explorer: state.explorerTree.explorers[props.pickerId],
+      explorer: state.docExplorer.explorers[props.pickerId],
     }),
     {
       // actions
       docRefPicked,
-      explorerTreeOpened,
+      docExplorerOpened,
     },
   ),
   lifecycle({
     componentDidMount() {
-      const { explorerTreeOpened, pickerId, typeFilter } = this.props;
-      explorerTreeOpened(pickerId, false, false, typeFilter);
+      const { docExplorerOpened, pickerId, typeFilter } = this.props;
+      docExplorerOpened(pickerId, false, false, typeFilter);
     },
   }),
   withModal,

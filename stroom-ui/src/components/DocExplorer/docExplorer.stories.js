@@ -25,7 +25,7 @@ import {
   DocRefModalPicker,
   DocRefDropdownPicker,
   PermissionInheritancePicker,
-  PermissionInheritance,
+  PermissionInheritanceValues,
   DocPicker,
 } from './index';
 import { actionCreators } from './redux';
@@ -54,7 +54,7 @@ storiesOf('Document Explorer (from setupSampleData)', module)
       'modal2',
       pickRandomItem(fromSetupSampleData, (l, n) => n.type === 'Pipeline'),
     ));
-    store.dispatch(permissionInheritancePicked('pi2', PermissionInheritance.DESTINATION));
+    store.dispatch(permissionInheritancePicked('pi2', PermissionInheritanceValues.DESTINATION));
   }))
   .addDecorator(DragDropDecorator)
   .add('Explorer Tree (multi-select, dnd)', () => <DocExplorer explorerId="multi-select-dnd" />)

@@ -152,7 +152,7 @@ const Routes = ({
 
       <Route
         exact
-        path="/explorerTree"
+        path="/docExplorer"
         render={({ match }) =>
           (isLoggedIn ? (
             <DocExplorer explorerId="singleton" />

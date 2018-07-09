@@ -1,4 +1,4 @@
-import { actionCreators } from './redux/explorerTreeReducer';
+import { actionCreators } from './redux/docExplorerReducer';
 import { wrappedGet } from 'lib/fetchTracker.redux';
 
 const { docTreeReceived, docRefTypesReceived } = actionCreators;

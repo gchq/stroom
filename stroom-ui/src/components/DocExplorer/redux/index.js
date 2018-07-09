@@ -1,7 +1,7 @@
 import {
-  actionCreators as explorerTreeActionCreators,
-  reducer as explorerTreeReducer,
-} from './explorerTreeReducer';
+  actionCreators as docExplorerActionCreators,
+  reducer as docExplorerReducer,
+} from './docExplorerReducer';
 import {
   actionCreators as permissionInheritancePickerActionCreators,
   reducer as permissionInheritancePickerReducer,
@@ -16,7 +16,7 @@ import {
 } from './moveDocRefReducer';
 
 const actionCreators = {
-  ...explorerTreeActionCreators,
+  ...docExplorerActionCreators,
   ...permissionInheritancePickerActionCreators,
   ...docRefPickerActionCreators,
   ...moveDocRefActionCreators,
@@ -24,7 +24,7 @@ const actionCreators = {
 
 export {
   actionCreators,
-  explorerTreeReducer,
+  docExplorerReducer,
   permissionInheritancePickerReducer,
   docRefPickerReducer,
   moveDocRefReducer,

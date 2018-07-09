@@ -21,7 +21,7 @@ import { connect } from 'react-redux';
 
 import { Dropdown, Icon, Confirm } from 'semantic-ui-react';
 
-import { actionCreators } from './redux/explorerTreeReducer';
+import { actionCreators } from './redux/docExplorerReducer';
 
 const { folderOpenToggled, docRefDeleted } = actionCreators;
 

@@ -18,7 +18,7 @@ import DocRefModalPicker from './DocRefModalPicker';
 import DocPicker from './DocPicker';
 import DocRefDropdownPicker from './DocRefDropdownPicker';
 import PermissionInheritancePicker from './PermissionInheritancePicker';
-import PermissionInheritance from './PermissionInheritance';
+import PermissionInheritanceValues from './PermissionInheritanceValues';
 import withExplorerTree from './withExplorerTree';
 import withDocRefTypes from './withDocRefTypes';
 
@@ -28,7 +28,7 @@ export {
   DocRefDropdownPicker,
   DocPicker,
   PermissionInheritancePicker,
-  PermissionInheritance,
+  PermissionInheritanceValues,
   withExplorerTree,
   withDocRefTypes,
 };

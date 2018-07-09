@@ -19,14 +19,14 @@ import PropTypes from 'prop-types';
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
 
-import { actionCreators as docExplorerActionCreators } from './redux/explorerTreeReducer';
+import { actionCreators as docExplorerActionCreators } from './redux/docExplorerReducer';
 
 const { docRefSelected } = docExplorerActionCreators;
 
 const enhance = compose(connect(
   (state, props) => ({
     // state
-    explorer: state.explorerTree.explorers[props.explorerId],
+    explorer: state.docExplorer.explorers[props.explorerId],
   }),
   {
     docRefSelected,

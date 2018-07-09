@@ -21,11 +21,11 @@ import { actionCreators } from './redux';
 
 import { testTree, DOC_REF_TYPES } from './documentTree.testData';
 
-import { explorerTreeReducer, DEFAULT_EXPLORER_ID } from './redux';
+import { docExplorerReducer, DEFAULT_EXPLORER_ID } from './redux';
 
 const {
   docTreeReceived,
-  explorerTreeOpened,
+  docExplorerOpened,
   moveExplorerItem,
   folderOpenToggled,
   tabOpened,
@@ -39,7 +39,7 @@ let store;
 
 describe('Doc Explorer Reducer', () => {
   beforeEach(() => {
-    store = createStore(explorerTreeReducer);
+    store = createStore(docExplorerReducer);
   });
 
   describe('Explorer Tree', () => {
@@ -59,7 +59,7 @@ describe('Doc Explorer Reducer', () => {
 
       // When
       store.dispatch(docTreeReceived(testTree));
-      store.dispatch(explorerTreeOpened(explorerId, allowMultiSelect, allowDragAndDrop, typeFilter));
+      store.dispatch(docExplorerOpened(explorerId, allowMultiSelect, allowDragAndDrop, typeFilter));
 
       // Then
       const state = store.getState();
@@ -81,7 +81,7 @@ describe('Doc Explorer Reducer', () => {
 
       // When
       store.dispatch(docTreeReceived(testTree));
-      store.dispatch(explorerTreeOpened(explorerId, allowMultiSelect, allowDragAndDrop, typeFilter));
+      store.dispatch(docExplorerOpened(explorerId, allowMultiSelect, allowDragAndDrop, typeFilter));
       const state = store.getState();
       const explorer = state.explorers[explorerId];
 
@@ -99,7 +99,7 @@ describe('Doc Explorer Reducer', () => {
 
       // When
       store.dispatch(docTreeReceived(testTree));
-      store.dispatch(explorerTreeOpened(explorerId, allowMultiSelect, allowDragAndDrop, typeFilter));
+      store.dispatch(docExplorerOpened(explorerId, allowMultiSelect, allowDragAndDrop, typeFilter));
 
       // Then
       const state = store.getState();
@@ -128,7 +128,7 @@ describe('Doc Explorer Reducer', () => {
 
       // When
       store.dispatch(docTreeReceived(testTree));
-      store.dispatch(explorerTreeOpened(explorerId, allowMultiSelect, allowDragAndDrop, typeFilter));
+      store.dispatch(docExplorerOpened(explorerId, allowMultiSelect, allowDragAndDrop, typeFilter));
       store.dispatch(searchTermUpdated(explorerId, searchTerm));
       store.dispatch(searchTermUpdated(explorerId, undefined));
 
@@ -160,7 +160,7 @@ describe('Doc Explorer Reducer', () => {
 
       // When
       store.dispatch(docTreeReceived(subTree));
-      store.dispatch(explorerTreeOpened(explorerId, allowMultiSelect, allowDragAndDrop, typeFilter));
+      store.dispatch(docExplorerOpened(explorerId, allowMultiSelect, allowDragAndDrop, typeFilter));
       store.dispatch(searchTermUpdated(explorerId, searchTerm));
       store.dispatch(searchTermUpdated(explorerId, undefined));
 
