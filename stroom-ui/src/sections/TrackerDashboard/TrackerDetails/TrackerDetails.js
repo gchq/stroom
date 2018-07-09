@@ -22,52 +22,25 @@ import 'semantic-ui-css/semantic.min.css';
 
 import { actionCreators } from '../redux';
 import { enableToggle } from '../streamTasksResourceClient';
+import HorizontalPanel from 'prototypes/HorizontalPanel';
 import { ExpressionBuilder } from 'components/ExpressionBuilder';
 import { truncate } from 'lib/reduxFormUtils';
 
-const TrackerDetails = ({ selectedTracker, onHandleEnableToggle, onHandleTrackerSelection }) => (
-  <div className="details-container">
-    <Table className="tracker-details-table">
-      <Table.Body>
-        <Table.Row className="tracker-row">
-          <Table.Cell width={1}>
-            <Button icon basic color="green" onClick={() => onHandleTrackerSelection(undefined)}>
-              <Icon name="close" />
-            </Button>
-          </Table.Cell>
-          <Table.Cell width={1}>
-            <Checkbox
-              toggle
-              checked={selectedTracker.enabled}
-              onMouseDown={() =>
-                onHandleEnableToggle(selectedTracker.filterId, selectedTracker.enabled)
-              }
-            />
-          </Table.Cell>
+const TrackerDetails = ({ selectedTracker, onHandleEnableToggle, onHandleTrackerSelection }) => {
+  const title = selectedTracker.pipelineName;
 
-          <Table.Cell className="name-column" textAlign="right" width={5}>
-            <Header as="h3">{truncate(selectedTracker.pipelineName, 25)}</Header>
-          </Table.Cell>
-          <Table.Cell className="priority-column" textAlign="center" width={1}>
-            <Label circular color="green">
-              {selectedTracker.priority}
-            </Label>
-          </Table.Cell>
-          <Table.Cell className="progress-column" width={8}>
-            <Progress
-              percent={selectedTracker.trackerPercent ? selectedTracker.trackerPercent : 0}
-              indicating
-            />
-          </Table.Cell>
-        </Table.Row>
-      </Table.Body>
-    </Table>
+  const headerMenuItems = (
+    <Checkbox
+      toggle
+      checked={selectedTracker.enabled}
+      onMouseDown={() => onHandleEnableToggle(selectedTracker.filterId, selectedTracker.enabled)}
+    />
+  );
 
+  const content = (
     <Grid centered divided columns={3} className="details-grid">
       <Grid.Column textAlign="left" width={10}>
-        <ExpressionBuilder
-          expressionId="trackerDetailsExpression"
-        />
+        <ExpressionBuilder expressionId="trackerDetailsExpression" />
       </Grid.Column>
       <Grid.Column width={6}>
         <Card.Meta>This tracker:</Card.Meta>
@@ -123,13 +96,26 @@ const TrackerDetails = ({ selectedTracker, onHandleEnableToggle, onHandleTracker
         </List>
       </Grid.Column>
     </Grid>
-  </div>
-);
+  );
+
+  return (
+    <HorizontalPanel
+      className="element-details__panel"
+      title={title}
+      content={content}
+      onClose={()=> onHandleTrackerSelection(null)}
+      titleColumns={6}
+      menuColumns={10}
+      headerMenuItems={headerMenuItems}
+      headerSize="h3"
+    />
+  );
+};
 
 TrackerDetails.propTypes = {
   selectedTracker: PropTypes.object.isRequired,
   onHandleEnableToggle: PropTypes.func.isRequired,
-  onHandleTrackerSelection: PropTypes.func.isRequired,
+  onHandleTrackerSelection: PropTypes.func.isRequired
 };
 
 export default compose(
@@ -146,5 +132,5 @@ export default compose(
       },
     }),
   ),
-  branch(({selectedTracker}) => !selectedTracker, renderComponent(() => <div />)),
+  branch(({ selectedTracker }) => !selectedTracker, renderComponent(() => <div />)),
 )(TrackerDetails);

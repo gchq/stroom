@@ -14,42 +14,21 @@
  * limitations under the License.
  */
 
-.App {
-  text-align: center;
+.tracker-container {
+  position: relative;
+  height: 100%;
 }
 
-.App-logo {
-  animation: App-logo-spin infinite 20s linear;
-  height: 80px;
+.tracker-container .SplitPane {
+  position: relative !important;
 }
 
-.App-header {
-  background-color: #222;
-  height: 75px;
-  padding: 20px;
-  color: white;
-}
-
-.App-title {
-  font-size: 1.5em;
-}
-
-.App-intro {
-  font-size: large;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.tracker-container .SplitPane .Pane1 {
+  overflow-y: auto;
 }
 
 .tracker-dashboard {
   height: 100%;
-  position: relative;
   min-height: 150px;
 }
 
@@ -57,7 +36,7 @@
   height: 100%;
 }
 
-.ui.grid > .row {
+.ui.grid>.row {
   padding-top: 1px !important;
   padding-bottom: 1px !important;
 }
@@ -69,10 +48,7 @@
 
 .headerDivider {
   border-left: 1px solid #38546d;
-  /* border-right:0px solid #16222c;  */
   height: 80px;
-  position: absolute;
-  /* right:249px; */
   top: 10px;
 }
 
@@ -122,17 +98,16 @@ way to have the neat colourisation from 'indicating' without the 'active' class 
   animation: none !important;
 }
 
-.tracker-dashboard .search-container {
+.search-container {
   width: 100% !important;
   top: 0px;
   left: 0px;
   height: 45px;
   right: 0px;
   overflow: hidden;
-  position: absolute;
 }
 
-.tracker-dashboard .search-container .input {
+.search-container .input {
   width: 100% !important;
 }
 
@@ -141,7 +116,6 @@ way to have the neat colourisation from 'indicating' without the 'active' class 
   bottom: 0px;
   left: 0px;
   right: 0px;
-  position: absolute;
   overflow: auto;
 }
 
@@ -157,7 +131,6 @@ way to have the neat colourisation from 'indicating' without the 'active' class 
   border-top: solid 3px lightgray;
   overflow: hidden;
   width: 100%;
-  position: absolute;
   bottom: 0px;
   height: 295px;
   left: 0px;

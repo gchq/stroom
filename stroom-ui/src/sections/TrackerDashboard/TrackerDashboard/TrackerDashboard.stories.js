@@ -27,21 +27,13 @@ import { actionCreators } from '../redux';
 
 import 'styles/main.css';
 
-const containerStyle = {
-  height: '500px',
-};
-
 storiesOf('TrackerDashboard', module)
   .addDecorator(PollyDecorator({
     trackers: [trackers.minimalTracker_undefinedLastPollAge, trackers.maximalTracker],
   }))
   .addDecorator(ReduxDecorator)
   .addDecorator(StoryRouter())
-  .add('basic', () => (
-    <div style={containerStyle}>
-      <TrackerDashboard />
-    </div>
-  ));
+  .add('basic', () => <TrackerDashboard />);
 
 storiesOf('TrackerDashboard', module)
   .addDecorator(PollyDecorator({
@@ -49,11 +41,7 @@ storiesOf('TrackerDashboard', module)
   }))
   .addDecorator(ReduxDecorator)
   .addDecorator(StoryRouter())
-  .add('No trackers', () => (
-    <div style={containerStyle}>
-      <TrackerDashboard />
-    </div>
-  ));
+  .add('No trackers', () => <TrackerDashboard />);
 
 const lotsOfTrackers = [...Array(10).keys()].map(i => generateGenericTracker(i));
 
@@ -63,8 +51,4 @@ storiesOf('TrackerDashboard', module)
   }))
   .addDecorator(ReduxDecorator)
   .addDecorator(StoryRouter())
-  .add('Lots of trackers', () => (
-    <div style={containerStyle}>
-      <TrackerDashboard />
-    </div>
-  ));
+  .add('Lots of trackers', () => <TrackerDashboard />);

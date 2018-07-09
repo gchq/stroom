@@ -20,6 +20,9 @@ import { connect } from 'react-redux';
 import { compose, lifecycle } from 'recompose';
 import Mousetrap from 'mousetrap';
 
+import SplitPane from 'react-split-pane';
+import PanelGroup from 'react-panelgroup';
+
 import { Label, Table, Progress, Button, Input, Menu, Pagination } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 
@@ -87,7 +90,7 @@ class TrackerDashboard extends Component {
     Mousetrap.bind('return', () => onHandleSearch());
 
     return (
-      <div className="tracker-dashboard">
+      <div className="tracker-container">
         <Menu attached="top">
           <Menu.Menu position="left" className="search-container">
             <Input
@@ -102,88 +105,90 @@ class TrackerDashboard extends Component {
             />
           </Menu.Menu>
         </Menu>
+        <PanelGroup direction="column" panelWidths={[{}, { minSize: 370 }]}>
+          <div>
+            <div
+              id="table-container"
+              className={`table-container${showDetails ? ' showing-details' : ''}`}
+            >
+              <Table selectable sortable basic="very" className="tracker-table" columns={15}>
+                <Table.Header>
+                  <Table.Row>
+                    <Table.HeaderCell
+                      sorted={sortBy === SortByOptions.pipelineUuid ? sortDirection : null}
+                      onClick={() => this.handleSort(SortByOptions.pipeline, sortBy, sortDirection)}
+                    >
+                      Pipeline name
+                    </Table.HeaderCell>
+                    <Table.HeaderCell
+                      sorted={sortBy === SortByOptions.priority ? sortDirection : null}
+                      onClick={() => this.handleSort(SortByOptions.priority, sortBy, sortDirection)}
+                    >
+                      Priority
+                    </Table.HeaderCell>
+                    <Table.HeaderCell
+                      sorted={sortBy === SortByOptions.progress ? sortDirection : null}
+                      onClick={() => this.handleSort(SortByOptions.progress, sortBy, sortDirection)}
+                    >
+                      Progress
+                    </Table.HeaderCell>
+                  </Table.Row>
+                </Table.Header>
 
-        <div
-          id="table-container"
-          className={`table-container${showDetails ? ' showing-details' : ''}`}
-        >
-          <Table selectable sortable basic="very" className="tracker-table" columns={15}>
-            <Table.Header>
-              <Table.Row>
-                <Table.HeaderCell
-                  sorted={sortBy === SortByOptions.pipelineUuid ? sortDirection : null}
-                  onClick={() => this.handleSort(SortByOptions.pipeline, sortBy, sortDirection)}
-                >
-                  Pipeline name
-                </Table.HeaderCell>
-                <Table.HeaderCell
-                  sorted={sortBy === SortByOptions.priority ? sortDirection : null}
-                  onClick={() => this.handleSort(SortByOptions.priority, sortBy, sortDirection)}
-                >
-                  Priority
-                </Table.HeaderCell>
-                <Table.HeaderCell
-                  sorted={sortBy === SortByOptions.progress ? sortDirection : null}
-                  onClick={() => this.handleSort(SortByOptions.progress, sortBy, sortDirection)}
-                >
-                  Progress
-                </Table.HeaderCell>
-              </Table.Row>
-            </Table.Header>
-
-            <Table.Body>
-              {trackers.map(({
-                  // Core properties
-                  pipelineName,
-                  priority,
-                  trackerPercent,
-                  filterId,
-                  createdOn,
-                  createUser,
-                  updateUser,
-                  updatedOn,
-                  enabled,
-                  status,
-                  lastPollAge,
-                  taskCount,
-                  trackerMs,
-                  streamCount,
-                  eventCount,
-                }, // History // Key // Misc
-              ) => (
-                <Table.Row
-                  key={filterId}
-                  className="tracker-row"
-                  onClick={() => onHandleTrackerSelection(filterId, trackers)}
-                  active={selectedTrackerId === filterId}
-                >
-                  <Table.Cell className="name-column" textAlign="left" width={7}>
-                    {pipelineName}
-                  </Table.Cell>
-                  <Table.Cell className="priority-column" textAlign="center" width={1}>
-                    <Label circular color="green">
-                      {priority}
-                    </Label>
-                  </Table.Cell>
-                  <Table.Cell className="progress-column" width={7}>
-                    <Progress indicating percent={trackerPercent} />
-                  </Table.Cell>
-                </Table.Row>
-              ))}
-            </Table.Body>
-          </Table>
-          <div className="pagination-container">
-            <Pagination
-              activePage={pageOffset + 1}
-              totalPages={numberOfPages || 1}
-              firstItem={null}
-              lastItem={null}
-              size="tiny"
-              onPageChange={(event, data) => onHandlePageChange(data)}
-            />
+                <Table.Body>
+                  {trackers.map(({
+                      pipelineName,
+                      priority,
+                      trackerPercent,
+                      filterId,
+                      createdOn,
+                      createUser,
+                      updateUser,
+                      updatedOn,
+                      enabled,
+                      status,
+                      lastPollAge,
+                      taskCount,
+                      trackerMs,
+                      streamCount,
+                      eventCount,
+                    }, 
+                  ) => (
+                    <Table.Row
+                      key={filterId}
+                      className="tracker-row"
+                      onClick={() => onHandleTrackerSelection(filterId, trackers)}
+                      active={selectedTrackerId === filterId}
+                    >
+                      <Table.Cell className="name-column" textAlign="left" width={7}>
+                        {pipelineName}
+                      </Table.Cell>
+                      <Table.Cell className="priority-column" textAlign="center" width={1}>
+                        <Label circular color="green">
+                          {priority}
+                        </Label>
+                      </Table.Cell>
+                      <Table.Cell className="progress-column" width={7}>
+                        <Progress indicating percent={trackerPercent} />
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table>
+              <div className="pagination-container">
+                <Pagination
+                  activePage={pageOffset + 1}
+                  totalPages={numberOfPages || 1}
+                  firstItem={null}
+                  lastItem={null}
+                  size="tiny"
+                  onPageChange={(event, data) => onHandlePageChange(data)}
+                />
+              </div>
+            </div>
           </div>
-        </div>
-        <TrackerDetails />
+          <TrackerDetails/>
+        </PanelGroup>
       </div>
     );
   }

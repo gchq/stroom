@@ -2,7 +2,6 @@
 .element-details {
   padding: 0.5rem;
   background-color: white;
-  height: 300px;
 }
 
 .element-details__header {
@@ -21,10 +20,6 @@
   width: 600px;
 }
 
-.element-details__panel {
-  height: 300px;
-}
+.element-details__panel {}
 
-.horizontal-panel__container {
-  height: 300px;
-}
+.horizontal-panel__container {}
