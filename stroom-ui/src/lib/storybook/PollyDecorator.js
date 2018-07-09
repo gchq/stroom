@@ -19,6 +19,7 @@ import { connect } from 'react-redux';
 import { compose, lifecycle } from 'recompose';
 import { Polly } from '@pollyjs/core';
 
+import { findItem } from 'lib/treeUtils';
 import { actionCreators as fetchActionCreators } from 'lib/fetchTracker.redux';
 
 const { resetAllUrls } = fetchActionCreators;
@@ -54,6 +55,8 @@ const testCache = {
   data: {},
 };
 
+const startTime = Date.now();
+
 // Hot loading should pass through
 server.get('*.hot-update.json').passthrough();
 
@@ -66,6 +69,21 @@ server.get('/config.json').intercept((req, res) => {
 server.get(`${testConfig.explorerServiceUrl}/all`).intercept((req, res) => {
   res.json(testCache.data.documentTree);
 });
+server
+  .get(`${testConfig.explorerServiceUrl}/info/:docRefType/:docRefUuid`)
+  .intercept((req, res) => {
+    const docRef = findItem(testCache.data.documentTree, req.params.docRefUuid);
+    const info = {
+      docRef,
+      createTime: startTime,
+      updateTime: Date.now(),
+      createUser: 'testGuy',
+      updateUser: 'testGuy',
+      otherInfo: 'pet peeves - crying babies',
+    };
+    res.json(info);
+  });
+
 server.get(`${testConfig.explorerServiceUrl}/docRefTypes`).intercept((req, res) => {
   res.json(testCache.data.docRefTypes);
 });

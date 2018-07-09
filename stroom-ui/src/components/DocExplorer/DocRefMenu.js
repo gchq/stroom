@@ -25,6 +25,8 @@ import { actionCreators as docExplorerActionCreators } from './redux';
 import { actionCreators as contentTabActionCreators } from 'sections/AppChrome/redux';
 import { TabTypes } from 'sections/AppChrome/TabTypes';
 
+import { fetchDocInfo } from './explorerClient';
+
 const { docRefDeleted, prepareDocRefMoves } = docExplorerActionCreators;
 const { tabOpened } = contentTabActionCreators;
 
@@ -39,6 +41,7 @@ const enhance = compose(
       tabOpened,
       docRefDeleted,
       prepareDocRefMoves,
+      fetchDocInfo
     },
   ),
   withPendingDeletion,
@@ -50,6 +53,7 @@ const DocRefMenu = ({
   isOpen,
   tabOpened,
   prepareDocRefMoves,
+  fetchDocInfo,
   docRefDeleted,
   closeContextMenu,
   pendingDeletion,
@@ -75,6 +79,10 @@ const DocRefMenu = ({
         >
           <Icon name="file" />
           Open
+        </Dropdown.Item>
+        <Dropdown.Item onClick={() => fetchDocInfo(docRef)}>
+          <Icon name="info" />
+          Info
         </Dropdown.Item>
         <Dropdown.Item
           onClick={() => {

@@ -57,6 +57,8 @@ export const DEFAULT_EXPLORER_ID = 'default';
 export const actionCreators = createActions({
   DOC_TREE_RECEIVED: documentTree => ({ documentTree }),
   DOC_REF_TYPES_RECEIVED: docRefTypes => ({ docRefTypes }),
+  DOC_REF_INFO_RECEIVED: (docRefInfo) => ({docRefInfo}),
+  DOC_REF_INFO_CLOSED: () => ({}),
   DOC_EXPLORER_OPENED: (explorerId, allowMultiSelect, allowDragAndDrop, typeFilter) => ({
     explorerId,
     allowMultiSelect,
@@ -105,6 +107,7 @@ const defaultState = {
   allowDragAndDrop: true,
   isTreeReady: false,
   isDocRefTypeListReady: false,
+  docRefInfo: undefined
 };
 
 function getIsValidFilterTerm(filterTerm) {
@@ -251,6 +254,16 @@ export const reducer = handleActions(
         isDocRefTypeListReady: true,
       };
     },
+
+    DOC_REF_INFO_RECEIVED: (state, action) => ({
+      ...state,
+      docRefInfo: action.payload.docRefInfo
+    }),
+
+    DOC_REF_INFO_CLOSED: (state, action) => ({
+      ...state,
+      docRefInfo: undefined
+    }),
 
     // When an explorer is opened
     DOC_EXPLORER_OPENED: (state, action) => {

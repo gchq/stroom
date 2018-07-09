@@ -63,7 +63,7 @@ public class ExplorerResource {
     }
 
     @GET
-    @Path("/info")
+    @Path("/info/{type}/{uuid}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getDocInfo(@PathParam("type") final String type,
                                @PathParam("uuid") final String uuid) {

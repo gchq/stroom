@@ -20,6 +20,7 @@ import { storiesOf, addDecorator } from '@storybook/react';
 
 import {
   DocExplorer,
+  DocRefInfoModal,
   DocRef,
   Folder,
   DocPickerModal,
@@ -37,7 +38,7 @@ import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
 import 'styles/main.css';
 
-const { docRefPicked, permissionInheritancePicked } = actionCreators;
+const { docRefPicked, permissionInheritancePicked, docRefInfoReceived } = actionCreators;
 
 storiesOf('Document Explorer (small testTree)', module)
   .addDecorator(PollyDecorator({ documentTree: testTree, docRefTypes: testDocRefsTypes }))
@@ -64,6 +65,25 @@ storiesOf('Document Explorer (from setupSampleData)', module)
     <DocExplorer explorerId="filtered-dict" typeFilter="Dictionary" />
   ));
 
+const timeCreated = Date.now();
+
+storiesOf('Doc Ref Info Modal', module)
+  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
+    store.dispatch(docRefInfoReceived({
+      docRef: {
+        type: 'Animal',
+        name: 'Tiger',
+        uuid: '1234456789'
+      },
+      createTime: timeCreated,
+      updateTime: Date.now(),
+      createUser: 'me',
+      updateUser: 'you',
+      otherInfo: 'I am test data'
+    }));
+  }))
+  .add('Doc Ref Info Modal', () => <DocRefInfoModal />);
+
 storiesOf('Doc Ref Modal Picker', module)
   .addDecorator(PollyDecorator({ documentTree: fromSetupSampleData, docRefTypes: testDocRefsTypes }))
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
@@ -72,7 +92,6 @@ storiesOf('Doc Ref Modal Picker', module)
       pickRandomItem(fromSetupSampleData, (l, n) => n.type === 'Pipeline'),
     ));
   }))
-  .addDecorator(DragDropDecorator)
   .add('Doc Ref Picker (modal, no choice made)', () => <DocPickerModal pickerId="modal1" />)
   .add('Doc Ref Picker (modal, choice made)', () => <DocPickerModal pickerId="modal2" />)
   .add('Doc Ref Picker (modal, filter to pipeline)', () => (
@@ -85,7 +104,6 @@ storiesOf('Doc Ref Modal Picker', module)
 storiesOf('Doc Ref Picker', module)
   .addDecorator(PollyDecorator({ documentTree: fromSetupSampleData, docRefTypes: testDocRefsTypes }))
   .addDecorator(ReduxDecorator)
-  .addDecorator(DragDropDecorator)
   .add('Doc Picker', () => <DocPicker explorerId="picker1" />)
   .add('Doc Picker (folders only)', () => <DocPicker explorerId="picker2" foldersOnly />);
 

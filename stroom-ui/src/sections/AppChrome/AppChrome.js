@@ -74,7 +74,7 @@ const AppChrome = ({
       title: TabTypeDisplayInfo[tabType].getTitle(),
       icon: TabTypeDisplayInfo[tabType].icon,
       onClick: () => tabOpened(tabType),
-      selected: currentTab && currentTab.type == tabType,
+      selected: currentTab && currentTab.type === tabType,
     })));
 
   const menu = isExpanded ? (
