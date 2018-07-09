@@ -17,7 +17,9 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { compose, withState, lifecycle } from 'recompose';
 import { Button, Menu, Icon } from 'semantic-ui-react';
+import { withRouter } from 'react-router-dom';
 import Mousetrap from 'mousetrap';
+import PropTypes, { object } from 'prop-types';
 
 import { actionCreators as appChromeActionCreators } from './redux';
 import { actionCreators as recentItemsActionCreators } from 'prototypes/RecentItems/redux';
@@ -45,8 +47,16 @@ const enhance = compose(
       appSearchOpened,
     },
   ),
+  withRouter,
   withIsExpanded,
   lifecycle({
+    componentWillMount() {
+      // We're going to see if we've got a matching tab type to display,
+      // and if we have we're going to make sure it opens.
+      const { path } = this.props.match;
+      const tabType = Object.keys(TabTypeDisplayInfo).find(tabTypeKey => TabTypeDisplayInfo[tabTypeKey].path === path);
+      if (tabType) this.props.tabOpened(parseInt(tabType));
+    },
     componentDidMount() {
       Mousetrap.bind('ctrl+e', () => this.props.recentItemsOpened());
       Mousetrap.bind('ctrl+f', () => this.props.appSearchOpened());
@@ -61,6 +71,7 @@ const AppChrome = ({
   isExpanded,
   setIsExpanded,
   currentTab,
+  history,
 }) => {
   const menuItems = [
     {
@@ -73,7 +84,11 @@ const AppChrome = ({
     .map(tabType => ({
       title: TabTypeDisplayInfo[tabType].getTitle(),
       icon: TabTypeDisplayInfo[tabType].icon,
-      onClick: () => tabOpened(tabType),
+      onClick: () => {
+        // If we open a tab we need to make sure we update the route.
+        history.push(TabTypeDisplayInfo[tabType].path);
+        tabOpened(tabType);
+      },
       selected: currentTab && currentTab.type == tabType,
     })));
 
