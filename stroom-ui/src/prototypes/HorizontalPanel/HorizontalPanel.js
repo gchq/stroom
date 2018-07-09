@@ -33,8 +33,9 @@ const HorizontalPanel = ({
       </Grid.Column>
     </Grid>
     <Divider />
-
-    <div className="horizontal-panel__content">{content}</div>
+    <div className="horizontal-panel__content__container">
+      <div className="horizontal-panel__content">{content}</div>
+    </div>
   </div>
 );
 

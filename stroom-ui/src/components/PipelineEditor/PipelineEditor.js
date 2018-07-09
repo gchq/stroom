@@ -22,6 +22,8 @@ import { compose, lifecycle, withState, branch, renderComponent, withProps } fro
 import { connect } from 'react-redux';
 import { Loader, Form } from 'semantic-ui-react';
 
+import PanelGroup from 'react-panelgroup';
+
 import { LineContainer, LineTo } from 'components/LineTo';
 import { mapObject } from 'lib/treeUtils';
 import { getPipelineLayoutInformation } from './pipelineUtils';
@@ -115,73 +117,85 @@ const PipelineEditor = ({
   editorClassName,
   elementStyles,
   savePipeline,
-}) => (
-  <div className={`Pipeline-editor Pipeline-editor--palette-${isPaletteOpen ? 'open' : 'close'}`}>
-    <div className="Pipeline-editor__element-palette">
-      <ElementPalette pipelineId={pipelineId} />
-    </div>
-
-    <button className="Pipeline-editor__palette-toggle" onClick={togglePaletteOpen}>
-      {isPaletteOpen ? <Icon name="caret left" /> : <Icon name="caret right" />}
-    </button>
-
-    <div className="Pipeline-editor__content">
-      <div className="Pipeline-editor__top-bar">
-        <SavePipeline pipelineId={pipelineId} />
-        <Bin pipelineId={pipelineId} />
-        <Form>
-          <Form.Field>
-            <label>Parent Pipeline</label>
-            <DocPickerModal pickerId={pipelineId} typeFilter="Pipeline" />
-          </Form.Field>
-        </Form>
+}) => {
+  const settingsPanelSize = isElementDetailsOpen ? '50%' : 0;
+  const panelSizes = [
+    {},
+    {
+      resize: 'dynamic',
+      size: settingsPanelSize,
+    },
+  ];
+  return (
+    <div className={`Pipeline-editor Pipeline-editor--palette-${isPaletteOpen ? 'open' : 'close'}`}>
+      <div className="Pipeline-editor__element-palette">
+        <ElementPalette pipelineId={pipelineId} />
       </div>
-      <LineContainer
-        className="Pipeline-editor__graph"
-        lineContextId={`pipeline-lines-${pipelineId}`}
-        lineElementCreators={lineElementCreators}
-      >
-        <div className="Pipeline-editor__bin" />
-        <div className="Pipeline-editor__elements">
-          {Object.keys(elementStyles)
-            .map(es => pipeline.pipeline.merged.elements.add.find(e => e.id === es))
-            .map(e => (
-              <div key={e.id} id={e.id} style={elementStyles[e.id]}>
-                <PipelineElement
-                  pipelineId={pipelineId}
-                  elementId={e.id}
-                  onClick={() => setElementDetailsOpen(true)}
-                />
-              </div>
-            ))}
+
+      <button className="Pipeline-editor__palette-toggle" onClick={togglePaletteOpen}>
+        {isPaletteOpen ? <Icon name="caret left" /> : <Icon name="caret right" />}
+      </button>
+
+      <PanelGroup direction="column" className="Pipeline-editor__content" panelWidths={panelSizes}>
+        <div className="Pipeline-editor__topPanel">
+          <div className="Pipeline-editor__top-bar">
+            <SavePipeline pipelineId={pipelineId} />
+            <Bin pipelineId={pipelineId} />
+            <Form>
+              <Form.Field>
+                <label>Parent Pipeline</label>
+                <DocPickerModal pickerId={pipelineId} typeFilter="Pipeline" />
+              </Form.Field>
+            </Form>
+          </div>
+          <LineContainer
+            className="Pipeline-editor__graph"
+            lineContextId={`pipeline-lines-${pipelineId}`}
+            lineElementCreators={lineElementCreators}
+          >
+            <div className="Pipeline-editor__bin" />
+            <div className="Pipeline-editor__elements">
+              {Object.keys(elementStyles)
+                .map(es => pipeline.pipeline.merged.elements.add.find(e => e.id === es))
+                .map(e => (
+                  <div key={e.id} id={e.id} style={elementStyles[e.id]}>
+                    <PipelineElement
+                      pipelineId={pipelineId}
+                      elementId={e.id}
+                      onClick={() => setElementDetailsOpen(true)}
+                    />
+                  </div>
+                ))}
+            </div>
+            <div className="Pipeline-editor__lines">
+              {pipeline.pipeline.merged.links.add
+                .filter(l => elementStyles[l.from] && elementStyles[l.to])
+                .map(l => ({ ...l, lineId: `${l.from}-${l.to}` }))
+                .map(l => (
+                  <LineTo
+                    lineId={l.lineId}
+                    key={l.lineId}
+                    fromId={l.from}
+                    toId={l.to}
+                    lineType="curve"
+                  />
+                ))}
+            </div>
+          </LineContainer>
         </div>
-        <div className="Pipeline-editor__lines">
-          {pipeline.pipeline.merged.links.add
-            .filter(l => elementStyles[l.from] && elementStyles[l.to])
-            .map(l => ({ ...l, lineId: `${l.from}-${l.to}` }))
-            .map(l => (
-              <LineTo
-                lineId={l.lineId}
-                key={l.lineId}
-                fromId={l.from}
-                toId={l.to}
-                lineType="curve"
-              />
-            ))}
-        </div>
-      </LineContainer>
-      {isElementDetailsOpen ? (
-        <ElementDetails
-          pipelineId={pipelineId}
-          className="Pipeline-editor__details"
-          onClose={() => setElementDetailsOpen(false)}
-        />
-      ) : (
-        undefined
-      )}
+        {isElementDetailsOpen ? (
+          <ElementDetails
+            pipelineId={pipelineId}
+            className="Pipeline-editor__details"
+            onClose={() => setElementDetailsOpen(false)}
+          />
+        ) : (
+          <div />
+        )}
+      </PanelGroup>
     </div>
-  </div>
-);
+  );
+};
 
 PipelineEditor.propTypes = {
   pipelineId: PropTypes.string.isRequired,

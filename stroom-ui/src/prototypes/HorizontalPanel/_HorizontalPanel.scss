@@ -16,7 +16,6 @@
 
 $header-height: 46px;
 .horizontal-panel__container {
-  overflow: hidden;
   height: 100%;
   width: 100%;
 }
@@ -41,6 +40,11 @@ $header-height: 46px;
   width: 100%;
   padding-left: 10px;
   padding-right: 10px;
+  overflow-y: auto;
+}
+
+.horizontal-panel__content__container {
+  height: 100%;
 }
 
 .horizontal-panel_close-button {
