@@ -1,21 +1,18 @@
 import { createActions, combineActions, handleActions } from 'redux-actions';
 
 const actionCreators = createActions({
-  PREPARE_DOC_REF_MOVES: docRefs => ({ docRefs }),
-  COMPLETE_DOC_REF_MOVES: () => ({ docRefs: [] }),
+  PREPARE_DOC_REF_MOVE: docRefs => ({ docRefs }),
+  COMPLETE_DOC_REF_MOVE: () => ({ docRefs: [] }),
 });
 
-const { prepareDocRefMoves, completeDocRefMoves } = actionCreators;
+const { prepareDocRefMove, completeDocRefMove } = actionCreators;
 
 // Array of doc refs being moved
 const defaultState = { isMoving: false, docRefs: [] };
 
 const reducer = handleActions(
   {
-    [combineActions(prepareDocRefMoves, completeDocRefMoves)]: (
-      state,
-      { payload: { docRefs } },
-    ) => ({
+    [combineActions(prepareDocRefMove, completeDocRefMove)]: (state, { payload: { docRefs } }) => ({
       isMoving: docRefs.length > 0,
       docRefs,
     }),

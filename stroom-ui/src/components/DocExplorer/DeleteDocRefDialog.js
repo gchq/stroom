@@ -25,30 +25,29 @@ import { actionCreators } from './redux';
 import DocPicker from './DocPicker/DocPicker';
 import PermissionInheritancePicker from './PermissionInheritancePicker';
 
-const { completeDocRefMove } = actionCreators;
+const { completeDocRefDelete } = actionCreators;
 
 const enhance = compose(connect(
   (state, props) => ({
-    isMoving: state.docExplorer.moveDocRef.isMoving,
-    docRefs: state.docExplorer.moveDocRef.docRefs,
+    isDeleting: state.docExplorer.deleteDocRef.isDeleting,
+    docRefs: state.docExplorer.deleteDocRef.docRefs,
   }),
-  { completeDocRefMove },
+  { completeDocRefDelete },
 ));
 
-const MoveDocRefDialog = ({ explorerId, isMoving, docRefs, completeDocRefMove }) => (
-  <Modal open={isMoving}>
-    <Modal.Header>Select a Destination Folder for the Move</Modal.Header>
-    <Modal.Content scrolling>
-      <DocPicker explorerId={`move-doc-ref-${explorerId}`} typeFilter="Folder" foldersOnly />
-      <PermissionInheritancePicker pickerId="move-doc-ref" />
-    </Modal.Content>
+const DeleteDocRefDialog = ({
+  explorerId, isDeleting, docRefs, completeDocRefDelete,
+}) => (
+  <Modal open={isDeleting}>
+    <Modal.Header>Are you sure about deleting these Doc Refs?</Modal.Header>
+    <Modal.Content scrolling />
     <Modal.Actions>
-      <Button negative onClick={completeDocRefMove}>
+      <Button negative onClick={completeDocRefDelete}>
         Cancel
       </Button>
       <Button
         positive
-        onClick={() => console.log('Please implement me move dialog')}
+        onClick={() => console.log('Please implement me delete dialog')}
         labelPosition="right"
         icon="checkmark"
         content="Choose"
@@ -57,8 +56,8 @@ const MoveDocRefDialog = ({ explorerId, isMoving, docRefs, completeDocRefMove })
   </Modal>
 );
 
-MoveDocRefDialog.propTypes = {
-  explorerId: PropTypes.string.isRequired
-}
+DeleteDocRefDialog.propTypes = {
+  explorerId: PropTypes.string.isRequired,
+};
 
-export default enhance(MoveDocRefDialog);
+export default enhance(DeleteDocRefDialog);

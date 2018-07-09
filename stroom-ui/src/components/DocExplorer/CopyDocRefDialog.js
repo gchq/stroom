@@ -25,30 +25,30 @@ import { actionCreators } from './redux';
 import DocPicker from './DocPicker/DocPicker';
 import PermissionInheritancePicker from './PermissionInheritancePicker';
 
-const { completeDocRefMove } = actionCreators;
+const { completeDocRefCopy } = actionCreators;
 
 const enhance = compose(connect(
   (state, props) => ({
-    isMoving: state.docExplorer.moveDocRef.isMoving,
-    docRefs: state.docExplorer.moveDocRef.docRefs,
+    isCopying: state.docExplorer.copyDocRef.isCopying,
+    docRefs: state.docExplorer.copyDocRef.docRefs,
   }),
-  { completeDocRefMove },
+  { completeDocRefCopy },
 ));
 
-const MoveDocRefDialog = ({ explorerId, isMoving, docRefs, completeDocRefMove }) => (
-  <Modal open={isMoving}>
-    <Modal.Header>Select a Destination Folder for the Move</Modal.Header>
+const CopyDocRefDialog = ({ explorerId, isCopying, docRefs, completeDocRefCopy }) => (
+  <Modal open={isCopying}>
+    <Modal.Header>Select a Destination Folder for the Copy</Modal.Header>
     <Modal.Content scrolling>
-      <DocPicker explorerId={`move-doc-ref-${explorerId}`} typeFilter="Folder" foldersOnly />
-      <PermissionInheritancePicker pickerId="move-doc-ref" />
+      <DocPicker explorerId={`copy-doc-ref-${explorerId}`} typeFilter="Folder" foldersOnly />
+      <PermissionInheritancePicker pickerId="copy-doc-ref" />
     </Modal.Content>
     <Modal.Actions>
-      <Button negative onClick={completeDocRefMove}>
+      <Button negative onClick={completeDocRefCopy}>
         Cancel
       </Button>
       <Button
         positive
-        onClick={() => console.log('Please implement me move dialog')}
+        onClick={() => console.log('Please implement me copy dialog')}
         labelPosition="right"
         icon="checkmark"
         content="Choose"
@@ -57,8 +57,8 @@ const MoveDocRefDialog = ({ explorerId, isMoving, docRefs, completeDocRefMove })
   </Modal>
 );
 
-MoveDocRefDialog.propTypes = {
+CopyDocRefDialog.propTypes = {
   explorerId: PropTypes.string.isRequired
 }
 
-export default enhance(MoveDocRefDialog);
+export default enhance(CopyDocRefDialog);

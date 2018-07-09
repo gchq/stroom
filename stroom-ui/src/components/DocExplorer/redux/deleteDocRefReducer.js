@@ -1,8 +1,8 @@
 import { createActions, combineActions, handleActions } from 'redux-actions';
 
 const actionCreators = createActions({
-  PREPARE_DOC_REF_DELETE: docRef => ({ docRef }),
-  COMPLETE_DOC_REF_DELETE: () => ({ docRef: [] }),
+  PREPARE_DOC_REF_DELETE: docRefs => ({ docRefs }),
+  COMPLETE_DOC_REF_DELETE: () => ({ docRefs: [] }),
 });
 
 const { prepareDocRefDelete, completeDocRefDelete } = actionCreators;

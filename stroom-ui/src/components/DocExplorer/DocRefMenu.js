@@ -16,10 +16,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { withState, compose } from 'recompose';
+import { compose } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Dropdown, Icon, Confirm } from 'semantic-ui-react';
+import { Dropdown, Icon } from 'semantic-ui-react';
 
 import { actionCreators as docExplorerActionCreators } from './redux';
 import { actionCreators as contentTabActionCreators } from 'sections/AppChrome/redux';
@@ -27,50 +27,41 @@ import { TabTypes } from 'sections/AppChrome/TabTypes';
 
 import { fetchDocInfo } from './explorerClient';
 
-const { docRefDeleted, prepareDocRefMoves, prepareDocRefRename } = docExplorerActionCreators;
+const {
+  prepareDocRefDelete,
+  prepareDocRefCopy,
+  prepareDocRefMove,
+  prepareDocRefRename,
+} = docExplorerActionCreators;
 const { tabOpened } = contentTabActionCreators;
 
-const withPendingDeletion = withState('pendingDeletion', 'setPendingDeletion', false);
-
-const enhance = compose(
-  connect(
-    state => ({
-      // state
-    }),
-    {
-      tabOpened,
-      docRefDeleted,
-      prepareDocRefMoves,
-      prepareDocRefRename,
-      fetchDocInfo,
-    },
-  ),
-  withPendingDeletion,
-);
+const enhance = compose(connect(
+  state => ({
+    // state
+  }),
+  {
+    tabOpened,
+    prepareDocRefMove,
+    prepareDocRefCopy,
+    prepareDocRefDelete,
+    prepareDocRefRename,
+    fetchDocInfo,
+  },
+));
 
 const DocRefMenu = ({
   explorerId,
   docRef,
   isOpen,
   tabOpened,
-  prepareDocRefMoves,
+  prepareDocRefMove,
   prepareDocRefRename,
+  prepareDocRefDelete,
+  prepareDocRefCopy,
   fetchDocInfo,
-  docRefDeleted,
   closeContextMenu,
-  pendingDeletion,
-  setPendingDeletion,
 }) => (
   <span>
-    <Confirm
-      open={!!pendingDeletion}
-      content="This will delete the doc ref, are you sure?"
-      onCancel={() => setPendingDeletion(false)}
-      onConfirm={() => {
-        docRefDeleted(explorerId, docRef);
-        setPendingDeletion(false);
-      }}
-    />
     <Dropdown inline icon={null} open={isOpen} onClose={() => closeContextMenu()}>
       <Dropdown.Menu>
         <Dropdown.Item
@@ -88,6 +79,14 @@ const DocRefMenu = ({
         </Dropdown.Item>
         <Dropdown.Item
           onClick={() => {
+            prepareDocRefCopy([docRef]);
+          }}
+        >
+          <Icon name="copy" />
+          Copy
+        </Dropdown.Item>
+        <Dropdown.Item
+          onClick={() => {
             prepareDocRefRename(docRef);
           }}
         >
@@ -96,13 +95,13 @@ const DocRefMenu = ({
         </Dropdown.Item>
         <Dropdown.Item
           onClick={() => {
-            prepareDocRefMoves([docRef]);
+            prepareDocRefMove([docRef]);
           }}
         >
-          <Icon name="paw" />
+          <Icon name="move" />
           Move
         </Dropdown.Item>
-        <Dropdown.Item onClick={() => setPendingDeletion(true)}>
+        <Dropdown.Item onClick={() => prepareDocRefDelete([docRef])}>
           <Icon name="trash" />
           Delete
         </Dropdown.Item>

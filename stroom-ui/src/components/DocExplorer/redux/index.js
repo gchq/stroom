@@ -23,7 +23,7 @@ import {
 import {
   actionCreators as deleteDocRefActionCreators,
   reducer as deleteDocRefReducer,
-} from './renameDocRefReducer';
+} from './deleteDocRefReducer';
 import {
   actionCreators as copyDocRefActionCreators,
   reducer as copyDocRefReducer,
@@ -41,16 +41,13 @@ const actionCreators = {
 
 const reducer = combineReducers({
   moveDocRef: moveDocRefReducer,
-  explorerTree : explorerTreeReducer,
+  explorerTree: explorerTreeReducer,
   permissionInheritancePicker: permissionInheritancePickerReducer,
   docRefPicker: docRefPickerReducer,
   moveDocRef: moveDocRefReducer,
   renameDocRef: renameDocRefReducer,
   deleteDocRef: deleteDocRefReducer,
-  copyDocRef: copyDocRefReducer
-})
+  copyDocRef: copyDocRefReducer,
+});
 
-export {
-  actionCreators,
-  reducer
-};
+export { actionCreators, reducer };

@@ -24,6 +24,8 @@ import { Input, Loader } from 'semantic-ui-react';
 import Folder from './Folder';
 import MoveDocRefDialog from './MoveDocRefDialog';
 import RenameDocRefDialog from './RenameDocRefDialog';
+import CopyDocRefDialog from './CopyDocRefDialog';
+import DeleteDocRefDialog from './DeleteDocRefDialog';
 import DocRefInfoModal from './DocRefInfoModal';
 import { actionCreators } from './redux/explorerTreeReducer';
 import withExplorerTree from './withExplorerTree';
@@ -73,6 +75,8 @@ const DocExplorer = ({
     <DocRefInfoModal />
     <MoveDocRefDialog explorerId={explorerId} />
     <RenameDocRefDialog explorerId={explorerId} />
+    <DeleteDocRefDialog explorerId={explorerId} />
+    <CopyDocRefDialog explorerId={explorerId} />
     <Input
       icon="search"
       placeholder="Search..."
