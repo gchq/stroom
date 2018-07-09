@@ -22,7 +22,7 @@ import { connect } from 'react-redux';
 import { Modal } from 'semantic-ui-react';
 
 import { actionCreators } from './redux';
-import DocPicker from './DocPicker';
+import DocPicker from './DocPicker/DocPicker';
 import PermissionInheritancePicker from './PermissionInheritancePicker';
 
 const { completeDocRefMoves } = actionCreators;
@@ -34,7 +34,7 @@ const enhance = compose(connect(
   { completeDocRefMoves },
 ));
 
-const MoveDocRef = ({ explorerId, docRefs, completeDocRefMoves }) => (
+const MoveDocRefDialog = ({ explorerId, docRefs, completeDocRefMoves }) => (
   <Modal open={docRefs.length > 0}>
     <Modal.Header>Select a Doc Ref</Modal.Header>
     <Modal.Content scrolling>
@@ -44,8 +44,8 @@ const MoveDocRef = ({ explorerId, docRefs, completeDocRefMoves }) => (
   </Modal>
 );
 
-MoveDocRef.propTypes = {
+MoveDocRefDialog.propTypes = {
   explorerId: PropTypes.string.isRequired,
 };
 
-export default enhance(MoveDocRef);
+export default enhance(MoveDocRefDialog);

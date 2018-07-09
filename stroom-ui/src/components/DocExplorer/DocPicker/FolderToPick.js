@@ -23,7 +23,7 @@ import { Icon } from 'semantic-ui-react';
 
 import DocRefToPick from './DocRefToPick';
 
-import { actionCreators } from './redux/docExplorerReducer';
+import { actionCreators } from '../redux/docExplorerReducer';
 
 const { folderOpenToggled, docRefSelected } = actionCreators;
 

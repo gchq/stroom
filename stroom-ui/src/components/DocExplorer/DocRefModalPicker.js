@@ -26,7 +26,7 @@ import { actionCreators } from './redux';
 
 import withExplorerTree from './withExplorerTree';
 import withDocRefTypes from './withDocRefTypes';
-import DocPicker from './DocPicker';
+import DocPicker from './DocPicker/DocPicker';
 
 const { docRefPicked, docExplorerOpened } = actionCreators;
 

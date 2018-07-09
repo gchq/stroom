@@ -22,7 +22,7 @@ import { connect } from 'react-redux';
 import { Input, Loader } from 'semantic-ui-react';
 
 import Folder from './Folder';
-import MoveDocRef from './MoveDocRef';
+import MoveDocRefDialog from './MoveDocRefDialog';
 import { actionCreators } from './redux/docExplorerReducer';
 import withExplorerTree from './withExplorerTree';
 
@@ -68,7 +68,7 @@ const DocExplorer = ({
   documentTree, explorerId, explorer, searchTermUpdated,
 }) => (
   <div>
-    <MoveDocRef explorerId={explorerId} />
+    <MoveDocRefDialog explorerId={explorerId} />
     <Input
       icon="search"
       placeholder="Search..."

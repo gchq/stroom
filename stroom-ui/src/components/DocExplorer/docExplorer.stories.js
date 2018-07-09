@@ -23,9 +23,8 @@ import {
   DocRef,
   Folder,
   DocRefModalPicker,
-  DocRefDropdownPicker,
   PermissionInheritancePicker,
-  PermissionInheritanceValues,
+  permissionInheritanceValues,
   DocPicker,
 } from './index';
 import { actionCreators } from './redux';
@@ -48,14 +47,7 @@ storiesOf('Document Explorer (small testTree)', module)
 
 storiesOf('Document Explorer (from setupSampleData)', module)
   .addDecorator(PollyDecorator({ documentTree: fromSetupSampleData, docRefTypes: testDocRefsTypes }))
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(docRefPicked('dropdown2', pickRandomItem(fromSetupSampleData, (l, n) => n.type === 'XSLT')));
-    store.dispatch(docRefPicked(
-      'modal2',
-      pickRandomItem(fromSetupSampleData, (l, n) => n.type === 'Pipeline'),
-    ));
-    store.dispatch(permissionInheritancePicked('pi2', PermissionInheritanceValues.DESTINATION));
-  }))
+  .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator)
   .add('Explorer Tree (multi-select, dnd)', () => <DocExplorer explorerId="multi-select-dnd" />)
   .add('Explorer Tree (single-select, no-dnd)', () => (
@@ -70,16 +62,17 @@ storiesOf('Document Explorer (from setupSampleData)', module)
   ))
   .add('Explorer Tree (type filter to dictionary)', () => (
     <DocExplorer explorerId="filtered-dict" typeFilter="Dictionary" />
-  ))
-  .add('Doc Ref Picker (dropdown, no choice made)', () => (
-    <DocRefDropdownPicker pickerId="dropdown1" />
-  ))
-  .add('Doc Ref Picker (dropdown, choice made)', () => (
-    <DocRefDropdownPicker pickerId="dropdown2" />
-  ))
-  .add('Doc Ref Picker (dropdown, filter to dictionaries)', () => (
-    <DocRefDropdownPicker pickerId="dropdown3" typeFilter="Dictionary" />
-  ))
+  ));
+
+storiesOf('Doc Ref Modal Picker', module)
+  .addDecorator(PollyDecorator({ documentTree: fromSetupSampleData, docRefTypes: testDocRefsTypes }))
+  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
+    store.dispatch(docRefPicked(
+      'modal2',
+      pickRandomItem(fromSetupSampleData, (l, n) => n.type === 'Pipeline'),
+    ));
+  }))
+  .addDecorator(DragDropDecorator)
   .add('Doc Ref Picker (modal, no choice made)', () => <DocRefModalPicker pickerId="modal1" />)
   .add('Doc Ref Picker (modal, choice made)', () => <DocRefModalPicker pickerId="modal2" />)
   .add('Doc Ref Picker (modal, filter to pipeline)', () => (
@@ -87,9 +80,20 @@ storiesOf('Document Explorer (from setupSampleData)', module)
   ))
   .add('Doc Ref Picker (modal, filter to folders)', () => (
     <DocRefModalPicker pickerId="modal4" typeFilter="Folder" />
-  ))
+  ));
+
+storiesOf('Doc Ref Picker', module)
+  .addDecorator(PollyDecorator({ documentTree: fromSetupSampleData, docRefTypes: testDocRefsTypes }))
+  .addDecorator(ReduxDecorator)
+  .addDecorator(DragDropDecorator)
   .add('Doc Picker', () => <DocPicker explorerId="picker1" />)
-  .add('Doc Picker (folders only)', () => <DocPicker explorerId="picker2" foldersOnly />)
+  .add('Doc Picker (folders only)', () => <DocPicker explorerId="picker2" foldersOnly />);
+
+storiesOf('Permission Inheritance Picker', module)
+  .addDecorator(PollyDecorator({ documentTree: fromSetupSampleData, docRefTypes: testDocRefsTypes }))
+  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
+    store.dispatch(permissionInheritancePicked('pi2', permissionInheritanceValues.DESTINATION));
+  }))
   .add('Permission Inheritance Picker', () => <PermissionInheritancePicker pickerId="pi1" />)
   .add('Permission Inheritance Picker (choice made)', () => (
     <PermissionInheritancePicker pickerId="pi2" />

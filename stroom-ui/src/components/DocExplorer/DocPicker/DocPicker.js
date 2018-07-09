@@ -22,9 +22,8 @@ import { connect } from 'react-redux';
 import { Input, Loader } from 'semantic-ui-react';
 
 import FolderToPick from './FolderToPick';
-import MoveDocRef from './MoveDocRef';
-import { actionCreators } from './redux/docExplorerReducer';
-import withExplorerTree from './withExplorerTree';
+import { actionCreators } from '../redux/docExplorerReducer';
+import withExplorerTree from '../withExplorerTree';
 
 const { searchTermUpdated, docExplorerOpened } = actionCreators;
 

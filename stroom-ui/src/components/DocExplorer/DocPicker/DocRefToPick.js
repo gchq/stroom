@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
 
-import { actionCreators as docExplorerActionCreators } from './redux/docExplorerReducer';
+import { actionCreators as docExplorerActionCreators } from '../redux/docExplorerReducer';
 
 const { docRefSelected } = docExplorerActionCreators;
 
@@ -48,7 +48,7 @@ const DocRefToPick = ({
   return (
     <div className={className} onClick={onSingleClick}>
       <span>
-        <img className="doc-ref__icon" alt="X" src={require(`./images/${docRef.type}.svg`)} />
+        <img className="doc-ref__icon" alt="X" src={require(`../images/${docRef.type}.svg`)} />
         {docRef.name}
       </span>
     </div>
