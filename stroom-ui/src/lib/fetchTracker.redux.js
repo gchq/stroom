@@ -163,6 +163,10 @@ export const wrappedPost = (dispatch, state, url, successCallback, options) => {
   wrappedFetchWithBody(dispatch, state, url, successCallback, { method: 'post', ...options });
 };
 
+export const wrappedPut = (dispatch, state, url, successCallback, options) => {
+  wrappedFetchWithBody(dispatch, state, url, successCallback, { method: 'put', ...options });
+};
+
 export const wrappedPatch = (dispatch, state, url, successCallback, options) => {
   wrappedFetchWithBody(dispatch, state, url, successCallback, { method: 'patch', ...options });
 };

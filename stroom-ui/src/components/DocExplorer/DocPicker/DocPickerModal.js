@@ -22,13 +22,13 @@ import { connect } from 'react-redux';
 import { Button, Modal, Input, Loader } from 'semantic-ui-react';
 
 import { findItem } from 'lib/treeUtils';
-import { actionCreators } from './redux/explorerTreeReducer';
+import { actionCreators } from './redux';
 
 import withExplorerTree from './withExplorerTree';
 import withDocRefTypes from './withDocRefTypes';
-import DocExplorer from './DocExplorer';
+import DocPicker from './DocPicker/DocPicker';
 
-const { docRefPicked, explorerTreeOpened } = actionCreators;
+const { docRefPicked, docExplorerOpened } = actionCreators;
 
 const withModal = withState('isOpen', 'setIsOpen', false);
 
@@ -37,20 +37,20 @@ const enhance = compose(
   withDocRefTypes,
   connect(
     (state, props) => ({
-      documentTree: state.explorerTree.documentTree,
+      documentTree: state.docExplorer.explorerTree.documentTree,
       docRef: state.docRefPicker[props.pickerId],
-      explorer: state.explorerTree.explorers[props.pickerId],
+      explorer: state.docExplorer.explorerTree.explorers[props.pickerId],
     }),
     {
       // actions
       docRefPicked,
-      explorerTreeOpened,
+      docExplorerOpened,
     },
   ),
   lifecycle({
     componentDidMount() {
-      const { explorerTreeOpened, pickerId, typeFilter } = this.props;
-      explorerTreeOpened(pickerId, false, false, typeFilter);
+      const { docExplorerOpened, pickerId, typeFilter } = this.props;
+      docExplorerOpened(pickerId, false, false, typeFilter);
     },
   }),
   withModal,
@@ -60,13 +60,12 @@ const enhance = compose(
   ),
 );
 
-const DocRefModalPicker = ({
+const DocPickerModal = ({
   isSelected,
   documentTree,
   docRefPicked,
   docRef,
   isOpen,
-  tree,
   pickerId,
   typeFilter,
   setIsOpen,
@@ -97,13 +96,7 @@ const DocRefModalPicker = ({
     >
       <Modal.Header>Select a Doc Ref</Modal.Header>
       <Modal.Content scrolling>
-        <DocExplorer
-          tree={tree}
-          explorerId={pickerId}
-          allowMultiSelect={false}
-          allowDragAndDrop={false}
-          typeFilter={typeFilter}
-        />
+        <DocPicker explorerId={pickerId} typeFilter={typeFilter} />
       </Modal.Content>
       <Modal.Actions>
         <Button negative onClick={handleClose}>
@@ -121,9 +114,9 @@ const DocRefModalPicker = ({
   );
 };
 
-DocRefModalPicker.propTypes = {
+DocPickerModal.propTypes = {
   pickerId: PropTypes.string.isRequired,
   typeFilter: PropTypes.string,
 };
 
-export default enhance(DocRefModalPicker);
+export default enhance(DocPickerModal);

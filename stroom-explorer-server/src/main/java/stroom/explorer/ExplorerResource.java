@@ -3,7 +3,9 @@ package stroom.explorer;
 import io.swagger.annotations.Api;
 import stroom.docref.DocRef;
 import stroom.entity.shared.PermissionInheritance;
+import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.HasNodeState;
@@ -60,6 +62,19 @@ public class ExplorerResource {
         return Response.ok(result).build();
     }
 
+    @GET
+    @Path("/info/{type}/{uuid}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getDocInfo(@PathParam("type") final String type,
+                               @PathParam("uuid") final String uuid) {
+        final DocRefInfo info = explorerService.info(new DocRef.Builder()
+                .type(type)
+                .uuid(uuid)
+                .build());
+
+        return Response.ok(info).build();
+    }
+
     /**
      * @return The DocRef types currently used in this tree.
      */
@@ -80,6 +95,15 @@ public class ExplorerResource {
         return Response.ok(docRefTypes).build();
     }
 
+    @POST
+    @Path("/copy")
+    public Response copyDocument(@FormParam("docRefs") final List<DocRef> docRefs,
+                                 @FormParam("destinationFolderRef") final DocRef destinationFolderRef,
+                                 @FormParam("permissionInheritance") final PermissionInheritance permissionInheritance) {
+        explorerService.copy(docRefs, destinationFolderRef, permissionInheritance);
+
+        return Response.ok().build();
+    }
 
     /**
      * Move a set of doc refs to another folder.
@@ -89,11 +113,28 @@ public class ExplorerResource {
      * @return HTTP 204 if it works.
      */
     @PUT
-    @Path("/move/{uuid}")
+    @Path("/move")
     public Response moveDocument(@FormParam("docRefs") final List<DocRef> docRefs,
-                                 @FormParam("destinationFolderRef")  final DocRef destinationFolderRef,
-                                 @FormParam("permissionInheritance")  final PermissionInheritance permissionInheritance) {
+                                 @FormParam("destinationFolderRef") final DocRef destinationFolderRef,
+                                 @FormParam("permissionInheritance") final PermissionInheritance permissionInheritance) {
         explorerService.move(docRefs, destinationFolderRef, permissionInheritance);
+
+        return Response.ok().build();
+    }
+
+    @PUT
+    @Path("/rename")
+    public Response renameDocument(@FormParam("docRef") final DocRef docRef,
+                                   @FormParam("name") final String name) {
+        explorerService.rename(docRef, name);
+
+        return Response.ok().build();
+    }
+
+    @DELETE
+    @Path("/delete")
+    public Response deleteDocument(@FormParam("docRefs") final List<DocRef> docRefs) {
+        explorerService.delete(docRefs);
 
         return Response.ok().build();
     }

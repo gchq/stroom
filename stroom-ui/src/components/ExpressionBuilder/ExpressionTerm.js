@@ -25,8 +25,8 @@ import { DragSource } from 'react-dnd';
 
 import ItemTypes from './dragDropTypes';
 import { displayValues } from './conditions';
-import { DocRefModalPicker } from '../DocExplorer';
-import { actionCreators as docExplorerActionCreators } from '../DocExplorer/redux/explorerTreeReducer';
+import { DocPickerModal } from '../DocExplorer';
+import { actionCreators as docExplorerActionCreators } from '../DocExplorer/redux';
 import { actionCreators, joinDictionaryTermId } from './redux';
 
 const { docRefPicked } = docExplorerActionCreators;
@@ -104,7 +104,7 @@ const withPickedDocRef = () => (WrappedComponent) => {
   return connect(
     state => ({
       // terms are nested, so take all their props from parent
-      pickedDocRefs: state.docRefPicker,
+      pickedDocRefs: state.docExplorer.docRefPicker,
     }),
     {
       docRefPicked,
@@ -306,7 +306,7 @@ const ExpressionTerm = ({
       break;
     }
     case 'IN_DICTIONARY': {
-      valueWidget = <DocRefModalPicker pickerId={pickerId} typeFilter="Dictionary" />;
+      valueWidget = <DocPickerModal pickerId={pickerId} typeFilter="Dictionary" />;
       break;
     }
     default:

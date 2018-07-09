@@ -1,5 +1,7 @@
+import { combineReducers } from 'redux';
+
 import {
-  actionCreators as explorerTreeActionCreators,
+  actionCreators as docExplorerActionCreators,
   reducer as explorerTreeReducer,
 } from './explorerTreeReducer';
 import {
@@ -10,16 +12,42 @@ import {
   actionCreators as docRefPickerActionCreators,
   reducer as docRefPickerReducer,
 } from './docRefPickerReducer';
+import {
+  actionCreators as moveDocRefActionCreators,
+  reducer as moveDocRefReducer,
+} from './moveDocRefReducer';
+import {
+  actionCreators as renameDocRefActionCreators,
+  reducer as renameDocRefReducer,
+} from './renameDocRefReducer';
+import {
+  actionCreators as deleteDocRefActionCreators,
+  reducer as deleteDocRefReducer,
+} from './deleteDocRefReducer';
+import {
+  actionCreators as copyDocRefActionCreators,
+  reducer as copyDocRefReducer,
+} from './copyDocRefReducer';
 
 const actionCreators = {
-  ...explorerTreeActionCreators,
+  ...docExplorerActionCreators,
   ...permissionInheritancePickerActionCreators,
   ...docRefPickerActionCreators,
+  ...moveDocRefActionCreators,
+  ...renameDocRefActionCreators,
+  ...deleteDocRefActionCreators,
+  ...copyDocRefActionCreators,
 };
 
-export {
-  actionCreators,
-  explorerTreeReducer,
-  permissionInheritancePickerReducer,
-  docRefPickerReducer,
-};
+const reducer = combineReducers({
+  moveDocRef: moveDocRefReducer,
+  explorerTree: explorerTreeReducer,
+  permissionInheritancePicker: permissionInheritancePickerReducer,
+  docRefPicker: docRefPickerReducer,
+  moveDocRef: moveDocRefReducer,
+  renameDocRef: renameDocRefReducer,
+  deleteDocRef: deleteDocRefReducer,
+  copyDocRef: copyDocRefReducer,
+});
+
+export { actionCreators, reducer };

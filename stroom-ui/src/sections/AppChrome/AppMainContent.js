@@ -17,7 +17,7 @@ import React from 'react';
 
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
-import { Menu, Header, Icon, Divider, Grid, Button, Popup } from 'semantic-ui-react';
+import { Header, Icon, Divider, Grid, Button, Popup } from 'semantic-ui-react';
 
 import DocExplorer from 'components/DocExplorer';
 import TrackerDashboard from 'sections/TrackerDashboard';
@@ -62,28 +62,6 @@ const AppMainContent = ({
   if (tabSelectionStack.length > 0) {
     selectedTab = tabSelectionStack[0];
   }
-
-  const menuItems = openTabs.map((openTab, index, arr) => {
-    const title = TabTypeDisplayInfo[openTab.type].getTitle(openTab.data);
-
-    const closeTab = (e) => {
-      tabClosed(openTab.tabId);
-      e.preventDefault();
-    };
-
-    return (
-      <Menu.Item
-        key={openTab.tabId}
-        onClick={() => tabSelected(openTab.tabId)}
-        active={openTab.tabId === selectedTab.tabId}
-      >
-        {title}
-        <button className="content-tabs__close-btn" onClick={closeTab}>
-          x
-        </button>
-      </Menu.Item>
-    );
-  });
 
   const tabContents = openTabs.map((openTab) => {
     let tabContent;
@@ -140,7 +118,6 @@ const AppMainContent = ({
 
   return (
     <div className="content-tabs">
-      {/* <Menu tabular>{menuItems}</Menu> */}
       <div className="content-tabs__content">{tabContents}</div>
     </div>
   );

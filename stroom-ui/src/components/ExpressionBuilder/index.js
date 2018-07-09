@@ -13,17 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { combineReducers } from 'redux';
 import ExpressionBuilder from './ExpressionBuilder';
+
 import { reducer as expressionReducer, actionCreators as expressionActionCreators } from './redux';
 import {
   reducer as dataSourceReducer,
   actionCreators as dataSourceActionCreators,
 } from './DataSource';
 
-export {
-  ExpressionBuilder,
-  expressionReducer,
-  dataSourceReducer,
-  dataSourceActionCreators,
-  expressionActionCreators,
+const actionCreators = {
+  ...dataSourceActionCreators,
+  ...expressionActionCreators,
 };
+
+const reducer = combineReducers({
+  expressions: expressionReducer,
+  dataSources: dataSourceReducer,
+});
+
+export { ExpressionBuilder, reducer, actionCreators };

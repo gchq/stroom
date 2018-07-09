@@ -95,15 +95,16 @@ const Routes = ({
         {/* Direct paths -- these paths make sections accessible outside the AppChrome
         i.e. for when we want to embed them in Stroom. */}
         <PrivateRoute exact path="/trackers" referrer="/trackers" component={TrackerDashboard} />
+        {/* TODO: What path do we want for docExplorer? */}
         <PrivateRoute exact path="/explorerTree" referrer="/explorerTree" component={DocExplorer} />
+        <PrivateRoute exact path="/docExplorer" referrer="/docExplorer" component={DocExplorer} />
 
         {/* TODO: There are no AppChrome routes for the following because the do not have
         TabTypes. Content must to be anchored to something on the sidebar. Otherwise it's
         disconnected from the obvious flow of the app and the mental model of the flow
         the user used to get to the data is broken. Bad. So we could either add an XSLT
         and pipeline sections or we could map them to something deeper, e.g.
-        /pipelines/<pipelienId>/xslt/<xsltId>
-
+           /pipelines/<pipelienId>/xslt/<xsltId>
         Obviously this needs more thinking about. */}
         <PrivateRoute exact path="/xslt/:xsltId" referrer="/xslt" component={XsltEditor} />
         <PrivateRoute

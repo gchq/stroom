@@ -128,8 +128,8 @@ const dropCollect = (connect, monitor) => ({
 const enhance = compose(
   connect(
     (state, props) => {
-      const pipeline = state.pipelines[props.pipelineId];
-      const elements = state.elements;
+      const pipeline = state.pipelineEditor.pipelines[props.pipelineId];
+      const elements = state.pipelineEditor.elements;
 
       let selectedElementId;
       let element;

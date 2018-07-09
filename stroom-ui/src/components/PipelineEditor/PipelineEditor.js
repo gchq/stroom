@@ -33,7 +33,7 @@ import SavePipeline from './SavePipeline';
 
 import lineElementCreators from './pipelineLineElementCreators';
 import { ElementDetails } from './ElementDetails';
-import { DocRefModalPicker } from '../DocExplorer';
+import { DocPickerModal } from '../DocExplorer';
 
 import { fetchPipeline } from './pipelineResourceClient';
 import { fetchElements, fetchElementProperties } from './elementResourceClient';
@@ -54,8 +54,8 @@ const enhance = compose(
   withConfig,
   connect(
     (state, props) => ({
-      pipeline: state.pipelines[props.pipelineId],
-      elements: state.elements,
+      pipeline: state.pipelineEditor.pipelines[props.pipelineId],
+      elements: state.pipelineEditor.elements,
     }),
     {
       // action, needed by lifecycle hook below
@@ -132,7 +132,7 @@ const PipelineEditor = ({
         <Form>
           <Form.Field>
             <label>Parent Pipeline</label>
-            <DocRefModalPicker pickerId={pipelineId} typeFilter="Pipeline" />
+            <DocPickerModal pickerId={pipelineId} typeFilter="Pipeline" />
           </Form.Field>
         </Form>
       </div>

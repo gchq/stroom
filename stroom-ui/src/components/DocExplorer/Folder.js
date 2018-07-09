@@ -31,7 +31,7 @@ import FolderMenu from './FolderMenu';
 
 import { actionCreators } from './redux/explorerTreeReducer';
 
-const { moveExplorerItem, folderOpenToggled } = actionCreators;
+const { moveExplorerItem, folderOpenToggled, docRefSelected } = actionCreators;
 
 const withContextMenu = withState('isContextMenuOpen', 'setContextMenuOpen', false);
 
@@ -74,11 +74,12 @@ const enhance = compose(
   connect(
     (state, props) => ({
       // state
-      explorer: state.explorerTree.explorers[props.explorerId],
+      explorer: state.docExplorer.explorerTree.explorers[props.explorerId],
     }),
     {
       moveExplorerItem,
       folderOpenToggled,
+      docRefSelected,
     },
   ),
   withContextMenu,
@@ -96,12 +97,14 @@ const _Folder = ({
   explorer,
   folder,
   folderOpenToggled,
+  docRefSelected,
   moveExplorerItem,
   isContextMenuOpen,
   setContextMenuOpen,
 }) => {
   const thisIsOpen = !!explorer.isFolderOpen[folder.uuid];
   const icon = thisIsOpen ? 'caret down' : 'caret right';
+  const isSelected = explorer.isSelected[folder.uuid];
 
   let className = '';
   if (isOver) {
@@ -120,6 +123,9 @@ const _Folder = ({
   if (isContextMenuOpen) {
     className += ' doc-ref__context-menu-open';
   }
+  if (isSelected) {
+    className += ' doc-ref__selected';
+  }
 
   const onRightClick = (e) => {
     setContextMenuOpen(true);
@@ -131,7 +137,6 @@ const _Folder = ({
       {connectDragSource(connectDropTarget(<span
         className={className}
         onContextMenu={onRightClick}
-        onClick={() => folderOpenToggled(explorerId, folder)}
       >
         <FolderMenu
           explorerId={explorerId}
@@ -140,8 +145,8 @@ const _Folder = ({
           closeContextMenu={() => setContextMenuOpen(false)}
         />
         <span>
-          <Icon name={icon} />
-          {folder.name}
+          <Icon name={icon} onClick={() => folderOpenToggled(explorerId, folder)} />
+          <span onClick={() => docRefSelected(explorerId, folder)}>{folder.name}</span>
         </span>
                                            </span>))}
       {thisIsOpen && (
@@ -167,4 +172,4 @@ Folder.propTypes = {
   folder: PropTypes.object.isRequired,
 };
 
-export default Folder
+export default Folder;

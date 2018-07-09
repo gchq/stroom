@@ -57,7 +57,9 @@ export const DEFAULT_EXPLORER_ID = 'default';
 export const actionCreators = createActions({
   DOC_TREE_RECEIVED: documentTree => ({ documentTree }),
   DOC_REF_TYPES_RECEIVED: docRefTypes => ({ docRefTypes }),
-  EXPLORER_TREE_OPENED: (explorerId, allowMultiSelect, allowDragAndDrop, typeFilter) => ({
+  DOC_REF_INFO_RECEIVED: (docRefInfo) => ({docRefInfo}),
+  DOC_REF_INFO_CLOSED: () => ({}),
+  DOC_EXPLORER_OPENED: (explorerId, allowMultiSelect, allowDragAndDrop, typeFilter) => ({
     explorerId,
     allowMultiSelect,
     allowDragAndDrop,
@@ -105,6 +107,7 @@ const defaultState = {
   allowDragAndDrop: true,
   isTreeReady: false,
   isDocRefTypeListReady: false,
+  docRefInfo: undefined
 };
 
 function getIsValidFilterTerm(filterTerm) {
@@ -198,8 +201,6 @@ function getUpdatedExplorer(documentTree, explorer, searchExecutor, searchTerm, 
 }
 
 function getStateAfterTreeUpdate(state, documentTree) {
-  console.log('Tree received', documentTree);
-
   // Create the search index
   const rawSearchData = [];
   iterateNodes(documentTree, (lineage, node) => {
@@ -254,8 +255,18 @@ export const reducer = handleActions(
       };
     },
 
+    DOC_REF_INFO_RECEIVED: (state, action) => ({
+      ...state,
+      docRefInfo: action.payload.docRefInfo
+    }),
+
+    DOC_REF_INFO_CLOSED: (state, action) => ({
+      ...state,
+      docRefInfo: undefined
+    }),
+
     // When an explorer is opened
-    EXPLORER_TREE_OPENED: (state, action) => {
+    DOC_EXPLORER_OPENED: (state, action) => {
       const {
         explorerId, allowMultiSelect, allowDragAndDrop, typeFilter,
       } = action.payload;

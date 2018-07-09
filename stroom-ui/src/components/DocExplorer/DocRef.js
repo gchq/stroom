@@ -55,7 +55,7 @@ const enhance = compose(
   connect(
     (state, props) => ({
       // state
-      explorer: state.explorerTree.explorers[props.explorerId],
+      explorer: state.docExplorer.explorerTree.explorers[props.explorerId],
     }),
     {
       docRefSelected,

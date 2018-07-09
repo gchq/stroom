@@ -6,9 +6,12 @@ import { connect } from 'react-redux';
 
 import { Select } from 'semantic-ui-react';
 
-import PermissionInheritance from './PermissionInheritance';
+import { actionCreators } from './redux';
+import permissionInheritanceValues from './permissionInheritanceValues';
 
-const piOptions = Object.values(PermissionInheritance).map(pi => ({
+const { permissionInheritancePicked } = actionCreators;
+
+const piOptions = Object.values(permissionInheritanceValues).map(pi => ({
   key: pi,
   value: pi,
   text: pi,
@@ -16,13 +19,26 @@ const piOptions = Object.values(PermissionInheritance).map(pi => ({
 
 const enhance = compose(connect(
   (state, props) => ({
-    pickedPermissionInheritance: state.explorerTree.pickedPermissionInheritance,
+    permissionInheritance: state.docExplorer.permissionInheritancePicker[props.pickerId],
   }),
-  {},
+  { permissionInheritancePicked },
 ));
 
-const PermissionInheritancePicker = ({ pickedPermissionInheritance }) => (
-  <Select placeholder="Permission Inheritance" options={piOptions} />
+const PermissionInheritancePicker = ({
+  pickerId,
+  permissionInheritance,
+  permissionInheritancePicked,
+}) => (
+  <Select
+    placeholder="Permission Inheritance"
+    onChange={(e, { value }) => permissionInheritancePicked(pickerId, value)}
+    options={piOptions}
+    value={permissionInheritance}
+  />
 );
+
+PermissionInheritancePicker.propTypes = {
+  pickerId: PropTypes.string.isRequired,
+};
 
 export default enhance(PermissionInheritancePicker);

@@ -8,7 +8,7 @@ import { savePipeline } from './pipelineResourceClient';
 
 const enhance = connect(
   (state, props) => ({
-    isDirty: state.pipelines[props.pipelineId].isDirty,
+    isDirty: state.pipelineEditor.pipelines[props.pipelineId].isDirty,
   }),
   {
     savePipeline,
