@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#803** : Fix for group key conversion to an appropriate value for visualisations.
+
 ## [v6.0-beta.1]
 
 * Issue **#802** : Restore lucene-backward-codecs to the build
