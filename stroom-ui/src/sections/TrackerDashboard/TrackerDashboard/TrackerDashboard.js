@@ -26,7 +26,7 @@ import { Label, Table, Progress, Button, Input, Menu, Pagination } from 'semanti
 import 'semantic-ui-css/semantic.min.css';
 
 import { actionCreators, Directions, SortByOptions } from '../redux';
-import { expressionActionCreators } from 'components/ExpressionBuilder';
+import { actionCreators as expressionActionCreators } from 'components/ExpressionBuilder';
 import { fetchTrackers, TrackerSelection } from '../streamTasksResourceClient';
 import TrackerDetails from '../TrackerDetails/TrackerDetails';
 import { withConfig } from 'startup/config';
