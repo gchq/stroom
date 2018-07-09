@@ -26,7 +26,7 @@ import { fetchDocRefTypes } from './explorerClient';
 export default compose(
   connect(
     (state, props) => ({
-      isDocRefTypeListReady: state.docExplorer.isDocRefTypeListReady,
+      isDocRefTypeListReady: state.docExplorer.explorerTree.isDocRefTypeListReady,
     }),
     {
       fetchDocRefTypes,

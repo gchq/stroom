@@ -54,8 +54,8 @@ const enhance = compose(
   withConfig,
   connect(
     (state, props) => ({
-      pipeline: state.pipelines[props.pipelineId],
-      elements: state.elements,
+      pipeline: state.pipelineEditor.pipelines[props.pipelineId],
+      elements: state.pipelineEditor.elements,
     }),
     {
       // action, needed by lifecycle hook below

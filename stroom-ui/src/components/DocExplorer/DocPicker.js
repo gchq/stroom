@@ -21,11 +21,9 @@ import { connect } from 'react-redux';
 
 import { Input, Loader } from 'semantic-ui-react';
 
-import Folder from './Folder';
+import FolderToPick from './FolderToPick';
 import MoveDocRefDialog from './MoveDocRefDialog';
-import RenameDocRefDialog from './RenameDocRefDialog';
-import DocRefInfoModal from './DocRefInfoModal';
-import { actionCreators } from './redux/explorerTreeReducer';
+import { actionCreators } from './redux/docExplorerReducer';
 import withExplorerTree from './withExplorerTree';
 
 const { searchTermUpdated, docExplorerOpened } = actionCreators;
@@ -49,15 +47,9 @@ const enhance = compose(
   ),
   lifecycle({
     componentDidMount() {
-      const {
-        docExplorerOpened,
-        explorerId,
-        allowMultiSelect,
-        allowDragAndDrop,
-        typeFilter,
-      } = this.props;
+      const { docExplorerOpened, explorerId, typeFilter } = this.props;
 
-      docExplorerOpened(explorerId, allowMultiSelect, allowDragAndDrop, typeFilter);
+      docExplorerOpened(explorerId, false, false, typeFilter);
     },
   }),
   branch(
@@ -66,25 +58,27 @@ const enhance = compose(
   ),
 );
 
-const DocExplorer = ({
-  documentTree, explorerId, explorer, searchTermUpdated,
+const DocPicker = ({
+  documentTree, explorerId, explorer, searchTermUpdated, foldersOnly,
 }) => (
   <div>
-    <DocRefInfoModal />
-    <MoveDocRefDialog explorerId={explorerId} />
-    <RenameDocRefDialog explorerId={explorerId} />
     <Input
       icon="search"
       placeholder="Search..."
       value={explorer.searchTerm}
       onChange={e => searchTermUpdated(explorerId, e.target.value)}
     />
-    <Folder explorerId={explorerId} folder={documentTree} />
+    <FolderToPick explorerId={explorerId} folder={documentTree} foldersOnly={foldersOnly} />
   </div>
 );
 
-DocExplorer.propTypes = {
+DocPicker.propTypes = {
   explorerId: PropTypes.string.isRequired,
+  foldersOnly: PropTypes.bool.isRequired,
 };
 
-export default enhance(DocExplorer);
+DocPicker.defaultProps = {
+  foldersOnly: false,
+};
+
+export default enhance(DocPicker);

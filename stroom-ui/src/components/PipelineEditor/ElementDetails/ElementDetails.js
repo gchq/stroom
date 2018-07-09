@@ -16,7 +16,7 @@ import ElementField from './ElementField';
 const enhance = compose(
   connect(
     (state, props) => {
-      const pipeline = state.pipelines[props.pipelineId];
+      const pipeline = state.pipelineEditor.pipelines[props.pipelineId];
       let initialValues;
       let selectedElementId;
       if (pipeline) {
@@ -27,7 +27,7 @@ const enhance = compose(
 
       return {
         // for our component
-        elements: state.elements,
+        elements: state.pipelineEditor.elements,
         selectedElementId,
         pipeline,
         // for redux-form

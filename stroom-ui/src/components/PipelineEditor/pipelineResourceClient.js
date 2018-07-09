@@ -29,7 +29,7 @@ export const savePipeline = pipelineId => (dispatch, getState) => {
   const state = getState();
   const url = `${state.config.pipelineServiceUrl}/${pipelineId}`;
 
-  const pipelineData = state.pipelines[pipelineId].pipeline;
+  const pipelineData = state.pipelineEditor.pipelines[pipelineId].pipeline;
   const body = JSON.stringify(pipelineData.configStack[pipelineData.configStack.length - 1]);
 
   wrappedPost(

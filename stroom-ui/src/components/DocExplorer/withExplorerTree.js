@@ -27,7 +27,7 @@ import { withConfig } from 'startup/config';
 export default compose(
   connect(
     (state, props) => ({
-      treeIsReady: state.docExplorer.isTreeReady,
+      treeIsReady: state.docExplorer.explorerTree.isTreeReady,
     }),
     {
       fetchDocTree,

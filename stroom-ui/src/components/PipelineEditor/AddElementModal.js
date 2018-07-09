@@ -20,7 +20,7 @@ const enhance = compose(
     (state, props) => ({
       // state
       newElementForm: state.form.newElementName,
-      pipeline: state.pipelines[props.pipelineId],
+      pipeline: state.pipelineEditor.pipelines[props.pipelineId],
       initialValues: props.newElementDefinition
         ? { name: props.newElementDefinition.type }
         : undefined,

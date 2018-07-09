@@ -22,15 +22,17 @@ import { PollyDecorator } from 'lib/storybook/PollyDecorator';
 import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
-import { ExpressionTerm, ExpressionOperator, ExpressionBuilder } from './index';
+import {
+  ExpressionTerm,
+  ExpressionOperator,
+  ExpressionBuilder,
+  actionCreators as expressionBuilderActionCreators,
+} from './index';
 
-import { actionCreators as expressionActionCreators } from './redux';
-import { actionCreators as dataSourceActionCreators } from './DataSource';
 import { actionCreators as docExplorerActionCreators } from 'components/DocExplorer';
 import { testTree, testDocRefsTypes } from 'components/DocExplorer/test';
 
-const { expressionChanged } = expressionActionCreators;
-const { receiveDataSource } = dataSourceActionCreators;
+const { receiveDataSource, expressionChanged } = expressionBuilderActionCreators;
 
 import 'styles/main.css';
 

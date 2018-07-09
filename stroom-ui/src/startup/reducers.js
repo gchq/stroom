@@ -22,20 +22,9 @@ import {
   authorisationReducer as authorisation,
 } from 'startup/Authentication';
 import { reducer as lineContainer } from 'components/LineTo';
-import {
-  docExplorerReducer as docExplorer,
-  permissionInheritancePickerReducer as permissionInheritancePicker,
-  docRefPickerReducer as docRefPicker,
-  moveDocRefReducer as moveDocRef
-} from 'components/DocExplorer/redux';
-import {
-  expressionReducer as expressions,
-  dataSourceReducer as dataSources,
-} from 'components/ExpressionBuilder';
-import {
-  pipelineReducer as pipelines,
-  elementReducer as elements,
-} from 'components/PipelineEditor';
+import { reducer as docExplorer } from 'components/DocExplorer/redux';
+import { reducer as expressionBuilder } from 'components/ExpressionBuilder';
+import { reducer as pipelineEditor } from 'components/PipelineEditor';
 import { reducer as recentItems } from 'prototypes/RecentItems';
 import { reducer as appSearch } from 'prototypes/AppSearch';
 import { reducer as xslt } from 'prototypes/XsltEditor';
@@ -53,14 +42,9 @@ export default combineReducers({
   config,
   trackerDashboard,
   docExplorer,
-  permissionInheritancePicker,
-  docRefPicker,
-  moveDocRef,
-  dataSources,
-  expressions,
-  pipelines,
+  expressionBuilder,
+  pipelineEditor,
   xslt,
-  elements,
   errorPage,
   lineContainer,
   fetch,

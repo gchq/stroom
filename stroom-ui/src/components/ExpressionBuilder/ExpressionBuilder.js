@@ -47,8 +47,8 @@ ROExpressionBuilder.propTypes = {
 const enhance = compose(
   connect(
     (state, props) => ({
-      dataSource: state.dataSources[props.dataSourceUuid],
-      expression: state.expressions[props.expressionId],
+      dataSource: state.expressionBuilder.dataSources[props.dataSourceUuid],
+      expression: state.expressionBuilder.expressions[props.expressionId],
     }),
     {
       // actions

@@ -27,7 +27,7 @@ import { TabTypes } from 'sections/AppChrome/TabTypes';
 
 import { fetchDocInfo } from './explorerClient';
 
-const { docRefDeleted, prepareDocRefMoves } = docExplorerActionCreators;
+const { docRefDeleted, prepareDocRefMoves, prepareDocRefRename } = docExplorerActionCreators;
 const { tabOpened } = contentTabActionCreators;
 
 const withPendingDeletion = withState('pendingDeletion', 'setPendingDeletion', false);
@@ -41,7 +41,8 @@ const enhance = compose(
       tabOpened,
       docRefDeleted,
       prepareDocRefMoves,
-      fetchDocInfo
+      prepareDocRefRename,
+      fetchDocInfo,
     },
   ),
   withPendingDeletion,
@@ -53,6 +54,7 @@ const DocRefMenu = ({
   isOpen,
   tabOpened,
   prepareDocRefMoves,
+  prepareDocRefRename,
   fetchDocInfo,
   docRefDeleted,
   closeContextMenu,
@@ -86,7 +88,15 @@ const DocRefMenu = ({
         </Dropdown.Item>
         <Dropdown.Item
           onClick={() => {
-            prepareDocRefMoves(explorerId, [docRef]);
+            prepareDocRefRename(docRef);
+          }}
+        >
+          <Icon name="pencil" />
+          Rename
+        </Dropdown.Item>
+        <Dropdown.Item
+          onClick={() => {
+            prepareDocRefMoves([docRef]);
           }}
         >
           <Icon name="paw" />

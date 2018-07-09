@@ -1,32 +1,23 @@
 import { createActions, combineActions, handleActions } from 'redux-actions';
 
-import { actionCreators as docExplorerActionCreators } from './docExplorerReducer';
-
-const { docExplorerOpened } = docExplorerActionCreators;
-
 const actionCreators = createActions({
-  PREPARE_DOC_REF_MOVES: (explorerId, docRefs) => ({ explorerId, docRefs }),
-  COMPLETE_DOC_REF_MOVES: explorerId => ({ explorerId, docRefs: [] }),
+  PREPARE_DOC_REF_MOVES: docRefs => ({ docRefs }),
+  COMPLETE_DOC_REF_MOVES: () => ({ docRefs: [] }),
 });
 
 const { prepareDocRefMoves, completeDocRefMoves } = actionCreators;
 
-// The state will contain a map of arrays.
-// Keyed on explorer ID, the arrays will contain the doc refs being moved
-const defaultState = {};
+// Array of doc refs being moved
+const defaultState = { isMoving: false, docRefs: [] };
 
 const reducer = handleActions(
   {
     [combineActions(prepareDocRefMoves, completeDocRefMoves)]: (
       state,
-      { payload: { explorerId, docRefs } },
+      { payload: { docRefs } },
     ) => ({
-      ...state,
-      [explorerId]: docRefs,
-    }),
-    [docExplorerOpened]: (state, action) => ({
-      ...state,
-      [action.payload.explorerId]: [],
+      isMoving: docRefs.length > 0,
+      docRefs,
     }),
   },
   defaultState,

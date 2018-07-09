@@ -11,9 +11,9 @@ const enhance = compose(
   connect(
     (state, props) => ({
       // state
-      elementsByCategory: state.elements.byCategory || {},
-      elementsByType: state.elements.byType || {},
-      pipeline: state.pipelines[props.pipelineId],
+      elementsByCategory: state.pipelineEditor.elements.byCategory || {},
+      elementsByType: state.pipelineEditor.elements.byType || {},
+      pipeline: state.pipelineEditor.pipelines[props.pipelineId],
     }),
     {
       // actions

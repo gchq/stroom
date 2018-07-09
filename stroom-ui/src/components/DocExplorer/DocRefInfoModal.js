@@ -26,7 +26,7 @@ const { docRefInfoClosed } = actionCreators;
 
 const enhance = compose(connect(
   (state, props) => ({
-    docRefInfo: state.docExplorer.docRefInfo,
+    docRefInfo: state.docExplorer.explorerTree.docRefInfo,
   }),
   { docRefInfoClosed },
 ));

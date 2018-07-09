@@ -14,40 +14,47 @@
  * limitations under the License.
  */
 import React from 'react';
+import PropTypes from 'prop-types';
 
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Modal, Button } from 'semantic-ui-react';
+import { Modal, Form, Button } from 'semantic-ui-react';
 
 import { actionCreators } from './redux';
 import DocPicker from './DocPicker/DocPicker';
 import PermissionInheritancePicker from './PermissionInheritancePicker';
 
-const { completeDocRefMoves } = actionCreators;
+const { completeDocRefRename } = actionCreators;
 
 const enhance = compose(connect(
   (state, props) => ({
-    isMoving: state.docExplorer.moveDocRef.isMoving,
-    docRefs: state.docExplorer.moveDocRef.docRefs,
+    isRenaming: state.docExplorer.renameDocRef.isRenaming,
+    docRef: state.docExplorer.renameDocRef.docRef,
   }),
-  { completeDocRefMoves },
+  { completeDocRefRename },
 ));
 
-const MoveDocRefDialog = ({ isMoving, docRefs, completeDocRefMoves }) => (
-  <Modal open={isMoving}>
-    <Modal.Header>Select a Destination Folder</Modal.Header>
+const RenameDocRefDialog = ({ isRenaming, docRef, completeDocRefRename }) => (
+  <Modal open={isRenaming}>
+    <Modal.Header>Enter New Name for Doc Ref</Modal.Header>
     <Modal.Content scrolling>
-      <DocPicker explorerId="move-doc-ref" typeFilter="Folder" foldersOnly />
-      <PermissionInheritancePicker pickerId="move-doc-ref" />
+      <Form>
+        <Form.Input
+          label="Type"
+          type="text"
+          onChange={(e, value) => console.log('yaas', { e, value })}
+          value={docRef ? docRef.name : ''}
+        />
+      </Form>
     </Modal.Content>
     <Modal.Actions>
-      <Button negative onClick={completeDocRefMoves}>
+      <Button negative onClick={completeDocRefRename}>
         Cancel
       </Button>
       <Button
         positive
-        onClick={() => console.log('Please implement me move dialog')}
+        onClick={() => console.log('Implement me please rename dialog')}
         labelPosition="right"
         icon="checkmark"
         content="Choose"
@@ -56,4 +63,4 @@ const MoveDocRefDialog = ({ isMoving, docRefs, completeDocRefMoves }) => (
   </Modal>
 );
 
-export default enhance(MoveDocRefDialog);
+export default enhance(RenameDocRefDialog);

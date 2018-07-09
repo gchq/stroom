@@ -66,9 +66,11 @@ server.get('/config.json').intercept((req, res) => {
 });
 
 // Explorer Resource
+// // Get Explorer Tree
 server.get(`${testConfig.explorerServiceUrl}/all`).intercept((req, res) => {
   res.json(testCache.data.documentTree);
 });
+// // Get Info
 server
   .get(`${testConfig.explorerServiceUrl}/info/:docRefType/:docRefUuid`)
   .intercept((req, res) => {
@@ -83,9 +85,25 @@ server
     };
     res.json(info);
   });
-
+// // Get Document Types
 server.get(`${testConfig.explorerServiceUrl}/docRefTypes`).intercept((req, res) => {
   res.json(testCache.data.docRefTypes);
+});
+// // Copy Document
+server.post(`${testConfig.explorerServiceUrl}/copy`).intercept((req, res) => {
+  res.setStatus(204);
+});
+// // Move Document
+server.put(`${testConfig.explorerServiceUrl}/move`).intercept((req, res) => {
+  res.setStatus(204);
+});
+// // Rename Document
+server.put(`${testConfig.explorerServiceUrl}/rename`).intercept((req, res) => {
+  res.setStatus(204);
+});
+// // Delete Document
+server.delete(`${testConfig.explorerServiceUrl}/delete`).intercept((req, res) => {
+  res.setStatus(204);
 });
 
 // Elements Resource

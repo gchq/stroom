@@ -22,7 +22,7 @@ import { connect } from 'react-redux';
 import { Input, Loader } from 'semantic-ui-react';
 
 import FolderToPick from './FolderToPick';
-import { actionCreators } from '../redux/docExplorerReducer';
+import { actionCreators } from '../redux/explorerTreeReducer';
 import withExplorerTree from '../withExplorerTree';
 
 const { searchTermUpdated, docExplorerOpened } = actionCreators;
@@ -31,8 +31,8 @@ const enhance = compose(
   withExplorerTree,
   connect(
     (state, props) => ({
-      documentTree: state.docExplorer.documentTree,
-      explorer: state.docExplorer.explorers[props.explorerId],
+      documentTree: state.docExplorer.explorerTree.documentTree,
+      explorer: state.docExplorer.explorerTree.explorers[props.explorerId],
     }),
     {
       searchTermUpdated,

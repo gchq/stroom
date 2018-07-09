@@ -15,17 +15,10 @@
  */
 import PipelineEditor from './PipelineEditor';
 
-import { pipelineReducer, elementReducer } from './redux';
+import { reducer } from './redux';
 import { fetchPipeline } from './pipelineResourceClient';
 import { fetchElements, fetchElementProperties } from './elementResourceClient';
 
-export {
-  PipelineEditor,
-  pipelineReducer,
-  elementReducer,
-  fetchPipeline,
-  fetchElements,
-  fetchElementProperties,
-};
+export { PipelineEditor, reducer, fetchPipeline, fetchElements, fetchElementProperties };
 
 export default PipelineEditor;

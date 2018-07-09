@@ -37,9 +37,9 @@ const enhance = compose(
   withDocRefTypes,
   connect(
     (state, props) => ({
-      documentTree: state.docExplorer.documentTree,
-      docRef: state.docRefPicker[props.pickerId],
-      explorer: state.docExplorer.explorers[props.pickerId],
+      documentTree: state.docExplorer.explorerTree.documentTree,
+      docRef: state.docExplorer.docRefPicker[props.pickerId],
+      explorer: state.docExplorer.explorerTree.explorers[props.pickerId],
     }),
     {
       // actions

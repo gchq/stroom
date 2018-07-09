@@ -22,7 +22,7 @@ import { connect } from 'react-redux';
 import ItemTypes from './dragDropTypes';
 import { DragSource } from 'react-dnd';
 
-import { actionCreators as docExplorerActionCreators } from './redux/docExplorerReducer';
+import { actionCreators as docExplorerActionCreators } from './redux/explorerTreeReducer';
 import { actionCreators as contentTabActionCreators } from 'sections/AppChrome/redux';
 import { TabTypes } from 'sections/AppChrome/TabTypes';
 
@@ -55,7 +55,7 @@ const enhance = compose(
   connect(
     (state, props) => ({
       // state
-      explorer: state.docExplorer.explorers[props.explorerId],
+      explorer: state.docExplorer.explorerTree.explorers[props.explorerId],
     }),
     {
       docRefSelected,

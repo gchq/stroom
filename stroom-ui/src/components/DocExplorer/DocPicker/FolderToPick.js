@@ -23,14 +23,14 @@ import { Icon } from 'semantic-ui-react';
 
 import DocRefToPick from './DocRefToPick';
 
-import { actionCreators } from '../redux/docExplorerReducer';
+import { actionCreators } from '../redux/explorerTreeReducer';
 
 const { folderOpenToggled, docRefSelected } = actionCreators;
 
 const enhance = compose(connect(
   (state, props) => ({
     // state
-    explorer: state.docExplorer.explorers[props.explorerId],
+    explorer: state.docExplorer.explorerTree.explorers[props.explorerId],
   }),
   {
     folderOpenToggled,
