@@ -20,7 +20,6 @@ import { connect } from 'react-redux';
 import { compose, lifecycle } from 'recompose';
 import Mousetrap from 'mousetrap';
 
-import SplitPane from 'react-split-pane';
 import PanelGroup from 'react-panelgroup';
 
 import { Label, Table, Progress, Button, Input, Menu, Pagination } from 'semantic-ui-react';
@@ -78,7 +77,6 @@ class TrackerDashboard extends Component {
     const showDetails = selectedTracker !== undefined;
     // 370 is the minimum height because it lets all the tracker details be displayed
     const detailsPanelMinimumHeight = showDetails ? 370 : 0;
-    const detailsPanelSize = showDetails ? null : 0;
 
     const panelSizes = [
       {},

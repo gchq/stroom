@@ -34,6 +34,8 @@ import PathNotFound from 'sections/PathNotFound';
 
 import { withConfig } from './config';
 
+import { PrivateRoute } from './Authentication';
+
 const enhance = compose(
   withConfig,
   withRouter,
@@ -63,7 +65,6 @@ const Routes = ({
 }) => (
   <Router history={history} basename="/">
     <Switch>
-      {/* Authentication routes */}
       <Route
         exact
         path="/handleAuthenticationResponse"
@@ -75,97 +76,20 @@ const Routes = ({
         )}
       />
 
-      {/* Application routes - no authentication required */}
       <Route exact path="/error" component={ErrorPage} />
       <Route exact path="/prototypes/original_list" component={OriginalList} />
       <Route exact path="/prototypes/graph" component={Graph} />
 
-      {/* Application Routes - require authentication */}
-      <Route
-        exact
-        path="/"
-        render={() =>
-          (isLoggedIn ? (
-            <AppChrome />
-          ) : (
-            <AuthenticationRequest
-              referrer="/"
-              uiUrl={advertisedUrl}
-              appClientId={appClientId}
-              authenticationServiceUrl={authenticationServiceUrl}
-            />
-          ))
-        }
-      />
-
-      <Route
-        exact
-        path="/trackers"
-        render={() =>
-          (isLoggedIn ? (
-            <TrackerDashboard />
-          ) : (
-            <AuthenticationRequest
-              referrer="/trackers"
-              uiUrl={advertisedUrl}
-              appClientId={appClientId}
-              authenticationServiceUrl={authenticationServiceUrl}
-              appPermission="MANAGE_USERS"
-            />
-          ))
-        }
-      />
-
-      <Route
+      <PrivateRoute exact path="/" referrer="/" component={AppChrome} />
+      <PrivateRoute exact path="/trackers" referrer="/trackers" component={TrackerDashboard} />
+      <PrivateRoute
         exact
         path="/pipelines/:pipelineId"
-        render={({ match }) =>
-          (isLoggedIn ? (
-            <PipelineEditor pipelineId={match.params.pipelineId} />
-          ) : (
-            <AuthenticationRequest
-              referrer={match.url}
-              uiUrl={advertisedUrl}
-              appClientId={appClientId}
-              authenticationServiceUrl={authenticationServiceUrl}
-            />
-          ))
-        }
+        referrer="/pipelines"
+        component={PipelineEditor}
       />
-
-      <Route
-        exact
-        path="/xslt/:xsltId"
-        render={({ match }) =>
-          (isLoggedIn ? (
-            <XsltEditor xsltId={match.params.xsltId} />
-          ) : (
-            <AuthenticationRequest
-              referrer={match.url}
-              uiUrl={advertisedUrl}
-              appClientId={appClientId}
-              authenticationServiceUrl={authenticationServiceUrl}
-            />
-          ))
-        }
-      />
-
-      <Route
-        exact
-        path="/explorerTree"
-        render={({ match }) =>
-          (isLoggedIn ? (
-            <DocExplorer explorerId="singleton" />
-          ) : (
-            <AuthenticationRequest
-              referrer={match.url}
-              uiUrl={advertisedUrl}
-              appClientId={appClientId}
-              authenticationServiceUrl={authenticationServiceUrl}
-            />
-          ))
-        }
-      />
+      <PrivateRoute exact path="/xslt/:xsltId" referrer="/xslt" component={XsltEditor} />
+      <PrivateRoute exact path="/explorerTree" referrer="/explorerTree" component={DocExplorer} />
 
       <Route component={PathNotFound} />
     </Switch>
