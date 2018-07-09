@@ -76,6 +76,20 @@ class TrackerDashboard extends Component {
 
     const selectedTracker = trackers.find(tracker => tracker.filterId === selectedTrackerId);
     const showDetails = selectedTracker !== undefined;
+    // 370 is the minimum height because it lets all the tracker details be displayed
+    const detailsPanelMinimumHeight = showDetails ? 370 : 0;
+    const detailsPanelSize = showDetails ? null : 0;
+
+    const panelSizes = [
+      {},
+      {
+        resize: "dynamic",
+        minSize: detailsPanelMinimumHeight,
+        size: detailsPanelMinimumHeight
+      },
+    ];
+
+    if (!showDetails) panelSizes[1].size = 0;
 
     // TODO: At some point move the shortcuts to some common location;
     //       we will want to use the same binding for 'search' throughout.
@@ -105,7 +119,7 @@ class TrackerDashboard extends Component {
             />
           </Menu.Menu>
         </Menu>
-        <PanelGroup direction="column" panelWidths={[{}, { minSize: 370 }]}>
+        <PanelGroup direction="column" panelWidths={panelSizes}>
           <div>
             <div
               id="table-container"
@@ -152,27 +166,26 @@ class TrackerDashboard extends Component {
                       trackerMs,
                       streamCount,
                       eventCount,
-                    }, 
-                  ) => (
-                    <Table.Row
-                      key={filterId}
-                      className="tracker-row"
-                      onClick={() => onHandleTrackerSelection(filterId, trackers)}
-                      active={selectedTrackerId === filterId}
-                    >
-                      <Table.Cell className="name-column" textAlign="left" width={7}>
-                        {pipelineName}
-                      </Table.Cell>
-                      <Table.Cell className="priority-column" textAlign="center" width={1}>
-                        <Label circular color="green">
-                          {priority}
-                        </Label>
-                      </Table.Cell>
-                      <Table.Cell className="progress-column" width={7}>
-                        <Progress indicating percent={trackerPercent} />
-                      </Table.Cell>
-                    </Table.Row>
-                  ))}
+                    }) => (
+                      <Table.Row
+                        key={filterId}
+                        className="tracker-row"
+                        onClick={() => onHandleTrackerSelection(filterId, trackers)}
+                        active={selectedTrackerId === filterId}
+                      >
+                        <Table.Cell className="name-column" textAlign="left" width={7}>
+                          {pipelineName}
+                        </Table.Cell>
+                        <Table.Cell className="priority-column" textAlign="center" width={1}>
+                          <Label circular color="green">
+                            {priority}
+                          </Label>
+                        </Table.Cell>
+                        <Table.Cell className="progress-column" width={7}>
+                          <Progress indicating percent={trackerPercent} />
+                        </Table.Cell>
+                      </Table.Row>
+                    ))}
                 </Table.Body>
               </Table>
               <div className="pagination-container">
@@ -187,7 +200,7 @@ class TrackerDashboard extends Component {
               </div>
             </div>
           </div>
-          <TrackerDetails/>
+          <TrackerDetails />
         </PanelGroup>
       </div>
     );
