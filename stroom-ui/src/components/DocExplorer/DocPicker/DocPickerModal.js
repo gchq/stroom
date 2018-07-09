@@ -60,7 +60,7 @@ const enhance = compose(
   ),
 );
 
-const DocRefModalPicker = ({
+const DocPickerModal = ({
   isSelected,
   documentTree,
   docRefPicked,
@@ -114,9 +114,9 @@ const DocRefModalPicker = ({
   );
 };
 
-DocRefModalPicker.propTypes = {
+DocPickerModal.propTypes = {
   pickerId: PropTypes.string.isRequired,
   typeFilter: PropTypes.string,
 };
 
-export default enhance(DocRefModalPicker);
+export default enhance(DocPickerModal);

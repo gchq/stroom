@@ -56,8 +56,8 @@ const _FolderToPick = ({
   }
 
   return (
-    <div className={className}>
-      <span>
+    <div>
+      <span className={className}>
         <Icon name={icon} onClick={() => folderOpenToggled(explorerId, folder)} />
         <span onClick={() => docRefSelected(explorerId, folder)}>{folder.name}</span>
       </span>

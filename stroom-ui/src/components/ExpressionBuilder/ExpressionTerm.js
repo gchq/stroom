@@ -25,7 +25,7 @@ import { DragSource } from 'react-dnd';
 
 import ItemTypes from './dragDropTypes';
 import { displayValues } from './conditions';
-import { DocRefModalPicker } from '../DocExplorer';
+import { DocPickerModal } from '../DocExplorer';
 import { actionCreators as docExplorerActionCreators } from '../DocExplorer/redux/docExplorerReducer';
 import { actionCreators, joinDictionaryTermId } from './redux';
 
@@ -306,7 +306,7 @@ const ExpressionTerm = ({
       break;
     }
     case 'IN_DICTIONARY': {
-      valueWidget = <DocRefModalPicker pickerId={pickerId} typeFilter="Dictionary" />;
+      valueWidget = <DocPickerModal pickerId={pickerId} typeFilter="Dictionary" />;
       break;
     }
     default:

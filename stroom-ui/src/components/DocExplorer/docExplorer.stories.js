@@ -22,7 +22,7 @@ import {
   DocExplorer,
   DocRef,
   Folder,
-  DocRefModalPicker,
+  DocPickerModal,
   PermissionInheritancePicker,
   permissionInheritanceValues,
   DocPicker,
@@ -73,13 +73,13 @@ storiesOf('Doc Ref Modal Picker', module)
     ));
   }))
   .addDecorator(DragDropDecorator)
-  .add('Doc Ref Picker (modal, no choice made)', () => <DocRefModalPicker pickerId="modal1" />)
-  .add('Doc Ref Picker (modal, choice made)', () => <DocRefModalPicker pickerId="modal2" />)
+  .add('Doc Ref Picker (modal, no choice made)', () => <DocPickerModal pickerId="modal1" />)
+  .add('Doc Ref Picker (modal, choice made)', () => <DocPickerModal pickerId="modal2" />)
   .add('Doc Ref Picker (modal, filter to pipeline)', () => (
-    <DocRefModalPicker pickerId="modal3" typeFilter="Pipeline" />
+    <DocPickerModal pickerId="modal3" typeFilter="Pipeline" />
   ))
   .add('Doc Ref Picker (modal, filter to folders)', () => (
-    <DocRefModalPicker pickerId="modal4" typeFilter="Folder" />
+    <DocPickerModal pickerId="modal4" typeFilter="Folder" />
   ));
 
 storiesOf('Doc Ref Picker', module)
