@@ -18,6 +18,7 @@ import { connect } from 'react-redux';
 import { compose, lifecycle } from 'recompose';
 import { Button, Menu, Icon } from 'semantic-ui-react';
 import Mousetrap from 'mousetrap';
+import { withRouter } from 'react-router-dom';
 
 import { actionCreators as appChromeActionCreators } from './redux';
 import { actionCreators as recentItemsActionCreators } from 'prototypes/RecentItems/redux';
@@ -46,6 +47,7 @@ const enhance = compose(
       appSearchOpened,
     },
   ),
+  withRouter,
   withIsExpanded,
   lifecycle({
     componentWillMount() {
