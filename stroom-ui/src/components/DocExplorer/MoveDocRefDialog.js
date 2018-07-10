@@ -16,31 +16,61 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose } from 'recompose';
+import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
 
 import { Modal, Button } from 'semantic-ui-react';
 
 import { actionCreators } from './redux';
+import { moveDocuments } from './explorerClient';
+
 import DocPicker from './DocPicker/DocPicker';
 import PermissionInheritancePicker from './PermissionInheritancePicker';
 
 const { completeDocRefMove } = actionCreators;
 
-const enhance = compose(connect(
-  (state, props) => ({
-    isMoving: state.docExplorer.moveDocRef.isMoving,
-    docRefs: state.docExplorer.moveDocRef.docRefs,
-  }),
-  { completeDocRefMove },
-));
+const enhance = compose(
+  withProps(({ explorerId }) => ({
+    explorerId: `copy-doc-ref-${explorerId}`,
+  })),
+  connect(
+    ({ docExplorer }, { explorerId }) => {
+      let selectedDocRef;
+      const explorer = docExplorer.explorerTree.explorers[explorerId];
+      if (explorer) {
+        const s = Object.entries(explorer.isSelected)
+          .filter(k => k[1])
+          .map(k => ({ uuid: k[0] }));
+        if (s.length > 0) {
+          selectedDocRef = s[0];
+        }
+      }
 
-const MoveDocRefDialog = ({ explorerId, isMoving, docRefs, completeDocRefMove }) => (
+      return {
+        isMoving: docExplorer.moveDocRef.isMoving,
+        docRefs: docExplorer.moveDocRef.docRefs,
+        permissionInheritance: docExplorer.permissionInheritancePicker[explorerId],
+        selectedDocRef,
+      };
+    },
+    { completeDocRefMove, moveDocuments },
+  ),
+);
+
+const MoveDocRefDialog = ({
+  explorerId,
+  isMoving,
+  docRefs,
+  completeDocRefMove,
+  moveDocuments,
+  selectedDocRef,
+  permissionInheritance,
+}) => (
   <Modal open={isMoving}>
     <Modal.Header>Select a Destination Folder for the Move</Modal.Header>
     <Modal.Content scrolling>
-      <DocPicker explorerId={`move-doc-ref-${explorerId}`} typeFilter="Folder" foldersOnly />
-      <PermissionInheritancePicker pickerId="move-doc-ref" />
+      <DocPicker explorerId={explorerId} typeFilter="Folder" foldersOnly />
+      <PermissionInheritancePicker pickerId={explorerId} />
     </Modal.Content>
     <Modal.Actions>
       <Button negative onClick={completeDocRefMove}>
@@ -48,7 +78,7 @@ const MoveDocRefDialog = ({ explorerId, isMoving, docRefs, completeDocRefMove })
       </Button>
       <Button
         positive
-        onClick={() => console.log('Please implement me move dialog')}
+        onClick={() => moveDocuments(docRefs, selectedDocRef, permissionInheritance)}
         labelPosition="right"
         icon="checkmark"
         content="Choose"
@@ -58,7 +88,7 @@ const MoveDocRefDialog = ({ explorerId, isMoving, docRefs, completeDocRefMove })
 );
 
 MoveDocRefDialog.propTypes = {
-  explorerId: PropTypes.string.isRequired
-}
+  explorerId: PropTypes.string.isRequired,
+};
 
 export default enhance(MoveDocRefDialog);

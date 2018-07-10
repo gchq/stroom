@@ -70,6 +70,60 @@ export function moveItemInTree(rootNode, itemToMove, destination) {
 }
 
 /**
+ * Given a tree of data, returns a new tree with the item to move
+ * relocated to the intended destination.
+ *
+ * @param {treeNode} rootNode The current entire tree of doc refs
+ * @param {treeNode} itemToMove The item being moved
+ * @param {treeNode} destination The destination tree node
+ */
+export function moveItemsInTree(rootNode, itemsToMove, destination) {
+  let children;
+  if (rootNode.children) {
+    const itemsToInsert = rootNode.uuid === destination.uuid ? itemsToMove : []; // if this is the destination, insert the item to move
+    const uuidsToMove = itemsToMove.map(i => i.uuid);
+    const filteredItemsToCopy = rootNode.children.filter(c => !uuidsToMove.includes(c.uuid)); // remove the 'item to move'
+    children = [
+      ...itemsToInsert, // insert at beginning
+      ...filteredItemsToCopy,
+    ]
+      .filter(c => !!c) // filter out undefined
+      .map(c => moveItemsInTree(c, itemsToMove, destination)); // recurse children
+  }
+
+  return {
+    ...rootNode,
+    children,
+  };
+}
+
+/**
+ * Given a tree of data, returns a new tree with the item to move
+ * relocated to the intended destination.
+ *
+ * @param {treeNode} rootNode The current entire tree of doc refs
+ * @param {treeNode} itemToMove The item being moved
+ * @param {treeNode} destination The destination tree node
+ */
+export function copyItemsInTree(rootNode, itemsToCopy, destination) {
+  let children;
+  if (rootNode.children) {
+    const itemsToInsert = rootNode.uuid === destination.uuid ? itemsToCopy : []; // if this is the destination, insert the item to move
+    children = [
+      ...itemsToInsert, // insert at beginning
+      ...rootNode.children,
+    ]
+      .filter(c => !!c) // filter out undefined
+      .map(c => copyItemsInTree(c, itemsToCopy, destination)); // recurse children
+  }
+
+  return {
+    ...rootNode,
+    children,
+  };
+}
+
+/**
  * Recursively check that a tree node is inside the child hierarchy of the given destination tree node.
  *
  * @param {treeNode} treeNode The node we are looking into, this will be recursed through children

@@ -4,6 +4,8 @@ import { wrappedGet, wrappedPut, wrappedPost } from 'lib/fetchTracker.redux';
 const {
   docTreeReceived,
   docRefRenamed,
+  docRefsCopied,
+  docRefsMoved,
   docRefsDeleted,
   docRefTypesReceived,
   docRefInfoOpened,
@@ -13,6 +15,12 @@ const {
   completeDocRefRename,
   completeDocRefMove,
 } = actionCreators;
+
+const stripDocRef = docRef => ({
+  uuid: docRef.uuid,
+  type: docRef.type,
+  name: docRef.name,
+});
 
 export const fetchDocTree = () => (dispatch, getState) => {
   const state = getState();
@@ -61,7 +69,7 @@ export const renameDocument = (docRef, name) => (dispatch, getState) => {
   );
 };
 
-export const copyDocument = (docRefs, destinationFolderRef, permissionInheritance) => (
+export const copyDocuments = (docRefs, destinationFolderRef, permissionInheritance) => (
   dispatch,
   getState,
 ) => {
@@ -71,10 +79,14 @@ export const copyDocument = (docRefs, destinationFolderRef, permissionInheritanc
     dispatch,
     state,
     url,
-    response => response.json().then(docRefInfo => dispatch(completeDocRefCopy(docRefInfo))),
+    response =>
+      response.text().then((r) => {
+        dispatch(completeDocRefCopy());
+        dispatch(docRefsCopied(docRefs, destinationFolderRef));
+      }),
     {
       body: JSON.stringify({
-        docRefs,
+        docRefs: docRefs.map(stripDocRef),
         destinationFolderRef,
         permissionInheritance,
       }),
@@ -82,20 +94,24 @@ export const copyDocument = (docRefs, destinationFolderRef, permissionInheritanc
   );
 };
 
-export const moveDocument = (docRefs, destinationFolderRef, permissionInheritance) => (
+export const moveDocuments = (docRefs, destinationFolderRef, permissionInheritance) => (
   dispatch,
   getState,
 ) => {
   const state = getState();
   const url = `${state.config.explorerServiceUrl}/move`;
-  wrappedPost(
+  wrappedPut(
     dispatch,
     state,
     url,
-    response => response.json().then(docRefInfo => dispatch(completeDocRefMove(docRefInfo))),
+    response =>
+      response.text().then(() => {
+        dispatch(completeDocRefMove());
+        dispatch(docRefsMoved(docRefs, destinationFolderRef));
+      }),
     {
       body: JSON.stringify({
-        docRefs,
+        docRefs: docRefs.map(stripDocRef),
         destinationFolderRef,
         permissionInheritance,
       }),
@@ -117,11 +133,7 @@ export const deleteDocuments = docRefs => (dispatch, getState) => {
       }),
     {
       method: 'delete',
-      body: JSON.stringify(docRefs.map(d => ({
-        uuid: d.uuid,
-        type: d.type,
-        name: d.name,
-      }))),
+      body: JSON.stringify(docRefs.map(stripDocRef)),
     },
   );
 };

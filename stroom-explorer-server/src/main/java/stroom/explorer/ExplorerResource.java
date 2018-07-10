@@ -85,9 +85,33 @@ public class ExplorerResource {
     }
 
     static class CopyOp {
-        List<DocRef> docRefs;
-        DocRef destinationFolderRef;
-        PermissionInheritance permissionInheritance;
+        private List<DocRef> docRefs;
+        private DocRef destinationFolderRef;
+        private PermissionInheritance permissionInheritance;
+
+        public List<DocRef> getDocRefs() {
+            return docRefs;
+        }
+
+        public void setDocRefs(List<DocRef> docRefs) {
+            this.docRefs = docRefs;
+        }
+
+        public DocRef getDestinationFolderRef() {
+            return destinationFolderRef;
+        }
+
+        public void setDestinationFolderRef(DocRef destinationFolderRef) {
+            this.destinationFolderRef = destinationFolderRef;
+        }
+
+        public PermissionInheritance getPermissionInheritance() {
+            return permissionInheritance;
+        }
+
+        public void setPermissionInheritance(PermissionInheritance permissionInheritance) {
+            this.permissionInheritance = permissionInheritance;
+        }
     }
 
     @POST
@@ -100,9 +124,33 @@ public class ExplorerResource {
     }
 
     static class MoveOp {
-        List<DocRef> docRefs;
-        DocRef destinationFolderRef;
-        PermissionInheritance permissionInheritance;
+        private List<DocRef> docRefs;
+        private DocRef destinationFolderRef;
+        private PermissionInheritance permissionInheritance;
+
+        public List<DocRef> getDocRefs() {
+            return docRefs;
+        }
+
+        public void setDocRefs(List<DocRef> docRefs) {
+            this.docRefs = docRefs;
+        }
+
+        public DocRef getDestinationFolderRef() {
+            return destinationFolderRef;
+        }
+
+        public void setDestinationFolderRef(DocRef destinationFolderRef) {
+            this.destinationFolderRef = destinationFolderRef;
+        }
+
+        public PermissionInheritance getPermissionInheritance() {
+            return permissionInheritance;
+        }
+
+        public void setPermissionInheritance(PermissionInheritance permissionInheritance) {
+            this.permissionInheritance = permissionInheritance;
+        }
     }
 
     @PUT
@@ -115,8 +163,24 @@ public class ExplorerResource {
     }
 
     static class RenameOp {
-        public DocRef docRef;
-        public String name;
+        private DocRef docRef;
+        private String name;
+
+        public DocRef getDocRef() {
+            return docRef;
+        }
+
+        public void setDocRef(DocRef docRef) {
+            this.docRef = docRef;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
     }
 
     @PUT

@@ -17,7 +17,8 @@ import { createActions, handleActions } from 'redux-actions';
 import * as JsSearch from 'js-search';
 
 import {
-  moveItemInTree,
+  moveItemsInTree,
+  copyItemsInTree,
   iterateNodes,
   getIsInFilteredMap,
   deleteItemsFromTree,
@@ -64,11 +65,6 @@ export const actionCreators = createActions({
     allowDragAndDrop,
     typeFilter,
   }),
-  MOVE_EXPLORER_ITEM: (explorerId, itemToMove, destination) => ({
-    explorerId,
-    itemToMove,
-    destination,
-  }),
   FOLDER_OPEN_TOGGLED: (explorerId, docRef) => ({
     explorerId,
     docRef,
@@ -80,6 +76,14 @@ export const actionCreators = createActions({
   DOC_REF_SELECTED: (explorerId, docRef) => ({
     explorerId,
     docRef,
+  }),
+  DOC_REFS_MOVED: (docRefs, destination) => ({
+    docRefs,
+    destination,
+  }),
+  DOC_REFS_COPIED: (docRefs, destination) => ({
+    docRefs,
+    destination,
   }),
   DOC_REFS_DELETED: (docRefs) => ({
     docRefs,
@@ -280,15 +284,6 @@ export const reducer = handleActions(
       };
     },
 
-    // Move Item in Explorer Tree
-    MOVE_EXPLORER_ITEM: (state, action) => {
-      const { itemToMove, destination } = action.payload;
-
-      const documentTree = moveItemInTree(state.documentTree, itemToMove, destination);
-
-      return getStateAfterTreeUpdate(state, documentTree);
-    },
-
     // Folder Open Toggle
     FOLDER_OPEN_TOGGLED: (state, action) => {
       const { explorerId, docRef } = action.payload;
@@ -378,6 +373,22 @@ export const reducer = handleActions(
       });
       return getStateAfterTreeUpdate(state, documentTree);
     },
+
+    DOC_REFS_COPIED: (state, action) => {
+      const { docRefs, destination } = action.payload;
+
+      const documentTree = copyItemsInTree(state.documentTree, docRefs, destination);
+
+      return getStateAfterTreeUpdate(state, documentTree);
+    },
+
+    DOC_REFS_MOVED: (state, action) => {
+      const { docRefs, destination } = action.payload;
+
+      const documentTree = moveItemsInTree(state.documentTree, docRefs, destination);
+
+      return getStateAfterTreeUpdate(state, documentTree);
+    }
   },
   defaultState,
 );
