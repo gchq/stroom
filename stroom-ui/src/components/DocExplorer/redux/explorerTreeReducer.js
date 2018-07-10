@@ -21,6 +21,7 @@ import {
   iterateNodes,
   getIsInFilteredMap,
   deleteItemFromTree,
+  updateItemInTree,
 } from 'lib/treeUtils';
 
 const OPEN_STATES = {
@@ -80,9 +81,12 @@ export const actionCreators = createActions({
     explorerId,
     docRef,
   }),
-  DOC_REF_DELETED: (explorerId, docRef) => ({
-    explorerId,
+  DOC_REF_DELETED: (docRef) => ({
     docRef,
+  }),
+  DOC_REF_RENAMED: (docRef, name) => ({
+    docRef,
+    name,
   }),
 });
 
@@ -104,7 +108,7 @@ const defaultState = {
   allowMultiSelect: true,
   allowDragAndDrop: true,
   isTreeReady: false,
-  isDocRefTypeListReady: false
+  isDocRefTypeListReady: false,
 };
 
 function getIsValidFilterTerm(filterTerm) {
@@ -363,6 +367,15 @@ export const reducer = handleActions(
 
       const documentTree = deleteItemFromTree(state.documentTree, docRef.uuid);
 
+      return getStateAfterTreeUpdate(state, documentTree);
+    },
+
+    DOC_REF_RENAMED: (state, action) => {
+      const { docRef, name } = action.payload;
+
+      const documentTree = updateItemInTree(state.documentTree, docRef.uuid, {
+        name,
+      });
       return getStateAfterTreeUpdate(state, documentTree);
     },
   },

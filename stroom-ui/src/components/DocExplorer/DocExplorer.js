@@ -27,7 +27,7 @@ import RenameDocRefDialog from './RenameDocRefDialog';
 import CopyDocRefDialog from './CopyDocRefDialog';
 import DeleteDocRefDialog from './DeleteDocRefDialog';
 import DocRefInfoModal from './DocRefInfoModal';
-import { actionCreators } from './redux/explorerTreeReducer';
+import { actionCreators } from './redux';
 import withExplorerTree from './withExplorerTree';
 
 const { searchTermUpdated, docExplorerOpened } = actionCreators;

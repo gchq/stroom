@@ -91,19 +91,19 @@ server.get(`${testConfig.explorerServiceUrl}/docRefTypes`).intercept((req, res) 
 });
 // // Copy Document
 server.post(`${testConfig.explorerServiceUrl}/copy`).intercept((req, res) => {
-  res.setStatus(204);
+  res.sendStatus(200);
 });
 // // Move Document
 server.put(`${testConfig.explorerServiceUrl}/move`).intercept((req, res) => {
-  res.setStatus(204);
+  res.sendStatus(200);
 });
 // // Rename Document
 server.put(`${testConfig.explorerServiceUrl}/rename`).intercept((req, res) => {
-  res.setStatus(204);
+  res.sendStatus(200);
 });
 // // Delete Document
 server.delete(`${testConfig.explorerServiceUrl}/delete`).intercept((req, res) => {
-  res.setStatus(204);
+  res.sendStatus(200);
 });
 
 // Elements Resource

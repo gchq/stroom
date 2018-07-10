@@ -16,7 +16,7 @@
 import React from 'react';
 
 import { connect } from 'react-redux';
-import { compose, branch, lifecycle, renderNothing, renderComponent } from 'recompose';
+import { compose, branch, renderNothing, renderComponent } from 'recompose';
 
 import { Modal, Button, Form, Loader } from 'semantic-ui-react';
 

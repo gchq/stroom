@@ -15,24 +15,37 @@
  */
 import React from 'react';
 
-import { compose } from 'recompose';
+import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
 
 import { Modal, Form, Button } from 'semantic-ui-react';
 
 import { actionCreators } from './redux';
+import { renameDocument } from './explorerClient';
+
+const withName = withState('name', 'setName', '');
 
 const { completeDocRefRename } = actionCreators;
 
-const enhance = compose(connect(
-  (state, props) => ({
-    isRenaming: state.docExplorer.renameDocRef.isRenaming,
-    docRef: state.docExplorer.renameDocRef.docRef,
-  }),
-  { completeDocRefRename },
-));
+const enhance = compose(
+  connect(
+    (state, props) => ({
+      isRenaming: state.docExplorer.renameDocRef.isRenaming,
+      docRef: state.docExplorer.renameDocRef.docRef,
+    }),
+    { completeDocRefRename, renameDocument },
+  ),
+  withName,
+);
 
-const RenameDocRefDialog = ({ isRenaming, docRef, completeDocRefRename }) => (
+const RenameDocRefDialog = ({
+  name,
+  setName,
+  isRenaming,
+  docRef,
+  completeDocRefRename,
+  renameDocument,
+}) => (
   <Modal open={isRenaming}>
     <Modal.Header>Enter New Name for Doc Ref</Modal.Header>
     <Modal.Content scrolling>
@@ -40,8 +53,8 @@ const RenameDocRefDialog = ({ isRenaming, docRef, completeDocRefRename }) => (
         <Form.Input
           label="Type"
           type="text"
-          onChange={(e, value) => console.log('yaas', { e, value })}
-          value={docRef ? docRef.name : ''}
+          onChange={(e, { value }) => setName(value)}
+          value={name || (docRef ? docRef.name : '')}
         />
       </Form>
     </Modal.Content>
@@ -51,7 +64,7 @@ const RenameDocRefDialog = ({ isRenaming, docRef, completeDocRefRename }) => (
       </Button>
       <Button
         positive
-        onClick={() => console.log('Implement me please rename dialog')}
+        onClick={() => renameDocument(docRef, name)}
         labelPosition="right"
         icon="checkmark"
         content="Choose"

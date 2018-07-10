@@ -56,7 +56,7 @@ const FolderMenu = ({
       content="This will delete the doc ref, are you sure?"
       onCancel={() => setPendingDeletion(false)}
       onConfirm={() => {
-        docRefDeleted(explorerId, docRef);
+        docRefDeleted(docRef);
         setPendingDeletion(false);
       }}
     />
