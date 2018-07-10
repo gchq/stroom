@@ -17,7 +17,6 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { compose, withState, lifecycle } from 'recompose';
 import { Button, Menu, Icon } from 'semantic-ui-react';
-import { withRouter } from 'react-router-dom';
 import Mousetrap from 'mousetrap';
 import PropTypes, { object } from 'prop-types';
 
@@ -28,11 +27,12 @@ import TabTypes, { TabTypeDisplayInfo } from './TabTypes';
 import AppMainContent from './AppMainContent';
 import RecentItems from 'prototypes/RecentItems';
 import AppSearch from 'prototypes/AppSearch';
+import withLocalStorage from 'lib/withLocalStorage';
 
 const { tabOpened } = appChromeActionCreators;
 const { recentItemsOpened } = recentItemsActionCreators;
 const { appSearchOpened } = appSearchActionCreators;
-const withIsExpanded = withState('isExpanded', 'setIsExpanded', false);
+const withIsExpanded = withLocalStorage('isExpanded', 'setIsExpanded', true);
 
 const SIDE_BAR_COLOUR = 'blue';
 
@@ -47,15 +47,16 @@ const enhance = compose(
       appSearchOpened,
     },
   ),
-  withRouter,
   withIsExpanded,
   lifecycle({
     componentWillMount() {
-      // We're going to see if we've got a matching tab type to display,
-      // and if we have we're going to make sure it opens.
-      const { path } = this.props.match;
-      const tabType = Object.keys(TabTypeDisplayInfo).find(tabTypeKey => TabTypeDisplayInfo[tabTypeKey].path === path);
-      if (tabType) this.props.tabOpened(parseInt(tabType));
+      if (this.props.match) {
+        // We're going to see if we've got a matching tab type to display,
+        // and if we have we're going to make sure it opens.
+        const { path } = this.props.match;
+        const tabType = Object.keys(TabTypeDisplayInfo).find(tabTypeKey => TabTypeDisplayInfo[tabTypeKey].path === path);
+        if (tabType) this.props.tabOpened(parseInt(tabType));
+      }
     },
     componentDidMount() {
       Mousetrap.bind('ctrl+e', () => this.props.recentItemsOpened());
