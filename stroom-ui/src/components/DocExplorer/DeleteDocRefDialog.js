@@ -22,6 +22,7 @@ import { connect } from 'react-redux';
 import { Modal, Button } from 'semantic-ui-react';
 
 import { actionCreators } from './redux';
+import { deleteDocuments } from './explorerClient';
 
 const { completeDocRefDelete } = actionCreators;
 
@@ -30,22 +31,26 @@ const enhance = compose(connect(
     isDeleting: state.docExplorer.deleteDocRef.isDeleting,
     docRefs: state.docExplorer.deleteDocRef.docRefs,
   }),
-  { completeDocRefDelete },
+  { completeDocRefDelete, deleteDocuments },
 ));
 
 const DeleteDocRefDialog = ({
-  explorerId, isDeleting, docRefs, completeDocRefDelete,
+  explorerId,
+  isDeleting,
+  docRefs,
+  completeDocRefDelete,
+  deleteDocuments,
 }) => (
   <Modal open={isDeleting}>
     <Modal.Header>Are you sure about deleting these Doc Refs?</Modal.Header>
-    <Modal.Content scrolling />
+    <Modal.Content scrolling>{JSON.stringify(docRefs)}</Modal.Content>
     <Modal.Actions>
       <Button negative onClick={completeDocRefDelete}>
         Cancel
       </Button>
       <Button
         positive
-        onClick={() => console.log('Please implement me delete dialog')}
+        onClick={() => deleteDocuments(docRefs)}
         labelPosition="right"
         icon="checkmark"
         content="Choose"

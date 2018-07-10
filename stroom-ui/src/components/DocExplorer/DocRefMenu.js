@@ -79,19 +79,19 @@ const DocRefMenu = ({
         </Dropdown.Item>
         <Dropdown.Item
           onClick={() => {
-            prepareDocRefCopy([docRef]);
-          }}
-        >
-          <Icon name="copy" />
-          Copy
-        </Dropdown.Item>
-        <Dropdown.Item
-          onClick={() => {
             prepareDocRefRename(docRef);
           }}
         >
           <Icon name="pencil" />
           Rename
+        </Dropdown.Item>
+        <Dropdown.Item
+          onClick={() => {
+            prepareDocRefCopy([docRef]);
+          }}
+        >
+          <Icon name="copy" />
+          Copy
         </Dropdown.Item>
         <Dropdown.Item
           onClick={() => {

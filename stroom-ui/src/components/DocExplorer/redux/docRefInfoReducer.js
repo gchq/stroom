@@ -26,6 +26,7 @@ const actionCreators = createActions({
 const defaultState = {
   isOpen: false,
   docRefInfo: undefined,
+  docRefInfoCache: {}, // keyed on UUID
 };
 
 const reducer = handleActions(
@@ -33,10 +34,14 @@ const reducer = handleActions(
     DOC_REF_INFO_RECEIVED: (state, { payload: { docRefInfo } }) => ({
       ...state,
       docRefInfo,
+      docRefInfoCache: {
+        ...state.docRefInfoCache,
+        [docRefInfo.docRef.uuid]: docRefInfo,
+      },
     }),
     DOC_REF_INFO_OPENED: (state, { payload: { docRef } }) => ({
       isOpen: true,
-      docRefInfo: undefined,
+      docRefInfo: state.docRefInfoCache[docRef.uuid],
     }),
     DOC_REF_INFO_CLOSED: (state, action) => ({
       ...state,

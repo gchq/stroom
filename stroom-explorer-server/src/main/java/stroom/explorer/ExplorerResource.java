@@ -128,14 +128,11 @@ public class ExplorerResource {
         return Response.ok().build();
     }
 
-    static class DeleteOp {
-        List<DocRef> docRefs;
-    }
     @DELETE
     @Path("/delete")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response deleteDocument(final DeleteOp op) {
-        explorerService.delete(op.docRefs);
+    public Response deleteDocument(final List<DocRef> docRefs) {
+        explorerService.delete(docRefs);
 
         return Response.ok().build();
     }

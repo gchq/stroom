@@ -4,6 +4,7 @@ import { wrappedGet, wrappedPut, wrappedPost } from 'lib/fetchTracker.redux';
 const {
   docTreeReceived,
   docRefRenamed,
+  docRefsDeleted,
   docRefTypesReceived,
   docRefInfoOpened,
   docRefInfoReceived,
@@ -28,7 +29,7 @@ export const fetchDocRefTypes = () => (dispatch, getState) => {
 };
 
 export const fetchDocInfo = docRef => (dispatch, getState) => {
-  dispatch(docRefInfoOpened());
+  dispatch(docRefInfoOpened(docRef));
   const state = getState();
   const url = `${state.config.explorerServiceUrl}/info/${docRef.type}/${docRef.uuid}`;
   wrappedGet(dispatch, state, url, response =>
@@ -102,19 +103,25 @@ export const moveDocument = (docRefs, destinationFolderRef, permissionInheritanc
   );
 };
 
-export const deleteDocument = docRefs => (dispatch, getState) => {
+export const deleteDocuments = docRefs => (dispatch, getState) => {
   const state = getState();
   const url = `${state.config.explorerServiceUrl}/delete`;
   wrappedPost(
     dispatch,
     state,
     url,
-    response => response.text().then(dispatch(completeDocRefDelete())),
+    response =>
+      response.text().then(() => {
+        dispatch(completeDocRefDelete());
+        dispatch(docRefsDeleted(docRefs));
+      }),
     {
       method: 'delete',
-      body: JSON.stringify({
-        docRefs,
-      }),
+      body: JSON.stringify(docRefs.map(d => ({
+        uuid: d.uuid,
+        type: d.type,
+        name: d.name,
+      }))),
     },
   );
 };

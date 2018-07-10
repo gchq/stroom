@@ -20,7 +20,7 @@ import {
   moveItemInTree,
   iterateNodes,
   getIsInFilteredMap,
-  deleteItemFromTree,
+  deleteItemsFromTree,
   updateItemInTree,
 } from 'lib/treeUtils';
 
@@ -81,8 +81,8 @@ export const actionCreators = createActions({
     explorerId,
     docRef,
   }),
-  DOC_REF_DELETED: (docRef) => ({
-    docRef,
+  DOC_REFS_DELETED: (docRefs) => ({
+    docRefs,
   }),
   DOC_REF_RENAMED: (docRef, name) => ({
     docRef,
@@ -362,10 +362,10 @@ export const reducer = handleActions(
     },
 
     // Confirm Delete Doc Ref
-    DOC_REF_DELETED: (state, action) => {
-      const { docRef } = action.payload;
+    DOC_REFS_DELETED: (state, action) => {
+      const { docRefs } = action.payload;
 
-      const documentTree = deleteItemFromTree(state.documentTree, docRef.uuid);
+      const documentTree = deleteItemsFromTree(state.documentTree, docRefs.map(d => d.uuid));
 
       return getStateAfterTreeUpdate(state, documentTree);
     },
