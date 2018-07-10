@@ -21,12 +21,10 @@ import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
 
 import ErrorPage from 'sections/ErrorPage';
-import OriginalList from 'prototypes/OriginalList';
-import Graph from 'prototypes/Graph';
 import TrackerDashboard from 'sections/TrackerDashboard';
 import { TabTypes, TabTypeDisplayInfo, AppChrome } from 'sections/AppChrome';
 import XsltEditor from 'prototypes/XsltEditor';
-import { AuthenticationRequest, HandleAuthenticationResponse } from 'startup/Authentication';
+import { HandleAuthenticationResponse } from 'startup/Authentication';
 import PipelineEditor from 'components/PipelineEditor';
 import DocExplorer from 'components/DocExplorer';
 

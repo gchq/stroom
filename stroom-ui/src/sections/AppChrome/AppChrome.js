@@ -15,10 +15,9 @@
  */
 import React from 'react';
 import { connect } from 'react-redux';
-import { compose, withState, lifecycle } from 'recompose';
+import { compose, lifecycle } from 'recompose';
 import { Button, Menu, Icon } from 'semantic-ui-react';
 import Mousetrap from 'mousetrap';
-import PropTypes, { object } from 'prop-types';
 
 import { actionCreators as appChromeActionCreators } from './redux';
 import { actionCreators as recentItemsActionCreators } from 'prototypes/RecentItems/redux';
@@ -55,7 +54,7 @@ const enhance = compose(
         // and if we have we're going to make sure it opens.
         const { path } = this.props.match;
         const tabType = Object.keys(TabTypeDisplayInfo).find(tabTypeKey => TabTypeDisplayInfo[tabTypeKey].path === path);
-        if (tabType) this.props.tabOpened(parseInt(tabType));
+        if (tabType) this.props.tabOpened(parseInt(tabType, 10));
       }
     },
     componentDidMount() {
@@ -90,7 +89,7 @@ const AppChrome = ({
         history.push(TabTypeDisplayInfo[tabType].path);
         tabOpened(tabType);
       },
-      selected: currentTab && currentTab.type == tabType,
+      selected: currentTab && currentTab.type === tabType,
     })));
 
   const menu = isExpanded ? (

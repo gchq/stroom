@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 import React from 'react';
-import PropTypes from 'prop-types';
 
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
@@ -22,8 +21,6 @@ import { connect } from 'react-redux';
 import { Modal, Form, Button } from 'semantic-ui-react';
 
 import { actionCreators } from './redux';
-import DocPicker from './DocPicker/DocPicker';
-import PermissionInheritancePicker from './PermissionInheritancePicker';
 
 const { completeDocRefRename } = actionCreators;
 

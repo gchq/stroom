@@ -6,25 +6,13 @@ import { connect } from 'react-redux';
 
 import moment from 'moment';
 
-import {
-  Grid,
-  Label,
-  Table,
-  Progress,
-  Button,
-  Header,
-  Checkbox,
-  List,
-  Card,
-  Icon,
-} from 'semantic-ui-react';
+import { Grid, Checkbox, List, Card } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 
 import { actionCreators } from '../redux';
 import { enableToggle } from '../streamTasksResourceClient';
 import HorizontalPanel from 'prototypes/HorizontalPanel';
 import { ExpressionBuilder } from 'components/ExpressionBuilder';
-import { truncate } from 'lib/reduxFormUtils';
 
 const TrackerDetails = ({ selectedTracker, onHandleEnableToggle, onHandleTrackerSelection }) => {
   const title = selectedTracker.pipelineName;
@@ -103,7 +91,7 @@ const TrackerDetails = ({ selectedTracker, onHandleEnableToggle, onHandleTracker
       className="element-details__panel"
       title={title}
       content={content}
-      onClose={()=> onHandleTrackerSelection(null)}
+      onClose={() => onHandleTrackerSelection(null)}
       titleColumns={6}
       menuColumns={10}
       headerMenuItems={headerMenuItems}
@@ -115,7 +103,7 @@ const TrackerDetails = ({ selectedTracker, onHandleEnableToggle, onHandleTracker
 TrackerDetails.propTypes = {
   selectedTracker: PropTypes.object.isRequired,
   onHandleEnableToggle: PropTypes.func.isRequired,
-  onHandleTrackerSelection: PropTypes.func.isRequired
+  onHandleTrackerSelection: PropTypes.func.isRequired,
 };
 
 export default compose(

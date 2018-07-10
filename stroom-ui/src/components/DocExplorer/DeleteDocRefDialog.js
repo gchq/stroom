@@ -22,8 +22,6 @@ import { connect } from 'react-redux';
 import { Modal, Button } from 'semantic-ui-react';
 
 import { actionCreators } from './redux';
-import DocPicker from './DocPicker/DocPicker';
-import PermissionInheritancePicker from './PermissionInheritancePicker';
 
 const { completeDocRefDelete } = actionCreators;
 
