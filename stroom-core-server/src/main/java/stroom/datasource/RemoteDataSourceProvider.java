@@ -30,6 +30,7 @@ import stroom.security.SecurityContext;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.servlet.HttpSessionUtil;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -87,9 +88,14 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
 
             Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
 
+            final HttpServletRequest httpServletRequest = httpServletRequestHolder.get();
+            if (httpServletRequest == null) {
+                throw new NullPointerException("Null HttpServletRequest");
+            }
+
             // We'll look for the user's API key in the session, but if they're not logged in we'll try and get
             // one from the security context.
-            String usersApiKey = HttpSessionUtil.getUserApiKey(httpServletRequestHolder.get().getSession(true));
+            String usersApiKey = HttpSessionUtil.getUserApiKey(httpServletRequest.getSession(true));
             if(Strings.isNullOrEmpty(usersApiKey)){
                 usersApiKey = securityContext.getApiToken();
             }
@@ -107,7 +113,8 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
                         response.getStatus(), request, webTarget.getUri(), response.getStatusInfo().getReasonPhrase()));
             }
 
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
             throw new RuntimeException(String.format("Error sending request %s to %s", request, path), e);
         }
     }
