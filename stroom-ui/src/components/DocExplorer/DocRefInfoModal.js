@@ -16,82 +16,62 @@
 import React from 'react';
 
 import { connect } from 'react-redux';
-import { compose } from 'recompose';
+import { compose, branch, lifecycle, renderNothing, renderComponent } from 'recompose';
 
-import { Modal, Button, Form } from 'semantic-ui-react';
+import { Modal, Button, Form, Loader } from 'semantic-ui-react';
 
 import { actionCreators } from './redux';
 
 const { docRefInfoClosed } = actionCreators;
 
-const enhance = compose(connect(
-  (state, props) => ({
-    docRefInfo: state.docExplorer.explorerTree.docRefInfo,
-  }),
-  { docRefInfoClosed },
-));
+const enhance = compose(
+  connect(
+    (state, props) => ({
+      isOpen: state.docExplorer.docRefInfo.isOpen,
+      docRefInfo: state.docExplorer.docRefInfo.docRefInfo,
+    }),
+    { docRefInfoClosed },
+  ),
+  branch(({ isOpen }) => !isOpen, renderNothing),
+  branch(
+    ({ docRefInfo }) => !docRefInfo,
+    renderComponent(() => <Loader active>Awaiting DocRef Info </Loader>),
+  ),
+);
 
-const DocRefInfoModal = ({ docRefInfo, docRefInfoClosed }) => (
-  <Modal open={!!docRefInfo} onClose={docRefInfoClosed} size="small" dimmer="inverted">
+const DocRefInfoModal = ({ isOpen, docRefInfo, docRefInfoClosed }) => (
+  <Modal open={isOpen} onClose={docRefInfoClosed} size="small" dimmer="inverted">
     {' '}
     <Modal.Header>Doc Ref Info</Modal.Header>
     <Modal.Content scrolling>
       <Form>
         <Form.Group widths="equal">
-          <Form.Input
-            label="Type"
-            type="text"
-            value={docRefInfo && docRefInfo.docRef ? docRefInfo.docRef.type : ''}
-          />
-          <Form.Input
-            label="UUID"
-            type="text"
-            value={docRefInfo && docRefInfo.docRef ? docRefInfo.docRef.uuid : ''}
-          />
-          <Form.Input
-            label="Name"
-            type="text"
-            value={docRefInfo && docRefInfo.docRef ? docRefInfo.docRef.name : ''}
-          />
+          <Form.Input label="Type" type="text" value={docRefInfo.docRef.type} />
+          <Form.Input label="UUID" type="text" value={docRefInfo.docRef.uuid} />
+          <Form.Input label="Name" type="text" value={docRefInfo.docRef.name} />
         </Form.Group>
         <Form.Group widths="equal">
-          <Form.Input
-            label="Created by"
-            type="text"
-            value={docRefInfo ? docRefInfo.createUser : ''}
-          />
+          <Form.Input label="Created by" type="text" value={docRefInfo.createUser} />
           <Form.Input
             label="at"
             type="text"
-            value={
-              docRefInfo
-                ? new Date(docRefInfo.createTime).toLocaleString('en-GB', { timeZone: 'UTC' })
-                : ''
-            }
+            value={new Date(docRefInfo.createTime).toLocaleString('en-GB', { timeZone: 'UTC' })}
           />
         </Form.Group>
         <Form.Group widths="equal">
-          <Form.Input
-            label="Updated by"
-            type="text"
-            value={docRefInfo ? docRefInfo.updateUser : ''}
-          />
+          <Form.Input label="Updated by" type="text" value={docRefInfo.updateUser} />
           <Form.Input
             label="at"
             type="text"
-            value={
-              docRefInfo
-                ? new Date(docRefInfo.updateTime).toLocaleString('en-GB', { timeZone: 'UTC' })
-                : ''
-            }
+            value={new Date(docRefInfo.updateTime).toLocaleString('en-GB', { timeZone: 'UTC' })}
           />
         </Form.Group>
-        <Form.Input label="Other Info" type="text" value={docRefInfo ? docRefInfo.otherInfo : ''} />
+        <Form.Input label="Other Info" type="text" value={docRefInfo.otherInfo} />
       </Form>
     </Modal.Content>
     <Modal.Actions>
       <Button negative onClick={docRefInfoClosed}>
-        Cancel
+        Close
       </Button>
     </Modal.Actions>
   </Modal>

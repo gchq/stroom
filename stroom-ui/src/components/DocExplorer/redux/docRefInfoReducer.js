@@ -16,21 +16,33 @@
 import { createActions, combineActions, handleActions } from 'redux-actions';
 
 const actionCreators = createActions({
-  PREPARE_DOC_REF_COPY: docRefs => ({ docRefs }),
-  COMPLETE_DOC_REF_COPY: () => ({ docRefs: [] }),
+  DOC_REF_INFO_RECEIVED: docRefInfo => ({ docRefInfo }),
+  DOC_REF_INFO_OPENED: docRef => ({ docRef }),
+  DOC_REF_INFO_CLOSED: () => ({}),
 });
 
-const { prepareDocRefCopy, completeDocRefCopy } = actionCreators;
+const { prepareDocRefDelete, completeDocRefDelete } = actionCreators;
 
-// The state will contain a map of arrays.
-// Keyed on explorer ID, the arrays will contain the doc refs being moved
-const defaultState = { isCopying: false, docRefs: [] };
+// The state will contain the current doc ref for which information is being shown,
+// plus a map of all the infos retrieved thus far, keyed on their UUID
+const defaultState = {
+  isOpen: false,
+  docRefInfo: undefined,
+};
 
 const reducer = handleActions(
   {
-    [combineActions(prepareDocRefCopy, completeDocRefCopy)]: (state, { payload: { docRefs } }) => ({
-      isCopying: docRefs.length > 0,
-      docRefs,
+    DOC_REF_INFO_RECEIVED: (state, { payload: { docRefInfo } }) => ({
+      ...state,
+      docRefInfo,
+    }),
+    DOC_REF_INFO_OPENED: (state, { payload: { docRef } }) => ({
+      isOpen: true,
+      docRefInfo: undefined,
+    }),
+    DOC_REF_INFO_CLOSED: (state, action) => ({
+      ...state,
+      isOpen: false,
     }),
   },
   defaultState,

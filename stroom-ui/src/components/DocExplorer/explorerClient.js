@@ -1,9 +1,10 @@
-import { actionCreators } from './redux/explorerTreeReducer';
+import { actionCreators } from './redux';
 import { wrappedGet, wrappedPut, wrappedPost } from 'lib/fetchTracker.redux';
 
 const {
   docTreeReceived,
   docRefTypesReceived,
+  docRefInfoOpened,
   docRefInfoReceived,
   completeDocRefCopy,
   completeDocRefDelete,
@@ -26,6 +27,7 @@ export const fetchDocRefTypes = () => (dispatch, getState) => {
 };
 
 export const fetchDocInfo = docRef => (dispatch, getState) => {
+  dispatch(docRefInfoOpened());
   const state = getState();
   const url = `${state.config.explorerServiceUrl}/info/${docRef.type}/${docRef.uuid}`;
   wrappedGet(dispatch, state, url, response =>
