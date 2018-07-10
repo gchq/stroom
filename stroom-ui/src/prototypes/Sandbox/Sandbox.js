@@ -1,8 +1,8 @@
 import React from 'react';
 
-import './Basic.css';
+import './Sandbox.css';
 
-const Basic = props => <span className="basic">Most Basic Element</span>;
+export const Basic = props => <span className="basic">Most Basic Element</span>;
 
 export const ExpandToFillManual = props => (
   <div className="expand-manual__container">
@@ -17,5 +17,3 @@ export const ExpandToFillFlexbox = props => (
     <div className="expand-flex__content">this division fills the rest of the space</div>
   </div>
 );
-
-export default Basic;
