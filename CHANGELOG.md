@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#806** : Fix for clearing previous dashboard table results if search results deliver no data.
+
 * Issue **#805** : Fix for dashboard date time formatting to use local time zone.
 
 ## [v6.0-beta.2]
