@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#805** : Fix for dashboard date time formatting to use local time zone.
+
 ## [v6.0-beta.2]
 
 * Issue **#803** : Fix for group key conversion to an appropriate value for visualisations.
