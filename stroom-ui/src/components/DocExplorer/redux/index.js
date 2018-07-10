@@ -40,7 +40,6 @@ const actionCreators = {
 };
 
 const reducer = combineReducers({
-  moveDocRef: moveDocRefReducer,
   explorerTree: explorerTreeReducer,
   permissionInheritancePicker: permissionInheritancePickerReducer,
   docRefPicker: docRefPickerReducer,

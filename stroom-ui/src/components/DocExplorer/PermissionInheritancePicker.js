@@ -7,11 +7,11 @@ import { connect } from 'react-redux';
 import { Select } from 'semantic-ui-react';
 
 import { actionCreators } from './redux';
-import PermissionInheritanceValues from './PermissionInheritanceValues';
+import permissionInheritanceValues from './permissionInheritanceValues';
 
 const { permissionInheritancePicked } = actionCreators;
 
-const piOptions = Object.values(PermissionInheritanceValues).map(pi => ({
+const piOptions = Object.values(permissionInheritanceValues).map(pi => ({
   key: pi,
   value: pi,
   text: pi,

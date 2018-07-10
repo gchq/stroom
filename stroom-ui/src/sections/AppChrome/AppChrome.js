@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 import React from 'react';
+import PropTypes, { object } from 'prop-types';
+
 import { connect } from 'react-redux';
 import { compose, lifecycle } from 'recompose';
 import { Button, Menu, Icon } from 'semantic-ui-react';
@@ -129,6 +131,13 @@ const AppChrome = ({
       </div>
     </div>
   );
+};
+
+AppChrome.contextTypes = {
+  store: PropTypes.object,
+  router: PropTypes.shape({
+    history: object.isRequired,
+  }),
 };
 
 export default enhance(AppChrome);
