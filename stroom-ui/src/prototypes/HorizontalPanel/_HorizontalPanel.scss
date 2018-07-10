@@ -18,6 +18,7 @@ $header-height: 46px;
 .horizontal-panel__container {
   height: 100%;
   width: 100%;
+  position: relative;
 }
 
 .horizontal-panel__container .grid {
@@ -45,6 +46,10 @@ $header-height: 46px;
 
 .horizontal-panel__content__container {
   height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  padding-top: 4.5rem;
 }
 
 .horizontal-panel_close-button {
