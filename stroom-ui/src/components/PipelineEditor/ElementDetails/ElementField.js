@@ -86,18 +86,16 @@ const ElementField = ({
       );
       break;
     case 'DocRef':
-      // TODO potential bug: I'm not sure why elementTypeProperties have multiple
-      // docRefTypes, but we can only use one so we'll choose the first.
-      elementField = (
         <DocPickerModal
           pickerId={getPickerName(name)}
-          typeFilter={docRefTypes[0]}
+          typeFilter={docRefTypes}
           onChange={(newValue) => {
             pipelineElementPropertyUpdated(pipelineId, elementId, name, 'entity', newValue);
           }}
         />
       );
       break;
+
     case 'String':
       actualValue = getActualValue(value, defaultValue, 'string');
       elementField = (

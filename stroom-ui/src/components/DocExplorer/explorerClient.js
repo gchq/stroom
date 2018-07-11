@@ -10,10 +10,6 @@ const {
   docRefTypesReceived,
   docRefInfoOpened,
   docRefInfoReceived,
-  completeDocRefCopy,
-  completeDocRefDelete,
-  completeDocRefRename,
-  completeDocRefMove,
 } = actionCreators;
 
 const stripDocRef = docRef => ({
@@ -52,10 +48,7 @@ export const renameDocument = (docRef, name) => (dispatch, getState) => {
     state,
     url,
     response =>
-      response.text().then(() => {
-        dispatch(completeDocRefRename());
-        dispatch(docRefRenamed(docRef, name));
-      }),
+      response.json().then(resultDocRef => dispatch(docRefRenamed(docRef, name, resultDocRef))),
     {
       body: JSON.stringify({
         docRef: {
@@ -80,10 +73,10 @@ export const copyDocuments = (docRefs, destinationFolderRef, permissionInheritan
     state,
     url,
     response =>
-      response.text().then((r) => {
-        dispatch(completeDocRefCopy());
-        dispatch(docRefsCopied(docRefs, destinationFolderRef));
-      }),
+      response
+        .json()
+        .then(bulkActionResult =>
+          dispatch(docRefsCopied(docRefs, destinationFolderRef, bulkActionResult))),
     {
       body: JSON.stringify({
         docRefs: docRefs.map(stripDocRef),
@@ -105,10 +98,10 @@ export const moveDocuments = (docRefs, destinationFolderRef, permissionInheritan
     state,
     url,
     response =>
-      response.text().then(() => {
-        dispatch(completeDocRefMove());
-        dispatch(docRefsMoved(docRefs, destinationFolderRef));
-      }),
+      response
+        .json()
+        .then(bulkActionResult =>
+          dispatch(docRefsMoved(docRefs, destinationFolderRef, bulkActionResult))),
     {
       body: JSON.stringify({
         docRefs: docRefs.map(stripDocRef),
@@ -127,10 +120,7 @@ export const deleteDocuments = docRefs => (dispatch, getState) => {
     state,
     url,
     response =>
-      response.text().then(() => {
-        dispatch(completeDocRefDelete());
-        dispatch(docRefsDeleted(docRefs));
-      }),
+      response.json().then(bulkActionResult => dispatch(docRefsDeleted(docRefs, bulkActionResult))),
     {
       method: 'delete',
       body: JSON.stringify(docRefs.map(stripDocRef)),

@@ -22,7 +22,7 @@ import { connect } from 'react-redux';
 
 import ErrorPage from 'sections/ErrorPage';
 import TrackerDashboard from 'sections/TrackerDashboard';
-import { TabTypes, TabTypeDisplayInfo, AppChrome } from 'sections/AppChrome';
+import { TabTypeDisplayInfo, AppChrome } from 'sections/AppChrome';
 import XsltEditor from 'prototypes/XsltEditor';
 import { HandleAuthenticationResponse } from 'startup/Authentication';
 import PipelineEditor from 'components/PipelineEditor';
@@ -60,63 +60,56 @@ const Routes = ({
   authenticationServiceUrl,
   authorisationServiceUrl,
   advertisedUrl,
-}) => {
-  const trackerPath = TabTypeDisplayInfo[TabTypes.TRACKER_DASHBOARD].path;
-  const explorerPath = TabTypeDisplayInfo[TabTypes.EXPLORER_TREE].path;
-  const userPath = TabTypeDisplayInfo[TabTypes.USER_ME].path;
-  const usersPath = TabTypeDisplayInfo[TabTypes.AUTH_USERS].path;
-  const apiKeysPath = TabTypeDisplayInfo[TabTypes.AUTH_TOKENS].path;
-  return (
-    <Router history={history} basename="/">
-      <Switch>
-        <Route
-          exact
-          path="/handleAuthenticationResponse"
-          render={() => (
-            <HandleAuthenticationResponse
-              authenticationServiceUrl={authenticationServiceUrl}
-              authorisationServiceUrl={authorisationServiceUrl}
-            />
-          )}
-        />
+}) => (
+  <Router history={history} basename="/">
+    <Switch>
+      <Route
+        exact
+        path="/handleAuthenticationResponse"
+        render={() => (
+          <HandleAuthenticationResponse
+            authenticationServiceUrl={authenticationServiceUrl}
+            authorisationServiceUrl={authorisationServiceUrl}
+          />
+        )}
+      />
 
-        <Route exact path="/error" component={ErrorPage} />
+      <Route exact path="/error" component={ErrorPage} />
 
-        {/* AppChrome paths -- these paths load the relevent sections. */}
-        <PrivateRoute exact path="/" referrer="/" component={AppChrome} />
-        <PrivateRoute exact path={trackerPath} referrer={trackerPath} component={AppChrome} />
-        <PrivateRoute exact path={explorerPath} referrer={explorerPath} component={AppChrome} />
-        <PrivateRoute exact path={userPath} referrer={userPath} component={AppChrome} />
-        <PrivateRoute exact path={usersPath} referrer={usersPath} component={AppChrome} />
-        <PrivateRoute exact path={apiKeysPath} referrer={apiKeysPath} component={AppChrome} />
+      {/* AppChrome paths -- these paths load the relevent sections. */}
+      <PrivateRoute exact path="/" referrer="/" component={AppChrome} />
+      {Object.values(TabTypeDisplayInfo)
+        .map(t => t.path)
+        .map(path => (
+          <PrivateRoute key={path} exact path={path} referrer={path} component={AppChrome} />
+        ))}
 
-        {/* Direct paths -- these paths make sections accessible outside the AppChrome
+      {/* Direct paths -- these paths make sections accessible outside the AppChrome
         i.e. for when we want to embed them in Stroom. */}
-        <PrivateRoute exact path="/trackers" referrer="/trackers" component={TrackerDashboard} />
-        {/* TODO: What path do we want for docExplorer? */}
-        <PrivateRoute exact path="/explorerTree" referrer="/explorerTree" component={DocExplorer} />
-        <PrivateRoute exact path="/docExplorer" referrer="/docExplorer" component={DocExplorer} />
+      <PrivateRoute exact path="/trackers" referrer="/trackers" component={TrackerDashboard} />
+      {/* TODO: What path do we want for docExplorer? */}
+      <PrivateRoute exact path="/explorerTree" referrer="/explorerTree" component={DocExplorer} />
+      <PrivateRoute exact path="/docExplorer" referrer="/docExplorer" component={DocExplorer} />
 
-        {/* TODO: There are no AppChrome routes for the following because the do not have
+      {/* TODO: There are no AppChrome routes for the following because the do not have
         TabTypes. Content must to be anchored to something on the sidebar. Otherwise it's
         disconnected from the obvious flow of the app and the mental model of the flow
         the user used to get to the data is broken. Bad. So we could either add an XSLT
         and pipeline sections or we could map them to something deeper, e.g.
            /pipelines/<pipelienId>/xslt/<xsltId>
         Obviously this needs more thinking about. */}
-        <PrivateRoute exact path="/xslt/:xsltId" referrer="/xslt" component={XsltEditor} />
-        <PrivateRoute
-          exact
-          path="/pipelines/:pipelineId"
-          referrer="/pipelines"
-          component={PipelineEditor}
-        />
+      <PrivateRoute exact path="/xslt/:xsltId" referrer="/xslt" component={XsltEditor} />
+      <PrivateRoute
+        exact
+        path="/pipelines/:pipelineId"
+        referrer="/pipelines"
+        component={PipelineEditor}
+      />
 
-        <Route component={PathNotFound} />
-      </Switch>
-    </Router>
-  );
-};
+      <Route component={PathNotFound} />
+    </Switch>
+  </Router>
+);
 
 Routes.contextTypes = {
   store: PropTypes.object,

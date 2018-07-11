@@ -25,10 +25,9 @@ import { DragSource, DropTarget } from 'react-dnd';
 
 import { Icon } from 'semantic-ui-react';
 
+import ClickCounter from 'lib/ClickCounter';
 import DocRef from './DocRef';
-
 import FolderMenu from './FolderMenu';
-
 import { actionCreators } from './redux/explorerTreeReducer';
 
 const { moveExplorerItem, folderOpenToggled, docRefSelected } = actionCreators;
@@ -37,7 +36,7 @@ const withContextMenu = withState('isContextMenuOpen', 'setContextMenuOpen', fal
 
 const dragSource = {
   canDrag(props) {
-    return props.explorer.allowDragAndDrop;
+    return true;
   },
   beginDrag(props) {
     return {
@@ -55,7 +54,7 @@ function dragCollect(connect, monitor) {
 
 const dropTarget = {
   canDrop(props, monitor) {
-    return props.explorer.allowDragAndDrop && canMove(monitor.getItem(), props.folder);
+    return canMove(monitor.getItem(), props.folder);
   },
   drop(props, monitor) {
     props.moveExplorerItem(props.explorerId, monitor.getItem(), props.folder);
@@ -127,6 +126,10 @@ const _Folder = ({
     className += ' doc-ref__selected';
   }
 
+  const clickCounter = new ClickCounter()
+    .withOnSingleClick(() => docRefSelected(explorerId, folder))
+    .withOnDoubleClick(() => folderOpenToggled(explorerId, folder));
+
   const onRightClick = (e) => {
     setContextMenuOpen(true);
     e.preventDefault();
@@ -134,19 +137,19 @@ const _Folder = ({
 
   return (
     <div>
-      {connectDragSource(connectDropTarget(<span
-        className={className}
-        onContextMenu={onRightClick}
-      >
+      {connectDragSource(connectDropTarget(<span className={className} onContextMenu={onRightClick}>
         <FolderMenu
           explorerId={explorerId}
           docRef={folder}
           isOpen={isContextMenuOpen}
           closeContextMenu={() => setContextMenuOpen(false)}
         />
-        <span>
-          <Icon name={icon} onClick={() => folderOpenToggled(explorerId, folder)} />
-          <span onClick={() => docRefSelected(explorerId, folder)}>{folder.name}</span>
+        <span
+          onClick={() => clickCounter.onSingleClick()}
+          onDoubleClick={() => clickCounter.onDoubleClick()}
+        >
+          <Icon name={icon} />
+          <span>{folder.name}</span>
         </span>
                                            </span>))}
       {thisIsOpen && (

@@ -306,7 +306,7 @@ const ExpressionTerm = ({
       break;
     }
     case 'IN_DICTIONARY': {
-      valueWidget = <DocPickerModal pickerId={pickerId} typeFilter="Dictionary" />;
+      valueWidget = <DocPickerModal pickerId={pickerId} typeFilters={["Dictionary"]} />;
       break;
     }
     default:

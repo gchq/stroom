@@ -19,7 +19,7 @@ import { connect } from 'react-redux';
 import { compose, lifecycle } from 'recompose';
 import { Polly } from '@pollyjs/core';
 
-import { findItem } from 'lib/treeUtils';
+import { guid, findItem } from 'lib/treeUtils';
 import { actionCreators as fetchActionCreators } from 'lib/fetchTracker.redux';
 
 const { resetAllUrls } = fetchActionCreators;
@@ -91,19 +91,36 @@ server.get(`${testConfig.explorerServiceUrl}/docRefTypes`).intercept((req, res) 
 });
 // // Copy Document
 server.post(`${testConfig.explorerServiceUrl}/copy`).intercept((req, res) => {
-  res.sendStatus(200);
+  const { docRefs } = JSON.parse(req.body);
+  res.json({
+    docRefs: docRefs.map(docRef => ({
+      uuid: guid(),
+      type: docRef.type,
+      name: `${docRef.name}-copy-${guid()}`,
+    })),
+    message: '',
+  });
 });
 // // Move Document
 server.put(`${testConfig.explorerServiceUrl}/move`).intercept((req, res) => {
-  res.sendStatus(200);
+  const { docRefs } = JSON.parse(req.body);
+  res.json({
+    docRefs,
+    message: '',
+  });
 });
 // // Rename Document
 server.put(`${testConfig.explorerServiceUrl}/rename`).intercept((req, res) => {
-  res.sendStatus(200);
+  const { docRef, name } = JSON.parse(req.body);
+  res.json({ ...docRef, name });
 });
 // // Delete Document
 server.delete(`${testConfig.explorerServiceUrl}/delete`).intercept((req, res) => {
-  res.sendStatus(200);
+  const { docRefs } = JSON.parse(req.body);
+  res.json({
+    docRefs,
+    message: '',
+  });
 });
 
 // Elements Resource

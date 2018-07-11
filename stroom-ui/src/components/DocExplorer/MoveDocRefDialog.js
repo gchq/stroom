@@ -69,7 +69,7 @@ const MoveDocRefDialog = ({
   <Modal open={isMoving}>
     <Modal.Header>Select a Destination Folder for the Move</Modal.Header>
     <Modal.Content scrolling>
-      <DocPicker explorerId={explorerId} typeFilter="Folder" foldersOnly />
+      <DocPicker explorerId={explorerId} typeFilters={["Folder"]} foldersOnly />
       <PermissionInheritancePicker pickerId={explorerId} />
     </Modal.Content>
     <Modal.Actions>

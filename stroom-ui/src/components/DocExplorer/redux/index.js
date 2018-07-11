@@ -56,7 +56,7 @@ const actionCreators = {
   ...renameDocRefActionCreators,
   ...deleteDocRefActionCreators,
   ...copyDocRefActionCreators,
-  ...docRefInfoActionCreators
+  ...docRefInfoActionCreators,
 };
 
 const reducer = combineReducers({
@@ -67,7 +67,7 @@ const reducer = combineReducers({
   renameDocRef: renameDocRefReducer,
   deleteDocRef: deleteDocRefReducer,
   copyDocRef: copyDocRefReducer,
-  docRefInfo: docRefInfoReducer
+  docRefInfo: docRefInfoReducer,
 });
 
 export { actionCreators, reducer };

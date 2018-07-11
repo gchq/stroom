@@ -57,13 +57,17 @@ function getToggledState(currentState, isUser) {
 export const DEFAULT_EXPLORER_ID = 'default';
 
 export const actionCreators = createActions({
-  DOC_TREE_RECEIVED: documentTree => ({ documentTree }),
   DOC_REF_TYPES_RECEIVED: docRefTypes => ({ docRefTypes }),
-  DOC_EXPLORER_OPENED: (explorerId, allowMultiSelect, allowDragAndDrop, typeFilter) => ({
+  DOC_TREE_RECEIVED: documentTree => ({ documentTree }),
+  DOC_EXPLORER_OPENED: (explorerId, allowMultiSelect, typeFilters) => ({
     explorerId,
     allowMultiSelect,
-    allowDragAndDrop,
-    typeFilter,
+    typeFilters,
+  }),
+  TYPE_FILTER_CHANGED: (explorerId, docRefType, newValue) => ({
+    explorerId,
+    docRefType,
+    newValue,
   }),
   FOLDER_OPEN_TOGGLED: (explorerId, docRef) => ({
     explorerId,
@@ -77,20 +81,24 @@ export const actionCreators = createActions({
     explorerId,
     docRef,
   }),
-  DOC_REFS_MOVED: (docRefs, destination) => ({
+  DOC_REFS_MOVED: (docRefs, destination, bulkActionResult) => ({
     docRefs,
     destination,
+    bulkActionResult
   }),
-  DOC_REFS_COPIED: (docRefs, destination) => ({
+  DOC_REFS_COPIED: (docRefs, destination, bulkActionResult) => ({
     docRefs,
     destination,
+    bulkActionResult
   }),
-  DOC_REFS_DELETED: (docRefs) => ({
+  DOC_REFS_DELETED: (docRefs, bulkActionResult) => ({
     docRefs,
+    bulkActionResult
   }),
-  DOC_REF_RENAMED: (docRef, name) => ({
+  DOC_REF_RENAMED: (docRef, name, resultDocRef) => ({
     docRef,
     name,
+    resultDocRef
   }),
 });
 
@@ -108,11 +116,10 @@ const defaultExplorerState = {
 const defaultState = {
   documentTree: undefined, // The hierarchy of doc refs in folders
   explorers: {},
-  pickedDocRefs: {}, // Picked Doc Refs by pickerId
   allowMultiSelect: true,
-  allowDragAndDrop: true,
   isTreeReady: false,
   isDocRefTypeListReady: false,
+  docRefTypes: [],
 };
 
 function getIsValidFilterTerm(filterTerm) {
@@ -166,7 +173,8 @@ function getFolderIsOpenMap(
   return isFolderOpen;
 }
 
-function getUpdatedExplorer(documentTree, explorer, searchExecutor, searchTerm, typeFilter) {
+function getUpdatedExplorer(documentTree, explorer, searchExecutor, searchTerm, rawTypeFilters) {
+  let typeFilters = rawTypeFilters.filter(d => d !== 'Folder');
   let searchResults;
   if (searchExecutor && searchTerm) {
     searchResults = searchExecutor
@@ -175,8 +183,8 @@ function getUpdatedExplorer(documentTree, explorer, searchExecutor, searchTerm, 
   }
 
   const typeFilterFunction = (lineage, node) => {
-    if (getIsValidFilterTerm(typeFilter)) {
-      return typeFilter === node.type;
+    if (typeFilters.length > 0) {
+      return typeFilters.includes(node.type);
     }
     return true;
   };
@@ -190,7 +198,7 @@ function getUpdatedExplorer(documentTree, explorer, searchExecutor, searchTerm, 
 
   return {
     ...explorer,
-    typeFilter,
+    typeFilters,
     searchTerm,
     isVisible: getIsVisibleMap(documentTree, isInTypeFilterMap, isInSearchMap),
     isFolderOpen: getFolderIsOpenMap(
@@ -231,7 +239,7 @@ function getStateAfterTreeUpdate(state, documentTree) {
       k[1],
       searchExecutor,
       k[1].searchTerm,
-      k[1].typeFilter,
+      k[1].typeFilters,
     );
   });
 
@@ -246,25 +254,37 @@ function getStateAfterTreeUpdate(state, documentTree) {
 
 export const reducer = handleActions(
   {
-    // Receive the current state of the explorer tree
-    DOC_TREE_RECEIVED: (state, action) =>
-      getStateAfterTreeUpdate(state, action.payload.documentTree),
     // Receive the set of doc ref types used in the current tree
-    DOC_REF_TYPES_RECEIVED: (state, action) => {
-      const docRefTypes = {};
-      action.payload.docRefTypes.forEach(docRefType => (docRefTypes[docRefType.toUpperCase()] = docRefType));
+    DOC_REF_TYPES_RECEIVED: (state, { payload: { docRefTypes } }) => {
+      const explorers = {};
+      Object.entries(state.explorers)
+        .map(k => ({ explorerId: k[0], explorer: k[1] }))
+        .forEach(({ explorerId, explorer }) =>
+          (explorers[explorerId] = getUpdatedExplorer(
+            state.documentTree,
+            explorer,
+            state.searchExecutor,
+            explorer.searchTerm,
+            explorer.typeFilters.length === 0 ? docRefTypes : explorer.typeFilters,
+          )));
+
       return {
         ...state,
         docRefTypes,
         isDocRefTypeListReady: true,
+        explorers,
       };
     },
 
+    // Receive the current state of the explorer tree
+    DOC_TREE_RECEIVED: (state, action) =>
+      getStateAfterTreeUpdate(state, action.payload.documentTree),
+
     // When an explorer is opened
     DOC_EXPLORER_OPENED: (state, action) => {
-      const {
-        explorerId, allowMultiSelect, allowDragAndDrop, typeFilter,
-      } = action.payload;
+      const { explorerId, allowMultiSelect, typeFilters } = action.payload;
+      const typeFiltersToUse =
+        typeFilters.length > 0 ? typeFilters : state.docRefTypes;
       return {
         ...state,
         explorers: {
@@ -275,11 +295,36 @@ export const reducer = handleActions(
               defaultExplorerState,
               state.searchExecutor,
               '',
-              typeFilter,
+              typeFiltersToUse,
             ),
             allowMultiSelect,
-            allowDragAndDrop,
           },
+        },
+      };
+    },
+
+    // Type Filter changed
+    TYPE_FILTER_CHANGED: (state, action) => {
+      const { explorerId, docRefType, newValue } = action.payload;
+
+      const currentExplorer = state.explorers[explorerId];
+      const updatedFilters = newValue
+        ? currentExplorer.typeFilters.concat([docRefType])
+        : currentExplorer.typeFilters.filter(t => t !== docRefType);
+
+      const updatedExplorer = getUpdatedExplorer(
+        state.documentTree,
+        currentExplorer,
+        state.searchExecutor,
+        currentExplorer.searchTerm,
+        updatedFilters,
+      );
+
+      return {
+        ...state,
+        explorers: {
+          ...state.explorers,
+          [explorerId]: updatedExplorer,
         },
       };
     },
@@ -315,7 +360,7 @@ export const reducer = handleActions(
         state.explorers[explorerId],
         state.searchExecutor,
         searchTerm,
-        state.explorers[explorerId].typeFilter,
+        state.explorers[explorerId].typeFilters,
       );
 
       return {
@@ -358,37 +403,35 @@ export const reducer = handleActions(
 
     // Confirm Delete Doc Ref
     DOC_REFS_DELETED: (state, action) => {
-      const { docRefs } = action.payload;
+      const { bulkActionResult } = action.payload;
 
-      const documentTree = deleteItemsFromTree(state.documentTree, docRefs.map(d => d.uuid));
+      const documentTree = deleteItemsFromTree(state.documentTree, bulkActionResult.docRefs.map(d => d.uuid));
 
       return getStateAfterTreeUpdate(state, documentTree);
     },
 
     DOC_REF_RENAMED: (state, action) => {
-      const { docRef, name } = action.payload;
+      const { docRef, resultDocRef } = action.payload;
 
-      const documentTree = updateItemInTree(state.documentTree, docRef.uuid, {
-        name,
-      });
+      const documentTree = updateItemInTree(state.documentTree, docRef.uuid, resultDocRef);
       return getStateAfterTreeUpdate(state, documentTree);
     },
 
     DOC_REFS_COPIED: (state, action) => {
-      const { docRefs, destination } = action.payload;
+      const { destination, bulkActionResult } = action.payload;
 
-      const documentTree = copyItemsInTree(state.documentTree, docRefs, destination);
+      const documentTree = copyItemsInTree(state.documentTree, bulkActionResult.docRefs, destination);
 
       return getStateAfterTreeUpdate(state, documentTree);
     },
 
     DOC_REFS_MOVED: (state, action) => {
-      const { docRefs, destination } = action.payload;
+      const { destination, bulkActionResult } = action.payload;
 
-      const documentTree = moveItemsInTree(state.documentTree, docRefs, destination);
+      const documentTree = moveItemsInTree(state.documentTree, bulkActionResult.docRefs, destination);
 
       return getStateAfterTreeUpdate(state, documentTree);
-    }
+    },
   },
   defaultState,
 );

@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import { compose, lifecycle, branch, renderComponent } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Input, Loader } from 'semantic-ui-react';
+import { Input, Loader, Button, Popup } from 'semantic-ui-react';
 
 import Folder from './Folder';
 import MoveDocRefDialog from './MoveDocRefDialog';
@@ -27,6 +27,7 @@ import RenameDocRefDialog from './RenameDocRefDialog';
 import CopyDocRefDialog from './CopyDocRefDialog';
 import DeleteDocRefDialog from './DeleteDocRefDialog';
 import DocRefInfoModal from './DocRefInfoModal';
+import DocTypeFilters from './DocTypeFilters';
 import { actionCreators } from './redux';
 import withExplorerTree from './withExplorerTree';
 
@@ -51,15 +52,11 @@ const enhance = compose(
   ),
   lifecycle({
     componentDidMount() {
-      const {
-        docExplorerOpened,
-        explorerId,
-        allowMultiSelect,
-        allowDragAndDrop,
-        typeFilter,
-      } = this.props;
+      const { docExplorerOpened, explorerId } = this.props;
+      const typeFilters = [];
+      const allowMultiSelect = true;
 
-      docExplorerOpened(explorerId, allowMultiSelect, allowDragAndDrop, typeFilter);
+      docExplorerOpened(explorerId, allowMultiSelect, typeFilters);
     },
   }),
   branch(
@@ -74,8 +71,8 @@ const DocExplorer = ({
   <div>
     <DocRefInfoModal />
     <MoveDocRefDialog explorerId={explorerId} />
-    <RenameDocRefDialog explorerId={explorerId} />
-    <DeleteDocRefDialog explorerId={explorerId} />
+    <RenameDocRefDialog />
+    <DeleteDocRefDialog />
     <CopyDocRefDialog explorerId={explorerId} />
     <Input
       icon="search"
@@ -83,6 +80,10 @@ const DocExplorer = ({
       value={explorer.searchTerm}
       onChange={e => searchTermUpdated(explorerId, e.target.value)}
     />
+    <Popup trigger={<Button icon="filter" />} flowing hoverable>
+      <DocTypeFilters explorerId={explorerId} />
+    </Popup>
+
     <Folder explorerId={explorerId} folder={documentTree} />
   </div>
 );

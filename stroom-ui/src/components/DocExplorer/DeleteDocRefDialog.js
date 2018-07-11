@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 import React from 'react';
-import PropTypes from 'prop-types';
 
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
@@ -35,11 +34,7 @@ const enhance = compose(connect(
 ));
 
 const DeleteDocRefDialog = ({
-  explorerId,
-  isDeleting,
-  docRefs,
-  completeDocRefDelete,
-  deleteDocuments,
+  isDeleting, docRefs, completeDocRefDelete, deleteDocuments,
 }) => (
   <Modal open={isDeleting}>
     <Modal.Header>Are you sure about deleting these Doc Refs?</Modal.Header>
@@ -58,9 +53,5 @@ const DeleteDocRefDialog = ({
     </Modal.Actions>
   </Modal>
 );
-
-DeleteDocRefDialog.propTypes = {
-  explorerId: PropTypes.string.isRequired,
-};
 
 export default enhance(DeleteDocRefDialog);

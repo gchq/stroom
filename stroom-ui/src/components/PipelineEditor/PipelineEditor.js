@@ -16,11 +16,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { Icon } from 'semantic-ui-react';
-
 import { compose, lifecycle, withState, branch, renderComponent, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Loader, Form } from 'semantic-ui-react';
+import { Form, Button, Icon, Confirm, Loader } from 'semantic-ui-react';
 
 import PanelGroup from 'react-panelgroup';
 
@@ -31,15 +29,17 @@ import { getPipelineLayoutInformation } from './pipelineUtils';
 import PipelineElement from './PipelineElement';
 import ElementPalette from './ElementPalette';
 import Bin from './Bin';
-import SavePipeline from './SavePipeline';
 
 import lineElementCreators from './pipelineLineElementCreators';
 import { ElementDetails } from './ElementDetails';
 import { DocPickerModal } from '../DocExplorer';
 
-import { fetchPipeline } from './pipelineResourceClient';
+import { fetchPipeline, savePipeline } from './pipelineResourceClient';
 import { fetchElements, fetchElementProperties } from './elementResourceClient';
 import { withConfig } from 'startup/config';
+import { actionCreators } from './redux';
+
+const { pipelineElementDeleteCancelled, pipelineElementDeleted } = actionCreators;
 
 const HORIZONTAL_SPACING = 150;
 const VERTICAL_SPACING = 70;
@@ -64,6 +64,9 @@ const enhance = compose(
       fetchPipeline,
       fetchElements,
       fetchElementProperties,
+      savePipeline,
+      pipelineElementDeleteCancelled,
+      pipelineElementDeleted,
     },
   ),
   lifecycle({
@@ -91,7 +94,14 @@ const enhance = compose(
   ),
   withPaletteOpen,
   withElementDetailsOpen,
-  withProps(({ pipeline, setPaletteOpen, isPaletteOpen }) => ({
+  withProps(({
+    pipelineId,
+    pipeline,
+    setPaletteOpen,
+    isPaletteOpen,
+    pipelineElementDeleteCancelled,
+    pipelineElementDeleted,
+  }) => ({
     elementStyles: mapObject(getPipelineLayoutInformation(pipeline.asTree), (l) => {
       const index = l.verticalPos - 1;
       const fromTop = VERTICAL_START_PX + index * VERTICAL_SPACING;
@@ -103,7 +113,14 @@ const enhance = compose(
         left: `${fromLeft}px`,
       };
     }),
+    isDirty: pipeline.isDirty,
+    isSaving: pipeline.isSaving,
+    pendingElementToDelete: pipeline.pendingElementToDelete,
     togglePaletteOpen: () => setPaletteOpen(!isPaletteOpen),
+    onCancelDelete: () => pipelineElementDeleteCancelled(pipelineId),
+    onConfirmDelete: () => {
+      pipelineElementDeleted(pipelineId, pipeline.pendingElementToDelete);
+    },
   })),
 );
 
@@ -117,6 +134,11 @@ const PipelineEditor = ({
   editorClassName,
   elementStyles,
   savePipeline,
+  isDirty,
+  isSaving,
+  pendingElementToDelete,
+  onCancelDelete,
+  onConfirmDelete,
 }) => {
   const settingsPanelSize = isElementDetailsOpen ? '50%' : 0;
   const panelSizes = [
@@ -128,6 +150,12 @@ const PipelineEditor = ({
   ];
   return (
     <div className={`Pipeline-editor Pipeline-editor--palette-${isPaletteOpen ? 'open' : 'close'}`}>
+      <Confirm
+        open={!!pendingElementToDelete}
+        content={`Delete ${pendingElementToDelete} from pipeline?`}
+        onCancel={onCancelDelete}
+        onConfirm={onConfirmDelete}
+      />
       <div className="Pipeline-editor__element-palette">
         <ElementPalette pipelineId={pipelineId} />
       </div>
@@ -139,12 +167,22 @@ const PipelineEditor = ({
       <PanelGroup direction="column" className="Pipeline-editor__content" panelWidths={panelSizes}>
         <div className="Pipeline-editor__topPanel">
           <div className="Pipeline-editor__top-bar">
-            <SavePipeline pipelineId={pipelineId} />
-            <Bin pipelineId={pipelineId} />
+            <div>
+              <Button
+                icon='save'
+                loading={isSaving}
+                disabled={!isDirty}
+                color="blue"
+                size="huge"
+                circular
+                onClick={() => savePipeline(pipelineId)}
+              />
+            </div>
+            <Bin />
             <Form>
               <Form.Field>
                 <label>Parent Pipeline</label>
-                <DocPickerModal pickerId={pipelineId} typeFilter="Pipeline" />
+                <DocPickerModal pickerId={pipelineId} typeFilters={["Pipeline"]} />
               </Form.Field>
             </Form>
           </div>

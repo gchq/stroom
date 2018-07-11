@@ -16,7 +16,7 @@
 import React from 'react';
 
 import { connect } from 'react-redux';
-import { compose } from 'recompose';
+import { compose, withProps } from 'recompose';
 import { Header, Icon, Divider, Grid, Button, Popup } from 'semantic-ui-react';
 
 import DocExplorer from 'components/DocExplorer';
@@ -24,6 +24,7 @@ import TrackerDashboard from 'sections/TrackerDashboard';
 import DocRefEditor from './DocRefEditor';
 import UserSettings from 'prototypes/UserSettings';
 import IFrame from './IFrame';
+import Welcome from './Welcome';
 
 import { actionCreators as appChromeActionCreators } from './redux';
 import { actionCreators as appSearchActionCreators } from 'prototypes/AppSearch/redux';
@@ -44,8 +45,19 @@ const enhance = compose(
       authUsersUiUrl: state.config.authUsersUiUrl,
       authTokensUiUrl: state.config.authTokensUiUrl,
     }),
-    { tabSelected, tabClosed, appSearchOpened, recentItemsOpened },
+    {
+      tabSelected,
+      tabClosed,
+      appSearchOpened,
+      recentItemsOpened,
+    },
   ),
+  withProps(({ openTabs }) => ({
+    openTabs:
+      openTabs.length > 0
+        ? openTabs
+        : openTabs.concat([{ tabId: TabTypes.WELCOME, type: TabTypes.WELCOME }]),
+  })),
 );
 
 const AppMainContent = ({
@@ -61,12 +73,17 @@ const AppMainContent = ({
   let selectedTab;
   if (tabSelectionStack.length > 0) {
     selectedTab = tabSelectionStack[0];
+  } else if (openTabs.length > 0) {
+    selectedTab = openTabs[0];
   }
 
   const tabContents = openTabs.map((openTab) => {
     let tabContent;
 
     switch (openTab.type) {
+      case TabTypes.WELCOME:
+        tabContent = <Welcome />;
+        break;
       case TabTypes.DOC_REF:
         tabContent = <DocRefEditor docRef={openTab.data} />;
         break;
@@ -106,8 +123,23 @@ const AppMainContent = ({
             </Header>
           </Grid.Column>
           <Grid.Column width={4}>
-            <Popup trigger={<Button floated="right" circular icon="file outline" onClick={() => recentItemsOpened()}/>} content="Recently opened items"/>
-            <Popup trigger={<Button floated="right" circular icon="search" onClick={()=> appSearchOpened()}/>} content="Search for things"/>
+            <Popup
+              trigger={
+                <Button
+                  floated="right"
+                  circular
+                  icon="file outline"
+                  onClick={() => recentItemsOpened()}
+                />
+              }
+              content="Recently opened items"
+            />
+            <Popup
+              trigger={
+                <Button floated="right" circular icon="search" onClick={() => appSearchOpened()} />
+              }
+              content="Search for things"
+            />
           </Grid.Column>
         </Grid>
         <Divider />

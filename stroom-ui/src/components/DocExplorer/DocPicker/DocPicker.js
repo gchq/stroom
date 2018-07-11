@@ -46,9 +46,10 @@ const enhance = compose(
   ),
   lifecycle({
     componentDidMount() {
-      const { docExplorerOpened, explorerId, typeFilter } = this.props;
+      const { docExplorerOpened, explorerId, typeFilters } = this.props;
+      const allowMultiSelect = false;
 
-      docExplorerOpened(explorerId, false, false, typeFilter);
+      docExplorerOpened(explorerId, allowMultiSelect, typeFilters);
     },
   }),
   branch(
