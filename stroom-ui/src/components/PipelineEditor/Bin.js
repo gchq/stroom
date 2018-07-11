@@ -1,19 +1,14 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 
-import { compose, withState, withProps } from 'recompose';
+import { compose } from 'recompose';
 import { connect } from 'react-redux';
 import { DropTarget } from 'react-dnd';
-import { Confirm, Button } from 'semantic-ui-react';
+import { Button } from 'semantic-ui-react';
 
 import ItemTypes from './dragDropTypes';
 import { actionCreators } from './redux';
 
-const {
-  pipelineElementDeleteRequested,
-  pipelineElementDeleteCancelled,
-  pipelineElementDeleted,
-} = actionCreators;
+const { pipelineElementDeleteRequested } = actionCreators;
 
 const dropTarget = {
   canDrop(props, monitor) {
@@ -45,6 +40,6 @@ const Bin = ({ connectDropTarget, isOver, dndIsHappening }) =>
       size="huge"
       icon="trash"
     />
-  </div>);
+                    </div>);
 
 export default enhance(Bin);

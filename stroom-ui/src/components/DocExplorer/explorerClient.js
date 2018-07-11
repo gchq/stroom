@@ -47,7 +47,8 @@ export const renameDocument = (docRef, name) => (dispatch, getState) => {
     dispatch,
     state,
     url,
-    response => response.text().then(() => dispatch(docRefRenamed(docRef, name))),
+    response =>
+      response.json().then(resultDocRef => dispatch(docRefRenamed(docRef, name, resultDocRef))),
     {
       body: JSON.stringify({
         docRef: {
@@ -71,7 +72,11 @@ export const copyDocuments = (docRefs, destinationFolderRef, permissionInheritan
     dispatch,
     state,
     url,
-    response => response.text().then(r => dispatch(docRefsCopied(docRefs, destinationFolderRef))),
+    response =>
+      response
+        .json()
+        .then(bulkActionResult =>
+          dispatch(docRefsCopied(docRefs, destinationFolderRef, bulkActionResult))),
     {
       body: JSON.stringify({
         docRefs: docRefs.map(stripDocRef),
@@ -92,7 +97,11 @@ export const moveDocuments = (docRefs, destinationFolderRef, permissionInheritan
     dispatch,
     state,
     url,
-    response => response.text().then(() => dispatch(docRefsMoved(docRefs, destinationFolderRef))),
+    response =>
+      response
+        .json()
+        .then(bulkActionResult =>
+          dispatch(docRefsMoved(docRefs, destinationFolderRef, bulkActionResult))),
     {
       body: JSON.stringify({
         docRefs: docRefs.map(stripDocRef),
@@ -110,7 +119,8 @@ export const deleteDocuments = docRefs => (dispatch, getState) => {
     dispatch,
     state,
     url,
-    response => response.text().then(() => dispatch(docRefsDeleted(docRefs))),
+    response =>
+      response.json().then(bulkActionResult => dispatch(docRefsDeleted(docRefs, bulkActionResult))),
     {
       method: 'delete',
       body: JSON.stringify(docRefs.map(stripDocRef)),

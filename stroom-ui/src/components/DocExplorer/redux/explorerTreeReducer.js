@@ -81,20 +81,24 @@ export const actionCreators = createActions({
     explorerId,
     docRef,
   }),
-  DOC_REFS_MOVED: (docRefs, destination) => ({
+  DOC_REFS_MOVED: (docRefs, destination, bulkActionResult) => ({
     docRefs,
     destination,
+    bulkActionResult
   }),
-  DOC_REFS_COPIED: (docRefs, destination) => ({
+  DOC_REFS_COPIED: (docRefs, destination, bulkActionResult) => ({
     docRefs,
     destination,
+    bulkActionResult
   }),
-  DOC_REFS_DELETED: docRefs => ({
+  DOC_REFS_DELETED: (docRefs, bulkActionResult) => ({
     docRefs,
+    bulkActionResult
   }),
-  DOC_REF_RENAMED: (docRef, name) => ({
+  DOC_REF_RENAMED: (docRef, name, resultDocRef) => ({
     docRef,
     name,
+    resultDocRef
   }),
 });
 
@@ -261,7 +265,7 @@ export const reducer = handleActions(
             explorer,
             state.searchExecutor,
             explorer.searchTerm,
-            explorer.typeFilters.length == 0 ? docRefTypes : explorer.typeFilters,
+            explorer.typeFilters.length === 0 ? docRefTypes : explorer.typeFilters,
           )));
 
       return {
@@ -399,34 +403,32 @@ export const reducer = handleActions(
 
     // Confirm Delete Doc Ref
     DOC_REFS_DELETED: (state, action) => {
-      const { docRefs } = action.payload;
+      const { bulkActionResult } = action.payload;
 
-      const documentTree = deleteItemsFromTree(state.documentTree, docRefs.map(d => d.uuid));
+      const documentTree = deleteItemsFromTree(state.documentTree, bulkActionResult.docRefs.map(d => d.uuid));
 
       return getStateAfterTreeUpdate(state, documentTree);
     },
 
     DOC_REF_RENAMED: (state, action) => {
-      const { docRef, name } = action.payload;
+      const { docRef, resultDocRef } = action.payload;
 
-      const documentTree = updateItemInTree(state.documentTree, docRef.uuid, {
-        name,
-      });
+      const documentTree = updateItemInTree(state.documentTree, docRef.uuid, resultDocRef);
       return getStateAfterTreeUpdate(state, documentTree);
     },
 
     DOC_REFS_COPIED: (state, action) => {
-      const { docRefs, destination } = action.payload;
+      const { destination, bulkActionResult } = action.payload;
 
-      const documentTree = copyItemsInTree(state.documentTree, docRefs, destination);
+      const documentTree = copyItemsInTree(state.documentTree, bulkActionResult.docRefs, destination);
 
       return getStateAfterTreeUpdate(state, documentTree);
     },
 
     DOC_REFS_MOVED: (state, action) => {
-      const { docRefs, destination } = action.payload;
+      const { destination, bulkActionResult } = action.payload;
 
-      const documentTree = moveItemsInTree(state.documentTree, docRefs, destination);
+      const documentTree = moveItemsInTree(state.documentTree, bulkActionResult.docRefs, destination);
 
       return getStateAfterTreeUpdate(state, documentTree);
     },
