@@ -32,43 +32,12 @@ const dropCollect = (connect, monitor) => ({
 });
 
 const enhance = compose(
-  connect(
-    ({ pipelineEditor }, { pipelineId }) => ({
-      pendingElementToDelete: pipelineEditor.pipelines[pipelineId].pendingElementToDelete,
-    }),
-    { pipelineElementDeleteRequested, pipelineElementDeleteCancelled, pipelineElementDeleted },
-  ),
+  connect((state, props) => ({}), { pipelineElementDeleteRequested }),
   DropTarget([ItemTypes.ELEMENT], dropTarget, dropCollect),
-  withProps(({
-    pipelineId,
-    isOver,
-    pendingElementToDelete,
-    pipelineElementDeleted,
-    pipelineElementDeleteCancelled,
-  }) => ({
-    onCancelDelete: () => pipelineElementDeleteCancelled(pipelineId),
-    onConfirmDelete: () => {
-      pipelineElementDeleted(pipelineId, pendingElementToDelete);
-    },
-  })),
 );
 
-const Bin = ({
-  pipelineId,
-  connectDropTarget,
-  isOver,
-  dndIsHappening,
-  onCancelDelete,
-  onConfirmDelete,
-  pendingElementToDelete,
-}) =>
+const Bin = ({ connectDropTarget, isOver, dndIsHappening }) =>
   connectDropTarget(<div>
-    <Confirm
-      open={!!pendingElementToDelete}
-      content={`Delete ${pendingElementToDelete} from pipeline?`}
-      onCancel={onCancelDelete}
-      onConfirm={onConfirmDelete}
-    />
     <Button
       circular
       disabled={!dndIsHappening}
@@ -77,9 +46,5 @@ const Bin = ({
       icon="trash"
     />
   </div>);
-
-Bin.propTypes = {
-  pipelineId: PropTypes.string.isRequired,
-};
 
 export default enhance(Bin);

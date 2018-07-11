@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 
 import { compose, lifecycle, withState, branch, renderComponent, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Loader, Form, Button, Icon } from 'semantic-ui-react';
+import { Loader, Form, Button, Icon, Confirm } from 'semantic-ui-react';
 
 import PanelGroup from 'react-panelgroup';
 
@@ -37,6 +37,9 @@ import { DocPickerModal } from '../DocExplorer';
 import { fetchPipeline, savePipeline } from './pipelineResourceClient';
 import { fetchElements, fetchElementProperties } from './elementResourceClient';
 import { withConfig } from 'startup/config';
+import { actionCreators } from './redux';
+
+const { pipelineElementDeleteCancelled, pipelineElementDeleted } = actionCreators;
 
 const HORIZONTAL_SPACING = 150;
 const VERTICAL_SPACING = 70;
@@ -62,6 +65,8 @@ const enhance = compose(
       fetchElements,
       fetchElementProperties,
       savePipeline,
+      pipelineElementDeleteCancelled,
+      pipelineElementDeleted,
     },
   ),
   lifecycle({
@@ -89,7 +94,14 @@ const enhance = compose(
   ),
   withPaletteOpen,
   withElementDetailsOpen,
-  withProps(({ pipeline, setPaletteOpen, isPaletteOpen }) => ({
+  withProps(({
+    pipelineId,
+    pipeline,
+    setPaletteOpen,
+    isPaletteOpen,
+    pipelineElementDeleteCancelled,
+    pipelineElementDeleted,
+  }) => ({
     elementStyles: mapObject(getPipelineLayoutInformation(pipeline.asTree), (l) => {
       const index = l.verticalPos - 1;
       const fromTop = VERTICAL_START_PX + index * VERTICAL_SPACING;
@@ -103,7 +115,12 @@ const enhance = compose(
     }),
     isDirty: pipeline.isDirty,
     isSaving: pipeline.isSaving,
+    pendingElementToDelete: pipeline.pendingElementToDelete,
     togglePaletteOpen: () => setPaletteOpen(!isPaletteOpen),
+    onCancelDelete: () => pipelineElementDeleteCancelled(pipelineId),
+    onConfirmDelete: () => {
+      pipelineElementDeleted(pipelineId, pipeline.pendingElementToDelete);
+    },
   })),
 );
 
@@ -119,6 +136,9 @@ const PipelineEditor = ({
   savePipeline,
   isDirty,
   isSaving,
+  pendingElementToDelete,
+  onCancelDelete,
+  onConfirmDelete,
 }) => {
   const settingsPanelSize = isElementDetailsOpen ? '50%' : 0;
   const panelSizes = [
@@ -130,6 +150,12 @@ const PipelineEditor = ({
   ];
   return (
     <div className={`Pipeline-editor Pipeline-editor--palette-${isPaletteOpen ? 'open' : 'close'}`}>
+      <Confirm
+        open={!!pendingElementToDelete}
+        content={`Delete ${pendingElementToDelete} from pipeline?`}
+        onCancel={onCancelDelete}
+        onConfirm={onConfirmDelete}
+      />
       <div className="Pipeline-editor__element-palette">
         <ElementPalette pipelineId={pipelineId} />
       </div>
@@ -141,17 +167,19 @@ const PipelineEditor = ({
       <PanelGroup direction="column" className="Pipeline-editor__content" panelWidths={panelSizes}>
         <div className="Pipeline-editor__topPanel">
           <div className="Pipeline-editor__top-bar">
-            <Button
-              icon
-              disabled={!isDirty}
-              color="blue"
-              size='huge'
-              circular
-              onClick={() => savePipeline(pipelineId)}
-            >
-              {isSaving ? <Loader size="small" active inline /> : <Icon name="save" />}
-            </Button>
-            <Bin pipelineId={pipelineId} />
+            <div>
+              <Button
+                icon
+                disabled={!isDirty}
+                color="blue"
+                size="huge"
+                circular
+                onClick={() => savePipeline(pipelineId)}
+              >
+                {isSaving ? <Loader size="small" active inline /> : <Icon name="save" />}
+              </Button>
+            </div>
+            <Bin />
             <Form>
               <Form.Field>
                 <label>Parent Pipeline</label>
