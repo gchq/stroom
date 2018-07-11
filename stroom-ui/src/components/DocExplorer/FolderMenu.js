@@ -19,11 +19,11 @@ import PropTypes from 'prop-types';
 import { withState, compose } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Dropdown, Icon, Confirm } from 'semantic-ui-react';
+import { Dropdown, Icon } from 'semantic-ui-react';
 
 import { actionCreators } from './redux/explorerTreeReducer';
 
-const { folderOpenToggled, docRefDeleted } = actionCreators;
+const { folderOpenToggled, docRefsDeleted } = actionCreators;
 
 const withPendingDeletion = withState('pendingDeletion', 'setPendingDeletion', false);
 
@@ -34,7 +34,7 @@ const enhance = compose(
     }),
     {
       folderOpenToggled,
-      docRefDeleted,
+      docRefsDeleted,
     },
   ),
   withPendingDeletion,
@@ -47,19 +47,10 @@ const FolderMenu = ({
   pendingDeletion,
   setPendingDeletion,
   folderOpenToggled,
-  docRefDeleted,
+  docRefsDeleted,
   closeContextMenu,
 }) => (
   <span>
-    <Confirm
-      open={!!pendingDeletion}
-      content="This will delete the doc ref, are you sure?"
-      onCancel={() => setPendingDeletion(false)}
-      onConfirm={() => {
-        docRefDeleted(explorerId, docRef);
-        setPendingDeletion(false);
-      }}
-    />
     <Dropdown inline icon={null} open={isOpen} onClose={() => closeContextMenu()}>
       <Dropdown.Menu>
         <Dropdown.Item
@@ -70,10 +61,6 @@ const FolderMenu = ({
         >
           <Icon name="folder" />
           Open
-        </Dropdown.Item>
-        <Dropdown.Item onClick={() => setPendingDeletion(true)}>
-          <Icon name="trash" />
-          Delete
         </Dropdown.Item>
       </Dropdown.Menu>
     </Dropdown>

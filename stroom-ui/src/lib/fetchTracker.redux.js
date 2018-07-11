@@ -135,15 +135,18 @@ export const wrappedGet = (dispatch, state, url, successCallback, options) => {
 export const wrappedFetchWithBody = (dispatch, state, url, successCallback, options) => {
   const jwsToken = state.authentication.idToken;
 
+  let headers = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${jwsToken}`,
+    ...(options ? options.headers : {}),
+  }
+  console.log('Fetch Headers', headers);
+
   fetch(url, {
     mode: 'cors',
     ...options,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${jwsToken}`,
-      ...(options ? options.headers : {}),
-    },
+    headers,
   })
     .then(handleStatus)
     .then((response) => {

@@ -16,31 +16,61 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose } from 'recompose';
+import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
 
 import { Modal, Button } from 'semantic-ui-react';
 
 import { actionCreators } from './redux';
+import { copyDocuments } from './explorerClient';
+
 import DocPicker from './DocPicker/DocPicker';
 import PermissionInheritancePicker from './PermissionInheritancePicker';
 
 const { completeDocRefCopy } = actionCreators;
 
-const enhance = compose(connect(
-  (state, props) => ({
-    isCopying: state.docExplorer.copyDocRef.isCopying,
-    docRefs: state.docExplorer.copyDocRef.docRefs,
-  }),
-  { completeDocRefCopy },
-));
+const enhance = compose(
+  withProps(({ explorerId }) => ({
+    explorerId: `copy-doc-ref-${explorerId}`,
+  })),
+  connect(
+    ({ docExplorer }, { explorerId }) => {
+      let selectedDocRef;
+      const explorer = docExplorer.explorerTree.explorers[explorerId];
+      if (explorer) {
+        const s = Object.entries(explorer.isSelected)
+          .filter(k => k[1])
+          .map(k => ({ uuid: k[0] }));
+        if (s.length > 0) {
+          selectedDocRef = s[0];
+        }
+      }
 
-const CopyDocRefDialog = ({ explorerId, isCopying, docRefs, completeDocRefCopy }) => (
+      return {
+        isCopying: docExplorer.copyDocRef.isCopying,
+        docRefs: docExplorer.copyDocRef.docRefs,
+        permissionInheritance: docExplorer.permissionInheritancePicker[explorerId],
+        selectedDocRef,
+      };
+    },
+    { completeDocRefCopy, copyDocuments },
+  ),
+);
+
+const CopyDocRefDialog = ({
+  explorerId,
+  isCopying,
+  docRefs,
+  completeDocRefCopy,
+  copyDocuments,
+  selectedDocRef,
+  permissionInheritance,
+}) => (
   <Modal open={isCopying}>
     <Modal.Header>Select a Destination Folder for the Copy</Modal.Header>
     <Modal.Content scrolling>
-      <DocPicker explorerId={`copy-doc-ref-${explorerId}`} typeFilter="Folder" foldersOnly />
-      <PermissionInheritancePicker pickerId="copy-doc-ref" />
+      <DocPicker explorerId={explorerId} typeFilter="Folder" foldersOnly />
+      <PermissionInheritancePicker pickerId={explorerId} />
     </Modal.Content>
     <Modal.Actions>
       <Button negative onClick={completeDocRefCopy}>
@@ -48,7 +78,7 @@ const CopyDocRefDialog = ({ explorerId, isCopying, docRefs, completeDocRefCopy }
       </Button>
       <Button
         positive
-        onClick={() => console.log('Please implement me copy dialog')}
+        onClick={() => copyDocuments(docRefs, selectedDocRef, permissionInheritance)}
         labelPosition="right"
         icon="checkmark"
         content="Choose"
@@ -58,7 +88,7 @@ const CopyDocRefDialog = ({ explorerId, isCopying, docRefs, completeDocRefCopy }
 );
 
 CopyDocRefDialog.propTypes = {
-  explorerId: PropTypes.string.isRequired
-}
+  explorerId: PropTypes.string.isRequired,
+};
 
 export default enhance(CopyDocRefDialog);

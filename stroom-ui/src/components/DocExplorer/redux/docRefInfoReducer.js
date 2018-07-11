@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { createActions, combineActions, handleActions } from 'redux-actions';
+import { createActions, handleActions } from 'redux-actions';
 
 const actionCreators = createActions({
   DOC_REF_INFO_RECEIVED: docRefInfo => ({ docRefInfo }),
@@ -21,13 +21,12 @@ const actionCreators = createActions({
   DOC_REF_INFO_CLOSED: () => ({}),
 });
 
-const { prepareDocRefDelete, completeDocRefDelete } = actionCreators;
-
 // The state will contain the current doc ref for which information is being shown,
 // plus a map of all the infos retrieved thus far, keyed on their UUID
 const defaultState = {
   isOpen: false,
   docRefInfo: undefined,
+  docRefInfoCache: {}, // keyed on UUID
 };
 
 const reducer = handleActions(
@@ -35,10 +34,14 @@ const reducer = handleActions(
     DOC_REF_INFO_RECEIVED: (state, { payload: { docRefInfo } }) => ({
       ...state,
       docRefInfo,
+      docRefInfoCache: {
+        ...state.docRefInfoCache,
+        [docRefInfo.docRef.uuid]: docRefInfo,
+      },
     }),
     DOC_REF_INFO_OPENED: (state, { payload: { docRef } }) => ({
       isOpen: true,
-      docRefInfo: undefined,
+      docRefInfo: state.docRefInfoCache[docRef.uuid],
     }),
     DOC_REF_INFO_CLOSED: (state, action) => ({
       ...state,

@@ -3,7 +3,6 @@ package stroom.explorer;
 import io.swagger.annotations.Api;
 import stroom.docref.DocRef;
 import stroom.entity.shared.PermissionInheritance;
-import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
@@ -22,28 +21,18 @@ import java.util.stream.Collectors;
         value = "explorer - /v1",
         description = "Stroom Explorer API")
 @Path("/explorer/v1")
-@Produces(MediaType.APPLICATION_JSON)
 public class ExplorerResource {
     private final ExplorerService explorerService;
-    private final ExplorerNodeService explorerNodeService;
     private final ExplorerTreeModel explorerTreeModel;
-    private final ExplorerActionHandlers explorerActionHandlers;
     private final SecurityContext securityContext;
-    private final ExplorerEventLog explorerEventLog;
 
     @Inject
     public ExplorerResource(final ExplorerService explorerService,
-                            final ExplorerNodeService explorerNodeService,
                             final ExplorerTreeModel explorerTreeModel,
-                            final ExplorerActionHandlers explorerActionHandlers,
-                            final SecurityContext securityContext,
-                            final ExplorerEventLog explorerEventLog) {
+                            final SecurityContext securityContext) {
         this.explorerService = explorerService;
-        this.explorerNodeService = explorerNodeService;
         this.explorerTreeModel = explorerTreeModel;
-        this.explorerActionHandlers = explorerActionHandlers;
         this.securityContext = securityContext;
-        this.explorerEventLog = explorerEventLog;
     }
 
     @GET
@@ -95,45 +84,118 @@ public class ExplorerResource {
         return Response.ok(docRefTypes).build();
     }
 
+    static class CopyOp {
+        private List<DocRef> docRefs;
+        private DocRef destinationFolderRef;
+        private PermissionInheritance permissionInheritance;
+
+        public List<DocRef> getDocRefs() {
+            return docRefs;
+        }
+
+        public void setDocRefs(List<DocRef> docRefs) {
+            this.docRefs = docRefs;
+        }
+
+        public DocRef getDestinationFolderRef() {
+            return destinationFolderRef;
+        }
+
+        public void setDestinationFolderRef(DocRef destinationFolderRef) {
+            this.destinationFolderRef = destinationFolderRef;
+        }
+
+        public PermissionInheritance getPermissionInheritance() {
+            return permissionInheritance;
+        }
+
+        public void setPermissionInheritance(PermissionInheritance permissionInheritance) {
+            this.permissionInheritance = permissionInheritance;
+        }
+    }
+
     @POST
     @Path("/copy")
-    public Response copyDocument(@FormParam("docRefs") final List<DocRef> docRefs,
-                                 @FormParam("destinationFolderRef") final DocRef destinationFolderRef,
-                                 @FormParam("permissionInheritance") final PermissionInheritance permissionInheritance) {
-        explorerService.copy(docRefs, destinationFolderRef, permissionInheritance);
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response copyDocument(final CopyOp op) {
+        explorerService.copy(op.docRefs, op.destinationFolderRef, op.permissionInheritance);
 
         return Response.ok().build();
     }
 
-    /**
-     * Move a set of doc refs to another folder.
-     *
-     * @param docRefs The doc refs to move
-     *
-     * @return HTTP 204 if it works.
-     */
+    static class MoveOp {
+        private List<DocRef> docRefs;
+        private DocRef destinationFolderRef;
+        private PermissionInheritance permissionInheritance;
+
+        public List<DocRef> getDocRefs() {
+            return docRefs;
+        }
+
+        public void setDocRefs(List<DocRef> docRefs) {
+            this.docRefs = docRefs;
+        }
+
+        public DocRef getDestinationFolderRef() {
+            return destinationFolderRef;
+        }
+
+        public void setDestinationFolderRef(DocRef destinationFolderRef) {
+            this.destinationFolderRef = destinationFolderRef;
+        }
+
+        public PermissionInheritance getPermissionInheritance() {
+            return permissionInheritance;
+        }
+
+        public void setPermissionInheritance(PermissionInheritance permissionInheritance) {
+            this.permissionInheritance = permissionInheritance;
+        }
+    }
+
     @PUT
     @Path("/move")
-    public Response moveDocument(@FormParam("docRefs") final List<DocRef> docRefs,
-                                 @FormParam("destinationFolderRef") final DocRef destinationFolderRef,
-                                 @FormParam("permissionInheritance") final PermissionInheritance permissionInheritance) {
-        explorerService.move(docRefs, destinationFolderRef, permissionInheritance);
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response moveDocument(final MoveOp op) {
+        explorerService.move(op.docRefs, op.destinationFolderRef, op.permissionInheritance);
 
         return Response.ok().build();
+    }
+
+    static class RenameOp {
+        private DocRef docRef;
+        private String name;
+
+        public DocRef getDocRef() {
+            return docRef;
+        }
+
+        public void setDocRef(DocRef docRef) {
+            this.docRef = docRef;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
     }
 
     @PUT
     @Path("/rename")
-    public Response renameDocument(@FormParam("docRef") final DocRef docRef,
-                                   @FormParam("name") final String name) {
-        explorerService.rename(docRef, name);
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response renameDocument(final RenameOp renameOp) {
+        explorerService.rename(renameOp.docRef, renameOp.name);
 
         return Response.ok().build();
     }
 
     @DELETE
     @Path("/delete")
-    public Response deleteDocument(@FormParam("docRefs") final List<DocRef> docRefs) {
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response deleteDocument(final List<DocRef> docRefs) {
         explorerService.delete(docRefs);
 
         return Response.ok().build();

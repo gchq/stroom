@@ -17,10 +17,12 @@ import { createActions, handleActions } from 'redux-actions';
 import * as JsSearch from 'js-search';
 
 import {
-  moveItemInTree,
+  moveItemsInTree,
+  copyItemsInTree,
   iterateNodes,
   getIsInFilteredMap,
-  deleteItemFromTree,
+  deleteItemsFromTree,
+  updateItemInTree,
 } from 'lib/treeUtils';
 
 const OPEN_STATES = {
@@ -63,11 +65,6 @@ export const actionCreators = createActions({
     allowDragAndDrop,
     typeFilter,
   }),
-  MOVE_EXPLORER_ITEM: (explorerId, itemToMove, destination) => ({
-    explorerId,
-    itemToMove,
-    destination,
-  }),
   FOLDER_OPEN_TOGGLED: (explorerId, docRef) => ({
     explorerId,
     docRef,
@@ -80,9 +77,20 @@ export const actionCreators = createActions({
     explorerId,
     docRef,
   }),
-  DOC_REF_DELETED: (explorerId, docRef) => ({
-    explorerId,
+  DOC_REFS_MOVED: (docRefs, destination) => ({
+    docRefs,
+    destination,
+  }),
+  DOC_REFS_COPIED: (docRefs, destination) => ({
+    docRefs,
+    destination,
+  }),
+  DOC_REFS_DELETED: (docRefs) => ({
+    docRefs,
+  }),
+  DOC_REF_RENAMED: (docRef, name) => ({
     docRef,
+    name,
   }),
 });
 
@@ -104,7 +112,7 @@ const defaultState = {
   allowMultiSelect: true,
   allowDragAndDrop: true,
   isTreeReady: false,
-  isDocRefTypeListReady: false
+  isDocRefTypeListReady: false,
 };
 
 function getIsValidFilterTerm(filterTerm) {
@@ -276,15 +284,6 @@ export const reducer = handleActions(
       };
     },
 
-    // Move Item in Explorer Tree
-    MOVE_EXPLORER_ITEM: (state, action) => {
-      const { itemToMove, destination } = action.payload;
-
-      const documentTree = moveItemInTree(state.documentTree, itemToMove, destination);
-
-      return getStateAfterTreeUpdate(state, documentTree);
-    },
-
     // Folder Open Toggle
     FOLDER_OPEN_TOGGLED: (state, action) => {
       const { explorerId, docRef } = action.payload;
@@ -358,13 +357,38 @@ export const reducer = handleActions(
     },
 
     // Confirm Delete Doc Ref
-    DOC_REF_DELETED: (state, action) => {
-      const { docRef } = action.payload;
+    DOC_REFS_DELETED: (state, action) => {
+      const { docRefs } = action.payload;
 
-      const documentTree = deleteItemFromTree(state.documentTree, docRef.uuid);
+      const documentTree = deleteItemsFromTree(state.documentTree, docRefs.map(d => d.uuid));
 
       return getStateAfterTreeUpdate(state, documentTree);
     },
+
+    DOC_REF_RENAMED: (state, action) => {
+      const { docRef, name } = action.payload;
+
+      const documentTree = updateItemInTree(state.documentTree, docRef.uuid, {
+        name,
+      });
+      return getStateAfterTreeUpdate(state, documentTree);
+    },
+
+    DOC_REFS_COPIED: (state, action) => {
+      const { docRefs, destination } = action.payload;
+
+      const documentTree = copyItemsInTree(state.documentTree, docRefs, destination);
+
+      return getStateAfterTreeUpdate(state, documentTree);
+    },
+
+    DOC_REFS_MOVED: (state, action) => {
+      const { docRefs, destination } = action.payload;
+
+      const documentTree = moveItemsInTree(state.documentTree, docRefs, destination);
+
+      return getStateAfterTreeUpdate(state, documentTree);
+    }
   },
   defaultState,
 );
