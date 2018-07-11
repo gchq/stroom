@@ -20,7 +20,8 @@ import {
   reinstateElementToPipeline,
   removeElementFromPipeline,
   getAllChildren,
-  setElementPropertyValueInPipeline
+  setElementPropertyValueInPipeline,
+  getParentProperty
 } from '../pipelineUtils';
 
 import {
@@ -373,6 +374,36 @@ describe('Pipeline Utils', () => {
           to: 'streamAppender',
         },
       ]));
+    });
+  });
+
+  describe('#getParentProperty', () => {
+    test('shouldn\'t find anything because there\'s no parent', () => {
+      // Given
+      const pipeline = testPipelines.noParent;
+      // When
+      const parentProperty = getParentProperty(pipeline.configStack, 'xsltFilter', 'xsltNamePattern');
+
+      // Then
+      expect(parentProperty).toBe(undefined);
+    });
+
+    test('shouldn\'t find anything because there\'s nothing in the parent', () => {
+      // Given
+      const pipeline = testPipelines.parentNoProperty;
+      // When
+      const parentProperty = getParentProperty(pipeline.configStack, 'type', 'xsltNamePattern');
+      // Then
+      expect(parentProperty).toBe(undefined);
+    });
+    test('should not find anything because there\'s no parent', () => {
+      // Given
+      const pipeline = testPipelines.parentWithProperty;
+      // When
+      const parentProperty = getParentProperty(pipeline.configStack, 'xsltFilter', 'type');
+      // Then
+      console.log({parentProperty})
+      expect(parentProperty).toBe(undefined);
     });
   });
 });

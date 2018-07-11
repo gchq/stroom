@@ -55,11 +55,12 @@ const enhance = compose(
 const ElementDetails = ({
   pipelineId, pipeline, selectedElementId, elements, onClose,
 }) => {
+  // These next few lines involve extracting the relevant properties from the pipeline.
+  // The types of the properties and their values are in different places.
   const element = pipeline.pipeline.merged.elements.add.find(element => element.id === selectedElementId);
   const elementProperties = pipeline.pipeline.merged.properties.add.filter(property => property.element === selectedElementId);
   const elementType = elements.elements.find(e => e.type === element.type);
   const elementTypeProperties = elements.elementProperties[element.type];
-
   const sortedElementTypeProperties = Object.values(elementTypeProperties).sort((a, b) => a.displayPriority > b.displayPriority);
 
   const title = (

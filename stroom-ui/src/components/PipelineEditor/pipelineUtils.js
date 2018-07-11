@@ -493,3 +493,33 @@ export function getAllChildren(pipeline, parent) {
 
   return allChildren;
 }
+
+
+/**
+ * Looks through the parents in the stack until it finds the first time this property has been set.
+ * It'll return that value but if it's never been set it'll return undefined.
+ * 
+ * @param {pipeline} pipeline The pipeline 
+ * @param {string} elementId The elementId of the
+ * @param {string} propertyName The name of the property to search for
+ */
+export function getParentProperty(stack, elementId, propertyName) {
+  const getFromParent = (index) =>{
+    console.log({index})
+    const property = stack[index].properties.add.find(element => element.element === elementId && element.name === propertyName);
+    console.log({property})
+    if(property !== undefined){
+      // We return the first matching property we find.
+      return property;
+    } else {
+      // If we haven't found one we might need to continue looking up the stack
+      if( index -1 >= 0){
+        return getFromParent(index - 1)
+      }
+      else return undefined;
+    }
+  }
+
+  if(stack.length < 2) return undefined;
+  else return getFromParent(stack.length - 2);
+}
