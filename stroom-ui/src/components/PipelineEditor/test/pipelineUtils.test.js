@@ -20,6 +20,7 @@ import {
   reinstateElementToPipeline,
   removeElementFromPipeline,
   getAllChildren,
+  setElementPropertyValueInPipeline
 } from '../pipelineUtils';
 
 import {
@@ -144,6 +145,67 @@ describe('Pipeline Utils', () => {
       expect(updatedPipeline.merged.links.add).toEqual(arrayContainingLink);
     });
   });
+
+  describe('#setElementPropertyValueInPipeline', () => {
+
+    test('should update a property on an element in the config stack', () => {
+      // Given
+      const testPipeline = Object.assign(testPipelines.simple, {});
+      const elementName = 'xsltFilter'
+      const propertyName = 'xslt'
+      const propertyType = 'entity'
+      const propertyValue = {
+        type: 'some type',
+        uuid: 'some uuid',
+        name: 'some name',
+      }
+
+      // When
+      const updatedPipeline = setElementPropertyValueInPipeline(
+        testPipeline,
+        elementName,
+        propertyName,
+        propertyType,
+        propertyValue,
+      );
+
+      // Then
+      const add = updatedPipeline.configStack[0].properties.add;
+      expect(add.length).toEqual(2);
+      const newProperty = add[1];
+      expect(newProperty.element).toEqual(elementName);
+      expect(newProperty.name).toEqual(propertyName);
+      expect(newProperty.value.entity).toEqual(propertyValue);
+    });
+
+    test('should add a property to an element in the config stack', () => {
+      // Given
+      const testPipeline = Object.assign(testPipelines.simple, {});
+      const elementName = 'xsltFilter'
+      const propertyName = 'xsltNamePattern'
+      const propertyType = 'string'
+      const propertyValue = 'New value'
+
+      // When
+      const updatedPipeline = setElementPropertyValueInPipeline(
+        testPipeline,
+        elementName,
+        propertyName,
+        propertyType,
+        propertyValue,
+      );
+
+      // Then
+      const add = updatedPipeline.configStack[0].properties.add;
+      expect(add.length).toEqual(3);
+      const newProperty = add[2];
+      expect(newProperty.element).toEqual(elementName);
+      expect(newProperty.name).toEqual(propertyName);
+      expect(newProperty.value.string).toEqual(propertyValue);
+    });
+  });
+
+
 
   describe('#reinstateElementToPipeline', () => {
     test('it should restore an element and add a link to the correct parent', () => {

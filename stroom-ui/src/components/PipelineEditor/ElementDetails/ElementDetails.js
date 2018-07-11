@@ -55,8 +55,11 @@ const enhance = compose(
 const ElementDetails = ({
   pipelineId, pipeline, selectedElementId, elements, onClose,
 }) => {
-  const element = pipeline.pipeline.merged.elements.add.find(element => element.id === selectedElementId);
-  const elementProperties = pipeline.pipeline.merged.properties.add.filter(property => property.element === selectedElementId);
+  const config = pipeline.pipeline.configStack[pipeline.pipeline.configStack.length - 1];
+  const element = config.elements.add.find(element => element.id === selectedElementId);
+  // TODO:  this doesn't work when elements are spread out over a config stack
+  // const element = pipeline.pipeline.merged.elements.add.find(element => element.id === selectedElementId);
+  const elementProperties = config.properties.add.filter(property => property.element === selectedElementId);
   const elementType = elements.elements.find(e => e.type === element.type);
   const elementTypeProperties = elements.elementProperties[element.type];
 
@@ -82,19 +85,26 @@ const ElementDetails = ({
         {Object.keys(elementTypeProperties).length === 0 ? (
           <p>There is nothing to configure for this element </p>
         ) : (
-          sortedElementTypeProperties.map(elementTypeProperty => (
-            <ElementField
-              key={elementTypeProperty.name}
-              name={elementTypeProperty.name}
-              type={elementTypeProperty.type}
-              docRefTypes={
-                elementTypeProperty.docRefTypes ? elementTypeProperty.docRefTypes : undefined
-              }
-              description={elementTypeProperty.description}
-              defaultValue={parseInt(elementTypeProperty.defaultValue, 10)}
-              value={elementProperties.find(element => element.name === elementTypeProperty.name)}
-            />
-          ))
+          sortedElementTypeProperties.map((elementTypeProperty) => {
+            const docRefTypes = elementTypeProperty.docRefTypes
+              ? elementTypeProperty.docRefTypes
+              : undefined;
+            const defaultValue = parseInt(elementTypeProperty.defaultValue, 10);
+            const property = elementProperties.find(element => element.name === elementTypeProperty.name);
+            return (
+              <ElementField
+                pipelineId={pipelineId}
+                elementId={element.id}
+                key={elementTypeProperty.name}
+                name={elementTypeProperty.name}
+                type={elementTypeProperty.type}
+                docRefTypes={docRefTypes}
+                description={elementTypeProperty.description}
+                defaultValue={defaultValue}
+                value={property}
+              />
+            );
+          })
         )}
       </Form>
     </React.Fragment>

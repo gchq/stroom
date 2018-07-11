@@ -243,6 +243,58 @@ export function createNewElementInPipeline(pipeline, parentId, childDefinition, 
 }
 
 /**
+ * Adds or updates a property on the element of a pipeline.
+ *
+ * @param {pipeline} pipeline The current definition of the pipeline.
+ * @param {string} element The name of the element to update.
+ * @param {string} name The name of the property on the element to update
+ * @param {string} propertyType The type of the property to update, one of boolean, entity, integer, long, or string.
+ * @param {boolean|entity|integer|long|string} propertyValue The value to add or update
+ */
+export function setElementPropertyValueInPipeline(
+  pipeline,
+  element,
+  name,
+  propertyType,
+  propertyValue,
+) {
+  const add = pipeline.configStack[pipeline.configStack.length - 1].properties.add;
+
+  // Create the 'value' property.
+  let value = {boolean: null, entity: null, integer: null, long: null, string: null}
+  value[propertyType.toLowerCase()] = propertyValue
+
+  // Get ready for splice
+  let index = add.findIndex(item => item.element === element && item.name === name);
+  let addOrReplace; // The deleteCount param for splice, i.e. 0 for insert, 1 for replace
+  const property = {
+    element,
+    name,
+    value,
+  };
+  if (index === -1) {
+    addOrReplace = 0;
+    index = add.length; // Insert at the end
+  } else {
+    addOrReplace = 1;
+  }
+
+  add.splice(index, addOrReplace, property);
+
+  return {
+    configStack: mapLastItemInArray(pipeline.configStack, stackItem => ({
+      elements: stackItem.elements,
+      links: stackItem.links,
+      properties: {
+        ...stackItem.properties,
+        add,
+      },
+    })),
+    merged: pipeline.merged
+  };
+}
+
+/**
  * Reinstates an element into the pipeline that had previously been removed.
  *
  * @param {pipeline} pipeline The current definition of the pipeline.

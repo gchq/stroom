@@ -70,6 +70,7 @@ const DocPickerModal = ({
   typeFilter,
   setIsOpen,
   explorer,
+  onChange,
 }) => {
   const value = docRef ? docRef.name : '';
 
@@ -81,6 +82,7 @@ const DocPickerModal = ({
     Object.keys(explorer.isSelected).forEach((pickedUuid) => {
       const picked = findItem(documentTree, pickedUuid);
       docRefPicked(pickerId, picked);
+      onChange(picked);
     });
 
     handleClose();
@@ -117,6 +119,7 @@ const DocPickerModal = ({
 DocPickerModal.propTypes = {
   pickerId: PropTypes.string.isRequired,
   typeFilter: PropTypes.string,
+  onChange: PropTypes.func,
 };
 
 export default enhance(DocPickerModal);
