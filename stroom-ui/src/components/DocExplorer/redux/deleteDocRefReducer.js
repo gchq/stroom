@@ -15,6 +15,10 @@
  */
 import { createActions, combineActions, handleActions } from 'redux-actions';
 
+import { actionCreators as explorerTreeActionCreators } from './explorerTreeReducer';
+
+const { docRefsDeleted } = explorerTreeActionCreators;
+
 const actionCreators = createActions({
   PREPARE_DOC_REF_DELETE: docRefs => ({ docRefs }),
   COMPLETE_DOC_REF_DELETE: () => ({ docRefs: [] }),
@@ -34,6 +38,10 @@ const reducer = handleActions(
     ) => ({
       isDeleting: docRefs.length > 0,
       docRefs,
+    }),
+    [docRefsDeleted]: (state, action) => ({
+      isDeleting: false,
+      docRefs: [],
     }),
   },
   defaultState,

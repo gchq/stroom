@@ -3,6 +3,7 @@ package stroom.explorer;
 import io.swagger.annotations.Api;
 import stroom.docref.DocRef;
 import stroom.entity.shared.PermissionInheritance;
+import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
@@ -21,6 +22,8 @@ import java.util.stream.Collectors;
         value = "explorer - /v1",
         description = "Stroom Explorer API")
 @Path("/explorer/v1")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class ExplorerResource {
     private final ExplorerService explorerService;
     private final ExplorerTreeModel explorerTreeModel;
@@ -37,7 +40,6 @@ public class ExplorerResource {
 
     @GET
     @Path("/all")
-    @Produces(MediaType.APPLICATION_JSON)
     public Response getExplorerTree() {
         // For now, just do this every time the whole tree is fetched
         explorerTreeModel.rebuild();
@@ -53,7 +55,6 @@ public class ExplorerResource {
 
     @GET
     @Path("/info/{type}/{uuid}")
-    @Produces(MediaType.APPLICATION_JSON)
     public Response getDocInfo(@PathParam("type") final String type,
                                @PathParam("uuid") final String uuid) {
         final DocRefInfo info = explorerService.info(new DocRef.Builder()
@@ -69,7 +70,6 @@ public class ExplorerResource {
      */
     @GET
     @Path("/docRefTypes")
-    @Produces(MediaType.APPLICATION_JSON)
     public Response getDocRefTypes() {
         explorerTreeModel.rebuild();
         final TreeModel treeModel = explorerTreeModel.getModel();
@@ -116,11 +116,10 @@ public class ExplorerResource {
 
     @POST
     @Path("/copy")
-    @Consumes(MediaType.APPLICATION_JSON)
     public Response copyDocument(final CopyOp op) {
-        explorerService.copy(op.docRefs, op.destinationFolderRef, op.permissionInheritance);
+        final BulkActionResult result = explorerService.copy(op.docRefs, op.destinationFolderRef, op.permissionInheritance);
 
-        return Response.ok().build();
+        return Response.ok(result).build();
     }
 
     static class MoveOp {
@@ -155,11 +154,10 @@ public class ExplorerResource {
 
     @PUT
     @Path("/move")
-    @Consumes(MediaType.APPLICATION_JSON)
     public Response moveDocument(final MoveOp op) {
-        explorerService.move(op.docRefs, op.destinationFolderRef, op.permissionInheritance);
+        final BulkActionResult result = explorerService.move(op.docRefs, op.destinationFolderRef, op.permissionInheritance);
 
-        return Response.ok().build();
+        return Response.ok(result).build();
     }
 
     static class RenameOp {
@@ -185,20 +183,18 @@ public class ExplorerResource {
 
     @PUT
     @Path("/rename")
-    @Consumes(MediaType.APPLICATION_JSON)
     public Response renameDocument(final RenameOp renameOp) {
-        explorerService.rename(renameOp.docRef, renameOp.name);
+        final DocRef result = explorerService.rename(renameOp.docRef, renameOp.name);
 
-        return Response.ok().build();
+        return Response.ok(result).build();
     }
 
     @DELETE
     @Path("/delete")
-    @Consumes(MediaType.APPLICATION_JSON)
     public Response deleteDocument(final List<DocRef> docRefs) {
-        explorerService.delete(docRefs);
+        final BulkActionResult result = explorerService.delete(docRefs);
 
-        return Response.ok().build();
+        return Response.ok(result).build();
     }
 
     private boolean filterDescendants(final ExplorerNode parent,

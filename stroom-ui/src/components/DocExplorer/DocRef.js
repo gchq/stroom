@@ -36,7 +36,7 @@ const withContextMenu = withState('isContextMenuOpen', 'setContextMenuOpen', fal
 
 const dragSource = {
   canDrag(props) {
-    return props.explorer.allowDragAndDrop;
+    return true;
   },
   beginDrag(props) {
     return {

@@ -15,6 +15,10 @@
  */
 import { createActions, combineActions, handleActions } from 'redux-actions';
 
+import { actionCreators as explorerTreeActionCreators } from './explorerTreeReducer';
+
+const { docRefsMoved } = explorerTreeActionCreators;
+
 const actionCreators = createActions({
   PREPARE_DOC_REF_MOVE: docRefs => ({ docRefs }),
   COMPLETE_DOC_REF_MOVE: () => ({ docRefs: [] }),
@@ -30,6 +34,10 @@ const reducer = handleActions(
     [combineActions(prepareDocRefMove, completeDocRefMove)]: (state, { payload: { docRefs } }) => ({
       isMoving: docRefs.length > 0,
       docRefs,
+    }),
+    [docRefsMoved]: (state, action) => ({
+      isMoving: false,
+      docRefs: [],
     }),
   },
   defaultState,

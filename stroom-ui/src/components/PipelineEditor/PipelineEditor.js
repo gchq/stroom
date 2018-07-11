@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 
 import { compose, lifecycle, withState, branch, renderComponent, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Loader, Form, Button, Icon, Confirm } from 'semantic-ui-react';
+import { Form, Button, Icon, Confirm, Loader } from 'semantic-ui-react';
 
 import PanelGroup from 'react-panelgroup';
 
@@ -169,21 +169,20 @@ const PipelineEditor = ({
           <div className="Pipeline-editor__top-bar">
             <div>
               <Button
-                icon
+                icon='save'
+                loading={isSaving}
                 disabled={!isDirty}
                 color="blue"
                 size="huge"
                 circular
                 onClick={() => savePipeline(pipelineId)}
-              >
-                {isSaving ? <Loader size="small" active inline /> : <Icon name="save" />}
-              </Button>
+              />
             </div>
             <Bin />
             <Form>
               <Form.Field>
                 <label>Parent Pipeline</label>
-                <DocPickerModal pickerId={pipelineId} typeFilter="Pipeline" />
+                <DocPickerModal pickerId={pipelineId} typeFilters={["Pipeline"]} />
               </Form.Field>
             </Form>
           </div>

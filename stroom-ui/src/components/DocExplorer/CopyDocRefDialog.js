@@ -69,7 +69,7 @@ const CopyDocRefDialog = ({
   <Modal open={isCopying}>
     <Modal.Header>Select a Destination Folder for the Copy</Modal.Header>
     <Modal.Content scrolling>
-      <DocPicker explorerId={explorerId} typeFilter="Folder" foldersOnly />
+      <DocPicker explorerId={explorerId} typeFilters={["Folder"]} foldersOnly />
       <PermissionInheritancePicker pickerId={explorerId} />
     </Modal.Content>
     <Modal.Actions>

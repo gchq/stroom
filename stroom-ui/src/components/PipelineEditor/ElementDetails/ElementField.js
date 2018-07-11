@@ -57,9 +57,7 @@ const ElementFieldType = ({
         />
       );
     case 'DocRef':
-      // TODO potential bug: I'm not sure why elementTypeProperties have multiple
-      // docRefTypes, but we can only use one so we'll choose the first.
-      return <DocPickerModal pickerId={getPickerName(name)} typeFilter={docRefTypes[0]} />;
+      return <DocPickerModal pickerId={getPickerName(name)} typeFilters={docRefTypes} />;
     case 'String':
     case 'PipelineReference':
       actualValue = getActualValue(value, defaultValue, 'string');

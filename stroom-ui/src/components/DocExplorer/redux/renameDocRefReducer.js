@@ -15,6 +15,10 @@
  */
 import { createActions, combineActions, handleActions } from 'redux-actions';
 
+import { actionCreators as explorerTreeActionCreators } from './explorerTreeReducer';
+
+const { docRefRenamed } = explorerTreeActionCreators;
+
 const actionCreators = createActions({
   PREPARE_DOC_REF_RENAME: docRef => ({ docRef }),
   COMPLETE_DOC_REF_RENAME: () => ({ docRef: undefined }),
@@ -34,6 +38,10 @@ const reducer = handleActions(
     ) => ({
       isRenaming: !!docRef,
       docRef,
+    }),
+    [docRefRenamed]: (state, action) => ({
+      isRenaming: false,
+      docRef: undefined,
     }),
   },
   defaultState,

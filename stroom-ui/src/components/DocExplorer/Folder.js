@@ -36,7 +36,7 @@ const withContextMenu = withState('isContextMenuOpen', 'setContextMenuOpen', fal
 
 const dragSource = {
   canDrag(props) {
-    return props.explorer.allowDragAndDrop;
+    return true;
   },
   beginDrag(props) {
     return {
@@ -54,7 +54,7 @@ function dragCollect(connect, monitor) {
 
 const dropTarget = {
   canDrop(props, monitor) {
-    return props.explorer.allowDragAndDrop && canMove(monitor.getItem(), props.folder);
+    return canMove(monitor.getItem(), props.folder);
   },
   drop(props, monitor) {
     props.moveExplorerItem(props.explorerId, monitor.getItem(), props.folder);

@@ -38,48 +38,42 @@ import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
 import 'styles/main.css';
 
-const { docRefPicked, permissionInheritancePicked, docRefInfoReceived } = actionCreators;
+const {
+  docRefPicked,
+  permissionInheritancePicked,
+  docRefInfoReceived,
+  docRefInfoOpened,
+} = actionCreators;
 
-storiesOf('Document Explorer (small testTree)', module)
+storiesOf('Document Explorer (small)', module)
   .addDecorator(PollyDecorator({ documentTree: testTree, docRefTypes: testDocRefsTypes }))
   .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator)
   .add('Explorer Tree', () => <DocExplorer explorerId="dev-server" />);
 
-storiesOf('Document Explorer (from setupSampleData)', module)
+storiesOf('Document Explorer (setupSampleData)', module)
   .addDecorator(PollyDecorator({ documentTree: fromSetupSampleData, docRefTypes: testDocRefsTypes }))
   .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator)
-  .add('Explorer Tree (multi-select, dnd)', () => <DocExplorer explorerId="multi-select-dnd" />)
-  .add('Explorer Tree (single-select, no-dnd)', () => (
-    <DocExplorer
-      explorerId="single-select-no-dnd"
-      allowMultiSelect={false}
-      allowDragAndDrop={false}
-    />
-  ))
-  .add('Explorer Tree (type filter to XSLT)', () => (
-    <DocExplorer explorerId="filtered-xslt" typeFilter="XSLT" />
-  ))
-  .add('Explorer Tree (type filter to dictionary)', () => (
-    <DocExplorer explorerId="filtered-dict" typeFilter="Dictionary" />
-  ));
+  .add('Explorer Tree', () => <DocExplorer explorerId="multi-select-dnd" />);
 
 const timeCreated = Date.now();
 
 storiesOf('Doc Ref Info Modal', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
+    const docRef = {
+      type: 'Animal',
+      name: 'Tiger',
+      uuid: '1234456789',
+    };
+    store.dispatch(docRefInfoOpened(docRef));
     store.dispatch(docRefInfoReceived({
-      docRef: {
-        type: 'Animal',
-        name: 'Tiger',
-        uuid: '1234456789'
-      },
+      docRef,
       createTime: timeCreated,
       updateTime: Date.now(),
       createUser: 'me',
       updateUser: 'you',
-      otherInfo: 'I am test data'
+      otherInfo: 'I am test data',
     }));
   }))
   .add('Doc Ref Info Modal', () => <DocRefInfoModal />);
@@ -95,10 +89,13 @@ storiesOf('Doc Ref Modal Picker', module)
   .add('Doc Ref Picker (modal, no choice made)', () => <DocPickerModal pickerId="modal1" />)
   .add('Doc Ref Picker (modal, choice made)', () => <DocPickerModal pickerId="modal2" />)
   .add('Doc Ref Picker (modal, filter to pipeline)', () => (
-    <DocPickerModal pickerId="modal3" typeFilter="Pipeline" />
+    <DocPickerModal pickerId="modal3" typeFilters={['Pipeline']} />
+  ))
+  .add('Doc Ref Picker (modal, filter to feed AND dictionary)', () => (
+    <DocPickerModal pickerId="modal4" typeFilters={['Feed', 'Dictionary']} />
   ))
   .add('Doc Ref Picker (modal, filter to folders)', () => (
-    <DocPickerModal pickerId="modal4" typeFilter="Folder" />
+    <DocPickerModal pickerId="modal5" typeFilters={['Folder']} />
   ));
 
 storiesOf('Doc Ref Picker', module)

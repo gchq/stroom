@@ -22,6 +22,7 @@ import { connect } from 'react-redux';
 import { Icon } from 'semantic-ui-react';
 
 import DocRefToPick from './DocRefToPick';
+import ClickCounter from 'lib/ClickCounter';
 
 import { actionCreators } from '../redux/explorerTreeReducer';
 
@@ -55,11 +56,19 @@ const _FolderToPick = ({
     className += ' doc-ref__selected';
   }
 
+  const clickCounter = new ClickCounter()
+    .withOnSingleClick(() => docRefSelected(explorerId, folder))
+    .withOnDoubleClick(() => folderOpenToggled(explorerId, folder));
+
   return (
     <div>
-      <span className={className}>
-        <Icon name={icon} onClick={() => folderOpenToggled(explorerId, folder)} />
-        <span onClick={() => docRefSelected(explorerId, folder)}>{folder.name}</span>
+      <span
+        className={className}
+        onClick={() => clickCounter.onSingleClick()}
+        onDoubleClick={() => clickCounter.onDoubleClick()}
+      >
+        <Icon name={icon} />
+        <span>{folder.name}</span>
       </span>
       {thisIsOpen && (
         <div className="folder__children">

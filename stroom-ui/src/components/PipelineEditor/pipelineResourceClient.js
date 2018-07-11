@@ -34,15 +34,13 @@ export const savePipeline = pipelineId => (dispatch, getState) => {
 
   dispatch(pipelineSaveRequested(pipelineId));
 
-  setTimeout(() => {
-    wrappedPost(
-      dispatch,
-      state,
-      url,
-      response => response.text().then(response => dispatch(pipelineSaved(pipelineId))),
-      {
-        body,
-      },
-    );
-  }, 2000);
+  wrappedPost(
+    dispatch,
+    state,
+    url,
+    response => response.text().then(response => dispatch(pipelineSaved(pipelineId))),
+    {
+      body,
+    },
+  );
 };

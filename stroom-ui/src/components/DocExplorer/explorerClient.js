@@ -10,10 +10,6 @@ const {
   docRefTypesReceived,
   docRefInfoOpened,
   docRefInfoReceived,
-  completeDocRefCopy,
-  completeDocRefDelete,
-  completeDocRefRename,
-  completeDocRefMove,
 } = actionCreators;
 
 const stripDocRef = docRef => ({
@@ -51,11 +47,7 @@ export const renameDocument = (docRef, name) => (dispatch, getState) => {
     dispatch,
     state,
     url,
-    response =>
-      response.text().then(() => {
-        dispatch(completeDocRefRename());
-        dispatch(docRefRenamed(docRef, name));
-      }),
+    response => response.text().then(() => dispatch(docRefRenamed(docRef, name))),
     {
       body: JSON.stringify({
         docRef: {
@@ -79,11 +71,7 @@ export const copyDocuments = (docRefs, destinationFolderRef, permissionInheritan
     dispatch,
     state,
     url,
-    response =>
-      response.text().then((r) => {
-        dispatch(completeDocRefCopy());
-        dispatch(docRefsCopied(docRefs, destinationFolderRef));
-      }),
+    response => response.text().then(r => dispatch(docRefsCopied(docRefs, destinationFolderRef))),
     {
       body: JSON.stringify({
         docRefs: docRefs.map(stripDocRef),
@@ -104,11 +92,7 @@ export const moveDocuments = (docRefs, destinationFolderRef, permissionInheritan
     dispatch,
     state,
     url,
-    response =>
-      response.text().then(() => {
-        dispatch(completeDocRefMove());
-        dispatch(docRefsMoved(docRefs, destinationFolderRef));
-      }),
+    response => response.text().then(() => dispatch(docRefsMoved(docRefs, destinationFolderRef))),
     {
       body: JSON.stringify({
         docRefs: docRefs.map(stripDocRef),
@@ -126,11 +110,7 @@ export const deleteDocuments = docRefs => (dispatch, getState) => {
     dispatch,
     state,
     url,
-    response =>
-      response.text().then(() => {
-        dispatch(completeDocRefDelete());
-        dispatch(docRefsDeleted(docRefs));
-      }),
+    response => response.text().then(() => dispatch(docRefsDeleted(docRefs))),
     {
       method: 'delete',
       body: JSON.stringify(docRefs.map(stripDocRef)),

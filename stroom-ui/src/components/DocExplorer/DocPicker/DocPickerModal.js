@@ -49,8 +49,8 @@ const enhance = compose(
   ),
   lifecycle({
     componentDidMount() {
-      const { docExplorerOpened, pickerId, typeFilter } = this.props;
-      docExplorerOpened(pickerId, false, false, typeFilter);
+      const { docExplorerOpened, pickerId, typeFilters } = this.props;
+      docExplorerOpened(pickerId, false, false, typeFilters);
     },
   }),
   withModal,
@@ -67,7 +67,7 @@ const DocPickerModal = ({
   docRef,
   isOpen,
   pickerId,
-  typeFilter,
+  typeFilters,
   setIsOpen,
   explorer,
 }) => {
@@ -96,7 +96,7 @@ const DocPickerModal = ({
     >
       <Modal.Header>Select a Doc Ref</Modal.Header>
       <Modal.Content scrolling>
-        <DocPicker explorerId={pickerId} typeFilter={typeFilter} />
+        <DocPicker explorerId={pickerId} typeFilters={typeFilters} />
       </Modal.Content>
       <Modal.Actions>
         <Button negative onClick={handleClose}>
@@ -116,7 +116,7 @@ const DocPickerModal = ({
 
 DocPickerModal.propTypes = {
   pickerId: PropTypes.string.isRequired,
-  typeFilter: PropTypes.string,
+  typeFilters: PropTypes.array,
 };
 
 export default enhance(DocPickerModal);
