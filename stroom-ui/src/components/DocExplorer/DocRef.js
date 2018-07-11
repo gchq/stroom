@@ -27,6 +27,7 @@ import { actionCreators as contentTabActionCreators } from 'sections/AppChrome/r
 import { TabTypes } from 'sections/AppChrome/TabTypes';
 
 import DocRefMenu from './DocRefMenu';
+import ClickCounter from 'lib/ClickCounter';
 
 const { docRefSelected } = docExplorerActionCreators;
 const { tabOpened } = contentTabActionCreators;
@@ -81,24 +82,9 @@ const DocRef = ({
   isDragging,
 }) => {
   // these are required to tell the difference between single/double clicks
-  let timer = 0;
-  const delay = 200;
-  let prevent = false;
-
-  const onSingleClick = () => {
-    timer = setTimeout(() => {
-      if (!prevent) {
-        docRefSelected(explorerId, docRef);
-      }
-      prevent = false;
-    }, delay);
-  };
-
-  const onDoubleClick = () => {
-    clearTimeout(timer);
-    prevent = true;
-    tabOpened(TabTypes.DOC_REF, docRef.uuid, docRef);
-  };
+  const clickCounter = new ClickCounter()
+    .withOnSingleClick(() => docRefSelected(explorerId, docRef))
+    .withOnDoubleClick(() => tabOpened(TabTypes.DOC_REF, docRef.uuid, docRef))
 
   const onRightClick = (e) => {
     setContextMenuOpen(true);
@@ -121,8 +107,8 @@ const DocRef = ({
   return connectDragSource(<div
     className={className}
     onContextMenu={onRightClick}
-    onDoubleClick={onDoubleClick}
-    onClick={onSingleClick}
+    onDoubleClick={() => clickCounter.onDoubleClick()}
+    onClick={() => clickCounter.onSingleClick()}
   >
     <DocRefMenu
       explorerId={explorerId}

@@ -54,7 +54,7 @@ const testTree = {
           type: 'Folder',
           name: 'Stroom Elastic Example',
           children: [
-            createRandomItem('≈'),
+            createRandomItem('Dictionary'),
             createRandomItem('Pipeline'),
             createRandomItem('TextConverter'),
             createRandomItem('ElasticIndex'),
