@@ -86,14 +86,14 @@ const ElementField = ({
       );
       break;
     case 'DocRef':
-        <DocPickerModal
+        elementField = <DocPickerModal
           pickerId={getPickerName(name)}
           typeFilter={docRefTypes}
           onChange={(newValue) => {
             pipelineElementPropertyUpdated(pipelineId, elementId, name, 'entity', newValue);
           }}
         />
-      );
+      
       break;
 
     case 'String':
