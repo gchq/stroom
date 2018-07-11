@@ -258,28 +258,23 @@ export function setElementPropertyValueInPipeline(
   propertyType,
   propertyValue,
 ) {
-  const add = pipeline.configStack[pipeline.configStack.length - 1].properties.add;
 
   // Create the 'value' property.
   let value = {boolean: null, entity: null, integer: null, long: null, string: null}
   value[propertyType.toLowerCase()] = propertyValue
 
-  // Get ready for splice
-  let index = add.findIndex(item => item.element === element && item.name === name);
-  let addOrReplace; // The deleteCount param for splice, i.e. 0 for insert, 1 for replace
   const property = {
     element,
     name,
     value,
   };
-  if (index === -1) {
-    addOrReplace = 0;
-    index = add.length; // Insert at the end
-  } else {
-    addOrReplace = 1;
-  }
 
-  add.splice(index, addOrReplace, property);
+
+  const stackAdd = pipeline.configStack[pipeline.configStack.length - 1].properties.add;
+  addToProperties(stackAdd, property)
+
+  const mergeAdd = pipeline.merged.properties.add;
+  addToProperties(mergeAdd, property)
 
   return {
     configStack: mapLastItemInArray(pipeline.configStack, stackItem => ({
@@ -287,11 +282,32 @@ export function setElementPropertyValueInPipeline(
       links: stackItem.links,
       properties: {
         ...stackItem.properties,
-        add,
+        stackAdd,
       },
     })),
-    merged: pipeline.merged
+    merged: {
+      elements: pipeline.merged.elements,
+      links: pipeline.merged.links,
+      properties: {
+        ...pipeline.merged.properties,
+        add: mergeAdd,
+      }
+    }
   };
+}
+
+function addToProperties(properties, property){
+  let index = properties.findIndex(item => item.element === property.element && item.name === property.name);
+  let addOrReplace; // The deleteCount param for splice, i.e. 0 for insert, 1 for replace
+
+  if (index === -1) {
+    addOrReplace = 0;
+    index = properties.length; // Insert at the end
+  } else {
+    addOrReplace = 1;
+  }
+
+  properties.splice(index, addOrReplace, property);
 }
 
 /**

@@ -154,7 +154,7 @@ describe('Pipeline Utils', () => {
       const elementName = 'xsltFilter'
       const propertyName = 'xslt'
       const propertyType = 'entity'
-      const propertyValue = {
+      const propertyEntityValue = {
         type: 'some type',
         uuid: 'some uuid',
         name: 'some name',
@@ -166,16 +166,21 @@ describe('Pipeline Utils', () => {
         elementName,
         propertyName,
         propertyType,
-        propertyValue,
+        propertyEntityValue,
       );
 
       // Then
-      const add = updatedPipeline.configStack[0].properties.add;
-      expect(add.length).toEqual(2);
-      const newProperty = add[1];
-      expect(newProperty.element).toEqual(elementName);
-      expect(newProperty.name).toEqual(propertyName);
-      expect(newProperty.value.entity).toEqual(propertyValue);
+      const propertyValue = {
+        boolean: null,
+        entity: propertyEntityValue,
+        integer: null,
+        long: null,
+        string: null
+      }
+      const stackAdd = updatedPipeline.configStack[0].properties.add;
+      expectsForNewProperties(stackAdd, 2, elementName, propertyName, propertyValue);
+      const mergedAdd = updatedPipeline.merged.properties.add;
+      expectsForNewProperties(mergedAdd, 2, elementName, propertyName, propertyValue);
     });
 
     test('should add a property to an element in the config stack', () => {
@@ -184,7 +189,7 @@ describe('Pipeline Utils', () => {
       const elementName = 'xsltFilter'
       const propertyName = 'xsltNamePattern'
       const propertyType = 'string'
-      const propertyValue = 'New value'
+      const propertyEntityValue = 'New value'
 
       // When
       const updatedPipeline = setElementPropertyValueInPipeline(
@@ -192,16 +197,21 @@ describe('Pipeline Utils', () => {
         elementName,
         propertyName,
         propertyType,
-        propertyValue,
+        propertyEntityValue,
       );
 
       // Then
-      const add = updatedPipeline.configStack[0].properties.add;
-      expect(add.length).toEqual(3);
-      const newProperty = add[2];
-      expect(newProperty.element).toEqual(elementName);
-      expect(newProperty.name).toEqual(propertyName);
-      expect(newProperty.value.string).toEqual(propertyValue);
+      const propertyValue = {
+        boolean: null,
+        entity: null,
+        integer: null,
+        long: null,
+        string: propertyEntityValue
+      }
+      const stackAdd = updatedPipeline.configStack[0].properties.add;
+      expectsForNewProperties(stackAdd, 3, elementName, propertyName, propertyValue);
+      const mergedAdd = updatedPipeline.merged.properties.add;
+      expectsForNewProperties(mergedAdd, 3, elementName, propertyName, propertyValue);
     });
   });
 
@@ -385,4 +395,12 @@ function expectsForGetDescendants(children) {
   expect(children.includes('xmlWriter2')).toBeTruthy();
   expect(children.includes('streamAppender1')).toBeTruthy();
   expect(children.includes('streamAppender2')).toBeTruthy();
+}
+
+function expectsForNewProperties(properties, expectedSize, elementName, propertyName, propertyValue){
+  expect(properties.length).toEqual(expectedSize)
+  const property = properties.find(element => element.element === elementName && element.name == propertyName);
+  expect(property.element).toEqual(elementName);
+  expect(property.name).toEqual(propertyName);
+  expect(property.value).toEqual(propertyValue);
 }
