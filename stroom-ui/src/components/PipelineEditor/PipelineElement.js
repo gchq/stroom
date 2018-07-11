@@ -46,6 +46,7 @@ const dragSource = {
   },
   beginDrag(props) {
     return {
+      pipelineId: props.pipelineId,
       elementId: props.elementId,
       elementDefinition: props.elementDefinition,
     };

@@ -1,4 +1,4 @@
-import { createActions, handleActions } from 'redux-actions';
+import { combineActions, createActions, handleActions } from 'redux-actions';
 
 import {
   moveElementInPipeline,
@@ -13,6 +13,9 @@ const actionCreators = createActions({
   PIPELINE_RECEIVED: (pipelineId, pipeline) => ({
     pipelineId,
     pipeline,
+  }),
+  PIPELINE_SAVE_REQUESTED: pipelineId => ({
+    pipelineId,
   }),
   PIPELINE_SAVED: pipelineId => ({
     pipelineId,
@@ -33,6 +36,8 @@ const actionCreators = createActions({
     childDefinition,
     name,
   }),
+  PIPELINE_ELEMENT_DELETE_REQUESTED: (pipelineId, elementId) => ({ pipelineId, elementId }),
+  PIPELINE_ELEMENT_DELETE_CANCELLED: pipelineId => ({ pipelineId, elementId: undefined }),
   PIPELINE_ELEMENT_DELETED: (pipelineId, elementId) => ({ pipelineId, elementId }),
   PIPELINE_ELEMENT_REINSTATED: (pipelineId, parentId, recycleData) => ({
     pipelineId,
@@ -41,8 +46,14 @@ const actionCreators = createActions({
   }),
 });
 
+const { pipelineElementDeleteRequested, pipelineElementDeleteCancelled } = actionCreators;
+
 // pipelines, keyed on ID, there may be several expressions on a page
-const defaultPipelineState = {};
+const defaultPipelineState = {
+  isDirty: false,
+  isSaving: false,
+  pendingElementToDelete: undefined,
+};
 
 const updatePipeline = pipeline => ({
   pipeline,
@@ -56,7 +67,13 @@ const reducer = handleActions(
       [action.payload.pipelineId]: {
         ...defaultPipelineState,
         ...updatePipeline(action.payload.pipeline),
-        isDirty: false,
+      },
+    }),
+    PIPELINE_SAVE_REQUESTED: (state, action) => ({
+      ...state,
+      [action.payload.pipelineId]: {
+        ...state[action.payload.pipelineId],
+        isSaving: true,
       },
     }),
     PIPELINE_SAVED: (state, action) => ({
@@ -64,6 +81,7 @@ const reducer = handleActions(
       [action.payload.pipelineId]: {
         ...state[action.payload.pipelineId],
         isDirty: false,
+        isSaving: false,
       },
     }),
     PIPELINE_ELEMENT_SELECTED: (state, action) => ({
@@ -74,6 +92,16 @@ const reducer = handleActions(
         selectedElementInitialValues: action.payload.initialValues,
       },
     }),
+    [combineActions(pipelineElementDeleteRequested, pipelineElementDeleteCancelled)]: (
+      state,
+      action,
+    ) => ({
+      ...state,
+      [action.payload.pipelineId]: {
+        ...state[action.payload.pipelineId],
+        pendingElementToDelete: action.payload.elementId,
+      },
+    }),
     PIPELINE_ELEMENT_DELETED: (state, action) => ({
       ...state,
       [action.payload.pipelineId]: {
@@ -82,6 +110,7 @@ const reducer = handleActions(
           action.payload.elementId,
         )),
         isDirty: true,
+        pendingElementToDelete: undefined
       },
     }),
     PIPELINE_ELEMENT_REINSTATED: (state, action) => ({

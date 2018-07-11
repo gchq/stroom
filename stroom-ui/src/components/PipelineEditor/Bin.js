@@ -9,22 +9,19 @@ import { Confirm, Button } from 'semantic-ui-react';
 import ItemTypes from './dragDropTypes';
 import { actionCreators } from './redux';
 
-const { pipelineElementDeleted } = actionCreators;
-
-const withPendingDeletion = withState(
-  'pendingElementToDelete',
-  'setPendingElementToDelete',
-  undefined,
-);
+const {
+  pipelineElementDeleteRequested,
+  pipelineElementDeleteCancelled,
+  pipelineElementDeleted,
+} = actionCreators;
 
 const dropTarget = {
   canDrop(props, monitor) {
     return true;
   },
-  drop(props, monitor) {
-    const { elementId } = monitor.getItem();
-    const { setPendingElementToDelete } = props;
-    setPendingElementToDelete(elementId);
+  drop({ pipelineElementDeleteRequested }, monitor) {
+    const { pipelineId, elementId } = monitor.getItem();
+    pipelineElementDeleteRequested(pipelineId, elementId);
   },
 };
 
@@ -35,20 +32,23 @@ const dropCollect = (connect, monitor) => ({
 });
 
 const enhance = compose(
-  connect(state => ({}), { pipelineElementDeleted }),
-  withPendingDeletion,
+  connect(
+    ({ pipelineEditor }, { pipelineId }) => ({
+      pendingElementToDelete: pipelineEditor.pipelines[pipelineId].pendingElementToDelete,
+    }),
+    { pipelineElementDeleteRequested, pipelineElementDeleteCancelled, pipelineElementDeleted },
+  ),
   DropTarget([ItemTypes.ELEMENT], dropTarget, dropCollect),
   withProps(({
     pipelineId,
     isOver,
     pendingElementToDelete,
-    setPendingElementToDelete,
     pipelineElementDeleted,
+    pipelineElementDeleteCancelled,
   }) => ({
-    onCancelDelete: () => setPendingElementToDelete(undefined),
+    onCancelDelete: () => pipelineElementDeleteCancelled(pipelineId),
     onConfirmDelete: () => {
       pipelineElementDeleted(pipelineId, pendingElementToDelete);
-      setPendingElementToDelete(undefined);
     },
   })),
 );
@@ -70,10 +70,10 @@ const Bin = ({
       onConfirm={onConfirmDelete}
     />
     <Button
-      size="huge"
       circular
       disabled={!dndIsHappening}
       color={isOver ? 'black' : 'red'}
+      size="huge"
       icon="trash"
     />
   </div>);

@@ -16,11 +16,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { Icon } from 'semantic-ui-react';
-
 import { compose, lifecycle, withState, branch, renderComponent, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Loader, Form } from 'semantic-ui-react';
+import { Loader, Form, Button, Icon } from 'semantic-ui-react';
 
 import PanelGroup from 'react-panelgroup';
 
@@ -31,13 +29,12 @@ import { getPipelineLayoutInformation } from './pipelineUtils';
 import PipelineElement from './PipelineElement';
 import ElementPalette from './ElementPalette';
 import Bin from './Bin';
-import SavePipeline from './SavePipeline';
 
 import lineElementCreators from './pipelineLineElementCreators';
 import { ElementDetails } from './ElementDetails';
 import { DocPickerModal } from '../DocExplorer';
 
-import { fetchPipeline } from './pipelineResourceClient';
+import { fetchPipeline, savePipeline } from './pipelineResourceClient';
 import { fetchElements, fetchElementProperties } from './elementResourceClient';
 import { withConfig } from 'startup/config';
 
@@ -64,6 +61,7 @@ const enhance = compose(
       fetchPipeline,
       fetchElements,
       fetchElementProperties,
+      savePipeline,
     },
   ),
   lifecycle({
@@ -103,6 +101,8 @@ const enhance = compose(
         left: `${fromLeft}px`,
       };
     }),
+    isDirty: pipeline.isDirty,
+    isSaving: pipeline.isSaving,
     togglePaletteOpen: () => setPaletteOpen(!isPaletteOpen),
   })),
 );
@@ -117,6 +117,8 @@ const PipelineEditor = ({
   editorClassName,
   elementStyles,
   savePipeline,
+  isDirty,
+  isSaving,
 }) => {
   const settingsPanelSize = isElementDetailsOpen ? '50%' : 0;
   const panelSizes = [
@@ -139,7 +141,16 @@ const PipelineEditor = ({
       <PanelGroup direction="column" className="Pipeline-editor__content" panelWidths={panelSizes}>
         <div className="Pipeline-editor__topPanel">
           <div className="Pipeline-editor__top-bar">
-            <SavePipeline pipelineId={pipelineId} />
+            <Button
+              icon
+              disabled={!isDirty}
+              color="blue"
+              size='huge'
+              circular
+              onClick={() => savePipeline(pipelineId)}
+            >
+              {isSaving ? <Loader size="small" active inline /> : <Icon name="save" />}
+            </Button>
             <Bin pipelineId={pipelineId} />
             <Form>
               <Form.Field>
