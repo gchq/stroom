@@ -162,7 +162,7 @@ ElementField.propTypes = {
   description: PropTypes.string.isRequired,
   type: PropTypes.string.isRequired,
   docRefTypes: PropTypes.array,
-  defaultValue: PropTypes.number.isRequired,
+  defaultValue: PropTypes.string.isRequired,
   value: PropTypes.object,
   pipelineElementPropertyUpdated: PropTypes.func.isRequired,
 };

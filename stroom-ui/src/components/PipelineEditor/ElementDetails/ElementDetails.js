@@ -89,7 +89,8 @@ const ElementDetails = ({
             const docRefTypes = elementTypeProperty.docRefTypes
               ? elementTypeProperty.docRefTypes
               : undefined;
-            const defaultValue = parseInt(elementTypeProperty.defaultValue, 10);
+
+            const defaultValue = elementTypeProperty.defaultValue;
             const property = elementProperties.find(element => element.name === elementTypeProperty.name);
             return (
               <ElementField
