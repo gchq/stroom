@@ -65,7 +65,6 @@ const ElementField = ({
           checked={actualValue}
           name={name}
           onChange={(_, event) => {
-            console.log({ event });
             pipelineElementPropertyUpdated(pipelineId, elementId, name, 'boolean', event.checked);
           }}
         />
@@ -77,7 +76,6 @@ const ElementField = ({
         <NumericInput
           value={actualValue}
           onChange={(newValue) => {
-            console.log({ newValue });
             pipelineElementPropertyUpdated(pipelineId, elementId, name, 'integer', newValue);
           }}
         />
@@ -86,7 +84,6 @@ const ElementField = ({
     case 'DocRef':
       // TODO potential bug: I'm not sure why elementTypeProperties have multiple
       // docRefTypes, but we can only use one so we'll choose the first.
-      // TODO Set this value when loading
       elementField = (
         <DocPickerModal
           pickerId={getPickerName(name)}
@@ -110,7 +107,7 @@ const ElementField = ({
       );
       break;
     case 'PipelineReference':
-      // TODO
+      elementField = <div>TODO</div>;
       break;
     default:
       actualValue = getActualValue(value, defaultValue, 'string');
@@ -133,6 +130,7 @@ const ElementField = ({
         {elementField}
       </Form.Field>
       <Popup
+        hoverable
         trigger={<Icon name="question circle" color="blue" size="large" />}
         content={
           <div>

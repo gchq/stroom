@@ -282,7 +282,7 @@ export function setElementPropertyValueInPipeline(
       links: stackItem.links,
       properties: {
         ...stackItem.properties,
-        stackAdd,
+        add: stackAdd,
       },
     })),
     merged: {

@@ -55,11 +55,8 @@ const enhance = compose(
 const ElementDetails = ({
   pipelineId, pipeline, selectedElementId, elements, onClose,
 }) => {
-  const config = pipeline.pipeline.configStack[pipeline.pipeline.configStack.length - 1];
-  const element = config.elements.add.find(element => element.id === selectedElementId);
-  // TODO:  this doesn't work when elements are spread out over a config stack
-  // const element = pipeline.pipeline.merged.elements.add.find(element => element.id === selectedElementId);
-  const elementProperties = config.properties.add.filter(property => property.element === selectedElementId);
+  const element = pipeline.pipeline.merged.elements.add.find(element => element.id === selectedElementId);
+  const elementProperties = pipeline.pipeline.merged.properties.add.filter(property => property.element === selectedElementId);
   const elementType = elements.elements.find(e => e.type === element.type);
   const elementTypeProperties = elements.elementProperties[element.type];
 
