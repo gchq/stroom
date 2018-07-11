@@ -1,5 +1,6 @@
 // Enumerate the tab types that can be opened
 const TabTypes = {
+  WELCOME: -1,
   DOC_REF: 0,
   EXPLORER_TREE: 1,
   TRACKER_DASHBOARD: 2,
@@ -11,6 +12,11 @@ const TabTypes = {
 const pathPrefix = '/s';
 
 const TabTypeDisplayInfo = {
+  [TabTypes.WELCOME]: {
+    getTitle: tabData => 'Welcome',
+    path: `${pathPrefix}/welcome/`,
+    icon: 'home',
+  },
   [TabTypes.DOC_REF]: {
     getTitle: tabData => tabData.name,
     path: `${pathPrefix}/docref/`,
