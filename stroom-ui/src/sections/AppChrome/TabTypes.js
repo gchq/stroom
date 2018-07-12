@@ -3,10 +3,11 @@ const TabTypes = {
   WELCOME: -1,
   DOC_REF: 0,
   EXPLORER_TREE: 1,
-  TRACKER_DASHBOARD: 2,
-  USER_ME: 3,
-  AUTH_USERS: 4,
-  AUTH_TOKENS: 5,
+  PROCESSING: 2,
+  TRACKER_DASHBOARD: 3,
+  USER_ME: 4,
+  AUTH_USERS: 5,
+  AUTH_TOKENS: 6,
 };
 
 const pathPrefix = '/s';
@@ -26,6 +27,11 @@ const TabTypeDisplayInfo = {
     getTitle: () => 'Explorer',
     path: `${pathPrefix}/explorer`,
     icon: 'eye',
+  },
+  [TabTypes.PROCESSING]: {
+    getTitle: () => 'Processing',
+    path: `${pathPrefix}/processing`,
+    icon: 'play',
   },
   [TabTypes.TRACKER_DASHBOARD]: {
     getTitle: () => 'Trackers',

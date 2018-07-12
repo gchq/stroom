@@ -25,6 +25,7 @@ import DocRefEditor from './DocRefEditor';
 import UserSettings from 'prototypes/UserSettings';
 import IFrame from './IFrame';
 import Welcome from './Welcome';
+import Processing from 'sections/Processing';
 
 import { actionCreators as appChromeActionCreators } from './redux';
 import { actionCreators as appSearchActionCreators } from 'prototypes/AppSearch/redux';
@@ -89,6 +90,9 @@ const AppMainContent = ({
         break;
       case TabTypes.EXPLORER_TREE:
         tabContent = <DocExplorer explorerId="content-tab-tree" />;
+        break;
+      case TabTypes.PROCESSING:
+        tabContent = <Processing/>;
         break;
       case TabTypes.TRACKER_DASHBOARD:
         tabContent = <TrackerDashboard />;
