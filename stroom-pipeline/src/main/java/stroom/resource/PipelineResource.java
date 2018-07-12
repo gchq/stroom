@@ -1,10 +1,9 @@
 package stroom.resource;
 
 import com.codahale.metrics.health.HealthCheck;
+import com.google.common.base.Strings;
 import io.swagger.annotations.Api;
-import org.eclipse.jetty.http.HttpStatus;
 import stroom.docref.DocRef;
-import stroom.docstore.db.DocumentNotFoundException;
 import stroom.guice.PipelineScopeRunnable;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.factory.PipelineDataValidator;
@@ -14,14 +13,11 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.*;
 import stroom.security.Security;
 import stroom.util.HasHealthCheck;
-import stroom.util.shared.SharedList;
-import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.xml.bind.annotation.XmlElement;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -200,6 +196,51 @@ public class PipelineResource implements HasHealthCheck  {
                 .uuid(pipelineId)
                 .type(PipelineDoc.DOCUMENT_TYPE)
                 .build();
+    }
+
+    @GET
+    @Path("/")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response search(@QueryParam("offset") Integer offset,
+                           @QueryParam("pageSize") Integer pageSize,
+                           @QueryParam("filter") String filter){
+        return security.secureResult(() -> {
+            // Validate pagination params
+            if((pageSize != null && offset == null) || (pageSize == null && offset != null)){
+                return Response.status(Response.Status.BAD_REQUEST).entity("A pagination request requires both a pageSize and an offset").build();
+            }
+
+            // TODO: The below isn't very efficient because it grabs and processes on all the pipelines. Better to
+            // do paging on the database. But this sort of paging is done like this elsewhere so it's a general issue.
+            List<DocRef> pipelines = pipelineStore.list();
+            int totalPipelines = pipelines.size();
+
+            // Filter
+            if(!Strings.isNullOrEmpty(filter)) {
+                pipelines = pipelines.stream().filter(pipeline -> pipeline.getName().contains(filter)).collect(Collectors.toList());
+            }
+
+            // Sorting
+            pipelines = pipelines.stream().sorted(Comparator.comparing(DocRef::getName)).collect(Collectors.toList());
+
+            // Paging
+            if(pageSize != null && offset != null) {
+                final int fromIndex = offset * pageSize;
+                int toIndex = fromIndex + pageSize;
+                if (toIndex >= pipelines.size()) {
+                    toIndex = pipelines.size() == 0 ? 0 : pipelines.size() - 1;
+                }
+                pipelines = pipelines.subList(fromIndex, toIndex);
+            }
+
+            // Produce response
+            final List<DocRef> results = pipelines;
+            Object response = new Object() {
+                public int total = totalPipelines;
+                public List<DocRef> pipelines = results;
+            };
+            return Response.ok(response).build();
+        });
     }
 
     @GET
