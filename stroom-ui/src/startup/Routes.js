@@ -28,6 +28,7 @@ import XsltEditor from 'prototypes/XsltEditor';
 import { HandleAuthenticationResponse } from 'startup/Authentication';
 import PipelineEditor from 'components/PipelineEditor';
 import DocExplorer from 'components/DocExplorer';
+import DataViewer from 'components/DataViewer';
 import UserSettings from 'prototypes/UserSettings';
 import IFrame from 'components/IFrame';
 import Welcome from 'sections/Welcome';
@@ -102,6 +103,16 @@ const Routes = ({
         render={props => (
           <AppChrome {...props} title="Explorer" icon="eye">
             <DocExplorer explorerId="app-chrome" />
+          </AppChrome>
+        )}
+      />
+      <PrivateRoute
+        exact
+        path="/s/data"
+        referrer="/s/data"
+        render={props => (
+          <AppChrome {...props} title="Data" icon="database">
+            <DataViewer />
           </AppChrome>
         )}
       />

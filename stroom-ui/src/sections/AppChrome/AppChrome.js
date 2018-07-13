@@ -63,6 +63,11 @@ const sidebarMenuItems = [
     icon: 'eye',
   },
   {
+    title: 'Data',
+    path: `${pathPrefix}/data`,
+    icon: 'database',
+  },
+  {
     title: 'Pipelines',
     path: `${pathPrefix}/pipelines`,
     icon: 'tasks',
