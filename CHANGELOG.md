@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.4.5] - 2018-07-13
+
 * Issue **#697** : Fix for reference data sometimes failing to find the appropriate effective stream due to the incorrect use of the effective stream cache. It was incorrectly configured to use a time to idle (TTI) expiry rather than a time to live (TTL) expiry meaning that heavy use of the cache would prevent the cached effective streams being refreshed.
 
 ## [v5.4.4] - 2018-06-26
@@ -836,7 +838,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.4.4...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.4.5...HEAD
+[v5.4.5]: https://github.com/gchq/stroom/compare/v5.4.4...v5.4.5
 [v5.4.4]: https://github.com/gchq/stroom/compare/v5.4.3...v5.4.4
 [v5.4.3]: https://github.com/gchq/stroom/compare/v5.4.2...v5.4.3
 [v5.4.2]: https://github.com/gchq/stroom/compare/v5.4.1...v5.4.2
