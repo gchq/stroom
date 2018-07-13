@@ -116,7 +116,7 @@ const AppChrome = ({
       {menuItems.map(menuItem => (
         <Menu.Item
           key={menuItem.title}
-          active={menuItem.selected}
+          active={menuItem.title === title}
           name={menuItem.title}
           onClick={menuItem.onClick}
         >
@@ -130,7 +130,7 @@ const AppChrome = ({
       {menuItems.map(menuItem => (
         <Button
           key={menuItem.title}
-          active={menuItem.selected}
+          active={menuItem.title === title}
           icon={menuItem.icon}
           onClick={menuItem.onClick}
         />
