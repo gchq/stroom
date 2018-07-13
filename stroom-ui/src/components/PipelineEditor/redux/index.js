@@ -10,14 +10,21 @@ import {
   reducer as pipelineReducer,
 } from './pipelineReducer';
 
+import {
+  actionCreators as pipelineSearchActionCreators,
+  reducer as pipelineSearchReducer,
+} from './pipelineSearchReducer';
+
 const actionCreators = {
   ...elementActionCreators,
   ...pipelineActionCreators,
+  ...pipelineSearchActionCreators,
 };
 
 const reducer = combineReducers({
   elements: elementReducer,
   pipelines: pipelineReducer,
+  search: pipelineSearchReducer,
 });
 
 export { actionCreators, reducer };

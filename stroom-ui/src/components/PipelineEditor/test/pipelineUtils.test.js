@@ -20,6 +20,8 @@ import {
   reinstateElementToPipeline,
   removeElementFromPipeline,
   getAllChildren,
+  setElementPropertyValueInPipeline,
+  getParentProperty
 } from '../pipelineUtils';
 
 import {
@@ -144,6 +146,77 @@ describe('Pipeline Utils', () => {
       expect(updatedPipeline.merged.links.add).toEqual(arrayContainingLink);
     });
   });
+
+  describe('#setElementPropertyValueInPipeline', () => {
+
+    test('should update a property on an element in the config stack', () => {
+      // Given
+      const testPipeline = Object.assign(testPipelines.simple, {});
+      const elementName = 'xsltFilter'
+      const propertyName = 'xslt'
+      const propertyType = 'entity'
+      const propertyEntityValue = {
+        type: 'some type',
+        uuid: 'some uuid',
+        name: 'some name',
+      }
+
+      // When
+      const updatedPipeline = setElementPropertyValueInPipeline(
+        testPipeline,
+        elementName,
+        propertyName,
+        propertyType,
+        propertyEntityValue,
+      );
+
+      // Then
+      const propertyValue = {
+        boolean: null,
+        entity: propertyEntityValue,
+        integer: null,
+        long: null,
+        string: null
+      }
+      const stackAdd = updatedPipeline.configStack[0].properties.add;
+      expectsForNewProperties(stackAdd, 2, elementName, propertyName, propertyValue);
+      const mergedAdd = updatedPipeline.merged.properties.add;
+      expectsForNewProperties(mergedAdd, 2, elementName, propertyName, propertyValue);
+    });
+
+    test('should add a property to an element in the config stack', () => {
+      // Given
+      const testPipeline = Object.assign(testPipelines.simple, {});
+      const elementName = 'xsltFilter'
+      const propertyName = 'xsltNamePattern'
+      const propertyType = 'string'
+      const propertyEntityValue = 'New value'
+
+      // When
+      const updatedPipeline = setElementPropertyValueInPipeline(
+        testPipeline,
+        elementName,
+        propertyName,
+        propertyType,
+        propertyEntityValue,
+      );
+
+      // Then
+      const propertyValue = {
+        boolean: null,
+        entity: null,
+        integer: null,
+        long: null,
+        string: propertyEntityValue
+      }
+      const stackAdd = updatedPipeline.configStack[0].properties.add;
+      expectsForNewProperties(stackAdd, 3, elementName, propertyName, propertyValue);
+      const mergedAdd = updatedPipeline.merged.properties.add;
+      expectsForNewProperties(mergedAdd, 3, elementName, propertyName, propertyValue);
+    });
+  });
+
+
 
   describe('#reinstateElementToPipeline', () => {
     test('it should restore an element and add a link to the correct parent', () => {
@@ -303,6 +376,36 @@ describe('Pipeline Utils', () => {
       ]));
     });
   });
+
+  describe('#getParentProperty', () => {
+    test('shouldn\'t find anything because there\'s no parent', () => {
+      // Given
+      const pipeline = testPipelines.noParent;
+      // When
+      const parentProperty = getParentProperty(pipeline.configStack, 'xsltFilter', 'xsltNamePattern');
+
+      // Then
+      expect(parentProperty).toBe(undefined);
+    });
+
+    test('shouldn\'t find anything because there\'s nothing in the parent', () => {
+      // Given
+      const pipeline = testPipelines.parentNoProperty;
+      // When
+      const parentProperty = getParentProperty(pipeline.configStack, 'type', 'xsltNamePattern');
+      // Then
+      expect(parentProperty).toBe(undefined);
+    });
+    test('should not find anything because there\'s no parent', () => {
+      // Given
+      const pipeline = testPipelines.parentWithProperty;
+      // When
+      const parentProperty = getParentProperty(pipeline.configStack, 'xsltFilter', 'type');
+      // Then
+      console.log({parentProperty})
+      expect(parentProperty).toBe(undefined);
+    });
+  });
 });
 
 function expectMissing(pipeline, list, elementProperty, elementName) {
@@ -323,4 +426,12 @@ function expectsForGetDescendants(children) {
   expect(children.includes('xmlWriter2')).toBeTruthy();
   expect(children.includes('streamAppender1')).toBeTruthy();
   expect(children.includes('streamAppender2')).toBeTruthy();
+}
+
+function expectsForNewProperties(properties, expectedSize, elementName, propertyName, propertyValue){
+  expect(properties.length).toEqual(expectedSize)
+  const property = properties.find(element => element.element === elementName && element.name == propertyName);
+  expect(property.element).toEqual(elementName);
+  expect(property.name).toEqual(propertyName);
+  expect(property.value).toEqual(propertyValue);
 }

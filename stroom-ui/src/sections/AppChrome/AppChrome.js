@@ -63,6 +63,11 @@ const sidebarMenuItems = [
     icon: 'eye',
   },
   {
+    title: 'Processing',
+    path: `${pathPrefix}/processing`,
+    icon: 'play',
+  },
+  {
     title: 'Trackers',
     path: `${pathPrefix}/trackers`,
     icon: 'tasks',

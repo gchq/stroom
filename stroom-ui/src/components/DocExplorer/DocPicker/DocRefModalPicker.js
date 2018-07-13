@@ -70,6 +70,7 @@ const DocPickerModal = ({
   typeFilters,
   setIsOpen,
   explorer,
+  onChange,
 }) => {
   const value = docRef ? docRef.name : '';
 
@@ -80,7 +81,11 @@ const DocPickerModal = ({
   const onDocRefSelected = () => {
     Object.keys(explorer.isSelected).forEach((pickedUuid) => {
       const picked = findItem(documentTree, pickedUuid);
+      // The 'children' property is just for the tree. It's not part of the DocRef and we need to remove it.
+      // If left in it will get sent to the server and cause deserialisation errors.
+      delete picked.children;
       docRefPicked(pickerId, picked);
+      onChange(picked);
     });
 
     handleClose();
@@ -117,6 +122,7 @@ const DocPickerModal = ({
 DocPickerModal.propTypes = {
   pickerId: PropTypes.string.isRequired,
   typeFilters: PropTypes.array,
+  onChange: PropTypes.func,
 };
 
 export default enhance(DocPickerModal);

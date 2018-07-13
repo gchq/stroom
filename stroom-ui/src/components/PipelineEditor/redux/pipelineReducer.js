@@ -5,6 +5,7 @@ import {
   removeElementFromPipeline,
   createNewElementInPipeline,
   reinstateElementToPipeline,
+  setElementPropertyValueInPipeline,
 } from '../pipelineUtils';
 
 import { getPipelineAsTree } from '../pipelineUtils';
@@ -43,6 +44,13 @@ const actionCreators = createActions({
     pipelineId,
     parentId,
     recycleData,
+  }),
+  PIPELINE_ELEMENT_PROPERTY_UPDATED: (pipelineId, element, name, propertyType, propertyValue) => ({
+    pipelineId,
+    element,
+    name,
+    propertyType,
+    propertyValue,
   }),
 });
 
@@ -146,6 +154,20 @@ const reducer = handleActions(
           state[action.payload.pipelineId].pipeline,
           action.payload.itemToMove,
           action.payload.destination,
+        )),
+        isDirty: true,
+      },
+    }),
+    PIPELINE_ELEMENT_PROPERTY_UPDATED: (state, action) => ({
+      ...state,
+      [action.payload.pipelineId]: {
+        ...state[action.payload.pipelineId],
+        ...updatePipeline(setElementPropertyValueInPipeline(
+          state[action.payload.pipelineId].pipeline,
+          action.payload.element,
+          action.payload.name,
+          action.payload.propertyType,
+          action.payload.propertyValue,
         )),
         isDirty: true,
       },

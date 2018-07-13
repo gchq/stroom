@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
+#
 # Simple script to start and stop Stroom.
+#
+# There is a copy of this script in each release, so any changes you make at
+# deployment-time won't carry over to the next release. So if they're generally
+# applicable changes then you'll want to make them in the main stroom repo.
 
 # Exit script on any error
 set -e

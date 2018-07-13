@@ -23,6 +23,7 @@ import { connect } from 'react-redux';
 import ErrorPage from 'sections/ErrorPage';
 import TrackerDashboard from 'sections/TrackerDashboard';
 import { AppChrome } from 'sections/AppChrome';
+import Processing from 'sections/Processing';
 import XsltEditor from 'prototypes/XsltEditor';
 import { HandleAuthenticationResponse } from 'startup/Authentication';
 import PipelineEditor from 'components/PipelineEditor';
@@ -106,6 +107,16 @@ const Routes = ({
       />
       <PrivateRoute
         exact
+        path="/s/processing"
+        referrer="/s/processing"
+        render={props => (
+          <AppChrome {...props} title="Processing" icon="play">
+            <Processing />
+          </AppChrome>
+        )}
+      />
+      <PrivateRoute
+        exact
         path="/s/trackers"
         referrer="/s/trackers"
         render={props => (
@@ -143,6 +154,14 @@ const Routes = ({
             <IFrame url={authTokensUiUrl} />
           </AppChrome>
         )}
+      />
+
+      {/* TODO: this isn't going to work... */}
+      <PrivateRoute
+        exact
+        path="/s/processing/pipeline/:uuid"
+        referrer="/s/processing/pipeline/"
+        component={AppChrome}
       />
 
       {/* Direct paths -- these paths make sections accessible outside the AppChrome
