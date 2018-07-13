@@ -20,18 +20,14 @@ import { connect } from 'react-redux';
 import { Button, Header, Icon, Modal, Menu } from 'semantic-ui-react';
 
 import { actionCreators as recentItemsActionCreators } from './redux';
-import { actionCreators as appChromeActionCreators } from 'sections/AppChrome/redux';
-import { TabTypeDisplayInfo } from 'sections/AppChrome/TabTypes';
 
 const { recentItemsClosed } = recentItemsActionCreators;
-const { tabSelected } = appChromeActionCreators;
 
 const enhance = compose(connect(
   (state, props) => ({
     isOpen: state.recentItems.isOpen,
-    tabSelectionStack: state.appChrome.tabSelectionStack,
   }),
-  { recentItemsClosed, tabSelected },
+  { recentItemsClosed },
 ));
 
 const RecentItems = ({
@@ -42,7 +38,7 @@ const RecentItems = ({
     <Modal.Content>
       <Menu vertical fluid>
         {tabSelectionStack.map((tab) => {
-          const title = TabTypeDisplayInfo[tab.type].getTitle(tab.data);
+          const title = ' Work in Progress'; // TODO JOE
           return (
             <Menu.Item
               key={tab.tabId}

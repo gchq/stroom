@@ -46,14 +46,14 @@ const PrivateRoute = ({
   advertisedUrl,
   appClientId,
   authenticationServiceUrl,
-  component: Component,
+  render,
   ...rest
 }) => (
   <Route
     {...rest}
     render={props =>
       (isLoggedIn ? (
-        <Component {...props.match.params} {...props} />
+        render({...props.match.params, ...props})
       ) : (
         <AuthenticationRequest
           referrer={props.match.url}

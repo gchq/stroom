@@ -6,11 +6,8 @@ import { Button, Header, Icon, Modal, Menu, Input, Breadcrumb } from 'semantic-u
 
 import { actionCreators as appSearchActionCreators } from './redux';
 import withExplorerTree from 'components/DocExplorer/withExplorerTree';
-import { actionCreators as appChromeActionCreators } from 'sections/AppChrome/redux';
-import { TabTypes } from 'sections/AppChrome/TabTypes';
 
 const { appSearchClosed, appSearchTermUpdated } = appSearchActionCreators;
-const { tabOpened } = appChromeActionCreators;
 
 const enhance = compose(
   withExplorerTree,
@@ -20,7 +17,7 @@ const enhance = compose(
       searchTerm: state.appSearch.searchTerm,
       searchResults: state.appSearch.searchResults,
     }),
-    { appSearchClosed, appSearchTermUpdated, tabOpened },
+    { appSearchClosed, appSearchTermUpdated },
   ),
 );
 
@@ -29,7 +26,6 @@ const AppSearch = ({
   searchTerm,
   appSearchClosed,
   appSearchTermUpdated,
-  tabOpened,
   searchResults,
 }) => (
   <Modal open={isOpen} onClose={appSearchClosed} size="small" dimmer="inverted">
@@ -54,7 +50,7 @@ const AppSearch = ({
             <Menu.Item
               key={i}
               onClick={() => {
-                tabOpened(TabTypes.DOC_REF, searchResult.uuid, searchResult);
+                console.log('OPEN DOC REF'); // todo
                 appSearchClosed();
               }}
             >

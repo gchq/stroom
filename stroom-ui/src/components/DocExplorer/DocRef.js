@@ -23,14 +23,11 @@ import ItemTypes from './dragDropTypes';
 import { DragSource } from 'react-dnd';
 
 import { actionCreators as docExplorerActionCreators } from './redux/explorerTreeReducer';
-import { actionCreators as contentTabActionCreators } from 'sections/AppChrome/redux';
-import { TabTypes } from 'sections/AppChrome/TabTypes';
 
 import DocRefMenu from './DocRefMenu';
 import ClickCounter from 'lib/ClickCounter';
 
 const { docRefSelected } = docExplorerActionCreators;
-const { tabOpened } = contentTabActionCreators;
 
 const withContextMenu = withState('isContextMenuOpen', 'setContextMenuOpen', false);
 
@@ -60,7 +57,6 @@ const enhance = compose(
     }),
     {
       docRefSelected,
-      tabOpened,
     },
   ),
   withContextMenu,
@@ -73,7 +69,6 @@ const DocRef = ({
   docRef,
 
   docRefSelected,
-  tabOpened,
 
   isContextMenuOpen,
   setContextMenuOpen,
@@ -84,7 +79,7 @@ const DocRef = ({
   // these are required to tell the difference between single/double clicks
   const clickCounter = new ClickCounter()
     .withOnSingleClick(() => docRefSelected(explorerId, docRef))
-    .withOnDoubleClick(() => tabOpened(TabTypes.DOC_REF, docRef.uuid, docRef))
+    .withOnDoubleClick(() => console.log('OPEN DOC REF')) // todo
 
   const onRightClick = (e) => {
     setContextMenuOpen(true);

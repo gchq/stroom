@@ -22,8 +22,6 @@ import { connect } from 'react-redux';
 import { Dropdown, Icon } from 'semantic-ui-react';
 
 import { actionCreators as docExplorerActionCreators } from './redux';
-import { actionCreators as contentTabActionCreators } from 'sections/AppChrome/redux';
-import { TabTypes } from 'sections/AppChrome/TabTypes';
 
 import { fetchDocInfo } from './explorerClient';
 
@@ -33,14 +31,12 @@ const {
   prepareDocRefMove,
   prepareDocRefRename,
 } = docExplorerActionCreators;
-const { tabOpened } = contentTabActionCreators;
 
 const enhance = compose(connect(
   state => ({
     // state
   }),
   {
-    tabOpened,
     prepareDocRefMove,
     prepareDocRefCopy,
     prepareDocRefDelete,
@@ -53,7 +49,6 @@ const DocRefMenu = ({
   explorerId,
   docRef,
   isOpen,
-  tabOpened,
   prepareDocRefMove,
   prepareDocRefRename,
   prepareDocRefDelete,
@@ -66,7 +61,7 @@ const DocRefMenu = ({
       <Dropdown.Menu>
         <Dropdown.Item
           onClick={() => {
-            tabOpened(TabTypes.DOC_REF, docRef.uuid, docRef);
+            console.log('OPEN DOC REF'); // todo
             closeContextMenu();
           }}
         >

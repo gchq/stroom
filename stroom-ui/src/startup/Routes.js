@@ -22,11 +22,14 @@ import { connect } from 'react-redux';
 
 import ErrorPage from 'sections/ErrorPage';
 import TrackerDashboard from 'sections/TrackerDashboard';
-import { TabTypeDisplayInfo, AppChrome } from 'sections/AppChrome';
+import { AppChrome } from 'sections/AppChrome';
 import XsltEditor from 'prototypes/XsltEditor';
 import { HandleAuthenticationResponse } from 'startup/Authentication';
 import PipelineEditor from 'components/PipelineEditor';
 import DocExplorer from 'components/DocExplorer';
+import UserSettings from 'prototypes/UserSettings';
+import IFrame from 'components/IFrame';
+import Welcome from 'sections/Welcome';
 
 import PathNotFound from 'sections/PathNotFound';
 
@@ -45,6 +48,8 @@ const enhance = compose(
       appClientId: state.config.appClientId,
       authenticationServiceUrl: state.config.authenticationServiceUrl,
       authorisationServiceUrl: state.config.authorisationServiceUrl,
+      authUsersUiUrl: state.config.authUsersUiUrl,
+      authTokensUiUrl: state.config.authTokensUiUrl,
     }),
     {},
   ),
@@ -60,6 +65,8 @@ const Routes = ({
   authenticationServiceUrl,
   authorisationServiceUrl,
   advertisedUrl,
+  authUsersUiUrl,
+  authTokensUiUrl,
 }) => (
   <Router history={history} basename="/">
     <Switch>
@@ -77,18 +84,71 @@ const Routes = ({
       <Route exact path="/error" component={ErrorPage} />
 
       {/* AppChrome paths -- these paths load the relevent sections. */}
-      <PrivateRoute exact path="/" referrer="/" component={AppChrome} />
-      {Object.values(TabTypeDisplayInfo)
-        .map(t => t.path)
-        .map(path => (
-          <PrivateRoute key={path} exact path={path} referrer={path} component={AppChrome} />
-        ))}
+      <PrivateRoute
+        exact
+        path="/s/welcome"
+        referrer="/s/welcome"
+        render={props => (
+          <AppChrome {...props} title="Welcome" icon="home">
+            <Welcome />
+          </AppChrome>
+        )}
+      />
+      <PrivateRoute
+        exact
+        path="/s/docExplorer"
+        referrer="/s/docExplorer"
+        render={props => (
+          <AppChrome {...props} title="Explorer" icon="eye">
+            <DocExplorer explorerId="app-chrome" />
+          </AppChrome>
+        )}
+      />
+      <PrivateRoute
+        exact
+        path="/s/trackers"
+        referrer="/s/trackers"
+        render={props => (
+          <AppChrome {...props} title="Trackers" icon="tasks">
+            <TrackerDashboard />
+          </AppChrome>
+        )}
+      />
+      <PrivateRoute
+        exact
+        path="/s/me"
+        referrer="/s/me"
+        render={props => (
+          <AppChrome {...props} title="Me" icon="user">
+            <UserSettings />
+          </AppChrome>
+        )}
+      />
+      <PrivateRoute
+        exact
+        path="/s/users"
+        referrer="/s/users"
+        render={props => (
+          <AppChrome {...props} title="Users" icon="users">
+            <IFrame url={authUsersUiUrl} />
+          </AppChrome>
+        )}
+      />
+      <PrivateRoute
+        exact
+        path="/s/apikeys"
+        referrer="/s/apikeys"
+        render={props => (
+          <AppChrome {...props} title="API Keys" icon="key">
+            <IFrame url={authTokensUiUrl} />
+          </AppChrome>
+        )}
+      />
 
       {/* Direct paths -- these paths make sections accessible outside the AppChrome
         i.e. for when we want to embed them in Stroom. */}
       <PrivateRoute exact path="/trackers" referrer="/trackers" component={TrackerDashboard} />
       {/* TODO: What path do we want for docExplorer? */}
-      <PrivateRoute exact path="/explorerTree" referrer="/explorerTree" component={DocExplorer} />
       <PrivateRoute exact path="/docExplorer" referrer="/docExplorer" component={DocExplorer} />
 
       {/* TODO: There are no AppChrome routes for the following because the do not have

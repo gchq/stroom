@@ -15,13 +15,11 @@
  */
 import AppChrome from './AppChrome';
 
-import TabTypes, { TabTypeDisplayInfo } from './TabTypes';
-
 // NOTE: DO NOT PUBLISH 'redux' STUFF FROM HERE, YOU END WITH HORRID CIRCULAR DEPENDENCIES
 // Other parts of the app use the redux actions to open tabs
 // The Tab displaying component is dependant on everything else because it displays all other components
 // You get some nasty undefined crashes if you export redux stuff from here and import from here
 
-export { AppChrome, TabTypes, TabTypeDisplayInfo };
+export { AppChrome };
 
 export default AppChrome;

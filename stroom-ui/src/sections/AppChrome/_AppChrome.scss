@@ -30,20 +30,6 @@
   padding: 0.5rem;
 }
 
-%content-tabs__tab {
-  height: inherit;
-}
-
-.content-tabs__tab--chosen {
-  @extend %content-tabs__tab;
-  display: block;
-}
-
-.content-tabs__tab--hidden {
-  @extend %content-tabs__tab;
-  display: none;
-}
-
 .content-tabs__close-btn {
   border: none;
 }

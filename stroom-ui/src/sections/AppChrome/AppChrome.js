@@ -18,20 +18,16 @@ import PropTypes, { object } from 'prop-types';
 
 import { connect } from 'react-redux';
 import { compose, lifecycle } from 'recompose';
-import { Button, Menu, Icon } from 'semantic-ui-react';
-import Mousetrap from 'mousetrap';
 import { withRouter } from 'react-router-dom';
+import { Button, Menu, Icon, Header, Divider, Grid, Popup } from 'semantic-ui-react';
+import Mousetrap from 'mousetrap';
 
-import { actionCreators as appChromeActionCreators } from './redux';
 import { actionCreators as recentItemsActionCreators } from 'prototypes/RecentItems/redux';
 import { actionCreators as appSearchActionCreators } from 'prototypes/AppSearch/redux';
-import TabTypes, { TabTypeDisplayInfo } from './TabTypes';
-import AppMainContent from './AppMainContent';
 import RecentItems from 'prototypes/RecentItems';
 import AppSearch from 'prototypes/AppSearch';
 import withLocalStorage from 'lib/withLocalStorage';
 
-const { tabOpened } = appChromeActionCreators;
 const { recentItemsOpened } = recentItemsActionCreators;
 const { appSearchOpened } = appSearchActionCreators;
 const withIsExpanded = withLocalStorage('isExpanded', 'setIsExpanded', true);
@@ -39,28 +35,13 @@ const withIsExpanded = withLocalStorage('isExpanded', 'setIsExpanded', true);
 const SIDE_BAR_COLOUR = 'blue';
 
 const enhance = compose(
-  connect(
-    (state, props) => ({
-      currentTab: state.appChrome.tabSelectionStack[0],
-    }),
-    {
-      tabOpened,
-      recentItemsOpened,
-      appSearchOpened,
-    },
-  ),
+  connect((state, props) => ({}), {
+    recentItemsOpened,
+    appSearchOpened,
+  }),
   withRouter,
   withIsExpanded,
   lifecycle({
-    componentWillMount() {
-      if (this.props.match) {
-        // We're going to see if we've got a matching tab type to display,
-        // and if we have we're going to make sure it opens.
-        const { path } = this.props.match;
-        const tabType = Object.keys(TabTypeDisplayInfo).find(tabTypeKey => TabTypeDisplayInfo[tabTypeKey].path === path);
-        if (tabType) this.props.tabOpened(parseInt(tabType, 10));
-      }
-    },
     componentDidMount() {
       Mousetrap.bind('ctrl+e', () => this.props.recentItemsOpened());
       Mousetrap.bind('ctrl+f', () => this.props.appSearchOpened());
@@ -68,14 +49,50 @@ const enhance = compose(
   }),
 );
 
+const pathPrefix = '/s';
+
+const sidebarMenuItems = [
+  {
+    title: 'Welcome',
+    path: `${pathPrefix}/welcome/`,
+    icon: 'home',
+  },
+  {
+    title: 'Explorer',
+    path: `${pathPrefix}/docExplorer`,
+    icon: 'eye',
+  },
+  {
+    title: 'Trackers',
+    path: `${pathPrefix}/trackers`,
+    icon: 'tasks',
+  },
+  {
+    title: 'Me',
+    path: `${pathPrefix}/me`,
+    icon: 'user',
+  },
+  {
+    title: 'Users',
+    path: `${pathPrefix}/users`,
+    icon: 'users',
+  },
+  {
+    title: 'API Keys',
+    path: `${pathPrefix}/apikeys`,
+    icon: 'key',
+  },
+];
+
 const AppChrome = ({
-  tabOpened,
+  title,
+  icon,
   recentItemsOpened,
   appSearchOpened,
   isExpanded,
   setIsExpanded,
-  currentTab,
   history,
+  children,
 }) => {
   const menuItems = [
     {
@@ -83,18 +100,11 @@ const AppChrome = ({
       icon: 'bars',
       onClick: () => setIsExpanded(!isExpanded),
     },
-  ].concat(Object.values(TabTypes)
-    .filter(t => t !== TabTypes.DOC_REF) // this type is used to cover individual open doc refs
-    .map(tabType => ({
-      title: TabTypeDisplayInfo[tabType].getTitle(),
-      icon: TabTypeDisplayInfo[tabType].icon,
-      onClick: () => {
-        // If we open a tab we need to make sure we update the route.
-        history.push(TabTypeDisplayInfo[tabType].path);
-        tabOpened(tabType);
-      },
-      selected: currentTab && currentTab.type === tabType,
-    })));
+  ].concat(sidebarMenuItems.map(sidebarMenuItem => ({
+    title: sidebarMenuItem.title,
+    icon: sidebarMenuItem.icon,
+    onClick: () => history.push(sidebarMenuItem.path),
+  })));
 
   const menu = isExpanded ? (
     <Menu vertical fluid color={SIDE_BAR_COLOUR} inverted>
@@ -125,11 +135,47 @@ const AppChrome = ({
 
   return (
     <div className="app-chrome">
+      <AppSearch />
       <div className="app-chrome__sidebar">{menu}</div>
       <div className="app-chrome__content">
-        <AppMainContent />
-        <RecentItems />
-        <AppSearch />
+        <div className="content-tabs">
+          <div className="content-tabs__content">
+            <Grid>
+              <Grid.Column width={12}>
+                <Header as="h3">
+                  <Icon name={icon} color="grey" />
+                  {title}
+                </Header>
+              </Grid.Column>
+              <Grid.Column width={4}>
+                <Popup
+                  trigger={
+                    <Button
+                      floated="right"
+                      circular
+                      icon="file outline"
+                      onClick={() => recentItemsOpened()}
+                    />
+                  }
+                  content="Recently opened items"
+                />
+                <Popup
+                  trigger={
+                    <Button
+                      floated="right"
+                      circular
+                      icon="search"
+                      onClick={() => appSearchOpened()}
+                    />
+                  }
+                  content="Search for things"
+                />
+              </Grid.Column>
+            </Grid>
+            <Divider />
+            {children}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -141,5 +187,7 @@ AppChrome.contextTypes = {
     history: object.isRequired,
   }),
 };
+
+AppChrome.propTypes = {};
 
 export default enhance(AppChrome);
