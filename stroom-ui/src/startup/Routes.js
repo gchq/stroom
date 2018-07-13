@@ -23,7 +23,7 @@ import { connect } from 'react-redux';
 import ErrorPage from 'sections/ErrorPage';
 import TrackerDashboard from 'sections/TrackerDashboard';
 import { AppChrome } from 'sections/AppChrome';
-import Processing from 'sections/Processing';
+import PipelineSearch from 'components/PipelineSearch';
 import XsltEditor from 'prototypes/XsltEditor';
 import { HandleAuthenticationResponse } from 'startup/Authentication';
 import PipelineEditor from 'components/PipelineEditor';
@@ -111,7 +111,7 @@ const Routes = ({
         referrer="/s/processing"
         render={props => (
           <AppChrome {...props} title="Processing" icon="play">
-            <Processing />
+            <PipelineSearch />
           </AppChrome>
         )}
       />
