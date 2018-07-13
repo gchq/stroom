@@ -67,7 +67,7 @@ const enhance = compose(
   }),
 );
 
-const Processing = ({
+const PipelineSearch = ({
   searchResults,
   totalPipelines,
   onPipelineSelected,
@@ -167,5 +167,5 @@ const Processing = ({
   );
 };
 
-Processing.contextTypes = contextTypes;
-export default enhance(Processing);
+PipelineSearch.contextTypes = contextTypes;
+export default enhance(PipelineSearch);
