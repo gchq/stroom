@@ -17,7 +17,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { compose, lifecycle } from 'recompose';
+import { compose, lifecycle, withState } from 'recompose';
 import Mousetrap from 'mousetrap';
 import { push } from 'react-router-redux';
 
@@ -31,6 +31,7 @@ import {
   Input,
   Menu,
   Pagination,
+  Dropdown,
 } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 
@@ -39,16 +40,21 @@ import ClickCounter from 'lib/ClickCounter';
 
 import { searchPipelines } from 'components/PipelineEditor';
 
+const withFilter = withState('filter', 'setFilter');
+const withPageSize = withState('pageSize', 'setPageSize');
+const withOffset = withState('pageOffset', 'setPageOffset');
+
 const contextTypes = {
   store: PropTypes.object.isRequired,
 };
 
 const enhance = compose(
   withConfig,
+  withFilter,
+  withPageSize,
+  withOffset,
   connect(
     (state, props) => ({
-      pageSize: state.pipelineEditor.search.pageSize,
-      pageOffset: state.pipelineEditor.search.pageOffset,
       totalPipelines: state.pipelineEditor.search.total,
       searchResults: state.pipelineEditor.search.pipelines,
     }),
@@ -61,7 +67,14 @@ const enhance = compose(
   ),
   lifecycle({
     componentDidMount() {
-      const { searchPipelines, pageSize, pageOffset } = this.props;
+      let {
+        searchPipelines, pageSize, pageOffset, setPageSize, setPageOffset,
+      } = this.props;
+
+      if (pageSize === undefined) pageSize = 10;
+      if (pageOffset === undefined) pageOffset = 0;
+      setPageOffset(pageOffset);
+      setPageSize(pageSize);
       this.props.searchPipelines(undefined, pageSize, pageOffset);
     },
   }),
@@ -70,20 +83,88 @@ const enhance = compose(
 const Processing = ({
   searchResults,
   totalPipelines,
-  pageSize,
-  pageOffset,
   onPipelineSelected,
+  searchPipelines,
+  filter,
+  setFilter,
+  pageSize,
+  setPageSize,
+  pageOffset,
+  setPageOffset,
 }) => {
   // these are required to tell the difference between single/double clicks
   const clickCounter = new ClickCounter()
-    .withOnSingleClick(uuid =>
-      console.log('TODO: single click behaviour -- highlight') /* pipelineSelected(docRef) */)
+    .withOnSingleClick(uuid => console.log('TODO: single click behaviour -- highlight'))
     .withOnDoubleClick((uuid) => {
       onPipelineSelected(uuid);
     });
 
+  const totalPages = Math.ceil(totalPipelines / pageSize);
+
+  const dropdownPageSize = pageSize === undefined ? 'all' : pageSize;
+
+  const dropdownOptions = [
+    {
+      text: 'All',
+      value: 'all',
+    },
+    {
+      text: 10,
+      value: 10,
+    },
+    {
+      text: 20,
+      value: 20,
+    },
+    {
+      text: 30,
+      value: 30,
+    },
+    {
+      text: 40,
+      value: 40,
+    },
+    {
+      text: 50,
+      value: 50,
+    },
+  ];
+
   return (
     <Container className="PipelineSearch__container">
+      <Input
+        value={filter}
+        icon="search"
+        placeholder="Search..."
+        onChange={(_, data) => {
+          setFilter(data.value);
+          searchPipelines(data.value, pageSize, pageOffset);
+        }}
+      />
+      <Dropdown
+        selection
+        options={dropdownOptions}
+        value={dropdownPageSize}
+        onChange={(_, data) => {
+          console.log({ data });
+          if (data.value === 'all') {
+            setPageSize(undefined);
+            searchPipelines(filter, undefined, pageOffset);
+          } else {
+            setPageSize(data.value);
+            searchPipelines(filter, data.value, pageOffset);
+          }
+        }}
+      />
+      <Pagination
+        defaultActivePage={1}
+        totalPages={totalPages}
+        ellipsisItem={null}
+        onPageChange={(_, pagination) => {
+          setPageOffset(pagination.activePage);
+          searchPipelines(filter, pageSize, pagination.activePage - 1);
+        }}
+      />
       <Card.Group>
         {searchResults.map(pipelineSummary => (
           <Card

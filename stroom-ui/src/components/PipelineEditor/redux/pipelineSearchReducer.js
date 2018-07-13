@@ -10,8 +10,6 @@ const actionCreators = createActions({
 const defaultPipelineSearchState = {
   total: undefined,
   pipelines: [],
-  pageSize: 10,
-  pageOffset: 0,
 };
 
 const reducer = handleActions(

@@ -53,18 +53,25 @@ export const savePipeline = pipelineId => (dispatch, getState) => {
 export const searchPipelines = (filter, pageSize, offset) => (dispatch, getState) => {
   const state = getState();
   let url = `${state.config.pipelineServiceUrl}/?`;
+
   if (filter !== undefined && filter !== '') {
     url += `&filter=${filter}`;
   }
-  if (pageSize !== undefined) {
-    url += `&pageSize=${pageSize}`;
-  }
-  if (offset !== undefined) {
-    url += `&offset=${offset}`;
+
+  if (pageSize !== undefined && offset !== undefined) {
+    url += `&pageSize=${pageSize}&offset=${offset}`;
   }
 
-  wrappedGet(dispatch, state, url, response =>
-    response
-      .json()
-      .then(response => dispatch(pipelinesReceived(response.total, response.pipelines))));
+  const forceGet = true;
+  wrappedGet(
+    dispatch,
+    state,
+    url,
+    response =>
+      response
+        .json()
+        .then(response => dispatch(pipelinesReceived(response.total, response.pipelines))),
+    null,
+    forceGet,
+  );
 };

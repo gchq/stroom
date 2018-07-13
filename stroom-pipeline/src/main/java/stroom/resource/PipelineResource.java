@@ -228,7 +228,7 @@ public class PipelineResource implements HasHealthCheck  {
                 final int fromIndex = offset * pageSize;
                 int toIndex = fromIndex + pageSize;
                 if (toIndex >= pipelines.size()) {
-                    toIndex = pipelines.size() == 0 ? 0 : pipelines.size() - 1;
+                    toIndex = pipelines.size() == 0 ? 0 : pipelines.size();
                 }
                 pipelines = pipelines.subList(fromIndex, toIndex);
             }

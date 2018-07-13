@@ -55,7 +55,7 @@ export const reducer = handleActions(
  * @param {string} url The URL to fetch
  * @param {function} successCallback The function to call with the response if successful. Failures will be handled generically
  */
-export const wrappedGet = (dispatch, state, url, successCallback, options) => {
+export const wrappedGet = (dispatch, state, url, successCallback, options, forceGet) => {
   const jwsToken = state.authentication.idToken;
   const currentState = state.fetch[url];
   let needToFetch = false;
@@ -63,30 +63,34 @@ export const wrappedGet = (dispatch, state, url, successCallback, options) => {
   console.group('Requesting ', url);
   console.log('Current State of URL', { url, currentState });
 
-  switch (currentState) {
-    case undefined:
-      console.log('Never even heard of it', url);
-      needToFetch = true;
-      break;
-    case FETCH_STATES.UNREQUESTED:
-      console.log('Has been reset, go again!', url);
-      needToFetch = true;
-      break;
-    case FETCH_STATES.FAILED:
-      console.log('It failed last time, second times a charm?', url);
-      needToFetch = true;
-      break;
-    case FETCH_STATES.REQUESTED:
-      console.log('Already asked, dont ask again', url);
-      needToFetch = false;
-      break;
-    case FETCH_STATES.RESPONDED:
-      console.log('Already got it, dont ask again', url);
-      needToFetch = false;
-      break;
-    default:
-      console.log('Default state? Nonsense');
-      break;
+  if (!forceGet) {
+    switch (currentState) {
+      case undefined:
+        console.log('Never even heard of it', url);
+        needToFetch = true;
+        break;
+      case FETCH_STATES.UNREQUESTED:
+        console.log('Has been reset, go again!', url);
+        needToFetch = true;
+        break;
+      case FETCH_STATES.FAILED:
+        console.log('It failed last time, second times a charm?', url);
+        needToFetch = true;
+        break;
+      case FETCH_STATES.REQUESTED:
+        console.log('Already asked, dont ask again', url);
+        needToFetch = false;
+        break;
+      case FETCH_STATES.RESPONDED:
+        console.log('Already got it, dont ask again', url);
+        needToFetch = false;
+        break;
+      default:
+        console.log('Default state? Nonsense');
+        break;
+    }
+  } else {
+    needToFetch = true;
   }
 
   if (needToFetch) {
@@ -135,12 +139,12 @@ export const wrappedGet = (dispatch, state, url, successCallback, options) => {
 export const wrappedFetchWithBody = (dispatch, state, url, successCallback, options) => {
   const jwsToken = state.authentication.idToken;
 
-  let headers = {
+  const headers = {
     Accept: 'application/json',
     'Content-Type': 'application/json',
     Authorization: `Bearer ${jwsToken}`,
     ...(options ? options.headers : {}),
-  }
+  };
   console.log('Fetch Headers', headers);
 
   fetch(url, {
