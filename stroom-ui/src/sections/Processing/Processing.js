@@ -14,25 +14,14 @@
  * limitations under the License.
  */
 
-import React, { Component } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { compose, lifecycle, withState } from 'recompose';
-import Mousetrap from 'mousetrap';
+import { compose, lifecycle } from 'recompose';
+// import Mousetrap from 'mousetrap'; //TODO
 import { push } from 'react-router-redux';
 
-import {
-  Container,
-  Card,
-  Label,
-  Table,
-  Progress,
-  Button,
-  Input,
-  Menu,
-  Pagination,
-  Dropdown,
-} from 'semantic-ui-react';
+import { Container, Card, Input, Pagination, Dropdown } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 
 import { withConfig } from 'startup/config';
