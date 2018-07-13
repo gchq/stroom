@@ -18,6 +18,7 @@
 package stroom.test;
 
 import org.junit.Assert;
+import stroom.docref.DocRef;
 import stroom.feed.FeedService;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.Feed;

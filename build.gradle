@@ -62,7 +62,7 @@ ext.versions = [
         hadoopHdfsShaded  : 'v2.6.4-4',
         stroomAuth        : 'v0.1-alpha.3',
         stroomExpression  : 'v1.4.1',
-        stroomQuery       : 'v3.1-beta.7', //same version for both stroom-query-api and stroom-query-common
+        stroomQuery       : 'v4.0-beta.6', //same version for both stroom-query-api and stroom-query-common
         stroomStats       : 'v0.6.0-alpha.2',
 
         //------------3rd-party------------
@@ -175,6 +175,7 @@ ext.libs = [
         lucene_analyzers_common        : "org.apache.lucene:lucene-analyzers-common:$versions.lucene",
         lucene_core                    : "org.apache.lucene:lucene-core:$versions.lucene",
         lucene_queryparser             : "org.apache.lucene:lucene-queryparser:$versions.lucene",
+        lucene_backward_codecs: "org.apache.lucene:lucene-backward-codecs:$versions.lucene",
         mockito_core                   : "org.mockito:mockito-core:2.0.2-beta",
         mysql_connector_java           : "mysql:mysql-connector-java:5.1.40",
         poi                            : "org.apache.poi:poi:3.17",

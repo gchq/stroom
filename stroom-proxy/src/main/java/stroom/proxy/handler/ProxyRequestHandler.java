@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import stroom.datafeed.MetaMapFilter;
 import stroom.datafeed.MetaMapFilterFactory;
 import stroom.datafeed.RequestHandler;
+import stroom.docref.DocRef;
 import stroom.feed.MetaMap;
 import stroom.feed.MetaMapFactory;
 import stroom.feed.StroomStatusCode;
