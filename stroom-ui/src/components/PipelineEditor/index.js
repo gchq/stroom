@@ -16,9 +16,16 @@
 import PipelineEditor from './PipelineEditor';
 
 import { reducer } from './redux';
-import { fetchPipeline } from './pipelineResourceClient';
+import { fetchPipeline, searchPipelines } from './pipelineResourceClient';
 import { fetchElements, fetchElementProperties } from './elementResourceClient';
 
-export { PipelineEditor, reducer, fetchPipeline, fetchElements, fetchElementProperties };
+export {
+  PipelineEditor,
+  reducer,
+  fetchPipeline,
+  fetchElements,
+  fetchElementProperties,
+  searchPipelines,
+};
 
 export default PipelineEditor;

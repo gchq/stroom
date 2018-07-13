@@ -84,6 +84,14 @@ const Routes = ({
           <PrivateRoute key={path} exact path={path} referrer={path} component={AppChrome} />
         ))}
 
+      {/* TODO: this isn't going to work... */}
+      <PrivateRoute
+        exact
+        path="/s/processing/pipeline/:uuid"
+        referrer="/s/processing/pipeline/"
+        component={AppChrome}
+      />
+
       {/* Direct paths -- these paths make sections accessible outside the AppChrome
         i.e. for when we want to embed them in Stroom. */}
       <PrivateRoute exact path="/trackers" referrer="/trackers" component={TrackerDashboard} />

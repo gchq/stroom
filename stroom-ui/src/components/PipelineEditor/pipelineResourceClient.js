@@ -16,7 +16,12 @@
 import { actionCreators } from './redux';
 import { wrappedGet, wrappedPost } from 'lib/fetchTracker.redux';
 
-const { pipelineReceived, pipelineSaveRequested, pipelineSaved } = actionCreators;
+const {
+  pipelineReceived,
+  pipelineSaveRequested,
+  pipelineSaved,
+  pipelinesReceived,
+} = actionCreators;
 
 export const fetchPipeline = pipelineId => (dispatch, getState) => {
   const state = getState();
@@ -43,4 +48,23 @@ export const savePipeline = pipelineId => (dispatch, getState) => {
       body,
     },
   );
+};
+
+export const searchPipelines = (filter, pageSize, offset) => (dispatch, getState) => {
+  const state = getState();
+  let url = `${state.config.pipelineServiceUrl}/?`;
+  if (filter !== undefined && filter !== '') {
+    url += `&filter=${filter}`;
+  }
+  if (pageSize !== undefined) {
+    url += `&pageSize=${pageSize}`;
+  }
+  if (offset !== undefined) {
+    url += `&offset=${offset}`;
+  }
+
+  wrappedGet(dispatch, state, url, response =>
+    response
+      .json()
+      .then(response => dispatch(pipelinesReceived(response.total, response.pipelines))));
 };
