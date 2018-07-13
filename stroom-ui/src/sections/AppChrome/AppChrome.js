@@ -63,14 +63,14 @@ const sidebarMenuItems = [
     icon: 'eye',
   },
   {
-    title: 'Processing',
-    path: `${pathPrefix}/processing`,
-    icon: 'play',
+    title: 'Pipelines',
+    path: `${pathPrefix}/pipelines`,
+    icon: 'tasks',
   },
   {
-    title: 'Trackers',
-    path: `${pathPrefix}/trackers`,
-    icon: 'tasks',
+    title: 'Processing',
+    path: `${pathPrefix}/trackers`, // TODO change this to processing -- needs changing in the stroom iFrame too.
+    icon: 'play',
   },
   {
     title: 'Me',

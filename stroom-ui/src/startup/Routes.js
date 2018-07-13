@@ -107,20 +107,32 @@ const Routes = ({
       />
       <PrivateRoute
         exact
-        path="/s/processing"
-        referrer="/s/processing"
+        path="/s/pipelines"
+        referrer="/s/pipelines"
         render={props => (
-          <AppChrome {...props} title="Processing" icon="play">
+          <AppChrome {...props} title="Pipelines" icon="tasks">
             <PipelineSearch />
           </AppChrome>
         )}
       />
+
+      <PrivateRoute
+        exact
+        path="/s/pipelines/:pipelineId"
+        referrer="/s/pipelines"
+        render={props => (
+          <AppChrome {...props} title="Pipelines" icon="tasks">
+            <PipelineEditor />
+          </AppChrome>
+        )}
+      />
+
       <PrivateRoute
         exact
         path="/s/trackers"
         referrer="/s/trackers"
         render={props => (
-          <AppChrome {...props} title="Trackers" icon="tasks">
+          <AppChrome {...props} title="Processing" icon="play">
             <TrackerDashboard />
           </AppChrome>
         )}
@@ -154,14 +166,6 @@ const Routes = ({
             <IFrame url={authTokensUiUrl} />
           </AppChrome>
         )}
-      />
-
-      {/* TODO: this isn't going to work... */}
-      <PrivateRoute
-        exact
-        path="/s/processing/pipeline/:uuid"
-        referrer="/s/processing/pipeline/"
-        component={AppChrome}
       />
 
       {/* Direct paths -- these paths make sections accessible outside the AppChrome

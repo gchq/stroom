@@ -43,8 +43,7 @@ const enhance = compose(
     }),
     {
       searchPipelines,
-      onPipelineSelected: uuid => (dispatch, getState) =>
-        dispatch(push(`/s/processing/pipeline/${uuid}`)),
+      onPipelineSelected: uuid => (dispatch, getState) => dispatch(push(`/s/pipelines/${uuid}`)),
       updateCriteria: criteria => (dispatch, getState) =>
         dispatch(actionCreators.updateCriteria(criteria)),
     },
