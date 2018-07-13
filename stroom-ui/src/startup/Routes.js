@@ -122,7 +122,7 @@ const Routes = ({
         referrer="/s/pipelines"
         render={props => (
           <AppChrome {...props} title="Pipelines" icon="tasks">
-            <PipelineEditor />
+            <PipelineEditor pipelineId={props.pipelineId} />
           </AppChrome>
         )}
       />
