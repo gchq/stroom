@@ -30,8 +30,39 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Changed the import export API to use byte arrays to hold values rather than strings. *POSSIBLE BREAKING CHANGE*
 Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
+* Issue **#806** : Fix for clearing previous dashboard table results if search results deliver no data.
+
+* Issue **#805** : Fix for dashboard date time formatting to use local time zone.
+
+* Issue **#803** : Fix for group key conversion to an appropriate value for visualisations.
+
+* Issue **#802** : Restore lucene-backward-codecs to the build
+
+* Issue **#800** : Add DB migration script 33 to replace references to the `Stream Type` type in the STRM_PROC_FILT table with `streamTypeName`.
+
+* Issue **#798** : Add DB migration script 32 to replace references to the `NStatFilter` type in the PIPE table with `StatisticsFilter`.
+
+* Fix data receipt policy defect
+
+* Issue **#791** : Search completion signal is now only sent to the UI once all pending search result merges are completed.
+
+* Issue **#795** : Import and export now works with appropriate application permissions. Read permission is required to export items and Create/Update permissions are required to import items depending on whether the update will create a new item or update an existing one.
+
+* Improve configurabilty of stroom-proxy.
+
+* Issue **#783** : Reverted code that ignored duplicate selection to fix double click in tables.
+
+* Issue **#782** : Fix for NPE thrown when using CountGroups when GroupKey string was null due to non grouped child rows.
+
+* Issue **#778** : Fix for text selection on tooltips etc in the latest version of Chrome.
 
 * Uplift stroom-expression to v1.4.1
+
+* Issue **#776** : Removal of index shard searcher caching to hopefully fix Lucene directory closing issue.
+
+* Issue **#779** : Fix permissions defect.
+
+* Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#766** : Fix NullPointerExceptions when downloading table results to Excel format.
 
@@ -39,11 +70,7 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#761** : New fix for premature truncation of SQL stats queries due to thread interruption.
 
-## [v6.0-alpha.24]
-
 * Issue **#748** : Fix build issue resulting from a change to SafeXMLFilter.
-
-## [v6.0-alpha.23]
 
 * Issue **#748** : Added a command line interface (CLI) in addition to headless execution so that full pipelines can be run against input files.
 

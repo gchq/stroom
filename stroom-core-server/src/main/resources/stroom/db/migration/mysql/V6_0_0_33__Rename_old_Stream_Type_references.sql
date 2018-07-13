@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,11 @@
  * limitations under the License.
  */
 
-.tooltip {
-	background-color: #ffd;
-	padding: 0px 2px;
-	-moz-user-focus: initial;
-	-moz-user-input: initial;
-	-webkit-user-focus: initial;
-	-webkit-user-input: initial;
-	user-focus: initial;
-	user-input: initial;
-
-  	-webkit-user-select: text;
-  	-moz-user-select: text;
-  	user-select: text;
-}
+-- Ensures any old processor filters have the stream type field updated to
+-- its new type name
+update STRM_PROC_FILT
+set DAT = REPLACE(
+    DAT,
+    '<field>Stream Type</field>',
+    '<field>streamTypeName</field>')
+WHERE DAT like '%<field>Stream Type</field>%';

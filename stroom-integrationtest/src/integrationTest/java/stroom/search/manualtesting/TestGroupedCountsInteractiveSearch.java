@@ -185,11 +185,6 @@ public class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationT
                 "stroom.search.extraction.maxThreads",
                 "5",
                 StroomProperties.Source.TEST);
-
-        StroomProperties.setOverrideProperty(
-                "stroom.search.shard.maxOpen",
-                "10",
-                StroomProperties.Source.TEST);
     }
 
 
