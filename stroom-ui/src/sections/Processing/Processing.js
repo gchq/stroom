@@ -38,11 +38,7 @@ import 'semantic-ui-css/semantic.min.css';
 import { withConfig } from 'startup/config';
 import ClickCounter from 'lib/ClickCounter';
 
-import { searchPipelines } from 'components/PipelineEditor';
-
-const withFilter = withState('filter', 'setFilter');
-const withPageSize = withState('pageSize', 'setPageSize');
-const withOffset = withState('pageOffset', 'setPageOffset');
+import { searchPipelines, actionCreators } from 'components/PipelineEditor';
 
 const contextTypes = {
   store: PropTypes.object.isRequired,
@@ -50,32 +46,34 @@ const contextTypes = {
 
 const enhance = compose(
   withConfig,
-  withFilter,
-  withPageSize,
-  withOffset,
   connect(
     (state, props) => ({
       totalPipelines: state.pipelineEditor.search.total,
       searchResults: state.pipelineEditor.search.pipelines,
+      criteria: state.pipelineEditor.search.criteria,
     }),
     {
       searchPipelines,
-      onPipelineSelected: uuid => (dispatch, getState) => {
-        dispatch(push(`/s/processing/pipeline/${uuid}`));
-      },
+      onPipelineSelected: uuid => (dispatch, getState) =>
+        dispatch(push(`/s/processing/pipeline/${uuid}`)),
+      updateCriteria: criteria => (dispatch, getState) =>
+        dispatch(actionCreators.updateCriteria(criteria)),
     },
   ),
   lifecycle({
     componentDidMount() {
-      let {
-        searchPipelines, pageSize, pageOffset, setPageSize, setPageOffset,
-      } = this.props;
+      let { searchPipelines, criteria, updateCriteria } = this.props;
 
-      if (pageSize === undefined) pageSize = 10;
-      if (pageOffset === undefined) pageOffset = 0;
-      setPageOffset(pageOffset);
-      setPageSize(pageSize);
-      this.props.searchPipelines(undefined, pageSize, pageOffset);
+      if (criteria === undefined) {
+        criteria = {
+          pageSize: 10,
+          pageOffset: 0,
+          filter: '',
+        };
+      }
+
+      updateCriteria(criteria);
+      searchPipelines();
     },
   }),
 );
@@ -85,12 +83,8 @@ const Processing = ({
   totalPipelines,
   onPipelineSelected,
   searchPipelines,
-  filter,
-  setFilter,
-  pageSize,
-  setPageSize,
-  pageOffset,
-  setPageOffset,
+  updateCriteria,
+  criteria,
 }) => {
   // these are required to tell the difference between single/double clicks
   const clickCounter = new ClickCounter()
@@ -98,6 +92,8 @@ const Processing = ({
     .withOnDoubleClick((uuid) => {
       onPipelineSelected(uuid);
     });
+
+  const { filter, pageSize, pageOffset } = criteria;
 
   const totalPages = Math.ceil(totalPipelines / pageSize);
 
@@ -137,8 +133,8 @@ const Processing = ({
         icon="search"
         placeholder="Search..."
         onChange={(_, data) => {
-          setFilter(data.value);
-          searchPipelines(data.value, pageSize, pageOffset);
+          updateCriteria({ pageSize, pageOffset, filter: data.value });
+          searchPipelines();
         }}
       />
       <Dropdown
@@ -148,11 +144,11 @@ const Processing = ({
         onChange={(_, data) => {
           console.log({ data });
           if (data.value === 'all') {
-            setPageSize(undefined);
-            searchPipelines(filter, undefined, pageOffset);
+            updateCriteria({ pageSize: undefined, pageOffset, filter });
+            searchPipelines();
           } else {
-            setPageSize(data.value);
-            searchPipelines(filter, data.value, pageOffset);
+            updateCriteria({ pageSize: data.value, pageOffset, filter });
+            searchPipelines();
           }
         }}
       />
@@ -161,8 +157,8 @@ const Processing = ({
         totalPages={totalPages}
         ellipsisItem={null}
         onPageChange={(_, pagination) => {
-          setPageOffset(pagination.activePage);
-          searchPipelines(filter, pageSize, pagination.activePage - 1);
+          updateCriteria({ pageSize, pageOffset: pagination.activePage - 1, filter });
+          searchPipelines();
         }}
       />
       <Card.Group>

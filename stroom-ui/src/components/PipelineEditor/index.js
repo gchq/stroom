@@ -15,7 +15,7 @@
  */
 import PipelineEditor from './PipelineEditor';
 
-import { reducer } from './redux';
+import { reducer, actionCreators } from './redux';
 import { fetchPipeline, searchPipelines } from './pipelineResourceClient';
 import { fetchElements, fetchElementProperties } from './elementResourceClient';
 
@@ -26,6 +26,7 @@ export {
   fetchElements,
   fetchElementProperties,
   searchPipelines,
+  actionCreators,
 };
 
 export default PipelineEditor;

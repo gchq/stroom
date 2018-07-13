@@ -50,16 +50,17 @@ export const savePipeline = pipelineId => (dispatch, getState) => {
   );
 };
 
-export const searchPipelines = (filter, pageSize, offset) => (dispatch, getState) => {
+export const searchPipelines = () => (dispatch, getState) => {
   const state = getState();
   let url = `${state.config.pipelineServiceUrl}/?`;
+  const { filter, pageSize, pageOffset } = state.pipelineEditor.search.criteria;
 
   if (filter !== undefined && filter !== '') {
     url += `&filter=${filter}`;
   }
 
-  if (pageSize !== undefined && offset !== undefined) {
-    url += `&pageSize=${pageSize}&offset=${offset}`;
+  if (pageSize !== undefined && pageOffset !== undefined) {
+    url += `&pageSize=${pageSize}&offset=${pageOffset}`;
   }
 
   const forceGet = true;
