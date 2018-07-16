@@ -200,7 +200,7 @@ const getDetails = (value, parentValue, defaultValue, type) => {
  * @param {string} type The type of the element
  * @param {array} docRefTypes The docref types to filter by
  */
-const getField = (value, name, pipelineId, elementId, type, docRefTypes) => {
+const getField = (pipelineElementPropertyUpdated, value, name, pipelineId, elementId, type, docRefTypes) => {
   let elementField;
   switch (type) {
     case 'boolean':
@@ -243,9 +243,9 @@ const getField = (value, name, pipelineId, elementId, type, docRefTypes) => {
         <Input
           value={value}
           name={name}
-          onChange={(_, event) =>
+          onChange={(_, event) => {
             pipelineElementPropertyUpdated(pipelineId, elementId, name, type, event.value)
-          }
+          }}
         />
       );
       break;
@@ -257,9 +257,9 @@ const getField = (value, name, pipelineId, elementId, type, docRefTypes) => {
         <Input
           value={value}
           name={name}
-          onChange={(_, event) =>
+          onChange={(_, event) => {
             pipelineElementPropertyUpdated(pipelineId, elementId, name, type, event.value)
-          }
+          }}
         />
       );
       break;
@@ -284,7 +284,7 @@ const ElementField = ({
   type = type.toLowerCase();
 
   const details = getDetails(value, parentValue, defaultValue, type);
-  const field = getField(details.actualValue, name, pipelineId, elementId, type, docRefTypes)
+  const field = getField(pipelineElementPropertyUpdated, details.actualValue, name, pipelineId, elementId, type, docRefTypes)
   
   const popOverContent = (
     <div>
