@@ -505,9 +505,7 @@ export function getAllChildren(pipeline, parent) {
  */
 export function getParentProperty(stack, elementId, propertyName) {
   const getFromParent = (index) =>{
-    console.log({index})
     const property = stack[index].properties.add.find(element => element.element === elementId && element.name === propertyName);
-    console.log({property})
     if(property !== undefined){
       // We return the first matching property we find.
       return property;
