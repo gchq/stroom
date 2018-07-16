@@ -451,7 +451,16 @@ describe('Pipeline Utils', () => {
       expect(parentProperty.element).toBe('xsltFilter');
       expect(parentProperty.name).toBe('xsltNamePattern')
       expect(parentProperty.value.string).toBe('DSD')
-    });    
+    });
+
+    test('shouldn\'t find a property in the parent because although it\'s there it also exists in \'remove\'', () => {
+      // Given
+      const pipeline = testPipelines.parentWithRemoveforItsParentsAdd;
+      // When
+      const parentProperty = getParentProperty(pipeline.configStack, 'xsltFilter', 'property2');
+      // Then
+      expect(parentProperty).toBe(undefined);
+    });   
   });
 });
 
