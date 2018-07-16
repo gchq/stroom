@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import {
   getPipelineAsTree,
   getBinItems,
@@ -21,7 +22,8 @@ import {
   removeElementFromPipeline,
   getAllChildren,
   setElementPropertyValueInPipeline,
-  getParentProperty
+  getParentProperty,
+  revertPropertyToParent
 } from '../pipelineUtils';
 
 import {
@@ -216,7 +218,58 @@ describe('Pipeline Utils', () => {
     });
   });
 
+  describe('#revertPropertyToParent', () => {
+    test('should remove an item from the add stack', () => {
+      // Given
+      const testPipeline = testPipelines.parentWithProperty;
+      const elementName = "xsltFilter"
+      const propertyName = "xsltNamePattern"
+      const matchingProp = addItem => addItem.element === elementName && addItem.name === propertyName;
+      
+      // Verify that the test data is as we expect
+      const parentTestConfirmation = testPipeline.configStack[0].properties.add.find(matchingProp)
+      expect(parentTestConfirmation.value.string).toBe("DSD");
+      const childTestConfirmation = testPipeline.configStack[1].properties.add.find(matchingProp)
+      expect(childTestConfirmation.value.string).toBe("D");
+      const mergedTestConfirmation = testPipeline.merged.properties.add.find(matchingProp)
+      expect(mergedTestConfirmation.value.string).toBe("D")
+      
 
+      // When
+      const updatedPipeline = revertPropertyToParent(
+        testPipeline,
+        elementName,
+        propertyName
+      );
+
+      // Then
+      const parentProperty = updatedPipeline.configStack[0].properties.add.find(matchingProp)
+      expect(parentProperty.value.string).toBe("DSD");
+
+      const shouldBeNullChildProperty = updatedPipeline.configStack[1].properties.add.find(matchingProp)
+      expect(shouldBeNullChildProperty).toBe(undefined);
+
+      const mergedProperty = updatedPipeline.merged.properties.add.find(matchingProp)
+      expect(mergedProperty.value.string).toBe("DSD")
+    });
+
+    test('to error when there\'s no parent in the stack', () => {
+      // Given
+      const testPipeline = testPipelines.noParent;
+      const elementName = "xsltFilter"
+      const propertyName = "xsltNamePattern"
+      const matchingProp = addItem => addItem.element === elementName && addItem.name === propertyName;
+
+
+      // When
+      expect(() => revertPropertyToParent(
+        testPipeline,
+        elementName,
+        propertyName
+      )).toThrow();
+
+    });
+  });
 
   describe('#reinstateElementToPipeline', () => {
     test('it should restore an element and add a link to the correct parent', () => {

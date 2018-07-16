@@ -6,6 +6,7 @@ import {
   createNewElementInPipeline,
   reinstateElementToPipeline,
   setElementPropertyValueInPipeline,
+  revertPropertyToParent,
 } from '../pipelineUtils';
 
 import { getPipelineAsTree } from '../pipelineUtils';
@@ -52,6 +53,12 @@ const actionCreators = createActions({
     propertyType,
     propertyValue,
   }),
+  PIPELINE_ELEMENT_PROPERTY_REVERT_TO_PARENT: (pipelineId, elementId, name) => ({
+    pipelineId,
+    elementId,
+    name,
+  }),
+  PIPELINE_ELEMENT_PROPERTY_REVERT_TO_DEFAULT: () => ({}),
 });
 
 const { pipelineElementDeleteRequested, pipelineElementDeleteCancelled } = actionCreators;
@@ -118,7 +125,7 @@ const reducer = handleActions(
           action.payload.elementId,
         )),
         isDirty: true,
-        pendingElementToDelete: undefined
+        pendingElementToDelete: undefined,
       },
     }),
     PIPELINE_ELEMENT_REINSTATED: (state, action) => ({
@@ -172,6 +179,22 @@ const reducer = handleActions(
         isDirty: true,
       },
     }),
+
+    PIPELINE_ELEMENT_PROPERTY_REVERT_TO_PARENT: (state, action) => {
+      console.log({ state });
+      return {
+        ...state,
+        [action.payload.pipelineId]: {
+          ...state[action.payload.pipelineId],
+          ...updatePipeline(revertPropertyToParent(
+            state[action.payload.pipelineId].pipeline,
+            action.payload.element,
+            action.payload.name,
+          )),
+          isDirty: true,
+        },
+      };
+    },
   },
   defaultPipelineState,
 );

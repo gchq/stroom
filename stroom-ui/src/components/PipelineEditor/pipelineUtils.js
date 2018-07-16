@@ -310,6 +310,55 @@ function addToProperties(properties, property){
   properties.splice(index, addOrReplace, property);
 }
 
+export function revertPropertyToParent(pipeline, element, name){
+  const childAdd = pipeline.configStack[pipeline.configStack.length - 1].properties.add
+  // If there's no parent in the stack this operation will fail, as it should. 
+  // It shouldn't be callable on a stack without a matching parent property.
+  if(pipeline.configStack.length < 2) { 
+    throw new Error('This function requires a configStack with a parent');
+  }
+  const parentAdd = pipeline.configStack[pipeline.configStack.length - 2].properties.add
+  const mergedAdd = pipeline.merged.properties.add
+  
+  const indexToRemove = childAdd.findIndex(addItem => addItem.name === name);
+  const parentProperty = parentAdd.find(addItem => addItem.name === name);
+  const indexToRemoveFromMerged = mergedAdd.findIndex(addItem => addItem.name === name);
+
+  return {
+    configStack: mapLastItemInArray(pipeline.configStack, stackItem => ({
+      elements: stackItem.elements,
+      links: stackItem.links,
+      properties: {
+        ...stackItem.properties,
+        add: [
+          // We want to remove the property from the child
+          ...stackItem.properties.add.slice(0, indexToRemove),
+          ...stackItem.properties.add.slice(indexToRemove + 1),
+        ],
+      },
+    })),
+    merged: {
+      elements: pipeline.merged.elements,
+      links: pipeline.merged.links,
+      properties: {
+        ...pipeline.merged.properties,
+        add:[
+          // We want to remove the property from the merged stack...
+          ...pipeline.merged.properties.add.slice(0, indexToRemoveFromMerged),
+          ...pipeline.merged.properties.add.slice(indexToRemoveFromMerged + 1),
+          //... and replace it with the paren'ts property
+          parentProperty
+        ]
+      }
+    }
+  };
+}
+
+export function revertPropertyToDefault(pipeline, element, name){
+  // TODO: delete property in the child
+  // TODO: add remove properties for parents, if there are any
+}
+
 /**
  * Reinstates an element into the pipeline that had previously been removed.
  *

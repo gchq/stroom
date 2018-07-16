@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { compose, lifecycle } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Form, Popup, Icon, Input, Checkbox, Button } from 'semantic-ui-react';
+import { Form, Popup, Icon, Input, Checkbox, Button, Grid } from 'semantic-ui-react';
 
 import { actionCreators } from '../redux';
 
@@ -13,7 +13,7 @@ import { actionCreators as docExplorerActionCreators } from 'components/DocExplo
 
 import NumericInput from 'prototypes/NumericInput';
 
-const { pipelineElementPropertyUpdated } = actionCreators;
+const { pipelineElementPropertyUpdated, pipelineElementPropertyRevertToParent, pipelineElementPropertyRevertToDefault } = actionCreators;
 
 const { docRefPicked } = docExplorerActionCreators;
 
@@ -27,6 +27,8 @@ const enhance = compose(
     {
       docRefPicked,
       pipelineElementPropertyUpdated,
+      pipelineElementPropertyRevertToParent,
+      pipelineElementPropertyRevertToDefault
     },
   ),
   lifecycle({
@@ -65,9 +67,9 @@ const getDisplayValue = (value, type) => {
  * @param {string} defaultValue The default property
  * @param {string} type The type of the property
  */
-const getDetails = (value, parentValue, defaultValue, type) => {
-  const RevertToDefaultButton = <Button>Revert to default</Button>;
-  const RevertToParentButton = <Button>Revert to parent</Button>;
+const getDetails = (value, parentValue, defaultValue, type, revertToParent, revertToDefault, elementId, name, pipelineId) => {
+  const RevertToDefaultButton = <Button onClick={(_, data) => revertToDefault(data)}>Revert to default</Button>;
+  const RevertToParentButton = <Button onClick={(_, data) => revertToParent(pipelineId, elementId, name)}>Revert to parent</Button>;
 
   // Parse the value if it's a boolean.
   if (type === 'boolean') {
@@ -138,10 +140,16 @@ const getDetails = (value, parentValue, defaultValue, type) => {
         </p>
 
         <p>
-          You may revert it to the default or you may revert to the parent's value.
-          {RevertToDefaultButton}
-          {RevertToParentButton}
+          You may revert it to the default or you may revert to the parent's value
         </p>
+        <Grid divided columns="equal">
+          <Grid.Column>
+        {RevertToDefaultButton}
+        </Grid.Column>
+        <Grid.Column>
+        {RevertToParentButton}
+        </Grid.Column>
+        </Grid>
       </div>
     );
 
@@ -182,8 +190,9 @@ const getDetails = (value, parentValue, defaultValue, type) => {
         <p>
           It is inheriting a value of <strong> {getDisplayValue(parentValue.value[type], type)}</strong>
           but this has been overriden by the user. You can revert to this inherited value if you
-          like. {RevertToParentButton}
+          like. 
         </p>
+        {RevertToParentButton}
       </div>
     );
   }
@@ -225,7 +234,7 @@ const getField = (pipelineElementPropertyUpdated, value, name, pipelineId, eleme
         />
       );
       break;
-    case 'DocRef':
+    case 'docref':
       elementField = (
         <DocPickerModal
           pickerId={getPickerName(name)}
@@ -238,7 +247,7 @@ const getField = (pipelineElementPropertyUpdated, value, name, pipelineId, eleme
 
       break;
 
-    case 'String':
+    case 'string':
       elementField = (
         <Input
           value={value}
@@ -249,7 +258,7 @@ const getField = (pipelineElementPropertyUpdated, value, name, pipelineId, eleme
         />
       );
       break;
-    case 'PipelineReference':
+    case 'pipelinereference':
       elementField = <div>TODO</div>;
       break;
     default:
@@ -278,12 +287,15 @@ const ElementField = ({
   docRefTypes,
   pipelineId,
   pipelineElementPropertyUpdated,
+  pipelineElementPropertyRevertToParent,
+  pipelineElementPropertyRevertToDefault,
   elementId,
+  revertToDefault
 }) => {
   // Types should always be lower case.
   type = type.toLowerCase();
 
-  const details = getDetails(value, parentValue, defaultValue, type);
+  const details = getDetails(value, parentValue, defaultValue, type, pipelineElementPropertyRevertToParent, pipelineElementPropertyRevertToDefault, elementId, name, pipelineId);
   const field = getField(pipelineElementPropertyUpdated, details.actualValue, name, pipelineId, elementId, type, docRefTypes)
   
   const popOverContent = (
