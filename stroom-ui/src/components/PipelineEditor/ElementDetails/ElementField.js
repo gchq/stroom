@@ -86,14 +86,16 @@ const ElementField = ({
       );
       break;
     case 'DocRef':
-        elementField = <DocPickerModal
+      elementField = (
+        <DocPickerModal
           pickerId={getPickerName(name)}
           typeFilter={docRefTypes}
           onChange={(newValue) => {
             pipelineElementPropertyUpdated(pipelineId, elementId, name, 'entity', newValue);
           }}
         />
-      
+      );
+
       break;
 
     case 'String':
@@ -131,13 +133,12 @@ const ElementField = ({
     resetToDefaultAddsRemove: false,
   };
 
-  const revertToDefaultButton = <Button>Revert to default</Button>;
-  const revertToParentButton = <Button>Revert to parent</Button>;
+  const RevertToDefaultButton = <Button>Revert to default</Button>;
+  const RevertToParentButton = <Button>Revert to parent</Button>;
 
   // If values are entities then they'll be objects, which we can't drop into JSX.
   // So we'll habitually use this function to get a usable display value.
-  const getDisplayValue = value =>
-    (value !== null && typeof value === 'object' ? value.value : value);
+  const getDisplayValue = value => (value !== null && typeof value === 'object' ? value.value : value);
 
   const isSet = value => value !== undefined && value !== '';
 
@@ -146,44 +147,56 @@ const ElementField = ({
   if (value === undefined && parentValue === undefined && isSet(defaultValue)) {
     valueSpec.valueToDisplay = defaultValue;
     popUpContentForValue = (
-      <p>
-        This property is using the default value of <em>{getDisplayValue(defaultValue)}</em>. It is
-        not inheriting anything and hasn't been set to anything by a user.
-      </p>
+      <div>
+        <p>
+          This property is using the default value of <strong>{getDisplayValue(defaultValue)}</strong>.
+        </p>
+        <p>It is not inheriting anything and hasn't been set to anything by a user.</p>
+      </div>
     );
   } else if (value !== undefined && parentValue === undefined && isSet(defaultValue)) {
     valueSpec.valueToDisplay = value.value[type];
     popUpContentForValue = (
       <div>
         <p>
-          This property has a default value of <em>{getDisplayValue(defaultValue)}</em> but it has
-          been overridden by the user. It is not inheriting anything. You can revert to the default
-          if you like.
+          This property has a default value of <strong>{getDisplayValue(defaultValue)}</strong> but it has been overridden by the user. You can revert to the default if you like.
         </p>
-        {revertToDefaultButton}
+        {RevertToDefaultButton}
+        <p>This property is not inheriting anything.</p>
       </div>
     );
     valueSpec.resetToDefaultDeletesProperty = true;
   } else if (value === undefined && parentValue !== undefined && isSet(defaultValue)) {
     valueSpec.valueToDisplay = parentValue;
     popUpContentForValue = (
-      <p>
-        This property has a default value of <em>{getDisplayValue(defaultValue)}</em>. It is
-        currently inheriting a value of <em>{getDisplayValue(parentValue)}</em>, but you can make it
-        use the default if you like. TODO: REVERT TO DEFAULT BUTTON
-      </p>
+      <div>
+        <p>
+          This property has a default value of <strong>{getDisplayValue(defaultValue)}</strong>.
+        </p>
+
+        <p>
+          It is currently inheriting a value of <strong>{getDisplayValue(parentValue)}</strong>, but you can make it use the default if you like. {RevertToDefaultButton}
+        </p>
+      </div>
     );
     valueSpec.resetToDefaultAddsRemove = true;
   } else if (value !== undefined && parentValue !== undefined && isSet(defaultValue)) {
     valueSpec.valueToDisplay = value.value[type];
     popUpContentForValue = (
-      <p>
-        This property has a default value of <em>{getDisplayValue(defaultValue)}</em>. It would
-        inherit a value of
-        <em>{getDisplayValue(parentValue)}</em> except this has been set by a user to
-        <em>{getDisplayValue(value.value[type])}</em>. You may revert it to the default or you may
-        revert to the parent's value. TODO: REVERT TO DEFAULT BUTTON. TODO: REVERT TO PARENT BUTTON.
-      </p>
+      <div>
+        <p>
+          This property has a default value of <strong>{getDisplayValue(defaultValue)}</strong>.
+        </p>
+        <p>
+          This property would inherit a value of <strong>{getDisplayValue(parentValue)}</strong> except this has been set by a user.
+        </p>
+
+        <p>
+          You may revert it to the default or you may revert to the parent's value.
+          {RevertToDefaultButton}
+          {RevertToParentButton}
+        </p>
+      </div>
     );
     valueSpec.resetToDefaultDeletesProperty = true;
     valueSpec.resetToDefaultAddsRemove = true;
@@ -191,8 +204,7 @@ const ElementField = ({
     valueSpec.valueToDisplay = undefined;
     popUpContentForValue = (
       <p>
-        This property has no default value, it is not inheriting anything, and hasn't been set to
-        anything by a user.
+        This property has no default value, it is not inheriting anything, and hasn't been set to anything by a user.
       </p>
     );
   } else if (value !== undefined && parentValue === undefined && !isSet(defaultValue)) {
@@ -200,16 +212,14 @@ const ElementField = ({
     valueSpec.resetToDefaultDeletesProperty = true;
     popUpContentForValue = (
       <p>
-        This property has no default value and it is not inheriting anything. It has been set by the
-        user.
+        This property has no default value and it is not inheriting anything. It has been set by the user.
       </p>
     );
   } else if (value === undefined && parentValue !== undefined && !isSet(defaultValue)) {
     valueSpec.valueToDisplay = parentValue;
     popUpContentForValue = (
       <p>
-        This property has no default value and has not been set to anything by the user, but it is
-        inheriting a value of <em>{getDisplayValue(parentValue)}</em>.
+        This property has no default value and has not been set to anything by the user, but it is inheriting a value of <strong>{getDisplayValue(parentValue)}</strong>.
       </p>
     );
     valueSpec.resetToDefaultAddsRemove = true;
@@ -218,12 +228,14 @@ const ElementField = ({
     valueSpec.resetToDefaultDeletesProperty = true;
     valueSpec.resetToDefaultAddsRemove = true;
     popUpContentForValue = (
-      <p>
-        This property has no default value. It is inheriting a value of{' '}
-        <em>{getDisplayValue(parentValue)}</em> but this has been overriden by the user to{' '}
-        <em>{getDisplayValue(value.value[type])}</em>. You can revert to the inherited value if you
-        like. TODO: REVERT TO PARENT BUTTON.
-      </p>
+      <div>
+        <p>This property has no default value.</p>
+
+        <p>
+          {' '}
+          It is inheriting a value of <strong> {getDisplayValue(parentValue.value[type])}</strong> but this has been overriden by the user. You can revert to this inherited value if you like. {RevertToParentButton}
+        </p>
+      </div>
     );
   }
 
@@ -244,7 +256,7 @@ const ElementField = ({
       </Form.Field>
       <Popup
         hoverable
-        trigger={<Icon name="question circle" color="blue" size="large" />}
+        trigger={<Icon name="cog" color="blue" size="large" />}
         content={popOverContent}
       />
     </Form.Group>

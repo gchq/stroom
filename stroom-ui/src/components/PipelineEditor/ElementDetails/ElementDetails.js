@@ -9,6 +9,8 @@ import { Container, Message, Image, Form } from 'semantic-ui-react';
 
 import { reduxForm } from 'redux-form';
 
+import { getParentProperty } from '../pipelineUtils';
+
 import HorizontalPanel from 'prototypes/HorizontalPanel';
 
 import ElementField from './ElementField';
@@ -88,6 +90,11 @@ const ElementDetails = ({
               ? elementTypeProperty.docRefTypes
               : undefined;
 
+            const parentValue = getParentProperty(
+              pipeline.pipeline.configStack,
+              element.id,
+              elementTypeProperty.name,
+            );
             const defaultValue = elementTypeProperty.defaultValue;
             const property = elementProperties.find(element => element.name === elementTypeProperty.name);
             return (
@@ -100,6 +107,7 @@ const ElementDetails = ({
                 docRefTypes={docRefTypes}
                 description={elementTypeProperty.description}
                 defaultValue={defaultValue}
+                parentValue={parentValue}
                 value={property}
               />
             );
