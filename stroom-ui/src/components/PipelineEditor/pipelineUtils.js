@@ -497,23 +497,24 @@ export function getAllChildren(pipeline, parent) {
 
 /**
  * Looks through the parents in the stack until it finds the first time this property has been set.
- * It'll return that value but if it's never been set it'll return undefined.
+ * It'll return that value but if it's never been set it'll return undefined. It won't return a value 
+ * if the property exists in 'remove'.
  * 
- * @param {pipeline} pipeline The pipeline 
+ * @param {configStack} stack The config stack for the pipeline 
  * @param {string} elementId The elementId of the
  * @param {string} propertyName The name of the property to search for
  */
 export function getParentProperty(stack, elementId, propertyName) {
-  const getFromParent = (index) =>{
-    console.log({index})
+  const getFromParent = (index) => {
     const property = stack[index].properties.add.find(element => element.element === elementId && element.name === propertyName);
-    console.log({property})
+    const removeProperty = stack[index].properties.remove.find(element => element.element === elementId && element.name === propertyName);
     if(property !== undefined){
       // We return the first matching property we find.
       return property;
     } else {
       // If we haven't found one we might need to continue looking up the stack
-      if( index -1 >= 0){
+      // We won't continue looking up the stack if we have a matching 'remove' property.
+      if( index -1 >= 0 && removeProperty === undefined){
         return getFromParent(index - 1)
       }
       else return undefined;

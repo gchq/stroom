@@ -391,19 +391,75 @@ describe('Pipeline Utils', () => {
       // Given
       const pipeline = testPipelines.parentNoProperty;
       // When
-      const parentProperty = getParentProperty(pipeline.configStack, 'type', 'xsltNamePattern');
+      const parentProperty = getParentProperty(pipeline.configStack, 'combinedParser', 'type');
       // Then
       expect(parentProperty).toBe(undefined);
     });
-    test('should not find anything because there\'s no parent', () => {
+    test('should find parent property', () => {
       // Given
       const pipeline = testPipelines.parentWithProperty;
       // When
-      const parentProperty = getParentProperty(pipeline.configStack, 'xsltFilter', 'type');
+      const parentProperty = getParentProperty(pipeline.configStack, 'combinedParser', 'type');
+      const parentProperty2 = getParentProperty(pipeline.configStack, 'xsltFilter', 'xsltNamePattern');
       // Then
-      console.log({parentProperty})
+      expect(parentProperty.element).toBe('combinedParser');
+      expect(parentProperty.name).toBe('type')
+      expect(parentProperty.value.string).toBe('JS')
+      expect(parentProperty2.element).toBe('xsltFilter');
+      expect(parentProperty2.name).toBe('xsltNamePattern')
+      expect(parentProperty2.value.string).toBe('DSD')
+    });
+
+    test('shouldn\' find a property in parent or parent\'s parent', () => {
+      // Given
+      const pipeline = testPipelines.parentNoPropertyParentNoProperty;
+      // When
+      const parentProperty = getParentProperty(pipeline.configStack, 'combinedParser', 'type');
+      // Then
       expect(parentProperty).toBe(undefined);
     });
+
+    test('should find a property, in the parent\'s parent', () => {
+      // Given
+      const pipeline = testPipelines.parentNoPropertyParentWithProperty;
+      // When
+      const parentProperty = getParentProperty(pipeline.configStack, 'xsltFilter', 'property1');
+      // Then
+      expect(parentProperty.element).toBe('xsltFilter');
+      expect(parentProperty.name).toBe('property1')
+      expect(parentProperty.value.boolean).toBe(false)
+    });
+
+    test('should find a property, in the parent but not their parent', () => {
+      // Given
+      const pipeline = testPipelines.parentWithPropertyParentNoProperty;
+      // When
+      const parentProperty = getParentProperty(pipeline.configStack, 'xsltFilter', 'property1');
+      // Then
+      expect(parentProperty.element).toBe('xsltFilter');
+      expect(parentProperty.name).toBe('property1')
+      expect(parentProperty.value.boolean).toBe(false)
+    });
+
+    test('should find a property in the parent and ignore a property in their parent', () => {
+      // Given
+      const pipeline = testPipelines.parentWithPropertyParentWithProperty;
+      // When
+      const parentProperty = getParentProperty(pipeline.configStack, 'xsltFilter', 'xsltNamePattern');
+      // Then
+      expect(parentProperty.element).toBe('xsltFilter');
+      expect(parentProperty.name).toBe('xsltNamePattern')
+      expect(parentProperty.value.string).toBe('DSD')
+    });
+
+    test('shouldn\'t find a property in the parent because although it\'s there it also exists in \'remove\'', () => {
+      // Given
+      const pipeline = testPipelines.parentWithRemoveforItsParentsAdd;
+      // When
+      const parentProperty = getParentProperty(pipeline.configStack, 'xsltFilter', 'property2');
+      // Then
+      expect(parentProperty).toBe(undefined);
+    });   
   });
 });
 
