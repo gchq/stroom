@@ -23,7 +23,6 @@ import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
 import org.lmdbjava.Txn;
 
-import javax.annotation.concurrent.NotThreadSafe;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -33,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-@NotThreadSafe
 public class LmdbKeyValueStore implements KeyValueStore {
 
     public static final int VALUE_BUFFER_SIZE = 700;
