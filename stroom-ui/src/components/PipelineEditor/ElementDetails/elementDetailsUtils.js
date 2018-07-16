@@ -1,18 +1,13 @@
-const getActualValue = (value, defaultValue, type) => {
+const getActualValue = (value, type) => {
   // In case the type of the element doesn't match the type in the data.
   type = type === 'int' ? 'integer' : type;
-
-  // If we're dealing with a boolean we need to parse the defaultValue from the string.
-  if (type === 'boolean') {
-    defaultValue = defaultValue == 'true';
-  }
 
   let actualValue;
 
   if (value !== undefined && value.value[type] !== undefined) {
     actualValue = value.value[type];
   } else {
-    actualValue = defaultValue;
+    actualValue = undefined;
   }
 
   return actualValue;
