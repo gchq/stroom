@@ -15,15 +15,14 @@
  */
 import React from 'react';
 import PropTypes from 'prop-types';
-
+import { withRouter } from 'react-router-dom';
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
-
 import { Dropdown, Icon } from 'semantic-ui-react';
 
 import { actionCreators as docExplorerActionCreators } from './redux';
-
 import { fetchDocInfo } from './explorerClient';
+import { openDocRef } from 'prototypes/RecentItems';
 
 const {
   prepareDocRefDelete,
@@ -32,18 +31,22 @@ const {
   prepareDocRefRename,
 } = docExplorerActionCreators;
 
-const enhance = compose(connect(
-  state => ({
-    // state
-  }),
-  {
-    prepareDocRefMove,
-    prepareDocRefCopy,
-    prepareDocRefDelete,
-    prepareDocRefRename,
-    fetchDocInfo,
-  },
-));
+const enhance = compose(
+  withRouter,
+  connect(
+    state => ({
+      // state
+    }),
+    {
+      prepareDocRefMove,
+      prepareDocRefCopy,
+      prepareDocRefDelete,
+      prepareDocRefRename,
+      fetchDocInfo,
+      openDocRef,
+    },
+  ),
+);
 
 const DocRefMenu = ({
   explorerId,
@@ -55,13 +58,15 @@ const DocRefMenu = ({
   prepareDocRefCopy,
   fetchDocInfo,
   closeContextMenu,
+  openDocRef,
+  history,
 }) => (
   <span>
     <Dropdown inline icon={null} open={isOpen} onClose={() => closeContextMenu()}>
       <Dropdown.Menu>
         <Dropdown.Item
           onClick={() => {
-            console.log('OPEN DOC REF'); // todo
+            openDocRef(history, docRef);
             closeContextMenu();
           }}
         >

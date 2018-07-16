@@ -140,6 +140,16 @@ server.get(`${testConfig.pipelineServiceUrl}/:pipelineId`).intercept((req, res) 
     res.sendStatus(404);
   }
 });
+server.get(`${testConfig.pipelineServiceUrl}/`).intercept((req, res) => {
+  res.json({
+    total: Object.keys(testCache.data.pipelines).length,
+    pipelines: Object.keys(testCache.data.pipelines).map(p => ({
+      uuid: p,
+      name: p,
+      type: 'Pipeline',
+    })),
+  });
+});
 server
   .post(`${testConfig.pipelineServiceUrl}/:pipelineId`)
   .intercept((req, res) => res.sendStatus(200));

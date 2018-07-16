@@ -4,7 +4,7 @@ const getActualValue = (value, defaultValue, type) => {
 
   // If we're dealing with a boolean we need to parse the defaultValue from the string.
   if (type === 'boolean') {
-    defaultValue = defaultValue == 'true';
+    defaultValue = defaultValue === 'true';
   }
 
   let actualValue;

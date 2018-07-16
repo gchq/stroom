@@ -3,13 +3,16 @@ import React from 'react';
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
 import { Button, Header, Icon, Modal, Menu, Input, Breadcrumb } from 'semantic-ui-react';
+import { withRouter } from 'react-router-dom';
 
 import { actionCreators as appSearchActionCreators } from './redux';
 import withExplorerTree from 'components/DocExplorer/withExplorerTree';
+import { openDocRef } from 'prototypes/RecentItems';
 
 const { appSearchClosed, appSearchTermUpdated } = appSearchActionCreators;
 
 const enhance = compose(
+  withRouter,
   withExplorerTree,
   connect(
     (state, props) => ({
@@ -17,7 +20,7 @@ const enhance = compose(
       searchTerm: state.appSearch.searchTerm,
       searchResults: state.appSearch.searchResults,
     }),
-    { appSearchClosed, appSearchTermUpdated },
+    { appSearchClosed, appSearchTermUpdated, openDocRef },
   ),
 );
 
@@ -27,6 +30,8 @@ const AppSearch = ({
   appSearchClosed,
   appSearchTermUpdated,
   searchResults,
+  history,
+  openDocRef,
 }) => (
   <Modal open={isOpen} onClose={appSearchClosed} size="small" dimmer="inverted">
     <Header icon="search" content="App Search" />
@@ -50,7 +55,7 @@ const AppSearch = ({
             <Menu.Item
               key={i}
               onClick={() => {
-                console.log('OPEN DOC REF'); // todo
+                openDocRef(history, searchResult);
                 appSearchClosed();
               }}
             >

@@ -18,6 +18,7 @@ import PropTypes from 'prop-types';
 
 import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
+import { withRouter } from 'react-router-dom';
 
 import ItemTypes from './dragDropTypes';
 import { DragSource } from 'react-dnd';
@@ -26,6 +27,7 @@ import { actionCreators as docExplorerActionCreators } from './redux/explorerTre
 
 import DocRefMenu from './DocRefMenu';
 import ClickCounter from 'lib/ClickCounter';
+import { openDocRef } from 'prototypes/RecentItems';
 
 const { docRefSelected } = docExplorerActionCreators;
 
@@ -50,6 +52,7 @@ function dragCollect(connect, monitor) {
 }
 
 const enhance = compose(
+  withRouter,
   connect(
     (state, props) => ({
       // state
@@ -57,6 +60,7 @@ const enhance = compose(
     }),
     {
       docRefSelected,
+      openDocRef
     },
   ),
   withContextMenu,
@@ -67,8 +71,9 @@ const DocRef = ({
   explorerId,
   explorer,
   docRef,
-
+  history, 
   docRefSelected,
+  openDocRef,
 
   isContextMenuOpen,
   setContextMenuOpen,
@@ -79,7 +84,7 @@ const DocRef = ({
   // these are required to tell the difference between single/double clicks
   const clickCounter = new ClickCounter()
     .withOnSingleClick(() => docRefSelected(explorerId, docRef))
-    .withOnDoubleClick(() => console.log('OPEN DOC REF')) // todo
+    .withOnDoubleClick(() => openDocRef(history, docRef))
 
   const onRightClick = (e) => {
     setContextMenuOpen(true);

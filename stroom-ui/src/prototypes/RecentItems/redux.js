@@ -16,6 +16,7 @@
 import { createActions, combineActions, handleActions } from 'redux-actions';
 
 const actionCreators = createActions({
+  DOC_REF_OPENED: docRef => ({ docRef }),
   RECENT_ITEMS_OPENED: () => ({ isOpen: true }),
   RECENT_ITEMS_CLOSED: () => ({ isOpen: false }),
 });
@@ -24,6 +25,7 @@ const { recentItemsOpened, recentItemsClosed } = actionCreators;
 
 const defaultState = {
   isOpen: false,
+  openItemStack: [],
 };
 
 const reducer = handleActions(
@@ -31,6 +33,10 @@ const reducer = handleActions(
     [combineActions(recentItemsOpened, recentItemsClosed)]: (state, { payload: { isOpen } }) => ({
       ...state,
       isOpen,
+    }),
+    DOC_REF_OPENED: (state, { payload: { docRef } }) => ({
+      ...state,
+      openItemStack: [docRef].concat(state.openItemStack.filter(d => d.uuid !== docRef.uuid)),
     }),
   },
   defaultState,

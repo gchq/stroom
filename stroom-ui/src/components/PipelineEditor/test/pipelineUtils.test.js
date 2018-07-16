@@ -83,7 +83,6 @@ describe('Pipeline Utils', () => {
   describe('#getAllChildren', () => {
     test('should recursively return children #1', () => {
       // When
-      // TODO change name to `getAllChildren` or something similar.
       const children = getAllChildren(testPipelines.forkedPipeline, 'xsltFilter');
 
       // Then

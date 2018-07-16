@@ -74,7 +74,7 @@ const sidebarMenuItems = [
   },
   {
     title: 'Processing',
-    path: `${pathPrefix}/trackers`, // TODO change this to processing -- needs changing in the stroom iFrame too.
+    path: `${pathPrefix}/processing`,
     icon: 'play',
   },
   {
@@ -146,6 +146,7 @@ const AppChrome = ({
   return (
     <div className="app-chrome">
       <AppSearch />
+      <RecentItems />
       <div className="app-chrome__sidebar">{menu}</div>
       <div className="app-chrome__content">
         <div className="content-tabs">
