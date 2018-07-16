@@ -22,7 +22,7 @@ import com.google.inject.multibindings.Multibinder;
 import stroom.entity.event.EntityEvent;
 import stroom.entity.shared.Clearable;
 import stroom.logging.EventInfoProvider;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.task.TaskHandler;
 
 public class SecurityModule extends AbstractModule {
@@ -62,7 +62,7 @@ public class SecurityModule extends AbstractModule {
     }
 
     @Provides
-    public SecurityConfig securityConfig(final StroomPropertyService stroomPropertyService) {
+    public SecurityConfig securityConfig(final PropertyService stroomPropertyService) {
         final SecurityConfig securityConfig = new SecurityConfig();
         securityConfig.setAuthenticationServiceUrl(stroomPropertyService.getProperty("stroom.auth.authentication.service.url"));
         securityConfig.setAdvertisedStroomUrl(stroomPropertyService.getProperty("stroom.advertisedUrl"));

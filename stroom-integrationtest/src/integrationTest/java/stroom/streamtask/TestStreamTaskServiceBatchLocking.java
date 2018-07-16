@@ -65,7 +65,7 @@ public class TestStreamTaskServiceBatchLocking extends AbstractCoreIntegrationTe
     //
     // final FindTranslationStreamTaskCriteria criteria = new
     // FindTranslationStreamTaskCriteria();
-    // criteria.setNode(nodeCache.getDefaultNode());
+    // criteria.setNode(nodeCache.get());
     // criteria.getPageRequest().setLength(2);
     // criteria.setStreamTaskStatus(TaskStatus.UNPROCESSED);
     // criteria.setTranslateFeed(Boolean.TRUE);

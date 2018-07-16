@@ -16,7 +16,7 @@
 
 package stroom.entity;
 
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
@@ -25,7 +25,7 @@ public class StroomDatabaseInfo {
     private String driverClassName;
 
     @Inject
-    StroomDatabaseInfo(final StroomPropertyService propertyService) {
+    StroomDatabaseInfo(final PropertyService propertyService) {
         this.driverClassName = propertyService.getProperty("stroom.jdbcDriverClassName");
     }
 

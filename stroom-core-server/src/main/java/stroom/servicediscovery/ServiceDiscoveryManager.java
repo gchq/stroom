@@ -9,7 +9,7 @@ import org.apache.curator.x.discovery.ServiceDiscovery;
 import org.apache.curator.x.discovery.ServiceDiscoveryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.util.lifecycle.StroomShutdown;
 
 import javax.inject.Inject;
@@ -35,7 +35,7 @@ public class ServiceDiscoveryManager {
     public static final String PROP_KEY_ZOOKEEPER_BASE_PATH = PROP_KEY_PREFIX + "zookeeperBasePath";
     public static final String PROP_KEY_SERVICE_DISCOVERY_ENABLED = PROP_KEY_PREFIX + "enabled";
 
-    private final StroomPropertyService stroomPropertyService;
+    private final PropertyService stroomPropertyService;
     private final String zookeeperUrl;
 
     private final AtomicReference<CuratorFramework> curatorFrameworkRef = new AtomicReference<>();
@@ -46,7 +46,7 @@ public class ServiceDiscoveryManager {
 
     @SuppressWarnings("unused")
     @Inject
-    ServiceDiscoveryManager(final StroomPropertyService stroomPropertyService) {
+    ServiceDiscoveryManager(final PropertyService stroomPropertyService) {
         this.stroomPropertyService = stroomPropertyService;
         this.zookeeperUrl = stroomPropertyService.getProperty(PROP_KEY_ZOOKEEPER_QUORUM);
 

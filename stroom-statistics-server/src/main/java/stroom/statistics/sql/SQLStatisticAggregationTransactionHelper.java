@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.StroomDatabaseInfo;
 import stroom.entity.util.ConnectionUtil;
 import stroom.entity.util.SqlUtil;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.statistics.shared.StatisticType;
 import stroom.task.TaskContext;
 import stroom.util.date.DateUtil;
@@ -215,7 +215,7 @@ public class SQLStatisticAggregationTransactionHelper {
             .toString();
     private final ConnectionProvider connectionProvider;
     private final StroomDatabaseInfo stroomDatabaseInfo;
-    private final StroomPropertyService stroomPropertyService;
+    private final PropertyService stroomPropertyService;
 
     // @formatter:on
     private final AggregateConfig[] aggregateConfig = new AggregateConfig[]{
@@ -252,7 +252,7 @@ public class SQLStatisticAggregationTransactionHelper {
     @Inject
     SQLStatisticAggregationTransactionHelper(final ConnectionProvider connectionProvider,
                                              final StroomDatabaseInfo stroomDatabaseInfo,
-                                             final StroomPropertyService stroomPropertyService) {
+                                             final PropertyService stroomPropertyService) {
         this.connectionProvider = connectionProvider;
         this.stroomDatabaseInfo = stroomDatabaseInfo;
         this.stroomPropertyService = stroomPropertyService;

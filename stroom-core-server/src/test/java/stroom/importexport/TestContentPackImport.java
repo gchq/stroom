@@ -32,7 +32,7 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import stroom.node.shared.GlobalProperty;
 import stroom.properties.GlobalPropertyService;
-import stroom.properties.impl.mock.MockStroomPropertyService;
+import stroom.properties.impl.mock.MockPropertyService;
 import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
 import stroom.util.test.StroomExpectedException;
@@ -61,7 +61,7 @@ public class TestContentPackImport {
     public MockitoRule mockitoRule = MockitoJUnit.rule();
     @Mock
     ImportExportService importExportService;
-    MockStroomPropertyService stroomPropertyService = new MockStroomPropertyService();
+    MockPropertyService stroomPropertyService = new MockPropertyService();
     @Mock
     GlobalPropertyService globalPropertyService;
     @Captor

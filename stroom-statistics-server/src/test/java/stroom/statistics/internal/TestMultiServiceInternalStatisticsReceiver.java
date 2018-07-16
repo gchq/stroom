@@ -11,7 +11,7 @@ import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.properties.impl.mock.MockStroomPropertyService;
+import stroom.properties.impl.mock.MockPropertyService;
 import stroom.docref.DocRef;
 
 import java.util.Arrays;
@@ -41,7 +41,7 @@ public class TestMultiServiceInternalStatisticsReceiver {
     private static final InternalStatisticEvent EVENT_B702 = createEvent(STAT_KEY_B, 702L);
     private static final InternalStatisticEvent EVENT_B703 = createEvent(STAT_KEY_B, 703L);
 
-    private final MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
+    private final MockPropertyService mockStroomPropertyService = new MockPropertyService();
 
     @Mock
     private InternalStatisticDocRefCache internalStatisticDocRefCache;

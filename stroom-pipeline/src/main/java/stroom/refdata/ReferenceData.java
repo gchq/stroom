@@ -17,7 +17,7 @@
 package stroom.refdata;
 
 import stroom.docref.DocRef;
-import stroom.entity.DocumentPermissionCache;
+import stroom.security.DocumentPermissionCache;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;

@@ -23,7 +23,7 @@ import com.zaxxer.hikari.HikariConfig;
 import org.flywaydb.core.Flyway;
 import stroom.properties.api.ConnectionConfig;
 import stroom.properties.api.ConnectionPoolConfig;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.task.TaskHandler;
 
 import javax.inject.Singleton;
@@ -45,7 +45,7 @@ public class SQLStatisticsModule extends AbstractModule {
 
     @Provides
     @Singleton
-    ConnectionProvider getConnectionProvider(final StroomPropertyService stroomPropertyService) {
+    ConnectionProvider getConnectionProvider(final PropertyService stroomPropertyService) {
         final ConnectionConfig connectionConfig = getConnectionConfig(stroomPropertyService);
         final ConnectionPoolConfig connectionPoolConfig = getConnectionPoolConfig(stroomPropertyService);
 
@@ -71,11 +71,11 @@ public class SQLStatisticsModule extends AbstractModule {
         return flyway;
     }
 
-    private ConnectionConfig getConnectionConfig(final StroomPropertyService stroomPropertyService) {
+    private ConnectionConfig getConnectionConfig(final PropertyService stroomPropertyService) {
         return new ConnectionConfig(CONNECTION_PROPERTY_PREFIX, stroomPropertyService);
     }
 
-    private ConnectionPoolConfig getConnectionPoolConfig(final StroomPropertyService stroomPropertyService) {
+    private ConnectionPoolConfig getConnectionPoolConfig(final PropertyService stroomPropertyService) {
         return new ConnectionPoolConfig(CONNECTION_PROPERTY_PREFIX, stroomPropertyService);
     }
 

@@ -20,7 +20,7 @@ package stroom.streamtask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.lifecycle.JobTrackedSchedule;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.proxy.repo.RepositoryProcessor;
 import stroom.proxy.repo.StroomZipRepository;
 import stroom.task.ExecutorProvider;
@@ -58,7 +58,7 @@ class ProxyAggregationExecutor {
     ProxyAggregationExecutor(final ProxyFileProcessorImpl proxyFileProcessor,
                              final TaskContext taskContext,
                              final ExecutorProvider executorProvider,
-                             final StroomPropertyService propertyService) {
+                             final PropertyService propertyService) {
         this(
                 proxyFileProcessor,
                 taskContext,

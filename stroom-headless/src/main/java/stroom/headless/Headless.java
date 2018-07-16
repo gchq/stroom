@@ -25,18 +25,12 @@ import stroom.docstore.fs.FSPersistenceConfig;
 import stroom.entity.util.XMLUtil;
 import stroom.guice.PipelineScopeRunnable;
 import stroom.importexport.ImportExportService;
-import stroom.node.NodeCache;
-import stroom.node.VolumeService;
-import stroom.node.shared.VolumeEntity;
-import stroom.node.shared.VolumeEntity.VolumeType;
-import stroom.persist.PersistService;
 import stroom.pipeline.filter.SafeXMLFilter;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
 import stroom.proxy.repo.StroomZipNameSet;
 import stroom.proxy.repo.StroomZipRepository;
 import stroom.task.ExternalShutdownController;
-import stroom.task.TaskManager;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.config.StroomProperties;
 import stroom.util.config.StroomProperties.Source;
@@ -45,6 +39,8 @@ import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ModelStringUtil;
 
+import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
@@ -77,6 +73,15 @@ public class Headless extends AbstractCommandLineTool {
     private Path configFile;
     private Path contentDir;
     private Path tmpDir;
+
+    @Inject
+    private FSPersistenceConfig fsPersistenceConfig;
+    @Inject
+    private PipelineScopeRunnable pipelineScopeRunnable;
+    @Inject
+    private ImportExportService importExportService;
+    @Inject
+    private Provider<HeadlessTranslationTaskHandler> translationTaskHandlerProvider;
 
     public static void main(final String[] args) {
         new Headless().doMain(args);
@@ -188,31 +193,21 @@ public class Headless extends AbstractCommandLineTool {
         // Initialise some variables.
         init();
 
-        final Injector injector = createInjector();
+        // Create the Guice injector and inject members.
+        createInjector();
 
-        // Start persistance.
-        injector.getInstance(PersistService.class).start();
-        try {
-            final PipelineScopeRunnable pipelineScopeRunnable = injector.getInstance(PipelineScopeRunnable.class);
-            pipelineScopeRunnable.scopeRunnable(() -> {
-                process(injector);
-            });
-        } finally {
-            // Stop persistance.
-            injector.getInstance(PersistService.class).stop();
-        }
+        pipelineScopeRunnable.scopeRunnable(this::processInPipelineScope);
 
         LOGGER.info("Processing completed in "
                 + ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime));
     }
 
-    private void process(final Injector injector) {
+    private void processInPipelineScope() {
         // Set the content directory.
-        final FSPersistenceConfig fsPersistenceConfig = injector.getInstance(FSPersistenceConfig.class);
         fsPersistenceConfig.setPath(contentDir.toAbsolutePath().toString());
 
         // Read the configuration.
-        readConfig(injector);
+        readConfig();
 
         OutputStreamWriter outputStreamWriter = null;
         try {
@@ -235,7 +230,7 @@ public class Headless extends AbstractCommandLineTool {
             // Output the start root element.
             headlessFilter.beginOutput();
 
-            processRepository(injector, headlessFilter);
+            processRepository(headlessFilter);
 
             // Output the end root element.
             headlessFilter.endOutput();
@@ -255,10 +250,8 @@ public class Headless extends AbstractCommandLineTool {
         }
     }
 
-    private void processRepository(final Injector injector, final HeadlessFilter headlessFilter) {
+    private void processRepository(final HeadlessFilter headlessFilter) {
         try {
-            final TaskManager taskManager = injector.getInstance(TaskManager.class);
-
             // Loop over all of the data files in the repository.
             final StroomZipRepository repo = new StroomZipRepository(FileUtil.getCanonicalPath(inputDir));
             final List<Path> zipFiles = repo.listAllZipFiles();
@@ -280,7 +273,8 @@ public class Headless extends AbstractCommandLineTool {
                             final HeadlessTranslationTask task = new HeadlessTranslationTask(
                                     IgnoreCloseInputStream.wrap(dataStream), IgnoreCloseInputStream.wrap(metaStream),
                                     IgnoreCloseInputStream.wrap(contextStream), headlessFilter);
-                            taskManager.exec(task);
+                            final HeadlessTranslationTaskHandler handler = translationTaskHandlerProvider.get();
+                            handler.exec(task);
                         }
 
                         // Close the zip file.
@@ -295,22 +289,15 @@ public class Headless extends AbstractCommandLineTool {
         }
     }
 
-    private void readConfig(final Injector injector) {
+    private void readConfig() {
         LOGGER.info("Reading configuration from: " + FileUtil.getCanonicalPath(configFile));
 
-        final ImportExportService importExportService = injector.getInstance(ImportExportService.class);
         importExportService.performImportWithoutConfirmation(configFile);
-
-        final NodeCache nodeCache = injector.getInstance(NodeCache.class);
-        final VolumeService volumeService = injector.getInstance(VolumeService.class);
-        volumeService
-                .save(VolumeEntity.create(nodeCache.getDefaultNode(), FileUtil.getCanonicalPath(tmpDir) + "/cvol", VolumeType.PUBLIC));
+//        volumeService.save(VolumeEntity.create(nodeCache.get(), FileUtil.getCanonicalPath(tmpDir) + "/cvol", VolumeType.PUBLIC));
     }
 
-    private Injector createInjector() {
-        final Injector injector = Guice.createInjector(new HeadlessModule());
+    private void createInjector() {
+        final Injector injector = Guice.createInjector(new CliModule());
         injector.injectMembers(this);
-
-        return injector;
     }
 }

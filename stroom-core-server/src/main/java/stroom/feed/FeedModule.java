@@ -43,17 +43,5 @@ public class FeedModule extends AbstractModule {
 
         final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
         entityServiceByTypeBinder.addBinding(FeedDoc.DOCUMENT_TYPE).to(FeedStoreImpl.class);
-
-//        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
-//        findServiceBinder.addBinding().to(FeedServiceImpl.class);
     }
-//
-//    @Provides
-//    @Named("cachedFeedService")
-//    public FdService cachedFeedService(final CachingEntityManager entityManager,
-//                                       final EntityManagerSupport entityManagerSupport,
-//                                       final ImportExportHelper importExportHelper,
-//                                       final SecurityContext securityContext) {
-//        return new FdServiceImpl(entityManager, entityManagerSupport, importExportHelper, securityContext);
-//    }
 }

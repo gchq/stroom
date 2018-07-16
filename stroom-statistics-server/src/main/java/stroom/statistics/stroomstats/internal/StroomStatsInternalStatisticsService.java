@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import stroom.connectors.kafka.StroomKafkaProducer;
 import stroom.kafka.StroomKafkaProducerFactoryService;
 import stroom.connectors.kafka.StroomKafkaProducerRecord;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.docref.DocRef;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsService;
@@ -46,14 +46,14 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     private static final TimeZone TIME_ZONE_UTC = TimeZone.getTimeZone(ZoneId.from(ZoneOffset.UTC));
 
     private final StroomKafkaProducerFactoryService stroomKafkaProducerFactory;
-    private final StroomPropertyService stroomPropertyService;
+    private final PropertyService stroomPropertyService;
     private final String docRefType;
     private final JAXBContext jaxbContext;
     private final DatatypeFactory datatypeFactory;
 
     @Inject
     StroomStatsInternalStatisticsService(final StroomKafkaProducerFactoryService stroomKafkaProducerFactory,
-                                         final StroomPropertyService stroomPropertyService) {
+                                         final PropertyService stroomPropertyService) {
         this.stroomKafkaProducerFactory = stroomKafkaProducerFactory;
         this.stroomPropertyService = stroomPropertyService;
         this.docRefType = stroomPropertyService.getProperty(PROP_KEY_DOC_REF_TYPE);

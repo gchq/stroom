@@ -20,7 +20,7 @@ package stroom.dashboard;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.lifecycle.JobTrackedSchedule;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.util.shared.Task;
 import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.task.TaskContext;
@@ -37,10 +37,10 @@ public class QueryHistoryCleanExecutor {
 
     private final TaskContext taskContext;
     private final QueryService queryService;
-    private final StroomPropertyService propertyService;
+    private final PropertyService propertyService;
 
     @Inject
-    public QueryHistoryCleanExecutor(final TaskContext taskContext, final QueryService queryService, final StroomPropertyService propertyService) {
+    public QueryHistoryCleanExecutor(final TaskContext taskContext, final QueryService queryService, final PropertyService propertyService) {
         this.taskContext = taskContext;
         this.queryService = queryService;
         this.propertyService = propertyService;

@@ -28,7 +28,7 @@ import stroom.index.shared.IndexShard;
 import stroom.jobsystem.shared.ClusterLock;
 import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobNode;
-import stroom.node.NodeConfig;
+import stroom.node.NodeCreator;
 import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
@@ -103,7 +103,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     private final IndexShardManager indexShardManager;
     private final IndexShardWriterCache indexShardWriterCache;
     private final DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper;
-    private final NodeConfig nodeConfig;
+    private final NodeCreator nodeConfig;
     private final StreamTaskCreator streamTaskCreator;
     private final StroomCacheManager stroomCacheManager;
     private final StroomBeanStore beanStore;
@@ -114,7 +114,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
                               final IndexShardManager indexShardManager,
                               final IndexShardWriterCache indexShardWriterCache,
                               final DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper,
-                              final NodeConfig nodeConfig,
+                              final NodeCreator nodeConfig,
                               final StreamTaskCreator streamTaskCreator,
                               final StroomCacheManager stroomCacheManager,
                               final StroomBeanStore beanStore) {

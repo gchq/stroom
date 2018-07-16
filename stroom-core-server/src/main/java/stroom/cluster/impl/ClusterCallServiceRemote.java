@@ -25,7 +25,7 @@ import stroom.feed.StroomHessianProxyFactory;
 import stroom.guice.StroomBeanStore;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 
@@ -59,7 +59,7 @@ class ClusterCallServiceRemote implements ClusterCallService {
     @Inject
     ClusterCallServiceRemote(final NodeCache nodeCache,
                              final StroomBeanStore beanStore,
-                             final StroomPropertyService propertyService) {
+                             final PropertyService propertyService) {
         this.nodeCache = nodeCache;
         this.beanStore = beanStore;
         this.clusterCallUseLocal = propertyService.getBooleanProperty("stroom.clusterCallUseLocal", true);

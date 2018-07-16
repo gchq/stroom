@@ -25,7 +25,7 @@ import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.datasource.api.v2.DataSourceField;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.statistics.shared.StatisticStore;
 import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.shared.common.CustomRollUpMask;
@@ -62,7 +62,7 @@ public class SQLStatisticEventStore implements Statistics {
     private final StatisticStoreValidator statisticsDataSourceValidator;
     private final StatisticStoreCache statisticsDataSourceCache;
     private final SQLStatisticCache statisticCache;
-    private final StroomPropertyService propertyService;
+    private final PropertyService propertyService;
     /**
      * SQL for testing querying the stat/tag names
      * <p>
@@ -89,7 +89,7 @@ public class SQLStatisticEventStore implements Statistics {
     SQLStatisticEventStore(final StatisticStoreValidator statisticsDataSourceValidator,
                            final StatisticStoreCache statisticsDataSourceCache,
                            final SQLStatisticCache statisticCache,
-                           final StroomPropertyService propertyService) {
+                           final PropertyService propertyService) {
 
         this.statisticsDataSourceValidator = statisticsDataSourceValidator;
         this.propertyService = propertyService;
@@ -105,7 +105,7 @@ public class SQLStatisticEventStore implements Statistics {
                                   final StatisticStoreValidator statisticsDataSourceValidator,
                                   final StatisticStoreCache statisticsDataSourceCache,
                                   final SQLStatisticCache statisticCache,
-                                  final StroomPropertyService propertyService) {
+                                  final PropertyService propertyService) {
         this.statisticsDataSourceValidator = statisticsDataSourceValidator;
         this.statisticsDataSourceCache = statisticsDataSourceCache;
         this.statisticCache = statisticCache;

@@ -11,7 +11,7 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
-import stroom.properties.impl.mock.MockStroomPropertyService;
+import stroom.properties.impl.mock.MockPropertyService;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.test.StroomExpectedException;
@@ -31,7 +31,7 @@ public class TestHeapHistogramStatisticsExecutor {
     @Captor
     private ArgumentCaptor<List<InternalStatisticEvent>> eventsCaptor;
 
-    private MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
+    private MockPropertyService mockStroomPropertyService = new MockPropertyService();
     private HeapHistogramService heapHistogramService = new HeapHistogramService(mockStroomPropertyService);
     private HeapHistogramStatisticsExecutor executor;
 

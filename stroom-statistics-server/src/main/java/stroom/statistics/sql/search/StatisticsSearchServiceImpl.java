@@ -13,7 +13,7 @@ import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.entity.util.PreparedStatementUtil;
 import stroom.entity.util.SqlBuilder;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.shared.StatisticType;
 import stroom.statistics.sql.ConnectionProvider;
@@ -59,7 +59,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     private static final String ALIASED_VALUE_COL = VALUE_TABLE_ALIAS + "." + SQLStatisticNames.VALUE;
 
     private final ConnectionProvider connectionProvider;
-    private final StroomPropertyService propertyService;
+    private final PropertyService propertyService;
 
     //defines how the entity fields relate to the table columns
     private static final Map<String, List<String>> STATIC_FIELDS_TO_COLUMNS_MAP = ImmutableMap.<String, List<String>>builder()
@@ -72,7 +72,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     @SuppressWarnings("unused") // Called by DI
     @Inject
     StatisticsSearchServiceImpl(final ConnectionProvider connectionProvider,
-                                final StroomPropertyService propertyService) {
+                                final PropertyService propertyService) {
         this.connectionProvider = connectionProvider;
         this.propertyService = propertyService;
     }
@@ -485,7 +485,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
         PreparedStatementResourceHolder(final DataSource dataSource,
                                         final SqlBuilder sql,
-                                        final StroomPropertyService propertyService) {
+                                        final PropertyService propertyService) {
             try {
                 connection = dataSource.getConnection();
             } catch (SQLException e) {

@@ -19,31 +19,11 @@ package stroom.entity;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.Clearable;
+import stroom.security.DocumentPermissionCache;
 
 public class MockEntityModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(GenericEntityService.class).to(GenericEntityServiceImpl.class);
-//        bind(StroomEntityManager.class).to(StroomEntityManagerImpl.class);
-//        bind(EntityEventBus.class).to(EntityEventBusImpl.class);
-        bind(DocumentPermissionCache.class).to(DocumentPermissionCacheImpl.class);
-//
-        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-//        clearableBinder.addBinding().to(CachingEntityManager.class);
-        clearableBinder.addBinding().to(DocumentPermissionCacheImpl.class);
-
-
-        // Needed by GenericEntityServiceImpl
-        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
-
-//
-//        final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
-//        taskHandlerBinder.addBinding().to(EntityReferenceFindHandler.class);
-//        taskHandlerBinder.addBinding().to(EntityServiceDeleteHandler.class);
-//        taskHandlerBinder.addBinding().to(EntityServiceFindDeleteHandler.class);
-//        taskHandlerBinder.addBinding().to(EntityServiceFindHandler.class);
-//        taskHandlerBinder.addBinding().to(EntityServiceFindReferenceHandler.class);
-//        taskHandlerBinder.addBinding().to(EntityServiceFindSummaryHandler.class);
-//        taskHandlerBinder.addBinding().to(EntityServiceSaveHandler.class);
     }
 }

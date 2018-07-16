@@ -80,7 +80,7 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
     @Inject
     HeadlessTranslationTaskHandler(final PipelineFactory pipelineFactory,
                                    final FeedStore feedStore,
-                                   @Named("cachedPipelineStore") final PipelineStore pipelineStore,
+                                   final PipelineStore pipelineStore,
                                    final MetaData metaData,
                                    final PipelineHolder pipelineHolder,
                                    final FeedHolder feedHolder,

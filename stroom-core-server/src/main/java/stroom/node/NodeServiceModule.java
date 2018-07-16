@@ -22,12 +22,10 @@ import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Named;
 import stroom.entity.CachingEntityManager;
-import stroom.entity.EntityModule;
 import stroom.entity.FindService;
 import stroom.node.shared.Node;
 import stroom.persist.EntityManagerModule;
 import stroom.properties.PropertyModule;
-import stroom.properties.api.StroomPropertyService;
 import stroom.security.Security;
 
 public class NodeServiceModule extends AbstractModule {
@@ -37,7 +35,7 @@ public class NodeServiceModule extends AbstractModule {
         install(new PropertyModule());
 
         bind(NodeService.class).to(NodeServiceImpl.class);
-        bind(NodeServiceGetDefaultNode.class).to(NodeServiceImpl.class);
+        bind(LocalNodeProvider.class).to(LocalNodeProviderImpl.class);
 
         final MapBinder<String, Object> entityServiceByTypeBinder = MapBinder.newMapBinder(binder(), String.class, Object.class);
         entityServiceByTypeBinder.addBinding(Node.ENTITY_TYPE).to(NodeServiceImpl.class);
@@ -50,9 +48,8 @@ public class NodeServiceModule extends AbstractModule {
     @Named("cachedNodeService")
     public NodeService cachedNodeService(final CachingEntityManager entityManager,
                                          final Security security,
-                                         final NodeServiceTransactionHelper nodeServiceTransactionHelper,
-                                         final StroomPropertyService propertyService) {
-        return new NodeServiceImpl(entityManager, security, nodeServiceTransactionHelper, propertyService);
+                                         final NodeServiceTransactionHelper nodeServiceTransactionHelper) {
+        return new NodeServiceImpl(entityManager, security, nodeServiceTransactionHelper);
     }
 
     @Override

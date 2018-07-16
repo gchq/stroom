@@ -23,7 +23,7 @@ import stroom.data.meta.api.DataMetaService;
 import stroom.data.meta.api.DataStatus;
 import stroom.entity.shared.BaseResultList;
 import stroom.jobsystem.ClusterLockService;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -51,7 +51,7 @@ public class StreamDeleteExecutor extends AbstractBatchDeleteExecutor {
     @Inject
     StreamDeleteExecutor(final BatchIdTransactionHelper batchIdTransactionHelper,
                          final ClusterLockService clusterLockService,
-                         final StroomPropertyService propertyService,
+                         final PropertyService propertyService,
                          final TaskContext taskContext,
                          final DataMetaService streamMetaService) {
         super(batchIdTransactionHelper, clusterLockService, propertyService, taskContext, TASK_NAME, LOCK_NAME,

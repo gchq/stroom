@@ -16,7 +16,7 @@
 
 package stroom.persist;
 
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 
 import java.util.Objects;
 
@@ -75,7 +75,7 @@ public class C3P0Config {
     private final int statementCacheNumDeferredCloseThreads;
     private final int numHelperThreads;
 
-    public C3P0Config(final String prefix, final StroomPropertyService stroomPropertyService) {
+    public C3P0Config(final String prefix, final PropertyService stroomPropertyService) {
         this.maxStatements = stroomPropertyService.getIntProperty(prefix + PROP_MAX_STATEMENTS, MAX_STATEMENTS);
         this.maxStatementsPerConnection = stroomPropertyService.getIntProperty(prefix + PROP_MAX_STATEMENTS_PER_CONNECTION, MAX_STATEMENTS_PER_CONNECTION);
         this.initialPoolSize = stroomPropertyService.getIntProperty(prefix + PROP_INITIAL_POOL_SIZE, INITIAL_POOL_SIZE);

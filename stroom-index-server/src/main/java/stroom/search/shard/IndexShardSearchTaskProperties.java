@@ -16,7 +16,7 @@
 
 package stroom.search.shard;
 
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 
 import javax.inject.Inject;
 
@@ -25,10 +25,10 @@ public class IndexShardSearchTaskProperties {
     private static final int DEFAULT_MAX_THREADS_PER_TASK = 2;
     private static final int DEFAULT_MAX_OPEN_SHARDS = 5;
 
-    private final StroomPropertyService propertyService;
+    private final PropertyService propertyService;
 
     @Inject
-    IndexShardSearchTaskProperties(final StroomPropertyService propertyService) {
+    IndexShardSearchTaskProperties(final PropertyService propertyService) {
         this.propertyService = propertyService;
     }
 

@@ -16,50 +16,46 @@
 
 package stroom.pipeline.factory;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-
-public class CommonPipelineElementModule extends AbstractModule {
+public class CommonPipelineElementModule extends PipelineElementModule {
     @Override
-    protected void configure() {
-        final Multibinder<Element> elementBinder = Multibinder.newSetBinder(binder(), Element.class);
+    protected void configureElements() {
         // Source
-        elementBinder.addBinding().to(stroom.pipeline.source.SourceElement.class);
+        bindElement(stroom.pipeline.source.SourceElement.class);
 
         // Readers
-        elementBinder.addBinding().to(stroom.pipeline.reader.BOMRemovalFilterInputElement.class);
-        elementBinder.addBinding().to(stroom.pipeline.reader.BadTextXMLFilterReaderElement.class);
-        elementBinder.addBinding().to(stroom.pipeline.reader.InvalidCharFilterReaderElement.class);
-        elementBinder.addBinding().to(stroom.pipeline.reader.InvalidXMLCharFilterReaderElement.class);
-        elementBinder.addBinding().to(stroom.pipeline.reader.ReaderElement.class);
+        bindElement(stroom.pipeline.reader.BOMRemovalFilterInputElement.class);
+        bindElement(stroom.pipeline.reader.BadTextXMLFilterReaderElement.class);
+        bindElement(stroom.pipeline.reader.InvalidCharFilterReaderElement.class);
+        bindElement(stroom.pipeline.reader.InvalidXMLCharFilterReaderElement.class);
+        bindElement(stroom.pipeline.reader.ReaderElement.class);
 
         // Parsers
-        elementBinder.addBinding().to(stroom.pipeline.parser.CombinedParser.class);
-        elementBinder.addBinding().to(stroom.pipeline.parser.DSParser.class);
-        elementBinder.addBinding().to(stroom.pipeline.parser.JSONParser.class);
-        elementBinder.addBinding().to(stroom.pipeline.parser.XMLFragmentParser.class);
-        elementBinder.addBinding().to(stroom.pipeline.parser.XMLParser.class);
+        bindElement(stroom.pipeline.parser.CombinedParser.class);
+        bindElement(stroom.pipeline.parser.DSParser.class);
+        bindElement(stroom.pipeline.parser.JSONParser.class);
+        bindElement(stroom.pipeline.parser.XMLFragmentParser.class);
+        bindElement(stroom.pipeline.parser.XMLParser.class);
 
         // XML filters
-        elementBinder.addBinding().to(stroom.pipeline.filter.HttpPostFilter.class);
-        elementBinder.addBinding().to(stroom.pipeline.filter.IdEnrichmentFilter.class);
-        elementBinder.addBinding().to(stroom.pipeline.filter.RecordCountFilter.class);
-        elementBinder.addBinding().to(stroom.pipeline.filter.RecordOutputFilter.class);
-        elementBinder.addBinding().to(stroom.pipeline.filter.ReferenceDataFilter.class);
-        elementBinder.addBinding().to(stroom.pipeline.filter.SchemaFilterSplit.class);
-        elementBinder.addBinding().to(stroom.pipeline.filter.SplitFilter.class);
-        elementBinder.addBinding().to(stroom.pipeline.filter.TestFilter.class);
-        elementBinder.addBinding().to(stroom.pipeline.filter.XsltFilter.class);
+        bindElement(stroom.pipeline.filter.HttpPostFilter.class);
+        bindElement(stroom.pipeline.filter.IdEnrichmentFilter.class);
+        bindElement(stroom.pipeline.filter.RecordCountFilter.class);
+        bindElement(stroom.pipeline.filter.RecordOutputFilter.class);
+        bindElement(stroom.pipeline.filter.ReferenceDataFilter.class);
+        bindElement(stroom.pipeline.filter.SchemaFilterSplit.class);
+        bindElement(stroom.pipeline.filter.SplitFilter.class);
+        bindElement(stroom.pipeline.filter.TestFilter.class);
+        bindElement(stroom.pipeline.filter.XsltFilter.class);
 
         // Writers
-        elementBinder.addBinding().to(stroom.pipeline.writer.JSONWriter.class);
-        elementBinder.addBinding().to(stroom.pipeline.writer.TextWriter.class);
-        elementBinder.addBinding().to(stroom.pipeline.writer.XMLWriter.class);
+        bindElement(stroom.pipeline.writer.JSONWriter.class);
+        bindElement(stroom.pipeline.writer.TextWriter.class);
+        bindElement(stroom.pipeline.writer.XMLWriter.class);
 
         // Appenders
-        elementBinder.addBinding().to(stroom.pipeline.writer.FileAppender.class);
-        elementBinder.addBinding().to(stroom.pipeline.writer.HTTPAppender.class);
-        elementBinder.addBinding().to(stroom.pipeline.writer.RollingFileAppender.class);
-        elementBinder.addBinding().to(stroom.pipeline.writer.TestAppender.class);
+        bindElement(stroom.pipeline.writer.FileAppender.class);
+        bindElement(stroom.pipeline.writer.HTTPAppender.class);
+        bindElement(stroom.pipeline.writer.RollingFileAppender.class);
+        bindElement(stroom.pipeline.writer.TestAppender.class);
     }
 }

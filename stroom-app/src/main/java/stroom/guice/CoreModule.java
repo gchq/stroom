@@ -5,6 +5,7 @@ import stroom.data.meta.impl.db.DataMetaDbModule;
 import stroom.entity.event.EntityClusterTaskModule;
 import stroom.persist.EntityManagerModule;
 import stroom.pipeline.factory.PipelineFactoryModule;
+import stroom.pipeline.xsltfunctions.CommonXsltFunctionModule;
 import stroom.statistics.sql.SQLStatisticsModule;
 
 public class CoreModule extends AbstractModule {
@@ -30,6 +31,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.feed.FeedModule());
         install(new stroom.guice.PipelineScopeModule());
         install(new stroom.importexport.ImportExportModule());
+        install(new stroom.importexport.ImportExportHandlerModule());
         install(new stroom.index.IndexModule());
         install(new stroom.jobsystem.JobSystemModule());
         install(new stroom.kafka.KafkaModule());
@@ -40,11 +42,15 @@ public class CoreModule extends AbstractModule {
         install(new stroom.node.NodeServiceModule());
         install(new EntityManagerModule());
         install(new stroom.pipeline.PipelineModule());
+        install(new stroom.pipeline.PipelineHandlerModule());
+        install(new stroom.pipeline.xsltfunctions.CommonXsltFunctionModule());
+        install(new stroom.pipeline.xsltfunctions.DataStoreXsltFunctionModule());
         install(new PipelineFactoryModule());
         install(new stroom.pipeline.stepping.PipelineSteppingModule());
         install(new stroom.pipeline.task.PipelineStreamTaskModule());
         install(new stroom.policy.PolicyModule());
         install(new stroom.properties.PropertyModule());
+        install(new stroom.properties.GlobalPropertyModule());
         install(new stroom.query.QueryModule());
         install(new stroom.refdata.ReferenceDataModule());
         install(new stroom.ruleset.RulesetModule());
@@ -60,7 +66,8 @@ public class CoreModule extends AbstractModule {
         install(new stroom.statistics.sql.rollup.SQLStatisticRollupModule());
         install(new stroom.statistics.sql.search.SQLStatisticSearchModule());
         install(new stroom.statistics.stroomstats.entity.StroomStatsStoreModule());
-        install(new stroom.statistics.stroomstats.internal.InternalModule());
+        install(new stroom.statistics.stroomstats.internal.InternalStatisticsModule());
+        install(new stroom.statistics.stroomstats.pipeline.StatisticsElementModule());
         install(new stroom.statistics.stroomstats.rollup.StroomStatsRollupModule());
         install(new DataMetaDbModule());
         install(new stroom.data.store.DataStoreHandlerModule());

@@ -8,7 +8,7 @@ import stroom.entity.shared.Clearable;
 import stroom.entity.shared.ExternalDocRefConstants;
 import stroom.node.shared.ClientProperties;
 import stroom.pipeline.errorhandler.LoggedException;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.docref.DocRef;
 import stroom.query.audit.client.DocRefResourceHttpClient;
 import stroom.query.security.ServiceUser;
@@ -33,7 +33,7 @@ public class ElasticIndexCacheImpl implements ElasticIndexCache, Clearable {
     @Inject
     ElasticIndexCacheImpl(final CacheManager cacheManager,
                           final SecurityContext securityContext,
-                          final StroomPropertyService propertyService) {
+                          final PropertyService propertyService) {
         final String urlPropKey = ClientProperties.URL_DOC_REF_SERVICE_BASE + ExternalDocRefConstants.ELASTIC_INDEX;
         docRefHttpClient = new DocRefResourceHttpClient<>(propertyService.getProperty(urlPropKey));
 

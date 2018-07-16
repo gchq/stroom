@@ -19,7 +19,7 @@ package stroom.explorer;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.node.shared.ClientProperties;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.guice.StroomBeanStore;
 
 import javax.inject.Inject;
@@ -36,14 +36,14 @@ import java.util.stream.Collectors;
 class ExplorerActionHandlers {
     private final StroomBeanStore beanStore;
     private final ExplorerActionHandlerFactory explorerActionHandlerFactory;
-    private final StroomPropertyService propertyService;
+    private final PropertyService propertyService;
 
     private volatile Handlers handlers;
 
     @Inject
     ExplorerActionHandlers(final StroomBeanStore beanStore,
                            final ExplorerActionHandlerFactory explorerActionHandlerFactory,
-                           final StroomPropertyService propertyService) {
+                           final PropertyService propertyService) {
         this.beanStore = beanStore;
         this.explorerActionHandlerFactory = explorerActionHandlerFactory;
         this.propertyService = propertyService;
@@ -80,7 +80,7 @@ class ExplorerActionHandlers {
 
         Handlers(final StroomBeanStore beanStore,
                  final ExplorerActionHandlerFactory explorerActionHandlerFactory,
-                 final StroomPropertyService propertyService) {
+                 final PropertyService propertyService) {
             // Add external handlers.
             propertyService.getCsvProperty(String.format("%s|trace", ClientProperties.EXTERNAL_DOC_REF_TYPES))
                     .forEach(type -> {

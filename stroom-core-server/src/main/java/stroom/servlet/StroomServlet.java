@@ -16,13 +16,13 @@
 
 package stroom.servlet;
 
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 
 import javax.inject.Inject;
 
 public class StroomServlet extends AppServlet {
     @Inject
-    StroomServlet(final StroomPropertyService stroomPropertyService) {
+    StroomServlet(final PropertyService stroomPropertyService) {
         super(stroomPropertyService);
     }
 

@@ -18,7 +18,7 @@ package stroom.importexport;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
 import stroom.util.lifecycle.StroomStartup;
@@ -46,11 +46,11 @@ public class ContentPackImport {
     private static final Logger LOGGER = LoggerFactory.getLogger(ContentPackImport.class);
 
     private final ImportExportService importExportService;
-    private final StroomPropertyService stroomPropertyService;
+    private final PropertyService stroomPropertyService;
 
     @SuppressWarnings("unused")
     @Inject
-    ContentPackImport(final ImportExportService importExportService, final StroomPropertyService stroomPropertyService) {
+    ContentPackImport(final ImportExportService importExportService, final PropertyService stroomPropertyService) {
         this.importExportService = importExportService;
         this.stroomPropertyService = stroomPropertyService;
     }

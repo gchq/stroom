@@ -16,17 +16,11 @@
 
 package stroom.pipeline.factory;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.entity.shared.Clearable;
-import stroom.pipeline.filter.XsltFilter;
-
-public class DataStorePipelineElementModule extends AbstractModule {
+public class DataStorePipelineElementModule extends PipelineElementModule {
     @Override
-    protected void configure() {
-        final Multibinder<Element> elementBinder = Multibinder.newSetBinder(binder(), Element.class);
-        elementBinder.addBinding().to(stroom.pipeline.writer.HDFSFileAppender.class);
-        elementBinder.addBinding().to(stroom.pipeline.writer.RollingStreamAppender.class);
-        elementBinder.addBinding().to(stroom.pipeline.writer.StreamAppender.class);
+    protected void configureElements() {
+        bindElement(stroom.pipeline.writer.HDFSFileAppender.class);
+        bindElement(stroom.pipeline.writer.RollingStreamAppender.class);
+        bindElement(stroom.pipeline.writer.StreamAppender.class);
     }
 }

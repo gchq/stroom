@@ -16,26 +16,27 @@
 
 package stroom.pipeline.factory;
 
+import com.google.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.guice.StroomBeanStore;
+import stroom.pipeline.factory.PipelineElementModule.ElementType;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 @Singleton
 public class ElementRegistryFactoryImpl implements ElementRegistryFactory, ElementFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(ElementRegistryFactoryImpl.class);
 
-    private final StroomBeanStore beanStore;
+    private final Map<ElementType, Provider<Element>> elementMap;
     private volatile ElementRegistry registry;
 
     @Inject
-    ElementRegistryFactoryImpl(final StroomBeanStore beanStore) {
-        this.beanStore = beanStore;
+    ElementRegistryFactoryImpl(final Map<ElementType, Provider<Element>> elementMap) {
+        this.elementMap = elementMap;
     }
 
     /**
@@ -62,10 +63,9 @@ public class ElementRegistryFactoryImpl implements ElementRegistryFactory, Eleme
         // Fudge a task scope context as many of the beans require one before
         // they can be created.
         LOGGER.info("Initialising pipeline element registry.");
-        final Set<Element> elements = beanStore.getInstancesOfType(Element.class);
         final List<Class<?>> elementClasses = new ArrayList<>();
-        for (final Element element : elements) {
-            final Class<?> clazz = element.getClass();
+        for (final ElementType elementType : elementMap.keySet()) {
+            final Class<?> clazz = elementType.getElementClass();
             elementClasses.add(clazz);
 
             if (LOGGER.isDebugEnabled()) {
@@ -81,9 +81,16 @@ public class ElementRegistryFactoryImpl implements ElementRegistryFactory, Eleme
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <T extends Element> T getElementInstance(final Class<T> elementClass) {
         try {
-            return beanStore.getInstance(elementClass);
+            final ElementType elementType = new ElementType(elementClass);
+            final Provider<Element> elementProvider = elementMap.get(elementType);
+            if (elementProvider == null) {
+                LOGGER.error("No element provider found for " + elementClass);
+                throw new RuntimeException("No element provider found for " + elementClass);
+            }
+            return (T) elementProvider.get();
         } catch (final RuntimeException rex) {
             LOGGER.error("Failed to load {}", elementClass, rex);
             throw rex;

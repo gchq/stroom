@@ -51,7 +51,7 @@ class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction
 
     @Inject
     FetchSuggestionsHandler(final DataMetaService streamMetaService,
-                            @Named("cachedPipelineStore") final PipelineStore pipelineStore,
+                            final PipelineStore pipelineStore,
                             @Named("cachedNodeService") final NodeService nodeService,
                             final Security security) {
         this.streamMetaService = streamMetaService;

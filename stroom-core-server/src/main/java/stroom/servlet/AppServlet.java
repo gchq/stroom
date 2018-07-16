@@ -16,7 +16,7 @@
 
 package stroom.servlet;
 
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
 
@@ -32,11 +32,11 @@ public abstract class AppServlet extends HttpServlet {
     private static final String ON_CONTEXT_MENU = "@ON_CONTEXT_MENU@";
     private static final String SCRIPT = "@SCRIPT@";
 
-    private final StroomPropertyService stroomPropertyService;
+    private final PropertyService stroomPropertyService;
 
     private String template;
 
-    AppServlet(final StroomPropertyService stroomPropertyService) {
+    AppServlet(final PropertyService stroomPropertyService) {
         this.stroomPropertyService = stroomPropertyService;
     }
 

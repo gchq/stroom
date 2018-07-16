@@ -27,7 +27,7 @@ import stroom.index.shared.IndexFieldsMap;
 import stroom.node.NodeCache;
 import stroom.node.shared.ClientProperties;
 import stroom.node.shared.Node;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
@@ -56,7 +56,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
 
     private final IndexStore indexStore;
     private final DictionaryStore dictionaryStore;
-    private final StroomPropertyService stroomPropertyService;
+    private final PropertyService stroomPropertyService;
     private final NodeCache nodeCache;
     private final int maxBooleanClauseCount;
     private final SecurityContext securityContext;
@@ -66,9 +66,9 @@ public class LuceneSearchStoreFactory implements StoreFactory {
     @Inject
     public LuceneSearchStoreFactory(final IndexStore indexStore,
                                     final DictionaryStore dictionaryStore,
-                                    final StroomPropertyService stroomPropertyService,
+                                    final PropertyService stroomPropertyService,
                                     final NodeCache nodeCache,
-                                    final StroomPropertyService propertyService,
+                                    final PropertyService propertyService,
                                     final SecurityContext securityContext,
                                     final Security security,
                                     final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory) {

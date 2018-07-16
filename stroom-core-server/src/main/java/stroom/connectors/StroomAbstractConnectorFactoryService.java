@@ -1,6 +1,6 @@
 package stroom.connectors;
 
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -35,7 +35,7 @@ public abstract class StroomAbstractConnectorFactoryService<
     private static final String PROP_CONNECTOR_VERSION = "connector.version";
 
     private final String propertyPrefix;
-    private final StroomPropertyService propertyService;
+    private final PropertyService propertyService;
 
     private final ExternalLibService externalLibService;
     private final Class<C> connectorClass;
@@ -48,7 +48,7 @@ public abstract class StroomAbstractConnectorFactoryService<
     //need to key on name+version
     private final ConcurrentMap<String, C> connectorsByName;
 
-    protected StroomAbstractConnectorFactoryService(final StroomPropertyService propertyService,
+    protected StroomAbstractConnectorFactoryService(final PropertyService propertyService,
                                                     final ExternalLibService externalLibService,
                                                     final String propertyPrefix,
                                                     final Class<C> connectorClass,
@@ -185,7 +185,7 @@ public abstract class StroomAbstractConnectorFactoryService<
         connectorsByName.clear();
     }
 
-    protected StroomPropertyService getPropertyService() {
+    protected PropertyService getPropertyService() {
         return propertyService;
     }
 

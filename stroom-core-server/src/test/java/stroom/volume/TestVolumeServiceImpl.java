@@ -32,8 +32,8 @@ import stroom.node.shared.VolumeEntity;
 import stroom.node.shared.VolumeEntity.VolumeType;
 import stroom.node.shared.VolumeState;
 import stroom.persist.EntityManagerSupport;
-import stroom.properties.api.StroomPropertyService;
-import stroom.properties.impl.mock.MockStroomPropertyService;
+import stroom.properties.api.PropertyService;
+import stroom.properties.impl.mock.MockPropertyService;
 import stroom.security.Security;
 import stroom.security.impl.mock.MockSecurityContext;
 import stroom.statistics.internal.InternalStatisticsReceiver;
@@ -61,7 +61,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
     private static final Path DEFAULT_INDEX_VOLUME_PATH = DEFAULT_VOLUMES_PATH.resolve(VolumeServiceImpl.DEFAULT_INDEX_VOLUME_SUBDIR);
     private static final Path DEFAULT_STREAM_VOLUME_PATH = DEFAULT_VOLUMES_PATH.resolve(VolumeServiceImpl.DEFAULT_STREAM_VOLUME_SUBDIR);
 
-    private final MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
+    private final MockPropertyService mockStroomPropertyService = new MockPropertyService();
     private final Rack rack1 = Rack.create("rack1");
     private final Rack rack2 = Rack.create("rack2");
     private final Node node1a = Node.create(rack1, "1a");
@@ -214,7 +214,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
                           final Security security,
                           final EntityManagerSupport entityManagerSupport,
                           final NodeCache nodeCache,
-                          final StroomPropertyService stroomPropertyService,
+                          final PropertyService stroomPropertyService,
                           final Optional<InternalStatisticsReceiver> optionalInternalStatisticsReceiver) {
             super(stroomEntityManager,
                     security,

@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.StroomEntityManager;
 import stroom.jobsystem.ScheduledTaskExecutor;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.security.Security;
 import stroom.task.StroomThreadGroup;
 import stroom.task.TaskCallbackAdaptor;
@@ -68,7 +68,7 @@ public class LifecycleServiceImpl implements LifecycleService {
                                 final StroomEntityManager entityManager,
                                 final ScheduledTaskExecutor scheduledTaskExecutor,
                                 final Security security,
-                                final StroomPropertyService propertyService) {
+                                final PropertyService propertyService) {
         this.taskManager = taskManager;
         this.stroomBeanLifeCycle = stroomBeanLifeCycle;
         this.entityManager = entityManager;

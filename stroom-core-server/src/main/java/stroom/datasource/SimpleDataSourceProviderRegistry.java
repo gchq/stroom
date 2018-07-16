@@ -21,7 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.ExternalDocRefConstants;
 import stroom.node.shared.ClientProperties;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.docref.DocRef;
 import stroom.security.SecurityContext;
 import stroom.servlet.HttpServletRequestHolder;
@@ -43,7 +43,7 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
     private HttpServletRequestHolder httpServletRequestHolder;
 
     SimpleDataSourceProviderRegistry(final SecurityContext securityContext,
-                                     final StroomPropertyService stroomPropertyService,
+                                     final PropertyService stroomPropertyService,
                                      final HttpServletRequestHolder httpServletRequestHolder) {
         this.securityContext = securityContext;
         this.httpServletRequestHolder = httpServletRequestHolder;

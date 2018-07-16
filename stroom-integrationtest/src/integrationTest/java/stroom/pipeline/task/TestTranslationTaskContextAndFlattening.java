@@ -123,7 +123,7 @@ public class TestTranslationTaskContextAndFlattening extends AbstractProcessInte
     // // First try and look for raw reference streams that need processing.
     // final FindTranslationStreamTaskCriteria criteria = new
     // FindTranslationStreamTaskCriteria();
-    // criteria.setNode(nodeCache.getDefaultNode());
+    // criteria.setNode(nodeCache.get());
     // criteria.getPageRequest().setLength(1);
     // criteria.setStreamTaskStatus(TaskStatus.UNPROCESSED);
     // criteria.setType(StreamType.RAW_REFERENCE);

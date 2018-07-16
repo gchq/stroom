@@ -1,25 +1,29 @@
 package stroom.test;
 
 import com.google.inject.AbstractModule;
-import stroom.pipeline.factory.PipelineFactoryModule;
+import stroom.pipeline.xsltfunctions.CommonXsltFunctionModule;
 
 public class MockServiceModule extends AbstractModule {
     @Override
     protected void configure() {
+        install(new stroom.data.meta.impl.mock.MockDataMetaModule());
         install(new stroom.cache.PipelineCacheModule());
         install(new stroom.feed.MockFeedModule());
         install(new stroom.dictionary.MockDictionaryModule());
         install(new stroom.docstore.memory.MemoryPersistenceModule());
-        install(new stroom.entity.MockEntityModule());
+//        install(new stroom.entity.MockEntityModule());
         install(new stroom.explorer.MockExplorerModule());
         install(new stroom.guice.PipelineScopeModule());
         install(new stroom.importexport.ImportExportModule());
         install(new stroom.index.MockIndexModule());
-        install(new stroom.node.MockNodeModule());
         install(new stroom.node.MockNodeServiceModule());
         install(new stroom.persist.MockPersistenceModule());
-        install(new stroom.pipeline.MockPipelineModule());
-        install(new PipelineFactoryModule());
+        install(new stroom.pipeline.PipelineModule());
+        install(new stroom.pipeline.factory.PipelineFactoryModule());
+        install(new stroom.pipeline.factory.CommonPipelineElementModule());
+        install(new stroom.pipeline.factory.DataStorePipelineElementModule());
+        install(new stroom.pipeline.xsltfunctions.CommonXsltFunctionModule());
+        install(new stroom.pipeline.xsltfunctions.DataStoreXsltFunctionModule());
         install(new stroom.pipeline.task.PipelineStreamTaskModule());
         install(new stroom.properties.impl.mock.MockPropertyModule());
         install(new stroom.refdata.ReferenceDataModule());

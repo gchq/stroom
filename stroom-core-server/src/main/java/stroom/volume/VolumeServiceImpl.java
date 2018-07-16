@@ -40,7 +40,7 @@ import stroom.node.shared.VolumeEntity.VolumeType;
 import stroom.node.shared.VolumeEntity.VolumeUseStatus;
 import stroom.node.shared.VolumeState;
 import stroom.persist.EntityManagerSupport;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.statistics.internal.InternalStatisticEvent;
@@ -122,7 +122,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
     private final Security security;
     private final EntityManagerSupport entityManagerSupport;
     private final NodeCache nodeCache;
-    private final StroomPropertyService stroomPropertyService;
+    private final PropertyService stroomPropertyService;
     private final Optional<InternalStatisticsReceiver> optionalInternalStatisticsReceiver;
     private final AtomicReference<List<VolumeEntity>> currentVolumeState = new AtomicReference<>();
     private volatile boolean initialised;
@@ -132,7 +132,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
                       final Security security,
                       final EntityManagerSupport entityManagerSupport,
                       final NodeCache nodeCache,
-                      final StroomPropertyService stroomPropertyService,
+                      final PropertyService stroomPropertyService,
                       final Optional<InternalStatisticsReceiver> optionalInternalStatisticsReceiver) {
         super(stroomEntityManager, security);
         this.stroomEntityManager = stroomEntityManager;
@@ -564,7 +564,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
 //                Optional<Path> optDefaultVolumePath = getDefaultVolumesPath();
 //
 //                if (optDefaultVolumePath.isPresent()) {
-//                    Node node = nodeCache.getDefaultNode();
+//                    Node node = nodeCache.get();
 //                    Path indexVolPath = optDefaultVolumePath.get().resolve(DEFAULT_INDEX_VOLUME_SUBDIR);
 //                    createIndexVolume(indexVolPath, node);
 //                    Path streamVolPath = optDefaultVolumePath.get().resolve(DEFAULT_STREAM_VOLUME_SUBDIR);

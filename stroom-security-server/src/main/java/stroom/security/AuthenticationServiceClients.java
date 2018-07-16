@@ -27,7 +27,7 @@ import stroom.auth.service.api.model.CreateTokenRequest;
 import stroom.auth.service.api.model.SearchRequest;
 import stroom.auth.service.api.model.SearchResponse;
 import stroom.auth.service.api.model.Token;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -50,7 +50,7 @@ class AuthenticationServiceClients {
     private final boolean enableAuth;
 
     @Inject
-    AuthenticationServiceClients(final StroomPropertyService propertyService) {
+    AuthenticationServiceClients(final PropertyService propertyService) {
         enableAuth = propertyService.getBooleanProperty("stroom.authentication.required", true);
         if (enableAuth) {
             if (Strings.isNullOrEmpty(propertyService.getProperty("stroom.security.apiToken"))) {

@@ -28,6 +28,8 @@ import stroom.pipeline.factory.Element;
 public class MockIndexModule extends AbstractModule {
     @Override
     protected void configure() {
+        install(new IndexElementModule());
+
 //        bind(IndexShardManager.class).to(MockIndexShardManagerImpl.class);
         bind(IndexShardWriterCache.class).to(MockIndexShardWriterCache.class);
         bind(IndexConfigCache.class).to(IndexConfigCacheImpl.class);
@@ -49,8 +51,6 @@ public class MockIndexModule extends AbstractModule {
 //        clearableBinder.addBinding().to(IndexStoreImpl.class);
         clearableBinder.addBinding().to(MockIndexShardService.class);
 
-        final Multibinder<Element> elementBinder = Multibinder.newSetBinder(binder(), Element.class);
-        elementBinder.addBinding().to(IndexingFilter.class);
 //
 //        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
 //        explorerActionHandlerBinder.addBinding().to(IndexStoreImpl.class);

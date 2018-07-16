@@ -19,7 +19,7 @@ package stroom.streamtask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.jobsystem.ClusterLockService;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.task.TaskContext;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
@@ -32,7 +32,7 @@ public abstract class AbstractBatchDeleteExecutor {
 
     private final BatchIdTransactionHelper batchIdTransactionHelper;
     private final ClusterLockService clusterLockService;
-    private final StroomPropertyService propertyService;
+    private final PropertyService propertyService;
     private final TaskContext taskContext;
 
     private final String taskName;
@@ -43,7 +43,7 @@ public abstract class AbstractBatchDeleteExecutor {
     private final String tempIdTable;
 
     public AbstractBatchDeleteExecutor(final BatchIdTransactionHelper batchIdTransactionHelper,
-                                       final ClusterLockService clusterLockService, final StroomPropertyService propertyService,
+                                       final ClusterLockService clusterLockService, final PropertyService propertyService,
                                        final TaskContext taskContext, final String taskName, final String clusterLockName,
                                        final String deleteAgePropertyName, final String deleteBatchSizePropertyName,
                                        final int deleteBatchSizeDefaultValue, final String tempIdTable) {

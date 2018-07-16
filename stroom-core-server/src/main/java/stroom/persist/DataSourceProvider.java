@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import stroom.properties.GlobalProperties;
 import stroom.properties.api.ConnectionConfig;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.util.config.StroomProperties;
 import stroom.util.shared.Version;
 
@@ -25,11 +25,11 @@ import java.sql.Statement;
 public class DataSourceProvider implements Provider<DataSource> {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataSourceProvider.class);
 
-    private final StroomPropertyService stroomPropertyService;
+    private final PropertyService stroomPropertyService;
     private volatile DataSource dataSource;
 
     @Inject
-    DataSourceProvider(final GlobalProperties globalProperties, final StroomPropertyService stroomPropertyService) {
+    DataSourceProvider(final GlobalProperties globalProperties, final PropertyService stroomPropertyService) {
         this.stroomPropertyService = stroomPropertyService;
     }
 

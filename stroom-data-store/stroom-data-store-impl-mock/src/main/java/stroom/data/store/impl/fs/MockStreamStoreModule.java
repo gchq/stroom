@@ -18,13 +18,16 @@ package stroom.data.store.impl.fs;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
+import stroom.data.store.impl.SteamStoreStreamCloserImpl;
 import stroom.entity.shared.Clearable;
 import stroom.data.store.api.StreamStore;
+import stroom.io.StreamCloser;
 
 public class MockStreamStoreModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(StreamStore.class).to(MockStreamStore.class);
+        bind(StreamCloser.class).to(SteamStoreStreamCloserImpl.class);
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(MockStreamStore.class);

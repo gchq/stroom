@@ -23,7 +23,7 @@ import stroom.entity.shared.BaseResultList;
 import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.query.api.v2.Query;
 import stroom.search.EventRef;
 import stroom.search.EventRefs;
@@ -98,7 +98,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     private final NodeCache nodeCache;
     private final StreamTaskService streamTaskService;
     private final StreamTaskHelper streamTaskHelper;
-    private final StroomPropertyService propertyService;
+    private final PropertyService propertyService;
     private final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider;
     private final DataMetaService streamMetaService;
     private final Security security;
@@ -149,7 +149,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                           final NodeCache nodeCache,
                           final StreamTaskService streamTaskService,
                           final StreamTaskHelper streamTaskHelper,
-                          final StroomPropertyService propertyService,
+                          final PropertyService propertyService,
                           final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider,
                           final DataMetaService streamMetaService,
                           final Security security) {

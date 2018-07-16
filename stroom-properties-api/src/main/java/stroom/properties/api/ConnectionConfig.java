@@ -29,7 +29,7 @@ public class ConnectionConfig {
     private final String jdbcDriverUsername;
     private final String jdbcDriverPassword;
 
-    public ConnectionConfig(final String prefix, final StroomPropertyService stroomPropertyService) {
+    public ConnectionConfig(final String prefix, final PropertyService stroomPropertyService) {
         this.jdbcDriverClassName = stroomPropertyService.getProperty(prefix + PROP_JDBC_CLASS_NAME);
         this.jdbcDriverUrl = stroomPropertyService.getProperty(prefix + PROP_JDBC_DRIVER_URL + "|trace");
         this.jdbcDriverUsername = stroomPropertyService.getProperty(prefix + PROP_JDBC_DRIVER_USERNAME);

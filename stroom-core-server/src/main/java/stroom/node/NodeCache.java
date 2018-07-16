@@ -28,12 +28,12 @@ import javax.inject.Singleton;
 @Singleton
 @EntityEventHandler(type = Node.ENTITY_TYPE, action = {EntityAction.UPDATE, EntityAction.DELETE})
 public class NodeCache implements Clearable, EntityEvent.Handler {
-    private final NodeServiceGetDefaultNode nodeService;
+    private final LocalNodeProvider nodeService;
 
     private volatile Node defaultNode;
 
     @Inject
-    public NodeCache(final NodeServiceGetDefaultNode nodeService) {
+    public NodeCache(final LocalNodeProvider nodeService) {
         this.nodeService = nodeService;
     }
 
@@ -51,7 +51,7 @@ public class NodeCache implements Clearable, EntityEvent.Handler {
         if (defaultNode == null) {
             synchronized (this) {
                 if (defaultNode == null && nodeService != null) {
-                    defaultNode = nodeService.getDefaultNode();
+                    defaultNode = nodeService.get();
                 }
 
                 if (defaultNode == null) {

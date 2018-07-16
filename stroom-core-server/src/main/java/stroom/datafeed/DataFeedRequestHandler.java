@@ -25,7 +25,7 @@ import stroom.data.meta.api.AttributeMap;
 import stroom.feed.AttributeMapFactory;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.security.Security;
 import stroom.data.store.api.StreamStore;
@@ -56,7 +56,7 @@ class DataFeedRequestHandler implements RequestHandler {
     private final FeedDocCache feedDocCache;
     private final MetaDataStatistic metaDataStatistics;
     private final AttributeMapFilterFactory attributeMapFilterFactory;
-    private final StroomPropertyService stroomPropertyService;
+    private final PropertyService stroomPropertyService;
 
     private volatile AttributeMapFilter attributeMapFilter;
 
@@ -66,7 +66,7 @@ class DataFeedRequestHandler implements RequestHandler {
                                   final FeedDocCache feedDocCache,
                                   final MetaDataStatistic metaDataStatistics,
                                   final AttributeMapFilterFactory attributeMapFilterFactory,
-                                  final StroomPropertyService stroomPropertyService) {
+                                  final PropertyService stroomPropertyService) {
         this.security = security;
         this.streamStore = streamStore;
         this.feedDocCache = feedDocCache;

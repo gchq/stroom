@@ -8,7 +8,7 @@ import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.commons.exec.ShutdownHookProcessDestroyer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -44,12 +44,12 @@ class HeapHistogramService {
 
     private static final int STRING_TRUNCATE_LIMIT = 200;
 
-    private final StroomPropertyService stroomPropertyService;
+    private final PropertyService stroomPropertyService;
     private final Pattern lineMatchPattern;
 
     @SuppressWarnings("unused")
     @Inject
-    HeapHistogramService(final StroomPropertyService stroomPropertyService) {
+    HeapHistogramService(final PropertyService stroomPropertyService) {
         this.stroomPropertyService = stroomPropertyService;
         this.lineMatchPattern = Pattern.compile("\\s*\\d+:\\s+(?<instances>\\d+)\\s+(?<bytes>\\d+)\\s+(?<class>.*)");
     }
@@ -165,7 +165,7 @@ class HeapHistogramService {
         }
     }
 
-    private static Predicate<String> getClassNameMatchPredicate(final StroomPropertyService stroomPropertyService) {
+    private static Predicate<String> getClassNameMatchPredicate(final PropertyService stroomPropertyService) {
         String classNameRegexStr = stroomPropertyService.getProperty(CLASS_NAME_MATCH_REGEX_PROP_KEY);
 
         if (classNameRegexStr == null || classNameRegexStr.isEmpty()) {

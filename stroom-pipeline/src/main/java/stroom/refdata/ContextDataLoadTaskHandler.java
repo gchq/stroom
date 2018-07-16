@@ -71,7 +71,7 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
                                final FeedProperties feedProperties,
                                final MetaDataHolder metaDataHolder,
                                final ErrorReceiverProxy errorReceiverProxy,
-                               @Named("cachedPipelineStore") final PipelineStore pipelineStore,
+                               final PipelineStore pipelineStore,
                                final StreamHolder streamHolder,
                                final PipelineDataCache pipelineDataCache,
                                final Security security) {

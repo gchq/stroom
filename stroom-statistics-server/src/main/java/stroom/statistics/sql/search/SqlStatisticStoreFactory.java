@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.node.shared.ClientProperties;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
@@ -35,14 +35,14 @@ public class SqlStatisticStoreFactory implements StoreFactory {
     private static final int DEFAULT_ROWS_IN_BATCH = 5_000;
 
     private final StatisticStoreCache statisticStoreCache;
-    private final StroomPropertyService stroomPropertyService;
+    private final PropertyService stroomPropertyService;
     private final StatisticsSearchService statisticsSearchService;
     private final TaskContext taskContext;
     private final Executor executor;
 
     @Inject
     public SqlStatisticStoreFactory(final StatisticStoreCache statisticStoreCache,
-                                    final StroomPropertyService stroomPropertyService,
+                                    final PropertyService stroomPropertyService,
                                     final StatisticsSearchService statisticsSearchService,
                                     final TaskContext taskContext,
                                     final ExecutorProvider executorProvider) {

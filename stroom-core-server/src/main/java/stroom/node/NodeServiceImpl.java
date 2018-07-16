@@ -23,7 +23,7 @@ import stroom.entity.StroomEntityManager;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 
@@ -36,51 +36,23 @@ import javax.inject.Singleton;
  * </p>
  */
 @Singleton
-public class NodeServiceImpl extends NamedEntityServiceImpl<Node, FindNodeCriteria>
-        implements NodeService, NodeServiceGetDefaultNode {
+public class NodeServiceImpl extends NamedEntityServiceImpl<Node, FindNodeCriteria> implements NodeService {
     private final NodeServiceTransactionHelper nodeServiceUtil;
-    private String nodeName;
-    private String rackName;
 
     @Inject
     NodeServiceImpl(final StroomEntityManager entityManager,
                     final Security security,
-                    final NodeServiceTransactionHelper nodeServiceUtil,
-                    final StroomPropertyService propertyService) {
+                    final NodeServiceTransactionHelper nodeServiceUtil) {
         super(entityManager, security);
-
         this.nodeServiceUtil = nodeServiceUtil;
-        this.nodeName = propertyService.getProperty("stroom.node");
-        this.rackName = propertyService.getProperty("stroom.rack");
     }
 
-    public Node getNode(final String name) {
+    Node getNode(final String name) {
         return nodeServiceUtil.getNode(name);
     }
 
-    public Rack getRack(final String name) {
+    Rack getRack(final String name) {
         return nodeServiceUtil.getRack(name);
-    }
-
-    @Override
-    // @Transactional
-    public Node getDefaultNode() {
-        Node node = getNode(nodeName);
-
-        if (node == null) {
-            // This will start a new mini transaction for the update
-            node = nodeServiceUtil.buildNode(nodeName, rackName);
-        }
-
-        return node;
-    }
-
-    public void setNodeName(final String nodeName) {
-        this.nodeName = nodeName;
-    }
-
-    public void setRackName(final String rackName) {
-        this.rackName = rackName;
     }
 
     @Override

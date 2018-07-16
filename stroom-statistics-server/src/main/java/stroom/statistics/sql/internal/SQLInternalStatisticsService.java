@@ -4,7 +4,7 @@ import com.google.common.base.Preconditions;
 import io.vavr.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.docref.DocRef;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsService;
@@ -24,12 +24,12 @@ class SQLInternalStatisticsService implements InternalStatisticsService {
 
     private static final String PROP_KEY_DOC_REF_TYPE = "stroom.services.sqlStatistics.docRefType";
 
-    private final StroomPropertyService stroomPropertyService;
+    private final PropertyService stroomPropertyService;
     private final Statistics statisticsService;
     private final String docRefType;
 
     @Inject
-    SQLInternalStatisticsService(final StroomPropertyService stroomPropertyService,
+    SQLInternalStatisticsService(final PropertyService stroomPropertyService,
                                  final Statistics statisticsService) {
         this.stroomPropertyService = stroomPropertyService;
         this.statisticsService = statisticsService;

@@ -19,6 +19,7 @@ package stroom.io;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -33,6 +34,10 @@ public class BasicStreamCloser implements StreamCloser {
     // For stream target's we can delete them on closing if they are no-longer
     // required
     private boolean delete = false;
+
+    @Inject
+    BasicStreamCloser() {
+    }
 
     public BasicStreamCloser(final Closeable... closeables) {
         add(closeables);

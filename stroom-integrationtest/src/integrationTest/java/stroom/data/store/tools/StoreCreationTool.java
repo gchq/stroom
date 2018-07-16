@@ -17,8 +17,8 @@
 package stroom.data.store.tools;
 
 import org.junit.Assert;
-import stroom.data.meta.api.MetaDataSource;
 import stroom.data.meta.api.DataProperties;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.StreamSource;
@@ -308,15 +308,15 @@ public final class StoreCreationTool {
 
         final StreamTarget dataTarget = streamStore.openStreamTarget(streamProperties);
         try (final OutputStreamProvider outputStreamProvider = dataTarget.getOutputStreamProvider()) {
-            try (final SegmentOutputStream outputStream = outputStreamProvider.next()) {
-                final InputStream dataInputStream = Files.newInputStream(dataLocation);
-                StreamUtil.streamToStream(dataInputStream, outputStream);
+            try (final InputStream inputStream = Files.newInputStream(dataLocation);
+                 final SegmentOutputStream outputStream = outputStreamProvider.next()) {
+                StreamUtil.streamToStream(inputStream, outputStream, false);
             }
 
             if (contextLocation != null) {
-                try (final SegmentOutputStream outputStream = outputStreamProvider.next(StreamTypeNames.CONTEXT)) {
-                    final InputStream contextInputStream = Files.newInputStream(contextLocation);
-                    StreamUtil.streamToStream(contextInputStream, outputStream);
+                try (final InputStream inputStream = Files.newInputStream(contextLocation);
+                     final SegmentOutputStream outputStream = outputStreamProvider.next(StreamTypeNames.CONTEXT)) {
+                    StreamUtil.streamToStream(inputStream, outputStream, false);
                 }
             }
         }

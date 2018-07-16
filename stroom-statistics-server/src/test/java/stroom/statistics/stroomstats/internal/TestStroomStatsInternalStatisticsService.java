@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import stroom.connectors.kafka.StroomKafkaProducer;
 import stroom.kafka.StroomKafkaProducerFactoryService;
 import stroom.connectors.kafka.StroomKafkaProducerRecord;
-import stroom.properties.impl.mock.MockStroomPropertyService;
+import stroom.properties.impl.mock.MockPropertyService;
 import stroom.docref.DocRef;
 import stroom.statistics.internal.InternalStatisticEvent;
 
@@ -33,7 +33,7 @@ public class TestStroomStatsInternalStatisticsService {
     public static final String DOC_REF_TYPE_1 = "myDocRefType1";
     public static final String DOC_REF_TYPE_2 = "myDocRefType2";
     private static final Logger LOGGER = LoggerFactory.getLogger(TestStroomStatsInternalStatisticsService.class);
-    private final MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
+    private final MockPropertyService mockStroomPropertyService = new MockPropertyService();
 
     @Captor
     private ArgumentCaptor<Consumer<Throwable>> exceptionHandlerCaptor;

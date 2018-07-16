@@ -28,7 +28,7 @@ import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.index.LuceneVersionUtil;
 import stroom.index.shared.IndexShard;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.task.ExecutorProvider;
 import stroom.task.TaskContext;
 import stroom.util.logging.LambdaLogger;
@@ -48,13 +48,13 @@ public class IndexShardSearchTaskHandler {
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(IndexShardSearchTaskHandler.class);
 
     private final IndexShardSearcherCache indexShardSearcherCache;
-    private final StroomPropertyService propertyService;
+    private final PropertyService propertyService;
     private final ExecutorProvider executorProvider;
     private final TaskContext taskContext;
 
     @Inject
     IndexShardSearchTaskHandler(final IndexShardSearcherCache indexShardSearcherCache,
-                                final StroomPropertyService propertyService,
+                                final PropertyService propertyService,
                                 final ExecutorProvider executorProvider,
                                 final TaskContext taskContext) {
         this.indexShardSearcherCache = indexShardSearcherCache;

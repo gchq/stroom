@@ -1,6 +1,6 @@
 package stroom.data.meta.impl.db;
 
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
@@ -8,10 +8,10 @@ import javax.inject.Singleton;
 
 @Singleton
 class MetaValueConfig {
-    private final StroomPropertyService stroomPropertyService;
+    private final PropertyService stroomPropertyService;
 
     @Inject
-    MetaValueConfig(final StroomPropertyService stroomPropertyService) {
+    MetaValueConfig(final PropertyService stroomPropertyService) {
         this.stroomPropertyService = stroomPropertyService;
     }
 

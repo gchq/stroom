@@ -19,7 +19,7 @@ package stroom.servlet;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.ImportExportService;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.resource.ResourceStore;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ResourceKey;
@@ -43,12 +43,12 @@ public class ExportConfigServlet extends HttpServlet {
 
     private final transient ImportExportService importExportService;
     private final transient ResourceStore resourceStore;
-    private final transient StroomPropertyService propertyService;
+    private final transient PropertyService propertyService;
 
     @Inject
     ExportConfigServlet(final ImportExportService importExportService,
                         final ResourceStore resourceStore,
-                        final StroomPropertyService propertyService) {
+                        final PropertyService propertyService) {
         this.importExportService = importExportService;
         this.resourceStore = resourceStore;
         this.propertyService = propertyService;

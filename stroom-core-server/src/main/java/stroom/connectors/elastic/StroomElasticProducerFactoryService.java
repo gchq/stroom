@@ -6,7 +6,7 @@ import stroom.connectors.ExternalLibService;
 import stroom.connectors.StroomAbstractConnectorFactoryService;
 import stroom.connectors.kafka.StroomKafkaProducer;
 import stroom.connectors.kafka.StroomKafkaProducerFactory;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.util.lifecycle.StroomShutdown;
 
 import javax.inject.Inject;
@@ -30,7 +30,7 @@ public class StroomElasticProducerFactoryService
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomElasticProducerFactoryService.class);
 
     @Inject
-    public StroomElasticProducerFactoryService(final StroomPropertyService propertyService,
+    public StroomElasticProducerFactoryService(final PropertyService propertyService,
                                                final ExternalLibService externalLibService) {
         super(propertyService,
                 externalLibService,

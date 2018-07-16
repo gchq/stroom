@@ -134,7 +134,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
     PipelineStreamProcessor(final PipelineFactory pipelineFactory,
                             final StreamStore streamStore,
                             final DataMetaService streamMetaService,
-                            @Named("cachedPipelineStore") final PipelineStore pipelineStore,
+                            final PipelineStore pipelineStore,
                             final TaskContext taskContext,
                             final PipelineHolder pipelineHolder,
                             final FeedHolder feedHolder,
@@ -533,7 +533,7 @@ public class PipelineStreamProcessor implements StreamProcessorTaskExecutor {
             metaData.put(MetaDataSource.DURATION, String.valueOf(recordCount.getDuration()));
 
             // TODO : @66 DO WE REALLY NEED TO KNOW WHAT NODE PROCESSED A STREAM AS THE DATA IS AVAILABLE ON STREAM TASK???
-//            metaData.put(StreamAttributeConstants.NODE, nodeCache.getDefaultNode().getName());
+//            metaData.put(StreamAttributeConstants.NODE, nodeCache.get().getName());
         } catch (final RuntimeException e) {
             outputError(e);
         }

@@ -16,7 +16,7 @@
 
 package stroom.search.extraction;
 
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 
 import javax.inject.Inject;
 
@@ -24,10 +24,10 @@ public class ExtractionTaskProperties {
     private static final int DEFAULT_MAX_THREADS = 4;
     private static final int DEFAULT_MAX_THREADS_PER_TASK = 2;
 
-    private final StroomPropertyService propertyService;
+    private final PropertyService propertyService;
 
     @Inject
-    public ExtractionTaskProperties(final StroomPropertyService propertyService) {
+    public ExtractionTaskProperties(final PropertyService propertyService) {
         this.propertyService = propertyService;
     }
 

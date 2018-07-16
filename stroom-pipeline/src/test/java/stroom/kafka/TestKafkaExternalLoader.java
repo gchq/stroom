@@ -8,8 +8,8 @@ import stroom.connectors.ExternalLibService;
 import stroom.connectors.kafka.StroomKafkaProducer;
 import stroom.connectors.kafka.StroomKafkaProducerRecord;
 import stroom.connectors.kafka.StroomKafkaRecordMetaData;
-import stroom.properties.impl.mock.MockStroomPropertyService;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.impl.mock.MockPropertyService;
+import stroom.properties.api.PropertyService;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
@@ -20,7 +20,7 @@ import java.util.function.Consumer;
 public class TestKafkaExternalLoader {
     private static final String DEV_EXTERNAL_LIB_DIR = System.getenv("HOME") + "/.stroom/plugins";
 
-    private final MockStroomPropertyService mockPropertyService = new MockStroomPropertyService();
+    private final MockPropertyService mockPropertyService = new MockPropertyService();
 
     @Before
     public void setup() {
@@ -92,7 +92,7 @@ public class TestKafkaExternalLoader {
     public void testKafkaProduceMisconfigured() {
 
         //Empty prop service, so not kafka props to use
-        final StroomPropertyService emptyPropertyService = new MockStroomPropertyService();
+        final PropertyService emptyPropertyService = new MockPropertyService();
 
         final ExternalLibService externalLibService = new ExternalLibService(emptyPropertyService);
 

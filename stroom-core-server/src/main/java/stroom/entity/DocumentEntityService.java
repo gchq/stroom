@@ -17,11 +17,10 @@
 
 package stroom.entity;
 
-import stroom.docstore.DocumentActionHandler;
 import stroom.entity.shared.DocumentEntity;
 import stroom.entity.shared.HasLoadByUuid;
 import stroom.entity.shared.ProvidesNamePattern;
 
-public interface DocumentEntityService<E extends DocumentEntity> extends BaseEntityService<E>, HasLoadByUuid<E>, ProvidesNamePattern, DocumentActionHandler<E> {
+public interface DocumentEntityService<E extends DocumentEntity> extends BaseEntityService<E>, HasLoadByUuid<E>, ProvidesNamePattern {
     E create(String name);
 }

@@ -22,7 +22,7 @@ import com.google.inject.multibindings.Multibinder;
 public class MockTaskModule extends AbstractModule {
     @Override
     protected void configure() {
-//        bind(ExecutorProvider.class).to(ExecutorProviderImpl.class);
+        bind(ExecutorProvider.class).to(ExecutorProviderImpl.class);
         bind(TaskManager.class).to(TaskManagerImpl.class);
         bind(TaskContext.class).to(TaskContextImpl.class);
 //

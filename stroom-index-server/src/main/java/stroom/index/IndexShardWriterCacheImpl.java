@@ -25,7 +25,7 @@ import stroom.index.shared.IndexShardKey;
 import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.docref.DocRef;
 import stroom.task.ExecutorProvider;
 import stroom.task.TaskContext;
@@ -69,7 +69,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private final IndexShardService indexShardService;
     private final IndexConfigCache indexConfigCache;
     private final IndexShardManager indexShardManager;
-    private final StroomPropertyService stroomPropertyService;
+    private final PropertyService stroomPropertyService;
 
     private final Map<Long, IndexShardWriter> openWritersByShardId = new ConcurrentHashMap<>();
     private final Map<IndexShardKey, IndexShardWriter> openWritersByShardKey = new ConcurrentHashMap<>();
@@ -83,7 +83,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     @Inject
     public IndexShardWriterCacheImpl(final NodeCache nodeCache,
                                      final IndexShardService indexShardService,
-                                     final StroomPropertyService stroomPropertyService,
+                                     final PropertyService stroomPropertyService,
                                      final IndexConfigCache indexConfigCache,
                                      final IndexShardManager indexShardManager,
                                      final ExecutorProvider executorProvider,

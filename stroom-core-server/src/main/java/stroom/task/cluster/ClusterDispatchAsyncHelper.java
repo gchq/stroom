@@ -19,7 +19,7 @@ package stroom.task.cluster;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.node.shared.Node;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.util.shared.ModelStringUtil;
 import stroom.docref.SharedObject;
@@ -37,7 +37,7 @@ public class ClusterDispatchAsyncHelper {
     private static final Long ONE_MINUTE = 60000L;
     private static final Long DEFAULT_CLUSTER_RESPONSE_TIMEOUT = ONE_MINUTE;
 
-    private final StroomPropertyService stroomPropertyService;
+    private final PropertyService stroomPropertyService;
     private final ClusterResultCollectorCache collectorCache;
     private final Provider<ClusterDispatchAsync> dispatchAsyncProvider;
     private final TargetNodeSetFactory targetNodeSetFactory;
@@ -45,7 +45,7 @@ public class ClusterDispatchAsyncHelper {
     private volatile long lastClusterStateWarn;
 
     @Inject
-    public ClusterDispatchAsyncHelper(final StroomPropertyService stroomPropertyService,
+    public ClusterDispatchAsyncHelper(final PropertyService stroomPropertyService,
                                       final ClusterResultCollectorCache collectorCache,
                                       final Provider<ClusterDispatchAsync> dispatchAsyncProvider,
                                       final TargetNodeSetFactory targetNodeSetFactory) {

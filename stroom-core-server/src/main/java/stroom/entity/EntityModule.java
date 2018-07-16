@@ -20,6 +20,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.Clearable;
 import stroom.logging.LoggingModule;
+import stroom.security.DocumentPermissionCache;
 import stroom.task.TaskHandler;
 
 public class EntityModule extends AbstractModule {
@@ -28,11 +29,9 @@ public class EntityModule extends AbstractModule {
         install(new LoggingModule());
 
         bind(GenericEntityService.class).to(GenericEntityServiceImpl.class);
-        bind(DocumentPermissionCache.class).to(DocumentPermissionCacheImpl.class);
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(CachingEntityManager.class);
-        clearableBinder.addBinding().to(DocumentPermissionCacheImpl.class);
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.entity.EntityServiceDeleteHandler.class);
@@ -42,14 +41,6 @@ public class EntityModule extends AbstractModule {
         taskHandlerBinder.addBinding().to(stroom.entity.EntityServiceFindSummaryHandler.class);
         taskHandlerBinder.addBinding().to(stroom.entity.EntityServiceSaveHandler.class);
     }
-
-//
-// TODO: @66 DON'T THINK THIS IS NEEDED ANYMORE SO DELETE IT
-//    @Bean
-//    public GenericEntityMarshaller genericEntityMarshaller() {
-//        return new GenericEntityMarshallerImpl();
-//    }
-//
 
     @Override
     public boolean equals(final Object o) {

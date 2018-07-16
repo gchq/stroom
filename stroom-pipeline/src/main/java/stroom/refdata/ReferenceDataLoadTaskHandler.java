@@ -83,7 +83,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
     ReferenceDataLoadTaskHandler(final StreamStore streamStore,
                                  final PipelineFactory pipelineFactory,
                                  final MapStoreHolder mapStoreHolder,
-                                 @Named("cachedPipelineStore") final PipelineStore pipelineStore,
+                                 final PipelineStore pipelineStore,
                                  final PipelineHolder pipelineHolder,
                                  final FeedHolder feedHolder,
                                  final FeedProperties feedProperties,

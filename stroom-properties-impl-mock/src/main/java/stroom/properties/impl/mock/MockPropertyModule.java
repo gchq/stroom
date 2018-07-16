@@ -17,12 +17,12 @@
 package stroom.properties.impl.mock;
 
 import com.google.inject.AbstractModule;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 
 public class MockPropertyModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(StroomPropertyService.class).to(MockStroomPropertyService.class);
+        bind(PropertyService.class).to(MockPropertyService.class);
 //        bind(ClientPropertiesService.class).to(ClientPropertiesServiceImpl.class);
 //        bind(GlobalPropertyService.class).to(MockGlobalPropertyService.class);
 

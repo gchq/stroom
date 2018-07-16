@@ -24,7 +24,7 @@ import stroom.entity.shared.SharedDocRef;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
 import stroom.node.shared.ClientProperties;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.query.audit.ExportDTO;
@@ -53,7 +53,7 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
 
     ExternalDocumentEntityServiceImpl(final String type,
                                       final SecurityContext securityContext,
-                                      final StroomPropertyService propertyService) {
+                                      final PropertyService propertyService) {
         this.type = type;
         this.securityContext = securityContext;
 

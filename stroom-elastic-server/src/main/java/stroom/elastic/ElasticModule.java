@@ -19,17 +19,15 @@ package stroom.elastic;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.Clearable;
-import stroom.pipeline.factory.Element;
 
 public class ElasticModule extends AbstractModule {
     @Override
     protected void configure() {
+        install(new ElasticElementModule());
+
         bind(ElasticIndexCache.class).to(ElasticIndexCacheImpl.class);
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(ElasticIndexCacheImpl.class);
-
-        final Multibinder<Element> elementBinder = Multibinder.newSetBinder(binder(), Element.class);
-        elementBinder.addBinding().to(stroom.elastic.ElasticIndexingFilter.class);
     }
 }

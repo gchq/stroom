@@ -2,7 +2,7 @@ package stroom.statistics.internal;
 
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
-import stroom.properties.impl.mock.MockStroomPropertyService;
+import stroom.properties.impl.mock.MockPropertyService;
 import stroom.docref.DocRef;
 
 import java.util.List;
@@ -28,7 +28,7 @@ public class TestInternalStatisticDocRefCache {
     @Test
     public void getDocRefs_singleDocRef() {
 
-        MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
+        MockPropertyService mockStroomPropertyService = new MockPropertyService();
 
         String propValue = docRefStr1;
         mockStroomPropertyService.setProperty(propKey, propValue);
@@ -45,7 +45,7 @@ public class TestInternalStatisticDocRefCache {
     @Test
     public void getDocRefs_twoDocRefs() {
 
-        MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
+        MockPropertyService mockStroomPropertyService = new MockPropertyService();
 
         String propValue = docRefStr1 + "," + docRefStr2;
         mockStroomPropertyService.setProperty(propKey, propValue);
@@ -62,7 +62,7 @@ public class TestInternalStatisticDocRefCache {
     @Test
     public void getDocRefs_emptyProvVal() {
 
-        MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
+        MockPropertyService mockStroomPropertyService = new MockPropertyService();
 
         String propValue = "";
         mockStroomPropertyService.setProperty(propKey, propValue);
@@ -77,7 +77,7 @@ public class TestInternalStatisticDocRefCache {
     @Test
     public void getDocRefs_nullProvVal() {
 
-        MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
+        MockPropertyService mockStroomPropertyService = new MockPropertyService();
 
         String propValue = null;
         mockStroomPropertyService.setProperty(propKey, propValue);
@@ -92,7 +92,7 @@ public class TestInternalStatisticDocRefCache {
     @Test(expected = RuntimeException.class)
     public void getDocRefs_invalidPropVal() {
 
-        MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
+        MockPropertyService mockStroomPropertyService = new MockPropertyService();
 
         String propValue = docRefStr1 + "xxx";
         mockStroomPropertyService.setProperty(propKey, propValue);

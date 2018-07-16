@@ -1,0 +1,29 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<pipeline>
+   <properties>
+      <add>
+         <property>
+            <element>combinedParser</element>
+            <name>textConverter</name>
+            <value>
+               <entity>
+                  <type>TextConverter</type>
+                  <uuid>46ceda6c-ba3e-4196-9855-a5dc5fd0ab33</uuid>
+                  <name>IP_RANGE_TO_LOCATION-REFERENCE</name>
+               </entity>
+            </value>
+         </property>
+         <property>
+            <element>translationFilter</element>
+            <name>xslt</name>
+            <value>
+               <entity>
+                  <type>XSLT</type>
+                  <uuid>a531dfb5-b0e7-401a-afea-d2ee00ed3cbf</uuid>
+                  <name>IP_RANGE_TO_LOCATION-REFERENCE</name>
+               </entity>
+            </value>
+         </property>
+      </add>
+   </properties>
+</pipeline>

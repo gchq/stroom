@@ -10,7 +10,7 @@ import stroom.data.meta.api.DataSecurityFilter;
 import stroom.entity.shared.Clearable;
 import stroom.properties.api.ConnectionConfig;
 import stroom.properties.api.ConnectionPoolConfig;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 
 import javax.inject.Singleton;
 import javax.sql.DataSource;
@@ -36,7 +36,7 @@ public class DataMetaDbModule extends AbstractModule {
 
     @Provides
     @Singleton
-    ConnectionProvider getConnectionProvider(final StroomPropertyService stroomPropertyService) {
+    ConnectionProvider getConnectionProvider(final PropertyService stroomPropertyService) {
         final ConnectionConfig connectionConfig = getConnectionConfig(stroomPropertyService);
         final ConnectionPoolConfig connectionPoolConfig = getConnectionPoolConfig(stroomPropertyService);
 
@@ -62,11 +62,11 @@ public class DataMetaDbModule extends AbstractModule {
         return flyway;
     }
 
-    private ConnectionConfig getConnectionConfig(final StroomPropertyService stroomPropertyService) {
+    private ConnectionConfig getConnectionConfig(final PropertyService stroomPropertyService) {
         return new ConnectionConfig(CONNECTION_PROPERTY_PREFIX, stroomPropertyService);
     }
 
-    private ConnectionPoolConfig getConnectionPoolConfig(final StroomPropertyService stroomPropertyService) {
+    private ConnectionPoolConfig getConnectionPoolConfig(final PropertyService stroomPropertyService) {
         return new ConnectionPoolConfig(CONNECTION_PROPERTY_PREFIX, stroomPropertyService);
     }
 

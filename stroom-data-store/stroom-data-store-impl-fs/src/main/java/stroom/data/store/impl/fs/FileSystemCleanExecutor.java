@@ -23,7 +23,7 @@ import stroom.node.NodeCache;
 import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.VolumeEntity;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.task.AsyncTaskHelper;
 import stroom.task.TaskCallbackAdaptor;
 import stroom.task.TaskContext;
@@ -70,7 +70,7 @@ class FileSystemCleanExecutor {
                             final TaskContext taskContext,
                             final TaskManager taskManager,
                             final NodeCache nodeCache,
-                            final StroomPropertyService propertyService) {
+                            final PropertyService propertyService) {
         this.volumeService = volumeService;
         this.taskContext = taskContext;
         this.taskManager = taskManager;

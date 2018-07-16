@@ -31,6 +31,8 @@ import stroom.task.TaskHandler;
 public class IndexModule extends AbstractModule {
     @Override
     protected void configure() {
+        install(new IndexElementModule());
+
         bind(IndexShardManager.class).to(IndexShardManagerImpl.class);
         bind(IndexShardWriterCache.class).to(IndexShardWriterCacheImpl.class);
         bind(IndexConfigCache.class).to(IndexConfigCacheImpl.class);
@@ -50,9 +52,6 @@ public class IndexModule extends AbstractModule {
 
         final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(IndexConfigCacheEntityEventHandler.class);
-
-        final Multibinder<Element> elementBinder = Multibinder.newSetBinder(binder(), Element.class);
-        elementBinder.addBinding().to(stroom.index.IndexingFilter.class);
 
         final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
         explorerActionHandlerBinder.addBinding().to(stroom.index.IndexStoreImpl.class);

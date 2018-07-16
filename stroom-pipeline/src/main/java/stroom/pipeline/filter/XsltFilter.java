@@ -49,7 +49,7 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.PipelineContext;
 import stroom.pipeline.writer.PathCreator;
 import stroom.pool.PoolItem;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.docref.DocRef;
 import stroom.util.CharBuffer;
 import stroom.util.shared.Location;
@@ -79,7 +79,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     private final XsltPool xsltPool;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final XsltStore xsltStore;
-    private final StroomPropertyService stroomPropertyService;
+    private final PropertyService stroomPropertyService;
     private final LocationFactoryProxy locationFactory;
     private final PipelineContext pipelineContext;
     private final PathCreator pathCreator;
@@ -111,7 +111,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     public XsltFilter(final XsltPool xsltPool,
                       final ErrorReceiverProxy errorReceiverProxy,
                       final XsltStore xsltStore,
-                      final StroomPropertyService stroomPropertyService,
+                      final PropertyService stroomPropertyService,
                       final LocationFactoryProxy locationFactory,
                       final PipelineContext pipelineContext,
                       final PathCreator pathCreator) {

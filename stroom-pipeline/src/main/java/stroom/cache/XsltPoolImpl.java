@@ -22,8 +22,7 @@ import net.sf.saxon.s9api.XsltCompiler;
 import net.sf.saxon.s9api.XsltExecutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.DocumentPermissionCache;
-import stroom.guice.StroomBeanStore;
+import stroom.security.DocumentPermissionCache;
 import stroom.pipeline.DefaultLocationFactory;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorListenerAdaptor;
@@ -41,6 +40,7 @@ import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.xml.transform.ErrorListener;
 import javax.xml.transform.URIResolver;
@@ -52,7 +52,7 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
     private static final Logger LOGGER = LoggerFactory.getLogger(XsltPoolImpl.class);
 
     private final URIResolver uriResolver;
-    private final StroomBeanStore beanStore;
+    private final Provider<StroomXsltFunctionLibrary> stroomXsltFunctionLibraryProvider;
 
     @Inject
     XsltPoolImpl(final CacheManager cacheManager,
@@ -60,10 +60,10 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
                  final Security security,
                  final SecurityContext securityContext,
                  final URIResolver uriResolver,
-                 final StroomBeanStore beanStore) {
+                 final Provider<StroomXsltFunctionLibrary> stroomXsltFunctionLibraryProvider) {
         super(cacheManager, "XSLT Pool", documentPermissionCache, security, securityContext);
         this.uriResolver = uriResolver;
-        this.beanStore = beanStore;
+        this.stroomXsltFunctionLibraryProvider = stroomXsltFunctionLibraryProvider;
     }
 
     @Override
@@ -73,7 +73,7 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
 
         // Configure the item.
         if (poolItem != null && poolItem.getValue() != null && poolItem.getValue().getFunctionLibrary() != null) {
-            poolItem.getValue().getFunctionLibrary().configure(beanStore, errorReceiver, locationFactory,
+            poolItem.getValue().getFunctionLibrary().configure(errorReceiver, locationFactory,
                     pipelineReferences);
         }
 
@@ -108,7 +108,8 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
             final Processor processor = new Processor(false);
 
             // Register the Stroom XSLT extension functions.
-            functionLibrary = new StroomXsltFunctionLibrary(processor.getUnderlyingConfiguration());
+            functionLibrary = stroomXsltFunctionLibraryProvider.get();
+            functionLibrary.init(processor.getUnderlyingConfiguration());
 
             final XsltCompiler xsltCompiler = processor.newXsltCompiler();
             xsltCompiler.setErrorListener(errorListener);

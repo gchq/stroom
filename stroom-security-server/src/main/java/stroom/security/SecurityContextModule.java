@@ -18,6 +18,9 @@ package stroom.security;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import com.google.inject.multibindings.Multibinder;
+import stroom.entity.CachingEntityManager;
+import stroom.entity.shared.Clearable;
 
 import javax.inject.Singleton;
 
@@ -25,6 +28,10 @@ public class SecurityContextModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(SecurityContext.class).to(SecurityContextImpl.class);
+        bind(DocumentPermissionCache.class).to(DocumentPermissionCacheImpl.class);
+
+        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
+        clearableBinder.addBinding().to(DocumentPermissionCacheImpl.class);
     }
 
     @Provides

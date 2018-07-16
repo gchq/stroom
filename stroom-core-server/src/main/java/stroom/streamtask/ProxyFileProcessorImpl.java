@@ -23,7 +23,7 @@ import stroom.data.meta.api.AttributeMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.streamtask.statistic.MetaDataStatistic;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.proxy.repo.ProxyFileHandler;
 import stroom.proxy.repo.ProxyFileProcessor;
 import stroom.proxy.repo.StroomZipRepository;
@@ -71,7 +71,7 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
     ProxyFileProcessorImpl(final StreamStore streamStore,
                            final FeedDocCache feedDocCache,
                            final MetaDataStatistic metaDataStatistic,
-                           final StroomPropertyService propertyService) {
+                           final PropertyService propertyService) {
         this(
                 streamStore,
                 feedDocCache,

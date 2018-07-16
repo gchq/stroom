@@ -2,7 +2,7 @@ package stroom.statistics.stroomstats.kafka;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.statistics.shared.StatisticType;
 
 import javax.inject.Inject;
@@ -12,10 +12,10 @@ public class TopicNameFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(TopicNameFactory.class);
     private static final String PROP_KEY_PREFIX_KAFKA_TOPICS = "stroom.services.stroomStats.kafkaTopics.";
 
-    final StroomPropertyService stroomPropertyService;
+    final PropertyService stroomPropertyService;
 
     @Inject
-    TopicNameFactory(final StroomPropertyService stroomPropertyService) {
+    TopicNameFactory(final PropertyService stroomPropertyService) {
         this.stroomPropertyService = stroomPropertyService;
     }
 

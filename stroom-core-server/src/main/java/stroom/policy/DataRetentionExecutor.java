@@ -24,7 +24,7 @@ import stroom.entity.shared.Period;
 import stroom.entity.util.XMLMarshallerUtil;
 import stroom.jobsystem.ClusterLockService;
 import stroom.util.lifecycle.JobTrackedSchedule;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -79,7 +79,7 @@ public class DataRetentionExecutor {
     private final TaskContext taskContext;
     private final ClusterLockService clusterLockService;
     private final DataRetentionService dataRetentionService;
-    private final StroomPropertyService propertyService;
+    private final PropertyService propertyService;
     private final DictionaryStore dictionaryStore;
     private final DataSource dataSource;
     private final AtomicBoolean running = new AtomicBoolean();
@@ -88,7 +88,7 @@ public class DataRetentionExecutor {
     DataRetentionExecutor(final TaskContext taskContext,
                           final ClusterLockService clusterLockService,
                           final DataRetentionService dataRetentionService,
-                          final StroomPropertyService propertyService,
+                          final PropertyService propertyService,
                           final DictionaryStore dictionaryStore,
                           final DataSource dataSource) {
         this.taskContext = taskContext;

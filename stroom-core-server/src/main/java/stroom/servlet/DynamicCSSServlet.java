@@ -16,7 +16,7 @@
 
 package stroom.servlet;
 
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
 
@@ -48,11 +48,11 @@ public class DynamicCSSServlet extends HttpServlet {
     private static final String STROOM_THEME_TUBE_VISIBLE = "stroom.theme.tube.visible";
     private static final String STROOM_THEME_TUBE_OPACITY = "stroom.theme.tube.opacity";
 
-    private final transient StroomPropertyService stroomPropertyService;
+    private final transient PropertyService stroomPropertyService;
     private String cssTemplate;
 
     @Inject
-    DynamicCSSServlet(final StroomPropertyService stroomPropertyService) {
+    DynamicCSSServlet(final PropertyService stroomPropertyService) {
         this.stroomPropertyService = stroomPropertyService;
     }
 

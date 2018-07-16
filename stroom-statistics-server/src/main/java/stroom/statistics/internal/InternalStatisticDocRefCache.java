@@ -3,7 +3,7 @@ package stroom.statistics.internal;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.docref.DocRef;
 
 import javax.inject.Inject;
@@ -23,12 +23,12 @@ public class InternalStatisticDocRefCache {
     private static final Pattern DOC_REF_PART_PATTERN = Pattern.compile("(docRef\\([^,]+,[0-9a-f\\-]+,[^,]+\\))");
     private static final Pattern DOC_REF_WHOLE_PATTERN = Pattern.compile("(" + DOC_REF_PART_PATTERN.pattern() + ",?)+");
 
-    private final StroomPropertyService stroomPropertyService;
+    private final PropertyService stroomPropertyService;
     //map of internal stat key to the list of datasource docrefs available for that stat
     private final ConcurrentMap<String, List<DocRef>> map = new ConcurrentHashMap<>();
 
     @Inject
-    public InternalStatisticDocRefCache(final StroomPropertyService stroomPropertyService) {
+    public InternalStatisticDocRefCache(final PropertyService stroomPropertyService) {
         this.stroomPropertyService = stroomPropertyService;
     }
 

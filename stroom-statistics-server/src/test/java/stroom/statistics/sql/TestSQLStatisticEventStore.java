@@ -25,7 +25,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import stroom.properties.impl.mock.MockStroomPropertyService;
+import stroom.properties.impl.mock.MockPropertyService;
 import stroom.docref.DocRef;
 import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.sql.entity.StatisticStoreCache;
@@ -44,7 +44,7 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
     private final AtomicLong destroyCount = new AtomicLong();
     private final AtomicLong eventCount = new AtomicLong();
     private final AtomicSequence atomicSequence = new AtomicSequence(10);
-    private final MockStroomPropertyService propertyService = new MockStroomPropertyService();
+    private final MockPropertyService propertyService = new MockPropertyService();
     private final StatisticStoreCache mockStatisticsDataSourceCache = new StatisticStoreCache() {
         @Override
         public StatisticStoreDoc getStatisticsDataSource(final String statisticName) {

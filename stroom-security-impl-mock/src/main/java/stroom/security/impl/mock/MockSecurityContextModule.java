@@ -18,6 +18,7 @@ package stroom.security.impl.mock;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import stroom.security.DocumentPermissionCache;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
 
@@ -25,6 +26,7 @@ public class MockSecurityContextModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(SecurityContext.class).to(MockSecurityContext.class);
+        bind(DocumentPermissionCache.class).to(MockDocumentPermissionCache.class);
     }
 
     @Provides

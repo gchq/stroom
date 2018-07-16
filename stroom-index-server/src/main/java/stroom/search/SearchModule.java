@@ -25,6 +25,8 @@ import stroom.task.TaskHandler;
 public class SearchModule extends AbstractModule {
     @Override
     protected void configure() {
+        install(new SearchElementModule());
+
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(LuceneSearchResponseCreatorManager.class);
 
@@ -32,8 +34,5 @@ public class SearchModule extends AbstractModule {
         taskHandlerBinder.addBinding().to(stroom.search.AsyncSearchTaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.search.ClusterSearchTaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.search.EventSearchTaskHandler.class);
-
-        final Multibinder<Element> elementBinder = Multibinder.newSetBinder(binder(), Element.class);
-        elementBinder.addBinding().to(stroom.search.extraction.SearchResultOutputFilter.class);
     }
 }

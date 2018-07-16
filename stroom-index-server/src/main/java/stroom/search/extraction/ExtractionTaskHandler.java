@@ -87,7 +87,7 @@ public class ExtractionTaskHandler {
                           final PipelineHolder pipelineHolder,
                           final ErrorReceiverProxy errorReceiverProxy,
                           final PipelineFactory pipelineFactory,
-                          @Named("cachedPipelineStore") final PipelineStore pipelineStore,
+                          final PipelineStore pipelineStore,
                           final PipelineDataCache pipelineDataCache,
                           final TaskContext taskContext,
                           final Security security,

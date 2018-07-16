@@ -31,7 +31,7 @@ import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.MessageUtil;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Param;
 import stroom.query.common.v2.Coprocessor;
@@ -129,7 +129,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                              final ExtractionTaskProperties extractionTaskProperties,
                              final DataMetaService streamMetaService,
                              final Security security,
-                             final StroomPropertyService propertyService,
+                             final PropertyService propertyService,
                              final Provider<IndexShardSearchTaskHandler> indexShardSearchTaskHandlerProvider,
                              final Provider<ExtractionTaskHandler> extractionTaskHandlerProvider,
                              final ExecutorProvider executorProvider) {

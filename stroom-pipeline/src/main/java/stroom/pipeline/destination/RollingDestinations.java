@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.errorhandler.TerminatedException;
-import stroom.properties.api.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.task.TaskContext;
 import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.lifecycle.StroomShutdown;
@@ -41,10 +41,10 @@ public class RollingDestinations {
 
     private static final ConcurrentHashMap<Object, RollingDestination> currentDestinations = new ConcurrentHashMap<>();
 
-    private final StroomPropertyService stroomPropertyService;
+    private final PropertyService stroomPropertyService;
 
     @Inject
-    public RollingDestinations(final StroomPropertyService stroomPropertyService) {
+    public RollingDestinations(final PropertyService stroomPropertyService) {
         this.stroomPropertyService = stroomPropertyService;
     }
 
