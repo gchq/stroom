@@ -2,7 +2,7 @@ import React from 'react';
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
 
-import ActionBarItem from 'components/ActionBarItem';
+import ActionBarItem from 'sections/AppChrome/ActionBarItem';
 
 const enhance = compose(connect((state, props) => ({}), {}));
 

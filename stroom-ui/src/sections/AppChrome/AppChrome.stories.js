@@ -19,10 +19,14 @@ import PropTypes from 'prop-types';
 import { storiesOf, addDecorator } from '@storybook/react';
 import StoryRouter from 'storybook-react-router';
 import { Switch, Route } from 'react-router-dom';
+import { Header } from 'semantic-ui-react';
 
 import { AppChrome } from './index';
 import TrackerDashboard from 'sections/TrackerDashboard';
-import PipelineEditor from 'components/PipelineEditor';
+import PipelineEditor, {
+  ActionBarItems as PipelineEditorActionBarItems,
+  HeaderContent as PipelineEditorHeaderContent
+} from 'components/PipelineEditor';
 import XsltEditor from 'prototypes/XsltEditor';
 import PipelineSearch from 'components/PipelineSearch';
 import Welcome from 'sections/Welcome';
@@ -64,15 +68,35 @@ const AppChromeWithRouter = () => (
   <Switch>
     <Route
       exact
+      path="/"
+      render={props => (
+        <AppChrome
+          activeMenuItem="Welcome"
+          headerContent={<Header.Content>Welcome</Header.Content>}
+          icon="home"
+          content={<Welcome />}
+        />
+      )}
+    />
+    <Route
+      exact
       path="/s/welcome"
-      render={props => <AppChrome title="Welcome" icon="home" content={<Welcome />} />}
+      render={props => (
+        <AppChrome
+          activeMenuItem="Welcome"
+          headerContent={<Header.Content>Welcome</Header.Content>}
+          icon="home"
+          content={<Welcome />}
+        />
+      )}
     />
     <Route
       exact
       path="/s/docExplorer"
       render={props => (
         <AppChrome
-          title="Explorer"
+          activeMenuItem="Explorer"
+          headerContent={<Header.Content>Explorer</Header.Content>}
           icon="eye"
           content={<DocExplorer explorerId="app-chrome-stories" />}
         />
@@ -81,42 +105,58 @@ const AppChromeWithRouter = () => (
     <Route
       exact
       path="/s/data"
-      render={props => <AppChrome title="Data" icon="database" content={<DataViewer />} />}
+      render={props => (
+        <AppChrome
+          activeMenuItem="Data"
+          headerContent={<Header.Content>Data</Header.Content>}
+          icon="database"
+          content={<DataViewer />}
+        />
+      )}
     />
     <Route
       exact
       path="/s/pipelines"
-      render={props => <AppChrome title="Pipelines" icon="tasks" content={<PipelineSearch />} />}
-    />
-    <Route
-      exact
-      path="/s/pipelines/:pipelineId"
       render={props => (
         <AppChrome
-          {...props}
-          title="Pipelines"
+          activeMenuItem="Pipelines"
+          headerContent={<Header.Content>Pipelines</Header.Content>}
           icon="tasks"
-          content={<PipelineEditor pipelineId={props.pipelineId} />}
+          content={<PipelineSearch />}
         />
       )}
     />
-
     <Route
       exact
       path="/s/processing"
-      render={props => <AppChrome title="Processing" icon="play" content={<TrackerDashboard />} />}
+      render={props => (
+        <AppChrome
+          activeMenuItem="Processing"
+          headerContent={<Header.Content>Processing</Header.Content>}
+          icon="play"
+          content={<TrackerDashboard />}
+        />
+      )}
     />
     <Route
       exact
       path="/s/me"
-      render={props => <AppChrome title="Me" icon="user" content={<UserSettings />} />}
+      render={props => (
+        <AppChrome
+          activeMenuItem="Me"
+          headerContent={<Header.Content>Me</Header.Content>}
+          icon="user"
+          content={<UserSettings />}
+        />
+      )}
     />
     <Route
       exact
       path="/s/users"
       render={props => (
         <AppChrome
-          title="Users"
+          activeMenuItem="Users"
+          headerContent={<Header.Content>Users</Header.Content>}
           icon="users"
           content={<div>iFrames not supported in our Storybook test cases</div>}
         />
@@ -127,7 +167,8 @@ const AppChromeWithRouter = () => (
       path="/s/apikeys"
       render={props => (
         <AppChrome
-          title="API Keys"
+          activeMenuItem="API Keys"
+          headerContent={<Header.Content>API Keys</Header.Content>}
           icon="key"
           content={<div>iFrames not supported in our Storybook test cases</div>}
         />
@@ -139,8 +180,9 @@ const AppChromeWithRouter = () => (
       path="/s/doc/XSLT/:xsltId"
       render={props => (
         <AppChrome
+          activeMenuItem="Explorer"
           {...props}
-          title="Edit XSLT"
+          headerContent={<Header.Content>Edit XSLT</Header.Content>}
           icon="file"
           content={<XsltEditor xsltId={props.match.params.xsltId} />}
         />
@@ -151,10 +193,14 @@ const AppChromeWithRouter = () => (
       path="/s/doc/Pipeline/:pipelineId"
       render={props => (
         <AppChrome
+          activeMenuItem="Pipelines"
           {...props}
-          title="Edit Pipeline"
+          headerContent={<PipelineEditorHeaderContent pipelineId={props.match.params.pipelineId} />}
           icon="file"
           content={<PipelineEditor pipelineId={props.match.params.pipelineId} />}
+          actionBarAdditionalItems={
+            <PipelineEditorActionBarItems pipelineId={props.match.params.pipelineId} />
+          }
         />
       )}
     />
@@ -165,8 +211,9 @@ const AppChromeWithRouter = () => (
       path="/s/doc/:type/:uuid"
       render={props => (
         <AppChrome
+          activeMenuItem="Explorer"
           {...props}
-          title={`Edit ${props.type}`}
+          headerContent={<Header.Content>{`Edit ${props.type}`}</Header.Content>}
           icon="file"
           content={<PathNotFound message="no editor provided for this doc ref type " />}
         />
@@ -176,7 +223,12 @@ const AppChromeWithRouter = () => (
     {/* Default route */}
     <Route
       render={() => (
-        <AppChrome title="Not Found" icon="exclamation triangle" content={<PathNotFound />} />
+        <AppChrome
+          activeMenuItem="Welcome"
+          headerContent={<Header.Content>Not Found</Header.Content>}
+          icon="exclamation triangle"
+          content={<PathNotFound />}
+        />
       )}
     />
   </Switch>
@@ -188,8 +240,8 @@ storiesOf('App Chrome', module)
   .addDecorator(DragDropDecorator)
   .addDecorator(StoryRouter())
   .add('Just the chrome', props => (
-    <AppChrome title="Stuff" icon="cog">
-      Stuff goes here forr
+    <AppChrome headerContent={<Header.Content>Stuff</Header.Content>} icon="cog">
+      Stuff goes here
     </AppChrome>
   ))
   .add('With routing', () => <AppChromeWithRouter />);

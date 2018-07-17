@@ -1,4 +1,9 @@
 export default {
+  docRef: {
+    uuid: 'multiBranchChild',
+    name: 'Multi Branch Child',
+    type: 'Pipeline'
+  },
   description: 'Complex pipeline with branching and inheritance',
   configStack: [
     {

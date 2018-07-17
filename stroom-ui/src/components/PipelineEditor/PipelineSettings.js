@@ -56,7 +56,6 @@ const PipelineSettings = ({
     <Header content="Pipeline Settings" />
     <Modal.Content>
       <Form>
-        {/* <Form.Field control={TextArea} placeholder="Describe this pipeline..." /> */}
         <Form.Field>
           <label>Description</label>
           <Field

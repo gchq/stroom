@@ -1,4 +1,9 @@
 export default {
+  docRef: {
+    uuid: 'simple',
+    name: 'Simple Pipeline',
+    type: 'Pipeline'
+  },
   description: 'just a simple pipeline',
   configStack: [
     {

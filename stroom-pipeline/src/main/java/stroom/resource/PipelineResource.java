@@ -4,6 +4,7 @@ import com.codahale.metrics.health.HealthCheck;
 import com.google.common.base.Strings;
 import io.swagger.annotations.Api;
 import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.guice.PipelineScopeRunnable;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.factory.PipelineDataValidator;
@@ -37,6 +38,7 @@ public class PipelineResource implements HasHealthCheck  {
 
     private static class PipelineDTO {
         private DocRef parentPipeline;
+        private DocRef docRef;
         private String description;
         private List<PipelineData> configStack;
         private PipelineData merged;
@@ -46,9 +48,11 @@ public class PipelineResource implements HasHealthCheck  {
         }
 
         PipelineDTO(final DocRef parentPipeline,
+                    final DocRef docRef,
                     final String description,
                     final List<PipelineData> configStack) {
             this.parentPipeline = parentPipeline;
+            this.docRef = docRef;
             this.description = description;
             this.configStack = configStack;
             this.merged = new PipelineDataMerger().merge(configStack).createMergedData();
@@ -56,6 +60,10 @@ public class PipelineResource implements HasHealthCheck  {
 
         public String getDescription() {
             return description;
+        }
+
+        public DocRef getDocRef() {
+            return docRef;
         }
 
         public DocRef getParentPipeline() {
@@ -166,6 +174,7 @@ public class PipelineResource implements HasHealthCheck  {
 
         final PipelineDTO dto  = new PipelineDTO(
                 pipelineDoc.getParentPipeline(),
+                DocRefUtil.create(pipelineDoc),
                 pipelineDoc.getDescription(),
                 configStack);
         return Response.ok(dto).build();

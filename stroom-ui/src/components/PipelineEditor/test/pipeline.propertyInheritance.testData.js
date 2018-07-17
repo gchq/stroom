@@ -1,4 +1,9 @@
 export const noParent = {
+  docRef: {
+    uuid: 'propertyInheritance',
+    name: 'Property Inheritance',
+    type: 'Pipeline'
+  },
   description: 'Demonstrates properties',
   configStack: [
     {

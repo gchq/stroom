@@ -24,7 +24,7 @@ import Mousetrap from 'mousetrap';
 
 import { actionCreators as recentItemsActionCreators } from 'prototypes/RecentItems/redux';
 import { actionCreators as appSearchActionCreators } from 'prototypes/AppSearch/redux';
-import ActionBarItem from 'components/ActionBarItem';
+import ActionBarItem from './ActionBarItem';
 import RecentItems from 'prototypes/RecentItems';
 import AppSearch from 'prototypes/AppSearch';
 import withLocalStorage from 'lib/withLocalStorage';
@@ -128,7 +128,8 @@ const enhance = compose(
 );
 
 const AppChrome = ({
-  title,
+  activeMenuItem,
+  headerContent,
   icon,
   content,
   actionBarItems,
@@ -145,7 +146,7 @@ const AppChrome = ({
           {menuItems.map(menuItem => (
             <Menu.Item
               key={menuItem.title}
-              active={menuItem.title === title}
+              active={menuItem.title === activeMenuItem}
               name={menuItem.title}
               onClick={menuItem.onClick}
             >
@@ -159,7 +160,7 @@ const AppChrome = ({
           {menuItems.map(menuItem => (
             <Button
               key={menuItem.title}
-              active={menuItem.title === title}
+              active={menuItem.title === activeMenuItem}
               icon={menuItem.icon}
               onClick={menuItem.onClick}
             />
@@ -174,7 +175,7 @@ const AppChrome = ({
             <Grid.Column width={12}>
               <Header as="h3">
                 <Icon name={icon} color="grey" />
-                {title}
+                {headerContent}
               </Header>
             </Grid.Column>
             <Grid.Column width={4}>
@@ -203,8 +204,9 @@ AppChrome.contextTypes = {
 };
 
 AppChrome.propTypes = {
+  activeMenuItem: PropTypes.string.isRequired,
   icon: PropTypes.string.isRequired,
-  title: PropTypes.string.isRequired,
+  headerContent: PropTypes.object.isRequired,
   content: PropTypes.object.isRequired,
   actionBarAdditionalItems: PropTypes.object,
 };

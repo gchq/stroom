@@ -19,6 +19,7 @@ import PropTypes, { object } from 'prop-types';
 import { Route, Router, Switch, withRouter } from 'react-router-dom';
 import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
+import { Header } from 'semantic-ui-react';
 
 import ErrorPage from 'sections/ErrorPage';
 import TrackerDashboard from 'sections/TrackerDashboard';
@@ -28,6 +29,7 @@ import XsltEditor from 'prototypes/XsltEditor';
 import { HandleAuthenticationResponse } from 'startup/Authentication';
 import PipelineEditor, {
   ActionBarItems as PipelineEditorActionBarItems,
+  HeaderContent as PipelineEditorHeaderContent,
 } from 'components/PipelineEditor';
 import DocExplorer from 'components/DocExplorer';
 import DataViewer from 'components/DataViewer';
@@ -91,20 +93,37 @@ const Routes = ({
       <PrivateRoute
         exact
         path="/"
-        render={props => <AppChrome {...props} title="Welcome" icon="home" content={<Welcome />} />}
+        render={props => (
+          <AppChrome
+            activeMenuItem="Welcome"
+            {...props}
+            headerContent={<Header.Content>Welcome</Header.Content>}
+            icon="home"
+            content={<Welcome />}
+          />
+        )}
       />
       <PrivateRoute
         exact
         path="/s/welcome"
-        render={props => <AppChrome {...props} title="Welcome" icon="home" content={<Welcome />} />}
+        render={props => (
+          <AppChrome
+            activeMenuItem="Welcome"
+            {...props}
+            headerContent={<Header.Content>Welcome</Header.Content>}
+            icon="home"
+            content={<Welcome />}
+          />
+        )}
       />
       <PrivateRoute
         exact
         path="/s/docExplorer"
         render={props => (
           <AppChrome
+            activeMenuItem="Explorer"
             {...props}
-            title="Explorer"
+            headerContent={<Header.Content>Explorer</Header.Content>}
             icon="eye"
             content={<DocExplorer explorerId="app-chrome" />}
           />
@@ -114,14 +133,26 @@ const Routes = ({
         exact
         path="/s/data"
         render={props => (
-          <AppChrome {...props} title="Data" icon="database" content={<DataViewer />} />
+          <AppChrome
+            activeMenuItem="Data"
+            {...props}
+            headerContent={<Header.Content>Data</Header.Content>}
+            icon="database"
+            content={<DataViewer />}
+          />
         )}
       />
       <PrivateRoute
         exact
         path="/s/pipelines"
         render={props => (
-          <AppChrome {...props} title="Pipelines" icon="tasks" content={<PipelineSearch />} />
+          <AppChrome
+            activeMenuItem="Pipelines"
+            {...props}
+            headerContent={<Header.Content>Pipelines</Header.Content>}
+            icon="tasks"
+            content={<PipelineSearch />}
+          />
         )}
       />
 
@@ -129,21 +160,36 @@ const Routes = ({
         exact
         path="/s/processing"
         render={props => (
-          <AppChrome {...props} title="Processing" icon="play" content={<TrackerDashboard />} />
+          <AppChrome
+            activeMenuItem="Processing"
+            {...props}
+            headerContent={<Header.Content>Processing</Header.Content>}
+            icon="play"
+            content={<TrackerDashboard />}
+          />
         )}
       />
       <PrivateRoute
         exact
         path="/s/me"
-        render={props => <AppChrome {...props} title="Me" icon="user" content={<UserSettings />} />}
+        render={props => (
+          <AppChrome
+            activeMenuItem="Me"
+            {...props}
+            headerContent={<Header.Content>Me</Header.Content>}
+            icon="user"
+            content={<UserSettings />}
+          />
+        )}
       />
       <PrivateRoute
         exact
         path="/s/users"
         render={props => (
           <AppChrome
+            activeMenuItem="Users"
             {...props}
-            title="Users"
+            headerContent={<Header.Content>Users</Header.Content>}
             icon="users"
             content={<IFrame key="users" url={authUsersUiUrl} />}
           />
@@ -154,8 +200,9 @@ const Routes = ({
         path="/s/apikeys"
         render={props => (
           <AppChrome
+            activeMenuItem="API Keys"
             {...props}
-            title="API Keys"
+            headerContent={<Header.Content>API Keys</Header.Content>}
             icon="key"
             content={<IFrame key="apikeys" url={authTokensUiUrl} />}
           />
@@ -196,8 +243,9 @@ const Routes = ({
         path="/s/doc/XSLT/:xsltId"
         render={props => (
           <AppChrome
+            activeMenuItem="Explorer"
             {...props}
-            title="Edit XSLT"
+            headerContent={<Header.Content>Edit XSLT</Header.Content>}
             icon="file"
             content={<XsltEditor xsltId={props.xsltId} />}
           />
@@ -208,8 +256,11 @@ const Routes = ({
         path="/s/doc/Pipeline/:pipelineId"
         render={props => (
           <AppChrome
+            activeMenuItem="Pipelines"
             {...props}
-            title="Pipelines"
+            headerContent={
+              <PipelineEditorHeaderContent pipelineId={props.match.params.pipelineId} />
+            }
             icon="tasks"
             content={<PipelineEditor pipelineId={props.pipelineId} />}
             actionBarAdditionalItems={
@@ -225,15 +276,26 @@ const Routes = ({
         path="/s/doc/:type/:uuid"
         render={props => (
           <AppChrome
+            activeMenuItem="Explorer"
             {...props}
-            title={`Edit ${props.type}`}
+            headerContent={<Header.Content>{`Edit ${props.type}`}</Header.Content>}
             icon="file"
             content={<PathNotFound message="no editor provided for this doc ref type " />}
           />
         )}
       />
 
-      <Route component={PathNotFound} />
+      {/* Default route */}
+      <Route
+        render={() => (
+          <AppChrome
+            activeMenuItem="Welcome"
+            headerContent={<Header.Content>Not Found</Header.Content>}
+            icon="exclamation triangle"
+            content={<PathNotFound />}
+          />
+        )}
+      />
     </Switch>
   </Router>
 );

@@ -30,9 +30,6 @@ import PipelineSettings from './PipelineSettings';
 import PipelineElement from './PipelineElement';
 import ElementPalette from './ElementPalette';
 import Bin from './Bin';
-import SavePipeline from './SavePipeline';
-import CreateChildPipeline from './CreateChildPipeline';
-import OpenPipelineSettings from './OpenPipelineSettings';
 
 import lineElementCreators from './pipelineLineElementCreators';
 import { ElementDetails } from './ElementDetails';
@@ -217,16 +214,6 @@ const PipelineEditor = ({
     </div>
   );
 };
-
-const ActionBarItems = ({ pipelineId }) => (
-  <React.Fragment>
-    <SavePipeline pipelineId={pipelineId} />
-    <CreateChildPipeline pipelineId={pipelineId} />
-    <OpenPipelineSettings pipelineId={pipelineId} />
-  </React.Fragment>
-);
-
-export { ActionBarItems };
 
 PipelineEditor.propTypes = {
   pipelineId: PropTypes.string.isRequired,

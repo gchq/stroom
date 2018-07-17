@@ -1,25 +1,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { compose, branch, renderNothing } from 'recompose';
-import { connect } from 'react-redux';
+import { compose } from 'recompose';
 
-import ActionBarItem from 'components/ActionBarItem';
+import withPipeline from './withPipeline';
+import ActionBarItem from 'sections/AppChrome/ActionBarItem';
 import { savePipeline } from './pipelineResourceClient';
 
-const enhance = compose(
-  connect(
-    ({ pipelineEditor: { pipelines, elements } }, { pipelineId }) => ({
-      pipeline: pipelines[pipelineId],
-      elements,
-    }),
-    {
-      // action, needed by lifecycle hook below
-      savePipeline,
-    },
-  ),
-  branch(({ pipeline }) => !pipeline, renderNothing),
-  branch(({ pipeline: { pipeline } }) => !pipeline, renderNothing),
-);
+const enhance = compose(withPipeline({ savePipeline }));
 
 const SavePipeline = ({ pipeline: { isSaving, isDirty }, savePipeline, pipelineId }) => (
   <ActionBarItem
