@@ -112,7 +112,7 @@ public class ExpressionToFindCriteria {
     private void convertExpression(final ExpressionOperator expression,
                                    final OldFindStreamCriteria criteria,
                                    final Context context) {
-        if (expression != null && !Boolean.FALSE.equals(expression.getEnabled()) && expression.getChildren() != null) {
+        if (expression != null && expression.enabled() && expression.getChildren() != null) {
             final List<Op> opStack = new ArrayList<>();
             opStack.add(expression.getOp());
             addChildren(expression.getChildren(), opStack, criteria, context);
@@ -140,7 +140,7 @@ public class ExpressionToFindCriteria {
         }
 
         final List<ExpressionTerm> terms = children.stream()
-                .filter(item -> !Boolean.FALSE.equals(item.getEnabled()))
+                .filter(ExpressionItem::enabled)
                 .filter(item -> item instanceof ExpressionTerm)
                 .map(item -> (ExpressionTerm) item)
                 .collect(Collectors.toList());
@@ -195,7 +195,7 @@ public class ExpressionToFindCriteria {
 
         // Recurse into child operators.
         children.stream()
-                .filter(item -> !Boolean.FALSE.equals(item.getEnabled()))
+                .filter(ExpressionItem::enabled)
                 .filter(item -> item instanceof ExpressionOperator)
                 .map(item -> (ExpressionOperator) item)
                 .forEach(expressionOperator -> {
