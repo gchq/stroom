@@ -26,20 +26,16 @@ public final class StreamTargetUtil {
     }
 
     public static long write(final StreamTarget streamTarget, final InputStream inputStream) {
-        return write(streamTarget, inputStream, true);
-    }
-
-    public static long write(final StreamTarget streamTarget, final InputStream inputStream, final boolean close)  {
         try (final OutputStreamProvider outputStreamProvider = streamTarget.getOutputStreamProvider()) {
             try (final OutputStream outputStream = outputStreamProvider.next()) {
-                return write(inputStream, outputStream, close);
+                return write(inputStream, outputStream, false);
             }
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
-//    private static long write(final InputStream inputStream,
+    //    private static long write(final InputStream inputStream,
 //                              final OutputStream segmentOutputStream,
 //                              final boolean close) {
 //        long bytesWritten;
@@ -72,8 +68,8 @@ public final class StreamTargetUtil {
 //     * Take a stream to another stream.
 //     */
     public static long write(final InputStream inputStream,
-                                       final OutputStream outputStream,
-                                       final boolean close) {
+                             final OutputStream outputStream,
+                             final boolean close) {
         long bytesWritten = 0;
         try {
             final byte[] buffer = new byte[BUFFER_SIZE];

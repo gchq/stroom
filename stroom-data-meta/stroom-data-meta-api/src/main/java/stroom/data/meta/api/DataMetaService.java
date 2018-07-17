@@ -7,6 +7,13 @@ import java.util.Set;
 
 public interface DataMetaService {
     /**
+     * Get the current maximum id of any data.
+     *
+     * @return The maximum id of any data item or null if there is no data.
+     */
+    Long getMaxId();
+
+    /**
      * Create a data record with the supplied properties.
      *
      * @param properties The properties that the newly created data record will have.

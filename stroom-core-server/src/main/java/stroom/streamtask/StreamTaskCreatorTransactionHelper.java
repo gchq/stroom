@@ -124,30 +124,7 @@ class StreamTaskCreatorTransactionHelper {
                 results, nodeCache.getDefaultNode().getName());
     }
 
-    /**
-     * @return streams that have not yet got a stream task for a particular
-     * stream processor
-     */
-    public List<Data> runSelectStreamQuery(final ExpressionOperator expression,
-                                           final long minStreamId,
-                                           final int max) {
-        final ExpressionOperator streamIdExpression = new ExpressionOperator.Builder(Op.AND)
-                .addOperator(expression)
-                .addTerm(MetaDataSource.STREAM_ID, Condition.GREATER_THAN_OR_EQUAL_TO, String.valueOf(minStreamId))
-                .build();
 
-        // Copy the filter
-        final FindDataCriteria findStreamCriteria = new FindDataCriteria(streamIdExpression);
-//        findStreamCriteria.copyFrom(criteria);
-        findStreamCriteria.setSort(MetaDataSource.STREAM_ID, Direction.ASCENDING, false);
-//        findStreamCriteria.setStreamIdRange(new IdRange(minStreamId, null));
-//        // Don't care about status
-//        findStreamCriteria.obtainStatusSet().add(StreamStatus.LOCKED);
-//        findStreamCriteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
-        findStreamCriteria.obtainPageRequest().setLength(max);
-
-        return streamMetaService.find(findStreamCriteria);
-    }
 
 //    private ExpressionOperator copyExpression(final ExpressionOperator expression) {
 //        ExpressionOperator.Builder builder;
@@ -218,6 +195,7 @@ class StreamTaskCreatorTransactionHelper {
                                        final long streamQueryTime,
                                        final Map<Data, InclusiveRanges> streams,
                                        final Node thisNode,
+                                       final Long maxMetaId,
                                        final boolean reachedLimit) {
         return entityManagerSupport.transactionResult(em -> {
             List<ProcessorFilterTask> availableTaskList = Collections.emptyList();
@@ -374,10 +352,10 @@ class StreamTaskCreatorTransactionHelper {
                     // Only create tasks for streams with an id 1 or more greater
                     // than the current max stream id in future as we didn't manage
                     // to create any tasks.
-//                    tracker.setMinStreamId(recentStreamInfo.getMaxStreamId() + 1);
-
-                    tracker.setMinStreamId(streamIdRange.getMax() + 1);
-                    tracker.setMinEventId(0L);
+                    if (maxMetaId != null) {
+                        tracker.setMinStreamId(maxMetaId + 1);
+                        tracker.setMinEventId(0L);
+                    }
                 }
 
                 if (tracker.getStreamCount() != null) {

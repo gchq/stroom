@@ -9,22 +9,22 @@ import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
-import stroom.data.meta.api.EffectiveMetaDataCriteria;
-import stroom.data.meta.api.FindDataCriteria;
 import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataRow;
-import stroom.data.meta.api.MetaDataSource;
 import stroom.data.meta.api.DataMetaService;
 import stroom.data.meta.api.DataProperties;
+import stroom.data.meta.api.DataRow;
 import stroom.data.meta.api.DataSecurityFilter;
 import stroom.data.meta.api.DataStatus;
+import stroom.data.meta.api.EffectiveMetaDataCriteria;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.MetaDataSource;
+import stroom.data.meta.impl.db.DataImpl.Builder;
 import stroom.data.meta.impl.db.ExpressionMapper.TermHandler;
 import stroom.data.meta.impl.db.MetaExpressionMapper.MetaTermHandler;
-import stroom.data.meta.impl.db.DataImpl.Builder;
-import stroom.data.meta.impl.db.stroom.tables.DataType;
-import stroom.data.meta.impl.db.stroom.tables.MetaVal;
 import stroom.data.meta.impl.db.stroom.tables.DataFeed;
 import stroom.data.meta.impl.db.stroom.tables.DataProcessor;
+import stroom.data.meta.impl.db.stroom.tables.DataType;
+import stroom.data.meta.impl.db.stroom.tables.MetaVal;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.IdSet;
 import stroom.entity.shared.PageRequest;
@@ -53,11 +53,11 @@ import java.util.Optional;
 import java.util.Set;
 
 import static org.jooq.impl.DSL.selectDistinct;
-import static stroom.data.meta.impl.db.stroom.tables.MetaVal.META_VAL;
 import static stroom.data.meta.impl.db.stroom.tables.Data.DATA;
 import static stroom.data.meta.impl.db.stroom.tables.DataFeed.DATA_FEED;
 import static stroom.data.meta.impl.db.stroom.tables.DataProcessor.DATA_PROCESSOR;
 import static stroom.data.meta.impl.db.stroom.tables.DataType.DATA_TYPE;
+import static stroom.data.meta.impl.db.stroom.tables.MetaVal.META_VAL;
 
 @Singleton
 class DataMetaServiceImpl implements DataMetaService {
@@ -141,6 +141,22 @@ class DataMetaServiceImpl implements DataMetaService {
                     new TermHandler<>(metaVal.VAL, Long::valueOf));
             metaTermHandlers.put(fieldName, handler);
         });
+    }
+
+    @Override
+    public Long getMaxId() {
+        try (final Connection connection = connectionProvider.getConnection()) {
+            final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+            return create
+                    .select(data.ID.max())
+                    .from(data)
+                    .fetchOptional()
+                    .map(Record1::value1)
+                    .orElse(null);
+        } catch (final SQLException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 
     @Override

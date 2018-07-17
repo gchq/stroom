@@ -21,16 +21,16 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataMetaService;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.util.ConnectionUtil;
 import stroom.entity.util.SqlBuilder;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.data.meta.api.FindDataCriteria;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataMetaService;
-import stroom.data.meta.api.MetaDataSource;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -57,7 +57,7 @@ public class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrat
     @Inject
     private CommonTestControl commonTestControl;
     @Inject
-    private StreamTaskCreatorTransactionHelper streamTaskCreatorTransactionHelper;
+    private StreamTaskCreatorImpl streamTaskCreator;
     @Inject
     private StreamTaskDeleteExecutor streamTaskDeleteExecutor;
     @Inject
@@ -76,19 +76,19 @@ public class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrat
 
         ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND).build();
         Assert.assertEquals(1,
-                streamTaskCreatorTransactionHelper.runSelectStreamQuery(expression, 0, 100).size());
+                streamTaskCreator.runSelectMetaQuery(expression, 0, 100).size());
 
         expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaDataSource.FEED, Condition.EQUALS, feedName).build();
         Assert.assertEquals(1,
-                streamTaskCreatorTransactionHelper.runSelectStreamQuery(expression, 0, 100).size());
+                streamTaskCreator.runSelectMetaQuery(expression, 0, 100).size());
 
         expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaDataSource.FEED, Condition.EQUALS, "otherFed").build();
         Assert.assertEquals(0,
-                streamTaskCreatorTransactionHelper.runSelectStreamQuery(expression, 0, 100).size());
+                streamTaskCreator.runSelectMetaQuery(expression, 0, 100).size());
 
         expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaDataSource.PIPELINE, Condition.EQUALS, "1234").build();
         Assert.assertEquals(0,
-                streamTaskCreatorTransactionHelper.runSelectStreamQuery(expression, 0, 100).size());
+                streamTaskCreator.runSelectMetaQuery(expression, 0, 100).size());
     }
 
     @Test

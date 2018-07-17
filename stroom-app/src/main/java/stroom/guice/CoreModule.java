@@ -4,8 +4,6 @@ import com.google.inject.AbstractModule;
 import stroom.data.meta.impl.db.DataMetaDbModule;
 import stroom.entity.event.EntityClusterTaskModule;
 import stroom.persist.EntityManagerModule;
-import stroom.pipeline.factory.PipelineFactoryModule;
-import stroom.pipeline.xsltfunctions.CommonXsltFunctionModule;
 import stroom.statistics.sql.SQLStatisticsModule;
 
 public class CoreModule extends AbstractModule {
@@ -33,6 +31,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.importexport.ImportExportModule());
         install(new stroom.importexport.ImportExportHandlerModule());
         install(new stroom.index.IndexModule());
+        install(new stroom.index.IndexElementModule());
         install(new stroom.jobsystem.JobSystemModule());
         install(new stroom.kafka.KafkaModule());
         install(new stroom.lifecycle.LifecycleModule());
@@ -43,9 +42,11 @@ public class CoreModule extends AbstractModule {
         install(new EntityManagerModule());
         install(new stroom.pipeline.PipelineModule());
         install(new stroom.pipeline.PipelineHandlerModule());
+        install(new stroom.pipeline.factory.PipelineFactoryModule());
+        install(new stroom.pipeline.factory.CommonPipelineElementModule());
+        install(new stroom.pipeline.factory.DataStorePipelineElementModule());
         install(new stroom.pipeline.xsltfunctions.CommonXsltFunctionModule());
         install(new stroom.pipeline.xsltfunctions.DataStoreXsltFunctionModule());
-        install(new PipelineFactoryModule());
         install(new stroom.pipeline.stepping.PipelineSteppingModule());
         install(new stroom.pipeline.task.PipelineStreamTaskModule());
         install(new stroom.policy.PolicyModule());
@@ -57,6 +58,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.script.ScriptModule());
         install(new stroom.search.SearchModule());
         install(new stroom.search.shard.ShardModule());
+        install(new stroom.search.SearchElementModule());
         install(new stroom.security.SecurityModule());
         install(new stroom.servicediscovery.ServiceDiscoveryModule());
         install(new stroom.servlet.ServletModule());

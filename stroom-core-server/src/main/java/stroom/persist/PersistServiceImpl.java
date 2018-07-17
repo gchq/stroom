@@ -137,16 +137,16 @@ public class PersistServiceImpl implements Provider<EntityManager>, PersistServi
                 "stroom.security.Permission",
                 "stroom.security.User",
                 "stroom.security.UserGroupUser",
-                "stroom.streamstore.shared.FeedEntity",
-                "stroom.streamstore.shared.StreamEntity",
-                "stroom.streamstore.meta.db.StreamAttributeKey",
-                "stroom.streamstore.meta.db.StreamAttributeValue",
+//                "stroom.streamstore.shared.FeedEntity",
+//                "stroom.streamstore.shared.StreamEntity",
+//                "stroom.streamstore.meta.db.StreamAttributeKey",
+//                "stroom.streamstore.meta.db.StreamAttributeValue",
                 "stroom.streamstore.shared.StreamTypeEntity",
                 "stroom.streamstore.shared.StreamVolumeEntity",
-                "stroom.streamtask.shared.StreamProcessor",
-                "stroom.streamtask.shared.StreamProcessorFilter",
-                "stroom.streamtask.shared.StreamProcessorFilterTracker",
-                "stroom.streamtask.shared.StreamTask"
+                "stroom.streamtask.shared.Processor",
+                "stroom.streamtask.shared.ProcessorFilter",
+                "stroom.streamtask.shared.ProcessorFilterTracker",
+                "stroom.streamtask.shared.ProcessorFilterTask"
         );
 
         return new PersistenceUnitInfoImpl(name, entityClassNames, properties(dataSource));

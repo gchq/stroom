@@ -53,7 +53,7 @@ public class ProcessorFilterTask extends TaskBasedEntity {
         return streamId;
     }
 
-    public void setStream(final Long streamId) {
+    public void setStreamId(final Long streamId) {
         this.streamId = streamId;
     }
 

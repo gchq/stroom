@@ -83,7 +83,7 @@ public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
                             filter.getStreamProcessorFilterTracker().setMinStreamId(stream.getId() + 1);
 
                             final ProcessorFilterTask streamTask = new ProcessorFilterTask();
-                            streamTask.setStream(stream.getId());
+                            streamTask.setStreamId(stream.getId());
                             streamTask.setStreamProcessorFilter(filter);
                             streamTask.setNode(node);
                             streamTask.setStatus(TaskStatus.ASSIGNED);
@@ -113,11 +113,6 @@ public class MockStreamTaskCreator implements StreamTaskCreator, Clearable {
     @Override
     public int getStreamTaskQueueSize() {
         return 0;
-    }
-
-    @Override
-    public StreamTaskCreatorRecentStreamDetails getStreamTaskCreatorRecentStreamDetails() {
-        return null;
     }
 
     @Override

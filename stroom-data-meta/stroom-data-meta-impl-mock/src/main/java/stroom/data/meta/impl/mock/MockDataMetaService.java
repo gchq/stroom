@@ -35,6 +35,13 @@ public class MockDataMetaService implements DataMetaService, Clearable {
      */
     private long currentId;
 
+    @Override
+    public Long getMaxId() {
+        if (currentId == 0) {
+            return null;
+        }
+        return currentId;
+    }
 
     @Override
     public Data create(final DataProperties properties) {
@@ -59,33 +66,6 @@ public class MockDataMetaService implements DataMetaService, Clearable {
         dataMap.put(currentId, data);
 
         return data;
-    }
-
-    @Override
-    public Set<Data> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
-        final Set<Data> results = new HashSet<>();
-
-        try {
-            for (final Data data : dataMap.values()) {
-                boolean match = true;
-
-                if (criteria.getType() != null && !criteria.getType().equals(data.getTypeName())) {
-                    match = false;
-                }
-                if (criteria.getFeed() != null && !criteria.getFeed().equals(data.getFeedName())) {
-                    match = false;
-                }
-
-                if (match) {
-                    results.add(data);
-                }
-            }
-        } catch (final RuntimeException e) {
-            System.out.println(e.getMessage());
-            // Ignore ... just a mock
-        }
-
-        return results;
     }
 
     @Override
@@ -190,6 +170,33 @@ public class MockDataMetaService implements DataMetaService, Clearable {
     @Override
     public List<DataRow> findRelatedData(final long id, final boolean anyStatus) {
         return null;
+    }
+
+    @Override
+    public Set<Data> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
+        final Set<Data> results = new HashSet<>();
+
+        try {
+            for (final Data data : dataMap.values()) {
+                boolean match = true;
+
+                if (criteria.getType() != null && !criteria.getType().equals(data.getTypeName())) {
+                    match = false;
+                }
+                if (criteria.getFeed() != null && !criteria.getFeed().equals(data.getFeedName())) {
+                    match = false;
+                }
+
+                if (match) {
+                    results.add(data);
+                }
+            }
+        } catch (final RuntimeException e) {
+            System.out.println(e.getMessage());
+            // Ignore ... just a mock
+        }
+
+        return results;
     }
 
     @Override

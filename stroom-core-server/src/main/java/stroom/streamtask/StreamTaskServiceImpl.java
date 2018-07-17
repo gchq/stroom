@@ -218,19 +218,19 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<ProcessorFilt
             // Append all the criteria
             sql.appendPrimitiveValueSetQuery(alias + ".pstatus", criteria.getStreamTaskStatusSet());
 
-            sql.appendCriteriaSetQuery(alias, criteria.getStreamTaskIdSet());
+            sql.appendCriteriaSetQuery(alias + ".id", criteria.getStreamTaskIdSet());
 
-            sql.appendCriteriaSetQuery(alias + ".node", criteria.getNodeIdSet());
+            sql.appendCriteriaSetQuery(alias + ".node.id", criteria.getNodeIdSet());
 
             sql.appendDocRefSetQuery(alias + ".streamProcessorFilter.streamProcessor.pipelineUuid",
                     criteria.obtainPipelineSet());
 
-            sql.appendCriteriaSetQuery(alias + ".streamProcessorFilter", criteria.getStreamProcessorFilterIdSet());
+            sql.appendCriteriaSetQuery(alias + ".streamProcessorFilter.id", criteria.getStreamProcessorFilterIdSet());
 
             sql.appendValueQuery(alias + ".createMs", criteria.getCreateMs());
 
 //            if (criteria.getStatusSet() != null || criteria.getFeedIdSet() != null || criteria.getPipelineSet() != null) {
-            sql.appendCriteriaSetQuery(alias + ".stream", criteria.getStreamIdSet());
+            sql.appendCriteriaSetQuery(alias + ".stream.id", criteria.getStreamIdSet());
 
 //            sql.appendCriteriaSetQuery(alias + ".stream.streamType", streamTypeService.convertNameSet(criteria.getStreamTypeNameSet()));
 //
