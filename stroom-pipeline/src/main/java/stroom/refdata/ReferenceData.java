@@ -165,9 +165,6 @@ public class ReferenceData {
 
     private void doGetValue(final List<PipelineReference> pipelineReferences,
                             final LookupIdentifier lookupIdentifier,
-//                            final long time,
-//                            final String mapName,
-//                            final String keyName,
                             final ReferenceDataResult referenceDataResult) {
 
         List<RefDataValueProxy> refDataValueProxies = new ArrayList<>();
