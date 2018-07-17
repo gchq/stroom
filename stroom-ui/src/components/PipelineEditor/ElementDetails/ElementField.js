@@ -218,7 +218,7 @@ const getField = (pipelineElementPropertyUpdated, value, name, pipelineId, eleme
     case 'int':
       elementField = (
         <NumericInput
-          value={parseInt(value)}
+          value={parseInt(value, 10)}
           onChange={(newValue) => {
             pipelineElementPropertyUpdated(pipelineId, elementId, name, 'integer', newValue);
           }}

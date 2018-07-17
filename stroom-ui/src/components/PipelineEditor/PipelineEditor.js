@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 
 import { compose, lifecycle, withState, branch, renderComponent, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Button, Icon, Confirm, Loader } from 'semantic-ui-react';
+import { Icon, Confirm, Loader } from 'semantic-ui-react';
 
 import PanelGroup from 'react-panelgroup';
 
@@ -32,6 +32,7 @@ import ElementPalette from './ElementPalette';
 import Bin from './Bin';
 import SavePipeline from './SavePipeline';
 import CreateChildPipeline from './CreateChildPipeline';
+import OpenPipelineSettings from './OpenPipelineSettings';
 
 import lineElementCreators from './pipelineLineElementCreators';
 import { ElementDetails } from './ElementDetails';
@@ -41,7 +42,10 @@ import { fetchElements, fetchElementProperties } from './elementResourceClient';
 import { withConfig } from 'startup/config';
 import { actionCreators } from './redux';
 
-const { pipelineElementDeleteCancelled, pipelineElementDeleted, pipelineSettingsOpened } = actionCreators;
+const {
+  pipelineElementDeleteCancelled,
+  pipelineElementDeleted
+} = actionCreators;
 
 const HORIZONTAL_SPACING = 150;
 const VERTICAL_SPACING = 70;
@@ -67,8 +71,7 @@ const enhance = compose(
       fetchElements,
       fetchElementProperties,
       pipelineElementDeleteCancelled,
-      pipelineElementDeleted,
-      pipelineSettingsOpened,
+      pipelineElementDeleted
     },
   ),
   lifecycle({
@@ -87,21 +90,18 @@ const enhance = compose(
     renderComponent(() => <Loader active>Loading Pipeline</Loader>),
   ),
   branch(
-    ({ pipeline: {pipeline} }) => !pipeline,
+    ({ pipeline: { pipeline } }) => !pipeline,
     renderComponent(() => <Loader active>Loading Pipeline Data</Loader>),
   ),
   branch(
-    ({ elements: {elements} }) => !elements,
+    ({ elements: { elements } }) => !elements,
     renderComponent(() => <Loader active>Loading Elements</Loader>),
   ),
   withPaletteOpen,
   withElementDetailsOpen,
   withProps(({
     pipelineId,
-    pipeline: {
-      asTree,
-      pendingElementToDelete
-    },
+    pipeline: { asTree, pendingElementToDelete },
     setPaletteOpen,
     isPaletteOpen,
     pipelineElementDeleteCancelled,
@@ -128,10 +128,7 @@ const enhance = compose(
 const PipelineEditor = ({
   pipelineId,
   pipeline: {
-    pipeline,
-    isDirty,
-    isSaving,
-    pendingElementToDelete
+    pipeline, isDirty, isSaving, pendingElementToDelete,
   },
   isPaletteOpen,
   setPaletteOpen,
@@ -139,7 +136,6 @@ const PipelineEditor = ({
   setElementDetailsOpen,
   editorClassName,
   elementStyles,
-  pipelineSettingsOpened,
   onCancelDelete,
   onConfirmDelete,
 }) => {
@@ -171,24 +167,14 @@ const PipelineEditor = ({
 
       <PanelGroup direction="column" className="Pipeline-editor__content" panelWidths={panelSizes}>
         <div className="Pipeline-editor__topPanel">
-          <div className="Pipeline-editor__top-bar">
-            <SavePipeline pipelineId={pipelineId} />
-            <Bin />
-            <CreateChildPipeline />
-            <div>
-              <Button 
-                icon='cogs' 
-                size='huge'
-                circular
-                onClick={() => pipelineSettingsOpened(pipelineId)} />
-            </div>
-          </div>
           <LineContainer
             className="Pipeline-editor__graph"
             lineContextId={`pipeline-lines-${pipelineId}`}
             lineElementCreators={lineElementCreators}
           >
-            <div className="Pipeline-editor__bin" />
+            <div className="Pipeline-editor__bin">
+              <Bin />
+            </div>
             <div className="Pipeline-editor__elements">
               {Object.keys(elementStyles)
                 .map(es => pipeline.merged.elements.add.find(e => e.id === es))
@@ -231,6 +217,16 @@ const PipelineEditor = ({
     </div>
   );
 };
+
+const ActionBarItems = ({ pipelineId }) => (
+  <React.Fragment>
+    <SavePipeline pipelineId={pipelineId} />
+    <CreateChildPipeline pipelineId={pipelineId} />
+    <OpenPipelineSettings pipelineId={pipelineId} />
+  </React.Fragment>
+);
+
+export { ActionBarItems };
 
 PipelineEditor.propTypes = {
   pipelineId: PropTypes.string.isRequired,

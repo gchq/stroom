@@ -17,13 +17,14 @@ import React from 'react';
 import PropTypes, { object } from 'prop-types';
 
 import { connect } from 'react-redux';
-import { compose, lifecycle } from 'recompose';
+import { compose, lifecycle, withProps } from 'recompose';
 import { withRouter } from 'react-router-dom';
-import { Button, Menu, Icon, Header, Divider, Grid, Popup } from 'semantic-ui-react';
+import { Button, Menu, Icon, Header, Divider, Grid } from 'semantic-ui-react';
 import Mousetrap from 'mousetrap';
 
 import { actionCreators as recentItemsActionCreators } from 'prototypes/RecentItems/redux';
 import { actionCreators as appSearchActionCreators } from 'prototypes/AppSearch/redux';
+import ActionBarItem from 'components/ActionBarItem';
 import RecentItems from 'prototypes/RecentItems';
 import AppSearch from 'prototypes/AppSearch';
 import withLocalStorage from 'lib/withLocalStorage';
@@ -33,6 +34,8 @@ const { appSearchOpened } = appSearchActionCreators;
 const withIsExpanded = withLocalStorage('isExpanded', 'setIsExpanded', true);
 
 const SIDE_BAR_COLOUR = 'blue';
+
+const pathPrefix = '/s';
 
 const enhance = compose(
   connect((state, props) => ({}), {
@@ -47,150 +50,150 @@ const enhance = compose(
       Mousetrap.bind('ctrl+f', () => this.props.appSearchOpened());
     },
   }),
+  withProps(({
+    isExpanded,
+    setIsExpanded,
+    history,
+    recentItemsOpened,
+    appSearchOpened,
+    actionBarItems,
+  }) => ({
+    menuItems: [
+      {
+        title: 'Stroom',
+        icon: 'bars',
+        onClick: () => setIsExpanded(!isExpanded),
+      },
+    ].concat([
+      {
+        title: 'Welcome',
+        path: `${pathPrefix}/welcome/`,
+        icon: 'home',
+      },
+      {
+        title: 'Explorer',
+        path: `${pathPrefix}/docExplorer`,
+        icon: 'eye',
+      },
+      {
+        title: 'Data',
+        path: `${pathPrefix}/data`,
+        icon: 'database',
+      },
+      {
+        title: 'Pipelines',
+        path: `${pathPrefix}/pipelines`,
+        icon: 'tasks',
+      },
+      {
+        title: 'Processing',
+        path: `${pathPrefix}/processing`,
+        icon: 'play',
+      },
+      {
+        title: 'Me',
+        path: `${pathPrefix}/me`,
+        icon: 'user',
+      },
+      {
+        title: 'Users',
+        path: `${pathPrefix}/users`,
+        icon: 'users',
+      },
+      {
+        title: 'API Keys',
+        path: `${pathPrefix}/apikeys`,
+        icon: 'key',
+      },
+    ].map(menuLink => ({
+      title: menuLink.title,
+      icon: menuLink.icon,
+      onClick: () => history.push(menuLink.path),
+    }))),
+    actionBarItems: [
+      {
+        key: 'recentItems',
+        onClick: recentItemsOpened,
+        icon: 'file outline',
+        content: 'Recently opened items',
+      },
+      {
+        key: 'search',
+        onClick: appSearchOpened,
+        icon: 'search',
+        content: 'Search for things',
+      },
+    ],
+  })),
 );
-
-const pathPrefix = '/s';
-
-const sidebarMenuItems = [
-  {
-    title: 'Welcome',
-    path: `${pathPrefix}/welcome/`,
-    icon: 'home',
-  },
-  {
-    title: 'Explorer',
-    path: `${pathPrefix}/docExplorer`,
-    icon: 'eye',
-  },
-  {
-    title: 'Data',
-    path: `${pathPrefix}/data`,
-    icon: 'database',
-  },
-  {
-    title: 'Pipelines',
-    path: `${pathPrefix}/pipelines`,
-    icon: 'tasks',
-  },
-  {
-    title: 'Processing',
-    path: `${pathPrefix}/processing`,
-    icon: 'play',
-  },
-  {
-    title: 'Me',
-    path: `${pathPrefix}/me`,
-    icon: 'user',
-  },
-  {
-    title: 'Users',
-    path: `${pathPrefix}/users`,
-    icon: 'users',
-  },
-  {
-    title: 'API Keys',
-    path: `${pathPrefix}/apikeys`,
-    icon: 'key',
-  },
-];
 
 const AppChrome = ({
   title,
   icon,
-  recentItemsOpened,
-  appSearchOpened,
+  content,
+  actionBarItems,
   isExpanded,
-  setIsExpanded,
-  history,
-  children,
-}) => {
-  const menuItems = [
-    {
-      title: 'Stroom',
-      icon: 'bars',
-      onClick: () => setIsExpanded(!isExpanded),
-    },
-  ].concat(sidebarMenuItems.map(sidebarMenuItem => ({
-    title: sidebarMenuItem.title,
-    icon: sidebarMenuItem.icon,
-    onClick: () => history.push(sidebarMenuItem.path),
-  })));
-
-  const menu = isExpanded ? (
-    <Menu vertical fluid color={SIDE_BAR_COLOUR} inverted>
-      {menuItems.map(menuItem => (
-        <Menu.Item
-          key={menuItem.title}
-          active={menuItem.title === title}
-          name={menuItem.title}
-          onClick={menuItem.onClick}
-        >
-          <Icon name={menuItem.icon} />
-          {menuItem.title}
-        </Menu.Item>
-      ))}
-    </Menu>
-  ) : (
-    <Button.Group vertical color={SIDE_BAR_COLOUR} size="large">
-      {menuItems.map(menuItem => (
-        <Button
-          key={menuItem.title}
-          active={menuItem.title === title}
-          icon={menuItem.icon}
-          onClick={menuItem.onClick}
-        />
-      ))}
-    </Button.Group>
-  );
-
-  return (
-    <div className="app-chrome">
-      <AppSearch />
-      <RecentItems />
-      <div className="app-chrome__sidebar">{menu}</div>
-      <div className="app-chrome__content">
-        <div className="content-tabs">
-          <div className="content-tabs__content">
-            <Grid>
-              <Grid.Column width={12}>
-                <Header as="h3">
-                  <Icon name={icon} color="grey" />
-                  {title}
-                </Header>
-              </Grid.Column>
-              <Grid.Column width={4}>
-                <Popup
-                  trigger={
-                    <Button
-                      floated="right"
-                      circular
-                      icon="file outline"
-                      onClick={() => recentItemsOpened()}
-                    />
-                  }
-                  content="Recently opened items"
+  menuItems,
+  actionBarAdditionalItems
+}) => (
+  <div className="app-chrome">
+    <AppSearch />
+    <RecentItems />
+    <div className="app-chrome__sidebar">
+      {isExpanded ? (
+        <Menu vertical fluid color={SIDE_BAR_COLOUR} inverted>
+          {menuItems.map(menuItem => (
+            <Menu.Item
+              key={menuItem.title}
+              active={menuItem.title === title}
+              name={menuItem.title}
+              onClick={menuItem.onClick}
+            >
+              <Icon name={menuItem.icon} />
+              {menuItem.title}
+            </Menu.Item>
+          ))}
+        </Menu>
+      ) : (
+        <Button.Group vertical color={SIDE_BAR_COLOUR} size="large">
+          {menuItems.map(menuItem => (
+            <Button
+              key={menuItem.title}
+              active={menuItem.title === title}
+              icon={menuItem.icon}
+              onClick={menuItem.onClick}
+            />
+          ))}
+        </Button.Group>
+      )}
+    </div>
+    <div className="app-chrome__content">
+      <div className="content-tabs">
+        <div className="content-tabs__content">
+          <Grid>
+            <Grid.Column width={12}>
+              <Header as="h3">
+                <Icon name={icon} color="grey" />
+                {title}
+              </Header>
+            </Grid.Column>
+            <Grid.Column width={4}>
+              {actionBarItems.map(aBarItem => (
+                <ActionBarItem
+                  key={aBarItem.key}
+                  {...aBarItem}
                 />
-                <Popup
-                  trigger={
-                    <Button
-                      floated="right"
-                      circular
-                      icon="search"
-                      onClick={() => appSearchOpened()}
-                    />
-                  }
-                  content="Search for things"
-                />
-              </Grid.Column>
-            </Grid>
-            <Divider />
-            {children}
-          </div>
+              ))}
+              {actionBarAdditionalItems}
+            </Grid.Column>
+          </Grid>
+          <Divider />
+          {content}
         </div>
       </div>
     </div>
-  );
-};
+  </div>
+);
 
 AppChrome.contextTypes = {
   store: PropTypes.object,
@@ -199,6 +202,11 @@ AppChrome.contextTypes = {
   }),
 };
 
-AppChrome.propTypes = {};
+AppChrome.propTypes = {
+  icon: PropTypes.string.isRequired,
+  title: PropTypes.string.isRequired,
+  content: PropTypes.object.isRequired,
+  actionBarAdditionalItems: PropTypes.object,
+};
 
 export default enhance(AppChrome);

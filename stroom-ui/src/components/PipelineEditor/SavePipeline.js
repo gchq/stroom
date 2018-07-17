@@ -1,33 +1,35 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { compose, branch, renderNothing } from 'recompose';
 import { connect } from 'react-redux';
-import { Button } from 'semantic-ui-react';
 
+import ActionBarItem from 'components/ActionBarItem';
 import { savePipeline } from './pipelineResourceClient';
 
-const enhance = connect(
-  (state, props) => ({
-    pipeline: state.pipelineEditor.pipelines[props.pipelineId],
-    elements: state.pipelineEditor.elements,
-  }),
-  {
-    // action, needed by lifecycle hook below
-    savePipeline,
-  },
+const enhance = compose(
+  connect(
+    ({ pipelineEditor: { pipelines, elements } }, { pipelineId }) => ({
+      pipeline: pipelines[pipelineId],
+      elements,
+    }),
+    {
+      // action, needed by lifecycle hook below
+      savePipeline,
+    },
+  ),
+  branch(({ pipeline }) => !pipeline, renderNothing),
+  branch(({ pipeline: { pipeline } }) => !pipeline, renderNothing),
 );
 
 const SavePipeline = ({ pipeline: { isSaving, isDirty }, savePipeline, pipelineId }) => (
-  <div>
-    <Button
-      icon="save"
-      loading={isSaving}
-      disabled={!isDirty}
-      color="blue"
-      size="huge"
-      circular
-      onClick={() => savePipeline(pipelineId)}
-    />
-  </div>
+  <ActionBarItem
+    icon="save"
+    content={isDirty ? 'Save changes' : 'Changes saved'}
+    color={isDirty ? 'blue' : undefined}
+    onClick={() => {
+      if (isDirty) savePipeline(pipelineId);
+    }}
+  />
 );
 
 SavePipeline.propTypes = {

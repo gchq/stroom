@@ -65,83 +65,72 @@ const AppChromeWithRouter = () => (
     <Route
       exact
       path="/s/welcome"
-      render={props => (
-        <AppChrome title="Welcome" icon="home">
-          <Welcome />
-        </AppChrome>
-      )}
+      render={props => <AppChrome title="Welcome" icon="home" content={<Welcome />} />}
     />
     <Route
       exact
       path="/s/docExplorer"
       render={props => (
-        <AppChrome title="Explorer" icon="eye">
-          <DocExplorer explorerId="app-chrome-stories" />
-        </AppChrome>
+        <AppChrome
+          title="Explorer"
+          icon="eye"
+          content={<DocExplorer explorerId="app-chrome-stories" />}
+        />
       )}
     />
     <Route
       exact
       path="/s/data"
-      render={props => (
-        <AppChrome title="Data" icon="database">
-          <DataViewer />
-        </AppChrome>
-      )}
+      render={props => <AppChrome title="Data" icon="database" content={<DataViewer />} />}
     />
     <Route
       exact
       path="/s/pipelines"
-      render={props => (
-        <AppChrome title="Pipelines" icon="tasks">
-          <PipelineSearch />
-        </AppChrome>
-      )}
+      render={props => <AppChrome title="Pipelines" icon="tasks" content={<PipelineSearch />} />}
     />
     <Route
       exact
       path="/s/pipelines/:pipelineId"
       render={props => (
-        <AppChrome {...props} title="Pipelines" icon="tasks">
-          <PipelineEditor pipelineId={props.pipelineId} />
-        </AppChrome>
+        <AppChrome
+          {...props}
+          title="Pipelines"
+          icon="tasks"
+          content={<PipelineEditor pipelineId={props.pipelineId} />}
+        />
       )}
     />
 
     <Route
       exact
       path="/s/processing"
-      render={props => (
-        <AppChrome title="Processing" icon="play">
-          <TrackerDashboard />
-        </AppChrome>
-      )}
+      render={props => <AppChrome title="Processing" icon="play" content={<TrackerDashboard />} />}
     />
     <Route
       exact
       path="/s/me"
-      render={props => (
-        <AppChrome title="Me" icon="user">
-          <UserSettings />
-        </AppChrome>
-      )}
+      render={props => <AppChrome title="Me" icon="user" content={<UserSettings />} />}
     />
     <Route
       exact
       path="/s/users"
       render={props => (
-        <AppChrome title="Users" icon="users">
-          iFrames not supported in our Storybook test cases
-        </AppChrome>
+        <AppChrome
+          title="Users"
+          icon="users"
+          content={<div>iFrames not supported in our Storybook test cases</div>}
+        />
       )}
     />
     <Route
       exact
       path="/s/apikeys"
       render={props => (
-        <AppChrome title="API Keys" icon="key">
-          iFrames not supported in our Storybook test cases
-        </AppChrome>
+        <AppChrome
+          title="API Keys"
+          icon="key"
+          content={<div>iFrames not supported in our Storybook test cases</div>}
+        />
       )}
     />
 
@@ -149,18 +138,24 @@ const AppChromeWithRouter = () => (
       exact
       path="/s/doc/XSLT/:xsltId"
       render={props => (
-        <AppChrome {...props} title="Edit XSLT" icon="file">
-          <XsltEditor xsltId={props.match.params.xsltId} />
-        </AppChrome>
+        <AppChrome
+          {...props}
+          title="Edit XSLT"
+          icon="file"
+          content={<XsltEditor xsltId={props.match.params.xsltId} />}
+        />
       )}
     />
     <Route
       exact
       path="/s/doc/Pipeline/:pipelineId"
       render={props => (
-        <AppChrome {...props} title="Edit Pipeline" icon="file">
-          <PipelineEditor pipelineId={props.match.params.pipelineId} />
-        </AppChrome>
+        <AppChrome
+          {...props}
+          title="Edit Pipeline"
+          icon="file"
+          content={<PipelineEditor pipelineId={props.match.params.pipelineId} />}
+        />
       )}
     />
 
@@ -169,18 +164,19 @@ const AppChromeWithRouter = () => (
       exact
       path="/s/doc/:type/:uuid"
       render={props => (
-        <AppChrome {...props} title={`Edit ${props.type}`} icon="file">
-          <PathNotFound message="no editor provided for this doc ref type " />
-        </AppChrome>
+        <AppChrome
+          {...props}
+          title={`Edit ${props.type}`}
+          icon="file"
+          content={<PathNotFound message="no editor provided for this doc ref type " />}
+        />
       )}
     />
 
     {/* Default route */}
     <Route
       render={() => (
-        <AppChrome title="Not Found" icon="exclamation triangle">
-          <PathNotFound />
-        </AppChrome>
+        <AppChrome title="Not Found" icon="exclamation triangle" content={<PathNotFound />} />
       )}
     />
   </Switch>

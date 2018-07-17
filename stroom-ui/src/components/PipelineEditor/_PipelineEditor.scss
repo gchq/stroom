@@ -90,6 +90,14 @@ $palette-width: 12rem;
   overflow-x: auto;
 }
 
+.Pipeline-editor__bin {
+  position: absolute;
+  margin-bottom: 12rem;
+  margin-left: 1rem;
+  left: 0;
+  bottom: 0;
+}
+
 .Pipeline-editor__content {
   //TODO: Hack. I'm not sure why the offset needs to be as much as 190px.
   width: calc(100% - 190px);

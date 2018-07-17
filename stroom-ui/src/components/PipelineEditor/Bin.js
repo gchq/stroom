@@ -3,7 +3,7 @@ import React from 'react';
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
 import { DropTarget } from 'react-dnd';
-import { Button } from 'semantic-ui-react';
+import { Icon } from 'semantic-ui-react';
 
 import ItemTypes from './dragDropTypes';
 import { actionCreators } from './redux';
@@ -33,12 +33,10 @@ const enhance = compose(
 
 const Bin = ({ connectDropTarget, isOver, dndIsHappening }) =>
   connectDropTarget(<div>
-    <Button
-      circular
-      disabled={!dndIsHappening}
-      color={isOver ? 'black' : 'red'}
-      size="huge"
-      icon="trash"
+    <Icon
+      color={dndIsHappening ? (isOver ? 'red' : 'black') : 'grey'}
+      size="massive"
+      name="trash"
     />
                     </div>);
 
