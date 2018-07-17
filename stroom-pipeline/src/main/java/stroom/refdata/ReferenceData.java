@@ -62,7 +62,8 @@ public class ReferenceData {
     // Maps can be nested during the look up process e.g. "MAP1/MAP2"
     private static final String NEST_SEPARATOR = "/";
     private static final int MINIMUM_BYTE_COUNT = 10;
-//    private final Map<String, CachedMapStore> nestedStreamCache = new HashMap<>();
+    private static final String DUMMY = "4c449061-236a-411f-87df-72a90288336b";
+    //    private final Map<String, CachedMapStore> nestedStreamCache = new HashMap<>();
 //    private final Map<MapStoreCacheKey, MapStore> localMapStoreCache = new HashMap<>();
 
     private EffectiveStreamCache effectiveStreamCache;
@@ -77,6 +78,7 @@ public class ReferenceData {
     private final RefDataLoaderHolder refDataLoaderHolder;
     private final PipelineStore pipelineStore;
     private final Security security;
+
 
     @Inject
     ReferenceData(final EffectiveStreamCache effectiveStreamCache,
@@ -234,9 +236,9 @@ public class ReferenceData {
             final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                     pipelineReference.getPipeline(),
                     getPipelineVersion(pipelineReference),
-//                    streamHolder.getStream().getParentStreamId());
-                    streamHolder.getStream().getId());
-
+                    streamHolder.getStream().getId(),
+                    true,
+                    streamNo);
 
             // TODO we may want to implement some sort of on-heap store that fronts our off-heap store
             // Thus all writes/reads go through the on-heap store first and only data that is deemed
@@ -264,7 +266,7 @@ public class ReferenceData {
                 // have any context data stream.
                 if (provider != null) {
                     final StreamSourceInputStream inputStream = provider.getStream(streamNo);
-                    loadContextData(streamHolder.getStream(), inputStream, pipelineReference.getPipeline());
+                    loadContextData(streamHolder.getStream(), inputStream, pipelineReference.getPipeline(), refStreamDefinition);
                 }
             }
 
@@ -340,10 +342,15 @@ public class ReferenceData {
         }
     }
 
+    private String getPipelineVersion(final PipelineReference pipelineReference) {
+        return refDataLoaderHolder.getPipelineVersion(pipelineReference, pipelineStore);
+    }
+
     private void loadContextData(
             final Stream stream,
             final StreamSourceInputStream contextStream,
-            final DocRef contextPipeline) {
+            final DocRef contextPipeline,
+            final RefStreamDefinition refStreamDefinition) {
 
         if (contextStream != null) {
             // Check the size of the input stream.
@@ -351,7 +358,7 @@ public class ReferenceData {
             // Only use context data if we actually have some.
             if (byteCount > MINIMUM_BYTE_COUNT) {
                 // build a mapstore from the context stream
-                contextDataLoader.load(contextStream, stream, feedHolder.getFeed(), contextPipeline);
+                contextDataLoader.load(contextStream, stream, feedHolder.getFeed(), contextPipeline, refStreamDefinition);
             }
         }
     }
@@ -475,14 +482,6 @@ public class ReferenceData {
     }
 
 
-    private String getPipelineVersion(PipelineReference pipelineReference) {
-        try {
-            return pipelineStore.readDocument(pipelineReference.getPipeline()).getVersion();
-        } catch (Exception e) {
-            throw new RuntimeException(LambdaLogger.buildMessage(
-                    "pipelineReference not found in store {}", pipelineReference), e);
-        }
-    }
 
 //    private MapStore getMapStore(final MapStoreCacheKey mapStoreCacheKey) {
 //        // Try the local cache first as we may have already got this map.

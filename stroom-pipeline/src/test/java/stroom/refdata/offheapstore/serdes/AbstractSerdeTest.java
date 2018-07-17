@@ -17,7 +17,6 @@
 
 package stroom.refdata.offheapstore.serdes;
 
-import org.assertj.core.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.serde.Serde;
@@ -26,6 +25,8 @@ import stroom.refdata.offheapstore.ByteArrayUtils;
 import java.nio.ByteBuffer;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class AbstractSerdeTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractSerdeTest.class);
@@ -55,12 +56,12 @@ class AbstractSerdeTest {
         LOGGER.debug("expectedOutputObject [{}]", expectedOutputObject);
         LOGGER.debug("outputObject [{}]", outputObject);
 
-        Assertions.assertThat(outputObject).isEqualTo(expectedOutputObject);
+        assertThat(outputObject).isEqualTo(expectedOutputObject);
 
         T outputObject2 = serde2.deserialize(byteBuffer);
 
         // re-run the deser to ennsure the buffer is in the right position to be read from again
-        Assertions.assertThat(outputObject2).isEqualTo(expectedOutputObject);
+        assertThat(outputObject2).isEqualTo(expectedOutputObject);
     }
 
     <T> void doSerialisationDeserialisationTest(T object, Supplier<Serde<T>> serdeSupplier) {
@@ -80,12 +81,15 @@ class AbstractSerdeTest {
         LOGGER.debug("Object 1 [{}]", object);
         LOGGER.debug("Object 2 [{}]", object2);
 
-        Assertions.assertThat(object2).isEqualTo(object);
+        assertThat(object2).isEqualTo(object);
 
         T object3 = serde2.deserialize(byteBuffer);
 
         // re-run the deser to ennsure the buffer is in the right position to be read from again
-        Assertions.assertThat(object3).isEqualTo(object);
+        assertThat(object3).isEqualTo(object);
 
+        // ensure hashcode work across ser-deser
+        assertThat(object.hashCode()).isEqualTo(object2.hashCode());
+        assertThat(object.hashCode()).isEqualTo(object3.hashCode());
     }
 }

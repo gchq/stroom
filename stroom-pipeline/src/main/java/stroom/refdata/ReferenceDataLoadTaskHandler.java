@@ -19,7 +19,6 @@ package stroom.refdata;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.docref.DocRef;
 import stroom.feed.FeedService;
 import stroom.feed.shared.Feed;
 import stroom.io.StreamCloser;
@@ -59,9 +58,6 @@ import stroom.util.shared.VoidResult;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 
 /**
  * Processes reference data that meets some supplied criteria (feed names,
@@ -134,7 +130,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
     @Override
     public VoidResult exec(final ReferenceDataLoadTask task) {
         return security.secureResult(() -> {
-            final List<RefStreamDefinition> loadedRefStreamDefinitions = new ArrayList<>();
+//            final List<RefStreamDefinition> loadedRefStreamDefinitions = new ArrayList<>();
             final StoredErrorReceiver storedErrorReceiver = new StoredErrorReceiver();
             errorReceiver = new ErrorReceiverIdDecorator(getClass().getSimpleName(), storedErrorReceiver);
             errorReceiverProxy.setErrorReceiver(errorReceiver);
@@ -165,9 +161,13 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                         final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
                         final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
-                        loadedRefStreamDefinitions.addAll(
-                                populateMaps(
-                                        pipeline, stream, streamSource, feed, stream.getStreamType()));
+                        populateMaps(
+                                pipeline,
+                                stream,
+                                streamSource,
+                                feed,
+                                stream.getStreamType(),
+                                task.getRefStreamDefinition());
 
                         LOGGER.debug("Finished loading reference data: {}", refStreamDefinition);
                     } finally {
@@ -188,12 +188,13 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
         });
     }
 
-    private List<RefStreamDefinition> populateMaps(final Pipeline pipeline,
-                                                   final Stream stream,
-                                                   final StreamSource streamSource,
-                                                   final Feed feed,
-                                                   final StreamType streamType) {
-        final List<RefStreamDefinition> loadedRefStreamDefinitions = new ArrayList<>();
+    private void populateMaps(final Pipeline pipeline,
+                              final Stream stream,
+                              final StreamSource streamSource,
+                              final Feed feed,
+                              final StreamType streamType,
+                              final RefStreamDefinition refStreamDefinition) {
+//        final List<RefStreamDefinition> loadedRefStreamDefinitions = new ArrayList<>();
         try {
             // Get the stream providers.
             streamHolder.setStream(stream);
@@ -219,13 +220,13 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                 final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
                 locationFactory.setLocationFactory(streamLocationFactory);
 
-                final DocRef pipelineDocRef = Objects.requireNonNull(pipelineHolder.getPipeline());
-                PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineDocRef);
+//                final DocRef pipelineDocRef = Objects.requireNonNull(pipelineHolder.getPipeline());
+//                PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineDocRef);
 
-                final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
-                        pipelineDocRef,
-                        pipelineDoc.getVersion(),
-                        streamHolder.getStream().getId());
+//                final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
+//                        pipelineDocRef,
+//                        pipelineDoc.getVersion(),
+//                        streamHolder.getStream().getId());
 
                 refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, stream.getEffectiveMs(), refDataLoader -> {
                     // we are now blocking any other thread loading the same refStreamDefinition
@@ -248,7 +249,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                             try {
                                 //process the pipeline, ref data will be loaded via the ReferenceDataFilter
                                 pipeline.process(inputStream, encoding);
-                                loadedRefStreamDefinitions.add(refStreamDefinition);
+//                                loadedRefStreamDefinitions.add(refStreamDefinition);
                             } catch (final RuntimeException e) {
                                 log(Severity.FATAL_ERROR, e.getMessage(), e);
                             }
@@ -273,7 +274,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
         } catch (final IOException | RuntimeException e) {
             log(Severity.FATAL_ERROR, e.getMessage(), e);
         }
-        return loadedRefStreamDefinitions;
+//        return loadedRefStreamDefinitions;
     }
 
     private void log(final Severity severity, final String message, final Throwable e) {

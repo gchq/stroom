@@ -16,20 +16,21 @@
 
 package stroom.refdata;
 
+import stroom.docref.DocRef;
 import stroom.feed.shared.Feed;
 import stroom.refdata.offheapstore.RefStreamDefinition;
-import stroom.docref.DocRef;
 import stroom.streamstore.shared.Stream;
 import stroom.task.ServerTask;
+import stroom.util.shared.VoidResult;
 
 import java.io.InputStream;
-import java.util.List;
 
-public class ContextDataLoadTask extends ServerTask<List<RefStreamDefinition>> {
+public class ContextDataLoadTask extends ServerTask<VoidResult> {
     private InputStream inputStream;
     private Stream stream;
     private Feed feed;
     private DocRef contextPipeline;
+    private RefStreamDefinition refStreamDefinition;
 
     public ContextDataLoadTask() {
     }
@@ -37,11 +38,13 @@ public class ContextDataLoadTask extends ServerTask<List<RefStreamDefinition>> {
     public ContextDataLoadTask(final InputStream inputStream,
                                final Stream stream,
                                final Feed feed,
-                               final DocRef contextPipeline) {
+                               final DocRef contextPipeline,
+                               final RefStreamDefinition refStreamDefinition) {
         this.inputStream = inputStream;
         this.stream = stream;
         this.feed = feed;
         this.contextPipeline = contextPipeline;
+        this.refStreamDefinition = refStreamDefinition;
     }
 
     public InputStream getInputStream() {
@@ -58,5 +61,9 @@ public class ContextDataLoadTask extends ServerTask<List<RefStreamDefinition>> {
 
     public DocRef getContextPipeline() {
         return contextPipeline;
+    }
+
+    public RefStreamDefinition getRefStreamDefinition() {
+        return refStreamDefinition;
     }
 }

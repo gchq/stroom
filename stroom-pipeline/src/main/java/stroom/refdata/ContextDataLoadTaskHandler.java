@@ -44,6 +44,7 @@ import stroom.streamtask.StreamProcessorService;
 import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 import stroom.util.shared.Severity;
+import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -53,7 +54,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @TaskHandlerBean(task = ContextDataLoadTask.class)
-class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask, List<RefStreamDefinition>> {
+class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ContextDataLoadTaskHandler.class);
 
     private final PipelineFactory pipelineFactory;
@@ -96,8 +97,9 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
     }
 
     @Override
-    public List<RefStreamDefinition> exec(final ContextDataLoadTask task) {
-        return security.secureResult(() -> {
+    public VoidResult exec(final ContextDataLoadTask task) {
+//        return security.secureResult(() -> {
+        security.secure(() -> {
             final List<RefStreamDefinition> loadedRefStreamDefinitions = new ArrayList<>();
             final StoredErrorReceiver storedErrorReceiver = new StoredErrorReceiver();
 //            final MapStoreBuilder mapStoreBuilder = new MapStoreBuilderImpl(storedErrorReceiver);
@@ -143,10 +145,12 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
 //                    mapStoreHolder.setMapStoreBuilder(mapStoreBuilder);
 
                     // TODO is it always 0 for context streams?
-                    RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
-                            pipelineDoc.getUuid(),
-                            pipelineDoc.getVersion(),
-                            stream.getId());
+//                    RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
+//                            pipelineDoc.getUuid(),
+//                            pipelineDoc.getVersion(),
+//                            stream.getId());
+
+                    RefStreamDefinition refStreamDefinition = task.getRefStreamDefinition();
 
                     refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, stream.getEffectiveMs(), refDataLoader -> {
                         refDataLoaderHolder.setRefDataLoader(refDataLoader);
@@ -178,8 +182,9 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
                     }
                 }
             }
-            return loadedRefStreamDefinitions;
+//            return loadedRefStreamDefinitions;
         });
+        return VoidResult.INSTANCE;
     }
 
     private void log(final Severity severity, final String message, final Throwable e) {

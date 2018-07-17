@@ -29,7 +29,9 @@ public class TestRefStreamDefinitionSerde extends AbstractSerdeTest {
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(),
-                123456L);
+                123456L,
+                true,
+                123L);
 
         doSerialisationDeserialisationTest(refStreamDefinition, RefStreamDefinitionSerde::new);
     }

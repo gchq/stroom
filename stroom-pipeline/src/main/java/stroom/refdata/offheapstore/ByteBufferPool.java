@@ -17,6 +17,9 @@
 
 package stroom.refdata.offheapstore;
 
+import stroom.entity.shared.Clearable;
+import stroom.util.logging.LambdaLogger;
+
 import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 import java.util.Comparator;
@@ -48,8 +51,15 @@ import java.util.function.Function;
  * limitations under the License.
  */
 
+/**
+ * An unbounded self-populating pool of directly allocated ByteBuffers.
+ * When using one of the methods to get/use a buffer from the pool the
+ * smallest available buffer that is greater than or equal to the required
+ * capacity will be provided. All buffers will be cleared on return to
+ * the pool.
+ */
 @Singleton
-public class ByteBufferPool {
+public class ByteBufferPool implements Clearable {
 
     private final TreeMap<Key, ByteBuffer> bufferMap = new TreeMap<>();
 
@@ -69,6 +79,9 @@ public class ByteBufferPool {
 
     public synchronized void release(ByteBuffer buffer) {
         Objects.requireNonNull(buffer);
+        if (!buffer.isDirect()) {
+            throw new RuntimeException(LambdaLogger.buildMessage("Expecting a direct ByteBuffer"));
+        }
         buffer.clear();
 
         while (true) {
@@ -93,12 +106,14 @@ public class ByteBufferPool {
 
     public void release(BufferPair bufferPair) {
         Objects.requireNonNull(bufferPair);
-        bufferPair.clear();
-
         release(bufferPair.getKeyBuffer());
         release(bufferPair.getValueBuffer());
     }
 
+    /**
+     * Perform work with a {@link ByteBuffer} obtained from the pool. The {@link ByteBuffer}
+     * must not be used outside of the work lambda.
+     */
     public <T> T getWithBuffer(final int minCapacity, Function<ByteBuffer, T> work) {
         ByteBuffer buffer = null;
         try {
@@ -111,6 +126,10 @@ public class ByteBufferPool {
         }
     }
 
+    /**
+     * Perform work with a {@link ByteBuffer} obtained from the pool. The {@link ByteBuffer}
+     * must not be used outside of the work lambda.
+     */
     public void doWithBuffer(final int minCapacity, Consumer<ByteBuffer> work) {
         ByteBuffer buffer = null;
         try {
@@ -123,6 +142,10 @@ public class ByteBufferPool {
         }
     }
 
+    /**
+     * Perform work with a {@link BufferPair} obtained from the pool. The {@link BufferPair}
+     * must not be used outside of the work lambda.
+     */
     public <T> T getWithBufferPair(final int minKeyCapacity, final int minValueCapacity, Function<BufferPair, T> work) {
         BufferPair bufferPair = null;
         try {
@@ -135,6 +158,10 @@ public class ByteBufferPool {
         }
     }
 
+    /**
+     * Perform work with a {@link BufferPair} obtained from the pool. The {@link BufferPair}
+     * must not be used outside of the work lambda.
+     */
     public void doWithBufferPair(final int minKeyCapacity, final int minValueCapacity, Consumer<BufferPair> work) {
         BufferPair bufferPair = null;
         try {
@@ -156,6 +183,11 @@ public class ByteBufferPool {
         return "ByteBufferPool{" +
                 "bufferMap=" + bufferMap +
                 '}';
+    }
+
+    @Override
+    public synchronized void clear() {
+        bufferMap.clear();
     }
 
     private static final class Key implements Comparable<Key> {

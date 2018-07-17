@@ -22,8 +22,7 @@ import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.streamstore.shared.Stream;
 
 import java.io.InputStream;
-import java.util.List;
 
 public interface ContextDataLoader {
-    List<RefStreamDefinition> load(InputStream inputStream, Stream stream, Feed feed, DocRef contextPipeline);
+    void load(InputStream inputStream, Stream stream, Feed feed, DocRef contextPipeline, RefStreamDefinition refStreamDefinition);
 }

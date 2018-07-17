@@ -84,6 +84,8 @@ public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinit
             // with the same RefStreamDefinition TODO why do we need to do this scan?
 
             output.writeLong(refStreamDefinition.getStreamId(), true);
+            output.writeBoolean(refStreamDefinition.isContextData());
+            output.writeLong(refStreamDefinition.getStreamNo(), true);
         }
 
         @Override
@@ -92,14 +94,17 @@ public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinit
                                         final Class<RefStreamDefinition> type) {
 
             final String pipelineUuid = pipelineDocRefUuidVariableLengthSerializer.read(kryo, input, String.class);
-//            final String pipelineType = input.readString();
             final String pipelineVersion = pieplineVersionUuidVariableLengthSerializer.read(kryo, input, String.class);
             final long streamId = input.readLong(true);
+            final boolean isContextData = input.readBoolean();
+            final long streamNo = input.readLong(true);
 
             return new RefStreamDefinition(
                     pipelineUuid,
                     pipelineVersion,
-                    streamId);
+                    streamId,
+                    isContextData,
+                    streamNo);
         }
     }
 }

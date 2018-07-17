@@ -17,11 +17,17 @@
 
 package stroom.refdata;
 
+import stroom.docref.DocRef;
 import stroom.guice.PipelineScoped;
+import stroom.pipeline.PipelineStore;
+import stroom.pipeline.shared.data.PipelineReference;
 import stroom.refdata.offheapstore.RefDataLoader;
 import stroom.refdata.offheapstore.RefStreamDefinition;
+import stroom.util.logging.LambdaLogger;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 @PipelineScoped
@@ -31,6 +37,10 @@ public class RefDataLoaderHolder {
     // Set to keep track of which ref streams have been loaded, re-loaded or confirmed
     // to be already loaded within this pipeline processing instance
     private Set<RefStreamDefinition> availableRefStreamDefinitions = new HashSet<>();
+
+    // Used to cache the pipeline versions for the life of the pipeline to prevent
+    // repeated DB hits during lookups
+    private final Map<DocRef, String> pipelineDocRefToVersionCache = new HashMap<>();
 
     public RefDataLoader getRefDataLoader() {
         return refDataLoader;
@@ -46,5 +56,22 @@ public class RefDataLoaderHolder {
 
     public boolean isRefStreamAvailable(final RefStreamDefinition refStreamDefinition) {
         return availableRefStreamDefinitions.contains(refStreamDefinition);
+    }
+
+    public String getPipelineVersion(final PipelineReference pipelineReference, final PipelineStore pipelineStore) {
+        try {
+
+            // TODO the readDocument call is very expensive here as it reads the whole DB record back
+            // and deserialises the json/xml data part, when all we want is the version. As getPipelineVersion
+            // is called for each lookup this needs to be addressed.
+//            return pipelineStore.readDocument(pipelineReference.getPipeline()).getVersion();
+
+            //only fetch the version once per pipeline
+            return pipelineDocRefToVersionCache.computeIfAbsent(pipelineReference.getPipeline(), docRef ->
+                    pipelineStore.readDocument(pipelineReference.getPipeline()).getVersion());
+        } catch (Exception e) {
+            throw new RuntimeException(LambdaLogger.buildMessage(
+                    "pipelineReference not found in store {}", pipelineReference), e);
+        }
     }
 }
