@@ -42,6 +42,9 @@ public class CommonPipelineElementModule extends PipelineElementModule {
         bindElement(stroom.pipeline.filter.RecordCountFilter.class);
         bindElement(stroom.pipeline.filter.RecordOutputFilter.class);
         bindElement(stroom.pipeline.filter.ReferenceDataFilter.class);
+        bindElement(stroom.pipeline.filter.SafeXMLFilter.class);
+        bindElement(stroom.pipeline.filter.SAXEventRecorder.class);
+        bindElement(stroom.pipeline.filter.SAXRecordDetector.class);
         bindElement(stroom.pipeline.filter.SchemaFilterSplit.class);
         bindElement(stroom.pipeline.filter.SplitFilter.class);
         bindElement(stroom.pipeline.filter.TestFilter.class);
@@ -49,6 +52,7 @@ public class CommonPipelineElementModule extends PipelineElementModule {
 
         // Writers
         bindElement(stroom.pipeline.writer.JSONWriter.class);
+        bindElement(stroom.pipeline.writer.OutputRecorder.class);
         bindElement(stroom.pipeline.writer.TextWriter.class);
         bindElement(stroom.pipeline.writer.XMLWriter.class);
 
