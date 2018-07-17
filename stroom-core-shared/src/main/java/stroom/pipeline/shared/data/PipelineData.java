@@ -57,6 +57,10 @@ public class PipelineData implements SharedObject {
         return links;
     }
 
+    public PipelineData() {
+
+    }
+
     // Used for testing....
     public void addElement(final PipelineElementType elementType, final String id) {
         final PipelineElement element = new PipelineElement();

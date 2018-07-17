@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 export default {
+  description: 'Pipeline with a single element',
   configStack: [
     {
       elements: {

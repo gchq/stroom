@@ -1,4 +1,5 @@
 export default {
+  description: 'This demonstrates a pipeline that heads in multiple directions to test layout',
   configStack: [
     {
       elements: {

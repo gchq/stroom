@@ -1,4 +1,5 @@
 export default {
+  description: 'This demonstrates a pipeline with a link that can be restored, that used to be a forked path',
   configStack: [
     {
       elements: {

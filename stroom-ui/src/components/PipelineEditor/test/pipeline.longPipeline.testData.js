@@ -1,4 +1,5 @@
 export default {
+  description: 'This pipeline is long enough to stress out the rendering',
   configStack: [
     {
       elements: {

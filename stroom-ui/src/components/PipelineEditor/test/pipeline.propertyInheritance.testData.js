@@ -1,4 +1,5 @@
 export const noParent = {
+  description: 'Demonstrates properties',
   configStack: [
     {
       elements: {

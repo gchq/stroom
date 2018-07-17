@@ -1,4 +1,5 @@
 export default {
+  description: 'Another multi branching pipeline',
   configStack: [
     {
       elements: {

@@ -280,7 +280,7 @@ export const reducer = handleActions(
     DOC_TREE_RECEIVED: (state, action) =>
       getStateAfterTreeUpdate(state, action.payload.documentTree),
 
-    // When an explorer is opened
+    // When an explorer is opened (if this ID has been opened before, it will use that old state)
     DOC_EXPLORER_OPENED: (state, action) => {
       const { explorerId, allowMultiSelect, typeFilters } = action.payload;
       const typeFiltersToUse =
@@ -289,7 +289,7 @@ export const reducer = handleActions(
         ...state,
         explorers: {
           ...state.explorers,
-          [explorerId]: {
+          [explorerId]: state.explorers[explorerId] || {
             ...getUpdatedExplorer(
               state.documentTree,
               defaultExplorerState,

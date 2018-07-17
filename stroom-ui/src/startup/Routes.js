@@ -88,6 +88,15 @@ const Routes = ({
       {/* AppChrome paths -- these paths load the relevent sections. */}
       <PrivateRoute
         exact
+        path="/"
+        render={props => (
+          <AppChrome {...props} title="Welcome" icon="home">
+            <Welcome />
+          </AppChrome>
+        )}
+      />
+      <PrivateRoute
+        exact
         path="/s/welcome"
         render={props => (
           <AppChrome {...props} title="Welcome" icon="home">

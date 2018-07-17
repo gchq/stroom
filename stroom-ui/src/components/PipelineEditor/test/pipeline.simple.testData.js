@@ -1,4 +1,5 @@
 export default {
+  description: 'just a simple pipeline',
   configStack: [
     {
       elements: {
