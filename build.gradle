@@ -171,6 +171,7 @@ ext.libs = [
     jetty_servlets                 : "org.eclipse.jetty:jetty-servlets:$versions.jetty",
     jose4j                         : "org.bitbucket.b_c:jose4j:0.5.5",
     jsinterop_annotations          : "com.google.jsinterop:jsinterop-annotations:1.0.1",
+    jsr173_api                     : "javax.xml.bind:jsr173_api:1.0",
     jul_to_slf4j                   : "org.slf4j:jul-to-slf4j:$versions.slf4j",
     junit                          : "junit:junit:4.12",
     lmdbjava                       : "org.lmdbjava:lmdbjava:0.6.1",

@@ -29,6 +29,7 @@ dependencies {
     compile libs.javax_inject
     compile libs.jaxb_api
     compile libs.jersey_client
+    compile libs.jsr173_api
     compile libs.kryo
     compile libs.lmdbjava
     compile libs.objenesis
