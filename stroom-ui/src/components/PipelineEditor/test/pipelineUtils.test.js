@@ -23,7 +23,8 @@ import {
   getAllChildren,
   setElementPropertyValueInPipeline,
   getParentProperty,
-  revertPropertyToParent
+  revertPropertyToParent,
+  revertPropertyToDefault
 } from '../pipelineUtils';
 
 import {
@@ -268,6 +269,92 @@ describe('Pipeline Utils', () => {
         propertyName
       )).toThrow();
 
+    });
+  });
+
+  describe('#revertPropertyToDefault', () => {
+    test('should remove an item from the parent by adding a remove -- child has property', () => {
+      // Given
+      const testPipeline = testPipelines.parentWithProperty;
+      const elementName = "xsltFilter"
+      const propertyName = "xsltNamePattern"
+      const matchingProp = addItem => addItem.element === elementName && addItem.name === propertyName;
+      
+      // Verify that the test data is as we expect
+      const parentTestConfirmation = testPipeline.configStack[0].properties.add.find(matchingProp)
+      expect(parentTestConfirmation.value.string).toBe("DSD");
+      const childTestConfirmation = testPipeline.configStack[1].properties.add.find(matchingProp)
+      expect(childTestConfirmation.value.string).toBe("D");
+      const mergedTestConfirmation = testPipeline.merged.properties.add.find(matchingProp)
+      expect(mergedTestConfirmation.value.string).toBe("D")
+      
+
+      // When
+      const updatedPipeline = revertPropertyToDefault(
+        testPipeline,
+        elementName,
+        propertyName
+      );
+
+      // Then
+      // We expect the paret to be unchanged
+      const parentProperty = updatedPipeline.configStack[0].properties.add.find(matchingProp)
+      expect(parentProperty.value.string).toBe("DSD");
+
+      // We expect the add in the child to have been removed/not exist
+      const shouldBeNullChildProperty = updatedPipeline.configStack[1].properties.add.find(matchingProp)
+      expect(shouldBeNullChildProperty).toBe(undefined);
+
+      // We expect there to be a remove in the child config stack
+      const shouldBeFoundInRemove = updatedPipeline.configStack[1].properties.remove.find(matchingProp)
+      expect(shouldBeFoundInRemove.value.string).toBe('D')
+
+      // We expect there to be no such property in the merged add list
+      const mergedProperty = updatedPipeline.merged.properties.add.find(matchingProp)
+      expect(mergedProperty).toBe(undefined)
+    });
+
+    test('should remove an item from the parent by adding a remove - child doesn\'t have property', () => {
+      // Given
+      const testPipeline = testPipelines.emptyChildParentWithProperty;
+      const elementName = "xsltFilter"
+      const propertyName = "xsltNamePattern"
+      const matchingProp = addItem => addItem.element === elementName && addItem.name === propertyName;
+      
+      // Verify that the test data is as we expect
+      const parentTestConfirmation = testPipeline.configStack[0].properties.add.find(matchingProp)
+      expect(parentTestConfirmation.value.string).toBe("DSD");
+
+      const childTestConfirmation = testPipeline.configStack[1].properties.add.find(matchingProp)
+      expect(childTestConfirmation).toBe(undefined);
+
+      const mergedTestConfirmation = testPipeline.merged.properties.add.find(matchingProp)
+      expect(mergedTestConfirmation.value.string).toBe("D")
+      
+
+      // When
+      const updatedPipeline = revertPropertyToDefault(
+        testPipeline,
+        elementName,
+        propertyName
+      );
+
+      // Then
+      // We expect the paret to be unchanged
+      const parentProperty = updatedPipeline.configStack[0].properties.add.find(matchingProp)
+      expect(parentProperty.value.string).toBe("DSD");
+
+      // We expect the add in the child to have been removed/not exist
+      const shouldBeNullChildProperty = updatedPipeline.configStack[1].properties.add.find(matchingProp)
+      expect(shouldBeNullChildProperty).toBe(undefined);
+
+      // We expect there to be a remove in the child config stack
+      const shouldBeFoundInRemove = updatedPipeline.configStack[1].properties.remove.find(matchingProp)
+      expect(shouldBeFoundInRemove.value.string).toBe('DSD')
+
+      // We expect there to be no such property in the merged add list
+      const mergedProperty = updatedPipeline.merged.properties.add.find(matchingProp)
+      expect(mergedProperty).toBe(undefined)
     });
   });
 
