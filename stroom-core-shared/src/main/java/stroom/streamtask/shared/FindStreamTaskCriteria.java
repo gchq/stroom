@@ -87,7 +87,7 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
     private CriteriaSet<DataStatus> statusSet;
 
     private Period createPeriod;
-    private Period effectivePeriod;
+//    private Period effectivePeriod;
 
     /**
      * Create at a particular time
@@ -130,9 +130,6 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
             return true;
         }
         if (createPeriod != null && createPeriod.isConstrained()) {
-            return true;
-        }
-        if (effectivePeriod != null && effectivePeriod.isConstrained()) {
             return true;
         }
         return false;
@@ -289,20 +286,20 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
 
     }
 
-    public Period getEffectivePeriod() {
-        return effectivePeriod;
-    }
-
-    public void setEffectivePeriod(final Period effectivePeriod) {
-        this.effectivePeriod = effectivePeriod;
-    }
-
-    public Period obtainEffectivePeriod() {
-        if (effectivePeriod == null) {
-            effectivePeriod = new Period();
-        }
-        return effectivePeriod;
-    }
+//    public Period getEffectivePeriod() {
+//        return effectivePeriod;
+//    }
+//
+//    public void setEffectivePeriod(final Period effectivePeriod) {
+//        this.effectivePeriod = effectivePeriod;
+//    }
+//
+//    public Period obtainEffectivePeriod() {
+//        if (effectivePeriod == null) {
+//            effectivePeriod = new Period();
+//        }
+//        return effectivePeriod;
+//    }
 
     @Override
     public boolean equals(final Object o) {
@@ -327,11 +324,8 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
         if (pipelineSet != null ? pipelineSet.equals(that.pipelineSet) : that.pipelineSet == null) return false;
         if (statusSet != null ? statusSet.equals(that.statusSet) : that.statusSet == null) return false;
         if (createPeriod != null ? createPeriod.equals(that.createPeriod) : that.createPeriod == null) return false;
-        if (effectivePeriod != null ? effectivePeriod.equals(that.effectivePeriod) : that.effectivePeriod == null)
-            return false;
 
         return true;
-
     }
 
     @Override
@@ -348,7 +342,6 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
         result = 31 * result + (pipelineSet != null ? pipelineSet.hashCode() : 0);
         result = 31 * result + (statusSet != null ? statusSet.hashCode() : 0);
         result = 31 * result + (createPeriod != null ? createPeriod.hashCode() : 0);
-        result = 31 * result + (effectivePeriod != null ? effectivePeriod.hashCode() : 0);
         return result;
     }
 }

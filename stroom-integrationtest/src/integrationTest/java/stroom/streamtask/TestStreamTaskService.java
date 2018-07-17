@@ -107,7 +107,7 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
         criteria.obtainStreamTaskStatusSet().add(TaskStatus.COMPLETE);
 
         criteria.setCreatePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
-        criteria.setEffectivePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
+//        criteria.setEffectivePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
 //        criteria.obtainStreamTypeNameSet().add(StreamTypeNames.CONTEXT);
 
 //        criteria.getFetchSet().add(StreamEntity.ENTITY_TYPE);
@@ -136,7 +136,7 @@ public class TestStreamTaskService extends AbstractCoreIntegrationTest {
         criteria.obtainStreamTaskStatusSet().add(TaskStatus.COMPLETE);
 
         criteria.setCreatePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
-        criteria.setEffectivePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
+//        criteria.setEffectivePeriod(new Period(System.currentTimeMillis(), System.currentTimeMillis()));
 //        criteria.obtainStreamTypeNameSet().add(StreamTypeNames.CONTEXT);
 
     }

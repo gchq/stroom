@@ -122,12 +122,12 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<ProcessorFilt
             sql.appendDocRefSetQuery("SP." + Processor.PIPELINE_UUID, criteria.getPipelineSet());
 //            sql.appendEntityIdSetQuery("F." + BaseEntity.ID, feedService.convertNameSet(criteria.getFeedNameSet()));
 
-            sql.append(" GROUP BY PIPE_UUID, FEED_ID, PRIORITY_1, STAT_ID1");
+            sql.append(" GROUP BY PIPE_UUID, PRIORITY_1, STAT_ID1");
             sql.append(") D");
 
             sql.appendOrderBy(getSqlFieldMap().getSqlFieldMap(), criteria, null);
 
-            return getEntityManager().executeNativeQuerySummaryDataResult(sql, 4);
+            return getEntityManager().executeNativeQuerySummaryDataResult(sql, 3);
         });
     }
 
@@ -148,7 +148,7 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<ProcessorFilt
 //        CriteriaLoggingUtil.appendCriteriaSet(items, "feedNameSet", criteria.getFeedNameSet());
         CriteriaLoggingUtil.appendDateTerm(items, "createMs", criteria.getCreateMs());
         CriteriaLoggingUtil.appendRangeTerm(items, "createPeriod", criteria.getCreatePeriod());
-        CriteriaLoggingUtil.appendRangeTerm(items, "effectivePeriod", criteria.getEffectivePeriod());
+//        CriteriaLoggingUtil.appendRangeTerm(items, "effectivePeriod", criteria.getEffectivePeriod());
         super.appendCriteria(items, criteria);
     }
 
@@ -230,7 +230,7 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<ProcessorFilt
             sql.appendValueQuery(alias + ".createMs", criteria.getCreateMs());
 
 //            if (criteria.getStatusSet() != null || criteria.getFeedIdSet() != null || criteria.getPipelineSet() != null) {
-            sql.appendCriteriaSetQuery(alias + ".stream.id", criteria.getStreamIdSet());
+            sql.appendCriteriaSetQuery(alias + ".streamId", criteria.getStreamIdSet());
 
 //            sql.appendCriteriaSetQuery(alias + ".stream.streamType", streamTypeService.convertNameSet(criteria.getStreamTypeNameSet()));
 //
@@ -244,8 +244,8 @@ public class StreamTaskServiceImpl extends SystemEntityServiceImpl<ProcessorFilt
 //
 //            sql.appendEntityIdSetQuery(alias + ".stream.feed", feedService.convertNameSet(criteria.getFeedNameSet()));
 
-            sql.appendRangeQuery(alias + ".stream.createMs", criteria.getCreatePeriod());
-            sql.appendRangeQuery(alias + ".stream.effectiveMs", criteria.getEffectivePeriod());
+            sql.appendRangeQuery(alias + ".createMs", criteria.getCreatePeriod());
+//            sql.appendRangeQuery(alias + ".stream.effectiveMs", criteria.getEffectivePeriod());
         }
     }
 }
