@@ -5,6 +5,11 @@ import {
   reducer as elementReducer,
 } from './elementReducer';
 
+import { 
+  actionCreators as pipelineSettingsActionCreators,
+  reducer as pipelineSettingsReducer
+} from './pipelineSettingsReducer';
+
 import {
   actionCreators as pipelineActionCreators,
   reducer as pipelineReducer,
@@ -19,12 +24,14 @@ const actionCreators = {
   ...elementActionCreators,
   ...pipelineActionCreators,
   ...pipelineSearchActionCreators,
+  ...pipelineSettingsActionCreators
 };
 
 const reducer = combineReducers({
   elements: elementReducer,
   pipelines: pipelineReducer,
   search: pipelineSearchReducer,
+  settings: pipelineSettingsReducer
 });
 
 export { actionCreators, reducer };

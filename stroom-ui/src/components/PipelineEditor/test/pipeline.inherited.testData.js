@@ -15,6 +15,17 @@
  */
 
 export default {
+  parentPipeline: {
+    uuid: 'simple',
+    type: 'Pipeline',
+    name: 'type'
+  },
+  docRef: {
+    uuid: 'inherited',
+    name: 'Inherited',
+    type: 'Pipeline'
+  },
+  description: 'This demonstrates an inherited pipeline',
   configStack: [
     {
       elements: {

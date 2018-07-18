@@ -1,4 +1,10 @@
 export default {
+  docRef: {
+    uuid: 'childRestoredLink',
+    name: 'Child Restored Link',
+    type: 'Pipeline'
+  },
+  description: 'This demonstrates a pipeline with a link that can be restored',
   configStack: [
     {
       elements: {

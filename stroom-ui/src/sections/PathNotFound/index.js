@@ -14,31 +14,26 @@
  * limitations under the License.
  */
 
-import React, {Component} from 'react'
-import {bindActionCreators} from 'redux'
-import {connect} from 'react-redux'
+import React from 'react';
+import PropTypes from 'prop-types';
 
-import './PathNotFound.css'
-// import '../Layout.css'
+import './PathNotFound.css';
 
-class PathNotFound extends Component {
-  render () {
-    return (
-      <div className='content-floating-without-appbar'>
-        <div className='PathNotFound-card'>
-          <h3>Page not found!</h3>
-          <p>There's nothing here I'm afraid.</p>
-        </div>
-      </div>
-    )
-  }
-}
+const PathNotFound = ({ message }) => (
+  <div className="content-floating-without-appbar">
+    <div className="PathNotFound-card">
+      <h3>Page not found!</h3>
+      <p>{message}</p>
+    </div>
+  </div>
+);
 
-const mapStateToProps = state => ({})
+PathNotFound.propTypes = {
+  message: PropTypes.string.isRequired,
+};
 
-const mapDispatchToProps = dispatch => bindActionCreators({}, dispatch)
+PathNotFound.defaultProps = {
+  message: "There's nothing here I'm afraid.",
+};
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(PathNotFound)
+export default PathNotFound;

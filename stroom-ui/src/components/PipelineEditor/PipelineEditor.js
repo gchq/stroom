@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 
 import { compose, lifecycle, withState, branch, renderComponent, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Form, Button, Icon, Confirm, Loader } from 'semantic-ui-react';
+import { Icon, Confirm, Loader } from 'semantic-ui-react';
 
 import PanelGroup from 'react-panelgroup';
 
@@ -26,20 +26,23 @@ import { LineContainer, LineTo } from 'components/LineTo';
 import { mapObject } from 'lib/treeUtils';
 import { getPipelineLayoutInformation } from './pipelineUtils';
 
+import PipelineSettings from './PipelineSettings';
 import PipelineElement from './PipelineElement';
 import ElementPalette from './ElementPalette';
 import Bin from './Bin';
 
 import lineElementCreators from './pipelineLineElementCreators';
 import { ElementDetails } from './ElementDetails';
-import { DocPickerModal } from '../DocExplorer';
 
-import { fetchPipeline, savePipeline } from './pipelineResourceClient';
+import { fetchPipeline } from './pipelineResourceClient';
 import { fetchElements, fetchElementProperties } from './elementResourceClient';
 import { withConfig } from 'startup/config';
 import { actionCreators } from './redux';
 
-const { pipelineElementDeleteCancelled, pipelineElementDeleted } = actionCreators;
+const {
+  pipelineElementDeleteCancelled,
+  pipelineElementDeleted
+} = actionCreators;
 
 const HORIZONTAL_SPACING = 150;
 const VERTICAL_SPACING = 70;
@@ -64,9 +67,8 @@ const enhance = compose(
       fetchPipeline,
       fetchElements,
       fetchElementProperties,
-      savePipeline,
       pipelineElementDeleteCancelled,
-      pipelineElementDeleted,
+      pipelineElementDeleted
     },
   ),
   lifecycle({
@@ -85,24 +87,24 @@ const enhance = compose(
     renderComponent(() => <Loader active>Loading Pipeline</Loader>),
   ),
   branch(
-    ({ pipeline }) => !pipeline.pipeline,
+    ({ pipeline: { pipeline } }) => !pipeline,
     renderComponent(() => <Loader active>Loading Pipeline Data</Loader>),
   ),
   branch(
-    ({ elements }) => !elements.elements,
+    ({ elements: { elements } }) => !elements,
     renderComponent(() => <Loader active>Loading Elements</Loader>),
   ),
   withPaletteOpen,
   withElementDetailsOpen,
   withProps(({
     pipelineId,
-    pipeline,
+    pipeline: { asTree, pendingElementToDelete },
     setPaletteOpen,
     isPaletteOpen,
     pipelineElementDeleteCancelled,
     pipelineElementDeleted,
   }) => ({
-    elementStyles: mapObject(getPipelineLayoutInformation(pipeline.asTree), (l) => {
+    elementStyles: mapObject(getPipelineLayoutInformation(asTree), (l) => {
       const index = l.verticalPos - 1;
       const fromTop = VERTICAL_START_PX + index * VERTICAL_SPACING;
       const fromLeft = HORIZONTAL_START_PX + l.horizontalPos * HORIZONTAL_SPACING;
@@ -113,33 +115,28 @@ const enhance = compose(
         left: `${fromLeft}px`,
       };
     }),
-    isDirty: pipeline.isDirty,
-    isSaving: pipeline.isSaving,
-    pendingElementToDelete: pipeline.pendingElementToDelete,
-    togglePaletteOpen: () => setPaletteOpen(!isPaletteOpen),
     onCancelDelete: () => pipelineElementDeleteCancelled(pipelineId),
     onConfirmDelete: () => {
-      pipelineElementDeleted(pipelineId, pipeline.pendingElementToDelete);
+      pipelineElementDeleted(pipelineId, pendingElementToDelete);
     },
   })),
 );
 
 const PipelineEditor = ({
   pipelineId,
-  pipeline,
+  pipeline: {
+    pipeline, isDirty, isSaving, pendingElementToDelete,
+  },
   isPaletteOpen,
-  togglePaletteOpen,
+  setPaletteOpen,
   isElementDetailsOpen,
   setElementDetailsOpen,
   editorClassName,
   elementStyles,
-  savePipeline,
-  isDirty,
-  isSaving,
-  pendingElementToDelete,
   onCancelDelete,
   onConfirmDelete,
 }) => {
+  const togglePaletteOpen = () => setPaletteOpen(!isPaletteOpen);
   const settingsPanelSize = isElementDetailsOpen ? '50%' : 0;
   const panelSizes = [
     {},
@@ -156,6 +153,7 @@ const PipelineEditor = ({
         onCancel={onCancelDelete}
         onConfirm={onConfirmDelete}
       />
+      <PipelineSettings pipelineId={pipelineId} />
       <div className="Pipeline-editor__element-palette">
         <ElementPalette pipelineId={pipelineId} />
       </div>
@@ -166,35 +164,17 @@ const PipelineEditor = ({
 
       <PanelGroup direction="column" className="Pipeline-editor__content" panelWidths={panelSizes}>
         <div className="Pipeline-editor__topPanel">
-          <div className="Pipeline-editor__top-bar">
-            <div>
-              <Button
-                icon='save'
-                loading={isSaving}
-                disabled={!isDirty}
-                color="blue"
-                size="huge"
-                circular
-                onClick={() => savePipeline(pipelineId)}
-              />
-            </div>
-            <Bin />
-            <Form>
-              <Form.Field>
-                <label>Parent Pipeline</label>
-                <DocPickerModal pickerId={pipelineId} typeFilters={["Pipeline"]} />
-              </Form.Field>
-            </Form>
-          </div>
           <LineContainer
             className="Pipeline-editor__graph"
             lineContextId={`pipeline-lines-${pipelineId}`}
             lineElementCreators={lineElementCreators}
           >
-            <div className="Pipeline-editor__bin" />
+            <div className="Pipeline-editor__bin">
+              <Bin />
+            </div>
             <div className="Pipeline-editor__elements">
               {Object.keys(elementStyles)
-                .map(es => pipeline.pipeline.merged.elements.add.find(e => e.id === es))
+                .map(es => pipeline.merged.elements.add.find(e => e.id === es))
                 .map(e => (
                   <div key={e.id} id={e.id} style={elementStyles[e.id]}>
                     <PipelineElement
@@ -206,7 +186,7 @@ const PipelineEditor = ({
                 ))}
             </div>
             <div className="Pipeline-editor__lines">
-              {pipeline.pipeline.merged.links.add
+              {pipeline.merged.links.add
                 .filter(l => elementStyles[l.from] && elementStyles[l.to])
                 .map(l => ({ ...l, lineId: `${l.from}-${l.to}` }))
                 .map(l => (

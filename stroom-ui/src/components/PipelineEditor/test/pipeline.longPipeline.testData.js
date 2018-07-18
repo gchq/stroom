@@ -1,4 +1,10 @@
 export default {
+  docRef: {
+    uuid: 'longPipeline',
+    name: 'Long Pipeline',
+    type: 'Pipeline'
+  },
+  description: 'This pipeline is long enough to stress out the rendering',
   configStack: [
     {
       elements: {

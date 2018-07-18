@@ -35,10 +35,8 @@ const enhance = compose(
   }),
   // Properties from owner
   withProps(({ // Redux action
-    pipelineId, elementId, // from withNewElementDefinition in owner
-    pipelineElementAdded, // Redux form
-    newElementDefinition, setNewElementDefinition, newElementForm, reset,
-  }) => ({
+    pipelineId, elementId, pipelineElementAdded, newElementDefinition, setNewElementDefinition, newElementForm, reset,
+  }) => ({ // from withNewElementDefinition in owner // Redux form
     onConfirmNewElement: () => {
       pipelineElementAdded(pipelineId, elementId, newElementDefinition, newElementForm.values.name);
       setNewElementDefinition(undefined);

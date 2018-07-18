@@ -23,6 +23,10 @@ const actionCreators = createActions({
   PIPELINE_SAVED: pipelineId => ({
     pipelineId,
   }),
+  PIPELINE_SETTINGS_UPDATED: (pipelineId, description) => ({
+    pipelineId,
+    description,
+  }),
   PIPELINE_ELEMENT_SELECTED: (pipelineId, elementId, initialValues) => ({
     pipelineId,
     elementId,
@@ -102,6 +106,17 @@ const reducer = handleActions(
         ...state[action.payload.pipelineId],
         isDirty: false,
         isSaving: false,
+      },
+    }),
+    PIPELINE_SETTINGS_UPDATED: (state, action) => ({
+      ...state,
+      [action.payload.pipelineId]: {
+        ...state[action.payload.pipelineId],
+        pipeline: {
+          ...state[action.payload.pipelineId].pipeline,
+          description: action.payload.description,
+        },
+        isDirty: true,
       },
     }),
     PIPELINE_ELEMENT_SELECTED: (state, action) => ({

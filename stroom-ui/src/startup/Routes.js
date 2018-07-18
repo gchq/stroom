@@ -19,6 +19,7 @@ import PropTypes, { object } from 'prop-types';
 import { Route, Router, Switch, withRouter } from 'react-router-dom';
 import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
+import { Header } from 'semantic-ui-react';
 
 import ErrorPage from 'sections/ErrorPage';
 import TrackerDashboard from 'sections/TrackerDashboard';
@@ -26,7 +27,10 @@ import { AppChrome } from 'sections/AppChrome';
 import PipelineSearch from 'components/PipelineSearch';
 import XsltEditor from 'prototypes/XsltEditor';
 import { HandleAuthenticationResponse } from 'startup/Authentication';
-import PipelineEditor from 'components/PipelineEditor';
+import PipelineEditor, {
+  ActionBarItems as PipelineEditorActionBarItems,
+  HeaderContent as PipelineEditorHeaderContent,
+} from 'components/PipelineEditor';
 import DocExplorer from 'components/DocExplorer';
 import DataViewer from 'components/DataViewer';
 import UserSettings from 'prototypes/UserSettings';
@@ -88,102 +92,137 @@ const Routes = ({
       {/* AppChrome paths -- these paths load the relevent sections. */}
       <PrivateRoute
         exact
-        path="/s/welcome"
-        referrer="/s/welcome"
+        path="/"
         render={props => (
-          <AppChrome {...props} title="Welcome" icon="home">
-            <Welcome />
-          </AppChrome>
+          <AppChrome
+            activeMenuItem="Welcome"
+            {...props}
+            headerContent={<Header.Content>Welcome</Header.Content>}
+            icon="home"
+            content={<Welcome />}
+          />
+        )}
+      />
+      <PrivateRoute
+        exact
+        path="/s/welcome"
+        render={props => (
+          <AppChrome
+            activeMenuItem="Welcome"
+            {...props}
+            headerContent={<Header.Content>Welcome</Header.Content>}
+            icon="home"
+            content={<Welcome />}
+          />
         )}
       />
       <PrivateRoute
         exact
         path="/s/docExplorer"
-        referrer="/s/docExplorer"
         render={props => (
-          <AppChrome {...props} title="Explorer" icon="eye">
-            <DocExplorer explorerId="app-chrome" />
-          </AppChrome>
+          <AppChrome
+            activeMenuItem="Explorer"
+            {...props}
+            headerContent={<Header.Content>Explorer</Header.Content>}
+            icon="eye"
+            content={<DocExplorer explorerId="app-chrome" />}
+          />
         )}
       />
       <PrivateRoute
         exact
         path="/s/data"
-        referrer="/s/data"
         render={props => (
-          <AppChrome {...props} title="Data" icon="database">
-            <DataViewer />
-          </AppChrome>
+          <AppChrome
+            activeMenuItem="Data"
+            {...props}
+            headerContent={<Header.Content>Data</Header.Content>}
+            icon="database"
+            content={<DataViewer />}
+          />
         )}
       />
       <PrivateRoute
         exact
         path="/s/pipelines"
-        referrer="/s/pipelines"
         render={props => (
-          <AppChrome {...props} title="Pipelines" icon="tasks">
-            <PipelineSearch />
-          </AppChrome>
+          <AppChrome
+            activeMenuItem="Pipelines"
+            {...props}
+            headerContent={<Header.Content>Pipelines</Header.Content>}
+            icon="tasks"
+            content={<PipelineSearch />}
+          />
         )}
       />
 
       <PrivateRoute
         exact
-        path="/s/pipelines/:pipelineId"
-        referrer="/s/pipelines"
+        path="/s/processing"
         render={props => (
-          <AppChrome {...props} title="Pipelines" icon="tasks">
-            <PipelineEditor pipelineId={props.pipelineId} />
-          </AppChrome>
-        )}
-      />
-
-      <PrivateRoute
-        exact
-        path="/s/trackers"
-        referrer="/s/trackers"
-        render={props => (
-          <AppChrome {...props} title="Processing" icon="play">
-            <TrackerDashboard />
-          </AppChrome>
+          <AppChrome
+            activeMenuItem="Processing"
+            {...props}
+            headerContent={<Header.Content>Processing</Header.Content>}
+            icon="play"
+            content={<TrackerDashboard />}
+          />
         )}
       />
       <PrivateRoute
         exact
         path="/s/me"
-        referrer="/s/me"
         render={props => (
-          <AppChrome {...props} title="Me" icon="user">
-            <UserSettings />
-          </AppChrome>
+          <AppChrome
+            activeMenuItem="Me"
+            {...props}
+            headerContent={<Header.Content>Me</Header.Content>}
+            icon="user"
+            content={<UserSettings />}
+          />
         )}
       />
       <PrivateRoute
         exact
         path="/s/users"
-        referrer="/s/users"
         render={props => (
-          <AppChrome {...props} title="Users" icon="users">
-            <IFrame url={authUsersUiUrl} />
-          </AppChrome>
+          <AppChrome
+            activeMenuItem="Users"
+            {...props}
+            headerContent={<Header.Content>Users</Header.Content>}
+            icon="users"
+            content={<IFrame key="users" url={authUsersUiUrl} />}
+          />
         )}
       />
       <PrivateRoute
         exact
         path="/s/apikeys"
-        referrer="/s/apikeys"
         render={props => (
-          <AppChrome {...props} title="API Keys" icon="key">
-            <IFrame url={authTokensUiUrl} />
-          </AppChrome>
+          <AppChrome
+            activeMenuItem="API Keys"
+            {...props}
+            headerContent={<Header.Content>API Keys</Header.Content>}
+            icon="key"
+            content={<IFrame key="apikeys" url={authTokensUiUrl} />}
+          />
         )}
       />
 
       {/* Direct paths -- these paths make sections accessible outside the AppChrome
         i.e. for when we want to embed them in Stroom. */}
-      <PrivateRoute exact path="/trackers" referrer="/trackers" component={TrackerDashboard} />
-      {/* TODO: What path do we want for docExplorer? */}
-      <PrivateRoute exact path="/docExplorer" referrer="/docExplorer" component={DocExplorer} />
+      <PrivateRoute
+        exact
+        path="/trackers"
+        referrer="/trackers"
+        render={() => <TrackerDashboard />}
+      />
+      <PrivateRoute
+        exact
+        path="/docExplorer"
+        referrer="/docExplorer"
+        render={() => <DocExplorer />}
+      />
 
       {/* TODO: There are no AppChrome routes for the following because the do not have
         TabTypes. Content must to be anchored to something on the sidebar. Otherwise it's
@@ -192,15 +231,71 @@ const Routes = ({
         and pipeline sections or we could map them to something deeper, e.g.
            /pipelines/<pipelienId>/xslt/<xsltId>
         Obviously this needs more thinking about. */}
-      <PrivateRoute exact path="/xslt/:xsltId" referrer="/xslt" component={XsltEditor} />
+      <PrivateRoute exact path="/XSLT/:xsltId" render={props => <XsltEditor {...props} />} />
       <PrivateRoute
         exact
-        path="/pipelines/:pipelineId"
-        referrer="/pipelines"
-        component={PipelineEditor}
+        path="/Pipeline/:pipelineId"
+        render={props => <PipelineEditor {...props} />}
       />
 
-      <Route component={PathNotFound} />
+      <PrivateRoute
+        exact
+        path="/s/doc/XSLT/:xsltId"
+        render={props => (
+          <AppChrome
+            activeMenuItem="Explorer"
+            {...props}
+            headerContent={<Header.Content>Edit XSLT</Header.Content>}
+            icon="file"
+            content={<XsltEditor xsltId={props.xsltId} />}
+          />
+        )}
+      />
+      <PrivateRoute
+        exact
+        path="/s/doc/Pipeline/:pipelineId"
+        render={props => (
+          <AppChrome
+            activeMenuItem="Pipelines"
+            {...props}
+            headerContent={
+              <PipelineEditorHeaderContent pipelineId={props.match.params.pipelineId} />
+            }
+            icon="tasks"
+            content={<PipelineEditor pipelineId={props.pipelineId} />}
+            actionBarAdditionalItems={
+              <PipelineEditorActionBarItems pipelineId={props.pipelineId} />
+            }
+          />
+        )}
+      />
+
+      {/* Catch all doc route */}
+      <PrivateRoute
+        exact
+        path="/s/doc/:type/:uuid"
+        render={props => (
+          <AppChrome
+            activeMenuItem="Explorer"
+            {...props}
+            headerContent={<Header.Content>{`Edit ${props.type}`}</Header.Content>}
+            icon="file"
+            content={<PathNotFound message="no editor provided for this doc ref type " />}
+          />
+        )}
+      />
+
+      {/* Default route */}
+      <Route
+        render={() => (
+          <AppChrome
+            activeMenuItem="Welcome"
+            headerContent={<Header.Content>Not Found</Header.Content>}
+            icon="exclamation triangle"
+            content={<PathNotFound />}
+          />
+        )}
+      />
     </Switch>
   </Router>
 );

@@ -1,4 +1,10 @@
 export default {
+  docRef: {
+    uuid: 'forkedPipeline',
+    name: 'Forked Pipeline',
+    type: 'Pipeline'
+  },
+  description: 'This demonstrates a pipeline that heads in multiple directions to test layout',
   configStack: [
     {
       elements: {

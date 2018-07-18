@@ -4,6 +4,7 @@ import com.codahale.metrics.health.HealthCheck;
 import com.google.common.base.Strings;
 import io.swagger.annotations.Api;
 import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.guice.PipelineScopeRunnable;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.factory.PipelineDataValidator;
@@ -35,145 +36,45 @@ public class PipelineResource implements HasHealthCheck  {
     private final Security security;
     private final PipelineScopeRunnable pipelineScopeRunnable;
 
-    private static final class PipelineElementDTO {
-        private final String id;
-        private final String type;
-
-        PipelineElementDTO(final PipelineElement element) {
-            this.id = element.getId();
-            this.type = element.getType();
-        }
-
-        public String getId() {
-            return id;
-        }
-
-        public String getType() {
-            return type;
-        }
-    }
-
-    private static final class PipelinePropertyDTO {
-        private final String element;
-        private final String name;
-        private final PipelinePropertyValue value;
-
-        PipelinePropertyDTO(final PipelineProperty property) {
-            this.element = property.getElement();
-            this.name = property.getName();
-            this.value = property.getValue();
-        }
-
-        public String getElement() {
-            return element;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public PipelinePropertyValue getValue() {
-            return value;
-        }
-    }
-
-    private static final class PipelineLinkDTO {
-        private final String from;
-        private final String to;
-
-        PipelineLinkDTO(final PipelineLink link) {
-            this.from = link.getFrom();
-            this.to = link.getTo();
-        }
-
-        public String getFrom() {
-            return from;
-        }
-
-        public String getTo() {
-            return to;
-        }
-    }
-
-    private static final class PipelineAddRemoveDTO<Domain, DTO> {
-        private final List<DTO> add;
-        private final List<DTO> remove;
-
-        PipelineAddRemoveDTO(final PipelineData data,
-                         final Function<Domain, DTO> convert,
-                         final Function<PipelineData, List<Domain>> getAdd,
-                         final Function<PipelineData, List<Domain>> getRemove) {
-            this.add = getAdd.apply(data).stream().map(convert).collect(Collectors.toList());
-            this.remove = getRemove.apply(data).stream().map(convert).collect(Collectors.toList());
-        }
-
-        public List<DTO> getAdd() {
-            return add;
-        }
-
-        public List<DTO> getRemove() {
-            return remove;
-        }
-    }
-
-    private static class PipelineDataDTO {
-        final PipelineAddRemoveDTO<PipelineElement, PipelineElementDTO> elements;
-        final PipelineAddRemoveDTO<PipelineProperty, PipelinePropertyDTO> properties;
-        final PipelineReferences pipelineReferences;
-        final PipelineAddRemoveDTO<PipelineLink, PipelineLinkDTO> links;
-
-        PipelineDataDTO(final PipelineData data) {
-            this.elements = new PipelineAddRemoveDTO<>(data,
-                    PipelineElementDTO::new,
-                    (d) -> d.getElements().getAdd(),
-                    (d) -> d.getElements().getRemove()
-            );
-            this.properties = new PipelineAddRemoveDTO<>(data,
-                    PipelinePropertyDTO::new,
-                    (d) -> d.getProperties().getAdd(),
-                    (d) -> d.getProperties().getRemove()
-            );
-            this.pipelineReferences = data.getPipelineReferences();
-            this.links = new PipelineAddRemoveDTO<>(data,
-                    PipelineLinkDTO::new,
-                    (d) -> d.getLinks().getAdd(),
-                    (d) -> d.getLinks().getRemove()
-            );
-        }
-
-        public PipelineAddRemoveDTO<PipelineElement, PipelineElementDTO> getElements() {
-            return elements;
-        }
-
-        public PipelineAddRemoveDTO<PipelineProperty, PipelinePropertyDTO> getProperties() {
-            return properties;
-        }
-
-        public PipelineReferences getPipelineReferences() {
-            return pipelineReferences;
-        }
-
-        public PipelineAddRemoveDTO<PipelineLink, PipelineLinkDTO> getLinks() {
-            return links;
-        }
-    }
-
     private static class PipelineDTO {
-        private final List<PipelineDataDTO> configStack;
-        private final PipelineDataDTO merged;
+        private DocRef parentPipeline;
+        private DocRef docRef;
+        private String description;
+        private List<PipelineData> configStack;
+        private PipelineData merged;
 
-        PipelineDTO(final List<PipelineData> configStack) {
-            this.configStack = configStack.stream()
-                    .map(PipelineDataDTO::new)
-                    .collect(Collectors.toList());
-            this.merged = new PipelineDataDTO(new PipelineDataMerger().merge(configStack).createMergedData());
+        PipelineDTO() {
+
         }
 
-        public List<PipelineDataDTO> getConfigStack() {
+        PipelineDTO(final DocRef parentPipeline,
+                    final DocRef docRef,
+                    final String description,
+                    final List<PipelineData> configStack) {
+            this.parentPipeline = parentPipeline;
+            this.docRef = docRef;
+            this.description = description;
+            this.configStack = configStack;
+            this.merged = new PipelineDataMerger().merge(configStack).createMergedData();
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public DocRef getDocRef() {
+            return docRef;
+        }
+
+        public DocRef getParentPipeline() {
+            return parentPipeline;
+        }
+
+        public List<PipelineData> getConfigStack() {
             return configStack;
         }
 
-        public PipelineDataDTO getMerged() {
+        public PipelineData getMerged() {
             return merged;
         }
     }
@@ -247,32 +148,56 @@ public class PipelineResource implements HasHealthCheck  {
     @Path("/{pipelineId}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response fetch(@PathParam("pipelineId") final String pipelineId) {
-        return security.secureResult(() -> {
-            final PipelineDoc pipelineDoc = pipelineStore.readDocument(getDocRef(pipelineId));
-            final List<PipelineData> configStack = new ArrayList<>();
+        return security.secureResult(() -> pipelineScopeRunnable.scopeResult(() -> {
+            // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
+            return security.useAsReadResult(() -> fetchInScope(pipelineId));
+        }));
+    }
 
-            pipelineScopeRunnable.scopeRunnable(() -> {
-                // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
-                security.useAsRead(() -> {
-                    final List<PipelineDoc> pipelines = pipelineStackLoader.loadPipelineStack(pipelineDoc);
+    private Response fetchInScope(final String pipelineId) {
+        final PipelineDoc pipelineDoc = pipelineStore.readDocument(getDocRef(pipelineId));
+        final List<PipelineData> configStack = new ArrayList<>();
 
-                    final Map<String, PipelineElementType> elementMap = PipelineDataMerger.createElementMap();
-                    for (final PipelineDoc pipe : pipelines) {
-                        final PipelineData pipelineData = pipe.getPipelineData();
+        final List<PipelineDoc> pipelines = pipelineStackLoader.loadPipelineStack(pipelineDoc);
 
-                        // Validate the pipeline data and add element and property type
-                        // information.
-                        final SourcePipeline source = new SourcePipeline(pipe);
-                        pipelineDataValidator.validate(source, pipelineData, elementMap);
-                        configStack.add(pipelineData);
+        final Map<String, PipelineElementType> elementMap = PipelineDataMerger.createElementMap();
+        for (final PipelineDoc pipe : pipelines) {
+            final PipelineData pipelineData = pipe.getPipelineData();
 
-                    }
+            // Validate the pipeline data and add element and property type
+            // information.
+            final SourcePipeline source = new SourcePipeline(pipe);
+            pipelineDataValidator.validate(source, pipelineData, elementMap);
+            configStack.add(pipelineData);
 
-                });
-            });
+        }
 
-            final PipelineDTO dto  = new PipelineDTO(configStack);
-            return Response.ok(dto).build();
+        final PipelineDTO dto  = new PipelineDTO(
+                pipelineDoc.getParentPipeline(),
+                DocRefUtil.create(pipelineDoc),
+                pipelineDoc.getDescription(),
+                configStack);
+        return Response.ok(dto).build();
+    }
+
+    @POST
+    @Path("/{parentPipelineId}/inherit")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response createInherited(@PathParam("parentPipelineId") final String pipelineId,
+                                    final DocRef parentPipeline) {
+
+        return pipelineScopeRunnable.scopeResult(() -> {
+            final PipelineDoc parentDoc = pipelineStore.readDocument(getDocRef(pipelineId));
+
+            final DocRef docRef = pipelineStore.createDocument(String.format("Child of %s", parentDoc.getName()));
+
+            final PipelineDoc pipelineDoc = pipelineStore.readDocument(docRef);
+            if (pipelineDoc != null) {
+                pipelineDoc.setParentPipeline(parentPipeline);
+                pipelineStore.writeDocument(pipelineDoc);
+            }
+
+            return fetchInScope(docRef.getUuid());
         });
     }
 
@@ -281,14 +206,15 @@ public class PipelineResource implements HasHealthCheck  {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response save(@PathParam("pipelineId") final String pipelineId,
-                         final PipelineData pipelineData) {
+                         final PipelineDTO pipelineDocUpdates) {
         pipelineScopeRunnable.scopeRunnable(() -> {
             // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
             security.useAsRead(() -> {
                 final PipelineDoc pipelineDoc = pipelineStore.readDocument(getDocRef(pipelineId));
 
                 if (pipelineDoc != null) {
-                    pipelineDoc.setPipelineData(pipelineData);
+                    pipelineDoc.setDescription(pipelineDocUpdates.getDescription());
+                    pipelineDocUpdates.getConfigStack().forEach(pipelineDoc::setPipelineData); // will have the effect of setting last one
                     pipelineStore.writeDocument(pipelineDoc);
                 }
             });

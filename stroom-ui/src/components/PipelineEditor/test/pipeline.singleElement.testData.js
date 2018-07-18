@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 export default {
+  docRef: {
+    uuid: 'singleElement',
+    name: 'Single Element',
+    type: 'Pipeline'
+  },
+  description: 'Pipeline with a single element',
   configStack: [
     {
       elements: {

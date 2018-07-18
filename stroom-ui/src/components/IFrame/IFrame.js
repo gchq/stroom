@@ -2,8 +2,8 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 class IFrame extends Component {
-  shouldComponentUpdate() {
-    return false;
+  shouldComponentUpdate(nextProps, nextState) {
+    return nextProps.url !== this.props.url;
   }
 
   render() {

@@ -17,11 +17,8 @@
 import RecentItems from './RecentItems';
 
 import { actionCreators, reducer } from './redux';
+import openDocRef from './openDocRef';
 
-export {
-  RecentItems,
-  actionCreators,
-  reducer
-}
+export { RecentItems, actionCreators, reducer, openDocRef };
 
 export default RecentItems;
