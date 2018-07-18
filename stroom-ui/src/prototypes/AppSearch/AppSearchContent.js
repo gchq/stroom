@@ -28,8 +28,8 @@ import { openDocRef } from 'prototypes/RecentItems';
 /**
  * This component is separate to AppSearch.js because the modal in AppSearch.js makes it
  * impossible to add an event listener to the input -- it's not in the DOM at the time of
- * any of the lifecycle methods. Moving the content of the modal to a separate component
- * solves this problem.
+ * any of the lifecycle methods. Moving the content of the modal to a separate component,
+ * this one, solves this problem.
  */
 
 const {
@@ -58,87 +58,100 @@ const enhance = compose(
       openDocRef,
     },
   ),
-  lifecycle({
-    componentDidMount() {
-      // I'd rather use Mousetrap for these shortcut keys. Historically Mousetrap hasn't handled keypresses
-      // that occured inside inputs or textareas. There were some changes to fix this, like binding specifically
-      // to a field. But that requires getting the element from the DOM and we'd rather not break outside React
-      // to do this. The other alternative is adding 'mousetrap' as a class to the input, but that striaght up doesn't work.
-
-      // We need to prevent up and down keys from moving the cursor around in the input
-      const input = document.getElementById('AppSearch__search-input');
-      input.addEventListener(
-        'keydown',
-        (event) => {
-          if (event.keyCode === 38) {
-            // Up
-            this.props.appSearchSelectionUp();
-            event.preventDefault();
-          } else if (event.keyCode === 40) {
-            // Down
-            this.props.appSearchSelectionDown();
-            event.preventDefault();
-          } else if (event.keyCode === 13) {
-            // Enter
-            this.props.openDocRef(this.props.history, this.props.selectedDocRef);
-            event.preventDefault();
-          }
-        },
-        false,
-      );
-    },
-  }),
 );
 
-const AppSearchContent = ({
-  isOpen,
-  searchTerm,
-  appSearchClosed,
-  appSearchTermUpdated,
-  searchResults,
-  selectedItem,
-  history,
-  openDocRef,
-  appSearchSelectionUp,
-  appSearchSelectionDown,
-}) => (
-  <React.Fragment>
-    <Input
-      className="mousetrap"
-      id="AppSearch__search-input"
-      icon="search"
-      placeholder="Search..."
-      value={searchTerm}
-      onChange={e => appSearchTermUpdated(e.target.value)}
-      autoFocus
-    />
-    <Menu vertical fluid>
-      {searchResults.map((searchResult, i, arr) => {
-        // Compose the data that provides the breadcrumb to this node
-        const sections = searchResult.lineage.map(l => ({
-          key: l.name,
-          content: l.name,
-          link: false,
-        }));
+class AppSearchContent extends React.Component {
+  componentDidMount() {
+    // We need to prevent up and down keys from moving the cursor around in the input
 
-        return (
-          <Menu.Item
-            active={selectedItem === i}
-            key={i}
-            onClick={() => {
-              openDocRef(history, searchResult);
-              appSearchClosed();
-            }}
-          >
-            <div style={{ width: '50rem' }}>
-              <Breadcrumb size="mini" icon="right angle" sections={sections} />
-              <div className="doc-ref-dropdown__item-name">{searchResult.name}</div>
-            </div>
-          </Menu.Item>
-        );
-      })}
-    </Menu>
-  </React.Fragment>
-);
+    // I'd rather use Mousetrap for these shortcut keys. Historically Mousetrap
+    // hasn't handled keypresses that occured inside inputs or textareas.
+    // There were some changes to fix this, like binding specifically
+    // to a field. But that requires getting the element from the DOM and
+    // we'd rather not break outside React to do this. The other alternative
+    // is adding 'mousetrap' as a class to the input, but that doesn't seem to work.
+
+    // Up
+    const upKeycode = 38;
+    const ctrlKKeycode = 75;
+
+    // Down
+    const downKeycode = 40;
+    const ctrljKeycode = 74;
+
+    const enterKeycode = 13;
+
+    this.refs.searchTermInput.inputRef.addEventListener(
+      'keydown',
+      (event) => {
+        if (event.keyCode === upKeycode || event.keyCode === ctrlKKeycode) {
+          this.props.appSearchSelectionUp();
+          event.preventDefault();
+        } else if (event.keyCode === downKeycode || event.keyCode === ctrljKeycode) {
+          this.props.appSearchSelectionDown();
+          event.preventDefault();
+        } else if (event.keyCode === enterKeycode) {
+          this.props.openDocRef(this.props.history, this.props.selectedDocRef);
+          event.preventDefault();
+        }
+      },
+      false,
+    );
+  }
+
+  render() {
+    const {
+      isOpen,
+      searchTerm,
+      appSearchClosed,
+      appSearchTermUpdated,
+      searchResults,
+      selectedItem,
+      history,
+      openDocRef,
+      appSearchSelectionUp,
+      appSearchSelectionDown,
+    } = this.props;
+    return (
+      <React.Fragment>
+        <Input
+          id="AppSearch__search-input"
+          icon="search"
+          placeholder="Search..."
+          value={searchTerm}
+          onChange={e => appSearchTermUpdated(e.target.value)}
+          ref="searchTermInput"
+          autoFocus
+        />
+        <Menu vertical fluid>
+          {searchResults.map((searchResult, i, arr) => {
+            // Compose the data that provides the breadcrumb to this node
+            const sections = searchResult.lineage.map(l => ({
+              key: l.name,
+              content: l.name,
+              link: false,
+            }));
+
+            return (
+              <Menu.Item
+                active={selectedItem === i}
+                key={i}
+                onClick={() => {
+                  openDocRef(history, searchResult);
+                  appSearchClosed();
+                }}
+              >
+                <div style={{ width: '50rem' }}>
+                  <Breadcrumb size="mini" icon="right angle" sections={sections} />
+                  <div className="doc-ref-dropdown__item-name">{searchResult.name}</div>
+                </div>
+              </Menu.Item>
+            );
+          })}
+        </Menu>
+      </React.Fragment>
+    );
+  }
+}
 
 export default enhance(AppSearchContent);
