@@ -14,18 +14,23 @@
  * limitations under the License.
  */
 
-import React, { Component } from 'react';
+import React from 'react';
 
 import { compose, lifecycle } from 'recompose';
 import { connect } from 'react-redux';
-import ReactModal from 'react-modal';
-import { Button, Header, Icon, Modal, Menu, Input, Breadcrumb } from 'semantic-ui-react';
+import { Menu, Input, Breadcrumb } from 'semantic-ui-react';
 import { withRouter } from 'react-router-dom';
-import Mousetrap from 'mousetrap';
 
 import { actionCreators as appSearchActionCreators } from './redux';
 import withExplorerTree from 'components/DocExplorer/withExplorerTree';
 import { openDocRef } from 'prototypes/RecentItems';
+
+/**
+ * This component is separate to AppSearch.js because the modal in AppSearch.js makes it
+ * impossible to add an event listener to the input -- it's not in the DOM at the time of
+ * any of the lifecycle methods. Moving the content of the modal to a separate component
+ * solves this problem.
+ */
 
 const {
   appSearchClosed,
@@ -84,19 +89,18 @@ const AppSearchContent = ({
   openDocRef,
   appSearchSelectionUp,
   appSearchSelectionDown,
-}) => {
-  return (
-    <React.Fragment>
-      <Input
-        id="AppSearch__search-input"
-        icon="search"
-        placeholder="Search..."
-        value={searchTerm}
-        onChange={e => appSearchTermUpdated(e.target.value)}
-        autoFocus
-      />
-      <Menu vertical fluid>
-        {searchResults.map((searchResult, i, arr) => {
+}) => (
+  <React.Fragment>
+    <Input
+      id="AppSearch__search-input"
+      icon="search"
+      placeholder="Search..."
+      value={searchTerm}
+      onChange={e => appSearchTermUpdated(e.target.value)}
+      autoFocus
+    />
+    <Menu vertical fluid>
+      {searchResults.map((searchResult, i, arr) => {
           // Compose the data that provides the breadcrumb to this node
           const sections = searchResult.lineage.map(l => ({
             key: l.name,
@@ -120,9 +124,8 @@ const AppSearchContent = ({
             </Menu.Item>
           );
         })}
-      </Menu>
-    </React.Fragment>
-  );
-};
+    </Menu>
+  </React.Fragment>
+);
 
 export default enhance(AppSearchContent);

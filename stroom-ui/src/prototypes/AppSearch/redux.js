@@ -62,7 +62,7 @@ const reducer = handleActions(
       };
     },
     APP_SEARCH_SELECTION_UP: (state, payload) => {
-      const nextIndex = state.selectedItem == 0 ? 0 : state.selectedItem - 1;
+      const nextIndex = state.selectedItem === 0 ? 0 : state.selectedItem - 1;
       return {
         ...state,
         selectedItem: nextIndex,

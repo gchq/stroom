@@ -204,7 +204,7 @@ const getDetails = ({
       </p>
     );
   } else if (value === undefined && parentValue !== undefined && !isSet(defaultValue)) {
-    actualValue == undefined;
+    actualValue = undefined;
     info = (
       <p>
         This property has no default value and has not been set to anything by the user, but it is
@@ -374,7 +374,7 @@ const ElementField = ({
       </p> */}
       <p>
         The <em>field name</em> of this property is <strong>{name}</strong>
-      </p> 
+      </p>
       {details.info}
     </div>
   );

@@ -16,15 +16,11 @@
 
 import React from 'react';
 
-import { compose, lifecycle } from 'recompose';
+import { compose } from 'recompose';
 import { connect } from 'react-redux';
-import { Button, Header, Icon, Modal, Menu, Input, Breadcrumb } from 'semantic-ui-react';
-import { withRouter } from 'react-router-dom';
-import Mousetrap from 'mousetrap';
+import { Button, Header, Icon, Modal } from 'semantic-ui-react';
 
 import { actionCreators as appSearchActionCreators } from './redux';
-import withExplorerTree from 'components/DocExplorer/withExplorerTree';
-import { openDocRef } from 'prototypes/RecentItems';
 
 import AppSearchContent from './AppSearchContent';
 
