@@ -8,7 +8,7 @@ const enhance = compose(connect((state, props) => ({}), {}));
 
 const CreateChildPipeline = props => (
   <ActionBarItem
-    icon="eyedropper"
+    buttonProps={{ icon: 'eyedropper' }}
     content="Create a child pipeline, using this one as a parent"
     onClick={() => console.log('Choose folder for child pipeline?')}
   />

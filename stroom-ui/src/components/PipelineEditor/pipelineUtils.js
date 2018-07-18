@@ -215,6 +215,7 @@ export function createNewElementInPipeline(pipeline, parentId, childDefinition, 
   };
 
   return {
+    ...pipeline,
     configStack: mapLastItemInArray(pipeline.configStack, stackItem => ({
       properties: stackItem.properties,
       elements: {
@@ -277,6 +278,7 @@ export function setElementPropertyValueInPipeline(
   addToProperties(mergeAdd, property)
 
   return {
+    ...pipeline,
     configStack: mapLastItemInArray(pipeline.configStack, stackItem => ({
       elements: stackItem.elements,
       links: stackItem.links,
@@ -324,6 +326,7 @@ export function revertPropertyToParent(pipeline, element, name){
   const indexToRemoveFromMerged = mergedAdd.findIndex(addItem => addItem.name === name);
 
   return {
+    ...pipeline,
     configStack: mapLastItemInArray(pipeline.configStack, stackItem => ({
       elements: stackItem.elements,
       links: stackItem.links,
@@ -368,6 +371,7 @@ export function revertPropertyToDefault(pipeline, element, name){
   if( indexToRemove !== -1) {
     const propertyForRemove = childAdd.find(addItem => addItem.name === name);
     return {
+      ...pipeline,
       configStack: mapLastItemInArray(pipeline.configStack, stackItem => ({
         elements: stackItem.elements,
         links: stackItem.links,
@@ -401,6 +405,7 @@ export function revertPropertyToDefault(pipeline, element, name){
     // If we don't have this property in the child then we need to get it from the parent:
     const propertyForRemove = getParentProperty(pipeline.configStack, element, name);
     return {
+      ...pipeline,
       configStack: mapLastItemInArray(pipeline.configStack, stackItem => ({
         elements: stackItem.elements, 
         links: stackItem.links, 
@@ -444,6 +449,7 @@ export function reinstateElementToPipeline(pipeline, parentId, recycleData) {
   };
 
   return {
+    ...pipeline,
     configStack: mapLastItemInArray(pipeline.configStack, stackItem => ({
       properties: stackItem.properties,
       elements: {
@@ -506,6 +512,7 @@ export function removeElementFromPipeline(pipeline, itemToDelete) {
   }
 
   return {
+    ...pipeline,
     configStack: mapLastItemInArray(pipeline.configStack, stackItem => ({
       properties: stackItem.properties,
       elements: {
@@ -570,6 +577,7 @@ export function canMovePipelineElement(pipeline, pipelineAsTree, itemToMove, des
  */
 export function moveElementInPipeline(pipeline, itemToMove, destination) {
   return {
+    ...pipeline,
     configStack: pipeline.configStack,
     merged: {
       properties: pipeline.merged.properties,

@@ -178,14 +178,20 @@ const AppChrome = ({
                 {headerContent}
               </Header>
             </Grid.Column>
-            <Grid.Column width={4}>
+            <Grid.Column width={2}>
+              {actionBarAdditionalItems}
+            </Grid.Column>
+            <Grid.Column width={2}>
               {actionBarItems.map(aBarItem => (
                 <ActionBarItem
                   key={aBarItem.key}
-                  {...aBarItem}
+                  onClick={aBarItem.onClick}
+                  content={aBarItem.content}
+                  buttonProps={{
+                    icon: aBarItem.icon
+                  }}
                 />
               ))}
-              {actionBarAdditionalItems}
             </Grid.Column>
           </Grid>
           <Divider />

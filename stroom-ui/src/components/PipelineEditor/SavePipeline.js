@@ -10,9 +10,8 @@ const enhance = compose(withPipeline({ savePipeline }));
 
 const SavePipeline = ({ pipeline: { isSaving, isDirty }, savePipeline, pipelineId }) => (
   <ActionBarItem
-    icon="save"
+    buttonProps={{ icon: 'save', color: isDirty ? 'blue' : undefined, loading: isSaving }}
     content={isDirty ? 'Save changes' : 'Changes saved'}
-    color={isDirty ? 'blue' : undefined}
     onClick={() => {
       if (isDirty) savePipeline(pipelineId);
     }}

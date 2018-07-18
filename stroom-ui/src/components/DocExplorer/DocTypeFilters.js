@@ -41,9 +41,9 @@ const enhance = compose(
   ),
   withProps(({ docRefTypes, typeFilters }) => {
     let allSelectState;
-    if (typeFilters.length == 0) {
+    if (typeFilters.length === 0) {
       allSelectState = ALL_SELECT_STATE.NONE;
-    } else if (typeFilters.length == docRefTypes.length) {
+    } else if (typeFilters.length === docRefTypes.length) {
       allSelectState = ALL_SELECT_STATE.ALL;
     } else {
       allSelectState = ALL_SELECT_STATE.INDETERMINATE;

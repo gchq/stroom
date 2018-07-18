@@ -12,7 +12,7 @@ const enhance = compose(connect((state, props) => ({}), { pipelineSettingsOpened
 
 const OpenPipelineSettings = ({ pipelineId, pipelineSettingsOpened }) => (
   <ActionBarItem
-    icon="cogs"
+    buttonProps={{ icon: 'cogs' }}
     content="Edit the settings for this pipeline"
     onClick={() => pipelineSettingsOpened(pipelineId)}
   />
