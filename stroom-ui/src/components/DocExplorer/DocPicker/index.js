@@ -1,5 +1,5 @@
 import DocPicker from './DocPicker';
-import DocPickerModal from './DocRefModalPicker';
+import DocPickerModal from './DocPickerModal';
 
 export { DocPicker, DocPickerModal };
 
