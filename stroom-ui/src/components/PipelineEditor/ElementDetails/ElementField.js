@@ -289,8 +289,8 @@ const getField = (
         <DocPickerModal
           pickerId={getPickerName(name)}
           typeFilter={docRefTypes}
-          onChange={(newValue) => {
-            pipelineElementPropertyUpdated(pipelineId, elementId, name, 'entity', newValue);
+          onChange={({node, lineage}) => {
+            pipelineElementPropertyUpdated(pipelineId, elementId, name, 'entity', node);
           }}
         />
       );

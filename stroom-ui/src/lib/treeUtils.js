@@ -238,21 +238,24 @@ export function pickRandomItem(tree, filterFunction) {
 }
 
 /**
- * Given a tree, and a UUID, finds and returns the matching object.
+ * Given a tree, and a UUID, finds and returns the matching object and it's lineage
  *
  * @param {treeNode} tree
  * @param {string} uuid
  */
 export function findItem(tree, uuid) {
-  if (tree.uuid === uuid) {
-    return tree;
-  } else if (tree.children) {
-    const nested = tree.children.map(c => findItem(c, uuid)).filter(c => !!c);
-    if (!!nested && nested.length > 0) {
-      return nested[0];
+  let foundNode, foundLineage;
+  iterateNodes(tree, (lineage, node) => {
+    if (node.uuid === uuid) {
+      foundNode = node;
+      foundLineage = lineage;
     }
-  }
-  return undefined;
+  })
+
+  return {
+    node: foundNode,
+    lineage: foundLineage
+  };
 }
 
 /**

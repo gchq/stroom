@@ -97,7 +97,7 @@ const enhance = compose(
   withPendingDeletion,
 );
 
-const _ExpressionOperator = ({
+const ExpressionOperator = ({
   expressionId,
   operator,
   isRoot,
@@ -235,7 +235,7 @@ const _ExpressionOperator = ({
                   break;
                 case 'operator':
                   itemElement = (
-                    <ExpressionOperator
+                    <EnhancedExpressionOperator
                       dataSource={dataSource}
                       expressionId={expressionId}
                       isEnabled={isEnabled && c.enabled}
@@ -267,9 +267,9 @@ const _ExpressionOperator = ({
   );
 };
 
-const ExpressionOperator = enhance(_ExpressionOperator);
+const EnhancedExpressionOperator = enhance(ExpressionOperator);
 
-ExpressionOperator.propTypes = {
+EnhancedExpressionOperator.propTypes = {
   dataSource: PropTypes.object.isRequired, // complete definition of the data source
   expressionId: PropTypes.string.isRequired, // the ID of the overall expression
   operator: PropTypes.object.isRequired, // the operator that this particular element is to represent
@@ -277,8 +277,8 @@ ExpressionOperator.propTypes = {
   isEnabled: PropTypes.bool.isRequired, // a combination of any parent enabled state, and its own
 };
 
-ExpressionOperator.defaultProps = {
+EnhancedExpressionOperator.defaultProps = {
   isRoot: false,
 };
 
-export default enhance(ExpressionOperator);
+export default EnhancedExpressionOperator;

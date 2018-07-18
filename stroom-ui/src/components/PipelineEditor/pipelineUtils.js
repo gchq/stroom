@@ -543,10 +543,10 @@ export function removeElementFromPipeline(pipeline, itemToDelete) {
  * @param {string} itemToMove ID of the item to move
  * @param {string} destination ID of the destination
  * @return {boolean} Indicate if the move is valid.
- */
+ */ 
 export function canMovePipelineElement(pipeline, pipelineAsTree, itemToMove, destination) {
-  const itemToMoveNode = findItem(pipelineAsTree, itemToMove);
-  const destinationNode = findItem(pipelineAsTree, destination);
+  const {node: itemToMoveNode } = findItem(pipelineAsTree, itemToMove);
+  const {node: destinationNode } = findItem(pipelineAsTree, destination);
 
   // If either node cannot be found...bad times
   if (!itemToMoveNode || !destinationNode) {

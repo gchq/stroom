@@ -74,7 +74,7 @@ server.get(`${testConfig.explorerServiceUrl}/all`).intercept((req, res) => {
 server
   .get(`${testConfig.explorerServiceUrl}/info/:docRefType/:docRefUuid`)
   .intercept((req, res) => {
-    const docRef = findItem(testCache.data.documentTree, req.params.docRefUuid);
+    const { node: docRef } = findItem(testCache.data.documentTree, req.params.docRefUuid);
     const info = {
       docRef,
       createTime: startTime,

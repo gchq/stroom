@@ -16,6 +16,7 @@
 import DocExplorer from './DocExplorer';
 import DocRefInfoModal from './DocRefInfoModal';
 import DocPicker, { DocPickerModal } from './DocPicker/index';
+import DocRefTypePicker from './DocRefTypePicker';
 import PermissionInheritancePicker from './PermissionInheritancePicker';
 import permissionInheritanceValues from './permissionInheritanceValues';
 import withExplorerTree from './withExplorerTree';
@@ -26,6 +27,7 @@ export {
   DocRefInfoModal,
   DocPickerModal,
   DocPicker,
+  DocRefTypePicker,
   PermissionInheritancePicker,
   permissionInheritanceValues,
   withExplorerTree,

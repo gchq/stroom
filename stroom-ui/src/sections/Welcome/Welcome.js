@@ -44,6 +44,12 @@ const Welcome = props => (
               <code> ctrl + shift + e</code>
             </Table.Cell>
           </Table.Row>
+          <Table.Row>
+            <Table.Cell>Create Document</Table.Cell>
+            <Table.Cell>
+              <code>ctrl + shift + n</code>
+            </Table.Cell>
+          </Table.Row>
         </Table.Body>
       </Table>
     </Container>
