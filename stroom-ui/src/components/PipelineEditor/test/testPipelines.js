@@ -16,6 +16,7 @@ import {
   parentWithPropertyParentNoProperty,
   parentWithPropertyParentWithProperty,
   parentWithRemoveforItsParentsAdd,
+  emptyChildParentWithProperty,
 } from './pipeline.propertyInheritance.testData';
 
 export default {
@@ -36,4 +37,5 @@ export default {
   parentWithPropertyParentNoProperty,
   parentWithPropertyParentWithProperty,
   parentWithRemoveforItsParentsAdd,
+  emptyChildParentWithProperty,
 };

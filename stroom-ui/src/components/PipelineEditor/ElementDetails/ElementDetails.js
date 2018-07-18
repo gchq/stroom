@@ -60,12 +60,15 @@ const ElementDetails = ({
   // These next few lines involve extracting the relevant properties from the pipeline.
   // The types of the properties and their values are in different places.
   const element = pipeline.pipeline.merged.elements.add.find(element => element.id === selectedElementId);
-  const elementProperties = pipeline.pipeline.configStack[
-    pipeline.pipeline.configStack.length - 1
-  ].properties.add.filter(property => property.element === selectedElementId);
   const elementType = elements.elements.find(e => e.type === element.type);
   const elementTypeProperties = elements.elementProperties[element.type];
   const sortedElementTypeProperties = Object.values(elementTypeProperties).sort((a, b) => a.displayPriority > b.displayPriority);
+
+  const elementProperties = pipeline.pipeline.merged.properties.add.filter(property => property.element === selectedElementId);
+
+  const elementPropertiesInChild = pipeline.pipeline.configStack[
+    pipeline.pipeline.configStack.length - 1
+  ].properties.add.filter(property => property.element === selectedElementId);
 
   const title = (
     <React.Fragment>
@@ -99,6 +102,7 @@ const ElementDetails = ({
             );
             const defaultValue = elementTypeProperty.defaultValue;
             const property = elementProperties.find(element => element.name === elementTypeProperty.name);
+            const childProperty = elementPropertiesInChild.find(element => element.name === elementTypeProperty.name);
             return (
               <ElementField
                 pipelineId={pipelineId}
@@ -110,6 +114,7 @@ const ElementDetails = ({
                 description={elementTypeProperty.description}
                 defaultValue={defaultValue}
                 parentValue={parentValue}
+                childValue={childProperty}
                 value={property}
               />
             );
