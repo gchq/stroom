@@ -308,9 +308,10 @@ export const reducer = handleActions(
       const { explorerId, docRefType, newValue } = action.payload;
 
       const currentExplorer = state.explorers[explorerId];
-      const updatedFilters = newValue
-        ? currentExplorer.typeFilters.concat([docRefType])
-        : currentExplorer.typeFilters.filter(t => t !== docRefType);
+      let updatedFilters = currentExplorer.typeFilters.filter(t => t !== docRefType)
+      if (newValue) {
+        updatedFilters = updatedFilters.concat([docRefType])
+      }
 
       const updatedExplorer = getUpdatedExplorer(
         state.documentTree,

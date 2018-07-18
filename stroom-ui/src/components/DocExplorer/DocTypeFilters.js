@@ -16,7 +16,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { compose } from 'recompose';
+import { compose, withProps } from 'recompose';
 import { Form, Checkbox } from 'semantic-ui-react';
 
 import withDocRefTypes from './withDocRefTypes';
@@ -24,23 +24,59 @@ import { actionCreators } from './redux';
 
 const { typeFilterChanged } = actionCreators;
 
+const ALL_SELECT_STATE = {
+  ALL: 0,
+  NONE: 1,
+  INDETERMINATE: 2,
+};
+
 const enhance = compose(
   withDocRefTypes,
   connect(
     ({ docExplorer }, { explorerId }) => ({
       typeFilters: docExplorer.explorerTree.explorers[explorerId].typeFilters,
-      docRefTypes: docExplorer.explorerTree.docRefTypes,
+      docRefTypes: docExplorer.explorerTree.docRefTypes.filter(d => d !== 'Folder'),
     }),
     { typeFilterChanged },
   ),
+  withProps(({ docRefTypes, typeFilters }) => {
+    let allSelectState;
+    if (typeFilters.length == 0) {
+      allSelectState = ALL_SELECT_STATE.NONE;
+    } else if (typeFilters.length == docRefTypes.length) {
+      allSelectState = ALL_SELECT_STATE.ALL;
+    } else {
+      allSelectState = ALL_SELECT_STATE.INDETERMINATE;
+    }
+    console.log('Doc REf Types', docRefTypes);
+    console.log('Type Filters', typeFilters);
+    console.log('All State', allSelectState);
+    return {
+      allSelectState,
+    };
+  }),
 );
 
 const DocTypeFilters = ({
-  explorerId, typeFilters, docRefTypes, typeFilterChanged,
+  explorerId,
+  typeFilters,
+  docRefTypes,
+  typeFilterChanged,
+  allSelectState,
 }) => (
   <div>
+    <Form.Field>
+      <img className="doc-ref__icon" alt="X" src={require('./images/System.svg')} />
+      <Checkbox
+        label="All"
+        indeterminate={allSelectState === ALL_SELECT_STATE.INDETERMINATE}
+        checked={allSelectState === ALL_SELECT_STATE.ALL}
+        onChange={(e, { checked }) =>
+          docRefTypes.forEach(docRefType => typeFilterChanged(explorerId, docRefType, checked))
+        }
+      />;
+    </Form.Field>
     {docRefTypes
-      .filter(docRefType => docRefType !== 'Folder')
       .map(docRefType => ({ docRefType, isSelected: typeFilters.includes(docRefType) }))
       .map(({ docRefType, isSelected }) => (
         <Form.Field key={docRefType}>

@@ -240,8 +240,6 @@ storiesOf('App Chrome', module)
   .addDecorator(DragDropDecorator)
   .addDecorator(StoryRouter())
   .add('Just the chrome', props => (
-    <AppChrome headerContent={<Header.Content>Stuff</Header.Content>} icon="cog">
-      Stuff goes here
-    </AppChrome>
+    <AppChrome headerContent={<Header.Content>Stuff</Header.Content>} icon="cog" content={<div>Stuff goes here</div>} />
   ))
   .add('With routing', () => <AppChromeWithRouter />);
