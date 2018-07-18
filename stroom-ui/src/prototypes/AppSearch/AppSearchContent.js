@@ -48,6 +48,7 @@ const enhance = compose(
       searchTerm: state.appSearch.searchTerm,
       searchResults: state.appSearch.searchResults,
       selectedItem: state.appSearch.selectedItem,
+      selectedDocRef: state.appSearch.selectedDocRef,
     }),
     {
       appSearchClosed,
@@ -59,16 +60,27 @@ const enhance = compose(
   ),
   lifecycle({
     componentDidMount() {
+      // I'd rather use Mousetrap for these shortcut keys. Historically Mousetrap hasn't handled keypresses
+      // that occured inside inputs or textareas. There were some changes to fix this, like binding specifically
+      // to a field. But that requires getting the element from the DOM and we'd rather not break outside React
+      // to do this. The other alternative is adding 'mousetrap' as a class to the input, but that striaght up doesn't work.
+
       // We need to prevent up and down keys from moving the cursor around in the input
       const input = document.getElementById('AppSearch__search-input');
       input.addEventListener(
         'keydown',
         (event) => {
           if (event.keyCode === 38) {
+            // Up
             this.props.appSearchSelectionUp();
             event.preventDefault();
           } else if (event.keyCode === 40) {
+            // Down
             this.props.appSearchSelectionDown();
+            event.preventDefault();
+          } else if (event.keyCode === 13) {
+            // Enter
+            this.props.openDocRef(this.props.history, this.props.selectedDocRef);
             event.preventDefault();
           }
         },
@@ -92,6 +104,7 @@ const AppSearchContent = ({
 }) => (
   <React.Fragment>
     <Input
+      className="mousetrap"
       id="AppSearch__search-input"
       icon="search"
       placeholder="Search..."
@@ -101,29 +114,29 @@ const AppSearchContent = ({
     />
     <Menu vertical fluid>
       {searchResults.map((searchResult, i, arr) => {
-          // Compose the data that provides the breadcrumb to this node
-          const sections = searchResult.lineage.map(l => ({
-            key: l.name,
-            content: l.name,
-            link: false,
-          }));
+        // Compose the data that provides the breadcrumb to this node
+        const sections = searchResult.lineage.map(l => ({
+          key: l.name,
+          content: l.name,
+          link: false,
+        }));
 
-          return (
-            <Menu.Item
-              active={selectedItem === i}
-              key={i}
-              onClick={() => {
-                openDocRef(history, searchResult);
-                appSearchClosed();
-              }}
-            >
-              <div style={{ width: '50rem' }}>
-                <Breadcrumb size="mini" icon="right angle" sections={sections} />
-                <div className="doc-ref-dropdown__item-name">{searchResult.name}</div>
-              </div>
-            </Menu.Item>
-          );
-        })}
+        return (
+          <Menu.Item
+            active={selectedItem === i}
+            key={i}
+            onClick={() => {
+              openDocRef(history, searchResult);
+              appSearchClosed();
+            }}
+          >
+            <div style={{ width: '50rem' }}>
+              <Breadcrumb size="mini" icon="right angle" sections={sections} />
+              <div className="doc-ref-dropdown__item-name">{searchResult.name}</div>
+            </div>
+          </Menu.Item>
+        );
+      })}
     </Menu>
   </React.Fragment>
 );

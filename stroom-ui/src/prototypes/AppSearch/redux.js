@@ -37,7 +37,8 @@ const defaultState = {
   searchResults: [],
   rawData: [],
   search: undefined,
-  selectedItem: 0,
+  selectedItem: 0, // Used for simple item selection, by array index
+  selectedDocRef: undefined, // Used for loading
 };
 
 const reducer = handleActions(
@@ -66,6 +67,7 @@ const reducer = handleActions(
       return {
         ...state,
         selectedItem: nextIndex,
+        selectedDocRef: state.searchResults[nextIndex],
       };
     },
     APP_SEARCH_SELECTION_DOWN: (state, payload) => {
@@ -76,6 +78,7 @@ const reducer = handleActions(
       return {
         ...state,
         selectedItem: nextIndex,
+        selectedDocRef: state.searchResults[nextIndex],
       };
     },
     [docTreeReceived]: (state, { payload: { documentTree } }) => {
