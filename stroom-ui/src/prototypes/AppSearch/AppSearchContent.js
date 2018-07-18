@@ -16,7 +16,7 @@
 
 import React from 'react';
 
-import { compose, lifecycle } from 'recompose';
+import { compose } from 'recompose';
 import { connect } from 'react-redux';
 import { Menu, Input, Breadcrumb } from 'semantic-ui-react';
 import { withRouter } from 'react-router-dom';
@@ -101,7 +101,6 @@ class AppSearchContent extends React.Component {
 
   render() {
     const {
-      isOpen,
       searchTerm,
       appSearchClosed,
       appSearchTermUpdated,
@@ -109,8 +108,6 @@ class AppSearchContent extends React.Component {
       selectedItem,
       history,
       openDocRef,
-      appSearchSelectionUp,
-      appSearchSelectionDown,
     } = this.props;
     return (
       <React.Fragment>
