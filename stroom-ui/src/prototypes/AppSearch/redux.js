@@ -56,10 +56,14 @@ const reducer = handleActions(
         searchResults = state.search.search(searchTerm);
       }
 
+      // A user would probably want to reset their selection when they expand their search terms.
+      // Plus it solves a bunch of problems we might encounter.
       return {
         ...state,
         searchTerm,
         searchResults,
+        selectedItem: 0,
+        selectedDocRef: state.searchResults.length > 0 ? state.searchResults[0] : undefined,
       };
     },
     APP_SEARCH_SELECTION_UP: (state, payload) => {

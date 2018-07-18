@@ -92,6 +92,7 @@ class AppSearchContent extends React.Component {
           event.preventDefault();
         } else if (event.keyCode === enterKeycode) {
           this.props.openDocRef(this.props.history, this.props.selectedDocRef);
+          this.props.appSearchClosed();
           event.preventDefault();
         }
       },
