@@ -73,25 +73,26 @@ class AppSearchContent extends React.Component {
 
     // Up
     const upKeycode = 38;
-    const ctrlKKeycode = 75;
+    const kKeycode = 75;
 
     // Down
     const downKeycode = 40;
-    const ctrljKeycode = 74;
+    const jKeycode = 74;
 
     const enterKeycode = 13;
 
     this.refs.searchTermInput.inputRef.addEventListener(
       'keydown',
       (event) => {
-        if (event.keyCode === upKeycode || event.keyCode === ctrlKKeycode) {
+        if (event.keyCode === upKeycode || (event.ctrlKey && event.keyCode === kKeycode)) {
           this.props.appSearchSelectionUp();
           event.preventDefault();
-        } else if (event.keyCode === downKeycode || event.keyCode === ctrljKeycode) {
+        } else if (event.keyCode === downKeycode || (event.ctrlKey && event.keyCode === jKeycode)) {
           this.props.appSearchSelectionDown();
           event.preventDefault();
         } else if (event.keyCode === enterKeycode) {
           this.props.openDocRef(this.props.history, this.props.selectedDocRef);
+          this.props.appSearchClosed();
           event.preventDefault();
         }
       },
