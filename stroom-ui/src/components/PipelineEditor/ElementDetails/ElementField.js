@@ -213,19 +213,30 @@ const getDetails = ({
     );
   } else if (value !== undefined && parentValue !== undefined && !isSet(defaultValue)) {
     actualValue = value.value[type];
-    info = (
-      <div>
-        <p>This property has no default value.</p>
+    const setByChild = childValue !== undefined && childValue.value[type] === value.value[type];
+    if (setByChild) {
+      info = (
+        <div>
+          <p>This property has no default value.</p>
 
-        <p>
-          It is inheriting a value of{' '}
-          <strong> {getDisplayValue(parentValue.value[type], type)}</strong>
-          but this has been overriden by the user. You can revert to this inherited value if you
-          like.
-        </p>
-        {RevertToParentButton}
-      </div>
-    );
+          <p>
+            It is inheriting a value of{' '}
+            <strong> {getDisplayValue(parentValue.value[type], type)}</strong>
+            but this has been overriden by the user. You can revert to this inherited value if you
+            like.
+          </p>
+          {RevertToParentButton}
+        </div>
+      );
+    } else {
+      info = (
+        <div>
+          <p>This property has no default value.</p>
+
+          <p>This property is inheriting it's value.</p>
+        </div>
+      );
+    }
   }
 
   return { actualValue, info };
@@ -358,9 +369,12 @@ const ElementField = ({
 
   const popOverContent = (
     <div>
+      {/* <p>
+        <strong>Field name: </strong> {name}
+      </p> */}
       <p>
         The <em>field name</em> of this property is <strong>{name}</strong>
-      </p>
+      </p> 
       {details.info}
     </div>
   );

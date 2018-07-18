@@ -46,8 +46,8 @@ const enhance = compose(
   withIsExpanded,
   lifecycle({
     componentDidMount() {
-      Mousetrap.bind('ctrl+e', () => this.props.recentItemsOpened());
-      Mousetrap.bind('ctrl+f', () => this.props.appSearchOpened());
+      Mousetrap.bind('ctrl+shift+e', () => this.props.recentItemsOpened());
+      Mousetrap.bind('ctrl+shift+f', () => this.props.appSearchOpened());
     },
   }),
   withProps(({

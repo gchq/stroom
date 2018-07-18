@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { createActions, handleActions, combineActions } from 'redux-actions';
 import * as JsSearch from 'js-search';
 
@@ -8,6 +24,8 @@ const actionCreators = createActions({
   APP_SEARCH_TERM_UPDATED: searchTerm => ({ searchTerm }),
   APP_SEARCH_OPENED: () => ({ isOpen: true }),
   APP_SEARCH_CLOSED: () => ({ isOpen: false }),
+  APP_SEARCH_SELECTION_UP: () => ({}),
+  APP_SEARCH_SELECTION_DOWN: () => ({}),
 });
 
 const { appSearchOpened, appSearchClosed } = actionCreators;
@@ -19,6 +37,7 @@ const defaultState = {
   searchResults: [],
   rawData: [],
   search: undefined,
+  selectedItem: 0,
 };
 
 const reducer = handleActions(
@@ -40,6 +59,23 @@ const reducer = handleActions(
         ...state,
         searchTerm,
         searchResults,
+      };
+    },
+    APP_SEARCH_SELECTION_UP: (state, payload) => {
+      const nextIndex = state.selectedItem == 0 ? 0 : state.selectedItem - 1;
+      return {
+        ...state,
+        selectedItem: nextIndex,
+      };
+    },
+    APP_SEARCH_SELECTION_DOWN: (state, payload) => {
+      const nextIndex =
+        state.selectedItem === state.searchResults.length - 1
+          ? state.searchResults.length - 1
+          : state.selectedItem + 1;
+      return {
+        ...state,
+        selectedItem: nextIndex,
       };
     },
     [docTreeReceived]: (state, { payload: { documentTree } }) => {
