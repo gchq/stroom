@@ -22,11 +22,11 @@ import { connect } from 'react-redux';
 import { Button, Modal, Input, Loader } from 'semantic-ui-react';
 
 import { findItem } from 'lib/treeUtils';
-import { actionCreators } from './redux';
+import { actionCreators } from '../redux';
 
-import withExplorerTree from './withExplorerTree';
-import withDocRefTypes from './withDocRefTypes';
-import DocPicker from './DocPicker/DocPicker';
+import withExplorerTree from '../withExplorerTree';
+import withDocRefTypes from '../withDocRefTypes';
+import DocPicker from './DocPicker';
 
 const { docRefPicked, docExplorerOpened } = actionCreators;
 
@@ -38,7 +38,7 @@ const enhance = compose(
   connect(
     (state, props) => ({
       documentTree: state.docExplorer.explorerTree.documentTree,
-      docRef: state.docRefPicker[props.pickerId],
+      docRef: state.docExplorer.docRefPicker[props.pickerId],
       explorer: state.docExplorer.explorerTree.explorers[props.pickerId],
     }),
     {
@@ -70,6 +70,7 @@ const DocPickerModal = ({
   typeFilters,
   setIsOpen,
   explorer,
+  onChange,
 }) => {
   const value = docRef ? docRef.name : '';
 
@@ -80,7 +81,11 @@ const DocPickerModal = ({
   const onDocRefSelected = () => {
     Object.keys(explorer.isSelected).forEach((pickedUuid) => {
       const picked = findItem(documentTree, pickedUuid);
+      // The 'children' property is just for the tree. It's not part of the DocRef and we need to remove it.
+      // If left in it will get sent to the server and cause deserialisation errors.
+      delete picked.children;
       docRefPicked(pickerId, picked);
+      onChange(picked);
     });
 
     handleClose();
@@ -117,6 +122,7 @@ const DocPickerModal = ({
 DocPickerModal.propTypes = {
   pickerId: PropTypes.string.isRequired,
   typeFilters: PropTypes.array,
+  onChange: PropTypes.func,
 };
 
 export default enhance(DocPickerModal);

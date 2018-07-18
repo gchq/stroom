@@ -1,13 +1,18 @@
 import { combineReducers } from 'redux';
 
 import {
+  actionCreators as inheritPipelineActionCreators,
+  reducer as inheritPipelineReducer,
+} from './inheritPipelineReducer';
+
+import {
   actionCreators as elementActionCreators,
   reducer as elementReducer,
 } from './elementReducer';
 
-import { 
+import {
   actionCreators as pipelineSettingsActionCreators,
-  reducer as pipelineSettingsReducer
+  reducer as pipelineSettingsReducer,
 } from './pipelineSettingsReducer';
 
 import {
@@ -24,14 +29,16 @@ const actionCreators = {
   ...elementActionCreators,
   ...pipelineActionCreators,
   ...pipelineSearchActionCreators,
-  ...pipelineSettingsActionCreators
+  ...pipelineSettingsActionCreators,
+  ...inheritPipelineActionCreators,
 };
 
 const reducer = combineReducers({
   elements: elementReducer,
   pipelines: pipelineReducer,
   search: pipelineSearchReducer,
-  settings: pipelineSettingsReducer
+  settings: pipelineSettingsReducer,
+  inheritPipeline: inheritPipelineReducer,
 });
 
 export { actionCreators, reducer };

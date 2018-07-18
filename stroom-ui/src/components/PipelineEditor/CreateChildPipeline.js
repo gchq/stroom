@@ -1,17 +1,25 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
 
 import ActionBarItem from 'sections/AppChrome/ActionBarItem';
+import { actionCreators } from './redux';
 
-const enhance = compose(connect((state, props) => ({}), {}));
+const { startInheritedPipeline } = actionCreators;
 
-const CreateChildPipeline = props => (
+const enhance = compose(connect((state, props) => ({}), { startInheritedPipeline }));
+
+const CreateChildPipeline = ({ pipelineId, startInheritedPipeline }) => (
   <ActionBarItem
-    buttonProps={{ icon: 'eyedropper' }}
+    buttonProps={{ icon: 'recycle' }}
     content="Create a child pipeline, using this one as a parent"
-    onClick={() => console.log('Choose folder for child pipeline?')}
+    onClick={() => startInheritedPipeline(pipelineId)}
   />
 );
+
+CreateChildPipeline.propTypes = {
+  pipelineId: PropTypes.string.isRequired,
+};
 
 export default enhance(CreateChildPipeline);
