@@ -27,6 +27,7 @@ import stroom.refdata.ReferenceDataResult;
 import stroom.refdata.offheapstore.RefDataStoreProvider;
 import stroom.refdata.offheapstore.RefDataValueProxy;
 import stroom.refdata.offheapstore.RefDataValueProxyConsumer;
+import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
@@ -78,16 +79,19 @@ class BitmapLookup extends AbstractLookup {
 
 //                final Sequence sequence = eventListConsumer.map(eventListProxy);
 
-                if (refDataValueProxy != null) {
-                    if (sequenceMaker == null) {
-                        sequenceMaker = new SequenceMaker(context, getRefDataStore(), getConsumerFactory());
-                        sequenceMaker.open();
-                    }
-                    boolean wasFound = false;
-                    try {
+                boolean wasFound = false;
+
+                try {
+                    if (refDataValueProxy != null) {
+                        if (sequenceMaker == null) {
+                            sequenceMaker = new SequenceMaker(context, getRefDataStore(), getConsumerFactory());
+                            sequenceMaker.open();
+                        }
                         wasFound = sequenceMaker.consume(refDataValueProxy);
-                    } catch (XPathException e) {
-                        outputInfo(Severity.ERROR, "Lookup errored: " + e.getMessage(), lookupIdentifier, trace, result, context);
+                    }
+
+                    if (trace && wasFound) {
+                        outputInfo(Severity.INFO, "Lookup success ", lookupIdentifier, trace, result, context);
                     }
 
                     if (!wasFound && !ignoreWarnings) {
@@ -102,9 +106,8 @@ class BitmapLookup extends AbstractLookup {
                         failedBits.append(",");
                     }
 
-                    if (trace) {
-                        outputInfo(Severity.INFO, "Lookup success ", lookupIdentifier, trace, result, context);
-                    }
+                } catch (XPathException e) {
+                    outputInfo(Severity.ERROR, "Lookup errored: " + e.getMessage(), lookupIdentifier, trace, result, context);
                 }
             }
 
@@ -116,7 +119,13 @@ class BitmapLookup extends AbstractLookup {
                 // Create the message.
                 final StringBuilder sb = new StringBuilder();
                 sb.append("Lookup failed ");
-                lookupIdentifier.append(sb);
+                sb.append("(map = ");
+                sb.append(lookupIdentifier.getPrimaryMapName());
+                sb.append(", key = ");
+                sb.append(failedBits.toString());
+                sb.append(", eventTime = ");
+                sb.append(DateUtil.createNormalDateTimeString(lookupIdentifier.getEventTime()));
+                sb.append(")");
                 outputWarning(context, sb, null);
             }
 

@@ -79,8 +79,6 @@ public class LookupIdentifier {
 
     public void append(final StringBuilder sb) {
         sb.append("(map = ");
-        sb.append(map);
-        sb.append(", primaryMapName = ");
         sb.append(primaryMapName);
         sb.append(", key = ");
         sb.append(key);

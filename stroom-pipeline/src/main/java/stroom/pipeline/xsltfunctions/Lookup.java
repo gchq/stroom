@@ -60,23 +60,25 @@ class Lookup extends AbstractLookup {
 //
 //        final Sequence sequence = eventListConsumer.map(eventListProxy);
 
-        if (refDataValueProxy != null) {
-            sequenceMaker.open();
+        boolean wasFound = false;
+        try {
+            if (refDataValueProxy != null) {
+                sequenceMaker.open();
 
-            try {
-                boolean wasFound = sequenceMaker.consume(refDataValueProxy);
-                if (!wasFound && !ignoreWarnings) {
-                    outputInfo(Severity.WARNING, "Lookup failed ", lookupIdentifier, trace, result, context);
+                wasFound = sequenceMaker.consume(refDataValueProxy);
+
+                sequenceMaker.close();
+
+                if (wasFound && trace) {
+                    outputInfo(Severity.INFO, "Lookup success ", lookupIdentifier, trace, result, context);
                 }
-            } catch (XPathException e) {
-                outputInfo(Severity.ERROR, "Lookup errored: " + e.getMessage(), lookupIdentifier, trace, result, context);
             }
+        } catch (XPathException e) {
+            outputInfo(Severity.ERROR, "Lookup errored: " + e.getMessage(), lookupIdentifier, trace, result, context);
+        }
 
-            sequenceMaker.close();
-
-            if (trace) {
-                outputInfo(Severity.INFO, "Lookup success ", lookupIdentifier, trace, result, context);
-            }
+        if (!wasFound && !ignoreWarnings) {
+            outputInfo(Severity.WARNING, "Lookup failed ", lookupIdentifier, trace, result, context);
         }
 
         return sequenceMaker.toSequence();
