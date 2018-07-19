@@ -53,12 +53,6 @@ class Lookup extends AbstractLookup {
         final RefDataValueProxy refDataValueProxy = result.getRefDataValueProxy();
 
         final SequenceMaker sequenceMaker = new SequenceMaker(context, getRefDataStore(), getConsumerFactory());
-//                EventListProxyConsumerFactory.getConsumerSupplier(eventListProxy));
-//        final EventListProxyConsumer eventListConsumer = EventListProxyConsumerFactory.getConsumer(
-//                eventListProxy,
-//                context);
-//
-//        final Sequence sequence = eventListConsumer.map(eventListProxy);
 
         boolean wasFound = false;
         try {

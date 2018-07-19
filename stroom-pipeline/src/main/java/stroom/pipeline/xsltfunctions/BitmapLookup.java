@@ -43,9 +43,6 @@ class BitmapLookup extends AbstractLookup {
 
     @Override
     protected Sequence doLookup(final XPathContext context,
-//                                final String map,
-//                                final String key,
-//                                final long eventTime,
                                 final boolean ignoreWarnings,
                                 final boolean trace,
                                 final LookupIdentifier lookupIdentifier) throws XPathException {
