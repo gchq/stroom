@@ -3,15 +3,21 @@ ext.moduleName = 'stroom.data.store.impl.fs'
 dependencies {
     compile project(':stroom-data-store:stroom-data-store-impl-fs-db-gen')
     compile project(':stroom-data-store:stroom-data-store-api')
+    compile project(':stroom-data-meta:stroom-data-meta-api')
     compile project(':stroom-core-server')
-        compile project(':stroom-core-shared')
-//    compile project(':stroom-properties-api')
-//    compile project(':stroom-security-api')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-properties:stroom-properties-api')
+    compile project(':stroom-security-api')
     compile project(':stroom-util') // TODO : @66 TRY AND REMOVE THIS
-//    compile libs.stroomQueryApi
+    compile project(':stroom-util-shared')
+    compile project(':stroom-entity-shared')
+
+    compile libs.stroomDocRef
+    compile libs.stroomQueryApi
+    compile libs.eventLogging
 //
-//    compile libs.flyway_core
-//    compile libs.guava
+    compile libs.flyway_core
+    compile libs.guava
     compile libs.guice4
     compile libs.hikari
     compile libs.jooq

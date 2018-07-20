@@ -26,7 +26,7 @@ import stroom.data.store.StreamFactory;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
-import stroom.feed.AttributeMapFactory;
+import stroom.feed.AttributeMapUtil;
 import stroom.feed.FeedDocCache;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
@@ -193,11 +193,11 @@ public class StreamTargetStroomStreamHandler implements StroomStreamHandler, Str
         if (StroomZipFileType.Meta.equals(currentFileType)) {
             currentAttributeMap = null;
             if (globalAttributeMap != null) {
-                currentAttributeMap = AttributeMapFactory.cloneAllowable(globalAttributeMap);
+                currentAttributeMap = AttributeMapUtil.cloneAllowable(globalAttributeMap);
             } else {
                 currentAttributeMap = new AttributeMap();
             }
-            currentAttributeMap.read(currentHeaderByteArrayOutputStream.toByteArray());
+            AttributeMapUtil.read( currentHeaderByteArrayOutputStream.toByteArray(), currentAttributeMap);
 
             if (metaDataStatistics != null) {
                 metaDataStatistics.recordStatistics(currentAttributeMap);

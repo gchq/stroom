@@ -20,6 +20,7 @@ package stroom.proxy.repo;
 import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.feed.AttributeMapUtil;
 import stroom.feed.FeedDocCache;
 import stroom.data.meta.api.AttributeMap;
 import stroom.feed.StroomHeaderArguments;
@@ -102,7 +103,7 @@ public class ProxyRepositoryCreator {
                 // Add meta data.
                 OutputStream zipPart = zipOutputStream.addEntry(new StroomZipEntry(null, newName, StroomZipFileType.Meta).getFullName());
                 final AttributeMap map = createMap(feed, effectiveMs);
-                map.write(zipPart, true);
+                AttributeMapUtil.write(map, zipPart, true);
 
                 // Add data.
                 zipPart = zipOutputStream.addEntry(new StroomZipEntry(null, newName, StroomZipFileType.Data).getFullName());
@@ -137,11 +138,11 @@ public class ProxyRepositoryCreator {
                     InputStream inputStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Meta);
                     final AttributeMap map = createMap(feed, effectiveMs);
                     if (inputStream != null) {
-                        map.read(inputStream, true);
+                        AttributeMapUtil.read(inputStream, true, map);
                     }
                     OutputStream outputStream = zipOutputStream
                             .addEntry(new StroomZipEntry(null, newName, StroomZipFileType.Meta).getFullName());
-                    map.write(outputStream, true);
+                    AttributeMapUtil.write(map, outputStream, true);
 
                     // Add context data.
                     inputStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Context);

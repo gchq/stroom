@@ -6,7 +6,7 @@ import stroom.datafeed.AttributeMapFilter;
 import stroom.datafeed.AttributeMapFilterFactory;
 import stroom.datafeed.RequestHandler;
 import stroom.data.meta.api.AttributeMap;
-import stroom.feed.AttributeMapFactory;
+import stroom.feed.AttributeMapUtil;
 import stroom.datafeed.StroomStatusCode;
 import stroom.datafeed.StroomStreamException;
 import stroom.proxy.repo.StroomStreamProcessor;
@@ -61,7 +61,7 @@ public class ProxyRequestHandler implements RequestHandler {
         int returnCode = HttpServletResponse.SC_OK;
 
         final long startTimeMs = System.currentTimeMillis();
-        final AttributeMap attributeMap = AttributeMapFactory.create(request);
+        final AttributeMap attributeMap = AttributeMapUtil.create(request);
 
         try {
             try (final ByteCountInputStream inputStream = new ByteCountInputStream(request.getInputStream())) {

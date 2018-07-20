@@ -66,16 +66,16 @@ dependencies {
     compile project(':stroom-explorer-api')
     compile project(':stroom-explorer-server')
     compile project(':stroom-security-server')
-    compile project(':stroom-security-impl-mock')
-    permitUnusedDeclared project(':stroom-security-server') //not clear why it thinks this is unused
+//    compile project(':stroom-security-impl-mock')
+//    permitUnusedDeclared project(':stroom-security-server') //not clear why it thinks this is unused
     compile project(':stroom-index-server')
-    compile project(':stroom-statistics-api')
-    permitUnusedDeclared project(':stroom-statistics-api') //not clear why it thinks this is unused
-    compile project(':stroom-entity-shared')
-    permitUnusedDeclared project(':stroom-entity-shared') //not clear why it thinks this is unused
-    compile project(':stroom-index-shared')
-    permitUnusedDeclared project(':stroom-index-shared') // not clear why it thinks this is unused
-    compile project(':stroom-util')
+//    compile project(':stroom-statistics-api')
+//    permitUnusedDeclared project(':stroom-statistics-api') //not clear why it thinks this is unused
+//    compile project(':stroom-entity-shared')
+//    permitUnusedDeclared project(':stroom-entity-shared') //not clear why it thinks this is unused
+//    compile project(':stroom-index-shared')
+//    permitUnusedDeclared project(':stroom-index-shared') // not clear why it thinks this is unused
+//    compile project(':stroom-util')
     compile project(':stroom-docstore-server')
     compile project(':stroom-pipeline')
     compile project(':stroom-dashboard-server')
@@ -87,7 +87,7 @@ dependencies {
     compile project(':stroom-data-store:stroom-data-store-impl-fs')
 
     compile libs.stroomDocRef
-    compile libs.stroomQueryApi
+//    compile libs.stroomQueryApi
 
     compile libs.dropwizard_lifecycle
     compile libs.guava

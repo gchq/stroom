@@ -3,13 +3,15 @@ ext.moduleName = 'stroom.data.meta.impl.db'
 dependencies {
     compile project(':stroom-data-meta:stroom-data-meta-impl-db-gen')
     compile project(':stroom-data-meta:stroom-data-meta-api')
-    compile project(':stroom-properties-api')
+    compile project(':stroom-properties:stroom-properties-api')
     compile project(':stroom-security-api')
     compile project(':stroom-util') // TODO : @66 TRY AND REMOVE THIS
+    compile project(':stroom-util-shared')
+    compile project(':stroom-entity-shared')
     compile libs.stroomQueryApi
 
     compile libs.flyway_core
-    compile libs.guava
+//    compile libs.guava
     compile libs.guice4
     compile libs.hikari
     compile libs.jooq
@@ -22,5 +24,5 @@ dependencies {
     testCompile libs.assertj_core
 
     testCompile project(':stroom-security-impl-mock')
-    testCompile project(':stroom-properties-impl-mock')
+    testCompile project(':stroom-properties:stroom-properties-impl-mock')
 }

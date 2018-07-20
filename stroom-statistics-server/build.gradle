@@ -1,6 +1,7 @@
 ext.moduleName = 'stroom.statistics.server'
 
 dependencies {
+    compile project(':stroom-properties:stroom-properties-api')
     compile project(':stroom-core-server')
     compile project(':stroom-core-shared')
     compile project(':stroom-entity-shared')
@@ -46,7 +47,7 @@ dependencies {
     compile libs.dropwizard_metrics_healthchecks
 
     testCompile project(':stroom-security-impl-mock')
-    testCompile project(':stroom-properties-impl-mock')
+    testCompile project(':stroom-properties:stroom-properties-impl-mock')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
 

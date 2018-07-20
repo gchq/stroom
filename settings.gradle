@@ -25,8 +25,8 @@ include 'stroom-util-shared'
 include 'stroom-entity-shared'
 
 // Properties
-include 'stroom-properties-api'
-include 'stroom-properties-impl-mock'
+include 'stroom-properties:stroom-properties-api'
+include 'stroom-properties:stroom-properties-impl-mock'
 
 // Data meta projects
 include 'stroom-data-meta:stroom-data-meta-api'

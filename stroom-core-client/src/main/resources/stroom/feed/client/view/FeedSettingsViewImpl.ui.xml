@@ -29,9 +29,9 @@
         </g:customCell>
       </g:row>
       <g:row>
-        <g:cell>Type:</g:cell>
+        <g:cell>Received Type:</g:cell>
         <g:customCell>
-          <l:StringListBox ui:field="type" />
+          <l:StringListBox ui:field="receivedType" />
         </g:customCell>
       </g:row>
       <g:row>

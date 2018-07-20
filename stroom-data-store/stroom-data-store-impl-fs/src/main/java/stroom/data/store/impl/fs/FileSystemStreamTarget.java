@@ -23,6 +23,7 @@ import stroom.data.meta.api.Data;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.StreamException;
 import stroom.data.store.api.StreamTarget;
+import stroom.feed.AttributeMapUtil;
 import stroom.io.SeekableOutputStream;
 
 import java.io.IOException;
@@ -275,7 +276,7 @@ final class FileSystemStreamTarget implements StreamTarget, NestedOutputStreamFa
                         .createChildStreamFile(getFiles(false).iterator().next(), InternalStreamTypeNames.MANIFEST);
                 if (Files.isRegularFile(manifestFile)) {
                     try (final InputStream inputStream = Files.newInputStream(manifestFile)) {
-                        attributeMap.read(inputStream, true);
+                        AttributeMapUtil.read(inputStream, true, attributeMap);
                     } catch (final IOException e) {
                         LOGGER.error("getAttributes()", e);
                     }

@@ -17,15 +17,16 @@
 
 package stroom.pipeline.task;
 
-import stroom.docref.DocRef;
 import stroom.data.meta.api.AttributeMap;
+import stroom.data.meta.api.Data;
+import stroom.data.store.api.StreamSourceInputStream;
+import stroom.data.store.api.StreamSourceInputStreamProvider;
+import stroom.docref.DocRef;
+import stroom.feed.AttributeMapUtil;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.state.MetaDataProvider;
 import stroom.pipeline.state.StreamHolder;
-import stroom.data.store.api.StreamSourceInputStream;
-import stroom.data.store.api.StreamSourceInputStreamProvider;
-import stroom.data.meta.api.Data;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.date.DateUtil;
 
@@ -95,7 +96,7 @@ public class StreamMetaDataProvider implements MetaDataProvider {
                         // Only use meta data if we actually have some.
                         final long byteCount = inputStream.size();
                         if (byteCount > MINIMUM_BYTE_COUNT) {
-                            metaData.read(inputStream, false);
+                            AttributeMapUtil.read(inputStream, false, metaData);
                         }
                     }
                 }

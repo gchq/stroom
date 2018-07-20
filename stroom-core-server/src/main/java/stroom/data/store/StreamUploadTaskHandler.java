@@ -26,6 +26,7 @@ import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.util.EntityServiceExceptionUtil;
+import stroom.feed.AttributeMapUtil;
 import stroom.feed.FeedDocCache;
 import stroom.feed.StroomHeaderArguments;
 import stroom.proxy.repo.StroomStreamProcessor;
@@ -104,7 +105,7 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
         final AttributeMap attributeMap = new AttributeMap();
         if (task.getMetaData() != null && task.getMetaData().trim().length() > 0) {
             try {
-                attributeMap.read(task.getMetaData().getBytes(StreamUtil.DEFAULT_CHARSET));
+                AttributeMapUtil.read(task.getMetaData().getBytes(StreamUtil.DEFAULT_CHARSET), attributeMap);
             } catch (final IOException e) {
                 LOGGER.error("uploadData()", e);
             }
@@ -232,10 +233,10 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
             final AttributeMap segmentAttributeMap = new AttributeMap();
             segmentAttributeMap.putAll(globalAttributeMap);
             if (sourceStream != null) {
-                segmentAttributeMap.read(sourceStream, false);
+                AttributeMapUtil.read(sourceStream, false, segmentAttributeMap);
             }
             try (final OutputStream outputStream = outputStreamProvider.next(StreamTypeNames.META)) {
-                segmentAttributeMap.write(outputStream, false);
+                AttributeMapUtil.write(segmentAttributeMap, outputStream, false);
             }
         }
         if (StroomZipFileType.Context.equals(stroomZipFileType)) {

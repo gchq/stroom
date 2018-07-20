@@ -3,6 +3,8 @@ apply plugin: 'com.github.johnrengelman.shadow'
 ext.moduleName = 'stroom.headless'
 
 dependencies {
+    compile project(':stroom-data-meta:stroom-data-meta-api')
+    compile project(':stroom-data-store:stroom-data-store-api')
     compile project(':stroom-core-shared')
     compile project(':stroom-core-server')
     compile project(':stroom-util-shared')

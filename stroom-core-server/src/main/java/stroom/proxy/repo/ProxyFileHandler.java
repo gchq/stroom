@@ -19,6 +19,7 @@ package stroom.proxy.repo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
+import stroom.feed.AttributeMapUtil;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.InitialByteArrayOutputStream;
@@ -161,7 +162,7 @@ public final class ProxyFileHandler {
             stroomStreamHandler.handleEntryStart(targetEntry);
         }
         final InitialByteArrayOutputStream initialByteArrayOutputStream = new InitialByteArrayOutputStream(buffer);
-        attributeMap.write(initialByteArrayOutputStream, false);
+        AttributeMapUtil.write(attributeMap, initialByteArrayOutputStream, false);
         final BufferPos bufferPos = initialByteArrayOutputStream.getBufferPos();
         for (final StroomStreamHandler stroomStreamHandler : stroomStreamHandlerList) {
             stroomStreamHandler.handleEntryData(bufferPos.getBuffer(), 0, bufferPos.getBufferPos());

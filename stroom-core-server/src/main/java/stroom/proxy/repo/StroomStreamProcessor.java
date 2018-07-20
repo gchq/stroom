@@ -22,7 +22,7 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
-import stroom.feed.AttributeMapFactory;
+import stroom.feed.AttributeMapUtil;
 import stroom.feed.StroomHeaderArguments;
 import stroom.datafeed.StroomStatusCode;
 import stroom.datafeed.StroomStreamException;
@@ -182,7 +182,7 @@ public class StroomStreamProcessor {
                     totalRead += read;
                 }
                 handleEntryEnd();
-                final AttributeMap entryAttributeMap = AttributeMapFactory.cloneAllowable(globalAttributeMap);
+                final AttributeMap entryAttributeMap = AttributeMapUtil.cloneAllowable(globalAttributeMap);
                 entryAttributeMap.put(StroomHeaderArguments.STREAM_SIZE, String.valueOf(totalRead));
                 sendHeader(StroomZipFile.SINGLE_META_ENTRY, entryAttributeMap);
             }
@@ -228,12 +228,12 @@ public class StroomStreamProcessor {
             final StroomZipEntry stroomZipEntry = stroomZipNameSet.add(entryName);
 
             if (StroomZipFileType.Meta.equals(stroomZipEntry.getStroomZipFileType())) {
-                final AttributeMap entryAttributeMap = AttributeMapFactory.cloneAllowable(globalAttributeMap);
+                final AttributeMap entryAttributeMap = AttributeMapUtil.cloneAllowable(globalAttributeMap);
                 // We have to wrap our stream reading code in a individual
                 // try/catch so we can return to the client an error in the case
                 // of a corrupt stream.
                 try {
-                    entryAttributeMap.read(zipArchiveInputStream, false);
+                    AttributeMapUtil.read(zipArchiveInputStream, false, entryAttributeMap);
                 } catch (final IOException ioEx) {
                     throw new StroomStreamException(StroomStatusCode.COMPRESSED_STREAM_INVALID, ioEx.getMessage());
                 }
@@ -307,7 +307,7 @@ public class StroomStreamProcessor {
                     if (entryAttributeMap != null) {
                         entryAttributeMap.put(StroomHeaderArguments.STREAM_SIZE, String.valueOf(totalRead));
                         handleEntryStart(new StroomZipEntry(null, stroomZipEntry.getBaseName(), StroomZipFileType.Meta));
-                        final byte[] headerBytes = entryAttributeMap.toByteArray();
+                        final byte[] headerBytes = AttributeMapUtil.toByteArray(entryAttributeMap);
                         handleEntryData(headerBytes, 0, headerBytes.length);
                         handleEntryEnd();
                     }
@@ -330,7 +330,7 @@ public class StroomStreamProcessor {
             // Send Generic Header
             if (headerName == null) {
                 final String dataFileName = stroomZipNameSet.getName(baseName, StroomZipFileType.Data);
-                final AttributeMap entryAttributeMap = AttributeMapFactory.cloneAllowable(globalAttributeMap);
+                final AttributeMap entryAttributeMap = AttributeMapUtil.cloneAllowable(globalAttributeMap);
                 entryAttributeMap.put(StroomHeaderArguments.STREAM_SIZE,
                         String.valueOf(dataStreamSizeMap.remove(dataFileName)));
                 sendHeader(new StroomZipEntry(null, baseName, StroomZipFileType.Meta), entryAttributeMap);
@@ -350,7 +350,7 @@ public class StroomStreamProcessor {
         handleEntryStart(stroomZipEntry);
         // Try and use the buffer
         final InitialByteArrayOutputStream byteArrayOutputStream = new InitialByteArrayOutputStream(buffer);
-        attributeMap.write(byteArrayOutputStream, true);
+        AttributeMapUtil.write(attributeMap, byteArrayOutputStream, true);
         final BufferPos bufferPos = byteArrayOutputStream.getBufferPos();
         handleEntryData(bufferPos.getBuffer(), 0, bufferPos.getBufferPos());
         handleEntryEnd();

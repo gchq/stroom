@@ -18,13 +18,14 @@ package stroom.data.store;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.meta.api.FindDataCriteria;
 import stroom.data.meta.api.Data;
 import stroom.data.meta.api.DataMetaService;
+import stroom.data.meta.api.FindDataCriteria;
 import stroom.data.store.api.NestedInputStream;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.entity.shared.BaseResultList;
+import stroom.feed.AttributeMapUtil;
 import stroom.proxy.repo.StroomFileNameUtil;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFileType;
@@ -203,7 +204,7 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
 
                     // Write out the manifest
                     if (part == 1 || part == -1) {
-                        dataSource.getAttributes().write(stroomZipOutputStream
+                        AttributeMapUtil.write(dataSource.getAttributes(), stroomZipOutputStream
                                 .addEntry(new StroomZipEntry(null, basePartName, StroomZipFileType.Manifest).getFullName()), true);
                     }
 

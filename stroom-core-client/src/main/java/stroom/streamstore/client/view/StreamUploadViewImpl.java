@@ -36,7 +36,7 @@ public class StreamUploadViewImpl extends ViewImpl implements DataUploadView {
     @UiField
     Grid grid;
     @UiField(provided = true)
-    StringListBox streamType;
+    StringListBox type;
     @UiField
     FileUpload fileUpload;
     @UiField
@@ -48,10 +48,10 @@ public class StreamUploadViewImpl extends ViewImpl implements DataUploadView {
 
     @Inject
     public StreamUploadViewImpl(final Binder binder, final StreamTypeUiManager streamTypeUiManager) {
-        streamType = new StringListBox();
+        type = new StringListBox();
 
         for (final String st : streamTypeUiManager.getRawStreamTypeList()) {
-            streamType.addItem(st);
+            type.addItem(st);
         }
         widget = binder.createAndBindUi(this);
 
@@ -79,8 +79,8 @@ public class StreamUploadViewImpl extends ViewImpl implements DataUploadView {
     }
 
     @Override
-    public StringListBox getStreamType() {
-        return streamType;
+    public StringListBox getType() {
+        return type;
     }
 
     @Override

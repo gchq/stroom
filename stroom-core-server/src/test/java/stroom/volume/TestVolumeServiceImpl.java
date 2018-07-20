@@ -186,6 +186,7 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
     public void testStartup_EnabledNoExistingVolumes() {
         mockStroomPropertyService.setProperty(VolumeServiceImpl.PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, "true");
         volumeServiceImpl.volumeList.clear();
+        volumeServiceImpl.getStreamVolumeSet(node1a);
 //        volumeServiceImpl.startup();
 
         Assert.assertTrue(volumeServiceImpl.saveCalled);

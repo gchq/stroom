@@ -3,11 +3,16 @@ ext.moduleName = 'stroom.data.store.util'
 dependencies {
     compile project(':stroom-data-store:stroom-data-store-api')
     compile project(':stroom-data-store:stroom-data-store-impl-fs')
+    compile project(':stroom-data-meta:stroom-data-meta-api')
     compile project(':stroom-data-meta:stroom-data-meta-impl-db')
     compile project(':stroom-security-impl-mock')
     compile project(':stroom-util')
+    compile project(':stroom-core-server')
+
+    compile libs.stroomQueryApi
     compile libs.guice4
-    compile libs.javax_inject
+    compile libs.slf4j_api
+//    compile libs.javax_inject
 
     testCompile libs.junit_jupiter
     testCompile libs.assertj_core

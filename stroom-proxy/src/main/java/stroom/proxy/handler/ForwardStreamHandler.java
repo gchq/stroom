@@ -3,7 +3,7 @@ package stroom.proxy.handler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
-import stroom.feed.AttributeMapFactory;
+import stroom.feed.AttributeMapUtil;
 import stroom.feed.StroomHeaderArguments;
 import stroom.datafeed.StroomStreamException;
 import stroom.proxy.repo.StroomZipEntry;
@@ -84,7 +84,7 @@ class ForwardStreamHandler implements StreamHandler, HostnameVerifier {
 
         connection.addRequestProperty(StroomHeaderArguments.COMPRESSION, StroomHeaderArguments.COMPRESSION_ZIP);
 
-        AttributeMap sendHeader = AttributeMapFactory.cloneAllowable(attributeMap);
+        AttributeMap sendHeader = AttributeMapUtil.cloneAllowable(attributeMap);
         for (Entry<String, String> entry : sendHeader.entrySet()) {
             connection.addRequestProperty(entry.getKey(), entry.getValue());
         }

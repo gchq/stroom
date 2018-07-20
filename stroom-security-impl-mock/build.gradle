@@ -17,7 +17,7 @@ dependencies {
 //    compile libs.guava
 //    compile libs.hibernate_jpa_api
 //    compile libs.jackson_annotations
-    compile libs.javax_inject
+//    compile libs.javax_inject
 //    compile libs.javax_servlet_api
 //    compile libs.slf4j_api
 //    compile libs.jose4j

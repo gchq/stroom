@@ -1,7 +1,9 @@
 ext.moduleName = 'stroom.pipeline'
 
 dependencies {
-    //testCompile project(':stroom-core-server')
+    compile project(':stroom-data-meta:stroom-data-meta-api')
+    compile project(':stroom-data-store:stroom-data-store-api')
+    compile project(':stroom-properties:stroom-properties-api')
     compile project(':stroom-core-server')
     compile project(':stroom-core-shared')
     compile project(':stroom-docstore-shared')
@@ -33,7 +35,7 @@ dependencies {
 
     testCompile project(':stroom-security-impl-mock')
     testCompile project(':stroom-data-meta:stroom-data-meta-impl-mock')
-    testCompile project(':stroom-properties-impl-mock')
+    testCompile project(':stroom-properties:stroom-properties-impl-mock')
     testCompile project(':stroom-test-common')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')

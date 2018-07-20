@@ -3,6 +3,7 @@ package stroom.proxy.repo;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.data.meta.api.AttributeMap;
+import stroom.feed.AttributeMapUtil;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -50,18 +51,18 @@ public class TestAttributeMap {
     @Test
     public void testReadWrite() throws IOException {
         AttributeMap attributeMap = new AttributeMap();
-        attributeMap.read("b:2\na:1\nz\n".getBytes(CharsetConstants.DEFAULT_CHARSET));
+        AttributeMapUtil.read("b:2\na:1\nz\n".getBytes(CharsetConstants.DEFAULT_CHARSET), attributeMap);
         Assert.assertEquals("1", attributeMap.get("a"));
         Assert.assertEquals("2", attributeMap.get("b"));
         Assert.assertNull(attributeMap.get("z"));
 
-        Assert.assertEquals("a:1\nb:2\nz\n", new String(attributeMap.toByteArray(), CharsetConstants.DEFAULT_CHARSET));
+        Assert.assertEquals("a:1\nb:2\nz\n", new String(AttributeMapUtil.toByteArray(attributeMap), CharsetConstants.DEFAULT_CHARSET));
     }
 
     @Test
     public void testtoString() throws IOException {
         AttributeMap attributeMap = new AttributeMap();
-        attributeMap.read("b:2\na:1\nz\n".getBytes(CharsetConstants.DEFAULT_CHARSET));
+        AttributeMapUtil.read("b:2\na:1\nz\n".getBytes(CharsetConstants.DEFAULT_CHARSET), attributeMap);
 
         // AttributeMap's are used in log output and so check that they do output
         // the map values.

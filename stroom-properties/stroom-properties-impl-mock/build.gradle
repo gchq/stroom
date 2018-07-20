@@ -1,8 +1,8 @@
 ext.moduleName = 'stroom.properties.impl.mock'
 
 dependencies {
-    compile project(':stroom-properties-api')
-    compile project(':stroom-core-shared')
+    compile project(':stroom-properties:stroom-properties-api')
+//    compile project(':stroom-core-shared')
 
 //    compile libs.stroomDocRef
 //    compile libs.stroomQueryApi
@@ -12,6 +12,6 @@ dependencies {
     compile libs.guice4
 //    compile libs.hikari
 //    compile libs.jooq
-    compile libs.javax_inject
+//    compile libs.javax_inject
     compile libs.slf4j_api
 }

@@ -71,7 +71,7 @@ public class StreamUploadPresenter extends MyPresenterWidget<StreamUploadPresent
                 final UploadDataAction action = new UploadDataAction(
                         resourceKey,
                         feedName,
-                        getView().getStreamType().getSelected(),
+                        getView().getType().getSelected(),
                         effectiveMs,
                         getView().getMetaData(),
                         fileName);
@@ -100,7 +100,7 @@ public class StreamUploadPresenter extends MyPresenterWidget<StreamUploadPresent
             AlertEvent.fireWarn(this, "Feed not set!", null);
             return false;
         }
-        if (getView().getStreamType().getSelected() == null) {
+        if (getView().getType().getSelected() == null) {
             AlertEvent.fireWarn(this, "Stream Type not set!", null);
             return false;
         }
@@ -171,7 +171,7 @@ public class StreamUploadPresenter extends MyPresenterWidget<StreamUploadPresent
     public interface DataUploadView extends View {
         FormPanel getForm();
 
-        StringListBox getStreamType();
+        StringListBox getType();
 
         Long getEffectiveDate();
 

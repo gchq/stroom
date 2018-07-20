@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.feed.FeedDocCache;
 import stroom.data.meta.api.AttributeMap;
-import stroom.feed.AttributeMapFactory;
+import stroom.feed.AttributeMapUtil;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.properties.api.PropertyService;
@@ -85,7 +85,7 @@ class DataFeedRequestHandler implements RequestHandler {
         }
 
         security.asProcessingUser(() -> {
-            final AttributeMap attributeMap = AttributeMapFactory.create(request);
+            final AttributeMap attributeMap = AttributeMapUtil.create(request);
             if (attributeMapFilter == null || attributeMapFilter.filter(attributeMap)) {
                 debug("Receiving data", attributeMap);
                 final String feedName = attributeMap.get(StroomHeaderArguments.FEED);

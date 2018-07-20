@@ -23,15 +23,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
 import stroom.data.meta.api.Data;
-import stroom.data.meta.api.MetaDataSource;
 import stroom.data.meta.api.DataMetaService;
 import stroom.data.meta.api.DataProperties;
 import stroom.data.meta.api.DataStatus;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.data.store.api.StreamException;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
 import stroom.data.store.impl.fs.DataVolumeService.DataVolume;
+import stroom.feed.AttributeMapUtil;
 import stroom.node.NodeCache;
 import stroom.node.VolumeService;
 import stroom.node.shared.Node;
@@ -159,8 +160,7 @@ class FileSystemStreamStoreImpl implements StreamStore {
 
                 // Does the manifest exist ... overwrite it
                 if (FileSystemUtil.isAllFile(childFile)) {
-                    fileSystemStreamTarget.getAttributes()
-                            .write(fileSystemStreamPathHelper.getOutputStream(InternalStreamTypeNames.MANIFEST, childFile), true);
+                    AttributeMapUtil.write(fileSystemStreamTarget.getAttributes(), fileSystemStreamPathHelper.getOutputStream(InternalStreamTypeNames.MANIFEST, childFile), true);
                     doneManifest = true;
                 }
             }
@@ -168,8 +168,7 @@ class FileSystemStreamStoreImpl implements StreamStore {
             if (!doneManifest) {
                 // No manifest done yet ... output one if the parent dir's exist
                 if (FileSystemUtil.isAllParentDirectoryExist(((FileSystemStreamTarget) streamTarget).getFiles(false))) {
-                    fileSystemStreamTarget.getAttributes()
-                            .write(fileSystemStreamTarget.add(InternalStreamTypeNames.MANIFEST).getOutputStream(), true);
+                    AttributeMapUtil.write(fileSystemStreamTarget.getAttributes(), fileSystemStreamTarget.add(InternalStreamTypeNames.MANIFEST).getOutputStream(), true);
                 } else {
                     LOGGER.warn("closeStreamTarget() - Closing target file with no directory present");
                 }
@@ -280,7 +279,7 @@ class FileSystemStreamStoreImpl implements StreamStore {
             if (Files.isRegularFile(manifest)) {
                 final AttributeMap attributeMap = new AttributeMap();
                 try {
-                    attributeMap.read(Files.newInputStream(manifest), true);
+                    AttributeMapUtil.read(Files.newInputStream(manifest), true, attributeMap);
                 } catch (final IOException ioException) {
                     LOGGER.error("loadAttributeMapFromFileSystem() {}", manifest, ioException);
                 }

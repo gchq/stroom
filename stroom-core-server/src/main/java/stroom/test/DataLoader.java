@@ -25,6 +25,7 @@ import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
+import stroom.feed.AttributeMapUtil;
 import stroom.feed.FeedDocCache;
 import stroom.feed.shared.FeedDoc;
 import stroom.proxy.repo.StroomZipEntry;
@@ -124,7 +125,7 @@ public class DataLoader {
                 try (final SegmentOutputStream outputStream = outputStreamProvider.next(StreamTypeNames.META)) {
                     final AttributeMap map = new AttributeMap();
                     map.put("TestData", "Loaded By SetupSampleData");
-                    map.write(outputStream, true);
+                    AttributeMapUtil.write(map, outputStream, true);
                 }
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);

@@ -35,7 +35,7 @@ public class NewPipelineReferencePresenter
     private final EntityDropDownPresenter pipelinePresenter;
     private final EntityDropDownPresenter feedPresenter;
     //    private final ClientDispatchAsync dispatcher;
-    private final TextBox streamTypesWidget;
+    private final TextBox typeWidget;
     private boolean dirty;
 //    private boolean initialised;
 
@@ -60,9 +60,9 @@ public class NewPipelineReferencePresenter
         feedPresenter.getWidget().getElement().getStyle().setMarginBottom(0, Unit.PX);
         getView().setFeedView(feedPresenter.getView());
 
-        streamTypesWidget = new TextBox();
-        streamTypesWidget.getElement().getStyle().setMarginBottom(0, Unit.PX);
-        getView().setStreamTypeWidget(streamTypesWidget);
+        typeWidget = new TextBox();
+        typeWidget.getElement().getStyle().setMarginBottom(0, Unit.PX);
+        getView().setTypeWidget(typeWidget);
     }
 
     public void read(final PipelineReference pipelineReference) {
@@ -91,9 +91,9 @@ public class NewPipelineReferencePresenter
             }
 //            }
         });
-        streamTypesWidget.addChangeHandler(event -> {
+        typeWidget.addChangeHandler(event -> {
 //            if (initialised) {
-//                final String selection = streamTypesWidget.getSelected();
+//                final String selection = typeWidget.getSelected();
 //                if ((pipelineReference.getType() == null && selection != null)
 //                        || (pipelineReference.getType() != null
 //                        && !pipelineReference.getType().equals(selection))) {
@@ -106,11 +106,11 @@ public class NewPipelineReferencePresenter
     public void write(final PipelineReference pipelineReference) {
         pipelineReference.setPipeline(pipelinePresenter.getSelectedEntityReference());
         pipelineReference.setFeed(feedPresenter.getSelectedEntityReference());
-        pipelineReference.setStreamType(streamTypesWidget.getText());
+        pipelineReference.setStreamType(typeWidget.getText());
     }
 
 //    private void updateStreamTypes(final String selectedStreamType) {
-//        streamTypesWidget.clear();
+//        typeWidget.clear();
 //
 //        final FindStreamTypeCriteria findStreamTypeCriteria = new FindStreamTypeCriteria();
 //        findStreamTypeCriteria.obtainPurpose().add(Purpose.RAW);
@@ -119,12 +119,12 @@ public class NewPipelineReferencePresenter
 //        dispatcher.exec(new EntityReferenceFindAction<>(findStreamTypeCriteria)).onSuccess(result -> {
 //            if (result != null && result.size() > 0) {
 //                for (final DocRef docRef : result) {
-//                    streamTypesWidget.addItem(docRef.getName());
+//                    typeWidget.addItem(docRef.getName());
 //                }
 //            }
 //
 //            if (selectedStreamType != null) {
-//                streamTypesWidget.setSelected(selectedStreamType);
+//                typeWidget.setSelected(selectedStreamType);
 //            }
 //
 //            initialised = true;
@@ -146,6 +146,6 @@ public class NewPipelineReferencePresenter
 
         void setFeedView(View view);
 
-        void setStreamTypeWidget(Widget widget);
+        void setTypeWidget(Widget widget);
     }
 }

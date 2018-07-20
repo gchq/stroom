@@ -46,7 +46,7 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
     @UiField
     ItemListBox<FeedDoc.FeedStatus> feedStatus;
     @UiField
-    StringListBox streamType;
+    StringListBox receivedType;
     @UiField
     ItemListBox<SupportedRetentionAge> retentionAge;
     @UiField
@@ -88,8 +88,8 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
     }
 
     @Override
-    public StringListBox getStreamType() {
-        return streamType;
+    public StringListBox getReceivedType() {
+        return receivedType;
     }
 
     @Override

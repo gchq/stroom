@@ -19,6 +19,7 @@ package stroom.data.store.impl.fs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
+import stroom.feed.AttributeMapUtil;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.ArgsUtil;
 import stroom.util.io.AbstractFileVisitor;
@@ -112,7 +113,7 @@ class FileMetaGrep extends AbstractCommandLineTool {
                     segment++;
 
                     AttributeMap attributeMap = new AttributeMap();
-                    attributeMap.read(nestedInputStream, false);
+                    AttributeMapUtil.read(nestedInputStream, false, attributeMap);
                     nestedInputStream.closeEntry();
 
                     boolean match = true;
@@ -132,7 +133,7 @@ class FileMetaGrep extends AbstractCommandLineTool {
                     if (match) {
                         // Found Match
                         System.out.println("Found Match in " + path + " at segment " + segment);
-                        System.out.write(attributeMap.toByteArray());
+                        System.out.write(AttributeMapUtil.toByteArray(attributeMap));
                         System.out.println();
                     }
 

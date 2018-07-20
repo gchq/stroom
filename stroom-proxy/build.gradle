@@ -1,6 +1,7 @@
 ext.moduleName = 'stroom.proxy'
 
 dependencies {
+    compile project(':stroom-data-meta:stroom-data-meta-api')
     compile project(':stroom-core-server')
     compile project(':stroom-ruleset-server')
     compile project(':stroom-util-shared')

@@ -19,6 +19,7 @@ package stroom.proxy.repo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
+import stroom.feed.AttributeMapUtil;
 import stroom.task.TaskContext;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.CloseableUtil;
@@ -272,7 +273,7 @@ public final class RepositoryProcessor {
     }
 
     private AttributeMap getAttributeMap(final StroomZipRepository stroomZipRepository, final Path path) {
-        final AttributeMap attributeMap = new AttributeMap();
+        AttributeMap attributeMap = new AttributeMap();
         StroomZipFile stroomZipFile = null;
         try {
             stroomZipFile = new StroomZipFile(path);
@@ -286,7 +287,7 @@ public final class RepositoryProcessor {
                 if (anyHeaderStream == null) {
                     stroomZipRepository.addErrorMessage(stroomZipFile, "Unable to find header??", true);
                 } else {
-                    attributeMap.read(anyHeaderStream, false);
+                    AttributeMapUtil.read(anyHeaderStream, false, attributeMap);
                 }
             }
         } catch (final IOException ex) {

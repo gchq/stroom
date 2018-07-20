@@ -20,6 +20,7 @@ package stroom.headless;
 import stroom.data.meta.api.AttributeMap;
 import stroom.data.meta.api.Data;
 import stroom.docref.DocRef;
+import stroom.feed.AttributeMapUtil;
 import stroom.feed.FeedStore;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
@@ -56,7 +57,6 @@ import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -123,7 +123,7 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
 
                 // Load the meta and context data.
                 final AttributeMap metaData = new AttributeMap();
-                metaData.read(metaStream, false);
+                AttributeMapUtil.read(metaStream, false, metaData);
 
                 // Get the feed.
                 final String feedName = metaData.get(StroomHeaderArguments.FEED);

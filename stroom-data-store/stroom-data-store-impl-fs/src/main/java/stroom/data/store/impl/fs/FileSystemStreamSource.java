@@ -26,6 +26,7 @@ import stroom.data.store.api.NestedInputStream;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamSourceInputStreamProvider;
+import stroom.feed.AttributeMapUtil;
 import stroom.io.BasicStreamCloser;
 import stroom.io.StreamCloser;
 
@@ -195,7 +196,7 @@ final class FileSystemStreamSource implements StreamSource {
             try {
                 final StreamSource streamSource = getChildStream(InternalStreamTypeNames.MANIFEST);
                 if (streamSource != null) {
-                    attributeMap.read(streamSource.getInputStream(), true);
+                    AttributeMapUtil.read(streamSource.getInputStream(), true, attributeMap);
                 }
             } catch (final RuntimeException | IOException e) {
                 LOGGER.error("getAttributes()", e);
