@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+    <!-- Paper Lines -->
+    <line x1="80" y1="30" x2="200" y2="30" style="stroke:grey;stroke-width:5" />
+    <line x1="80" y1="60" x2="200" y2="60" style="stroke:grey;stroke-width:5" />
+    <line x1="80" y1="90" x2="200" y2="90" style="stroke:grey;stroke-width:5" />
+    <line x1="80" y1="120" x2="200" y2="120" style="stroke:grey;stroke-width:5" />
+    <line x1="135" y1="150" x2="200" y2="150" style="stroke:grey;stroke-width:5" />
+
+    <!-- Main Body -->
+    <polygon points="50,20 150,120 150,150 120,150 20,50" style="fill:yellow;stroke:black;stroke-width:5" />
+
+    <!-- Eraser-->
+    <polygon points="50,20 65,35 35,65 20,50" style="fill:pink;stroke:black;stroke-width:5" />
+
+    <!-- Tip -->
+    <polygon points="150,135 150,150, 135,150" style="fill:black;stroke:black;stroke-width:5" />
+</svg>

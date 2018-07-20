@@ -315,8 +315,8 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 
                 final ExpressionOperator rawExpression = new ExpressionOperator.Builder(Op.AND)
                         .addTerm(MetaDataSource.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(createPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(createPeriod.getToMs()))
-                        .addTerm(MetaDataSource.FEED, Condition.EQUALS, feedName)
-                        .addTerm(MetaDataSource.STREAM_TYPE, Condition.EQUALS, rawStreamType)
+                        .addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, feedName)
+                        .addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, rawStreamType)
                         .build();
                 final QueryData rawCriteria = new QueryData();
                 rawCriteria.setExpression(rawExpression);
@@ -328,8 +328,8 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                 // Wait for the cluster to stop processing.
                 final ExpressionOperator processedExpression = new ExpressionOperator.Builder(Op.AND)
                         .addTerm(MetaDataSource.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(startTime))
-                        .addTerm(MetaDataSource.FEED, Condition.EQUALS, feedName)
-                        .addTerm(MetaDataSource.STREAM_TYPE, Condition.EQUALS, processedStreamType)
+                        .addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, feedName)
+                        .addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, processedStreamType)
                         .addTerm(MetaDataSource.STATUS, Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue())
                         .build();
                 final FindDataCriteria processedCriteria = new FindDataCriteria();
@@ -456,8 +456,8 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                 .addTerm(MetaDataSource.FEED, Condition.EQUALS, feedName)
                 .addTerm(MetaDataSource.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(processPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(processPeriod.getToMs()))
                 .addOperator(new ExpressionOperator.Builder(Op.OR)
-                        .addTerm(MetaDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeNames.EVENTS)
-                        .addTerm(MetaDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeNames.REFERENCE)
+                        .addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.EVENTS)
+                        .addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.REFERENCE)
                         .build())
                 .build();
 

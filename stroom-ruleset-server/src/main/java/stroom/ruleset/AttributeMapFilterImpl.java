@@ -32,14 +32,17 @@ class AttributeMapFilterImpl implements AttributeMapFilter {
 
     @Override
     public boolean filter(final AttributeMap attributeMap) {
-        // We need to examine the meta map and ensure we aren't dropping or rejecting this data.
-        final DataReceiptAction dataReceiptAction = dataReceiptPolicyChecker.check(attributeMap);
+        boolean allowThrough = true;
+        if (dataReceiptPolicyChecker != null) {
+            // We need to examine the meta map and ensure we aren't dropping or rejecting this data.
+            final DataReceiptAction dataReceiptAction = dataReceiptPolicyChecker.check(attributeMap);
 
-        if (DataReceiptAction.REJECT.equals(dataReceiptAction)) {
-            throw new StroomStreamException(StroomStatusCode.RECEIPT_POLICY_SET_TO_REJECT_DATA);
+            if (DataReceiptAction.REJECT.equals(dataReceiptAction)) {
+                throw new StroomStreamException(StroomStatusCode.RECEIPT_POLICY_SET_TO_REJECT_DATA);
+            }
 
+            allowThrough = DataReceiptAction.RECEIVE.equals(dataReceiptAction);
         }
-
-        return DataReceiptAction.RECEIVE.equals(dataReceiptAction);
+        return allowThrough;
     }
 }

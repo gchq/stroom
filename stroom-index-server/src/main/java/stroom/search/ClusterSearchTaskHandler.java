@@ -49,7 +49,6 @@ import stroom.search.shard.IndexShardSearchTaskExecutor;
 import stroom.search.shard.IndexShardSearchTaskHandler;
 import stroom.search.shard.IndexShardSearchTaskProducer;
 import stroom.search.shard.IndexShardSearchTaskProperties;
-import stroom.search.shard.IndexShardSearcherCache;
 import stroom.security.Security;
 import stroom.data.meta.api.DataMetaService;
 import stroom.task.ExecutorProvider;
@@ -100,7 +99,6 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     private final CoprocessorFactory coprocessorFactory;
     private final IndexShardSearchTaskExecutor indexShardSearchTaskExecutor;
     private final IndexShardSearchTaskProperties indexShardSearchTaskProperties;
-    private final IndexShardSearcherCache indexShardSearcherCache;
     private final ExtractionTaskExecutor extractionTaskExecutor;
     private final ExtractionTaskProperties extractionTaskProperties;
     private final DataMetaService streamMetaService;
@@ -124,7 +122,6 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                              final CoprocessorFactory coprocessorFactory,
                              final IndexShardSearchTaskExecutor indexShardSearchTaskExecutor,
                              final IndexShardSearchTaskProperties indexShardSearchTaskProperties,
-                             final IndexShardSearcherCache indexShardSearcherCache,
                              final ExtractionTaskExecutor extractionTaskExecutor,
                              final ExtractionTaskProperties extractionTaskProperties,
                              final DataMetaService streamMetaService,
@@ -139,7 +136,6 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
         this.coprocessorFactory = coprocessorFactory;
         this.indexShardSearchTaskExecutor = indexShardSearchTaskExecutor;
         this.indexShardSearchTaskProperties = indexShardSearchTaskProperties;
-        this.indexShardSearcherCache = indexShardSearcherCache;
         this.extractionTaskExecutor = extractionTaskExecutor;
         this.extractionTaskProperties = extractionTaskProperties;
         this.streamMetaService = streamMetaService;
@@ -324,12 +320,6 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                 storedData = new LinkedBlockingQueue<>(maxStoredDataQueueSize);
                 final AtomicLong hitCount = new AtomicLong();
 
-                // Update the configuration.
-                final int maxOpenShards = indexShardSearchTaskProperties.getMaxOpenShards();
-                if (indexShardSearcherCache.getMaxOpenShards() != maxOpenShards) {
-                    indexShardSearcherCache.setMaxOpenShards(maxOpenShards);
-                }
-
                 // Update config for the index shard search task executor.
                 indexShardSearchTaskExecutor.setMaxThreads(indexShardSearchTaskProperties.getMaxThreads());
 
@@ -338,7 +328,6 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                 final IndexShardSearchTaskProducer indexShardSearchTaskProducer = new IndexShardSearchTaskProducer(
                         indexShardSearchTaskExecutor,
                         storedData,
-                        indexShardSearcherCache,
                         task.getShards(),
                         queryFactory,
                         storedFieldNames,

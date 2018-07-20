@@ -9,6 +9,7 @@ import stroom.proxy.repo.ProxyRepositoryConfigImpl;
 import stroom.proxy.repo.ProxyRepositoryReaderConfig;
 
 public class ProxyConfig {
+    private String proxyConfigDir;
     private ProxyRequestConfig proxyRequestConfig;
     private ForwardStreamConfig forwardStreamConfig;
     private ProxyRepositoryConfigImpl proxyRepositoryConfig;
@@ -74,5 +75,10 @@ public class ProxyConfig {
     @JsonProperty
     public void setContentSyncConfig(final ContentSyncConfig contentSyncConfig) {
         this.contentSyncConfig = contentSyncConfig;
+    }
+
+    @JsonProperty
+    public String getProxyConfigDir() {
+        return proxyConfigDir;
     }
 }

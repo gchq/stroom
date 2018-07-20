@@ -80,17 +80,10 @@
 	
 	-moz-user-focus: initial;
 	-moz-user-input: initial;
-	-moz-user-select: initial;
 	-webkit-user-focus: initial;
 	-webkit-user-input: initial;
-	-webkit-user-select: initial;
 	user-focus: initial;
 	user-input: initial;
-	user-select: initial;
-
-    -moz-user-select: auto;
-    -webkit-user-select: auto;
-    user-select: auto;
 
     -moz-user-select: text;
     -webkit-user-select: text;
@@ -103,13 +96,14 @@
 	
 	-moz-user-focus: initial;
 	-moz-user-input: initial;
-	-moz-user-select: initial;
 	-webkit-user-focus: initial;
 	-webkit-user-input: initial;
-	-webkit-user-select: initial;
 	user-focus: initial;
 	user-input: initial;
-	user-select: initial;	
+
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    user-select: text;
 }
 
 .dataGridCellWrapText {

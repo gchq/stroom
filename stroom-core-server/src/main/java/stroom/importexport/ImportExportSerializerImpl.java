@@ -194,9 +194,6 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                     if (!securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.UPDATE)) {
                         throw new PermissionException(securityContext.getUserId(), "You do not have permission to update '" + docRef + "'");
                     }
-                    if (!securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.IMPORT)) {
-                        throw new PermissionException(securityContext.getUserId(), "You do not have permission to import '" + docRef + "'");
-                    }
 
                     final List<ExplorerNode> parents = explorerNodeService.getPath(docRef);
                     if (parents.size() > 0) {
@@ -212,9 +209,6 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                 final DocRef folderRef = new DocRef(parentNode.getType(), parentNode.getUuid(), parentNode.getName());
                 if (!securityContext.hasDocumentPermission(folderRef.getType(), folderRef.getUuid(), DocumentPermissionNames.getDocumentCreatePermission(type))) {
                     throw new PermissionException(securityContext.getUserId(), "You do not have permission to create '" + docRef + "' in '" + folderRef);
-                }
-                if (!securityContext.hasDocumentPermission(folderRef.getType(), folderRef.getUuid(), DocumentPermissionNames.IMPORT)) {
-                    throw new PermissionException(securityContext.getUserId(), "You do not have permission to import '" + docRef + "' into '" + folderRef);
                 }
 
                 try {
@@ -322,7 +316,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
     private void addDocRef(final DocRef docRef, final DocRefs docRefs) {
         try {
-            if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.EXPORT)) {
+            if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.READ)) {
                 docRefs.add(docRef);
             }
         } catch (final RuntimeException e) {

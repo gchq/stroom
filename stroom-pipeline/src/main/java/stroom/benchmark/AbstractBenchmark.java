@@ -133,11 +133,11 @@ public abstract class AbstractBenchmark {
 
     protected void verifyData(final FeedDoc feed, final String verificationString) throws IOException {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
-        builder.addTerm(MetaDataSource.FEED, Condition.EQUALS, feed.getName());
+        builder.addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, feed.getName());
         if (feed.isReference()) {
-            builder.addTerm(MetaDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeNames.REFERENCE);
+            builder.addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.REFERENCE);
         } else {
-            builder.addTerm(MetaDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeNames.EVENTS);
+            builder.addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.EVENTS);
         }
         final FindDataCriteria criteria = new FindDataCriteria();
         criteria.setExpression(builder.build());

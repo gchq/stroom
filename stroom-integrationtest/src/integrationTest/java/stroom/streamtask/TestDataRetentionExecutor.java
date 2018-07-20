@@ -21,6 +21,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.entity.shared.BaseResultList;
 import stroom.policy.DataRetentionExecutor;
 import stroom.policy.DataRetentionService;
@@ -34,6 +35,7 @@ import stroom.data.meta.api.Data;
 import stroom.data.meta.api.DataMetaService;
 import stroom.data.meta.api.DataProperties;
 import stroom.data.meta.api.DataStatus;
+import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
@@ -69,7 +71,7 @@ public class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
 
         // save two streams, one inside retention period, one outside
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(true, Op.AND);
-        builder.addTerm("Feed", Condition.EQUALS, feedName);
+        builder.addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, feedName);
         final DataRetentionRule rule = createRule(1, builder.build(), RETENTION_PERIOD_DAYS, stroom.streamstore.shared.TimeUnit.DAYS);
         final DataRetentionPolicy currentPolicy = dataRetentionService.load();
         final DataRetentionPolicy dataRetentionPolicy = new DataRetentionPolicy(Collections.singletonList(rule));

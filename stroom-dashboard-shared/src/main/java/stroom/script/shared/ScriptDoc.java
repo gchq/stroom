@@ -17,6 +17,8 @@
 package stroom.script.shared;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
@@ -26,6 +28,7 @@ import java.util.List;
 import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "dependencies"})
+@JsonInclude(Include.NON_EMPTY)
 public class ScriptDoc extends Doc implements HasData {
     private static final long serialVersionUID = 4519634323788508083L;
 

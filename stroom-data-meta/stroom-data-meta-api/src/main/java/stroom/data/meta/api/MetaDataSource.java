@@ -6,7 +6,6 @@ import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -29,9 +28,9 @@ public class MetaDataSource {
 //    private static final Map<String, String> STREAM_TYPE_FIELDS = new HashMap<>();
 //    private static final Map<String, String> PIPELINE_FIELDS = new HashMap<>();
 
-    public static final String FEED = "Feed";
-    public static final String PIPELINE = "Pipeline";
-    public static final String STREAM_TYPE = "Stream Type";
+    public static final String FEED_NAME = "feedName";
+    public static final String PIPELINE_UUID = "pipelineUuid";
+    public static final String STREAM_TYPE_NAME = "streamTypeName";
     public static final String STREAM_ID = "Stream Id";
     public static final String PARENT_STREAM_ID = "Parent Stream Id";
     public static final String STATUS = "Status";
@@ -64,9 +63,9 @@ public class MetaDataSource {
 //        STREAM_TYPE_FIELDS.put(STREAM_TYPE, StreamTypeEntity.NAME);
 //        PIPELINE_FIELDS.put(PIPELINE, PipelineDoc.NAME);
 
-        FIELDS.add(createStringField(FEED));
-        FIELDS.add(createStringField(PIPELINE));
-        FIELDS.add(createStringField(STREAM_TYPE));
+        FIELDS.add(createStringField(FEED_NAME));
+        FIELDS.add(createStringField(PIPELINE_UUID));
+        FIELDS.add(createStringField(STREAM_TYPE_NAME));
         FIELDS.add(createIdField(STREAM_ID));
         FIELDS.add(createIdField(PARENT_STREAM_ID));
         FIELDS.add(createStringField(STATUS));

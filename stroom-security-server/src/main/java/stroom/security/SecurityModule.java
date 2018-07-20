@@ -23,6 +23,7 @@ import stroom.entity.event.EntityEvent;
 import stroom.entity.shared.Clearable;
 import stroom.logging.EventInfoProvider;
 import stroom.properties.api.PropertyService;
+import stroom.security.SecurityConfig.JwtConfig;
 import stroom.task.TaskHandler;
 
 public class SecurityModule extends AbstractModule {
@@ -62,11 +63,22 @@ public class SecurityModule extends AbstractModule {
     }
 
     @Provides
-    public SecurityConfig securityConfig(final PropertyService stroomPropertyService) {
+    public JwtConfig jwtConfig(final PropertyService propertyService) {
+        final JwtConfig jwtConfig = new JwtConfig();
+        jwtConfig.setJwtIssuer(propertyService.getProperty("stroom.auth.jwt.issuer"));
+        jwtConfig.setEnableTokenRevocationCheck(propertyService.getBooleanProperty("stroom.auth.jwt.enabletokenrevocationcheck", false));
+        return jwtConfig;
+    }
+
+    @Provides
+    public SecurityConfig securityConfig(final PropertyService propertyService, final JwtConfig jwtConfig) {
         final SecurityConfig securityConfig = new SecurityConfig();
-        securityConfig.setAuthenticationServiceUrl(stroomPropertyService.getProperty("stroom.auth.authentication.service.url"));
-        securityConfig.setAdvertisedStroomUrl(stroomPropertyService.getProperty("stroom.advertisedUrl"));
-        securityConfig.setAuthenticationRequired(stroomPropertyService.getBooleanProperty("stroom.authentication.required", true));
+        securityConfig.setAuthenticationServiceUrl(propertyService.getProperty("stroom.auth.authentication.service.url"));
+        securityConfig.setAdvertisedStroomUrl(propertyService.getProperty("stroom.advertisedUrl"));
+        securityConfig.setAuthenticationRequired(propertyService.getBooleanProperty("stroom.authentication.required", true));
+        securityConfig.setApiToken(propertyService.getProperty("stroom.security.apiToken"));
+        securityConfig.setAuthServicesBaseUrl(propertyService.getProperty("stroom.auth.services.url"));
+        securityConfig.setJwtConfig(jwtConfig);
         return securityConfig;
     }
 

@@ -56,14 +56,14 @@ public class TestExpressionMatcher {
 
     private ExpressionOperator createExpression(final Op op, final String feedName) {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(true, op);
-        builder.addTerm("Feed", Condition.CONTAINS, feedName);
+        builder.addTerm(MetaDataSource.FEED_NAME, Condition.CONTAINS, feedName);
         return builder.build();
     }
 
     private Map<String, Object> createAttributeMap() {
         final Map<String, Object> attributeMap = new HashMap<>();
-        attributeMap.put(MetaDataSource.FEED, "TEST_FEED");
-        attributeMap.put(MetaDataSource.STREAM_TYPE, "Raw Events");
+        attributeMap.put(MetaDataSource.FEED_NAME, "TEST_FEED");
+        attributeMap.put(MetaDataSource.STREAM_TYPE_NAME, "Raw Events");
         return attributeMap;
     }
 }

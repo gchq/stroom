@@ -48,10 +48,9 @@ html,body,div,span,table,tbody,tr,th,td,table th,table td,b,p,h1,h2,h3,h4,select
 }
 
 select,input,textarea {
-	-webkit-user-select: initial;
-	-moz-user-select: initial;
-	-ms-user-select: initial;
-	user-select: initial;	
+  	-webkit-user-select: text;
+  	-moz-user-select: text;
+  	user-select: text;
 }
 
 table {
@@ -110,7 +109,7 @@ td {
 	font-size: 1px;
 }
 
-/** 
+/**
  * Styles for basic Stroom components
  */
 .stroom-body {

@@ -16,6 +16,9 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
@@ -30,14 +33,17 @@ import java.io.Serializable;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"includes", "excludes"})
+@JsonInclude(Include.NON_EMPTY)
 @XmlRootElement(name = "filter")
 @XmlType(name = "Filter", propOrder = {"includes", "excludes"})
 public class Filter implements Serializable {
     private static final long serialVersionUID = 7327802315955158337L;
 
     @XmlElement(name = "includes")
+    @JsonProperty("includes")
     private String includes;
     @XmlElement(name = "excludes")
+    @JsonProperty("excludes")
     private String excludes;
 
     public Filter() {

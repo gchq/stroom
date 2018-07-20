@@ -9,13 +9,11 @@
   "precision" : 60000,
   "enabled" : true,
   "config" : {
-    "statisticFields" : [ {
+    "fields" : [ {
       "fieldName" : "Node"
     }, {
       "fieldName" : "Type"
     } ],
-    "customRollUpMasks" : [ {
-      "rolledUpTagPositions" : [ ]
-    } ]
+    "customRollUpMasks" : [ { } ]
   }
 }

@@ -49,7 +49,6 @@ public final class IndexShardSearchTaskProducer extends AbstractTaskProducer imp
             0,
             Integer.MAX_VALUE);
 
-    private final IndexShardSearcherCache indexShardSearcherCache;
     private final ErrorReceiver errorReceiver;
     private final Queue<IndexShardSearchRunnable> taskQueue = new ConcurrentLinkedQueue<>();
     private final long now = System.currentTimeMillis();
@@ -65,7 +64,6 @@ public final class IndexShardSearchTaskProducer extends AbstractTaskProducer imp
 
     public IndexShardSearchTaskProducer(final TaskExecutor taskExecutor,
                                         final LinkedBlockingQueue<Optional<Val[]>> storedData,
-                                        final IndexShardSearcherCache indexShardSearcherCache,
                                         final List<Long> shards,
                                         final IndexShardQueryFactory queryFactory,
                                         final String[] fieldNames,
@@ -77,7 +75,6 @@ public final class IndexShardSearchTaskProducer extends AbstractTaskProducer imp
         super(taskExecutor, executor);
         this.maxThreadsPerTask = maxThreadsPerTask;
         this.storedData = storedData;
-        this.indexShardSearcherCache = indexShardSearcherCache;
         this.errorReceiver = errorReceiver;
 
         // Create a deque to capture stored data from the index that can be used by coprocessors.
@@ -161,23 +158,7 @@ public final class IndexShardSearchTaskProducer extends AbstractTaskProducer imp
     }
 
     private Runnable getNext() {
-        IndexShardSearchRunnable task = null;
-
-        // First try and get a task that will make use of an open shard.
-        for (final IndexShardSearchRunnable t : taskQueue) {
-            if (indexShardSearcherCache.isCached(t.getTask().getIndexShardId())) {
-                if (taskQueue.remove(t)) {
-                    task = t;
-                    break;
-                }
-            }
-        }
-
-        // If there are no open shards that can be used for any tasks then just get the task at the head of the queue.
-        if (task == null) {
-            task = taskQueue.poll();
-        }
-
+        final IndexShardSearchRunnable task = taskQueue.poll();
         if (task != null) {
             final int no = tasksRequested.incrementAndGet();
             task.getTask().setShardTotal(tasksTotal);

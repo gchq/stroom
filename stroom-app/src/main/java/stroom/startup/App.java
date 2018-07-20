@@ -45,11 +45,14 @@ import stroom.guice.AppModule;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.index.StroomIndexQueryResource;
 import stroom.lifecycle.LifecycleService;
+import stroom.persist.PersistLifecycle;
+import stroom.resource.PipelineResource;
 import stroom.proxy.guice.ProxyModule;
 import stroom.proxy.repo.ProxyLifecycle;
 import stroom.proxy.servlet.ConfigServlet;
 import stroom.proxy.servlet.ProxyStatusServlet;
 import stroom.proxy.servlet.ProxyWelcomeServlet;
+import stroom.resource.ElementResource;
 import stroom.resource.SessionResourceStoreImpl;
 import stroom.ruleset.RuleSetResource;
 import stroom.ruleset.RuleSetResource2;
@@ -76,6 +79,7 @@ import stroom.servlet.SessionListServlet;
 import stroom.servlet.StatusServlet;
 import stroom.servlet.StroomServlet;
 import stroom.statistics.sql.search.SqlStatisticsQueryResource;
+import stroom.streamtask.resource.StreamTaskResource;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
@@ -180,6 +184,9 @@ public class App extends Application<Config> {
         final AppModule appModule = new AppModule();
         final Injector injector = Guice.createInjector(appModule);
 
+        // Start the persistence service. This needs to be done before anything else as other filters and services rely on it.
+        injector.getInstance(PersistLifecycle.class).startPersistence();
+
         final ServletContextHandler servletContextHandler = environment.getApplicationContext();
 
         // Add health checks
@@ -227,6 +234,9 @@ public class App extends Application<Config> {
         GuiceUtil.addResource(environment.jersey(), injector, StroomIndexQueryResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, SqlStatisticsQueryResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, AuthorisationResource.class);
+        GuiceUtil.addResource(environment.jersey(), injector, StreamTaskResource.class);
+        GuiceUtil.addResource(environment.jersey(), injector, PipelineResource.class);
+        GuiceUtil.addResource(environment.jersey(), injector, ElementResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, SessionResource.class);
 
         // Listen to the lifecycle of the Dropwizard app.
@@ -236,7 +246,7 @@ public class App extends Application<Config> {
     private static void configureCors(io.dropwizard.setup.Environment environment) {
         FilterRegistration.Dynamic cors = environment.servlets().addFilter("CORS", CrossOriginFilter.class);
         cors.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, "/*");
-        cors.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, "GET,PUT,POST,DELETE,OPTIONS");
+        cors.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, "GET,PUT,POST,DELETE,OPTIONS,PATCH");
         cors.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, "*");
         cors.setInitParameter(CrossOriginFilter.ALLOWED_HEADERS_PARAM, "*");
     }

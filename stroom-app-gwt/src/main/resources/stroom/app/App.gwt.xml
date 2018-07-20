@@ -72,6 +72,7 @@
     <inherits name="stroom.users.Users" />
     <inherits name="stroom.util.Util" />
     <inherits name="stroom.welcome.Welcome" />
+    <inherits name="stroom.trackers.Trackers" />
 
     <!-- Additional -->
     <inherits name="stroom.folder.Folder" />

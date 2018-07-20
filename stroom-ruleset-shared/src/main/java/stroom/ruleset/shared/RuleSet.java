@@ -17,6 +17,8 @@
 
 package stroom.ruleset.shared;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.docref.SharedObject;
@@ -25,6 +27,7 @@ import stroom.docstore.shared.Doc;
 import java.util.List;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "fields", "rules"})
+@JsonInclude(Include.NON_EMPTY)
 public class RuleSet extends Doc implements SharedObject {
     private static final long serialVersionUID = -7268301402378907741L;
 

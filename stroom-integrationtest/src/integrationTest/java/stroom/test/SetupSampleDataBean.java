@@ -196,7 +196,7 @@ public final class SetupSampleDataBean {
                 final QueryData criteria = new QueryData.Builder()
                         .dataSource(MetaDataSource.STREAM_STORE_DOC_REF)
                         .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                                .addTerm(MetaDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
+                                .addTerm(MetaDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
                                 .build())
                         .build();
 
@@ -245,10 +245,10 @@ public final class SetupSampleDataBean {
                 final QueryData criteria = new QueryData.Builder()
                         .dataSource(MetaDataSource.STREAM_STORE_DOC_REF)
                         .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                                .addTerm(MetaDataSource.FEED, ExpressionTerm.Condition.EQUALS, feed.getName())
+                                .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, feed.getName())
                                 .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                                        .addTerm(MetaDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
-                                        .addTerm(MetaDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
+                                        .addTerm(MetaDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                                        .addTerm(MetaDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
                                         .build())
                                 .build())
                         .build();

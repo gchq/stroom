@@ -78,7 +78,6 @@ class FetchProcessorHandler extends AbstractTaskHandler<FetchProcessorAction, Re
 
             criteria.getFetchSet().add(Processor.ENTITY_TYPE);
             criteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
-            criteriaRoot.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
 
             final BaseResultList<Processor> streamProcessors = streamProcessorService.find(criteriaRoot);
 

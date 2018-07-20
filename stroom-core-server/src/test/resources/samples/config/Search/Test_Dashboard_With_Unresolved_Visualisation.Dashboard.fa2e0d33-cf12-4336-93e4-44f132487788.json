@@ -94,7 +94,38 @@
       "width" : 200,
       "height" : 200
     },
-    "dimension" : 1
+    "dimension" : 1,
+    "children" : [ {
+      "type" : "tabLayout",
+      "preferredSize" : {
+        "width" : 200,
+        "height" : 122
+      },
+      "tabs" : [ {
+        "id" : "query-MRGPM"
+      } ],
+      "selected" : 0
+    }, {
+      "type" : "tabLayout",
+      "preferredSize" : {
+        "width" : 200,
+        "height" : 258
+      },
+      "tabs" : [ {
+        "id" : "table-78LF4"
+      } ],
+      "selected" : 0
+    }, {
+      "type" : "tabLayout",
+      "preferredSize" : {
+        "width" : 200,
+        "height" : 604
+      },
+      "tabs" : [ {
+        "id" : "vis-SPSCW"
+      } ],
+      "selected" : 0
+    } ]
   },
   "tabVisibility" : "SHOW_ALL"
 }

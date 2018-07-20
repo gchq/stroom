@@ -22,8 +22,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.SharedObject;
 
-@JsonInclude(Include.NON_EMPTY)
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser"})
+@JsonInclude(Include.NON_EMPTY)
 public class Doc implements SharedObject {
     private static final long serialVersionUID = -7268601402378907741L;
 

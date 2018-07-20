@@ -16,6 +16,7 @@
 
 package stroom.streamtask.shared;
 
+import stroom.data.meta.api.MetaDataSource;
 import stroom.docref.DocRef;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.CriteriaSet;
@@ -37,12 +38,13 @@ public final class FindStreamTaskCriteria extends BaseCriteria implements HasIsC
     public static final String FIELD_CREATE_TIME = "Created";
     public static final String FIELD_START_TIME = "Start Time";
     public static final String FIELD_END_TIME_DATE = "End Time";
-    public static final String FIELD_FEED_NAME = "Feed";
+    public static final String FIELD_FEED_NAME = MetaDataSource.FEED_NAME;
     public static final String FIELD_PRIORITY = "Priority";
-    public static final String FIELD_PIPELINE_NAME = "Pipeline";
+    public static final String FIELD_PIPELINE_UUID = MetaDataSource.PIPELINE_UUID;
     public static final String FIELD_STATUS = "Status";
     public static final String FIELD_COUNT = "Count";
     public static final String FIELD_NODE = "Node";
+    public static final String FIELD_POLL_AGE = "Poll Age";
     private static final long serialVersionUID = 5031936548305751911L;
     /**
      * Look for stream tasks with a certain status.

@@ -24,8 +24,6 @@ import java.util.Properties;
 
 @Singleton
 public class PersistServiceImpl implements Provider<EntityManager>, PersistService {
-//    private static final String PACKAGE = "stroom";
-
     private final DataSource dataSource;
 
     private volatile EntityManagerFactory emFactory;

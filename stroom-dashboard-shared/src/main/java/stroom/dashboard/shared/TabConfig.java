@@ -16,6 +16,10 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.SharedObject;
 
@@ -28,20 +32,24 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"id", "settings"})
+@JsonInclude(Include.NON_EMPTY)
 @XmlRootElement(name = "tab")
 @XmlType(name = "TabConfig", propOrder = {"id", "settings"})
 public class TabConfig implements SharedObject {
     private static final long serialVersionUID = -2105048053435792675L;
 
     @XmlElement(name = "id")
+    @JsonProperty("id")
     private String id;
 
     @XmlElements({@XmlElement(name = "query", type = QueryComponentSettings.class),
             @XmlElement(name = "table", type = TableComponentSettings.class),
             @XmlElement(name = "vis", type = VisComponentSettings.class),
             @XmlElement(name = "text", type = TextComponentSettings.class)})
+    @JsonProperty("settings")
     private ComponentSettings settings;
 
+    @JsonIgnore
     private transient TabLayoutConfig parent;
 
     public TabConfig() {

@@ -302,12 +302,6 @@ public class DefaultProperties {
 
         // SEARCH SHARD
         list.add(new GlobalProperty.Builder()
-                .name("stroom.search.shard.maxOpen")
-                .value("5")
-                .description("The number of open Lucene index shards to cache on each node")
-                .editable(true)
-                .build());
-        list.add(new GlobalProperty.Builder()
                 .name("stroom.search.shard.maxDocIdQueueSize")
                 .value("1000000")
                 .description("The maximum number of doc ids that will be queued ready for stored data to be retrieved from the index shard")
@@ -365,13 +359,13 @@ public class DefaultProperties {
         list.add(new GlobalProperty.Builder()
                 .name("stroom.search.process.defaultTimeLimit")
                 .value("30")
-                .description("The default number of minutes that search processing will be limited by.")
+                .description("The default number of minutes that batch search processing will be limited by.")
                 .editable(true)
                 .build());
         list.add(new GlobalProperty.Builder()
                 .name("stroom.search.process.defaultRecordLimit")
                 .value("1000000")
-                .description("The default number of records that search processing will be limited by.")
+                .description("The default number of records that batch search processing will be limited by.")
                 .editable(true)
                 .build());
 

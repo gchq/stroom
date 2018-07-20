@@ -16,6 +16,10 @@
 
 package stroom.stats.shared;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.HasDisplayValue;
 import stroom.docref.SharedObject;
 
@@ -26,11 +30,13 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "statisticField", propOrder = {"fieldName"})
+@JsonPropertyOrder({"fieldName"})
+@JsonInclude(Include.NON_EMPTY)
 public class StatisticField implements HasDisplayValue, Comparable<StatisticField>, SharedObject {
-
     private static final long serialVersionUID = 1142082317542942204L;
 
     @XmlElement(name = "fieldName")
+    @JsonProperty("fieldName")
     private String fieldName;
 
     public StatisticField() {

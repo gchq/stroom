@@ -170,8 +170,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                 final QueryData findStreamQueryData = new QueryData.Builder()
                         .dataSource(MetaDataSource.STREAM_STORE_DOC_REF)
                         .expression(new ExpressionOperator.Builder(Op.AND)
-                                .addTerm(MetaDataSource.FEED, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
-                                .addTerm(MetaDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, streamType)
+                                .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
+                                .addTerm(MetaDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, streamType)
                                 .build())
                         .build();
 
@@ -358,10 +358,10 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         final FeedDoc feed = feeds.get();
 
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaDataSource.FEED, Condition.EQUALS, feedName)
+                .addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, feedName)
                 .addOperator(new ExpressionOperator.Builder(Op.OR)
-                        .addTerm(MetaDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
-                        .addTerm(MetaDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                        .addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_REFERENCE)
+                        .addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                         .build())
                 .build();
 

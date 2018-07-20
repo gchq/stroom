@@ -1,0 +1,49 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
+/*Not working */
+.tracker-summary-segment {
+    padding-left:0px;
+    padding-right:0px;
+}
+
+.table .wide {
+    margin:0px !important;
+    padding: 0px !important;
+}
+
+.graph .label {
+    width: 100%;
+}
+
+.graph .circular.label {
+    width:10px;
+}
+
+.graph .progress {
+    margin:0px !important;
+    padding: 0px !important;
+}
+
+.graph .column {
+    padding-top:0px !important;
+    padding-right:0px !important;
+    padding-left:0px !important;
+}
+
+.graph .priority-column {
+    width:15px !important;
+}

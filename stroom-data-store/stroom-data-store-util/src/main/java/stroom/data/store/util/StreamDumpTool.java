@@ -119,13 +119,13 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         final DataMetaService streamMetaService = injector.getInstance(DataMetaService.class);
 
         if (feed != null) {
-            builder.addTerm(MetaDataSource.FEED, Condition.EQUALS, feed);
+            builder.addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, feed);
         }
 
         if (streamType != null) {
-            builder.addTerm(MetaDataSource.STREAM_TYPE, Condition.EQUALS, streamType);
+            builder.addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, streamType);
         } else {
-            builder.addTerm(MetaDataSource.STREAM_TYPE, Condition.EQUALS, StreamTypeNames.RAW_EVENTS);
+            builder.addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.RAW_EVENTS);
         }
 
         // Query the stream store

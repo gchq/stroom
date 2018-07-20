@@ -16,6 +16,9 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
@@ -29,6 +32,7 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"decimalPlaces", "useSeparator"})
+@JsonInclude(Include.NON_EMPTY)
 @XmlRootElement(name = "numberFormatSettings")
 @XmlType(name = "NumberFormatSettings", propOrder = {"decimalPlaces", "useSeparator"})
 public class NumberFormatSettings implements FormatSettings {
@@ -38,8 +42,10 @@ public class NumberFormatSettings implements FormatSettings {
     private static final boolean DEFAULT_USE_SEPARATOR = false;
 
     @XmlElement(name = "decimalPlaces")
+    @JsonProperty("decimalPlaces")
     private Integer decimalPlaces;
     @XmlElement(name = "useSeparator")
+    @JsonProperty("useSeparator")
     private Boolean useSeparator;
 
     public NumberFormatSettings() {

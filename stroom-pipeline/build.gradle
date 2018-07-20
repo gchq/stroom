@@ -7,6 +7,7 @@ dependencies {
     compile project(':stroom-core-server')
     compile project(':stroom-core-shared')
     compile project(':stroom-docstore-shared')
+    compile project(':stroom-docstore-server')
     compile project(':stroom-entity-shared')
     compile project(':stroom-security-api')
     compile project(':stroom-statistics-api')
@@ -32,6 +33,8 @@ dependencies {
     compile libs.stroomQueryApi
     compile libs.ws_rs_api
     compile libs.xml_apis
+    compile libs.swagger_annotations
+    compile libs.dropwizard_metrics_healthchecks
 
     testCompile project(':stroom-security-impl-mock')
     testCompile project(':stroom-data-meta:stroom-data-meta-impl-mock')

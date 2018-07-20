@@ -36,6 +36,11 @@ public class AttributeMapFilterFactoryImpl implements AttributeMapFilterFactory 
     }
 
     @Override
+    public AttributeMapFilter create() {
+        return new AttributeMapFilter(null);
+    }
+
+    @Override
     public AttributeMapFilter create(final DocRef policyRef) {
         return new AttributeMapFilterImpl(new DataReceiptPolicyChecker(ruleSetService, dictionaryStore, policyRef));
     }

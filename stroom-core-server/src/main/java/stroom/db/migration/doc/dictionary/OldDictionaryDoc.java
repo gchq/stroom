@@ -16,6 +16,8 @@
 
 package stroom.db.migration.doc.dictionary;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docstore.shared.Doc;
 import stroom.docref.DocRef;
@@ -31,6 +33,7 @@ import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "includes"})
+@JsonInclude(Include.NON_EMPTY)
 @XmlRootElement(name = "dictionary")
 @XmlType(name = "DictionaryDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "imports"})
 public class OldDictionaryDoc extends Doc {

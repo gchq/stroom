@@ -113,7 +113,7 @@ public class StreamRetentionExecutor {
             });
 
             final ExpressionOperator expression = periodToExpression(MetaDataSource.CREATE_TIME, createPeriod)
-                    .addTerm(MetaDataSource.FEED, Condition.EQUALS, feed.getName())
+                    .addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, feed.getName())
                     // we only want it to logically delete UNLOCKED items and not ones
                     // already marked as DELETED
                     .addTerm(MetaDataSource.STATUS, Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue())

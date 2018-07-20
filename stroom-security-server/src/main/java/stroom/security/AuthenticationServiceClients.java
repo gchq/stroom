@@ -50,21 +50,21 @@ class AuthenticationServiceClients {
     private final boolean enableAuth;
 
     @Inject
-    AuthenticationServiceClients(final PropertyService propertyService) {
-        enableAuth = propertyService.getBooleanProperty("stroom.authentication.required", true);
+    AuthenticationServiceClients(final SecurityConfig securityConfig) {
+        enableAuth = securityConfig.isAuthenticationRequired();
         if (enableAuth) {
-            if (Strings.isNullOrEmpty(propertyService.getProperty("stroom.security.apiToken"))) {
+            if (Strings.isNullOrEmpty(securityConfig.getApiToken())) {
                 throw new RuntimeException("Missing API key! Please configure using 'stroom.security.apiToken'");
             }
 
-            if (Strings.isNullOrEmpty(propertyService.getProperty("stroom.auth.services.url"))) {
+            if (Strings.isNullOrEmpty(securityConfig.getAuthServicesBaseUrl())) {
                 throw new RuntimeException("Missing auth service URL! Please configure using 'stroom.auth.services.url'");
             }
         }
 
         authServiceClient = new ApiClient();
-        authServiceClient.setBasePath(propertyService.getProperty("stroom.auth.services.url"));
-        authServiceClient.addDefaultHeader("Authorization", "Bearer " + propertyService.getProperty("stroom.security.apiToken"));
+        authServiceClient.setBasePath(securityConfig.getAuthServicesBaseUrl());
+        authServiceClient.addDefaultHeader("Authorization", "Bearer " + securityConfig.getApiToken());
     }
 
     AuthenticationApi newAuthenticationApi() {
@@ -125,17 +125,24 @@ class AuthenticationServiceClients {
             put("enabled", "true");
         }});
 
-        Optional<String> usersApiToken;
+        Optional<String> usersApiToken = Optional.empty();
         try {
             SearchResponse authSearchResponse = newApiKeyApi().search(authSearchRequest);
-            if (authSearchResponse.getTokens().isEmpty()) {
+            for(Token token : authSearchResponse.getTokens()){
+                // We're using the auth token search API to get this token. It'll be a fuzzy match so
+                // we need to make sure the userId matches exactly.
+                if(token.getUserEmail().equalsIgnoreCase(userId)){
+                    usersApiToken = Optional.of(token.getToken());
+                    break;
+                }
+            }
+
+            if(!usersApiToken.isPresent()){
                 // User doesn't have an API token and cannot make this request.
                 LOGGER.warn("Tried to get a user's API key but they don't have one! User was: " +
                         userId);
-                usersApiToken = Optional.empty();
-            } else {
-                usersApiToken = Optional.of(authSearchResponse.getTokens().get(0).getToken());
             }
+
         } catch (ApiException e) {
             String message =
                     "Unable to get the user's token from the Token service! User was: " + userId;

@@ -269,7 +269,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     }
 
     private void validateFeed(final ProcessorFilter filter, final QueryData queryData) {
-        final int feedCount = termCount(queryData, MetaDataSource.FEED);
+        final int feedCount = termCount(queryData, MetaDataSource.FEED_NAME);
         final int streamIdCount = termCount(queryData, MetaDataSource.STREAM_ID);
         final int parentStreamIdCount = termCount(queryData, MetaDataSource.PARENT_STREAM_ID);
 
@@ -288,7 +288,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     }
 
     private void validateStreamType(final ProcessorFilter filter, final QueryData queryData) {
-        final int streamTypeCount = termCount(queryData, MetaDataSource.STREAM_TYPE);
+        final int streamTypeCount = termCount(queryData, MetaDataSource.STREAM_TYPE_NAME);
         final int streamIdCount = termCount(queryData, MetaDataSource.STREAM_ID);
         final int parentStreamIdCount = termCount(queryData, MetaDataSource.PARENT_STREAM_ID);
 

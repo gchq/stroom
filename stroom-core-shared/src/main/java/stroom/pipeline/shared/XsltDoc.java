@@ -17,6 +17,8 @@
 package stroom.pipeline.shared;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docstore.shared.Doc;
 import stroom.entity.shared.HasData;
@@ -24,6 +26,7 @@ import stroom.entity.shared.HasData;
 import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description"})
+@JsonInclude(Include.NON_EMPTY)
 public class XsltDoc extends Doc implements HasData {
     private static final long serialVersionUID = 4519634323788508083L;
 

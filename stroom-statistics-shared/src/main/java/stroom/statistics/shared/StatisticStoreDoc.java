@@ -17,6 +17,9 @@
 package stroom.statistics.shared;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docstore.shared.Doc;
 import stroom.statistics.shared.common.CustomRollUpMask;
@@ -31,6 +34,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "statisticType", "rollUpType", "precision", "enabled", "config"})
+@JsonInclude(Include.NON_EMPTY)
 public class StatisticStoreDoc extends Doc implements StatisticStore {
     public static final String DOCUMENT_TYPE = "StatisticStore";
 
@@ -44,11 +48,17 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
 
     private static final long serialVersionUID = -649286188919707915L;
 
+    @JsonProperty("description")
     private String description;
+    @JsonProperty("statisticType")
     private StatisticType statisticType;
+    @JsonProperty("rollUpType")
     private StatisticRollUpType rollUpType;
+    @JsonProperty("precision")
     private Long precision;
+    @JsonProperty("enabled")
     private Boolean enabled;
+    @JsonProperty("config")
     private StatisticsDataSourceData config;
 
     public StatisticStoreDoc() {
