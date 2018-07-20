@@ -189,14 +189,6 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         StreamSource source = streamStore.openStreamSource(list.get(0).getId());
 
         assertContent("expecting meta data", source.getChildStream(StreamTypeNames.META), true);
-        try {
-            // TODO : @66 No idea what we might get here.
-            Assert.assertEquals("expecting nested data", source.getNestedInputStream().getEntryCount(), 2);
-        } catch (final IOException e) {
-            // Ignore.
-        }
-
-//        assertContent("expecting NO boundary data", source.getNestedInputStream(), true);
 
         streamStore.closeStreamSource(source);
         source = streamStore.openStreamSource(list.get(0).getId());

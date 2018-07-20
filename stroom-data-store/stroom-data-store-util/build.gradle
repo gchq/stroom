@@ -15,7 +15,7 @@ dependencies {
 //    compile libs.javax_inject
 
     testCompile libs.junit_jupiter
-    testCompile libs.assertj_core
+//    testCompile libs.assertj_core
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
 
     // the following logging libs are needed when running junits outside dropwizard
