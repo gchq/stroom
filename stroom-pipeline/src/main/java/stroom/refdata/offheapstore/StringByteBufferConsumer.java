@@ -53,7 +53,7 @@ public class StringByteBufferConsumer extends AbstractByteBufferConsumer {
         byteBuffer.flip();
 
         LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("str {}, byteBuffer {}",
-                str, ByteArrayUtils.byteBufferInfo(byteBuffer)));
+                str, ByteBufferUtils.byteBufferInfo(byteBuffer)));
 
         try {
             receiver.characters(str, NULL_LOCATION, ReceiverOptions.WHOLE_TEXT_NODE);

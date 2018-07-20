@@ -17,10 +17,17 @@
 
 package stroom.refdata.offheapstore.serdes;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.refdata.offheapstore.RefDataProcessingInfo;
 
+import java.nio.ByteBuffer;
+
 public class TestRefDataProcessingInfoSerde extends AbstractSerdeTest {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestRefDataProcessingInfoSerde.class);
 
     @Test
     public void testSerializeDeserialize() {
@@ -107,4 +114,37 @@ public class TestRefDataProcessingInfoSerde extends AbstractSerdeTest {
                     refDataProcessingInfoSerde.updateState(byteBuffer, RefDataProcessingInfo.ProcessingState.COMPLETE);
                 });
     }
+
+    @Test
+    public void wasAccessedAfter() {
+
+        RefDataProcessingInfoSerde serde = new RefDataProcessingInfoSerde();
+        RefDataProcessingInfo refDataProcessingInfo = new RefDataProcessingInfo(
+                0L,
+                1000L,
+                100L,
+                RefDataProcessingInfo.ProcessingState.COMPLETE);
+
+
+        ByteBuffer valueBuffer = ByteBuffer.allocate(30);
+        serde.serialize(valueBuffer, refDataProcessingInfo);
+
+        doAccessTest(1000L, valueBuffer, false);
+        doAccessTest(999L, valueBuffer, true);
+        doAccessTest(1001L, valueBuffer, false);
+
+
+    }
+
+    private void doAccessTest(final long timeUnderTestMs, final ByteBuffer valueBuffer, final boolean expectedResult) {
+        ByteBuffer timeBuffer = ByteBuffer.allocate(Long.BYTES);
+        timeBuffer.putLong(timeUnderTestMs);
+        timeBuffer.flip();
+        boolean result = RefDataProcessingInfoSerde.wasAccessedAfter(valueBuffer, timeBuffer);
+        Assertions.assertThat(result).isEqualTo(expectedResult);
+    }
+
+
+
+
 }

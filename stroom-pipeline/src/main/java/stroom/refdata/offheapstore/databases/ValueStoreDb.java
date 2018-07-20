@@ -28,8 +28,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.AbstractLmdbDb;
 import stroom.refdata.lmdb.LmdbUtils;
-import stroom.refdata.offheapstore.ByteArrayUtils;
 import stroom.refdata.offheapstore.ByteBufferPool;
+import stroom.refdata.offheapstore.ByteBufferUtils;
 import stroom.refdata.offheapstore.RefDataValue;
 import stroom.refdata.offheapstore.TypedByteBuffer;
 import stroom.refdata.offheapstore.ValueStoreKey;
@@ -130,7 +130,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
             boolean isFound = cursor.get(keyBuffer, GetOp.MDB_SET_KEY);
             if (!isFound) {
                 throw new RuntimeException(LambdaLogger.buildMessage(
-                        "Expecting to find entry for {}", ByteArrayUtils.byteBufferInfo(keyBuffer)));
+                        "Expecting to find entry for {}", ByteBufferUtils.byteBufferInfo(keyBuffer)));
             }
             final ByteBuffer valueBuf = cursor.val();
 
@@ -182,7 +182,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
         final ByteBuffer valueBuffer = valueSerde.serialize(refDataValue);
 
         LAMBDA_LOGGER.trace(() ->
-                LambdaLogger.buildMessage("valueBuffer: {}", ByteArrayUtils.byteBufferInfo(valueBuffer)));
+                LambdaLogger.buildMessage("valueBuffer: {}", ByteBufferUtils.byteBufferInfo(valueBuffer)));
 
         ValueStoreKey valueStoreKey = null;
 
@@ -260,8 +260,8 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                         cursor.put(keyFromDbBuf, valueBufClone, PutFlags.MDB_CURRENT);
                     } catch (Exception e) {
                         throw new RuntimeException(LambdaLogger.buildMessage("Error doing cursor.put with [{}] & [{}]",
-                                ByteArrayUtils.byteBufferInfo(keyFromDbBuf),
-                                ByteArrayUtils.byteBufferInfo(valueBufClone)), e);
+                                ByteBufferUtils.byteBufferInfo(keyFromDbBuf),
+                                ByteBufferUtils.byteBufferInfo(valueBufClone)), e);
                     }
 
                     break;
@@ -303,8 +303,8 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
             boolean didPutSucceed = put(writeTxn, keyBuffer, valueBuffer, false);
             if (!didPutSucceed) {
                 throw new RuntimeException(LambdaLogger.buildMessage("Put failed for key: {}, value {}",
-                        ByteArrayUtils.byteBufferInfo(keyBuffer),
-                        ByteArrayUtils.byteBufferInfo(valueBuffer)));
+                        ByteBufferUtils.byteBufferInfo(keyBuffer),
+                        ByteBufferUtils.byteBufferInfo(valueBuffer)));
             }
         }
 

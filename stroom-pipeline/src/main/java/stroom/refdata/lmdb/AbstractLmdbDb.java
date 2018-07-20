@@ -29,8 +29,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.serde.Serde;
 import stroom.refdata.offheapstore.BufferPair;
-import stroom.refdata.offheapstore.ByteArrayUtils;
 import stroom.refdata.offheapstore.ByteBufferPool;
+import stroom.refdata.offheapstore.ByteBufferUtils;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -110,8 +110,8 @@ public abstract class AbstractLmdbDb<K, V> {
             ByteBuffer keyBuffer = keySerde.serialize(key);
             ByteBuffer valueBuffer = lmdbDbi.get(txn, keyBuffer);
             LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Get returned value [{}] for key [{}]",
-                    ByteArrayUtils.byteBufferInfo(valueBuffer),
-                    ByteArrayUtils.byteBufferInfo(keyBuffer)));
+                    ByteBufferUtils.byteBufferInfo(valueBuffer),
+                    ByteBufferUtils.byteBufferInfo(keyBuffer)));
 
             return Optional.ofNullable(valueBuffer)
                     .map(valueSerde::deserialize);
@@ -137,13 +137,13 @@ public abstract class AbstractLmdbDb<K, V> {
         try {
             final ByteBuffer valueBuffer = lmdbDbi.get(txn, keyBuffer);
             LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Get returned value [{}] for key [{}]",
-                    ByteArrayUtils.byteBufferInfo(valueBuffer),
-                    ByteArrayUtils.byteBufferInfo(keyBuffer)));
+                    ByteBufferUtils.byteBufferInfo(valueBuffer),
+                    ByteBufferUtils.byteBufferInfo(keyBuffer)));
 
             return Optional.ofNullable(valueBuffer);
         } catch (RuntimeException e) {
             throw new RuntimeException(LambdaLogger.buildMessage("Error getting value for key [{}]",
-                    ByteArrayUtils.byteBufferInfo(keyBuffer)), e);
+                    ByteBufferUtils.byteBufferInfo(keyBuffer)), e);
         }
     }
 
@@ -202,13 +202,13 @@ public abstract class AbstractLmdbDb<K, V> {
             }
             LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Put returned {} for key [{}], value [{}]",
                     didPutSucceed,
-                    ByteArrayUtils.byteBufferInfo(keyBuffer),
-                    ByteArrayUtils.byteBufferInfo(valueBuffer)));
+                    ByteBufferUtils.byteBufferInfo(keyBuffer),
+                    ByteBufferUtils.byteBufferInfo(valueBuffer)));
 
             return didPutSucceed;
         } catch (RuntimeException e) {
             throw new RuntimeException(LambdaLogger.buildMessage("Error putting key {}, value {}",
-                    ByteArrayUtils.byteBufferInfo(keyBuffer), ByteArrayUtils.byteBufferInfo(valueBuffer)), e);
+                    ByteBufferUtils.byteBufferInfo(keyBuffer), ByteBufferUtils.byteBufferInfo(valueBuffer)), e);
         }
     }
 
@@ -261,7 +261,7 @@ public abstract class AbstractLmdbDb<K, V> {
             boolean isFound = cursor.get(keyBuffer, GetOp.MDB_SET_KEY);
             if (!isFound) {
                 throw new RuntimeException(LambdaLogger.buildMessage(
-                        "Expecting to find entry for {}", ByteArrayUtils.byteBufferInfo(keyBuffer)));
+                        "Expecting to find entry for {}", ByteBufferUtils.byteBufferInfo(keyBuffer)));
             }
             final ByteBuffer valueBuf = cursor.val();
 

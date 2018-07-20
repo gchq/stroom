@@ -28,7 +28,7 @@ import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.serde.Serde;
-import stroom.refdata.offheapstore.ByteArrayUtils;
+import stroom.refdata.offheapstore.ByteBufferUtils;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -302,13 +302,13 @@ public class LmdbUtils {
      * byte values.
      */
     public static void logRawDatabaseContents(final Env<ByteBuffer> env, final Dbi<ByteBuffer> dbi) {
-        logDatabaseContents(env, dbi, ByteArrayUtils::byteBufferToHex, ByteArrayUtils::byteBufferToHex);
+        logDatabaseContents(env, dbi, ByteBufferUtils::byteBufferToHex, ByteBufferUtils::byteBufferToHex);
     }
 
     public static void logRawDatabaseContents(final Env<ByteBuffer> env,
                                               final Dbi<ByteBuffer> dbi,
                                               final Txn<ByteBuffer> txn) {
-        logDatabaseContents(env, dbi, txn, ByteArrayUtils::byteBufferToHex, ByteArrayUtils::byteBufferToHex);
+        logDatabaseContents(env, dbi, txn, ByteBufferUtils::byteBufferToHex, ByteBufferUtils::byteBufferToHex);
     }
 
     /**
@@ -324,8 +324,8 @@ public class LmdbUtils {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(LambdaLogger.buildMessage("Dumping entries in range {} [[{}] to [{}]] for database [{}]",
                 keyRange.getType().toString(),
-                ByteArrayUtils.byteBufferToHex(keyRange.getStart()),
-                ByteArrayUtils.byteBufferToHex(keyRange.getStop()),
+                ByteBufferUtils.byteBufferToHex(keyRange.getStart()),
+                ByteBufferUtils.byteBufferToHex(keyRange.getStop()),
                 new String(dbi.getName())));
 
         try (CursorIterator<ByteBuffer> cursorIterator = dbi.iterate(txn, keyRange)) {
@@ -353,14 +353,14 @@ public class LmdbUtils {
                                              final Dbi<ByteBuffer> dbi,
                                              final Txn<ByteBuffer> txn,
                                              final KeyRange<ByteBuffer> keyRange) {
-        logContentsInRange(env, dbi, txn, keyRange, ByteArrayUtils::byteBufferToHex, ByteArrayUtils::byteBufferToHex);
+        logContentsInRange(env, dbi, txn, keyRange, ByteBufferUtils::byteBufferToHex, ByteBufferUtils::byteBufferToHex);
     }
 
     public static void logRawContentsInRange(final Env<ByteBuffer> env,
                             final Dbi<ByteBuffer> dbi,
                             final KeyRange<ByteBuffer> keyRange) {
         doWithReadTxn(env, txn ->
-                logContentsInRange(env, dbi, txn, keyRange, ByteArrayUtils::byteBufferToHex, ByteArrayUtils::byteBufferToHex)
+                logContentsInRange(env, dbi, txn, keyRange, ByteBufferUtils::byteBufferToHex, ByteBufferUtils::byteBufferToHex)
         );
     }
 }

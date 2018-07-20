@@ -4,7 +4,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.refdata.offheapstore.ByteArrayUtils;
+import stroom.refdata.offheapstore.ByteBufferUtils;
 import stroom.refdata.offheapstore.FastInfosetValue;
 
 import java.nio.ByteBuffer;
@@ -23,13 +23,13 @@ public class TestFastInfoSetValueSerde extends AbstractSerdeTest {
 
 
         ByteBuffer byteBuffer = refDataValueSerde.serialize(fastInfosetValue);
-        LOGGER.debug("byteBuffer {}", ByteArrayUtils.byteBufferInfo(byteBuffer));
+        LOGGER.debug("byteBuffer {}", ByteBufferUtils.byteBufferInfo(byteBuffer));
         ByteBuffer byteBufferClone = byteBuffer.duplicate();
 
 
         ByteBuffer valueByteBuffer = refDataValueSerde.extractValueBuffer(byteBuffer);
-        LOGGER.debug("byteBuffer {}", ByteArrayUtils.byteBufferInfo(byteBuffer));
-        LOGGER.debug("valueByteBuffer {}", ByteArrayUtils.byteBufferInfo(valueByteBuffer));
+        LOGGER.debug("byteBuffer {}", ByteBufferUtils.byteBufferInfo(byteBuffer));
+        LOGGER.debug("valueByteBuffer {}", ByteBufferUtils.byteBufferInfo(valueByteBuffer));
 
         byte[] valueBytesFound = new byte[valueBytes.length];
 

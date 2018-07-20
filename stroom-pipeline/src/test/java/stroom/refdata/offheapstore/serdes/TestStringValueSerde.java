@@ -1,12 +1,9 @@
 package stroom.refdata.offheapstore.serdes;
 
-import org.apache.hadoop.hbase.util.ByteBufferUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.refdata.offheapstore.ByteArrayUtils;
-import stroom.refdata.offheapstore.FastInfosetValue;
 import stroom.refdata.offheapstore.StringValue;
 
 import java.nio.ByteBuffer;
@@ -24,11 +21,11 @@ public class TestStringValueSerde extends AbstractSerdeTest {
         RefDataValueSerde refDataValueSerde = RefDataValueSerdeFactory.create();
 
         ByteBuffer byteBuffer = refDataValueSerde.serialize(stringValue);
-        LOGGER.debug("byteBuffer {}", ByteArrayUtils.byteBufferInfo(byteBuffer));
+        LOGGER.debug("byteBuffer {}", stroom.refdata.offheapstore.ByteBufferUtils.byteBufferInfo(byteBuffer));
         ByteBuffer byteBufferClone = byteBuffer.duplicate();
 
         ByteBuffer subBuffer = refDataValueSerde.getSubBuffer(byteBuffer);
-        LOGGER.debug("subBuffer {}", ByteArrayUtils.byteBufferInfo(subBuffer));
+        LOGGER.debug("subBuffer {}", stroom.refdata.offheapstore.ByteBufferUtils.byteBufferInfo(subBuffer));
 
         Assertions.assertThat(subBuffer.remaining()).isEqualTo(byteBuffer.remaining() - 1);
 
@@ -53,16 +50,16 @@ public class TestStringValueSerde extends AbstractSerdeTest {
 
         ByteBuffer byteBuffer = serde.serialize(stringValue);
         ByteBuffer byteBufferClone = byteBuffer.duplicate();
-        LOGGER.debug("byteBuffer {}", ByteArrayUtils.byteBufferInfo(byteBuffer));
+        LOGGER.debug("byteBuffer {}", stroom.refdata.offheapstore.ByteBufferUtils.byteBufferInfo(byteBuffer));
 
         ByteBuffer subBuffer = serde.getSubBuffer(byteBuffer);
         ByteBuffer subBufferClone = subBuffer.duplicate();
-        LOGGER.debug("subBuffer {}", ByteArrayUtils.byteBufferInfo(byteBuffer));
+        LOGGER.debug("subBuffer {}", stroom.refdata.offheapstore.ByteBufferUtils.byteBufferInfo(byteBuffer));
 
         int refCountFound = serde.getSubSerde(byteBuffer).extractReferenceCount(subBuffer);
 
-        LOGGER.debug("subBuffer {}", ByteArrayUtils.byteBufferInfo(byteBuffer));
-        LOGGER.debug("byteBuffer {}", ByteArrayUtils.byteBufferInfo(byteBuffer));
+        LOGGER.debug("subBuffer {}", stroom.refdata.offheapstore.ByteBufferUtils.byteBufferInfo(byteBuffer));
+        LOGGER.debug("byteBuffer {}", stroom.refdata.offheapstore.ByteBufferUtils.byteBufferInfo(byteBuffer));
 
         Assertions.assertThat(refCountFound).isEqualTo(refCount);
 
@@ -82,16 +79,16 @@ public class TestStringValueSerde extends AbstractSerdeTest {
 
         ByteBuffer byteBuffer = serde.serialize(stringValue);
         ByteBuffer byteBufferClone = byteBuffer.duplicate();
-        LOGGER.debug("byteBuffer {}", ByteArrayUtils.byteBufferInfo(byteBuffer));
+        LOGGER.debug("byteBuffer {}", stroom.refdata.offheapstore.ByteBufferUtils.byteBufferInfo(byteBuffer));
 
         ByteBuffer subBuffer = serde.getSubBuffer(byteBuffer);
         ByteBuffer subBufferClone = subBuffer.duplicate();
-        LOGGER.debug("subBuffer {}", ByteArrayUtils.byteBufferInfo(byteBuffer));
+        LOGGER.debug("subBuffer {}", stroom.refdata.offheapstore.ByteBufferUtils.byteBufferInfo(byteBuffer));
 
         int refCountFound = serde.getSubSerde(byteBuffer).getReferenceCount(subBuffer);
 
-        LOGGER.debug("subBuffer {}", ByteArrayUtils.byteBufferInfo(byteBuffer));
-        LOGGER.debug("byteBuffer {}", ByteArrayUtils.byteBufferInfo(byteBuffer));
+        LOGGER.debug("subBuffer {}", stroom.refdata.offheapstore.ByteBufferUtils.byteBufferInfo(byteBuffer));
+        LOGGER.debug("byteBuffer {}", stroom.refdata.offheapstore.ByteBufferUtils.byteBufferInfo(byteBuffer));
 
         Assertions.assertThat(refCountFound).isEqualTo(refCount);
 

@@ -49,7 +49,14 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
                 });
     }
 
+//    public RefDataProcessingInfo.ProcessingState getProcessingState(final Txn<ByteBuffer> txn,
+//                                                                    final ByteBuffer keyBuffer) {
+//            ByteBuffer valueBuffer = lmdbDbi.get(txn, keyBuffer);
+//            return valueSerde.
+//    }
+
     public interface Factory {
         ProcessingInfoDb create(final Env<ByteBuffer> lmdbEnvironment);
     }
+
 }

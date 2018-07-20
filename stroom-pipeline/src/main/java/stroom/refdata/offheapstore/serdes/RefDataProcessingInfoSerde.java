@@ -17,9 +17,12 @@
 
 package stroom.refdata.offheapstore.serdes;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.serde.Deserializer;
 import stroom.refdata.lmdb.serde.Serde;
 import stroom.refdata.lmdb.serde.Serializer;
+import stroom.refdata.offheapstore.ByteBufferUtils;
 import stroom.refdata.offheapstore.RefDataProcessingInfo;
 
 import java.nio.ByteBuffer;
@@ -29,6 +32,8 @@ public class RefDataProcessingInfoSerde implements
         Serde<RefDataProcessingInfo>,
         Serializer<RefDataProcessingInfo>,
         Deserializer<RefDataProcessingInfo> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(RefDataProcessingInfoSerde.class);
 
     public static final int CREATE_TIME_OFFSET = 0;
     public static final int LAST_ACCESSED_TIME_OFFSET = CREATE_TIME_OFFSET + Long.BYTES;
@@ -64,7 +69,7 @@ public class RefDataProcessingInfoSerde implements
     }
 
     public void updateState(final ByteBuffer byteBuffer,
-                            final RefDataProcessingInfo.ProcessingState newProcessingState) {
+                                   final RefDataProcessingInfo.ProcessingState newProcessingState) {
 
         // absolute put so no need to change the buffer position
         byteBuffer.put(PROCESSING_STATE_OFFSET, newProcessingState.getId());
@@ -77,5 +82,22 @@ public class RefDataProcessingInfoSerde implements
 
     public void updateLastAccessedTime(final ByteBuffer byteBuffer) {
         updateLastAccessedTime(byteBuffer, System.currentTimeMillis());
+    }
+
+    /**
+     * Return true if the {@link RefDataProcessingInfo} object represent by valueBuffer has a last accessed
+     * time after the epoch millis time represented by timeMsBuffer.
+     * @param valueBuffer {@link ByteBuffer} containing a serialised {@link RefDataProcessingInfo}
+     * @param timeMsBuffer a {@link ByteBuffer} containing a long representing an epoch millis time
+     */
+    public static boolean wasAccessedAfter(final ByteBuffer valueBuffer, final ByteBuffer timeMsBuffer) {
+        int compareResult = ByteBufferUtils.compareAsLong(
+                timeMsBuffer, timeMsBuffer.position(),
+                valueBuffer, LAST_ACCESSED_TIME_OFFSET);
+
+//        LOGGER.info("{} {}",
+//                timeMsBuffer.getLong(0),
+//                valueBuffer.getLong(LAST_ACCESSED_TIME_OFFSET));
+        return compareResult < 0;
     }
 }

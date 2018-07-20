@@ -26,8 +26,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Range;
 import stroom.refdata.lmdb.AbstractLmdbDb;
-import stroom.refdata.offheapstore.ByteArrayUtils;
 import stroom.refdata.offheapstore.ByteBufferPool;
+import stroom.refdata.offheapstore.ByteBufferUtils;
 import stroom.refdata.offheapstore.RangeStoreKey;
 import stroom.refdata.offheapstore.UID;
 import stroom.refdata.offheapstore.ValueStoreKey;
@@ -95,7 +95,7 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
                     RangeStoreKey rangeStoreKey = keySerde.deserialize(keyBuffer);
                     LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("rangeStoreKey {}, keyBuffer {}",
                             rangeStoreKey,
-                            ByteArrayUtils.byteBufferInfo(keyBuffer)));
+                            ByteBufferUtils.byteBufferInfo(keyBuffer)));
                 }
 
                 if (RangeStoreKeySerde.isKeyInRange(keyBuffer, key)) {

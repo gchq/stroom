@@ -75,7 +75,7 @@ public class MapDefinitionUIDStore {
         return mapUidForwardDb.getAsBytes(writeTxn, mapDefinitionBuffer)
                 .map(uidBuffer -> {
                     LAMBDA_LOGGER.trace(() ->
-                            LambdaLogger.buildMessage("Found existing UID {}", ByteArrayUtils.byteBufferInfo(uidBuffer)));
+                            LambdaLogger.buildMessage("Found existing UID {}", ByteBufferUtils.byteBufferInfo(uidBuffer)));
                     return uidSerde.deserialize(uidBuffer);
                 })
                 .orElseGet(() ->
@@ -99,7 +99,7 @@ public class MapDefinitionUIDStore {
 
         LAMBDA_LOGGER.trace(() ->
                 LambdaLogger.buildMessage("Creating UID mappings for mapDefinition {}",
-                        ByteArrayUtils.byteBufferInfo(mapDefinitionBuffer)));
+                        ByteBufferUtils.byteBufferInfo(mapDefinitionBuffer)));
 
         // get the highest current UID
         final Optional<ByteBuffer> optHighestUid = mapUidReverseDb.getHighestUid(writeTxn);
@@ -113,9 +113,9 @@ public class MapDefinitionUIDStore {
 
         // put the reverse entry
         LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage(
-                "nextUidKeyBuffer {}", ByteArrayUtils.byteBufferInfo(nextUidKeyBuffer)));
+                "nextUidKeyBuffer {}", ByteBufferUtils.byteBufferInfo(nextUidKeyBuffer)));
         LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage(
-                "mapDefinitionBuffer {}", ByteArrayUtils.byteBufferInfo(mapDefinitionBuffer)));
+                "mapDefinitionBuffer {}", ByteBufferUtils.byteBufferInfo(mapDefinitionBuffer)));
         mapUidReverseDb.putReverseEntry(writeTxn, nextUidKeyBuffer, mapDefinitionBuffer);
 
         // we can't reuse the buffers as they are directly allocated so need to copy them
@@ -123,16 +123,16 @@ public class MapDefinitionUIDStore {
         final ByteBuffer nextUidValueBuffer = LmdbUtils.copyDirectBuffer(nextUidKeyBuffer);
 
         LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage(
-                "mapDefinitionKeyBuffer {}", ByteArrayUtils.byteBufferInfo(mapDefinitionKeyBuffer)));
+                "mapDefinitionKeyBuffer {}", ByteBufferUtils.byteBufferInfo(mapDefinitionKeyBuffer)));
         LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage(
-                "nextUidValueBuffer {}", ByteArrayUtils.byteBufferInfo(nextUidValueBuffer)));
+                "nextUidValueBuffer {}", ByteBufferUtils.byteBufferInfo(nextUidValueBuffer)));
 
         // put the forward entry
         mapUidForwardDb.putForwardEntry(writeTxn, mapDefinitionKeyBuffer, nextUidValueBuffer);
 
         // this buffer is 'owned' by LMDB now but we are still in a txn so can pass it back
         LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage(
-                "nextUidValueBuffer {}", ByteArrayUtils.byteBufferInfo(nextUidValueBuffer)));
+                "nextUidValueBuffer {}", ByteBufferUtils.byteBufferInfo(nextUidValueBuffer)));
 
         return UID.wrap(nextUidValueBuffer);
     }

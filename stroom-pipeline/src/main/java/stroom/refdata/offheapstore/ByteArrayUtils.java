@@ -18,11 +18,8 @@
 package stroom.refdata.offheapstore;
 
 import org.apache.hadoop.hbase.util.Bytes;
-import stroom.util.logging.LambdaLogger;
 
 import javax.xml.bind.DatatypeConverter;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 
 public class ByteArrayUtils {
     /**
@@ -60,10 +57,6 @@ public class ByteArrayUtils {
         return sb.toString().replaceAll(" $", "");
     }
 
-    public static String byteBufferToString(final ByteBuffer byteBuffer) {
-        return byteArrayToString(Bytes.getBytes(byteBuffer));
-    }
-
     /**
      * Converts a byte array into a hex representation with a space between each
      * byte e.g 00 00 01 00 05 59 B3
@@ -99,48 +92,6 @@ public class ByteArrayUtils {
         return sb.toString().replaceAll(" $", "");
     }
 
-    public static String byteBufferToHex(final ByteBuffer byteBuffer) {
-        if (byteBuffer == null) {
-            return "null";
-        }
-        return byteArrayToHex(Bytes.getBytes(byteBuffer));
-    }
-
-    public static String byteBufferToHexAll(final ByteBuffer byteBuffer) {
-        final StringBuilder sb = new StringBuilder();
-        if (byteBuffer != null) {
-            int endOffsetEx = byteBuffer.limit();
-            for (int i = 0; i < endOffsetEx; i++) {
-                final byte[] oneByteArr = new byte[1];
-                if (i == byteBuffer.position()) {
-                    sb.append(">");
-                }
-                oneByteArr[0] = byteBuffer.get(i);
-                sb.append(DatatypeConverter.printHexBinary(oneByteArr));
-                if (i == byteBuffer.limit()) {
-                    sb.append("<");
-                }
-                sb.append(" ");
-            }
-        }
-        return sb.toString().replaceAll(" $", "");
-    }
-
-    public static String byteBufferInfo(final ByteBuffer byteBuffer) {
-        if (byteBuffer == null) {
-            return "null";
-        }
-
-        final String value = byteBufferToHexAll(byteBuffer);
-        return LambdaLogger.buildMessage("Cap: {}, pos: {}, lim: {}, rem: {}, val [{}], asStr [{}]",
-                byteBuffer.capacity(),
-                byteBuffer.position(),
-                byteBuffer.limit(),
-                byteBuffer.remaining(),
-                value,
-                StandardCharsets.UTF_8.decode(byteBuffer.duplicate()));
-    }
-
     /**
      * @param arr
      * @return The array represented in hex, decimal and 'hbase' forms. The
@@ -163,8 +114,5 @@ public class ByteArrayUtils {
         } else {
             return "NULL";
         }
-    }
-    public static String byteBufferToAllForms(final ByteBuffer byteBuffer) {
-        return byteArrayToAllForms(Bytes.getBytes(byteBuffer));
     }
 }

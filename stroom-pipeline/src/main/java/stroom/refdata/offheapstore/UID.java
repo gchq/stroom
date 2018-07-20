@@ -109,7 +109,7 @@ public class UID {
 
     @Override
     public String toString() {
-        return ByteArrayUtils.byteBufferToHex(byteBuffer);
+        return ByteBufferUtils.byteBufferToHex(byteBuffer);
     }
 
     @Override

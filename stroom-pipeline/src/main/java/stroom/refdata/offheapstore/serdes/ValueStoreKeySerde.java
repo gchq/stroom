@@ -19,7 +19,6 @@ package stroom.refdata.offheapstore.serdes;
 
 import org.apache.hadoop.hbase.util.ByteBufferUtils;
 import stroom.refdata.lmdb.serde.Serde;
-import stroom.refdata.offheapstore.ByteArrayUtils;
 import stroom.refdata.offheapstore.ValueStoreKey;
 import stroom.util.logging.LambdaLogger;
 
@@ -107,8 +106,8 @@ public class ValueStoreKeySerde implements Serde<ValueStoreKey> {
                     thatBuffer, VALUE_HASH_CODE_OFFSET, VALUE_HASH_CODE_BYTES);
         } catch (Exception e) {
             throw new RuntimeException(LambdaLogger.buildMessage("Error comparing [{}] & [{}]",
-                    ByteArrayUtils.byteBufferInfo(thisBuffer),
-                    ByteArrayUtils.byteBufferInfo(thatBuffer)), e);
+                    stroom.refdata.offheapstore.ByteBufferUtils.byteBufferInfo(thisBuffer),
+                    stroom.refdata.offheapstore.ByteBufferUtils.byteBufferInfo(thatBuffer)), e);
         }
     }
 }

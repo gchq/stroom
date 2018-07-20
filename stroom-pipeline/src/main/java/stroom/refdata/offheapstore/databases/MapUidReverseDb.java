@@ -25,8 +25,8 @@ import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.AbstractLmdbDb;
-import stroom.refdata.offheapstore.ByteArrayUtils;
 import stroom.refdata.offheapstore.ByteBufferPool;
+import stroom.refdata.offheapstore.ByteBufferUtils;
 import stroom.refdata.offheapstore.MapDefinition;
 import stroom.refdata.offheapstore.UID;
 import stroom.refdata.offheapstore.serdes.MapDefinitionSerde;
@@ -61,7 +61,7 @@ public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
                 final CursorIterator.KeyVal<ByteBuffer> highestKeyVal = cursorIterator.next();
                 optHighestUid = Optional.of(highestKeyVal.key());
                 LAMBDA_LOGGER.trace(() ->
-                        LambdaLogger.buildMessage("highestKey: {}", ByteArrayUtils.byteBufferInfo(highestKeyVal.key())));
+                        LambdaLogger.buildMessage("highestKey: {}", ByteBufferUtils.byteBufferInfo(highestKeyVal.key())));
             }
         }
         return optHighestUid;
@@ -74,8 +74,8 @@ public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
         boolean didPutSuceed = put(writeTxn, uidKeyBuffer, mapDefinitionValueBuffer, false);
         if (!didPutSuceed) {
             throw new RuntimeException(LambdaLogger.buildMessage("Failed to put mapDefinition {}, uid {}",
-                    ByteArrayUtils.byteBufferInfo(uidKeyBuffer),
-                    ByteArrayUtils.byteBufferInfo(mapDefinitionValueBuffer)));
+                    ByteBufferUtils.byteBufferInfo(uidKeyBuffer),
+                    ByteBufferUtils.byteBufferInfo(mapDefinitionValueBuffer)));
         }
 
     }

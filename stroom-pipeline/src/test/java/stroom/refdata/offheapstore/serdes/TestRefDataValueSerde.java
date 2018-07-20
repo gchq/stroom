@@ -21,7 +21,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.refdata.offheapstore.ByteArrayUtils;
+import stroom.refdata.offheapstore.ByteBufferUtils;
 import stroom.refdata.offheapstore.FastInfosetValue;
 import stroom.refdata.offheapstore.RefDataValue;
 import stroom.refdata.offheapstore.StringValue;
@@ -132,8 +132,8 @@ public class TestRefDataValueSerde extends AbstractSerdeTest {
         ByteBuffer thisBuf = refDataValueSerde.serialize(thisRefDataValue);
         ByteBuffer thatBuf = refDataValueSerde.serialize(thatRefDataValue);
 
-        LOGGER.debug("thisBuf: {}", ByteArrayUtils.byteBufferInfo(thisBuf));
-        LOGGER.debug("thatBuf: {}", ByteArrayUtils.byteBufferInfo(thatBuf));
+        LOGGER.debug("thisBuf: {}", ByteBufferUtils.byteBufferInfo(thisBuf));
+        LOGGER.debug("thatBuf: {}", ByteBufferUtils.byteBufferInfo(thatBuf));
 
         boolean result = refDataValueSerde.areValuesEqual(thisBuf, thatBuf);
         Assertions.assertThat(result).isEqualTo(expectedResult);

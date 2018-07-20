@@ -1324,7 +1324,7 @@ public class DefaultProperties {
                 .build());
         list.add(new GlobalProperty.Builder()
                 .name("stroom.refloader.offheapstore.maxPutsBeforeCommit")
-                .value("1000")
+                .value("200")
                 .description("The maximum number of puts into the store before the transaction is committed. There is only one write transaction available long running transactions are not desirable.")
                 .editable(false)
                 .build());

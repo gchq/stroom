@@ -53,6 +53,8 @@ import java.util.Set;
  * This XML filter captures XML content that defines key, value maps to be
  * stored as reference data. The key, value map content is likely to have been
  * produced as the result of an XSL transformation of some reference data.
+ *
+ * This filter will typically fire
  */
 @ConfigurableElement(
         type = "ReferenceDataFilter",

@@ -1,10 +1,9 @@
 package stroom.refdata.lmdb;
 
-import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.refdata.offheapstore.ByteArrayUtils;
+import stroom.refdata.offheapstore.ByteBufferUtils;
 import stroom.refdata.offheapstore.RefDataProcessingInfo;
 import stroom.refdata.offheapstore.serdes.RefDataProcessingInfoSerde;
 
@@ -31,11 +30,11 @@ public class TestLmdbUtils {
 
         serde.serialize(sourceBuffer, refDataProcessingInfo);
 
-        LOGGER.debug(ByteArrayUtils.byteBufferInfo(sourceBuffer));
+        LOGGER.debug(ByteBufferUtils.byteBufferInfo(sourceBuffer));
 
         ByteBuffer outputBuffer = LmdbUtils.copyDirectBuffer(sourceBuffer);
 
-        LOGGER.debug(ByteArrayUtils.byteBufferInfo(outputBuffer));
+        LOGGER.debug(ByteBufferUtils.byteBufferInfo(outputBuffer));
 
         final RefDataProcessingInfo refDataProcessingInfo2 = serde.deserialize(outputBuffer);
 

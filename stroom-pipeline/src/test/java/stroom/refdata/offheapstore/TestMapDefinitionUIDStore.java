@@ -84,8 +84,8 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
         key.put(keyStr.getBytes(StandardCharsets.UTF_8)).flip();
         value.put("Hello world".getBytes(StandardCharsets.UTF_8)).flip();
 
-        LOGGER.debug("key {}", ByteArrayUtils.byteBufferInfo(key));
-        LOGGER.debug("value {}", ByteArrayUtils.byteBufferInfo(value));
+        LOGGER.debug("key {}", ByteBufferUtils.byteBufferInfo(key));
+        LOGGER.debug("value {}", ByteBufferUtils.byteBufferInfo(value));
 
         LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
             long entryCount = LmdbUtils.getEntryCount(lmdbEnv, dbi);
@@ -106,11 +106,11 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
 
         final ByteBuffer searchKey = ByteBuffer.allocateDirect(30);
         searchKey.put("greeting".getBytes(StandardCharsets.UTF_8)).flip();
-        LOGGER.debug("searchKey {}", ByteArrayUtils.byteBufferInfo(searchKey));
+        LOGGER.debug("searchKey {}", ByteBufferUtils.byteBufferInfo(searchKey));
 
         final ByteBuffer foundValue = LmdbUtils.getWithReadTxn(lmdbEnv, txn ->
                 dbi.get(txn, searchKey));
-        LOGGER.debug("foundValue {}", ByteArrayUtils.byteBufferInfo(foundValue));
+        LOGGER.debug("foundValue {}", ByteBufferUtils.byteBufferInfo(foundValue));
     }
 
     @Test

@@ -21,8 +21,8 @@ import com.google.inject.assistedinject.Assisted;
 import org.lmdbjava.Env;
 import org.lmdbjava.Txn;
 import stroom.refdata.lmdb.AbstractLmdbDb;
-import stroom.refdata.offheapstore.ByteArrayUtils;
 import stroom.refdata.offheapstore.ByteBufferPool;
+import stroom.refdata.offheapstore.ByteBufferUtils;
 import stroom.refdata.offheapstore.MapDefinition;
 import stroom.refdata.offheapstore.UID;
 import stroom.refdata.offheapstore.serdes.MapDefinitionSerde;
@@ -57,8 +57,8 @@ public class MapUidForwardDb extends AbstractLmdbDb<MapDefinition, UID> {
         boolean didPutSuceed = put(writeTxn, mapDefinitionKeyBuffer, uidValueBuffer, false);
         if (!didPutSuceed) {
             throw new RuntimeException(LambdaLogger.buildMessage("Failed to put mapDefinition {}, uid {}",
-                    ByteArrayUtils.byteBufferInfo(mapDefinitionKeyBuffer),
-                    ByteArrayUtils.byteBufferInfo(uidValueBuffer)));
+                    ByteBufferUtils.byteBufferInfo(mapDefinitionKeyBuffer),
+                    ByteBufferUtils.byteBufferInfo(uidValueBuffer)));
         }
     }
 

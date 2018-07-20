@@ -20,7 +20,7 @@ package stroom.refdata.offheapstore.serdes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.serde.Serde;
-import stroom.refdata.offheapstore.ByteArrayUtils;
+import stroom.refdata.offheapstore.ByteBufferUtils;
 
 import java.nio.ByteBuffer;
 import java.util.function.BiConsumer;
@@ -74,7 +74,7 @@ class AbstractSerdeTest {
 
         serde1.serialize(byteBuffer, object);
 
-        LOGGER.debug(ByteArrayUtils.byteBufferInfo(byteBuffer));
+        LOGGER.debug(ByteBufferUtils.byteBufferInfo(byteBuffer));
 
         T object2 = serde2.deserialize(byteBuffer);
 
