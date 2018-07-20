@@ -361,6 +361,10 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                         if (key != null) {
                             // TODO we may be able to pass a Consumer<ByteBuffer> and then use a ByteBufferOutputStream
                             // to write directly to a direct byteBuffer, however we will not know the size up front
+                            // TODO We are holding onto a txn most of the time between put calls. It would probably be
+                            // better to hold onto the kv pairs locally then put them all in a batch so the txn is only
+                            // used for lmdb CRUD and not xml processing. Alternatively change our loader so all
+                            // put calls write txn work is done by a single thread and callers just
                             LOGGER.trace("Putting key {} into map {}", key, mapDefinition);
                             boolean didPutSucceed = refDataLoaderHolder.getRefDataLoader()
                                     .put(mapDefinition, key, refDataValue);

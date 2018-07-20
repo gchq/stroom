@@ -5,15 +5,16 @@ import org.slf4j.LoggerFactory;
 import stroom.datafeed.MetaMapFilter;
 import stroom.datafeed.MetaMapFilterFactory;
 import stroom.datafeed.RequestHandler;
+import stroom.docref.DocRef;
 import stroom.feed.MetaMap;
 import stroom.feed.MetaMapFactory;
 import stroom.feed.StroomStatusCode;
 import stroom.feed.StroomStreamException;
 import stroom.proxy.repo.StroomStreamProcessor;
-import stroom.docref.DocRef;
 import stroom.util.io.ByteCountInputStream;
 import stroom.util.thread.BufferFactory;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -38,13 +39,18 @@ public class ProxyRequestHandler implements RequestHandler {
     private final LogStream logStream;
 
     @Inject
-    public ProxyRequestHandler(final ProxyRequestConfig proxyRequestConfig,
+    public ProxyRequestHandler(@Nullable final ProxyRequestConfig proxyRequestConfig,
                                final MasterStreamHandlerFactory streamHandlerFactory,
                                final MetaMapFilterFactory metaMapFilterFactory,
                                final LogStream logStream) {
         this.streamHandlerFactory = streamHandlerFactory;
-        this.metaMapFilter = metaMapFilterFactory.create(new DocRef("RuleSet", proxyRequestConfig.getReceiptPolicyUuid()));
         this.logStream = logStream;
+
+        if (proxyRequestConfig != null && proxyRequestConfig.getReceiptPolicyUuid() != null) {
+            metaMapFilter = metaMapFilterFactory.create(new DocRef("RuleSet", proxyRequestConfig.getReceiptPolicyUuid()));
+        } else {
+            metaMapFilter = metaMapFilterFactory.create();
+        }
     }
 
     @Override

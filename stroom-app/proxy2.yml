@@ -43,12 +43,17 @@ logging:
 
 mode: "proxy"
 proxyConfig:
-  proxyRequestConfig:
-    receiptPolicyUuid: "12345"
+  proxyConfigDir: "/tmp/stroom-proxy/config"
+
+# If you want to use a receipt policy then the RuleSet must exist
+# in Stroom and have the UUID as specified below.
+#  proxyRequestConfig:
+#    receiptPolicyUuid: "12345"
+
 #  forwardStreamConfig:
 #    forwardUrl: "http://localhost:8899/datafeed"
   proxyRepositoryConfig:
-    repoDir: "/Users/stroomdev66/tmp/stroom-proxy2"
+    repoDir: "/tmp/stroom-proxy/repo"
     repositoryFormat: "${pathId}/${id}"
     rollCron: "* * *"
   proxyRepositoryReaderConfig:

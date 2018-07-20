@@ -66,7 +66,7 @@ public class IndexConfigCacheImpl implements IndexConfigCache, Clearable {
 
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(MAX_CACHE_ENTRIES)
-                .expireAfterAccess(10, TimeUnit.MINUTES);
+                .expireAfterWrite(10, TimeUnit.MINUTES);
         cache = cacheBuilder.build(cacheLoader);
         cacheManager.registerCache("Index Config Cache", cacheBuilder, cache);
     }

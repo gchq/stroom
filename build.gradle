@@ -62,7 +62,7 @@ ext.versions = [
     hadoopHdfsShaded  : 'v2.6.4-4',
     stroomAuth        : 'v0.1-alpha.3',
     stroomExpression  : 'v1.4.1',
-    stroomQuery       : 'v3.1-beta.7', //same version for both stroom-query-api and stroom-query-common
+    stroomQuery       : 'v4.0-beta.6', //same version for both stroom-query-api and stroom-query-common
     stroomStats       : 'v0.6.0-alpha.2',
 
     //------------3rd-party------------
@@ -91,17 +91,16 @@ ext.libs = [
     eventLogging                   : "event-logging:event-logging:$versions.eventLogging",
     hadoopCommonShaded             : "stroom:hadoop-common-shaded:$versions.hadoopCommonShaded",
     hadoopHdfsShaded               : "stroom:hadoop-hdfs-shaded:$versions.hadoopHdfsShaded",
+    stroomAuthApi                  : "stroom:stroom-auth-service-api:$versions.stroomAuth",
     stroomDocRef                   : "stroom:stroom-docref:$versions.stroomQuery",
+    stroomExpression               : "stroom:stroom-expression:$versions.stroomExpression",
     stroomQueryApi                 : "stroom:stroom-query-api:$versions.stroomQuery",
     stroomQueryAudit               : "stroom:stroom-query-audit:$versions.stroomQuery",
-    stroomQueryCommon              : "stroom:stroom-query-common:$versions.stroomQuery",
     stroomQueryAuthorisation       : "stroom:stroom-query-authorisation:$versions.stroomQuery",
-    stroomExpression               : "stroom:stroom-expression:$versions.stroomExpression",
+    stroomQueryCommon              : "stroom:stroom-query-common:$versions.stroomQuery",
     stroomStatsSchema              : "stroom:stroom-stats-schema:$versions.stroomStats",
-    stroomAuthApi                  : "stroom:stroom-auth-service-api:$versions.stroomAuth",
 
     //------3rd Party-libs---------------
-    kryo                           : "com.esotericsoftware:kryo-shaded:4.0.0",
     aopalliance                    : "aopalliance:aopalliance:1.0",
     assertj_core                   : "org.assertj:assertj-core:3.8.0",
     c3p0                           : "com.mchange:c3p0:0.9.5.2",
@@ -130,6 +129,7 @@ ext.libs = [
     fast_infoset                   : "com.sun.xml.fastinfoset:FastInfoset:1.2.12",
     flyway_core                    : "org.flywaydb:flyway-core:4.0.3",
     gin                            : "com.google.gwt.inject:gin:2.1.2",
+    google_findbugs                : "com.google.code.findbugs:jsr305:3.0.2",
     guava                          : "com.google.guava:guava:$versions.guava", //>=v21 removes MoreExecutors.sameThreadExecutor() which is needed by curator 2.11
     guice3                         : "com.google.inject:guice:3.0",
     guice4                         : "com.google.inject:guice:$versions.guice4",
@@ -174,11 +174,13 @@ ext.libs = [
     jsr173_api                     : "javax.xml.bind:jsr173_api:1.0",
     jul_to_slf4j                   : "org.slf4j:jul-to-slf4j:$versions.slf4j",
     junit                          : "junit:junit:4.12",
+    kryo                           : "com.esotericsoftware:kryo-shaded:4.0.0",
     lmdbjava                       : "org.lmdbjava:lmdbjava:0.6.1",
     log4j_over_slf4j               : "org.slf4j:log4j-over-slf4j:$versions.slf4j",
     logback_classic                : "ch.qos.logback:logback-classic:$versions.logback",
     logback_core                   : "ch.qos.logback:logback-core:$versions.logback",
     lucene_analyzers_common        : "org.apache.lucene:lucene-analyzers-common:$versions.lucene",
+    lucene_backward_codecs         : "org.apache.lucene:lucene-backward-codecs:$versions.lucene",
     lucene_core                    : "org.apache.lucene:lucene-core:$versions.lucene",
     lucene_queryparser             : "org.apache.lucene:lucene-queryparser:$versions.lucene",
     mockito_core                   : "org.mockito:mockito-core:2.0.2-beta",
@@ -208,11 +210,11 @@ def visualisationsContentPackUrl = "http://github.com/gchq/stroom-visualisations
 //A set of content packs to download in the task downloadStroomContent
 ext.contentPacks = [
     'core-xml-schemas'                : 'v2.0',
-    'internal-statistics-stroom-stats': 'v2.1',
-    'internal-statistics-sql'         : 'v2.1',
+    'event-logging-xml-schema'        : 'v3.2.3',
     'internal-dashboards'             : 'v1.1',
-    'stroom-101'                      : 'v1.0',
-    'event-logging-xml-schema'        : 'v3.2.3'
+    'internal-statistics-sql'         : 'v2.1',
+    'internal-statistics-stroom-stats': 'v2.1',
+    'stroom-101'                      : 'v1.0'
 ]
 
 //defines a list of gradle projects that we will publish with maven/bintray
@@ -230,10 +232,10 @@ def projectsToBePublished = subprojects.findAll { project ->
 def projectsWithSharedTestJars = subprojects.findAll { project ->
     project.path in [
         ':stroom-core-server',
-        ':stroom-pipeline',
         ':stroom-dashboard-server',
         ':stroom-entity-shared',
         ':stroom-index-server',
+        ':stroom-pipeline',
         ':stroom-security-server',
         ':stroom-util',
         'zzDUMMYzz to ease sorting'
