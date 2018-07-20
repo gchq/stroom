@@ -11,7 +11,7 @@ dependencies {
 
     compile libs.stroomDocRef
     compile libs.slf4j_api
-//    compile libs.google_findbugs
+    compile libs.google_findbugs
     compile libs.guava
     compile libs.jackson_annotations
 
