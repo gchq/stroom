@@ -32,14 +32,14 @@ class StreamAttributeMapUtil {
                 map.put(MetaDataSource.PARENT_STREAM_ID, stream.getParentDataId());
             }
             if (stream.getTypeName() != null) {
-                map.put(MetaDataSource.STREAM_TYPE, stream.getTypeName());
+                map.put(MetaDataSource.STREAM_TYPE_NAME, stream.getTypeName());
             }
             final String feedName = stream.getFeedName();
             if (feedName != null) {
-                map.put(MetaDataSource.FEED, feedName);
+                map.put(MetaDataSource.FEED_NAME, feedName);
             }
-            final String pipelineName = stream.getPipelineUuid();
-            map.put(MetaDataSource.PIPELINE, pipelineName);
+            final String pipelineUuid = stream.getPipelineUuid();
+            map.put(MetaDataSource.PIPELINE_UUID, pipelineUuid);
 //            if (streamProcessor != null) {
 //                final String pipelineUuid = streamProcessor.getPipelineUuid();
 //                if (pipelineUuid != null) {

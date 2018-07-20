@@ -20,5 +20,7 @@ package stroom.datafeed;
 import stroom.docref.DocRef;
 
 public interface AttributeMapFilterFactory {
+    AttributeMapFilter create();
+
     AttributeMapFilter create(DocRef policyRef);
 }

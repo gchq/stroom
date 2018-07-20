@@ -27,7 +27,6 @@ import stroom.auth.service.api.model.CreateTokenRequest;
 import stroom.auth.service.api.model.SearchRequest;
 import stroom.auth.service.api.model.SearchResponse;
 import stroom.auth.service.api.model.Token;
-import stroom.properties.api.PropertyService;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

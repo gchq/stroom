@@ -30,14 +30,14 @@ public class AttributeMapFilterFactoryImpl implements AttributeMapFilterFactory 
 
     @Inject
     AttributeMapFilterFactoryImpl(final RuleSetService ruleSetService,
-                             final DictionaryStore dictionaryStore) {
+                                  final DictionaryStore dictionaryStore) {
         this.ruleSetService = ruleSetService;
         this.dictionaryStore = dictionaryStore;
     }
 
     @Override
     public AttributeMapFilter create() {
-        return new AttributeMapFilter(null);
+        return new AttributeMapFilterImpl(null);
     }
 
     @Override

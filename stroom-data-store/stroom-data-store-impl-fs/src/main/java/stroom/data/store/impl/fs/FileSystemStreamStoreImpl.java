@@ -326,8 +326,8 @@ class FileSystemStreamStoreImpl implements StreamStore {
                     String.valueOf(stream.getParentDataId()));
         }
 
-        updateAttribute(target, MetaDataSource.FEED, stream.getFeedName());
-        updateAttribute(target, MetaDataSource.STREAM_TYPE, stream.getTypeName());
+        updateAttribute(target, MetaDataSource.FEED_NAME, stream.getFeedName());
+        updateAttribute(target, MetaDataSource.STREAM_TYPE_NAME, stream.getTypeName());
         updateAttribute(target, MetaDataSource.CREATE_TIME, DateUtil.createNormalDateTimeString(stream.getCreateMs()));
         if (stream.getEffectiveMs() != null) {
             updateAttribute(target, MetaDataSource.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(stream.getEffectiveMs()));

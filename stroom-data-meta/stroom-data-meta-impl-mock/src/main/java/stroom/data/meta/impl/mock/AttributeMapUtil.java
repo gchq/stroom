@@ -34,14 +34,14 @@ class AttributeMapUtil {
                 attributeMap.put(MetaDataSource.PARENT_STREAM_ID, data.getParentDataId());
             }
             if (data.getTypeName() != null) {
-                attributeMap.put(MetaDataSource.STREAM_TYPE, data.getTypeName());
+                attributeMap.put(MetaDataSource.STREAM_TYPE_NAME, data.getTypeName());
             }
             final String feedName = data.getFeedName();
             if (feedName != null) {
-                attributeMap.put(MetaDataSource.FEED, feedName);
+                attributeMap.put(MetaDataSource.FEED_NAME, feedName);
             }
-            final String pipelineName = data.getPipelineUuid();
-            attributeMap.put(MetaDataSource.PIPELINE, pipelineName);
+            final String pipelineUuid = data.getPipelineUuid();
+            attributeMap.put(MetaDataSource.PIPELINE_UUID, pipelineUuid);
 //            if (processor != null) {
 //                final String pipelineUuid = processor.getPipelineUuid();
 //                if (pipelineUuid != null) {

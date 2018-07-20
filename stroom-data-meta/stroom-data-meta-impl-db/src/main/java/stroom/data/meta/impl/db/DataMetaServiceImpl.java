@@ -102,10 +102,10 @@ class DataMetaServiceImpl implements DataMetaService {
         // Standard fields.
         final Map<String, TermHandler<?>> termHandlers = new HashMap<>();
         termHandlers.put(MetaDataSource.STREAM_ID, new TermHandler<>(data.ID, Long::valueOf));
-        termHandlers.put(MetaDataSource.FEED, new TermHandler<>(data.FEED_ID, feedService::getOrCreate));
+        termHandlers.put(MetaDataSource.FEED_NAME, new TermHandler<>(data.FEED_ID, feedService::getOrCreate));
         termHandlers.put(MetaDataSource.FEED_ID, new TermHandler<>(data.FEED_ID, Integer::valueOf));
-        termHandlers.put(MetaDataSource.STREAM_TYPE, new TermHandler<>(data.TYPE_ID, dataTypeService::getOrCreate));
-        termHandlers.put(MetaDataSource.PIPELINE, new TermHandler<>(dataProcessor.PIPELINE_UUID, value -> value));
+        termHandlers.put(MetaDataSource.STREAM_TYPE_NAME, new TermHandler<>(data.TYPE_ID, dataTypeService::getOrCreate));
+        termHandlers.put(MetaDataSource.PIPELINE_UUID, new TermHandler<>(dataProcessor.PIPELINE_UUID, value -> value));
         termHandlers.put(MetaDataSource.PARENT_STREAM_ID, new TermHandler<>(data.PARENT_ID, Long::valueOf));
         termHandlers.put(MetaDataSource.STREAM_TASK_ID, new TermHandler<>(data.TASK_ID, Long::valueOf));
         termHandlers.put(MetaDataSource.STREAM_PROCESSOR_ID, new TermHandler<>(data.PROCESSOR_ID, Integer::valueOf));
@@ -481,8 +481,8 @@ class DataMetaServiceImpl implements DataMetaService {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
                 .addTerm(MetaDataSource.EFFECTIVE_TIME, ExpressionTerm.Condition.GREATER_THAN, DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getFromMs()))
                 .addTerm(MetaDataSource.EFFECTIVE_TIME, ExpressionTerm.Condition.LESS_THAN, DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getToMs()))
-                .addTerm(MetaDataSource.FEED, ExpressionTerm.Condition.EQUALS, criteria.getFeed())
-                .addTerm(MetaDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, criteria.getType())
+                .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, criteria.getFeed())
+                .addTerm(MetaDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, criteria.getType())
                 .addTerm(MetaDataSource.STATUS, ExpressionTerm.Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue())
                 .build();
 
@@ -496,8 +496,8 @@ class DataMetaServiceImpl implements DataMetaService {
     private Optional<Long> getMaxEffectiveDataIdBeforePeriod(final EffectiveMetaDataCriteria criteria) {
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
                 .addTerm(MetaDataSource.EFFECTIVE_TIME, ExpressionTerm.Condition.LESS_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(criteria.getEffectivePeriod().getFromMs()))
-                .addTerm(MetaDataSource.FEED, ExpressionTerm.Condition.EQUALS, criteria.getFeed())
-                .addTerm(MetaDataSource.STREAM_TYPE, ExpressionTerm.Condition.EQUALS, criteria.getType())
+                .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, criteria.getFeed())
+                .addTerm(MetaDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, criteria.getType())
                 .addTerm(MetaDataSource.STATUS, ExpressionTerm.Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue())
                 .build();
 

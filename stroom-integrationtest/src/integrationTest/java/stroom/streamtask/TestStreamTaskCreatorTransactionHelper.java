@@ -78,15 +78,15 @@ public class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrat
         Assert.assertEquals(1,
                 streamTaskCreator.runSelectMetaQuery(expression, 0, 100).size());
 
-        expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaDataSource.FEED, Condition.EQUALS, feedName).build();
+        expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, feedName).build();
         Assert.assertEquals(1,
                 streamTaskCreator.runSelectMetaQuery(expression, 0, 100).size());
 
-        expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaDataSource.FEED, Condition.EQUALS, "otherFed").build();
+        expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, "otherFed").build();
         Assert.assertEquals(0,
                 streamTaskCreator.runSelectMetaQuery(expression, 0, 100).size());
 
-        expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaDataSource.PIPELINE, Condition.EQUALS, "1234").build();
+        expression = new ExpressionOperator.Builder(Op.AND).addTerm(MetaDataSource.PIPELINE_UUID, Condition.EQUALS, "1234").build();
         Assert.assertEquals(0,
                 streamTaskCreator.runSelectMetaQuery(expression, 0, 100).size());
     }

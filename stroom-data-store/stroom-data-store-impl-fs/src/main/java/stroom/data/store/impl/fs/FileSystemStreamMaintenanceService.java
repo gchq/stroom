@@ -228,7 +228,7 @@ class FileSystemStreamMaintenanceService
 
         if (parts.length > 0 && parts[0].length() > 0) {
             final String streamTypeName = fileSystemTypePaths.getType(parts[0]);
-            builder.addTerm(MetaDataSource.STREAM_TYPE, Condition.EQUALS, streamTypeName);
+            builder.addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, streamTypeName);
         }
         if (parts.length >= 4) {
             try {

@@ -453,7 +453,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
         // StreamAttributeValueFlush.class));
 
         final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaDataSource.FEED, Condition.EQUALS, feedName)
+                .addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, feedName)
                 .addTerm(MetaDataSource.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(processPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(processPeriod.getToMs()))
                 .addOperator(new ExpressionOperator.Builder(Op.OR)
                         .addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, StreamTypeNames.EVENTS)

@@ -18,17 +18,15 @@
 package stroom.data.store;
 
 import org.junit.Test;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.entity.util.XMLMarshallerUtil;
-
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.DataRetentionRule;
-import stroom.streamstore.shared.StreamDataSource;
 import stroom.streamstore.shared.TimeUnit;
 
-import javax.xml.bind.JAXB;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import java.util.ArrayList;
@@ -38,8 +36,8 @@ public class TestDataRetentionPolicySerialisation {
     @Test
     public void test() throws JAXBException {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(true, Op.AND);
-        builder.addTerm(StreamDataSource.STREAM_TYPE_NAME, Condition.EQUALS, "Raw Events");
-        builder.addTerm(StreamDataSource.FEED_NAME, Condition.EQUALS, "TEST_FEED");
+        builder.addTerm(MetaDataSource.STREAM_TYPE_NAME, Condition.EQUALS, "Raw Events");
+        builder.addTerm(MetaDataSource.FEED_NAME, Condition.EQUALS, "TEST_FEED");
         final ExpressionOperator expression = builder.build();
 
         final List<DataRetentionRule> list = new ArrayList<>();
