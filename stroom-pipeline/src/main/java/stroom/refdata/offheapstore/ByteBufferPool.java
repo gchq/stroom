@@ -63,6 +63,10 @@ public class ByteBufferPool implements Clearable {
 
     private final TreeMap<Key, ByteBuffer> bufferMap = new TreeMap<>();
 
+    public synchronized PooledByteBuffer getBufferAsResource(final int minCapacity) {
+        return new PooledByteBuffer(this, getBuffer(minCapacity));
+    }
+
     public synchronized ByteBuffer getBuffer(final int minCapacity) {
         // get a buffer at least as big as minCapacity with the smallest insertionTime
         final Map.Entry<Key, ByteBuffer> entry = bufferMap.ceilingEntry(new Key(minCapacity, 0));
@@ -78,36 +82,37 @@ public class ByteBufferPool implements Clearable {
     }
 
     public synchronized void release(ByteBuffer buffer) {
-        Objects.requireNonNull(buffer);
-        if (!buffer.isDirect()) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Expecting a direct ByteBuffer"));
-        }
-        buffer.clear();
-
-        while (true) {
-            final Key key = new Key(buffer.capacity(), System.nanoTime());
-            if (!bufferMap.containsKey(key)) {
-                bufferMap.put(key, buffer);
-                return;
+        if (buffer != null) {
+            if (!buffer.isDirect()) {
+                throw new RuntimeException(LambdaLogger.buildMessage("Expecting a direct ByteBuffer"));
             }
-            // Buffers are indexed by (capacity, time).
-            // If our key is not unique on the first try, we try again, since the
-            // time will be different.  Since we use nanoseconds, it's pretty
-            // unlikely that we'll loop even once, unless the system clock has a
-            // poor granularity.
+            buffer.clear();
+
+            while (true) {
+                final Key key = new Key(buffer.capacity(), System.nanoTime());
+                if (!bufferMap.containsKey(key)) {
+                    bufferMap.put(key, buffer);
+                    return;
+                }
+                // Buffers are indexed by (capacity, time).
+                // If our key is not unique on the first try, we try again, since the
+                // time will be different.  Since we use nanoseconds, it's pretty
+                // unlikely that we'll loop even once, unless the system clock has a
+                // poor granularity.
+            }
         }
     }
 
-    public BufferPair getBufferPair(final int minKeyCapacity, final int minValueCapacity) {
+    public ByteBufferPair getBufferPair(final int minKeyCapacity, final int minValueCapacity) {
         ByteBuffer keyBuffer = getBuffer(minKeyCapacity);
         ByteBuffer valueBuffer = getBuffer(minValueCapacity);
-        return BufferPair.of(keyBuffer, valueBuffer);
+        return ByteBufferPair.of(keyBuffer, valueBuffer);
     }
 
-    public void release(BufferPair bufferPair) {
-        Objects.requireNonNull(bufferPair);
-        release(bufferPair.getKeyBuffer());
-        release(bufferPair.getValueBuffer());
+    public void release(ByteBufferPair byteBufferPair) {
+        Objects.requireNonNull(byteBufferPair);
+        release(byteBufferPair.getKeyBuffer());
+        release(byteBufferPair.getValueBuffer());
     }
 
     /**
@@ -143,33 +148,33 @@ public class ByteBufferPool implements Clearable {
     }
 
     /**
-     * Perform work with a {@link BufferPair} obtained from the pool. The {@link BufferPair}
+     * Perform work with a {@link ByteBufferPair} obtained from the pool. The {@link ByteBufferPair}
      * must not be used outside of the work lambda.
      */
-    public <T> T getWithBufferPair(final int minKeyCapacity, final int minValueCapacity, Function<BufferPair, T> work) {
-        BufferPair bufferPair = null;
+    public <T> T getWithBufferPair(final int minKeyCapacity, final int minValueCapacity, Function<ByteBufferPair, T> work) {
+        ByteBufferPair byteBufferPair = null;
         try {
-            bufferPair = getBufferPair(minKeyCapacity, minValueCapacity);
-            return work.apply(bufferPair);
+            byteBufferPair = getBufferPair(minKeyCapacity, minValueCapacity);
+            return work.apply(byteBufferPair);
         } finally {
-            if (bufferPair != null) {
-                release(bufferPair);
+            if (byteBufferPair != null) {
+                release(byteBufferPair);
             }
         }
     }
 
     /**
-     * Perform work with a {@link BufferPair} obtained from the pool. The {@link BufferPair}
+     * Perform work with a {@link ByteBufferPair} obtained from the pool. The {@link ByteBufferPair}
      * must not be used outside of the work lambda.
      */
-    public void doWithBufferPair(final int minKeyCapacity, final int minValueCapacity, Consumer<BufferPair> work) {
-        BufferPair bufferPair = null;
+    public void doWithBufferPair(final int minKeyCapacity, final int minValueCapacity, Consumer<ByteBufferPair> work) {
+        ByteBufferPair byteBufferPair = null;
         try {
-            bufferPair = getBufferPair(minKeyCapacity, minValueCapacity);
-            work.accept(bufferPair);
+            byteBufferPair = getBufferPair(minKeyCapacity, minValueCapacity);
+            work.accept(byteBufferPair);
         } finally {
-            if (bufferPair != null) {
-                release(bufferPair);
+            if (byteBufferPair != null) {
+                release(byteBufferPair);
             }
         }
     }

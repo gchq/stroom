@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.LmdbUtils;
 import stroom.refdata.offheapstore.ByteBufferPool;
+import stroom.refdata.offheapstore.ProcessingState;
 import stroom.refdata.offheapstore.RefDataProcessingInfo;
 import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.refdata.offheapstore.serdes.RefDataProcessingInfoSerde;
@@ -63,13 +64,13 @@ public class TestProcessingInfoDb extends AbstractLmdbDbTest {
                 1234567890L,
                 345678901L,
                 56789012L,
-                RefDataProcessingInfo.ProcessingState.COMPLETE);
+                ProcessingState.COMPLETE);
 
         final RefDataProcessingInfo refDataProcessingInfoB = new RefDataProcessingInfo(
                 34567890L,
                 5678901L,
                 789012L,
-                RefDataProcessingInfo.ProcessingState.LOAD_IN_PROGRESS);
+                ProcessingState.LOAD_IN_PROGRESS);
 
         boolean didSucceed = false;
         didSucceed = processingInfoDb.put(refStreamDefinitionA, refDataProcessingInfoA, false);
@@ -94,11 +95,11 @@ public class TestProcessingInfoDb extends AbstractLmdbDbTest {
         byte version = 0;
         final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
 
-        final RefDataProcessingInfo refDataProcessingInfoBefore = new RefDataProcessingInfo(
+        RefDataProcessingInfo refDataProcessingInfoBefore = new RefDataProcessingInfo(
                 234L,
                 123L,
                 345L,
-                RefDataProcessingInfo.ProcessingState.LOAD_IN_PROGRESS);
+                ProcessingState.LOAD_IN_PROGRESS);
 
         boolean didSucceed = false;
 
@@ -117,12 +118,23 @@ public class TestProcessingInfoDb extends AbstractLmdbDbTest {
         // open a write txn and mutate the value
         LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn ->
                 processingInfoDb.updateProcessingState(
-                        writeTxn, refStreamDefinition, RefDataProcessingInfo.ProcessingState.COMPLETE));
+                        writeTxn, refStreamDefinition, ProcessingState.COMPLETE, true));
 
-        final RefDataProcessingInfo refDataProcessingInfoAfter = processingInfoDb.get(refStreamDefinition).get();
+        RefDataProcessingInfo refDataProcessingInfoAfter = processingInfoDb.get(refStreamDefinition).get();
 
-        assertThat(refDataProcessingInfoAfter.getProcessingState()).isEqualTo(RefDataProcessingInfo.ProcessingState.COMPLETE);
+        assertThat(refDataProcessingInfoAfter.getProcessingState()).isEqualTo(ProcessingState.COMPLETE);
         assertThat(refDataProcessingInfoAfter.getLastAccessedTimeEpochMs()).isGreaterThan(refDataProcessingInfoBefore.getLastAccessedTimeEpochMs());
+
+        refDataProcessingInfoBefore = processingInfoDb.get(refStreamDefinition).get();
+        // open a write txn and mutate the value
+        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn ->
+                processingInfoDb.updateProcessingState(
+                        writeTxn, refStreamDefinition, ProcessingState.PURGE_IN_PROGRESS, false));
+
+        refDataProcessingInfoAfter = processingInfoDb.get(refStreamDefinition).get();
+
+        assertThat(refDataProcessingInfoAfter.getProcessingState()).isEqualTo(ProcessingState.PURGE_IN_PROGRESS);
+        assertThat(refDataProcessingInfoAfter.getLastAccessedTimeEpochMs()).isEqualTo(refDataProcessingInfoBefore.getLastAccessedTimeEpochMs());
     }
 
     @Test
@@ -135,7 +147,7 @@ public class TestProcessingInfoDb extends AbstractLmdbDbTest {
                 234L,
                 123L,
                 345L,
-                RefDataProcessingInfo.ProcessingState.LOAD_IN_PROGRESS);
+                ProcessingState.LOAD_IN_PROGRESS);
 
         boolean didSucceed = false;
 

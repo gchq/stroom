@@ -20,17 +20,17 @@ package stroom.refdata.offheapstore;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
-public class BufferPair {
+public class ByteBufferPair {
     private final ByteBuffer keyBuffer;
     private final ByteBuffer valueBuffer;
 
-    BufferPair(final ByteBuffer keyBuffer, final ByteBuffer valueBuffer) {
+    ByteBufferPair(final ByteBuffer keyBuffer, final ByteBuffer valueBuffer) {
         this.keyBuffer = keyBuffer;
         this.valueBuffer = valueBuffer;
     }
 
-    public static BufferPair of(final ByteBuffer keyBuffer, final ByteBuffer valueBuffer) {
-        return new BufferPair(keyBuffer, valueBuffer);
+    public static ByteBufferPair of(final ByteBuffer keyBuffer, final ByteBuffer valueBuffer) {
+        return new ByteBufferPair(keyBuffer, valueBuffer);
     }
 
     ByteBuffer getKeyBuffer() {
@@ -50,7 +50,7 @@ public class BufferPair {
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        final BufferPair that = (BufferPair) o;
+        final ByteBufferPair that = (ByteBufferPair) o;
         return Objects.equals(keyBuffer, that.keyBuffer) &&
                 Objects.equals(valueBuffer, that.valueBuffer);
     }
@@ -63,7 +63,7 @@ public class BufferPair {
 
     @Override
     public String toString() {
-        return "BufferPair{" +
+        return "ByteBufferPair{" +
                 "keyBuffer=" + keyBuffer +
                 ", valueBuffer=" + valueBuffer +
                 '}';

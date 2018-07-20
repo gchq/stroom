@@ -23,6 +23,7 @@ import stroom.refdata.lmdb.serde.Deserializer;
 import stroom.refdata.lmdb.serde.Serde;
 import stroom.refdata.lmdb.serde.Serializer;
 import stroom.refdata.offheapstore.ByteBufferUtils;
+import stroom.refdata.offheapstore.ProcessingState;
 import stroom.refdata.offheapstore.RefDataProcessingInfo;
 
 import java.nio.ByteBuffer;
@@ -48,8 +49,8 @@ public class RefDataProcessingInfoSerde implements
         final long effectiveTimeEpochMs = byteBuffer.getLong();
         final byte processingStateId = byteBuffer.get();
         byteBuffer.flip();
-        final RefDataProcessingInfo.ProcessingState processingState =
-                RefDataProcessingInfo.ProcessingState.fromByte(processingStateId);
+        final ProcessingState processingState =
+                ProcessingState.fromByte(processingStateId);
 
         return new RefDataProcessingInfo(
                 createTimeEpochMs, lastAccessedTimeEpochMs, effectiveTimeEpochMs, processingState);
@@ -69,7 +70,7 @@ public class RefDataProcessingInfoSerde implements
     }
 
     public void updateState(final ByteBuffer byteBuffer,
-                                   final RefDataProcessingInfo.ProcessingState newProcessingState) {
+                                   final ProcessingState newProcessingState) {
 
         // absolute put so no need to change the buffer position
         byteBuffer.put(PROCESSING_STATE_OFFSET, newProcessingState.getId());
@@ -84,16 +85,21 @@ public class RefDataProcessingInfoSerde implements
         updateLastAccessedTime(byteBuffer, System.currentTimeMillis());
     }
 
+    public static ProcessingState extractProcessingState(final ByteBuffer byteBuffer) {
+        byte bState = byteBuffer.get(PROCESSING_STATE_OFFSET);
+        return ProcessingState.fromByte(bState);
+    }
+
     /**
      * Return true if the {@link RefDataProcessingInfo} object represent by valueBuffer has a last accessed
      * time after the epoch millis time represented by timeMsBuffer.
-     * @param valueBuffer {@link ByteBuffer} containing a serialised {@link RefDataProcessingInfo}
+     * @param processingInfoBuffer {@link ByteBuffer} containing a serialised {@link RefDataProcessingInfo}
      * @param timeMsBuffer a {@link ByteBuffer} containing a long representing an epoch millis time
      */
-    public static boolean wasAccessedAfter(final ByteBuffer valueBuffer, final ByteBuffer timeMsBuffer) {
+    public static boolean wasAccessedAfter(final ByteBuffer processingInfoBuffer, final ByteBuffer timeMsBuffer) {
         int compareResult = ByteBufferUtils.compareAsLong(
                 timeMsBuffer, timeMsBuffer.position(),
-                valueBuffer, LAST_ACCESSED_TIME_OFFSET);
+                processingInfoBuffer, LAST_ACCESSED_TIME_OFFSET);
 
 //        LOGGER.info("{} {}",
 //                timeMsBuffer.getLong(0),

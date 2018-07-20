@@ -17,18 +17,32 @@
 
 package stroom.refdata.offheapstore;
 
-import org.assertj.core.api.Assertions;
-import org.junit.Test;
+public enum ProcessingState {
 
-public class TestRefDataProcessingInfo {
+    // byte values must be unique obviously
+    LOAD_IN_PROGRESS((byte)0),
+    PURGE_IN_PROGRESS((byte)1),
+    COMPLETE((byte)2);
 
-    @Test
-    public void testProcessingStateFromBytes() {
+    private final byte id;
 
+    private static ProcessingState[] states = new ProcessingState[ProcessingState.values().length];
+
+    static {
         for (ProcessingState state : ProcessingState.values()) {
-            byte id = state.getId();
-            ProcessingState outputState = ProcessingState.fromByte(id);
-            Assertions.assertThat(outputState).isEqualTo(state);
+            states[state.getId()] = state;
         }
+    }
+
+    ProcessingState(final byte id) {
+        this.id = id;
+    }
+
+    public byte getId() {
+        return id;
+    }
+
+    public static ProcessingState fromByte(final byte id) {
+        return states[id];
     }
 }

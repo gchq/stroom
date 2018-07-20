@@ -28,6 +28,7 @@ import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.serde.Serde;
+import stroom.refdata.offheapstore.ByteBufferPool;
 import stroom.refdata.offheapstore.ByteBufferUtils;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -37,6 +38,7 @@ import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -55,9 +57,25 @@ public class LmdbUtils {
     /**
      * Do work inside a read txn, returning a result of the work
      */
-    public static <T> T getWithReadTxn(final Env<ByteBuffer> env, final Function<Txn<ByteBuffer>, T> work) {
+    public static <T> T getWithReadTxn(final Env<ByteBuffer> env,
+                                       final Function<Txn<ByteBuffer>, T> work) {
         try (final Txn<ByteBuffer> txn = env.txnRead()) {
             return work.apply(txn);
+        } catch (RuntimeException e) {
+            throw new RuntimeException(LambdaLogger.buildMessage("Error performing work in read transaction: {}",
+                    e.getMessage()), e);
+        }
+    }
+
+    /**
+     * Do work inside a read txn using a keyBuffer as supplied by the the byteBufferPool
+     */
+    public static <T> T getWithReadTxn(final Env<ByteBuffer> env,
+                                       final ByteBufferPool byteBufferPool,
+                                       final BiFunction<Txn<ByteBuffer>, ByteBuffer, T> work) {
+        try (final Txn<ByteBuffer> txn = env.txnRead()) {
+            return byteBufferPool.getWithBuffer(env.getMaxKeySize(), keyBuffer ->
+                    work.apply(txn, keyBuffer));
         } catch (RuntimeException e) {
             throw new RuntimeException(LambdaLogger.buildMessage("Error performing work in read transaction: {}",
                     e.getMessage()), e);

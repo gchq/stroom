@@ -476,9 +476,9 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
 
 //            ((RefDataOffHeapStore) refDataStore).logAllContents();
 
-            RefDataProcessingInfo refDataProcessingInfo = refDataStore.getProcessingInfo(refStreamDefinition).get();
+            RefDataProcessingInfo refDataProcessingInfo = refDataStore.getAndMutateProcessingInfo(refStreamDefinition).get();
 
-            assertThat(refDataProcessingInfo.getProcessingState()).isEqualTo(RefDataProcessingInfo.ProcessingState.COMPLETE);
+            assertThat(refDataProcessingInfo.getProcessingState()).isEqualTo(ProcessingState.COMPLETE);
 
         });
         assertLoadedKeyValueData(keyValueLoadedData);
@@ -602,9 +602,9 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
 
         assertThat(didLoadHappen).isEqualTo(isLoadExpectedToHappen);
 
-        RefDataProcessingInfo processingInfo = refDataStore.getProcessingInfo(refStreamDefinition).get();
+        RefDataProcessingInfo processingInfo = refDataStore.getAndMutateProcessingInfo(refStreamDefinition).get();
 
-        assertThat(processingInfo.getProcessingState()).isEqualTo(RefDataProcessingInfo.ProcessingState.COMPLETE);
+        assertThat(processingInfo.getProcessingState()).isEqualTo(ProcessingState.COMPLETE);
 
         boolean isDataLoaded = refDataStore.isDataLoaded(refStreamDefinition);
         assertThat(isDataLoaded).isTrue();

@@ -4,6 +4,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.offheapstore.ByteBufferUtils;
+import stroom.refdata.offheapstore.ProcessingState;
 import stroom.refdata.offheapstore.RefDataProcessingInfo;
 import stroom.refdata.offheapstore.serdes.RefDataProcessingInfoSerde;
 
@@ -24,7 +25,7 @@ public class TestLmdbUtils {
                 1234567890L,
                 345678901L,
                 56789012L,
-                RefDataProcessingInfo.ProcessingState.COMPLETE);
+                ProcessingState.COMPLETE);
 
         final RefDataProcessingInfoSerde serde = new RefDataProcessingInfoSerde();
 

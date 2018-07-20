@@ -17,13 +17,15 @@
 
 package stroom.refdata.offheapstore.serdes;
 
-import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.refdata.offheapstore.ProcessingState;
 import stroom.refdata.offheapstore.RefDataProcessingInfo;
 
 import java.nio.ByteBuffer;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestRefDataProcessingInfoSerde extends AbstractSerdeTest {
 
@@ -36,7 +38,7 @@ public class TestRefDataProcessingInfoSerde extends AbstractSerdeTest {
                 1234567890L,
                 345678901L,
                 56789012L,
-                RefDataProcessingInfo.ProcessingState.COMPLETE);
+                ProcessingState.COMPLETE);
 
         doSerialisationDeserialisationTest(refDataProcessingInfo, RefDataProcessingInfoSerde::new);
     }
@@ -47,13 +49,13 @@ public class TestRefDataProcessingInfoSerde extends AbstractSerdeTest {
                 1,
                 1,
                 1,
-                RefDataProcessingInfo.ProcessingState.LOAD_IN_PROGRESS);
+                ProcessingState.LOAD_IN_PROGRESS);
 
         final RefDataProcessingInfo expectedOutput = new RefDataProcessingInfo(
                 1,
                 1,
                 1,
-                RefDataProcessingInfo.ProcessingState.COMPLETE);
+                ProcessingState.COMPLETE);
 
         doByteBufferModificationTest(
                 input,
@@ -62,7 +64,7 @@ public class TestRefDataProcessingInfoSerde extends AbstractSerdeTest {
                 (serde, byteBuffer) ->
                         ((RefDataProcessingInfoSerde) serde).updateState(
                                 byteBuffer,
-                                RefDataProcessingInfo.ProcessingState.COMPLETE));
+                                ProcessingState.COMPLETE));
 
     }
 
@@ -72,13 +74,13 @@ public class TestRefDataProcessingInfoSerde extends AbstractSerdeTest {
                 1,
                 1,
                 1,
-                RefDataProcessingInfo.ProcessingState.LOAD_IN_PROGRESS);
+                ProcessingState.LOAD_IN_PROGRESS);
 
         final RefDataProcessingInfo expectedOutput = new RefDataProcessingInfo(
                 1,
                 123,
                 1,
-                RefDataProcessingInfo.ProcessingState.LOAD_IN_PROGRESS);
+                ProcessingState.LOAD_IN_PROGRESS);
 
         doByteBufferModificationTest(
                 input,
@@ -96,13 +98,13 @@ public class TestRefDataProcessingInfoSerde extends AbstractSerdeTest {
                 1,
                 1,
                 1,
-                RefDataProcessingInfo.ProcessingState.LOAD_IN_PROGRESS);
+                ProcessingState.LOAD_IN_PROGRESS);
 
         final RefDataProcessingInfo expectedOutput = new RefDataProcessingInfo(
                 1,
                 123,
                 1,
-                RefDataProcessingInfo.ProcessingState.COMPLETE);
+                ProcessingState.COMPLETE);
 
         doByteBufferModificationTest(
                 input,
@@ -111,7 +113,7 @@ public class TestRefDataProcessingInfoSerde extends AbstractSerdeTest {
                 (serde, byteBuffer) -> {
                     RefDataProcessingInfoSerde refDataProcessingInfoSerde = (RefDataProcessingInfoSerde) serde;
                     refDataProcessingInfoSerde.updateLastAccessedTime(byteBuffer, 123);
-                    refDataProcessingInfoSerde.updateState(byteBuffer, RefDataProcessingInfo.ProcessingState.COMPLETE);
+                    refDataProcessingInfoSerde.updateState(byteBuffer, ProcessingState.COMPLETE);
                 });
     }
 
@@ -123,7 +125,7 @@ public class TestRefDataProcessingInfoSerde extends AbstractSerdeTest {
                 0L,
                 1000L,
                 100L,
-                RefDataProcessingInfo.ProcessingState.COMPLETE);
+                ProcessingState.COMPLETE);
 
 
         ByteBuffer valueBuffer = ByteBuffer.allocate(30);
@@ -141,10 +143,26 @@ public class TestRefDataProcessingInfoSerde extends AbstractSerdeTest {
         timeBuffer.putLong(timeUnderTestMs);
         timeBuffer.flip();
         boolean result = RefDataProcessingInfoSerde.wasAccessedAfter(valueBuffer, timeBuffer);
-        Assertions.assertThat(result).isEqualTo(expectedResult);
+        assertThat(result).isEqualTo(expectedResult);
     }
 
+    @Test
+    public void testExtractProcessingState() {
 
+        for (ProcessingState processingState : ProcessingState.values()) {
+            RefDataProcessingInfoSerde serde = new RefDataProcessingInfoSerde();
+            RefDataProcessingInfo refDataProcessingInfo = new RefDataProcessingInfo(
+                    0L,
+                    1000L,
+                    100L,
+                    processingState);
 
+            ByteBuffer valueBuffer = ByteBuffer.allocate(30);
+            serde.serialize(valueBuffer, refDataProcessingInfo);
 
+            ProcessingState foundProcessingState = RefDataProcessingInfoSerde.extractProcessingState(valueBuffer);
+
+            assertThat(foundProcessingState).isEqualTo(processingState);
+        }
+    }
 }

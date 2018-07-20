@@ -28,7 +28,7 @@ import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.serde.Serde;
-import stroom.refdata.offheapstore.BufferPair;
+import stroom.refdata.offheapstore.ByteBufferPair;
 import stroom.refdata.offheapstore.ByteBufferPool;
 import stroom.refdata.offheapstore.ByteBufferUtils;
 import stroom.util.logging.LambdaLogger;
@@ -45,6 +45,9 @@ import java.util.function.Function;
  * An abstract class representing a generic LMDB table with understanding of how to (de)serialise
  * keys/values into/out of the database. Provides various helper methods for interacting with the
  * database at a higher abstraction that the raw bytes.
+ *
+ * See https://github.com/lmdbjava/lmdbjava/issues/81 for more information on the use/re-use
+ * of the ByteBuffers passed to or returned from LMDBJava.
  *
  * @param <K> The class of the database keys
  * @param <V> The class of the database values
@@ -86,7 +89,7 @@ public abstract class AbstractLmdbDb<K, V> {
         return byteBufferPool.getBuffer(lmdbEnvironment.getMaxKeySize());
     }
 
-    protected BufferPair getBufferPairFromPool(int minValueBufferCapacity) {
+    protected ByteBufferPair getBufferPairFromPool(int minValueBufferCapacity) {
         return byteBufferPool.getBufferPair(lmdbEnvironment.getMaxKeySize(), minValueBufferCapacity);
     }
 
@@ -275,7 +278,11 @@ public abstract class AbstractLmdbDb<K, V> {
             // update the buffer
             valueBufferConsumer.accept(newValueBuf);
 
-            cursor.put(cursor.key(), newValueBuf, PutFlags.MDB_CURRENT);
+            if (ByteBufferUtils.compare(valueBuf, newValueBuf) != 0) {
+                cursor.put(cursor.key(), newValueBuf, PutFlags.MDB_CURRENT);
+            } else {
+                LOGGER.trace("put call skipped as buffers are the same");
+            }
         }
     }
 
@@ -294,6 +301,16 @@ public abstract class AbstractLmdbDb<K, V> {
             txn.commit();
         } catch (RuntimeException e) {
             throw new RuntimeException(LambdaLogger.buildMessage("Error deleting key {}", key), e);
+        }
+    }
+
+    public void delete(final ByteBuffer keyBuffer) {
+        try (final Txn<ByteBuffer> txn = lmdbEnvironment.txnWrite()) {
+            lmdbDbi.delete(txn, keyBuffer);
+            txn.commit();
+        } catch (RuntimeException e) {
+            throw new RuntimeException(LambdaLogger.buildMessage("Error deleting key {}",
+                    ByteBufferUtils.byteBufferInfo(keyBuffer)), e);
         }
     }
 

@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 
 public interface RefDataStore {
 
-    Optional<RefDataProcessingInfo> getProcessingInfo(final RefStreamDefinition refStreamDefinition);
+    Optional<RefDataProcessingInfo> getAndMutateProcessingInfo(final RefStreamDefinition refStreamDefinition);
 
     /**
      * Returns true if all the data for the passed stream definition has been successfully loaded into the

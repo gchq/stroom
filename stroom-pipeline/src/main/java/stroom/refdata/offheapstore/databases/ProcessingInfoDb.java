@@ -5,7 +5,9 @@ import org.lmdbjava.Env;
 import org.lmdbjava.Txn;
 import stroom.refdata.lmdb.AbstractLmdbDb;
 import stroom.refdata.lmdb.LmdbUtils;
+import stroom.refdata.offheapstore.ByteBufferPair;
 import stroom.refdata.offheapstore.ByteBufferPool;
+import stroom.refdata.offheapstore.ProcessingState;
 import stroom.refdata.offheapstore.RefDataProcessingInfo;
 import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.refdata.offheapstore.serdes.RefDataProcessingInfoSerde;
@@ -13,6 +15,8 @@ import stroom.refdata.offheapstore.serdes.RefStreamDefinitionSerde;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
+import java.util.Optional;
+import java.util.function.Predicate;
 
 public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDataProcessingInfo> {
 
@@ -40,20 +44,47 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
 
     public void updateProcessingState(final Txn<ByteBuffer> writeTxn,
                                       final RefStreamDefinition refStreamDefinition,
-                                      final RefDataProcessingInfo.ProcessingState newProcessingState) {
+                                      final ProcessingState newProcessingState,
+                                      final boolean touchLastAccessedTime) {
 
         updateValue(writeTxn,
                 refStreamDefinition, newValueBuf -> {
                     valueSerde.updateState(newValueBuf, newProcessingState);
-                    valueSerde.updateLastAccessedTime(newValueBuf);
+                    if (touchLastAccessedTime) {
+                        valueSerde.updateLastAccessedTime(newValueBuf);
+                    }
                 });
     }
 
-//    public RefDataProcessingInfo.ProcessingState getProcessingState(final Txn<ByteBuffer> txn,
-//                                                                    final ByteBuffer keyBuffer) {
-//            ByteBuffer valueBuffer = lmdbDbi.get(txn, keyBuffer);
-//            return valueSerde.
-//    }
+    public void updateProcessingState(final Txn<ByteBuffer> writeTxn,
+                                      final ByteBuffer refStreamDefinitionBuffer,
+                                      final ProcessingState newProcessingState,
+                                      final boolean touchLastAccessedTime) {
+
+        updateValue(writeTxn,
+                refStreamDefinitionBuffer, newValueBuf -> {
+                    valueSerde.updateState(newValueBuf, newProcessingState);
+                    if (touchLastAccessedTime) {
+                        valueSerde.updateLastAccessedTime(newValueBuf);
+                    }
+                });
+    }
+
+    public ProcessingState getProcessingState(final RefStreamDefinition refStreamDefinition) {
+        return LmdbUtils.getWithReadTxn(lmdbEnvironment, byteBufferPool, (readTxn, keyBuffer) -> {
+            keySerde.serialize(keyBuffer, refStreamDefinition);
+            ByteBuffer valueBuffer = lmdbDbi.get(readTxn, keyBuffer);
+            return RefDataProcessingInfoSerde.extractProcessingState(valueBuffer);
+        });
+    }
+
+    public Optional<ByteBufferPair> getNextEntry(final Txn<ByteBuffer> txn,
+                                                 final ByteBuffer startKeyBuffer,
+                                                 final Predicate<ByteBuffer> valueBufferPredicate) {
+
+
+        return Optional.empty();
+    }
 
     public interface Factory {
         ProcessingInfoDb create(final Env<ByteBuffer> lmdbEnvironment);

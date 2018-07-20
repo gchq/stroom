@@ -35,9 +35,11 @@ import stroom.refdata.offheapstore.databases.MapUidReverseDb;
 import stroom.refdata.offheapstore.databases.ProcessingInfoDb;
 import stroom.refdata.offheapstore.databases.RangeStoreDb;
 import stroom.refdata.offheapstore.databases.ValueStoreDb;
+import stroom.refdata.offheapstore.serdes.RefDataProcessingInfoSerde;
 import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
@@ -63,7 +65,7 @@ public class RefDataOffHeapStore implements RefDataStore {
     public static final long PROCESSING_INFO_UPDATE_DELAY_MS = Duration.of(1, ChronoUnit.HOURS).toMillis();
 
     private static final String DATA_RETENTION_AGE_PROP_KEY = "stroom.refloader.offheapstore.deleteAge";
-
+    private static final String DATA_RETENTION_AGE_DEFAULT_VALUE = "30d";
 
     private final Path dbDir;
     private final long maxSize;
@@ -163,7 +165,7 @@ public class RefDataOffHeapStore implements RefDataStore {
      * {@link Optional} if there isn't one.
      */
     @Override
-    public Optional<RefDataProcessingInfo> getProcessingInfo(final RefStreamDefinition refStreamDefinition) {
+    public Optional<RefDataProcessingInfo> getAndMutateProcessingInfo(final RefStreamDefinition refStreamDefinition) {
         // get the current processing info
         final Optional<RefDataProcessingInfo> optProcessingInfo = processingInfoDb.get(refStreamDefinition);
 
@@ -183,11 +185,9 @@ public class RefDataOffHeapStore implements RefDataStore {
     @Override
     public boolean isDataLoaded(final RefStreamDefinition refStreamDefinition) {
 
-        // TODO we could optimise this so that it doesn't deser the whole object, instead just
-        // extract the state value while in a txn
-        boolean result = getProcessingInfo(refStreamDefinition)
+        boolean result = getAndMutateProcessingInfo(refStreamDefinition)
                 .map(RefDataProcessingInfo::getProcessingState)
-                .filter(Predicate.isEqual(RefDataProcessingInfo.ProcessingState.COMPLETE))
+                .filter(Predicate.isEqual(ProcessingState.COMPLETE))
                 .isPresent();
 
         LOGGER.trace("isDataLoaded({}) - {}", refStreamDefinition, result);
@@ -408,6 +408,54 @@ public class RefDataOffHeapStore implements RefDataStore {
     public void purgeOldData() {
 
 
+
+        try (final PooledByteBuffer currRefStreamDefPooledBuf = getKeyBufferFromPool();
+             final PooledByteBuffer accessTimeThresholdPooledBuf = getAccessTimeCutOffBuffer()) {
+
+            final ByteBuffer currRefStreamDefBuf = currRefStreamDefPooledBuf.getByteBuffer();
+            final ByteBuffer accessTimeThresholdBuf = accessTimeThresholdPooledBuf.getByteBuffer();
+
+//            currentRefStreamDefBuf = getKeyBufferFromPool();
+//            accessTimeThresholdBuf = getAccessTimeCutOffBuffer();
+
+            // hack to make it final for the lambda
+//            final ByteBuffer accessTimeThresholdBufFinal = accessTimeThresholdBuf;
+
+            boolean wasMatchFound = false;
+            do {
+                wasMatchFound = LmdbUtils.getWithWriteTxn(lmdbEnvironment, writeTxn -> {
+                    final Optional<ByteBufferPair> byteBufferPair = processingInfoDb.getNextEntry(
+                            writeTxn,
+                            currRefStreamDefBuf,
+                            processingInfoBuffer ->
+                                    RefDataProcessingInfoSerde.wasAccessedAfter(
+                                            processingInfoBuffer,
+                                            accessTimeThresholdBuf));
+
+                    if (!byteBufferPair.isPresent()) {
+                        // no matching ref streams found so break out
+                        return false;
+                    } else {
+                        // found a ref stream def that is ready for purge
+
+                        // mark it is purge in progress
+                        processingInfoDb.updateProcessingState(writeTxn,
+                                currRefStreamDefPooledBuf.getByteBuffer(),
+                                ProcessingState.PURGE_IN_PROGRESS,
+                                false);
+
+                        // purge the data associated with this ref stream def
+                        purgeRefStreamData(writeTxn, currRefStreamDefBuf);
+
+                        //now delete the proc info entry
+                        processingInfoDb.delete(currRefStreamDefBuf);
+                        return true;
+                    }
+                });
+            } while (wasMatchFound);
+        }
+
+
         //TODO
 
         //open a write txn
@@ -415,17 +463,7 @@ public class RefDataOffHeapStore implements RefDataStore {
         //subtract purge age prop val from current time to give purge cut off ms
         //for each proc info record one test the last access time against the cut off time (without de-serialising to long)
         //if it is older than cut off date then change its state to PURGE_IN_PROGRESS
-        //open a ranged cursor on the map forward table to scan all map defs for that stream def
-        //for each map def get the map uid
-        //open a cursor on key/value store scanning over all record for this map uid
-        //for each one get the valueStoreKey
-        //look up the valueStoreKey in the references DB and establish if this is the last ref for this value
-        //if it is, delete the value entry
-        //now delete the key/value entry
-        //do the same for the keyrange/value DB
-        //commit every N key/value or keyrange/value entries
-        //now delete the mapdef<=>uid pair
-        //now delete the proc info entry
+
 
         //process needs to be idempotent so we can continue a part finished purge. A new txn MUST always check the
         //processing info state to ensure it is still PURGE_IN_PROGRESS in case another txn has started a load, in which
@@ -462,6 +500,22 @@ public class RefDataOffHeapStore implements RefDataStore {
         // change to ref counter MUST be done in same txn as the thing that is making it change, e.g the KV entry removal
     }
 
+    private void purgeRefStreamData(final Txn<ByteBuffer> writeTxn,
+                                    final ByteBuffer refStreamDefBuffer) {
+
+        //open a ranged cursor on the map forward table to scan all map defs for that stream def
+        //for each map def get the map uid
+        //open a cursor on key/value store scanning over all record for this map uid
+        //for each one get the valueStoreKey
+        //look up the valueStoreKey in the references DB and establish if this is the last ref for this value
+        //if it is, delete the value entry
+        //now delete the key/value entry
+        //do the same for the keyrange/value DB
+        //commit every N key/value or keyrange/value entries
+        //now delete the mapdef<=>uid pair
+
+    }
+
     public void doWithRefStreamDefinitionLock(final RefStreamDefinition refStreamDefinition, final Runnable work) {
         final Lock lock = refStreamDefStripedReentrantLock.get(refStreamDefinition);
         try {
@@ -491,27 +545,35 @@ public class RefDataOffHeapStore implements RefDataStore {
 //        valueReferenceCountDb.logDatabaseContents();
     }
 
-    private ByteBuffer getKeyBufferFromPool() {
-        return byteBufferPool.getBuffer(lmdbEnvironment.getMaxKeySize());
+    /**
+     * Must be returned to the pool in a finally block
+     */
+    private PooledByteBuffer getKeyBufferFromPool() {
+        return byteBufferPool.getBufferAsResource(lmdbEnvironment.getMaxKeySize());
     }
 
-    private BufferPair getBufferPairFromPool() {
+    private PooledByteBuffer getAccessTimeCutOffBuffer() {
+        long purgeAge = ModelStringUtil.parseDurationString(
+                stroomPropertyService.getProperty(DATA_RETENTION_AGE_PROP_KEY, DATA_RETENTION_AGE_DEFAULT_VALUE));
+        long purgeCutOff = System.currentTimeMillis() - purgeAge;
+
+        LOGGER.info("Using purge cut off {}", Instant.ofEpochMilli(purgeCutOff));
+
+        PooledByteBuffer pooledByteBuffer = byteBufferPool.getBufferAsResource(Long.BYTES);
+        pooledByteBuffer.getByteBuffer().putLong(purgeCutOff);
+        pooledByteBuffer.getByteBuffer().flip();
+        return pooledByteBuffer;
+    }
+
+    /**
+     * Must be returned to the pool in a finally block
+     */
+    private ByteBufferPair getBufferPairFromPool() {
         return byteBufferPool.getBufferPair(lmdbEnvironment.getMaxKeySize(), valueBufferCapacity);
     }
 
 
-
-
-
-
-
-
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-
-
-
 
 
     /**
@@ -632,7 +694,7 @@ public class RefDataOffHeapStore implements RefDataStore {
                     System.currentTimeMillis(),
                     System.currentTimeMillis(),
                     effectiveTimeMs,
-                    RefDataProcessingInfo.ProcessingState.LOAD_IN_PROGRESS);
+                    ProcessingState.LOAD_IN_PROGRESS);
 
             // TODO need to consider how to prevent multiple threads trying to load the same
             // ref data set at once
@@ -654,7 +716,7 @@ public class RefDataOffHeapStore implements RefDataStore {
 
             // Set the processing info record to COMPLETE and update the last update time
             processingInfoDb.updateProcessingState(
-                    writeTxn, refStreamDefinition, RefDataProcessingInfo.ProcessingState.COMPLETE);
+                    writeTxn, refStreamDefinition, ProcessingState.COMPLETE, true);
 
             final Duration loadDuration = Duration.between(startTime, Instant.now());
             final String mapNames = mapDefinitionToUIDMap.keySet()

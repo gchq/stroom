@@ -82,6 +82,12 @@ public class ByteBufferUtils {
         return ByteArrayUtils.byteArrayToAllForms(Bytes.getBytes(byteBuffer));
     }
 
+    public static int compare(final ByteBuffer left, final ByteBuffer right) {
+        return org.apache.hadoop.hbase.util.ByteBufferUtils.compareTo(
+                left, left.position(), left.remaining(),
+                right, right.position(), right.remaining());
+    }
+
     /**
      * Compare two {@link ByteBuffer} objects as if they are longs
      * @param left A {@link ByteBuffer} representing a long
