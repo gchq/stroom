@@ -408,7 +408,6 @@ public class RefDataOffHeapStore implements RefDataStore {
     public void purgeOldData() {
 
 
-
         try (final PooledByteBuffer currRefStreamDefPooledBuf = getKeyBufferFromPool();
              final PooledByteBuffer accessTimeThresholdPooledBuf = getAccessTimeCutOffBuffer()) {
 
@@ -503,8 +502,18 @@ public class RefDataOffHeapStore implements RefDataStore {
     private void purgeRefStreamData(final Txn<ByteBuffer> writeTxn,
                                     final ByteBuffer refStreamDefBuffer) {
 
-        //open a ranged cursor on the map forward table to scan all map defs for that stream def
-        //for each map def get the map uid
+        Optional<UID> optMapUid = Optional.empty();
+        do {
+            //open a ranged cursor on the map forward table to scan all map defs for that stream def
+            //for each map def get the map uid
+            optMapUid = mapDefinitionUIDStore.getNextMapDefinition(writeTxn, refStreamDefBuffer);
+            optMapUid.ifPresent(byteBuffer ->
+                    purgeMapData(writeTxn, byteBuffer));
+        } while (optMapUid.isPresent());
+    }
+
+    private void purgeMapData(final Txn<ByteBuffer> writeTxn,
+                              final UID mapUid) {
         //open a cursor on key/value store scanning over all record for this map uid
         //for each one get the valueStoreKey
         //look up the valueStoreKey in the references DB and establish if this is the last ref for this value

@@ -22,9 +22,11 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.esotericsoftware.kryo.pool.KryoFactory;
 import com.esotericsoftware.kryo.pool.KryoPool;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.serde.AbstractKryoSerde;
+import stroom.refdata.offheapstore.ByteArrayUtils;
 import stroom.refdata.offheapstore.KeyValueStoreKey;
 import stroom.refdata.offheapstore.UID;
 import stroom.util.logging.LambdaLogger;
@@ -73,5 +75,15 @@ public class KeyValueStoreKeySerde extends AbstractKryoSerde<KeyValueStoreKey> {
             final String key = input.readString();
             return new KeyValueStoreKey(mapUid, key);
         }
+    }
+
+    public void SerializeAsStartKey(final ByteBuffer byteBuffer, final KeyValueStoreKey key) {
+
+        serialize(byteBuffer, key);
+
+        byteBuffer.
+
+
+
     }
 }

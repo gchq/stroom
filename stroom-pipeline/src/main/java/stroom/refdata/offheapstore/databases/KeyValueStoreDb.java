@@ -18,16 +18,21 @@
 package stroom.refdata.offheapstore.databases;
 
 import com.google.inject.assistedinject.Assisted;
+import org.lmdbjava.CursorIterator;
 import org.lmdbjava.Env;
+import org.lmdbjava.KeyRange;
+import org.lmdbjava.Txn;
 import stroom.refdata.lmdb.AbstractLmdbDb;
 import stroom.refdata.offheapstore.ByteBufferPool;
 import stroom.refdata.offheapstore.KeyValueStoreKey;
+import stroom.refdata.offheapstore.UID;
 import stroom.refdata.offheapstore.serdes.KeyValueStoreKeySerde;
 import stroom.refdata.offheapstore.ValueStoreKey;
 import stroom.refdata.offheapstore.serdes.ValueStoreKeySerde;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
+import java.util.function.BiConsumer;
 
 public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStoreKey> {
 
@@ -40,6 +45,31 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
                     final ValueStoreKeySerde valueSerde) {
 
         super(lmdbEnvironment, byteBufferPool, keySerde, valueSerde, DB_NAME);
+    }
+
+    public void forEachEntry(final Txn<ByteBuffer> txn,
+                             final UID mapUid,
+                             final BiConsumer<ByteBuffer, ByteBuffer> entryConsumer) {
+
+        final KeyRange<ByteBuffer> singleMapUidKeyRange = buildSingleMapUidKeyRange(mapUid);
+
+        try (CursorIterator<ByteBuffer> cursorIterator = lmdbDbi.iterate(txn, singleMapUidKeyRange)) {
+            for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
+                entryConsumer.accept(keyVal.key(), keyVal.val());
+            }
+        }
+    }
+
+    private KeyRange<ByteBuffer> buildSingleMapUidKeyRange(final UID mapUid) {
+
+        // create a key with a dummy key name
+        final KeyValueStoreKey dummyKey = new KeyValueStoreKey(mapUid, "DUMMY");
+        lmdbDbi.
+
+
+
+
+        return null;
     }
 
     public interface Factory {

@@ -139,4 +139,10 @@ public class MapDefinitionUIDStore {
         return null;
     }
 
+    public Optional<UID> getNextMapDefinition(final Txn<ByteBuffer> writeTxn,
+                                              final ByteBuffer RefStreamDefinition) {
+
+        return Optional.empty();
+    }
+
 }
