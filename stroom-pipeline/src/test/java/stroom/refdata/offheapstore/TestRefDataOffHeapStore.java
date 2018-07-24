@@ -411,6 +411,8 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         assertThat(refDataStore.getKeyValueEntryCount()).isGreaterThan(0);
         assertThat(refDataStore.getKeyRangeValueEntryCount()).isGreaterThan(0);
 
+        ((RefDataOffHeapStore) refDataStore).logAllContents();
+
         LOGGER.info("------------------------purge-starts-here--------------------------------------");
         refDataStore.purgeOldData();
 

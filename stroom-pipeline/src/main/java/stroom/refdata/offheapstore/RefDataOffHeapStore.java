@@ -580,6 +580,10 @@ public class RefDataOffHeapStore implements RefDataStore {
 
     private void purgeMapData(final Txn<ByteBuffer> writeTxn,
                               final UID mapUid) {
+
+//        valueStoreDb.logDatabaseContents();
+//        valueStoreDb.logRawDatabaseContents();
+
         // loop over all keyValue entries for this mapUid and dereference/delete the associated
         // valueStore entry
         keyValueStoreDb.forEachEntry(writeTxn, mapUid, (keyValueStoreKeyBuffer, valueStoreKeyBuffer) -> {
