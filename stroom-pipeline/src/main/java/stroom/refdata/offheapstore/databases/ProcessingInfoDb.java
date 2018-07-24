@@ -84,19 +84,19 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
                                                         final ByteBuffer startKeyBuffer,
                                                         final Predicate<ByteBuffer> valueBufferPredicate) {
 
-        Optional<ByteBufferPair> foundEntry = Optional.empty();
+        Optional<ByteBufferPair> optMatchedEntry = Optional.empty();
         final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(startKeyBuffer);
         try (CursorIterator<ByteBuffer> cursorIterator = lmdbDbi.iterate(txn, keyRange)) {
             for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
 
                 if (valueBufferPredicate.test(keyVal.val())) {
                     // got a match
-                    foundEntry = Optional.of(ByteBufferPair.of(keyVal.key(), keyVal.val()));
+                    optMatchedEntry = Optional.of(ByteBufferPair.of(keyVal.key(), keyVal.val()));
                 }
             }
         }
 
-        return foundEntry;
+        return optMatchedEntry;
     }
 
     public interface Factory {
