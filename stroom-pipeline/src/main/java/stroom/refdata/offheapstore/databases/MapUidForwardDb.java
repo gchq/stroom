@@ -18,12 +18,16 @@
 package stroom.refdata.offheapstore.databases;
 
 import com.google.inject.assistedinject.Assisted;
+import org.lmdbjava.CursorIterator;
 import org.lmdbjava.Env;
+import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 import stroom.refdata.lmdb.AbstractLmdbDb;
 import stroom.refdata.offheapstore.ByteBufferPool;
 import stroom.refdata.offheapstore.ByteBufferUtils;
 import stroom.refdata.offheapstore.MapDefinition;
+import stroom.refdata.offheapstore.PooledByteBuffer;
+import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.refdata.offheapstore.UID;
 import stroom.refdata.offheapstore.serdes.MapDefinitionSerde;
 import stroom.refdata.offheapstore.serdes.UIDSerde;
@@ -32,6 +36,7 @@ import stroom.util.logging.LambdaLogger;
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 public class MapUidForwardDb extends AbstractLmdbDb<MapDefinition, UID> {
 
@@ -62,6 +67,41 @@ public class MapUidForwardDb extends AbstractLmdbDb<MapDefinition, UID> {
         }
     }
 
+    public Optional<UID> getNextMapDefinition(final Txn<ByteBuffer> writeTxn,
+                                              final RefStreamDefinition refStreamDefinition,
+                                              final Supplier<ByteBuffer> uidBufferSupplier) {
+
+        Optional<UID> optMatchedMapUid = Optional.empty();
+        MapDefinition mapDefinitionWithNoMapName = new MapDefinition(refStreamDefinition);
+        try (PooledByteBuffer pooledStartKeyIncBuffer = getPooledKeyBuffer()) {
+            ByteBuffer startKeyIncBuffer = pooledStartKeyIncBuffer.getByteBuffer();
+
+            keySerde.serialize(startKeyIncBuffer, mapDefinitionWithNoMapName);
+
+            final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(startKeyIncBuffer);
+
+            try (CursorIterator<ByteBuffer> cursorIterator = lmdbDbi.iterate(writeTxn, keyRange)) {
+                for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
+
+                    // our startKeyIncBuffer contains only the refStreamDefinition part
+                    // so ensure the key we get back from the cursor is prefixed with that
+                    // else we are on a different refStreamDefinition
+                    if (!ByteBufferUtils.containsPrefix(keyVal.key(), startKeyIncBuffer)) {
+                        break;
+                    }
+
+                    // we want to use the bytebuffer outside the cursor so we must clone it first
+                    final ByteBuffer newBuffer = uidBufferSupplier.get();
+                    ByteBufferUtils.copy(keyVal.val(), newBuffer);
+                    final UID mapUid = UID.wrap(newBuffer);
+                    optMatchedMapUid = Optional.of(mapUid);
+                    // got our match so break
+                    break;
+                }
+            }
+        }
+        return optMatchedMapUid;
+    }
 
 
 

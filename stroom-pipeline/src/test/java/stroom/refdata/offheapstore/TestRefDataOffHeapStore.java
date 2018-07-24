@@ -395,11 +395,36 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         });
     }
 
+    @Test
+    public void testPurgeOldData_simple() {
+
+        // two different ref stream definitions
+        List<RefStreamDefinition> refStreamDefinitions = Arrays.asList(
+                buildUniqueRefStreamDefinition(),
+                buildUniqueRefStreamDefinition());
+
+        bulkLoadAndAssert(refStreamDefinitions, false, 1000);
+
+        setProperty(RefDataOffHeapStore.DATA_RETENTION_AGE_PROP_KEY, "0ms");
+
+        assertThat(refDataStore.getProcessingInfoEntryCount()).isEqualTo(2);
+        assertThat(refDataStore.getKeyValueEntryCount()).isGreaterThan(0);
+        assertThat(refDataStore.getKeyRangeValueEntryCount()).isGreaterThan(0);
+
+        LOGGER.info("------------------------purge-starts-here--------------------------------------");
+        refDataStore.purgeOldData();
+
+        assertThat(refDataStore.getProcessingInfoEntryCount()).isEqualTo(0);
+        assertThat(refDataStore.getKeyValueEntryCount()).isEqualTo(0);
+        assertThat(refDataStore.getKeyRangeValueEntryCount()).isEqualTo(0);
+    }
+
+
     private RefStreamDefinition buildUniqueRefStreamDefinition() {
         return new RefStreamDefinition(
-                    UUID.randomUUID().toString(),
-                    UUID.randomUUID().toString(),
-                    123456L);
+                UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(),
+                123456L);
     }
 
     private void bulkLoadAndAssert(final boolean overwriteExisting,

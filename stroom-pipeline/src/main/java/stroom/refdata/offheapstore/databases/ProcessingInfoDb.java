@@ -5,15 +5,20 @@ import org.lmdbjava.CursorIterator;
 import org.lmdbjava.Env;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.AbstractLmdbDb;
 import stroom.refdata.lmdb.LmdbUtils;
 import stroom.refdata.offheapstore.ByteBufferPair;
 import stroom.refdata.offheapstore.ByteBufferPool;
+import stroom.refdata.offheapstore.ByteBufferUtils;
 import stroom.refdata.offheapstore.ProcessingState;
 import stroom.refdata.offheapstore.RefDataProcessingInfo;
 import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.refdata.offheapstore.serdes.RefDataProcessingInfoSerde;
 import stroom.refdata.offheapstore.serdes.RefStreamDefinitionSerde;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
@@ -21,6 +26,8 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDataProcessingInfo> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessingInfoDb.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ProcessingInfoDb.class);
 
     private static final String DB_NAME = "ProcessingInfo";
     private final RefStreamDefinitionSerde keySerde;
@@ -85,17 +92,34 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
                                                         final Predicate<ByteBuffer> valueBufferPredicate) {
 
         Optional<ByteBufferPair> optMatchedEntry = Optional.empty();
-        final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(startKeyBuffer);
+
+        final KeyRange<ByteBuffer> keyRange;
+
+        if (startKeyBuffer == null) {
+            LOGGER.debug("Scanning from start of DB");
+            keyRange = KeyRange.all();
+        } else {
+            LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage(
+                    "Scanning from {}", ByteBufferUtils.byteBufferInfo(startKeyBuffer)));
+            keyRange = KeyRange.atLeast(startKeyBuffer);
+        }
+        int i = 0;
+
         try (CursorIterator<ByteBuffer> cursorIterator = lmdbDbi.iterate(txn, keyRange)) {
             for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
+                i++;
 
                 if (valueBufferPredicate.test(keyVal.val())) {
                     // got a match
-                    optMatchedEntry = Optional.of(ByteBufferPair.of(keyVal.key(), keyVal.val()));
+                    ByteBufferPair matchedEntry = ByteBufferPair.of(keyVal.key(), keyVal.val());
+                    optMatchedEntry = Optional.of(matchedEntry);
+//                    LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("Found match {}", matchedEntry));
+                    break;
                 }
             }
         }
 
+         LOGGER.debug("getNextEntryAsBytes returning {} after {} iterations", optMatchedEntry, i);
         return optMatchedEntry;
     }
 

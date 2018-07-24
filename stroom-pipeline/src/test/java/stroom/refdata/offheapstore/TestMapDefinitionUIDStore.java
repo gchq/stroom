@@ -22,6 +22,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
+import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.LmdbUtils;
@@ -34,6 +35,7 @@ import stroom.refdata.offheapstore.serdes.UIDSerde;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -245,6 +247,123 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
         assertThat(optUid.get()).isNotNull();
     }
 
+    @Test
+    public void testDeletePair() {
+        String pipelineUuid = UUID.randomUUID().toString();
+        String pipelineVersion = UUID.randomUUID().toString();
+        RefStreamDefinition refStreamDefinition = new RefStreamDefinition(pipelineUuid, pipelineVersion, 1);
+
+        MapDefinition mapDefinition1 = new MapDefinition(refStreamDefinition, "map1");
+        MapDefinition mapDefinition2 = new MapDefinition(refStreamDefinition, "map2");
+        MapDefinition mapDefinition3 = new MapDefinition(refStreamDefinition, "map3");
+
+        final Map<UID, MapDefinition> loadedEntries = loadEntries(mapDefinition1, mapDefinition2, mapDefinition3);
+
+        assertThat(mapUidForwardDb.getEntryCount()).isEqualTo(3);
+        assertThat(mapUidReverseDb.getEntryCount()).isEqualTo(3);
+
+        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            mapDefinitionUIDStore.deletePair(writeTxn, loadedEntries.entrySet().iterator().next().getKey());
+        });
+
+        assertThat(mapUidForwardDb.getEntryCount()).isEqualTo(2);
+        assertThat(mapUidReverseDb.getEntryCount()).isEqualTo(2);
+    }
+
+    @Test
+    public void testGetNextMapDefinition() {
+
+        String pipelineUuid = UUID.randomUUID().toString();
+        String pipelineVersion = UUID.randomUUID().toString();
+        RefStreamDefinition refStreamDefinition1 = new RefStreamDefinition(pipelineUuid, pipelineVersion, 1);
+        RefStreamDefinition refStreamDefinition2 = new RefStreamDefinition(pipelineUuid, pipelineVersion, 2);
+        RefStreamDefinition refStreamDefinition3 = new RefStreamDefinition(pipelineUuid, pipelineVersion, 3);
+
+        MapDefinition mapDefinition11 = new MapDefinition(refStreamDefinition1, "map1");
+        MapDefinition mapDefinition21 = new MapDefinition(refStreamDefinition2, "map1");
+        MapDefinition mapDefinition22 = new MapDefinition(refStreamDefinition2, "map2");
+        MapDefinition mapDefinition31 = new MapDefinition(refStreamDefinition3, "map1");
+
+        loadEntries(Arrays.asList(
+                mapDefinition11,
+                mapDefinition21,
+                mapDefinition22,
+                mapDefinition31));
+
+        assertThat(mapUidReverseDb.getEntryCount()).isEqualTo(4);
+        assertThat(mapUidForwardDb.getEntryCount()).isEqualTo(4);
+
+        LOGGER.info("--------------------------------------------------------------------------------");
+
+
+        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+
+            doGetNextMapDefinitionTest(
+                    writeTxn, refStreamDefinition1, Optional.of(mapDefinition11), false);
+            // same match as nothing has changed
+            doGetNextMapDefinitionTest(
+                    writeTxn, refStreamDefinition1, Optional.of(mapDefinition11), false);
+
+            doGetNextMapDefinitionTest(
+                    writeTxn, refStreamDefinition2, Optional.of(mapDefinition21), false);
+            // same match as nothing has changed
+            doGetNextMapDefinitionTest(
+                    writeTxn, refStreamDefinition2, Optional.of(mapDefinition21), false);
+
+            doGetNextMapDefinitionTest(
+                    writeTxn, refStreamDefinition3, Optional.of(mapDefinition31), false);
+            // same match as nothing has changed
+            doGetNextMapDefinitionTest(
+                    writeTxn, refStreamDefinition3, Optional.of(mapDefinition31), false);
+
+            //now delete the match after we find it
+
+            doGetNextMapDefinitionTest(
+                    writeTxn, refStreamDefinition1, Optional.of(mapDefinition11), true);
+            // same match as nothing has changed
+            doGetNextMapDefinitionTest(
+                    writeTxn, refStreamDefinition1, Optional.empty(), true);
+
+            doGetNextMapDefinitionTest(
+                    writeTxn, refStreamDefinition2, Optional.of(mapDefinition21), true);
+            // same match as nothing has changed
+            doGetNextMapDefinitionTest(
+                    writeTxn, refStreamDefinition2, Optional.of(mapDefinition22), true);
+
+            doGetNextMapDefinitionTest(
+                    writeTxn, refStreamDefinition3, Optional.of(mapDefinition31), true);
+            // same match as nothing has changed
+            doGetNextMapDefinitionTest(
+                    writeTxn, refStreamDefinition3, Optional.empty(), true);
+        });
+    }
+
+    private void doGetNextMapDefinitionTest(final Txn<ByteBuffer> writeTxn,
+                                            final RefStreamDefinition inputRefStreamDefinition,
+                                            final Optional<MapDefinition> optExpectedMapDefinition,
+                                            final boolean deletePairAfterwards) {
+
+        Optional<UID> optMapUid = mapDefinitionUIDStore.getNextMapDefinition(
+                writeTxn, inputRefStreamDefinition, () -> ByteBuffer.allocate(UID.UID_ARRAY_LENGTH));
+
+        assertThat(optMapUid.isPresent()).isEqualTo(optExpectedMapDefinition.isPresent());
+
+        if (optMapUid.isPresent()) {
+
+            MapDefinition actualMapDefinition = mapUidReverseDb.get(optMapUid.get()).get();
+
+            assertThat(actualMapDefinition).isEqualTo(optExpectedMapDefinition.get());
+
+            if (deletePairAfterwards) {
+                mapDefinitionUIDStore.deletePair(writeTxn, optMapUid.get());
+            }
+        }
+    }
+
+    private Map<UID, MapDefinition> loadEntries(MapDefinition... mapDefinitions) {
+        return loadEntries(Arrays.asList(mapDefinitions));
+    }
+
     private Map<UID, MapDefinition> loadEntries(List<MapDefinition> mapDefinitions) {
         List<UID> uids = new ArrayList<>();
 
@@ -269,6 +388,20 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
 
         mapUidForwardDb.logRawDatabaseContents();
         mapUidReverseDb.logRawDatabaseContents();
+
+        // now verify all the uid<->mapDef mappings we are about to return
+        LmdbUtils.doWithReadTxn(lmdbEnv, readTxn -> {
+            loadedEntries.forEach(((uid, mapDefinition) -> {
+                UID uid2 = mapUidForwardDb.get(readTxn, mapDefinition).get();
+
+                int cmpResult = ByteBufferUtils.compare(uid.getBackingBuffer(), uid2.getBackingBuffer());
+                assertThat(cmpResult).isEqualTo(0);
+
+                MapDefinition mapDefinition2 = mapUidReverseDb.get(readTxn, uid).get();
+
+                assertThat(mapDefinition2).isEqualTo(mapDefinition);
+            }));
+        });
 
         return loadedEntries;
     }

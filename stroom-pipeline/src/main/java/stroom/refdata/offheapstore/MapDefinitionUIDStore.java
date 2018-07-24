@@ -1,6 +1,7 @@
 package stroom.refdata.offheapstore;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Supplier;
 import org.lmdbjava.Env;
 import org.lmdbjava.Txn;
 import stroom.refdata.lmdb.LmdbUtils;
@@ -95,9 +96,10 @@ public class MapDefinitionUIDStore {
     }
 
     public Optional<UID> getNextMapDefinition(final Txn<ByteBuffer> writeTxn,
-                                              final ByteBuffer RefStreamDefinition) {
+                                              final RefStreamDefinition refStreamDefinition,
+                                              final Supplier<ByteBuffer> uidBufferSupplier) {
 
-        return Optional.empty();
+        return mapUidForwardDb.getNextMapDefinition(writeTxn, refStreamDefinition, uidBufferSupplier);
     }
 
     public void deletePair(final Txn<ByteBuffer> writeTxn,
@@ -108,8 +110,8 @@ public class MapDefinitionUIDStore {
                         "No entry exists for mapUid {}", ByteBufferUtils.byteBufferInfo(mapUid.getBackingBuffer()))));
 
         // these two MUST be done in the same txn to ensure data consistency
-        mapUidForwardDb.delete(mapDefinitionBuffer);
-        mapUidReverseDb.delete(mapUid.getBackingBuffer());
+        mapUidForwardDb.delete(writeTxn, mapDefinitionBuffer);
+        mapUidReverseDb.delete(writeTxn, mapUid.getBackingBuffer());
     }
 
     private UID createForwardReversePair(final Txn<ByteBuffer> writeTxn, final ByteBuffer mapDefinitionBuffer) {
@@ -150,6 +152,7 @@ public class MapDefinitionUIDStore {
         LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage(
                 "nextUidValueBuffer {}", ByteBufferUtils.byteBufferInfo(nextUidKeyBuffer)));
 
+        // ensure it is ready for reading again as we are returning it
         return UID.wrap(nextUidKeyBuffer);
     }
 

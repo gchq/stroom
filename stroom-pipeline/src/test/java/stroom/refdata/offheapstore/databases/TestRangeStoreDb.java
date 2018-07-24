@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Range;
 import stroom.refdata.lmdb.LmdbUtils;
 import stroom.refdata.offheapstore.ByteBufferPool;
+import stroom.refdata.offheapstore.ByteBufferUtils;
 import stroom.refdata.offheapstore.RangeStoreKey;
 import stroom.refdata.offheapstore.UID;
 import stroom.refdata.offheapstore.ValueStoreKey;
@@ -184,6 +185,49 @@ public class TestRangeStoreDb extends AbstractLmdbDbTest {
             Optional<ValueStoreKey> optValueStoreKey = rangeStoreDb.get(txn, uid2, 5);
             assertThat(optValueStoreKey).isNotEmpty();
             assertThat(optValueStoreKey.get()).isEqualTo(val(11));
+        });
+    }
+
+    @Test
+    public void forEachEntry() {
+
+        final UID uid1 = UID.of(1,0,0,1);
+        final UID uid2 = UID.of(2,0,0,2);
+        final UID uid3 = UID.of(3,0,0,3);
+
+        final RangeStoreKey rangeStoreKey11 = new RangeStoreKey(uid1, Range.of(10L, 20L));
+        final RangeStoreKey rangeStoreKey21 = new RangeStoreKey(uid2, Range.of(20L, 25L));
+        final RangeStoreKey rangeStoreKey22 = new RangeStoreKey(uid2, Range.of(20L, 30L));
+        final RangeStoreKey rangeStoreKey31 = new RangeStoreKey(uid3, Range.of(30L, 40L));
+
+        final ValueStoreKey valueStoreKey11 = new ValueStoreKey(11, (short) 11);
+        final ValueStoreKey valueStoreKey21 = new ValueStoreKey(21, (short) 21);
+        final ValueStoreKey valueStoreKey22 = new ValueStoreKey(22, (short) 22);
+        final ValueStoreKey valueStoreKey31 = new ValueStoreKey(31, (short) 31);
+
+        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            rangeStoreDb.put(writeTxn, rangeStoreKey11, valueStoreKey11, false);
+            rangeStoreDb.put(writeTxn, rangeStoreKey21, valueStoreKey21, false);
+            rangeStoreDb.put(writeTxn, rangeStoreKey22, valueStoreKey22, false);
+            rangeStoreDb.put(writeTxn, rangeStoreKey31, valueStoreKey31, false);
+
+            assertThat(rangeStoreDb.getEntryCount(writeTxn)).isEqualTo(4);
+        });
+
+        doForEachTest(uid1, 1);
+        doForEachTest(uid2, 2);
+        doForEachTest(uid3, 1);
+    }
+
+    private void doForEachTest(final UID uid, final int expectedEntryCount) {
+        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            AtomicInteger cnt = new AtomicInteger(0);
+            rangeStoreDb.forEachEntry(writeTxn, uid, (keyBuf, valBuf) -> {
+                cnt.incrementAndGet();
+                LOGGER.info("{} {}", ByteBufferUtils.byteBufferInfo(keyBuf), ByteBufferUtils.byteBufferInfo(valBuf));
+            });
+
+            assertThat(cnt).hasValue(expectedEntryCount);
         });
     }
 

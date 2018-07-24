@@ -25,6 +25,8 @@ import org.slf4j.LoggerFactory;
 import java.nio.ByteBuffer;
 import java.util.Random;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 
 public class TestByteBufferUtils {
 
@@ -77,6 +79,50 @@ public class TestByteBufferUtils {
             long val2 = random.nextLong();
             doLongCompareTest(val1, val2, buf1, buf2);
         }
+    }
+
+    @Test
+    public void testContainsPrefix_match() {
+
+        ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[] {0, 1, 2, 3, 4, 5});
+        ByteBuffer prefixByteBuffer = ByteBuffer.wrap(new byte[] {0, 1, 2, 3, 4});
+
+        boolean result = ByteBufferUtils.containsPrefix(byteBuffer, prefixByteBuffer);
+
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    public void testContainsPrefix_match2() {
+
+        ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[] {0, 1, 2, 3, 4, 5});
+        ByteBuffer prefixByteBuffer = ByteBuffer.wrap(new byte[] {0});
+
+        boolean result = ByteBufferUtils.containsPrefix(byteBuffer, prefixByteBuffer);
+
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    public void testContainsPrefix_bufferTooShort() {
+
+        ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[] {0, 1, 2});
+        ByteBuffer prefixByteBuffer = ByteBuffer.wrap(new byte[] {0, 1, 2, 3, 4});
+
+        boolean result = ByteBufferUtils.containsPrefix(byteBuffer, prefixByteBuffer);
+
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    public void testContainsPrefix_noMatch() {
+
+        ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[] {0, 1, 2, 3, 4, 5});
+        ByteBuffer prefixByteBuffer = ByteBuffer.wrap(new byte[] {1, 2, 3, 4});
+
+        boolean result = ByteBufferUtils.containsPrefix(byteBuffer, prefixByteBuffer);
+
+        assertThat(result).isFalse();
     }
 
     private void doLongCompareTest(long val1, long val2, ByteBuffer buf1, ByteBuffer buf2) {

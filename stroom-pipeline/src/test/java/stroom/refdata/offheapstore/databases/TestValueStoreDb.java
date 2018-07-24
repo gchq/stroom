@@ -47,25 +47,25 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
                 refDataValueSerde);
     }
 
-//    @Test
-//    public void getOrCreate() {
-//
-//        valueStoreDb.put(new ValueStoreKey(3,(short) 1), StringValue.of("3-1"), false);
-//        valueStoreDb.put(new ValueStoreKey(3,(short) 0), StringValue.of("3-0"), false);
-//        valueStoreDb.put(new ValueStoreKey(3,(short) 3), StringValue.of("3-3"), false);
-//        valueStoreDb.put(new ValueStoreKey(3,(short) 2), StringValue.of("3-2"), false);
-//        valueStoreDb.put(new ValueStoreKey(1,(short) 1), StringValue.of("1-1"), false);
-//        valueStoreDb.put(new ValueStoreKey(1,(short) 0), StringValue.of("1-0"), false);
-//        valueStoreDb.put(new ValueStoreKey(1,(short) 3), StringValue.of("1-3"), false);
-//        valueStoreDb.put(new ValueStoreKey(1,(short) 2), StringValue.of("1-2"), false);
-//        valueStoreDb.put(new ValueStoreKey(2,(short) 3), StringValue.of("2-3"), false);
-//        valueStoreDb.put(new ValueStoreKey(2,(short) 1), StringValue.of("2-1"), false);
-//        valueStoreDb.put(new ValueStoreKey(2,(short) 0), StringValue.of("2-0"), false);
-//        valueStoreDb.put(new ValueStoreKey(2,(short) 2), StringValue.of("2-2"), false);
-//
-//        valueStoreDb.logRawDatabaseContents();
-//        valueStoreDb.logDatabaseContents();
-//    }
+    @Test
+    public void getOrCreate() {
+
+        valueStoreDb.put(new ValueStoreKey(3,(short) 1), StringValue.of("3-1"), false);
+        valueStoreDb.put(new ValueStoreKey(3,(short) 0), StringValue.of("3-0"), false);
+        valueStoreDb.put(new ValueStoreKey(3,(short) 3), StringValue.of("3-3"), false);
+        valueStoreDb.put(new ValueStoreKey(3,(short) 2), StringValue.of("3-2"), false);
+        valueStoreDb.put(new ValueStoreKey(1,(short) 1), StringValue.of("1-1"), false);
+        valueStoreDb.put(new ValueStoreKey(1,(short) 0), StringValue.of("1-0"), false);
+        valueStoreDb.put(new ValueStoreKey(1,(short) 3), StringValue.of("1-3"), false);
+        valueStoreDb.put(new ValueStoreKey(1,(short) 2), StringValue.of("1-2"), false);
+        valueStoreDb.put(new ValueStoreKey(2,(short) 3), StringValue.of("2-3"), false);
+        valueStoreDb.put(new ValueStoreKey(2,(short) 1), StringValue.of("2-1"), false);
+        valueStoreDb.put(new ValueStoreKey(2,(short) 0), StringValue.of("2-0"), false);
+        valueStoreDb.put(new ValueStoreKey(2,(short) 2), StringValue.of("2-2"), false);
+
+        valueStoreDb.logRawDatabaseContents();
+        valueStoreDb.logDatabaseContents();
+    }
 
     @Test
     public void testGetOrCreate() {

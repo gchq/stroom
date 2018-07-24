@@ -78,6 +78,7 @@ public class UID {
     public UID clone() {
         ByteBuffer newBuffer = ByteBuffer.allocateDirect(UID_ARRAY_LENGTH);
         newBuffer.put(byteBuffer);
+        byteBuffer.rewind();
         newBuffer.flip();
         return new UID(newBuffer);
     }

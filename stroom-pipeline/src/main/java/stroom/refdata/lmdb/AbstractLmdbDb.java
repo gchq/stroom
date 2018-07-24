@@ -31,6 +31,7 @@ import stroom.refdata.lmdb.serde.Serde;
 import stroom.refdata.offheapstore.ByteBufferPair;
 import stroom.refdata.offheapstore.ByteBufferPool;
 import stroom.refdata.offheapstore.ByteBufferUtils;
+import stroom.refdata.offheapstore.PooledByteBuffer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -87,6 +88,10 @@ public abstract class AbstractLmdbDb<K, V> {
 
     protected ByteBuffer getKeyBufferFromPool() {
         return byteBufferPool.getBuffer(lmdbEnvironment.getMaxKeySize());
+    }
+
+    protected PooledByteBuffer getPooledKeyBuffer() {
+        return byteBufferPool.getBufferAsResource(lmdbEnvironment.getMaxKeySize());
     }
 
     protected ByteBufferPair getBufferPairFromPool(int minValueBufferCapacity) {

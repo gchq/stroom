@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.serde.AbstractKryoSerde;
 import stroom.refdata.offheapstore.MapDefinition;
 import stroom.refdata.offheapstore.RefStreamDefinition;
+import stroom.refdata.offheapstore.UID;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -67,7 +68,9 @@ public class MapDefinitionSerde extends AbstractKryoSerde<MapDefinition> {
         public void write(final Kryo kryo, final Output output, final MapDefinition mapDefinition) {
             // first serialise the refStreamDefinition part
             refStreamDefinitionSerializer.write(kryo, output, mapDefinition.getRefStreamDefinition());
-            output.writeString(mapDefinition.getMapName());
+            if (mapDefinition.getMapName() != null) {
+                output.writeString(mapDefinition.getMapName());
+            }
         }
 
         @Override
@@ -75,8 +78,21 @@ public class MapDefinitionSerde extends AbstractKryoSerde<MapDefinition> {
             // first de-serialise the refStreamDefinition part
             final RefStreamDefinition refStreamDefinition = refStreamDefinitionSerializer.read(
                     kryo, input, RefStreamDefinition.class);
-            final String mapName = input.readString();
+            final String mapName;
+            if (input.position() < input.limit()) {
+                mapName = input.readString();
+            } else {
+                mapName = null;
+            }
             return new MapDefinition(refStreamDefinition, mapName);
         }
+    }
+
+    public void serializeWithoutKeyPart(final ByteBuffer byteBuffer, final MapDefinition mapDefinition) {
+
+        serialize(byteBuffer, mapDefinition);
+
+        // set the limit to just after the UID part
+        byteBuffer.limit(UID.UID_ARRAY_LENGTH);
     }
 }

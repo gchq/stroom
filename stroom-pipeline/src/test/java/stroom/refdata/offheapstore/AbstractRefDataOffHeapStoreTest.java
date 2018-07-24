@@ -71,4 +71,8 @@ public abstract class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest
                 });
         injector.injectMembers(this);
     }
+
+    protected void setProperty(String name, String value) {
+        mockStroomPropertyService.setProperty(name, value);
+    }
 }

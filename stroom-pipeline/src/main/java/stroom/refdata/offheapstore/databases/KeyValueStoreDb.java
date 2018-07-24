@@ -69,18 +69,37 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
         try (PooledByteBuffer startKeyIncPooledBuffer = byteBufferPool.getBufferAsResource(lmdbEnvironment.getMaxKeySize());
              PooledByteBuffer endKeyExcPooledBuffer = byteBufferPool.getBufferAsResource(lmdbEnvironment.getMaxKeySize())) {
 
-            final KeyRange<ByteBuffer> singleMapUidKeyRange = buildSingleMapUidKeyRange(
-                    mapUid, startKeyIncPooledBuffer.getByteBuffer(), endKeyExcPooledBuffer.getByteBuffer());
+            // TODO there appears to be a bug in LMDB that causes an IndexOutOfBoundsException
+            // when both the start and end key are used in the keyRange
+            // see https://github.com/lmdbjava/lmdbjava/issues/98
+            // As a work around will have to use an AT_LEAST cursor and manually
+            // test entries to see when I have gone too far.
+//            final KeyRange<ByteBuffer> singleMapUidKeyRange = buildSingleMapUidKeyRange(
+//                    mapUid, startKeyIncPooledBuffer.getByteBuffer(), endKeyExcPooledBuffer.getByteBuffer());
 
-            try (CursorIterator<ByteBuffer> cursorIterator = lmdbDbi.iterate(txn, singleMapUidKeyRange)) {
+            final KeyValueStoreKey startKeyInc = new KeyValueStoreKey(mapUid, "");
+            final ByteBuffer startKeyIncBuffer = startKeyIncPooledBuffer.getByteBuffer();
+            keySerde.serializeWithoutKeyPart(startKeyIncBuffer, startKeyInc);
+            final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(startKeyIncBuffer);
+
+            try (CursorIterator<ByteBuffer> cursorIterator = lmdbDbi.iterate(txn, keyRange)) {
                 for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
 
-                    LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Found entry {} {}",
-                            ByteBufferUtils.byteBufferInfo(keyVal.key()),
-                            ByteBufferUtils.byteBufferInfo(keyVal.val())));
+                    if (ByteBufferUtils.containsPrefix(keyVal.key(), startKeyIncBuffer)) {
+                        // prefixed with our UID
 
-                    // pass the found kv pair from this entry to the consumer
-                    entryConsumer.accept(keyVal.key(), keyVal.val());
+                        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Found entry {} {}",
+                                ByteBufferUtils.byteBufferInfo(keyVal.key()),
+                                ByteBufferUtils.byteBufferInfo(keyVal.val())));
+
+                        // pass the found kv pair from this entry to the consumer
+                        // consumer MUST not hold on to the key/value references as they can change
+                        // once the cursor is closed or moves position
+                        entryConsumer.accept(keyVal.key(), keyVal.val());
+                    } else {
+                        // passed out UID so break out
+                        break;
+                    }
                 }
             }
         }

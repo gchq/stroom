@@ -25,8 +25,11 @@ import stroom.refdata.lmdb.serde.Serializer;
 import stroom.refdata.offheapstore.ByteBufferUtils;
 import stroom.refdata.offheapstore.ProcessingState;
 import stroom.refdata.offheapstore.RefDataProcessingInfo;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.time.Instant;
 import java.util.Objects;
 
 public class RefDataProcessingInfoSerde implements
@@ -35,6 +38,7 @@ public class RefDataProcessingInfoSerde implements
         Deserializer<RefDataProcessingInfo> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RefDataProcessingInfoSerde.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(RefDataProcessingInfoSerde.class);
 
     public static final int CREATE_TIME_OFFSET = 0;
     public static final int LAST_ACCESSED_TIME_OFFSET = CREATE_TIME_OFFSET + Long.BYTES;
@@ -101,9 +105,10 @@ public class RefDataProcessingInfoSerde implements
                 timeMsBuffer, timeMsBuffer.position(),
                 processingInfoBuffer, LAST_ACCESSED_TIME_OFFSET);
 
-//        LOGGER.info("{} {}",
-//                timeMsBuffer.getLong(0),
-//                valueBuffer.getLong(LAST_ACCESSED_TIME_OFFSET));
+        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("wasAccessedAfter returns {} for test time {} lastAccessed time {}",
+                compareResult,
+                Instant.ofEpochMilli(timeMsBuffer.getLong(0)),
+                Instant.ofEpochMilli(processingInfoBuffer.getLong(LAST_ACCESSED_TIME_OFFSET))));
         return compareResult < 0;
     }
 }

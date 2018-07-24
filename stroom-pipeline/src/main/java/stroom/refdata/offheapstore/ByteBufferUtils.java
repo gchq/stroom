@@ -83,9 +83,16 @@ public class ByteBufferUtils {
     }
 
     public static int compare(final ByteBuffer left, final ByteBuffer right) {
-        return org.apache.hadoop.hbase.util.ByteBufferUtils.compareTo(
+        int cmpResult = org.apache.hadoop.hbase.util.ByteBufferUtils.compareTo(
                 left, left.position(), left.remaining(),
                 right, right.position(), right.remaining());
+
+        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("compare({}, {}) returned {}",
+                ByteBufferUtils.byteBufferInfo(left),
+                ByteBufferUtils.byteBufferInfo(right),
+                cmpResult));
+        return cmpResult;
+
     }
 
     /**
@@ -134,6 +141,27 @@ public class ByteBufferUtils {
     public static int compareAsInt(final ByteBuffer left, final int leftPos,
                                    final ByteBuffer right, final int rightPos) {
         return compareAs(left, leftPos, right, rightPos, Integer.BYTES);
+    }
+
+    public static boolean containsPrefix(final ByteBuffer buffer, final ByteBuffer prefixBuffer) {
+        boolean result = true;
+        if (buffer.remaining() < prefixBuffer.remaining()) {
+            result = false;
+        } else {
+            for (int i = 0; i < prefixBuffer.remaining(); i++) {
+                if (prefixBuffer.get(i) != buffer.get(i)) {
+                    result = false;
+                    break;
+                }
+            }
+        }
+        return result;
+    }
+
+    public static void copy(final ByteBuffer sourceBuffer, final ByteBuffer destBuffer) {
+        destBuffer.put(sourceBuffer);
+        destBuffer.flip();
+        sourceBuffer.rewind();
     }
 
     /**

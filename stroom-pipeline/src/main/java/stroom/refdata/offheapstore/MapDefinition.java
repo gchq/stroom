@@ -41,6 +41,12 @@ public class MapDefinition {
         this.hashCode = buildHashCode();
     }
 
+    public MapDefinition(final RefStreamDefinition refStreamDefinition) {
+        this.refStreamDefinition = refStreamDefinition;
+        this.mapName = null;
+        this.hashCode = buildHashCode();
+    }
+
     DocRef getPipelineDocRef() {
         return refStreamDefinition.getPipelineDocRef();
     }

@@ -122,6 +122,8 @@ public interface RefDataStore {
 
     long getKeyRangeValueEntryCount();
 
+    long getProcessingInfoEntryCount();
+
     void purgeOldData();
 
     void doWithRefStreamDefinitionLock(final RefStreamDefinition refStreamDefinition,

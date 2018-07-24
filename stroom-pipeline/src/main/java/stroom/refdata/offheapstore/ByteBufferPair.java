@@ -63,9 +63,8 @@ public class ByteBufferPair {
 
     @Override
     public String toString() {
-        return "ByteBufferPair{" +
-                "keyBuffer=" + keyBuffer +
-                ", valueBuffer=" + valueBuffer +
-                '}';
+        return "key: [" + ByteBufferUtils.byteBufferInfo(keyBuffer) +
+                "] value: [" + ByteBufferUtils.byteBufferInfo(valueBuffer) +
+                "]";
     }
 }

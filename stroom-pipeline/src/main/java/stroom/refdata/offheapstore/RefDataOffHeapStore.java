@@ -66,7 +66,7 @@ public class RefDataOffHeapStore implements RefDataStore {
 
     public static final long PROCESSING_INFO_UPDATE_DELAY_MS = Duration.of(1, ChronoUnit.HOURS).toMillis();
 
-    private static final String DATA_RETENTION_AGE_PROP_KEY = "stroom.refloader.offheapstore.deleteAge";
+    public static final String DATA_RETENTION_AGE_PROP_KEY = "stroom.refloader.offheapstore.deleteAge";
     private static final String DATA_RETENTION_AGE_DEFAULT_VALUE = "30d";
 
     private final Path dbDir;
@@ -403,27 +403,35 @@ public class RefDataOffHeapStore implements RefDataStore {
     }
 
     @Override
+    public long getProcessingInfoEntryCount() {
+        return processingInfoDb.getEntryCount();
+    }
+
+    @Override
     @StroomSimpleCronSchedule(cron = "2 * *") // 02:00 every day
     @JobTrackedSchedule(
             jobName = "Ref Data Store Purge",
             description = "Purge old reference data from the off heap store, as defined by " + DATA_RETENTION_AGE_PROP_KEY)
     public void purgeOldData() {
 
-        try (final PooledByteBuffer currRefStreamDefPooledBuf = getKeyBufferFromPool();
-             final PooledByteBuffer accessTimeThresholdPooledBuf = getAccessTimeCutOffBuffer()) {
+        try (final PooledByteBuffer accessTimeThresholdPooledBuf = getAccessTimeCutOffBuffer()) {
 
 //            ByteBuffer currRefStreamDefBuf = currRefStreamDefPooledBuf.getByteBuffer();
-            final AtomicReference<ByteBuffer> currRefStreamDefBufRef = new AtomicReference<>(currRefStreamDefPooledBuf.getByteBuffer());
+            final AtomicReference<ByteBuffer> currRefStreamDefBufRef = new AtomicReference<>();
             final ByteBuffer accessTimeThresholdBuf = accessTimeThresholdPooledBuf.getByteBuffer();
 
+            Predicate<ByteBuffer> accessTimePredicate = processingInfoBuffer ->
+                            !RefDataProcessingInfoSerde.wasAccessedAfter(
+                                    processingInfoBuffer,
+                                    accessTimeThresholdBuf);
+
 //            currentRefStreamDefBuf = getKeyBufferFromPool();
-//            accessTimeThresholdBuf = getAccessTimeCutOffBuffer();
 
             // hack to make it final for the lambda
 //            final ByteBuffer accessTimeThresholdBufFinal = accessTimeThresholdBuf;
 
             // buffer is empty at this point so flip it to make it ready for reading
-            currRefStreamDefBufRef.get().flip();
+//            currRefStreamDefBufRef.get().flip();
 
             final AtomicBoolean wasMatchFound = new AtomicBoolean(false);
             do {
@@ -432,10 +440,7 @@ public class RefDataOffHeapStore implements RefDataStore {
                     Optional<ByteBufferPair> optProcInfoBufferPair = processingInfoDb.getNextEntryAsBytes(
                             readTxn,
                             currRefStreamDefBufRef.get(),
-                            processingInfoBuffer ->
-                                    RefDataProcessingInfoSerde.wasAccessedAfter(
-                                            processingInfoBuffer,
-                                            accessTimeThresholdBuf));
+                            accessTimePredicate);
 
 
                     return optProcInfoBufferPair.map(procInfoBufferPair -> {
@@ -449,6 +454,8 @@ public class RefDataOffHeapStore implements RefDataStore {
 
                 if (optRefStreamDef.isPresent()) {
 
+                    LOGGER.debug("Found at least one refStreamDef ready for purge, now getting lock");
+
                     // now acquire a lock for the this ref stream def so we don't conflict with any load operations
                     doWithRefStreamDefinitionLock(optRefStreamDef.get(), () -> {
                         // start a write txn and re-fetch the next entry for purge (should be the same one as above)
@@ -459,13 +466,11 @@ public class RefDataOffHeapStore implements RefDataStore {
                             final Optional<ByteBufferPair> optProcInfoBufferPair = processingInfoDb.getNextEntryAsBytes(
                                     writeTxn,
                                     currRefStreamDefBufRef.get(),
-                                    processingInfoBuffer ->
-                                            RefDataProcessingInfoSerde.wasAccessedAfter(
-                                                    processingInfoBuffer,
-                                                    accessTimeThresholdBuf));
+                                    accessTimePredicate);
 
                             if (!optProcInfoBufferPair.isPresent()) {
                                 // no matching ref streams found so break out
+                                LOGGER.debug("No match found");
                                 return false;
                             } else {
                                 // found a ref stream def that is ready for purge
@@ -490,10 +495,10 @@ public class RefDataOffHeapStore implements RefDataStore {
                                         false);
 
                                 // purge the data associated with this ref stream def
-                                purgeRefStreamData(writeTxn, refStreamDefBuffer);
+                                purgeRefStreamData(writeTxn, refStreamDefinition);
 
                                 //now delete the proc info entry
-                                processingInfoDb.delete(refStreamDefBuffer);
+                                processingInfoDb.delete(writeTxn, refStreamDefBuffer);
 
                                 LOGGER.info("Completed purge of refStreamDefinition {} {}",
                                         refStreamDefinition, refDataProcessingInfo);
@@ -555,16 +560,22 @@ public class RefDataOffHeapStore implements RefDataStore {
     }
 
     private void purgeRefStreamData(final Txn<ByteBuffer> writeTxn,
-                                    final ByteBuffer refStreamDefBuffer) {
+                                    final RefStreamDefinition refStreamDefinition) {
 
-        Optional<UID> optMapUid = Optional.empty();
-        do {
-            //open a ranged cursor on the map forward table to scan all map defs for that stream def
-            //for each map def get the map uid
-            optMapUid = mapDefinitionUIDStore.getNextMapDefinition(writeTxn, refStreamDefBuffer);
-            optMapUid.ifPresent(byteBuffer ->
-                    purgeMapData(writeTxn, byteBuffer));
-        } while (optMapUid.isPresent());
+        LOGGER.debug("purgeRefStreamData({})", refStreamDefinition);
+
+        Optional<UID> optMapUid;
+        try (PooledByteBuffer pooledUidBuffer = byteBufferPool.getBufferAsResource(UID.UID_ARRAY_LENGTH)) {
+            do {
+                //open a ranged cursor on the map forward table to scan all map defs for that stream def
+                //for each map def get the map uid
+                optMapUid = mapDefinitionUIDStore.getNextMapDefinition(
+                        writeTxn, refStreamDefinition, pooledUidBuffer::getByteBuffer);
+
+                optMapUid.ifPresent(byteBuffer ->
+                        purgeMapData(writeTxn, byteBuffer));
+            } while (optMapUid.isPresent());
+        }
     }
 
     private void purgeMapData(final Txn<ByteBuffer> writeTxn,
@@ -594,7 +605,7 @@ public class RefDataOffHeapStore implements RefDataStore {
         LAMBDA_LOGGER.logDurationIfDebugEnabled(
                 () -> {
                     try {
-                        LOGGER.debug("Acquiring lock");
+                        LOGGER.debug("Acquiring lock for {}", refStreamDefinition);
                         lock.lockInterruptibly();
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
@@ -635,9 +646,13 @@ public class RefDataOffHeapStore implements RefDataStore {
     private PooledByteBuffer getAccessTimeCutOffBuffer() {
         long purgeAge = ModelStringUtil.parseDurationString(
                 stroomPropertyService.getProperty(DATA_RETENTION_AGE_PROP_KEY, DATA_RETENTION_AGE_DEFAULT_VALUE));
-        long purgeCutOff = System.currentTimeMillis() - purgeAge;
+        long now = System.currentTimeMillis();
+        long purgeCutOff = now - purgeAge;
 
-        LOGGER.info("Using purge cut off {}", Instant.ofEpochMilli(purgeCutOff));
+        LOGGER.info("Using purge duration {}, cut off {}, now {}",
+                Duration.ofMillis(purgeAge),
+                Instant.ofEpochMilli(purgeCutOff),
+                Instant.ofEpochMilli(now));
 
         PooledByteBuffer pooledByteBuffer = byteBufferPool.getBufferAsResource(Long.BYTES);
         pooledByteBuffer.getByteBuffer().putLong(purgeCutOff);

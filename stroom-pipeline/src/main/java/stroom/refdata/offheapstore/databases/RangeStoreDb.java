@@ -181,18 +181,36 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
         try (PooledByteBuffer startKeyIncPooledBuffer = byteBufferPool.getBufferAsResource(lmdbEnvironment.getMaxKeySize());
              PooledByteBuffer endKeyExcPooledBuffer = byteBufferPool.getBufferAsResource(lmdbEnvironment.getMaxKeySize())) {
 
-            final KeyRange<ByteBuffer> singleMapUidKeyRange = buildSingleMapUidKeyRange(
-                    mapUid, startKeyIncPooledBuffer.getByteBuffer(), endKeyExcPooledBuffer.getByteBuffer());
+            // TODO there appears to be a bug in LMDB that causes an IndexOutOfBoundsException
+            // when both the start and end key are used in the keyRange
+            // see https://github.com/lmdbjava/lmdbjava/issues/98
+            // As a work around will have to use an AT_LEAST cursor and manually
+            // test entries to see when I have gone too far.
+//            final KeyRange<ByteBuffer> singleMapUidKeyRange = buildSingleMapUidKeyRange(
+//                    mapUid, startKeyIncPooledBuffer.getByteBuffer(), endKeyExcPooledBuffer.getByteBuffer());
 
-            try (CursorIterator<ByteBuffer> cursorIterator = lmdbDbi.iterate(txn, singleMapUidKeyRange)) {
+            final Range<Long> dummyRange = Range.of(0L, 1L);
+            final RangeStoreKey startKeyInc = new RangeStoreKey(mapUid, dummyRange);
+            final ByteBuffer startKeyIncBuffer = startKeyIncPooledBuffer.getByteBuffer();
+            keySerde.serializeWithoutRangePart(startKeyIncBuffer, startKeyInc);
+            final KeyRange<ByteBuffer> atLeastKeyRange = KeyRange.atLeast(startKeyIncBuffer);
+
+            try (CursorIterator<ByteBuffer> cursorIterator = lmdbDbi.iterate(txn, atLeastKeyRange)) {
                 for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
 
-                    LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Found entry {} {}",
-                            ByteBufferUtils.byteBufferInfo(keyVal.key()),
-                            ByteBufferUtils.byteBufferInfo(keyVal.val())));
+                    if (ByteBufferUtils.containsPrefix(keyVal.key(), startKeyIncBuffer)) {
+                        // prefixed with our UID
 
-                    // pass the found kv pair from this entry to the consumer
-                    entryConsumer.accept(keyVal.key(), keyVal.val());
+                        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Found entry {} {}",
+                                ByteBufferUtils.byteBufferInfo(keyVal.key()),
+                                ByteBufferUtils.byteBufferInfo(keyVal.val())));
+
+                        // pass the found kv pair from this entry to the consumer
+                        entryConsumer.accept(keyVal.key(), keyVal.val());
+                    } else {
+                        // passed out UID so break out
+                        break;
+                    }
                 }
             }
         }
@@ -201,12 +219,13 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
     private KeyRange<ByteBuffer> buildSingleMapUidKeyRange(final UID mapUid,
                                                            final ByteBuffer startKeyIncBuffer,
                                                            final ByteBuffer endKeyExcBuffer) {
-        final RangeStoreKey startKeyInc = new RangeStoreKey(mapUid, Range.from(0L));
+        Range<Long> dummyRange = Range.of(0L, 1L);
+        final RangeStoreKey startKeyInc = new RangeStoreKey(mapUid, dummyRange);
 
         keySerde.serializeWithoutRangePart(startKeyIncBuffer, startKeyInc);
 
         UID nextMapUid = mapUid.nextUid();
-        final RangeStoreKey endKeyExc = new RangeStoreKey(nextMapUid, Range.from(0L));
+        final RangeStoreKey endKeyExc = new RangeStoreKey(nextMapUid, dummyRange);
 
         LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Using range {} (inc) {} (exc)",
                 ByteBufferUtils.byteBufferInfo(startKeyIncBuffer),

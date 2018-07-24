@@ -18,10 +18,14 @@
 package stroom.refdata.offheapstore.serdes;
 
 import org.junit.Test;
+import stroom.refdata.offheapstore.ByteBufferUtils;
 import stroom.refdata.offheapstore.MapDefinition;
 import stroom.refdata.offheapstore.RefStreamDefinition;
 
+import java.nio.ByteBuffer;
 import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestMapDefinitionSerde extends AbstractSerdeTest {
 
@@ -31,9 +35,51 @@ public class TestMapDefinitionSerde extends AbstractSerdeTest {
                 UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(),
                 123456L);
-        final MapDefinition mapDefinition1 = new MapDefinition(refStreamDefinition,
-                "MyMapName");
+        final MapDefinition mapDefinition1 = new MapDefinition(refStreamDefinition, "MyMapName");
 
         doSerialisationDeserialisationTest(mapDefinition1, MapDefinitionSerde::new);
+    }
+
+    @Test
+    public void serialize_nullMapName() {
+        RefStreamDefinitionSerde refStreamDefinitionSerde = new RefStreamDefinitionSerde();
+        MapDefinitionSerde mapDefinitionSerde = new MapDefinitionSerde();
+
+        final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
+                UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(),
+                123456L);
+        final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, null);
+
+        doSerialisationDeserialisationTest(mapDefinition, () -> mapDefinitionSerde);
+
+    }
+
+    @Test
+    public void serialize_nullMapName_verifySerialisedForm() {
+        RefStreamDefinitionSerde refStreamDefinitionSerde = new RefStreamDefinitionSerde();
+        MapDefinitionSerde mapDefinitionSerde = new MapDefinitionSerde();
+
+        final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
+                UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(),
+                123456L);
+        final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, null);
+
+        ByteBuffer refStreamDefBuffer = ByteBuffer.allocate(60);
+        refStreamDefinitionSerde.serialize(refStreamDefBuffer, refStreamDefinition);
+
+        ByteBuffer mapDefBuffer = ByteBuffer.allocate(60);
+        mapDefinitionSerde.serialize(mapDefBuffer, mapDefinition);
+
+        int compareResult = ByteBufferUtils.compare(refStreamDefBuffer, mapDefBuffer);
+
+        assertThat(compareResult).isEqualTo(0);
+
+        final MapDefinition mapDefinition2 = new MapDefinition(refStreamDefinition, "myMapName");
+        ByteBuffer mapDefBuffer2 = ByteBuffer.allocate(60);
+        mapDefinitionSerde.serialize(mapDefBuffer2, mapDefinition2);
+
+        assertThat(mapDefBuffer2.remaining()).isGreaterThan(mapDefBuffer.remaining());
     }
 }
