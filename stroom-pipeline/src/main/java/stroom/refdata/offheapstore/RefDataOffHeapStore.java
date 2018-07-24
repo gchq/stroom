@@ -52,6 +52,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -404,14 +406,14 @@ public class RefDataOffHeapStore implements RefDataStore {
     @StroomSimpleCronSchedule(cron = "2 * *") // 02:00 every day
     @JobTrackedSchedule(
             jobName = "Ref Data Store Purge",
-            description = "Purge old reference data form the off heap store, as defined by " + DATA_RETENTION_AGE_PROP_KEY)
+            description = "Purge old reference data from the off heap store, as defined by " + DATA_RETENTION_AGE_PROP_KEY)
     public void purgeOldData() {
-
 
         try (final PooledByteBuffer currRefStreamDefPooledBuf = getKeyBufferFromPool();
              final PooledByteBuffer accessTimeThresholdPooledBuf = getAccessTimeCutOffBuffer()) {
 
-            final ByteBuffer currRefStreamDefBuf = currRefStreamDefPooledBuf.getByteBuffer();
+//            ByteBuffer currRefStreamDefBuf = currRefStreamDefPooledBuf.getByteBuffer();
+            final AtomicReference<ByteBuffer> currRefStreamDefBufRef = new AtomicReference<>(currRefStreamDefPooledBuf.getByteBuffer());
             final ByteBuffer accessTimeThresholdBuf = accessTimeThresholdPooledBuf.getByteBuffer();
 
 //            currentRefStreamDefBuf = getKeyBufferFromPool();
@@ -420,38 +422,91 @@ public class RefDataOffHeapStore implements RefDataStore {
             // hack to make it final for the lambda
 //            final ByteBuffer accessTimeThresholdBufFinal = accessTimeThresholdBuf;
 
-            boolean wasMatchFound = false;
+            // buffer is empty at this point so flip it to make it ready for reading
+            currRefStreamDefBufRef.get().flip();
+
+            final AtomicBoolean wasMatchFound = new AtomicBoolean(false);
             do {
-                wasMatchFound = LmdbUtils.getWithWriteTxn(lmdbEnvironment, writeTxn -> {
-                    final Optional<ByteBufferPair> byteBufferPair = processingInfoDb.getNextEntry(
-                            writeTxn,
-                            currRefStreamDefBuf,
+                // with a read txn find the next proc info entry that is ready for purge
+                Optional<RefStreamDefinition> optRefStreamDef = LmdbUtils.getWithReadTxn(lmdbEnvironment, readTxn -> {
+                    Optional<ByteBufferPair> optProcInfoBufferPair = processingInfoDb.getNextEntryAsBytes(
+                            readTxn,
+                            currRefStreamDefBufRef.get(),
                             processingInfoBuffer ->
                                     RefDataProcessingInfoSerde.wasAccessedAfter(
                                             processingInfoBuffer,
                                             accessTimeThresholdBuf));
 
-                    if (!byteBufferPair.isPresent()) {
-                        // no matching ref streams found so break out
-                        return false;
-                    } else {
-                        // found a ref stream def that is ready for purge
 
-                        // mark it is purge in progress
-                        processingInfoDb.updateProcessingState(writeTxn,
-                                currRefStreamDefPooledBuf.getByteBuffer(),
-                                ProcessingState.PURGE_IN_PROGRESS,
-                                false);
+                    return optProcInfoBufferPair.map(procInfoBufferPair -> {
+                        RefStreamDefinition refStreamDefinition = processingInfoDb.deserializeKey(procInfoBufferPair.getKeyBuffer());
 
-                        // purge the data associated with this ref stream def
-                        purgeRefStreamData(writeTxn, currRefStreamDefBuf);
-
-                        //now delete the proc info entry
-                        processingInfoDb.delete(currRefStreamDefBuf);
-                        return true;
-                    }
+                        // update the current key buffer so we can search from here next time
+                        currRefStreamDefBufRef.set(procInfoBufferPair.getKeyBuffer());
+                        return refStreamDefinition;
+                    });
                 });
-            } while (wasMatchFound);
+
+                if (optRefStreamDef.isPresent()) {
+
+                    // now acquire a lock for the this ref stream def so we don't conflict with any load operations
+                    doWithRefStreamDefinitionLock(optRefStreamDef.get(), () -> {
+                        // start a write txn and re-fetch the next entry for purge (should be the same one as above)
+                        // TODO we currently purge a whole refStreamDef in one txn, may be better to do it in smaller
+                        // chunks
+                        boolean wasFound = LmdbUtils.getWithWriteTxn(lmdbEnvironment, writeTxn -> {
+
+                            final Optional<ByteBufferPair> optProcInfoBufferPair = processingInfoDb.getNextEntryAsBytes(
+                                    writeTxn,
+                                    currRefStreamDefBufRef.get(),
+                                    processingInfoBuffer ->
+                                            RefDataProcessingInfoSerde.wasAccessedAfter(
+                                                    processingInfoBuffer,
+                                                    accessTimeThresholdBuf));
+
+                            if (!optProcInfoBufferPair.isPresent()) {
+                                // no matching ref streams found so break out
+                                return false;
+                            } else {
+                                // found a ref stream def that is ready for purge
+
+                                final ByteBuffer refStreamDefBuffer = optProcInfoBufferPair.get().getKeyBuffer();
+                                final ByteBuffer refDataProcInfoBuffer = optProcInfoBufferPair.get().getValueBuffer();
+
+                                // update this for the next iteration
+                                currRefStreamDefBufRef.set(refStreamDefBuffer);
+
+                                final RefStreamDefinition refStreamDefinition = processingInfoDb.deserializeKey(
+                                        refStreamDefBuffer);
+                                final RefDataProcessingInfo refDataProcessingInfo = processingInfoDb.deserializeValue(
+                                        refDataProcInfoBuffer);
+                                LOGGER.info("Purging refStreamDefinition {} {}",
+                                        refStreamDefinition, refDataProcessingInfo);
+
+                                // mark it is purge in progress
+                                processingInfoDb.updateProcessingState(writeTxn,
+                                        refStreamDefBuffer,
+                                        ProcessingState.PURGE_IN_PROGRESS,
+                                        false);
+
+                                // purge the data associated with this ref stream def
+                                purgeRefStreamData(writeTxn, refStreamDefBuffer);
+
+                                //now delete the proc info entry
+                                processingInfoDb.delete(refStreamDefBuffer);
+
+                                LOGGER.info("Completed purge of refStreamDefinition {} {}",
+                                        refStreamDefinition, refDataProcessingInfo);
+                                return true;
+                            }
+                        });
+                        wasMatchFound.set(wasFound);
+                    });
+                } else {
+                    wasMatchFound.set(false);
+                }
+
+            } while (wasMatchFound.get());
         }
 
 
@@ -514,30 +569,46 @@ public class RefDataOffHeapStore implements RefDataStore {
 
     private void purgeMapData(final Txn<ByteBuffer> writeTxn,
                               final UID mapUid) {
-        //open a cursor on key/value store scanning over all record for this map uid
-        //for each one get the valueStoreKey
-        //look up the valueStoreKey in the references DB and establish if this is the last ref for this value
-        //if it is, delete the value entry
-        //now delete the key/value entry
-        //do the same for the keyrange/value DB
-        //commit every N key/value or keyrange/value entries
-        //now delete the mapdef<=>uid pair
+        // loop over all keyValue entries for this mapUid and dereference/delete the associated
+        // valueStore entry
+        keyValueStoreDb.forEachEntry(writeTxn, mapUid, (keyValueStoreKeyBuffer, valueStoreKeyBuffer) -> {
 
+            //dereference this value, deleting it if required
+            valueStoreDb.deReferenceValue(writeTxn, valueStoreKeyBuffer);
+        });
+
+        // loop over all rangeValue entries for this mapUid and dereference/delete the associated
+        // valueStore entry
+        rangeStoreDb.forEachEntry(writeTxn, mapUid, (rangeValueStoreKeyBuffer, valueStoreKeyBuffer) -> {
+
+            //dereference this value, deleting it if required
+            valueStoreDb.deReferenceValue(writeTxn, valueStoreKeyBuffer);
+        });
+
+        mapDefinitionUIDStore.deletePair(writeTxn, mapUid);
     }
 
     public void doWithRefStreamDefinitionLock(final RefStreamDefinition refStreamDefinition, final Runnable work) {
         final Lock lock = refStreamDefStripedReentrantLock.get(refStreamDefinition);
+
+        LAMBDA_LOGGER.logDurationIfDebugEnabled(
+                () -> {
+                    try {
+                        LOGGER.debug("Acquiring lock");
+                        lock.lockInterruptibly();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        throw new RuntimeException(LambdaLogger.buildMessage(
+                                "Thread interrupted while trying to acquire lock for refStreamDefinition {}",
+                                refStreamDefinition));
+                    }
+                },
+                () -> LambdaLogger.buildMessage("Acquiring lock for {}", refStreamDefinition));
         try {
-            lock.lockInterruptibly();
-            try {
-                // now we have sole access to this RefStreamDefinition so perform the work on it
-                work.run();
-            } finally {
-                lock.unlock();
-            }
-        } catch (final InterruptedException e) {
-            LOGGER.warn("Thread interrupted waiting to acquire lock for {}", refStreamDefinition);
-            Thread.currentThread().interrupt();
+            // now we have sole access to this RefStreamDefinition so perform the work on it
+            work.run();
+        } finally {
+            lock.unlock();
         }
     }
 

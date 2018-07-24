@@ -29,6 +29,11 @@ public class KeyValueStoreKey {
         this.key = Objects.requireNonNull(key);
     }
 
+//    public KeyValueStoreKey(final UID mapUid) {
+//        this.mapUid = Objects.requireNonNull(mapUid);
+//        this.key = null;
+//    }
+
     public UID getMapUid() {
         return mapUid;
     }
@@ -36,7 +41,6 @@ public class KeyValueStoreKey {
     public String getKey() {
         return key;
     }
-
 
     @Override
     public boolean equals(final Object o) {
@@ -49,7 +53,6 @@ public class KeyValueStoreKey {
 
     @Override
     public int hashCode() {
-
         return Objects.hash(mapUid, key);
     }
 

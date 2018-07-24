@@ -32,4 +32,14 @@ public class TestKeyValueStoreKeySerde extends AbstractSerdeTest {
 
         doSerialisationDeserialisationTest(keyValueStoreKey, KeyValueStoreKeySerde::new);
     }
+
+    @Test
+    public void serializeDeserialize_emptyString() {
+        final UID uid = UID.of(0, 1, 2, 3);
+        final KeyValueStoreKey keyValueStoreKey = new KeyValueStoreKey(
+                uid,
+                "");
+
+        doSerialisationDeserialisationTest(keyValueStoreKey, KeyValueStoreKeySerde::new);
+    }
 }

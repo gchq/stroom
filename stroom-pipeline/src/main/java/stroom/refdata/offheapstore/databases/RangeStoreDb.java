@@ -28,6 +28,7 @@ import stroom.entity.shared.Range;
 import stroom.refdata.lmdb.AbstractLmdbDb;
 import stroom.refdata.offheapstore.ByteBufferPool;
 import stroom.refdata.offheapstore.ByteBufferUtils;
+import stroom.refdata.offheapstore.PooledByteBuffer;
 import stroom.refdata.offheapstore.RangeStoreKey;
 import stroom.refdata.offheapstore.UID;
 import stroom.refdata.offheapstore.ValueStoreKey;
@@ -40,6 +41,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 
 public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
 
@@ -48,6 +50,9 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
 
     private static final String DB_NAME = "RangeStore";
 
+    private final RangeStoreKeySerde keySerde;
+    private final ValueStoreKeySerde valueSerde;
+
     @Inject
     public RangeStoreDb(@Assisted final Env<ByteBuffer> lmdbEnvironment,
                         final ByteBufferPool byteBufferPool,
@@ -55,6 +60,8 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
                         final ValueStoreKeySerde valueSerde) {
 
         super(lmdbEnvironment, byteBufferPool, keySerde, valueSerde, DB_NAME);
+        this.keySerde = keySerde;
+        this.valueSerde = valueSerde;
     }
 
     /**
@@ -165,6 +172,49 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
         LOGGER.trace("Using range [{}] to [{}]", endRangeStoreKey, startRangeStoreKey);
         // we want to scan backward from (and including, if found) our start key
         return KeyRange.closedBackward(startKeyBuf, endKeyBuf);
+    }
+
+    public void forEachEntry(final Txn<ByteBuffer> txn,
+                             final UID mapUid,
+                             final BiConsumer<ByteBuffer, ByteBuffer> entryConsumer) {
+
+        try (PooledByteBuffer startKeyIncPooledBuffer = byteBufferPool.getBufferAsResource(lmdbEnvironment.getMaxKeySize());
+             PooledByteBuffer endKeyExcPooledBuffer = byteBufferPool.getBufferAsResource(lmdbEnvironment.getMaxKeySize())) {
+
+            final KeyRange<ByteBuffer> singleMapUidKeyRange = buildSingleMapUidKeyRange(
+                    mapUid, startKeyIncPooledBuffer.getByteBuffer(), endKeyExcPooledBuffer.getByteBuffer());
+
+            try (CursorIterator<ByteBuffer> cursorIterator = lmdbDbi.iterate(txn, singleMapUidKeyRange)) {
+                for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
+
+                    LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Found entry {} {}",
+                            ByteBufferUtils.byteBufferInfo(keyVal.key()),
+                            ByteBufferUtils.byteBufferInfo(keyVal.val())));
+
+                    // pass the found kv pair from this entry to the consumer
+                    entryConsumer.accept(keyVal.key(), keyVal.val());
+                }
+            }
+        }
+    }
+
+    private KeyRange<ByteBuffer> buildSingleMapUidKeyRange(final UID mapUid,
+                                                           final ByteBuffer startKeyIncBuffer,
+                                                           final ByteBuffer endKeyExcBuffer) {
+        final RangeStoreKey startKeyInc = new RangeStoreKey(mapUid, Range.from(0L));
+
+        keySerde.serializeWithoutRangePart(startKeyIncBuffer, startKeyInc);
+
+        UID nextMapUid = mapUid.nextUid();
+        final RangeStoreKey endKeyExc = new RangeStoreKey(nextMapUid, Range.from(0L));
+
+        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Using range {} (inc) {} (exc)",
+                ByteBufferUtils.byteBufferInfo(startKeyIncBuffer),
+                ByteBufferUtils.byteBufferInfo(endKeyExcBuffer)));
+
+        keySerde.serializeWithoutRangePart(endKeyExcBuffer, endKeyExc);
+
+        return KeyRange.closedOpen(startKeyIncBuffer, endKeyExcBuffer);
     }
 
     public interface Factory {

@@ -295,6 +295,7 @@ public abstract class AbstractLmdbDb<K, V> {
     }
 
     public void delete(final K key) {
+        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("delete({})", key));
         try (final Txn<ByteBuffer> txn = lmdbEnvironment.txnWrite()) {
             ByteBuffer keyBuffer = keySerde.serialize(key);
             lmdbDbi.delete(txn, keyBuffer);
@@ -305,9 +306,20 @@ public abstract class AbstractLmdbDb<K, V> {
     }
 
     public void delete(final ByteBuffer keyBuffer) {
+        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("delete({})", ByteBufferUtils.byteBufferInfo(keyBuffer)));
         try (final Txn<ByteBuffer> txn = lmdbEnvironment.txnWrite()) {
             lmdbDbi.delete(txn, keyBuffer);
             txn.commit();
+        } catch (RuntimeException e) {
+            throw new RuntimeException(LambdaLogger.buildMessage("Error deleting key {}",
+                    ByteBufferUtils.byteBufferInfo(keyBuffer)), e);
+        }
+    }
+
+    public void delete(final Txn<ByteBuffer> writeTxn, final ByteBuffer keyBuffer) {
+        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("delete(txn, {})", ByteBufferUtils.byteBufferInfo(keyBuffer)));
+        try {
+            lmdbDbi.delete(writeTxn, keyBuffer);
         } catch (RuntimeException e) {
             throw new RuntimeException(LambdaLogger.buildMessage("Error deleting key {}",
                     ByteBufferUtils.byteBufferInfo(keyBuffer)), e);
@@ -397,5 +409,21 @@ public abstract class AbstractLmdbDb<K, V> {
         LmdbUtils.logRawDatabaseContents(
                 lmdbEnvironment,
                 lmdbDbi);
+    }
+
+    public K deserializeKey(final ByteBuffer keyBuffer) {
+        return keySerde.deserialize(keyBuffer);
+    }
+
+    public V deserializeValue(final ByteBuffer valueBuffer) {
+        return valueSerde.deserialize(valueBuffer);
+    }
+
+    public void serializeKey(final ByteBuffer keyBuffer, K key) {
+        keySerde.serialize(keyBuffer, key);
+    }
+
+    public void serializeValue(final ByteBuffer valueBuffer, V value) {
+        valueSerde.serialize(valueBuffer, value);
     }
 }

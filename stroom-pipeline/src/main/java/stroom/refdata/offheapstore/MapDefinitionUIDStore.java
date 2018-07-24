@@ -94,6 +94,24 @@ public class MapDefinitionUIDStore {
         return entryCountForward;
     }
 
+    public Optional<UID> getNextMapDefinition(final Txn<ByteBuffer> writeTxn,
+                                              final ByteBuffer RefStreamDefinition) {
+
+        return Optional.empty();
+    }
+
+    public void deletePair(final Txn<ByteBuffer> writeTxn,
+                           final UID mapUid) {
+
+        final ByteBuffer mapDefinitionBuffer = mapUidReverseDb.getAsBytes(writeTxn, mapUid.getBackingBuffer())
+                .orElseThrow(() -> new RuntimeException(LambdaLogger.buildMessage(
+                        "No entry exists for mapUid {}", ByteBufferUtils.byteBufferInfo(mapUid.getBackingBuffer()))));
+
+        // these two MUST be done in the same txn to ensure data consistency
+        mapUidForwardDb.delete(mapDefinitionBuffer);
+        mapUidReverseDb.delete(mapUid.getBackingBuffer());
+    }
+
     private UID createForwardReversePair(final Txn<ByteBuffer> writeTxn, final ByteBuffer mapDefinitionBuffer) {
         // this is all done in a write txn so we can be sure of consistency between the forward and reverse DBs
 
@@ -133,16 +151,6 @@ public class MapDefinitionUIDStore {
                 "nextUidValueBuffer {}", ByteBufferUtils.byteBufferInfo(nextUidKeyBuffer)));
 
         return UID.wrap(nextUidKeyBuffer);
-    }
-
-    Optional<MapDefinition> getMapDefinition(UID uid) {
-        return null;
-    }
-
-    public Optional<UID> getNextMapDefinition(final Txn<ByteBuffer> writeTxn,
-                                              final ByteBuffer RefStreamDefinition) {
-
-        return Optional.empty();
     }
 
 }

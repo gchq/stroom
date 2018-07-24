@@ -1,7 +1,9 @@
 package stroom.refdata.offheapstore.databases;
 
 import com.google.inject.assistedinject.Assisted;
+import org.lmdbjava.CursorIterator;
 import org.lmdbjava.Env;
+import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 import stroom.refdata.lmdb.AbstractLmdbDb;
 import stroom.refdata.lmdb.LmdbUtils;
@@ -78,12 +80,23 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
         });
     }
 
-    public Optional<ByteBufferPair> getNextEntry(final Txn<ByteBuffer> txn,
-                                                 final ByteBuffer startKeyBuffer,
-                                                 final Predicate<ByteBuffer> valueBufferPredicate) {
+    public Optional<ByteBufferPair> getNextEntryAsBytes(final Txn<ByteBuffer> txn,
+                                                        final ByteBuffer startKeyBuffer,
+                                                        final Predicate<ByteBuffer> valueBufferPredicate) {
 
+        Optional<ByteBufferPair> foundEntry = Optional.empty();
+        final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(startKeyBuffer);
+        try (CursorIterator<ByteBuffer> cursorIterator = lmdbDbi.iterate(txn, keyRange)) {
+            for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
 
-        return Optional.empty();
+                if (valueBufferPredicate.test(keyVal.val())) {
+                    // got a match
+                    foundEntry = Optional.of(ByteBufferPair.of(keyVal.key(), keyVal.val()));
+                }
+            }
+        }
+
+        return foundEntry;
     }
 
     public interface Factory {
