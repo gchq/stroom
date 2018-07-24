@@ -48,20 +48,73 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void getOrCreate() {
+    public void testDereference() {
 
-        valueStoreDb.put(new ValueStoreKey(3,(short) 1), StringValue.of("3-1"), false);
-        valueStoreDb.put(new ValueStoreKey(3,(short) 0), StringValue.of("3-0"), false);
-        valueStoreDb.put(new ValueStoreKey(3,(short) 3), StringValue.of("3-3"), false);
-        valueStoreDb.put(new ValueStoreKey(3,(short) 2), StringValue.of("3-2"), false);
-        valueStoreDb.put(new ValueStoreKey(1,(short) 1), StringValue.of("1-1"), false);
-        valueStoreDb.put(new ValueStoreKey(1,(short) 0), StringValue.of("1-0"), false);
-        valueStoreDb.put(new ValueStoreKey(1,(short) 3), StringValue.of("1-3"), false);
-        valueStoreDb.put(new ValueStoreKey(1,(short) 2), StringValue.of("1-2"), false);
-        valueStoreDb.put(new ValueStoreKey(2,(short) 3), StringValue.of("2-3"), false);
-        valueStoreDb.put(new ValueStoreKey(2,(short) 1), StringValue.of("2-1"), false);
-        valueStoreDb.put(new ValueStoreKey(2,(short) 0), StringValue.of("2-0"), false);
-        valueStoreDb.put(new ValueStoreKey(2,(short) 2), StringValue.of("2-2"), false);
+        StringValue value1 = StringValue.of("1111");
+        StringValue value2 = StringValue.of("2222");
+
+        // ensure hashcode don't clash
+        assertThat(value1.getValue().hashCode()).isNotEqualTo(value2.getValue().hashCode());
+
+        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            StringValue stringValue;
+            ValueStoreKey valueStoreKey1a = valueStoreDb.getOrCreate(writeTxn, value1);
+            assertThat(valueStoreDb.getEntryCount(writeTxn)).isEqualTo(1);
+            stringValue = (StringValue) valueStoreDb.get(writeTxn, valueStoreKey1a).get();
+            assertThat(stringValue.getReferenceCount()).isEqualTo(1);
+            assertThat(stringValue.getValue()).isEqualTo(value1.getValue());
+
+            // getOrCreate same value, should no new records, but ref count will have increased
+            ValueStoreKey valueStoreKey1b = valueStoreDb.getOrCreate(writeTxn, value1);
+            assertThat(valueStoreDb.getEntryCount(writeTxn)).isEqualTo(1);
+            assertThat(valueStoreKey1b).isEqualTo(valueStoreKey1a);
+            stringValue = (StringValue) valueStoreDb.get(writeTxn, valueStoreKey1b).get();
+            assertThat(stringValue.getReferenceCount()).isEqualTo(2);
+            assertThat(stringValue.getValue()).isEqualTo(value1.getValue());
+
+            // getOrCreate same value, should no new records, but ref count will have increased
+            ValueStoreKey valueStoreKey1c = valueStoreDb.getOrCreate(writeTxn, value1);
+            assertThat(valueStoreDb.getEntryCount(writeTxn)).isEqualTo(1);
+            assertThat(valueStoreKey1b).isEqualTo(valueStoreKey1a);
+            stringValue = (StringValue) valueStoreDb.get(writeTxn, valueStoreKey1c).get();
+            assertThat(stringValue.getReferenceCount()).isEqualTo(3);
+            assertThat(stringValue.getValue()).isEqualTo(value1.getValue());
+
+            // getOrCreate a different value, so 1 new entry, ref count is 1
+            ValueStoreKey valueStoreKey2a = valueStoreDb.getOrCreate(writeTxn, value2);
+            assertThat(valueStoreDb.getEntryCount(writeTxn)).isEqualTo(2);
+            stringValue = (StringValue) valueStoreDb.get(writeTxn, valueStoreKey2a).get();
+            assertThat(stringValue.getReferenceCount()).isEqualTo(1);
+            assertThat(stringValue.getValue()).isEqualTo(value2.getValue());
+
+            valueStoreDb.logRawDatabaseContents();
+            valueStoreDb.logDatabaseContents();
+
+            LOGGER.info("-----------------------------------------------------------------");
+
+            // now dereference value1
+            valueStoreDb.deReferenceValue(writeTxn, valueStoreKey1a);
+            stringValue = (StringValue) valueStoreDb.get(writeTxn, valueStoreKey1a).get();
+            assertThat(stringValue.getReferenceCount()).isEqualTo(2);
+            assertThat(valueStoreDb.getEntryCount(writeTxn)).isEqualTo(2);
+
+            // now dereference value1 again
+            valueStoreDb.deReferenceValue(writeTxn, valueStoreKey1a);
+            stringValue = (StringValue) valueStoreDb.get(writeTxn, valueStoreKey1a).get();
+            assertThat(stringValue.getReferenceCount()).isEqualTo(1);
+            assertThat(valueStoreDb.getEntryCount(writeTxn)).isEqualTo(2);
+
+            // now dereference value1 again, entry is deleted
+            valueStoreDb.deReferenceValue(writeTxn, valueStoreKey1a);
+            assertThat(valueStoreDb.get(writeTxn, valueStoreKey1a)).isEmpty();
+            assertThat(valueStoreDb.getEntryCount(writeTxn)).isEqualTo(1);
+
+            // now dereference value2, entry is deleted
+            valueStoreDb.deReferenceValue(writeTxn, valueStoreKey2a);
+            assertThat(valueStoreDb.get(writeTxn, valueStoreKey2a)).isEmpty();
+            assertThat(valueStoreDb.getEntryCount(writeTxn)).isEqualTo(0);
+
+        });
 
         valueStoreDb.logRawDatabaseContents();
         valueStoreDb.logDatabaseContents();

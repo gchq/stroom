@@ -344,7 +344,7 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
                                             final boolean deletePairAfterwards) {
 
         Optional<UID> optMapUid = mapDefinitionUIDStore.getNextMapDefinition(
-                writeTxn, inputRefStreamDefinition, () -> ByteBuffer.allocate(UID.UID_ARRAY_LENGTH));
+                writeTxn, inputRefStreamDefinition, () -> ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH));
 
         assertThat(optMapUid.isPresent()).isEqualTo(optExpectedMapDefinition.isPresent());
 

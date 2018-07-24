@@ -145,8 +145,13 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
 
             if (newRefCount <= 0) {
                 // we had the last ref to this value so we can delete it
+                LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Ref count is zero, derleting entry for key {}",
+                        ByteBufferUtils.byteBufferInfo(keyBuffer)));
                 cursor.delete();
             } else {
+                LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Updating entry with new ref count {} for key {}",
+                        newRefCount,
+                        ByteBufferUtils.byteBufferInfo(keyBuffer)));
                 cursor.put(cursor.key(), newValueBuf, PutFlags.MDB_CURRENT);
             }
         }
