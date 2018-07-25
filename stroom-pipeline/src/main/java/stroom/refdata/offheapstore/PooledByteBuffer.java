@@ -20,10 +20,14 @@ package stroom.refdata.offheapstore;
 import stroom.util.logging.LambdaLogger;
 
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 /**
  * Wrapper for a {@link ByteBuffer} obtained from a {@link ByteBufferPool} that can be used
- * with a try with resources block as it implements {@link AutoCloseable}.
+ * with a try with resources block as it implements {@link AutoCloseable}. If not used
+ * with a try with resources block then {@link PooledByteBuffer#close()} or
+ * {@link PooledByteBuffer#release()} must be called when the underlying {@link ByteBuffer}
+ * is no longer needed.
  */
 public class PooledByteBuffer implements AutoCloseable {
 
@@ -36,13 +40,21 @@ public class PooledByteBuffer implements AutoCloseable {
         this.byteBuffer = byteBuffer;
     }
 
+    /**
+     * @return The underlying {@link ByteBuffer} that was obtained from the pool.
+     */
     public ByteBuffer getByteBuffer() {
         if (byteBuffer == null) {
-            throw new RuntimeException(LambdaLogger.buildMessage("The byteBuffer has been returned to the pool"));
+            throw new IllegalStateException(LambdaLogger.buildMessage("The byteBuffer has been returned to the pool"));
         }
         return byteBuffer;
     }
 
+    /**
+     * Release the underlying {@link ByteBuffer} back to the pool. Once released,
+     * the {@link ByteBuffer} cannot be used any more and you should not retain any
+     * references to it. Identical behaviour to calling {@link PooledByteBuffer#close()}.
+     */
     public void release() {
         byteBufferPool.release(byteBuffer);
         byteBuffer = null;
@@ -58,5 +70,19 @@ public class PooledByteBuffer implements AutoCloseable {
         return "PooledByteBuffer{" +
                 "byteBuffer=" + ByteBufferUtils.byteBufferInfo(byteBuffer) +
                 '}';
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final PooledByteBuffer that = (PooledByteBuffer) o;
+        return Objects.equals(byteBuffer, that.byteBuffer);
+    }
+
+    @Override
+    public int hashCode() {
+
+        return Objects.hash(byteBuffer);
     }
 }

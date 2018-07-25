@@ -64,15 +64,15 @@ public class TestByteBufferPool {
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(0);
 
         //will create a new buffer
-        byteBufferPool.release(byteBufferPool.getBuffer(10));
+        byteBufferPool.getPooledByteBuffer(10).release();
 
         //will use the 10 buffer
-        byteBufferPool.release(byteBufferPool.getBuffer(1));
+        byteBufferPool.getPooledByteBuffer(1).release();
 
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(1);
 
         //will create a new buffer
-        byteBufferPool.release(byteBufferPool.getBuffer(1000));
+        byteBufferPool.getPooledByteBuffer(1000).release();
 
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(2);
 
@@ -99,17 +99,20 @@ public class TestByteBufferPool {
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(0);
 
         //will create two new buffers
-        byteBufferPool.release(byteBufferPool.getBufferPair(10, 11));
+        byteBufferPool.getPooledBufferPair(10, 11).release();
+//        byteBufferPool.release(byteBufferPool.getBufferPair(10, 11));
 
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(2);
 
         //will use the 10 and 11 buffers
-        byteBufferPool.release(byteBufferPool.getBufferPair(1, 2));
+        byteBufferPool.getPooledBufferPair(1, 2).release();
+//        byteBufferPool.release(byteBufferPool.getBufferPair(1, 2));
 
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(2);
 
         //will create two new buffers
-        byteBufferPool.release(byteBufferPool.getBufferPair(1000, 1001));
+        byteBufferPool.getPooledBufferPair(1000, 1001).release();
+//        byteBufferPool.release(byteBufferPool.getBufferPair(1000, 1001));
 
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(4);
 
@@ -136,23 +139,26 @@ public class TestByteBufferPool {
     public void testBufferClearing() {
         ByteBufferPool byteBufferPool = new ByteBufferPool();
 
-        ByteBuffer byteBuffer = byteBufferPool.getBuffer(10);
+        PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(10);
 
-        byteBuffer.putLong(Long.MAX_VALUE);
+        pooledByteBuffer.getByteBuffer().putLong(Long.MAX_VALUE);
 
-        assertThat(byteBuffer.position()).isEqualTo(8);
-        assertThat(byteBuffer.capacity()).isEqualTo(10);
+        assertThat(pooledByteBuffer.getByteBuffer().position()).isEqualTo(8);
+        assertThat(pooledByteBuffer.getByteBuffer().capacity()).isEqualTo(10);
 
-        byteBufferPool.release(byteBuffer);
+        // hold a ref to the buffer so we can test it later, shouldn't normally do this
+        ByteBuffer firstByteBuffer = pooledByteBuffer.getByteBuffer();
 
-        ByteBuffer byteBuffer2 = byteBufferPool.getBuffer(10);
+        pooledByteBuffer.release();
+
+        PooledByteBuffer pooledByteBuffer2 = byteBufferPool.getPooledByteBuffer(10);
 
         // got same instance from pool
-        assertThat(byteBuffer2).isSameAs(byteBuffer);
+        assertThat(pooledByteBuffer2.getByteBuffer()).isSameAs(firstByteBuffer);
 
         // buffer has been cleared
-        assertThat(byteBuffer.position()).isEqualTo(0);
-        assertThat(byteBuffer.capacity()).isEqualTo(10);
+        assertThat(pooledByteBuffer2.getByteBuffer().position()).isEqualTo(0);
+        assertThat(pooledByteBuffer2.getByteBuffer().capacity()).isEqualTo(10);
     }
 
     @Test
@@ -167,6 +173,30 @@ public class TestByteBufferPool {
         assertPoolSizeAfterMultipleConcurrentGetRequests(threadCount, minCapacity, byteBufferPool);
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testGetByteBuffer_fail() {
+        final ByteBufferPool byteBufferPool = new ByteBufferPool();
+        assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(0);
+        PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(10);
+        pooledByteBuffer.release();
+        assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(1);
+
+        // will throw exception as buffer has been released
+        pooledByteBuffer.getByteBuffer();
+    }
+
+    @Test
+    public void testGetByteBuffer() {
+        int capacity = 10;
+        final ByteBufferPool byteBufferPool = new ByteBufferPool();
+        assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(0);
+        PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(capacity);
+
+        ByteBuffer theBuffer = pooledByteBuffer.getByteBuffer();
+
+        assertThat(theBuffer.capacity()).isEqualTo(capacity);
+    }
+
     private void assertPoolSizeAfterMultipleConcurrentGetRequests(final int threadCount, final int minCapacity, final ByteBufferPool byteBufferPool) {
         final CountDownLatch countDownLatch = new CountDownLatch(threadCount);
         final ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
@@ -176,7 +206,7 @@ public class TestByteBufferPool {
 
             completableFutures.add(CompletableFuture.runAsync(() -> {
 
-                ByteBuffer byteBuffer = byteBufferPool.getBuffer(minCapacity);
+                PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(minCapacity);
                 countDownLatch.countDown();
 //                LOGGER.debug("latch count {}", countDownLatch.getCount());
 
@@ -187,7 +217,7 @@ public class TestByteBufferPool {
                     Thread.currentThread().interrupt();
                     throw new RuntimeException("Thread interrupted", e);
                 }
-                byteBufferPool.release(byteBuffer);
+                pooledByteBuffer.release();
             }, executorService));
         }
 

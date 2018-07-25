@@ -67,7 +67,7 @@ public class ByteBufferPool implements Clearable {
         return new PooledByteBuffer(this, getBuffer(minCapacity));
     }
 
-    public synchronized ByteBuffer getBuffer(final int minCapacity) {
+    private synchronized ByteBuffer getBuffer(final int minCapacity) {
         // get a buffer at least as big as minCapacity with the smallest insertionTime
         final Map.Entry<Key, ByteBuffer> entry = bufferMap.ceilingEntry(new Key(minCapacity, 0));
 
@@ -81,7 +81,7 @@ public class ByteBufferPool implements Clearable {
         return buffer;
     }
 
-    public synchronized void release(ByteBuffer buffer) {
+    synchronized void release(ByteBuffer buffer) {
         if (buffer != null) {
             if (!buffer.isDirect()) {
                 throw new RuntimeException(LambdaLogger.buildMessage("Expecting a direct ByteBuffer"));
@@ -103,7 +103,7 @@ public class ByteBufferPool implements Clearable {
         }
     }
 
-    public ByteBufferPair getBufferPair(final int minKeyCapacity, final int minValueCapacity) {
+    private ByteBufferPair getBufferPair(final int minKeyCapacity, final int minValueCapacity) {
         ByteBuffer keyBuffer = getBuffer(minKeyCapacity);
         ByteBuffer valueBuffer = getBuffer(minValueCapacity);
         return ByteBufferPair.of(keyBuffer, valueBuffer);
@@ -115,7 +115,7 @@ public class ByteBufferPool implements Clearable {
         return new PooledByteBufferPair(this, keyBuffer, valueBuffer);
     }
 
-    public void release(ByteBufferPair byteBufferPair) {
+    private void release(ByteBufferPair byteBufferPair) {
         Objects.requireNonNull(byteBufferPair);
         release(byteBufferPair.getKeyBuffer());
         release(byteBufferPair.getValueBuffer());

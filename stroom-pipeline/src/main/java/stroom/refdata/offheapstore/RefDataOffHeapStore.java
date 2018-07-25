@@ -646,13 +646,6 @@ public class RefDataOffHeapStore implements RefDataStore {
 //        valueReferenceCountDb.logDatabaseContents();
     }
 
-    /**
-     * Must be returned to the pool in a finally block
-     */
-//    private PooledByteBuffer getKeyBufferFromPool() {
-//        return byteBufferPool.getBufferAsResource(lmdbEnvironment.getMaxKeySize());
-//    }
-
     private PooledByteBuffer getAccessTimeCutOffBuffer() {
         long purgeAge = ModelStringUtil.parseDurationString(
                 stroomPropertyService.getProperty(DATA_RETENTION_AGE_PROP_KEY, DATA_RETENTION_AGE_DEFAULT_VALUE));
