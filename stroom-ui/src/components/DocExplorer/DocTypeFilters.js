@@ -34,7 +34,7 @@ const enhance = compose(
   withDocRefTypes,
   connect(
     ({ docExplorer }, { explorerId }) => ({
-      typeFilters: docExplorer.explorerTree.explorers[explorerId].typeFilters,
+      typeFilters: docExplorer.explorerTree.explorers[explorerId].typeFilters.filter(d => d !== 'Folder'),
       docRefTypes: docExplorer.explorerTree.docRefTypes.filter(d => d !== 'Folder'),
     }),
     { typeFilterChanged },

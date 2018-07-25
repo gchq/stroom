@@ -17,14 +17,13 @@ import { createStore } from 'redux';
 
 import { guid, iterateNodes } from 'lib/treeUtils';
 
-import { actionCreators } from './redux';
+import { actionCreators, reducer } from '../redux';
 
-import { testTree, DOC_REF_TYPES } from './documentTree.testData';
-
-import { docExplorerReducer, DEFAULT_EXPLORER_ID } from './redux';
+import { testTree, testDocRefsTypes } from './index';
 
 const {
   docTreeReceived,
+  docRefTypesReceived,
   docExplorerOpened,
   moveExplorerItem,
   folderOpenToggled,
@@ -39,32 +38,35 @@ let store;
 
 describe('Doc Explorer Reducer', () => {
   beforeEach(() => {
-    store = createStore(docExplorerReducer);
+    store = createStore(reducer);
+    store.dispatch(docRefTypesReceived(testDocRefsTypes));
+    store.dispatch(docTreeReceived(testTree));
   });
 
   describe('Explorer Tree', () => {
     it('should contain the test tree', () => {
-      store.dispatch(docTreeReceived(testTree));
-
       const state = store.getState();
-      expect(state).toHaveProperty('documentTree');
-      expect(state.documentTree).toBe(testTree);
+      expect(state).toHaveProperty('explorerTree');
+      expect(state.explorerTree).toHaveProperty('documentTree');
+      expect(state.explorerTree.documentTree).toBe(testTree);
     });
     it('should create a new explorer state for given ID', () => {
       // Given
       const explorerId = guid();
       const allowMultiSelect = true;
-      let typeFilters = [];
+      const typeFilters = [];
 
       // When
-      store.dispatch(docTreeReceived(testTree));
       store.dispatch(docExplorerOpened(explorerId, allowMultiSelect, typeFilters));
 
       // Then
-      const state = store.getState();
-      expect(state.explorers).toHaveProperty(explorerId);
-      const explorer = state.explorers[explorerId];
-      expect(explorer.typeFilters).toBe([]);
+      const {
+        explorerTree: { explorers },
+      } = store.getState();
+      expect(explorers).toHaveProperty(explorerId);
+      const explorer = explorers[explorerId];
+
+      expect(explorer.typeFilters).toEqual(testDocRefsTypes);
       expect(explorer.allowMultiSelect).toBe(true);
     });
   });
@@ -77,13 +79,14 @@ describe('Doc Explorer Reducer', () => {
       let typeFilters;
 
       // When
-      store.dispatch(docTreeReceived(testTree));
       store.dispatch(docExplorerOpened(explorerId, allowMultiSelect, typeFilters));
-      const state = store.getState();
-      const explorer = state.explorers[explorerId];
+      const {
+        explorerTree: { documentTree, explorers },
+      } = store.getState();
+      const explorer = explorers[explorerId];
 
       // Then
-      iterateNodes(state.documentTree, (lineage, node) => {
+      iterateNodes(documentTree, (lineage, node) => {
         expect(explorer.isVisible[node.uuid]).toBe(true);
       });
     });
@@ -91,16 +94,17 @@ describe('Doc Explorer Reducer', () => {
       // Given
       const explorerId = guid();
       const allowMultiSelect = true;
-      const typeFilters = [DOC_REF_TYPES.XSLT];
+      const typeFilters = ['XSLT'];
 
       // When
-      store.dispatch(docTreeReceived(testTree));
       store.dispatch(docExplorerOpened(explorerId, allowMultiSelect, typeFilters));
 
       // Then
-      const state = store.getState();
-      expect(state.explorers).toHaveProperty(explorerId);
-      const explorer = state.explorers[explorerId];
+      const {
+        explorerTree: { explorers },
+      } = store.getState();
+      expect(explorers).toHaveProperty(explorerId);
+      const explorer = explorers[explorerId];
 
       // Check a folder that contains a match
       expect(explorer.isVisible[testTree.children[0].uuid]).toBe(true);
@@ -118,19 +122,20 @@ describe('Doc Explorer Reducer', () => {
       // Given
       const explorerId = guid();
       const allowMultiSelect = true;
-      const typeFilters = [DOC_REF_TYPES.DICTIONARY];
+      const typeFilters = ['Dictionary'];
       const searchTerm = testTree.children[0].children[1].children[0].name;
 
       // When
-      store.dispatch(docTreeReceived(testTree));
       store.dispatch(docExplorerOpened(explorerId, allowMultiSelect, typeFilters));
       store.dispatch(searchTermUpdated(explorerId, searchTerm));
       store.dispatch(searchTermUpdated(explorerId, undefined));
 
       // Then
-      const state = store.getState();
-      expect(state.explorers).toHaveProperty(explorerId);
-      const explorer = state.explorers[explorerId];
+      const {
+        explorerTree: { explorers },
+      } = store.getState();
+      expect(explorers).toHaveProperty(explorerId);
+      const explorer = explorers[explorerId];
 
       // Check a matching folder
       expect(explorer.isVisible[testTree.children[0].children[1].uuid]).toBe(true);
@@ -148,20 +153,21 @@ describe('Doc Explorer Reducer', () => {
       // Given
       const explorerId = guid();
       const allowMultiSelect = true;
-      const typeFilters = [DOC_REF_TYPES.Index];
+      const typeFilters = ['Index'];
       const subTree = testTree.children[1];
       const searchTerm = subTree.children[0].children[3].name;
 
       // When
-      store.dispatch(docTreeReceived(subTree));
       store.dispatch(docExplorerOpened(explorerId, allowMultiSelect, typeFilters));
       store.dispatch(searchTermUpdated(explorerId, searchTerm));
       store.dispatch(searchTermUpdated(explorerId, undefined));
 
       // Then
-      const state = store.getState();
-      expect(state.explorers).toHaveProperty(explorerId);
-      const explorer = state.explorers[explorerId];
+      const {
+        explorerTree: { explorers },
+      } = store.getState();
+      expect(explorers).toHaveProperty(explorerId);
+      const explorer = explorers[explorerId];
 
       // Check the matching doc
       expect(explorer.isVisible[subTree.children[0].children[3].uuid]).toBe(true);

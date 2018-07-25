@@ -177,8 +177,7 @@ function getFolderIsOpenMap(
   return isFolderOpen;
 }
 
-function getUpdatedExplorer(documentTree, explorer, searchExecutor, searchTerm, rawTypeFilters) {
-  let typeFilters = rawTypeFilters.filter(d => d !== 'Folder');
+function getUpdatedExplorer(documentTree, explorer, searchExecutor, searchTerm, typeFilters) {
   let searchResults;
   if (searchExecutor && searchTerm) {
     searchResults = searchExecutor
@@ -288,7 +287,7 @@ export const reducer = handleActions(
     DOC_EXPLORER_OPENED: (state, action) => {
       const { explorerId, allowMultiSelect, typeFilters } = action.payload;
       const typeFiltersToUse =
-        typeFilters.length > 0 ? typeFilters : state.docRefTypes;
+        (typeFilters && (typeFilters.length > 0)) ? typeFilters : state.docRefTypes;
       return {
         ...state,
         explorers: {
