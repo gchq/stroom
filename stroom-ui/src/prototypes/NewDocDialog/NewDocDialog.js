@@ -8,12 +8,9 @@ import { InputField } from 'react-semantic-redux-form';
 
 import { required, minLength2 } from 'lib/reduxFormUtils';
 import { actionCreators } from './redux';
-import {
-  DocPickerModal,
-  DocRefTypePicker,
-  PermissionInheritancePicker,
-  explorerClient,
-} from 'components/DocExplorer';
+import { DocPickerModal, DocRefTypePicker, explorerClient } from 'components/DocExplorer';
+
+import PermissionInheritancePicker from 'components/PermissionInheritancePicker';
 
 const { createDocument } = explorerClient;
 
@@ -77,7 +74,7 @@ const NewDocDialog = ({
             component={({ input: { onChange, value } }) => (
               <DocPickerModal
                 pickerId="new-doc-ref-destination"
-                foldersOnly
+                typeFilters={['Folder']}
                 onChange={({ node, lineage }) => onChange(node)}
               />
             )}

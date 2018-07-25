@@ -19,7 +19,7 @@ const piOptions = Object.values(permissionInheritanceValues).map(pi => ({
 
 const enhance = compose(connect(
   (state, props) => ({
-    permissionInheritance: state.docExplorer.permissionInheritancePicker[props.pickerId],
+    permissionInheritance: state.permissionInheritancePicker[props.pickerId],
   }),
   { permissionInheritancePicked },
 ));

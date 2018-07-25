@@ -17,17 +17,9 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 import { storiesOf, addDecorator } from '@storybook/react';
+import StoryRouter from 'storybook-react-router';
 
-import {
-  DocExplorer,
-  DocRefInfoModal,
-  DocRef,
-  Folder,
-  DocPickerModal,
-  PermissionInheritancePicker,
-  permissionInheritanceValues,
-  DocPicker,
-} from './index';
+import { DocExplorer, DocRefInfoModal, DocRef, Folder, DocPickerModal, DocPicker } from './index';
 import { actionCreators } from './redux';
 import { testTree, fromSetupSampleData, testDocRefsTypes } from './test';
 import { pickRandomItem } from 'lib/treeUtils';
@@ -49,12 +41,14 @@ storiesOf('Document Explorer (small)', module)
   .addDecorator(PollyDecorator({ documentTree: testTree, docRefTypes: testDocRefsTypes }))
   .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator)
+  .addDecorator(StoryRouter())
   .add('Explorer Tree', () => <DocExplorer explorerId="dev-server" />);
 
 storiesOf('Document Explorer (setupSampleData)', module)
   .addDecorator(PollyDecorator({ documentTree: fromSetupSampleData, docRefTypes: testDocRefsTypes }))
   .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator)
+  .addDecorator(StoryRouter())
   .add('Explorer Tree', () => <DocExplorer explorerId="multi-select-dnd" />);
 
 const timeCreated = Date.now();
@@ -81,10 +75,8 @@ storiesOf('Doc Ref Info Modal', module)
 storiesOf('Doc Ref Modal Picker', module)
   .addDecorator(PollyDecorator({ documentTree: fromSetupSampleData, docRefTypes: testDocRefsTypes }))
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(docRefPicked(
-      'modal2',
-      pickRandomItem(fromSetupSampleData, (l, n) => n.type === 'Pipeline'),
-    ));
+    const randomPipeline = pickRandomItem(fromSetupSampleData, (l, n) => n.type === 'Pipeline');
+    store.dispatch(docRefPicked('modal2', randomPipeline.node, randomPipeline.lineage));
   }))
   .add('Doc Ref Picker (modal, no choice made)', () => <DocPickerModal pickerId="modal1" />)
   .add('Doc Ref Picker (modal, choice made)', () => <DocPickerModal pickerId="modal2" />)
@@ -94,7 +86,7 @@ storiesOf('Doc Ref Modal Picker', module)
   .add('Doc Ref Picker (modal, filter to feed AND dictionary)', () => (
     <DocPickerModal pickerId="modal4" typeFilters={['Feed', 'Dictionary']} />
   ))
-  .add('Doc Ref Picker (modal, filter to folders)', () => (
+  .add('Doc Ref Picker (modal, filter to Folders)', () => (
     <DocPickerModal pickerId="modal5" typeFilters={['Folder']} />
   ));
 
@@ -102,14 +94,4 @@ storiesOf('Doc Ref Picker', module)
   .addDecorator(PollyDecorator({ documentTree: fromSetupSampleData, docRefTypes: testDocRefsTypes }))
   .addDecorator(ReduxDecorator)
   .add('Doc Picker', () => <DocPicker explorerId="picker1" />)
-  .add('Doc Picker (folders only)', () => <DocPicker explorerId="picker2" foldersOnly />);
-
-storiesOf('Permission Inheritance Picker', module)
-  .addDecorator(PollyDecorator({ documentTree: fromSetupSampleData, docRefTypes: testDocRefsTypes }))
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(permissionInheritancePicked('pi2', permissionInheritanceValues.DESTINATION));
-  }))
-  .add('Permission Inheritance Picker', () => <PermissionInheritancePicker pickerId="pi1" />)
-  .add('Permission Inheritance Picker (choice made)', () => (
-    <PermissionInheritancePicker pickerId="pi2" />
-  ));
+  .add('Doc Picker (folders only)', () => <DocPicker explorerId="picker2" typeFilters={['Folder']} />);

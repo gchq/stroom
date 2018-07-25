@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import { compose, withState, lifecycle, branch, renderComponent } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Button, Modal, Input, Loader, Breadcrumb } from 'semantic-ui-react';
+import { Button, Modal, Input, Loader, Breadcrumb, Dropdown } from 'semantic-ui-react';
 
 import { findItem } from 'lib/treeUtils';
 import { actionCreators } from '../redux';
@@ -50,7 +50,7 @@ const enhance = compose(
   lifecycle({
     componentDidMount() {
       const { docExplorerOpened, pickerId, typeFilters } = this.props;
-      docExplorerOpened(pickerId, false, false, typeFilters);
+      docExplorerOpened(pickerId, false, typeFilters);
     },
   }),
   withModal,
@@ -71,7 +71,6 @@ const DocPickerModal = ({
   setIsOpen,
   explorer,
   onChange,
-  foldersOnly,
 }) => {
   const value = docRefWithLineage ? docRefWithLineage.docRef.name : '';
 
@@ -91,26 +90,38 @@ const DocPickerModal = ({
     handleClose();
   };
 
-  let triggerValue;
+  let trigger;
   if (docRefWithLineage) {
-    triggerValue = `${docRefWithLineage.lineage.map(d => d.name).join(' > ')} > ${
+    const triggerValue = `${docRefWithLineage.lineage.map(d => d.name).join(' > ')} > ${
       docRefWithLineage.docRef.name
     }`;
+    trigger = (
+      <Dropdown
+        // it moans about mixing trigger and selection, but it's the only way to make it look right..?
+        selection
+        fluid
+        onFocus={handleOpen}
+        trigger={
+          <span>
+            <img
+              className="doc-ref__icon"
+              alt="X"
+              src={require(`../images/${docRefWithLineage.docRef.type}.svg`)}
+            />
+            {triggerValue}
+          </span>
+        }
+      />
+    );
   } else {
-    triggerValue = '...';
+    trigger = <Input fluid onFocus={handleOpen} value="..." />;
   }
 
   return (
-    <Modal
-      trigger={<Input fluid onFocus={handleOpen} value={triggerValue} />}
-      open={isOpen}
-      onClose={handleClose}
-      size="small"
-      dimmer="inverted"
-    >
+    <Modal trigger={trigger} open={isOpen} onClose={handleClose} size="small" dimmer="inverted">
       <Modal.Header>Select a Doc Ref</Modal.Header>
       <Modal.Content scrolling>
-        <DocPicker explorerId={pickerId} typeFilters={typeFilters} foldersOnly={foldersOnly} />
+        <DocPicker explorerId={pickerId} typeFilters={typeFilters} />
       </Modal.Content>
       <Modal.Actions>
         <Button negative onClick={handleClose}>
@@ -134,12 +145,10 @@ EnhancedDocPickerModal.propTypes = {
   pickerId: PropTypes.string.isRequired,
   typeFilters: PropTypes.array.isRequired,
   onChange: PropTypes.func,
-  foldersOnly: PropTypes.bool.isRequired,
 };
 
 EnhancedDocPickerModal.defaultProps = {
   typeFilters: [],
-  foldersOnly: false,
   onChange: d => console.log('On Change Not Implemented, Falling back to Default', d),
 };
 

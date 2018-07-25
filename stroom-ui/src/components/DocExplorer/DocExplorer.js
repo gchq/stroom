@@ -70,10 +70,10 @@ const DocExplorer = ({
 }) => (
   <div>
     <DocRefInfoModal />
-    <MoveDocRefDialog explorerId={explorerId} />
+    <MoveDocRefDialog />
     <RenameDocRefDialog />
     <DeleteDocRefDialog />
-    <CopyDocRefDialog explorerId={explorerId} />
+    <CopyDocRefDialog />
     <Input
       icon="search"
       placeholder="Search..."

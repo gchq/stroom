@@ -18,23 +18,23 @@ import PropTypes from 'prop-types';
 
 import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
-
 import { Modal, Button } from 'semantic-ui-react';
 
+import { guid } from 'lib/treeUtils';
 import { actionCreators } from './redux';
 import { copyDocuments } from './explorerClient';
 
 import DocPicker from './DocPicker/DocPicker';
-import PermissionInheritancePicker from './PermissionInheritancePicker';
+import PermissionInheritancePicker from 'components/PermissionInheritancePicker';
 
 const { completeDocRefCopy } = actionCreators;
 
 const enhance = compose(
   withProps(({ explorerId }) => ({
-    explorerId: `copy-doc-ref-${explorerId}`,
+    explorerId: `copy-doc-ref-${explorerId || guid()}`,
   })),
   connect(
-    ({ docExplorer }, { explorerId }) => {
+    ({ docExplorer, permissionInheritancePicker }, { explorerId }) => {
       let selectedDocRef;
       const explorer = docExplorer.explorerTree.explorers[explorerId];
       if (explorer) {
@@ -49,7 +49,7 @@ const enhance = compose(
       return {
         isCopying: docExplorer.copyDocRef.isCopying,
         docRefs: docExplorer.copyDocRef.docRefs,
-        permissionInheritance: docExplorer.permissionInheritancePicker[explorerId],
+        permissionInheritance: permissionInheritancePicker[explorerId],
         selectedDocRef,
       };
     },
@@ -69,7 +69,7 @@ const CopyDocRefDialog = ({
   <Modal open={isCopying}>
     <Modal.Header>Select a Destination Folder for the Copy</Modal.Header>
     <Modal.Content scrolling>
-      <DocPicker explorerId={explorerId} typeFilters={["Folder"]} foldersOnly />
+      <DocPicker explorerId={explorerId} typeFilters={['Folder']} />
       <PermissionInheritancePicker pickerId={explorerId} />
     </Modal.Content>
     <Modal.Actions>
@@ -88,7 +88,7 @@ const CopyDocRefDialog = ({
 );
 
 CopyDocRefDialog.propTypes = {
-  explorerId: PropTypes.string.isRequired,
+  explorerId: PropTypes.string,
 };
 
 export default enhance(CopyDocRefDialog);

@@ -43,7 +43,7 @@ const _FolderToPick = ({
   explorerId,
   explorer,
   folder,
-  foldersOnly,
+  typeFilters,
   folderOpenToggled,
   docRefSelected,
 }) => {
@@ -74,14 +74,13 @@ const _FolderToPick = ({
         <div className="folder__children">
           {folder.children
             .filter(c => !!explorer.isVisible[c.uuid])
-            .filter(c => !foldersOnly || c.type === 'Folder')
             .map(c =>
                 (c.type === 'Folder' ? (
                   <FolderToPick
                     key={c.uuid}
                     explorerId={explorerId}
+                    typeFilters={typeFilters}
                     folder={c}
-                    foldersOnly={foldersOnly}
                   />
                 ) : (
                   <DocRefToPick key={c.uuid} explorerId={explorerId} docRef={c} />
@@ -97,7 +96,6 @@ const FolderToPick = enhance(_FolderToPick);
 FolderToPick.propTypes = {
   explorerId: PropTypes.string.isRequired,
   folder: PropTypes.object.isRequired,
-  foldersOnly: PropTypes.bool.isRequired,
 };
 
 export default FolderToPick;

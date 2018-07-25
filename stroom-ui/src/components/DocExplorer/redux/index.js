@@ -20,10 +20,6 @@ import {
   reducer as explorerTreeReducer,
 } from './explorerTreeReducer';
 import {
-  actionCreators as permissionInheritancePickerActionCreators,
-  reducer as permissionInheritancePickerReducer,
-} from './permissionInheritancePickerReducer';
-import {
   actionCreators as docRefPickerActionCreators,
   reducer as docRefPickerReducer,
 } from './docRefPickerReducer';
@@ -50,7 +46,6 @@ import {
 
 const actionCreators = {
   ...docExplorerActionCreators,
-  ...permissionInheritancePickerActionCreators,
   ...docRefPickerActionCreators,
   ...moveDocRefActionCreators,
   ...renameDocRefActionCreators,
@@ -61,7 +56,6 @@ const actionCreators = {
 
 const reducer = combineReducers({
   explorerTree: explorerTreeReducer,
-  permissionInheritancePicker: permissionInheritancePickerReducer,
   docRefPicker: docRefPickerReducer,
   moveDocRef: moveDocRefReducer,
   renameDocRef: renameDocRefReducer,

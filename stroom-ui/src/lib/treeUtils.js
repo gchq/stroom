@@ -220,13 +220,14 @@ export function iterateNodes(tree, callback, lineage) {
  *
  * @param {treeNode} tree The tree through which to search
  * @param {function} filterFunction Callback that takes (lineage, node) and returns true/false for inclusion in random options
+ * @return {object} Containing { node, lineage} of picked item
  */
 export function pickRandomItem(tree, filterFunction) {
   const options = [];
 
   iterateNodes(tree, (lineage, node) => {
     if (filterFunction(lineage, node)) {
-      options.push(node);
+      options.push({node, lineage});
     }
   });
 
