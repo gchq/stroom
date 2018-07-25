@@ -84,21 +84,18 @@ const DocPickerModal = ({
       const { node, lineage } = findItem(documentTree, pickedUuid);
       // The 'children' property is just for the tree. It's not part of the DocRef and we need to remove it.
       // If left in it will get sent to the server and cause deserialisation errors.
-      delete node.children;
       docRefPicked(pickerId, node, lineage);
       onChange({ node, lineage });
     });
 
     handleClose();
   };
-  console.log('Value', docRefWithLineage);
 
   let triggerValue;
   if (docRefWithLineage) {
-    triggerValue =
-      `${docRefWithLineage.lineage.map(d => d.name).join(' > ')
-      } > ${
-        docRefWithLineage.docRef.name}`;
+    triggerValue = `${docRefWithLineage.lineage.map(d => d.name).join(' > ')} > ${
+      docRefWithLineage.docRef.name
+    }`;
   } else {
     triggerValue = '...';
   }

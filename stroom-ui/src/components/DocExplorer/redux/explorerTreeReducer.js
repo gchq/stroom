@@ -22,6 +22,7 @@ import {
   iterateNodes,
   getIsInFilteredMap,
   deleteItemsFromTree,
+  addItemToTree,
   updateItemInTree,
 } from 'lib/treeUtils';
 
@@ -94,6 +95,9 @@ export const actionCreators = createActions({
   DOC_REFS_DELETED: (docRefs, bulkActionResult) => ({
     docRefs,
     bulkActionResult
+  }),
+  DOC_REF_CREATED: (docRef, parentFolder) => ({
+    docRef, parentFolder
   }),
   DOC_REF_RENAMED: (docRef, name, resultDocRef) => ({
     docRef,
@@ -407,6 +411,14 @@ export const reducer = handleActions(
       const { bulkActionResult } = action.payload;
 
       const documentTree = deleteItemsFromTree(state.documentTree, bulkActionResult.docRefs.map(d => d.uuid));
+
+      return getStateAfterTreeUpdate(state, documentTree);
+    },
+
+    DOC_REF_CREATED: (state, action) => {
+      const { docRef, parentFolder } = action.payload;
+
+      const documentTree = addItemToTree(state.documentTree, parentFolder.uuid, docRef);
 
       return getStateAfterTreeUpdate(state, documentTree);
     },

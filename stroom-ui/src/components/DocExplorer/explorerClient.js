@@ -10,6 +10,7 @@ const {
   docRefTypesReceived,
   docRefInfoOpened,
   docRefInfoReceived,
+  docRefCreated,
 } = actionCreators;
 
 const stripDocRef = docRef => ({
@@ -40,6 +41,37 @@ export const fetchDocInfo = docRef => (dispatch, getState) => {
     response.json().then(docRefInfo => dispatch(docRefInfoReceived(docRefInfo))));
 };
 
+export const createDocument = (docRefType, docRefName, destinationFolderRef, permissionInheritance) => (
+  dispatch,
+  getState,
+) => {
+  console.log('Creating New Doc Ref', {
+    docRefType,
+    docRefName,
+    destinationFolderRef,
+    permissionInheritance,
+  });
+  const state = getState();
+  const url = `${state.config.explorerServiceUrl}/create`;
+  wrappedPost(
+    dispatch,
+    state,
+    url,
+    response =>
+      response
+        .json()
+        .then(resultDocRef => dispatch(docRefCreated(resultDocRef, destinationFolderRef))),
+    {
+      body: JSON.stringify({
+        docRefType,
+        docRefName,
+        destinationFolderRef,
+        permissionInheritance,
+      }),
+    },
+  );
+};
+
 export const renameDocument = (docRef, name) => (dispatch, getState) => {
   const state = getState();
   const url = `${state.config.explorerServiceUrl}/rename`;
@@ -51,11 +83,7 @@ export const renameDocument = (docRef, name) => (dispatch, getState) => {
       response.json().then(resultDocRef => dispatch(docRefRenamed(docRef, name, resultDocRef))),
     {
       body: JSON.stringify({
-        docRef: {
-          uuid: docRef.uuid,
-          type: docRef.type,
-          name: docRef.name,
-        },
+        docRef: stripDocRef(docRef),
         name,
       }),
     },
@@ -80,7 +108,7 @@ export const copyDocuments = (docRefs, destinationFolderRef, permissionInheritan
     {
       body: JSON.stringify({
         docRefs: docRefs.map(stripDocRef),
-        destinationFolderRef,
+        destinationFolderRef: stripDocRef(destinationFolderRef),
         permissionInheritance,
       }),
     },
@@ -105,7 +133,7 @@ export const moveDocuments = (docRefs, destinationFolderRef, permissionInheritan
     {
       body: JSON.stringify({
         docRefs: docRefs.map(stripDocRef),
-        destinationFolderRef,
+        destinationFolderRef: stripDocRef(destinationFolderRef),
         permissionInheritance,
       }),
     },
@@ -127,3 +155,16 @@ export const deleteDocuments = docRefs => (dispatch, getState) => {
     },
   );
 };
+
+const explorerClient = {
+  createDocument,
+  copyDocuments,
+  renameDocument,
+  moveDocuments,
+  deleteDocuments,
+  fetchDocTree,
+  fetchDocInfo,
+  fetchDocRefTypes,
+};
+
+export default explorerClient;

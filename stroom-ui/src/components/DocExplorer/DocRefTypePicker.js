@@ -9,6 +9,7 @@ const DocRefTypePicker = ({
   onChange, value, docRefTypes, pickerId,
 }) => (
   <Dropdown
+    // it moans about mixing trigger and selection, but it's the only way to make it look right..?
     selection
     trigger={
       <span>

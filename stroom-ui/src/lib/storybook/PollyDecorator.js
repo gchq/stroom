@@ -89,6 +89,15 @@ server
 server.get(`${testConfig.explorerServiceUrl}/docRefTypes`).intercept((req, res) => {
   res.json(testCache.data.docRefTypes);
 });
+// // Create Document
+server.post(`${testConfig.explorerServiceUrl}/create`).intercept((req, res) => {
+  const { docRefType, docRefName, destinationFolderRef, permissionInheritance } = JSON.parse(req.body);
+  res.json({
+    uuid: guid(),
+    type: docRefType,
+    name: docRefName
+  });
+});
 // // Copy Document
 server.post(`${testConfig.explorerServiceUrl}/copy`).intercept((req, res) => {
   const { docRefs } = JSON.parse(req.body);
@@ -116,7 +125,7 @@ server.put(`${testConfig.explorerServiceUrl}/rename`).intercept((req, res) => {
 });
 // // Delete Document
 server.delete(`${testConfig.explorerServiceUrl}/delete`).intercept((req, res) => {
-  const { docRefs } = JSON.parse(req.body);
+  const docRefs = JSON.parse(req.body);
   res.json({
     docRefs,
     message: '',

@@ -361,7 +361,9 @@ export function addItemToTree(treeNode, parentUuid, item) {
   }
 
   if (treeNode.uuid === parentUuid) {
-    item.uuid = guid();
+    if (!item.uuid) {
+      item.uuid = guid();
+    }
     children.push(item);
   }
 

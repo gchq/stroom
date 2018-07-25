@@ -21,6 +21,7 @@ import PermissionInheritancePicker from './PermissionInheritancePicker';
 import permissionInheritanceValues from './permissionInheritanceValues';
 import withExplorerTree from './withExplorerTree';
 import withDocRefTypes from './withDocRefTypes';
+import explorerClient from './explorerClient';
 
 export {
   DocExplorer,
@@ -32,6 +33,7 @@ export {
   permissionInheritanceValues,
   withExplorerTree,
   withDocRefTypes,
+  explorerClient
 };
 
 export default DocExplorer;

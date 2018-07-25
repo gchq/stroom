@@ -8,17 +8,24 @@ import { InputField } from 'react-semantic-redux-form';
 
 import { required, minLength2 } from 'lib/reduxFormUtils';
 import { actionCreators } from './redux';
-import { DocPickerModal, DocRefTypePicker } from 'components/DocExplorer';
-import createNewDocRef from './createNewDocRef';
+import {
+  DocPickerModal,
+  DocRefTypePicker,
+  PermissionInheritancePicker,
+  explorerClient,
+} from 'components/DocExplorer';
+
+const { createDocument } = explorerClient;
 
 const { cancelDocRefCreation } = actionCreators;
 
 const enhance = compose(
   connect(
-    ({ newDoc, form }, props) => ({
+    ({ newDoc, form: { newDocRef } }, props) => ({
       isOpen: newDoc.isOpen,
+      newDocRefValues: newDocRef ? newDocRef.values : {},
     }),
-    { cancelDocRefCreation, createNewDocRef },
+    { cancelDocRefCreation, createDocument },
   ),
   reduxForm({
     form: 'newDocRef',
@@ -31,7 +38,8 @@ const NewDocDialog = ({
   cancelDocRefCreation,
   docRefTypes,
   change,
-  createNewDocRef,
+  createDocument,
+  newDocRefValues,
 }) => (
   <Modal
     open={isOpen}
@@ -55,7 +63,7 @@ const NewDocDialog = ({
         <Form.Field>
           <label>Name</label>
           <Field
-            name="name"
+            name="docRefName"
             component={InputField}
             type="text"
             placeholder="Name"
@@ -75,6 +83,19 @@ const NewDocDialog = ({
             )}
           />
         </Form.Field>
+        <Form.Field>
+          <label>Permission Inheritance</label>
+          <Field
+            name="permissionInheritance"
+            component={({ input: { onChange, value } }) => (
+              <PermissionInheritancePicker
+                pickerId="new-doc-ref-permission-inheritance"
+                permissionInheritancePicked={(pId, v) => onChange(v)}
+                permissionInheritance={value}
+              />
+            )}
+          />
+        </Form.Field>
       </Form>
     </Modal.Content>
     <Modal.Actions>
@@ -83,7 +104,14 @@ const NewDocDialog = ({
       </Button>
       <Button
         positive
-        onClick={createNewDocRef}
+        onClick={() =>
+          createDocument(
+            newDocRefValues.docRefType,
+            newDocRefValues.docRefName,
+            newDocRefValues.destination,
+            newDocRefValues.permissionInheritance,
+          )
+        }
         labelPosition="right"
         icon="checkmark"
         content="Choose"
