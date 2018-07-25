@@ -227,7 +227,7 @@ export function pickRandomItem(tree, filterFunction) {
 
   iterateNodes(tree, (lineage, node) => {
     if (filterFunction(lineage, node)) {
-      options.push({node, lineage});
+      options.push({ node, lineage });
     }
   });
 
@@ -245,17 +245,18 @@ export function pickRandomItem(tree, filterFunction) {
  * @param {string} uuid
  */
 export function findItem(tree, uuid) {
-  let foundNode, foundLineage;
+  let foundNode,
+    foundLineage;
   iterateNodes(tree, (lineage, node) => {
     if (node.uuid === uuid) {
       foundNode = node;
       foundLineage = lineage;
     }
-  })
+  });
 
   return {
     node: foundNode,
-    lineage: foundLineage
+    lineage: foundLineage,
   };
 }
 
@@ -389,22 +390,21 @@ export function getIsInFilteredMap(treeNode, filterFunction) {
   // This will be the return map
   const inFilteredMap = {};
 
-  // This is a map where the value is true only if the item matches (condition 1 from above)
-  const directMatches = {};
-
   // compose a map that indicates 'true' for all directly passing nodes
   iterateNodes(treeNode, (lineage, node) => {
-    directMatches[node.uuid] = filterFunction(lineage, node);
-  });
+    if (inFilteredMap[node.uuid] === undefined) {
+      inFilteredMap[node.uuid] = false;
+    }
 
-  // Ensure any containing folders are included in the return map
-  iterateNodes(treeNode, (lineage, node) => {
-    // If anything in the lineage or the node itself passes our filter...
-    const allNodes = lineage.concat([node]);
-    const anyMatches = allNodes.filter(n => directMatches[n.uuid]).length > 0;
-
-    // Set the values in the return map for all the nodes
-    allNodes.forEach(n => (inFilteredMap[n.uuid] = !!inFilteredMap[n.uuid] || anyMatches));
+    const thisOneMatches = filterFunction(lineage, node);
+    if (thisOneMatches) {
+      // Place this node's uuid, and the UUID's of it's ancestry within the filtered map, if they aren't there already
+      lineage
+        .map(n => n.uuid)
+        .concat([node.uuid])
+        .filter(matchUuid => !inFilteredMap[matchUuid])
+        .forEach(matchUuid => (inFilteredMap[node.uuid] = true));
+    }
   });
 
   return inFilteredMap;

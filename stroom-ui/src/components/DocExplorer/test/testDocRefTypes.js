@@ -1,4 +1,6 @@
 const docRefTypes = [
+  'AnnotationsIndex',
+  'ElasticIndex',
   'Dashboard',
   'Dictionary',
   'Feed',

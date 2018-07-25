@@ -118,7 +118,29 @@ describe('Doc Explorer Reducer', () => {
       // Check a non matching doc
       expect(explorer.isVisible[testTree.children[0].children[0].children[1].uuid]).toBe(false);
     });
-    it('should combine search terms and type filters correctly', () => {
+    it('should only make folders visible', () => {
+      // Given
+      const explorerId = guid();
+      const allowMultiSelect = true;
+      const typeFilters = ['Folder'];
+
+      // When
+      store.dispatch(docExplorerOpened(explorerId, allowMultiSelect, typeFilters));
+
+      // Then
+      const {
+        explorerTree: { explorers },
+      } = store.getState();
+      expect(explorers).toHaveProperty(explorerId);
+      const explorer = explorers[explorerId];
+
+      // Check a folder
+      expect(explorer.isVisible[testTree.children[1].children[1].uuid]).toBe(true);
+
+      // Check a doc
+      expect(explorer.isVisible[testTree.children[0].children[0].children[2].uuid]).toBe(false);
+    });
+    it('should combine search terms and type filters correctly 1', () => {
       // Given
       const explorerId = guid();
       const allowMultiSelect = true;
@@ -149,7 +171,7 @@ describe('Doc Explorer Reducer', () => {
       // Check a non matching doc
       expect(explorer.isVisible[testTree.children[3].uuid]).toBe(false);
     });
-    it('should combine search terms and type filters correctly', () => {
+    it('should combine search terms and type filters correctly 2', () => {
       // Given
       const explorerId = guid();
       const allowMultiSelect = true;

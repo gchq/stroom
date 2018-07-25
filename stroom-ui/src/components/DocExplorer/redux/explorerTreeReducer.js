@@ -130,13 +130,19 @@ function getIsValidFilterTerm(filterTerm) {
   return !!filterTerm && filterTerm.length > 1; // at least 2 characters
 }
 
-function getIsVisibleMap(documentTree, isInTypeFilterMap, isInSearchMap) {
+function getIsVisibleMap(documentTree, searchFilterFunc, typeFilterFunc) {
   const isVisible = {};
 
   iterateNodes(documentTree, (lineage, node) => {
-    const passesSearch = isInSearchMap[node.uuid];
-    const passesTypeFilter = isInTypeFilterMap[node.uuid];
-    isVisible[node.uuid] = passesSearch && passesTypeFilter;
+    let passesSearch = searchFilterFunc(lineage, node);
+    let passesTypeFilter = typeFilterFunc(lineage, node);
+
+    let nodeIsVisible = passesSearch && passesTypeFilter;
+    if (nodeIsVisible) {
+      lineage.forEach(n => isVisible[n.uuid] = true);
+    }
+
+    isVisible[node.uuid] = nodeIsVisible;
   });
 
   return isVisible;
@@ -185,25 +191,26 @@ function getUpdatedExplorer(documentTree, explorer, searchExecutor, searchTerm, 
       .reduce((acc, curr) => ({ ...acc, [curr.uuid]: true }), {});
   }
 
-  const typeFilterFunction = (lineage, node) => {
-    if (typeFilters.length > 0) {
-      return typeFilters.includes(node.type);
-    }
-    return true;
-  };
-
   const isSearching = getIsValidFilterTerm(searchTerm);
+  const searchFilterFunc = (l, n) => !isSearching || !!searchResults[n.uuid];
   const isInSearchMap = getIsInFilteredMap(
     documentTree,
-    (l, n) => !isSearching || !!searchResults[n.uuid],
+    searchFilterFunc,
   );
-  const isInTypeFilterMap = getIsInFilteredMap(documentTree, typeFilterFunction);
+  const typeFilterFunc = (l, n) => (typeFilters.length === 0) || typeFilters.includes(n.type)
+  const isInTypeFilterMap = getIsInFilteredMap(
+    documentTree,
+    typeFilterFunc
+  );
+
+  // Derive the combined mapping of visibility
+  const isVisible = getIsVisibleMap(documentTree, searchFilterFunc, typeFilterFunc);
 
   return {
     ...explorer,
     typeFilters,
     searchTerm,
-    isVisible: getIsVisibleMap(documentTree, isInTypeFilterMap, isInSearchMap),
+    isVisible,
     isFolderOpen: getFolderIsOpenMap(
       documentTree,
       isInTypeFilterMap,
