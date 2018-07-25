@@ -31,7 +31,7 @@ public class UIDSerde implements Serde<UID>, Serializer<UID>, Deserializer<UID> 
 
     @Override
     public UID deserialize(final ByteBuffer byteBuffer) {
-        UID uid = extractUid(byteBuffer);
+        UID uid = getUid(byteBuffer);
         byteBuffer.flip();
         return uid;
     }
@@ -44,9 +44,10 @@ public class UIDSerde implements Serde<UID>, Serializer<UID>, Deserializer<UID> 
 
     /**
      * Reads a {@link UID} from the passed {@link ByteBuffer} advancing the position in
-     * the {@link ByteBuffer}. The {@link ByteBuffer} is not flipped.
+     * the process. The {@link ByteBuffer} is not flipped.
+     * The returned buffer is just a view onto part of the original buffer.
      */
-    public static UID extractUid(final ByteBuffer byteBuffer) {
+    public static UID getUid(final ByteBuffer byteBuffer) {
         // create a buffer that only covers the UID part, to allow for de-serialising a UID
         // from a buffer that contains other data
 
@@ -62,11 +63,35 @@ public class UIDSerde implements Serde<UID>, Serializer<UID>, Deserializer<UID> 
     }
 
     /**
+     * Reads a {@link UID} from the passed {@link ByteBuffer}. The passed {@link ByteBuffer}
+     * is not muted in the process.
+     * The returned buffer is just a view onto part of the original buffer.
+     */
+    public static UID extractUid(final ByteBuffer byteBuffer) {
+        // create a buffer that only covers the UID part, to allow for de-serialising a UID
+        // from a buffer that contains other data
+
+        final ByteBuffer dupBuffer = byteBuffer.duplicate();
+        dupBuffer.limit(dupBuffer.position() + UID.UID_ARRAY_LENGTH);
+
+        final UID uid = UID.wrap(dupBuffer);
+        // no need to flip as we are just wrapping the original buffer
+
+        return uid;
+    }
+
+    /**
      * Writes a {@link UID} to the passed {@link ByteBuffer}, advancing the position but
      * not flipping it.
      */
     public static void writeUid(final ByteBuffer byteBuffer, final UID uid) {
         byteBuffer.put(uid.getBackingBuffer());
+    }
+
+
+    @Override
+    public int getBufferCapacity() {
+        return UID.UID_ARRAY_LENGTH;
     }
 
     public static class UIDKryoSerializer extends com.esotericsoftware.kryo.Serializer<UID> {
@@ -81,6 +106,7 @@ public class UIDSerde implements Serde<UID>, Serializer<UID>, Deserializer<UID> 
 
         @Override
         public UID read(final Kryo kryo, final Input input, final Class<UID> type) {
+            // TODO cnstantly creating a new ByteBuffer here is not ideal
             ByteBuffer byteBuffer = ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH);
             for (int i = 0; i < 4; i++) {
                 byteBuffer.put(input.readByte());

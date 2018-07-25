@@ -44,6 +44,7 @@ public class RefDataProcessingInfoSerde implements
     public static final int LAST_ACCESSED_TIME_OFFSET = CREATE_TIME_OFFSET + Long.BYTES;
     public static final int EFFECTIVE_TIME_OFFSET = LAST_ACCESSED_TIME_OFFSET + Long.BYTES;
     public static final int PROCESSING_STATE_OFFSET = EFFECTIVE_TIME_OFFSET + Long.BYTES;
+    private static final int BUFFER_CAPACITY = (Long.BYTES * 3) + 1;
 
     @Override
     public RefDataProcessingInfo deserialize(final ByteBuffer byteBuffer) {
@@ -110,5 +111,10 @@ public class RefDataProcessingInfoSerde implements
                 Instant.ofEpochMilli(timeMsBuffer.getLong(0)),
                 Instant.ofEpochMilli(processingInfoBuffer.getLong(LAST_ACCESSED_TIME_OFFSET))));
         return compareResult < 0;
+    }
+
+    @Override
+    public int getBufferCapacity() {
+        return BUFFER_CAPACITY;
     }
 }

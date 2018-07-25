@@ -28,10 +28,10 @@ import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.serde.Serde;
-import stroom.refdata.offheapstore.ByteBufferPair;
 import stroom.refdata.offheapstore.ByteBufferPool;
 import stroom.refdata.offheapstore.ByteBufferUtils;
 import stroom.refdata.offheapstore.PooledByteBuffer;
+import stroom.refdata.offheapstore.PooledByteBufferPair;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -65,6 +65,9 @@ public abstract class AbstractLmdbDb<K, V> {
     protected final Env<ByteBuffer> lmdbEnvironment;
     protected final ByteBufferPool byteBufferPool;
 
+    private final int keyBufferCapacity;
+    private final int valueBufferCapacity;
+
     public AbstractLmdbDb(final Env<ByteBuffer> lmdbEnvironment,
                           final ByteBufferPool byteBufferPool,
                           final Serde<K> keySerde,
@@ -76,6 +79,8 @@ public abstract class AbstractLmdbDb<K, V> {
         this.lmdbEnvironment = lmdbEnvironment;
         this.lmdbDbi = openDbi(lmdbEnvironment, dbName);
         this.byteBufferPool = byteBufferPool;
+        this.keyBufferCapacity = Math.min(lmdbEnvironment.getMaxKeySize(), keySerde.getBufferCapacity());
+        this.valueBufferCapacity = Math.min(Serde.DEFAULT_CAPACITY, valueSerde.getBufferCapacity());
     }
 
     public String getDbName() {
@@ -86,26 +91,61 @@ public abstract class AbstractLmdbDb<K, V> {
         return lmdbDbi;
     }
 
-    protected ByteBuffer getKeyBufferFromPool() {
-        return byteBufferPool.getBuffer(lmdbEnvironment.getMaxKeySize());
+    /**
+     * @return A {@link PooledByteBuffer} containing a direct {@link ByteBuffer} from the
+     * pool with sufficient capacity for this database's key type.
+     */
+    public PooledByteBuffer getPooledKeyBuffer() {
+        return byteBufferPool.getPooledByteBuffer(keyBufferCapacity);
     }
 
-    protected PooledByteBuffer getPooledKeyBuffer() {
-        return byteBufferPool.getBufferAsResource(lmdbEnvironment.getMaxKeySize());
+    /**
+     * @return A {@link PooledByteBuffer} containing a direct {@link ByteBuffer} from the
+     * pool with sufficient capacity for this database's value type.
+     */
+    public PooledByteBuffer getPooledValueBuffer() {
+        return byteBufferPool.getPooledByteBuffer(valueBufferCapacity);
     }
 
-    protected ByteBufferPair getBufferPairFromPool(int minValueBufferCapacity) {
-        return byteBufferPool.getBufferPair(lmdbEnvironment.getMaxKeySize(), minValueBufferCapacity);
+    /**
+     * @return A {@link PooledByteBuffer} containing a direct {@link ByteBuffer} from
+     * the pool with at least the specified capacity
+     */
+    public PooledByteBuffer getPooledValueBuffer(int minValueBufferCapacity) {
+        return byteBufferPool.getPooledByteBuffer(minValueBufferCapacity);
+    }
+
+    /**
+     * @return A {@link PooledByteBufferPair} containing direct {@link ByteBuffer}s from the
+     * pool, each with sufficient capacity for their respective key/value type.
+     */
+    public PooledByteBufferPair getPooledBufferPair() {
+        return byteBufferPool.getPooledBufferPair(keyBufferCapacity, valueBufferCapacity);
+    }
+
+    /**
+     * @return A {@link PooledByteBufferPair} containing direct {@link ByteBuffer}s from the
+     * pool. The key buffer's capacity is sufficient for this database's key type while the
+     * value buffer capacity is at least as specified.
+     */
+    public PooledByteBufferPair getPooledBufferPair(int minValueBufferCapacity) {
+        return byteBufferPool.getPooledBufferPair(keyBufferCapacity, minValueBufferCapacity);
     }
 
     protected Env<ByteBuffer> getLmdbEnvironment() {
         return lmdbEnvironment;
     }
 
+    /**
+     * @return The {@link Serde} for (de)serialising this database's keys
+     */
     public Serde<K> getKeySerde() {
         return keySerde;
     }
 
+    /**
+     * @return The {@link Serde} for (de)serialising this database's value
+     */
     public Serde<V> getValueSerde() {
         return valueSerde;
     }
@@ -299,32 +339,52 @@ public abstract class AbstractLmdbDb<K, V> {
                 updateValue(writeTxn, key, valueBufferConsumer));
     }
 
-    public void delete(final K key) {
-        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("delete({})", key));
-        try (final Txn<ByteBuffer> txn = lmdbEnvironment.txnWrite()) {
+    public boolean delete(final K key) {
+        try (final Txn<ByteBuffer> writeTxn = lmdbEnvironment.txnWrite()) {
             ByteBuffer keyBuffer = keySerde.serialize(key);
-            lmdbDbi.delete(txn, keyBuffer);
-            txn.commit();
+            boolean result = lmdbDbi.delete(writeTxn, keyBuffer);
+            LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("delete({}) returned {}", key, result));
+            writeTxn.commit();
+            return result;
         } catch (RuntimeException e) {
             throw new RuntimeException(LambdaLogger.buildMessage("Error deleting key {}", key), e);
         }
     }
 
-    public void delete(final ByteBuffer keyBuffer) {
-        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("delete({})", ByteBufferUtils.byteBufferInfo(keyBuffer)));
-        try (final Txn<ByteBuffer> txn = lmdbEnvironment.txnWrite()) {
-            lmdbDbi.delete(txn, keyBuffer);
-            txn.commit();
+    public boolean delete(final Txn<ByteBuffer> writeTxn, final K key) {
+        try {
+            ByteBuffer keyBuffer = keySerde.serialize(key);
+            boolean result = lmdbDbi.delete(writeTxn, keyBuffer);
+            LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("delete({}) returned {}", key, result));
+            return result;
+        } catch (RuntimeException e) {
+            throw new RuntimeException(LambdaLogger.buildMessage("Error deleting key {}", key), e);
+        }
+    }
+
+    public boolean delete(final ByteBuffer keyBuffer) {
+        try (final Txn<ByteBuffer> writeTxn = lmdbEnvironment.txnWrite()) {
+            boolean result = lmdbDbi.delete(writeTxn, keyBuffer);
+            LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("delete({}) returned {}",
+                    ByteBufferUtils.byteBufferInfo(keyBuffer), result));
+            writeTxn.commit();
+            return result;
         } catch (RuntimeException e) {
             throw new RuntimeException(LambdaLogger.buildMessage("Error deleting key {}",
                     ByteBufferUtils.byteBufferInfo(keyBuffer)), e);
         }
     }
 
-    public void delete(final Txn<ByteBuffer> writeTxn, final ByteBuffer keyBuffer) {
-        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("delete(txn, {})", ByteBufferUtils.byteBufferInfo(keyBuffer)));
+    /**
+     * Delete the entry with the passed keyBuffer.
+     * @return True if the entry was found and deleted.
+     */
+    public boolean delete(final Txn<ByteBuffer> writeTxn, final ByteBuffer keyBuffer) {
         try {
-            lmdbDbi.delete(writeTxn, keyBuffer);
+            boolean result = lmdbDbi.delete(writeTxn, keyBuffer);
+            LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("delete(txn, {}) returned {}",
+                    ByteBufferUtils.byteBufferInfo(keyBuffer), result));
+            return result;
         } catch (RuntimeException e) {
             throw new RuntimeException(LambdaLogger.buildMessage("Error deleting key {}",
                     ByteBufferUtils.byteBufferInfo(keyBuffer)), e);

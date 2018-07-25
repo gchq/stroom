@@ -93,24 +93,24 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
             LOGGER.info("-----------------------------------------------------------------");
 
             // now dereference value1
-            valueStoreDb.deReferenceValue(writeTxn, valueStoreKey1a);
+            valueStoreDb.deReferenceOrDeleteValue(writeTxn, valueStoreKey1a);
             stringValue = (StringValue) valueStoreDb.get(writeTxn, valueStoreKey1a).get();
             assertThat(stringValue.getReferenceCount()).isEqualTo(2);
             assertThat(valueStoreDb.getEntryCount(writeTxn)).isEqualTo(2);
 
             // now dereference value1 again
-            valueStoreDb.deReferenceValue(writeTxn, valueStoreKey1a);
+            valueStoreDb.deReferenceOrDeleteValue(writeTxn, valueStoreKey1a);
             stringValue = (StringValue) valueStoreDb.get(writeTxn, valueStoreKey1a).get();
             assertThat(stringValue.getReferenceCount()).isEqualTo(1);
             assertThat(valueStoreDb.getEntryCount(writeTxn)).isEqualTo(2);
 
             // now dereference value1 again, entry is deleted
-            valueStoreDb.deReferenceValue(writeTxn, valueStoreKey1a);
+            valueStoreDb.deReferenceOrDeleteValue(writeTxn, valueStoreKey1a);
             assertThat(valueStoreDb.get(writeTxn, valueStoreKey1a)).isEmpty();
             assertThat(valueStoreDb.getEntryCount(writeTxn)).isEqualTo(1);
 
             // now dereference value2, entry is deleted
-            valueStoreDb.deReferenceValue(writeTxn, valueStoreKey2a);
+            valueStoreDb.deReferenceOrDeleteValue(writeTxn, valueStoreKey2a);
             assertThat(valueStoreDb.get(writeTxn, valueStoreKey2a)).isEmpty();
             assertThat(valueStoreDb.getEntryCount(writeTxn)).isEqualTo(0);
 

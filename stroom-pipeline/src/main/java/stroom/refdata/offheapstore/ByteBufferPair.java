@@ -33,11 +33,11 @@ public class ByteBufferPair {
         return new ByteBufferPair(keyBuffer, valueBuffer);
     }
 
-    ByteBuffer getKeyBuffer() {
+    public ByteBuffer getKeyBuffer() {
         return keyBuffer;
     }
 
-    ByteBuffer getValueBuffer() {
+    public ByteBuffer getValueBuffer() {
         return valueBuffer;
     }
 

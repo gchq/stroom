@@ -62,12 +62,12 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
         this.valueSerde = valueSerde;
     }
 
-    public void forEachEntry(final Txn<ByteBuffer> txn,
-                             final UID mapUid,
-                             final BiConsumer<ByteBuffer, ByteBuffer> entryConsumer) {
+    public void deleteMapEntries(final Txn<ByteBuffer> writeTxn,
+                                 final UID mapUid,
+                                 final BiConsumer<ByteBuffer, ByteBuffer> entryConsumer) {
 
-        try (PooledByteBuffer startKeyIncPooledBuffer = byteBufferPool.getBufferAsResource(lmdbEnvironment.getMaxKeySize());
-             PooledByteBuffer endKeyExcPooledBuffer = byteBufferPool.getBufferAsResource(lmdbEnvironment.getMaxKeySize())) {
+        try (PooledByteBuffer startKeyIncPooledBuffer = getPooledKeyBuffer();
+             PooledByteBuffer endKeyExcPooledBuffer = getPooledKeyBuffer()) {
 
             // TODO there appears to be a bug in LMDB that causes an IndexOutOfBoundsException
             // when both the start and end key are used in the keyRange
@@ -82,7 +82,7 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
             keySerde.serializeWithoutKeyPart(startKeyIncBuffer, startKeyInc);
             final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(startKeyIncBuffer);
 
-            try (CursorIterator<ByteBuffer> cursorIterator = lmdbDbi.iterate(txn, keyRange)) {
+            try (CursorIterator<ByteBuffer> cursorIterator = lmdbDbi.iterate(writeTxn, keyRange)) {
                 for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
 
                     if (ByteBufferUtils.containsPrefix(keyVal.key(), startKeyIncBuffer)) {
@@ -96,6 +96,7 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
                         // consumer MUST not hold on to the key/value references as they can change
                         // once the cursor is closed or moves position
                         entryConsumer.accept(keyVal.key(), keyVal.val());
+                        cursorIterator.remove();
                     } else {
                         // passed out UID so break out
                         break;

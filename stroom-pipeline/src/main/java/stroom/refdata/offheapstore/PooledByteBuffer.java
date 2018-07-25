@@ -52,4 +52,11 @@ public class PooledByteBuffer implements AutoCloseable {
     public void close() {
         release();
     }
+
+    @Override
+    public String toString() {
+        return "PooledByteBuffer{" +
+                "byteBuffer=" + ByteBufferUtils.byteBufferInfo(byteBuffer) +
+                '}';
+    }
 }

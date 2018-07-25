@@ -115,16 +115,21 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
         return areValuesEqual;
     }
 
-    public void deReferenceValue(final Txn<ByteBuffer> writeTxn, final ValueStoreKey valueStoreKey) {
+    public void deReferenceOrDeleteValue(final Txn<ByteBuffer> writeTxn, final ValueStoreKey valueStoreKey) {
+        LOGGER.trace("deReferenceValue({}, {})", writeTxn, valueStoreKey);
+
         ByteBuffer keyBuffer = keySerde.serialize(valueStoreKey);
-        deReferenceValue(writeTxn, keyBuffer);
+        deReferenceOrDeleteValue(writeTxn, keyBuffer);
     }
 
     /**
      * Decrements the reference count for this value. If the resulting reference count is zero or less
      * the value will be deleted as it is no longer required.
      */
-    public void deReferenceValue(final Txn<ByteBuffer> writeTxn, final ByteBuffer keyBuffer) {
+    public void deReferenceOrDeleteValue(final Txn<ByteBuffer> writeTxn, final ByteBuffer keyBuffer) {
+        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("deReferenceValue({}, {})",
+                writeTxn, ByteBufferUtils.byteBufferInfo(keyBuffer)));
+
         try (Cursor<ByteBuffer> cursor = lmdbDbi.openCursor(writeTxn)) {
 
             boolean isFound = cursor.get(keyBuffer, GetOp.MDB_SET_KEY);

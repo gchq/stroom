@@ -400,8 +400,8 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
 
         // two different ref stream definitions
         List<RefStreamDefinition> refStreamDefinitions = Arrays.asList(
-                buildUniqueRefStreamDefinition(),
-                buildUniqueRefStreamDefinition());
+                buildUniqueRefStreamDefinition(1),
+                buildUniqueRefStreamDefinition(2));
 
         bulkLoadAndAssert(refStreamDefinitions, false, 1000);
 
@@ -421,6 +421,13 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         assertThat(refDataStore.getKeyRangeValueEntryCount()).isEqualTo(0);
     }
 
+
+    private RefStreamDefinition buildUniqueRefStreamDefinition(final long streamId) {
+        return new RefStreamDefinition(
+                UUID.randomUUID().toString(),
+                UUID.randomUUID().toString(),
+                streamId);
+    }
 
     private RefStreamDefinition buildUniqueRefStreamDefinition() {
         return new RefStreamDefinition(

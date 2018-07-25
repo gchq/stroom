@@ -36,7 +36,11 @@ import java.nio.ByteBuffer;
 public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinition> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RefStreamDefinitionSerde.class);
-    private static final LambdaLogger LAMBDA_LOGGER= LambdaLoggerFactory.getLogger(RefStreamDefinitionSerde.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(RefStreamDefinitionSerde.class);
+
+    private static final int BUFFER_CAPACITY = (VariableLengthUUIDKryoSerializer.BUFFER_CAPACITY * 2) +
+                    (AbstractKryoSerde.VARIABLE_LENGTH_LONG_BYTES * 2) +
+                    AbstractKryoSerde.BOOLEAN_BYTES;
 
     private static final KryoFactory kryoFactory = buildKryoFactory(
             RefStreamDefinition.class,
@@ -54,6 +58,11 @@ public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinit
     @Override
     public void serialize(final ByteBuffer byteBuffer, final RefStreamDefinition object) {
         super.serialize(pool, byteBuffer, object);
+    }
+
+    @Override
+    public int getBufferCapacity() {
+        return BUFFER_CAPACITY;
     }
 
     static class RefStreamDefinitionKryoSerializer extends com.esotericsoftware.kryo.Serializer<RefStreamDefinition> {

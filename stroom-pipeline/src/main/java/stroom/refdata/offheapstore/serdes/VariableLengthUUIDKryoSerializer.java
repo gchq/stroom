@@ -16,6 +16,9 @@ import java.util.UUID;
  */
 class VariableLengthUUIDKryoSerializer extends Serializer<String> {
 
+    // Two variable length longs at 1-9 bytes each
+    static final int BUFFER_CAPACITY = 9 * 2;
+
     @Override
     public void write(final Kryo kryo, final Output output, final String uuidStr) {
         UUID uuid = null;

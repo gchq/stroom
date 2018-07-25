@@ -114,6 +114,10 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
                                 uidOfFoundKey, mapDefinitionUid));
                     }
                     LOGGER.trace("key {} is in the range, found the required value after {} iterations", key, cnt);
+
+                    // TODO we are returning the cursor buffer out of the cursor scope so we must first copy it.
+                    // Better still we could accept an arg of a Function<ByteBuffer, ByteBuffer> to map the valueStoreKey
+                    // buffer into the actual value bytebuffer from the valueStoreDb. This would save a buffer copy.
                     return Optional.of(keyVal.val());
                 }
             }
@@ -174,12 +178,12 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
         return KeyRange.closedBackward(startKeyBuf, endKeyBuf);
     }
 
-    public void forEachEntry(final Txn<ByteBuffer> txn,
-                             final UID mapUid,
-                             final BiConsumer<ByteBuffer, ByteBuffer> entryConsumer) {
+    public void deleteMapEntries(final Txn<ByteBuffer> writeTxn,
+                                 final UID mapUid,
+                                 final BiConsumer<ByteBuffer, ByteBuffer> entryConsumer) {
 
-        try (PooledByteBuffer startKeyIncPooledBuffer = byteBufferPool.getBufferAsResource(lmdbEnvironment.getMaxKeySize());
-             PooledByteBuffer endKeyExcPooledBuffer = byteBufferPool.getBufferAsResource(lmdbEnvironment.getMaxKeySize())) {
+        try (PooledByteBuffer startKeyIncPooledBuffer = getPooledKeyBuffer();
+             PooledByteBuffer endKeyExcPooledBuffer = getPooledKeyBuffer()) {
 
             // TODO there appears to be a bug in LMDB that causes an IndexOutOfBoundsException
             // when both the start and end key are used in the keyRange
@@ -195,7 +199,7 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
             keySerde.serializeWithoutRangePart(startKeyIncBuffer, startKeyInc);
             final KeyRange<ByteBuffer> atLeastKeyRange = KeyRange.atLeast(startKeyIncBuffer);
 
-            try (CursorIterator<ByteBuffer> cursorIterator = lmdbDbi.iterate(txn, atLeastKeyRange)) {
+            try (CursorIterator<ByteBuffer> cursorIterator = lmdbDbi.iterate(writeTxn, atLeastKeyRange)) {
                 for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
 
                     if (ByteBufferUtils.containsPrefix(keyVal.key(), startKeyIncBuffer)) {
@@ -207,6 +211,7 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
 
                         // pass the found kv pair from this entry to the consumer
                         entryConsumer.accept(keyVal.key(), keyVal.val());
+                        cursorIterator.remove();
                     } else {
                         // passed out UID so break out
                         break;

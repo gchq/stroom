@@ -28,12 +28,12 @@ public class ValueStoreKeySerde implements Serde<ValueStoreKey> {
 
     public static final int VALUE_HASH_CODE_OFFSET = 0;
     public static final int VALUE_HASH_CODE_BYTES = Integer.BYTES;
-    private static final int SIZE_IN_BYTES = Integer.BYTES + Short.BYTES;
+    private static final int BUFFER_CAPACITY = Integer.BYTES + Short.BYTES;
     public static final int ID_OFFSET = Integer.BYTES;
 
     @Override
     public int getBufferCapacity() {
-        return SIZE_IN_BYTES;
+        return BUFFER_CAPACITY;
     }
 
     @Override
@@ -61,7 +61,7 @@ public class ValueStoreKeySerde implements Serde<ValueStoreKey> {
     public static ByteBuffer nextId(final ByteBuffer source) {
         short currId = source.getShort(ID_OFFSET);
 
-        ByteBuffer output = ByteBuffer.allocateDirect(SIZE_IN_BYTES);
+        ByteBuffer output = ByteBuffer.allocateDirect(BUFFER_CAPACITY);
 
         ByteBuffer sourceDuplicate = source.duplicate();
         sourceDuplicate.limit(Integer.BYTES);

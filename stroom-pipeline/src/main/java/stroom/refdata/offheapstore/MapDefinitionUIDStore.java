@@ -4,6 +4,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import org.lmdbjava.Env;
 import org.lmdbjava.Txn;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.LmdbUtils;
 import stroom.refdata.lmdb.serde.Serde;
 import stroom.refdata.offheapstore.databases.MapUidForwardDb;
@@ -16,6 +18,7 @@ import java.util.Optional;
 
 public class MapDefinitionUIDStore {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(MapDefinitionUIDStore.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(MapDefinitionUIDStore.class);
 
     private final MapUidForwardDb mapUidForwardDb;
@@ -104,6 +107,7 @@ public class MapDefinitionUIDStore {
 
     public void deletePair(final Txn<ByteBuffer> writeTxn,
                            final UID mapUid) {
+        LOGGER.trace("deletePair({})", mapUid);
 
         final ByteBuffer mapDefinitionBuffer = mapUidReverseDb.getAsBytes(writeTxn, mapUid.getBackingBuffer())
                 .orElseThrow(() -> new RuntimeException(LambdaLogger.buildMessage(

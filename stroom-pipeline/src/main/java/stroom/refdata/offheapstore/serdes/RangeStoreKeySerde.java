@@ -36,6 +36,8 @@ public class RangeStoreKeySerde implements Serde<RangeStoreKey> {
     public static final int RANGE_FROM_OFFSET = UID.UID_ARRAY_LENGTH;
     public static final int RANGE_TO_OFFSET = RANGE_FROM_OFFSET + Long.BYTES;
 
+    private static final int BUFFER_CAPACITY = UID.UID_ARRAY_LENGTH + (Long.BYTES * 2);
+
     //    private static final KryoFactory kryoFactory = buildKryoFactory(
 //            RangeStoreKey.class,
 //            RangeStoreKeyKryoSerializer::new);
@@ -48,7 +50,7 @@ public class RangeStoreKeySerde implements Serde<RangeStoreKey> {
     public RangeStoreKey deserialize(final ByteBuffer byteBuffer) {
 
         // clone it to de-couple us from a LMDB managed buffer
-        final UID mapUid = UIDSerde.extractUid(byteBuffer).clone();
+        final UID mapUid = UIDSerde.getUid(byteBuffer).clone();
         long rangeFromInc = byteBuffer.getLong();
         long rangeToExc = byteBuffer.getLong();
         byteBuffer.flip();
@@ -85,8 +87,12 @@ public class RangeStoreKeySerde implements Serde<RangeStoreKey> {
         byteBuffer.limit(UID.UID_ARRAY_LENGTH);
     }
 
+    @Override
+    public int getBufferCapacity() {
+        return BUFFER_CAPACITY;
+    }
 
-//    private static class RangeStoreKeyKryoSerializer extends com.esotericsoftware.kryo.Serializer<RangeStoreKey> {
+    //    private static class RangeStoreKeyKryoSerializer extends com.esotericsoftware.kryo.Serializer<RangeStoreKey> {
 //
 //        private final UIDSerde.UIDKryoSerializer uidKryoSerializer;
 //

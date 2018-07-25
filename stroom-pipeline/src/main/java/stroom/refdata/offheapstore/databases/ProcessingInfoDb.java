@@ -9,9 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.AbstractLmdbDb;
 import stroom.refdata.lmdb.LmdbUtils;
-import stroom.refdata.offheapstore.ByteBufferPair;
 import stroom.refdata.offheapstore.ByteBufferPool;
 import stroom.refdata.offheapstore.ByteBufferUtils;
+import stroom.refdata.offheapstore.PooledByteBufferPair;
 import stroom.refdata.offheapstore.ProcessingState;
 import stroom.refdata.offheapstore.RefDataProcessingInfo;
 import stroom.refdata.offheapstore.RefStreamDefinition;
@@ -87,11 +87,12 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
         });
     }
 
-    public Optional<ByteBufferPair> getNextEntryAsBytes(final Txn<ByteBuffer> txn,
-                                                        final ByteBuffer startKeyBuffer,
-                                                        final Predicate<ByteBuffer> valueBufferPredicate) {
+    public Optional<PooledByteBufferPair> getNextEntryAsBytes(final Txn<ByteBuffer> txn,
+                                                              final ByteBuffer startKeyBuffer,
+                                                              final Predicate<ByteBuffer> valueBufferPredicate,
+                                                              final PooledByteBufferPair pooledByteBufferPair) {
 
-        Optional<ByteBufferPair> optMatchedEntry = Optional.empty();
+        Optional<PooledByteBufferPair> optMatchedEntry = Optional.empty();
 
         final KeyRange<ByteBuffer> keyRange;
 
@@ -110,16 +111,18 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
                 i++;
 
                 if (valueBufferPredicate.test(keyVal.val())) {
-                    // got a match
-                    ByteBufferPair matchedEntry = ByteBufferPair.of(keyVal.key(), keyVal.val());
-                    optMatchedEntry = Optional.of(matchedEntry);
-//                    LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("Found match {}", matchedEntry));
+                    // got a match but was we are returning it out of the cursor scope we must copy
+                    // the key/value buffers, else the buffers will/may be mutated and strange things will happen
+                    ByteBufferUtils.copy(keyVal.key(), pooledByteBufferPair.getKeyBuffer());
+                    ByteBufferUtils.copy(keyVal.val(), pooledByteBufferPair.getValueBuffer());
+
+                    optMatchedEntry = Optional.of(pooledByteBufferPair);
                     break;
                 }
             }
         }
 
-         LOGGER.debug("getNextEntryAsBytes returning {} after {} iterations", optMatchedEntry, i);
+        LOGGER.debug("getNextEntryAsBytes returning {} after {} iterations", optMatchedEntry, i);
         return optMatchedEntry;
     }
 

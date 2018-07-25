@@ -86,7 +86,7 @@ public class TestKeyValueStoreDb extends AbstractLmdbDbTest {
     private void doForEachTest(final UID uid, final int expectedEntryCount) {
         LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
             AtomicInteger cnt = new AtomicInteger(0);
-            keyValueStoreDb.forEachEntry(writeTxn, uid, (keyBuf, valBuf) -> {
+            keyValueStoreDb.deleteMapEntries(writeTxn, uid, (keyBuf, valBuf) -> {
                 cnt.incrementAndGet();
                 LOGGER.info("{} {}", ByteBufferUtils.byteBufferInfo(keyBuf), ByteBufferUtils.byteBufferInfo(valBuf));
             });

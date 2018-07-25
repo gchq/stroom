@@ -212,20 +212,10 @@ public class RefDataOffHeapStore implements RefDataStore {
         return optionalRefDataValue;
     }
 
-//    public Optional<RefDataValue> getValue(final ValueStoreKey valueStoreKey) {
-//        return valueStoreDb.get(valueStoreKey);
-//    }
 
     @Override
     public RefDataValueProxy getValueProxy(final MapDefinition mapDefinition, final String key) {
 
-//        return LmdbUtils.getWithReadTxn(lmdbEnvironment, readTxn -> {
-//            Optional<ValueStoreKey> optValueStoreKey = getValueStoreKey(readTxn, mapDefinition, key);
-//
-//            // return a RefDataValueProxy if we found a value.
-//            return optValueStoreKey.map(valueStoreKey ->
-//                    new RefDataValueProxy(this, valueStoreKey, mapDefinition));
-//        });
         return new SingleRefDataValueProxy(this, mapDefinition, key);
     }
 
@@ -294,7 +284,6 @@ public class RefDataOffHeapStore implements RefDataStore {
     public boolean consumeValueBytes(final MapDefinition mapDefinition,
                                      final String key,
                                      final Consumer<TypedByteBuffer> valueBytesConsumer) {
-
 
         // lookup the passed mapDefinition and key and if a valueStoreKey is found use that to
         // lookup the value in the value store, passing the actual value part to the consumer.
@@ -414,9 +403,9 @@ public class RefDataOffHeapStore implements RefDataStore {
             description = "Purge old reference data from the off heap store, as defined by " + DATA_RETENTION_AGE_PROP_KEY)
     public void purgeOldData() {
 
-        try (final PooledByteBuffer accessTimeThresholdPooledBuf = getAccessTimeCutOffBuffer()) {
+        try (final PooledByteBuffer accessTimeThresholdPooledBuf = getAccessTimeCutOffBuffer();
+             final PooledByteBufferPair procInfoPooledBufferPair = processingInfoDb.getPooledBufferPair()) {
 
-//            ByteBuffer currRefStreamDefBuf = currRefStreamDefPooledBuf.getByteBuffer();
             final AtomicReference<ByteBuffer> currRefStreamDefBufRef = new AtomicReference<>();
             final ByteBuffer accessTimeThresholdBuf = accessTimeThresholdPooledBuf.getByteBuffer();
 
@@ -425,23 +414,15 @@ public class RefDataOffHeapStore implements RefDataStore {
                                     processingInfoBuffer,
                                     accessTimeThresholdBuf);
 
-//            currentRefStreamDefBuf = getKeyBufferFromPool();
-
-            // hack to make it final for the lambda
-//            final ByteBuffer accessTimeThresholdBufFinal = accessTimeThresholdBuf;
-
-            // buffer is empty at this point so flip it to make it ready for reading
-//            currRefStreamDefBufRef.get().flip();
-
             final AtomicBoolean wasMatchFound = new AtomicBoolean(false);
             do {
                 // with a read txn find the next proc info entry that is ready for purge
                 Optional<RefStreamDefinition> optRefStreamDef = LmdbUtils.getWithReadTxn(lmdbEnvironment, readTxn -> {
-                    Optional<ByteBufferPair> optProcInfoBufferPair = processingInfoDb.getNextEntryAsBytes(
+                    Optional<PooledByteBufferPair> optProcInfoBufferPair = processingInfoDb.getNextEntryAsBytes(
                             readTxn,
                             currRefStreamDefBufRef.get(),
-                            accessTimePredicate);
-
+                            accessTimePredicate,
+                            procInfoPooledBufferPair);
 
                     return optProcInfoBufferPair.map(procInfoBufferPair -> {
                         RefStreamDefinition refStreamDefinition = processingInfoDb.deserializeKey(procInfoBufferPair.getKeyBuffer());
@@ -463,10 +444,11 @@ public class RefDataOffHeapStore implements RefDataStore {
                         // chunks
                         boolean wasFound = LmdbUtils.getWithWriteTxn(lmdbEnvironment, writeTxn -> {
 
-                            final Optional<ByteBufferPair> optProcInfoBufferPair = processingInfoDb.getNextEntryAsBytes(
+                            final Optional<PooledByteBufferPair> optProcInfoBufferPair = processingInfoDb.getNextEntryAsBytes(
                                     writeTxn,
                                     currRefStreamDefBufRef.get(),
-                                    accessTimePredicate);
+                                    accessTimePredicate,
+                                    procInfoPooledBufferPair);
 
                             if (!optProcInfoBufferPair.isPresent()) {
                                 // no matching ref streams found so break out
@@ -485,6 +467,7 @@ public class RefDataOffHeapStore implements RefDataStore {
                                         refStreamDefBuffer);
                                 final RefDataProcessingInfo refDataProcessingInfo = processingInfoDb.deserializeValue(
                                         refDataProcInfoBuffer);
+
                                 LOGGER.info("Purging refStreamDefinition {} {}",
                                         refStreamDefinition, refDataProcessingInfo);
 
@@ -498,7 +481,20 @@ public class RefDataOffHeapStore implements RefDataStore {
                                 purgeRefStreamData(writeTxn, refStreamDefinition);
 
                                 //now delete the proc info entry
-                                processingInfoDb.delete(writeTxn, refStreamDefBuffer);
+                                LOGGER.debug("Deleting processing info entry for {}", refStreamDefinition);
+//                                ByteBuffer buf = byteBufferPool.getBuffer(100);
+//                                processingInfoDb.getKeySerde().serialize(buf, refStreamDefinition);
+//                                int cmp = ByteBufferUtils.compare(refStreamDefBuffer, buf);
+//
+//                                LOGGER.info("{}", ByteBufferUtils.byteBufferInfo(refStreamDefBuffer));
+//                                LOGGER.info("{}", ByteBufferUtils.byteBufferInfo(buf));
+
+                                boolean didDeleteSucceed = processingInfoDb.delete(writeTxn, refStreamDefBuffer);
+//                                boolean didDeleteSucceed = processingInfoDb.delete(writeTxn, refStreamDefinition);
+
+                                if (!didDeleteSucceed) {
+                                    throw new RuntimeException("Processing info entry not found so was not deleted");
+                                }
 
                                 LOGGER.info("Completed purge of refStreamDefinition {} {}",
                                         refStreamDefinition, refDataProcessingInfo);
@@ -564,40 +560,50 @@ public class RefDataOffHeapStore implements RefDataStore {
 
         LOGGER.debug("purgeRefStreamData({})", refStreamDefinition);
 
+        int cnt = 0;
         Optional<UID> optMapUid;
-        try (PooledByteBuffer pooledUidBuffer = byteBufferPool.getBufferAsResource(UID.UID_ARRAY_LENGTH)) {
+        try (PooledByteBuffer pooledUidBuffer = byteBufferPool.getPooledByteBuffer(UID.UID_ARRAY_LENGTH)) {
             do {
                 //open a ranged cursor on the map forward table to scan all map defs for that stream def
                 //for each map def get the map uid
                 optMapUid = mapDefinitionUIDStore.getNextMapDefinition(
                         writeTxn, refStreamDefinition, pooledUidBuffer::getByteBuffer);
 
-                optMapUid.ifPresent(byteBuffer ->
-                        purgeMapData(writeTxn, byteBuffer));
+                if (optMapUid.isPresent()) {
+                    UID mapUid = optMapUid.get();
+                    LOGGER.debug("Found mapUid {} for refStreamDefinition {}", mapUid, refStreamDefinition);
+                    purgeMapData(writeTxn, optMapUid.get());
+                    cnt++;
+                } else {
+                    LOGGER.debug("No more map definitions to purge for refStreamDefinition {}", refStreamDefinition);
+                }
             } while (optMapUid.isPresent());
         }
+
+        LOGGER.info("Purged data for {} map(s) for {}", cnt, refStreamDefinition);
     }
 
     private void purgeMapData(final Txn<ByteBuffer> writeTxn,
                               final UID mapUid) {
 
-//        valueStoreDb.logDatabaseContents();
-//        valueStoreDb.logRawDatabaseContents();
+        LOGGER.debug("purgeMapData(writeTxn, {})", mapUid);
 
+        LOGGER.debug("Deleting key/value entries and de-referencing/deleting their values");
         // loop over all keyValue entries for this mapUid and dereference/delete the associated
         // valueStore entry
-        keyValueStoreDb.forEachEntry(writeTxn, mapUid, (keyValueStoreKeyBuffer, valueStoreKeyBuffer) -> {
+        keyValueStoreDb.deleteMapEntries(writeTxn, mapUid, (keyValueStoreKeyBuffer, valueStoreKeyBuffer) -> {
 
             //dereference this value, deleting it if required
-            valueStoreDb.deReferenceValue(writeTxn, valueStoreKeyBuffer);
+            valueStoreDb.deReferenceOrDeleteValue(writeTxn, valueStoreKeyBuffer);
         });
 
+        LOGGER.debug("Deleting range/value entries and de-referencing/deleting their values");
         // loop over all rangeValue entries for this mapUid and dereference/delete the associated
         // valueStore entry
-        rangeStoreDb.forEachEntry(writeTxn, mapUid, (rangeValueStoreKeyBuffer, valueStoreKeyBuffer) -> {
+        rangeStoreDb.deleteMapEntries(writeTxn, mapUid, (rangeValueStoreKeyBuffer, valueStoreKeyBuffer) -> {
 
             //dereference this value, deleting it if required
-            valueStoreDb.deReferenceValue(writeTxn, valueStoreKeyBuffer);
+            valueStoreDb.deReferenceOrDeleteValue(writeTxn, valueStoreKeyBuffer);
         });
 
         mapDefinitionUIDStore.deletePair(writeTxn, mapUid);
@@ -643,9 +649,9 @@ public class RefDataOffHeapStore implements RefDataStore {
     /**
      * Must be returned to the pool in a finally block
      */
-    private PooledByteBuffer getKeyBufferFromPool() {
-        return byteBufferPool.getBufferAsResource(lmdbEnvironment.getMaxKeySize());
-    }
+//    private PooledByteBuffer getKeyBufferFromPool() {
+//        return byteBufferPool.getBufferAsResource(lmdbEnvironment.getMaxKeySize());
+//    }
 
     private PooledByteBuffer getAccessTimeCutOffBuffer() {
         long purgeAge = ModelStringUtil.parseDurationString(
@@ -658,19 +664,11 @@ public class RefDataOffHeapStore implements RefDataStore {
                 Instant.ofEpochMilli(purgeCutOff),
                 Instant.ofEpochMilli(now));
 
-        PooledByteBuffer pooledByteBuffer = byteBufferPool.getBufferAsResource(Long.BYTES);
+        PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(Long.BYTES);
         pooledByteBuffer.getByteBuffer().putLong(purgeCutOff);
         pooledByteBuffer.getByteBuffer().flip();
         return pooledByteBuffer;
     }
-
-    /**
-     * Must be returned to the pool in a finally block
-     */
-    private ByteBufferPair getBufferPairFromPool() {
-        return byteBufferPool.getBufferPair(lmdbEnvironment.getMaxKeySize(), valueBufferCapacity);
-    }
-
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -885,7 +883,7 @@ public class RefDataOffHeapStore implements RefDataStore {
                     } else {
                         // value is different so we need to de-reference the old one
                         // and getOrCreate the new one
-                        valueStoreDb.deReferenceValue(writeTxn, currentValueStoreKey);
+                        valueStoreDb.deReferenceOrDeleteValue(writeTxn, currentValueStoreKey);
 
                         //get the ValueStoreKey for the RefDataValue (creating the entry if it doesn't exist)
                         final ValueStoreKey valueStoreKey = valueStoreDb.getOrCreate(
@@ -960,7 +958,7 @@ public class RefDataOffHeapStore implements RefDataStore {
                     } else {
                         // value is different so we need to de-reference the old one
                         // and getOrCreate the new one
-                        valueStoreDb.deReferenceValue(writeTxn, currentValueStoreKey);
+                        valueStoreDb.deReferenceOrDeleteValue(writeTxn, currentValueStoreKey);
 
                         //get the ValueStoreKey for the RefDataValue (creating the entry if it doesn't exist)
                         final ValueStoreKey valueStoreKey = valueStoreDb.getOrCreate(

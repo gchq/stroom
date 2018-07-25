@@ -63,7 +63,7 @@ public class ByteBufferPool implements Clearable {
 
     private final TreeMap<Key, ByteBuffer> bufferMap = new TreeMap<>();
 
-    public synchronized PooledByteBuffer getBufferAsResource(final int minCapacity) {
+    public PooledByteBuffer getPooledByteBuffer(final int minCapacity) {
         return new PooledByteBuffer(this, getBuffer(minCapacity));
     }
 
@@ -107,6 +107,12 @@ public class ByteBufferPool implements Clearable {
         ByteBuffer keyBuffer = getBuffer(minKeyCapacity);
         ByteBuffer valueBuffer = getBuffer(minValueCapacity);
         return ByteBufferPair.of(keyBuffer, valueBuffer);
+    }
+
+    public PooledByteBufferPair getPooledBufferPair(final int minKeyCapacity, final int minValueCapacity) {
+        ByteBuffer keyBuffer = getBuffer(minKeyCapacity);
+        ByteBuffer valueBuffer = getBuffer(minValueCapacity);
+        return new PooledByteBufferPair(this, keyBuffer, valueBuffer);
     }
 
     public void release(ByteBufferPair byteBufferPair) {

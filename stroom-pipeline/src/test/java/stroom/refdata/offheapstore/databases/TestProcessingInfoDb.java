@@ -165,6 +165,31 @@ public class TestProcessingInfoDb extends AbstractLmdbDbTest {
                 .isGreaterThan(refDataProcessingInfoBefore.getLastAccessedTimeEpochMs());
     }
 
+    @Test
+    public void testDelete() {
+
+        final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
+
+        final RefDataProcessingInfo refDataProcessingInfoBefore = new RefDataProcessingInfo(
+                234L,
+                123L,
+                345L,
+                ProcessingState.LOAD_IN_PROGRESS);
+
+        boolean didSucceed;
+
+        // initial put into empty db so will succeed
+        didSucceed = processingInfoDb.put(refStreamDefinition, refDataProcessingInfoBefore, false);
+
+        assertThat(didSucceed).isTrue();
+        assertThat(processingInfoDb.getEntryCount()).isEqualTo(1);
+
+        didSucceed = processingInfoDb.delete(refStreamDefinition);
+
+        assertThat(didSucceed).isTrue();
+        assertThat(processingInfoDb.getEntryCount()).isEqualTo(0);
+    }
+
     private RefStreamDefinition buildUniqueRefStreamDefinition() {
         return new RefStreamDefinition(
                 UUID.randomUUID().toString(),
