@@ -139,8 +139,8 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
 
         assertThat(mapDefinitionUIDStore.getEntryCount()).isEqualTo(1);
 
-        LmdbUtils.logRawDatabaseContents(lmdbEnv, mapUidForwardDb.getLmdbDbi());
-        LmdbUtils.logRawDatabaseContents(lmdbEnv, mapUidReverseDb.getLmdbDbi());
+        mapUidForwardDb.logRawDatabaseContents();
+        mapUidReverseDb.logRawDatabaseContents();
 
         // now try again with the same mapDefinition, which should give the same UID
         final UID uid2 = LmdbUtils.getWithWriteTxn(lmdbEnv, writeTxn -> {

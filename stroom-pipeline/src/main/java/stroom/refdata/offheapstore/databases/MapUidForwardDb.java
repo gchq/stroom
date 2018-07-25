@@ -52,7 +52,7 @@ public class MapUidForwardDb extends AbstractLmdbDb<MapDefinition, UID> {
     }
 
     public Optional<ByteBuffer> getUID(final Txn<ByteBuffer> txn, final ByteBuffer keyBuffer) {
-        return Optional.ofNullable(lmdbDbi.get(txn, keyBuffer));
+        return Optional.ofNullable(getLmdbDbi().get(txn, keyBuffer));
     }
 
     public void putForwardEntry(final Txn<ByteBuffer> writeTxn,
@@ -76,11 +76,11 @@ public class MapUidForwardDb extends AbstractLmdbDb<MapDefinition, UID> {
         try (PooledByteBuffer pooledStartKeyIncBuffer = getPooledKeyBuffer()) {
             ByteBuffer startKeyIncBuffer = pooledStartKeyIncBuffer.getByteBuffer();
 
-            keySerde.serialize(startKeyIncBuffer, mapDefinitionWithNoMapName);
+            getKeySerde().serialize(startKeyIncBuffer, mapDefinitionWithNoMapName);
 
             final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(startKeyIncBuffer);
 
-            try (CursorIterator<ByteBuffer> cursorIterator = lmdbDbi.iterate(writeTxn, keyRange)) {
+            try (CursorIterator<ByteBuffer> cursorIterator = getLmdbDbi().iterate(writeTxn, keyRange)) {
                 for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
 
                     // our startKeyIncBuffer contains only the refStreamDefinition part

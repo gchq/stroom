@@ -30,6 +30,7 @@ import stroom.refdata.lmdb.AbstractLmdbDb;
 import stroom.refdata.lmdb.LmdbUtils;
 import stroom.refdata.offheapstore.ByteBufferPool;
 import stroom.refdata.offheapstore.ByteBufferUtils;
+import stroom.refdata.offheapstore.PooledByteBuffer;
 import stroom.refdata.offheapstore.RefDataValue;
 import stroom.refdata.offheapstore.TypedByteBuffer;
 import stroom.refdata.offheapstore.ValueStoreKey;
@@ -101,15 +102,19 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
         } else {
             // valueHashCodes match so need to do a full equality check
 
-            ByteBuffer valueStoreKeyBuf = keySerde.serialize(valueStoreKey);
+            try (final PooledByteBuffer pooledValueStoreKeyBuf = getPooledKeyBuffer();
+            final PooledByteBuffer pooledOtherRefDataValueBuf = getPooledValueBuffer()) {
 
-            Optional<ByteBuffer> optCurrentValueBuf = getAsBytes(txn, valueStoreKeyBuf);
+                keySerde.serialize(pooledValueStoreKeyBuf.getByteBuffer(), valueStoreKey);
 
-            if (optCurrentValueBuf.isPresent()) {
-                ByteBuffer otherRefDataValueBuf = valueSerde.serialize(otherRefDataValue);
-                areValuesEqual = valueSerde.areValuesEqual(optCurrentValueBuf.get(), otherRefDataValueBuf);
-            } else {
-                areValuesEqual = false;
+                Optional<ByteBuffer> optCurrentValueBuf = getAsBytes(txn, pooledValueStoreKeyBuf.getByteBuffer());
+
+                if (optCurrentValueBuf.isPresent()) {
+                    valueSerde.serialize(pooledOtherRefDataValueBuf.getByteBuffer(), otherRefDataValue);
+                    areValuesEqual = valueSerde.areValuesEqual(optCurrentValueBuf.get(), pooledOtherRefDataValueBuf.getByteBuffer());
+                } else {
+                    areValuesEqual = false;
+                }
             }
         }
         return areValuesEqual;
@@ -118,8 +123,10 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
     public void deReferenceOrDeleteValue(final Txn<ByteBuffer> writeTxn, final ValueStoreKey valueStoreKey) {
         LOGGER.trace("deReferenceValue({}, {})", writeTxn, valueStoreKey);
 
-        ByteBuffer keyBuffer = keySerde.serialize(valueStoreKey);
-        deReferenceOrDeleteValue(writeTxn, keyBuffer);
+        try(final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()) {
+            keySerde.serialize(pooledKeyBuffer.getByteBuffer(), valueStoreKey);
+            deReferenceOrDeleteValue(writeTxn, pooledKeyBuffer.getByteBuffer());
+        }
     }
 
     /**
@@ -130,7 +137,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
         LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("deReferenceValue({}, {})",
                 writeTxn, ByteBufferUtils.byteBufferInfo(keyBuffer)));
 
-        try (Cursor<ByteBuffer> cursor = lmdbDbi.openCursor(writeTxn)) {
+        try (Cursor<ByteBuffer> cursor = getLmdbDbi().openCursor(writeTxn)) {
 
             boolean isFound = cursor.get(keyBuffer, GetOp.MDB_SET_KEY);
             if (!isFound) {
@@ -204,7 +211,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
         final ByteBuffer startKey = buildStartKeyBuffer(refDataValue);
         ByteBuffer lastKeyBufferClone = null;
 
-        try (Cursor<ByteBuffer> cursor = lmdbDbi.openCursor(writeTxn)) {
+        try (Cursor<ByteBuffer> cursor = getLmdbDbi().openCursor(writeTxn)) {
             //get this key or one greater than it
             boolean isFound = cursor.get(startKey, GetOp.MDB_SET_RANGE);
 

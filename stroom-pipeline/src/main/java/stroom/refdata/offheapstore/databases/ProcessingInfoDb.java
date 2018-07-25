@@ -45,7 +45,7 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
     }
 
     public void updateLastAccessedTime(final RefStreamDefinition refStreamDefinition) {
-        LmdbUtils.doWithWriteTxn(lmdbEnvironment, writeTxn ->
+        LmdbUtils.doWithWriteTxn(getLmdbEnvironment(), writeTxn ->
                 updateValue(writeTxn,
                         refStreamDefinition,
                         valueSerde::updateLastAccessedTime));
@@ -80,9 +80,9 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
     }
 
     public ProcessingState getProcessingState(final RefStreamDefinition refStreamDefinition) {
-        return LmdbUtils.getWithReadTxn(lmdbEnvironment, byteBufferPool, (readTxn, keyBuffer) -> {
+        return LmdbUtils.getWithReadTxn(getLmdbEnvironment(), getByteBufferPool(), (readTxn, keyBuffer) -> {
             keySerde.serialize(keyBuffer, refStreamDefinition);
-            ByteBuffer valueBuffer = lmdbDbi.get(readTxn, keyBuffer);
+            ByteBuffer valueBuffer = getLmdbDbi().get(readTxn, keyBuffer);
             return RefDataProcessingInfoSerde.extractProcessingState(valueBuffer);
         });
     }
@@ -106,7 +106,7 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
         }
         int i = 0;
 
-        try (CursorIterator<ByteBuffer> cursorIterator = lmdbDbi.iterate(txn, keyRange)) {
+        try (CursorIterator<ByteBuffer> cursorIterator = getLmdbDbi().iterate(txn, keyRange)) {
             for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
                 i++;
 

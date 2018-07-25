@@ -78,7 +78,7 @@ public class TestProcessingInfoDb extends AbstractLmdbDbTest {
         didSucceed = processingInfoDb.put(refStreamDefinitionB, refDataProcessingInfoB, false);
         assertThat(didSucceed).isTrue();
 
-        Map<String, String> dbInfo = LmdbUtils.getDbInfo(lmdbEnv, processingInfoDb.getLmdbDbi());
+        Map<String, String> dbInfo = processingInfoDb.getDbInfo();
         LOGGER.debug("DB info: {}", dbInfo);
 
         int entries = Optional.ofNullable(dbInfo.get("entries")).map(Integer::parseInt).orElse(-1);

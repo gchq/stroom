@@ -23,13 +23,13 @@ import stroom.refdata.offheapstore.ByteBufferPool;
 
 import java.nio.ByteBuffer;
 
-public class BasicLmdbDb<K,V> extends AbstractLmdbDb<K, V> {
+public class BasicLmdbDb<K, V> extends AbstractLmdbDb<K, V> {
 
     private final String name;
 
     public BasicLmdbDb(final Env<ByteBuffer> lmdbEnvironment,
                        final ByteBufferPool byteBufferPool,
-                final Serde<K> keySerde,
+                       final Serde<K> keySerde,
                        final Serde<V> valueSerde,
                        final String dbName) {
         super(lmdbEnvironment, byteBufferPool, keySerde, valueSerde, dbName);
