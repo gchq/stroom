@@ -17,7 +17,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { compose, lifecycle } from 'recompose';
+import { compose, lifecycle, withProps } from 'recompose';
 // import Mousetrap from 'mousetrap'; //TODO
 import { push } from 'react-router-redux';
 
@@ -26,16 +26,38 @@ import 'semantic-ui-css/semantic.min.css';
 
 import { withConfig } from 'startup/config';
 import ClickCounter from 'lib/ClickCounter';
+import { search } from './streamAttributeMapClient';
+
+const propTypes = {
+  dataViewerId: PropTypes.string.isRequired,
+};
 
 const enhance = compose(
   withConfig,
-  connect((state, props) => ({}), {}),
+  connect(
+    (state, props) => {
+      const streamAttributeMaps =
+        state[props.dataViewerId] === undefined
+          ? []
+          : state[props.dataViewerId].streamAttributeMaps;
+      const total =
+        state[props.dataViewerId] === undefined ? undefined : state[props.dataViewerId].total;
+      return {
+        streamAttributeMaps,
+        total,
+      };
+    },
+    { search },
+  ),
   lifecycle({
-    componentDidMount() {},
+    componentDidMount() {
+      const { search, dataViewerId } = this.props;
+      search(dataViewerId, 0, 20);
+    },
   }),
 );
 
-const DataViewer = ({}) => {
+const DataViewer = ({ dataViewerId }) => {
   console.log('todo: data viewer');
 
   return (
@@ -43,6 +65,10 @@ const DataViewer = ({}) => {
       <p>todo</p>
     </Container>
   );
+};
+
+DataViewer.propTypes = {
+  dataViewerId: PropTypes.string.isRequired,
 };
 
 export default enhance(DataViewer);

@@ -137,7 +137,8 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
                         if (dataRetentionPolicy != null && dataRetentionPolicy.getRules() != null) {
                             rules = dataRetentionPolicy.getRules();
                         }
-                        final StreamAttributeMapRetentionRuleDecorator ruleDecorator = new StreamAttributeMapRetentionRuleDecorator(dictionaryStore, rules);
+                        final StreamAttributeMapRetentionRuleDecorator ruleDecorator =
+                                new StreamAttributeMapRetentionRuleDecorator(dictionaryStore, rules);
 
                         // Query the database for the attribute values
                         if (criteria.isUseCache()) {
@@ -160,7 +161,9 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
      * Load attributes from database
      */
     private void loadAttributeMapFromDatabase(final FindStreamAttributeMapCriteria criteria,
-                                              final List<StreamAttributeMap> streamMDList, final BaseResultList<Stream> streamList, final StreamAttributeMapRetentionRuleDecorator ruleDecorator) {
+                                              final List<StreamAttributeMap> streamMDList,
+                                              final BaseResultList<Stream> streamList,
+                                              final StreamAttributeMapRetentionRuleDecorator ruleDecorator) {
         final Map<Long, StreamAttributeMap> streamMap = new HashMap<>();
 
         // Get a list of valid stream ids.
@@ -238,15 +241,28 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
         streamMap.values().parallelStream().forEach(ruleDecorator::addMatchingRetentionRuleInfo);
     }
 
-    private void resolveRelations(final FindStreamAttributeMapCriteria criteria, final Stream stream, final Map<EntityRef, Optional<Object>> entityCache, final Map<DocRef, Optional<Object>> uuidCache) throws PermissionException {
+    private void resolveRelations(final FindStreamAttributeMapCriteria criteria,
+                                  final Stream stream,
+                                  final Map<EntityRef, Optional<Object>> entityCache,
+                                  final Map<DocRef, Optional<Object>> uuidCache) throws PermissionException {
         if (stream.getFeed() != null && criteria.getFetchSet().contains(Feed.ENTITY_TYPE)) {
             final EntityRef ref = new EntityRef(Feed.ENTITY_TYPE, stream.getFeed().getId());
-            entityCache.computeIfAbsent(ref, key -> safeOptional(() -> feedService.loadById(key.id))).ifPresent(obj -> stream.setFeed((Feed) obj));
+            entityCache
+                    .computeIfAbsent(ref, key -> safeOptional(() -> feedService.loadById(key.id)))
+                    .ifPresent(obj -> stream.setFeed((Feed) obj));
+            if (stream.getFeed().getStreamType() != null && criteria.getFetchSet().contains(StreamType.ENTITY_TYPE)) {
+                final EntityRef streamTypeRef = new EntityRef(StreamType.ENTITY_TYPE, stream.getFeed().getStreamType().getId());
+                entityCache
+                        .computeIfAbsent(streamTypeRef, key -> safeOptional(() -> streamTypeService.loadById(key.id)))
+                        .ifPresent(obj -> stream.getFeed().setStreamType((StreamType) obj));
+            }
         }
 
         if (stream.getStreamType() != null && criteria.getFetchSet().contains(StreamType.ENTITY_TYPE)) {
             final EntityRef ref = new EntityRef(StreamType.ENTITY_TYPE, stream.getStreamType().getId());
-            entityCache.computeIfAbsent(ref, key -> safeOptional(() -> streamTypeService.loadById(key.id))).ifPresent(obj -> stream.setStreamType((StreamType) obj));
+            entityCache
+                    .computeIfAbsent(ref, key -> safeOptional(() -> streamTypeService.loadById(key.id)))
+                    .ifPresent(obj -> stream.setStreamType((StreamType) obj));
         }
 
         if (stream.getStreamProcessor() != null && criteria.getFetchSet().contains(StreamProcessor.ENTITY_TYPE)) {
@@ -256,7 +272,8 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
             // stream.
             final EntityRef ref = new EntityRef(StreamProcessor.ENTITY_TYPE, stream.getStreamProcessor().getId());
             final Optional<Object> optional = entityCache.computeIfAbsent(ref, key -> {
-                final Optional<Object> optionalStreamProcessor = safeOptional(() -> streamProcessorService.loadByIdInsecure(key.id));
+                final Optional<Object> optionalStreamProcessor = safeOptional(() -> streamProcessorService
+                        .loadByIdInsecure(key.id));
                 if (criteria.getFetchSet().contains(PipelineDoc.DOCUMENT_TYPE)) {
                     optionalStreamProcessor.ifPresent(proc -> {
                         final StreamProcessor streamProcessor = (StreamProcessor) proc;
@@ -290,7 +307,9 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
     }
 
     private void loadAttributeMapFromFileSystem(final FindStreamAttributeMapCriteria criteria,
-                                                final List<StreamAttributeMap> streamMDList, final BaseResultList<Stream> streamList, final StreamAttributeMapRetentionRuleDecorator ruleDecorator) {
+                                                final List<StreamAttributeMap> streamMDList,
+                                                final BaseResultList<Stream> streamList,
+                                                final StreamAttributeMapRetentionRuleDecorator ruleDecorator) {
         final List<StreamAttributeKey> allKeys = streamAttributeKeyService.findAll();
         final Map<String, StreamAttributeKey> keyMap = new HashMap<>();
         for (final StreamAttributeKey key : allKeys) {
