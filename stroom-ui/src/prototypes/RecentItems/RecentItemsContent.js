@@ -17,15 +17,13 @@ import React from 'react';
 import { compose, lifecycle } from 'recompose';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
-
+import ReactDOM from 'react-dom';
 import { Input, Button, Header, Icon, Modal, Menu } from 'semantic-ui-react';
 
 import Mousetrap from 'mousetrap';
 
 import { actionCreators as recentItemsActionCreators } from './redux';
 import openDocRef from './openDocRef';
-
-import RecentItemsContent from './RecentItemsContent';
 
 const {
   recentItemsClosed,
@@ -39,6 +37,7 @@ const enhance = compose(
     (state, props) => ({
       isOpen: state.recentItems.isOpen,
       openItemStack: state.recentItems.openItemStack,
+      topItem: state.recentItems.openItemStack,
       selectedItem: state.recentItems.selectedItem,
       selectedDocRef: state.recentItems.selectedDocRef,
     }),
@@ -49,9 +48,39 @@ const enhance = compose(
       recentItemsSelectionDown,
     },
   ),
+  lifecycle({
+    componentDidMount() {
+      const {
+        recentItemsSelectionUp,
+        recentItemsSelectionDown,
+        openDocRef,
+        recentItemsClosed,
+        selectedDocRef,
+        history,
+        openItemStack,
+      } = this.props;
+
+      Mousetrap.bind(['k', 'up'], () => recentItemsSelectionUp());
+      Mousetrap.bind(['j', 'down'], () => recentItemsSelectionDown());
+      Mousetrap.bind('enter', () => {
+        if (selectedDocRef !== undefined) {
+          openDocRef(history, selectedDocRef);
+          recentItemsClosed();
+        } else if (openItemStack.length > 0) {
+          openDocRef(history, openItemStack[0]);
+          recentItemsClosed();
+        }
+      });
+    },
+    componentWillUnmount() {
+      Mousetrap.unbind(['k', 'up']);
+      Mousetrap.unbind(['j', 'down']);
+      Mousetrap.unbind('enter');
+    },
+  }),
 );
 
-const RecentItems = ({
+const RecentItemsContent = ({
   history,
   isOpen,
   recentItemsClosed,
@@ -62,17 +91,25 @@ const RecentItems = ({
   recentItemsSelectionUp,
   recentItemsSelectionDown,
 }) => (
-  <Modal open={isOpen} onClose={recentItemsClosed} size="small" dimmer="inverted">
-    <Header icon="file outline" content="Recent Items" />
-    <Modal.Content>
-      <RecentItemsContent />
-    </Modal.Content>
-    <Modal.Actions>
-      <Button negative onClick={recentItemsClosed} inverted>
-        <Icon name="checkmark" /> Close
-      </Button>{' '}
-    </Modal.Actions>
-  </Modal>
+  <Menu vertical fluid>
+    <div>
+      {openItemStack.map((docRef, i) => {
+        const title = docRef.name;
+        return (
+          <Menu.Item
+            active={selectedItem === i}
+            key={docRef.uuid}
+            name={title}
+            onClick={() => {
+              openDocRef(history, docRef);
+              recentItemsClosed();
+            }}
+          >
+            {title}
+          </Menu.Item>
+        );
+      })}
+    </div>
+  </Menu>
 );
-
-export default enhance(RecentItems);
+export default enhance(RecentItemsContent);
