@@ -22,6 +22,7 @@ import {
   iterateNodes,
   getIsInFilteredMap,
   deleteItemsFromTree,
+  addItemToTree,
   updateItemInTree,
 } from 'lib/treeUtils';
 
@@ -95,6 +96,9 @@ export const actionCreators = createActions({
     docRefs,
     bulkActionResult
   }),
+  DOC_REF_CREATED: (docRef, parentFolder) => ({
+    docRef, parentFolder
+  }),
   DOC_REF_RENAMED: (docRef, name, resultDocRef) => ({
     docRef,
     name,
@@ -126,13 +130,19 @@ function getIsValidFilterTerm(filterTerm) {
   return !!filterTerm && filterTerm.length > 1; // at least 2 characters
 }
 
-function getIsVisibleMap(documentTree, isInTypeFilterMap, isInSearchMap) {
+function getIsVisibleMap(documentTree, searchFilterFunc, typeFilterFunc) {
   const isVisible = {};
 
   iterateNodes(documentTree, (lineage, node) => {
-    const passesSearch = isInSearchMap[node.uuid];
-    const passesTypeFilter = isInTypeFilterMap[node.uuid];
-    isVisible[node.uuid] = passesSearch && passesTypeFilter;
+    let passesSearch = searchFilterFunc(lineage, node);
+    let passesTypeFilter = typeFilterFunc(lineage, node);
+
+    let nodeIsVisible = passesSearch && passesTypeFilter;
+    if (nodeIsVisible) {
+      lineage.forEach(n => isVisible[n.uuid] = true);
+    }
+
+    isVisible[node.uuid] = nodeIsVisible;
   });
 
   return isVisible;
@@ -173,8 +183,7 @@ function getFolderIsOpenMap(
   return isFolderOpen;
 }
 
-function getUpdatedExplorer(documentTree, explorer, searchExecutor, searchTerm, rawTypeFilters) {
-  let typeFilters = rawTypeFilters.filter(d => d !== 'Folder');
+function getUpdatedExplorer(documentTree, explorer, searchExecutor, searchTerm, typeFilters) {
   let searchResults;
   if (searchExecutor && searchTerm) {
     searchResults = searchExecutor
@@ -182,25 +191,26 @@ function getUpdatedExplorer(documentTree, explorer, searchExecutor, searchTerm, 
       .reduce((acc, curr) => ({ ...acc, [curr.uuid]: true }), {});
   }
 
-  const typeFilterFunction = (lineage, node) => {
-    if (typeFilters.length > 0) {
-      return typeFilters.includes(node.type);
-    }
-    return true;
-  };
-
   const isSearching = getIsValidFilterTerm(searchTerm);
+  const searchFilterFunc = (l, n) => !isSearching || !!searchResults[n.uuid];
   const isInSearchMap = getIsInFilteredMap(
     documentTree,
-    (l, n) => !isSearching || !!searchResults[n.uuid],
+    searchFilterFunc,
   );
-  const isInTypeFilterMap = getIsInFilteredMap(documentTree, typeFilterFunction);
+  const typeFilterFunc = (l, n) => (typeFilters.length === 0) || typeFilters.includes(n.type)
+  const isInTypeFilterMap = getIsInFilteredMap(
+    documentTree,
+    typeFilterFunc
+  );
+
+  // Derive the combined mapping of visibility
+  const isVisible = getIsVisibleMap(documentTree, searchFilterFunc, typeFilterFunc);
 
   return {
     ...explorer,
     typeFilters,
     searchTerm,
-    isVisible: getIsVisibleMap(documentTree, isInTypeFilterMap, isInSearchMap),
+    isVisible,
     isFolderOpen: getFolderIsOpenMap(
       documentTree,
       isInTypeFilterMap,
@@ -284,7 +294,7 @@ export const reducer = handleActions(
     DOC_EXPLORER_OPENED: (state, action) => {
       const { explorerId, allowMultiSelect, typeFilters } = action.payload;
       const typeFiltersToUse =
-        typeFilters.length > 0 ? typeFilters : state.docRefTypes;
+        (typeFilters && (typeFilters.length > 0)) ? typeFilters : state.docRefTypes;
       return {
         ...state,
         explorers: {
@@ -407,6 +417,14 @@ export const reducer = handleActions(
       const { bulkActionResult } = action.payload;
 
       const documentTree = deleteItemsFromTree(state.documentTree, bulkActionResult.docRefs.map(d => d.uuid));
+
+      return getStateAfterTreeUpdate(state, documentTree);
+    },
+
+    DOC_REF_CREATED: (state, action) => {
+      const { docRef, parentFolder } = action.payload;
+
+      const documentTree = addItemToTree(state.documentTree, parentFolder.uuid, docRef);
 
       return getStateAfterTreeUpdate(state, documentTree);
     },

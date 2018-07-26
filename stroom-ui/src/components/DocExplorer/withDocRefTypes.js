@@ -18,15 +18,18 @@ import { connect } from 'react-redux';
 import { branch, compose, renderComponent, lifecycle } from 'recompose';
 import { Loader } from 'semantic-ui-react';
 import { fetchDocRefTypes } from './explorerClient';
+import { withConfig } from 'startup/config';
 
 /**
  * Higher Order Component that kicks off the fetch of the doc ref types, and waits by rendering a Loader until
  * they are returned.
  */
 export default compose(
+  withConfig,
   connect(
     (state, props) => ({
       isDocRefTypeListReady: state.docExplorer.explorerTree.isDocRefTypeListReady,
+      docRefTypes: state.docExplorer.explorerTree.docRefTypes,
     }),
     {
       fetchDocRefTypes,

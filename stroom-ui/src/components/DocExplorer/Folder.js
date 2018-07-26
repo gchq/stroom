@@ -102,7 +102,7 @@ const _Folder = ({
   setContextMenuOpen,
 }) => {
   const thisIsOpen = !!explorer.isFolderOpen[folder.uuid];
-  const icon = thisIsOpen ? 'caret down' : 'caret right';
+  const icon = thisIsOpen ? 'folder open' : 'folder';
   const isSelected = explorer.isSelected[folder.uuid];
 
   let className = '';

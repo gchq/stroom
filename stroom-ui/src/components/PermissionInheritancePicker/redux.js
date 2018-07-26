@@ -26,9 +26,9 @@ const defaultState = {};
 
 export const reducer = handleActions(
   {
-    PERMISSION_INHERITANCE_PICKED: (state, action) => ({
+    PERMISSION_INHERITANCE_PICKED: (state, { payload: { pickerId, permissionInheritance } }) => ({
       ...state,
-      [action.payload.pickerId]: action.payload.permissionInheritance,
+      [pickerId]: permissionInheritance,
     }),
   },
   defaultState,

@@ -16,16 +16,16 @@
 import { createActions, handleActions } from 'redux-actions';
 
 export const actionCreators = createActions({
-  DOC_REF_PICKED: (pickerId, docRef) => ({ pickerId, docRef }),
+  DOC_REF_PICKED: (pickerId, docRef, lineage) => ({ pickerId, docRef, lineage }),
 });
 
 const defaultState = {};
 
 export const reducer = handleActions(
   {
-    DOC_REF_PICKED: (state, action) => ({
+    DOC_REF_PICKED: (state, { payload: { pickerId, docRef, lineage } }) => ({
       ...state,
-      [action.payload.pickerId]: action.payload.docRef,
+      [pickerId]: { docRef, lineage },
     }),
   },
   defaultState,

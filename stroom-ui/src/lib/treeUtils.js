@@ -220,13 +220,14 @@ export function iterateNodes(tree, callback, lineage) {
  *
  * @param {treeNode} tree The tree through which to search
  * @param {function} filterFunction Callback that takes (lineage, node) and returns true/false for inclusion in random options
+ * @return {object} Containing { node, lineage} of picked item
  */
 export function pickRandomItem(tree, filterFunction) {
   const options = [];
 
   iterateNodes(tree, (lineage, node) => {
     if (filterFunction(lineage, node)) {
-      options.push(node);
+      options.push({ node, lineage });
     }
   });
 
@@ -238,21 +239,25 @@ export function pickRandomItem(tree, filterFunction) {
 }
 
 /**
- * Given a tree, and a UUID, finds and returns the matching object.
+ * Given a tree, and a UUID, finds and returns the matching object and it's lineage
  *
  * @param {treeNode} tree
  * @param {string} uuid
  */
 export function findItem(tree, uuid) {
-  if (tree.uuid === uuid) {
-    return tree;
-  } else if (tree.children) {
-    const nested = tree.children.map(c => findItem(c, uuid)).filter(c => !!c);
-    if (!!nested && nested.length > 0) {
-      return nested[0];
+  let foundNode,
+    foundLineage;
+  iterateNodes(tree, (lineage, node) => {
+    if (node.uuid === uuid) {
+      foundNode = node;
+      foundLineage = lineage;
     }
-  }
-  return undefined;
+  });
+
+  return {
+    node: foundNode,
+    lineage: foundLineage,
+  };
 }
 
 /**
@@ -358,7 +363,9 @@ export function addItemToTree(treeNode, parentUuid, item) {
   }
 
   if (treeNode.uuid === parentUuid) {
-    item.uuid = guid();
+    if (!item.uuid) {
+      item.uuid = guid();
+    }
     children.push(item);
   }
 
@@ -383,22 +390,21 @@ export function getIsInFilteredMap(treeNode, filterFunction) {
   // This will be the return map
   const inFilteredMap = {};
 
-  // This is a map where the value is true only if the item matches (condition 1 from above)
-  const directMatches = {};
-
   // compose a map that indicates 'true' for all directly passing nodes
   iterateNodes(treeNode, (lineage, node) => {
-    directMatches[node.uuid] = filterFunction(lineage, node);
-  });
+    if (inFilteredMap[node.uuid] === undefined) {
+      inFilteredMap[node.uuid] = false;
+    }
 
-  // Ensure any containing folders are included in the return map
-  iterateNodes(treeNode, (lineage, node) => {
-    // If anything in the lineage or the node itself passes our filter...
-    const allNodes = lineage.concat([node]);
-    const anyMatches = allNodes.filter(n => directMatches[n.uuid]).length > 0;
-
-    // Set the values in the return map for all the nodes
-    allNodes.forEach(n => (inFilteredMap[n.uuid] = !!inFilteredMap[n.uuid] || anyMatches));
+    const thisOneMatches = filterFunction(lineage, node);
+    if (thisOneMatches) {
+      // Place this node's uuid, and the UUID's of it's ancestry within the filtered map, if they aren't there already
+      lineage
+        .map(n => n.uuid)
+        .concat([node.uuid])
+        .filter(matchUuid => !inFilteredMap[matchUuid])
+        .forEach(matchUuid => (inFilteredMap[node.uuid] = true));
+    }
   });
 
   return inFilteredMap;

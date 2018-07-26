@@ -146,16 +146,18 @@ const LineContainer = ({
   );
 };
 
-LineContainer.propTypes = {
+const EnhancedLineContainer = enhance(LineContainer);
+
+EnhancedLineContainer.propTypes = {
   lineContextId: PropTypes.string.isRequired,
   lineElementCreators: PropTypes.object.isRequired, // {'someLineType': ({lineId, fromRect, toRect}) => (<div>)}
   className: PropTypes.string,
 };
 
-LineContainer.defaultProps = {
+EnhancedLineContainer.defaultProps = {
   lineElementCreators: {
     [DEFAULT_LINE_TYPE]: straightLineCreator,
   },
 };
 
-export default enhance(LineContainer);
+export default EnhancedLineContainer;

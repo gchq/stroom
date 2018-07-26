@@ -84,6 +84,53 @@ public class ExplorerResource {
         return Response.ok(docRefTypes).build();
     }
 
+    static class CreateOp {
+        private String docRefType;
+        private String docRefName;
+        private DocRef destinationFolderRef;
+        private PermissionInheritance permissionInheritance;
+
+        public String getDocRefType() {
+            return docRefType;
+        }
+
+        public void setDocRefType(String docRefType) {
+            this.docRefType = docRefType;
+        }
+
+        public String getDocRefName() {
+            return docRefName;
+        }
+
+        public void setDocRefName(String docRefName) {
+            this.docRefName = docRefName;
+        }
+
+        public DocRef getDestinationFolderRef() {
+            return destinationFolderRef;
+        }
+
+        public void setDestinationFolderRef(DocRef destinationFolderRef) {
+            this.destinationFolderRef = destinationFolderRef;
+        }
+
+        public PermissionInheritance getPermissionInheritance() {
+            return permissionInheritance;
+        }
+
+        public void setPermissionInheritance(PermissionInheritance permissionInheritance) {
+            this.permissionInheritance = permissionInheritance;
+        }
+    }
+
+    @POST
+    @Path("/create")
+    public Response createDocument(final CreateOp op) {
+        final DocRef result = explorerService.create(op.docRefType, op.docRefName, op.destinationFolderRef, op.permissionInheritance);
+
+        return Response.ok(result).build();
+    }
+
     static class CopyOp {
         private List<DocRef> docRefs;
         private DocRef destinationFolderRef;

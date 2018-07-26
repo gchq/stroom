@@ -24,13 +24,16 @@ import Mousetrap from 'mousetrap';
 
 import { actionCreators as recentItemsActionCreators } from 'prototypes/RecentItems/redux';
 import { actionCreators as appSearchActionCreators } from 'prototypes/AppSearch/redux';
+import { actionCreators as newDocActionCreators } from 'prototypes/NewDocDialog/redux';
 import ActionBarItem from './ActionBarItem';
+import NewDocDialog from 'prototypes/NewDocDialog';
 import RecentItems from 'prototypes/RecentItems';
 import AppSearch from 'prototypes/AppSearch';
 import withLocalStorage from 'lib/withLocalStorage';
 
 const { recentItemsOpened } = recentItemsActionCreators;
 const { appSearchOpened } = appSearchActionCreators;
+const { startDocRefCreation } = newDocActionCreators;
 const withIsExpanded = withLocalStorage('isExpanded', 'setIsExpanded', true);
 
 const SIDE_BAR_COLOUR = 'blue';
@@ -41,6 +44,7 @@ const enhance = compose(
   connect((state, props) => ({}), {
     recentItemsOpened,
     appSearchOpened,
+    startDocRefCreation,
   }),
   withRouter,
   withIsExpanded,
@@ -48,6 +52,7 @@ const enhance = compose(
     componentDidMount() {
       Mousetrap.bind('ctrl+shift+e', () => this.props.recentItemsOpened());
       Mousetrap.bind('ctrl+shift+f', () => this.props.appSearchOpened());
+      Mousetrap.bind('ctrl+shift+n', () => this.props.startDocRefCreation());
     },
   }),
   withProps(({
@@ -56,6 +61,7 @@ const enhance = compose(
     history,
     recentItemsOpened,
     appSearchOpened,
+    startDocRefCreation,
     actionBarItems,
   }) => ({
     menuItems: [
@@ -123,6 +129,12 @@ const enhance = compose(
         icon: 'search',
         content: 'Search for things',
       },
+      {
+        key: 'create_doc_ref',
+        onClick: startDocRefCreation,
+        icon: 'plus',
+        content: 'Create a new Doc Ref',
+      },
     ],
   })),
 );
@@ -135,11 +147,12 @@ const AppChrome = ({
   actionBarItems,
   isExpanded,
   menuItems,
-  actionBarAdditionalItems
+  actionBarAdditionalItems,
 }) => (
   <div className="app-chrome">
     <AppSearch />
     <RecentItems />
+    <NewDocDialog />
     <div className="app-chrome__sidebar">
       {isExpanded ? (
         <Menu vertical fluid color={SIDE_BAR_COLOUR} inverted>
@@ -172,23 +185,21 @@ const AppChrome = ({
       <div className="content-tabs">
         <div className="content-tabs__content">
           <Grid>
-            <Grid.Column width={12}>
+            <Grid.Column width={8}>
               <Header as="h3">
                 <Icon name={icon} color="grey" />
                 {headerContent}
               </Header>
             </Grid.Column>
-            <Grid.Column width={2}>
-              {actionBarAdditionalItems}
-            </Grid.Column>
-            <Grid.Column width={2}>
+            <Grid.Column width={4}>{actionBarAdditionalItems}</Grid.Column>
+            <Grid.Column width={4}>
               {actionBarItems.map(aBarItem => (
                 <ActionBarItem
                   key={aBarItem.key}
                   onClick={aBarItem.onClick}
                   content={aBarItem.content}
                   buttonProps={{
-                    icon: aBarItem.icon
+                    icon: aBarItem.icon,
                   }}
                 />
               ))}

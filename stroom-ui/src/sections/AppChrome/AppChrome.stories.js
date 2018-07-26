@@ -25,7 +25,7 @@ import { AppChrome } from './index';
 import TrackerDashboard from 'sections/TrackerDashboard';
 import PipelineEditor, {
   ActionBarItems as PipelineEditorActionBarItems,
-  HeaderContent as PipelineEditorHeaderContent
+  HeaderContent as PipelineEditorHeaderContent,
 } from 'components/PipelineEditor';
 import XsltEditor from 'prototypes/XsltEditor';
 import PipelineSearch from 'components/PipelineSearch';
@@ -240,6 +240,11 @@ storiesOf('App Chrome', module)
   .addDecorator(DragDropDecorator)
   .addDecorator(StoryRouter())
   .add('Just the chrome', props => (
-    <AppChrome headerContent={<Header.Content>Stuff</Header.Content>} icon="cog" content={<div>Stuff goes here</div>} />
+    <AppChrome
+      activeMenuItem="welcome"
+      headerContent={<Header.Content>Stuff</Header.Content>}
+      icon="cogs"
+      content={<div>Stuff goes here</div>}
+    />
   ))
   .add('With routing', () => <AppChromeWithRouter />);

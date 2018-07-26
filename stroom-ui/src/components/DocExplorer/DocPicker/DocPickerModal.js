@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import { compose, withState, lifecycle, branch, renderComponent } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Button, Modal, Input, Loader } from 'semantic-ui-react';
+import { Button, Modal, Input, Loader, Breadcrumb, Dropdown } from 'semantic-ui-react';
 
 import { findItem } from 'lib/treeUtils';
 import { actionCreators } from '../redux';
@@ -38,7 +38,7 @@ const enhance = compose(
   connect(
     (state, props) => ({
       documentTree: state.docExplorer.explorerTree.documentTree,
-      docRef: state.docExplorer.docRefPicker[props.pickerId],
+      docRefWithLineage: state.docExplorer.docRefPicker[props.pickerId],
       explorer: state.docExplorer.explorerTree.explorers[props.pickerId],
     }),
     {
@@ -50,7 +50,7 @@ const enhance = compose(
   lifecycle({
     componentDidMount() {
       const { docExplorerOpened, pickerId, typeFilters } = this.props;
-      docExplorerOpened(pickerId, false, false, typeFilters);
+      docExplorerOpened(pickerId, false, typeFilters);
     },
   }),
   withModal,
@@ -64,7 +64,7 @@ const DocPickerModal = ({
   isSelected,
   documentTree,
   docRefPicked,
-  docRef,
+  docRefWithLineage,
   isOpen,
   pickerId,
   typeFilters,
@@ -72,7 +72,7 @@ const DocPickerModal = ({
   explorer,
   onChange,
 }) => {
-  const value = docRef ? docRef.name : '';
+  const value = docRefWithLineage ? docRefWithLineage.docRef.name : '';
 
   const handleOpen = () => setIsOpen(true);
 
@@ -80,25 +80,45 @@ const DocPickerModal = ({
 
   const onDocRefSelected = () => {
     Object.keys(explorer.isSelected).forEach((pickedUuid) => {
-      const picked = findItem(documentTree, pickedUuid);
+      const { node, lineage } = findItem(documentTree, pickedUuid);
       // The 'children' property is just for the tree. It's not part of the DocRef and we need to remove it.
       // If left in it will get sent to the server and cause deserialisation errors.
-      delete picked.children;
-      docRefPicked(pickerId, picked);
-      onChange(picked);
+      docRefPicked(pickerId, node, lineage);
+      onChange({ node, lineage });
     });
 
     handleClose();
   };
 
+  let trigger;
+  if (docRefWithLineage) {
+    const triggerValue = `${docRefWithLineage.lineage.map(d => d.name).join(' > ')} > ${
+      docRefWithLineage.docRef.name
+    }`;
+    trigger = (
+      <Dropdown
+        // it moans about mixing trigger and selection, but it's the only way to make it look right..?
+        selection
+        fluid
+        onFocus={handleOpen}
+        trigger={
+          <span>
+            <img
+              className="doc-ref__icon"
+              alt="X"
+              src={require(`../images/${docRefWithLineage.docRef.type}.svg`)}
+            />
+            {triggerValue}
+          </span>
+        }
+      />
+    );
+  } else {
+    trigger = <Input fluid onFocus={handleOpen} value="..." />;
+  }
+
   return (
-    <Modal
-      trigger={<Input onFocus={handleOpen} value={`${value}...`} />}
-      open={isOpen}
-      onClose={handleClose}
-      size="small"
-      dimmer="inverted"
-    >
+    <Modal trigger={trigger} open={isOpen} onClose={handleClose} size="small" dimmer="inverted">
       <Modal.Header>Select a Doc Ref</Modal.Header>
       <Modal.Content scrolling>
         <DocPicker explorerId={pickerId} typeFilters={typeFilters} />
@@ -119,10 +139,17 @@ const DocPickerModal = ({
   );
 };
 
-DocPickerModal.propTypes = {
+const EnhancedDocPickerModal = enhance(DocPickerModal);
+
+EnhancedDocPickerModal.propTypes = {
   pickerId: PropTypes.string.isRequired,
-  typeFilters: PropTypes.array,
+  typeFilters: PropTypes.array.isRequired,
   onChange: PropTypes.func,
 };
 
-export default enhance(DocPickerModal);
+EnhancedDocPickerModal.defaultProps = {
+  typeFilters: [],
+  onChange: d => console.log('On Change Not Implemented, Falling back to Default', d),
+};
+
+export default EnhancedDocPickerModal;

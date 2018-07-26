@@ -48,7 +48,6 @@ const enhance = compose(
     componentDidMount() {
       const { docExplorerOpened, explorerId, typeFilters } = this.props;
       const allowMultiSelect = false;
-
       docExplorerOpened(explorerId, allowMultiSelect, typeFilters);
     },
   }),
@@ -59,7 +58,7 @@ const enhance = compose(
 );
 
 const DocPicker = ({
-  documentTree, explorerId, explorer, searchTermUpdated, foldersOnly,
+  documentTree, explorerId, explorer, searchTermUpdated, typeFilters,
 }) => (
   <div>
     <Input
@@ -68,17 +67,19 @@ const DocPicker = ({
       value={explorer.searchTerm}
       onChange={e => searchTermUpdated(explorerId, e.target.value)}
     />
-    <FolderToPick explorerId={explorerId} folder={documentTree} foldersOnly={foldersOnly} />
+    <FolderToPick explorerId={explorerId} folder={documentTree} typeFilters={typeFilters} />
   </div>
 );
 
-DocPicker.propTypes = {
+const EnhancedDocPicker = enhance(DocPicker);
+
+EnhancedDocPicker.propTypes = {
   explorerId: PropTypes.string.isRequired,
-  foldersOnly: PropTypes.bool.isRequired,
+  typeFilters: PropTypes.array.isRequired,
 };
 
-DocPicker.defaultProps = {
-  foldersOnly: false,
+EnhancedDocPicker.defaultProps = {
+  typeFilters: [],
 };
 
-export default enhance(DocPicker);
+export default EnhancedDocPicker;

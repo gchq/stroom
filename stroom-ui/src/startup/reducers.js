@@ -21,6 +21,8 @@ import {
   authenticationReducer as authentication,
   authorisationReducer as authorisation,
 } from 'startup/Authentication';
+import { reducer as permissionInheritancePicker } from 'components/PermissionInheritancePicker';
+import { reducer as newDoc } from 'prototypes/NewDocDialog';
 import { reducer as lineContainer } from 'components/LineTo';
 import { reducer as docExplorer } from 'components/DocExplorer/redux';
 import { reducer as expressionBuilder } from 'components/ExpressionBuilder';
@@ -41,6 +43,7 @@ export default combineReducers({
   config,
   trackerDashboard,
   docExplorer,
+  newDoc,
   expressionBuilder,
   pipelineEditor,
   xslt,
@@ -49,4 +52,5 @@ export default combineReducers({
   fetch,
   recentItems,
   appSearch,
+  permissionInheritancePicker,
 });

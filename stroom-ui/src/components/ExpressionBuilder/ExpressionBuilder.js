@@ -102,14 +102,16 @@ const ExpressionBuilder = ({
   );
 };
 
-ExpressionBuilder.propTypes = {
+const EnhancedExpressionBuilder = enhance(ExpressionBuilder);
+
+EnhancedExpressionBuilder.propTypes = {
   dataSourceUuid: PropTypes.string, // if not set, the expression will be read only
   expressionId: PropTypes.string.isRequired,
   allowEdit: PropTypes.bool.isRequired,
 };
 
-ExpressionBuilder.defaultProps = {
+EnhancedExpressionBuilder.defaultProps = {
   allowEdit: false,
 };
 
-export default enhance(ExpressionBuilder);
+export default EnhancedExpressionBuilder;

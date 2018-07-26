@@ -21,20 +21,21 @@ import { connect } from 'react-redux';
 
 import { Modal, Button } from 'semantic-ui-react';
 
+import { guid } from 'lib/treeUtils';
 import { actionCreators } from './redux';
 import { moveDocuments } from './explorerClient';
 
 import DocPicker from './DocPicker/DocPicker';
-import PermissionInheritancePicker from './PermissionInheritancePicker';
+import PermissionInheritancePicker from 'components/PermissionInheritancePicker';
 
 const { completeDocRefMove } = actionCreators;
 
 const enhance = compose(
   withProps(({ explorerId }) => ({
-    explorerId: `copy-doc-ref-${explorerId}`,
+    explorerId: `move-doc-ref-${explorerId || guid()}`,
   })),
   connect(
-    ({ docExplorer }, { explorerId }) => {
+    ({ docExplorer, permissionInheritancePicker }, { explorerId }) => {
       let selectedDocRef;
       const explorer = docExplorer.explorerTree.explorers[explorerId];
       if (explorer) {
@@ -49,7 +50,7 @@ const enhance = compose(
       return {
         isMoving: docExplorer.moveDocRef.isMoving,
         docRefs: docExplorer.moveDocRef.docRefs,
-        permissionInheritance: docExplorer.permissionInheritancePicker[explorerId],
+        permissionInheritance: permissionInheritancePicker[explorerId],
         selectedDocRef,
       };
     },
@@ -69,7 +70,7 @@ const MoveDocRefDialog = ({
   <Modal open={isMoving}>
     <Modal.Header>Select a Destination Folder for the Move</Modal.Header>
     <Modal.Content scrolling>
-      <DocPicker explorerId={explorerId} typeFilters={["Folder"]} foldersOnly />
+      <DocPicker explorerId={explorerId} typeFilters={['Folder']} />
       <PermissionInheritancePicker pickerId={explorerId} />
     </Modal.Content>
     <Modal.Actions>

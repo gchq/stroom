@@ -34,7 +34,7 @@ const enhance = compose(
   withDocRefTypes,
   connect(
     ({ docExplorer }, { explorerId }) => ({
-      typeFilters: docExplorer.explorerTree.explorers[explorerId].typeFilters,
+      typeFilters: docExplorer.explorerTree.explorers[explorerId].typeFilters.filter(d => d !== 'Folder'),
       docRefTypes: docExplorer.explorerTree.docRefTypes.filter(d => d !== 'Folder'),
     }),
     { typeFilterChanged },
@@ -48,9 +48,6 @@ const enhance = compose(
     } else {
       allSelectState = ALL_SELECT_STATE.INDETERMINATE;
     }
-    console.log('Doc REf Types', docRefTypes);
-    console.log('Type Filters', typeFilters);
-    console.log('All State', allSelectState);
     return {
       allSelectState,
     };
