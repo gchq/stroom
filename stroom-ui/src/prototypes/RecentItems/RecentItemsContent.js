@@ -31,6 +31,10 @@ const {
   recentItemsSelectionDown,
 } = recentItemsActionCreators;
 
+const upKeys = ['k', 'ctrl+k', 'up'];
+const downKeys = ['j', 'ctrl+j', 'down'];
+const openKeys = ['enter'];
+
 const enhance = compose(
   withRouter,
   connect(
@@ -59,9 +63,9 @@ const enhance = compose(
         openItemStack,
       } = this.props;
 
-      Mousetrap.bind(['k', 'up'], () => recentItemsSelectionUp());
-      Mousetrap.bind(['j', 'down'], () => recentItemsSelectionDown());
-      Mousetrap.bind('enter', () => {
+      Mousetrap.bind(upKeys, () => recentItemsSelectionUp());
+      Mousetrap.bind(downKeys, () => recentItemsSelectionDown());
+      Mousetrap.bind(openKeys, () => {
         if (this.props.selectedDocRef !== undefined) {
           openDocRef(history, this.props.selectedDocRef);
           recentItemsClosed();
@@ -72,9 +76,9 @@ const enhance = compose(
       });
     },
     componentWillUnmount() {
-      Mousetrap.unbind(['k', 'up']);
-      Mousetrap.unbind(['j', 'down']);
-      Mousetrap.unbind('enter');
+      Mousetrap.unbind(upKeys);
+      Mousetrap.unbind(downKeys);
+      Mousetrap.unbind(openKeys);
     },
   }),
 );
