@@ -55,7 +55,6 @@ const enhance = compose(
         recentItemsSelectionDown,
         openDocRef,
         recentItemsClosed,
-        selectedDocRef,
         history,
         openItemStack,
       } = this.props;
@@ -63,8 +62,8 @@ const enhance = compose(
       Mousetrap.bind(['k', 'up'], () => recentItemsSelectionUp());
       Mousetrap.bind(['j', 'down'], () => recentItemsSelectionDown());
       Mousetrap.bind('enter', () => {
-        if (selectedDocRef !== undefined) {
-          openDocRef(history, selectedDocRef);
+        if (this.props.selectedDocRef !== undefined) {
+          openDocRef(history, this.props.selectedDocRef);
           recentItemsClosed();
         } else if (openItemStack.length > 0) {
           openDocRef(history, openItemStack[0]);
