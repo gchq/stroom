@@ -33,30 +33,38 @@ const propTypes = {
   dataViewerId: PropTypes.string.isRequired,
 };
 
+const startPage = 0;
+const defaultPageSize = 10;
+
 const enhance = compose(
   withConfig,
   connect(
     (state, props) => {
       const dataView = state.dataViewers[props.dataViewerId];
-      let total;
-      let streamAttributeMaps;
+      let total,
+        streamAttributeMaps,
+        pageSize,
+        pageOffset;
 
       if (dataView !== undefined) {
-        total = dataView.total;
-        streamAttributeMaps = dataView.streamAttributeMaps;
+        return dataView;
       }
 
       return {
-        streamAttributeMaps,
-        total,
+        streamAttributeMaps: [],
+        total: undefined,
+        pageSize: defaultPageSize,
+        pageOffset: startPage,
       };
     },
     { search },
   ),
   lifecycle({
     componentDidMount() {
-      const { search, dataViewerId } = this.props;
-      search(dataViewerId, 0, 20);
+      const {
+        search, dataViewerId, pageSize, pageOffset,
+      } = this.props;
+      search(dataViewerId, pageOffset, pageSize);
     },
   }),
   branch(
@@ -66,7 +74,14 @@ const enhance = compose(
 );
 
 const DataViewer = ({
-  dataViewerId, streamAttributeMaps, total, pageOffset, pageSize,
+  dataViewerId,
+  streamAttributeMaps,
+  total,
+  pageOffset,
+  pageSize,
+  nextPage,
+  previousPage,
+  search,
 }) => (
   <Table compact>
     <Table.Header>
@@ -80,7 +95,11 @@ const DataViewer = ({
 
     <Table.Body>
       {streamAttributeMaps.map(streamAttributeMap => (
-        <Table.Row>
+        <Table.Row
+          key={`${streamAttributeMap.stream.parentStreamId}_${streamAttributeMap.stream.id}_${
+            streamAttributeMap.stream.feed.id
+          }`}
+        >
           <Table.Cell>
             {moment(streamAttributeMap.stream.createMs).format('MMMM Do YYYY, h:mm:ss a')}
           </Table.Cell>
@@ -93,8 +112,23 @@ const DataViewer = ({
 
     <Table.Footer>
       <Table.Row>
-        <Table.HeaderCell colSpan="3">
-          <Pagination defaultActivePage={5} totalPages={10} />
+        <Table.HeaderCell colSpan="4">
+          <Pagination
+            activePage={pageOffset + 1}
+            boundaryRange="1"
+            onPageChange={(event, data) => {
+              console.log('sdfsd');
+              search(dataViewerId, data.activePage - 1, pageSize);
+            }}
+            size="mini"
+            // siblingRange={siblingRange}
+            ellipsisItem="?"
+            firstItem={null}
+            lastItem={null}
+            prevItem={previousPage}
+            nextItem={nextPage}
+            totalPages="10"
+          />
         </Table.HeaderCell>
       </Table.Row>
     </Table.Footer>

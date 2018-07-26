@@ -69,9 +69,12 @@ public class StreamAttributeMapResource implements HasHealthCheck {
                 return Response.status(Response.Status.BAD_REQUEST).entity("A pagination request requires both a pageSize and an offset").build();
             }
 
+            //Convert pageOffset (i.e. page from index 0) to item offset.
+            final long itemOffset = pageOffset * pageSize;
+
             // Configure default criteria
             FindStreamAttributeMapCriteria criteria = new FindStreamAttributeMapCriteria();
-            criteria.setPageRequest(new PageRequest(pageOffset, pageSize));
+            criteria.setPageRequest(new PageRequest(itemOffset, pageSize));
             // TODO Replace with Set.of() when we move to 1.9
             criteria.setFetchSet(Sets.newHashSet("StreamType", "StreamProcessor", "Volume", "Feed", "Pipeline"));
             criteria.setSort(new Sort("Create Time", Sort.Direction.DESCENDING, false));

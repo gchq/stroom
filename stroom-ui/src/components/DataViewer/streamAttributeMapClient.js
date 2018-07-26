@@ -8,13 +8,22 @@ export const search = (dataViewerId, pageOffset, pageSize) => (dispatch, getStat
   url += `pageSize=${pageSize}`;
   url += `&pageOffset=${pageOffset}`;
 
-  wrappedGet(dispatch, state, url, (response) => {
-    response.json().then((data) => {
-      dispatch(actionCreators.updateStreamAttributeMaps(
-        dataViewerId,
-        data.streamAttributeMaps,
-        data.pageResponse.total,
-      ));
-    });
-  });
+  wrappedGet(
+    dispatch,
+    state,
+    url,
+    (response) => {
+      response.json().then((data) => {
+        dispatch(actionCreators.updateStreamAttributeMaps(
+          dataViewerId,
+          data.streamAttributeMaps,
+          data.pageResponse.total,
+          pageSize,
+          pageOffset,
+        ));
+      });
+    },
+    null,
+    true,
+  );
 };

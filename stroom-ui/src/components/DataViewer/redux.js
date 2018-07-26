@@ -16,10 +16,18 @@
 import { createActions, handleActions } from 'redux-actions';
 
 const actionCreators = createActions({
-  UPDATE_STREAM_ATTRIBUTE_MAPS: (dataViewerId, streamAttributeMaps, total) => ({
+  UPDATE_STREAM_ATTRIBUTE_MAPS: (
     dataViewerId,
     streamAttributeMaps,
     total,
+    pageSize,
+    pageOffset,
+  ) => ({
+    dataViewerId,
+    streamAttributeMaps,
+    total,
+    pageSize,
+    pageOffset,
   }),
 });
 
@@ -29,10 +37,19 @@ const reducer = handleActions(
   {
     UPDATE_STREAM_ATTRIBUTE_MAPS: (
       state,
-      { payload: { dataViewerId, streamAttributeMaps, total } },
+      {
+        payload: {
+          dataViewerId, streamAttributeMaps, total, pageSize, pageOffset,
+        },
+      },
     ) => ({
       ...state,
-      [dataViewerId]: { total, streamAttributeMaps },
+      [dataViewerId]: {
+        total,
+        streamAttributeMaps,
+        pageSize,
+        pageOffset,
+      },
     }),
   },
   defaultState,
