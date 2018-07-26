@@ -17,11 +17,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { compose, lifecycle, withProps } from 'recompose';
+import { compose, lifecycle, withProps, branch, renderComponent } from 'recompose';
 // import Mousetrap from 'mousetrap'; //TODO
 import { push } from 'react-router-redux';
 
-import { Container, Card, Input, Pagination, Dropdown } from 'semantic-ui-react';
+import { Container, Card, Input, Pagination, Dropdown, Loader } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 
 import { withConfig } from 'startup/config';
@@ -36,12 +36,15 @@ const enhance = compose(
   withConfig,
   connect(
     (state, props) => {
-      const streamAttributeMaps =
-        state[props.dataViewerId] === undefined
-          ? []
-          : state[props.dataViewerId].streamAttributeMaps;
-      const total =
-        state[props.dataViewerId] === undefined ? undefined : state[props.dataViewerId].total;
+      const dataView = state.dataViewers[props.dataViewerId];
+      let total;
+      let streamAttributeMaps;
+
+      if (dataView !== undefined) {
+        total = dataView.total;
+        streamAttributeMaps = dataView.streamAttributeMaps;
+      }
+
       return {
         streamAttributeMaps,
         total,
@@ -55,17 +58,21 @@ const enhance = compose(
       search(dataViewerId, 0, 20);
     },
   }),
+  branch(
+    ({ streamAttributeMaps }) => !streamAttributeMaps,
+    renderComponent(() => <Loader active>Loading data</Loader>),
+  ),
 );
 
-const DataViewer = ({ dataViewerId }) => {
-  console.log('todo: data viewer');
-
-  return (
-    <Container className="DataViewer__container">
-      <p>todo</p>
-    </Container>
-  );
-};
+const DataViewer = ({
+  dataViewerId, streamAttributeMaps, total, pageOffset, pageSize,
+}) => (
+  <Container className="DataViewer__container">
+    {streamAttributeMaps.map((streamAttributeMap) => {
+        return <p>{streamAttributeMap.attributeKeySet}sdfsdfsdf</p>;
+      })}
+  </Container>
+);
 
 DataViewer.propTypes = {
   dataViewerId: PropTypes.string.isRequired,
