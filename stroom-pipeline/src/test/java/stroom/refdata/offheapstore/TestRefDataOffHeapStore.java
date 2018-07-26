@@ -396,7 +396,7 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
     }
 
     @Test
-    public void testPurgeOldData_simple() {
+    public void testPurgeOldData_all() {
 
         // two different ref stream definitions
         List<RefStreamDefinition> refStreamDefinitions = Arrays.asList(
@@ -422,6 +422,12 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
     }
 
 
+    @Test
+    public void testPurgeOldData_partial() {
+
+        loadBulkData(2, 2, 2, 10);
+    }
+
     private RefStreamDefinition buildUniqueRefStreamDefinition(final long streamId) {
         return new RefStreamDefinition(
                 UUID.randomUUID().toString(),
@@ -444,6 +450,72 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                 buildUniqueRefStreamDefinition());
 
         bulkLoadAndAssert(refStreamDefinitions, overwriteExisting, commitInterval);
+    }
+
+    private List<RefStreamDefinition> loadBulkData(
+            final int refStreamDefinitionCount,
+            final int keyValueMapCount,
+            final int rangeValueMapCount,
+            final int entryCount) {
+
+        assertThat(refStreamDefinitionCount).isGreaterThan(0);
+        assertThat(keyValueMapCount).isGreaterThanOrEqualTo(0);
+        assertThat(rangeValueMapCount).isGreaterThanOrEqualTo(0);
+        assertThat(entryCount).isGreaterThan(0);
+
+        List<RefStreamDefinition> refStreamDefinitions = new ArrayList<>();
+
+        for (int i = 1; i <= refStreamDefinitionCount; i++) {
+            RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
+                    UUID.randomUUID().toString(),
+                    UUID.randomUUID().toString(),
+                    (long) i);
+
+            refStreamDefinitions.add(refStreamDefinition);
+
+            refDataStore.doWithLoaderUnlessComplete(
+                    refStreamDefinition,
+                    System.currentTimeMillis(),
+                    loader -> {
+                        loader.initialise(false);
+                        loader.setCommitInterval(1000);
+
+                        loadKeyValueData(keyValueMapCount, entryCount, refStreamDefinition, loader);
+                        loadRangeValueData(keyValueMapCount, entryCount, refStreamDefinition, loader);
+
+                        loader.completeProcessing();
+                    });
+        }
+        return refStreamDefinitions;
+    }
+
+    private void loadRangeValueData(final int keyValueMapCount, final int entryCount, final RefStreamDefinition refStreamDefinition, final RefDataLoader loader) {
+        // load the range/value data
+        for (int j = 1; j <= keyValueMapCount; j++) {
+            String mapName = "map" + j;
+            MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
+
+            for (int k = 1; k <= entryCount; k++) {
+                Range<Long> range = Range.of((long) k * 10, (long) (k * 10) + 10);
+                String value = LambdaLogger.buildMessage("{}-{}-{}-value{}",
+                        mapName, range.getFrom(), range.getTo(), k);
+                loader.put(mapDefinition, range, StringValue.of(value));
+            }
+        }
+    }
+
+    private void loadKeyValueData(final int keyValueMapCount, final int entryCount, final RefStreamDefinition refStreamDefinition, final RefDataLoader loader) {
+        // load the key/value data
+        for (int j = 1; j <= keyValueMapCount; j++) {
+            String mapName = "map" + j;
+            MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
+
+            for (int k = 1; k <= entryCount; k++) {
+                String key = "key" + k;
+                String value = LambdaLogger.buildMessage("{}-{}-value{}", mapName, key, k);
+                loader.put(mapDefinition, key, StringValue.of(value));
+            }
+        }
     }
 
 

@@ -402,8 +402,14 @@ public class RefDataOffHeapStore implements RefDataStore {
             jobName = "Ref Data Store Purge",
             description = "Purge old reference data from the off heap store, as defined by " + DATA_RETENTION_AGE_PROP_KEY)
     public void purgeOldData() {
+        purgeOldData(System.currentTimeMillis());
+    }
 
-        try (final PooledByteBuffer accessTimeThresholdPooledBuf = getAccessTimeCutOffBuffer();
+    /**
+     * @param nowMs Allows the setting of the current time for testing purposes
+     */
+    void purgeOldData(final long nowMs) {
+        try (final PooledByteBuffer accessTimeThresholdPooledBuf = getAccessTimeCutOffBuffer(nowMs);
              final PooledByteBufferPair procInfoPooledBufferPair = processingInfoDb.getPooledBufferPair()) {
 
             final AtomicReference<ByteBuffer> currRefStreamDefBufRef = new AtomicReference<>();
@@ -646,16 +652,15 @@ public class RefDataOffHeapStore implements RefDataStore {
 //        valueReferenceCountDb.logDatabaseContents();
     }
 
-    private PooledByteBuffer getAccessTimeCutOffBuffer() {
+    private PooledByteBuffer getAccessTimeCutOffBuffer(final long nowMs) {
         long purgeAge = ModelStringUtil.parseDurationString(
                 stroomPropertyService.getProperty(DATA_RETENTION_AGE_PROP_KEY, DATA_RETENTION_AGE_DEFAULT_VALUE));
-        long now = System.currentTimeMillis();
-        long purgeCutOff = now - purgeAge;
+        long purgeCutOff = nowMs - purgeAge;
 
         LOGGER.info("Using purge duration {}, cut off {}, now {}",
                 Duration.ofMillis(purgeAge),
                 Instant.ofEpochMilli(purgeCutOff),
-                Instant.ofEpochMilli(now));
+                Instant.ofEpochMilli(nowMs));
 
         PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(Long.BYTES);
         pooledByteBuffer.getByteBuffer().putLong(purgeCutOff);
