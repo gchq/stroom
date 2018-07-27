@@ -38,3 +38,7 @@ storiesOf('MysteriousPagination', module).add('Different page size', () => (
 storiesOf('MysteriousPagination', module).add('Bad page size', () => (
   <MysteriousPagination pageOffset={9} pageSize={21} />
 ));
+
+storiesOf('MysteriousPagination', module).add('Different number of visible pages', () => (
+  <MysteriousPagination pageOffset={7} pageSize={21} visiblePages={10} />
+));

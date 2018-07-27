@@ -110,7 +110,7 @@ const AppChromeWithRouter = () => (
           activeMenuItem="Data"
           headerContent={<Header.Content>Data</Header.Content>}
           icon="database"
-          content={<DataViewer />}
+          content={<DataViewer dataViewerId="system" />}
         />
       )}
     />

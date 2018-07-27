@@ -22,7 +22,7 @@ import { compose } from 'recompose';
 import { Button, Dropdown, Icon } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 
-const numberOfPagesVisible = 5;
+const defaultNumberOfVisiblePages = 5;
 
 const dropdownOptions = [
   {
@@ -51,11 +51,16 @@ const dropdownOptions = [
   },
 ];
 
-const MysteriousPagination = ({ onPageChange, pageOffset, pageSize }) => {
+const MysteriousPagination = ({
+  onPageChange, pageOffset, pageSize, visiblePages,
+}) => {
+  if (visiblePages === undefined) {
+    visiblePages = defaultNumberOfVisiblePages;
+  }
   // We want something like [1,2,3,?,?] or [4,5,6,7,8]
   const pageOffsetIndexFromOne = pageOffset + 1;
-  let pages = Array(numberOfPagesVisible).fill('?');
-  let modifiedIndex = pageOffsetIndexFromOne - numberOfPagesVisible;
+  let pages = Array(visiblePages).fill('?');
+  let modifiedIndex = pageOffsetIndexFromOne - visiblePages;
   if (modifiedIndex < 0) {
     modifiedIndex = 0;
   }
@@ -116,6 +121,7 @@ MysteriousPagination.propTypes = {
   onPageChange: PropTypes.func.isRequired,
   pageOffset: PropTypes.number.isRequired,
   pageSize: PropTypes.number.isRequired,
+  visiblePages: PropTypes.number,
 };
 
 export default MysteriousPagination;
