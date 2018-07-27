@@ -6,7 +6,7 @@ export const TrackerSelection = Object.freeze({ first: 'first', last: 'last', no
 export const fetchTrackers = trackerSelection => (dispatch, getState) => {
   const state = getState();
 
-  const rowsToFetch = getRowsPerPage(state.trackerDashboard.selectedTrackerId !== undefined);
+  const rowsToFetch = state.trackerDashboard.pageSize;
   dispatch(actionCreators.updatePageSize(rowsToFetch));
 
   let url = `${state.config.streamTaskServiceUrl}/?`;
@@ -24,24 +24,31 @@ export const fetchTrackers = trackerSelection => (dispatch, getState) => {
     url += `&filter=${state.trackerDashboard.searchCriteria}`;
   }
 
-  wrappedGet(dispatch, state, url, (response) => {
-    response.json().then((trackers) => {
-      dispatch(actionCreators.updateTrackers(trackers.streamTasks, trackers.totalStreamTasks));
-      switch (trackerSelection) {
-        case TrackerSelection.first:
-          dispatch(actionCreators.selectFirst());
-          break;
-        case TrackerSelection.last:
-          dispatch(actionCreators.selectLast());
-          break;
-        case TrackerSelection.none:
-          dispatch(actionCreators.selectNone());
-          break;
-        default:
-          break;
-      }
-    });
-  });
+  wrappedGet(
+    dispatch,
+    state,
+    (response) => {
+      url,
+      response.json().then((trackers) => {
+        dispatch(actionCreators.updateTrackers(trackers.streamTasks, trackers.totalStreamTasks));
+        switch (trackerSelection) {
+          case TrackerSelection.first:
+            dispatch(actionCreators.selectFirst());
+            break;
+          case TrackerSelection.last:
+            dispatch(actionCreators.selectLast());
+            break;
+          case TrackerSelection.none:
+            dispatch(actionCreators.selectNone());
+            break;
+          default:
+            break;
+        }
+      });
+    },
+    null,
+    true,
+  );
 };
 
 export const enableToggle = (filterId, isCurrentlyEnabled) => (dispatch, getState) => {
@@ -53,6 +60,7 @@ export const enableToggle = (filterId, isCurrentlyEnabled) => (dispatch, getStat
     dispatch(actionCreators.updateEnabled(filterId, !isCurrentlyEnabled)));
 };
 
+// TODO: This isn't currently used.
 const getRowsPerPage = (isDetailsVisible) => {
   const viewport = document.getElementById('table-container');
   let rowsInViewport = 20; // Fallback default

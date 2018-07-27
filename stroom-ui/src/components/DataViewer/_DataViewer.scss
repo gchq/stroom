@@ -12,6 +12,10 @@
   padding-left: 10px;
 }
 
+.DataViewer_table.ui.compact.table tr:hover {
+  background-color: $hover-item-colour;
+}
+
 .DataViewer_table.ui.compact.table td {
   padding: 0.2em 0.3em;
 }

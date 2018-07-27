@@ -73,7 +73,7 @@ const MysteriousPagination = ({
   });
   return (
     <React.Fragment>
-      <Button.Group size="mini">
+      <Button.Group size="mini" basic>
         <Button
           icon
           disabled={pageOffsetIndexFromOne === 1}
