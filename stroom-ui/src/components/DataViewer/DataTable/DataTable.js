@@ -21,14 +21,19 @@ import { compose, lifecycle, branch, renderComponent } from 'recompose';
 // import Mousetrap from 'mousetrap'; //TODO
 import moment from 'moment';
 
+import PanelGroup from 'react-panelgroup';
+import { StickyTable, Row, Cell } from 'react-sticky-table';
+import 'react-sticky-table/dist/react-sticky-table.css';
+import ReactTable from 'react-table';
+import 'react-table/react-table.css';
+
 import { Loader, Table } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 
 import { withConfig } from 'startup/config';
-import { search } from './streamAttributeMapClient';
+import { search } from '../streamAttributeMapClient';
 
-import MysteriousPagination from './MysteriousPagination';
-import DataTable from './DataTable';
+import MysteriousPagination from '../MysteriousPagination';
 
 const startPage = 0;
 const defaultPageSize = 20;
@@ -73,7 +78,54 @@ const DataViewer = ({
   nextPage,
   previousPage,
   search,
-}) => <DataTable dataViewerId={dataViewerId} />;
+}) => {
+  const tableColumns = [
+    {
+      Header: 'Created',
+      accessor: 'created',
+    },
+    {
+      Header: 'Type',
+      accessor: 'type',
+    },
+    {
+      Header: 'Feed',
+      accessor: 'feed',
+    },
+    {
+      Header: 'Pipeline',
+      accessor: 'pipeline',
+    },
+  ];
+
+  const tableData = streamAttributeMaps.map(streamAttributeMap => ({
+    created: moment(streamAttributeMap.stream.createMs).format('MMMM Do YYYY, h:mm:ss a'),
+    type: streamAttributeMap.stream.feed.streamType.displayValue,
+    feed: streamAttributeMap.stream.feed.displayValue,
+    pipeline: streamAttributeMap.stream.streamProcessor.pipelineName,
+  }));
+
+  return (
+    <div className="DataTable__container">
+      <MysteriousPagination
+        pageOffset={pageOffset}
+        pageSize={pageSize}
+        onPageChange={(pageOffset, pageSize) => {
+          search(dataViewerId, pageOffset, pageSize);
+        }}
+      />
+      <div className="DataTable__reactTable__container">
+        <ReactTable
+          pageSize={pageSize}
+          showPagination={false}
+          className="DataTable__reactTable"
+          data={tableData}
+          columns={tableColumns}
+        />
+      </div>
+    </div>
+  );
+};
 
 DataViewer.propTypes = {
   dataViewerId: PropTypes.string.isRequired,

@@ -1,0 +1,58 @@
+.DataViewer__container {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.DataViewer__paginationButton {
+  width: 45px;
+}
+
+.DataViewer__pageSizeSelection {
+  padding-left: 10px;
+}
+
+.DataTable__column_created {
+  width: 25%;
+}
+
+.DataTable__column_type {
+  width: 25%;
+}
+
+.DataTable__column_feed {
+  width: 25%;
+}
+
+.DataTable__column_pipeline {
+  width: 25%;
+}
+
+.DataTable__container {
+  height: calc(100% - 70px);
+  position: relative;
+}
+
+.DataTable__reactTable__container {
+  position: absolute;
+  top: 35px;
+  right: 0;
+  left: 0;
+  bottom: 0;
+}
+
+.DataTable__reactTable {
+  position: absolute;
+  top: 0px;
+  right: 0;
+  left: 0;
+  bottom: 0;
+}
+
+.DataTable__reactTable .rt-table .rt-body .rt-tr-group {
+  max-height: 30px;
+}
+
+.ReactTable .rt-tbody .rt-tr-group {
+  max-height: 30px;
+}
