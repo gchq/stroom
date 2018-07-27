@@ -22,7 +22,18 @@ import { compose, lifecycle, withProps, branch, renderComponent } from 'recompos
 import { push } from 'react-router-redux';
 import moment from 'moment';
 
-import { Container, Card, Input, Pagination, Dropdown, Loader, Table } from 'semantic-ui-react';
+import {
+  Container,
+  Button,
+  Card,
+  Input,
+  Pagination,
+  Dropdown,
+  Loader,
+  Table,
+  Icon,
+  Popup,
+} from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 
 import { withConfig } from 'startup/config';
@@ -82,58 +93,106 @@ const DataViewer = ({
   nextPage,
   previousPage,
   search,
-}) => (
-  <Table compact>
-    <Table.Header>
-      <Table.Row>
-        <Table.HeaderCell>Created</Table.HeaderCell>
-        <Table.HeaderCell>Type</Table.HeaderCell>
-        <Table.HeaderCell>Feed</Table.HeaderCell>
-        <Table.HeaderCell>Pipeline</Table.HeaderCell>
-      </Table.Row>
-    </Table.Header>
+}) => {
+  // We want something like [1,2,3,?,?] or [4,5,6,7,8]
+  const pageOffsetIndexFromOne = pageOffset + 1;
+  const numberOfPagesVisible = 5;
+  let pages = Array(numberOfPagesVisible).fill('?');
+  let modifiedIndex = pageOffsetIndexFromOne - numberOfPagesVisible;
+  if (modifiedIndex < 0) {
+    modifiedIndex = 0;
+  }
+  pages = pages.map(() => {
+    modifiedIndex += 1;
+    if (modifiedIndex <= pageOffsetIndexFromOne) {
+      return modifiedIndex;
+    }
+    return '?';
+  });
 
-    <Table.Body>
-      {streamAttributeMaps.map(streamAttributeMap => (
-        <Table.Row
-          key={`${streamAttributeMap.stream.parentStreamId}_${streamAttributeMap.stream.id}_${
-            streamAttributeMap.stream.feed.id
-          }`}
-        >
-          <Table.Cell>
-            {moment(streamAttributeMap.stream.createMs).format('MMMM Do YYYY, h:mm:ss a')}
-          </Table.Cell>
-          <Table.Cell>{streamAttributeMap.stream.feed.streamType.displayValue}</Table.Cell>
-          <Table.Cell>{streamAttributeMap.stream.feed.displayValue}</Table.Cell>
-          <Table.Cell>{streamAttributeMap.stream.streamProcessor.pipelineName}</Table.Cell>
+  return (
+    <Table compact>
+      <Table.Header>
+        <Table.Row>
+          <Table.HeaderCell>Created</Table.HeaderCell>
+          <Table.HeaderCell>Type</Table.HeaderCell>
+          <Table.HeaderCell>Feed</Table.HeaderCell>
+          <Table.HeaderCell>Pipeline</Table.HeaderCell>
         </Table.Row>
-      ))}
-    </Table.Body>
+      </Table.Header>
 
-    <Table.Footer>
-      <Table.Row>
-        <Table.HeaderCell colSpan="4">
-          <Pagination
-            activePage={pageOffset + 1}
-            boundaryRange="1"
-            onPageChange={(event, data) => {
-              console.log('sdfsd');
-              search(dataViewerId, data.activePage - 1, pageSize);
-            }}
-            size="mini"
-            // siblingRange={siblingRange}
-            ellipsisItem="?"
-            firstItem={null}
-            lastItem={null}
-            prevItem={previousPage}
-            nextItem={nextPage}
-            totalPages="10"
-          />
-        </Table.HeaderCell>
-      </Table.Row>
-    </Table.Footer>
-  </Table>
-);
+      <Table.Body>
+        {streamAttributeMaps.map(streamAttributeMap => (
+          <Table.Row
+            key={`${streamAttributeMap.stream.parentStreamId}_${streamAttributeMap.stream.id}_${
+              streamAttributeMap.stream.feed.id
+            }`}
+          >
+            <Table.Cell>
+              {moment(streamAttributeMap.stream.createMs).format('MMMM Do YYYY, h:mm:ss a')}
+            </Table.Cell>
+            <Table.Cell>{streamAttributeMap.stream.feed.streamType.displayValue}</Table.Cell>
+            <Table.Cell>{streamAttributeMap.stream.feed.displayValue}</Table.Cell>
+            <Table.Cell>{streamAttributeMap.stream.streamProcessor.pipelineName}</Table.Cell>
+          </Table.Row>
+        ))}
+      </Table.Body>
+
+      <Table.Footer>
+        <Table.Row>
+          <Table.HeaderCell colSpan="4">
+            <Button.Group size="mini">
+              <Button
+                icon
+                disabled={pageOffsetIndexFromOne === 1}
+                onClick={() => search(dataViewerId, pageOffset - 1, pageSize)}
+              >
+                <Icon name="left arrow" />
+              </Button>
+              {pages.map(pageValue => (
+                <Button
+                  active={pageValue === pageOffsetIndexFromOne}
+                  className="DataViewer__paginationButton"
+                  size="mini"
+                  onClick={(_, data) => {
+                    // data.children shows the index from one (the display index)
+                    // so we need to modify that for the search request.
+                    search(dataViewerId, data.children - 1, pageSize);
+                  }}
+                >
+                  {pageValue}
+                </Button>
+              ))}
+
+              <Button icon onClick={() => search(dataViewerId, pageOffset + 1, pageSize)}>
+                <Icon name="right arrow" />
+              </Button>
+            </Button.Group>
+
+            {/* We can't really use Pagination because it requires a totalPages,
+      which our data source StreamAttributeMapResource, doesn't currently provide */}
+            {/* <Pagination
+              activePage={pageOffset + 1}
+              boundaryRange="1"
+              onPageChange={(event, data) => {
+                console.log('sdfsd');
+                search(dataViewerId, data.activePage - 1, pageSize);
+              }}
+              size="mini"
+              // siblingRange={siblingRange}
+              ellipsisItem="?"
+              firstItem={null}
+              lastItem={null}
+              prevItem={previousPage}
+              nextItem={nextPage}
+              totalPages="10"
+            /> */}
+          </Table.HeaderCell>
+        </Table.Row>
+      </Table.Footer>
+    </Table>
+  );
+};
 
 DataViewer.propTypes = {
   dataViewerId: PropTypes.string.isRequired,
