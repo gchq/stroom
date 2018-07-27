@@ -40,6 +40,8 @@ import { withConfig } from 'startup/config';
 import ClickCounter from 'lib/ClickCounter';
 import { search } from './streamAttributeMapClient';
 
+import MysteriousPagination from './MysteriousPagination';
+
 const startPage = 0;
 const defaultPageSize = 10;
 const numberOfPagesVisible = 5;
@@ -137,47 +139,14 @@ const DataViewer = ({
     <Table compact className="DataViewer_table">
       <Table.Header>
         <Table.Row>
-          <Table.HeaderCell colSpan='4'>
-          <Button.Group size="mini">
-              <Button
-                icon
-                disabled={pageOffsetIndexFromOne === 1}
-                onClick={() => search(dataViewerId, pageOffset - 1, pageSize)}
-              >
-                <Icon name="left arrow" />
-              </Button>
-              {pages.map(pageValue => (
-                <Button
-                  disabled={pageValue === '?'}
-                  active={pageValue === pageOffsetIndexFromOne}
-                  className="DataViewer__paginationButton"
-                  size="mini"
-                  onClick={(_, data) => {
-                    // data.children shows the index from one (the display index)
-                    // so we need to modify that for the search request.
-                    search(dataViewerId, data.children - 1, pageSize);
-                  }}
-                >
-                  {pageValue}
-                </Button>
-              ))}
-
-              <Button icon onClick={() => search(dataViewerId, pageOffset + 1, pageSize)}>
-                <Icon name="right arrow" />
-              </Button>
-            </Button.Group>
-            <span className="DataViewer__pageSizeSelection">
-              Show{' '}
-              <Dropdown
-                floating
-                inline
-                options={dropdownOptions}
-                value={pageSize}
-                onChange={(_, data) => {
-                  search(dataViewerId, pageOffset, data.value);
-                }}
-              />
-            </span>
+          <Table.HeaderCell colSpan="4">
+            <MysteriousPagination
+              pageOffset={pageOffset}
+              pageSize={pageSize}
+              onPageChange={(pageOffset, pageSize) => {
+                search(dataViewerId, pageOffset, pageSize);
+              }}
+            />
           </Table.HeaderCell>
         </Table.Row>
         <Table.Row>
@@ -208,65 +177,13 @@ const DataViewer = ({
       <Table.Footer>
         <Table.Row>
           <Table.HeaderCell colSpan="4">
-            <Button.Group size="mini">
-              <Button
-                icon
-                disabled={pageOffsetIndexFromOne === 1}
-                onClick={() => search(dataViewerId, pageOffset - 1, pageSize)}
-              >
-                <Icon name="left arrow" />
-              </Button>
-              {pages.map(pageValue => (
-                <Button
-                  disabled={pageValue === '?'}
-                  active={pageValue === pageOffsetIndexFromOne}
-                  className="DataViewer__paginationButton"
-                  size="mini"
-                  onClick={(_, data) => {
-                    // data.children shows the index from one (the display index)
-                    // so we need to modify that for the search request.
-                    search(dataViewerId, data.children - 1, pageSize);
-                  }}
-                >
-                  {pageValue}
-                </Button>
-              ))}
-
-              <Button icon onClick={() => search(dataViewerId, pageOffset + 1, pageSize)}>
-                <Icon name="right arrow" />
-              </Button>
-            </Button.Group>
-            <span className="DataViewer__pageSizeSelection">
-              Show{' '}
-              <Dropdown
-                floating
-                inline
-                options={dropdownOptions}
-                value={pageSize}
-                onChange={(_, data) => {
-                  search(dataViewerId, pageOffset, data.value);
-                }}
-              />
-            </span>
-
-            {/* We can't really use Pagination because it requires a totalPages,
-      which our data source StreamAttributeMapResource, doesn't currently provide */}
-            {/* <Pagination
-              activePage={pageOffset + 1}
-              boundaryRange="1"
-              onPageChange={(event, data) => {
-                console.log('sdfsd');
-                search(dataViewerId, data.activePage - 1, pageSize);
+            <MysteriousPagination
+              pageOffset={pageOffset}
+              pageSize={pageSize}
+              onPageChange={(pageOffset, pageSize) => {
+                search(dataViewerId, pageOffset, pageSize);
               }}
-              size="mini"
-              // siblingRange={siblingRange}
-              ellipsisItem="?"
-              firstItem={null}
-              lastItem={null}
-              prevItem={previousPage}
-              nextItem={nextPage}
-              totalPages="10"
-            /> */}
+            />
           </Table.HeaderCell>
         </Table.Row>
       </Table.Footer>
