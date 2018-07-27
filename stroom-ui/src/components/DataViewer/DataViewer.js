@@ -40,12 +40,36 @@ import { withConfig } from 'startup/config';
 import ClickCounter from 'lib/ClickCounter';
 import { search } from './streamAttributeMapClient';
 
-const propTypes = {
-  dataViewerId: PropTypes.string.isRequired,
-};
-
 const startPage = 0;
 const defaultPageSize = 10;
+const numberOfPagesVisible = 5;
+
+const dropdownOptions = [
+  {
+    text: 10,
+    value: 10,
+  },
+  {
+    text: 20,
+    value: 20,
+  },
+  {
+    text: 30,
+    value: 30,
+  },
+  {
+    text: 40,
+    value: 40,
+  },
+  {
+    text: 50,
+    value: 50,
+  },
+  {
+    text: 100,
+    value: 100,
+  },
+];
 
 const enhance = compose(
   withConfig,
@@ -96,7 +120,6 @@ const DataViewer = ({
 }) => {
   // We want something like [1,2,3,?,?] or [4,5,6,7,8]
   const pageOffsetIndexFromOne = pageOffset + 1;
-  const numberOfPagesVisible = 5;
   let pages = Array(numberOfPagesVisible).fill('?');
   let modifiedIndex = pageOffsetIndexFromOne - numberOfPagesVisible;
   if (modifiedIndex < 0) {
@@ -151,6 +174,7 @@ const DataViewer = ({
               </Button>
               {pages.map(pageValue => (
                 <Button
+                  disabled={pageValue === '?'}
                   active={pageValue === pageOffsetIndexFromOne}
                   className="DataViewer__paginationButton"
                   size="mini"
@@ -168,6 +192,18 @@ const DataViewer = ({
                 <Icon name="right arrow" />
               </Button>
             </Button.Group>
+            <span className="DataViewer__pageSizeSelection">
+              Show{' '}
+              <Dropdown
+                floating
+                inline
+                options={dropdownOptions}
+                value={pageSize}
+                onChange={(_, data) => {
+                  search(dataViewerId, pageOffset, data.value);
+                }}
+              />
+            </span>
 
             {/* We can't really use Pagination because it requires a totalPages,
       which our data source StreamAttributeMapResource, doesn't currently provide */}
