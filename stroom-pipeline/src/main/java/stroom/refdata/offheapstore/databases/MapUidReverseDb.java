@@ -43,7 +43,7 @@ public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
     private static final Logger LOGGER = LoggerFactory.getLogger(MapUidReverseDb.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(MapUidReverseDb.class);
 
-    private static final String DB_NAME = "MapUidBackward";
+    public static final String DB_NAME = "MapUidBackward";
 
     @Inject
     public MapUidReverseDb(@Assisted final Env<ByteBuffer> lmdbEnvironment,

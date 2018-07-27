@@ -48,7 +48,7 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
     private static final Logger LOGGER = LoggerFactory.getLogger(RangeStoreDb.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(RangeStoreDb.class);
 
-    private static final String DB_NAME = "RangeStore";
+    public static final String DB_NAME = "RangeStore";
 
     private final RangeStoreKeySerde keySerde;
     private final ValueStoreKeySerde valueSerde;
@@ -200,6 +200,7 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
             final KeyRange<ByteBuffer> atLeastKeyRange = KeyRange.atLeast(startKeyIncBuffer);
 
             try (CursorIterator<ByteBuffer> cursorIterator = getLmdbDbi().iterate(writeTxn, atLeastKeyRange)) {
+                int cnt = 0;
                 for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
 
                     if (ByteBufferUtils.containsPrefix(keyVal.key(), startKeyIncBuffer)) {
@@ -212,11 +213,13 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
                         // pass the found kv pair from this entry to the consumer
                         entryConsumer.accept(keyVal.key(), keyVal.val());
                         cursorIterator.remove();
+                        cnt++;
                     } else {
                         // passed out UID so break out
                         break;
                     }
                 }
+                LOGGER.debug("Deleted {} {} entries", DB_NAME, cnt);
             }
         }
     }

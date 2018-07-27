@@ -262,18 +262,6 @@ public class LmdbUtils {
         return byteBuffer;
     }
 
-    /**
-     * Creates a new direct {@link ByteBuffer} from the input {@link ByteBuffer}.
-     * The bytes from position() to limit() will be copied into a newly allocated
-     * buffer. The new buffer will be flipped to set its position read for get operations
-     */
-    public static ByteBuffer copyDirectBuffer(final ByteBuffer input) {
-        ByteBuffer output = ByteBuffer.allocateDirect(input.remaining());
-        output.put(input);
-        output.flip();
-        return output;
-    }
-
     public static void logDatabaseContents(final Env<ByteBuffer> env,
                                            final Dbi<ByteBuffer> dbi,
                                            final Txn<ByteBuffer> txn,

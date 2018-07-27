@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,6 +48,17 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
                 refDataValueSerde);
     }
 
+
+    private ValueStoreKey getOrCreate(Txn<ByteBuffer> writeTxn, RefDataValue refDataValue) {
+        final Supplier<ByteBuffer> valueStoreKeyBufferSupplier = () ->
+                valueStoreDb.getPooledKeyBuffer().getByteBuffer();
+
+        ByteBuffer valueStoreKeyBuffer = valueStoreDb.getOrCreate(
+                writeTxn, refDataValue, valueStoreKeyBufferSupplier);
+
+        return valueStoreDb.deserializeKey(valueStoreKeyBuffer);
+    }
+
     @Test
     public void testDereference() {
 
@@ -56,16 +68,17 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
         // ensure hashcode don't clash
         assertThat(value1.getValue().hashCode()).isNotEqualTo(value2.getValue().hashCode());
 
+
         LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
             StringValue stringValue;
-            ValueStoreKey valueStoreKey1a = valueStoreDb.getOrCreate(writeTxn, value1);
+            ValueStoreKey valueStoreKey1a = getOrCreate(writeTxn, value1);
             assertThat(valueStoreDb.getEntryCount(writeTxn)).isEqualTo(1);
             stringValue = (StringValue) valueStoreDb.get(writeTxn, valueStoreKey1a).get();
             assertThat(stringValue.getReferenceCount()).isEqualTo(1);
             assertThat(stringValue.getValue()).isEqualTo(value1.getValue());
 
             // getOrCreate same value, should no new records, but ref count will have increased
-            ValueStoreKey valueStoreKey1b = valueStoreDb.getOrCreate(writeTxn, value1);
+            ValueStoreKey valueStoreKey1b = getOrCreate(writeTxn, value1);
             assertThat(valueStoreDb.getEntryCount(writeTxn)).isEqualTo(1);
             assertThat(valueStoreKey1b).isEqualTo(valueStoreKey1a);
             stringValue = (StringValue) valueStoreDb.get(writeTxn, valueStoreKey1b).get();
@@ -73,7 +86,7 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
             assertThat(stringValue.getValue()).isEqualTo(value1.getValue());
 
             // getOrCreate same value, should no new records, but ref count will have increased
-            ValueStoreKey valueStoreKey1c = valueStoreDb.getOrCreate(writeTxn, value1);
+            ValueStoreKey valueStoreKey1c = getOrCreate(writeTxn, value1);
             assertThat(valueStoreDb.getEntryCount(writeTxn)).isEqualTo(1);
             assertThat(valueStoreKey1b).isEqualTo(valueStoreKey1a);
             stringValue = (StringValue) valueStoreDb.get(writeTxn, valueStoreKey1c).get();
@@ -81,7 +94,7 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
             assertThat(stringValue.getValue()).isEqualTo(value1.getValue());
 
             // getOrCreate a different value, so 1 new entry, ref count is 1
-            ValueStoreKey valueStoreKey2a = valueStoreDb.getOrCreate(writeTxn, value2);
+            ValueStoreKey valueStoreKey2a = getOrCreate(writeTxn, value2);
             assertThat(valueStoreDb.getEntryCount(writeTxn)).isEqualTo(2);
             stringValue = (StringValue) valueStoreDb.get(writeTxn, valueStoreKey2a).get();
             assertThat(stringValue.getReferenceCount()).isEqualTo(1);
@@ -134,7 +147,7 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
         assertThat(valueStoreDb.getEntryCount()).isEqualTo(0);
 
         LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
-            ValueStoreKey valueStoreKey = valueStoreDb.getOrCreate(writeTxn, StringValue.of(stringValueStr1));
+            ValueStoreKey valueStoreKey = getOrCreate(writeTxn, StringValue.of(stringValueStr1));
 
             assertThat(valueStoreKey).isNotNull();
             assertThat(valueStoreKey.getUniqueId()).isEqualTo((short) 0);
@@ -147,7 +160,7 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
         // now put the same value again. Entry count should not change as we already have the value
         // returned valueStoreKey should also be the same.
         LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
-            ValueStoreKey valueStoreKey = valueStoreDb.getOrCreate(writeTxn, StringValue.of(stringValueStr1));
+            ValueStoreKey valueStoreKey = getOrCreate(writeTxn, StringValue.of(stringValueStr1));
 
             assertThat(valueStoreKey).isNotNull();
             assertThat(valueStoreKey.getUniqueId()).isEqualTo((short) 0);
@@ -162,7 +175,7 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
         // now put a different value with same hashcode. Entry count should increase and the
         // returned valueStoreKey should have an id of 1 as it has same hashcode as last one
         LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
-            ValueStoreKey valueStoreKey = valueStoreDb.getOrCreate(writeTxn, StringValue.of(stringValueStr2));
+            ValueStoreKey valueStoreKey = getOrCreate(writeTxn, StringValue.of(stringValueStr2));
 
             assertThat(valueStoreKey).isNotNull();
             assertThat(valueStoreKey.getUniqueId()).isEqualTo((short) 1);
@@ -174,7 +187,7 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
 
         // get the same value again, no change to DB or returned values
         LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
-            ValueStoreKey valueStoreKey = valueStoreDb.getOrCreate(writeTxn, StringValue.of(stringValueStr2));
+            ValueStoreKey valueStoreKey = getOrCreate(writeTxn, StringValue.of(stringValueStr2));
 
             assertThat(valueStoreKey).isNotNull();
             assertThat(valueStoreKey.getUniqueId()).isEqualTo((short) 1);
@@ -188,7 +201,7 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
         // now put a different value with a different hashcode. Entry count should increase and the
         // returned valueStoreKey should have an id of 0 as it has a different hashcode.
         LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
-            ValueStoreKey valueStoreKey = valueStoreDb.getOrCreate(writeTxn, StringValue.of(stringValueStr3));
+            ValueStoreKey valueStoreKey = getOrCreate(writeTxn, StringValue.of(stringValueStr3));
 
             assertThat(valueStoreKey).isNotNull();
             assertThat(valueStoreKey.getUniqueId()).isEqualTo((short) 0);
@@ -200,7 +213,7 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
 
         // get the same value again, no change to DB or returned values
         LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
-            ValueStoreKey valueStoreKey = valueStoreDb.getOrCreate(writeTxn, StringValue.of(stringValueStr3));
+            ValueStoreKey valueStoreKey = getOrCreate(writeTxn, StringValue.of(stringValueStr3));
 
             assertThat(valueStoreKey).isNotNull();
             assertThat(valueStoreKey.getUniqueId()).isEqualTo((short) 0);
@@ -226,7 +239,7 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
             // insert the first five values, all have same hash so should get increasing
             // id values.
             for (int i = 0; i < 5; i++) {
-                valueStoreKey = valueStoreDb.getOrCreate(writeTxn, refDataValues.get(i));
+                valueStoreKey = getOrCreate(writeTxn, refDataValues.get(i));
                 valueStoreKeysMap.put(i, valueStoreKey);
                 assertThat(valueStoreKey.getUniqueId()).isEqualTo((short) i);
             }
@@ -246,7 +259,7 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
         LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
             ValueStoreKey valueStoreKey;
             for (int i = 5; i < 10; i++) {
-                valueStoreKey = valueStoreDb.getOrCreate(writeTxn, refDataValues.get(i));
+                valueStoreKey = getOrCreate(writeTxn, refDataValues.get(i));
                 valueStoreKeysMap.put(i, valueStoreKey);
             }
         });
@@ -320,9 +333,9 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
 
         // load three entries
         LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
-            valueToKeyMap.put(val1str, valueStoreDb.getOrCreate(writeTxn, StringValue.of(val1str)));
-            valueToKeyMap.put(val2str, valueStoreDb.getOrCreate(writeTxn, StringValue.of(val2str)));
-            valueToKeyMap.put(val3str, valueStoreDb.getOrCreate(writeTxn, StringValue.of(val3str)));
+            valueToKeyMap.put(val1str, getOrCreate(writeTxn, StringValue.of(val1str)));
+            valueToKeyMap.put(val2str, getOrCreate(writeTxn, StringValue.of(val2str)));
+            valueToKeyMap.put(val3str, getOrCreate(writeTxn, StringValue.of(val3str)));
         });
 
         assertThat(valueStoreDb.getEntryCount()).isEqualTo(3);
@@ -363,10 +376,10 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
 
         // load entries
         LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
-            valueToKeyMap.put(val1str, valueStoreDb.getOrCreate(writeTxn, StringValue.of(val1str)));
-            valueToKeyMap.put(val2str, valueStoreDb.getOrCreate(writeTxn, StringValue.of(val2str)));
-            valueToKeyMap.put(val3str, valueStoreDb.getOrCreate(writeTxn, StringValue.of(val3str)));
-            valueToKeyMap.put(val4str, valueStoreDb.getOrCreate(writeTxn, StringValue.of(val4str)));
+            valueToKeyMap.put(val1str, getOrCreate(writeTxn, StringValue.of(val1str)));
+            valueToKeyMap.put(val2str, getOrCreate(writeTxn, StringValue.of(val2str)));
+            valueToKeyMap.put(val3str, getOrCreate(writeTxn, StringValue.of(val3str)));
+            valueToKeyMap.put(val4str, getOrCreate(writeTxn, StringValue.of(val4str)));
         });
 
         // should have four different id values as all have the same hashcode
@@ -405,16 +418,23 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
     public void testAreValueEqual_notFound() {
         StringValue value2 = StringValue.of("value2");
         ValueStoreKey unknownValueStoreKey = new ValueStoreKey(123, (short) 0);
+        ByteBuffer unknownValueStoreKeyBuffer = valueStoreDb.getPooledKeyBuffer().getByteBuffer();
+        valueStoreDb.serializeKey(unknownValueStoreKeyBuffer, unknownValueStoreKey);
+
         LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
-            boolean areValuesEqual = valueStoreDb.areValuesEqual(writeTxn, unknownValueStoreKey, value2);
+            boolean areValuesEqual = valueStoreDb.areValuesEqual(writeTxn, unknownValueStoreKeyBuffer, value2);
             assertThat(areValuesEqual).isFalse();
         });
     }
 
     private void doAreValuesEqualAssert(final StringValue value1, final StringValue value2, final boolean expectedResult) {
         LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
-            ValueStoreKey valueStoreKey1 = valueStoreDb.getOrCreate(writeTxn, value1);
-            boolean areValuesEqual = valueStoreDb.areValuesEqual(writeTxn, valueStoreKey1, value2);
+            ValueStoreKey valueStoreKey1 = getOrCreate(writeTxn, value1);
+
+            ByteBuffer valueStoreKeyBuffer = valueStoreDb.getPooledKeyBuffer().getByteBuffer();
+            valueStoreDb.serializeKey(valueStoreKeyBuffer, valueStoreKey1);
+
+            boolean areValuesEqual = valueStoreDb.areValuesEqual(writeTxn, valueStoreKeyBuffer, value2);
             assertThat(areValuesEqual).isEqualTo(expectedResult);
         });
     }

@@ -58,8 +58,8 @@ public abstract class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest
 
         mockStroomPropertyService.setProperty(RefDataStoreProvider.OFF_HEAP_STORE_DIR_PROP_KEY,
                 dbDir.toAbsolutePath().toString());
-        mockStroomPropertyService.setProperty(RefDataStoreProvider.MAX_STORE_SIZE_BYTES_PROP_KEY,
-                Long.toString(DB_MAX_SIZE));
+
+        setDbMaxSizeProperty();
 
         final Injector injector = Guice.createInjector(
                 new AbstractModule() {
@@ -74,5 +74,18 @@ public abstract class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest
 
     protected void setProperty(String name, String value) {
         mockStroomPropertyService.setProperty(name, value);
+    }
+
+    protected void setDbMaxSizeProperty(final long sizeInBytes) {
+        mockStroomPropertyService.setProperty(RefDataStoreProvider.MAX_STORE_SIZE_BYTES_PROP_KEY,
+                Long.toString(sizeInBytes));
+    }
+
+    protected void setPurgeAgeProperty(final String purgeAge) {
+        mockStroomPropertyService.setProperty(RefDataOffHeapStore.DATA_RETENTION_AGE_PROP_KEY, purgeAge);
+    }
+
+    protected void setDbMaxSizeProperty() {
+        setDbMaxSizeProperty(DB_MAX_SIZE);
     }
 }

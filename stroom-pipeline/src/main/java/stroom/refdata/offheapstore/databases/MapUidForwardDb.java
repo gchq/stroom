@@ -40,7 +40,7 @@ import java.util.function.Supplier;
 
 public class MapUidForwardDb extends AbstractLmdbDb<MapDefinition, UID> {
 
-    private static final String DB_NAME = "MapUidForward";
+    public static final String DB_NAME = "MapUidForward";
 
     @Inject
     public MapUidForwardDb(@Assisted final Env<ByteBuffer> lmdbEnvironment,

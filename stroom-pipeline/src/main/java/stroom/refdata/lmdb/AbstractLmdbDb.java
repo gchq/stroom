@@ -50,10 +50,17 @@ import java.util.function.Function;
  * See https://github.com/lmdbjava/lmdbjava/issues/81 for more information on the use/re-use
  * of the ByteBuffers passed to or returned from LMDBJava.
  *
+ * Dos/Don'ts
+ * ~~~~~~~~~~
+ * DO NOT use/mutate a key/value buffer from a cursor outside of the cursor's scope.
+ * DO NOT mutate a key/value buffer inside a txn unless the DB is in MDB_WRITEMAP mode.
+ * DO NOT use/mutate a value buffer outside of a txn as its content is indeterminate outside the txn
+ * and belongs to LMDB.
+ *
  * @param <K> The class of the database keys
  * @param <V> The class of the database values
  */
-public abstract class AbstractLmdbDb<K, V> {
+public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractLmdbDb.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(AbstractLmdbDb.class);
@@ -68,6 +75,13 @@ public abstract class AbstractLmdbDb<K, V> {
     private final int keyBufferCapacity;
     private final int valueBufferCapacity;
 
+    /**
+     * @param lmdbEnvironment The LMDB {@link Env} to add this DB to.
+     * @param byteBufferPool A self loading pool of ByteBuffers.
+     * @param keySerde The {@link Serde} to use for the keys.
+     * @param valueSerde The {@link Serde} to use for the values.
+     * @param dbName The name of the database.
+     */
     public AbstractLmdbDb(final Env<ByteBuffer> lmdbEnvironment,
                           final ByteBufferPool byteBufferPool,
                           final Serde<K> keySerde,
@@ -83,6 +97,7 @@ public abstract class AbstractLmdbDb<K, V> {
         this.valueBufferCapacity = Math.min(Serde.DEFAULT_CAPACITY, valueSerde.getBufferCapacity());
     }
 
+    @Override
     public String getDbName() {
         return dbName;
     }
@@ -115,8 +130,8 @@ public abstract class AbstractLmdbDb<K, V> {
      * @return A {@link PooledByteBuffer} containing a direct {@link ByteBuffer} from
      * the pool with at least the specified capacity
      */
-    public PooledByteBuffer getPooledValueBuffer(int minValueBufferCapacity) {
-        return byteBufferPool.getPooledByteBuffer(minValueBufferCapacity);
+    public PooledByteBuffer getPooledBuffer(int minBufferCapacity) {
+        return byteBufferPool.getPooledByteBuffer(minBufferCapacity);
     }
 
     /**
@@ -330,7 +345,7 @@ public abstract class AbstractLmdbDb<K, V> {
             // We could run LMDB in MDB_WRITEMAP mode which allows mutation of the buffers (and
             // thus avoids the buffer copy cost) but adds more risk of DB corruption. As we are not
             // doing a high volume of value mutations read-only mode is a safer bet.
-            final ByteBuffer newValueBuf = LmdbUtils.copyDirectBuffer(valueBuf);
+            final ByteBuffer newValueBuf = ByteBufferUtils.copyToDirectBuffer(valueBuf);
 
             // update the buffer
             valueBufferConsumer.accept(newValueBuf);
@@ -432,14 +447,17 @@ public abstract class AbstractLmdbDb<K, V> {
         }
     }
 
+    @Override
     public Map<String, String> getDbInfo() {
         return LmdbUtils.getDbInfo(lmdbEnvironment, lmdbDbi);
     }
 
+    @Override
     public long getEntryCount(final Txn<ByteBuffer> txn) {
         return lmdbDbi.stat(txn).entries;
     }
 
+    @Override
     public long getEntryCount() {
         return LmdbUtils.getWithReadTxn(lmdbEnvironment, this::getEntryCount);
     }
@@ -448,6 +466,7 @@ public abstract class AbstractLmdbDb<K, V> {
      * Dumps the contents of this database to the logger using the key/value
      * serdes to de-serialise the data. Only for use at SMALL scale in tests.
      */
+    @Override
     public void logDatabaseContents(final Txn<ByteBuffer> txn) {
         LmdbUtils.logDatabaseContents(
                 lmdbEnvironment,
@@ -464,6 +483,7 @@ public abstract class AbstractLmdbDb<K, V> {
      * is configured with reverse keys). The keys/values are de-serialised and a toString() is applied
      * to the resulting objects.
      */
+    @Override
     public void logDatabaseContents() {
         LmdbUtils.logDatabaseContents(
                 lmdbEnvironment,
@@ -472,6 +492,7 @@ public abstract class AbstractLmdbDb<K, V> {
                 byteBuffer -> valueSerde.deserialize(byteBuffer).toString());
     }
 
+    @Override
     public void logRawDatabaseContents(final Txn<ByteBuffer> txn) {
         LmdbUtils.logRawDatabaseContents(
                 lmdbEnvironment,
@@ -486,6 +507,7 @@ public abstract class AbstractLmdbDb<K, V> {
      * is configured with reverse keys). The keys/values are output as hex representations of the
      * byte values.
      */
+    @Override
     public void logRawDatabaseContents() {
         LmdbUtils.logRawDatabaseContents(
                 lmdbEnvironment,

@@ -22,33 +22,18 @@ import java.util.function.Consumer;
 
 public interface RefDataStore {
 
-    Optional<RefDataProcessingInfo> getAndMutateProcessingInfo(final RefStreamDefinition refStreamDefinition);
+    /**
+     * Returns the {@link RefDataProcessingInfo} for the passed {@link MapDefinition}, or an empty
+     * {@link Optional} if there isn't one. If one is found the last accessed time is updated if it has
+     * not been updated in the last hour.
+     */
+    Optional<RefDataProcessingInfo> getAndTouchProcessingInfo(final RefStreamDefinition refStreamDefinition);
 
     /**
      * Returns true if all the data for the passed stream definition has been successfully loaded into the
      * store and is available for use.
      */
     boolean isDataLoaded(final RefStreamDefinition refStreamDefinition);
-
-//    /**
-//     * Performs a lookup using the passed mapDefinition and key and if not found will call the refDataValueSupplier
-//     * to create a new entry for that mapDefinition, key and value. The check-and-put will be done in an atomic way
-//     * so no external synchronisation is required.
-//     */
-//    void put(final MapDefinition mapDefinition,
-//             final String key,
-//             final Supplier<RefDataValue> refDataValueSupplier,
-//             final boolean overwriteExistingValue);
-//
-//    /**
-//     * Performs a lookup using the passed mapDefinition and keyRange and if not found will call the refDataValueSupplier
-//     * to create a new entry for that mapDefinition, keyRange and value. The check-and-put will be done in an atomic way
-//     * so no external synchronisation is required.
-//     */
-//    void put(final MapDefinition mapDefinition,
-//             final Range<Long> keyRange,
-//             final Supplier<RefDataValue> refDataValueSupplier,
-//             final boolean overwriteExistingValue);
 
     /**
      * Gets a value from the store for the passed mapDefinition and key. If not found returns an empty {@link Optional}.
@@ -64,16 +49,6 @@ public interface RefDataStore {
     RefDataValueProxy getValueProxy(final MapDefinition mapDefinition,
                                     final String key);
 
-//    Optional<RefDataValue> getValue(final ValueStoreKey valueStoreKey);
-
-
-//    /**
-//     * Performs a lookup using the passed mapDefinition and key and then applies the valueConsumer to
-//     * the found value. If no value is found the valueConsumer is not called
-//     */
-//    void consumeValue(final MapDefinition mapDefinition,
-//                      final String key,
-//                      final Consumer<RefDataValue> valueConsumer);
 
     /**
      * Performs a lookup using the passed mapDefinition and key and then applies the valueBytesConsumer to
@@ -84,27 +59,6 @@ public interface RefDataStore {
     boolean consumeValueBytes(final MapDefinition mapDefinition,
                               final String key,
                               final Consumer<TypedByteBuffer> valueBytesConsumer);
-
-//    void consumeValue(final ValueStoreKey valueStoreKey,
-//                      final Consumer<RefDataValue> valueConsumer);
-//
-//    void consumeBytes(final ValueStoreKey valueStoreKey,
-//                      final Consumer<ByteBuffer> valueConsumer);
-
-//    /**
-//     * Performs a lookup using the passed mapDefinition and key and then applies the valueMapper to
-//     * the found value, returning the value in an {@link Optional}. If no value is found an empty
-//     * {@link Optional} is returned. The valueMapper will be applied inside a transaction.
-//     */
-//    <T> Optional<T> map(final MapDefinition mapDefinition,
-//                        final String key,
-//                        final Function<RefDataValue, T> valueMapper);
-//
-//    <T> Optional<T> map(final ValueStoreKey valueStoreKey,
-//                        final Function<RefDataValue, T> valueMapper);
-//
-//    <T> Optional<T> mapBytes(final ValueStoreKey valueStoreKey,
-//                             final Function<ByteBuffer, T> valueMapper);
 
     /**
      * Will initiate a new {@link RefDataLoader} for the passed {@link RefStreamDefinition} and effectiveTimeMs.

@@ -155,6 +155,9 @@ public class ByteBufferUtils {
                 }
             }
         }
+        boolean result2 = result;
+        LAMBDA_LOGGER.info(() -> LambdaLogger.buildMessage("containsPrefix({} {}) returns {}",
+                ByteBufferUtils.byteBufferInfo(buffer), ByteBufferUtils.byteBufferInfo(prefixBuffer), result2));
         return result;
     }
 
@@ -162,6 +165,19 @@ public class ByteBufferUtils {
         destBuffer.put(sourceBuffer);
         destBuffer.flip();
         sourceBuffer.rewind();
+    }
+
+    /**
+     * Creates a new direct {@link ByteBuffer} from the input {@link ByteBuffer}.
+     * The bytes from position() to limit() will be copied into a newly allocated
+     * buffer. The new buffer will be flipped to set its position read for get operations
+     */
+    public static ByteBuffer copyToDirectBuffer(final ByteBuffer input) {
+        ByteBuffer output = ByteBuffer.allocateDirect(input.remaining());
+        output.put(input);
+        output.flip();
+        input.rewind();
+        return output;
     }
 
     /**
@@ -188,4 +204,5 @@ public class ByteBufferUtils {
 //                cmp2));
         return cmp;
     }
+
 }

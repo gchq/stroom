@@ -46,7 +46,7 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(KeyValueStoreDb.class);
 
 
-    private static final String DB_NAME = "KeyValueStore";
+    public static final String DB_NAME = "KeyValueStore";
 
     private final KeyValueStoreKeySerde keySerde;
     private final ValueStoreKeySerde valueSerde;
@@ -65,6 +65,9 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
     public void deleteMapEntries(final Txn<ByteBuffer> writeTxn,
                                  final UID mapUid,
                                  final BiConsumer<ByteBuffer, ByteBuffer> entryConsumer) {
+        LOGGER.debug("deleteMapEntries(..., {}, ...)", mapUid);
+
+        logRawDatabaseContents(writeTxn);
 
         try (PooledByteBuffer startKeyIncPooledBuffer = getPooledKeyBuffer();
              PooledByteBuffer endKeyExcPooledBuffer = getPooledKeyBuffer()) {
@@ -80,28 +83,35 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
             final KeyValueStoreKey startKeyInc = new KeyValueStoreKey(mapUid, "");
             final ByteBuffer startKeyIncBuffer = startKeyIncPooledBuffer.getByteBuffer();
             keySerde.serializeWithoutKeyPart(startKeyIncBuffer, startKeyInc);
+
+            LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage(
+                    "startKeyIncBuffer {}", ByteBufferUtils.byteBufferInfo(startKeyIncBuffer)));
+
             final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(startKeyIncBuffer);
 
             try (CursorIterator<ByteBuffer> cursorIterator = getLmdbDbi().iterate(writeTxn, keyRange)) {
+                int cnt = 0;
                 for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
-
+                    LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Found entry {} {}",
+                            ByteBufferUtils.byteBufferInfo(keyVal.key()),
+                            ByteBufferUtils.byteBufferInfo(keyVal.val())));
                     if (ByteBufferUtils.containsPrefix(keyVal.key(), startKeyIncBuffer)) {
                         // prefixed with our UID
 
-                        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Found entry {} {}",
-                                ByteBufferUtils.byteBufferInfo(keyVal.key()),
-                                ByteBufferUtils.byteBufferInfo(keyVal.val())));
 
                         // pass the found kv pair from this entry to the consumer
                         // consumer MUST not hold on to the key/value references as they can change
                         // once the cursor is closed or moves position
                         entryConsumer.accept(keyVal.key(), keyVal.val());
                         cursorIterator.remove();
+                        cnt++;
                     } else {
                         // passed out UID so break out
+                        LOGGER.trace("Breaking out of loop");
                         break;
                     }
                 }
+                LOGGER.debug("Deleted {} {} entries", DB_NAME, cnt);
             }
         }
     }

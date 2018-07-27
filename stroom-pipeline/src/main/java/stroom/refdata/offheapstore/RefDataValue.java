@@ -33,7 +33,7 @@ public abstract class RefDataValue {
      * @return The hashcode of just the underlying value that this object wraps
      * rather than hashcode of the whole object.
      */
-    public abstract int valueHashCode();
+    public abstract int getValueHashCode();
 
     /**
      * @return A code to represent the class of the implementation,

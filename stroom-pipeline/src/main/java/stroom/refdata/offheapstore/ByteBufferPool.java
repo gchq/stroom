@@ -18,7 +18,6 @@
 package stroom.refdata.offheapstore;
 
 import stroom.entity.shared.Clearable;
-import stroom.util.logging.LambdaLogger;
 
 import javax.inject.Singleton;
 import java.nio.ByteBuffer;
@@ -64,7 +63,7 @@ public class ByteBufferPool implements Clearable {
     private final TreeMap<Key, ByteBuffer> bufferMap = new TreeMap<>();
 
     public PooledByteBuffer getPooledByteBuffer(final int minCapacity) {
-        return new PooledByteBuffer(this, getBuffer(minCapacity));
+        return new PooledByteBuffer(() -> getBuffer(minCapacity), this);
     }
 
     private synchronized ByteBuffer getBuffer(final int minCapacity) {
@@ -84,21 +83,27 @@ public class ByteBufferPool implements Clearable {
     synchronized void release(ByteBuffer buffer) {
         if (buffer != null) {
             if (!buffer.isDirect()) {
-                throw new RuntimeException(LambdaLogger.buildMessage("Expecting a direct ByteBuffer"));
+                throw new RuntimeException("Expecting a direct ByteBuffer");
             }
             buffer.clear();
 
-            while (true) {
-                final Key key = new Key(buffer.capacity(), System.nanoTime());
-                if (!bufferMap.containsKey(key)) {
-                    bufferMap.put(key, buffer);
-                    return;
+            try {
+                while (true) {
+                    final Key key = new Key(buffer.capacity(), System.nanoTime());
+                    if (!bufferMap.containsKey(key)) {
+                        bufferMap.put(key, buffer);
+                        return;
+                    }
+                    // Buffers are indexed by (capacity, time).
+                    // If our key is not unique on the first try, we try again, since the
+                    // time will be different.  Since we use nanoseconds, it's pretty
+                    // unlikely that we'll loop even once, unless the system clock has a
+                    // poor granularity.
                 }
-                // Buffers are indexed by (capacity, time).
-                // If our key is not unique on the first try, we try again, since the
-                // time will be different.  Since we use nanoseconds, it's pretty
-                // unlikely that we'll loop even once, unless the system clock has a
-                // poor granularity.
+            } catch (Exception e) {
+                // if a buffer is not released back to the pool then it is not the end of the world
+                // is we can just create more as required.
+                throw new RuntimeException("Error releasing buffer back to the pool", e);
             }
         }
     }

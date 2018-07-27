@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,22 +12,31 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
-package stroom.util.lifecycle;
+package stroom.refdata.lmdb;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import org.lmdbjava.Txn;
 
-/**
- * A larger value for priority means a higher priority, i.e. 1 trumps 0
- */
-@Inherited
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface StroomShutdown {
-    int priority() default 0;
+import java.nio.ByteBuffer;
+import java.util.Map;
+
+public interface LmdbDb {
+
+    String getDbName();
+
+    Map<String, String> getDbInfo();
+
+    long getEntryCount(Txn<ByteBuffer> txn);
+
+    long getEntryCount();
+
+    void logDatabaseContents(Txn<ByteBuffer> txn);
+
+    void logDatabaseContents();
+
+    void logRawDatabaseContents(Txn<ByteBuffer> txn);
+
+    void logRawDatabaseContents();
 }

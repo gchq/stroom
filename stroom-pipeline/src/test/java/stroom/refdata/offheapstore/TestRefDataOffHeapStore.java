@@ -24,10 +24,19 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Range;
+import stroom.refdata.offheapstore.databases.KeyValueStoreDb;
+import stroom.refdata.offheapstore.databases.MapUidForwardDb;
+import stroom.refdata.offheapstore.databases.MapUidReverseDb;
+import stroom.refdata.offheapstore.databases.ProcessingInfoDb;
+import stroom.refdata.offheapstore.databases.RangeStoreDb;
+import stroom.refdata.offheapstore.databases.ValueStoreDb;
+import stroom.util.ByteSizeUnit;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -51,6 +60,14 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestRefDataOffHeapStore.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(TestRefDataOffHeapStore.class);
+
+    public static final String FIXED_PIPELINE_UUID = UUID.randomUUID().toString();
+    public static final String FIXED_PIPELINE_VERSION = UUID.randomUUID().toString();
+
+    @Override
+    protected void setDbMaxSizeProperty() {
+        setDbMaxSizeProperty(ByteSizeUnit.MEBIBYTE.longBytes(200));
+    }
 
     @Test
     public void getProcessingInfo() {
@@ -425,7 +442,76 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
     @Test
     public void testPurgeOldData_partial() {
 
-        loadBulkData(2, 2, 2, 10);
+        setPurgeAgeProperty("1d");
+        int refStreamDefCount = 4;
+        int keyValueMapCount = 2;
+        int rangeValueMapCount = 2;
+        int entryCount = 2;
+        int totalMapEntries = (refStreamDefCount * keyValueMapCount) + (refStreamDefCount * rangeValueMapCount);
+        int totalKeyValueEntryCount = refStreamDefCount * keyValueMapCount * entryCount;
+        int totalRangeValueEntryCount = refStreamDefCount * rangeValueMapCount * entryCount;
+        int totalValueEntryCount = totalKeyValueEntryCount + totalRangeValueEntryCount;
+
+        List<RefStreamDefinition> refStreamDefs = loadBulkData(
+                refStreamDefCount, keyValueMapCount, rangeValueMapCount, entryCount);
+
+        ((RefDataOffHeapStore) refDataStore).logAllContents();
+
+        assertDbCounts(
+                refStreamDefCount,
+                totalMapEntries,
+                totalKeyValueEntryCount,
+                totalRangeValueEntryCount,
+                totalValueEntryCount);
+
+        long twoDaysAgoMs = Instant.now().minus(2, ChronoUnit.DAYS).toEpochMilli();
+
+        ((RefDataOffHeapStore) refDataStore).logContents(ProcessingInfoDb.DB_NAME);
+
+        // set two of the refStreamDefs to be two days old so they should get purged
+        setLastAccessedTime(refStreamDefs.get(1), twoDaysAgoMs);
+        setLastAccessedTime(refStreamDefs.get(3), twoDaysAgoMs);
+
+        ((RefDataOffHeapStore) refDataStore).logContents(ProcessingInfoDb.DB_NAME);
+        ((RefDataOffHeapStore) refDataStore).logRawContents(KeyValueStoreDb.DB_NAME);
+
+        // do the purge
+        refDataStore.purgeOldData();
+
+        ((RefDataOffHeapStore) refDataStore).logAllContents();
+
+        int expectedRefStreamDefCount = 2;
+        assertDbCounts(
+                expectedRefStreamDefCount,
+                (expectedRefStreamDefCount + keyValueMapCount) + (expectedRefStreamDefCount * rangeValueMapCount),
+                expectedRefStreamDefCount * keyValueMapCount * entryCount,
+                expectedRefStreamDefCount * rangeValueMapCount * entryCount,
+                (expectedRefStreamDefCount * rangeValueMapCount * entryCount) +
+                        (expectedRefStreamDefCount * rangeValueMapCount * entryCount));
+    }
+
+    private void assertDbCounts(final int refStreamDefCount,
+                                final int totalMapEntries,
+                                final int totalKeyValueEntryCount,
+                                final int totalRangeValueEntryCount,
+                                final int totalValueEntryCount) {
+
+        assertThat(((RefDataOffHeapStore) refDataStore).getEntryCount(ProcessingInfoDb.DB_NAME))
+                .isEqualTo(refStreamDefCount);
+        assertThat(((RefDataOffHeapStore) refDataStore).getEntryCount(MapUidForwardDb.DB_NAME))
+                .isEqualTo(totalMapEntries);
+        assertThat(((RefDataOffHeapStore) refDataStore).getEntryCount(MapUidReverseDb.DB_NAME))
+                .isEqualTo(totalMapEntries);
+        assertThat(((RefDataOffHeapStore) refDataStore).getEntryCount(KeyValueStoreDb.DB_NAME))
+                .isEqualTo(totalKeyValueEntryCount);
+        assertThat(((RefDataOffHeapStore) refDataStore).getEntryCount(RangeStoreDb.DB_NAME))
+                .isEqualTo(totalRangeValueEntryCount);
+        assertThat(((RefDataOffHeapStore) refDataStore).getEntryCount(ValueStoreDb.DB_NAME))
+                .isEqualTo(totalValueEntryCount);
+    }
+
+    private void setLastAccessedTime(final RefStreamDefinition refStreamDef, final long newLastAccessedTimeMs) {
+        ((RefDataOffHeapStore) refDataStore).setLastAccessedTime(refStreamDef, newLastAccessedTimeMs);
     }
 
     private RefStreamDefinition buildUniqueRefStreamDefinition(final long streamId) {
@@ -452,6 +538,13 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         bulkLoadAndAssert(refStreamDefinitions, overwriteExisting, commitInterval);
     }
 
+    /**
+     * @param refStreamDefinitionCount Number of {@link RefStreamDefinition}s to create.
+     * @param keyValueMapCount         Number of KeyValue type maps to create per {@link RefStreamDefinition}
+     * @param rangeValueMapCount       Number of RangeValue type maps to create per {@link RefStreamDefinition}
+     * @param entryCount               Number of map entries to create per map
+     * @return The created {@link RefStreamDefinition} objects
+     */
     private List<RefStreamDefinition> loadBulkData(
             final int refStreamDefinitionCount,
             final int keyValueMapCount,
@@ -465,11 +558,9 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
 
         List<RefStreamDefinition> refStreamDefinitions = new ArrayList<>();
 
-        for (int i = 1; i <= refStreamDefinitionCount; i++) {
-            RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
-                    UUID.randomUUID().toString(),
-                    UUID.randomUUID().toString(),
-                    (long) i);
+        for (int i = 0; i < refStreamDefinitionCount; i++) {
+
+            RefStreamDefinition refStreamDefinition = buildRefStreamDefintion(i);
 
             refStreamDefinitions.add(refStreamDefinition);
 
@@ -489,33 +580,57 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         return refStreamDefinitions;
     }
 
+    private RefStreamDefinition buildRefStreamDefintion(final long i) {
+        return new RefStreamDefinition(
+                FIXED_PIPELINE_UUID,
+                FIXED_PIPELINE_VERSION,
+                i);
+    }
+
     private void loadRangeValueData(final int keyValueMapCount, final int entryCount, final RefStreamDefinition refStreamDefinition, final RefDataLoader loader) {
         // load the range/value data
-        for (int j = 1; j <= keyValueMapCount; j++) {
-            String mapName = "map" + j;
+        for (int j = 0; j < keyValueMapCount; j++) {
+            String mapName = buildMapName(refStreamDefinition, "Range", j);
             MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
 
-            for (int k = 1; k <= entryCount; k++) {
+            for (int k = 0; k < entryCount; k++) {
                 Range<Long> range = Range.of((long) k * 10, (long) (k * 10) + 10);
-                String value = LambdaLogger.buildMessage("{}-{}-{}-value{}",
-                        mapName, range.getFrom(), range.getTo(), k);
+                String value = buildRangeStoreValue(mapName, k, range);
                 loader.put(mapDefinition, range, StringValue.of(value));
             }
         }
     }
 
+    private String buildRangeStoreValue(final String mapName, final int i, final Range<Long> range) {
+        return LambdaLogger.buildMessage("{}-{}-{}-value{}",
+                mapName, range.getFrom(), range.getTo(), i);
+    }
+
+    private String buildMapName(final RefStreamDefinition refStreamDefinition, final String type, final int i) {
+        return LambdaLogger.buildMessage("refStreamDef{}-{}map{}",
+                refStreamDefinition.getStreamId(), type, i);
+    }
+
     private void loadKeyValueData(final int keyValueMapCount, final int entryCount, final RefStreamDefinition refStreamDefinition, final RefDataLoader loader) {
         // load the key/value data
-        for (int j = 1; j <= keyValueMapCount; j++) {
-            String mapName = "map" + j;
+        for (int j = 0; j < keyValueMapCount; j++) {
+            String mapName = buildMapName(refStreamDefinition, "KV", j);
             MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
 
-            for (int k = 1; k <= entryCount; k++) {
-                String key = "key" + k;
-                String value = LambdaLogger.buildMessage("{}-{}-value{}", mapName, key, k);
+            for (int k = 0; k < entryCount; k++) {
+                String key = buildKey(k);
+                String value = buildKeyStoreValue(mapName, k, key);
                 loader.put(mapDefinition, key, StringValue.of(value));
             }
         }
+    }
+
+    private String buildKeyStoreValue(final String mapName, final int i, final String key) {
+        return LambdaLogger.buildMessage("{}-{}-value{}", mapName, key, i);
+    }
+
+    private String buildKey(final int k) {
+        return "key" + k;
     }
 
 
@@ -582,7 +697,7 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
 
 //            ((RefDataOffHeapStore) refDataStore).logAllContents();
 
-            RefDataProcessingInfo refDataProcessingInfo = refDataStore.getAndMutateProcessingInfo(refStreamDefinition).get();
+            RefDataProcessingInfo refDataProcessingInfo = refDataStore.getAndTouchProcessingInfo(refStreamDefinition).get();
 
             assertThat(refDataProcessingInfo.getProcessingState()).isEqualTo(ProcessingState.COMPLETE);
 
@@ -682,7 +797,7 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                                 .map(name -> new MapDefinition(refStreamDefinition, name))
                                 .forEach(mapDefinition -> {
                                     int cnt = counter.incrementAndGet();
-                                    String key = "key" + cnt;
+                                    String key = buildKey(cnt);
                                     StringValue value = StringValue.of("value" + cnt);
                                     LOGGER.debug("Putting cnt {}, key {}, value {}", cnt, key, value);
                                     loader.put(mapDefinition, key, value);
@@ -708,7 +823,7 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
 
         assertThat(didLoadHappen).isEqualTo(isLoadExpectedToHappen);
 
-        RefDataProcessingInfo processingInfo = refDataStore.getAndMutateProcessingInfo(refStreamDefinition).get();
+        RefDataProcessingInfo processingInfo = refDataStore.getAndTouchProcessingInfo(refStreamDefinition).get();
 
         assertThat(processingInfo.getProcessingState()).isEqualTo(ProcessingState.COMPLETE);
 

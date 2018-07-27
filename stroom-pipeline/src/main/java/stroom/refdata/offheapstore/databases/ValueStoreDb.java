@@ -44,6 +44,8 @@ import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
+
 
 /**
  * A database to hold reference data values using a generated unique surrogate key. The key
@@ -69,7 +71,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ValueStoreDb.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ValueStoreDb.class);
 
-    private static final String DB_NAME = "ValueStore";
+    public static final String DB_NAME = "ValueStore";
 
     private final ValueStoreKeySerde keySerde;
     private final RefDataValueSerde valueSerde;
@@ -84,34 +86,67 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
         this.valueSerde = valueSerde;
     }
 
+//    /**
+//     * Tests if the passed otherRefDataValue is equal to the value associated with the
+//     * passed valueStoreKey (if there is one). If there is no value associated with
+//     * the passed valueStoreKey, false will be returned.
+//     */
+//    @Deprecated
+//    public boolean areValuesEqual(final Txn<ByteBuffer> txn,
+//                                  final ValueStoreKey valueStoreKey,
+//                                  final RefDataValue otherRefDataValue) {
+//
+//        int currentValueHashCode = valueStoreKey.getValueHashCode();
+//        int newValueHashCode = otherRefDataValue.getValueHashCode();
+//        boolean areValuesEqual;
+//        if (currentValueHashCode != newValueHashCode) {
+//            // valueHashCodes differ so values differ
+//            areValuesEqual = false;
+//        } else {
+//            // valueHashCodes match so need to do a full equality check
+//
+//            try (final PooledByteBuffer pooledValueStoreKeyBuf = getPooledKeyBuffer();
+//            final PooledByteBuffer pooledOtherRefDataValueBuf = getPooledValueBuffer()) {
+//
+//                keySerde.serialize(pooledValueStoreKeyBuf.getByteBuffer(), valueStoreKey);
+//
+//                Optional<ByteBuffer> optCurrentValueBuf = getAsBytes(txn, pooledValueStoreKeyBuf.getByteBuffer());
+//
+//                if (optCurrentValueBuf.isPresent()) {
+//                    valueSerde.serialize(pooledOtherRefDataValueBuf.getByteBuffer(), otherRefDataValue);
+//                    areValuesEqual = valueSerde.areValuesEqual(optCurrentValueBuf.get(), pooledOtherRefDataValueBuf.getByteBuffer());
+//                } else {
+//                    areValuesEqual = false;
+//                }
+//            }
+//        }
+//        return areValuesEqual;
+//    }
+
     /**
-     * Tests if the passed otherRefDataValue is equal to the value associated with the
+     * Tests if the passed newRefDataValue is equal to the value associated with the
      * passed valueStoreKey (if there is one). If there is no value associated with
      * the passed valueStoreKey, false will be returned.
      */
     public boolean areValuesEqual(final Txn<ByteBuffer> txn,
-                                  final ValueStoreKey valueStoreKey,
-                                  final RefDataValue otherRefDataValue) {
+                                  final ByteBuffer valueStoreKeyBuffer,
+                                  final RefDataValue newRefDataValue) {
 
-        int currentValueHashCode = valueStoreKey.getValueHashCode();
-        int newValueHashCode = otherRefDataValue.valueHashCode();
+        int currentValueHashCode = keySerde.extractValueHashCode(valueStoreKeyBuffer);
+        int newValueHashCode = newRefDataValue.getValueHashCode();
         boolean areValuesEqual;
         if (currentValueHashCode != newValueHashCode) {
             // valueHashCodes differ so values differ
             areValuesEqual = false;
         } else {
             // valueHashCodes match so need to do a full equality check
+            try (final PooledByteBuffer newRefDataValuePooledBuf = getPooledValueBuffer()) {
 
-            try (final PooledByteBuffer pooledValueStoreKeyBuf = getPooledKeyBuffer();
-            final PooledByteBuffer pooledOtherRefDataValueBuf = getPooledValueBuffer()) {
-
-                keySerde.serialize(pooledValueStoreKeyBuf.getByteBuffer(), valueStoreKey);
-
-                Optional<ByteBuffer> optCurrentValueBuf = getAsBytes(txn, pooledValueStoreKeyBuf.getByteBuffer());
+                Optional<ByteBuffer> optCurrentValueBuf = getAsBytes(txn, valueStoreKeyBuffer);
 
                 if (optCurrentValueBuf.isPresent()) {
-                    valueSerde.serialize(pooledOtherRefDataValueBuf.getByteBuffer(), otherRefDataValue);
-                    areValuesEqual = valueSerde.areValuesEqual(optCurrentValueBuf.get(), pooledOtherRefDataValueBuf.getByteBuffer());
+                    valueSerde.serialize(newRefDataValuePooledBuf.getByteBuffer(), newRefDataValue);
+                    areValuesEqual = valueSerde.areValuesEqual(optCurrentValueBuf.get(), newRefDataValuePooledBuf.getByteBuffer());
                 } else {
                     areValuesEqual = false;
                 }
@@ -123,7 +158,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
     public void deReferenceOrDeleteValue(final Txn<ByteBuffer> writeTxn, final ValueStoreKey valueStoreKey) {
         LOGGER.trace("deReferenceValue({}, {})", writeTxn, valueStoreKey);
 
-        try(final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()) {
+        try (final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()) {
             keySerde.serialize(pooledKeyBuffer.getByteBuffer(), valueStoreKey);
             deReferenceOrDeleteValue(writeTxn, pooledKeyBuffer.getByteBuffer());
         }
@@ -151,7 +186,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
             // We could run LMDB in MDB_WRITEMAP mode which allows mutation of the buffers (and
             // thus avoids the buffer copy cost) but adds more risk of DB corruption. As we are not
             // doing a high volume of value mutations read-only mode is a safer bet.
-            final ByteBuffer newValueBuf = LmdbUtils.copyDirectBuffer(valueBuf);
+            final ByteBuffer newValueBuf = ByteBufferUtils.copyToDirectBuffer(valueBuf);
 
             int newRefCount = valueSerde.updateReferenceCount(newValueBuf, -1);
 
@@ -169,9 +204,10 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
         }
     }
 
-    public ValueStoreKey getOrCreate(final Txn<ByteBuffer> writeTxn,
-                                     final RefDataValue refDataValue) {
-        return getOrCreate(writeTxn, refDataValue, false);
+    public ByteBuffer getOrCreate(final Txn<ByteBuffer> writeTxn,
+                                     final RefDataValue refDataValue,
+                                     final Supplier<ByteBuffer> valueStoreKeyBufferSupplier) {
+        return getOrCreate(writeTxn, refDataValue, valueStoreKeyBufferSupplier, false);
 
     }
 
@@ -182,9 +218,10 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
      *
      * @return A clone of the {@link ByteBuffer} containing the database key.
      */
-    public ValueStoreKey getOrCreate(final Txn<ByteBuffer> writeTxn,
-                                     final RefDataValue refDataValue,
-                                     final boolean isOverwrite) {
+    public ByteBuffer getOrCreate(final Txn<ByteBuffer> writeTxn,
+                                  final RefDataValue refDataValue,
+                                  final Supplier<ByteBuffer> valueStoreKeyBufferSupplier,
+                                  final boolean isOverwrite) {
 
         Preconditions.checkArgument(!writeTxn.isReadOnly(), "A write transaction is required");
 
@@ -201,13 +238,14 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
         LAMBDA_LOGGER.trace(() ->
                 LambdaLogger.buildMessage("valueBuffer: {}", ByteBufferUtils.byteBufferInfo(valueBuffer)));
 
-        ValueStoreKey valueStoreKey = null;
 
         // Use atomics so they can be mutated and then used in lambdas
         final AtomicBoolean isValueInDb = new AtomicBoolean(false);
         final AtomicInteger valuesCount = new AtomicInteger(0);
         short lastKeyId = -1;
         short firstUnusedKeyId = -1;
+        // TODO we have to create a new ByteBuffer here which we may/may not return so it is not
+        // straightforward to use a pool for it.
         final ByteBuffer startKey = buildStartKeyBuffer(refDataValue);
         ByteBuffer lastKeyBufferClone = null;
 
@@ -244,41 +282,46 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                         LmdbUtils.byteBufferToHex(valueBuffer),
                         LmdbUtils.byteBufferToHex(valueFromDbBuf)));
 
-                // we cannot use keyVal outside of the cursor loop so have to
-                // copy the content
+                // we cannot use keyVal outside of the cursor loop so have to copy the content
                 if (lastKeyBufferClone == null) {
                     // make a new buffer from the cursor key content
-                    lastKeyBufferClone = LmdbUtils.copyDirectBuffer(keyFromDbBuf);
+                    lastKeyBufferClone = valueStoreKeyBufferSupplier.get();
                 } else {
-                    // copy the cursor key content into our mutable buffer
-                    // TODO we could just copy the 2 bytes that make up the ID as that is the only bit that changes
-                    // though this only saves copying the extra 4 bytes
-                    lastKeyBufferClone.put(keyFromDbBuf);
-                    lastKeyBufferClone.flip();
+                    lastKeyBufferClone.clear();
                 }
+
+                // copy the cursor key content into our mutable buffer
+                // TODO we could just copy the 2 bytes that make up the ID as that is the only bit that changes
+                // though this only saves copying the extra 4 bytes
+                ByteBufferUtils.copy(keyFromDbBuf, lastKeyBufferClone);
+//                    lastKeyBufferClone.put(keyFromDbBuf);
+//                    lastKeyBufferClone.flip();
 
                 // see if the found value is identical to the value passed in
                 if (valueSerde.areValuesEqual(valueBuffer, valueFromDbBuf)) {
                     isValueInDb.set(true);
                     LAMBDA_LOGGER.trace(() -> "Found our value so incrementing its ref count and breaking out");
 
-                    // TODO this copy could be expensive as some of the value can be many hundreds of bytes
-                    // May be preferable to hold the ref count in a separate table (ValueReferenceCountDb)
-                    // as the copy/put of those 4 bytes will be cheaper but at the expense of an extra cursor get op
-                    final ByteBuffer valueBufClone = LmdbUtils.copyDirectBuffer(valueFromDbBuf);
-                    // we have an interest in this value so increment the reference count
-                    int newRefCount = valueSerde.incrementReferenceCount(valueBufClone);
+                    try (PooledByteBuffer valuePooledBuffer = getPooledBuffer(valueFromDbBuf.remaining())) {
+                        ByteBuffer valueBufClone = valuePooledBuffer.getByteBuffer();
+                        // TODO this copy could be expensive as some of the value can be many hundreds of bytes
+                        // May be preferable to hold the ref count in a separate table (ValueReferenceCountDb)
+                        // as the copy/put of those 4 bytes will be cheaper but at the expense of an extra cursor get op
+                        ByteBufferUtils.copy(valueFromDbBuf, valueBufClone);
+                        // we have an interest in this value so increment the reference count
+                        int newRefCount = valueSerde.incrementReferenceCount(valueBufClone);
 
-                    LOGGER.trace("newRefCount is {}", newRefCount);
+                        LOGGER.trace("newRefCount is {}", newRefCount);
 
-                    try {
-                        //flip the buffer so it is ready for reading by LMDB
-                        keyFromDbBuf.flip();
-                        cursor.put(keyFromDbBuf, valueBufClone, PutFlags.MDB_CURRENT);
-                    } catch (Exception e) {
-                        throw new RuntimeException(LambdaLogger.buildMessage("Error doing cursor.put with [{}] & [{}]",
-                                ByteBufferUtils.byteBufferInfo(keyFromDbBuf),
-                                ByteBufferUtils.byteBufferInfo(valueBufClone)), e);
+                        try {
+                            //flip the buffer so it is ready for reading by LMDB
+//                            keyFromDbBuf.flip();
+                            cursor.put(keyFromDbBuf, valueBufClone, PutFlags.MDB_CURRENT);
+                        } catch (Exception e) {
+                            throw new RuntimeException(LambdaLogger.buildMessage("Error doing cursor.put with [{}] & [{}]",
+                                    ByteBufferUtils.byteBufferInfo(keyFromDbBuf),
+                                    ByteBufferUtils.byteBufferInfo(valueBufClone)), e);
+                        }
                     }
 
                     break;
@@ -294,10 +337,14 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                 isValueInDb.get(),
                 valuesCount.get()));
 
+//        ValueStoreKey valueStoreKey = null;
+        ByteBuffer valueStoreKeyBuffer;
+
         if (isValueInDb.get()) {
             // value is already in the map, so use its key
             LOGGER.trace("Found value");
-            valueStoreKey = keySerde.deserialize(lastKeyBufferClone);
+//            valueStoreKey = keySerde.deserialize(lastKeyBufferClone);
+            valueStoreKeyBuffer = lastKeyBufferClone;
         } else {
             // value is not in the map so we need to add it
             final ByteBuffer keyBuffer;
@@ -314,9 +361,10 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                     ValueStoreKeySerde.incrementId(lastKeyBufferClone);
                 }
                 keyBuffer = lastKeyBufferClone;
-                LOGGER.trace("Incrementing key, valueStoreKey {}", valueStoreKey);
+//                LOGGER.trace("Incrementing key, valueStoreKey {}", valueStoreKey);
             }
-            valueStoreKey = keySerde.deserialize(keyBuffer);
+//            valueStoreKey = keySerde.deserialize(keyBuffer);
+            valueStoreKeyBuffer = keyBuffer;
             boolean didPutSucceed = put(writeTxn, keyBuffer, valueBuffer, false);
             if (!didPutSucceed) {
                 throw new RuntimeException(LambdaLogger.buildMessage("Put failed for key: {}, value {}",
@@ -325,7 +373,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
             }
         }
 
-        return valueStoreKey;
+        return valueStoreKeyBuffer;
     }
 
     public Optional<RefDataValue> get(final Txn<ByteBuffer> txn, final ByteBuffer keyBuffer) {
@@ -339,7 +387,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
     }
 
     private ByteBuffer buildStartKeyBuffer(final RefDataValue value) {
-        return keySerde.serialize(ValueStoreKey.lowestKey(value.valueHashCode()));
+        return keySerde.serialize(ValueStoreKey.lowestKey(value.getValueHashCode()));
     }
 
     public interface Factory {

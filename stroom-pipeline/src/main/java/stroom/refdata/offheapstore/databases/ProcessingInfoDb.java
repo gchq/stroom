@@ -29,7 +29,7 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessingInfoDb.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ProcessingInfoDb.class);
 
-    private static final String DB_NAME = "ProcessingInfo";
+    public static final String DB_NAME = "ProcessingInfo";
     private final RefStreamDefinitionSerde keySerde;
     private final RefDataProcessingInfoSerde valueSerde;
 
@@ -45,10 +45,15 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
     }
 
     public void updateLastAccessedTime(final RefStreamDefinition refStreamDefinition) {
+        updateLastAccessedTime(refStreamDefinition, System.currentTimeMillis());
+    }
+
+    public void updateLastAccessedTime(final RefStreamDefinition refStreamDefinition, final long newLastAccessedTimeMs) {
         LmdbUtils.doWithWriteTxn(getLmdbEnvironment(), writeTxn ->
                 updateValue(writeTxn,
                         refStreamDefinition,
-                        valueSerde::updateLastAccessedTime));
+                        valueBuffer ->
+                                valueSerde.updateLastAccessedTime(valueBuffer, newLastAccessedTimeMs)));
     }
 
     public void updateProcessingState(final Txn<ByteBuffer> writeTxn,

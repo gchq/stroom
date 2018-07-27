@@ -21,6 +21,8 @@ import stroom.util.logging.LambdaLogger;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * Wrapper for a {@link ByteBuffer} obtained from a {@link ByteBufferPool} that can be used
@@ -31,23 +33,30 @@ import java.util.Objects;
  */
 public class PooledByteBuffer implements AutoCloseable {
 
-    private final ByteBufferPool byteBufferPool;
     private ByteBuffer byteBuffer;
+    private Supplier<ByteBuffer> byteBufferSupplier;
+    private Consumer<ByteBuffer> releaseFunc;
 
-    PooledByteBuffer(final ByteBufferPool byteBufferPool,
-                     final ByteBuffer byteBuffer) {
-        this.byteBufferPool = byteBufferPool;
-        this.byteBuffer = byteBuffer;
+
+    PooledByteBuffer(final Supplier<ByteBuffer> byteBufferSupplier,
+                     final ByteBufferPool byteBufferPool) {
+        this.byteBufferSupplier = byteBufferSupplier;
+        this.releaseFunc = byteBufferPool::release;
     }
 
     /**
      * @return The underlying {@link ByteBuffer} that was obtained from the pool.
      */
     public ByteBuffer getByteBuffer() {
-        if (byteBuffer == null) {
+        // lazily provide the ByteBuffer
+        if (byteBuffer != null) {
+            return byteBuffer;
+        } else if (byteBufferSupplier == null) {
             throw new IllegalStateException(LambdaLogger.buildMessage("The byteBuffer has been returned to the pool"));
+        } else {
+            byteBuffer = byteBufferSupplier.get();
+            return byteBuffer;
         }
-        return byteBuffer;
     }
 
     /**
@@ -56,8 +65,10 @@ public class PooledByteBuffer implements AutoCloseable {
      * references to it. Identical behaviour to calling {@link PooledByteBuffer#close()}.
      */
     public void release() {
-        byteBufferPool.release(byteBuffer);
+        releaseFunc.accept(byteBuffer);
         byteBuffer = null;
+        byteBufferSupplier = null;
+        releaseFunc = null;
     }
 
     @Override
@@ -82,7 +93,6 @@ public class PooledByteBuffer implements AutoCloseable {
 
     @Override
     public int hashCode() {
-
         return Objects.hash(byteBuffer);
     }
 }

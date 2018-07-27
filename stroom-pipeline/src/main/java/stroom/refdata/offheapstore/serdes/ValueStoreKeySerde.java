@@ -89,6 +89,14 @@ public class ValueStoreKeySerde implements Serde<ValueStoreKey> {
     }
 
     /**
+     * Extracts the valueHashCode part of the {@link ByteBuffer} by one. Does not
+     * alter the offset/limit
+     */
+    public static int extractValueHashCode(final ByteBuffer byteBuffer) {
+        return byteBuffer.getInt(VALUE_HASH_CODE_OFFSET);
+    }
+
+    /**
      * Extracts the ID part of the {@link ByteBuffer} by one. Does not
      * alter the offset/limit
      */

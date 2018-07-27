@@ -17,6 +17,7 @@
 
 package stroom.refdata.offheapstore;
 
+import java.time.Instant;
 import java.util.Objects;
 
 public class RefDataProcessingInfo {
@@ -79,8 +80,9 @@ public class RefDataProcessingInfo {
     @Override
     public String toString() {
         return "RefDataProcessingInfo{" +
-                "createTimeEpochMs=" + createTimeEpochMs +
-                ", effectiveTimeEpochMs=" + effectiveTimeEpochMs +
+                "createTimeEpochMs=" + Instant.ofEpochMilli(createTimeEpochMs).toString() +
+                ", lastAccessedTimeEpochMs=" + Instant.ofEpochMilli(lastAccessedTimeEpochMs).toString() +
+                ", effectiveTimeEpochMs=" + Instant.ofEpochMilli(effectiveTimeEpochMs).toString() +
                 ", processingState=" + processingState +
                 '}';
     }

@@ -33,7 +33,7 @@ public class TestLmdbUtils {
 
         LOGGER.debug(ByteBufferUtils.byteBufferInfo(sourceBuffer));
 
-        ByteBuffer outputBuffer = LmdbUtils.copyDirectBuffer(sourceBuffer);
+        ByteBuffer outputBuffer = ByteBufferUtils.copyToDirectBuffer(sourceBuffer);
 
         LOGGER.debug(ByteBufferUtils.byteBufferInfo(outputBuffer));
 

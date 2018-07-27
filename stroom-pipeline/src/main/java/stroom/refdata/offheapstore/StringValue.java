@@ -56,7 +56,7 @@ public class StringValue extends RefDataValue {
     }
 
     @Override
-    public int valueHashCode() {
+    public int getValueHashCode() {
         return Objects.hash(value);
     }
 

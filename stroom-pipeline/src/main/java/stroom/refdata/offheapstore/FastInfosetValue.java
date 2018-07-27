@@ -65,7 +65,7 @@ public class FastInfosetValue extends RefDataValue {
     }
 
     @Override
-    public int valueHashCode() {
+    public int getValueHashCode() {
         return Arrays.hashCode(fastInfosetBytes);
     }
 
