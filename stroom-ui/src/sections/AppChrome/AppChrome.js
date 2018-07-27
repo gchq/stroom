@@ -205,7 +205,6 @@ const AppChrome = ({
               ))}
             </Grid.Column>
           </Grid>
-          <Divider />
           {content}
         </div>
       </div>

@@ -29,7 +29,7 @@
 }
 
 .DataTable__container {
-  height: calc(100% - 70px);
+  height: calc(100% - 45px);
   position: relative;
 }
 
@@ -55,4 +55,9 @@
 
 .ReactTable .rt-tbody .rt-tr-group {
   max-height: 30px;
+}
+
+.ReactTable .rt-thead.-header {
+  box-shadow: none;
+  border-bottom: solid 1px lightgrey;
 }

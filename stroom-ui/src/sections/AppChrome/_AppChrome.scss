@@ -27,7 +27,16 @@
   height: inherit;
   flex-grow: 1;
   overflow: scroll;
-  padding: 0.5rem;
+}
+
+.app-chrome__content .ui.grid {
+  // Get rid of semantic UIs annoying margins and add bottom border as a divider.
+  margin: 0;
+  border-bottom: solid 1px lightgrey;
+}
+
+.app-chrome__content .ui.grid .column {
+  padding: 0.3rem;
 }
 
 .content-tabs__close-btn {
@@ -40,4 +49,9 @@
 
 .ui.header:first-child {
   margin-top: 0.5rem !important; // semantic UI has a strange fixation with negative margins
+}
+
+.app-chrome__content .ui.grid h3 {
+  // Correctly align the title
+  margin-top: 0.3rem !important;
 }

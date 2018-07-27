@@ -22,8 +22,6 @@ import { compose, lifecycle, branch, renderComponent } from 'recompose';
 import moment from 'moment';
 
 import PanelGroup from 'react-panelgroup';
-import { StickyTable, Row, Cell } from 'react-sticky-table';
-import 'react-sticky-table/dist/react-sticky-table.css';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
 
