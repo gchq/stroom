@@ -17,31 +17,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { compose, lifecycle, withProps, branch, renderComponent } from 'recompose';
-// import Mousetrap from 'mousetrap'; //TODO
-import { push } from 'react-router-redux';
-import moment from 'moment';
+import { compose } from 'recompose';
 
-import {
-  Container,
-  Button,
-  Card,
-  Input,
-  Pagination,
-  Dropdown,
-  Loader,
-  Table,
-  Icon,
-  Popup,
-} from 'semantic-ui-react';
+import { Button, Dropdown, Icon } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 
-import { withConfig } from 'startup/config';
-import ClickCounter from 'lib/ClickCounter';
-import { search } from './streamAttributeMapClient';
-
-const startPage = 0;
-const defaultPageSize = 10;
 const numberOfPagesVisible = 5;
 
 const dropdownOptions = [

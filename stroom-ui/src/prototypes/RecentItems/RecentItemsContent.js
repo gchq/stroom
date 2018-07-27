@@ -17,8 +17,7 @@ import React from 'react';
 import { compose, lifecycle } from 'recompose';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
-import ReactDOM from 'react-dom';
-import { Input, Button, Header, Icon, Modal, Menu } from 'semantic-ui-react';
+import { Menu } from 'semantic-ui-react';
 
 import Mousetrap from 'mousetrap';
 

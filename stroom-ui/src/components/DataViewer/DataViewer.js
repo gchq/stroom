@@ -17,71 +17,26 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { compose, lifecycle, withProps, branch, renderComponent } from 'recompose';
+import { compose, lifecycle, branch, renderComponent } from 'recompose';
 // import Mousetrap from 'mousetrap'; //TODO
-import { push } from 'react-router-redux';
 import moment from 'moment';
 
-import {
-  Container,
-  Button,
-  Card,
-  Input,
-  Pagination,
-  Dropdown,
-  Loader,
-  Table,
-  Icon,
-  Popup,
-} from 'semantic-ui-react';
+import { Loader, Table } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 
 import { withConfig } from 'startup/config';
-import ClickCounter from 'lib/ClickCounter';
 import { search } from './streamAttributeMapClient';
 
 import MysteriousPagination from './MysteriousPagination';
 
 const startPage = 0;
 const defaultPageSize = 10;
-const numberOfPagesVisible = 5;
-
-const dropdownOptions = [
-  {
-    text: 10,
-    value: 10,
-  },
-  {
-    text: 20,
-    value: 20,
-  },
-  {
-    text: 30,
-    value: 30,
-  },
-  {
-    text: 40,
-    value: 40,
-  },
-  {
-    text: 50,
-    value: 50,
-  },
-  {
-    text: 100,
-    value: 100,
-  },
-];
 
 const enhance = compose(
   withConfig,
   connect(
     (state, props) => {
       const dataView = state.dataViewers[props.dataViewerId];
-      let total,
-        streamAttributeMaps,
-        pageSize,
-        pageOffset;
 
       if (dataView !== undefined) {
         return dataView;
@@ -89,7 +44,6 @@ const enhance = compose(
 
       return {
         streamAttributeMaps: [],
-        total: undefined,
         pageSize: defaultPageSize,
         pageOffset: startPage,
       };
@@ -113,28 +67,12 @@ const enhance = compose(
 const DataViewer = ({
   dataViewerId,
   streamAttributeMaps,
-  total,
   pageOffset,
   pageSize,
   nextPage,
   previousPage,
   search,
 }) => {
-  // We want something like [1,2,3,?,?] or [4,5,6,7,8]
-  const pageOffsetIndexFromOne = pageOffset + 1;
-  let pages = Array(numberOfPagesVisible).fill('?');
-  let modifiedIndex = pageOffsetIndexFromOne - numberOfPagesVisible;
-  if (modifiedIndex < 0) {
-    modifiedIndex = 0;
-  }
-  pages = pages.map(() => {
-    modifiedIndex += 1;
-    if (modifiedIndex <= pageOffsetIndexFromOne) {
-      return modifiedIndex;
-    }
-    return '?';
-  });
-
   return (
     <Table compact className="DataViewer_table">
       <Table.Header>

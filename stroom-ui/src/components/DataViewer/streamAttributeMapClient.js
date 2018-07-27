@@ -1,5 +1,5 @@
 import { actionCreators } from './redux';
-import { wrappedGet, wrappedPatch } from 'lib/fetchTracker.redux';
+import { wrappedGet } from 'lib/fetchTracker.redux';
 
 export const search = (dataViewerId, pageOffset, pageSize) => (dispatch, getState) => {
   const state = getState();

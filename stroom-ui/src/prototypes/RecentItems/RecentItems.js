@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 import React from 'react';
-import { compose, lifecycle } from 'recompose';
+import { compose } from 'recompose';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 
-import { Input, Button, Header, Icon, Modal, Menu } from 'semantic-ui-react';
-
-import Mousetrap from 'mousetrap';
+import { Button, Header, Icon, Modal } from 'semantic-ui-react';
 
 import { actionCreators as recentItemsActionCreators } from './redux';
 import openDocRef from './openDocRef';
