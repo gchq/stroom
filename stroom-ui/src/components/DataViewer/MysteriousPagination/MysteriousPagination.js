@@ -51,9 +51,6 @@ const dropdownOptions = [
   },
 ];
 
-// TODO: Not actually using this right now.
-const enhance = compose(connect((state, props) => {}, {}));
-
 const MysteriousPagination = ({ onPageChange, pageOffset, pageSize }) => {
   // We want something like [1,2,3,?,?] or [4,5,6,7,8]
   const pageOffsetIndexFromOne = pageOffset + 1;
@@ -121,4 +118,4 @@ MysteriousPagination.propTypes = {
   pageSize: PropTypes.number.isRequired,
 };
 
-export default enhance(MysteriousPagination);
+export default MysteriousPagination;
