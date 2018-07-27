@@ -134,8 +134,52 @@ const DataViewer = ({
   });
 
   return (
-    <Table compact>
+    <Table compact className="DataViewer_table">
       <Table.Header>
+        <Table.Row>
+          <Table.HeaderCell colSpan='4'>
+          <Button.Group size="mini">
+              <Button
+                icon
+                disabled={pageOffsetIndexFromOne === 1}
+                onClick={() => search(dataViewerId, pageOffset - 1, pageSize)}
+              >
+                <Icon name="left arrow" />
+              </Button>
+              {pages.map(pageValue => (
+                <Button
+                  disabled={pageValue === '?'}
+                  active={pageValue === pageOffsetIndexFromOne}
+                  className="DataViewer__paginationButton"
+                  size="mini"
+                  onClick={(_, data) => {
+                    // data.children shows the index from one (the display index)
+                    // so we need to modify that for the search request.
+                    search(dataViewerId, data.children - 1, pageSize);
+                  }}
+                >
+                  {pageValue}
+                </Button>
+              ))}
+
+              <Button icon onClick={() => search(dataViewerId, pageOffset + 1, pageSize)}>
+                <Icon name="right arrow" />
+              </Button>
+            </Button.Group>
+            <span className="DataViewer__pageSizeSelection">
+              Show{' '}
+              <Dropdown
+                floating
+                inline
+                options={dropdownOptions}
+                value={pageSize}
+                onChange={(_, data) => {
+                  search(dataViewerId, pageOffset, data.value);
+                }}
+              />
+            </span>
+          </Table.HeaderCell>
+        </Table.Row>
         <Table.Row>
           <Table.HeaderCell>Created</Table.HeaderCell>
           <Table.HeaderCell>Type</Table.HeaderCell>
@@ -151,7 +195,7 @@ const DataViewer = ({
               streamAttributeMap.stream.feed.id
             }`}
           >
-            <Table.Cell>
+            <Table.Cell className="DataViewer__tableCell">
               {moment(streamAttributeMap.stream.createMs).format('MMMM Do YYYY, h:mm:ss a')}
             </Table.Cell>
             <Table.Cell>{streamAttributeMap.stream.feed.streamType.displayValue}</Table.Cell>
