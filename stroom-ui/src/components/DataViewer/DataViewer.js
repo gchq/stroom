@@ -30,7 +30,7 @@ import { search } from './streamAttributeMapClient';
 import MysteriousPagination from './MysteriousPagination';
 
 const startPage = 0;
-const defaultPageSize = 10;
+const defaultPageSize = 20;
 
 const enhance = compose(
   withConfig,

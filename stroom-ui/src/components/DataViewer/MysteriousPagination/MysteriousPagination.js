@@ -120,7 +120,7 @@ const MysteriousPagination = ({
 MysteriousPagination.propTypes = {
   onPageChange: PropTypes.func.isRequired,
   pageOffset: PropTypes.number.isRequired,
-  pageSize: PropTypes.number.isRequired,
+  pageSize: PropTypes.oneOf(dropdownOptions.map(option => option.value)).isRequired,
   visiblePages: PropTypes.number,
 };
 
