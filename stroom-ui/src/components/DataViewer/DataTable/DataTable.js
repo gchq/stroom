@@ -32,6 +32,9 @@ import 'semantic-ui-css/semantic.min.css';
 import { withConfig } from 'startup/config';
 import { search } from '../streamAttributeMapClient';
 
+import { actionCreators } from '../redux';
+
+const { selectRow } = actionCreators;
 const startPage = 0;
 const defaultPageSize = 20;
 
@@ -49,9 +52,10 @@ const enhance = compose(
         streamAttributeMaps: [],
         pageSize: defaultPageSize,
         pageOffset: startPage,
+        selectedRow: undefined,
       };
     },
-    { search },
+    { search, selectRow },
   ),
   lifecycle({
     componentDidMount() {
@@ -75,6 +79,8 @@ const DataViewer = ({
   nextPage,
   previousPage,
   search,
+  selectRow,
+  selectedRow,
 }) => {
   const tableColumns = [
     {
@@ -111,6 +117,26 @@ const DataViewer = ({
           className="DataTable__reactTable"
           data={tableData}
           columns={tableColumns}
+          getTdProps={(state, rowInfo, column, instance) => ({
+            onClick: (e, handleOriginal) => {
+              selectRow(dataViewerId, rowInfo.index);
+
+              // IMPORTANT! React-Table uses onClick internally to trigger
+              // events like expanding SubComponents and pivots.
+              // By default a custom 'onClick' handler will override this functionality.
+              // If you want to fire the original onClick handler, call the
+              // 'handleOriginal' function.
+              if (handleOriginal) {
+                handleOriginal();
+              }
+            },
+          })}
+          getTrProps={(state, rowInfo, column) => {
+            return {
+              className:
+                path(['index'], rowInfo) === selectedRow ? 'DataTable__selectedRow' : undefined,
+            };
+          }}
         />
       </div>
     </div>
