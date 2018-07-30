@@ -103,6 +103,7 @@ class TrackerDashboard extends Component {
 
     return (
       <div className="tracker-container">
+      <div className="tracker">
         <Menu attached="top">
           <Menu.Menu position="left" className="search-container">
             <Input
@@ -200,6 +201,7 @@ class TrackerDashboard extends Component {
           </div>
           <TrackerDetails />
         </PanelGroup>
+        </div>
       </div>
     );
   }

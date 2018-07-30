@@ -16,7 +16,11 @@
 
 .tracker-container {
   position: relative;
-  height: 100%;
+  height: calc(100% - 100px);
+}
+
+.tracker {
+  position: absolute;
 }
 
 .tracker-container .SplitPane {

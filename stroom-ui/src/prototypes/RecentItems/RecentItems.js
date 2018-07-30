@@ -18,12 +18,18 @@ import { compose } from 'recompose';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 
-import { Button, Header, Icon, Modal, Menu } from 'semantic-ui-react';
+import { Button, Header, Icon, Modal } from 'semantic-ui-react';
 
 import { actionCreators as recentItemsActionCreators } from './redux';
 import openDocRef from './openDocRef';
 
-const { recentItemsClosed } = recentItemsActionCreators;
+import RecentItemsContent from './RecentItemsContent';
+
+const {
+  recentItemsClosed,
+  recentItemsSelectionUp,
+  recentItemsSelectionDown,
+} = recentItemsActionCreators;
 
 const enhance = compose(
   withRouter,
@@ -31,34 +37,33 @@ const enhance = compose(
     (state, props) => ({
       isOpen: state.recentItems.isOpen,
       openItemStack: state.recentItems.openItemStack,
+      selectedItem: state.recentItems.selectedItem,
+      selectedDocRef: state.recentItems.selectedDocRef,
     }),
-    { recentItemsClosed, openDocRef },
+    {
+      recentItemsClosed,
+      openDocRef,
+      recentItemsSelectionUp,
+      recentItemsSelectionDown,
+    },
   ),
 );
 
 const RecentItems = ({
-  history, isOpen, recentItemsClosed, openItemStack, openDocRef,
+  history,
+  isOpen,
+  recentItemsClosed,
+  openItemStack,
+  openDocRef,
+  selectedItem,
+  selectedDocRef,
+  recentItemsSelectionUp,
+  recentItemsSelectionDown,
 }) => (
   <Modal open={isOpen} onClose={recentItemsClosed} size="small" dimmer="inverted">
     <Header icon="file outline" content="Recent Items" />
     <Modal.Content>
-      <Menu vertical fluid>
-        {openItemStack.map((docRef) => {
-          const title = docRef.name;
-          return (
-            <Menu.Item
-              key={docRef.uuid}
-              name={title}
-              onClick={() => {
-                openDocRef(history, docRef);
-                recentItemsClosed();
-              }}
-            >
-              {title}
-            </Menu.Item>
-          );
-        })}
-      </Menu>
+      <RecentItemsContent />
     </Modal.Content>
     <Modal.Actions>
       <Button negative onClick={recentItemsClosed} inverted>

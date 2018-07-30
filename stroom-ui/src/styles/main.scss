@@ -4,6 +4,8 @@
 @import "../components/PipelineEditor/PipelineEditor";
 @import "../components/PipelineSearch/PipelineSearch";
 @import "../components/DataViewer/DataViewer";
+@import "../components/DataViewer/DataTable/DataTable";
+@import "../components/DataViewer/MysteriousPagination/MysteriousPagination";
 @import "../prototypes/HorizontalPanel/HorizontalPanel";
 @import "../prototypes/XsltEditor/XsltEditor";
 @import "../components/DocExplorer/DocExplorer";
@@ -11,3 +13,4 @@
 @import "../components/LineTo/LineTo";
 @import "../sections/TrackerDashboard/TrackerDashboard/TrackerDashboard";
 @import "../sections/AppChrome/AppChrome";
+@import "../components/IFrame/IFrame";

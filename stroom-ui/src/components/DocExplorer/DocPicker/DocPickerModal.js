@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import { compose, withState, lifecycle, branch, renderComponent } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Button, Modal, Input, Loader, Breadcrumb, Dropdown } from 'semantic-ui-react';
+import { Button, Modal, Input, Loader, Dropdown } from 'semantic-ui-react';
 
 import { findItem } from 'lib/treeUtils';
 import { actionCreators } from '../redux';

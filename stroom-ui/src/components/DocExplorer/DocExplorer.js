@@ -68,23 +68,25 @@ const enhance = compose(
 const DocExplorer = ({
   documentTree, explorerId, explorer, searchTermUpdated,
 }) => (
-  <div>
-    <DocRefInfoModal />
-    <MoveDocRefDialog />
-    <RenameDocRefDialog />
-    <DeleteDocRefDialog />
-    <CopyDocRefDialog />
-    <Input
-      icon="search"
-      placeholder="Search..."
-      value={explorer.searchTerm}
-      onChange={e => searchTermUpdated(explorerId, e.target.value)}
-    />
-    <Popup trigger={<Button icon="filter" />} flowing hoverable>
-      <DocTypeFilters explorerId={explorerId} />
-    </Popup>
+  <div className="DocExplorer__container">
+    <div className="DocExplorer">
+      <DocRefInfoModal />
+      <MoveDocRefDialog />
+      <RenameDocRefDialog />
+      <DeleteDocRefDialog />
+      <CopyDocRefDialog />
+      <Input
+        icon="search"
+        placeholder="Search..."
+        value={explorer.searchTerm}
+        onChange={e => searchTermUpdated(explorerId, e.target.value)}
+      />
+      <Popup trigger={<Button icon="filter" />} flowing hoverable>
+        <DocTypeFilters explorerId={explorerId} />
+      </Popup>
 
-    <Folder explorerId={explorerId} folder={documentTree} />
+      <Folder explorerId={explorerId} folder={documentTree} />
+    </div>
   </div>
 );
 

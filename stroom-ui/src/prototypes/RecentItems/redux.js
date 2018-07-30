@@ -13,31 +13,58 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { createActions, combineActions, handleActions } from 'redux-actions';
+import { createActions, handleActions } from 'redux-actions';
 
 const actionCreators = createActions({
   DOC_REF_OPENED: docRef => ({ docRef }),
   RECENT_ITEMS_OPENED: () => ({ isOpen: true }),
   RECENT_ITEMS_CLOSED: () => ({ isOpen: false }),
+  RECENT_ITEMS_SELECTION_UP: () => ({}),
+  RECENT_ITEMS_SELECTION_DOWN: () => ({}),
 });
-
-const { recentItemsOpened, recentItemsClosed } = actionCreators;
 
 const defaultState = {
   isOpen: false,
   openItemStack: [],
+  selectedItem: 0, // Used for simple item selection, by array index
+  selectedDocRef: undefined, // Used for loading
 };
 
 const reducer = handleActions(
   {
-    [combineActions(recentItemsOpened, recentItemsClosed)]: (state, { payload: { isOpen } }) => ({
+    RECENT_ITEMS_OPENED: (state, { payload: { isOpen } }) => ({
       ...state,
       isOpen,
+    }),
+    RECENT_ITEMS_CLOSED: (state, { payload: { isOpen } }) => ({
+      ...state,
+      isOpen,
+      selectedItem: 0,
+      selectedDocRef: undefined,
     }),
     DOC_REF_OPENED: (state, { payload: { docRef } }) => ({
       ...state,
       openItemStack: [docRef].concat(state.openItemStack.filter(d => d.uuid !== docRef.uuid)),
     }),
+    RECENT_ITEMS_SELECTION_UP: (state, payload) => {
+      const nextIndex = state.selectedItem === 0 ? 0 : state.selectedItem - 1;
+      return {
+        ...state,
+        selectedItem: nextIndex,
+        selectedDocRef: state.openItemStack[nextIndex],
+      };
+    },
+    RECENT_ITEMS_SELECTION_DOWN: (state, payload) => {
+      const nextIndex =
+        state.selectedItem === state.openItemStack.length - 1
+          ? state.openItemStack.length - 1
+          : state.selectedItem + 1;
+      return {
+        ...state,
+        selectedItem: nextIndex,
+        selectedDocRef: state.openItemStack[nextIndex],
+      };
+    },
   },
   defaultState,
 );

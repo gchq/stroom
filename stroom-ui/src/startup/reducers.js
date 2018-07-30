@@ -34,6 +34,7 @@ import { reducer as trackerDashboard } from 'sections/TrackerDashboard';
 import { reducer as errorPage } from 'sections/ErrorPage';
 import { reducer as config } from './config';
 import { reducer as fetch } from 'lib/fetchTracker.redux';
+import { reducer as dataViewers } from 'components/DataViewer';
 
 export default combineReducers({
   routing: routerReducer,
@@ -53,4 +54,5 @@ export default combineReducers({
   recentItems,
   appSearch,
   permissionInheritancePicker,
+  dataViewers,
 });

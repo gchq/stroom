@@ -81,6 +81,7 @@ import stroom.servlet.SessionListServlet;
 import stroom.servlet.StatusServlet;
 import stroom.servlet.StroomServlet;
 import stroom.statistics.sql.search.SqlStatisticsQueryResource;
+import stroom.streamstore.StreamAttributeMapResource;
 import stroom.streamtask.resource.StreamTaskResource;
 
 import javax.servlet.DispatcherType;
@@ -242,6 +243,7 @@ public class App extends Application<Config> {
         GuiceUtil.addResource(environment.jersey(), injector, ExplorerResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, ElementResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, SessionResource.class);
+        GuiceUtil.addResource(environment.jersey(), injector, StreamAttributeMapResource.class);
 
         // Listen to the lifecycle of the Dropwizard app.
         GuiceUtil.manage(environment.lifecycle(), injector, LifecycleService.class);

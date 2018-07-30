@@ -19,7 +19,7 @@ import PropTypes, { object } from 'prop-types';
 import { connect } from 'react-redux';
 import { compose, lifecycle, withProps } from 'recompose';
 import { withRouter } from 'react-router-dom';
-import { Button, Menu, Icon, Header, Divider, Grid } from 'semantic-ui-react';
+import { Button, Menu, Icon, Header, Grid } from 'semantic-ui-react';
 import Mousetrap from 'mousetrap';
 
 import { actionCreators as recentItemsActionCreators } from 'prototypes/RecentItems/redux';
@@ -185,13 +185,13 @@ const AppChrome = ({
       <div className="content-tabs">
         <div className="content-tabs__content">
           <Grid>
-            <Grid.Column width={8}>
+            <Grid.Column width={5}>
               <Header as="h3">
                 <Icon name={icon} color="grey" />
                 {headerContent}
               </Header>
             </Grid.Column>
-            <Grid.Column width={4}>{actionBarAdditionalItems}</Grid.Column>
+            <Grid.Column width={7}>{actionBarAdditionalItems}</Grid.Column>
             <Grid.Column width={4}>
               {actionBarItems.map(aBarItem => (
                 <ActionBarItem
@@ -205,7 +205,6 @@ const AppChrome = ({
               ))}
             </Grid.Column>
           </Grid>
-          <Divider />
           {content}
         </div>
       </div>
