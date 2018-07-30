@@ -22,17 +22,6 @@ import { Switch, Route } from 'react-router-dom';
 import { Header } from 'semantic-ui-react';
 
 import AppChrome, { appChromeRoutes } from './index';
-import PipelineEditor, {
-  ActionBarItems as PipelineEditorActionBarItems,
-  HeaderContent as PipelineEditorHeaderContent,
-} from 'components/PipelineEditor';
-import XsltEditor from 'prototypes/XsltEditor';
-import PipelineSearch from 'components/PipelineSearch';
-import Welcome from 'sections/Welcome';
-import DocExplorer, { ActionBarItems as DocExplorerActionBarItems } from 'components/DocExplorer';
-import DataViewer from 'components/DataViewer';
-import UserSettings from 'prototypes/UserSettings';
-import PathNotFound from 'sections/PathNotFound';
 
 import { fromSetupSampleData } from 'components/DocExplorer/test';
 
@@ -64,9 +53,7 @@ const PollyDecoratorWithTestData = PollyDecorator({
 
 // This basically replicates the 'Routes' implementation, but for test
 const AppChromeWithRouter = () => (
-  <Switch>
-    {appChromeRoutes.map(p => <Route key={p.path} {...p} />)}
-  </Switch>
+  <Switch>{appChromeRoutes.map((p, i) => <Route key={i} {...p} />)}</Switch>
 );
 
 storiesOf('App Chrome', module)

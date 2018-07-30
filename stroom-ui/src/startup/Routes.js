@@ -19,25 +19,12 @@ import PropTypes, { object } from 'prop-types';
 import { Route, Router, Switch, withRouter } from 'react-router-dom';
 import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Header } from 'semantic-ui-react';
 
 import ErrorPage from 'sections/ErrorPage';
+import { appChromeRoutes } from 'sections/AppChrome';
 import TrackerDashboard from 'sections/TrackerDashboard';
-import AppChrome, { appChromeRoutes } from 'sections/AppChrome';
-import PipelineSearch from 'components/PipelineSearch';
-import XsltEditor from 'prototypes/XsltEditor';
+import DocExplorer from 'components/DocExplorer';
 import { HandleAuthenticationResponse } from 'startup/Authentication';
-import PipelineEditor, {
-  ActionBarItems as PipelineEditorActionBarItems,
-  HeaderContent as PipelineEditorHeaderContent,
-} from 'components/PipelineEditor';
-import DocExplorer, { ActionBarItems as DocExplorerActionBarItems } from 'components/DocExplorer';
-import DataViewer, { ActionBarItems as DataViewerActionBarItems } from 'components/DataViewer';
-import UserSettings from 'prototypes/UserSettings';
-import IFrame from 'components/IFrame';
-import Welcome from 'sections/Welcome';
-
-import PathNotFound from 'sections/PathNotFound';
 
 import { withConfig } from './config';
 
@@ -89,7 +76,7 @@ const Routes = ({
 
       <Route exact path="/error" component={ErrorPage} />
 
-      {appChromeRoutes.map(p => <Route key={p.path} {...p} />)}
+      {appChromeRoutes.map((p, i) => <Route key={i} {...p} />)}
 
       {/* Direct paths -- these paths make sections accessible outside the AppChrome
         i.e. for when we want to embed them in Stroom. */}
