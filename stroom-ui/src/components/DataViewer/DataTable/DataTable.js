@@ -97,7 +97,7 @@ const DataViewer = ({
 
   const tableData = streamAttributeMaps.map(streamAttributeMap => ({
     created: moment(path(['stream', 'createMs'], streamAttributeMap)).format('MMMM Do YYYY, h:mm:ss a'),
-    type: path(['stream', 'feed', 'streamType', 'displayValue'], streamAttributeMap),
+    type: path(['stream', 'streamType', 'name'], streamAttributeMap),
     feed: path(['stream', 'feed', 'displayValue'], streamAttributeMap),
     pipeline: path(['stream', 'streamProcessor', 'pipelineName'], streamAttributeMap),
   }));
