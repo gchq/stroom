@@ -15,19 +15,19 @@ class ClickCounter {
     return this;
   }
 
-  onSingleClick(...props) {
+  onSingleClick(props) {
     this.timer = setTimeout(() => {
       if (!this.prevent) {
-        this.onSingleClickHandler(...props);
+        this.onSingleClickHandler(props);
       }
       this.prevent = false;
     }, this.delay);
   }
 
-  onDoubleClick(...props) {
+  onDoubleClick(props) {
     clearTimeout(this.timer);
     this.prevent = true;
-    this.onDoubleClickHandler(...props);
+    this.onDoubleClickHandler(props);
   }
 }
 
