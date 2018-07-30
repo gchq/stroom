@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-$header-height: 46px;
+$header-height: 30px;
 .horizontal-panel__container {
   height: 100%;
   width: 100%;
@@ -48,12 +48,14 @@ $header-height: 46px;
   height: 100%;
   width: 100%;
   position: absolute;
-  top: 0;
-  padding-top: 4.5rem;
 }
 
 .horizontal-panel_close-button {
   padding: 0px !important;
+}
+
+.horizontal-panel_close-button .button {
+  padding: 5px !important;
 }
 
 .horizontal-panel_header-container {
