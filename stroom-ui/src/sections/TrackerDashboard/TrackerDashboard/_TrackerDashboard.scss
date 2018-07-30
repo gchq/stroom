@@ -16,7 +16,7 @@
 
 .tracker-container {
   position: relative;
-  height: 100%;
+  height: calc(100% - 100px);
 }
 
 .tracker-container .SplitPane {
@@ -36,7 +36,7 @@
   height: 100%;
 }
 
-.ui.grid>.row {
+.ui.grid > .row {
   padding-top: 1px !important;
   padding-bottom: 1px !important;
 }
