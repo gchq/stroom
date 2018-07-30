@@ -131,12 +131,12 @@ const DataViewer = ({
               }
             },
           })}
-          getTrProps={(state, rowInfo, column) => {
-            return {
+          getTrProps={(state, rowInfo, column) => ({
               className:
-                path(['index'], rowInfo) === selectedRow ? 'DataTable__selectedRow' : undefined,
-            };
-          }}
+                selectedRow !== undefined && path(['index'], rowInfo) === selectedRow
+                  ? 'DataTable__selectedRow'
+                  : undefined,
+            })}
         />
       </div>
     </div>
