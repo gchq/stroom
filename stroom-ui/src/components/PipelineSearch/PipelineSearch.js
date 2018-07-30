@@ -115,54 +115,56 @@ const PipelineSearch = ({
   ];
 
   return (
-    <Container className="PipelineSearch__container">
-      <Input
-        value={filter}
-        icon="search"
-        placeholder="Search..."
-        onChange={(_, data) => {
-          updateCriteria({ pageSize, pageOffset, filter: data.value });
-          searchPipelines();
-        }}
-      />
-      <Dropdown
-        selection
-        options={dropdownOptions}
-        value={dropdownPageSize}
-        onChange={(_, data) => {
-          console.log({ data });
-          if (data.value === 'all') {
-            updateCriteria({ pageSize: undefined, pageOffset, filter });
+    <div className="PipelineSearch__container">
+      <div className="PipelineSearch">
+        <Input
+          value={filter}
+          icon="search"
+          placeholder="Search..."
+          onChange={(_, data) => {
+            updateCriteria({ pageSize, pageOffset, filter: data.value });
             searchPipelines();
-          } else {
-            updateCriteria({ pageSize: data.value, pageOffset, filter });
+          }}
+        />
+        <Dropdown
+          selection
+          options={dropdownOptions}
+          value={dropdownPageSize}
+          onChange={(_, data) => {
+            console.log({ data });
+            if (data.value === 'all') {
+              updateCriteria({ pageSize: undefined, pageOffset, filter });
+              searchPipelines();
+            } else {
+              updateCriteria({ pageSize: data.value, pageOffset, filter });
+              searchPipelines();
+            }
+          }}
+        />
+        <Pagination
+          defaultActivePage={1}
+          totalPages={totalPages}
+          ellipsisItem={null}
+          onPageChange={(_, pagination) => {
+            updateCriteria({ pageSize, pageOffset: pagination.activePage - 1, filter });
             searchPipelines();
-          }
-        }}
-      />
-      <Pagination
-        defaultActivePage={1}
-        totalPages={totalPages}
-        ellipsisItem={null}
-        onPageChange={(_, pagination) => {
-          updateCriteria({ pageSize, pageOffset: pagination.activePage - 1, filter });
-          searchPipelines();
-        }}
-      />
-      <Card.Group>
-        {searchResults.map(pipelineSummary => (
-          <Card
-            key={pipelineSummary.uuid}
-            onDoubleClick={() => clickCounter.onDoubleClick(pipelineSummary.uuid)}
-            onClick={() => clickCounter.onSingleClick(pipelineSummary.uuid)}
-            className="PipelineSearch__result"
-            header={pipelineSummary.name}
-            meta={pipelineSummary.uuid}
-            description="todo"
-          />
-        ))}
-      </Card.Group>
-    </Container>
+          }}
+        />
+        <Card.Group>
+          {searchResults.map(pipelineSummary => (
+            <Card
+              key={pipelineSummary.uuid}
+              onDoubleClick={() => clickCounter.onDoubleClick(pipelineSummary.uuid)}
+              onClick={() => clickCounter.onSingleClick(pipelineSummary.uuid)}
+              className="PipelineSearch__result"
+              header={pipelineSummary.name}
+              meta={pipelineSummary.uuid}
+              description="todo"
+            />
+          ))}
+        </Card.Group>
+      </div>
+    </div>
   );
 };
 
