@@ -80,7 +80,7 @@ const DocRef = ({
 }) => {
   // these are required to tell the difference between single/double clicks
   const clickCounter = new ClickCounter()
-    .withOnSingleClick(({appendSelection}) => docRefSelected(explorerId, docRef, appendSelection))
+    .withOnSingleClick(({appendSelection, contiguousSelection}) => docRefSelected(explorerId, docRef, appendSelection, contiguousSelection))
     .withOnDoubleClick(() => openDocRef(history, docRef))
 
   const onRightClick = (e) => {
@@ -107,7 +107,10 @@ const DocRef = ({
     className={className}
     onContextMenu={onRightClick}
     onDoubleClick={() => clickCounter.onDoubleClick()}
-    onClick={e => clickCounter.onSingleClick({appendSelection: e.ctrlKey || e.metaKey})}
+    onClick={e => clickCounter.onSingleClick({
+      appendSelection: e.ctrlKey || e.metaKey,
+      contiguousSelection: e.shiftKey
+    })}
   >
     <DocRefMenu
       explorerId={explorerId}

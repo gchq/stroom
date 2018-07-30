@@ -200,6 +200,7 @@ export function stripUuids(tree) {
 
 /**
  * This function can be used to iterate through all nodes in a tree.
+ * The callback can return 'true' if it wishes to skip any children from this node.
  *
  * @param {treeNode} tree The tree to iterate through
  * @param {function} callback Called for each node in the tree, first arg is an array of parents, second arg is the node
@@ -208,9 +209,9 @@ export function stripUuids(tree) {
 export function iterateNodes(tree, callback, lineage) {
   const thisLineage = lineage || [];
 
-  callback(thisLineage, tree);
+  const skipChildren = callback(thisLineage, tree);
 
-  if (tree.children) {
+  if (tree.children && !skipChildren) {
     tree.children.forEach(c => iterateNodes(c, callback, thisLineage.concat([tree])));
   }
 }
