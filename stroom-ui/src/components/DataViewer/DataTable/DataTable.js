@@ -21,17 +21,15 @@ import { compose, lifecycle, branch, renderComponent } from 'recompose';
 // import Mousetrap from 'mousetrap'; //TODO
 import moment from 'moment';
 
-import PanelGroup from 'react-panelgroup';
+// import PanelGroup from 'react-panelgroup';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
 
-import { Loader, Table } from 'semantic-ui-react';
+import { Loader } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 
 import { withConfig } from 'startup/config';
 import { search } from '../streamAttributeMapClient';
-
-import MysteriousPagination from '../MysteriousPagination';
 
 const startPage = 0;
 const defaultPageSize = 20;

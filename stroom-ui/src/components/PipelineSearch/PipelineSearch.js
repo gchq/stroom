@@ -21,7 +21,7 @@ import { compose, lifecycle } from 'recompose';
 // import Mousetrap from 'mousetrap'; //TODO
 import { push } from 'react-router-redux';
 
-import { Container, Card, Input, Pagination, Dropdown } from 'semantic-ui-react';
+import { Card, Input, Pagination, Dropdown } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 
 import { withConfig } from 'startup/config';

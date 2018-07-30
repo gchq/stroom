@@ -19,7 +19,7 @@ import PropTypes, { object } from 'prop-types';
 import { connect } from 'react-redux';
 import { compose, lifecycle, withProps } from 'recompose';
 import { withRouter } from 'react-router-dom';
-import { Button, Menu, Icon, Header, Divider, Grid } from 'semantic-ui-react';
+import { Button, Menu, Icon, Header, Grid } from 'semantic-ui-react';
 import Mousetrap from 'mousetrap';
 
 import { actionCreators as recentItemsActionCreators } from 'prototypes/RecentItems/redux';

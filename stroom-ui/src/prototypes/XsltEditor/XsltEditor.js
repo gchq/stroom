@@ -15,8 +15,9 @@
  */
 import React from 'react';
 import PropTypes from 'prop-types';
-import brace from 'brace';
 
+// eslint-disable-next-line
+import brace from 'brace';
 import 'brace/mode/xml';
 import 'brace/theme/github';
 import 'brace/keybinding/vim';

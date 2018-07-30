@@ -19,15 +19,13 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { compose, lifecycle, branch, renderComponent } from 'recompose';
 // import Mousetrap from 'mousetrap'; //TODO
-import moment from 'moment';
 
-import { Loader, Table } from 'semantic-ui-react';
+import { Loader } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 
 import { withConfig } from 'startup/config';
 import { search } from './streamAttributeMapClient';
 
-import MysteriousPagination from './MysteriousPagination';
 import DataTable from './DataTable';
 
 const startPage = 0;

@@ -61,27 +61,27 @@ export const enableToggle = (filterId, isCurrentlyEnabled) => (dispatch, getStat
 };
 
 // TODO: This isn't currently used.
-const getRowsPerPage = (isDetailsVisible) => {
-  const viewport = document.getElementById('table-container');
-  let rowsInViewport = 20; // Fallback default
-  const headerHeight = 46;
-  const footerHeight = 36;
-  // const detailsHeight = 295;
-  const rowHeight = 30;
-  if (viewport) {
-    const viewportHeight = viewport.offsetHeight;
-    const heightAvailableForRows = viewportHeight - headerHeight - footerHeight;
-    // if (isDetailsVisible) {
-    // heightAvailableForRows -= detailsHeight;
-    // }
-    rowsInViewport = Math.floor(heightAvailableForRows / rowHeight);
-  }
+// const getRowsPerPage = (isDetailsVisible) => {
+//   const viewport = document.getElementById('table-container');
+//   let rowsInViewport = 20; // Fallback default
+//   const headerHeight = 46;
+//   const footerHeight = 36;
+//   // const detailsHeight = 295;
+//   const rowHeight = 30;
+//   if (viewport) {
+//     const viewportHeight = viewport.offsetHeight;
+//     const heightAvailableForRows = viewportHeight - headerHeight - footerHeight;
+//     // if (isDetailsVisible) {
+//     // heightAvailableForRows -= detailsHeight;
+//     // }
+//     rowsInViewport = Math.floor(heightAvailableForRows / rowHeight);
+//   }
 
-  // Make sure we always request at least 1 row, even if the viewport is too small
-  // to display it without scrolling. Anything less will be rejected by the
-  // service for being rediculous.
-  if (rowsInViewport <= 0) {
-    return 1;
-  }
-  return rowsInViewport;
-};
+//   // Make sure we always request at least 1 row, even if the viewport is too small
+//   // to display it without scrolling. Anything less will be rejected by the
+//   // service for being rediculous.
+//   if (rowsInViewport <= 0) {
+//     return 1;
+//   }
+//   return rowsInViewport;
+// };

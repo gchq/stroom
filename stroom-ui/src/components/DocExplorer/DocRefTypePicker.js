@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { compose } from 'recompose';
 import { Dropdown } from 'semantic-ui-react';
 
 import withDocRefTypes from './withDocRefTypes';

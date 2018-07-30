@@ -36,7 +36,6 @@ import DataViewer, { ActionBarItems as DataViewerActionBarItems } from 'componen
 import UserSettings from 'prototypes/UserSettings';
 import IFrame from 'components/IFrame';
 import Welcome from 'sections/Welcome';
-import MysteriousPagination from 'components/DataViewer/MysteriousPagination';
 
 import PathNotFound from 'sections/PathNotFound';
 

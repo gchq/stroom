@@ -16,8 +16,6 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { compose } from 'recompose';
 
 import { Button, Dropdown, Icon } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
