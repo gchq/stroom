@@ -23,7 +23,7 @@ import { Header } from 'semantic-ui-react';
 
 import ErrorPage from 'sections/ErrorPage';
 import TrackerDashboard from 'sections/TrackerDashboard';
-import { AppChrome } from 'sections/AppChrome';
+import AppChrome, { appChromeRoutes } from 'sections/AppChrome';
 import PipelineSearch from 'components/PipelineSearch';
 import XsltEditor from 'prototypes/XsltEditor';
 import { HandleAuthenticationResponse } from 'startup/Authentication';
@@ -89,127 +89,7 @@ const Routes = ({
 
       <Route exact path="/error" component={ErrorPage} />
 
-      {/* AppChrome paths -- these paths load the relevent sections. */}
-      <PrivateRoute
-        exact
-        path="/"
-        render={props => (
-          <AppChrome
-            activeMenuItem="Welcome"
-            {...props}
-            headerContent={<Header.Content>Welcome</Header.Content>}
-            icon="home"
-            content={<Welcome />}
-          />
-        )}
-      />
-      <PrivateRoute
-        exact
-        path="/s/welcome"
-        render={props => (
-          <AppChrome
-            activeMenuItem="Welcome"
-            {...props}
-            headerContent={<Header.Content>Welcome</Header.Content>}
-            icon="home"
-            content={<Welcome />}
-          />
-        )}
-      />
-      <PrivateRoute
-        exact
-        path="/s/docExplorer"
-        render={props => (
-          <AppChrome
-            activeMenuItem="Explorer"
-            {...props}
-            headerContent={<Header.Content>Explorer</Header.Content>}
-            icon="eye"
-            content={<DocExplorer explorerId="app-chrome" />}
-            actionBarAdditionalItems={<DocExplorerActionBarItems explorerId="app-chrome" />}
-          />
-        )}
-      />
-      <PrivateRoute
-        exact
-        path="/s/data"
-        render={props => (
-          <AppChrome
-            activeMenuItem="Data"
-            {...props}
-            headerContent={<Header.Content>Data</Header.Content>}
-            icon="database"
-            content={<DataViewer dataViewerId="system" />}
-            actionBarAdditionalItems={<DataViewerActionBarItems dataViewerId="system" />}
-          />
-        )}
-      />
-      <PrivateRoute
-        exact
-        path="/s/pipelines"
-        render={props => (
-          <AppChrome
-            activeMenuItem="Pipelines"
-            {...props}
-            headerContent={<Header.Content>Pipelines</Header.Content>}
-            icon="tasks"
-            content={<PipelineSearch />}
-          />
-        )}
-      />
-
-      <PrivateRoute
-        exact
-        path="/s/processing"
-        render={props => (
-          <AppChrome
-            activeMenuItem="Processing"
-            {...props}
-            headerContent={<Header.Content>Processing</Header.Content>}
-            icon="play"
-            content={<TrackerDashboard />}
-          />
-        )}
-      />
-      <PrivateRoute
-        exact
-        path="/s/me"
-        render={props => (
-          <AppChrome
-            activeMenuItem="Me"
-            {...props}
-            headerContent={<Header.Content>Me</Header.Content>}
-            icon="user"
-            content={<UserSettings />}
-          />
-        )}
-      />
-      <PrivateRoute
-        exact
-        path="/s/users"
-        render={props => (
-          <AppChrome
-            activeMenuItem="Users"
-            {...props}
-            headerContent={<Header.Content>Users</Header.Content>}
-            icon="users"
-            content={<IFrame key="users" url={authUsersUiUrl} />}
-          />
-        )}
-      />
-      <PrivateRoute
-        exact
-        path="/s/apikeys"
-        render={props => (
-          <AppChrome
-            activeMenuItem="API Keys"
-            {...props}
-            headerContent={<Header.Content>API Keys</Header.Content>}
-            icon="key"
-            content={<IFrame key="apikeys" url={authTokensUiUrl} />}
-          />
-        )}
-      />
+      {appChromeRoutes.map(p => <Route key={p.path} {...p} />)}
 
       {/* Direct paths -- these paths make sections accessible outside the AppChrome
         i.e. for when we want to embed them in Stroom. */}
@@ -226,78 +106,8 @@ const Routes = ({
         render={() => <DocExplorer />}
       />
 
-      {/* TODO: There are no AppChrome routes for the following because the do not have
-        TabTypes. Content must to be anchored to something on the sidebar. Otherwise it's
-        disconnected from the obvious flow of the app and the mental model of the flow
-        the user used to get to the data is broken. Bad. So we could either add an XSLT
-        and pipeline sections or we could map them to something deeper, e.g.
-           /pipelines/<pipelienId>/xslt/<xsltId>
-        Obviously this needs more thinking about. */}
-      <PrivateRoute exact path="/XSLT/:xsltId" render={props => <XsltEditor {...props} />} />
-      <PrivateRoute
-        exact
-        path="/Pipeline/:pipelineId"
-        render={props => <PipelineEditor {...props} />}
-      />
-
-      <PrivateRoute
-        exact
-        path="/s/doc/XSLT/:xsltId"
-        render={props => (
-          <AppChrome
-            activeMenuItem="Explorer"
-            {...props}
-            headerContent={<Header.Content>Edit XSLT</Header.Content>}
-            icon="file"
-            content={<XsltEditor xsltId={props.xsltId} />}
-          />
-        )}
-      />
-      <PrivateRoute
-        exact
-        path="/s/doc/Pipeline/:pipelineId"
-        render={props => (
-          <AppChrome
-            activeMenuItem="Pipelines"
-            {...props}
-            headerContent={
-              <PipelineEditorHeaderContent pipelineId={props.match.params.pipelineId} />
-            }
-            icon="tasks"
-            content={<PipelineEditor pipelineId={props.pipelineId} />}
-            actionBarAdditionalItems={
-              <PipelineEditorActionBarItems pipelineId={props.pipelineId} />
-            }
-          />
-        )}
-      />
-
-      {/* Catch all doc route */}
-      <PrivateRoute
-        exact
-        path="/s/doc/:type/:uuid"
-        render={props => (
-          <AppChrome
-            activeMenuItem="Explorer"
-            {...props}
-            headerContent={<Header.Content>{`Edit ${props.type}`}</Header.Content>}
-            icon="file"
-            content={<PathNotFound message="no editor provided for this doc ref type " />}
-          />
-        )}
-      />
-
       {/* Default route */}
-      <Route
-        render={() => (
-          <AppChrome
-            activeMenuItem="Welcome"
-            headerContent={<Header.Content>Not Found</Header.Content>}
-            icon="exclamation triangle"
-            content={<PathNotFound />}
-          />
-        )}
-      />
+      <Route render={appChromeRoutes.notFound} />
     </Switch>
   </Router>
 );

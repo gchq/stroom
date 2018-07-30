@@ -53,7 +53,7 @@ const PrivateRoute = ({
     {...rest}
     render={props =>
       (isLoggedIn ? (
-        render({...props.match.params, ...props})
+        render({...props})
       ) : (
         <AuthenticationRequest
           referrer={props.match.url}

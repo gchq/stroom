@@ -1,0 +1,177 @@
+import React from 'react';
+
+import { Header } from 'semantic-ui-react';
+
+import { AppChrome } from './index';
+import TrackerDashboard from 'sections/TrackerDashboard';
+import PipelineEditor, {
+  ActionBarItems as PipelineEditorActionBarItems,
+  HeaderContent as PipelineEditorHeaderContent,
+} from 'components/PipelineEditor';
+import XsltEditor from 'prototypes/XsltEditor';
+import PipelineSearch from 'components/PipelineSearch';
+import Welcome from 'sections/Welcome';
+import DocExplorer, { ActionBarItems as DocExplorerActionBarItems } from 'components/DocExplorer';
+import DataViewer from 'components/DataViewer';
+import UserSettings from 'prototypes/UserSettings';
+import PathNotFound from 'sections/PathNotFound';
+
+const renderWelcome = props => (
+  <AppChrome
+    activeMenuItem="Welcome"
+    {...props}
+    headerContent={<Header.Content>Welcome</Header.Content>}
+    icon="home"
+    content={<Welcome />}
+  />
+);
+
+export default [
+  {
+    exact: true,
+    path: '/',
+    render: renderWelcome
+  },
+  {
+    exact: true,
+    path: '/s/welcome',
+    render: renderWelcome
+  },
+  {
+    exact: true,
+    path: '/s/docExplorer',
+    render: props => (
+      <AppChrome
+        activeMenuItem="Explorer"
+        headerContent={<Header.Content>Explorer</Header.Content>}
+        icon="eye"
+        content={<DocExplorer explorerId="app-chrome-stories" />}
+        actionBarAdditionalItems={<DocExplorerActionBarItems explorerId="app-chrome-stories" />}
+      />
+    ),
+  },
+  {
+    exact: true,
+    path: '/s/data',
+    render: props => (
+      <AppChrome
+        activeMenuItem="Data"
+        headerContent={<Header.Content>Data</Header.Content>}
+        icon="database"
+        content={<DataViewer dataViewerId="system" />}
+      />
+    ),
+  },
+  {
+    exact: true,
+    path: '/s/pipelines',
+    render: props => (
+      <AppChrome
+        activeMenuItem="Pipelines"
+        headerContent={<Header.Content>Pipelines</Header.Content>}
+        icon="tasks"
+        content={<PipelineSearch />}
+      />
+    ),
+  },
+  {
+    exact: true,
+    path: '/s/processing',
+    render: props => (
+      <AppChrome
+        activeMenuItem="Processing"
+        headerContent={<Header.Content>Processing</Header.Content>}
+        icon="play"
+        content={<TrackerDashboard />}
+      />
+    ),
+  },
+  {
+    exact: true,
+    path: '/s/me',
+    render: props => (
+      <AppChrome
+        activeMenuItem="Me"
+        headerContent={<Header.Content>Me</Header.Content>}
+        icon="user"
+        content={<UserSettings />}
+      />
+    ),
+  },
+  {
+    exact: true,
+    path: '/s/users',
+    render: props => (
+      <AppChrome
+        activeMenuItem="Users"
+        headerContent={<Header.Content>Users</Header.Content>}
+        icon="users"
+        content={<div>iFrames not supported in our Storybook test cases</div>}
+      />
+    ),
+  },
+  {
+    exact: true,
+    path: '/s/apikeys',
+    render: props => (
+      <AppChrome
+        activeMenuItem="API Keys"
+        headerContent={<Header.Content>API Keys</Header.Content>}
+        icon="key"
+        content={<div>iFrames not supported in our Storybook test cases</div>}
+      />
+    ),
+  },
+  {
+    exact: true,
+    path: '/s/doc/XSLT/:xsltId',
+    render: props => (
+      <AppChrome
+        activeMenuItem="Explorer"
+        {...props}
+        headerContent={<Header.Content>Edit XSLT</Header.Content>}
+        icon="file"
+        content={<XsltEditor xsltId={props.match.params.xsltId} />}
+      />
+    ),
+  },
+  {
+    exact: true,
+    path: '/s/doc/Pipeline/:pipelineId',
+    render: props => (
+      <AppChrome
+        activeMenuItem="Pipelines"
+        {...props}
+        headerContent={<PipelineEditorHeaderContent pipelineId={props.match.params.pipelineId} />}
+        icon="file"
+        content={<PipelineEditor pipelineId={props.match.params.pipelineId} />}
+        actionBarAdditionalItems={
+          <PipelineEditorActionBarItems pipelineId={props.match.params.pipelineId} />
+        }
+      />
+    ),
+  },
+  {
+    exact: true,
+    path: '/s/doc/:type/:uuid',
+    render: props => (
+      <AppChrome
+        activeMenuItem="Explorer"
+        {...props}
+        headerContent={<Header.Content>{`Edit ${props.match.params.type}`}</Header.Content>}
+        icon="file"
+        content={<PathNotFound message="no editor provided for this doc ref type " />}
+      />
+    ),
+  },
+  {
+    render: () => (
+      <AppChrome
+        activeMenuItem="Welcome"
+        headerContent={<Header.Content>Not Found</Header.Content>}
+        icon="exclamation triangle"
+        content={<PathNotFound />}
+      />
+    ),
+  },
+];
