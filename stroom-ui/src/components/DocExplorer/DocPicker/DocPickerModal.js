@@ -72,17 +72,13 @@ const DocPickerModal = ({
   explorer,
   onChange,
 }) => {
-  const value = docRefWithLineage ? docRefWithLineage.docRef.name : '';
-
   const handleOpen = () => setIsOpen(true);
 
   const handleClose = () => setIsOpen(false);
 
-  const onDocRefSelected = () => {
+  const onDocRefPickConfirmed = () => {
     Object.keys(explorer.isSelected).forEach((pickedUuid) => {
       const { node, lineage } = findItem(documentTree, pickedUuid);
-      // The 'children' property is just for the tree. It's not part of the DocRef and we need to remove it.
-      // If left in it will get sent to the server and cause deserialisation errors.
       docRefPicked(pickerId, node, lineage);
       onChange({ node, lineage });
     });
@@ -129,7 +125,7 @@ const DocPickerModal = ({
         </Button>
         <Button
           positive
-          onClick={onDocRefSelected}
+          onClick={onDocRefPickConfirmed}
           labelPosition="right"
           icon="checkmark"
           content="Choose"

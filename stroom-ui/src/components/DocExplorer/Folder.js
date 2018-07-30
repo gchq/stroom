@@ -16,7 +16,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose, withState } from 'recompose';
+import { compose } from 'recompose';
 import { connect } from 'react-redux';
 
 import { canMove } from '../../lib/treeUtils';
@@ -30,9 +30,13 @@ import DocRef from './DocRef';
 import FolderMenu from './FolderMenu';
 import { actionCreators } from './redux/explorerTreeReducer';
 
-const { moveExplorerItem, folderOpenToggled, docRefSelected } = actionCreators;
-
-const withContextMenu = withState('isContextMenuOpen', 'setContextMenuOpen', false);
+const {
+  moveExplorerItem,
+  folderOpenToggled,
+  docRefSelected,
+  docRefContextMenuOpened,
+  docRefContextMenuClosed,
+} = actionCreators;
 
 const dragSource = {
   canDrag(props) {
@@ -79,9 +83,10 @@ const enhance = compose(
       moveExplorerItem,
       folderOpenToggled,
       docRefSelected,
+      docRefContextMenuOpened,
+      docRefContextMenuClosed,
     },
   ),
-  withContextMenu,
   DragSource(ItemTypes.FOLDER, dragSource, dragCollect),
   DropTarget([ItemTypes.FOLDER, ItemTypes.DOC_REF], dropTarget, dropCollect),
 );
@@ -97,13 +102,15 @@ const _Folder = ({
   folder,
   folderOpenToggled,
   docRefSelected,
+  docRefContextMenuOpened,
+  docRefContextMenuClosed,
   moveExplorerItem,
-  isContextMenuOpen,
-  setContextMenuOpen,
 }) => {
   const thisIsOpen = !!explorer.isFolderOpen[folder.uuid];
   const icon = thisIsOpen ? 'folder open' : 'folder';
   const isSelected = explorer.isSelected[folder.uuid];
+  const { contentMenuDocRef } = explorer;
+  const isContextMenuOpen = !!contentMenuDocRef && contentMenuDocRef.uuid === folder.uuid;
 
   let className = '';
   if (isOver) {
@@ -131,7 +138,7 @@ const _Folder = ({
     .withOnDoubleClick(() => folderOpenToggled(explorerId, folder));
 
   const onRightClick = (e) => {
-    setContextMenuOpen(true);
+    docRefContextMenuOpened(explorerId, folder);
     e.preventDefault();
   };
 
@@ -142,7 +149,7 @@ const _Folder = ({
           explorerId={explorerId}
           docRef={folder}
           isOpen={isContextMenuOpen}
-          closeContextMenu={() => setContextMenuOpen(false)}
+          closeContextMenu={() => docRefContextMenuClosed(explorerId)}
         />
         <span
           onClick={() => clickCounter.onSingleClick()}
@@ -151,7 +158,7 @@ const _Folder = ({
           <Icon name={icon} />
           <span>{folder.name}</span>
         </span>
-                                           </span>))}
+      </span>))}
       {thisIsOpen && (
         <div className="folder__children">
           {folder.children

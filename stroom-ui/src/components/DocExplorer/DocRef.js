@@ -16,7 +16,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose, withState } from 'recompose';
+import { compose } from 'recompose';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 
@@ -29,9 +29,7 @@ import DocRefMenu from './DocRefMenu';
 import ClickCounter from 'lib/ClickCounter';
 import { openDocRef } from 'prototypes/RecentItems';
 
-const { docRefSelected } = docExplorerActionCreators;
-
-const withContextMenu = withState('isContextMenuOpen', 'setContextMenuOpen', false);
+const { docRefSelected, docRefContextMenuOpened, docRefContextMenuClosed } = docExplorerActionCreators;
 
 const dragSource = {
   canDrag(props) {
@@ -60,10 +58,11 @@ const enhance = compose(
     }),
     {
       docRefSelected,
-      openDocRef
+      openDocRef,
+      docRefContextMenuOpened,
+      docRefContextMenuClosed
     },
   ),
-  withContextMenu,
   DragSource(ItemTypes.DOC_REF, dragSource, dragCollect),
 );
 
@@ -74,10 +73,8 @@ const DocRef = ({
   history, 
   docRefSelected,
   openDocRef,
-
-  isContextMenuOpen,
-  setContextMenuOpen,
-
+  docRefContextMenuOpened,
+  docRefContextMenuClosed,
   connectDragSource,
   isDragging,
 }) => {
@@ -87,11 +84,13 @@ const DocRef = ({
     .withOnDoubleClick(() => openDocRef(history, docRef))
 
   const onRightClick = (e) => {
-    setContextMenuOpen(true);
+    docRefContextMenuOpened(explorerId, docRef);
     e.preventDefault();
   };
 
   const isSelected = explorer.isSelected[docRef.uuid];
+  const { contentMenuDocRef } = explorer;
+  const isContextMenuOpen = (!!contentMenuDocRef && contentMenuDocRef.uuid === docRef.uuid);
 
   let className = '';
   if (isDragging) {
@@ -114,7 +113,7 @@ const DocRef = ({
       explorerId={explorerId}
       docRef={docRef}
       isOpen={isContextMenuOpen}
-      closeContextMenu={() => setContextMenuOpen(false)}
+      closeContextMenu={() => docRefContextMenuClosed(explorerId)}
     />
     <span>
       <img className="doc-ref__icon" alt="X" src={require(`./images/${docRef.type}.svg`)} />
