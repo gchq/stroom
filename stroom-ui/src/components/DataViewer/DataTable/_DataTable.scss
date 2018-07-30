@@ -39,3 +39,7 @@
 .DataTable__container .rt-resizable-header-content {
   font-weight: bold;
 }
+
+.DataTable__selectedRow {
+  background-color: $selected-item-colour;
+}

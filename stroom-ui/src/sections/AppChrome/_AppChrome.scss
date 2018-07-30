@@ -26,6 +26,7 @@
 .content-tabs__content {
   height: inherit;
   flex-grow: 1;
+  overflow: hidden;
 }
 
 .app-chrome__content .ui.grid {

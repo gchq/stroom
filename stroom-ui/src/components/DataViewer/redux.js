@@ -29,6 +29,7 @@ const actionCreators = createActions({
     pageSize,
     pageOffset,
   }),
+  SELECT_ROW: (dataViewerId, rowIndex) => ({ dataViewerId, rowIndex }),
 });
 
 const defaultState = {};
@@ -49,6 +50,13 @@ const reducer = handleActions(
         streamAttributeMaps,
         pageSize,
         pageOffset,
+      },
+    }),
+    SELECT_ROW: (state, { payload: { dataViewerId, rowIndex } }) => ({
+      ...state,
+      [dataViewerId]: {
+        ...state[dataViewerId],
+        selectedRow: rowIndex,
       },
     }),
   },
