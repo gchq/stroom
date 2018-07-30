@@ -37,7 +37,7 @@
   },
   "scripts": {
     "build-css": "node-sass-chokidar src/ -o src/",
-    "watch-css": "npm run build-css && node-sass-chokidar src/ -o src/ --watch --recursive",
+    "watch-css": "node-sass-chokidar src/ -o src/ --watch --recursive",
     "start-js": "./config.template.sh && BROWSER=none PORT=5001 react-scripts start",
     "start": "npm-run-all -p watch-css start-js",
     "build-js": "react-scripts build",
