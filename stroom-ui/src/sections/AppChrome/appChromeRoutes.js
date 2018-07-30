@@ -12,7 +12,7 @@ import XsltEditor, { ActionBarItems as XsltEditorActionBarItems } from 'prototyp
 import PipelineSearch from 'components/PipelineSearch';
 import Welcome from 'sections/Welcome';
 import DocExplorer, { ActionBarItems as DocExplorerActionBarItems } from 'components/DocExplorer';
-import DataViewer from 'components/DataViewer';
+import DataViewer, { ActionBarItems as DataViewerActionBarItems } from 'components/DataViewer';
 import UserSettings from 'prototypes/UserSettings';
 import PathNotFound from 'sections/PathNotFound';
 
@@ -59,6 +59,7 @@ export default [
         headerContent={<Header.Content>Data</Header.Content>}
         icon="database"
         content={<DataViewer dataViewerId="system" />}
+        actionBarAdditionalItems={<DataViewerActionBarItems dataViewerId="system" />}
       />
     ),
   },

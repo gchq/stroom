@@ -153,7 +153,7 @@ const DataViewer = ({
           />
           <HorizontalPanel
             className="element-details__panel"
-            title={<div>{tableData.feed || ''}</div>}
+            title={<div>{path(['feed'], tableData[selectedRow]) || 'bums'}</div>}
             onClose={() => deselectRow(dataViewerId)}
             content={<div>show data</div>}
             titleColumns={6}
