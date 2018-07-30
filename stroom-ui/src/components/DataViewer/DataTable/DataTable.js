@@ -87,14 +87,28 @@ const DataViewer = ({
   deselectRow,
   selectedRow,
 }) => {
-  Mousetrap.bind(
-    ['k', 'up'],
-    () => (selectedRow > 0 ? selectRow(dataViewerId, selectedRow - 1) : undefined),
-  );
-  Mousetrap.bind(
-    ['j', 'down'],
-    () => (selectedRow < pageSize - 1 ? selectRow(dataViewerId, selectedRow + 1) : undefined),
-  );
+  Mousetrap.bind(['k', 'up'], () => {
+    // If no row is selected and the user has tried to use a shortcut key then we'll try and
+    // select the first row.
+    if (selectedRow === undefined) {
+      selectRow(dataViewerId, 0);
+    }
+    // If the selected row isn't the first row then we'll allow the selection to go up
+    else if (selectedRow > 0) {
+      selectRow(dataViewerId, selectedRow - 1);
+    }
+  });
+  Mousetrap.bind(['j', 'down'], () => {
+    // If no row is selected and the user has tried to use a shortcut key then we'll try and
+    // select the first row.
+    if (selectedRow === undefined) {
+      selectRow(dataViewerId, 0);
+    }
+    // If the selected row isn't the last row then we'll allow the selection to go down
+    else if (selectedRow < pageSize - 1) {
+      selectRow(dataViewerId, selectedRow + 1);
+    }
+  });
   Mousetrap.bind(['l', 'right'], () => search(dataViewerId, pageOffset + 1, pageSize));
   Mousetrap.bind(
     ['h', 'left'],
