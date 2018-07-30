@@ -57,7 +57,7 @@ const reducer = handleActions(
       ...state,
       [dataViewerId]: {
         ...state[dataViewerId],
-        selectedRow: rowIndex === state[dataViewerId].selectedRow ? undefined : rowIndex,
+        selectedRow: rowIndex,
       },
     }),
     DESELECT_ROW: (state, { payload: { dataViewerId } }) => ({

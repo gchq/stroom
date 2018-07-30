@@ -25,6 +25,8 @@ import { path } from 'ramda';
 import PanelGroup from 'react-panelgroup';
 import HorizontalPanel from 'prototypes/HorizontalPanel';
 
+import Mousetrap from 'mousetrap';
+
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
 
@@ -85,6 +87,20 @@ const DataViewer = ({
   deselectRow,
   selectedRow,
 }) => {
+  Mousetrap.bind(
+    ['k', 'up'],
+    () => (selectedRow > 0 ? selectRow(dataViewerId, selectedRow - 1) : undefined),
+  );
+  Mousetrap.bind(
+    ['j', 'down'],
+    () => (selectedRow < pageSize - 1 ? selectRow(dataViewerId, selectedRow + 1) : undefined),
+  );
+  Mousetrap.bind(['l', 'right'], () => search(dataViewerId, pageOffset + 1, pageSize));
+  Mousetrap.bind(
+    ['h', 'left'],
+    () => (pageOffset > 0 ? search(dataViewerId, pageOffset - 1, pageSize) : undefined),
+  );
+
   const tableColumns = [
     {
       Header: 'Created',
@@ -120,7 +136,7 @@ const DataViewer = ({
             {},
             {
               resize: 'dynamic',
-              size: selectedRow ? '50%' : 0,
+              size: selectedRow !== undefined ? '50%' : 0,
             },
           ]}
         >
@@ -153,7 +169,7 @@ const DataViewer = ({
           />
           <HorizontalPanel
             className="element-details__panel"
-            title={<div>{path(['feed'], tableData[selectedRow]) || 'bums'}</div>}
+            title={<div>{path(['feed'], tableData[selectedRow]) || 'Nothing selected'}</div>}
             onClose={() => deselectRow(dataViewerId)}
             content={<div>show data</div>}
             titleColumns={6}
