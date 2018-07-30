@@ -78,38 +78,40 @@ export const actionCreators = createActions({
     explorerId,
     searchTerm,
   }),
-  DOC_REF_SELECTED: (explorerId, docRef) => ({
+  DOC_REF_SELECTED: (explorerId, docRef, appendSelection) => ({
     explorerId,
     docRef,
+    appendSelection,
   }),
   DOC_REF_CONTEXT_MENU_OPENED: (explorerId, docRef) => ({
     explorerId,
-    docRef
+    docRef,
   }),
-  DOC_REF_CONTEXT_MENU_CLOSED: (explorerId) => ({
-    explorerId
+  DOC_REF_CONTEXT_MENU_CLOSED: explorerId => ({
+    explorerId,
   }),
   DOC_REFS_MOVED: (docRefs, destination, bulkActionResult) => ({
     docRefs,
     destination,
-    bulkActionResult
+    bulkActionResult,
   }),
   DOC_REFS_COPIED: (docRefs, destination, bulkActionResult) => ({
     docRefs,
     destination,
-    bulkActionResult
+    bulkActionResult,
   }),
   DOC_REFS_DELETED: (docRefs, bulkActionResult) => ({
     docRefs,
-    bulkActionResult
+    bulkActionResult,
   }),
   DOC_REF_CREATED: (docRef, parentFolder) => ({
-    docRef, parentFolder
+    docRef,
+    parentFolder,
   }),
   DOC_REF_RENAMED: (docRef, name, resultDocRef) => ({
     docRef,
     name,
-    resultDocRef
+    resultDocRef,
   }),
 });
 
@@ -141,12 +143,12 @@ function getIsVisibleMap(documentTree, searchFilterFunc, typeFilterFunc) {
   const isVisible = {};
 
   iterateNodes(documentTree, (lineage, node) => {
-    let passesSearch = searchFilterFunc(lineage, node);
-    let passesTypeFilter = typeFilterFunc(lineage, node);
+    const passesSearch = searchFilterFunc(lineage, node);
+    const passesTypeFilter = typeFilterFunc(lineage, node);
 
-    let nodeIsVisible = passesSearch && passesTypeFilter;
+    const nodeIsVisible = passesSearch && passesTypeFilter;
     if (nodeIsVisible) {
-      lineage.forEach(n => isVisible[n.uuid] = true);
+      lineage.forEach(n => (isVisible[n.uuid] = true));
     }
 
     isVisible[node.uuid] = nodeIsVisible;
@@ -161,13 +163,18 @@ function getFolderIsOpenMap(
   isSearching,
   isInSearchMap,
   currentIsFolderOpen,
+  isNewExplorer,
 ) {
   const isFolderOpen = {};
+  let isFirst = true;
 
   iterateNodes(documentTree, (lineage, node) => {
     const s = currentIsFolderOpen[node.uuid];
 
-    if (isSearching) {
+    if (isFirst && isNewExplorer) {
+      isFolderOpen[node.uuid] = OPEN_STATES.byUser;
+      isFirst = false;
+    } else if (isSearching) {
       if (isInSearchMap[node.uuid] && !isOpenState(s)) {
         // If this node is not open, but is included in the search, open it
         isFolderOpen[node.uuid] = OPEN_STATES.bySearch;
@@ -190,7 +197,14 @@ function getFolderIsOpenMap(
   return isFolderOpen;
 }
 
-function getUpdatedExplorer(documentTree, explorer, searchExecutor, searchTerm, typeFilters) {
+function getUpdatedExplorer({
+  documentTree,
+  explorer,
+  searchExecutor,
+  searchTerm,
+  typeFilters,
+  isNewExplorer,
+}) {
   let searchResults;
   if (searchExecutor && searchTerm) {
     searchResults = searchExecutor
@@ -200,15 +214,9 @@ function getUpdatedExplorer(documentTree, explorer, searchExecutor, searchTerm, 
 
   const isSearching = getIsValidFilterTerm(searchTerm);
   const searchFilterFunc = (l, n) => !isSearching || !!searchResults[n.uuid];
-  const isInSearchMap = getIsInFilteredMap(
-    documentTree,
-    searchFilterFunc,
-  );
-  const typeFilterFunc = (l, n) => (typeFilters.length === 0) || typeFilters.includes(n.type)
-  const isInTypeFilterMap = getIsInFilteredMap(
-    documentTree,
-    typeFilterFunc
-  );
+  const isInSearchMap = getIsInFilteredMap(documentTree, searchFilterFunc);
+  const typeFilterFunc = (l, n) => typeFilters.length === 0 || typeFilters.includes(n.type);
+  const isInTypeFilterMap = getIsInFilteredMap(documentTree, typeFilterFunc);
 
   // Derive the combined mapping of visibility
   const isVisible = getIsVisibleMap(documentTree, searchFilterFunc, typeFilterFunc);
@@ -224,13 +232,14 @@ function getUpdatedExplorer(documentTree, explorer, searchExecutor, searchTerm, 
       isSearching,
       isInSearchMap,
       explorer.isFolderOpen,
+      isNewExplorer,
     ),
     inSearch: isInSearchMap,
     inTypeFilter: isInTypeFilterMap,
   };
 }
 
-function getStateAfterTreeUpdate(state, documentTree) {
+function getStateAfterTreeUpdate(state, documentTree, isNewTree) {
   // Create the search index
   const rawSearchData = [];
   iterateNodes(documentTree, (lineage, node) => {
@@ -251,13 +260,14 @@ function getStateAfterTreeUpdate(state, documentTree) {
   // Update all the explorers with the new tree
   const explorers = {};
   Object.entries(state.explorers).forEach((k) => {
-    explorers[k[0]] = getUpdatedExplorer(
+    explorers[k[0]] = getUpdatedExplorer({
       documentTree,
-      k[1],
+      explorer: k[1],
       searchExecutor,
-      k[1].searchTerm,
-      k[1].typeFilters,
-    );
+      searchTerm: k[1].searchTerm,
+      typeFilters: k[1].typeFilters,
+      isNewExplorer: isNewTree,
+    });
   });
 
   return {
@@ -279,13 +289,13 @@ export const reducer = handleActions(
       Object.entries(state.explorers)
         .map(k => ({ explorerId: k[0], explorer: k[1] }))
         .forEach(({ explorerId, explorer }) =>
-          (explorers[explorerId] = getUpdatedExplorer(
-            state.documentTree,
+          (explorers[explorerId] = getUpdatedExplorer({
+            documentTree: state.documentTree,
             explorer,
-            state.searchExecutor,
-            explorer.searchTerm,
-            explorer.typeFilters.length === 0 ? docRefTypes : explorer.typeFilters,
-          )));
+            searchExecutor: state.searchExecutor,
+            searchTerm: explorer.searchTerm,
+            typeFilters: explorer.typeFilters.length === 0 ? docRefTypes : explorer.typeFilters,
+          })));
 
       return {
         ...state,
@@ -297,25 +307,26 @@ export const reducer = handleActions(
 
     // Receive the current state of the explorer tree
     DOC_TREE_RECEIVED: (state, action) =>
-      getStateAfterTreeUpdate(state, action.payload.documentTree),
+      getStateAfterTreeUpdate(state, action.payload.documentTree, true),
 
     // When an explorer is opened (if this ID has been opened before, it will use that old state)
     DOC_EXPLORER_OPENED: (state, action) => {
       const { explorerId, allowMultiSelect, typeFilters } = action.payload;
       const typeFiltersToUse =
-        (typeFilters && (typeFilters.length > 0)) ? typeFilters : state.docRefTypes;
+        typeFilters && typeFilters.length > 0 ? typeFilters : state.docRefTypes;
       return {
         ...state,
         explorers: {
           ...state.explorers,
           [explorerId]: state.explorers[explorerId] || {
-            ...getUpdatedExplorer(
-              state.documentTree,
-              defaultExplorerState,
-              state.searchExecutor,
-              '',
-              typeFiltersToUse,
-            ),
+            ...getUpdatedExplorer({
+              documentTree: state.documentTree,
+              explorer: defaultExplorerState,
+              searchExecutor: state.searchExecutor,
+              searchTerm: '',
+              typeFilters: typeFiltersToUse,
+              isNewExplorer: true,
+            }),
             allowMultiSelect,
           },
         },
@@ -327,18 +338,18 @@ export const reducer = handleActions(
       const { explorerId, docRefType, newValue } = action.payload;
 
       const currentExplorer = state.explorers[explorerId];
-      let updatedFilters = currentExplorer.typeFilters.filter(t => t !== docRefType)
+      let updatedFilters = currentExplorer.typeFilters.filter(t => t !== docRefType);
       if (newValue) {
-        updatedFilters = updatedFilters.concat([docRefType])
+        updatedFilters = updatedFilters.concat([docRefType]);
       }
 
-      const updatedExplorer = getUpdatedExplorer(
-        state.documentTree,
-        currentExplorer,
-        state.searchExecutor,
-        currentExplorer.searchTerm,
-        updatedFilters,
-      );
+      const updatedExplorer = getUpdatedExplorer({
+        documentTree: state.documentTree,
+        explorer: currentExplorer,
+        searchExecutor: state.searchExecutor,
+        searchTerm: currentExplorer.searchTerm,
+        typeFilters: updatedFilters,
+      });
 
       return {
         ...state,
@@ -375,13 +386,13 @@ export const reducer = handleActions(
     SEARCH_TERM_UPDATED: (state, action) => {
       const { explorerId, searchTerm } = action.payload;
 
-      const explorer = getUpdatedExplorer(
-        state.documentTree,
-        state.explorers[explorerId],
-        state.searchExecutor,
+      const explorer = getUpdatedExplorer({
+        documentTree: state.documentTree,
+        explorer: state.explorers[explorerId],
+        searchExecutor: state.searchExecutor,
         searchTerm,
-        state.explorers[explorerId].typeFilters,
-      );
+        typeFilters: state.explorers[explorerId].typeFilters,
+      });
 
       return {
         ...state,
@@ -394,11 +405,11 @@ export const reducer = handleActions(
 
     // Select Doc Ref
     DOC_REF_SELECTED: (state, action) => {
-      const { explorerId, docRef } = action.payload;
+      const { explorerId, docRef, appendSelection } = action.payload;
 
       const explorer = state.explorers[explorerId];
       let isSelected;
-      if (explorer.allowMultiSelect) {
+      if (explorer.allowMultiSelect && appendSelection) {
         isSelected = {
           ...state.explorers[explorerId].isSelected,
           [docRef.uuid]: !state.explorers[explorerId].isSelected[docRef.uuid],
@@ -421,8 +432,9 @@ export const reducer = handleActions(
       };
     },
 
-    [combineActions(docRefContextMenuOpened, docRefContextMenuClosed)]:(state, action) => {
-      const {explorerId, docRef} = action.payload;
+    // Open or Close a DocRef/Folder Context Menu
+    [combineActions(docRefContextMenuOpened, docRefContextMenuClosed)]: (state, action) => {
+      const { explorerId, docRef } = action.payload;
 
       return {
         ...state,
@@ -430,19 +442,22 @@ export const reducer = handleActions(
           ...state.explorers,
           [explorerId]: {
             ...state.explorers[explorerId],
-            contentMenuDocRef: docRef
-          }
-        }
-      }
+            contentMenuDocRef: docRef,
+          },
+        },
+      };
     },
 
     // Confirm Delete Doc Ref
     DOC_REFS_DELETED: (state, action) => {
       const { bulkActionResult } = action.payload;
 
-      const documentTree = deleteItemsFromTree(state.documentTree, bulkActionResult.docRefs.map(d => d.uuid));
+      const documentTree = deleteItemsFromTree(
+        state.documentTree,
+        bulkActionResult.docRefs.map(d => d.uuid),
+      );
 
-      return getStateAfterTreeUpdate(state, documentTree);
+      return getStateAfterTreeUpdate(state, documentTree, false);
     },
 
     DOC_REF_CREATED: (state, action) => {
@@ -450,30 +465,38 @@ export const reducer = handleActions(
 
       const documentTree = addItemToTree(state.documentTree, parentFolder.uuid, docRef);
 
-      return getStateAfterTreeUpdate(state, documentTree);
+      return getStateAfterTreeUpdate(state, documentTree, false);
     },
 
     DOC_REF_RENAMED: (state, action) => {
       const { docRef, resultDocRef } = action.payload;
 
       const documentTree = updateItemInTree(state.documentTree, docRef.uuid, resultDocRef);
-      return getStateAfterTreeUpdate(state, documentTree);
+      return getStateAfterTreeUpdate(state, documentTree, false);
     },
 
     DOC_REFS_COPIED: (state, action) => {
       const { destination, bulkActionResult } = action.payload;
 
-      const documentTree = copyItemsInTree(state.documentTree, bulkActionResult.docRefs, destination);
+      const documentTree = copyItemsInTree(
+        state.documentTree,
+        bulkActionResult.docRefs,
+        destination,
+      );
 
-      return getStateAfterTreeUpdate(state, documentTree);
+      return getStateAfterTreeUpdate(state, documentTree, false);
     },
 
     DOC_REFS_MOVED: (state, action) => {
       const { destination, bulkActionResult } = action.payload;
 
-      const documentTree = moveItemsInTree(state.documentTree, bulkActionResult.docRefs, destination);
+      const documentTree = moveItemsInTree(
+        state.documentTree,
+        bulkActionResult.docRefs,
+        destination,
+      );
 
-      return getStateAfterTreeUpdate(state, documentTree);
+      return getStateAfterTreeUpdate(state, documentTree, false);
     },
   },
   defaultState,

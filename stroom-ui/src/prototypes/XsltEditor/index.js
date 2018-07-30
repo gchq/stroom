@@ -15,10 +15,12 @@
  */
 
 import XsltEditor from './XsltEditor';
+import ActionBarItems from './ActionBarItems';
 import { actionCreators, reducer } from './redux';
 
 export {
   XsltEditor,
+  ActionBarItems,
   actionCreators,
   reducer
 }

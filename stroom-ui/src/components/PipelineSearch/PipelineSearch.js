@@ -76,8 +76,8 @@ const PipelineSearch = ({
 }) => {
   // these are required to tell the difference between single/double clicks
   const clickCounter = new ClickCounter()
-    .withOnSingleClick(uuid => console.log('TODO: single click behaviour -- highlight'))
-    .withOnDoubleClick((uuid) => {
+    .withOnSingleClick(({uuid}) => console.log('TODO: single click behaviour -- highlight'))
+    .withOnDoubleClick(({uuid}) => {
       onPipelineSelected(uuid);
     });
 
@@ -154,8 +154,8 @@ const PipelineSearch = ({
           {searchResults.map(pipelineSummary => (
             <Card
               key={pipelineSummary.uuid}
-              onDoubleClick={() => clickCounter.onDoubleClick(pipelineSummary.uuid)}
-              onClick={() => clickCounter.onSingleClick(pipelineSummary.uuid)}
+              onDoubleClick={() => clickCounter.onDoubleClick({uuid: pipelineSummary.uuid})}
+              onClick={() => clickCounter.onSingleClick({uuid: pipelineSummary.uuid})}
               className="PipelineSearch__result"
               header={pipelineSummary.name}
               meta={pipelineSummary.uuid}

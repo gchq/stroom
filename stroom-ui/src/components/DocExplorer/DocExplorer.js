@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import { compose, lifecycle, branch, renderComponent } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Input, Loader, Button, Popup } from 'semantic-ui-react';
+import { Loader } from 'semantic-ui-react';
 
 import Folder from './Folder';
 import MoveDocRefDialog from './MoveDocRefDialog';
@@ -27,7 +27,6 @@ import RenameDocRefDialog from './RenameDocRefDialog';
 import CopyDocRefDialog from './CopyDocRefDialog';
 import DeleteDocRefDialog from './DeleteDocRefDialog';
 import DocRefInfoModal from './DocRefInfoModal';
-import DocTypeFilters from './DocTypeFilters';
 import { actionCreators } from './redux';
 import withExplorerTree from './withExplorerTree';
 

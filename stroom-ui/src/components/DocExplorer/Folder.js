@@ -134,7 +134,7 @@ const _Folder = ({
   }
 
   const clickCounter = new ClickCounter()
-    .withOnSingleClick(() => docRefSelected(explorerId, folder))
+    .withOnSingleClick(({appendSelection}) => docRefSelected(explorerId, folder, appendSelection))
     .withOnDoubleClick(() => folderOpenToggled(explorerId, folder));
 
   const onRightClick = (e) => {
@@ -152,7 +152,7 @@ const _Folder = ({
           closeContextMenu={() => docRefContextMenuClosed(explorerId)}
         />
         <span
-          onClick={() => clickCounter.onSingleClick()}
+          onClick={e => clickCounter.onSingleClick({appendSelection: e.ctrlKey || e.metaKey})}
           onDoubleClick={() => clickCounter.onDoubleClick()}
         >
           <Icon name={icon} />
