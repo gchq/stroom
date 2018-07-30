@@ -28,13 +28,17 @@ class IFrame extends Component {
       width: this.props.width || '100%',
     };
 
-    return React.createElement(
-      'iframe',
-      Object.assign(
-        props,
-        this.props.id ? { id: this.props.id } : {},
-        this.props.className ? { className: this.props.className } : {},
-      ),
+    return (
+      <div className="IFrame__container">
+        {React.createElement(
+          'iframe',
+          Object.assign(
+            props,
+            this.props.id ? { id: this.props.id } : {},
+            this.props.className ? { className: this.props.className } : {},
+          ),
+        )}
+      </div>
     );
   }
 }
