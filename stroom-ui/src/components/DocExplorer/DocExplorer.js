@@ -75,16 +75,6 @@ const DocExplorer = ({
       <RenameDocRefDialog />
       <DeleteDocRefDialog />
       <CopyDocRefDialog />
-      <Input
-        icon="search"
-        placeholder="Search..."
-        value={explorer.searchTerm}
-        onChange={e => searchTermUpdated(explorerId, e.target.value)}
-      />
-      <Popup trigger={<Button icon="filter" />} flowing hoverable>
-        <DocTypeFilters explorerId={explorerId} />
-      </Popup>
-
       <Folder explorerId={explorerId} folder={documentTree} />
     </div>
   </div>

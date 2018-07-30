@@ -20,6 +20,7 @@ import DocRefTypePicker from './DocRefTypePicker';
 import withExplorerTree from './withExplorerTree';
 import withDocRefTypes from './withDocRefTypes';
 import explorerClient from './explorerClient';
+import ActionBarItems from './ActionBarItems';
 
 export {
   DocExplorer,
@@ -30,6 +31,7 @@ export {
   withExplorerTree,
   withDocRefTypes,
   explorerClient,
+  ActionBarItems,
 };
 
 export default DocExplorer;

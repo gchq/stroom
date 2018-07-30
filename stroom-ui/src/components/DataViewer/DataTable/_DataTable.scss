@@ -1,33 +1,3 @@
-.DataViewer__container {
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
-}
-
-.DataViewer__paginationButton {
-  width: 45px;
-}
-
-.DataViewer__pageSizeSelection {
-  padding-left: 10px;
-}
-
-.DataTable__column_created {
-  width: 25%;
-}
-
-.DataTable__column_type {
-  width: 25%;
-}
-
-.DataTable__column_feed {
-  width: 25%;
-}
-
-.DataTable__column_pipeline {
-  width: 25%;
-}
-
 .DataTable__container {
   height: calc(100% - 60px);
   position: relative;
@@ -53,6 +23,10 @@
   max-height: 30px;
 }
 
+.DataTable__container .rt-table .rt-tbody .rt-tr-group:hover {
+  background-color: $hover-item-colour;
+}
+
 .ReactTable .rt-tbody .rt-tr-group {
   max-height: 30px;
 }
@@ -60,4 +34,8 @@
 .ReactTable .rt-thead.-header {
   box-shadow: none;
   border-bottom: solid 1px lightgrey;
+}
+
+.DataTable__container .rt-resizable-header-content {
+  font-weight: bold;
 }

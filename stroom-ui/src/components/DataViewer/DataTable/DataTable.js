@@ -20,6 +20,7 @@ import { connect } from 'react-redux';
 import { compose, lifecycle, branch, renderComponent } from 'recompose';
 // import Mousetrap from 'mousetrap'; //TODO
 import moment from 'moment';
+import { path } from 'ramda';
 
 // import PanelGroup from 'react-panelgroup';
 import ReactTable from 'react-table';
@@ -95,10 +96,10 @@ const DataViewer = ({
   ];
 
   const tableData = streamAttributeMaps.map(streamAttributeMap => ({
-    created: moment(streamAttributeMap.stream.createMs).format('MMMM Do YYYY, h:mm:ss a'),
-    type: streamAttributeMap.stream.feed.streamType.displayValue,
-    feed: streamAttributeMap.stream.feed.displayValue,
-    pipeline: streamAttributeMap.stream.streamProcessor.pipelineName,
+    created: moment(path(['stream', 'createMs'], streamAttributeMap)).format('MMMM Do YYYY, h:mm:ss a'),
+    type: path(['stream', 'streamType', 'name'], streamAttributeMap),
+    feed: path(['stream', 'feed', 'displayValue'], streamAttributeMap),
+    pipeline: path(['stream', 'streamProcessor', 'pipelineName'], streamAttributeMap),
   }));
 
   return (

@@ -31,7 +31,7 @@ import PipelineEditor, {
   ActionBarItems as PipelineEditorActionBarItems,
   HeaderContent as PipelineEditorHeaderContent,
 } from 'components/PipelineEditor';
-import DocExplorer from 'components/DocExplorer';
+import DocExplorer, { ActionBarItems as DocExplorerActionBarItems } from 'components/DocExplorer';
 import DataViewer, { ActionBarItems as DataViewerActionBarItems } from 'components/DataViewer';
 import UserSettings from 'prototypes/UserSettings';
 import IFrame from 'components/IFrame';
@@ -126,6 +126,7 @@ const Routes = ({
             headerContent={<Header.Content>Explorer</Header.Content>}
             icon="eye"
             content={<DocExplorer explorerId="app-chrome" />}
+            actionBarAdditionalItems={<DocExplorerActionBarItems explorerId="app-chrome" />}
           />
         )}
       />
