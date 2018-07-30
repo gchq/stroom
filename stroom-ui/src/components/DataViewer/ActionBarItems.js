@@ -15,24 +15,25 @@ const enhance = compose(connect(
         pageOffset: state.dataViewers[props.dataViewerId].pageOffset,
         pageSize: state.dataViewers[props.dataViewerId].pageSize,
       };
-    } return { pageOffset: 0, pageSize: 20 };
+    }
+    return { pageOffset: 0, pageSize: 20 };
   },
   { search },
 ));
 
 const ActionBarItems = ({
   dataViewerId, pageOffset, pageSize, search,
-}) => {
-  console.log({dataViewerId, pageOffset, pageSize, search})
-  return (
-  <MysteriousPagination
-    pageOffset={pageOffset}
-    pageSize={pageSize}
-    onPageChange={(pageOffset, pageSize) => {
-      search(dataViewerId, pageOffset, pageSize);
-    }}
-  />
-)};
+}) => (
+  <div className="MysteriousPagination__ActionBarItems__container">
+    <MysteriousPagination
+      pageOffset={pageOffset}
+      pageSize={pageSize}
+      onPageChange={(pageOffset, pageSize) => {
+          search(dataViewerId, pageOffset, pageSize);
+        }}
+    />
+  </div>
+);
 
 ActionBarItems.propTypes = {
   dataViewerId: PropTypes.string.isRequired,
