@@ -2,6 +2,7 @@ import React from 'react';
 
 import { Header } from 'semantic-ui-react';
 
+import { withConfig } from 'startup/config';
 import { AppChrome } from './index';
 import TrackerDashboard from 'sections/TrackerDashboard';
 import PipelineEditor, {
@@ -15,6 +16,7 @@ import DocExplorer, { ActionBarItems as DocExplorerActionBarItems } from 'compon
 import DataViewer from 'components/DataViewer';
 import UserSettings from 'prototypes/UserSettings';
 import PathNotFound from 'sections/PathNotFound';
+import IFrame from 'components/IFrame';
 
 const renderWelcome = props => (
   <AppChrome
@@ -25,6 +27,12 @@ const renderWelcome = props => (
     content={<Welcome />}
   />
 );
+
+const UsersIFrame = props => <IFrame key="users" url={props.config.authUsersUiUrl} />;
+const UsersIFrameWithConfig = withConfig(UsersIFrame);
+
+const ApiTokensIFrame = props => <IFrame key="apikeys" url={props.config.authTokensUiUrl} />;
+const ApiTokensIFrameWithConfig = withConfig(ApiTokensIFrame);
 
 export default [
   {
@@ -106,7 +114,7 @@ export default [
         activeMenuItem="Users"
         headerContent={<Header.Content>Users</Header.Content>}
         icon="users"
-        content={<div>iFrames not supported in our Storybook test cases</div>}
+        content={<UsersIFrameWithConfig />}
       />
     ),
   },
@@ -118,7 +126,7 @@ export default [
         activeMenuItem="API Keys"
         headerContent={<Header.Content>API Keys</Header.Content>}
         icon="key"
-        content={<div>iFrames not supported in our Storybook test cases</div>}
+        content={<ApiTokensIFrameWithConfig />}
       />
     ),
   },
