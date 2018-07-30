@@ -8,7 +8,7 @@ import PipelineEditor, {
   ActionBarItems as PipelineEditorActionBarItems,
   HeaderContent as PipelineEditorHeaderContent,
 } from 'components/PipelineEditor';
-import XsltEditor from 'prototypes/XsltEditor';
+import XsltEditor, { ActionBarItems as XsltEditorActionBarItems } from 'prototypes/XsltEditor';
 import PipelineSearch from 'components/PipelineSearch';
 import Welcome from 'sections/Welcome';
 import DocExplorer, { ActionBarItems as DocExplorerActionBarItems } from 'components/DocExplorer';
@@ -30,12 +30,12 @@ export default [
   {
     exact: true,
     path: '/',
-    render: renderWelcome
+    render: renderWelcome,
   },
   {
     exact: true,
     path: '/s/welcome',
-    render: renderWelcome
+    render: renderWelcome,
   },
   {
     exact: true,
@@ -132,6 +132,7 @@ export default [
         headerContent={<Header.Content>Edit XSLT</Header.Content>}
         icon="file"
         content={<XsltEditor xsltId={props.match.params.xsltId} />}
+        actionBarAdditionalItems={<XsltEditorActionBarItems xsltId={props.match.params.xsltId} />}
       />
     ),
   },
