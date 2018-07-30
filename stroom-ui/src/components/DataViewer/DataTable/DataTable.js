@@ -22,7 +22,9 @@ import { compose, lifecycle, branch, renderComponent } from 'recompose';
 import moment from 'moment';
 import { path } from 'ramda';
 
-// import PanelGroup from 'react-panelgroup';
+import PanelGroup from 'react-panelgroup';
+import HorizontalPanel from 'prototypes/HorizontalPanel';
+
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
 
@@ -34,7 +36,7 @@ import { search } from '../streamAttributeMapClient';
 
 import { actionCreators } from '../redux';
 
-const { selectRow } = actionCreators;
+const { selectRow, deselectRow } = actionCreators;
 const startPage = 0;
 const defaultPageSize = 20;
 
@@ -55,7 +57,7 @@ const enhance = compose(
         selectedRow: undefined,
       };
     },
-    { search, selectRow },
+    { search, selectRow, deselectRow },
   ),
   lifecycle({
     componentDidMount() {
@@ -80,6 +82,7 @@ const DataViewer = ({
   previousPage,
   search,
   selectRow,
+  deselectRow,
   selectedRow,
 }) => {
   const tableColumns = [
@@ -111,33 +114,53 @@ const DataViewer = ({
   return (
     <div className="DataTable__container">
       <div className="DataTable__reactTable__container">
-        <ReactTable
-          pageSize={pageSize}
-          showPagination={false}
-          className="DataTable__reactTable"
-          data={tableData}
-          columns={tableColumns}
-          getTdProps={(state, rowInfo, column, instance) => ({
-            onClick: (e, handleOriginal) => {
-              selectRow(dataViewerId, rowInfo.index);
-
-              // IMPORTANT! React-Table uses onClick internally to trigger
-              // events like expanding SubComponents and pivots.
-              // By default a custom 'onClick' handler will override this functionality.
-              // If you want to fire the original onClick handler, call the
-              // 'handleOriginal' function.
-              if (handleOriginal) {
-                handleOriginal();
-              }
+        <PanelGroup
+          direction="column"
+          panelWidths={[
+            {},
+            {
+              resize: 'dynamic',
+              size: selectedRow ? '50%' : 0,
             },
-          })}
-          getTrProps={(state, rowInfo, column) => ({
+          ]}
+        >
+          <ReactTable
+            pageSize={pageSize}
+            showPagination={false}
+            className="DataTable__reactTable"
+            data={tableData}
+            columns={tableColumns}
+            getTdProps={(state, rowInfo, column, instance) => ({
+              onClick: (e, handleOriginal) => {
+                selectRow(dataViewerId, rowInfo.index);
+
+                // IMPORTANT! React-Table uses onClick internally to trigger
+                // events like expanding SubComponents and pivots.
+                // By default a custom 'onClick' handler will override this functionality.
+                // If you want to fire the original onClick handler, call the
+                // 'handleOriginal' function.
+                if (handleOriginal) {
+                  handleOriginal();
+                }
+              },
+            })}
+            getTrProps={(state, rowInfo, column) => ({
               className:
                 selectedRow !== undefined && path(['index'], rowInfo) === selectedRow
                   ? 'DataTable__selectedRow'
                   : undefined,
             })}
-        />
+          />
+          <HorizontalPanel
+            className="element-details__panel"
+            title={<div>{tableData.feed || ''}</div>}
+            onClose={() => deselectRow(dataViewerId)}
+            content={<div>show data</div>}
+            titleColumns={6}
+            menuColumns={10}
+            headerSize="h3"
+          />
+        </PanelGroup>
       </div>
     </div>
   );

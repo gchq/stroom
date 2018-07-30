@@ -30,6 +30,7 @@ const actionCreators = createActions({
     pageOffset,
   }),
   SELECT_ROW: (dataViewerId, rowIndex) => ({ dataViewerId, rowIndex }),
+  DESELECT_ROW: (dataViewerId, rowIndex) => ({ dataViewerId }),
 });
 
 const defaultState = {};
@@ -56,7 +57,14 @@ const reducer = handleActions(
       ...state,
       [dataViewerId]: {
         ...state[dataViewerId],
-        selectedRow: rowIndex,
+        selectedRow: rowIndex === state[dataViewerId].selectedRow ? undefined : rowIndex,
+      },
+    }),
+    DESELECT_ROW: (state, { payload: { dataViewerId } }) => ({
+      ...state,
+      [dataViewerId]: {
+        ...state[dataViewerId],
+        selectedRow: undefined,
       },
     }),
   },

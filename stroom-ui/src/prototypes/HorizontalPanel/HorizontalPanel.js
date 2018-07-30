@@ -1,9 +1,21 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Button, Menu, Header, Grid, Divider } from 'semantic-ui-react';
-import { compose, withState } from 'recompose';
+import { compose, withState, lifecycle } from 'recompose';
+import Mousetrap from 'mousetrap';
 
-const enhance = compose(withState('activeItem', 'setActiveItem', 'home'));
+const enhance = compose(
+  withState('activeItem', 'setActiveItem', 'home'),
+  lifecycle({
+    componentDidMount() {
+      const { onClose } = this.props;
+      Mousetrap.bind('esc', () => onClose());
+    },
+    componentWillMount() {
+      Mousetrap.unbind('esc');
+    },
+  }),
+);
 
 const HorizontalPanel = ({
   title,
