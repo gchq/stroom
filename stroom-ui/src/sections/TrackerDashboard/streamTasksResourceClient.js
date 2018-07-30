@@ -27,8 +27,8 @@ export const fetchTrackers = trackerSelection => (dispatch, getState) => {
   wrappedGet(
     dispatch,
     state,
+    url,
     (response) => {
-      url,
       response.json().then((trackers) => {
         dispatch(actionCreators.updateTrackers(trackers.streamTasks, trackers.totalStreamTasks));
         switch (trackerSelection) {
