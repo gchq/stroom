@@ -78,10 +78,11 @@ export const actionCreators = createActions({
     explorerId,
     searchTerm,
   }),
-  DOC_REF_SELECTED: (explorerId, docRef, appendSelection) => ({
+  DOC_REF_SELECTED: (explorerId, docRef, appendSelection, contiguousSelection) => ({
     explorerId,
     docRef,
     appendSelection,
+    contiguousSelection
   }),
   DOC_REF_CONTEXT_MENU_OPENED: (explorerId, docRef) => ({
     explorerId,
@@ -281,6 +282,12 @@ function getStateAfterTreeUpdate(state, documentTree, isNewTree) {
 
 const { docRefContextMenuOpened, docRefContextMenuClosed } = actionCreators;
 
+const PROCESS_PHASE = {
+  LOOKING_FOR_START: 0,
+  ADDING: 1,
+  FINISHED: 2
+}
+
 export const reducer = handleActions(
   {
     // Receive the set of doc ref types used in the current tree
@@ -405,15 +412,55 @@ export const reducer = handleActions(
 
     // Select Doc Ref
     DOC_REF_SELECTED: (state, action) => {
-      const { explorerId, docRef, appendSelection } = action.payload;
+      const { explorerId, docRef, appendSelection, contiguousSelection } = action.payload;
 
       const explorer = state.explorers[explorerId];
       let isSelected;
-      if (explorer.allowMultiSelect && appendSelection) {
-        isSelected = {
-          ...state.explorers[explorerId].isSelected,
-          [docRef.uuid]: !state.explorers[explorerId].isSelected[docRef.uuid],
-        };
+      if (explorer.allowMultiSelect) {
+        if (appendSelection) {
+          isSelected = {
+            ...state.explorers[explorerId].isSelected,
+            [docRef.uuid]: !state.explorers[explorerId].isSelected[docRef.uuid],
+          };
+        } else {
+          isSelected = {
+            [docRef.uuid]: !state.explorers[explorerId].isSelected[docRef.uuid],
+          };
+        }
+        
+        // Selecting contiguous files is somewhat complex!
+        if (contiguousSelection && explorer.lastSelectedUuid) {
+
+          // We will iterate through the nodes looking for one of the selection endpoints.
+          let phase = PROCESS_PHASE.LOOKING_FOR_START;
+          iterateNodes(state.documentTree, (lineage, node) => {
+            // The selection should be inclusive of start and end
+            let addThisOne = phase === PROCESS_PHASE.ADDING;
+
+            // If we have hit one of the endpoints, move the phase along
+            if ((node.uuid === explorer.lastSelectedUuid) || (node.uuid === docRef.uuid)) {
+              switch (phase) {
+                case PROCESS_PHASE.LOOKING_FOR_START:
+                  phase = PROCESS_PHASE.ADDING;
+                  addThisOne = true;
+                  break;
+                case PROCESS_PHASE.ADDING:
+                  phase = PROCESS_PHASE.FINISHED;
+                  break;
+                default:
+                  break;
+              }
+            }
+            
+            if (addThisOne) {
+              isSelected[node.uuid] = explorer.isVisible[node.uuid];
+            }
+
+            // Skip children if the folder is NOT open
+            return !explorer.isFolderOpen[node.uuid];
+          })
+        } 
+        
       } else {
         isSelected = {
           [docRef.uuid]: !state.explorers[explorerId].isSelected[docRef.uuid],
@@ -427,6 +474,7 @@ export const reducer = handleActions(
           [explorerId]: {
             ...state.explorers[explorerId],
             isSelected,
+            lastSelectedUuid: docRef.uuid
           },
         },
       };

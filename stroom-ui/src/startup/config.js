@@ -57,8 +57,8 @@ const fetchConfig = () => (dispatch, getState) => {
  */
 const withConfig = compose(
   connect(
-    (state, props) => ({
-      configIsReady: state.config.isReady,
+    ({ config }, props) => ({
+      config,
     }),
     {
       fetchConfig,
@@ -70,7 +70,7 @@ const withConfig = compose(
     },
   }),
   branch(
-    ({ configIsReady }) => !configIsReady,
+    ({ config: { isReady } }) => !isReady,
     renderComponent(() => <Loader active>Awaiting Config</Loader>),
   ),
 );

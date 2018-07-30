@@ -37,17 +37,20 @@ const enhance = compose(
     state => ({
       idToken: state.authentication.idToken,
       // showUnauthorizedDialog: state.login.showUnauthorizedDialog,
-      advertisedUrl: state.config.advertisedUrl,
-      appClientId: state.config.appClientId,
-      authenticationServiceUrl: state.config.authenticationServiceUrl,
-      authorisationServiceUrl: state.config.authorisationServiceUrl,
-      authUsersUiUrl: state.config.authUsersUiUrl,
-      authTokensUiUrl: state.config.authTokensUiUrl,
     }),
     {},
   ),
-  withProps(({ idToken }) => ({
+  withProps(({
+    idToken,
+    config: {
+      advertisedUrl, appClientId, authenticationServiceUrl, authorisationServiceUrl,
+    },
+  }) => ({
     isLoggedIn: !!idToken,
+    advertisedUrl,
+    appClientId,
+    authenticationServiceUrl,
+    authorisationServiceUrl,
   })),
 );
 
