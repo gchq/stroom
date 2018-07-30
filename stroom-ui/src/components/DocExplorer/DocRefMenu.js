@@ -62,7 +62,7 @@ const DocRefMenu = ({
   history,
 }) => (
   <span>
-    <Dropdown inline icon={null} open={isOpen} onClose={() => closeContextMenu()}>
+    <Dropdown inline icon={null} open={isOpen} onClose={closeContextMenu}>
       <Dropdown.Menu>
         <Dropdown.Item
           onClick={() => {

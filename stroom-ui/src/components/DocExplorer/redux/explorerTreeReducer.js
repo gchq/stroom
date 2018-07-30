@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { createActions, handleActions } from 'redux-actions';
+import { createActions, handleActions, combineActions } from 'redux-actions';
 import * as JsSearch from 'js-search';
 
 import {
@@ -81,6 +81,13 @@ export const actionCreators = createActions({
   DOC_REF_SELECTED: (explorerId, docRef) => ({
     explorerId,
     docRef,
+  }),
+  DOC_REF_CONTEXT_MENU_OPENED: (explorerId, docRef) => ({
+    explorerId,
+    docRef
+  }),
+  DOC_REF_CONTEXT_MENU_CLOSED: (explorerId) => ({
+    explorerId
   }),
   DOC_REFS_MOVED: (docRefs, destination, bulkActionResult) => ({
     docRefs,
@@ -262,6 +269,8 @@ function getStateAfterTreeUpdate(state, documentTree) {
   };
 }
 
+const { docRefContextMenuOpened, docRefContextMenuClosed } = actionCreators;
+
 export const reducer = handleActions(
   {
     // Receive the set of doc ref types used in the current tree
@@ -410,6 +419,21 @@ export const reducer = handleActions(
           },
         },
       };
+    },
+
+    [combineActions(docRefContextMenuOpened, docRefContextMenuClosed)]:(state, action) => {
+      const {explorerId, docRef} = action.payload;
+
+      return {
+        ...state,
+        explorers: {
+          ...state.explorers,
+          [explorerId]: {
+            ...state.explorers[explorerId],
+            contentMenuDocRef: docRef
+          }
+        }
+      }
     },
 
     // Confirm Delete Doc Ref
