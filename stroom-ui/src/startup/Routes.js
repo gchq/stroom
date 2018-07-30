@@ -32,10 +32,11 @@ import PipelineEditor, {
   HeaderContent as PipelineEditorHeaderContent,
 } from 'components/PipelineEditor';
 import DocExplorer from 'components/DocExplorer';
-import DataViewer from 'components/DataViewer';
+import DataViewer, { ActionBarItems as DataViewerActionBarItems } from 'components/DataViewer';
 import UserSettings from 'prototypes/UserSettings';
 import IFrame from 'components/IFrame';
 import Welcome from 'sections/Welcome';
+import MysteriousPagination from 'components/DataViewer/MysteriousPagination';
 
 import PathNotFound from 'sections/PathNotFound';
 
@@ -139,6 +140,7 @@ const Routes = ({
             headerContent={<Header.Content>Data</Header.Content>}
             icon="database"
             content={<DataViewer dataViewerId="system" />}
+            actionBarAdditionalItems={<DataViewerActionBarItems dataViewerId="system" />}
           />
         )}
       />

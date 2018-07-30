@@ -29,13 +29,13 @@
 }
 
 .DataTable__container {
-  height: calc(100% - 45px);
+  height: calc(100% - 60px);
   position: relative;
 }
 
 .DataTable__reactTable__container {
   position: absolute;
-  top: 35px;
+  top: 0; // If you want to push the top of the table down a bit, e.g. for a toolbar, do it here.
   right: 0;
   left: 0;
   bottom: 0;

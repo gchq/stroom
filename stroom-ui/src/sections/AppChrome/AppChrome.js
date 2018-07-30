@@ -185,13 +185,13 @@ const AppChrome = ({
       <div className="content-tabs">
         <div className="content-tabs__content">
           <Grid>
-            <Grid.Column width={8}>
+            <Grid.Column width={5}>
               <Header as="h3">
                 <Icon name={icon} color="grey" />
                 {headerContent}
               </Header>
             </Grid.Column>
-            <Grid.Column width={4}>{actionBarAdditionalItems}</Grid.Column>
+            <Grid.Column width={7}>{actionBarAdditionalItems}</Grid.Column>
             <Grid.Column width={4}>
               {actionBarItems.map(aBarItem => (
                 <ActionBarItem

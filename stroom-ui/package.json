@@ -32,7 +32,8 @@
     "redux-thunk": "^2.2.0",
     "semantic-ui-css": "^2.3.1",
     "semantic-ui-react": "^0.79.1",
-    "sjcl": "^1.0.7"
+    "sjcl": "^1.0.7",
+    "uuid": "^3.3.2"
   },
   "scripts": {
     "build-css": "node-sass-chokidar src/ -o src/",

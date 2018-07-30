@@ -105,13 +105,6 @@ const DataViewer = ({
 
   return (
     <div className="DataTable__container">
-      <MysteriousPagination
-        pageOffset={pageOffset}
-        pageSize={pageSize}
-        onPageChange={(pageOffset, pageSize) => {
-          search(dataViewerId, pageOffset, pageSize);
-        }}
-      />
       <div className="DataTable__reactTable__container">
         <ReactTable
           pageSize={pageSize}

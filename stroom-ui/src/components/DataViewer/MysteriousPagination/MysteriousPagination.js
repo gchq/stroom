@@ -22,6 +22,8 @@ import { compose } from 'recompose';
 import { Button, Dropdown, Icon } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 
+import uuidv4 from 'uuid/v4';
+
 const defaultNumberOfVisiblePages = 5;
 
 const dropdownOptions = [
@@ -83,6 +85,7 @@ const MysteriousPagination = ({
         </Button>
         {pages.map(pageValue => (
           <Button
+            key={pageValue === '?' ? uuidv4() : pageValue}
             disabled={pageValue === '?'}
             active={pageValue === pageOffsetIndexFromOne}
             className="MysteriousPagination__paginationButton"
