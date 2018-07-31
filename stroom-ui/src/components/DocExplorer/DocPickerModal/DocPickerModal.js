@@ -26,7 +26,7 @@ import { actionCreators } from '../redux';
 
 import withExplorerTree from '../withExplorerTree';
 import withDocRefTypes from '../withDocRefTypes';
-import DocPicker from './DocPicker';
+import FolderToPick from './FolderToPick';
 
 const { docRefPicked, docExplorerOpened } = actionCreators;
 
@@ -36,16 +36,28 @@ const enhance = compose(
   withExplorerTree,
   withDocRefTypes,
   connect(
-    (state, props) => ({
-      documentTree: state.docExplorer.explorerTree.documentTree,
-      docRefWithLineage: state.docExplorer.docRefPicker[props.pickerId],
-      explorer: state.docExplorer.explorerTree.explorers[props.pickerId],
+    (
+      {
+        docExplorer: {
+          explorerTree: { documentTree, explorers },
+          docRefPicker,
+        },
+      },
+      { pickerId },
+    ) => ({
+      documentTree,
+      docRefWithLineage: docRefPicker[pickerId],
+      explorer: explorers[pickerId],
     }),
     {
       // actions
       docRefPicked,
       docExplorerOpened,
     },
+  ),
+  branch(
+    ({ documentTree }) => !documentTree,
+    renderComponent(() => <Loader active>Awaiting Document Tree</Loader>),
   ),
   lifecycle({
     componentDidMount() {
@@ -117,7 +129,13 @@ const DocPickerModal = ({
     <Modal trigger={trigger} open={isOpen} onClose={handleClose} size="small" dimmer="inverted">
       <Modal.Header>Select a Doc Ref</Modal.Header>
       <Modal.Content scrolling>
-        <DocPicker explorerId={pickerId} typeFilters={typeFilters} />
+        <Input
+          icon="search"
+          placeholder="Search..."
+          value={explorer.searchTerm}
+          onChange={e => searchTermUpdated(pickerId, e.target.value)}
+        />
+        <FolderToPick pickerId={pickerId} folder={documentTree} typeFilters={typeFilters} />
       </Modal.Content>
       <Modal.Actions>
         <Button negative onClick={handleClose}>

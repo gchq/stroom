@@ -19,13 +19,13 @@ import PropTypes from 'prop-types';
 import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Modal, Button } from 'semantic-ui-react';
+import { Modal, Button, Form } from 'semantic-ui-react';
 
 import { guid } from 'lib/treeUtils';
 import { actionCreators } from './redux';
 import { moveDocuments } from './explorerClient';
 
-import DocPicker from './DocPicker/DocPicker';
+import DocPickerModal from './DocPickerModal';
 import PermissionInheritancePicker from 'components/PermissionInheritancePicker';
 
 const { completeDocRefMove } = actionCreators;
@@ -70,8 +70,16 @@ const MoveDocRefDialog = ({
   <Modal open={isMoving}>
     <Modal.Header>Select a Destination Folder for the Move</Modal.Header>
     <Modal.Content scrolling>
-      <DocPicker explorerId={explorerId} typeFilters={['Folder']} />
-      <PermissionInheritancePicker pickerId={explorerId} />
+      <Form>
+        <Form.Field>
+          <label>Destination</label>
+          <DocPickerModal pickerId={explorerId} typeFilters={['Folder']} />
+        </Form.Field>
+        <Form.Field>
+          <label>Permission Inheritance</label>
+          <PermissionInheritancePicker pickerId={explorerId} />
+        </Form.Field>
+      </Form>
     </Modal.Content>
     <Modal.Actions>
       <Button negative onClick={completeDocRefMove}>

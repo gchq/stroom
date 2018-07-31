@@ -35,9 +35,16 @@ const { searchTermUpdated, docExplorerOpened } = actionCreators;
 const enhance = compose(
   withExplorerTree,
   connect(
-    (state, props) => ({
-      documentTree: state.docExplorer.explorerTree.documentTree,
-      explorer: state.docExplorer.explorerTree.explorers[props.explorerId],
+    (
+      {
+        docExplorer: {
+          explorerTree: { documentTree, explorers },
+        },
+      },
+      { explorerId },
+    ) => ({
+      documentTree,
+      explorer: explorers[explorerId],
     }),
     {
       searchTermUpdated,
