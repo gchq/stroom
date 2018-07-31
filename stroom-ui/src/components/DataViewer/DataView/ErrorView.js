@@ -43,16 +43,40 @@ const ErrorView = ({ errors }) => {
             <p>Column: {row.original.col}</p>
           </React.Fragment>
         );
+
+        const position = 'right center';
         if (row.value === 'INFO') {
-          return <Popup trigger={<Icon color="blue" name="info circle" />} content={location} />;
+          return (
+            <Popup
+              trigger={<Icon color="blue" name="info circle" />}
+              content={location}
+              position={position}
+            />
+          );
         } else if (row.value === 'WARNING') {
           return (
-            <Popup trigger={<Icon color="orange" name="warning circle" />} content={location} />
+            <Popup
+              trigger={<Icon color="orange" name="warning circle" />}
+              content={location}
+              position={position}
+            />
           );
         } else if (row.value === 'ERROR') {
-          return <Popup trigger={<Icon color="red" name="warning circle" />} content={location} />;
+          return (
+            <Popup
+              trigger={<Icon color="red" name="warning circle" />}
+              content={location}
+              position={position}
+            />
+          );
         } else if (row.value === 'FATAL') {
-          return <Popup trigger={<Icon color="red" name="bomb" />} content={location} />;
+          return (
+            <Popup
+              trigger={<Icon color="red" name="bomb" />}
+              content={location}
+              position={position}
+            />
+          );
         }
       },
       width: 30,
