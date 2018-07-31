@@ -27,6 +27,7 @@ import 'brace/theme/github';
 import 'brace/keybinding/vim';
 
 import ErrorView from './ErrorView';
+import EventView from './EventView';
 
 const enhance = compose(
   connect((state, props) => {
@@ -46,12 +47,13 @@ const enhance = compose(
 
 const DataView = ({ data }) => {
   console.log({ data });
+  const streamType = path(['streamType', 'path'], data);
   const eventData = path(['data'], data);
   const markerData = path(['markers'], data);
   let content;
-  if (eventData === undefined && markerData !== undefined) {
-    return <ErrorView errors={markerData} />;
-  }
+  if (streamType === 'ERROR') return <ErrorView errors={markerData} />;
+  else if (streamType === 'RAW_EVENTS') return <EventView events={eventData} />;
+  else if (streamType === 'EVENTS') return <EventView events={eventData} />;
   return <div>TODO</div>;
 };
 
