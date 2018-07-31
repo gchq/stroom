@@ -123,6 +123,18 @@ export function copyItemsInTree(rootNode, itemsToCopy, destination) {
   };
 }
 
+export function findByUuids(treeNode, uuids) {
+  let results = [];
+
+  iterateNodes(treeNode, (lineage, node) => {
+    if (uuids.includes(node.uuid)) {
+      results.push(node);
+    }
+  });
+
+  return results;
+}
+
 /**
  * Recursively check that a tree node is inside the child hierarchy of the given destination tree node.
  *

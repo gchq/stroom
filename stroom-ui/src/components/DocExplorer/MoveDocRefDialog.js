@@ -35,23 +35,27 @@ const enhance = compose(
     explorerId: `move-doc-ref-${explorerId || guid()}`,
   })),
   connect(
-    ({ docExplorer, permissionInheritancePicker }, { explorerId }) => {
-      let selectedDocRef;
-      const explorer = docExplorer.explorerTree.explorers[explorerId];
-      if (explorer) {
-        const s = Object.entries(explorer.isSelected)
-          .filter(k => k[1])
-          .map(k => ({ uuid: k[0] }));
-        if (s.length > 0) {
-          selectedDocRef = s[0];
-        }
+    (
+      {
+        docExplorer: {
+          moveDocRef: { isMoving, uuids },
+          explorerTree: { explorers },
+        },
+        permissionInheritancePicker,
+      },
+      { explorerId },
+    ) => {
+      let destinationUuid;
+      const explorer = explorers[explorerId];
+      if (explorer && explorer.isSelectedList.length > 0) {
+        destinationUuid = explorer.isSelectedList[0];
       }
 
       return {
-        isMoving: docExplorer.moveDocRef.isMoving,
-        docRefs: docExplorer.moveDocRef.docRefs,
+        isMoving,
+        uuids,
         permissionInheritance: permissionInheritancePicker[explorerId],
-        selectedDocRef,
+        destinationUuid,
       };
     },
     { completeDocRefMove, moveDocuments },
@@ -61,10 +65,10 @@ const enhance = compose(
 const MoveDocRefDialog = ({
   explorerId,
   isMoving,
-  docRefs,
+  uuids,
   completeDocRefMove,
   moveDocuments,
-  selectedDocRef,
+  destinationUuid,
   permissionInheritance,
 }) => (
   <Modal open={isMoving}>
@@ -87,7 +91,7 @@ const MoveDocRefDialog = ({
       </Button>
       <Button
         positive
-        onClick={() => moveDocuments(docRefs, selectedDocRef, permissionInheritance)}
+        onClick={() => moveDocuments(uuids, destinationUuid, permissionInheritance)}
         labelPosition="right"
         icon="checkmark"
         content="Choose"

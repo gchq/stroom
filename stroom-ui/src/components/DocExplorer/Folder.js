@@ -122,7 +122,9 @@ const _Folder = ({
   keyIsDown,
 }) => {
   const thisIsOpen = !!explorer.isFolderOpen[folder.uuid];
-  const icon = thisIsOpen ? 'folder open' : 'folder';
+  const hasChildren = folder.children && folder.children.length > 0;
+  const folderIcon = thisIsOpen ? 'folder open' : 'folder';
+  const caretIcon = hasChildren ? (thisIsOpen ? 'caret down' : 'caret right') : undefined;
   const isSelected = explorer.isSelected[folder.uuid];
   const { contentMenuDocRef } = explorer;
   const isContextMenuOpen = !!contentMenuDocRef && contentMenuDocRef.uuid === folder.uuid;
@@ -155,6 +157,9 @@ const _Folder = ({
     .withOnDoubleClick(() => folderOpenToggled(explorerId, folder));
 
   const onRightClick = (e) => {
+    if (!isSelected) {
+      docRefSelected(explorerId, folder, false, false);
+    }
     docRefContextMenuOpened(explorerId, folder);
     e.preventDefault();
   };
@@ -177,20 +182,23 @@ const _Folder = ({
               }
           onDoubleClick={() => clickCounter.onDoubleClick()}
         >
-          <Icon name={icon} />
+          <Icon name={caretIcon} onClick={() => clickCounter.onDoubleClick()} />
+          <Icon name={folderIcon} />
           <span>{folder.name} {isOver && canDrop && (isCopy ? 'copy' : 'move')}</span>
         </span>
       </span>))}
       {thisIsOpen && (
         <div className="folder__children">
-          {folder.children
+          {hasChildren ? folder.children
             .filter(c => !!explorer.isVisible[c.uuid])
             .map(c =>
                 (c.type === 'Folder' ? (
                   <Folder key={c.uuid} explorerId={explorerId} folder={c} />
                 ) : (
                   <DocRef key={c.uuid} explorerId={explorerId} docRef={c} />
-                )))}
+                )))
+            : undefined
+            }
         </div>
       )}
     </div>

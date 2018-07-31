@@ -1,8 +1,5 @@
-import React from 'react';
-import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { lifecycle, compose } from 'recompose';
-import Mousetrap from 'mousetrap';
 
 import { actionCreators } from './redux';
 

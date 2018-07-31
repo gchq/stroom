@@ -20,28 +20,28 @@ import { actionCreators as explorerTreeActionCreators } from './explorerTreeRedu
 const { docRefsDeleted } = explorerTreeActionCreators;
 
 const actionCreators = createActions({
-  PREPARE_DOC_REF_DELETE: docRefs => ({ docRefs }),
-  COMPLETE_DOC_REF_DELETE: () => ({ docRefs: [] }),
+  PREPARE_DOC_REF_DELETE: uuids => ({ uuids }),
+  COMPLETE_DOC_REF_DELETE: () => ({ uuids: [] }),
 });
 
 const { prepareDocRefDelete, completeDocRefDelete } = actionCreators;
 
 // The state will contain a map of arrays.
 // Keyed on explorer ID, the arrays will contain the doc refs being moved
-const defaultState = { isDeleting: false, docRefs: [] };
+const defaultState = { isDeleting: false, uuids: [] };
 
 const reducer = handleActions(
   {
     [combineActions(prepareDocRefDelete, completeDocRefDelete)]: (
       state,
-      { payload: { docRefs } },
+      { payload: { uuids } },
     ) => ({
-      isDeleting: docRefs.length > 0,
-      docRefs,
+      isDeleting: uuids.length > 0,
+      uuids,
     }),
     [docRefsDeleted]: (state, action) => ({
       isDeleting: false,
-      docRefs: [],
+      uuids: [],
     }),
   },
   defaultState,

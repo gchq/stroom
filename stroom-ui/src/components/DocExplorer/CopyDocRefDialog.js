@@ -34,23 +34,27 @@ const enhance = compose(
     explorerId: `copy-doc-ref-${explorerId || guid()}`,
   })),
   connect(
-    ({ docExplorer, permissionInheritancePicker }, { explorerId }) => {
-      let selectedDocRef;
-      const explorer = docExplorer.explorerTree.explorers[explorerId];
-      if (explorer) {
-        const s = Object.entries(explorer.isSelected)
-          .filter(k => k[1])
-          .map(k => ({ uuid: k[0] }));
-        if (s.length > 0) {
-          selectedDocRef = s[0];
-        }
+    (
+      {
+        docExplorer: {
+          copyDocRef: { isCopying, uuids },
+          explorerTree: { explorers },
+        },
+        permissionInheritancePicker,
+      },
+      { explorerId },
+    ) => {
+      let destinationUuid;
+      const explorer = explorers[explorerId];
+      if (explorer && explorer.isSelectedList.length > 0) {
+        destinationUuid = explorer.isSelectedList[0];
       }
 
       return {
-        isCopying: docExplorer.copyDocRef.isCopying,
-        docRefs: docExplorer.copyDocRef.docRefs,
+        isCopying,
+        uuids,
         permissionInheritance: permissionInheritancePicker[explorerId],
-        selectedDocRef,
+        destinationUuid,
       };
     },
     { completeDocRefCopy, copyDocuments },
@@ -60,10 +64,10 @@ const enhance = compose(
 const CopyDocRefDialog = ({
   explorerId,
   isCopying,
-  docRefs,
+  uuids,
   completeDocRefCopy,
   copyDocuments,
-  selectedDocRef,
+  destinationUuid,
   permissionInheritance,
 }) => (
   <Modal open={isCopying}>
@@ -86,7 +90,7 @@ const CopyDocRefDialog = ({
       </Button>
       <Button
         positive
-        onClick={() => copyDocuments(docRefs, selectedDocRef, permissionInheritance)}
+        onClick={() => copyDocuments(uuids, destinationUuid, permissionInheritance)}
         labelPosition="right"
         icon="checkmark"
         content="Choose"

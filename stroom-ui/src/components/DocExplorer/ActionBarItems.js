@@ -31,12 +31,16 @@ const { searchTermUpdated } = actionCreators;
 const enhance = compose(
   withExplorerTree,
   connect(
-    (state, props) => {
-      console.log({ state });
-      return {
-        explorer: state.docExplorer.explorerTree.explorers[props.explorerId],
-      };
-    },
+    (
+      {
+        docExplorer: {
+          explorerTree: { explorers },
+        },
+      },
+      { explorerId },
+    ) => ({
+      explorer: explorers[explorerId],
+    }),
     { searchTermUpdated },
   ),
   branch(({ explorer }) => !explorer, renderComponent(() => <div />)),

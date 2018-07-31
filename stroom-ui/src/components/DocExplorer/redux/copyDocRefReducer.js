@@ -20,25 +20,25 @@ import { actionCreators as explorerTreeActionCreators } from './explorerTreeRedu
 const { docRefsCopied } = explorerTreeActionCreators;
 
 const actionCreators = createActions({
-  PREPARE_DOC_REF_COPY: docRefs => ({ docRefs }),
-  COMPLETE_DOC_REF_COPY: () => ({ docRefs: [] }),
+  PREPARE_DOC_REF_COPY: uuids => ({ uuids }),
+  COMPLETE_DOC_REF_COPY: () => ({ uuids: [] }),
 });
 
 const { prepareDocRefCopy, completeDocRefCopy } = actionCreators;
 
 // The state will contain a map of arrays.
 // Keyed on explorer ID, the arrays will contain the doc refs being moved
-const defaultState = { isCopying: false, docRefs: [] };
+const defaultState = { isCopying: false, uuids: [] };
 
 const reducer = handleActions(
   {
-    [combineActions(prepareDocRefCopy, completeDocRefCopy)]: (state, { payload: { docRefs } }) => ({
-      isCopying: docRefs.length > 0,
-      docRefs,
+    [combineActions(prepareDocRefCopy, completeDocRefCopy)]: (state, { payload: { uuids } }) => ({
+      isCopying: uuids.length > 0,
+      uuids,
     }),
     [docRefsCopied]: (state, action) => ({
       isCopying: false,
-      docRefs: [],
+      uuids: [],
     }),
   },
   defaultState,

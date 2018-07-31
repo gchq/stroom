@@ -19,6 +19,7 @@ import PropTypes from 'prop-types';
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
+import { Icon } from 'semantic-ui-react';
 
 import ItemTypes from './dragDropTypes';
 import { DragSource } from 'react-dnd';
@@ -91,6 +92,11 @@ const DocRef = ({
   connectDragSource,
   isDragging,
 }) => {
+  const isSelected = explorer.isSelected[docRef.uuid];
+  const { contentMenuDocRef } = explorer;
+  const isContextMenuOpen = !!contentMenuDocRef && contentMenuDocRef.uuid === docRef.uuid;
+  const isPartOfContextMenuSelection = !!contentMenuDocRef && isSelected;
+
   // these are required to tell the difference between single/double clicks
   const clickCounter = new ClickCounter()
     .withOnSingleClick(({ appendSelection, contiguousSelection }) =>
@@ -98,14 +104,12 @@ const DocRef = ({
     .withOnDoubleClick(() => openDocRef(history, docRef));
 
   const onRightClick = (e) => {
+    if (!isSelected) {
+      docRefSelected(explorerId, docRef, false, false);
+    }
     docRefContextMenuOpened(explorerId, docRef);
     e.preventDefault();
   };
-
-  const isSelected = explorer.isSelected[docRef.uuid];
-  const { contentMenuDocRef } = explorer;
-  const isContextMenuOpen = !!contentMenuDocRef && contentMenuDocRef.uuid === docRef.uuid;
-  const isPartOfContextMenuSelection = !!contentMenuDocRef && isSelected;
 
   let className = '';
   if (isDragging) {
@@ -136,6 +140,7 @@ const DocRef = ({
       closeContextMenu={() => docRefContextMenuClosed(explorerId)}
     />
     <span>
+      <Icon />
       <img className="doc-ref__icon" alt="X" src={require(`./images/${docRef.type}.svg`)} />
       {docRef.name}
     </span>

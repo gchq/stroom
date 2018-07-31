@@ -28,7 +28,7 @@ import withExplorerTree from '../withExplorerTree';
 import withDocRefTypes from '../withDocRefTypes';
 import FolderToPick from './FolderToPick';
 
-const { docRefPicked, docExplorerOpened } = actionCreators;
+const { docRefPicked, docExplorerOpened, searchTermUpdated } = actionCreators;
 
 const withModal = withState('isOpen', 'setIsOpen', false);
 
@@ -53,6 +53,7 @@ const enhance = compose(
       // actions
       docRefPicked,
       docExplorerOpened,
+      searchTermUpdated,
     },
   ),
   branch(
@@ -77,6 +78,7 @@ const DocPickerModal = ({
   documentTree,
   docRefPicked,
   docRefWithLineage,
+  searchTermUpdated,
   isOpen,
   pickerId,
   typeFilters,
