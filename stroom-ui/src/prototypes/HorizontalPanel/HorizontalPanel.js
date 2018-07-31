@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Menu, Header, Grid, Divider } from 'semantic-ui-react';
+import { Button, Menu, Header, Grid } from 'semantic-ui-react';
 import { compose, withState, lifecycle } from 'recompose';
 import Mousetrap from 'mousetrap';
 
@@ -30,12 +30,12 @@ const HorizontalPanel = ({
 }) => (
   <div className="horizontal-panel__container">
     <Grid className="horizontal-panel_header-container">
-      <Grid.Column width={titleColumns || 4}>
-        <Header as={headerSize || 'h2'}>{title}</Header>
+      <Grid.Column width={titleColumns || 4} className="HorizontalPanel_title__container">
+        <strong>{title}</strong>
       </Grid.Column>
       <Grid.Column width={menuColumns || 12}>
         <Menu secondary>
-          <Menu.Menu position="right">
+          <Menu.Menu position="right" className="HorizontalPanel_closeButton__container">
             {headerMenuItems}
             <Menu.Item className="horizontal-panel_close-button">
               <Button icon="close" onClick={() => onClose()} />
@@ -44,7 +44,6 @@ const HorizontalPanel = ({
         </Menu>
       </Grid.Column>
     </Grid>
-    <Divider />
     <div className="horizontal-panel__content__container">
       <div className="horizontal-panel__content">{content}</div>
     </div>
