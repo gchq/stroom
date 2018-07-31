@@ -25,6 +25,7 @@ import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.shared.AbstractFetchDataResult;
+import stroom.pipeline.shared.FetchDataAction;
 import stroom.pipeline.shared.FetchDataWithPipelineAction;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaDataHolder;
@@ -34,14 +35,18 @@ import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.streamstore.StreamStore;
 import stroom.streamtask.StreamProcessorService;
+import stroom.task.AbstractTaskHandler;
 import stroom.task.TaskHandlerBean;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 
 @TaskHandlerBean(task = FetchDataWithPipelineAction.class)
-class FetchDataWithPipelineHandler extends AbstractFetchDataHandler<FetchDataWithPipelineAction> {
-    private final Security security;
+class FetchDataWithPipelineHandler extends AbstractTaskHandler<FetchDataWithPipelineAction, AbstractFetchDataResult> {
+
+        private final Security security;
+    private final DataFetcher dataFetcher;
+
 
     @Inject
     FetchDataWithPipelineHandler(final StreamStore streamStore,
@@ -58,7 +63,7 @@ class FetchDataWithPipelineHandler extends AbstractFetchDataHandler<FetchDataWit
                                  final StreamEventLog streamEventLog,
                                  final Security security,
                                  final PipelineScopeRunnable pipelineScopeRunnable) {
-        super(streamStore,
+        dataFetcher = new DataFetcher(streamStore,
                 feedService,
                 streamProcessorService,
                 feedHolderProvider,
@@ -87,7 +92,7 @@ class FetchDataWithPipelineHandler extends AbstractFetchDataHandler<FetchDataWit
             final Long streamId = action.getStreamId();
 
             if (streamId != null) {
-                return getData(streamId, action.getChildStreamType(), action.getStreamRange(), action.getPageRange(),
+                return dataFetcher.getData(streamId, action.getChildStreamType(), action.getStreamRange(), action.getPageRange(),
                         action.isMarkerMode(), action.getPipeline(), action.isShowAsHtml());
             }
 

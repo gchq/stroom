@@ -47,6 +47,7 @@ import stroom.importexport.ImportExportActionHandler;
 import stroom.index.StroomIndexQueryResource;
 import stroom.lifecycle.LifecycleService;
 import stroom.persist.PersistLifecycle;
+import stroom.resource.DataResource;
 import stroom.resource.PipelineResource;
 import stroom.proxy.guice.ProxyModule;
 import stroom.proxy.repo.ProxyLifecycle;
@@ -244,6 +245,7 @@ public class App extends Application<Config> {
         GuiceUtil.addResource(environment.jersey(), injector, ElementResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, SessionResource.class);
         GuiceUtil.addResource(environment.jersey(), injector, StreamAttributeMapResource.class);
+        GuiceUtil.addResource(environment.jersey(), injector, DataResource.class);
 
         // Listen to the lifecycle of the Dropwizard app.
         GuiceUtil.manage(environment.lifecycle(), injector, LifecycleService.class);
