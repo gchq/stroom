@@ -164,6 +164,7 @@ const DataViewer = ({
           ]}
         >
           <ReactTable
+            sortable={false}
             pageSize={pageSize}
             showPagination={false}
             className="DataTable__reactTable"

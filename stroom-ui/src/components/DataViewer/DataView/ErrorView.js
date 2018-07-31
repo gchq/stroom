@@ -18,7 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { compose, lifecycle, branch, renderComponent } from 'recompose';
-import { Loader, Icon } from 'semantic-ui-react';
+import { Loader, Icon, Popup } from 'semantic-ui-react';
 import { path, splitAt } from 'ramda';
 
 // eslint-disable-next-line
@@ -36,14 +36,23 @@ const ErrorView = ({ errors }) => {
       Header: '',
       accessor: 'severity',
       Cell: (row) => {
+        const location = (
+          <React.Fragment>
+            <p>Stream: {row.original.stream}</p>
+            <p>Line: {row.original.line}</p>
+            <p>Column: {row.original.col}</p>
+          </React.Fragment>
+        );
         if (row.value === 'INFO') {
-          return <Icon color="blue" name="info circle" />;
+          return <Popup trigger={<Icon color="blue" name="info circle" />} content={location} />;
         } else if (row.value === 'WARNING') {
-          return <Icon color="orange" name="warning circle" />;
+          return (
+            <Popup trigger={<Icon color="orange" name="warning circle" />} content={location} />
+          );
         } else if (row.value === 'ERROR') {
-          return <Icon color="red" name="warning circle" />;
+          return <Popup trigger={<Icon color="red" name="warning circle" />} content={location} />;
         } else if (row.value === 'FATAL') {
-          return <Icon color="red" name="bomb" />;
+          return <Popup trigger={<Icon color="red" name="bomb" />} content={location} />;
         }
       },
       width: 30,
@@ -51,24 +60,11 @@ const ErrorView = ({ errors }) => {
     {
       Header: 'Element',
       accessor: 'elementId',
+      maxWidth: 120,
     },
     {
       Header: 'Message',
       accessor: 'message',
-      width: 500,
-    },
-    {
-      Header: 'Stream',
-      accessor: 'stream',
-      maxWidth: 30,
-    },
-    {
-      Header: 'Line',
-      accessor: 'line',
-    },
-    {
-      Header: 'Col',
-      accessor: 'col',
     },
   ];
 
@@ -87,6 +83,7 @@ const ErrorView = ({ errors }) => {
     <div className="ErrorView__container">
       <div className="ErrorView__reactTable__container">
         <ReactTable
+          sortable={false}
           showPagination={false}
           className="ErrorView__reactTable"
           data={tableData}

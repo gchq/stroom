@@ -17,12 +17,25 @@
   right: 0;
   left: 0;
   bottom: 0;
+  border-top: none;
 }
 
 .ErrorView__reactTable .rt-td {
+  // Make the table much more compact
   padding: 2px 2px;
 }
 
 .ErrorView__reactTable .rt-tbody .rt-td {
+  // Clean up lines
   border-right: none;
+}
+
+.ErrorView__reactTable .-header {
+  // Clean up lines
+  border-bottom: none !important;
+  font-style: italic;
+}
+
+.ErrorView__reactTable .rt-tr-group {
+  border-bottom: none !important;
 }
