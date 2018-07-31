@@ -18,3 +18,11 @@
   left: 0;
   bottom: 0;
 }
+
+.ErrorView__reactTable .rt-td {
+  padding: 2px 2px;
+}
+
+.ErrorView__reactTable .rt-tbody .rt-td {
+  border-right: none;
+}

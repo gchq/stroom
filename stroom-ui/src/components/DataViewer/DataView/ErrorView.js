@@ -18,7 +18,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { compose, lifecycle, branch, renderComponent } from 'recompose';
-import { Loader } from 'semantic-ui-react';
+import { Loader, Icon } from 'semantic-ui-react';
 import { path, splitAt } from 'ramda';
 
 // eslint-disable-next-line
@@ -33,12 +33,34 @@ import 'react-table/react-table.css';
 const ErrorView = ({ errors }) => {
   const tableColumns = [
     {
+      Header: '',
+      accessor: 'severity',
+      Cell: (row) => {
+        if (row.value === 'INFO') {
+          return <Icon color="blue" name="info circle" />;
+        } else if (row.value === 'WARNING') {
+          return <Icon color="orange" name="warning circle" />;
+        } else if (row.value === 'ERROR') {
+          return <Icon color="red" name="warning circle" />;
+        } else if (row.value === 'FATAL') {
+          return <Icon color="red" name="bomb" />;
+        }
+      },
+      width: 30,
+    },
+    {
       Header: 'Element',
       accessor: 'elementId',
     },
     {
+      Header: 'Message',
+      accessor: 'message',
+      width: 500,
+    },
+    {
       Header: 'Stream',
       accessor: 'stream',
+      maxWidth: 30,
     },
     {
       Header: 'Line',
@@ -47,14 +69,6 @@ const ErrorView = ({ errors }) => {
     {
       Header: 'Col',
       accessor: 'col',
-    },
-    {
-      Header: 'Message',
-      accessor: 'message',
-    },
-    {
-      Header: 'Severity',
-      accessor: 'severity',
     },
   ];
 

@@ -19,6 +19,10 @@
   bottom: 0;
 }
 
+.DataTable__reactTable .rt-tbody .rt-td {
+  border-right: none;
+}
+
 .DataTable__reactTable .rt-table .rt-body .rt-tr-group {
   max-height: 30px;
 }
@@ -34,10 +38,6 @@
 .ReactTable .rt-thead.-header {
   box-shadow: none;
   border-bottom: solid 1px lightgrey;
-}
-
-.DataTable__container .rt-resizable-header-content {
-  font-weight: bold;
 }
 
 .DataTable__selectedRow {
