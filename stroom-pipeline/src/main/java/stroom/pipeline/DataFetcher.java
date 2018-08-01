@@ -138,6 +138,15 @@ public class DataFetcher {
         this.pipelineScopeRunnable = pipelineScopeRunnable;
     }
 
+    public void reset(){
+        streamsOffset = 0L;
+        streamsTotal = 0L;
+        pageOffset = 0L;
+        pageLength = 0L;
+        pageTotal = 0L;
+        pageTotalIsExact = false;
+    }
+
     public AbstractFetchDataResult getData(final Long streamId, final StreamType childStreamType,
                                               final OffsetRange<Long> streamsRange, final OffsetRange<Long> pageRange, final boolean markerMode,
                                               final DocRef pipeline, final boolean showAsHtml, final Severity... expandedSeverities) {

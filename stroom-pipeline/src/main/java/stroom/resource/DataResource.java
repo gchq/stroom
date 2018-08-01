@@ -116,15 +116,16 @@ public class DataResource {
         StreamType childStreamType = null;
 
         return security.secureResult(PermissionNames.VIEW_DATA_PERMISSION, () -> {
-                AbstractFetchDataResult data = dataFetcher.getData(
-                        streamId,
-                        childStreamType,
-                        streamRange,
-                        pageRange,
-                        isMarkerMode,
-                        null,
-                        showAsHtml,
-                        expandedSeverities);
+            dataFetcher.reset();
+            AbstractFetchDataResult data = dataFetcher.getData(
+                    streamId,
+                    childStreamType,
+                    streamRange,
+                    pageRange,
+                    isMarkerMode,
+                    null,
+                    showAsHtml,
+                    expandedSeverities);
             return Response.ok(data).build();
 
         });
