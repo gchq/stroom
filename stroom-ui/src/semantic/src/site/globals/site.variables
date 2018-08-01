@@ -1,0 +1,15 @@
+/*******************************
+     User Global Variables
+*******************************/
+
+/*
+@fontName          : 'Open Sans';
+@headerFont        : 'Open Sans', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+@pageFont          : 'Open Sans', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+@googleFontFamily  : 'Open+Sans:400italic,400|Oswald:400,700';
+*/
+
+@fontName          : 'Clear Sans';
+@headerFont        : 'Clear Sans', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+@pageFont          : 'Clear Sans', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+@googleFontFamily  : 'Clear+Sans:400italic,400|Oswald:400,700';
