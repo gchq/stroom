@@ -63,16 +63,15 @@ public class TestByteBufferPool {
 
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(0);
 
-        //will create a new buffer
-        byteBufferPool.getPooledByteBuffer(10).release();
+        getAndReleaseBuffer(byteBufferPool, 10);
 
         //will use the 10 buffer
-        byteBufferPool.getPooledByteBuffer(1).release();
+        getAndReleaseBuffer(byteBufferPool, 1);
 
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(1);
 
         //will create a new buffer
-        byteBufferPool.getPooledByteBuffer(1000).release();
+        getAndReleaseBuffer(byteBufferPool, 1000);
 
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(2);
 
@@ -178,7 +177,9 @@ public class TestByteBufferPool {
         final ByteBufferPool byteBufferPool = new ByteBufferPool();
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(0);
         PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(10);
+        pooledByteBuffer.getByteBuffer();
         pooledByteBuffer.release();
+
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(1);
 
         // will throw exception as buffer has been released
@@ -207,6 +208,7 @@ public class TestByteBufferPool {
             completableFutures.add(CompletableFuture.runAsync(() -> {
 
                 PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(minCapacity);
+                ByteBuffer byteBuffer = pooledByteBuffer.getByteBuffer();
                 countDownLatch.countDown();
 //                LOGGER.debug("latch count {}", countDownLatch.getCount());
 
@@ -232,5 +234,12 @@ public class TestByteBufferPool {
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(threadCount);
 
         completableFutures.clear();
+    }
+
+    private void getAndReleaseBuffer(ByteBufferPool byteBufferPool, int minCapacity) {
+        //will create a new buffer
+        PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(minCapacity);
+        pooledByteBuffer.getByteBuffer();
+        pooledByteBuffer.release();
     }
 }
