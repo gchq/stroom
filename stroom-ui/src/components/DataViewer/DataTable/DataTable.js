@@ -31,10 +31,11 @@ import ReactTable from 'react-table';
 import 'react-table/react-table.css';
 
 import { Loader } from 'semantic-ui-react';
-import 'semantic-ui-css/semantic.min.css';
 
 import { withConfig } from 'startup/config';
 import { search } from '../streamAttributeMapClient';
+import { getDataForSelectedRow } from '../dataResourceClient';
+import DataView from '../DataView';
 
 import { actionCreators } from '../redux';
 
@@ -57,9 +58,10 @@ const enhance = compose(
         pageSize: defaultPageSize,
         pageOffset: startPage,
         selectedRow: undefined,
+        dataForSelectedRow: undefined
       };
     },
-    { search, selectRow, deselectRow },
+    { search, selectRow, deselectRow, getDataForSelectedRow },
   ),
   lifecycle({
     componentDidMount() {
@@ -86,16 +88,20 @@ const DataViewer = ({
   selectRow,
   deselectRow,
   selectedRow,
+  getDataForSelectedRow,
+  dataForSelectedRow
 }) => {
   Mousetrap.bind(['k', 'up'], () => {
     // If no row is selected and the user has tried to use a shortcut key then we'll try and
     // select the first row.
     if (selectedRow === undefined) {
       selectRow(dataViewerId, 0);
+      getDataForSelectedRow(dataViewerId);
     }
     // If the selected row isn't the first row then we'll allow the selection to go up
     else if (selectedRow > 0) {
       selectRow(dataViewerId, selectedRow - 1);
+      getDataForSelectedRow(dataViewerId);
     }
   });
   Mousetrap.bind(['j', 'down'], () => {
@@ -103,10 +109,12 @@ const DataViewer = ({
     // select the first row.
     if (selectedRow === undefined) {
       selectRow(dataViewerId, 0);
+      getDataForSelectedRow(dataViewerId);
     }
     // If the selected row isn't the last row then we'll allow the selection to go down
     else if (selectedRow < pageSize - 1) {
       selectRow(dataViewerId, selectedRow + 1);
+      getDataForSelectedRow(dataViewerId);
     }
   });
   Mousetrap.bind(['l', 'right'], () => search(dataViewerId, pageOffset + 1, pageSize));
@@ -136,7 +144,7 @@ const DataViewer = ({
 
   const tableData = streamAttributeMaps.map(streamAttributeMap => ({
     created: moment(path(['stream', 'createMs'], streamAttributeMap)).format('MMMM Do YYYY, h:mm:ss a'),
-    type: path(['stream', 'streamType', 'name'], streamAttributeMap),
+    type: path(['stream', 'streamType', 'displayValue'], streamAttributeMap),
     feed: path(['stream', 'feed', 'displayValue'], streamAttributeMap),
     pipeline: path(['stream', 'streamProcessor', 'pipelineName'], streamAttributeMap),
   }));
@@ -155,6 +163,7 @@ const DataViewer = ({
           ]}
         >
           <ReactTable
+            sortable={false}
             pageSize={pageSize}
             showPagination={false}
             className="DataTable__reactTable"
@@ -163,6 +172,7 @@ const DataViewer = ({
             getTdProps={(state, rowInfo, column, instance) => ({
               onClick: (e, handleOriginal) => {
                 selectRow(dataViewerId, rowInfo.index);
+                getDataForSelectedRow(dataViewerId);
 
                 // IMPORTANT! React-Table uses onClick internally to trigger
                 // events like expanding SubComponents and pivots.
@@ -185,7 +195,7 @@ const DataViewer = ({
             className="element-details__panel"
             title={<div>{path(['feed'], tableData[selectedRow]) || 'Nothing selected'}</div>}
             onClose={() => deselectRow(dataViewerId)}
-            content={<div>show data</div>}
+            content={<DataView dataViewerId={dataViewerId}/>}
             titleColumns={6}
             menuColumns={10}
             headerSize="h3"

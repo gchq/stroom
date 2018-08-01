@@ -8,6 +8,7 @@
   "elementServiceUrl": "http://IP_ADDRESS:8080/api/elements/v1",
   "streamAttributeMapServiceUrl": "http://IP_ADDRESS:8080/api/streamattributemap/v1",
   "advertisedUrl": "http://IP_ADDRESS:5001",
+  "dataServiceUrl": "http://IP_ADDRESS:8080/api/data/v1",
   "authUsersUiUrl": "https://IP_ADDRESS:9443/userSearch",
   "authTokensUiUrl": "https://IP_ADDRESS:9443/tokens",
   "appClientId": "stroom-ui"

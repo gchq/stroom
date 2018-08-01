@@ -1,5 +1,5 @@
 .DataTable__container {
-  height: calc(100% - 60px);
+  height: calc(100% - 45px);
   position: relative;
 }
 
@@ -17,10 +17,19 @@
   right: 0;
   left: 0;
   bottom: 0;
+  border: none;
+}
+
+.DataTable__reactTable .rt-td {
+  padding: 2px 2px;
+}
+
+.DataTable__reactTable .rt-tbody .rt-td {
+  border-right: none; // Make the table much more compact
 }
 
 .DataTable__reactTable .rt-table .rt-body .rt-tr-group {
-  max-height: 30px;
+  max-height: 23px;
 }
 
 .DataTable__container .rt-table .rt-tbody .rt-tr-group:hover {
@@ -28,16 +37,12 @@
 }
 
 .ReactTable .rt-tbody .rt-tr-group {
-  max-height: 30px;
+  max-height: 23px;
 }
 
 .ReactTable .rt-thead.-header {
   box-shadow: none;
   border-bottom: solid 1px lightgrey;
-}
-
-.DataTable__container .rt-resizable-header-content {
-  font-weight: bold;
 }
 
 .DataTable__selectedRow {

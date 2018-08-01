@@ -19,7 +19,6 @@ import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 
 import { Grid } from 'semantic-ui-react';
-import 'semantic-ui-css/semantic.min.css';
 
 import './ErrorPage.css';
 

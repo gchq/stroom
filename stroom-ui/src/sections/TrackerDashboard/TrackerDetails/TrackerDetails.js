@@ -7,7 +7,6 @@ import { connect } from 'react-redux';
 import moment from 'moment';
 
 import { Grid, Checkbox, List, Card } from 'semantic-ui-react';
-import 'semantic-ui-css/semantic.min.css';
 
 import { actionCreators } from '../redux';
 import { enableToggle } from '../streamTasksResourceClient';

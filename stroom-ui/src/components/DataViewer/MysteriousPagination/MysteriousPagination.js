@@ -18,7 +18,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import { Button, Dropdown, Icon } from 'semantic-ui-react';
-import 'semantic-ui-css/semantic.min.css';
 
 import uuidv4 from 'uuid/v4';
 

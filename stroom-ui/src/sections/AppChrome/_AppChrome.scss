@@ -32,11 +32,11 @@
 .app-chrome__content .ui.grid {
   // Get rid of semantic UIs annoying margins and add bottom border as a divider.
   margin: 0;
-  border-bottom: solid 1px lightgrey;
+  background-color: $hover-item-colour;
 }
 
 .app-chrome__content .ui.grid .column {
-  padding: 0.3rem;
+  padding: 0.3rem !important;
 }
 
 .content-tabs__close-btn {

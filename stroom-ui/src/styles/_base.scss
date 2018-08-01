@@ -17,18 +17,19 @@
 body {
   margin: 0;
   padding: 0;
-  font-family: sans-serif;
 }
 
 // Semantic react and Semantic UI have some issues with modal placement
 .ui.page.modals.transition.visible {
   display: flex !important;
 }
+
 .ui.modal {
   margin-top: 0 !important;
   margin-left: "auto";
   margin-right: "auto";
 }
+
 .ui.modal .scrolling.content {
   height: 70vh;
 }
@@ -36,4 +37,20 @@ body {
 .fill-space {
   height: 100%;
   width: 100%;
+}
+
+// Style table headers
+.ReactTable .rt-th {
+  font-weight: bold !important;
+  text-align: left !important;
+}
+
+.ReactTable .-header {
+  // We don't need the line under the header
+  border-bottom: none !important;
+}
+
+.ReactTable .rt-tr-group {
+  // We don't need lines between the rows
+  border-bottom: none !important;
 }

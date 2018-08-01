@@ -1,23 +1,26 @@
 /*
- * Copyright 2017 Crown Copyright
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  * Copyright 2018 Crown Copyright
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  *     http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 package stroom.pipeline;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.EntityServiceException;
 import stroom.feed.FeedService;
@@ -33,7 +36,6 @@ import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.reader.BOMRemovalInputStream;
 import stroom.pipeline.shared.AbstractFetchDataResult;
-import stroom.pipeline.shared.FetchDataAction;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.FetchMarkerResult;
 import stroom.pipeline.shared.PipelineDoc;
@@ -47,7 +49,6 @@ import stroom.pipeline.writer.AbstractWriter;
 import stroom.pipeline.writer.OutputStreamAppender;
 import stroom.pipeline.writer.TextWriter;
 import stroom.pipeline.writer.XMLWriter;
-import stroom.docref.DocRef;
 import stroom.security.Security;
 import stroom.streamstore.StreamSource;
 import stroom.streamstore.StreamStore;
@@ -58,7 +59,6 @@ import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamStatus;
 import stroom.streamstore.shared.StreamType;
 import stroom.streamtask.StreamProcessorService;
-import stroom.task.AbstractTaskHandler;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
@@ -78,9 +78,9 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
-        extends AbstractTaskHandler<A, AbstractFetchDataResult> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractFetchDataHandler.class);
+public class DataFetcher {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataFetcher.class);
 
     private static final int MAX_LINE_LENGTH = 1000;
     private final Long streamsLength = 1L;
@@ -108,20 +108,20 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
     private Long pageTotal = 0L;
     private boolean pageTotalIsExact = false;
 
-    AbstractFetchDataHandler(final StreamStore streamStore,
-                             final FeedService feedService,
-                             final StreamProcessorService streamProcessorService,
-                             final Provider<FeedHolder> feedHolderProvider,
-                             final Provider<MetaDataHolder> metaDataHolderProvider,
-                             final Provider<PipelineHolder> pipelineHolderProvider,
-                             final Provider<StreamHolder> streamHolderProvider,
-                             final PipelineStore pipelineStore,
-                             final Provider<PipelineFactory> pipelineFactoryProvider,
-                             final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
-                             final PipelineDataCache pipelineDataCache,
-                             final StreamEventLog streamEventLog,
-                             final Security security,
-                             final PipelineScopeRunnable pipelineScopeRunnable) {
+    public DataFetcher(final StreamStore streamStore,
+                       final FeedService feedService,
+                       final StreamProcessorService streamProcessorService,
+                       final Provider<FeedHolder> feedHolderProvider,
+                       final Provider<MetaDataHolder> metaDataHolderProvider,
+                       final Provider<PipelineHolder> pipelineHolderProvider,
+                       final Provider<StreamHolder> streamHolderProvider,
+                       final PipelineStore pipelineStore,
+                       final Provider<PipelineFactory> pipelineFactoryProvider,
+                       final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
+                       final PipelineDataCache pipelineDataCache,
+                       final StreamEventLog streamEventLog,
+                       final Security security,
+                       final PipelineScopeRunnable pipelineScopeRunnable){
         this.streamStore = streamStore;
         this.feedService = feedService;
         this.streamProcessorService = streamProcessorService;
@@ -138,7 +138,16 @@ public abstract class AbstractFetchDataHandler<A extends FetchDataAction>
         this.pipelineScopeRunnable = pipelineScopeRunnable;
     }
 
-    protected AbstractFetchDataResult getData(final Long streamId, final StreamType childStreamType,
+    public void reset(){
+        streamsOffset = 0L;
+        streamsTotal = 0L;
+        pageOffset = 0L;
+        pageLength = 0L;
+        pageTotal = 0L;
+        pageTotalIsExact = false;
+    }
+
+    public AbstractFetchDataResult getData(final Long streamId, final StreamType childStreamType,
                                               final OffsetRange<Long> streamsRange, final OffsetRange<Long> pageRange, final boolean markerMode,
                                               final DocRef pipeline, final boolean showAsHtml, final Severity... expandedSeverities) {
         // Allow users with 'Use' permission to read data, pipelines and XSLT.
