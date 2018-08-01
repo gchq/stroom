@@ -45,16 +45,6 @@
   border-bottom: solid 1px lightgrey;
 }
 
-.DataTable__reactTable .-header {
-  // Clean up lines
-  border-bottom: none !important;
-  font-style: italic;
-}
-
-.DataTable__reactTable .rt-tr-group {
-  border-bottom: none !important;
-}
-
 .DataTable__selectedRow {
   background-color: $selected-item-colour;
 }
