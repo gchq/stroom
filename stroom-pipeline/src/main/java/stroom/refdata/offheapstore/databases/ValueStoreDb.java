@@ -155,12 +155,12 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
         return areValuesEqual;
     }
 
-    public void deReferenceOrDeleteValue(final Txn<ByteBuffer> writeTxn, final ValueStoreKey valueStoreKey) {
+    public boolean deReferenceOrDeleteValue(final Txn<ByteBuffer> writeTxn, final ValueStoreKey valueStoreKey) {
         LOGGER.trace("deReferenceValue({}, {})", writeTxn, valueStoreKey);
 
         try (final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()) {
             keySerde.serialize(pooledKeyBuffer.getByteBuffer(), valueStoreKey);
-            deReferenceOrDeleteValue(writeTxn, pooledKeyBuffer.getByteBuffer());
+            return deReferenceOrDeleteValue(writeTxn, pooledKeyBuffer.getByteBuffer());
         }
     }
 
@@ -168,7 +168,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
      * Decrements the reference count for this value. If the resulting reference count is zero or less
      * the value will be deleted as it is no longer required.
      */
-    public void deReferenceOrDeleteValue(final Txn<ByteBuffer> writeTxn, final ByteBuffer keyBuffer) {
+    public boolean deReferenceOrDeleteValue(final Txn<ByteBuffer> writeTxn, final ByteBuffer keyBuffer) {
         LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("deReferenceValue({}, {})",
                 writeTxn, ByteBufferUtils.byteBufferInfo(keyBuffer)));
 
@@ -192,14 +192,16 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
 
             if (newRefCount <= 0) {
                 // we had the last ref to this value so we can delete it
-                LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Ref count is zero, derleting entry for key {}",
+                LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Ref count is zero, deleting entry for key {}",
                         ByteBufferUtils.byteBufferInfo(keyBuffer)));
                 cursor.delete();
+                return true;
             } else {
                 LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Updating entry with new ref count {} for key {}",
                         newRefCount,
                         ByteBufferUtils.byteBufferInfo(keyBuffer)));
                 cursor.put(cursor.key(), newValueBuf, PutFlags.MDB_CURRENT);
+                return false;
             }
         }
     }

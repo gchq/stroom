@@ -464,18 +464,11 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                 totalRangeValueEntryCount,
                 totalValueEntryCount);
 
-
         long twoDaysAgoMs = Instant.now().minus(2, ChronoUnit.DAYS).toEpochMilli();
-
-        ((RefDataOffHeapStore) refDataStore).logContents(ProcessingInfoDb.DB_NAME);
 
         // set two of the refStreamDefs to be two days old so they should get purged
         setLastAccessedTime(refStreamDefs.get(1), twoDaysAgoMs);
         setLastAccessedTime(refStreamDefs.get(3), twoDaysAgoMs);
-
-        ((RefDataOffHeapStore) refDataStore).logContents(ProcessingInfoDb.DB_NAME);
-        ((RefDataOffHeapStore) refDataStore).logContents(KeyValueStoreDb.DB_NAME);
-        ((RefDataOffHeapStore) refDataStore).logRawContents(KeyValueStoreDb.DB_NAME);
 
         LOGGER.info("------------------------purge-starts-here--------------------------------------");
 
@@ -492,6 +485,120 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                 expectedRefStreamDefCount * rangeValueMapCount * entryCount,
                 (expectedRefStreamDefCount * rangeValueMapCount * entryCount) +
                         (expectedRefStreamDefCount * rangeValueMapCount * entryCount));
+    }
+
+    @Test
+    public void testPurgeOldData_nothingToPurge() {
+
+        setPurgeAgeProperty("1d");
+        int refStreamDefCount = 4;
+        int keyValueMapCount = 2;
+        int rangeValueMapCount = 2;
+        int entryCount = 2;
+        int totalMapEntries = (refStreamDefCount * keyValueMapCount) + (refStreamDefCount * rangeValueMapCount);
+        int totalKeyValueEntryCount = refStreamDefCount * keyValueMapCount * entryCount;
+        int totalRangeValueEntryCount = refStreamDefCount * rangeValueMapCount * entryCount;
+        int totalValueEntryCount = totalKeyValueEntryCount + totalRangeValueEntryCount;
+
+        List<RefStreamDefinition> refStreamDefs = loadBulkData(
+                refStreamDefCount, keyValueMapCount, rangeValueMapCount, entryCount);
+
+        ((RefDataOffHeapStore) refDataStore).logAllContents();
+
+        assertDbCounts(
+                refStreamDefCount,
+                totalMapEntries,
+                totalKeyValueEntryCount,
+                totalRangeValueEntryCount,
+                totalValueEntryCount);
+
+        LOGGER.info("------------------------purge-starts-here--------------------------------------");
+
+        // do the purge
+        refDataStore.purgeOldData();
+
+        ((RefDataOffHeapStore) refDataStore).logAllContents();
+
+        // same as above as nothing is old enough for a purge
+        assertDbCounts(
+                refStreamDefCount,
+                totalMapEntries,
+                totalKeyValueEntryCount,
+                totalRangeValueEntryCount,
+                totalValueEntryCount);
+
+    }
+
+    @Test
+    public void testPurgeOldData_deReferenceValues() {
+
+        setPurgeAgeProperty("1d");
+        int refStreamDefCount = 1;
+        int keyValueMapCount = 1;
+        int rangeValueMapCount = 1;
+        int entryCount = 1;
+        int totalMapEntries = (refStreamDefCount * keyValueMapCount) + (refStreamDefCount * rangeValueMapCount);
+        int totalKeyValueEntryCount = refStreamDefCount * keyValueMapCount * entryCount;
+        int totalRangeValueEntryCount = refStreamDefCount * rangeValueMapCount * entryCount;
+        int totalValueEntryCount = totalKeyValueEntryCount + totalRangeValueEntryCount;
+
+        final List<RefStreamDefinition> refStreamDefs = loadBulkData(
+                refStreamDefCount,
+                keyValueMapCount,
+                rangeValueMapCount,
+                entryCount,
+                0,
+                this::buildMapNameWithoutRefStreamDef);
+
+        ((RefDataOffHeapStore) refDataStore).logAllContents();
+
+        assertDbCounts(
+                refStreamDefCount,
+                totalMapEntries,
+                totalKeyValueEntryCount,
+                totalRangeValueEntryCount,
+                totalValueEntryCount);
+
+        LOGGER.info("---------------------second-load-starts-here----------------------------------");
+
+        loadBulkData(
+                refStreamDefCount,
+                keyValueMapCount,
+                rangeValueMapCount,
+                entryCount,
+                4,
+                this::buildMapNameWithoutRefStreamDef);
+
+        ((RefDataOffHeapStore) refDataStore).logAllContents();
+
+        // as we have run again with different refStreamDefs we should get 2x of everything
+        // except the value entries as those will be the same (except with high reference counts)
+        assertDbCounts(
+                refStreamDefCount * 2,
+                totalMapEntries * 2,
+                totalKeyValueEntryCount * 2,
+                totalRangeValueEntryCount * 2,
+                totalValueEntryCount);
+
+
+        long twoDaysAgoMs = Instant.now().minus(2, ChronoUnit.DAYS).toEpochMilli();
+
+        // set two of the refStreamDefs to be two days old so they should get purged
+        setLastAccessedTime(refStreamDefs.get(0), twoDaysAgoMs);
+
+        LOGGER.info("------------------------purge-starts-here--------------------------------------");
+        // do the purge
+        refDataStore.purgeOldData();
+
+        ((RefDataOffHeapStore) refDataStore).logAllContents();
+
+        // back to how it was after first load with no change to value entry count as they have just been de-referenced
+        assertDbCounts(
+                refStreamDefCount,
+                totalMapEntries,
+                totalKeyValueEntryCount,
+                totalRangeValueEntryCount,
+                totalValueEntryCount);
     }
 
     private void assertDbCounts(final int refStreamDefCount,
@@ -542,18 +649,35 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         bulkLoadAndAssert(refStreamDefinitions, overwriteExisting, commitInterval);
     }
 
+    private List<RefStreamDefinition> loadBulkData(
+            final int refStreamDefinitionCount,
+            final int keyValueMapCount,
+            final int rangeValueMapCount,
+            final int entryCount) {
+        return loadBulkData(
+                refStreamDefinitionCount,
+                keyValueMapCount,
+                rangeValueMapCount,
+                entryCount,
+                0,
+                this::buildMapNameWithRefStreamDef);
+    }
+
     /**
-     * @param refStreamDefinitionCount Number of {@link RefStreamDefinition}s to create.
-     * @param keyValueMapCount         Number of KeyValue type maps to create per {@link RefStreamDefinition}
-     * @param rangeValueMapCount       Number of RangeValue type maps to create per {@link RefStreamDefinition}
-     * @param entryCount               Number of map entries to create per map
+     * @param refStreamDefinitionCount  Number of {@link RefStreamDefinition}s to create.
+     * @param keyValueMapCount          Number of KeyValue type maps to create per {@link RefStreamDefinition}
+     * @param rangeValueMapCount        Number of RangeValue type maps to create per {@link RefStreamDefinition}
+     * @param entryCount                Number of map entries to create per map
+     * @param refStreamDefinitionOffset The offset from zero for the refStreamDefinition streamNo
      * @return The created {@link RefStreamDefinition} objects
      */
     private List<RefStreamDefinition> loadBulkData(
             final int refStreamDefinitionCount,
             final int keyValueMapCount,
             final int rangeValueMapCount,
-            final int entryCount) {
+            final int entryCount,
+            final int refStreamDefinitionOffset,
+            final MapNamFunc mapNamFunc) {
 
         assertThat(refStreamDefinitionCount).isGreaterThan(0);
         assertThat(keyValueMapCount).isGreaterThanOrEqualTo(0);
@@ -564,7 +688,7 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
 
         for (int i = 0; i < refStreamDefinitionCount; i++) {
 
-            RefStreamDefinition refStreamDefinition = buildRefStreamDefintion(i);
+            RefStreamDefinition refStreamDefinition = buildRefStreamDefintion(i + refStreamDefinitionOffset);
 
             refStreamDefinitions.add(refStreamDefinition);
 
@@ -575,8 +699,8 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                         loader.initialise(false);
                         loader.setCommitInterval(1000);
 
-                        loadKeyValueData(keyValueMapCount, entryCount, refStreamDefinition, loader);
-                        loadRangeValueData(keyValueMapCount, entryCount, refStreamDefinition, loader);
+                        loadKeyValueData(keyValueMapCount, entryCount, refStreamDefinition, loader, mapNamFunc);
+                        loadRangeValueData(keyValueMapCount, entryCount, refStreamDefinition, loader, mapNamFunc);
 
                         loader.completeProcessing();
                     });
@@ -591,10 +715,21 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                 i);
     }
 
-    private void loadRangeValueData(final int keyValueMapCount, final int entryCount, final RefStreamDefinition refStreamDefinition, final RefDataLoader loader) {
+    private void loadRangeValueData(final int keyValueMapCount,
+                                    final int entryCount,
+                                    final RefStreamDefinition refStreamDefinition,
+                                    final RefDataLoader loader) {
+        loadRangeValueData(keyValueMapCount, entryCount, refStreamDefinition, loader, this::buildMapNameWithRefStreamDef);
+    }
+
+    private void loadRangeValueData(final int keyValueMapCount,
+                                    final int entryCount,
+                                    final RefStreamDefinition refStreamDefinition,
+                                    final RefDataLoader loader,
+                                    final MapNamFunc mapNamFunc) {
         // load the range/value data
         for (int j = 0; j < keyValueMapCount; j++) {
-            String mapName = buildMapName(refStreamDefinition, "Range", j);
+            String mapName = mapNamFunc.buildMapName(refStreamDefinition, "Range", j);
             MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
 
             for (int k = 0; k < entryCount; k++) {
@@ -605,20 +740,22 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         }
     }
 
-    private String buildRangeStoreValue(final String mapName, final int i, final Range<Long> range) {
-        return LambdaLogger.buildMessage("{}-{}-{}-value{}",
-                mapName, range.getFrom(), range.getTo(), i);
+
+    private void loadKeyValueData(final int keyValueMapCount,
+                                  final int entryCount,
+                                  final RefStreamDefinition refStreamDefinition,
+                                  final RefDataLoader loader) {
+        loadKeyValueData(keyValueMapCount, entryCount, refStreamDefinition, loader, this::buildMapNameWithRefStreamDef);
     }
 
-    private String buildMapName(final RefStreamDefinition refStreamDefinition, final String type, final int i) {
-        return LambdaLogger.buildMessage("refStreamDef{}-{}map{}",
-                refStreamDefinition.getStreamId(), type, i);
-    }
-
-    private void loadKeyValueData(final int keyValueMapCount, final int entryCount, final RefStreamDefinition refStreamDefinition, final RefDataLoader loader) {
+    private void loadKeyValueData(final int keyValueMapCount,
+                                  final int entryCount,
+                                  final RefStreamDefinition refStreamDefinition,
+                                  final RefDataLoader loader,
+                                  final MapNamFunc mapNamFunc) {
         // load the key/value data
         for (int j = 0; j < keyValueMapCount; j++) {
-            String mapName = buildMapName(refStreamDefinition, "KV", j);
+            String mapName = mapNamFunc.buildMapName(refStreamDefinition, "KV", j);
             MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
 
             for (int k = 0; k < entryCount; k++) {
@@ -629,7 +766,30 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         }
     }
 
-    private String buildKeyStoreValue(final String mapName, final int i, final String key) {
+    private String buildRangeStoreValue(final String mapName, final int i, final Range<Long> range) {
+        return LambdaLogger.buildMessage("{}-{}-{}-value{}",
+                mapName, range.getFrom(), range.getTo(), i);
+    }
+
+    private String buildMapNameWithRefStreamDef(
+            final RefStreamDefinition refStreamDefinition,
+            final String type,
+            final int i) {
+        return LambdaLogger.buildMessage("refStreamDef{}-{}map{}",
+                refStreamDefinition.getStreamId(), type, i);
+    }
+
+    private String buildMapNameWithoutRefStreamDef(
+            final RefStreamDefinition refStreamDefinition,
+            final String type,
+            final int i) {
+        return LambdaLogger.buildMessage("{}map{}",
+                type, i);
+    }
+
+    private String buildKeyStoreValue(final String mapName,
+                                      final int i,
+                                      final String key) {
         return LambdaLogger.buildMessage("{}-{}-value{}", mapName, key, i);
     }
 
@@ -835,5 +995,10 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         assertThat(isDataLoaded).isTrue();
 
         return entriesPerMapDef * mapNames.size();
+    }
+
+    private interface MapNamFunc {
+        String buildMapName(final RefStreamDefinition refStreamDefinition, final String type, final int i);
+
     }
 }

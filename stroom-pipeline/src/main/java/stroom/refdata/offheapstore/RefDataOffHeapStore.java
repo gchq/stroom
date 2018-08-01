@@ -54,6 +54,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
@@ -577,11 +578,22 @@ public class RefDataOffHeapStore implements RefDataStore {
         LOGGER.debug("Deleting key/value entries and de-referencing/deleting their values");
         // loop over all keyValue entries for this mapUid and dereference/delete the associated
         // valueStore entry
+        AtomicLong valueEntryDeleteCount = new AtomicLong();
+        AtomicLong valueEntryDeReferenceCount = new AtomicLong();
         keyValueStoreDb.deleteMapEntries(writeTxn, mapUid, (keyValueStoreKeyBuffer, valueStoreKeyBuffer) -> {
 
             //dereference this value, deleting it if required
-            valueStoreDb.deReferenceOrDeleteValue(writeTxn, valueStoreKeyBuffer);
+            boolean wasDeleted = valueStoreDb.deReferenceOrDeleteValue(writeTxn, valueStoreKeyBuffer);
+            if (wasDeleted) {
+             valueEntryDeleteCount.incrementAndGet();
+            } else {
+                valueEntryDeReferenceCount.incrementAndGet();
+            }
         });
+        LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("Deleted {} value entries, de-referenced {} value entries",
+                valueEntryDeleteCount.get(), valueEntryDeReferenceCount.get()));
+        valueEntryDeleteCount.set(0);
+        valueEntryDeReferenceCount.set(0);
 
         LOGGER.debug("Deleting range/value entries and de-referencing/deleting their values");
         // loop over all rangeValue entries for this mapUid and dereference/delete the associated
@@ -589,8 +601,14 @@ public class RefDataOffHeapStore implements RefDataStore {
         rangeStoreDb.deleteMapEntries(writeTxn, mapUid, (rangeValueStoreKeyBuffer, valueStoreKeyBuffer) -> {
 
             //dereference this value, deleting it if required
-            valueStoreDb.deReferenceOrDeleteValue(writeTxn, valueStoreKeyBuffer);
+            boolean wasDeleted = valueStoreDb.deReferenceOrDeleteValue(writeTxn, valueStoreKeyBuffer);
+            if (wasDeleted) {
+                valueEntryDeleteCount.incrementAndGet();
+            } else {
+                valueEntryDeReferenceCount.incrementAndGet();
+            }
         });
+        LOGGER.debug("Deleting range/value entries and de-referencing/deleting their values");
 
         mapDefinitionUIDStore.deletePair(writeTxn, mapUid);
     }
