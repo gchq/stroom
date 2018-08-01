@@ -39,6 +39,7 @@ import {
   actionCreators as docRefInfoActionCreators,
   reducer as docRefInfoReducer,
 } from './docRefInfoReducer';
+import { actionCreators as newDocActionCreators, reducer as newDocReducer } from './newDocReducer';
 
 const actionCreators = {
   ...docExplorerActionCreators,
@@ -47,6 +48,7 @@ const actionCreators = {
   ...deleteDocRefActionCreators,
   ...copyDocRefActionCreators,
   ...docRefInfoActionCreators,
+  ...newDocActionCreators,
 };
 
 const reducer = combineReducers({
@@ -56,6 +58,7 @@ const reducer = combineReducers({
   deleteDocRef: deleteDocRefReducer,
   copyDocRef: copyDocRefReducer,
   docRefInfo: docRefInfoReducer,
+  newDoc: newDocReducer,
 });
 
 export { actionCreators, reducer };

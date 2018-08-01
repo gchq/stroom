@@ -18,10 +18,10 @@ import PropTypes from 'prop-types';
 
 import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
-
+import { Field, reduxForm } from 'redux-form';
 import { Modal, Button, Form } from 'semantic-ui-react';
 
-import { guid } from 'lib/treeUtils';
+import { findItem } from 'lib/treeUtils';
 import { actionCreators } from './redux';
 import { moveDocuments } from './explorerClient';
 
@@ -32,34 +32,37 @@ const { completeDocRefMove } = actionCreators;
 
 const enhance = compose(
   withProps(({ explorerId }) => ({
-    explorerId: `move-doc-ref-${explorerId || guid()}`,
+    explorerId: `move-doc-ref-${explorerId}`,
   })),
   connect(
-    (
-      {
-        docExplorer: {
-          moveDocRef: { isMoving, uuids, destinationUuid },
-          explorerTree: { explorers },
-        },
-        permissionInheritancePicker,
+    ({
+      docExplorer: {
+        explorerTree: { documentTree },
       },
-      { explorerId },
-    ) => {
-      let selectedDestinationUuid;
-      const explorer = explorers[explorerId];
-      if (explorer && explorer.isSelectedList.length > 0) {
-        selectedDestinationUuid = explorer.isSelectedList[0];
-      }
+      form,
+      docExplorer: {
+        moveDocRef: { isMoving, uuids, destinationUuid },
+      },
+    }) => {
+      const initialDestination = findItem(documentTree, destinationUuid);
 
       return {
+        moveDocRefDialogForm: form.moveDocRefDialog,
         isMoving,
         uuids,
-        permissionInheritance: permissionInheritancePicker[explorerId],
-        destinationUuid: selectedDestinationUuid,
+        initialValues: {
+          destination: initialDestination && initialDestination.node,
+        },
       };
     },
     { completeDocRefMove, moveDocuments },
   ),
+  reduxForm({
+    form: 'moveDocRefDialog',
+    // We're re-using the same form for each element's modal so we need to permit reinitialization when using the initialValues prop
+    enableReinitialize: true,
+    touchOnChange: true,
+  }),
 );
 
 const MoveDocRefDialog = ({
@@ -68,8 +71,7 @@ const MoveDocRefDialog = ({
   uuids,
   completeDocRefMove,
   moveDocuments,
-  destinationUuid,
-  permissionInheritance,
+  moveDocRefDialogForm,
 }) => (
   <Modal open={isMoving}>
     <Modal.Header>Select a Destination Folder for the Move</Modal.Header>
@@ -77,11 +79,21 @@ const MoveDocRefDialog = ({
       <Form>
         <Form.Field>
           <label>Destination</label>
-          <DocPickerModal pickerId={explorerId} typeFilters={['Folder']} />
+          <Field
+            name="destination"
+            component={({ input: { onChange, value } }) => (
+              <DocPickerModal explorerId={explorerId} onChange={onChange} value={value} />
+            )}
+          />
         </Form.Field>
         <Form.Field>
           <label>Permission Inheritance</label>
-          <PermissionInheritancePicker pickerId={explorerId} />
+          <Field
+            name="permissionInheritance"
+            component={({ input: { onChange, value } }) => (
+              <PermissionInheritancePicker onChange={onChange} value={value} />
+            )}
+          />
         </Form.Field>
       </Form>
     </Modal.Content>
@@ -91,7 +103,13 @@ const MoveDocRefDialog = ({
       </Button>
       <Button
         positive
-        onClick={() => moveDocuments(uuids, destinationUuid, permissionInheritance)}
+        onClick={() => {
+          moveDocuments(
+            uuids,
+            moveDocRefDialogForm.values.destination.uuid,
+            moveDocRefDialogForm.values.permissionInheritance,
+          );
+        }}
         labelPosition="right"
         icon="checkmark"
         content="Choose"

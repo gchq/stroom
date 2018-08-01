@@ -129,7 +129,6 @@ const defaultExplorerState = {
 const defaultState = {
   documentTree: undefined, // The hierarchy of doc refs in folders
   explorers: {},
-  allowMultiSelect: true,
   isTreeReady: false,
   isDocRefTypeListReady: false,
   docRefTypes: [],
@@ -425,7 +424,7 @@ export const reducer = handleActions(
 
       // Only allow selection to be made if the doc ref is within the type filters
       // This prevents selection of folders when folders are only visible to allow underlying docs to be shown
-      if (!explorer.typeFilters.includes(docRef.type)) {
+      if (explorer.typeFilters.length > 0 && !explorer.typeFilters.includes(docRef.type)) {
         return state;
       }
 

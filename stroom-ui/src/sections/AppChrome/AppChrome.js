@@ -24,16 +24,15 @@ import Mousetrap from 'mousetrap';
 
 import { actionCreators as recentItemsActionCreators } from 'prototypes/RecentItems/redux';
 import { actionCreators as appSearchActionCreators } from 'prototypes/AppSearch/redux';
-import { actionCreators as newDocActionCreators } from 'prototypes/NewDocDialog/redux';
+import { actionCreators as docExplorerActionCreators } from 'components/DocExplorer/redux';
 import ActionBarItem from './ActionBarItem';
-import NewDocDialog from 'prototypes/NewDocDialog';
 import RecentItems from 'prototypes/RecentItems';
 import AppSearch from 'prototypes/AppSearch';
 import withLocalStorage from 'lib/withLocalStorage';
 
 const { recentItemsOpened } = recentItemsActionCreators;
 const { appSearchOpened } = appSearchActionCreators;
-const { startDocRefCreation } = newDocActionCreators;
+const { prepareDocRefCreation } = docExplorerActionCreators;
 const withIsExpanded = withLocalStorage('isExpanded', 'setIsExpanded', true);
 
 const SIDE_BAR_COLOUR = 'blue';
@@ -44,7 +43,7 @@ const enhance = compose(
   connect((state, props) => ({}), {
     recentItemsOpened,
     appSearchOpened,
-    startDocRefCreation,
+    prepareDocRefCreation,
   }),
   withRouter,
   withIsExpanded,
@@ -52,7 +51,7 @@ const enhance = compose(
     componentDidMount() {
       Mousetrap.bind('ctrl+shift+e', () => this.props.recentItemsOpened());
       Mousetrap.bind('ctrl+shift+f', () => this.props.appSearchOpened());
-      Mousetrap.bind('ctrl+shift+n', () => this.props.startDocRefCreation());
+      Mousetrap.bind('ctrl+shift+n', () => this.props.prepareDocRefCreation());
     },
   }),
   withProps(({
@@ -61,7 +60,7 @@ const enhance = compose(
     history,
     recentItemsOpened,
     appSearchOpened,
-    startDocRefCreation,
+    prepareDocRefCreation,
     actionBarItems,
   }) => ({
     menuItems: [
@@ -131,7 +130,7 @@ const enhance = compose(
       },
       {
         key: 'create_doc_ref',
-        onClick: startDocRefCreation,
+        onClick: prepareDocRefCreation,
         icon: 'plus',
         content: 'Create a new Doc Ref',
       },
@@ -152,7 +151,6 @@ const AppChrome = ({
   <div className="app-chrome">
     <AppSearch />
     <RecentItems />
-    <NewDocDialog />
     <div className="app-chrome__sidebar">
       {isExpanded ? (
         <Menu vertical fluid color={SIDE_BAR_COLOUR} inverted>

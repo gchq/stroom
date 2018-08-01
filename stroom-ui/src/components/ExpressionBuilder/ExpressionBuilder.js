@@ -88,6 +88,7 @@ const ExpressionBuilder = ({
 
   return (
     <LineContainer
+      className="Expression-editor__graph"
       lineContextId={`expression-lines-${expressionId}`}
       lineElementCreators={lineElementCreators}
     >

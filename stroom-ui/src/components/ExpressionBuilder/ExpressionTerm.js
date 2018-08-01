@@ -26,10 +26,8 @@ import { DragSource } from 'react-dnd';
 import ItemTypes from './dragDropTypes';
 import { displayValues } from './conditions';
 import { DocPickerModal } from '../DocExplorer';
-import { actionCreators as docExplorerActionCreators } from '../DocExplorer/redux';
 import { actionCreators, joinDictionaryTermId } from './redux';
 
-const { docRefPicked } = docExplorerActionCreators;
 const { expressionItemUpdated, expressionItemDeleted } = actionCreators;
 
 const withPendingDeletion = withState('pendingDeletion', 'setPendingDeletion', false);
@@ -49,69 +47,6 @@ function dragCollect(connect, monitor) {
   };
 }
 
-/**
- * Higher Order Component to cope with sync'ing the pickedDocRef state with the dictionary in our expression.
- *
- * Having this HOC allows the Expression Term component to be stateless functional
- * @param {Component} WrappedComponent
- */
-const withPickedDocRef = () => (WrappedComponent) => {
-  const WithPickedDocRef = class extends Component {
-    static propTypes = {
-      docRefPicked: PropTypes.func.isRequired,
-      pickedDocRefs: PropTypes.object.isRequired, // picked dictionary
-      expressionId: PropTypes.string.isRequired, // the ID of the overall expression
-      term: PropTypes.object.isRequired, // the operator that this particular element is to represent
-    };
-
-    componentDidMount() {
-      this.checkDictionary();
-    }
-
-    componentDidUpdate(prevProps, prevState, snapshot) {
-      this.checkDictionary();
-    }
-
-    /**
-     * This functions is used to check that the picked doc ref matches the one from the expression.
-     * If it doesn't then it triggers a docRefPicked action to ensure that it then does match.
-     * From that point on the expressions and pickedDocRefs should both be monitoring the same state.
-     */
-    checkDictionary() {
-      const {
-        expressionId, term, pickedDocRefs, docRefPicked,
-      } = this.props;
-      const pickerId = joinDictionaryTermId(expressionId, term.uuid);
-
-      if (term.condition === 'IN_DICTIONARY') {
-        // Get the current state of the picked doc refs
-        const picked = pickedDocRefs[pickerId];
-
-        // If the dictionary is set on the term, but not set or equal to the 'picked' one, update it
-        if (term.dictionary) {
-          if (!picked || picked.uuid !== term.dictionary.uuid) {
-            docRefPicked(pickerId, term.dictionary);
-          }
-        }
-      }
-    }
-
-    render() {
-      return <WrappedComponent {...this.props} />;
-    }
-  };
-
-  return connect(
-    state => ({
-      // terms are nested, so take all their props from parent
-      pickedDocRefs: state.docExplorer.docRefPicker,
-    }),
-    {
-      docRefPicked,
-    },
-  )(WithPickedDocRef);
-};
-
 const enhance = compose(
   connect(
     state => ({
@@ -123,7 +58,6 @@ const enhance = compose(
     },
   ),
   DragSource(ItemTypes.TERM, dragSource, dragCollect),
-  withPickedDocRef(),
   withPendingDeletion,
 );
 
@@ -201,6 +135,12 @@ const ExpressionTerm = ({
   const onSingleValueChange = (event, data) => {
     onTermUpdated({
       value: data.value,
+    });
+  };
+
+  const onDictionaryValueChange = (docRef) => {
+    onTermUpdated({
+      value: docRef,
     });
   };
 
@@ -306,7 +246,14 @@ const ExpressionTerm = ({
       break;
     }
     case 'IN_DICTIONARY': {
-      valueWidget = <DocPickerModal pickerId={pickerId} typeFilters={["Dictionary"]} />;
+      valueWidget = (
+        <DocPickerModal
+          explorerId={pickerId}
+          typeFilters={['Dictionary']}
+          onChange={onDictionaryValueChange}
+          value={term.value}
+        />
+      );
       break;
     }
     default:
@@ -342,7 +289,7 @@ const ExpressionTerm = ({
       {enabledButton}
       <Button compact icon="trash" onClick={onRequestDeleteTerm} />
     </Button.Group>
-  </div>);
+                           </div>);
 };
 
 ExpressionTerm.propTypes = {

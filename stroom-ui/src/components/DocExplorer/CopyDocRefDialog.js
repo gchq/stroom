@@ -18,9 +18,10 @@ import PropTypes from 'prop-types';
 
 import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
+import { Field, reduxForm } from 'redux-form';
 import { Modal, Button, Form } from 'semantic-ui-react';
 
-import { guid } from 'lib/treeUtils';
+import { findItem } from 'lib/treeUtils';
 import { actionCreators } from './redux';
 import { copyDocuments } from './explorerClient';
 
@@ -31,34 +32,40 @@ const { completeDocRefCopy } = actionCreators;
 
 const enhance = compose(
   withProps(({ explorerId }) => ({
-    explorerId: `copy-doc-ref-${explorerId || guid()}`,
+    explorerId: `copy-doc-ref-${explorerId}`,
   })),
   connect(
     (
       {
         docExplorer: {
-          copyDocRef: { isCopying, uuids },
-          explorerTree: { explorers },
+          explorerTree: { documentTree },
         },
-        permissionInheritancePicker,
+        form,
+        docExplorer: {
+          copyDocRef: { isCopying, uuids, destinationUuid },
+        },
       },
       { explorerId },
     ) => {
-      let destinationUuid;
-      const explorer = explorers[explorerId];
-      if (explorer && explorer.isSelectedList.length > 0) {
-        destinationUuid = explorer.isSelectedList[0];
-      }
+      const initialDestination = findItem(documentTree, destinationUuid);
 
       return {
+        copyDocRefDialogForm: form.copyDocRefDialog,
         isCopying,
         uuids,
-        permissionInheritance: permissionInheritancePicker[explorerId],
-        destinationUuid,
+        initialValues: {
+          destination: initialDestination && initialDestination.node,
+        },
       };
     },
     { completeDocRefCopy, copyDocuments },
   ),
+  reduxForm({
+    form: 'copyDocRefDialog',
+    // We're re-using the same form for each element's modal so we need to permit reinitialization when using the initialValues prop
+    enableReinitialize: true,
+    touchOnChange: true,
+  }),
 );
 
 const CopyDocRefDialog = ({
@@ -67,8 +74,7 @@ const CopyDocRefDialog = ({
   uuids,
   completeDocRefCopy,
   copyDocuments,
-  destinationUuid,
-  permissionInheritance,
+  copyDocRefDialogForm,
 }) => (
   <Modal open={isCopying}>
     <Modal.Header>Select a Destination Folder for the Copy</Modal.Header>
@@ -76,11 +82,21 @@ const CopyDocRefDialog = ({
       <Form>
         <Form.Field>
           <label>Destination</label>
-          <DocPickerModal pickerId={explorerId} typeFilters={['Folder']} />
+          <Field
+            name="destination"
+            component={({ input: { onChange, value } }) => (
+              <DocPickerModal explorerId={explorerId} onChange={onChange} value={value} />
+            )}
+          />
         </Form.Field>
         <Form.Field>
           <label>Permission Inheritance</label>
-          <PermissionInheritancePicker pickerId={explorerId} />
+          <Field
+            name="permissionInheritance"
+            component={({ input: { onChange, value } }) => (
+              <PermissionInheritancePicker onChange={onChange} value={value} />
+            )}
+          />
         </Form.Field>
       </Form>
     </Modal.Content>
@@ -90,7 +106,13 @@ const CopyDocRefDialog = ({
       </Button>
       <Button
         positive
-        onClick={() => copyDocuments(uuids, destinationUuid, permissionInheritance)}
+        onClick={() =>
+          copyDocuments(
+            uuids,
+            copyDocRefDialogForm.values.destination.uuid,
+            copyDocRefDialogForm.values.permissionInheritance,
+          )
+        }
         labelPosition="right"
         icon="checkmark"
         content="Choose"
