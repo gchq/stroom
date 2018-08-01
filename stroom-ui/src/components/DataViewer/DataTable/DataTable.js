@@ -31,7 +31,6 @@ import ReactTable from 'react-table';
 import 'react-table/react-table.css';
 
 import { Loader } from 'semantic-ui-react';
-import 'semantic-ui-css/semantic.min.css';
 
 import { withConfig } from 'startup/config';
 import { search } from '../streamAttributeMapClient';

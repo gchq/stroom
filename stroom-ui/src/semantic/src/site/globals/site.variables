@@ -10,6 +10,6 @@
 */
 
 @fontName          : 'Clear Sans';
-@headerFont        : 'Clear Sans', 'Helvetica Neue', Arial, Helvetica, sans-serif;
-@pageFont          : 'Clear Sans', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+@headerFont        : 'Clear Sans';
+@pageFont          : 'Clear Sans';
 @googleFontFamily  : 'Clear+Sans:400italic,400|Oswald:400,700';

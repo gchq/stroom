@@ -17,18 +17,19 @@
 body {
   margin: 0;
   padding: 0;
-  font-family: sans-serif;
 }
 
 // Semantic react and Semantic UI have some issues with modal placement
 .ui.page.modals.transition.visible {
   display: flex !important;
 }
+
 .ui.modal {
   margin-top: 0 !important;
   margin-left: "auto";
   margin-right: "auto";
 }
+
 .ui.modal .scrolling.content {
   height: 70vh;
 }

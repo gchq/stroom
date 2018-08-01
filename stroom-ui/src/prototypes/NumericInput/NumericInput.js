@@ -19,7 +19,6 @@ import PropTypes from 'prop-types';
 
 import { Input, Button, Icon, Popup } from 'semantic-ui-react';
 import { compose, withState } from 'recompose';
-import 'semantic-ui-css/semantic.min.css';
 
 import './NumericInput.css';
 

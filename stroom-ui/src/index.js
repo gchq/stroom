@@ -28,6 +28,8 @@ import store from 'startup/store';
 import { history } from 'startup/middleware';
 
 import './styles/main.css';
+import './semantic/dist/semantic.min.css';
+import 'typeface-clear-sans';
 
 const DndRoutes = compose(DragDropContext(HTML5Backend), toClass)(Routes);
 

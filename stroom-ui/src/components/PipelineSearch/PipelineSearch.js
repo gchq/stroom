@@ -22,7 +22,6 @@ import { compose, lifecycle } from 'recompose';
 import { push } from 'react-router-redux';
 
 import { Card, Input, Pagination, Dropdown } from 'semantic-ui-react';
-import 'semantic-ui-css/semantic.min.css';
 
 import { withConfig } from 'startup/config';
 import ClickCounter from 'lib/ClickCounter';
