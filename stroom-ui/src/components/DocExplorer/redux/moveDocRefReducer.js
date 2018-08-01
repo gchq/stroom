@@ -20,25 +20,26 @@ import { actionCreators as explorerTreeActionCreators } from './explorerTreeRedu
 const { docRefsMoved } = explorerTreeActionCreators;
 
 const actionCreators = createActions({
-  PREPARE_DOC_REF_MOVE: uuids => ({ uuids }),
+  PREPARE_DOC_REF_MOVE: (uuids, destinationUuid) => ({ uuids, destinationUuid }),
   COMPLETE_DOC_REF_MOVE: () => ({ uuids: [] }),
 });
 
 const { prepareDocRefMove, completeDocRefMove } = actionCreators;
 
 // Array of doc refs being moved
-const defaultState = { isMoving: false, uuids: [] };
+const defaultState = { isMoving: false, uuids: [], destinationUuid: undefined };
 
 const reducer = handleActions(
   {
-    [combineActions(prepareDocRefMove, completeDocRefMove)]: (state, { payload: { uuids } }) => ({
+    [combineActions(prepareDocRefMove, completeDocRefMove)]: (
+      state,
+      { payload: { uuids, destinationUuid } },
+    ) => ({
       isMoving: uuids.length > 0,
       uuids,
+      destinationUuid,
     }),
-    [docRefsMoved]: (state, action) => ({
-      isMoving: false,
-      uuids: [],
-    }),
+    [docRefsMoved]: () => defaultState,
   },
   defaultState,
 );

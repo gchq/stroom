@@ -16,31 +16,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose } from 'recompose';
-import { connect } from 'react-redux';
-
 import { Icon } from 'semantic-ui-react';
 
 import DocRefToPick from './DocRefToPick';
 import ClickCounter from 'lib/ClickCounter';
 
-import { actionCreators } from '../redux/explorerTreeReducer';
-
-const { folderOpenToggled, docRefSelected } = actionCreators;
-
-const enhance = compose(connect(
-  (state, props) => ({
-    // state
-    explorer: state.docExplorer.explorerTree.explorers[props.pickerId],
-  }),
-  {
-    folderOpenToggled,
-    docRefSelected,
-  },
-));
-
-const _FolderToPick = ({
-  pickerId,
+const FolderToPick = ({
+  explorerId,
   explorer,
   folder,
   typeFilters,
@@ -49,7 +31,7 @@ const _FolderToPick = ({
 }) => {
   const thisIsOpen = !!explorer.isFolderOpen[folder.uuid];
   const icon = thisIsOpen ? 'folder open' : 'folder';
-  const isSelected = explorer.isSelected[folder.uuid];
+  const isSelected = explorer.isSelected === folder.uuid;
 
   let className = '';
   if (isSelected) {
@@ -57,8 +39,8 @@ const _FolderToPick = ({
   }
 
   const clickCounter = new ClickCounter()
-    .withOnSingleClick(() => docRefSelected(pickerId, folder))
-    .withOnDoubleClick(() => folderOpenToggled(pickerId, folder));
+    .withOnSingleClick(() => docRefSelected(explorerId, folder))
+    .withOnDoubleClick(() => folderOpenToggled(explorerId, folder));
 
   return (
     <div>
@@ -78,12 +60,21 @@ const _FolderToPick = ({
                 (c.type === 'Folder' ? (
                   <FolderToPick
                     key={c.uuid}
-                    pickerId={pickerId}
+                    explorerId={explorerId}
+                    explorer={explorer}
+                    folderOpenToggled={folderOpenToggled}
+                    docRefSelected={docRefSelected}
                     typeFilters={typeFilters}
                     folder={c}
                   />
                 ) : (
-                  <DocRefToPick key={c.uuid} pickerId={pickerId} docRef={c} />
+                  <DocRefToPick
+                    key={c.uuid}
+                    explorerId={explorerId}
+                    docRef={c}
+                    explorer={explorer}
+                    docRefSelected={docRefSelected}
+                  />
                 )))}
         </div>
       )}
@@ -91,11 +82,13 @@ const _FolderToPick = ({
   );
 };
 
-const FolderToPick = enhance(_FolderToPick);
-
 FolderToPick.propTypes = {
-  pickerId: PropTypes.string.isRequired,
+  explorerId: PropTypes.string.isRequired,
   folder: PropTypes.object.isRequired,
+  folderOpenToggled: PropTypes.func.isRequired,
+  docRefSelected: PropTypes.func.isRequired,
+  explorer: PropTypes.object.isRequired,
+  typeFilters: PropTypes.array.isRequired,
 };
 
 export default FolderToPick;

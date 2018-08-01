@@ -121,8 +121,6 @@ const defaultExplorerState = {
   searchExecutor: undefined,
   searchResults: [],
   isFolderOpen: {}, // in response to user actions and searches
-  isSelected: {},
-  isSelectedList: [],
   isVisible: {}, // based on search
   inSearch: {},
   inTypeFilter: {},
@@ -331,7 +329,11 @@ export const reducer = handleActions(
           [explorerId]: state.explorers[explorerId] || {
             ...getUpdatedExplorer({
               documentTree: state.documentTree,
-              explorer: defaultExplorerState,
+              explorer: {
+                ...defaultExplorerState,
+                isSelected : allowMultiSelect ? {} : undefined,
+                isSelectedList : allowMultiSelect ? [] : undefined,
+              },
               searchExecutor: state.searchExecutor,
               searchTerm: '',
               typeFilters: typeFiltersToUse,
@@ -420,7 +422,15 @@ export const reducer = handleActions(
       } = action.payload;
 
       const explorer = state.explorers[explorerId];
+
+      // Only allow selection to be made if the doc ref is within the type filters
+      // This prevents selection of folders when folders are only visible to allow underlying docs to be shown
+      if (!explorer.typeFilters.includes(docRef.type)) {
+        return state;
+      }
+
       let isSelected;
+      let isSelectedList;
       if (explorer.allowMultiSelect) {
         if (appendSelection) {
           isSelected = {
@@ -464,10 +474,14 @@ export const reducer = handleActions(
             return !explorer.isFolderOpen[node.uuid];
           });
         }
+
+        isSelectedList = Object.entries(isSelected)
+          .filter(k => k[1])
+          .map(k => k[0]);
       } else {
-        isSelected = {
-          [docRef.uuid]: !state.explorers[explorerId].isSelected[docRef.uuid],
-        };
+        if (!explorer.isSelected || explorer.isSelected !== docRef.uuid) {
+          isSelected = docRef.uuid;
+        }
       }
 
       return {
@@ -477,9 +491,7 @@ export const reducer = handleActions(
           [explorerId]: {
             ...state.explorers[explorerId],
             isSelected,
-            isSelectedList: Object.entries(isSelected)
-              .filter(k => k[1])
-              .map(k => k[0]),
+            isSelectedList,
             lastSelectedUuid: docRef.uuid,
           },
         },

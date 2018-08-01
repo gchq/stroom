@@ -1,15 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose } from 'recompose';
-import { connect } from 'react-redux';
-
 import { Select } from 'semantic-ui-react';
 
-import { actionCreators } from './redux';
 import permissionInheritanceValues from './permissionInheritanceValues';
-
-const { permissionInheritancePicked } = actionCreators;
 
 const piOptions = Object.values(permissionInheritanceValues).map(pi => ({
   key: pi,
@@ -17,28 +11,22 @@ const piOptions = Object.values(permissionInheritanceValues).map(pi => ({
   text: pi,
 }));
 
-const enhance = compose(connect(
-  (state, props) => ({
-    permissionInheritance: state.permissionInheritancePicker[props.pickerId],
-  }),
-  { permissionInheritancePicked },
-));
-
-const PermissionInheritancePicker = ({
-  pickerId,
-  permissionInheritance,
-  permissionInheritancePicked,
-}) => (
+const PermissionInheritancePicker = ({ value, onChange }) => (
   <Select
     placeholder="Permission Inheritance"
-    onChange={(e, { value }) => permissionInheritancePicked(pickerId, value)}
+    onChange={(e, { value }) => onChange(value)}
     options={piOptions}
-    value={permissionInheritance}
+    value={value}
   />
 );
 
 PermissionInheritancePicker.propTypes = {
-  pickerId: PropTypes.string.isRequired,
+  value: PropTypes.string,
+  onChange: PropTypes.func.isRequired,
 };
 
-export default enhance(PermissionInheritancePicker);
+PermissionInheritancePicker.defaultProps = {
+  onChange: v => console.log('Not implemented onChange, value ignored', v),
+};
+
+export default PermissionInheritancePicker;

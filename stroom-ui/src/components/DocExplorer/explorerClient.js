@@ -48,12 +48,6 @@ export const createDocument = (
   destinationFolderRef,
   permissionInheritance,
 ) => (dispatch, getState) => {
-  console.log('Creating New Doc Ref', {
-    docRefType,
-    docRefName,
-    destinationFolderRef,
-    permissionInheritance,
-  });
   const state = getState();
   const url = `${state.config.explorerServiceUrl}/create`;
   wrappedPost(

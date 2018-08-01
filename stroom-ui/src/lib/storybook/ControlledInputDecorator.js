@@ -13,23 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { createActions, handleActions } from 'redux-actions';
+import React from 'react';
+import { withState } from 'recompose';
 
-export const actionCreators = createActions({
-  PERMISSION_INHERITANCE_PICKED: (pickerId, permissionInheritance) => ({
-    pickerId,
-    permissionInheritance,
-  }),
-});
+const withValue = withState('value', 'onChange', undefined);
 
-const defaultState = {};
+class RawControlledInput extends React.PureComponent {
+  render() {
+    const { children, onChange, value } = this.props;
 
-export const reducer = handleActions(
-  {
-    PERMISSION_INHERITANCE_PICKED: (state, { payload: { pickerId, permissionInheritance } }) => ({
-      ...state,
-      [pickerId]: permissionInheritance,
-    }),
-  },
-  defaultState,
-);
+    const childrenWithProps = React.Children.map(children, child =>
+      React.cloneElement(child, { onChange, value }));
+
+    return <div>{childrenWithProps}</div>;
+  }
+}
+
+export const ControlledInput = withValue(RawControlledInput);
+
+export const ControlledInputDecorator = storyFn => <ControlledInput>{storyFn()}</ControlledInput>;
