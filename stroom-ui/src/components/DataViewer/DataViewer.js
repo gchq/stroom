@@ -194,7 +194,7 @@ const DataViewer = ({
             className="element-details__panel"
             title={<div>{path(['feed'], tableData[selectedRow]) || 'Nothing selected'}</div>}
             onClose={() => deselectRow(dataViewerId)}
-            content={<DataDetails dataViewerId={dataViewerId}/>}
+            content={<DataDetails data={dataForSelectedRow}/>}
             titleColumns={6}
             menuColumns={10}
             headerSize="h3"

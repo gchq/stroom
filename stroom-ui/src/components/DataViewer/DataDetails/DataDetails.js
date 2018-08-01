@@ -16,9 +16,6 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { connect } from 'react-redux';
-import { compose, lifecycle, branch, renderComponent } from 'recompose';
-import { Loader } from 'semantic-ui-react';
 import { path } from 'ramda';
 // eslint-disable-next-line
 import brace from 'brace';
@@ -29,27 +26,10 @@ import 'brace/keybinding/vim';
 import ErrorTable from './Views/ErrorTable';
 import EventView from './Views/EventView';
 
-const enhance = compose(
-  connect((state, props) => {
-    const dataView = state.dataViewers[props.dataViewerId];
-    if (dataView !== undefined) {
-      return {
-        data: dataView.dataForSelectedRow,
-      };
-    }
-    return { data: undefined };
-  }, {}),
-  branch(
-    ({ dataViewerId }) => !dataViewerId,
-    renderComponent(() => <Loader active>Loading data</Loader>),
-  ),
-);
-
 const DataDetails = ({ data }) => {
   const streamType = path(['streamType', 'path'], data);
   const eventData = path(['data'], data);
   const markerData = path(['markers'], data);
-  let content;
   if (streamType === 'ERROR') return <ErrorTable errors={markerData} />;
   else if (streamType === 'RAW_EVENTS') return <EventView events={eventData} />;
   else if (streamType === 'EVENTS') return <EventView events={eventData} />;
@@ -57,8 +37,7 @@ const DataDetails = ({ data }) => {
 };
 
 DataDetails.propTypes = {
-  dataViewerId: PropTypes.string.isRequired,
   data: PropTypes.object.isRequired,
 };
 
-export default enhance(DataDetails);
+export default DataDetails;
