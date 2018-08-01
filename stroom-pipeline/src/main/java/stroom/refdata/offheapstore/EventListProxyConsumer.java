@@ -24,42 +24,23 @@ import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.expr.parser.Location;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
-import stroom.refdata.saxevents.ValueProxy;
 
 public abstract class EventListProxyConsumer {
 
     static final Location NULL_LOCATION = new NullLocation();
     static final String EMPTY = "";
-//    protected final Receiver receiver;
-//    protected final PipelineConfiguration pipe;
     private final XPathContext context;
-
-//    public EventListProxyConsumer(final Receiver receiver, final PipelineConfiguration pipe) {
-//        this.receiver = receiver;
-//        this.pipe = pipe;
-//    }
-
 
     EventListProxyConsumer(final XPathContext context) {
         this.context = context;
     }
 
-//    void startDocument() throws XPathException {
-//        receiver.setPipelineConfiguration(pipe);
-//        receiver.open();
-//        receiver.startDocument(0);
-//    }
     static void startDocument(final Receiver receiver,
                               final PipelineConfiguration pipelineConfiguration) throws XPathException {
         receiver.setPipelineConfiguration(pipelineConfiguration);
         receiver.open();
         receiver.startDocument(0);
     }
-
-//    void endDocument() throws XPathException {
-//        receiver.endDocument();
-//        receiver.close();
-//    }
 
     static void endDocument(final Receiver receiver) throws XPathException {
         receiver.endDocument();
@@ -70,8 +51,6 @@ public abstract class EventListProxyConsumer {
         final Configuration configuration = context.getConfiguration();
         return configuration.makePipelineConfiguration();
     }
-
-//    public abstract void consume(ValueProxy<EventListValue> eventListProxy);
 
     public abstract Sequence map(RefDataValueProxy refDataValueProxy);
 
