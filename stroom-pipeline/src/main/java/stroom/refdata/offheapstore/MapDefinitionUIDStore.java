@@ -157,7 +157,9 @@ public class MapDefinitionUIDStore {
                 "nextUidValueBuffer {}", ByteBufferUtils.byteBufferInfo(nextUidKeyBuffer)));
 
         // ensure it is ready for reading again as we are returning it
-        return UID.wrap(nextUidKeyBuffer);
+        UID mapUid = UID.wrap(nextUidKeyBuffer);
+        LOGGER.trace("Creating UID mapping for {}", mapUid);
+        return mapUid;
     }
 
 }

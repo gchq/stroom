@@ -17,14 +17,13 @@
 
 package stroom.refdata.offheapstore.serdes;
 
-import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.ByteBufferInputStream;
+import com.esotericsoftware.kryo.io.ByteBufferOutputStream;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import com.esotericsoftware.kryo.pool.KryoFactory;
-import com.esotericsoftware.kryo.pool.KryoPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.refdata.lmdb.serde.AbstractKryoSerde;
+import stroom.refdata.lmdb.serde.Serde;
 import stroom.refdata.offheapstore.KeyValueStoreKey;
 import stroom.refdata.offheapstore.UID;
 import stroom.util.logging.LambdaLogger;
@@ -32,54 +31,50 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import java.nio.ByteBuffer;
 
-public class KeyValueStoreKeySerde extends AbstractKryoSerde<KeyValueStoreKey> {
+public class KeyValueStoreKeySerde implements Serde<KeyValueStoreKey> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KeyValueStoreKeySerde.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(KeyValueStoreKeySerde.class);
 
-    private static final KryoFactory kryoFactory = buildKryoFactory(KeyValueStoreKey.class, KeyValueStoreKeyKryoSerializer::new);
-
-    private static final KryoPool pool = new KryoPool.Builder(kryoFactory)
-            .softReferences()
-            .build();
-
     @Override
     public KeyValueStoreKey deserialize(final ByteBuffer byteBuffer) {
-        return super.deserialize(pool, byteBuffer);
+        ByteBuffer dupBuffer = byteBuffer.duplicate();
+
+        dupBuffer.limit(byteBuffer.position() + UID.UID_ARRAY_LENGTH);
+
+        UID uid = UID.wrap(dupBuffer);
+        // advance the position now we have a dup of the UID portion
+        byteBuffer.position(byteBuffer.position() + UID.UID_ARRAY_LENGTH);
+
+        try (Input input = new Input(new ByteBufferInputStream(byteBuffer))) {
+            String key = input.readString();
+            byteBuffer.flip();
+            return new KeyValueStoreKey(uid, key);
+        }
     }
 
     @Override
-    public void serialize(final ByteBuffer byteBuffer, final KeyValueStoreKey object) {
-        super.serialize(pool, byteBuffer, object);
+    public void serialize(final ByteBuffer byteBuffer, final KeyValueStoreKey keyValueStoreKey) {
+
+        final ByteBuffer uidBuffer = keyValueStoreKey.getMapUid().getBackingBuffer();
+
+        byteBuffer.put(uidBuffer);
+        uidBuffer.rewind();
+
+        try (Output output = new Output(new ByteBufferOutputStream(byteBuffer))) {
+            output.writeString(keyValueStoreKey.getKey());
+        }
+        byteBuffer.flip();
     }
 
-    private static class KeyValueStoreKeyKryoSerializer extends com.esotericsoftware.kryo.Serializer<KeyValueStoreKey> {
-
-        private final UIDSerde.UIDKryoSerializer uidKryoSerializer;
-
-        private KeyValueStoreKeyKryoSerializer() {
-            uidKryoSerializer = new UIDSerde.UIDKryoSerializer();
-        }
-
-        @Override
-        public void write(final Kryo kryo, final Output output, final KeyValueStoreKey key) {
-            uidKryoSerializer.write(kryo, output, key.getMapUid());
-            output.writeString(key.getKey());
-        }
-
-        @Override
-        public KeyValueStoreKey read(final Kryo kryo, final Input input, final Class<KeyValueStoreKey> type) {
-            final UID mapUid = uidKryoSerializer.read(kryo, input, UID.class);
-            final String key = input.readString();
-            return new KeyValueStoreKey(mapUid, key);
-        }
-    }
 
     public void serializeWithoutKeyPart(final ByteBuffer byteBuffer, final KeyValueStoreKey key) {
+
+        int startPos = byteBuffer.position();
 
         serialize(byteBuffer, key);
 
         // set the limit to just after the UID part
-        byteBuffer.limit(UID.UID_ARRAY_LENGTH);
+        byteBuffer.limit(startPos + UID.UID_ARRAY_LENGTH);
     }
 }

@@ -96,6 +96,10 @@ public class UIDSerde implements Serde<UID>, Serializer<UID>, Deserializer<UID> 
 
     public static class UIDKryoSerializer extends com.esotericsoftware.kryo.Serializer<UID> {
 
+        {
+            setAcceptsNull(true);
+        }
+
         @Override
         public void write(final Kryo kryo, final Output output, final UID uid) {
             final ByteBuffer uidBuffer = uid.getBackingBuffer();

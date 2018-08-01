@@ -464,6 +464,7 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                 totalRangeValueEntryCount,
                 totalValueEntryCount);
 
+
         long twoDaysAgoMs = Instant.now().minus(2, ChronoUnit.DAYS).toEpochMilli();
 
         ((RefDataOffHeapStore) refDataStore).logContents(ProcessingInfoDb.DB_NAME);
@@ -473,7 +474,10 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         setLastAccessedTime(refStreamDefs.get(3), twoDaysAgoMs);
 
         ((RefDataOffHeapStore) refDataStore).logContents(ProcessingInfoDb.DB_NAME);
+        ((RefDataOffHeapStore) refDataStore).logContents(KeyValueStoreDb.DB_NAME);
         ((RefDataOffHeapStore) refDataStore).logRawContents(KeyValueStoreDb.DB_NAME);
+
+        LOGGER.info("------------------------purge-starts-here--------------------------------------");
 
         // do the purge
         refDataStore.purgeOldData();

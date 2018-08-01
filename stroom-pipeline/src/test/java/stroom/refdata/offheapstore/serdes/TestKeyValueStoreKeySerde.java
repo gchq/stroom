@@ -17,11 +17,23 @@
 
 package stroom.refdata.offheapstore.serdes;
 
+import com.esotericsoftware.kryo.io.ByteBufferInputStream;
+import com.esotericsoftware.kryo.io.ByteBufferOutputStream;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.refdata.offheapstore.ByteBufferUtils;
 import stroom.refdata.offheapstore.KeyValueStoreKey;
 import stroom.refdata.offheapstore.UID;
 
+import java.nio.ByteBuffer;
+
 public class TestKeyValueStoreKeySerde extends AbstractSerdeTest {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestKeyValueStoreKeySerde.class);
 
     @Test
     public void serializeDeserialize() {
@@ -41,5 +53,30 @@ public class TestKeyValueStoreKeySerde extends AbstractSerdeTest {
                 "");
 
         doSerialisationDeserialisationTest(keyValueStoreKey, KeyValueStoreKeySerde::new);
+    }
+
+
+    @Test
+    public void testOutput() {
+
+        // verify that we can directly use Output and Input classes to manage our own (de)ser
+        ByteBuffer byteBuffer = ByteBuffer.allocate(20);
+        LOGGER.info("{}", ByteBufferUtils.byteBufferInfo(byteBuffer));
+        Output output = new Output(new ByteBufferOutputStream(byteBuffer));
+        LOGGER.info("{}", ByteBufferUtils.byteBufferInfo(byteBuffer));
+        output.writeString("MyTestString");
+        output.flush();
+        LOGGER.info("{}", ByteBufferUtils.byteBufferInfo(byteBuffer));
+        output.writeInt(1,true);
+        output.flush();
+        LOGGER.info("{}", ByteBufferUtils.byteBufferInfo(byteBuffer));
+        byteBuffer.flip();
+        LOGGER.info("{}", ByteBufferUtils.byteBufferInfo(byteBuffer));
+
+        Input input = new Input(new ByteBufferInputStream(byteBuffer));
+        String str = input.readString();
+        int i = input.readInt(true);
+        Assertions.assertThat(str).isEqualTo("MyTestString");
+        Assertions.assertThat(i).isEqualTo(1);
     }
 }

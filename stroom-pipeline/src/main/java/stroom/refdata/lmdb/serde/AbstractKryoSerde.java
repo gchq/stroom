@@ -52,6 +52,7 @@ public abstract class AbstractKryoSerde<T> implements
             Object object = null;
             try {
                 object = kryo.readClassAndObject(input);
+//                object = kryo.readObject(input, getObjectType());
             } catch (Exception e) {
                 throw new RuntimeException(LambdaLogger.buildMessage("Error de-serialising bytebuffer in {}",
                         this.getClass().getCanonicalName()), e);
@@ -75,6 +76,7 @@ public abstract class AbstractKryoSerde<T> implements
             ByteBufferOutputStream stream = new ByteBufferOutputStream(byteBuffer);
             Output output = new Output(stream);
             kryo.writeClassAndObject(output, object);
+//            kryo.writeObject(output, object);
             output.close();
             //TODO how do we ensure bb has enough remaining length when passed in
             byteBuffer.flip();
@@ -90,6 +92,7 @@ public abstract class AbstractKryoSerde<T> implements
 
     @Override
     public abstract void serialize(final ByteBuffer byteBuffer, final T object);
+
 
 
     /**
@@ -112,7 +115,10 @@ public abstract class AbstractKryoSerde<T> implements
                         objectType.getSimpleName(),
                         Thread.currentThread().getName()));
 
+//                com.esotericsoftware.kryo.Serializer<T> serializer = customKryoSerializerSupplier.get();
+//                kryo.setDefaultSerializer(((kryo1, type) -> serializer));
                 kryo.setRegistrationRequired(true);
+//                kryo.register(objectType, serializer, 0);
                 kryo.register(objectType, customKryoSerializerSupplier.get(), 0);
 
                 ((Kryo.DefaultInstantiatorStrategy) kryo.getInstantiatorStrategy())

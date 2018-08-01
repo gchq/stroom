@@ -874,7 +874,7 @@ public class RefDataOffHeapStore implements RefDataStore {
             beginTxnIfRequired();
 
             final UID mapUid = getOrCreateUid(mapDefinition);
-            LOGGER.info("Using mapUid {}", mapUid);
+            LOGGER.trace("Using mapUid {} for {}", mapUid, mapDefinition);
             final KeyValueStoreKey keyValueStoreKey = new KeyValueStoreKey(mapUid, key);
 
             // see if we have a value already for this key
@@ -947,6 +947,8 @@ public class RefDataOffHeapStore implements RefDataStore {
 
             commitIfRequired();
 
+            keyValuePooledKeyBuffer.clear();
+
             return didPutSucceed;
         }
 
@@ -963,6 +965,7 @@ public class RefDataOffHeapStore implements RefDataStore {
             beginTxnIfRequired();
 
             final UID mapUid = getOrCreateUid(mapDefinition);
+            LOGGER.trace("Using mapUid {} for {}", mapUid, mapDefinition);
             final RangeStoreKey rangeStoreKey = new RangeStoreKey(mapUid, keyRange);
 
             // see if we have a value already for this key
@@ -1022,6 +1025,7 @@ public class RefDataOffHeapStore implements RefDataStore {
                 successfulPutsCounter++;
             }
             commitIfRequired();
+            rangeValuePooledKeyBuffer.clear();
             return didPutSucceed;
         }
 
@@ -1083,7 +1087,8 @@ public class RefDataOffHeapStore implements RefDataStore {
                 LOGGER.trace("MapDefinition not found in local cache so getting it from the store, {}", mapDefinition);
                 // cloning the UID in case we leave the txn
                 beginTxnIfRequired();
-                return mapDefinitionUIDStore.getOrCreateUid(writeTxn, mapDef).clone();
+                return mapDefinitionUIDStore.getOrCreateUid(writeTxn, mapDef)
+                        .clone();
             });
             return uid;
         }

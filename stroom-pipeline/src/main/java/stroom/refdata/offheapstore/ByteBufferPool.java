@@ -85,6 +85,9 @@ public class ByteBufferPool implements Clearable {
             if (!buffer.isDirect()) {
                 throw new RuntimeException("Expecting a direct ByteBuffer");
             }
+            for (int i = buffer.position(); i < buffer.limit(); i++) {
+                buffer.put((byte)0);
+            }
             buffer.clear();
 
             try {

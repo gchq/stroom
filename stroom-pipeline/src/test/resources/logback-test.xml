@@ -10,8 +10,9 @@
 
     <logger name="stroom" level="info" />
 
-    <logger name="stroom.refdata" level="debug" />
-    <logger name="stroom.refdata.offheapstore.databases.KeyValueStoreDb" level="trace" />
+    <logger name="stroom.refdata" level="info" />
+    <!--<logger name="stroom.refdata.offheapstore.MapDefinitionUIDStore" level="trace" />-->
+    <logger name="stroom.refdata.offheapstore.databases.KeyValueStoreDb" level="info" />
 
     <root level="error">
         <appender-ref ref="STDOUT" />

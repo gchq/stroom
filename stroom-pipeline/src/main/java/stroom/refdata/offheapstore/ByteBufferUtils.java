@@ -156,7 +156,7 @@ public class ByteBufferUtils {
             }
         }
         boolean result2 = result;
-        LAMBDA_LOGGER.info(() -> LambdaLogger.buildMessage("containsPrefix({} {}) returns {}",
+        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("containsPrefix({} {}) returns {}",
                 ByteBufferUtils.byteBufferInfo(buffer), ByteBufferUtils.byteBufferInfo(prefixBuffer), result2));
         return result;
     }

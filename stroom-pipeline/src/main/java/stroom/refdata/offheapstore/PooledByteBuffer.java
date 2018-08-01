@@ -71,6 +71,15 @@ public class PooledByteBuffer implements AutoCloseable {
         releaseFunc = null;
     }
 
+    /**
+     * Clears the underlying buffer if there is one.
+     */
+    public void clear() {
+        if (byteBuffer != null) {
+            byteBuffer.clear();
+        }
+    }
+
     @Override
     public void close() {
         release();
