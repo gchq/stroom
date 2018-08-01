@@ -29,12 +29,13 @@ import Mousetrap from 'mousetrap';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
 
-import { Loader } from 'semantic-ui-react';
+import { Loader, Popup, Icon } from 'semantic-ui-react';
 
 import { withConfig } from 'startup/config';
 import { search } from './streamAttributeMapClient';
 import { getDataForSelectedRow } from './dataResourceClient';
 import DataDetails from './DataDetails';
+import StreamPopup from './StreamPopup';
 
 import { actionCreators } from './redux';
 
@@ -126,12 +127,19 @@ const DataViewer = ({
 
   const tableColumns = [
     {
-      Header: 'Created',
-      accessor: 'created',
+      Header: '',
+      accessor: 'type',
+      Cell: (row) => {
+        // This block of code is mostly about making a sensible looking popup.
+        const stream = streamAttributeMaps.find(streamAttributeMap => streamAttributeMap.stream.id === row.original.streamId);
+
+        return <StreamPopup streamData={stream}/>
+      },
+      width: 35,
     },
     {
-      Header: 'Type',
-      accessor: 'type',
+      Header: 'Created',
+      accessor: 'created',
     },
     {
       Header: 'Feed',
@@ -144,6 +152,7 @@ const DataViewer = ({
   ];
 
   const tableData = streamAttributeMaps.map(streamAttributeMap => ({
+    streamId: path(['stream', 'id'], streamAttributeMap), 
     created: moment(path(['stream', 'createMs'], streamAttributeMap)).format('MMMM Do YYYY, h:mm:ss a'),
     type: path(['stream', 'streamType', 'displayValue'], streamAttributeMap),
     feed: path(['stream', 'feed', 'displayValue'], streamAttributeMap),
