@@ -1,3 +1,52 @@
-@import "./DataTable/DataTable";
 @import "./DataView/ErrorView";
 @import "./MysteriousPagination/MysteriousPagination";
+.DataTable__container {
+  height: calc(100% - 45px);
+  position: relative;
+}
+
+.DataTable__reactTable__container {
+  position: absolute;
+  top: 0; // If you want to push the top of the table down a bit, e.g. for a toolbar, do it here.
+  right: 0;
+  left: 0;
+  bottom: 0;
+}
+
+.DataTable__reactTable {
+  position: absolute;
+  top: 0px;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  border: none;
+}
+
+.DataTable__reactTable .rt-td {
+  padding: 2px 2px;
+}
+
+.DataTable__reactTable .rt-tbody .rt-td {
+  border-right: none; // Make the table much more compact
+}
+
+.DataTable__reactTable .rt-table .rt-body .rt-tr-group {
+  max-height: 23px;
+}
+
+.DataTable__container .rt-table .rt-tbody .rt-tr-group:hover {
+  background-color: $hover-item-colour;
+}
+
+.ReactTable .rt-tbody .rt-tr-group {
+  max-height: 23px;
+}
+
+.ReactTable .rt-thead.-header {
+  box-shadow: none;
+  border-bottom: solid 1px lightgrey;
+}
+
+.DataTable__selectedRow {
+  background-color: $selected-item-colour;
+}
