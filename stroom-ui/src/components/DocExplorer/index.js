@@ -21,6 +21,7 @@ import withExplorerTree from './withExplorerTree';
 import withDocRefTypes from './withDocRefTypes';
 import explorerClient from './explorerClient';
 import ActionBarItems from './ActionBarItems';
+import NewDocDialog from './NewDocDialog';
 
 export {
   DocExplorer,
@@ -31,6 +32,7 @@ export {
   withDocRefTypes,
   explorerClient,
   ActionBarItems,
+  NewDocDialog,
 };
 
 export default DocExplorer;

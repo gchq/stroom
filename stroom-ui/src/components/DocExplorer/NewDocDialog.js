@@ -8,21 +8,31 @@ import { InputField } from 'react-semantic-redux-form';
 
 import { required, minLength2 } from 'lib/reduxFormUtils';
 import { actionCreators } from './redux';
-import { DocPickerModal, DocRefTypePicker, explorerClient } from 'components/DocExplorer';
+import DocPickerModal from './DocPickerModal';
+import DocRefTypePicker from './DocRefTypePicker';
+import explorerClient from './explorerClient';
 
 import PermissionInheritancePicker from 'components/PermissionInheritancePicker';
 
 const { createDocument } = explorerClient;
 
-const { cancelDocRefCreation } = actionCreators;
+const { completeDocRefCreation } = actionCreators;
 
 const enhance = compose(
   connect(
-    ({ newDoc, form: { newDocRef } }, props) => ({
-      isOpen: newDoc.isOpen,
-      newDocRefValues: newDocRef ? newDocRef.values : {},
+    ({
+      docExplorer: {
+        newDoc: { isOpen, destination },
+      },
+      form,
+    }) => ({
+      isOpen,
+      newDocRefForm: form.newDocRef,
+      initialValues: {
+        destination,
+      },
     }),
-    { cancelDocRefCreation, createDocument },
+    { completeDocRefCreation, createDocument },
   ),
   reduxForm({
     form: 'newDocRef',
@@ -30,17 +40,11 @@ const enhance = compose(
 );
 
 const NewDocDialog = ({
-  isOpen,
-  stage,
-  cancelDocRefCreation,
-  docRefTypes,
-  change,
-  createDocument,
-  newDocRefValues,
+  isOpen, stage, completeDocRefCreation, createDocument, newDocRefForm,
 }) => (
   <Modal
     open={isOpen}
-    onClose={cancelDocRefCreation}
+    onClose={completeDocRefCreation}
     size="small"
     dimmer="inverted"
     closeOnDimmerClick={false}
@@ -73,9 +77,10 @@ const NewDocDialog = ({
             name="destination"
             component={({ input: { onChange, value } }) => (
               <DocPickerModal
-                pickerId="new-doc-ref-destination"
+                explorerId="new-doc-ref-destination"
                 typeFilters={['Folder']}
-                onChange={({ node, lineage }) => onChange(node)}
+                onChange={onChange}
+                value={value}
               />
             )}
           />
@@ -85,28 +90,24 @@ const NewDocDialog = ({
           <Field
             name="permissionInheritance"
             component={({ input: { onChange, value } }) => (
-              <PermissionInheritancePicker
-                pickerId="new-doc-ref-permission-inheritance"
-                permissionInheritancePicked={(pId, v) => onChange(v)}
-                permissionInheritance={value}
-              />
+              <PermissionInheritancePicker onChange={onChange} value={value} />
             )}
           />
         </Form.Field>
       </Form>
     </Modal.Content>
     <Modal.Actions>
-      <Button negative onClick={cancelDocRefCreation} inverted>
+      <Button negative onClick={completeDocRefCreation} inverted>
         <Icon name="checkmark" /> Cancel
       </Button>
       <Button
         positive
         onClick={() =>
           createDocument(
-            newDocRefValues.docRefType,
-            newDocRefValues.docRefName,
-            newDocRefValues.destination,
-            newDocRefValues.permissionInheritance,
+            newDocRefForm.values.docRefType,
+            newDocRefForm.values.docRefName,
+            newDocRefForm.values.destination,
+            newDocRefForm.values.permissionInheritance,
           )
         }
         labelPosition="right"

@@ -27,6 +27,7 @@ import RenameDocRefDialog from './RenameDocRefDialog';
 import CopyDocRefDialog from './CopyDocRefDialog';
 import DeleteDocRefDialog from './DeleteDocRefDialog';
 import DocRefInfoModal from './DocRefInfoModal';
+import NewDocDialog from './NewDocDialog';
 import { actionCreators } from './redux';
 import withExplorerTree from './withExplorerTree';
 
@@ -76,6 +77,7 @@ const DocExplorer = ({
 }) => (
   <div className="DocExplorer__container">
     <div className="DocExplorer">
+      <NewDocDialog />
       <DocRefInfoModal />
       <MoveDocRefDialog />
       <RenameDocRefDialog />

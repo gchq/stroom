@@ -35,18 +35,15 @@ const enhance = compose(
     explorerId: `move-doc-ref-${explorerId}`,
   })),
   connect(
-    (
-      {
-        docExplorer: {
-          explorerTree: { documentTree },
-        },
-        form,
-        docExplorer: {
-          moveDocRef: { isMoving, uuids, destinationUuid },
-        },
+    ({
+      docExplorer: {
+        explorerTree: { documentTree },
       },
-      { explorerId },
-    ) => {
+      form,
+      docExplorer: {
+        moveDocRef: { isMoving, uuids, destinationUuid },
+      },
+    }) => {
       const initialDestination = findItem(documentTree, destinationUuid);
 
       return {

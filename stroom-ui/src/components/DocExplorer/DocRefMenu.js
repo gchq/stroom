@@ -30,6 +30,7 @@ const {
   prepareDocRefMove,
   prepareDocRefRename,
   folderOpenToggled,
+  prepareDocRefCreation,
 } = actionCreators;
 
 const enhance = compose(
@@ -53,6 +54,7 @@ const enhance = compose(
       fetchDocInfo,
       openDocRef,
       folderOpenToggled,
+      prepareDocRefCreation,
     },
   ),
 );
@@ -66,6 +68,7 @@ const DocRefMenu = ({
   prepareDocRefRename,
   prepareDocRefDelete,
   prepareDocRefCopy,
+  prepareDocRefCreation,
   fetchDocInfo,
   closeContextMenu,
   openDocRef,
@@ -75,6 +78,16 @@ const DocRefMenu = ({
   <span>
     <Dropdown inline icon={null} open={isOpen} onClose={closeContextMenu}>
       <Dropdown.Menu>
+        {docRef.type === 'Folder' && (
+          <Dropdown.Item
+            onClick={() => {
+              prepareDocRefCreation(docRef);
+            }}
+          >
+            <Icon name="file outline" />
+            Create
+          </Dropdown.Item>
+        )}
         {explorer.isSelectedList &&
           explorer.isSelectedList.length === 1 && (
             <React.Fragment>
