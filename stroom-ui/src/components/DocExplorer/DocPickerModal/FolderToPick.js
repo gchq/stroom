@@ -31,7 +31,7 @@ const { folderOpenToggled, docRefSelected } = actionCreators;
 const enhance = compose(connect(
   (state, props) => ({
     // state
-    explorer: state.docExplorer.explorerTree.explorers[props.explorerId],
+    explorer: state.docExplorer.explorerTree.explorers[props.pickerId],
   }),
   {
     folderOpenToggled,
@@ -40,7 +40,7 @@ const enhance = compose(connect(
 ));
 
 const _FolderToPick = ({
-  explorerId,
+  pickerId,
   explorer,
   folder,
   typeFilters,
@@ -57,8 +57,8 @@ const _FolderToPick = ({
   }
 
   const clickCounter = new ClickCounter()
-    .withOnSingleClick(() => docRefSelected(explorerId, folder))
-    .withOnDoubleClick(() => folderOpenToggled(explorerId, folder));
+    .withOnSingleClick(() => docRefSelected(pickerId, folder))
+    .withOnDoubleClick(() => folderOpenToggled(pickerId, folder));
 
   return (
     <div>
@@ -78,12 +78,12 @@ const _FolderToPick = ({
                 (c.type === 'Folder' ? (
                   <FolderToPick
                     key={c.uuid}
-                    explorerId={explorerId}
+                    pickerId={pickerId}
                     typeFilters={typeFilters}
                     folder={c}
                   />
                 ) : (
-                  <DocRefToPick key={c.uuid} explorerId={explorerId} docRef={c} />
+                  <DocRefToPick key={c.uuid} pickerId={pickerId} docRef={c} />
                 )))}
         </div>
       )}
@@ -94,7 +94,7 @@ const _FolderToPick = ({
 const FolderToPick = enhance(_FolderToPick);
 
 FolderToPick.propTypes = {
-  explorerId: PropTypes.string.isRequired,
+  pickerId: PropTypes.string.isRequired,
   folder: PropTypes.object.isRequired,
 };
 

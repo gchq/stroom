@@ -23,6 +23,7 @@ import { ConnectedRouter } from 'react-router-redux';
 import { DragDropContext } from 'react-dnd';
 import HTML5Backend from 'react-dnd-html5-backend';
 
+import KeyIsDown from 'prototypes/KeyIsDown';
 import Routes from 'startup/Routes';
 import store from 'startup/store';
 import { history } from 'startup/middleware';
@@ -36,7 +37,7 @@ import 'typeface-open-sans-condensed';
 import 'typeface-aleo';
 import 'typeface-varela';
 
-const DndRoutes = compose(DragDropContext(HTML5Backend), toClass)(Routes);
+const DndRoutes = compose(KeyIsDown(), DragDropContext(HTML5Backend), toClass)(Routes);
 
 ReactDOM.render(
   <Provider store={store}>

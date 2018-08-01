@@ -15,7 +15,7 @@
  */
 import DocExplorer from './DocExplorer';
 import DocRefInfoModal from './DocRefInfoModal';
-import DocPicker, { DocPickerModal } from './DocPicker/index';
+import DocPickerModal from './DocPickerModal';
 import DocRefTypePicker from './DocRefTypePicker';
 import withExplorerTree from './withExplorerTree';
 import withDocRefTypes from './withDocRefTypes';
@@ -26,7 +26,6 @@ export {
   DocExplorer,
   DocRefInfoModal,
   DocPickerModal,
-  DocPicker,
   DocRefTypePicker,
   withExplorerTree,
   withDocRefTypes,

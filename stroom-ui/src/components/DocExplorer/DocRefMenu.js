@@ -29,13 +29,21 @@ const {
   prepareDocRefCopy,
   prepareDocRefMove,
   prepareDocRefRename,
+  folderOpenToggled,
 } = docExplorerActionCreators;
 
 const enhance = compose(
   withRouter,
   connect(
-    state => ({
-      // state
+    (
+      {
+        docExplorer: {
+          explorerTree: { explorers },
+        },
+      },
+      { explorerId },
+    ) => ({
+      explorer: explorers[explorerId],
     }),
     {
       prepareDocRefMove,
@@ -44,12 +52,14 @@ const enhance = compose(
       prepareDocRefRename,
       fetchDocInfo,
       openDocRef,
+      folderOpenToggled,
     },
   ),
 );
 
 const DocRefMenu = ({
   explorerId,
+  explorer,
   docRef,
   isOpen,
   prepareDocRefMove,
@@ -59,35 +69,53 @@ const DocRefMenu = ({
   fetchDocInfo,
   closeContextMenu,
   openDocRef,
+  folderOpenToggled,
   history,
 }) => (
   <span>
     <Dropdown inline icon={null} open={isOpen} onClose={closeContextMenu}>
       <Dropdown.Menu>
+        {explorer.isSelectedList &&
+          explorer.isSelectedList.length === 1 && (
+            <React.Fragment>
+              {docRef.type === 'Folder' ? (
+                <Dropdown.Item
+                  onClick={() => {
+                    folderOpenToggled(explorerId, docRef);
+                    closeContextMenu();
+                  }}
+                >
+                  <Icon name="folder" />
+                  Open
+                </Dropdown.Item>
+              ) : (
+                <Dropdown.Item
+                  onClick={() => {
+                    openDocRef(history, docRef);
+                    closeContextMenu();
+                  }}
+                >
+                  <Icon name="file" />
+                  Open
+                </Dropdown.Item>
+              )}
+              <Dropdown.Item onClick={() => fetchDocInfo(docRef)}>
+                <Icon name="info" />
+                Info
+              </Dropdown.Item>
+              <Dropdown.Item
+                onClick={() => {
+                  prepareDocRefRename(docRef);
+                }}
+              >
+                <Icon name="pencil" />
+                Rename
+              </Dropdown.Item>
+            </React.Fragment>
+          )}
         <Dropdown.Item
           onClick={() => {
-            openDocRef(history, docRef);
-            closeContextMenu();
-          }}
-        >
-          <Icon name="file" />
-          Open
-        </Dropdown.Item>
-        <Dropdown.Item onClick={() => fetchDocInfo(docRef)}>
-          <Icon name="info" />
-          Info
-        </Dropdown.Item>
-        <Dropdown.Item
-          onClick={() => {
-            prepareDocRefRename(docRef);
-          }}
-        >
-          <Icon name="pencil" />
-          Rename
-        </Dropdown.Item>
-        <Dropdown.Item
-          onClick={() => {
-            prepareDocRefCopy([docRef]);
+            prepareDocRefCopy(explorer.isSelectedList);
           }}
         >
           <Icon name="copy" />
@@ -95,13 +123,13 @@ const DocRefMenu = ({
         </Dropdown.Item>
         <Dropdown.Item
           onClick={() => {
-            prepareDocRefMove([docRef]);
+            prepareDocRefMove(explorer.isSelectedList);
           }}
         >
           <Icon name="move" />
           Move
         </Dropdown.Item>
-        <Dropdown.Item onClick={() => prepareDocRefDelete([docRef])}>
+        <Dropdown.Item onClick={() => prepareDocRefDelete(explorer.isSelectedList)}>
           <Icon name="trash" />
           Delete
         </Dropdown.Item>

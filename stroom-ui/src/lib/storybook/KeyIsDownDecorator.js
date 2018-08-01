@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 import React, { Component } from 'react';
-import { DragDropContext } from 'react-dnd';
-import HTML5Backend from 'react-dnd-html5-backend';
+
+import KeyIsDown from 'prototypes/KeyIsDown';
 
 class WrappedComponent extends Component {
   render() {
@@ -23,6 +23,7 @@ class WrappedComponent extends Component {
   }
 }
 
-const DragDropComponent = DragDropContext(HTML5Backend)(WrappedComponent);
-
-export const DragDropDecorator = storyFn => <DragDropComponent>{storyFn()}</DragDropComponent>;
+export const KeyIsDownDecorator = filters => (storyFn) => {
+  const KeyDownComponent = KeyIsDown(filters)(WrappedComponent);
+  return <KeyDownComponent>{storyFn()}</KeyDownComponent>;
+};

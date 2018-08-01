@@ -26,26 +26,30 @@ import { deleteDocuments } from './explorerClient';
 const { completeDocRefDelete } = actionCreators;
 
 const enhance = compose(connect(
-  (state, props) => ({
-    isDeleting: state.docExplorer.deleteDocRef.isDeleting,
-    docRefs: state.docExplorer.deleteDocRef.docRefs,
+  ({
+    docExplorer: {
+      deleteDocRef: { isDeleting, uuids },
+    },
+  }) => ({
+    isDeleting,
+    uuids,
   }),
   { completeDocRefDelete, deleteDocuments },
 ));
 
 const DeleteDocRefDialog = ({
-  isDeleting, docRefs, completeDocRefDelete, deleteDocuments,
+  isDeleting, uuids, completeDocRefDelete, deleteDocuments,
 }) => (
   <Modal open={isDeleting}>
     <Modal.Header>Are you sure about deleting these Doc Refs?</Modal.Header>
-    <Modal.Content scrolling>{JSON.stringify(docRefs)}</Modal.Content>
+    <Modal.Content scrolling>{JSON.stringify(uuids)}</Modal.Content>
     <Modal.Actions>
       <Button negative onClick={completeDocRefDelete}>
         Cancel
       </Button>
       <Button
         positive
-        onClick={() => deleteDocuments(docRefs)}
+        onClick={() => deleteDocuments(uuids)}
         labelPosition="right"
         icon="checkmark"
         content="Choose"

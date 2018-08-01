@@ -19,6 +19,7 @@ import PropTypes from 'prop-types';
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
+import { Icon } from 'semantic-ui-react';
 
 import ItemTypes from './dragDropTypes';
 import { DragSource } from 'react-dnd';
@@ -29,7 +30,11 @@ import DocRefMenu from './DocRefMenu';
 import ClickCounter from 'lib/ClickCounter';
 import { openDocRef } from 'prototypes/RecentItems';
 
-const { docRefSelected, docRefContextMenuOpened, docRefContextMenuClosed } = docExplorerActionCreators;
+const {
+  docRefSelected,
+  docRefContextMenuOpened,
+  docRefContextMenuClosed,
+} = docExplorerActionCreators;
 
 const dragSource = {
   canDrag(props) {
@@ -38,6 +43,7 @@ const dragSource = {
   beginDrag(props) {
     return {
       ...props.docRef,
+      isCopy: !!(props.keyIsDown.Control || props.keyIsDown.Meta),
     };
   },
 };
@@ -52,15 +58,23 @@ function dragCollect(connect, monitor) {
 const enhance = compose(
   withRouter,
   connect(
-    (state, props) => ({
-      // state
-      explorer: state.docExplorer.explorerTree.explorers[props.explorerId],
+    (
+      {
+        keyIsDown,
+        docExplorer: {
+          explorerTree: { explorers },
+        },
+      },
+      { explorerId },
+    ) => ({
+      explorer: explorers[explorerId],
+      keyIsDown,
     }),
     {
       docRefSelected,
       openDocRef,
       docRefContextMenuOpened,
-      docRefContextMenuClosed
+      docRefContextMenuClosed,
     },
   ),
   DragSource(ItemTypes.DOC_REF, dragSource, dragCollect),
@@ -70,7 +84,7 @@ const DocRef = ({
   explorerId,
   explorer,
   docRef,
-  history, 
+  history,
   docRefSelected,
   openDocRef,
   docRefContextMenuOpened,
@@ -78,19 +92,24 @@ const DocRef = ({
   connectDragSource,
   isDragging,
 }) => {
+  const isSelected = explorer.isSelected[docRef.uuid];
+  const { contentMenuDocRef } = explorer;
+  const isContextMenuOpen = !!contentMenuDocRef && contentMenuDocRef.uuid === docRef.uuid;
+  const isPartOfContextMenuSelection = !!contentMenuDocRef && isSelected;
+
   // these are required to tell the difference between single/double clicks
   const clickCounter = new ClickCounter()
-    .withOnSingleClick(({appendSelection, contiguousSelection}) => docRefSelected(explorerId, docRef, appendSelection, contiguousSelection))
-    .withOnDoubleClick(() => openDocRef(history, docRef))
+    .withOnSingleClick(({ appendSelection, contiguousSelection }) =>
+      docRefSelected(explorerId, docRef, appendSelection, contiguousSelection))
+    .withOnDoubleClick(() => openDocRef(history, docRef));
 
   const onRightClick = (e) => {
+    if (!isSelected) {
+      docRefSelected(explorerId, docRef, false, false);
+    }
     docRefContextMenuOpened(explorerId, docRef);
     e.preventDefault();
   };
-
-  const isSelected = explorer.isSelected[docRef.uuid];
-  const { contentMenuDocRef } = explorer;
-  const isContextMenuOpen = (!!contentMenuDocRef && contentMenuDocRef.uuid === docRef.uuid);
 
   let className = '';
   if (isDragging) {
@@ -99,7 +118,7 @@ const DocRef = ({
   if (isSelected) {
     className += ' doc-ref__selected';
   }
-  if (isContextMenuOpen) {
+  if (isPartOfContextMenuSelection) {
     className += ' doc-ref__context-menu-open';
   }
 
@@ -107,10 +126,12 @@ const DocRef = ({
     className={className}
     onContextMenu={onRightClick}
     onDoubleClick={() => clickCounter.onDoubleClick()}
-    onClick={e => clickCounter.onSingleClick({
-      appendSelection: e.ctrlKey || e.metaKey,
-      contiguousSelection: e.shiftKey
-    })}
+    onClick={e =>
+        clickCounter.onSingleClick({
+          appendSelection: e.ctrlKey || e.metaKey,
+          contiguousSelection: e.shiftKey,
+        })
+      }
   >
     <DocRefMenu
       explorerId={explorerId}
@@ -119,10 +140,11 @@ const DocRef = ({
       closeContextMenu={() => docRefContextMenuClosed(explorerId)}
     />
     <span>
+      <Icon />
       <img className="doc-ref__icon" alt="X" src={require(`./images/${docRef.type}.svg`)} />
       {docRef.name}
     </span>
-  </div>);
+                           </div>);
 };
 
 DocRef.propTypes = {

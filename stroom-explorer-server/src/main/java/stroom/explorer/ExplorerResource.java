@@ -292,10 +292,13 @@ public class ExplorerResource {
 
         final List<ExplorerNode> children = filteredModel.getChildMap().get(null);
         if (children != null) {
-            for (final ExplorerNode child : children) {
-                result = new SimpleDocRefTreeDTO(child.getUuid(), child.getType(), child.getName());
-                getChildren(child, filteredModel).forEach(result::addChild);
-            }
+            final ExplorerNode systemNode = children.stream()
+                    .filter(c -> c.getName().equals("System"))
+                    .findFirst()
+                    .orElse(children.get(0));
+
+            result = new SimpleDocRefTreeDTO(systemNode.getUuid(), systemNode.getType(), systemNode.getName());
+            getChildren(systemNode, filteredModel).forEach(result::addChild);
         }
 
         return result;

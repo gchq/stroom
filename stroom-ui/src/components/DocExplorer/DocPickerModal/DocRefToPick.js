@@ -26,7 +26,7 @@ const { docRefSelected } = docExplorerActionCreators;
 const enhance = compose(connect(
   (state, props) => ({
     // state
-    explorer: state.docExplorer.explorerTree.explorers[props.explorerId],
+    explorer: state.docExplorer.explorerTree.explorers[props.pickerId],
   }),
   {
     docRefSelected,
@@ -34,9 +34,9 @@ const enhance = compose(connect(
 ));
 
 const DocRefToPick = ({
-  explorerId, explorer, docRef, docRefSelected,
+  pickerId, explorer, docRef, docRefSelected,
 }) => {
-  const onSingleClick = () => docRefSelected(explorerId, docRef);
+  const onSingleClick = () => docRefSelected(pickerId, docRef);
 
   const isSelected = explorer.isSelected[docRef.uuid];
 
@@ -56,7 +56,7 @@ const DocRefToPick = ({
 };
 
 DocRefToPick.propTypes = {
-  explorerId: PropTypes.string.isRequired,
+  pickerId: PropTypes.string.isRequired,
   docRef: PropTypes.object.isRequired,
 };
 

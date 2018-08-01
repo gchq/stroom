@@ -25,7 +25,6 @@ const {
   docTreeReceived,
   docRefTypesReceived,
   docExplorerOpened,
-  moveExplorerItem,
   folderOpenToggled,
   tabOpened,
   searchTermUpdated,

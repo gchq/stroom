@@ -1,5 +1,6 @@
 import { actionCreators } from './redux';
 import { wrappedGet, wrappedPut, wrappedPost } from 'lib/fetchTracker.redux';
+import { findByUuids, findItem } from 'lib/treeUtils';
 
 const {
   docTreeReceived,
@@ -41,10 +42,12 @@ export const fetchDocInfo = docRef => (dispatch, getState) => {
     response.json().then(docRefInfo => dispatch(docRefInfoReceived(docRefInfo))));
 };
 
-export const createDocument = (docRefType, docRefName, destinationFolderRef, permissionInheritance) => (
-  dispatch,
-  getState,
-) => {
+export const createDocument = (
+  docRefType,
+  docRefName,
+  destinationFolderRef,
+  permissionInheritance,
+) => (dispatch, getState) => {
   console.log('Creating New Doc Ref', {
     docRefType,
     docRefName,
@@ -75,6 +78,7 @@ export const createDocument = (docRefType, docRefName, destinationFolderRef, per
 export const renameDocument = (docRef, name) => (dispatch, getState) => {
   const state = getState();
   const url = `${state.config.explorerServiceUrl}/rename`;
+
   wrappedPut(
     dispatch,
     state,
@@ -90,12 +94,21 @@ export const renameDocument = (docRef, name) => (dispatch, getState) => {
   );
 };
 
-export const copyDocuments = (docRefs, destinationFolderRef, permissionInheritance) => (
+export const copyDocuments = (uuids, destinationUuid, permissionInheritance) => (
   dispatch,
   getState,
 ) => {
   const state = getState();
-  const url = `${state.config.explorerServiceUrl}/copy`;
+  const {
+    config: { explorerServiceUrl },
+    docExplorer: {
+      explorerTree: { documentTree },
+    },
+  } = state;
+  const url = `${explorerServiceUrl}/copy`;
+  const docRefs = findByUuids(documentTree, uuids);
+  const destination = findItem(documentTree, destinationUuid);
+
   wrappedPost(
     dispatch,
     state,
@@ -104,23 +117,32 @@ export const copyDocuments = (docRefs, destinationFolderRef, permissionInheritan
       response
         .json()
         .then(bulkActionResult =>
-          dispatch(docRefsCopied(docRefs, destinationFolderRef, bulkActionResult))),
+          dispatch(docRefsCopied(docRefs, destination.node, bulkActionResult))),
     {
       body: JSON.stringify({
         docRefs: docRefs.map(stripDocRef),
-        destinationFolderRef: stripDocRef(destinationFolderRef),
+        destinationFolderRef: stripDocRef(destination.node),
         permissionInheritance,
       }),
     },
   );
 };
 
-export const moveDocuments = (docRefs, destinationFolderRef, permissionInheritance) => (
+export const moveDocuments = (uuids, destinationUuid, permissionInheritance) => (
   dispatch,
   getState,
 ) => {
   const state = getState();
-  const url = `${state.config.explorerServiceUrl}/move`;
+  const {
+    config: { explorerServiceUrl },
+    docExplorer: {
+      explorerTree: { documentTree },
+    },
+  } = state;
+
+  const url = `${explorerServiceUrl}/move`;
+  const docRefs = findByUuids(documentTree, uuids);
+  const destination = findItem(documentTree, destinationUuid);
   wrappedPut(
     dispatch,
     state,
@@ -129,20 +151,21 @@ export const moveDocuments = (docRefs, destinationFolderRef, permissionInheritan
       response
         .json()
         .then(bulkActionResult =>
-          dispatch(docRefsMoved(docRefs, destinationFolderRef, bulkActionResult))),
+          dispatch(docRefsMoved(docRefs, destination.node, bulkActionResult))),
     {
       body: JSON.stringify({
         docRefs: docRefs.map(stripDocRef),
-        destinationFolderRef: stripDocRef(destinationFolderRef),
+        destinationFolderRef: stripDocRef(destination.node),
         permissionInheritance,
       }),
     },
   );
 };
 
-export const deleteDocuments = docRefs => (dispatch, getState) => {
+export const deleteDocuments = uuids => (dispatch, getState) => {
   const state = getState();
   const url = `${state.config.explorerServiceUrl}/delete`;
+  const docRefs = findByUuids(state.docExplorer.explorerTree.documentTree, uuids);
   wrappedPost(
     dispatch,
     state,

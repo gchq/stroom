@@ -82,7 +82,7 @@ export const actionCreators = createActions({
     explorerId,
     docRef,
     appendSelection,
-    contiguousSelection
+    contiguousSelection,
   }),
   DOC_REF_CONTEXT_MENU_OPENED: (explorerId, docRef) => ({
     explorerId,
@@ -122,6 +122,7 @@ const defaultExplorerState = {
   searchResults: [],
   isFolderOpen: {}, // in response to user actions and searches
   isSelected: {},
+  isSelectedList: [],
   isVisible: {}, // based on search
   inSearch: {},
   inTypeFilter: {},
@@ -172,7 +173,9 @@ function getFolderIsOpenMap(
   iterateNodes(documentTree, (lineage, node) => {
     const s = currentIsFolderOpen[node.uuid];
 
-    if (isFirst && isNewExplorer) {
+    if (!node.children || node.children.length === 0) {
+      isFolderOpen[node.uuid] = OPEN_STATES.closed;
+    } else if (isFirst && isNewExplorer) {
       isFolderOpen[node.uuid] = OPEN_STATES.byUser;
       isFirst = false;
     } else if (isSearching) {
@@ -285,8 +288,8 @@ const { docRefContextMenuOpened, docRefContextMenuClosed } = actionCreators;
 const PROCESS_PHASE = {
   LOOKING_FOR_START: 0,
   ADDING: 1,
-  FINISHED: 2
-}
+  FINISHED: 2,
+};
 
 export const reducer = handleActions(
   {
@@ -412,7 +415,9 @@ export const reducer = handleActions(
 
     // Select Doc Ref
     DOC_REF_SELECTED: (state, action) => {
-      const { explorerId, docRef, appendSelection, contiguousSelection } = action.payload;
+      const {
+        explorerId, docRef, appendSelection, contiguousSelection,
+      } = action.payload;
 
       const explorer = state.explorers[explorerId];
       let isSelected;
@@ -427,10 +432,9 @@ export const reducer = handleActions(
             [docRef.uuid]: !state.explorers[explorerId].isSelected[docRef.uuid],
           };
         }
-        
+
         // Selecting contiguous files is somewhat complex!
         if (contiguousSelection && explorer.lastSelectedUuid) {
-
           // We will iterate through the nodes looking for one of the selection endpoints.
           let phase = PROCESS_PHASE.LOOKING_FOR_START;
           iterateNodes(state.documentTree, (lineage, node) => {
@@ -438,7 +442,7 @@ export const reducer = handleActions(
             let addThisOne = phase === PROCESS_PHASE.ADDING;
 
             // If we have hit one of the endpoints, move the phase along
-            if ((node.uuid === explorer.lastSelectedUuid) || (node.uuid === docRef.uuid)) {
+            if (node.uuid === explorer.lastSelectedUuid || node.uuid === docRef.uuid) {
               switch (phase) {
                 case PROCESS_PHASE.LOOKING_FOR_START:
                   phase = PROCESS_PHASE.ADDING;
@@ -451,16 +455,15 @@ export const reducer = handleActions(
                   break;
               }
             }
-            
+
             if (addThisOne) {
               isSelected[node.uuid] = explorer.isVisible[node.uuid];
             }
 
             // Skip children if the folder is NOT open
             return !explorer.isFolderOpen[node.uuid];
-          })
-        } 
-        
+          });
+        }
       } else {
         isSelected = {
           [docRef.uuid]: !state.explorers[explorerId].isSelected[docRef.uuid],
@@ -474,7 +477,10 @@ export const reducer = handleActions(
           [explorerId]: {
             ...state.explorers[explorerId],
             isSelected,
-            lastSelectedUuid: docRef.uuid
+            isSelectedList: Object.entries(isSelected)
+              .filter(k => k[1])
+              .map(k => k[0]),
+            lastSelectedUuid: docRef.uuid,
           },
         },
       };
@@ -524,25 +530,23 @@ export const reducer = handleActions(
     },
 
     DOC_REFS_COPIED: (state, action) => {
-      const { destination, bulkActionResult } = action.payload;
-
-      const documentTree = copyItemsInTree(
-        state.documentTree,
-        bulkActionResult.docRefs,
+      const {
         destination,
-      );
+        bulkActionResult: { docRefs },
+      } = action.payload;
+
+      const documentTree = copyItemsInTree(state.documentTree, docRefs, destination);
 
       return getStateAfterTreeUpdate(state, documentTree, false);
     },
 
     DOC_REFS_MOVED: (state, action) => {
-      const { destination, bulkActionResult } = action.payload;
-
-      const documentTree = moveItemsInTree(
-        state.documentTree,
-        bulkActionResult.docRefs,
+      const {
         destination,
-      );
+        bulkActionResult: { docRefs },
+      } = action.payload;
+
+      const documentTree = moveItemsInTree(state.documentTree, docRefs, destination);
 
       return getStateAfterTreeUpdate(state, documentTree, false);
     },

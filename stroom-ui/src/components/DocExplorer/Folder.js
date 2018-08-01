@@ -27,11 +27,10 @@ import { Icon } from 'semantic-ui-react';
 
 import ClickCounter from 'lib/ClickCounter';
 import DocRef from './DocRef';
-import FolderMenu from './FolderMenu';
+import DocRefMenu from './DocRefMenu';
 import { actionCreators } from './redux/explorerTreeReducer';
 
 const {
-  moveExplorerItem,
   folderOpenToggled,
   docRefSelected,
   docRefContextMenuOpened,
@@ -45,6 +44,7 @@ const dragSource = {
   beginDrag(props) {
     return {
       ...props.folder,
+      isCopy: !!(props.keyIsDown.Control || props.keyIsDown.Meta),
     };
   },
 };
@@ -53,6 +53,7 @@ function dragCollect(connect, monitor) {
   return {
     connectDragSource: connect.dragSource(),
     isDragging: monitor.isDragging(),
+    isCopy: monitor.getItem() ? monitor.getItem().isCopy : false
   };
 }
 
@@ -61,7 +62,13 @@ const dropTarget = {
     return canMove(monitor.getItem(), props.folder);
   },
   drop(props, monitor) {
-    props.moveExplorerItem(props.explorerId, monitor.getItem(), props.folder);
+    console.log('Move Explorer Item', {
+      explorerId: props.explorerId,
+      itemToDrop: monitor.getItem(),
+      destination: props.folder,
+    });
+    console.log('This one', monitor.getItem());
+    // props.moveExplorerItem(props.explorerId, monitor.getItem(), props.folder);
   },
 };
 
@@ -75,12 +82,19 @@ function dropCollect(connect, monitor) {
 
 const enhance = compose(
   connect(
-    (state, props) => ({
-      // state
-      explorer: state.docExplorer.explorerTree.explorers[props.explorerId],
+    (
+      {
+        keyIsDown,
+        docExplorer: {
+          explorerTree: { explorers },
+        },
+      },
+      { explorerId },
+    ) => ({
+      keyIsDown,
+      explorer: explorers[explorerId],
     }),
     {
-      moveExplorerItem,
       folderOpenToggled,
       docRefSelected,
       docRefContextMenuOpened,
@@ -94,6 +108,7 @@ const enhance = compose(
 const _Folder = ({
   connectDragSource,
   isDragging,
+  isCopy,
   connectDropTarget,
   isOver,
   canDrop,
@@ -104,13 +119,16 @@ const _Folder = ({
   docRefSelected,
   docRefContextMenuOpened,
   docRefContextMenuClosed,
-  moveExplorerItem,
+  keyIsDown,
 }) => {
   const thisIsOpen = !!explorer.isFolderOpen[folder.uuid];
-  const icon = thisIsOpen ? 'folder open' : 'folder';
+  const hasChildren = folder.children && folder.children.length > 0;
+  const folderIcon = thisIsOpen ? 'folder open' : 'folder';
+  const caretIcon = hasChildren ? (thisIsOpen ? 'caret down' : 'caret right') : undefined;
   const isSelected = explorer.isSelected[folder.uuid];
   const { contentMenuDocRef } = explorer;
   const isContextMenuOpen = !!contentMenuDocRef && contentMenuDocRef.uuid === folder.uuid;
+  const isPartOfContextMenuSelection = !!contentMenuDocRef && isSelected;
 
   let className = '';
   if (isOver) {
@@ -126,7 +144,7 @@ const _Folder = ({
       className += ' folder__over_cannot_drop';
     }
   }
-  if (isContextMenuOpen) {
+  if (isPartOfContextMenuSelection) {
     className += ' doc-ref__context-menu-open';
   }
   if (isSelected) {
@@ -134,10 +152,14 @@ const _Folder = ({
   }
 
   const clickCounter = new ClickCounter()
-    .withOnSingleClick(({appendSelection, contiguousSelection}) => docRefSelected(explorerId, folder, appendSelection, contiguousSelection))
+    .withOnSingleClick(({ appendSelection, contiguousSelection }) =>
+      docRefSelected(explorerId, folder, appendSelection, contiguousSelection))
     .withOnDoubleClick(() => folderOpenToggled(explorerId, folder));
 
   const onRightClick = (e) => {
+    if (!isSelected) {
+      docRefSelected(explorerId, folder, false, false);
+    }
     docRefContextMenuOpened(explorerId, folder);
     e.preventDefault();
   };
@@ -145,33 +167,38 @@ const _Folder = ({
   return (
     <div>
       {connectDragSource(connectDropTarget(<span className={className} onContextMenu={onRightClick}>
-        <FolderMenu
+        <DocRefMenu
           explorerId={explorerId}
           docRef={folder}
           isOpen={isContextMenuOpen}
           closeContextMenu={() => docRefContextMenuClosed(explorerId)}
         />
         <span
-          onClick={e => clickCounter.onSingleClick({
-            appendSelection: e.ctrlKey || e.metaKey,
-            contiguousSelection: e.shiftKey
-          })}
+          onClick={e =>
+                clickCounter.onSingleClick({
+                  appendSelection: e.ctrlKey || e.metaKey,
+                  contiguousSelection: e.shiftKey,
+                })
+              }
           onDoubleClick={() => clickCounter.onDoubleClick()}
         >
-          <Icon name={icon} />
-          <span>{folder.name}</span>
+          <Icon name={caretIcon} onClick={() => clickCounter.onDoubleClick()} />
+          <Icon name={folderIcon} />
+          <span>{folder.name} {isOver && canDrop && (isCopy ? 'copy' : 'move')}</span>
         </span>
       </span>))}
       {thisIsOpen && (
         <div className="folder__children">
-          {folder.children
+          {hasChildren ? folder.children
             .filter(c => !!explorer.isVisible[c.uuid])
             .map(c =>
                 (c.type === 'Folder' ? (
                   <Folder key={c.uuid} explorerId={explorerId} folder={c} />
                 ) : (
                   <DocRef key={c.uuid} explorerId={explorerId} docRef={c} />
-                )))}
+                )))
+            : undefined
+            }
         </div>
       )}
     </div>

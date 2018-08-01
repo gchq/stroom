@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
+import React from 'react';
 
 import { storiesOf, addDecorator } from '@storybook/react';
 import StoryRouter from 'storybook-react-router';
 
-import { DocExplorer, DocRefInfoModal, DocRef, Folder, DocPickerModal, DocPicker } from './index';
+import { DocExplorer, DocRefInfoModal, DocRef, Folder, DocPickerModal } from './index';
 import { actionCreators } from './redux';
 import { testTree, fromSetupSampleData, testDocRefsTypes } from './test';
 import { pickRandomItem } from 'lib/treeUtils';
@@ -27,6 +26,7 @@ import { pickRandomItem } from 'lib/treeUtils';
 import { ReduxDecoratorWithInitialisation, ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 import { PollyDecorator } from 'lib/storybook/PollyDecorator';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
+import { KeyIsDownDecorator } from 'lib/storybook/KeyIsDownDecorator';
 
 import 'styles/main.css';
 
@@ -39,6 +39,7 @@ const {
 
 storiesOf('Document Explorer (small)', module)
   .addDecorator(PollyDecorator({ documentTree: testTree, docRefTypes: testDocRefsTypes }))
+  .addDecorator(KeyIsDownDecorator())
   .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator)
   .addDecorator(StoryRouter())
@@ -46,6 +47,7 @@ storiesOf('Document Explorer (small)', module)
 
 storiesOf('Document Explorer (setupSampleData)', module)
   .addDecorator(PollyDecorator({ documentTree: fromSetupSampleData, docRefTypes: testDocRefsTypes }))
+  .addDecorator(KeyIsDownDecorator())
   .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator)
   .addDecorator(StoryRouter())
@@ -78,20 +80,30 @@ storiesOf('Doc Ref Modal Picker', module)
     const randomPipeline = pickRandomItem(fromSetupSampleData, (l, n) => n.type === 'Pipeline');
     store.dispatch(docRefPicked('modal2', randomPipeline.node, randomPipeline.lineage));
   }))
-  .add('Doc Ref Picker (modal, no choice made)', () => <DocPickerModal pickerId="modal1" />)
-  .add('Doc Ref Picker (modal, choice made)', () => <DocPickerModal pickerId="modal2" />)
+  .add('Doc Ref Picker (modal, no choice made)', () => (
+    <DocPickerModal pickerId="modal1" onChange={v => console.log('Value Picked', v)} />
+  ))
+  .add('Doc Ref Picker (modal, choice made)', () => (
+    <DocPickerModal pickerId="modal2" onChange={v => console.log('Value Picked', v)} />
+  ))
   .add('Doc Ref Picker (modal, filter to pipeline)', () => (
-    <DocPickerModal pickerId="modal3" typeFilters={['Pipeline']} />
+    <DocPickerModal
+      pickerId="modal3"
+      typeFilters={['Pipeline']}
+      onChange={v => console.log('Value Picked', v)}
+    />
   ))
   .add('Doc Ref Picker (modal, filter to feed AND dictionary)', () => (
-    <DocPickerModal pickerId="modal4" typeFilters={['Feed', 'Dictionary']} />
+    <DocPickerModal
+      pickerId="modal4"
+      typeFilters={['Feed', 'Dictionary']}
+      onChange={v => console.log('Value Picked', v)}
+    />
   ))
   .add('Doc Ref Picker (modal, filter to Folders)', () => (
-    <DocPickerModal pickerId="modal5" typeFilters={['Folder']} />
+    <DocPickerModal
+      pickerId="modal5"
+      typeFilters={['Folder']}
+      onChange={v => console.log('Value Picked', v)}
+    />
   ));
-
-storiesOf('Doc Ref Picker', module)
-  .addDecorator(PollyDecorator({ documentTree: fromSetupSampleData, docRefTypes: testDocRefsTypes }))
-  .addDecorator(ReduxDecorator)
-  .add('Doc Picker', () => <DocPicker explorerId="picker1" />)
-  .add('Doc Picker (folders only)', () => <DocPicker explorerId="picker2" typeFilters={['Folder']} />);
