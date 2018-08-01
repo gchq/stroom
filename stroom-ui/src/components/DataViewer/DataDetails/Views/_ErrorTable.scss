@@ -1,9 +1,9 @@
-.ErrorView__container {
+.ErrorTable__container {
   height: calc(100% - 29px);
   position: relative;
 }
 
-.ErrorView__reactTable__container {
+.ErrorTable__reactTable__container {
   position: absolute;
   top: 0; // If you want to push the top of the table down a bit, e.g. for a toolbar, do it here.
   right: 0;
@@ -11,7 +11,7 @@
   bottom: 0;
 }
 
-.ErrorView__reactTable {
+.ErrorTable__reactTable {
   position: absolute;
   top: 0;
   right: 0;
@@ -20,12 +20,12 @@
   border-top: none;
 }
 
-.ErrorView__reactTable .rt-td {
+.ErrorTable__reactTable .rt-td {
   // Make the table much more compact
   padding: 2px 2px;
 }
 
-.ErrorView__reactTable .rt-tbody .rt-td {
+.ErrorTable__reactTable .rt-tbody .rt-td {
   // Clean up lines
   border-right: none;
 }

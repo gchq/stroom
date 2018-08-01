@@ -79,7 +79,7 @@ const ErrorTable = ({ errors }) => {
           );
         }
       },
-      width: 30,
+      width: 35,
     },
     {
       Header: 'Element',
@@ -104,12 +104,12 @@ const ErrorTable = ({ errors }) => {
   }));
 
   return (
-    <div className="ErrorView__container">
-      <div className="ErrorView__reactTable__container">
+    <div className="ErrorTable__container">
+      <div className="ErrorTable__reactTable__container">
         <ReactTable
           sortable={false}
           showPagination={false}
-          className="ErrorView__reactTable"
+          className="ErrorTable__reactTable"
           data={tableData}
           columns={tableColumns}
         />
