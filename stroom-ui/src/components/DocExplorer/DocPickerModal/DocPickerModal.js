@@ -108,7 +108,6 @@ const DocPickerModal = ({
       <Dropdown
         // it moans about mixing trigger and selection, but it's the only way to make it look right..?
         selection
-        fluid
         onFocus={handleOpen}
         trigger={
           <span>
@@ -119,7 +118,7 @@ const DocPickerModal = ({
       />
     );
   } else {
-    trigger = <Input fluid onFocus={handleOpen} value="..." />;
+    trigger = <Input onFocus={handleOpen} value="..." />;
   }
 
   return (
