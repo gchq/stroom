@@ -43,12 +43,14 @@
     "uuid": "^3.3.2"
   },
   "scripts": {
+    "build-semantic": "cd src/semantic && gulp build",
+    "watch-semantic": "cd src/semantic && gulp watch",
     "build-css": "node-sass-chokidar src/ -o src/",
     "watch-css": "node-sass-chokidar src/ -o src/ --watch --recursive",
     "start-js": "./config.template.sh && BROWSER=none PORT=5001 react-scripts start",
-    "start": "npm-run-all -p watch-css start-js",
+    "start": "npm-run-all -p watch-css watch-semantic start-js",
     "build-js": "react-scripts build",
-    "build": "npm-run-all build-css build-js",
+    "build": "npm-run-all build-css build-js build-semantic",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
     "storybook-js": "start-storybook -p 9001 -c .storybook",
