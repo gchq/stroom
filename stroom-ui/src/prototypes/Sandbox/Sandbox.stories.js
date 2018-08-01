@@ -9,6 +9,8 @@ import loremIpsum from 'lorem-ipsum';
 
 import { Basic, ExpandToFillManual, ExpandToFillFlexbox } from './Sandbox';
 
+import 'semantic/dist/semantic.min.css';
+
 storiesOf('Developer sandbox', module)
   .add('Basic', () => <Basic />)
   .add('Panel group 1', () => (

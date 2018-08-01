@@ -24,6 +24,7 @@ import TrackerDetails from './TrackerDetails';
 import { actionCreators } from '../redux';
 import { trackers } from '../tracker.testData';
 
+import 'semantic/dist/semantic.min.css';
 
 storiesOf('TrackerDetails', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {

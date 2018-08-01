@@ -20,6 +20,8 @@ import { Segment, Menu, Input, Checkbox, Button, Container } from 'semantic-ui-r
 import { storiesOf } from '@storybook/react';
 import HorizontalPanel from './HorizontalPanel';
 
+import 'semantic/dist/semantic.min.css';
+
 storiesOf('HorizontalPanel', module)
   .add('segment content', () => (
     <HorizontalPanel

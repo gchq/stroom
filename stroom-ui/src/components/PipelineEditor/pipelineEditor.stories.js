@@ -34,6 +34,7 @@ import { actionCreators as pipelineActionCreators } from './redux';
 import { actionCreators as docExplorerActionCreators } from 'components/DocExplorer';
 
 import 'styles/main.css';
+import 'semantic/dist/semantic.min.css';
 
 import { testTree, testPipelines, elements, elementProperties } from './test';
 import { testDocRefsTypes } from 'components/DocExplorer/test';

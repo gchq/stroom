@@ -20,6 +20,8 @@ import { storiesOf, addDecorator } from '@storybook/react';
 import { PollyDecorator } from 'lib/storybook/PollyDecorator';
 import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 
+import 'semantic/dist/semantic.min.css';
+
 import { testXslt } from './test';
 
 import XsltEditor from './XsltEditor';

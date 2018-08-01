@@ -27,6 +27,7 @@ import { actionCreators } from './redux';
 import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
 
 import 'styles/main.css';
+import 'semantic/dist/semantic.min.css';
 
 const { permissionInheritancePicked } = actionCreators;
 

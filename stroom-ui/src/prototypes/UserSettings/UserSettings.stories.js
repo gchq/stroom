@@ -23,6 +23,8 @@ import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 
 import UserSettings from './UserSettings';
 
+import 'semantic/dist/semantic.min.css';
+
 const PollyDecoratorWithTestData = PollyDecorator({});
 
 const stories = storiesOf('User Settings', module)

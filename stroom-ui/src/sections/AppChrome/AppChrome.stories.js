@@ -38,6 +38,7 @@ import { testTree } from './test';
 import { generateGenericTracker } from 'sections/TrackerDashboard/tracker.testData';
 
 import 'styles/main.css';
+import 'semantic/dist/semantic.min.css';
 
 const { docTreeReceived, docRefPicked } = docExplorerActionCreators;
 

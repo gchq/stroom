@@ -18,6 +18,8 @@ import React from 'react';
 import { storiesOf } from '@storybook/react';
 import MysteriousPagination from './MysteriousPagination';
 
+import 'semantic/dist/semantic.min.css';
+
 storiesOf('MysteriousPagination', module).add('First page', () => (
   <MysteriousPagination pageOffset={0} pageSize={10} />
 ));

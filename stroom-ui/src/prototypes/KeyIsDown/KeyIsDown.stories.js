@@ -18,6 +18,7 @@ import { compose } from 'recompose';
 import { connect } from 'react-redux';
 import { storiesOf, addDecorator } from '@storybook/react';
 import { Checkbox, Header, Form } from 'semantic-ui-react';
+import 'semantic/dist/semantic.min.css';
 
 import KeyIsDown from './KeyIsDown';
 import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';

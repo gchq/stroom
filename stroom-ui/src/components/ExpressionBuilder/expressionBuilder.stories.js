@@ -35,6 +35,7 @@ import { testTree, testDocRefsTypes } from 'components/DocExplorer/test';
 const { receiveDataSource, expressionChanged } = expressionBuilderActionCreators;
 
 import 'styles/main.css';
+import 'semantic/dist/semantic.min.css';
 
 import {
   testExpression,

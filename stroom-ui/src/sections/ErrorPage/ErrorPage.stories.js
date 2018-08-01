@@ -21,6 +21,8 @@ import ErrorPage from 'sections/ErrorPage';
 
 import { setErrorMessageAction, setStackTraceAction, setHttpErrorCodeAction } from './redux';
 
+import 'semantic/dist/semantic.min.css';
+
 const errorMessage = 'Everything is a disaster';
 const stackTrace = `Invariant Violation: Objects are not valid as a React child (found: object with keys {sdfs}). If you meant to render a collection of children, use an array instead.
 in code (created by ErrorPage)

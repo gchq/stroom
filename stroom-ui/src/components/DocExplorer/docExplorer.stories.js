@@ -29,6 +29,7 @@ import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 import { KeyIsDownDecorator } from 'lib/storybook/KeyIsDownDecorator';
 
 import 'styles/main.css';
+import 'semantic/dist/semantic.min.css';
 
 const {
   docRefPicked,

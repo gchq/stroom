@@ -19,6 +19,7 @@ import { storiesOf } from '@storybook/react';
 import NumericInput from './NumericInput';
 
 import './NumericInput.css';
+import 'semantic/dist/semantic.min.css';
 
 storiesOf('NumericInput -- todo: make these redux controlled so they work again', module)
   .add('basic', () => (
