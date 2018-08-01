@@ -1,0 +1,21 @@
+.EventView__container {
+  height: calc(100% - 29px);
+  position: relative;
+}
+
+.EventView__aceEditor__container {
+  position: absolute;
+  top: 0; // If you want to push the top of the table down a bit, e.g. for a toolbar, do it here.
+  right: 0;
+  left: 0;
+  bottom: 0;
+}
+
+.EventView__aceEditor {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  border-top: none;
+}
