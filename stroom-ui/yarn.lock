@@ -10802,13 +10802,29 @@ typedarray@^0.0.6:
   version "0.0.6"
   resolved "https://registry.yarnpkg.com/typedarray/-/typedarray-0.0.6.tgz#867ac74e3864187b1d3d47d996a78ec5c8830777"
 
+typeface-aleo@^0.0.44:
+  version "0.0.44"
+  resolved "https://registry.yarnpkg.com/typeface-aleo/-/typeface-aleo-0.0.44.tgz#d89cc1bd48773b857d107db0b638db08ccfdafd8"
+
 typeface-clear-sans@^0.0.44:
   version "0.0.44"
   resolved "https://registry.yarnpkg.com/typeface-clear-sans/-/typeface-clear-sans-0.0.44.tgz#6cad349e6ed72cb1552238807421aa498e2ae8d6"
 
+typeface-cooper-hewitt@^0.0.44:
+  version "0.0.44"
+  resolved "https://registry.yarnpkg.com/typeface-cooper-hewitt/-/typeface-cooper-hewitt-0.0.44.tgz#def4915d143bebb8a9a1ca4ea6b81946271a2a57"
+
+typeface-open-sans-condensed@^0.0.54:
+  version "0.0.54"
+  resolved "https://registry.yarnpkg.com/typeface-open-sans-condensed/-/typeface-open-sans-condensed-0.0.54.tgz#e383915ab4a4c84fdafb64f773bf29854242bc2f"
+
 typeface-open-sans@^0.0.54:
   version "0.0.54"
   resolved "https://registry.yarnpkg.com/typeface-open-sans/-/typeface-open-sans-0.0.54.tgz#20f5b5ea5c7f95d89dc1f8b2d2b1457680129cee"
+
+typeface-varela@^0.0.54:
+  version "0.0.54"
+  resolved "https://registry.yarnpkg.com/typeface-varela/-/typeface-varela-0.0.54.tgz#7752b71f701416903637d5195f4bfdb28a7f2df0"
 
 typescript-eslint-parser@^16.0.0:
   version "16.0.1"

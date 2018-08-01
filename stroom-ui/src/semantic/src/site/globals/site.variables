@@ -9,7 +9,50 @@
 @googleFontFamily  : 'Open+Sans:400italic,400|Oswald:400,700';
 */
 
-@fontName          : 'Clear Sans';
-@headerFont        : 'Clear Sans';
-@pageFont          : 'Clear Sans';
-@googleFontFamily  : 'Clear+Sans:400italic,400|Oswald:400,700';
+// Clear sans is the easiest to read in compact tables. It doesn't seem so good for the sidebar.
+//@fontName          : 'Clear Sans';
+//@headerFont        : 'Clear Sans';
+//@pageFont          : 'Clear Sans';
+//@googleFontFamily  : 'Clear+Sans:400italic,400|Oswald:400,700';
+
+// Serif-y and a bit pants
+//@fontName          : 'Aleo';
+//@headerFont        : 'Aleo';
+//@pageFont          : 'Aleo';
+//@googleFontFamily  : 'Aleo:400italic,400|Oswald:400,700';
+
+//@fontName          : 'Broken';
+//@headerFont        : 'Broken';
+//@pageFont          : 'Broken';
+//@googleFontFamily  : 'Broken:400italic,400|Oswald:400,700';
+
+// Too tight
+/*
+@fontName          : 'Cooper Hewitt';
+@headerFont        : 'Cooper Hewitt';
+@pageFont          : 'Cooper Hewitt';
+@googleFontFamily  : 'Cooper+Hewitt:400italic,400|Oswald:400,700';
+*/
+
+// Lovely
+/*
+@fontName          : 'Open Sans';
+@headerFont        : 'Open Sans';
+@pageFont          : 'Open Sans';
+@googleFontFamily  : 'Open+Sans:400italic,400|Oswald:400,700';
+*/
+
+
+// Way too condensed
+/*@fontName          : 'Open Sans Condensed';
+@headerFont        : 'Open Sans Condensed';
+@pageFont          : 'Open Sans Condensed';
+@googleFontFamily  : 'Open+Sans+Condensed:400italic,400|Oswald:400,700';
+*/ 
+
+
+// This looks great on tables and pretty good elsewhere too
+@fontName          : 'Varela';
+@headerFont        : 'Varela';
+@pageFont          : 'Varela';
+@googleFontFamily  : 'Varela:400italic,400|Oswald:400,700';

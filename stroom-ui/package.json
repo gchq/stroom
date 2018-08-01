@@ -34,8 +34,12 @@
     "semantic-ui": "^2.3.3",
     "semantic-ui-react": "^0.79.1",
     "sjcl": "^1.0.7",
+    "typeface-aleo": "^0.0.44",
     "typeface-clear-sans": "^0.0.44",
+    "typeface-cooper-hewitt": "^0.0.44",
     "typeface-open-sans": "^0.0.54",
+    "typeface-open-sans-condensed": "^0.0.54",
+    "typeface-varela": "^0.0.54",
     "uuid": "^3.3.2"
   },
   "scripts": {

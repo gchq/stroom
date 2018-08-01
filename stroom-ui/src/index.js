@@ -30,6 +30,11 @@ import { history } from 'startup/middleware';
 import './styles/main.css';
 import './semantic/dist/semantic.min.css';
 import 'typeface-clear-sans';
+import 'typeface-cooper-hewitt';
+import 'typeface-open-sans';
+import 'typeface-open-sans-condensed';
+import 'typeface-aleo';
+import 'typeface-varela';
 
 const DndRoutes = compose(DragDropContext(HTML5Backend), toClass)(Routes);
 
