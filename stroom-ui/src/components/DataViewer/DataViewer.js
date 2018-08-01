@@ -34,7 +34,7 @@ import { Loader } from 'semantic-ui-react';
 import { withConfig } from 'startup/config';
 import { search } from './streamAttributeMapClient';
 import { getDataForSelectedRow } from './dataResourceClient';
-import DataView from './DataView';
+import DataDetails from './DataDetails';
 
 import { actionCreators } from './redux';
 
@@ -194,7 +194,7 @@ const DataViewer = ({
             className="element-details__panel"
             title={<div>{path(['feed'], tableData[selectedRow]) || 'Nothing selected'}</div>}
             onClose={() => deselectRow(dataViewerId)}
-            content={<DataView dataViewerId={dataViewerId}/>}
+            content={<DataDetails dataViewerId={dataViewerId}/>}
             titleColumns={6}
             menuColumns={10}
             headerSize="h3"

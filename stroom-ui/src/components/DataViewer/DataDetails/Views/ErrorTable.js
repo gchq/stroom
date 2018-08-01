@@ -30,7 +30,7 @@ import 'brace/keybinding/vim';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
 
-const ErrorView = ({ errors }) => {
+const ErrorTable = ({ errors }) => {
   const tableColumns = [
     {
       Header: '',
@@ -118,8 +118,8 @@ const ErrorView = ({ errors }) => {
   );
 };
 
-ErrorView.propTypes = {
+ErrorTable.propTypes = {
   errors: PropTypes.array.isRequired,
 };
 
-export default ErrorView;
+export default ErrorTable;
