@@ -1,9 +1,8 @@
 package stroom.refdata.offheapstore.serdes;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.Serializer;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import stroom.refdata.lmdb.serde.KryoSerializer;
 import stroom.util.logging.LambdaLogger;
 
 import java.util.UUID;
@@ -14,13 +13,13 @@ import java.util.UUID;
  *
  * May use variable length serialisation so the length of the serialised form is unknown.
  */
-class VariableLengthUUIDKryoSerializer extends Serializer<String> {
+class VariableLengthUUIDKryoSerializer implements KryoSerializer<String> {
 
     // Two variable length longs at 1-9 bytes each
     static final int BUFFER_CAPACITY = 9 * 2;
 
     @Override
-    public void write(final Kryo kryo, final Output output, final String uuidStr) {
+    public void write(final Output output, final String uuidStr) {
         UUID uuid = null;
         try {
             uuid = UUID.fromString(uuidStr);
@@ -31,12 +30,12 @@ class VariableLengthUUIDKryoSerializer extends Serializer<String> {
         output.writeLong(uuid.getLeastSignificantBits(), false);
     }
 
-    public void read(final Kryo kryo, final Input input) {
-        read(kryo, input, String.class);
-    }
+//    public void read(final Kryo kryo, final Input input) {
+//        read(kryo, input, String.class);
+//    }
 
     @Override
-    public String read(final Kryo kryo, final Input input, final Class<String> type) {
+    public String read(final Input input) {
         final long uuidHighBits = input.readLong(false);
         final long uuidLowBits = input.readLong(false);
         return new UUID(uuidHighBits, uuidLowBits).toString();

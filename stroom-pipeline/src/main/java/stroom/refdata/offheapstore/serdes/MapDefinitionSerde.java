@@ -17,11 +17,8 @@
 
 package stroom.refdata.offheapstore.serdes;
 
-import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import com.esotericsoftware.kryo.pool.KryoFactory;
-import com.esotericsoftware.kryo.pool.KryoPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.serde.AbstractKryoSerde;
@@ -38,55 +35,83 @@ public class MapDefinitionSerde extends AbstractKryoSerde<MapDefinition> {
     private static final Logger LOGGER = LoggerFactory.getLogger(MapDefinitionSerde.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(MapDefinitionSerde.class);
 
-    private static final KryoFactory kryoFactory = buildKryoFactory(
-            MapDefinition.class,
-            MapDefinitionKryoSerializer::new);
+//    private static final KryoFactory kryoFactory = buildKryoFactory(
+//            MapDefinition.class,
+//            MapDefinitionKryoSerializer::new);
+//
+//    private static final KryoPool pool = new KryoPool.Builder(kryoFactory)
+//            .softReferences()
+//            .build();
 
-    private static final KryoPool pool = new KryoPool.Builder(kryoFactory)
-            .softReferences()
-            .build();
+    private final RefStreamDefinitionSerde refStreamDefinitionSerde;
+
+    public MapDefinitionSerde() {
+        this.refStreamDefinitionSerde = new RefStreamDefinitionSerde();
+    }
+
+//    @Override
+//    public MapDefinition deserialize(final ByteBuffer byteBuffer) {
+//        return super.deserialize(pool, byteBuffer);
+//    }
+//
+//    @Override
+//    public void serialize(final ByteBuffer byteBuffer, final MapDefinition object) {
+//        super.serialize(pool, byteBuffer, object);
+//    }
 
     @Override
-    public MapDefinition deserialize(final ByteBuffer byteBuffer) {
-        return super.deserialize(pool, byteBuffer);
+    public void write(final Output output, final MapDefinition mapDefinition) {
+        // first serialise the refStreamDefinition part
+        refStreamDefinitionSerde.write(output, mapDefinition.getRefStreamDefinition());
+        if (mapDefinition.getMapName() != null) {
+            output.writeString(mapDefinition.getMapName());
+        }
     }
 
     @Override
-    public void serialize(final ByteBuffer byteBuffer, final MapDefinition object) {
-        super.serialize(pool, byteBuffer, object);
+    public MapDefinition read(final Input input) {
+        // first de-serialise the refStreamDefinition part
+        final RefStreamDefinition refStreamDefinition = refStreamDefinitionSerde.read(input);
+        final String mapName;
+        if (input.position() < input.limit()) {
+            mapName = input.readString();
+        } else {
+            mapName = null;
+        }
+        return new MapDefinition(refStreamDefinition, mapName);
     }
 
-    static class MapDefinitionKryoSerializer extends com.esotericsoftware.kryo.Serializer<MapDefinition> {
-
-        private final RefStreamDefinitionSerde.RefStreamDefinitionKryoSerializer refStreamDefinitionSerializer;
-
-        MapDefinitionKryoSerializer() {
-            this.refStreamDefinitionSerializer = new RefStreamDefinitionSerde.RefStreamDefinitionKryoSerializer();
-        }
-
-        @Override
-        public void write(final Kryo kryo, final Output output, final MapDefinition mapDefinition) {
-            // first serialise the refStreamDefinition part
-            refStreamDefinitionSerializer.write(kryo, output, mapDefinition.getRefStreamDefinition());
-            if (mapDefinition.getMapName() != null) {
-                output.writeString(mapDefinition.getMapName());
-            }
-        }
-
-        @Override
-        public MapDefinition read(final Kryo kryo, final Input input, final Class<MapDefinition> type) {
-            // first de-serialise the refStreamDefinition part
-            final RefStreamDefinition refStreamDefinition = refStreamDefinitionSerializer.read(
-                    kryo, input, RefStreamDefinition.class);
-            final String mapName;
-            if (input.position() < input.limit()) {
-                mapName = input.readString();
-            } else {
-                mapName = null;
-            }
-            return new MapDefinition(refStreamDefinition, mapName);
-        }
-    }
+//    static class MapDefinitionKryoSerializer extends com.esotericsoftware.kryo.Serializer<MapDefinition> {
+//
+//        private final RefStreamDefinitionSerde.RefStreamDefinitionKryoSerializer refStreamDefinitionSerializer;
+//
+//        MapDefinitionKryoSerializer() {
+//            this.refStreamDefinitionSerializer = new RefStreamDefinitionSerde.RefStreamDefinitionKryoSerializer();
+//        }
+//
+//        @Override
+//        public void write(final Kryo kryo, final Output output, final MapDefinition mapDefinition) {
+//            // first serialise the refStreamDefinition part
+//            refStreamDefinitionSerializer.write(kryo, output, mapDefinition.getRefStreamDefinition());
+//            if (mapDefinition.getMapName() != null) {
+//                output.writeString(mapDefinition.getMapName());
+//            }
+//        }
+//
+//        @Override
+//        public MapDefinition read(final Kryo kryo, final Input input, final Class<MapDefinition> type) {
+//            // first de-serialise the refStreamDefinition part
+//            final RefStreamDefinition refStreamDefinition = refStreamDefinitionSerializer.read(
+//                    kryo, input, RefStreamDefinition.class);
+//            final String mapName;
+//            if (input.position() < input.limit()) {
+//                mapName = input.readString();
+//            } else {
+//                mapName = null;
+//            }
+//            return new MapDefinition(refStreamDefinition, mapName);
+//        }
+//    }
 
     public void serializeWithoutKeyPart(final ByteBuffer byteBuffer, final MapDefinition mapDefinition) {
 

@@ -195,6 +195,14 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
                 get(txn, key));
     }
 
+    public Optional<ByteBuffer> getAsBytes(Txn<ByteBuffer> txn, final K key) {
+        try (final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()) {
+            final ByteBuffer keyBuffer = pooledKeyBuffer.getByteBuffer();
+            serializeKey(keyBuffer, key);
+            return getAsBytes(txn, keyBuffer);
+        }
+    }
+
     /**
      * Get the bytes of the value for the given key buffer. The returned {@link ByteBuffer} should ONLY
      * by used while still inside the passed {@link Txn}, so if you need its contents outside of the

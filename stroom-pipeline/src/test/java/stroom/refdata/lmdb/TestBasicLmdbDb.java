@@ -21,10 +21,12 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import stroom.refdata.offheapstore.ByteBufferPool;
+import stroom.refdata.offheapstore.PooledByteBuffer;
 import stroom.refdata.offheapstore.databases.AbstractLmdbDbTest;
 import stroom.refdata.offheapstore.serdes.StringSerde;
 
 import java.nio.ByteBuffer;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -113,4 +115,40 @@ public class TestBasicLmdbDb extends AbstractLmdbDbTest {
         basicLmdbDb.getValueSerde().serialize(valueBufRef.get(), "XXX");
 
     }
+
+    @Test
+    public void testGetAsBytes() {
+
+        basicLmdbDb.put("key1", "value1", false);
+        basicLmdbDb.put("key2", "value2", false);
+        basicLmdbDb.put("key3", "value3", false);
+
+        LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
+            Optional<ByteBuffer> optKeyBuffer = basicLmdbDb.getAsBytes(txn, "key2");
+
+            assertThat(optKeyBuffer).isNotEmpty();
+        });
+    }
+
+    @Test
+    public void testGetAsBytes2() {
+
+        basicLmdbDb.put("key1", "value1", false);
+        basicLmdbDb.put("key2", "value2", false);
+        basicLmdbDb.put("key3", "value3", false);
+
+        LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
+
+            try (PooledByteBuffer pooledKeyBuffer = basicLmdbDb.getPooledKeyBuffer()) {
+                ByteBuffer keyBuffer = pooledKeyBuffer.getByteBuffer();
+                basicLmdbDb.serializeKey(keyBuffer, "key2");
+                Optional<ByteBuffer> optValueBuffer = basicLmdbDb.getAsBytes(txn, keyBuffer);
+
+                assertThat(optValueBuffer).isNotEmpty();
+                String val = basicLmdbDb.deserializeKey(optValueBuffer.get());
+                assertThat(val).isEqualTo("value2");
+            }
+        });
+    }
+
 }

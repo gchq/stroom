@@ -233,147 +233,148 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
 
         LOGGER.trace("getOrCreate called for refDataValue: {}, isOverwrite", refDataValue, isOverwrite);
 
-        final ByteBuffer valueBuffer = valueSerde.serialize(refDataValue);
+        try (final PooledByteBuffer pooledValueBuffer = getPooledValueBuffer()) {
+            ByteBuffer valueBuffer = pooledValueBuffer.getByteBuffer();
+            valueSerde.serialize(valueBuffer, refDataValue);
 
-        LAMBDA_LOGGER.trace(() ->
-                LambdaLogger.buildMessage("valueBuffer: {}", ByteBufferUtils.byteBufferInfo(valueBuffer)));
+            LAMBDA_LOGGER.trace(() ->
+                    LambdaLogger.buildMessage("valueBuffer: {}", ByteBufferUtils.byteBufferInfo(valueBuffer)));
 
+            // Use atomics so they can be mutated and then used in lambdas
+            final AtomicBoolean isValueInDb = new AtomicBoolean(false);
+            final AtomicInteger valuesCount = new AtomicInteger(0);
+            short lastKeyId = -1;
+            short firstUnusedKeyId = -1;
+            // TODO we have to create a new ByteBuffer here which we may/may not return so it is not
+            // straightforward to use a pool for it.
+            final ByteBuffer startKey = buildStartKeyBuffer(refDataValue);
+            ByteBuffer lastKeyBufferClone = null;
 
-        // Use atomics so they can be mutated and then used in lambdas
-        final AtomicBoolean isValueInDb = new AtomicBoolean(false);
-        final AtomicInteger valuesCount = new AtomicInteger(0);
-        short lastKeyId = -1;
-        short firstUnusedKeyId = -1;
-        // TODO we have to create a new ByteBuffer here which we may/may not return so it is not
-        // straightforward to use a pool for it.
-        final ByteBuffer startKey = buildStartKeyBuffer(refDataValue);
-        ByteBuffer lastKeyBufferClone = null;
+            try (Cursor<ByteBuffer> cursor = getLmdbDbi().openCursor(writeTxn)) {
+                //get this key or one greater than it
+                boolean isFound = cursor.get(startKey, GetOp.MDB_SET_RANGE);
 
-        try (Cursor<ByteBuffer> cursor = getLmdbDbi().openCursor(writeTxn)) {
-            //get this key or one greater than it
-            boolean isFound = cursor.get(startKey, GetOp.MDB_SET_RANGE);
-
-            while (isFound) {
-                if (ValueStoreKeySerde.compareValueHashCode(startKey, cursor.key()) != 0) {
-                    // cursor key has a different hashcode so we can stop looping
-                    break;
-                }
-                valuesCount.incrementAndGet();
-
-                final ByteBuffer valueFromDbBuf = cursor.val();
-                final ByteBuffer keyFromDbBuf = cursor.key();
-                short thisKeyId = ValueStoreKeySerde.extractId(keyFromDbBuf);
-
-                // Because we have removal of entries we can end up with sparse id sequences
-                // therefore capture the first unused ID so we can use it if we need to put a
-                // new key/value.
-                if (firstUnusedKeyId == -1 && lastKeyId != -1) {
-                    if (thisKeyId <= lastKeyId) {
-                        throw new RuntimeException(LambdaLogger.buildMessage(
-                                "thisKeyId [{}] should be greater than lastId [{}]", thisKeyId, lastKeyId));
+                while (isFound) {
+                    if (ValueStoreKeySerde.compareValueHashCode(startKey, cursor.key()) != 0) {
+                        // cursor key has a different hashcode so we can stop looping
+                        break;
                     }
-                    if ((thisKeyId - lastKeyId) > 1) {
-                        firstUnusedKeyId = (short) (lastKeyId + 1);
+                    valuesCount.incrementAndGet();
+
+                    final ByteBuffer valueFromDbBuf = cursor.val();
+                    final ByteBuffer keyFromDbBuf = cursor.key();
+                    short thisKeyId = ValueStoreKeySerde.extractId(keyFromDbBuf);
+
+                    // Because we have removal of entries we can end up with sparse id sequences
+                    // therefore capture the first unused ID so we can use it if we need to put a
+                    // new key/value.
+                    if (firstUnusedKeyId == -1 && lastKeyId != -1) {
+                        if (thisKeyId <= lastKeyId) {
+                            throw new RuntimeException(LambdaLogger.buildMessage(
+                                    "thisKeyId [{}] should be greater than lastId [{}]", thisKeyId, lastKeyId));
+                        }
+                        if ((thisKeyId - lastKeyId) > 1) {
+                            firstUnusedKeyId = (short) (lastKeyId + 1);
+                        }
                     }
-                }
-                lastKeyId = thisKeyId;
+                    lastKeyId = thisKeyId;
 
-                LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Our value {}, db value {}",
-                        LmdbUtils.byteBufferToHex(valueBuffer),
-                        LmdbUtils.byteBufferToHex(valueFromDbBuf)));
+                    LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Our value {}, db value {}",
+                            LmdbUtils.byteBufferToHex(valueBuffer),
+                            LmdbUtils.byteBufferToHex(valueFromDbBuf)));
 
-                // we cannot use keyVal outside of the cursor loop so have to copy the content
-                if (lastKeyBufferClone == null) {
-                    // make a new buffer from the cursor key content
-                    lastKeyBufferClone = valueStoreKeyBufferSupplier.get();
-                } else {
-                    lastKeyBufferClone.clear();
-                }
+                    // we cannot use keyVal outside of the cursor loop so have to copy the content
+                    if (lastKeyBufferClone == null) {
+                        // make a new buffer from the cursor key content
+                        lastKeyBufferClone = valueStoreKeyBufferSupplier.get();
+                    } else {
+                        lastKeyBufferClone.clear();
+                    }
 
-                // copy the cursor key content into our mutable buffer
-                // TODO we could just copy the 2 bytes that make up the ID as that is the only bit that changes
-                // though this only saves copying the extra 4 bytes
-                ByteBufferUtils.copy(keyFromDbBuf, lastKeyBufferClone);
+                    // copy the cursor key content into our mutable buffer
+                    // TODO we could just copy the 2 bytes that make up the ID as that is the only bit that changes
+                    // though this only saves copying the extra 4 bytes
+                    ByteBufferUtils.copy(keyFromDbBuf, lastKeyBufferClone);
 //                    lastKeyBufferClone.put(keyFromDbBuf);
 //                    lastKeyBufferClone.flip();
 
-                // see if the found value is identical to the value passed in
-                if (valueSerde.areValuesEqual(valueBuffer, valueFromDbBuf)) {
-                    isValueInDb.set(true);
-                    LAMBDA_LOGGER.trace(() -> "Found our value so incrementing its ref count and breaking out");
+                    // see if the found value is identical to the value passed in
+                    if (valueSerde.areValuesEqual(valueBuffer, valueFromDbBuf)) {
+                        isValueInDb.set(true);
+                        LAMBDA_LOGGER.trace(() -> "Found our value so incrementing its ref count and breaking out");
 
-                    try (PooledByteBuffer valuePooledBuffer = getPooledBuffer(valueFromDbBuf.remaining())) {
-                        ByteBuffer valueBufClone = valuePooledBuffer.getByteBuffer();
-                        // TODO this copy could be expensive as some of the value can be many hundreds of bytes
-                        // May be preferable to hold the ref count in a separate table (ValueReferenceCountDb)
-                        // as the copy/put of those 4 bytes will be cheaper but at the expense of an extra cursor get op
-                        ByteBufferUtils.copy(valueFromDbBuf, valueBufClone);
-                        // we have an interest in this value so increment the reference count
-                        int newRefCount = valueSerde.incrementReferenceCount(valueBufClone);
+                        try (PooledByteBuffer valuePooledBuffer = getPooledBuffer(valueFromDbBuf.remaining())) {
+                            ByteBuffer valueBufClone = valuePooledBuffer.getByteBuffer();
+                            // TODO this copy could be expensive as some of the value can be many hundreds of bytes
+                            // May be preferable to hold the ref count in a separate table (ValueReferenceCountDb)
+                            // as the copy/put of those 4 bytes will be cheaper but at the expense of an extra cursor get op
+                            ByteBufferUtils.copy(valueFromDbBuf, valueBufClone);
+                            // we have an interest in this value so increment the reference count
+                            int newRefCount = valueSerde.incrementReferenceCount(valueBufClone);
 
-                        LOGGER.trace("newRefCount is {}", newRefCount);
+                            LOGGER.trace("newRefCount is {}", newRefCount);
 
-                        try {
-                            //flip the buffer so it is ready for reading by LMDB
+                            try {
+                                //flip the buffer so it is ready for reading by LMDB
 //                            keyFromDbBuf.flip();
-                            cursor.put(keyFromDbBuf, valueBufClone, PutFlags.MDB_CURRENT);
-                        } catch (Exception e) {
-                            throw new RuntimeException(LambdaLogger.buildMessage("Error doing cursor.put with [{}] & [{}]",
-                                    ByteBufferUtils.byteBufferInfo(keyFromDbBuf),
-                                    ByteBufferUtils.byteBufferInfo(valueBufClone)), e);
+                                cursor.put(keyFromDbBuf, valueBufClone, PutFlags.MDB_CURRENT);
+                            } catch (Exception e) {
+                                throw new RuntimeException(LambdaLogger.buildMessage("Error doing cursor.put with [{}] & [{}]",
+                                        ByteBufferUtils.byteBufferInfo(keyFromDbBuf),
+                                        ByteBufferUtils.byteBufferInfo(valueBufClone)), e);
+                            }
                         }
+
+                        break;
+                    } else {
+                        LAMBDA_LOGGER.trace(() -> "Values are not equal, keep looking");
                     }
-
-                    break;
-                } else {
-                    LAMBDA_LOGGER.trace(() -> "Values are not equal, keep looking");
+                    // advance cursor
+                    isFound = cursor.next();
                 }
-                // advance cursor
-                isFound = cursor.next();
             }
-        }
 
-        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("isValueInMap: {}, valuesCount {}",
-                isValueInDb.get(),
-                valuesCount.get()));
+            LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("isValueInMap: {}, valuesCount {}",
+                    isValueInDb.get(),
+                    valuesCount.get()));
 
 //        ValueStoreKey valueStoreKey = null;
-        ByteBuffer valueStoreKeyBuffer;
+            ByteBuffer valueStoreKeyBuffer;
 
-        if (isValueInDb.get()) {
-            // value is already in the map, so use its key
-            LOGGER.trace("Found value");
+            if (isValueInDb.get()) {
+                // value is already in the map, so use its key
+                LOGGER.trace("Found value");
 //            valueStoreKey = keySerde.deserialize(lastKeyBufferClone);
-            valueStoreKeyBuffer = lastKeyBufferClone;
-        } else {
-            // value is not in the map so we need to add it
-            final ByteBuffer keyBuffer;
-            if (lastKeyBufferClone == null) {
-                LOGGER.trace("no existing entry for this valueHashCode so use first uniqueId");
-                // the start key is the first key for that valueHashcode so use that
-                keyBuffer = startKey;
+                valueStoreKeyBuffer = lastKeyBufferClone;
             } else {
-                // One or more entries share our valueHashCode (but with different values)
-                // so give it a new ID value
-                if (firstUnusedKeyId != -1) {
-                    ValueStoreKeySerde.updateId(lastKeyBufferClone, firstUnusedKeyId);
+                // value is not in the map so we need to add it
+                final ByteBuffer keyBuffer;
+                if (lastKeyBufferClone == null) {
+                    LOGGER.trace("no existing entry for this valueHashCode so use first uniqueId");
+                    // the start key is the first key for that valueHashcode so use that
+                    keyBuffer = startKey;
                 } else {
-                    ValueStoreKeySerde.incrementId(lastKeyBufferClone);
-                }
-                keyBuffer = lastKeyBufferClone;
+                    // One or more entries share our valueHashCode (but with different values)
+                    // so give it a new ID value
+                    if (firstUnusedKeyId != -1) {
+                        ValueStoreKeySerde.updateId(lastKeyBufferClone, firstUnusedKeyId);
+                    } else {
+                        ValueStoreKeySerde.incrementId(lastKeyBufferClone);
+                    }
+                    keyBuffer = lastKeyBufferClone;
 //                LOGGER.trace("Incrementing key, valueStoreKey {}", valueStoreKey);
-            }
+                }
 //            valueStoreKey = keySerde.deserialize(keyBuffer);
-            valueStoreKeyBuffer = keyBuffer;
-            boolean didPutSucceed = put(writeTxn, keyBuffer, valueBuffer, false);
-            if (!didPutSucceed) {
-                throw new RuntimeException(LambdaLogger.buildMessage("Put failed for key: {}, value {}",
-                        ByteBufferUtils.byteBufferInfo(keyBuffer),
-                        ByteBufferUtils.byteBufferInfo(valueBuffer)));
+                valueStoreKeyBuffer = keyBuffer;
+                boolean didPutSucceed = put(writeTxn, keyBuffer, valueBuffer, false);
+                if (!didPutSucceed) {
+                    throw new RuntimeException(LambdaLogger.buildMessage("Put failed for key: {}, value {}",
+                            ByteBufferUtils.byteBufferInfo(keyBuffer),
+                            ByteBufferUtils.byteBufferInfo(valueBuffer)));
+                }
             }
+            return valueStoreKeyBuffer;
         }
-
-        return valueStoreKeyBuffer;
     }
 
     public Optional<RefDataValue> get(final Txn<ByteBuffer> txn, final ByteBuffer keyBuffer) {

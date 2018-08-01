@@ -77,9 +77,16 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
     public Optional<ByteBuffer> getAsBytes(final Txn<ByteBuffer> txn, final UID mapDefinitionUid, final long key) {
         LOGGER.trace("get called for {}, key {}", mapDefinitionUid, key);
 
-        final KeyRange<ByteBuffer> keyRange = buildKeyRange(mapDefinitionUid, key);
+        try (final PooledByteBuffer startKeyPolledBuffer = getPooledKeyBuffer();
+             final PooledByteBuffer endKeyPolledBuffer = getPooledKeyBuffer()) {
 
-        // these lines are useful for debugging with SMALL data volumes
+            final KeyRange<ByteBuffer> keyRange = buildKeyRange(
+                    mapDefinitionUid,
+                    key,
+                    startKeyPolledBuffer.getByteBuffer(),
+                    endKeyPolledBuffer.getByteBuffer());
+
+            // these lines are useful for debugging with SMALL data volumes
 //        logDatabaseContents(txn);
 //        logRawDatabaseContents(txn);
 //        LmdbUtils.logRawContentsInRange(lmdbEnvironment, lmdbDbi, txn, keyRange);
@@ -91,39 +98,42 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
 //                buf -> keySerde.deserialize(buf).toString(),
 //                buf -> valueSerde.deserialize(buf).toString());
 
-        int cnt = 0;
-        try (CursorIterator<ByteBuffer> cursorIterator = getLmdbDbi().iterate(txn, keyRange)) {
-            // loop backwards over all rows with the same mapDefinitionUid, starting at key
-            for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
-                cnt++;
-                final ByteBuffer keyBuffer = keyVal.key();
+            int cnt = 0;
+            try (CursorIterator<ByteBuffer> cursorIterator = getLmdbDbi().iterate(txn, keyRange)) {
+                // loop backwards over all rows with the same mapDefinitionUid, starting at key
+                for (final CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
+                    cnt++;
+                    final ByteBuffer keyBuffer = keyVal.key();
 
-                if (LOGGER.isTraceEnabled()) {
-                    RangeStoreKey rangeStoreKey = keySerde.deserialize(keyBuffer);
-                    LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("rangeStoreKey {}, keyBuffer {}",
-                            rangeStoreKey,
-                            ByteBufferUtils.byteBufferInfo(keyBuffer)));
-                }
-
-                if (RangeStoreKeySerde.isKeyInRange(keyBuffer, key)) {
-                    final UID uidOfFoundKey = UIDSerde.extractUid(keyBuffer);
-                    // double check to be sure we have the right mapDefinitionUid
-                    if (!uidOfFoundKey.equals(mapDefinitionUid)) {
-                        throw new RuntimeException(LambdaLogger.buildMessage(
-                                "Found a key with a different mapDefinitionUid, found: {}, expected {}",
-                                uidOfFoundKey, mapDefinitionUid));
+                    if (LOGGER.isTraceEnabled()) {
+                        RangeStoreKey rangeStoreKey = keySerde.deserialize(keyBuffer);
+                        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("rangeStoreKey {}, keyBuffer {}",
+                                rangeStoreKey,
+                                ByteBufferUtils.byteBufferInfo(keyBuffer)));
                     }
-                    LOGGER.trace("key {} is in the range, found the required value after {} iterations", key, cnt);
 
-                    // TODO we are returning the cursor buffer out of the cursor scope so we must first copy it.
-                    // Better still we could accept an arg of a Function<ByteBuffer, ByteBuffer> to map the valueStoreKey
-                    // buffer into the actual value bytebuffer from the valueStoreDb. This would save a buffer copy.
-                    return Optional.of(keyVal.val());
+                    if (RangeStoreKeySerde.isKeyInRange(keyBuffer, key)) {
+                        final UID uidOfFoundKey = UIDSerde.extractUid(keyBuffer);
+                        // double check to be sure we have the right mapDefinitionUid
+                        if (!uidOfFoundKey.equals(mapDefinitionUid)) {
+                            throw new RuntimeException(LambdaLogger.buildMessage(
+                                    "Found a key with a different mapDefinitionUid, found: {}, expected {}",
+                                    uidOfFoundKey, mapDefinitionUid));
+                        }
+                        LOGGER.trace("key {} is in the range, found the required value after {} iterations", key, cnt);
+
+                        // TODO we are returning the cursor buffer out of the cursor scope so we must first copy it.
+                        // Better still we could accept an arg of a Function<ByteBuffer, ByteBuffer> to map the valueStoreKey
+                        // buffer into the actual value bytebuffer from the valueStoreDb. This would save a buffer copy.
+                        return Optional.of(keyVal.val());
+                    }
                 }
             }
+            LOGGER.trace("Value not found for {}, key {}, iterations {}", mapDefinitionUid, key, cnt);
+            return Optional.empty();
+
         }
-        LOGGER.trace("Value not found for {}, key {}, iterations {}", mapDefinitionUid, key, cnt);
-        return Optional.empty();
+
     }
 
     /**
@@ -133,18 +143,25 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
 
         LOGGER.trace("containsMapDefinition called for {}, key {}", mapDefinitionUid);
 
-        final Range<Long> startRange = new Range<>(0L, 0L);
-        final RangeStoreKey startRangeStoreKey = new RangeStoreKey(mapDefinitionUid, startRange);
-        final ByteBuffer startKeyBuf = keySerde.serialize(startRangeStoreKey);
+        try (PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()) {
+            final Range<Long> startRange = new Range<>(0L, 0L);
+            final RangeStoreKey startRangeStoreKey = new RangeStoreKey(mapDefinitionUid, startRange);
+            final ByteBuffer startKeyBuf = pooledKeyBuffer.getByteBuffer();
+            keySerde.serialize(startKeyBuf, startRangeStoreKey);
 
-        final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(startKeyBuf);
+            final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(startKeyBuf);
 
-        try (CursorIterator<ByteBuffer> cursorIterator = getLmdbDbi().iterate(txn, keyRange)) {
-            return cursorIterator.hasNext();
+            try (CursorIterator<ByteBuffer> cursorIterator = getLmdbDbi().iterate(txn, keyRange)) {
+                return cursorIterator.hasNext();
+            }
+
         }
     }
 
-    private KeyRange<ByteBuffer> buildKeyRange(final UID mapDefinitionUid, final long key) {
+    private KeyRange<ByteBuffer> buildKeyRange(final UID mapDefinitionUid,
+                                               final long key,
+                                               final ByteBuffer startKeyBuf,
+                                               final ByteBuffer endKeyBuf) {
         // We want to scan backwards over all keys with the passed mapDefinitionUid,
         // starting with a range from == key. E.g. with the following data (ignoring mapDefUid)
         // in DB order.
@@ -165,13 +182,13 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
         // with that 'from' part.
         final Range<Long> startRange = new Range<>(key, Long.MAX_VALUE);
         final RangeStoreKey startRangeStoreKey = new RangeStoreKey(mapDefinitionUid, startRange);
-        final ByteBuffer startKeyBuf = keySerde.serialize(startRangeStoreKey);
+        keySerde.serialize(startKeyBuf, startRangeStoreKey);
 
         // Zero is the lowest value for 'from' and 'to' so this represents the smallest key for
         // a given mapDefinitionUid.
         final Range<Long> endRange = new Range<>(0L, 0L);
         final RangeStoreKey endRangeStoreKey = new RangeStoreKey(mapDefinitionUid, endRange);
-        final ByteBuffer endKeyBuf = keySerde.serialize(endRangeStoreKey);
+        keySerde.serialize(endKeyBuf, endRangeStoreKey);
 
         LOGGER.trace("Using range [{}] to [{}]", endRangeStoreKey, startRangeStoreKey);
         // we want to scan backward from (and including, if found) our start key

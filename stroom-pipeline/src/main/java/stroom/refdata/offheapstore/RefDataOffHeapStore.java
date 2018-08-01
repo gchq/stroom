@@ -249,8 +249,8 @@ public class RefDataOffHeapStore implements RefDataStore {
             //do the lookup in the kv store first
             final UID mapUid = optMapUid.get();
             final KeyValueStoreKey keyValueStoreKey = new KeyValueStoreKey(optMapUid.get(), key);
-            final ByteBuffer keyValueStoreKeyBuf = keyValueStoreDb.getKeySerde().serialize(keyValueStoreKey);
-            optValueStoreKey = keyValueStoreDb.getAsBytes(readTxn, keyValueStoreKeyBuf);
+
+            optValueStoreKey = keyValueStoreDb.getAsBytes(readTxn, keyValueStoreKey);
 
             if (!optValueStoreKey.isPresent()) {
                 //not found in the kv store so look in the keyrange store instead

@@ -17,11 +17,8 @@
 
 package stroom.refdata.offheapstore.serdes;
 
-import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import com.esotericsoftware.kryo.pool.KryoFactory;
-import com.esotericsoftware.kryo.pool.KryoPool;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,8 +27,6 @@ import stroom.refdata.lmdb.serde.AbstractKryoSerde;
 import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-
-import java.nio.ByteBuffer;
 
 public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinition> {
 
@@ -42,78 +37,70 @@ public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinit
                     (AbstractKryoSerde.VARIABLE_LENGTH_LONG_BYTES * 2) +
                     AbstractKryoSerde.BOOLEAN_BYTES;
 
-    private static final KryoFactory kryoFactory = buildKryoFactory(
-            RefStreamDefinition.class,
-            RefStreamDefinitionKryoSerializer::new);
+//    private static final KryoFactory kryoFactory = buildKryoFactory(
+//            RefStreamDefinition.class,
+//            RefStreamDefinitionKryoSerializer::new);
+//
+//    private static final KryoPool pool = new KryoPool.Builder(kryoFactory)
+//            .softReferences()
+//            .build();
 
-    private static final KryoPool pool = new KryoPool.Builder(kryoFactory)
-            .softReferences()
-            .build();
+    private final VariableLengthUUIDKryoSerializer variableLengthUUIDKryoSerializer;
 
-    @Override
-    public RefStreamDefinition deserialize(final ByteBuffer byteBuffer) {
-        return super.deserialize(pool, byteBuffer);
+    public RefStreamDefinitionSerde() {
+        this.variableLengthUUIDKryoSerializer = new VariableLengthUUIDKryoSerializer();
     }
 
     @Override
-    public void serialize(final ByteBuffer byteBuffer, final RefStreamDefinition object) {
-        super.serialize(pool, byteBuffer, object);
+    public void write(final Output output,
+                      final RefStreamDefinition refStreamDefinition) {
+
+        Preconditions.checkArgument(refStreamDefinition.getPipelineDocRef().getType().equals(PipelineDoc.DOCUMENT_TYPE));
+        variableLengthUUIDKryoSerializer.write(output, refStreamDefinition.getPipelineDocRef().getUuid());
+
+        // We are only ever dealing with pipeline DocRefs so we don't need
+        // the type as the uuid will be unique over all pipelines. The Type is only needed
+        // if we have more than one type in there
+//            output.writeString(refStreamDefinition.getPipelineDocRef().getType());
+        variableLengthUUIDKryoSerializer.write(output, refStreamDefinition.getPipelineVersion());
+
+        // write as fixed length bytes so we can scan down the mapUidForwardDb looking for keys
+        // with the same RefStreamDefinition TODO why do we need to do this scan?
+
+        output.writeLong(refStreamDefinition.getStreamId(), true);
+        output.writeBoolean(refStreamDefinition.isContextData());
+        output.writeLong(refStreamDefinition.getStreamNo(), true);
     }
+
+    @Override
+    public RefStreamDefinition read(final Input input) {
+
+        final String pipelineUuid = variableLengthUUIDKryoSerializer.read(input);
+        final String pipelineVersion = variableLengthUUIDKryoSerializer.read(input);
+        final long streamId = input.readLong(true);
+        final boolean isContextData = input.readBoolean();
+        final long streamNo = input.readLong(true);
+
+        return new RefStreamDefinition(
+                pipelineUuid,
+                pipelineVersion,
+                streamId,
+                isContextData,
+                streamNo);
+    }
+
+//    @Override
+//    public RefStreamDefinition deserialize(final ByteBuffer byteBuffer) {
+//        return super.deserialize(pool, byteBuffer);
+//    }
+//
+//    @Override
+//    public void serialize(final ByteBuffer byteBuffer, final RefStreamDefinition object) {
+//        super.serialize(pool, byteBuffer, object);
+//    }
 
     @Override
     public int getBufferCapacity() {
         return BUFFER_CAPACITY;
-    }
-
-    static class RefStreamDefinitionKryoSerializer extends com.esotericsoftware.kryo.Serializer<RefStreamDefinition> {
-
-        private final VariableLengthUUIDKryoSerializer pipelineDocRefUuidVariableLengthSerializer;
-        private final VariableLengthUUIDKryoSerializer pieplineVersionUuidVariableLengthSerializer;
-
-        RefStreamDefinitionKryoSerializer() {
-            this.pipelineDocRefUuidVariableLengthSerializer = new VariableLengthUUIDKryoSerializer();
-            this.pieplineVersionUuidVariableLengthSerializer = new VariableLengthUUIDKryoSerializer();
-        }
-
-        @Override
-        public void write(final Kryo kryo,
-                          final Output output,
-                          final RefStreamDefinition refStreamDefinition) {
-
-            Preconditions.checkArgument(refStreamDefinition.getPipelineDocRef().getType().equals(PipelineDoc.DOCUMENT_TYPE));
-            pipelineDocRefUuidVariableLengthSerializer.write(kryo, output, refStreamDefinition.getPipelineDocRef().getUuid());
-
-            // We are only ever dealing with pipeline DocRefs so we don't need
-            // the type as the uuid will be unique over all pipelines. The Type is only needed
-            // if we have more than one type in there
-//            output.writeString(refStreamDefinition.getPipelineDocRef().getType());
-            pieplineVersionUuidVariableLengthSerializer.write(kryo, output, refStreamDefinition.getPipelineVersion());
-
-            // write as fixed length bytes so we can scan down the mapUidForwardDb looking for keys
-            // with the same RefStreamDefinition TODO why do we need to do this scan?
-
-            output.writeLong(refStreamDefinition.getStreamId(), true);
-            output.writeBoolean(refStreamDefinition.isContextData());
-            output.writeLong(refStreamDefinition.getStreamNo(), true);
-        }
-
-        @Override
-        public RefStreamDefinition read(final Kryo kryo,
-                                        final Input input,
-                                        final Class<RefStreamDefinition> type) {
-
-            final String pipelineUuid = pipelineDocRefUuidVariableLengthSerializer.read(kryo, input, String.class);
-            final String pipelineVersion = pieplineVersionUuidVariableLengthSerializer.read(kryo, input, String.class);
-            final long streamId = input.readLong(true);
-            final boolean isContextData = input.readBoolean();
-            final long streamNo = input.readLong(true);
-
-            return new RefStreamDefinition(
-                    pipelineUuid,
-                    pipelineVersion,
-                    streamId,
-                    isContextData,
-                    streamNo);
-        }
     }
 }
