@@ -148,58 +148,63 @@ const DataViewer = ({
     pipeline: path(['stream', 'streamProcessor', 'pipelineName'], streamAttributeMap),
   }));
 
+  const table = <ReactTable
+                  sortable={false}
+                  pageSize={pageSize}
+                  showPagination={false}
+                  className="DataTable__reactTable"
+                  data={tableData}
+                  columns={tableColumns}
+                  getTdProps={(state, rowInfo, column, instance) => ({
+                    onClick: (e, handleOriginal) => {
+                      selectRow(dataViewerId, rowInfo.index);
+                      getDataForSelectedRow(dataViewerId);
+
+                      // IMPORTANT! React-Table uses onClick internally to trigger
+                      // events like expanding SubComponents and pivots.
+                      // By default a custom 'onClick' handler will override this functionality.
+                      // If you want to fire the original onClick handler, call the
+                      // 'handleOriginal' function.
+                      if (handleOriginal) {
+                        handleOriginal();
+                      }
+                    },
+                  })}
+                  getTrProps={(state, rowInfo, column) => ({
+                    className:
+                      selectedRow !== undefined && path(['index'], rowInfo) === selectedRow
+                        ? 'DataTable__selectedRow'
+                        : undefined,
+                  })}
+                />;
+
+  const details = <HorizontalPanel
+                className="element-details__panel"
+                title={<div>{path(['feed'], tableData[selectedRow]) || 'Nothing selected'}</div>}
+                onClose={() => deselectRow(dataViewerId)}
+                content={<DataDetails data={dataForSelectedRow}/>}
+                titleColumns={6}
+                menuColumns={10}
+                headerSize="h3"
+            />;
   return (
     <div className="DataTable__container">
       <div className="DataTable__reactTable__container">
+        {selectedRow === undefined ? 
+        table : 
         <PanelGroup
-          direction="column"
-          panelWidths={[
-            {},
-            {
-              resize: 'dynamic',
-              size: selectedRow !== undefined ? '50%' : 0,
-            },
-          ]}
-        >
-          <ReactTable
-            sortable={false}
-            pageSize={pageSize}
-            showPagination={false}
-            className="DataTable__reactTable"
-            data={tableData}
-            columns={tableColumns}
-            getTdProps={(state, rowInfo, column, instance) => ({
-              onClick: (e, handleOriginal) => {
-                selectRow(dataViewerId, rowInfo.index);
-                getDataForSelectedRow(dataViewerId);
-
-                // IMPORTANT! React-Table uses onClick internally to trigger
-                // events like expanding SubComponents and pivots.
-                // By default a custom 'onClick' handler will override this functionality.
-                // If you want to fire the original onClick handler, call the
-                // 'handleOriginal' function.
-                if (handleOriginal) {
-                  handleOriginal();
-                }
-              },
-            })}
-            getTrProps={(state, rowInfo, column) => ({
-              className:
-                selectedRow !== undefined && path(['index'], rowInfo) === selectedRow
-                  ? 'DataTable__selectedRow'
-                  : undefined,
-            })}
-          />
-          <HorizontalPanel
-            className="element-details__panel"
-            title={<div>{path(['feed'], tableData[selectedRow]) || 'Nothing selected'}</div>}
-            onClose={() => deselectRow(dataViewerId)}
-            content={<DataDetails data={dataForSelectedRow}/>}
-            titleColumns={6}
-            menuColumns={10}
-            headerSize="h3"
-          />
-        </PanelGroup>
+        direction="column"
+        panelWidths={[
+          {size: 500, resize:"dynamic"},
+          {
+            resize: 'dynamic',
+            size: 500,
+          },
+        ]}
+      >
+        {table}
+        {details}
+      </PanelGroup>}
       </div>
     </div>
   );
