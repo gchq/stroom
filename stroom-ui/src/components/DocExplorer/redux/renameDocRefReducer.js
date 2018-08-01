@@ -39,10 +39,7 @@ const reducer = handleActions(
       isRenaming: !!docRef,
       docRef,
     }),
-    [docRefRenamed]: (state, action) => ({
-      isRenaming: false,
-      docRef: undefined,
-    }),
+    [docRefRenamed]: () => defaultState,
   },
   defaultState,
 );

@@ -21,14 +21,16 @@ import { connect } from 'react-redux';
 
 import { Button, Modal, Input, Loader, Dropdown } from 'semantic-ui-react';
 
-import { findItem } from 'lib/treeUtils';
+import { findItem, guid } from 'lib/treeUtils';
 import { actionCreators } from '../redux';
 
 import withExplorerTree from '../withExplorerTree';
 import withDocRefTypes from '../withDocRefTypes';
 import FolderToPick from './FolderToPick';
 
-const { docRefPicked, docExplorerOpened, searchTermUpdated } = actionCreators;
+const {
+  docExplorerOpened, searchTermUpdated, folderOpenToggled, docRefSelected,
+} = actionCreators;
 
 const withModal = withState('isOpen', 'setIsOpen', false);
 
@@ -40,20 +42,18 @@ const enhance = compose(
       {
         docExplorer: {
           explorerTree: { documentTree, explorers },
-          docRefPicker,
         },
       },
-      { pickerId },
+      { explorerId, value },
     ) => ({
       documentTree,
-      docRefWithLineage: docRefPicker[pickerId],
-      explorer: explorers[pickerId],
+      explorer: explorers[explorerId],
     }),
     {
-      // actions
-      docRefPicked,
       docExplorerOpened,
       searchTermUpdated,
+      folderOpenToggled,
+      docRefSelected,
     },
   ),
   branch(
@@ -62,8 +62,8 @@ const enhance = compose(
   ),
   lifecycle({
     componentDidMount() {
-      const { docExplorerOpened, pickerId, typeFilters } = this.props;
-      docExplorerOpened(pickerId, false, typeFilters);
+      const { docExplorerOpened, explorerId, typeFilters } = this.props;
+      docExplorerOpened(explorerId, false, typeFilters);
     },
   }),
   withModal,
@@ -76,35 +76,32 @@ const enhance = compose(
 const DocPickerModal = ({
   isSelected,
   documentTree,
-  docRefPicked,
-  docRefWithLineage,
   searchTermUpdated,
   isOpen,
-  pickerId,
+  explorerId,
   typeFilters,
   setIsOpen,
   explorer,
   onChange,
+  value,
+  folderOpenToggled,
+  docRefSelected,
 }) => {
   const handleOpen = () => setIsOpen(true);
 
   const handleClose = () => setIsOpen(false);
 
   const onDocRefPickConfirmed = () => {
-    Object.keys(explorer.isSelected).forEach((pickedUuid) => {
-      const { node, lineage } = findItem(documentTree, pickedUuid);
-      docRefPicked(pickerId, node, lineage);
-      onChange({ node, lineage });
-    });
+    const result = findItem(documentTree, explorer.isSelected);
+    onChange(result.node);
 
     handleClose();
   };
 
   let trigger;
-  if (docRefWithLineage) {
-    const triggerValue = `${docRefWithLineage.lineage.map(d => d.name).join(' > ')} > ${
-      docRefWithLineage.docRef.name
-    }`;
+  if (value) {
+    const { lineage, node } = findItem(documentTree, value.uuid);
+    const triggerValue = `${lineage.map(d => d.name).join(' > ')} > ${node.name}`;
     trigger = (
       <Dropdown
         // it moans about mixing trigger and selection, but it's the only way to make it look right..?
@@ -113,11 +110,7 @@ const DocPickerModal = ({
         onFocus={handleOpen}
         trigger={
           <span>
-            <img
-              className="doc-ref__icon"
-              alt="X"
-              src={require(`../images/${docRefWithLineage.docRef.type}.svg`)}
-            />
+            <img className="doc-ref__icon" alt="X" src={require(`../images/${node.type}.svg`)} />
             {triggerValue}
           </span>
         }
@@ -135,9 +128,16 @@ const DocPickerModal = ({
           icon="search"
           placeholder="Search..."
           value={explorer.searchTerm}
-          onChange={e => searchTermUpdated(pickerId, e.target.value)}
+          onChange={e => searchTermUpdated(explorerId, e.target.value)}
         />
-        <FolderToPick pickerId={pickerId} folder={documentTree} typeFilters={typeFilters} />
+        <FolderToPick
+          explorerId={explorerId}
+          explorer={explorer}
+          folder={documentTree}
+          typeFilters={typeFilters}
+          folderOpenToggled={folderOpenToggled}
+          docRefSelected={docRefSelected}
+        />
       </Modal.Content>
       <Modal.Actions>
         <Button negative onClick={handleClose}>
@@ -147,6 +147,7 @@ const DocPickerModal = ({
           positive
           onClick={onDocRefPickConfirmed}
           labelPosition="right"
+          disabled={!explorer.isSelected}
           icon="checkmark"
           content="Choose"
         />
@@ -157,15 +158,25 @@ const DocPickerModal = ({
 
 const EnhancedDocPickerModal = enhance(DocPickerModal);
 
+const docRefShape = {
+  type: PropTypes.string.isRequired,
+  uuid: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
+};
+
 EnhancedDocPickerModal.propTypes = {
-  pickerId: PropTypes.string.isRequired,
+  explorerId: PropTypes.string.isRequired,
   typeFilters: PropTypes.array.isRequired,
-  onChange: PropTypes.func,
+  onChange: PropTypes.func.isRequired,
+  value: PropTypes.shape({
+    node: PropTypes.shape(docRefShape),
+    lineage: PropTypes.arrayOf(PropTypes.shape(docRefShape)),
+  }),
 };
 
 EnhancedDocPickerModal.defaultProps = {
   typeFilters: [],
-  onChange: d => console.log('On Change Not Implemented, Falling back to Default', d),
+  onChange: v => console.log('Not implemented onChange, value ignored', v),
 };
 
 export default EnhancedDocPickerModal;

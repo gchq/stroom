@@ -38,24 +38,24 @@ const enhance = compose(
     (
       {
         docExplorer: {
-          moveDocRef: { isMoving, uuids },
+          moveDocRef: { isMoving, uuids, destinationUuid },
           explorerTree: { explorers },
         },
         permissionInheritancePicker,
       },
       { explorerId },
     ) => {
-      let destinationUuid;
+      let selectedDestinationUuid;
       const explorer = explorers[explorerId];
       if (explorer && explorer.isSelectedList.length > 0) {
-        destinationUuid = explorer.isSelectedList[0];
+        selectedDestinationUuid = explorer.isSelectedList[0];
       }
 
       return {
         isMoving,
         uuids,
         permissionInheritance: permissionInheritancePicker[explorerId],
-        destinationUuid,
+        destinationUuid: selectedDestinationUuid,
       };
     },
     { completeDocRefMove, moveDocuments },

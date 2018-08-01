@@ -39,10 +39,7 @@ const reducer = handleActions(
       isDeleting: uuids.length > 0,
       uuids,
     }),
-    [docRefsDeleted]: (state, action) => ({
-      isDeleting: false,
-      uuids: [],
-    }),
+    [docRefsDeleted]: () => defaultState,
   },
   defaultState,
 );

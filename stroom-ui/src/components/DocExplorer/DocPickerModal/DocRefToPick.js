@@ -16,29 +16,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose } from 'recompose';
-import { connect } from 'react-redux';
-
-import { actionCreators as docExplorerActionCreators } from '../redux/explorerTreeReducer';
-
-const { docRefSelected } = docExplorerActionCreators;
-
-const enhance = compose(connect(
-  (state, props) => ({
-    // state
-    explorer: state.docExplorer.explorerTree.explorers[props.pickerId],
-  }),
-  {
-    docRefSelected,
-  },
-));
-
 const DocRefToPick = ({
-  pickerId, explorer, docRef, docRefSelected,
+  explorerId, explorer, docRef, docRefSelected,
 }) => {
-  const onSingleClick = () => docRefSelected(pickerId, docRef);
+  const onSingleClick = () => docRefSelected(explorerId, docRef);
 
-  const isSelected = explorer.isSelected[docRef.uuid];
+  const isSelected = explorer.isSelected === docRef.uuid;
 
   let className = '';
   if (isSelected) {
@@ -56,8 +39,10 @@ const DocRefToPick = ({
 };
 
 DocRefToPick.propTypes = {
-  pickerId: PropTypes.string.isRequired,
+  explorerId: PropTypes.string.isRequired,
   docRef: PropTypes.object.isRequired,
+  docRefSelected: PropTypes.func.isRequired,
+  explorer: PropTypes.object.isRequired,
 };
 
-export default enhance(DocRefToPick);
+export default DocRefToPick;

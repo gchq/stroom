@@ -24,7 +24,7 @@ import { Icon } from 'semantic-ui-react';
 import ItemTypes from './dragDropTypes';
 import { DragSource } from 'react-dnd';
 
-import { actionCreators as docExplorerActionCreators } from './redux/explorerTreeReducer';
+import { actionCreators } from './redux';
 
 import DocRefMenu from './DocRefMenu';
 import ClickCounter from 'lib/ClickCounter';
@@ -34,7 +34,7 @@ const {
   docRefSelected,
   docRefContextMenuOpened,
   docRefContextMenuClosed,
-} = docExplorerActionCreators;
+} = actionCreators;
 
 const dragSource = {
   canDrag(props) {
@@ -42,7 +42,7 @@ const dragSource = {
   },
   beginDrag(props) {
     return {
-      ...props.docRef,
+      docRef: props.docRef,
       isCopy: !!(props.keyIsDown.Control || props.keyIsDown.Meta),
     };
   },

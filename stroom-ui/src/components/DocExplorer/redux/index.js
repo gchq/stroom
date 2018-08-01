@@ -20,10 +20,6 @@ import {
   reducer as explorerTreeReducer,
 } from './explorerTreeReducer';
 import {
-  actionCreators as docRefPickerActionCreators,
-  reducer as docRefPickerReducer,
-} from './docRefPickerReducer';
-import {
   actionCreators as moveDocRefActionCreators,
   reducer as moveDocRefReducer,
 } from './moveDocRefReducer';
@@ -46,7 +42,6 @@ import {
 
 const actionCreators = {
   ...docExplorerActionCreators,
-  ...docRefPickerActionCreators,
   ...moveDocRefActionCreators,
   ...renameDocRefActionCreators,
   ...deleteDocRefActionCreators,
@@ -56,7 +51,6 @@ const actionCreators = {
 
 const reducer = combineReducers({
   explorerTree: explorerTreeReducer,
-  docRefPicker: docRefPickerReducer,
   moveDocRef: moveDocRefReducer,
   renameDocRef: renameDocRefReducer,
   deleteDocRef: deleteDocRefReducer,

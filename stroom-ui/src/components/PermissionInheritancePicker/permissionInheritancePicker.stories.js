@@ -18,23 +18,15 @@ import PropTypes from 'prop-types';
 
 import { storiesOf, addDecorator } from '@storybook/react';
 
+import { ControlledInputDecorator } from 'lib/storybook/ControlledInputDecorator';
+
 import {
   PermissionInheritancePicker,
   permissionInheritanceValues,
 } from 'components/PermissionInheritancePicker';
-import { actionCreators } from './redux';
-
-import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
 
 import 'styles/main.css';
 
-const { permissionInheritancePicked } = actionCreators;
-
 storiesOf('Permission Inheritance Picker', module)
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(permissionInheritancePicked('pi2', permissionInheritanceValues.DESTINATION));
-  }))
-  .add('Permission Inheritance Picker', () => <PermissionInheritancePicker pickerId="pi1" />)
-  .add('Permission Inheritance Picker (choice made)', () => (
-    <PermissionInheritancePicker pickerId="pi2" />
-  ));
+  .addDecorator(ControlledInputDecorator)
+  .add('Permission Inheritance Picker', () => <PermissionInheritancePicker />);

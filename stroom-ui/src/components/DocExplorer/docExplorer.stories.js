@@ -17,6 +17,7 @@ import React from 'react';
 
 import { storiesOf, addDecorator } from '@storybook/react';
 import StoryRouter from 'storybook-react-router';
+import { compose, withState } from 'recompose';
 
 import { DocExplorer, DocRefInfoModal, DocRef, Folder, DocPickerModal } from './index';
 import { actionCreators } from './redux';
@@ -27,15 +28,11 @@ import { ReduxDecoratorWithInitialisation, ReduxDecorator } from 'lib/storybook/
 import { PollyDecorator } from 'lib/storybook/PollyDecorator';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 import { KeyIsDownDecorator } from 'lib/storybook/KeyIsDownDecorator';
+import { ControlledInputDecorator } from 'lib/storybook/ControlledInputDecorator';
 
 import 'styles/main.css';
 
-const {
-  docRefPicked,
-  permissionInheritancePicked,
-  docRefInfoReceived,
-  docRefInfoOpened,
-} = actionCreators;
+const { permissionInheritancePicked, docRefInfoReceived, docRefInfoOpened } = actionCreators;
 
 storiesOf('Document Explorer (small)', module)
   .addDecorator(PollyDecorator({ documentTree: testTree, docRefTypes: testDocRefsTypes }))
@@ -75,35 +72,16 @@ storiesOf('Doc Ref Info Modal', module)
   .add('Doc Ref Info Modal', () => <DocRefInfoModal />);
 
 storiesOf('Doc Ref Modal Picker', module)
+  .addDecorator(ControlledInputDecorator) // must be the 'first' one
   .addDecorator(PollyDecorator({ documentTree: fromSetupSampleData, docRefTypes: testDocRefsTypes }))
-  .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    const randomPipeline = pickRandomItem(fromSetupSampleData, (l, n) => n.type === 'Pipeline');
-    store.dispatch(docRefPicked('modal2', randomPipeline.node, randomPipeline.lineage));
-  }))
-  .add('Doc Ref Picker (modal, no choice made)', () => (
-    <DocPickerModal pickerId="modal1" onChange={v => console.log('Value Picked', v)} />
+  .addDecorator(ReduxDecorator)
+  .add('Doc Ref Picker', () => <DocPickerModal explorerId="modal1" />)
+  .add('Doc Ref Picker (filter to pipeline)', () => (
+    <DocPickerModal explorerId="modal2" typeFilters={['Pipeline']} />
   ))
-  .add('Doc Ref Picker (modal, choice made)', () => (
-    <DocPickerModal pickerId="modal2" onChange={v => console.log('Value Picked', v)} />
+  .add('Doc Ref Picker (filter to feed AND dictionary)', () => (
+    <DocPickerModal explorerId="modal3" typeFilters={['Feed', 'Dictionary']} />
   ))
-  .add('Doc Ref Picker (modal, filter to pipeline)', () => (
-    <DocPickerModal
-      pickerId="modal3"
-      typeFilters={['Pipeline']}
-      onChange={v => console.log('Value Picked', v)}
-    />
-  ))
-  .add('Doc Ref Picker (modal, filter to feed AND dictionary)', () => (
-    <DocPickerModal
-      pickerId="modal4"
-      typeFilters={['Feed', 'Dictionary']}
-      onChange={v => console.log('Value Picked', v)}
-    />
-  ))
-  .add('Doc Ref Picker (modal, filter to Folders)', () => (
-    <DocPickerModal
-      pickerId="modal5"
-      typeFilters={['Folder']}
-      onChange={v => console.log('Value Picked', v)}
-    />
+  .add('Doc Ref Picker (filter to Folders)', () => (
+    <DocPickerModal explorerId="modal3" typeFilters={['Folder']} />
   ));

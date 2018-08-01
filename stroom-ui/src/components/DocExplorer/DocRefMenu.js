@@ -20,7 +20,7 @@ import { compose } from 'recompose';
 import { connect } from 'react-redux';
 import { Dropdown, Icon } from 'semantic-ui-react';
 
-import { actionCreators as docExplorerActionCreators } from './redux';
+import { actionCreators } from './redux';
 import { fetchDocInfo } from './explorerClient';
 import { openDocRef } from 'prototypes/RecentItems';
 
@@ -30,7 +30,7 @@ const {
   prepareDocRefMove,
   prepareDocRefRename,
   folderOpenToggled,
-} = docExplorerActionCreators;
+} = actionCreators;
 
 const enhance = compose(
   withRouter,

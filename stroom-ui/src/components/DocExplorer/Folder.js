@@ -28,13 +28,15 @@ import { Icon } from 'semantic-ui-react';
 import ClickCounter from 'lib/ClickCounter';
 import DocRef from './DocRef';
 import DocRefMenu from './DocRefMenu';
-import { actionCreators } from './redux/explorerTreeReducer';
+import { actionCreators } from './redux';
 
 const {
   folderOpenToggled,
   docRefSelected,
   docRefContextMenuOpened,
   docRefContextMenuClosed,
+  prepareDocRefCopy,
+  prepareDocRefMove,
 } = actionCreators;
 
 const dragSource = {
@@ -43,7 +45,7 @@ const dragSource = {
   },
   beginDrag(props) {
     return {
-      ...props.folder,
+      docRef: props.folder,
       isCopy: !!(props.keyIsDown.Control || props.keyIsDown.Meta),
     };
   },
@@ -59,16 +61,18 @@ function dragCollect(connect, monitor) {
 
 const dropTarget = {
   canDrop(props, monitor) {
-    return canMove(monitor.getItem(), props.folder);
+    return canMove(monitor.getItem().docRef, props.folder);
   },
   drop(props, monitor) {
-    console.log('Move Explorer Item', {
-      explorerId: props.explorerId,
-      itemToDrop: monitor.getItem(),
-      destination: props.folder,
-    });
-    console.log('This one', monitor.getItem());
-    // props.moveExplorerItem(props.explorerId, monitor.getItem(), props.folder);
+    const {
+      docRef, isCopy
+    } = monitor.getItem();
+    
+    if (isCopy) {
+      props.prepareDocRefCopy([docRef.uuid], props.folder.uuid)
+    } else {
+      props.prepareDocRefMove([docRef.uuid], props.folder.uuid);
+    }
   },
 };
 
@@ -99,6 +103,8 @@ const enhance = compose(
       docRefSelected,
       docRefContextMenuOpened,
       docRefContextMenuClosed,
+      prepareDocRefCopy,
+      prepareDocRefMove,
     },
   ),
   DragSource(ItemTypes.FOLDER, dragSource, dragCollect),
