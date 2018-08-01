@@ -21,7 +21,7 @@ import { connect } from 'react-redux';
 
 import { Button, Modal, Input, Loader, Dropdown } from 'semantic-ui-react';
 
-import { findItem, guid } from 'lib/treeUtils';
+import { findItem } from 'lib/treeUtils';
 import { actionCreators } from '../redux';
 
 import withExplorerTree from '../withExplorerTree';
@@ -101,7 +101,9 @@ const DocPickerModal = ({
   let trigger;
   if (value) {
     const { lineage, node } = findItem(documentTree, value.uuid);
-    const triggerValue = `${lineage.map(d => d.name).join(' > ')} > ${node.name}`;
+    const triggerValue = `${lineage.map(d => d.name).join(' > ')}${
+      lineage.length > 0 ? ' > ' : ''
+    }${node.name}`;
     trigger = (
       <Dropdown
         // it moans about mixing trigger and selection, but it's the only way to make it look right..?
