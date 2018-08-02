@@ -432,11 +432,12 @@ public class RefDataOffHeapStore implements RefDataStore {
                         // chunks
                         boolean wasFound = LmdbUtils.getWithWriteTxn(lmdbEnvironment, writeTxn -> {
 
-                            final Optional<PooledByteBufferPair> optProcInfoBufferPair = processingInfoDb.getNextEntryAsBytes(
-                                    writeTxn,
-                                    currRefStreamDefBufRef.get(),
-                                    accessTimePredicate,
-                                    procInfoPooledBufferPair);
+                            final Optional<PooledByteBufferPair> optProcInfoBufferPair =
+                                    processingInfoDb.getNextEntryAsBytes(
+                                            writeTxn,
+                                            currRefStreamDefBufRef.get(),
+                                            accessTimePredicate,
+                                            procInfoPooledBufferPair);
 
                             if (!optProcInfoBufferPair.isPresent()) {
                                 // no matching ref streams found so break out
@@ -444,7 +445,6 @@ public class RefDataOffHeapStore implements RefDataStore {
                                 return false;
                             } else {
                                 // found a ref stream def that is ready for purge
-
                                 final ByteBuffer refStreamDefBuffer = optProcInfoBufferPair.get().getKeyBuffer();
                                 final ByteBuffer refDataProcInfoBuffer = optProcInfoBufferPair.get().getValueBuffer();
 
@@ -470,15 +470,8 @@ public class RefDataOffHeapStore implements RefDataStore {
 
                                 //now delete the proc info entry
                                 LOGGER.debug("Deleting processing info entry for {}", refStreamDefinition);
-//                                ByteBuffer buf = byteBufferPool.getBuffer(100);
-//                                processingInfoDb.getKeySerde().serialize(buf, refStreamDefinition);
-//                                int cmp = ByteBufferUtils.compare(refStreamDefBuffer, buf);
-//
-//                                LOGGER.info("{}", ByteBufferUtils.byteBufferInfo(refStreamDefBuffer));
-//                                LOGGER.info("{}", ByteBufferUtils.byteBufferInfo(buf));
 
                                 boolean didDeleteSucceed = processingInfoDb.delete(writeTxn, refStreamDefBuffer);
-//                                boolean didDeleteSucceed = processingInfoDb.delete(writeTxn, refStreamDefinition);
 
                                 if (!didDeleteSucceed) {
                                     throw new RuntimeException("Processing info entry not found so was not deleted");
@@ -494,7 +487,6 @@ public class RefDataOffHeapStore implements RefDataStore {
                 } else {
                     wasMatchFound.set(false);
                 }
-
             } while (wasMatchFound.get());
         }
 

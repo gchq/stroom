@@ -20,6 +20,7 @@ package stroom.refdata.offheapstore;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.Tuple3;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,7 +67,7 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
 
     @Override
     protected void setDbMaxSizeProperty() {
-        setDbMaxSizeProperty(ByteSizeUnit.MEBIBYTE.longBytes(200));
+        setDbMaxSizeProperty(ByteSizeUnit.MEBIBYTE.longBytes(500));
     }
 
     @Test
@@ -595,6 +596,49 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                 totalKeyValueEntryCount,
                 totalRangeValueEntryCount,
                 totalValueEntryCount);
+    }
+
+    @Ignore // for manual profiling testing only
+    @Test
+    public void testBigLoadForPerfTesting() {
+
+        setPurgeAgeProperty("1d");
+        int refStreamDefCount = 5;
+        int keyValueMapCount = 2;
+        int rangeValueMapCount = 2;
+        int entryCount = 50_000;
+        int totalMapEntries = (refStreamDefCount * keyValueMapCount) + (refStreamDefCount * rangeValueMapCount);
+        int totalKeyValueEntryCount = refStreamDefCount * keyValueMapCount * entryCount;
+        int totalRangeValueEntryCount = refStreamDefCount * rangeValueMapCount * entryCount;
+        int totalValueEntryCount = totalKeyValueEntryCount + totalRangeValueEntryCount;
+
+        List<RefStreamDefinition> refStreamDefs = loadBulkData(
+                refStreamDefCount, keyValueMapCount, rangeValueMapCount, entryCount);
+
+        assertDbCounts(
+                refStreamDefCount,
+                totalMapEntries,
+                totalKeyValueEntryCount,
+                totalRangeValueEntryCount,
+                totalValueEntryCount);
+
+        long twoDaysAgoMs = Instant.now().minus(2, ChronoUnit.DAYS).toEpochMilli();
+
+        refStreamDefs.forEach(refStreamDefinition -> setLastAccessedTime(refStreamDefinition, twoDaysAgoMs));
+
+        LOGGER.info("------------------------purge-starts-here--------------------------------------");
+
+        // do the purge
+        refDataStore.purgeOldData();
+
+        int expectedRefStreamDefCount = 0;
+        assertDbCounts(
+                expectedRefStreamDefCount,
+                0,
+                expectedRefStreamDefCount * keyValueMapCount * entryCount,
+                expectedRefStreamDefCount * rangeValueMapCount * entryCount,
+                (expectedRefStreamDefCount * rangeValueMapCount * entryCount) +
+                        (expectedRefStreamDefCount * rangeValueMapCount * entryCount));
     }
 
     private void assertDbCounts(final int refStreamDefCount,

@@ -67,8 +67,6 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
                                  final BiConsumer<ByteBuffer, ByteBuffer> entryConsumer) {
         LOGGER.debug("deleteMapEntries(..., {}, ...)", mapUid);
 
-        logRawDatabaseContents(writeTxn);
-
         try (PooledByteBuffer startKeyIncPooledBuffer = getPooledKeyBuffer();
              PooledByteBuffer endKeyExcPooledBuffer = getPooledKeyBuffer()) {
 
