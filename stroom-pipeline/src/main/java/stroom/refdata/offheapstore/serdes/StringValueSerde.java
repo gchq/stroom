@@ -63,7 +63,7 @@ public class StringValueSerde implements RefDatValueSubSerde {
 
     /**
      * Reads a string from the passed buffer. Teh buffer is expected to have its position
-     * set to the begining of the string portion. The position will be changed by this
+     * set to the beginning of the string portion. The position will be changed by this
      * method.
      */
     public static String decodeString(final ByteBuffer byteBuffer) {

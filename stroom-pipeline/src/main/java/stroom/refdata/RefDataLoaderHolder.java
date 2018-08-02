@@ -32,6 +32,7 @@ import java.util.Set;
 
 @PipelineScoped
 public class RefDataLoaderHolder {
+
     private RefDataLoader refDataLoader;
 
     // Set to keep track of which ref streams have been loaded, re-loaded or confirmed
@@ -60,13 +61,7 @@ public class RefDataLoaderHolder {
 
     public String getPipelineVersion(final PipelineReference pipelineReference, final PipelineStore pipelineStore) {
         try {
-
-            // TODO the readDocument call is very expensive here as it reads the whole DB record back
-            // and deserialises the json/xml data part, when all we want is the version. As getPipelineVersion
-            // is called for each lookup this needs to be addressed.
-//            return pipelineStore.readDocument(pipelineReference.getPipeline()).getVersion();
-
-            //only fetch the version once per pipeline
+            //only fetch the version once per pipeline process
             return pipelineDocRefToVersionCache.computeIfAbsent(pipelineReference.getPipeline(), docRef ->
                     pipelineStore.readDocument(pipelineReference.getPipeline()).getVersion());
         } catch (Exception e) {

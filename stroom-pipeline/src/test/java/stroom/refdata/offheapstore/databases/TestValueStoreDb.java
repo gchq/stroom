@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.LmdbUtils;
 import stroom.refdata.offheapstore.ByteBufferPool;
+import stroom.refdata.offheapstore.PooledByteBuffer;
 import stroom.refdata.offheapstore.RefDataValue;
 import stroom.refdata.offheapstore.StringValue;
 import stroom.refdata.offheapstore.ValueStoreKey;
@@ -21,7 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -50,13 +50,12 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
 
 
     private ValueStoreKey getOrCreate(Txn<ByteBuffer> writeTxn, RefDataValue refDataValue) {
-        final Supplier<ByteBuffer> valueStoreKeyBufferSupplier = () ->
-                valueStoreDb.getPooledKeyBuffer().getByteBuffer();
+        try (PooledByteBuffer valueStoreKeyPooledBuffer = valueStoreDb.getPooledKeyBuffer()) {
+            ByteBuffer valueStoreKeyBuffer = valueStoreDb.getOrCreate(
+                    writeTxn, refDataValue, valueStoreKeyPooledBuffer);
 
-        ByteBuffer valueStoreKeyBuffer = valueStoreDb.getOrCreate(
-                writeTxn, refDataValue, valueStoreKeyBufferSupplier);
-
-        return valueStoreDb.deserializeKey(valueStoreKeyBuffer);
+            return valueStoreDb.deserializeKey(valueStoreKeyBuffer);
+        }
     }
 
     @Test
@@ -67,7 +66,6 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
 
         // ensure hashcode don't clash
         assertThat(value1.getValue().hashCode()).isNotEqualTo(value2.getValue().hashCode());
-
 
         LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
             StringValue stringValue;

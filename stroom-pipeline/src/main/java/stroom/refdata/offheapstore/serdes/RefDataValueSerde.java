@@ -85,7 +85,7 @@ public class RefDataValueSerde implements
         return subBuffer;
     }
 
-    RefDatValueSubSerde getSubSerde(ByteBuffer byteBuffer) {
+    RefDatValueSubSerde getSubSerde(final ByteBuffer byteBuffer) {
         return getSubSerde(extractTypeId(byteBuffer));
     }
 
