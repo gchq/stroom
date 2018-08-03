@@ -22,8 +22,6 @@ import stroom.properties.global.api.GlobalProperty;
 import java.util.List;
 
 public interface GlobalPropertyService {
-    void initialise();
-
     List<GlobalProperty> list();
 
     GlobalProperty load(GlobalProperty globalProperty);

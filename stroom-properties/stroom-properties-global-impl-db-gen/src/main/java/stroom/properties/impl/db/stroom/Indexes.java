@@ -11,6 +11,7 @@ import org.jooq.OrderField;
 import org.jooq.impl.AbstractKeys;
 
 import stroom.properties.impl.db.stroom.tables.Property;
+import stroom.properties.impl.db.stroom.tables.PropertyHistory;
 
 
 /**
@@ -32,6 +33,7 @@ public class Indexes {
 
     public static final Index PROPERTY_NAME = Indexes0.PROPERTY_NAME;
     public static final Index PROPERTY_PRIMARY = Indexes0.PROPERTY_PRIMARY;
+    public static final Index PROPERTY_HISTORY_PRIMARY = Indexes0.PROPERTY_HISTORY_PRIMARY;
 
     // -------------------------------------------------------------------------
     // [#1459] distribute members to avoid static initialisers > 64kb
@@ -40,5 +42,6 @@ public class Indexes {
     private static class Indexes0 extends AbstractKeys {
         public static Index PROPERTY_NAME = createIndex("name", Property.PROPERTY, new OrderField[] { Property.PROPERTY.NAME }, true);
         public static Index PROPERTY_PRIMARY = createIndex("PRIMARY", Property.PROPERTY, new OrderField[] { Property.PROPERTY.ID }, true);
+        public static Index PROPERTY_HISTORY_PRIMARY = createIndex("PRIMARY", PropertyHistory.PROPERTY_HISTORY, new OrderField[] { PropertyHistory.PROPERTY_HISTORY.ID }, true);
     }
 }

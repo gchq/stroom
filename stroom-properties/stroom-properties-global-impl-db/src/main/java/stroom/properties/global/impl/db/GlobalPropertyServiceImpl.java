@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.properties.global.api.GlobalProperty;
 import stroom.security.Security;
+import stroom.security.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.config.StroomProperties;
 import stroom.util.lifecycle.JobTrackedSchedule;
@@ -42,6 +43,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import static stroom.properties.impl.db.stroom.tables.Property.PROPERTY;
+import static stroom.properties.impl.db.stroom.tables.PropertyHistory.PROPERTY_HISTORY;
 
 @Singleton
 class GlobalPropertyServiceImpl implements GlobalPropertyService {
@@ -49,17 +51,21 @@ class GlobalPropertyServiceImpl implements GlobalPropertyService {
 
     private final ConnectionProvider connectionProvider;
     private final Security security;
+    private final SecurityContext securityContext;
     private final Map<String, GlobalProperty> globalProperties = new HashMap<>();
 
     @Inject
     GlobalPropertyServiceImpl(final ConnectionProvider connectionProvider,
-                              final Security security) {
+                              final Security security,
+                              final SecurityContext securityContext) {
         this.connectionProvider = connectionProvider;
         this.security = security;
+        this.securityContext = securityContext;
+
+        initialise();
     }
 
-    @Override
-    public void initialise() {
+    private void initialise() {
         // Setup DB properties.
         LOGGER.info("Adding global properties to the DB");
         loadDefaultProperties();
@@ -98,6 +104,9 @@ class GlobalPropertyServiceImpl implements GlobalPropertyService {
                                 globalProperty.setValue(record.getVal());
                                 globalProperty.setSource("Database");
                                 StroomProperties.setProperty(record.getName(), record.getVal(), StroomProperties.Source.DB);
+                            } else {
+                                // Delete old property.
+                                delete(record.getName());
                             }
                         }
                     });
@@ -168,16 +177,39 @@ class GlobalPropertyServiceImpl implements GlobalPropertyService {
         return security.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
             try (final Connection connection = connectionProvider.getConnection()) {
                 final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+
+                // Change value.
                 create
                         .update(PROPERTY)
                         .set(PROPERTY.VAL, globalProperty.getValue())
                         .where(PROPERTY.NAME.eq(globalProperty.getName()));
+
+                // Record history.
+                create
+                        .insertInto(PROPERTY_HISTORY, PROPERTY_HISTORY.UPDATE_TIME, PROPERTY_HISTORY.UPDATE_USER, PROPERTY_HISTORY.NAME, PROPERTY_HISTORY.VAL)
+                        .values(System.currentTimeMillis(), securityContext.getUserId(), globalProperty.getName(), globalProperty.getValue())
+                        .execute();
+
+                // Update property.
                 StroomProperties.setProperty(globalProperty.getName(), globalProperty.getValue(), StroomProperties.Source.DB);
             } catch (final SQLException e) {
                 LOGGER.error(e.getMessage(), e);
             }
 
             return globalProperty;
+        });
+    }
+
+    private void delete(final String name) {
+        security.secure(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
+            try (final Connection connection = connectionProvider.getConnection()) {
+                final DSLContext create = DSL.using(connection, SQLDialect.MYSQL);
+                create
+                        .deleteFrom(PROPERTY)
+                        .where(PROPERTY.NAME.eq(name));
+            } catch (final SQLException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
         });
     }
 

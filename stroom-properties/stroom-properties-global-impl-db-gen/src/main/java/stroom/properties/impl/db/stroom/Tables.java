@@ -7,6 +7,7 @@ package stroom.properties.impl.db.stroom;
 import javax.annotation.Generated;
 
 import stroom.properties.impl.db.stroom.tables.Property;
+import stroom.properties.impl.db.stroom.tables.PropertyHistory;
 
 
 /**
@@ -26,4 +27,9 @@ public class Tables {
      * The table <code>stroom.property</code>.
      */
     public static final Property PROPERTY = stroom.properties.impl.db.stroom.tables.Property.PROPERTY;
+
+    /**
+     * The table <code>stroom.property_history</code>.
+     */
+    public static final PropertyHistory PROPERTY_HISTORY = stroom.properties.impl.db.stroom.tables.PropertyHistory.PROPERTY_HISTORY;
 }

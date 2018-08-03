@@ -11,6 +11,8 @@ import org.jooq.UniqueKey;
 import org.jooq.impl.AbstractKeys;
 
 import stroom.properties.impl.db.stroom.tables.Property;
+import stroom.properties.impl.db.stroom.tables.PropertyHistory;
+import stroom.properties.impl.db.stroom.tables.records.PropertyHistoryRecord;
 import stroom.properties.impl.db.stroom.tables.records.PropertyRecord;
 
 
@@ -33,6 +35,7 @@ public class Keys {
     // -------------------------------------------------------------------------
 
     public static final Identity<PropertyRecord, Integer> IDENTITY_PROPERTY = Identities0.IDENTITY_PROPERTY;
+    public static final Identity<PropertyHistoryRecord, Integer> IDENTITY_PROPERTY_HISTORY = Identities0.IDENTITY_PROPERTY_HISTORY;
 
     // -------------------------------------------------------------------------
     // UNIQUE and PRIMARY KEY definitions
@@ -40,6 +43,7 @@ public class Keys {
 
     public static final UniqueKey<PropertyRecord> KEY_PROPERTY_PRIMARY = UniqueKeys0.KEY_PROPERTY_PRIMARY;
     public static final UniqueKey<PropertyRecord> KEY_PROPERTY_NAME = UniqueKeys0.KEY_PROPERTY_NAME;
+    public static final UniqueKey<PropertyHistoryRecord> KEY_PROPERTY_HISTORY_PRIMARY = UniqueKeys0.KEY_PROPERTY_HISTORY_PRIMARY;
 
     // -------------------------------------------------------------------------
     // FOREIGN KEY definitions
@@ -52,10 +56,12 @@ public class Keys {
 
     private static class Identities0 extends AbstractKeys {
         public static Identity<PropertyRecord, Integer> IDENTITY_PROPERTY = createIdentity(Property.PROPERTY, Property.PROPERTY.ID);
+        public static Identity<PropertyHistoryRecord, Integer> IDENTITY_PROPERTY_HISTORY = createIdentity(PropertyHistory.PROPERTY_HISTORY, PropertyHistory.PROPERTY_HISTORY.ID);
     }
 
     private static class UniqueKeys0 extends AbstractKeys {
         public static final UniqueKey<PropertyRecord> KEY_PROPERTY_PRIMARY = createUniqueKey(Property.PROPERTY, "KEY_property_PRIMARY", Property.PROPERTY.ID);
         public static final UniqueKey<PropertyRecord> KEY_PROPERTY_NAME = createUniqueKey(Property.PROPERTY, "KEY_property_name", Property.PROPERTY.NAME);
+        public static final UniqueKey<PropertyHistoryRecord> KEY_PROPERTY_HISTORY_PRIMARY = createUniqueKey(PropertyHistory.PROPERTY_HISTORY, "KEY_property_history_PRIMARY", PropertyHistory.PROPERTY_HISTORY.ID);
     }
 }

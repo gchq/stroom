@@ -16,6 +16,7 @@ import org.jooq.impl.SchemaImpl;
 
 import stroom.properties.impl.db.DefaultCatalog;
 import stroom.properties.impl.db.stroom.tables.Property;
+import stroom.properties.impl.db.stroom.tables.PropertyHistory;
 
 
 /**
@@ -31,7 +32,7 @@ import stroom.properties.impl.db.stroom.tables.Property;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Stroom extends SchemaImpl {
 
-    private static final long serialVersionUID = -1127189755;
+    private static final long serialVersionUID = 603408394;
 
     /**
      * The reference instance of <code>stroom</code>
@@ -42,6 +43,11 @@ public class Stroom extends SchemaImpl {
      * The table <code>stroom.property</code>.
      */
     public final Property PROPERTY = stroom.properties.impl.db.stroom.tables.Property.PROPERTY;
+
+    /**
+     * The table <code>stroom.property_history</code>.
+     */
+    public final PropertyHistory PROPERTY_HISTORY = stroom.properties.impl.db.stroom.tables.PropertyHistory.PROPERTY_HISTORY;
 
     /**
      * No further instances allowed
@@ -68,6 +74,7 @@ public class Stroom extends SchemaImpl {
 
     private final List<Table<?>> getTables0() {
         return Arrays.<Table<?>>asList(
-            Property.PROPERTY);
+            Property.PROPERTY,
+            PropertyHistory.PROPERTY_HISTORY);
     }
 }

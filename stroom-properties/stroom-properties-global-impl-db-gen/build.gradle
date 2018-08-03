@@ -31,7 +31,7 @@ if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
                     database {
                         name = 'org.jooq.util.mysql.MySQLDatabase'
                         // Add anything you want included in generation below
-                        includes = 'property'
+                        includes = 'property|property_history'
                         // We don't want to include flyway versioning
                         excludes = 'property_schema_history'
                     }

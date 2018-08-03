@@ -18,14 +18,12 @@ public class GlobalPropertiesDbModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(GlobalPropertyService.class).to(GlobalPropertyServiceImpl.class);
-//        final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
-//        clearableBinder.addBinding().to(Cleanup.class);
+        bind(GlobalPropertyService.class).to(GlobalPropertyServiceImpl.class).asEagerSingleton();
     }
 
     @Provides
     @Singleton
-    ConnectionProvider getConnectionProvider(final PropertyService propertyService, final GlobalPropertyService globalPropertyService) {
+    ConnectionProvider getConnectionProvider(final PropertyService propertyService) {
         final ConnectionConfig connectionConfig = getConnectionConfig(propertyService);
         final ConnectionPoolConfig connectionPoolConfig = getConnectionPoolConfig(propertyService);
 
@@ -39,7 +37,6 @@ public class GlobalPropertiesDbModule extends AbstractModule {
 
         final ConnectionProvider connectionProvider = new ConnectionProvider(config);
         flyway(connectionProvider);
-        globalPropertyService.initialise();
 
         return connectionProvider;
     }
