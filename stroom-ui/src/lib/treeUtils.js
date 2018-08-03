@@ -124,7 +124,7 @@ export function copyItemsInTree(rootNode, itemsToCopy, destination) {
 }
 
 export function findByUuids(treeNode, uuids) {
-  let results = [];
+  const results = [];
 
   iterateNodes(treeNode, (lineage, node) => {
     if (uuids.includes(node.uuid)) {
@@ -416,7 +416,7 @@ export function getIsInFilteredMap(treeNode, filterFunction) {
         .map(n => n.uuid)
         .concat([node.uuid])
         .filter(matchUuid => !inFilteredMap[matchUuid])
-        .forEach(matchUuid => (inFilteredMap[node.uuid] = true));
+        .forEach(matchUuid => (inFilteredMap[matchUuid] = true));
     }
   });
 

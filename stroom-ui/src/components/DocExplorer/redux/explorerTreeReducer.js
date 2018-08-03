@@ -78,7 +78,6 @@ export const actionCreators = createActions({
 
 const defaultExplorerState = {
   isFolderOpen: {}, // in response to user actions
-  isVisible: {}, // based on type filters
   inTypeFilter: {},
 };
 
@@ -86,55 +85,29 @@ const defaultState = {
   documentTree: undefined, // The hierarchy of doc refs in folders
   explorers: {},
   isTreeReady: false,
-  isDocRefTypeListReady: false
+  isDocRefTypeListReady: false,
 };
 
 function getIsValidFilterTerm(filterTerm) {
   return !!filterTerm && filterTerm.length > 1; // at least 2 characters
 }
 
-function getIsVisibleMap(documentTree, typeFilterFunc) {
-  const isVisible = {};
-
-  iterateNodes(documentTree, (lineage, node) => {
-    const nodeIsVisible = typeFilterFunc(lineage, node);
-    if (nodeIsVisible) {
-      lineage.forEach(n => (isVisible[n.uuid] = true));
-    }
-
-    isVisible[node.uuid] = nodeIsVisible;
-  });
-
-  return isVisible;
-}
-
-function getUpdatedExplorer({
-  documentTree, explorer, typeFilters, isNewExplorer,
-}) {
-  const typeFilterFunc = (l, n) => typeFilters.length === 0 || typeFilters.includes(n.type);
+function getUpdatedExplorer(documentTree, explorer) {
+  const typeFilterFunc = (l, n) =>
+    explorer.typeFilters.length === 0 || explorer.typeFilters.includes(n.type);
   const inTypeFilter = getIsInFilteredMap(documentTree, typeFilterFunc);
-
-  // Derive the combined mapping of visibility
-  const isVisible = getIsVisibleMap(documentTree, typeFilterFunc);
 
   return {
     ...explorer,
-    typeFilters,
-    isVisible,
     inTypeFilter,
   };
 }
 
-function getStateAfterTreeUpdate(state, documentTree, isNewTree) {
+function getStateAfterTreeUpdate(state, documentTree) {
   // Update all the explorers with the new tree
   const explorers = {};
   Object.entries(state.explorers).forEach((k) => {
-    explorers[k[0]] = getUpdatedExplorer({
-      documentTree,
-      explorer: k[1],
-      typeFilters: k[1].typeFilters,
-      isNewExplorer: isNewTree,
-    });
+    explorers[k[0]] = getUpdatedExplorer(documentTree, k[1]);
   });
 
   return {
@@ -157,7 +130,7 @@ export const reducer = handleActions(
   {
     // Receive the current state of the explorer tree
     DOC_TREE_RECEIVED: (state, action) =>
-      getStateAfterTreeUpdate(state, action.payload.documentTree, true),
+      getStateAfterTreeUpdate(state, action.payload.documentTree),
 
     // When an explorer is opened (if this ID has been opened before, it will use that old state)
     DOC_EXPLORER_OPENED: (state, action) => {
@@ -167,16 +140,15 @@ export const reducer = handleActions(
         explorers: {
           ...state.explorers,
           [explorerId]: state.explorers[explorerId] || {
-            ...getUpdatedExplorer({
-              documentTree: state.documentTree,
-              explorer: {
+            ...getUpdatedExplorer(
+              state.documentTree,
+              {
                 ...defaultExplorerState,
                 isSelected: allowMultiSelect ? {} : undefined,
                 isSelectedList: allowMultiSelect ? [] : undefined,
+                typeFilters,
               },
-              typeFilters,
-              isNewExplorer: true,
-            }),
+            ),
             allowMultiSelect,
           },
         },
@@ -254,7 +226,7 @@ export const reducer = handleActions(
             }
 
             if (addThisOne) {
-              isSelected[node.uuid] = explorer.isVisible[node.uuid];
+              isSelected[node.uuid] = explorer.inTypeFilter[node.uuid];
             }
 
             // Skip children if the folder is NOT open
@@ -308,7 +280,7 @@ export const reducer = handleActions(
         bulkActionResult.docRefs.map(d => d.uuid),
       );
 
-      return getStateAfterTreeUpdate(state, documentTree, false);
+      return getStateAfterTreeUpdate(state, documentTree);
     },
 
     DOC_REF_CREATED: (state, action) => {
@@ -316,14 +288,14 @@ export const reducer = handleActions(
 
       const documentTree = addItemToTree(state.documentTree, parentFolder.uuid, docRef);
 
-      return getStateAfterTreeUpdate(state, documentTree, false);
+      return getStateAfterTreeUpdate(state, documentTree);
     },
 
     DOC_REF_RENAMED: (state, action) => {
       const { docRef, resultDocRef } = action.payload;
 
       const documentTree = updateItemInTree(state.documentTree, docRef.uuid, resultDocRef);
-      return getStateAfterTreeUpdate(state, documentTree, false);
+      return getStateAfterTreeUpdate(state, documentTree);
     },
 
     DOC_REFS_COPIED: (state, action) => {
@@ -334,7 +306,7 @@ export const reducer = handleActions(
 
       const documentTree = copyItemsInTree(state.documentTree, docRefs, destination);
 
-      return getStateAfterTreeUpdate(state, documentTree, false);
+      return getStateAfterTreeUpdate(state, documentTree);
     },
 
     DOC_REFS_MOVED: (state, action) => {
@@ -345,7 +317,7 @@ export const reducer = handleActions(
 
       const documentTree = moveItemsInTree(state.documentTree, docRefs, destination);
 
-      return getStateAfterTreeUpdate(state, documentTree, false);
+      return getStateAfterTreeUpdate(state, documentTree);
     },
   },
   defaultState,

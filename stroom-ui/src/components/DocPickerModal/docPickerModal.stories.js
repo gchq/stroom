@@ -45,5 +45,5 @@ storiesOf('Doc Ref Modal Picker', module)
     <DocPickerModal explorerId="modal3" typeFilters={['Feed', 'Dictionary']} />
   ))
   .add('Doc Ref Picker (filter to Folders)', () => (
-    <DocPickerModal explorerId="modal3" typeFilters={['Folder']} />
+    <DocPickerModal explorerId="modal4" typeFilters={['Folder']} />
   ));
