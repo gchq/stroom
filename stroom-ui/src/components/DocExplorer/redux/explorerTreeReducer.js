@@ -94,7 +94,7 @@ function getIsValidFilterTerm(filterTerm) {
 
 function getUpdatedExplorer(documentTree, explorer) {
   const typeFilterFunc = (l, n) =>
-    explorer.typeFilters.length === 0 || explorer.typeFilters.includes(n.type);
+    !explorer.typeFilters || explorer.typeFilters.length === 0 || explorer.typeFilters.includes(n.type);
   const inTypeFilter = getIsInFilteredMap(documentTree, typeFilterFunc);
 
   return {
