@@ -1,4 +1,4 @@
-/*
+  /*
  * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,13 @@ import { storiesOf, addDecorator } from '@storybook/react';
 import StoryRouter from 'storybook-react-router';
 import { compose, withState } from 'recompose';
 
-import { DocExplorer, DocRefInfoModal, DocRef, Folder, DocPickerModal } from './index';
+import {
+  DocExplorer,
+  DocRefInfoModal,
+  DocRef,
+  Folder
+} from './index';
+import { DocPickerModal } from 'components/DocPickerModal';
 import { actionCreators } from './redux';
 import { testTree, fromSetupSampleData, testDocRefsTypes } from './test';
 import { pickRandomItem } from 'lib/treeUtils';
@@ -33,7 +39,7 @@ import { ControlledInputDecorator } from 'lib/storybook/ControlledInputDecorator
 import 'styles/main.css';
 import 'semantic/dist/semantic.min.css';
 
-const { permissionInheritancePicked, docRefInfoReceived, docRefInfoOpened } = actionCreators;
+const { docRefInfoReceived, docRefInfoOpened } = actionCreators;
 
 storiesOf('Document Explorer (small)', module)
   .addDecorator(PollyDecorator({ documentTree: testTree, docRefTypes: testDocRefsTypes }))
@@ -50,6 +56,7 @@ storiesOf('Document Explorer (setupSampleData)', module)
   .addDecorator(DragDropDecorator)
   .addDecorator(StoryRouter())
   .add('Explorer Tree', () => <DocExplorer explorerId="multi-select-dnd" />);
+
 
 const timeCreated = Date.now();
 
@@ -72,17 +79,3 @@ storiesOf('Doc Ref Info Modal', module)
   }))
   .add('Doc Ref Info Modal', () => <DocRefInfoModal />);
 
-storiesOf('Doc Ref Modal Picker', module)
-  .addDecorator(ControlledInputDecorator) // must be the 'first' one
-  .addDecorator(PollyDecorator({ documentTree: fromSetupSampleData, docRefTypes: testDocRefsTypes }))
-  .addDecorator(ReduxDecorator)
-  .add('Doc Ref Picker', () => <DocPickerModal explorerId="modal1" />)
-  .add('Doc Ref Picker (filter to pipeline)', () => (
-    <DocPickerModal explorerId="modal2" typeFilters={['Pipeline']} />
-  ))
-  .add('Doc Ref Picker (filter to feed AND dictionary)', () => (
-    <DocPickerModal explorerId="modal3" typeFilters={['Feed', 'Dictionary']} />
-  ))
-  .add('Doc Ref Picker (filter to Folders)', () => (
-    <DocPickerModal explorerId="modal3" typeFilters={['Folder']} />
-  ));

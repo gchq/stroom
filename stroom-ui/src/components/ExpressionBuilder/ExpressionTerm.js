@@ -25,7 +25,7 @@ import { DragSource } from 'react-dnd';
 
 import ItemTypes from './dragDropTypes';
 import { displayValues } from './conditions';
-import { DocPickerModal } from '../DocExplorer';
+import DocPickerModal from 'components/DocPickerModal';
 import { actionCreators, joinDictionaryTermId } from './redux';
 
 const { expressionItemUpdated, expressionItemDeleted } = actionCreators;

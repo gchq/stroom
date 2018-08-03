@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import DocExplorer from './DocExplorer';
-import DocRefInfoModal from './DocRefInfoModal';
-import withExplorerTree from './withExplorerTree';
-import explorerClient from './explorerClient';
-import ActionBarItems from './ActionBarItems';
-import NewDocDialog from './NewDocDialog';
+import { createActions, handleActions } from 'redux-actions';
 
-export {
-  DocExplorer,
-  DocRefInfoModal,
-  withExplorerTree,
-  explorerClient,
-  ActionBarItems,
-  NewDocDialog,
-};
+export const actionCreators = createActions({
+  DOC_REF_TYPES_RECEIVED: docRefTypes => ({ docRefTypes }),
+});
 
-export default DocExplorer;
+const defaultState = []
+
+export const reducer = handleActions(
+  {
+    // Receive the set of doc ref types used in the current tree
+    DOC_REF_TYPES_RECEIVED: (state, { payload: { docRefTypes } }) => docRefTypes,
+  },
+  defaultState,
+);

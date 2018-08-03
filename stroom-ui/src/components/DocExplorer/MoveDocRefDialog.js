@@ -25,7 +25,7 @@ import { findItem } from 'lib/treeUtils';
 import { actionCreators } from './redux';
 import { moveDocuments } from './explorerClient';
 
-import DocPickerModal from './DocPickerModal';
+import DocPickerModal from 'components/DocPickerModal';
 import PermissionInheritancePicker from 'components/PermissionInheritancePicker';
 
 const { completeDocRefMove } = actionCreators;

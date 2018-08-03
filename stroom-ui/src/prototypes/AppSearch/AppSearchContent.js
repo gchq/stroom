@@ -18,11 +18,12 @@ import React from 'react';
 
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
-import { Menu, Input, Breadcrumb } from 'semantic-ui-react';
+import { Menu, Input, Breadcrumb, Popup, Button } from 'semantic-ui-react';
 import { withRouter } from 'react-router-dom';
 
 import { actionCreators as appSearchActionCreators } from './redux';
-import withExplorerTree from 'components/DocExplorer/withExplorerTree';
+import { withExplorerTree } from 'components/DocExplorer';
+import { DocTypeFilters } from 'components/DocRefTypes';
 import { openDocRef } from 'prototypes/RecentItems';
 
 /**
@@ -121,6 +122,9 @@ class AppSearchContent extends React.Component {
           ref="searchTermInput"
           autoFocus
         />
+        <Popup trigger={<Button icon="filter" />} flowing hoverable>
+          <DocTypeFilters value={[]} onChange={v => console.log('Nope', v)} />
+        </Popup>
         <Menu vertical fluid>
           {searchResults.map((searchResult, i, arr) => {
             // Compose the data that provides the breadcrumb to this node
