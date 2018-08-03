@@ -99,7 +99,7 @@ public class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
 
         final long entryCount = LmdbUtils.getEntryCount(lmdbEnv, dbi);
         assertThat(entryCount).isEqualTo(1);
-        LmdbUtils.logRawDatabaseContents(lmdbEnv, dbi);
+        LmdbUtils.logRawDatabaseContents(lmdbEnv, dbi, LOGGER::info);
 
         final Long entries = LmdbUtils.getWithReadTxn(lmdbEnv, txn ->
                 dbi.stat(txn).entries);

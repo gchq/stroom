@@ -21,6 +21,7 @@ import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public interface LmdbDb {
 
@@ -28,15 +29,23 @@ public interface LmdbDb {
 
     Map<String, String> getDbInfo();
 
-    long getEntryCount(Txn<ByteBuffer> txn);
-
     long getEntryCount();
+
+    long getEntryCount(Txn<ByteBuffer> txn);
 
     void logDatabaseContents(Txn<ByteBuffer> txn);
 
+    void logDatabaseContents(Txn<ByteBuffer> txn, Consumer<String> logEntryConsumer);
+
     void logDatabaseContents();
+
+    void logDatabaseContents(Consumer<String> logEntryConsumer);
+
+    void logRawDatabaseContents();
 
     void logRawDatabaseContents(Txn<ByteBuffer> txn);
 
-    void logRawDatabaseContents();
+    void logRawDatabaseContents(Txn<ByteBuffer> txn, Consumer<String> logEntryConsumer);
+
+    void logRawDatabaseContents(Consumer<String> logEntryConsumer);
 }

@@ -266,7 +266,8 @@ public class LmdbUtils {
                                            final Dbi<ByteBuffer> dbi,
                                            final Txn<ByteBuffer> txn,
                                            final Function<ByteBuffer, String> keyToStringFunc,
-                                           final Function<ByteBuffer, String> valueToStringFunc) {
+                                           final Function<ByteBuffer, String> valueToStringFunc,
+                                           final Consumer<String> logEntryConsumer) {
 
         final StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(LambdaLogger.buildMessage("Dumping {} entries for database [{}]",
@@ -281,9 +282,10 @@ public class LmdbUtils {
                         valueToStringFunc.apply(keyVal.val())));
             }
         }
-        LOGGER.debug(stringBuilder.toString());
-
+        logEntryConsumer.accept(stringBuilder.toString());
+//        LOGGER.debug(stringBuilder.toString());
     }
+
     /**
      * Dumps all entries in the database to a single logger entry with one line per database entry.
      * This could potentially return thousands of rows so is only intended for small scale use in
@@ -294,10 +296,11 @@ public class LmdbUtils {
     public static void logDatabaseContents(final Env<ByteBuffer> env,
                                            final Dbi<ByteBuffer> dbi,
                                            final Function<ByteBuffer, String> keyToStringFunc,
-                                           final Function<ByteBuffer, String> valueToStringFunc) {
+                                           final Function<ByteBuffer, String> valueToStringFunc,
+                                           final Consumer<String> logEntryConsumer) {
 
         doWithReadTxn(env, txn ->
-                logDatabaseContents(env, dbi, txn, keyToStringFunc, valueToStringFunc));
+                logDatabaseContents(env, dbi, txn, keyToStringFunc, valueToStringFunc, logEntryConsumer));
     }
 
     /**
@@ -307,25 +310,29 @@ public class LmdbUtils {
      * is configured with reverse keys). The keys/values are output as hex representations of the
      * byte values.
      */
-    public static void logRawDatabaseContents(final Env<ByteBuffer> env, final Dbi<ByteBuffer> dbi) {
-        logDatabaseContents(env, dbi, ByteBufferUtils::byteBufferToHex, ByteBufferUtils::byteBufferToHex);
+    public static void logRawDatabaseContents(final Env<ByteBuffer> env,
+                                              final Dbi<ByteBuffer> dbi,
+                                              final Consumer<String> logEntryConsumer) {
+        logDatabaseContents(env, dbi, ByteBufferUtils::byteBufferToHex, ByteBufferUtils::byteBufferToHex, logEntryConsumer);
     }
 
     public static void logRawDatabaseContents(final Env<ByteBuffer> env,
                                               final Dbi<ByteBuffer> dbi,
-                                              final Txn<ByteBuffer> txn) {
-        logDatabaseContents(env, dbi, txn, ByteBufferUtils::byteBufferToHex, ByteBufferUtils::byteBufferToHex);
+                                              final Txn<ByteBuffer> txn,
+                                              final Consumer<String> logEntryConsumer) {
+        logDatabaseContents(env, dbi, txn, ByteBufferUtils::byteBufferToHex, ByteBufferUtils::byteBufferToHex, logEntryConsumer);
     }
 
     /**
      * Only intended for use in tests as the DB could be massive and thus produce a LOT of logging
      */
     public static void logContentsInRange(final Env<ByteBuffer> env,
-                            final Dbi<ByteBuffer> dbi,
-                            final Txn<ByteBuffer> txn,
-                            final KeyRange<ByteBuffer> keyRange,
-                            final Function<ByteBuffer, String> keyToStringFunc,
-                            final Function<ByteBuffer, String> valueToStringFunc) {
+                                          final Dbi<ByteBuffer> dbi,
+                                          final Txn<ByteBuffer> txn,
+                                          final KeyRange<ByteBuffer> keyRange,
+                                          final Function<ByteBuffer, String> keyToStringFunc,
+                                          final Function<ByteBuffer, String> valueToStringFunc,
+                                          final Consumer<String> logEntryConsumer) {
 
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(LambdaLogger.buildMessage("Dumping entries in range {} [[{}] to [{}]] for database [{}]",
@@ -341,32 +348,36 @@ public class LmdbUtils {
                         valueToStringFunc.apply(keyVal.val())));
             }
         }
-        LOGGER.debug(stringBuilder.toString());
+        logEntryConsumer.accept(stringBuilder.toString());
     }
 
     public static void logContentsInRange(final Env<ByteBuffer> env,
-                            final Dbi<ByteBuffer> dbi,
-                            final KeyRange<ByteBuffer> keyRange,
-                            final Function<ByteBuffer, String> keyToStringFunc,
-                            final Function<ByteBuffer, String> valueToStringFunc) {
+                                          final Dbi<ByteBuffer> dbi,
+                                          final KeyRange<ByteBuffer> keyRange,
+                                          final Function<ByteBuffer, String> keyToStringFunc,
+                                          final Function<ByteBuffer, String> valueToStringFunc,
+                                          final Consumer<String> logEntryConsumer) {
         doWithReadTxn(env, txn ->
-                logContentsInRange(env, dbi, txn, keyRange, keyToStringFunc, valueToStringFunc)
+                logContentsInRange(env, dbi, txn, keyRange, keyToStringFunc, valueToStringFunc, logEntryConsumer)
         );
-
     }
 
     public static void logRawContentsInRange(final Env<ByteBuffer> env,
                                              final Dbi<ByteBuffer> dbi,
                                              final Txn<ByteBuffer> txn,
-                                             final KeyRange<ByteBuffer> keyRange) {
-        logContentsInRange(env, dbi, txn, keyRange, ByteBufferUtils::byteBufferToHex, ByteBufferUtils::byteBufferToHex);
+                                             final KeyRange<ByteBuffer> keyRange,
+                                             final Consumer<String> logEntryConsumer) {
+        logContentsInRange(env, dbi, txn, keyRange, ByteBufferUtils::byteBufferToHex,
+                ByteBufferUtils::byteBufferToHex, logEntryConsumer);
     }
 
     public static void logRawContentsInRange(final Env<ByteBuffer> env,
-                            final Dbi<ByteBuffer> dbi,
-                            final KeyRange<ByteBuffer> keyRange) {
+                                             final Dbi<ByteBuffer> dbi,
+                                             final KeyRange<ByteBuffer> keyRange,
+                                             final Consumer<String> logEntryConsumer) {
         doWithReadTxn(env, txn ->
-                logContentsInRange(env, dbi, txn, keyRange, ByteBufferUtils::byteBufferToHex, ByteBufferUtils::byteBufferToHex)
+                logContentsInRange(env, dbi, txn, keyRange, ByteBufferUtils::byteBufferToHex,
+                        ByteBufferUtils::byteBufferToHex, logEntryConsumer)
         );
     }
 }

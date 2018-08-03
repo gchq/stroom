@@ -20,6 +20,10 @@ package stroom.refdata.offheapstore;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Striped;
 import com.google.inject.assistedinject.Assisted;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
+import io.vavr.Tuple3;
+import io.vavr.Tuple4;
 import org.apache.commons.io.FileUtils;
 import org.lmdbjava.Env;
 import org.lmdbjava.Txn;
@@ -391,6 +395,8 @@ public class RefDataOffHeapStore implements RefDataStore {
      * @param nowMs Allows the setting of the current time for testing purposes
      */
     void purgeOldData(final long nowMs) {
+        final Instant startTime = Instant.now();
+        final AtomicReference<Tuple4<Integer, Integer, Integer, Integer>> totalsRef = new AtomicReference<>(Tuple.of(0, 0, 0, 0));
         try (final PooledByteBuffer accessTimeThresholdPooledBuf = getAccessTimeCutOffBuffer(nowMs);
              final PooledByteBufferPair procInfoPooledBufferPair = processingInfoDb.getPooledBufferPair()) {
 
@@ -466,7 +472,16 @@ public class RefDataOffHeapStore implements RefDataStore {
                                         false);
 
                                 // purge the data associated with this ref stream def
-                                purgeRefStreamData(writeTxn, refStreamDefinition);
+                                final Tuple3<Integer, Integer, Integer> refStreamSummaryInfo = purgeRefStreamData(
+                                        writeTxn, refStreamDefinition);
+
+                                // aggregate the counts
+                                totalsRef.getAndUpdate(totals ->
+                                        totals.map((refStreamDefCnt, mapCnt, delCnt, deRefCnt) ->
+                                                Tuple.of(refStreamDefCnt + 1,
+                                                        mapCnt + refStreamSummaryInfo._1(),
+                                                        delCnt + refStreamSummaryInfo._2(),
+                                                        deRefCnt + refStreamSummaryInfo._3())));
 
                                 //now delete the proc info entry
                                 LOGGER.debug("Deleting processing info entry for {}", refStreamDefinition);
@@ -490,8 +505,14 @@ public class RefDataOffHeapStore implements RefDataStore {
             } while (wasMatchFound.get());
         }
 
-
-        //TODO
+        final Tuple4<Integer, Integer, Integer, Integer> totals = totalsRef.get();
+        LOGGER.info("purgeOldData completed in {}, {} refStreamDefs purged, " +
+                        "{} maps purged, {} values deleted, {} values de-referenced",
+                Duration.between(startTime, Instant.now()),
+                totals._1(),
+                totals._2(),
+                totals._3(),
+                totals._4());
 
         //open a write txn
         //open a cursor on the process info table to scan all records
@@ -535,11 +556,12 @@ public class RefDataOffHeapStore implements RefDataStore {
         // change to ref counter MUST be done in same txn as the thing that is making it change, e.g the KV entry removal
     }
 
-    private void purgeRefStreamData(final Txn<ByteBuffer> writeTxn,
-                                    final RefStreamDefinition refStreamDefinition) {
+    private Tuple3<Integer, Integer, Integer> purgeRefStreamData(final Txn<ByteBuffer> writeTxn,
+                                                                 final RefStreamDefinition refStreamDefinition) {
 
         LOGGER.debug("purgeRefStreamData({})", refStreamDefinition);
 
+        Tuple3<Integer, Integer, Integer> summaryInfo = Tuple.of(0, 0, 0);
         int cnt = 0;
         Optional<UID> optMapUid;
         try (PooledByteBuffer pooledUidBuffer = byteBufferPool.getPooledByteBuffer(UID.UID_ARRAY_LENGTH)) {
@@ -552,8 +574,10 @@ public class RefDataOffHeapStore implements RefDataStore {
                 if (optMapUid.isPresent()) {
                     UID mapUid = optMapUid.get();
                     LOGGER.debug("Found mapUid {} for refStreamDefinition {}", mapUid, refStreamDefinition);
-                    purgeMapData(writeTxn, optMapUid.get());
+                    Tuple2<Integer, Integer> dataPurgeCounts = purgeMapData(writeTxn, optMapUid.get());
                     cnt++;
+                    summaryInfo = summaryInfo.map((mapCnt, delCnt, deRefCnt) ->
+                            Tuple.of(mapCnt + 1, delCnt + dataPurgeCounts._1(), deRefCnt + dataPurgeCounts._2()));
                 } else {
                     LOGGER.debug("No more map definitions to purge for refStreamDefinition {}", refStreamDefinition);
                 }
@@ -561,10 +585,11 @@ public class RefDataOffHeapStore implements RefDataStore {
         }
 
         LOGGER.info("Purged data for {} map(s) for {}", cnt, refStreamDefinition);
+        return summaryInfo;
     }
 
-    private void purgeMapData(final Txn<ByteBuffer> writeTxn,
-                              final UID mapUid) {
+    private Tuple2<Integer, Integer> purgeMapData(final Txn<ByteBuffer> writeTxn,
+                                                  final UID mapUid) {
 
         LOGGER.debug("purgeMapData(writeTxn, {})", mapUid);
 
@@ -604,6 +629,8 @@ public class RefDataOffHeapStore implements RefDataStore {
         LOGGER.debug("Deleting range/value entries and de-referencing/deleting their values");
 
         mapDefinitionUIDStore.deletePair(writeTxn, mapUid);
+
+        return Tuple.of(valueEntryDeleteCount.intValue(), valueEntryDeReferenceCount.intValue());
     }
 
     public void doWithRefStreamDefinitionLock(final RefStreamDefinition refStreamDefinition, final Runnable work) {
@@ -634,12 +661,19 @@ public class RefDataOffHeapStore implements RefDataStore {
      * For use in testing at SMALL scale. Dumps the content of each DB to the logger.
      */
     void logAllContents() {
-        processingInfoDb.logDatabaseContents();
-        mapUidForwardDb.logDatabaseContents();
-        mapUidReverseDb.logDatabaseContents();
-        keyValueStoreDb.logDatabaseContents();
-        rangeStoreDb.logDatabaseContents();
-        valueStoreDb.logDatabaseContents();
+        logAllContents(LOGGER::debug);
+    }
+
+    /**
+     * For use in testing at SMALL scale. Dumps the content of each DB to the logger.
+     */
+    void logAllContents(Consumer<String> logEntryConsumer) {
+        processingInfoDb.logDatabaseContents(logEntryConsumer);
+        mapUidForwardDb.logDatabaseContents(logEntryConsumer);
+        mapUidReverseDb.logDatabaseContents(logEntryConsumer);
+        keyValueStoreDb.logDatabaseContents(logEntryConsumer);
+        rangeStoreDb.logDatabaseContents(logEntryConsumer);
+        valueStoreDb.logDatabaseContents(logEntryConsumer);
 //        valueReferenceCountDb.logDatabaseContents();
     }
 

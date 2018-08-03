@@ -49,7 +49,7 @@ import java.util.function.Function;
  * <p>
  * See https://github.com/lmdbjava/lmdbjava/issues/81 for more information on the use/re-use
  * of the ByteBuffers passed to or returned from LMDBJava.
- *
+ * <p>
  * Dos/Don'ts
  * ~~~~~~~~~~
  * DO NOT use/mutate a key/value buffer from a cursor outside of the cursor's scope.
@@ -77,10 +77,10 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
 
     /**
      * @param lmdbEnvironment The LMDB {@link Env} to add this DB to.
-     * @param byteBufferPool A self loading pool of ByteBuffers.
-     * @param keySerde The {@link Serde} to use for the keys.
-     * @param valueSerde The {@link Serde} to use for the values.
-     * @param dbName The name of the database.
+     * @param byteBufferPool  A self loading pool of ByteBuffers.
+     * @param keySerde        The {@link Serde} to use for the keys.
+     * @param valueSerde      The {@link Serde} to use for the values.
+     * @param dbName          The name of the database.
      */
     public AbstractLmdbDb(final Env<ByteBuffer> lmdbEnvironment,
                           final ByteBufferPool byteBufferPool,
@@ -389,7 +389,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
     }
 
     public boolean delete(final Txn<ByteBuffer> writeTxn, final K key) {
-        try (final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()){
+        try (final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()) {
             keySerde.serialize(pooledKeyBuffer.getByteBuffer(), key);
             boolean result = lmdbDbi.delete(writeTxn, pooledKeyBuffer.getByteBuffer());
             LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("delete({}) returned {}", key, result));
@@ -475,13 +475,18 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
      * serdes to de-serialise the data. Only for use at SMALL scale in tests.
      */
     @Override
-    public void logDatabaseContents(final Txn<ByteBuffer> txn) {
+    public void logDatabaseContents(final Txn<ByteBuffer> txn, Consumer<String> logEntryConsumer) {
         LmdbUtils.logDatabaseContents(
                 lmdbEnvironment,
                 lmdbDbi,
                 txn,
                 byteBuffer -> keySerde.deserialize(byteBuffer).toString(),
-                byteBuffer -> valueSerde.deserialize(byteBuffer).toString());
+                byteBuffer -> valueSerde.deserialize(byteBuffer).toString(),
+                logEntryConsumer);
+    }
+
+    public void logDatabaseContents(final Txn<ByteBuffer> txn) {
+        logRawDatabaseContents(txn, LOGGER::debug);
     }
 
     /**
@@ -492,20 +497,31 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
      * to the resulting objects.
      */
     @Override
-    public void logDatabaseContents() {
+    public void logDatabaseContents(Consumer<String> logEntryConsumer) {
         LmdbUtils.logDatabaseContents(
                 lmdbEnvironment,
                 lmdbDbi,
                 byteBuffer -> keySerde.deserialize(byteBuffer).toString(),
-                byteBuffer -> valueSerde.deserialize(byteBuffer).toString());
+                byteBuffer -> valueSerde.deserialize(byteBuffer).toString(),
+                logEntryConsumer);
     }
 
     @Override
-    public void logRawDatabaseContents(final Txn<ByteBuffer> txn) {
+    public void logDatabaseContents() {
+        logDatabaseContents(LOGGER::debug);
+    }
+
+    @Override
+    public void logRawDatabaseContents(final Txn<ByteBuffer> txn, Consumer<String> logEntryConsumer) {
         LmdbUtils.logRawDatabaseContents(
                 lmdbEnvironment,
                 lmdbDbi,
-                txn);
+                txn,
+                logEntryConsumer);
+    }
+
+    public void logRawDatabaseContents(final Txn<ByteBuffer> txn) {
+        logRawDatabaseContents(txn, LOGGER::debug);
     }
 
     /**
@@ -516,10 +532,15 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
      * byte values.
      */
     @Override
-    public void logRawDatabaseContents() {
+    public void logRawDatabaseContents(Consumer<String> logEntryConsumer) {
         LmdbUtils.logRawDatabaseContents(
                 lmdbEnvironment,
-                lmdbDbi);
+                lmdbDbi,
+                logEntryConsumer);
+    }
+    
+    public void logRawDatabaseContents() {
+        logRawDatabaseContents(LOGGER::debug);
     }
 
     public K deserializeKey(final ByteBuffer keyBuffer) {
