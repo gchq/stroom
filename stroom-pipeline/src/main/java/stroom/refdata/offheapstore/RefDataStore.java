@@ -17,10 +17,12 @@
 
 package stroom.refdata.offheapstore;
 
+import stroom.util.HasHealthCheck;
+
 import java.util.Optional;
 import java.util.function.Consumer;
 
-public interface RefDataStore {
+public interface RefDataStore extends HasHealthCheck {
 
     /**
      * Returns the {@link RefDataProcessingInfo} for the passed {@link MapDefinition}, or an empty

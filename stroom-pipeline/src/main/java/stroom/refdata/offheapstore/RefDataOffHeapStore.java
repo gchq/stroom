@@ -17,6 +17,7 @@
 
 package stroom.refdata.offheapstore;
 
+import com.codahale.metrics.health.HealthCheck;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Striped;
 import com.google.inject.assistedinject.Assisted;
@@ -41,13 +42,16 @@ import stroom.refdata.offheapstore.databases.ProcessingInfoDb;
 import stroom.refdata.offheapstore.databases.RangeStoreDb;
 import stroom.refdata.offheapstore.databases.ValueStoreDb;
 import stroom.refdata.offheapstore.serdes.RefDataProcessingInfoSerde;
+import stroom.util.HasHealthCheck;
 import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
@@ -64,6 +68,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class RefDataOffHeapStore implements RefDataStore {
 
@@ -714,9 +719,12 @@ public class RefDataOffHeapStore implements RefDataStore {
         return lmdbDb.getEntryCount();
     }
 
+    private String getDataRetentionAgeString() {
+        return stroomPropertyService.getProperty(DATA_RETENTION_AGE_PROP_KEY, DATA_RETENTION_AGE_DEFAULT_VALUE);
+    }
+
     private PooledByteBuffer getAccessTimeCutOffBuffer(final long nowMs) {
-        long purgeAge = ModelStringUtil.parseDurationString(
-                stroomPropertyService.getProperty(DATA_RETENTION_AGE_PROP_KEY, DATA_RETENTION_AGE_DEFAULT_VALUE));
+        long purgeAge = ModelStringUtil.parseDurationString(getDataRetentionAgeString());
         long purgeCutOff = nowMs - purgeAge;
 
         LOGGER.info("Using purge duration {}, cut off {}, now {}",
@@ -728,6 +736,52 @@ public class RefDataOffHeapStore implements RefDataStore {
         pooledByteBuffer.getByteBuffer().putLong(purgeCutOff);
         pooledByteBuffer.getByteBuffer().flip();
         return pooledByteBuffer;
+    }
+
+    @Override
+    public HealthCheck.Result getHealth() {
+
+        try {
+            HealthCheck.ResultBuilder builder = HealthCheck.Result.builder();
+            builder
+                    .healthy()
+                    .withDetail("Path", dbDir.toAbsolutePath().toString())
+                    .withDetail("Environment max size", ModelStringUtil.formatIECByteSizeString(maxSize))
+                    .withDetail("Environment current size", ModelStringUtil.formatIECByteSizeString(getEnvironmentDiskUsage()))
+                    .withDetail("Purge age", getDataRetentionAgeString())
+                    .withDetail("Max readers", maxReaders);
+
+            LmdbUtils.doWithReadTxn(lmdbEnvironment, txn -> {
+                builder.withDetail("Database entry counts", databaseMap.entrySet().stream()
+                        .collect(HasHealthCheck.buildTreeMapCollector(
+                                Map.Entry::getKey,
+                                entry -> entry.getValue().getEntryCount(txn))));
+            });
+            return builder.build();
+        } catch (RuntimeException e) {
+            return HealthCheck.Result.builder()
+                    .unhealthy(e)
+                    .build();
+        }
+    }
+
+    private long getEnvironmentDiskUsage() {
+        long totalSizeBytes;
+        try (final Stream<Path> fileStream = Files.list(dbDir)) {
+            totalSizeBytes = fileStream
+                    .mapToLong(path -> {
+                        try {
+                            return Files.size(path);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    })
+                    .sum();
+        } catch (IOException | RuntimeException e) {
+            LOGGER.error("Error calculating disk usage for path {}", dbDir.toAbsolutePath().toString(), e);
+            totalSizeBytes = -1;
+        }
+        return totalSizeBytes;
     }
 
 
