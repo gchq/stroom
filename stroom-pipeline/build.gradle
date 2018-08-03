@@ -16,6 +16,7 @@ dependencies {
     compile project(':stroom-connectors')
     permitUnusedDeclared project(':stroom-connectors')
 
+    compile libs.vavr
     compile libs.commons_io
     compile libs.commons_lang
     compile libs.fast_infoset
