@@ -32,7 +32,7 @@ import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.DataRetentionRule;
 import stroom.data.store.DataRetentionAgeUtil;
 import stroom.data.meta.api.MetaDataSource;
-import stroom.task.TaskContext;
+import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;

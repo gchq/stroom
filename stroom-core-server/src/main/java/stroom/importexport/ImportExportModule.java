@@ -17,8 +17,6 @@
 package stroom.importexport;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.task.TaskHandler;
 
 public class ImportExportModule extends AbstractModule {
     @Override

@@ -18,10 +18,10 @@ package stroom.streamtask;
 
 import stroom.jobsystem.DistributedTask;
 import stroom.streamtask.shared.ProcessorFilterTask;
-import stroom.util.shared.SimpleThreadPool;
-import stroom.util.shared.ThreadPool;
+import stroom.task.shared.SimpleThreadPool;
+import stroom.task.shared.ThreadPool;
 import stroom.util.shared.VoidResult;
-import stroom.task.ServerTask;
+import stroom.task.api.ServerTask;
 
 public class StreamProcessorTask extends ServerTask<VoidResult> implements DistributedTask<VoidResult> {
     public static final String JOB_NAME = "Stream Processor";

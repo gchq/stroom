@@ -22,8 +22,8 @@ import javax.inject.Inject;
 
 public class DashboardServlet extends AppServlet {
     @Inject
-    DashboardServlet(final PropertyService stroomPropertyService) {
-        super(stroomPropertyService);
+    DashboardServlet(final PropertyService propertyService) {
+        super(propertyService);
     }
 
     String getScript() {

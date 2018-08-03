@@ -16,7 +16,7 @@
 
 package stroom.servlet;
 
-import stroom.entity.shared.Action;
+import stroom.task.shared.Action;
 import stroom.entity.shared.ResultList;
 
 public class SessionListAction extends Action<ResultList<SessionDetails>> {

@@ -24,15 +24,15 @@ import stroom.entity.event.EntityEvent;
 import stroom.entity.event.EntityEventHandler;
 import stroom.entity.shared.EntityAction;
 import stroom.node.NodeCache;
-import stroom.node.shared.ClientProperties;
-import stroom.node.shared.ClientPropertiesService;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.Node;
+import stroom.properties.api.PropertyService;
+import stroom.properties.shared.ClientProperties;
 import stroom.task.TaskCallbackAdaptor;
 import stroom.task.TaskManager;
 import stroom.util.date.DateUtil;
-import stroom.util.shared.VoidResult;
 import stroom.util.lifecycle.StroomStartup;
+import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -62,13 +62,13 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
     private final ClusterState clusterState = new ClusterState();
     private final AtomicBoolean updatingState = new AtomicBoolean();
     private final AtomicBoolean pendingUpdate = new AtomicBoolean();
-    private final ClientPropertiesService clientPropertiesService;
+    private final PropertyService propertyService;
     private final NodeCache nodeCache;
     private final TaskManager taskManager;
 
     @Inject
-    ClusterNodeManagerImpl(final ClientPropertiesService clientPropertiesService, final NodeCache nodeCache, final TaskManager taskManager) {
-        this.clientPropertiesService = clientPropertiesService;
+    ClusterNodeManagerImpl(final PropertyService propertyService, final NodeCache nodeCache, final TaskManager taskManager) {
+        this.propertyService = propertyService;
         this.nodeCache = nodeCache;
         this.taskManager = taskManager;
     }
@@ -205,10 +205,12 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
         final Node masterNode = clusterState.getMasterNode();
         final String discoverTime = DateUtil.createNormalDateTimeString(clusterState.getUpdateTime());
 
-        final ClientProperties clientProperties = clientPropertiesService.getProperties();
         final ClusterNodeInfo clusterNodeInfo = new ClusterNodeInfo(discoverTime,
-                clientProperties.get(ClientProperties.BUILD_DATE), clientProperties.get(ClientProperties.BUILD_VERSION),
-                clientProperties.get(ClientProperties.UP_DATE), thisNode.getName(), thisNode.getClusterURL());
+                propertyService.getProperty(ClientProperties.BUILD_DATE),
+                propertyService.getProperty(ClientProperties.BUILD_VERSION),
+                propertyService.getProperty(ClientProperties.UP_DATE),
+                thisNode.getName(),
+                thisNode.getClusterURL());
 
         if (allNodeList != null && activeNodeList != null && masterNode != null) {
             for (final Node node : allNodeList) {

@@ -79,7 +79,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     private final XsltPool xsltPool;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final XsltStore xsltStore;
-    private final PropertyService stroomPropertyService;
+    private final PropertyService propertyService;
     private final LocationFactoryProxy locationFactory;
     private final PipelineContext pipelineContext;
     private final PathCreator pathCreator;
@@ -111,14 +111,14 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     public XsltFilter(final XsltPool xsltPool,
                       final ErrorReceiverProxy errorReceiverProxy,
                       final XsltStore xsltStore,
-                      final PropertyService stroomPropertyService,
+                      final PropertyService propertyService,
                       final LocationFactoryProxy locationFactory,
                       final PipelineContext pipelineContext,
                       final PathCreator pathCreator) {
         this.xsltPool = xsltPool;
         this.errorReceiverProxy = errorReceiverProxy;
         this.xsltStore = xsltStore;
-        this.stroomPropertyService = stroomPropertyService;
+        this.propertyService = propertyService;
         this.locationFactory = locationFactory;
         this.pipelineContext = pipelineContext;
         this.pathCreator = pathCreator;
@@ -580,9 +580,9 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
 
     private int getMaxElements() {
         int maxElements = DEFAULT_MAX_ELEMENTS;
-        if (stroomPropertyService != null) {
+        if (propertyService != null) {
             try {
-                final String property = stroomPropertyService.getProperty("stroom.pipeline.xslt.maxElements");
+                final String property = propertyService.getProperty("stroom.pipeline.xslt.maxElements");
                 if (property != null) {
                     maxElements = Integer.parseInt(property);
                 }

@@ -26,7 +26,7 @@ import stroom.node.shared.VolumeEntity;
 import stroom.properties.api.PropertyService;
 import stroom.task.AsyncTaskHelper;
 import stroom.task.TaskCallbackAdaptor;
-import stroom.task.TaskContext;
+import stroom.task.api.TaskContext;
 import stroom.task.TaskManager;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
@@ -34,7 +34,7 @@ import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.Task;
+import stroom.task.shared.Task;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;

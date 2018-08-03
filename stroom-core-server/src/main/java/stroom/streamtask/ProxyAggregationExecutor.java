@@ -24,14 +24,14 @@ import stroom.properties.api.PropertyService;
 import stroom.proxy.repo.RepositoryProcessor;
 import stroom.proxy.repo.StroomZipRepository;
 import stroom.task.ExecutorProvider;
-import stroom.task.TaskContext;
+import stroom.task.api.TaskContext;
 import stroom.task.ThreadPoolImpl;
 import stroom.util.date.DateUtil;
 import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.Task;
-import stroom.util.shared.ThreadPool;
+import stroom.task.shared.Task;
+import stroom.task.shared.ThreadPool;
 
 import javax.inject.Inject;
 import java.util.concurrent.Executor;

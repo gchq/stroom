@@ -34,7 +34,7 @@ import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindUserTaskProgressAction;
 import stroom.task.shared.TaskProgress;
 import stroom.task.shared.TerminateTaskProgressAction;
-import stroom.util.shared.TaskId;
+import stroom.task.shared.TaskId;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;

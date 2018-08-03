@@ -19,8 +19,8 @@ package stroom.lifecycle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.security.Security;
-import stroom.task.AbstractTaskHandler;
-import stroom.task.TaskHandlerBean;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskHandlerBean;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.VoidResult;
 

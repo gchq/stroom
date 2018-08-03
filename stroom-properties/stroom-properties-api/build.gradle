@@ -1,7 +1,11 @@
 ext.moduleName = 'stroom.properties.api'
 
 dependencies {
-//    compile libs.stroomDocRef
+    compile project(':stroom-task:stroom-task-api')
+
+    compile libs.stroomDocRef
+//    compile libs.slf4j_api
+//    compile libs.guava
 //    compile libs.stroomQueryApi
 //
 //    compile libs.jaxb_api

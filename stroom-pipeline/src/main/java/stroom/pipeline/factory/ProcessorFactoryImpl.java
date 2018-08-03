@@ -26,7 +26,7 @@ import stroom.pipeline.errorhandler.ErrorStatistics;
 import stroom.pipeline.errorhandler.ExpectedProcessException;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.task.ExecutorProvider;
-import stroom.task.TaskCallback;
+import stroom.task.api.TaskCallback;
 import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
 

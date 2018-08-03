@@ -17,7 +17,7 @@
 package stroom.streamtask;
 
 import stroom.util.shared.VoidResult;
-import stroom.task.ServerTask;
+import stroom.task.api.ServerTask;
 
 public class DummyTask extends ServerTask<VoidResult> {
 }

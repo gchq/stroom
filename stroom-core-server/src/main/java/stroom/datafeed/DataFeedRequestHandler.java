@@ -32,7 +32,6 @@ import stroom.data.store.api.StreamStore;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamTargetStroomStreamHandler;
 import stroom.streamtask.statistic.MetaDataStatistic;
-import stroom.util.thread.BufferFactory;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -56,7 +55,8 @@ class DataFeedRequestHandler implements RequestHandler {
     private final FeedDocCache feedDocCache;
     private final MetaDataStatistic metaDataStatistics;
     private final AttributeMapFilterFactory attributeMapFilterFactory;
-    private final PropertyService stroomPropertyService;
+    private final PropertyService propertyService;
+    private final BufferFactory bufferFactory;
 
     private volatile AttributeMapFilter attributeMapFilter;
 
@@ -66,19 +66,21 @@ class DataFeedRequestHandler implements RequestHandler {
                                   final FeedDocCache feedDocCache,
                                   final MetaDataStatistic metaDataStatistics,
                                   final AttributeMapFilterFactory attributeMapFilterFactory,
-                                  final PropertyService stroomPropertyService) {
+                                  final PropertyService propertyService,
+                                  final BufferFactory bufferFactory) {
         this.security = security;
         this.streamStore = streamStore;
         this.feedDocCache = feedDocCache;
         this.metaDataStatistics = metaDataStatistics;
         this.attributeMapFilterFactory = attributeMapFilterFactory;
-        this.stroomPropertyService = stroomPropertyService;
+        this.propertyService = propertyService;
+        this.bufferFactory = bufferFactory;
     }
 
     @Override
     public void handle(final HttpServletRequest request, final HttpServletResponse response) {
         if (attributeMapFilter == null) {
-            final String receiptPolicyUuid = stroomPropertyService.getProperty("stroom.feed.receiptPolicyUuid");
+            final String receiptPolicyUuid = propertyService.getProperty("stroom.feed.receiptPolicyUuid");
             if (receiptPolicyUuid != null && !receiptPolicyUuid.isEmpty()) {
                 this.attributeMapFilter = attributeMapFilterFactory.create(new DocRef("RuleSet", receiptPolicyUuid));
             }
@@ -111,7 +113,7 @@ class DataFeedRequestHandler implements RequestHandler {
                 List<StreamTargetStroomStreamHandler> handlers = StreamTargetStroomStreamHandler.buildSingleHandlerList(streamStore,
                         feedDocCache, metaDataStatistics, feedName, streamTypeName);
 
-                final byte[] buffer = BufferFactory.create();
+                final byte[] buffer = bufferFactory.create();
                 final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, handlers, buffer, "DataFeedRequestHandler-" + attributeMap.get(StroomHeaderArguments.GUID));
 
                 try {

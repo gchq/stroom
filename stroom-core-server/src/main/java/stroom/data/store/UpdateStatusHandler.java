@@ -19,8 +19,8 @@ package stroom.data.store;
 import stroom.data.meta.api.DataMetaService;
 import stroom.security.Security;
 import stroom.streamstore.shared.UpdateStatusAction;
-import stroom.task.AbstractTaskHandler;
-import stroom.task.TaskHandlerBean;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.SharedInteger;
 
 import javax.inject.Inject;

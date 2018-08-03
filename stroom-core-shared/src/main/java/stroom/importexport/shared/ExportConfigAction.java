@@ -16,7 +16,7 @@
 
 package stroom.importexport.shared;
 
-import stroom.entity.shared.Action;
+import stroom.task.shared.Action;
 import stroom.entity.shared.DocRefs;
 import stroom.util.shared.ResourceGeneration;
 

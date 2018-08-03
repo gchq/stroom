@@ -1,4 +1,4 @@
-ext.moduleName = 'stroom.properties.impl.mock'
+ext.moduleName = 'stroom.properties.global.impl.mock'
 
 dependencies {
     compile project(':stroom-properties:stroom-properties-api')

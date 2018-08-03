@@ -21,10 +21,10 @@ import org.slf4j.LoggerFactory;
 import stroom.security.Security;
 import stroom.data.store.ScanVolumePathResult;
 import stroom.data.store.StreamMaintenanceService;
-import stroom.task.AbstractTaskHandler;
+import stroom.task.api.AbstractTaskHandler;
 import stroom.task.TaskCallbackAdaptor;
-import stroom.task.TaskContext;
-import stroom.task.TaskHandlerBean;
+import stroom.task.api.TaskContext;
+import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.VoidResult;
 

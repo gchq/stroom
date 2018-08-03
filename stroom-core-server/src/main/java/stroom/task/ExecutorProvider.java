@@ -16,7 +16,7 @@
 
 package stroom.task;
 
-import stroom.util.shared.ThreadPool;
+import stroom.task.shared.ThreadPool;
 
 import java.util.concurrent.Executor;
 

@@ -37,7 +37,7 @@ public class ClusterDispatchAsyncHelper {
     private static final Long ONE_MINUTE = 60000L;
     private static final Long DEFAULT_CLUSTER_RESPONSE_TIMEOUT = ONE_MINUTE;
 
-    private final PropertyService stroomPropertyService;
+    private final PropertyService propertyService;
     private final ClusterResultCollectorCache collectorCache;
     private final Provider<ClusterDispatchAsync> dispatchAsyncProvider;
     private final TargetNodeSetFactory targetNodeSetFactory;
@@ -45,11 +45,11 @@ public class ClusterDispatchAsyncHelper {
     private volatile long lastClusterStateWarn;
 
     @Inject
-    public ClusterDispatchAsyncHelper(final PropertyService stroomPropertyService,
+    public ClusterDispatchAsyncHelper(final PropertyService propertyService,
                                       final ClusterResultCollectorCache collectorCache,
                                       final Provider<ClusterDispatchAsync> dispatchAsyncProvider,
                                       final TargetNodeSetFactory targetNodeSetFactory) {
-        this.stroomPropertyService = stroomPropertyService;
+        this.propertyService = propertyService;
         this.collectorCache = collectorCache;
         this.dispatchAsyncProvider = dispatchAsyncProvider;
         this.targetNodeSetFactory = targetNodeSetFactory;
@@ -131,7 +131,7 @@ public class ClusterDispatchAsyncHelper {
         Long timeout = DEFAULT_CLUSTER_RESPONSE_TIMEOUT;
         try {
             final Long tmp = ModelStringUtil
-                    .parseDurationString(stroomPropertyService.getProperty(CLUSTER_RESPONSE_TIMEOUT));
+                    .parseDurationString(propertyService.getProperty(CLUSTER_RESPONSE_TIMEOUT));
             if (tmp != null) {
                 timeout = tmp;
             }

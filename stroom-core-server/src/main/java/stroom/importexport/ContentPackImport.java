@@ -18,7 +18,6 @@ package stroom.importexport;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.properties.api.PropertyService;
 import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
 import stroom.util.lifecycle.StroomStartup;
@@ -39,32 +38,32 @@ import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
 public class ContentPackImport {
-    static final String AUTO_IMPORT_ENABLED_PROP_KEY = "stroom.contentPackImportEnabled";
     static final Path CONTENT_PACK_IMPORT_DIR = Paths.get("contentPackImport");
     static final String FAILED_DIR = "failed";
     static final String IMPORTED_DIR = "imported";
     private static final Logger LOGGER = LoggerFactory.getLogger(ContentPackImport.class);
 
     private final ImportExportService importExportService;
-    private final PropertyService stroomPropertyService;
+    private final ContentPackImportConfig config;
 
     @SuppressWarnings("unused")
     @Inject
-    ContentPackImport(final ImportExportService importExportService, final PropertyService stroomPropertyService) {
+    ContentPackImport(final ImportExportService importExportService,
+                      final ContentPackImportConfig config) {
         this.importExportService = importExportService;
-        this.stroomPropertyService = stroomPropertyService;
+        this.config = config;
     }
 
     //Startup with very low priority to ensure it starts after everything else
     //in particular
     @StroomStartup(priority = -1000)
     public void startup() {
-        final boolean isEnabled = stroomPropertyService.getBooleanProperty(AUTO_IMPORT_ENABLED_PROP_KEY, true);
+        final boolean isEnabled = config.isEnabled();
 
         if (isEnabled) {
             doImport();
         } else {
-            LOGGER.info("Content pack import currently disabled via property: {}", AUTO_IMPORT_ENABLED_PROP_KEY);
+            LOGGER.info("Content pack import currently disabled via property: {}", ContentPackImportConfig.AUTO_IMPORT_ENABLED_PROP_KEY);
         }
     }
 

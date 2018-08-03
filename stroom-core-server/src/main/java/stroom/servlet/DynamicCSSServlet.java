@@ -48,12 +48,12 @@ public class DynamicCSSServlet extends HttpServlet {
     private static final String STROOM_THEME_TUBE_VISIBLE = "stroom.theme.tube.visible";
     private static final String STROOM_THEME_TUBE_OPACITY = "stroom.theme.tube.opacity";
 
-    private final transient PropertyService stroomPropertyService;
+    private final transient PropertyService propertyService;
     private String cssTemplate;
 
     @Inject
-    DynamicCSSServlet(final PropertyService stroomPropertyService) {
-        this.stroomPropertyService = stroomPropertyService;
+    DynamicCSSServlet(final PropertyService propertyService) {
+        this.propertyService = propertyService;
     }
 
     public String getCssTemplate() {
@@ -96,7 +96,7 @@ public class DynamicCSSServlet extends HttpServlet {
     }
 
     private String replaceAll(final String css, final String sourcePattern, final String key) {
-        final String value = stroomPropertyService.getProperty(key);
+        final String value = propertyService.getProperty(key);
         if (value != null) {
             return css.replace(sourcePattern, value);
         }

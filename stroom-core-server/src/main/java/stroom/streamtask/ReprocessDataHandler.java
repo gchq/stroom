@@ -32,8 +32,8 @@ import stroom.streamstore.shared.ReprocessDataInfo;
 import stroom.data.meta.api.MetaDataSource;
 import stroom.streamtask.shared.Processor;
 import stroom.streamtask.shared.ReprocessDataAction;
-import stroom.task.AbstractTaskHandler;
-import stroom.task.TaskHandlerBean;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.Severity;
 import stroom.util.shared.SharedList;
 

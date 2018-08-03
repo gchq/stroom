@@ -25,6 +25,7 @@ import stroom.data.meta.api.DataMetaService;
 import stroom.data.store.api.NestedInputStream;
 import stroom.data.store.api.StreamSource;
 import stroom.data.store.api.StreamStore;
+import stroom.datafeed.BufferFactory;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.FeedDocCache;
 import stroom.feed.FeedStore;
@@ -33,7 +34,7 @@ import stroom.proxy.repo.StroomZipFile;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.task.ExecutorProvider;
-import stroom.task.TaskContext;
+import stroom.task.api.TaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
@@ -72,11 +73,13 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     private TaskContext taskContext;
     @Inject
     private ExecutorProvider executorProvider;
+    @Inject
+    private BufferFactory bufferFactory;
 
     private void aggregate(final String proxyDir,
                            final int maxAggregation,
                            final long maxStreamSize) {
-        final ProxyFileProcessorImpl proxyFileProcessor = new ProxyFileProcessorImpl(streamStore, feedDocCache, metaDataStatistic, maxAggregation, maxStreamSize);
+        final ProxyFileProcessorImpl proxyFileProcessor = new ProxyFileProcessorImpl(streamStore, feedDocCache, metaDataStatistic, maxAggregation, maxStreamSize, bufferFactory);
         final ProxyAggregationExecutor proxyAggregationExecutor = new ProxyAggregationExecutor(proxyFileProcessor, taskContext, executorProvider, proxyDir, 10, maxAggregation, 10000, maxStreamSize);
         proxyAggregationExecutor.exec(new DummyTask());
     }

@@ -12,7 +12,7 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.writer.AbstractRollingAppender;
 import stroom.pipeline.writer.PathCreator;
-import stroom.task.TaskContext;
+import stroom.task.api.TaskContext;
 
 import javax.inject.Inject;
 

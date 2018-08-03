@@ -56,7 +56,7 @@ import stroom.pipeline.writer.TextWriter;
 import stroom.pipeline.writer.XMLWriter;
 import stroom.security.Security;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.task.AbstractTaskHandler;
+import stroom.task.api.AbstractTaskHandler;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;

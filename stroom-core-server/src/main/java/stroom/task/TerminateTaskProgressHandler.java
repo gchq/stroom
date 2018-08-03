@@ -19,6 +19,8 @@ package stroom.task;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.security.Security;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskHandlerBean;
 import stroom.task.cluster.ClusterDispatchAsyncHelper;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.cluster.TerminateTaskClusterTask;

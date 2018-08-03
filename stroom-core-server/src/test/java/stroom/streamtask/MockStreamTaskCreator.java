@@ -28,7 +28,7 @@ import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.ProcessorFilter;
 import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.streamtask.shared.TaskStatus;
-import stroom.task.TaskContext;
+import stroom.task.api.TaskContext;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

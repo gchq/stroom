@@ -23,7 +23,7 @@ import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorStatistics;
 import stroom.pipeline.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.errorhandler.LoggedException;
-import stroom.task.TaskCallback;
+import stroom.task.api.TaskCallback;
 import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
 

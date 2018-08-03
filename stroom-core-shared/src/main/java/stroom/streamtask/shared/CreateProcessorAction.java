@@ -16,7 +16,7 @@
 
 package stroom.streamtask.shared;
 
-import stroom.entity.shared.Action;
+import stroom.task.shared.Action;
 import stroom.docref.DocRef;
 import stroom.streamstore.shared.QueryData;
 

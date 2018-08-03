@@ -163,7 +163,7 @@ public final class SetupSampleDataBean {
         // the root directories that we want to
         // process
         final Path[] rootDirs = new Path[]{StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(ROOT_DIR_NAME),
-                Paths.get("./stroom-statistics-server/src/test/resources").resolve(ROOT_DIR_NAME)};
+                Paths.get("./stroom-statistics/stroom-statistics-server/src/test/resources").resolve(ROOT_DIR_NAME)};
 
         // process each root dir in turn
         for (final Path dir : rootDirs) {

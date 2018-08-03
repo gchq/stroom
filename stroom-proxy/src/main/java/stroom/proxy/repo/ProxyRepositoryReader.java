@@ -2,9 +2,10 @@ package stroom.proxy.repo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.datafeed.BufferFactory;
 import stroom.proxy.handler.StreamHandler;
 import stroom.proxy.handler.StreamHandlerFactory;
-import stroom.task.TaskContext;
+import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
@@ -59,14 +60,15 @@ public final class ProxyRepositoryReader {
     ProxyRepositoryReader(final TaskContext taskContext,
                           final ProxyRepositoryManager proxyRepositoryManager,
                           final ProxyRepositoryReaderConfig proxyRepositoryReaderConfig,
-                          final StreamHandlerFactory handlerFactory) {
+                          final StreamHandlerFactory handlerFactory,
+                          final BufferFactory bufferFactory) {
         this.proxyRepositoryReaderConfig = proxyRepositoryReaderConfig;
         this.handlerFactory = handlerFactory;
         this.proxyRepositoryManager = proxyRepositoryManager;
         this.scheduler = createScheduler(proxyRepositoryReaderConfig.getReadCron());
 
         this.executorService = Executors.newFixedThreadPool(proxyRepositoryReaderConfig.getForwardThreadCount());
-        final ProxyFileProcessor feedFileProcessor = new ProxyFileProcessorImpl(proxyRepositoryReaderConfig, handlerFactory, finish);
+        final ProxyFileProcessor feedFileProcessor = new ProxyFileProcessorImpl(proxyRepositoryReaderConfig, handlerFactory, finish, bufferFactory);
         repositoryProcessor = new RepositoryProcessor(feedFileProcessor, executorService, taskContext);
     }
 

@@ -33,7 +33,7 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.data.store.api.StreamStore;
-import stroom.task.TaskHandlerBean;
+import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

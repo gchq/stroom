@@ -16,7 +16,7 @@
 
 package stroom.pipeline.shared;
 
-import stroom.entity.shared.Action;
+import stroom.task.shared.Action;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.Severity;
 

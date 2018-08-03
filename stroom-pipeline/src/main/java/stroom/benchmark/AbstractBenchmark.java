@@ -36,7 +36,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.task.TaskContext;
+import stroom.task.api.TaskContext;
 import stroom.util.io.StreamUtil;
 
 import java.io.IOException;

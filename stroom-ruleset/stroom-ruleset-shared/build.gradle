@@ -1,0 +1,11 @@
+ext.moduleName = 'stroom.ruleset.shared'
+
+dependencies {
+    compile project(':stroom-docstore:stroom-docstore-shared')
+    compile project(':stroom-task:stroom-task-api')
+
+    compile libs.stroomDocRef
+    compile libs.stroomQueryApi
+    compile libs.jackson_annotations
+    compile libs.jaxb_api
+}

@@ -21,6 +21,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.BaseResultList;
@@ -32,8 +33,6 @@ import stroom.node.shared.VolumeEntity;
 import stroom.node.shared.VolumeEntity.VolumeType;
 import stroom.node.shared.VolumeState;
 import stroom.persist.EntityManagerSupport;
-import stroom.properties.api.PropertyService;
-import stroom.properties.impl.mock.MockPropertyService;
 import stroom.security.Security;
 import stroom.security.impl.mock.MockSecurityContext;
 import stroom.statistics.internal.InternalStatisticsReceiver;
@@ -61,7 +60,6 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
     private static final Path DEFAULT_INDEX_VOLUME_PATH = DEFAULT_VOLUMES_PATH.resolve(VolumeServiceImpl.DEFAULT_INDEX_VOLUME_SUBDIR);
     private static final Path DEFAULT_STREAM_VOLUME_PATH = DEFAULT_VOLUMES_PATH.resolve(VolumeServiceImpl.DEFAULT_STREAM_VOLUME_SUBDIR);
 
-    private final MockPropertyService mockStroomPropertyService = new MockPropertyService();
     private final Rack rack1 = Rack.create("rack1");
     private final Rack rack2 = Rack.create("rack2");
     private final Node node1a = Node.create(rack1, "1a");
@@ -80,6 +78,8 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
 
     private MockVolumeService volumeServiceImpl = null;
     @Mock
+    private VolumeConfig volumeConfig;
+    @Mock
     private StroomEntityManager stroomEntityManager;
     @Mock
     private EntityManagerSupport entityManagerSupport;
@@ -97,9 +97,10 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
         volumeList.add(public2a);
         volumeList.add(public2b);
 
-        mockStroomPropertyService.setProperty(VolumeServiceImpl.PROP_RESILIENT_REPLICATION_COUNT, "2");
+        Mockito.when(volumeConfig.getResilientReplicationCount()).thenReturn(2);
+//        mockStroomPropertyService.setProperty(VolumeServiceImpl.PROP_RESILIENT_REPLICATION_COUNT, "2");
 
-        volumeServiceImpl = new MockVolumeService(stroomEntityManager, security, entityManagerSupport, new NodeCache(node1a), mockStroomPropertyService, null);
+        volumeServiceImpl = new MockVolumeService(stroomEntityManager, security, entityManagerSupport, new NodeCache(node1a), volumeConfig, null);
         volumeServiceImpl.volumeList = volumeList;
     }
 
@@ -162,7 +163,8 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
 
     @Test
     public void testStartup_Disabled() {
-        mockStroomPropertyService.setProperty(VolumeServiceImpl.PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, "false");
+        Mockito.when(volumeConfig.isCreateOnStartup()).thenReturn(false);
+//        mockStroomPropertyService.setProperty(VolumeServiceImpl.PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, "false");
 
 //        volumeServiceImpl.startup();
 
@@ -173,7 +175,8 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
 
     @Test
     public void testStartup_EnabledExistingVolumes() {
-        mockStroomPropertyService.setProperty(VolumeServiceImpl.PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, "true");
+        Mockito.when(volumeConfig.isCreateOnStartup()).thenReturn(true);
+//        mockStroomPropertyService.setProperty(VolumeServiceImpl.PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, "true");
 
 //        volumeServiceImpl.startup();
 
@@ -184,7 +187,9 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
 
     @Test
     public void testStartup_EnabledNoExistingVolumes() {
-        mockStroomPropertyService.setProperty(VolumeServiceImpl.PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, "true");
+        Mockito.when(volumeConfig.isCreateOnStartup()).thenReturn(true);
+
+//        mockStroomPropertyService.setProperty(VolumeServiceImpl.PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, "true");
         volumeServiceImpl.volumeList.clear();
         volumeServiceImpl.getStreamVolumeSet(node1a);
 //        volumeServiceImpl.startup();
@@ -215,13 +220,13 @@ public class TestVolumeServiceImpl extends StroomUnitTest {
                           final Security security,
                           final EntityManagerSupport entityManagerSupport,
                           final NodeCache nodeCache,
-                          final PropertyService stroomPropertyService,
+                          final VolumeConfig volumeConfig,
                           final Optional<InternalStatisticsReceiver> optionalInternalStatisticsReceiver) {
             super(stroomEntityManager,
                     security,
                     entityManagerSupport,
                     nodeCache,
-                    stroomPropertyService,
+                    volumeConfig,
                     optionalInternalStatisticsReceiver);
         }
 

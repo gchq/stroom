@@ -7,10 +7,11 @@ dependencies {
     compile project(':stroom-core-server')
     compile project(':stroom-core-shared')
     compile project(':stroom-properties:stroom-properties-api')
-    compile project(':stroom-security-api')
+    compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-util') // TODO : @66 TRY AND REMOVE THIS
     compile project(':stroom-util-shared')
     compile project(':stroom-entity-shared')
+    compile project(':stroom-task:stroom-task-api')
 
     compile libs.stroomDocRef
     compile libs.stroomQueryApi
@@ -31,6 +32,6 @@ dependencies {
     testCompile libs.mockito_core
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
 //
-//    testCompile project(':stroom-security-impl-mock')
+//    testCompile project(':stroom-security:stroom-security-impl-mock')
 //    testCompile project(':stroom-properties-impl-mock')
 }

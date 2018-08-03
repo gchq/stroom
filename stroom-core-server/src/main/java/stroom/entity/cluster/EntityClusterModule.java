@@ -18,7 +18,7 @@ package stroom.entity.cluster;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.task.TaskHandler;
+import stroom.task.api.TaskHandler;
 
 public class EntityClusterModule extends AbstractModule {
     @Override

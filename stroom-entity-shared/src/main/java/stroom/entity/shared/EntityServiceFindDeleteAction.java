@@ -16,6 +16,7 @@
 
 package stroom.entity.shared;
 
+import stroom.task.shared.Action;
 import stroom.util.shared.SharedLong;
 import stroom.docref.SharedObject;
 

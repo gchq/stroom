@@ -33,14 +33,14 @@ import stroom.proxy.repo.StroomZipOutputStream;
 import stroom.proxy.repo.StroomZipOutputStreamImpl;
 import stroom.security.Security;
 import stroom.streamstore.shared.StreamTypeNames;
-import stroom.task.AbstractTaskHandler;
-import stroom.task.TaskContext;
-import stroom.task.TaskHandlerBean;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskContext;
+import stroom.task.api.TaskHandlerBean;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogItemProgress;
-import stroom.util.thread.BufferFactory;
+import stroom.datafeed.BufferFactory;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -59,16 +59,19 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
     private final StreamStore streamStore;
     private final DataMetaService streamMetaService;
     private final Security security;
+    private final BufferFactory bufferFactory;
 
     @Inject
     StreamDownloadTaskHandler(final TaskContext taskContext,
                               final StreamStore streamStore,
                               final DataMetaService streamMetaService,
-                              final Security security) {
+                              final Security security,
+                              final BufferFactory bufferFactory) {
         this.taskContext = taskContext;
         this.streamStore = streamStore;
         this.streamMetaService = streamMetaService;
         this.security = security;
+        this.bufferFactory = bufferFactory;
     }
 
     @Override
@@ -237,7 +240,7 @@ class StreamDownloadTaskHandler extends AbstractTaskHandler<StreamDownloadTask, 
 
             final StroomZipEntry stroomZipEntry = new StroomZipEntry(null, basePartName, fileType);
             final OutputStream outputStream = zipOutputStream.addEntry(stroomZipEntry.getFullName());
-            final byte[] buffer = BufferFactory.create();
+            final byte[] buffer = bufferFactory.create();
 
             int len;
             while ((len = StreamUtil.eagerRead(nestedInputStream, buffer)) != -1) {

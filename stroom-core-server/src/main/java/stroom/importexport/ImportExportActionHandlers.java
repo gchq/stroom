@@ -16,7 +16,7 @@
 
 package stroom.importexport;
 
-import stroom.node.shared.ClientProperties;
+import stroom.properties.shared.ClientProperties;
 import stroom.properties.api.PropertyService;
 import stroom.guice.StroomBeanStore;
 

@@ -23,7 +23,7 @@ import com.google.inject.name.Names;
 import stroom.explorer.ExplorerActionHandler;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.ImportExportActionHandler;
-import stroom.task.TaskHandler;
+import stroom.task.api.TaskHandler;
 
 public class FeedModule extends AbstractModule {
     @Override

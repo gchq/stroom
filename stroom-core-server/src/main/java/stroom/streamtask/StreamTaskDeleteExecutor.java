@@ -32,7 +32,7 @@ import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.streamtask.shared.TaskStatus;
 import stroom.util.date.DateUtil;
 import stroom.util.lifecycle.StroomFrequencySchedule;
-import stroom.task.TaskContext;
+import stroom.task.api.TaskContext;
 
 import javax.inject.Inject;
 import java.util.List;

@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
 import stroom.feed.AttributeMapUtil;
-import stroom.task.TaskContext;
+import stroom.task.api.TaskContext;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.CloseableUtil;
 import stroom.util.logging.LogExecutionTime;

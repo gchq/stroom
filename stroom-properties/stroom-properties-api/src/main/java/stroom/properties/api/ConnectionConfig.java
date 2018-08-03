@@ -29,11 +29,11 @@ public class ConnectionConfig {
     private final String jdbcDriverUsername;
     private final String jdbcDriverPassword;
 
-    public ConnectionConfig(final String prefix, final PropertyService stroomPropertyService) {
-        this.jdbcDriverClassName = stroomPropertyService.getProperty(prefix + PROP_JDBC_CLASS_NAME);
-        this.jdbcDriverUrl = stroomPropertyService.getProperty(prefix + PROP_JDBC_DRIVER_URL + "|trace");
-        this.jdbcDriverUsername = stroomPropertyService.getProperty(prefix + PROP_JDBC_DRIVER_USERNAME);
-        this.jdbcDriverPassword = stroomPropertyService.getProperty(prefix + PROP_JDBC_DRIVER_PASSWORD);
+    public ConnectionConfig(final String prefix, final PropertyService propertyService) {
+        this.jdbcDriverClassName = propertyService.getProperty(prefix + PROP_JDBC_CLASS_NAME);
+        this.jdbcDriverUrl = propertyService.getProperty(prefix + PROP_JDBC_DRIVER_URL + "|trace");
+        this.jdbcDriverUsername = propertyService.getProperty(prefix + PROP_JDBC_DRIVER_USERNAME);
+        this.jdbcDriverPassword = propertyService.getProperty(prefix + PROP_JDBC_DRIVER_PASSWORD);
     }
 
     public String getJdbcDriverClassName() {

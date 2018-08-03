@@ -36,9 +36,9 @@ public class DataMetaDbModule extends AbstractModule {
 
     @Provides
     @Singleton
-    ConnectionProvider getConnectionProvider(final PropertyService stroomPropertyService) {
-        final ConnectionConfig connectionConfig = getConnectionConfig(stroomPropertyService);
-        final ConnectionPoolConfig connectionPoolConfig = getConnectionPoolConfig(stroomPropertyService);
+    ConnectionProvider getConnectionProvider(final PropertyService propertyService) {
+        final ConnectionConfig connectionConfig = getConnectionConfig(propertyService);
+        final ConnectionPoolConfig connectionPoolConfig = getConnectionPoolConfig(propertyService);
 
         final HikariConfig config = new HikariConfig();
         config.setJdbcUrl(connectionConfig.getJdbcDriverUrl());
@@ -62,12 +62,12 @@ public class DataMetaDbModule extends AbstractModule {
         return flyway;
     }
 
-    private ConnectionConfig getConnectionConfig(final PropertyService stroomPropertyService) {
-        return new ConnectionConfig(CONNECTION_PROPERTY_PREFIX, stroomPropertyService);
+    private ConnectionConfig getConnectionConfig(final PropertyService propertyService) {
+        return new ConnectionConfig(CONNECTION_PROPERTY_PREFIX, propertyService);
     }
 
-    private ConnectionPoolConfig getConnectionPoolConfig(final PropertyService stroomPropertyService) {
-        return new ConnectionPoolConfig(CONNECTION_PROPERTY_PREFIX, stroomPropertyService);
+    private ConnectionPoolConfig getConnectionPoolConfig(final PropertyService propertyService) {
+        return new ConnectionPoolConfig(CONNECTION_PROPERTY_PREFIX, propertyService);
     }
 
     @Override

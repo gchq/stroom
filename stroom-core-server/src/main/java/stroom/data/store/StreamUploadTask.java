@@ -16,7 +16,7 @@
 
 package stroom.data.store;
 
-import stroom.task.ServerTask;
+import stroom.task.api.ServerTask;
 import stroom.util.shared.VoidResult;
 
 import java.nio.file.Path;

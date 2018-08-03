@@ -16,7 +16,7 @@
 
 package stroom.jobsystem.shared;
 
-import stroom.entity.shared.Action;
+import stroom.task.shared.Action;
 import stroom.jobsystem.shared.JobNode.JobType;
 
 public class GetScheduledTimesAction extends Action<ScheduledTimes> {

@@ -5,7 +5,7 @@ dependencies {
     compile project(':stroom-data-store:stroom-data-store-impl-fs')
     compile project(':stroom-data-meta:stroom-data-meta-api')
     compile project(':stroom-data-meta:stroom-data-meta-impl-db')
-    compile project(':stroom-security-impl-mock')
+    compile project(':stroom-security:stroom-security-impl-mock')
     compile project(':stroom-util')
     compile project(':stroom-core-server')
 

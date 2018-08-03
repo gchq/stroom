@@ -17,7 +17,7 @@
 package stroom.data.store;
 
 import stroom.data.meta.api.FindDataCriteria;
-import stroom.task.ServerTask;
+import stroom.task.api.ServerTask;
 
 import java.nio.file.Path;
 

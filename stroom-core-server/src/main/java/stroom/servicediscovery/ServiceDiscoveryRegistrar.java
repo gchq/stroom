@@ -35,17 +35,17 @@ public class ServiceDiscoveryRegistrar implements HasHealthCheck {
 
     @Inject
     ServiceDiscoveryRegistrar(final ServiceDiscoveryManager serviceDiscoveryManager,
-                              final PropertyService stroomPropertyService) {
+                              final PropertyService propertyService) {
         this.serviceDiscoveryManager = serviceDiscoveryManager;
-        this.hostNameOrIpAddress = getHostOrIp(stroomPropertyService);
-        this.servicePort = stroomPropertyService.getIntProperty(PROP_KEY_SERVICE_PORT, 8080);
+        this.hostNameOrIpAddress = getHostOrIp(propertyService);
+        this.servicePort = propertyService.getIntProperty(PROP_KEY_SERVICE_PORT, 8080);
 
         health = HealthCheck.Result.unhealthy("Not yet initialised...");
         this.serviceDiscoveryManager.registerStartupListener(this::curatorStartupListener);
     }
 
-    private String getHostOrIp(final PropertyService stroomPropertyService) {
-        String hostOrIp = stroomPropertyService.getProperty(PROP_KEY_SERVICE_HOST_OR_IP);
+    private String getHostOrIp(final PropertyService propertyService) {
+        String hostOrIp = propertyService.getProperty(PROP_KEY_SERVICE_HOST_OR_IP);
         if (hostOrIp == null || hostOrIp.isEmpty()) {
             try {
                 hostOrIp = InetAddress.getLocalHost().getCanonicalHostName();

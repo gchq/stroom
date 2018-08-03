@@ -12,7 +12,7 @@ import stroom.datafeed.StroomStatusCode;
 import stroom.datafeed.StroomStreamException;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.util.io.ByteCountInputStream;
-import stroom.util.thread.BufferFactory;
+import stroom.datafeed.BufferFactory;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -37,14 +37,17 @@ public class ProxyRequestHandler implements RequestHandler {
     private final MasterStreamHandlerFactory streamHandlerFactory;
     private final AttributeMapFilter attributeMapFilter;
     private final LogStream logStream;
+    private final BufferFactory bufferFactory;
 
     @Inject
     public ProxyRequestHandler(@Nullable final ProxyRequestConfig proxyRequestConfig,
                                final MasterStreamHandlerFactory streamHandlerFactory,
                                final AttributeMapFilterFactory attributeMapFilterFactory,
-                               final LogStream logStream) {
+                               final LogStream logStream,
+                               final BufferFactory bufferFactory) {
         this.streamHandlerFactory = streamHandlerFactory;
         this.logStream = logStream;
+        this.bufferFactory = bufferFactory;
 
         if (proxyRequestConfig != null && proxyRequestConfig.getReceiptPolicyUuid() != null) {
             attributeMapFilter = attributeMapFilterFactory.create(new DocRef("RuleSet", proxyRequestConfig.getReceiptPolicyUuid()));
@@ -82,7 +85,7 @@ public class ProxyRequestHandler implements RequestHandler {
                             streamHandler.setAttributeMap(attributeMap);
                         }
 
-                        final byte[] buffer = BufferFactory.create();
+                        final byte[] buffer = bufferFactory.create();
                         final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, handlers, buffer, "DataFeedServlet");
 
                         stroomStreamProcessor.processRequestHeader(request);
@@ -114,7 +117,7 @@ public class ProxyRequestHandler implements RequestHandler {
 
                 } else {
                     // Just read the stream in and ignore it
-                    final byte[] buffer = BufferFactory.create();
+                    final byte[] buffer = bufferFactory.create();
                     while (inputStream.read(buffer) >= 0) {
                         // Ignore data.
                     }

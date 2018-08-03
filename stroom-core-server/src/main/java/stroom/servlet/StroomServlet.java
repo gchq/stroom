@@ -22,8 +22,8 @@ import javax.inject.Inject;
 
 public class StroomServlet extends AppServlet {
     @Inject
-    StroomServlet(final PropertyService stroomPropertyService) {
-        super(stroomPropertyService);
+    StroomServlet(final PropertyService propertyService) {
+        super(propertyService);
     }
 
 

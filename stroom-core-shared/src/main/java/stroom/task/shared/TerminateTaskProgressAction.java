@@ -16,7 +16,6 @@
 
 package stroom.task.shared;
 
-import stroom.entity.shared.Action;
 import stroom.util.shared.VoidResult;
 
 public class TerminateTaskProgressAction extends Action<VoidResult> {

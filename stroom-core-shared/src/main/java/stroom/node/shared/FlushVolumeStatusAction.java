@@ -16,7 +16,7 @@
 
 package stroom.node.shared;
 
-import stroom.entity.shared.Action;
+import stroom.task.shared.Action;
 import stroom.util.shared.VoidResult;
 
 public class FlushVolumeStatusAction extends Action<VoidResult> {

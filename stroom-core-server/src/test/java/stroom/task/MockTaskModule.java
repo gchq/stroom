@@ -17,7 +17,7 @@
 package stroom.task;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
+import stroom.task.api.TaskContext;
 
 public class MockTaskModule extends AbstractModule {
     @Override

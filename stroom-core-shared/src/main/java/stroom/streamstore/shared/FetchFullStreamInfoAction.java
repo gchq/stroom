@@ -1,6 +1,6 @@
 package stroom.streamstore.shared;
 
-import stroom.entity.shared.Action;
+import stroom.task.shared.Action;
 import stroom.data.meta.api.Data;
 
 public class FetchFullStreamInfoAction extends Action<FullStreamInfoResult> {

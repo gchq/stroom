@@ -12,16 +12,16 @@ def deployDir = "${gwtBuildDir}/deploy"
 def extraDir = "${gwtBuildDir}/extra"
 
 dependencies {
-    compile project(':stroom-index-client')
-    compile project(':stroom-externaldoc-client')
-    compile project(':stroom-statistics-client')
-    compile project(':stroom-dashboard-client')
-    compile project(':stroom-security-shared')
-    permitUnusedDeclared project(':stroom-security-shared')
+    compile project(':stroom-index:stroom-index-client')
+    compile project(':stroom-externaldoc:stroom-externaldoc-client')
+    compile project(':stroom-statistics:stroom-statistics-client')
+    compile project(':stroom-dashboard:stroom-dashboard-client')
+    compile project(':stroom-security:stroom-security-shared')
+    permitUnusedDeclared project(':stroom-security:stroom-security-shared')
     compile project(':stroom-core-client')
-    compile project(':stroom-security-client-api')
+    compile project(':stroom-security:stroom-security-client-api')
     compile project(':stroom-core-client-widget')
-    compile project(':stroom-security-client')
+    compile project(':stroom-security:stroom-security-client')
 
     compile "${libs.stroomDocRef}:sources"
     permitUnusedDeclared libs.stroomDocRef

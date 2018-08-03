@@ -19,14 +19,14 @@ package stroom.proxy.repo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.meta.api.AttributeMap;
+import stroom.datafeed.BufferFactory;
 import stroom.feed.AttributeMapUtil;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.InitialByteArrayOutputStream;
 import stroom.util.io.InitialByteArrayOutputStream.BufferPos;
-import stroom.util.io.StreamProgressMonitor;
+import stroom.data.store.StreamProgressMonitor;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.thread.BufferFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,7 +36,13 @@ import java.util.List;
 public final class ProxyFileHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyFileHandler.class);
 
-     public Long processFeedFile(final List<? extends StroomStreamHandler> stroomStreamHandlerList,
+    private final BufferFactory bufferFactory;
+
+    public ProxyFileHandler(final BufferFactory bufferFactory) {
+        this.bufferFactory = bufferFactory;
+    }
+
+    public Long processFeedFile(final List<? extends StroomStreamHandler> stroomStreamHandlerList,
                                 final StroomZipRepository stroomZipRepository, final Path file,
                                 final StreamProgressMonitor streamProgress,
                                 final long startSequence) throws IOException {
@@ -107,21 +113,21 @@ public final class ProxyFileHandler {
     }
 
     private void sendEntry(final List<? extends StroomStreamHandler> requestHandlerList, final StroomZipFile stroomZipFile,
-                             final String sourceName, final StreamProgressMonitor streamProgress,
-                             final StroomZipEntry targetEntry)
+                           final String sourceName, final StreamProgressMonitor streamProgress,
+                           final StroomZipEntry targetEntry)
             throws IOException {
         final InputStream inputStream = stroomZipFile.getInputStream(sourceName, targetEntry.getStroomZipFileType());
         sendEntry(requestHandlerList, inputStream, streamProgress, targetEntry);
     }
 
     private void sendEntry(final List<? extends StroomStreamHandler> stroomStreamHandlerList, final InputStream inputStream,
-                          final StreamProgressMonitor streamProgress, final StroomZipEntry targetEntry)
+                           final StreamProgressMonitor streamProgress, final StroomZipEntry targetEntry)
             throws IOException {
         if (inputStream != null) {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("sendEntry() - " + targetEntry);
             }
-            final byte[] buffer = BufferFactory.create();
+            final byte[] buffer = bufferFactory.create();
             for (final StroomStreamHandler stroomStreamHandler : stroomStreamHandlerList) {
                 stroomStreamHandler.handleEntryStart(targetEntry);
             }
@@ -150,11 +156,11 @@ public final class ProxyFileHandler {
     }
 
     private void sendEntry(final List<? extends StroomStreamHandler> stroomStreamHandlerList, final AttributeMap attributeMap,
-                          final StroomZipEntry targetEntry) throws IOException {
+                           final StroomZipEntry targetEntry) throws IOException {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("sendEntry() - " + targetEntry);
         }
-        final byte[] buffer = BufferFactory.create();
+        final byte[] buffer = bufferFactory.create();
         for (final StroomStreamHandler stroomStreamHandler : stroomStreamHandlerList) {
             if (stroomStreamHandler instanceof StroomHeaderStreamHandler) {
                 ((StroomHeaderStreamHandler) stroomStreamHandler).handleHeader(attributeMap);

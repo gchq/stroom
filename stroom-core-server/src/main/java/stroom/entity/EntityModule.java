@@ -20,8 +20,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.Clearable;
 import stroom.logging.LoggingModule;
-import stroom.security.DocumentPermissionCache;
-import stroom.task.TaskHandler;
+import stroom.task.api.TaskHandler;
 
 public class EntityModule extends AbstractModule {
     @Override

@@ -44,12 +44,11 @@ import stroom.streamstore.shared.StreamTypeNames;
 import stroom.data.store.api.StreamSourceInputStream;
 import stroom.data.store.api.StreamSourceInputStreamProvider;
 import stroom.data.meta.api.Data;
-import stroom.task.AbstractTaskHandler;
-import stroom.task.TaskHandlerBean;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.io.IOException;
 
 /**

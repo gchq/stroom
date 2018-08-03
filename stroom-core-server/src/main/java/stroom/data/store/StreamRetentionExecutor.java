@@ -32,7 +32,7 @@ import stroom.jobsystem.ClusterLockService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.task.TaskContext;
+import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.util.lifecycle.StroomSimpleCronSchedule;

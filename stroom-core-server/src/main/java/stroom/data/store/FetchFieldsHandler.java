@@ -20,8 +20,8 @@ import stroom.entity.shared.DataSourceFields;
 import stroom.security.Security;
 import stroom.streamstore.shared.FetchFieldsAction;
 import stroom.data.meta.api.MetaDataSource;
-import stroom.task.AbstractTaskHandler;
-import stroom.task.TaskHandlerBean;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 

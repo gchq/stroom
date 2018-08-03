@@ -45,7 +45,7 @@ import stroom.statistics.shared.common.StatisticField;
 import stroom.statistics.sql.entity.StatisticStoreStore;
 import stroom.statistics.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.sql.rollup.RolledUpStatisticEvent;
-import stroom.task.TaskContext;
+import stroom.task.api.TaskContext;
 import stroom.task.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;

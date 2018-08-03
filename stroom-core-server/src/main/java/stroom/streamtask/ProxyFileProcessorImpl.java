@@ -18,17 +18,17 @@ package stroom.streamtask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.datafeed.BufferFactory;
 import stroom.feed.FeedDocCache;
 import stroom.data.meta.api.AttributeMap;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.FeedDoc;
 import stroom.streamtask.statistic.MetaDataStatistic;
-import stroom.properties.api.PropertyService;
 import stroom.proxy.repo.ProxyFileHandler;
 import stroom.proxy.repo.ProxyFileProcessor;
 import stroom.proxy.repo.StroomZipRepository;
 import stroom.data.store.api.StreamStore;
-import stroom.util.io.StreamProgressMonitor;
+import stroom.data.store.StreamProgressMonitor;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 
@@ -53,7 +53,7 @@ import java.util.Optional;
 final class ProxyFileProcessorImpl implements ProxyFileProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyFileProcessorImpl.class);
 
-    private final ProxyFileHandler feedFileProcessorHelper = new ProxyFileHandler();
+    private final ProxyFileHandler feedFileProcessorHelper;
 
     private final static int DEFAULT_MAX_AGGREGATION = 10000;
     final static long DEFAULT_MAX_STREAM_SIZE = ModelStringUtil.parseIECByteSizeString("10G");
@@ -64,20 +64,22 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
     private final int maxAggregation;
     private final long maxStreamSize;
     private final boolean aggregate = true;
-    private final ProxyFileHandler proxyFileHandler = new ProxyFileHandler();
+    private final ProxyFileHandler proxyFileHandler;
     private volatile boolean stop = false;
 
     @Inject
     ProxyFileProcessorImpl(final StreamStore streamStore,
                            final FeedDocCache feedDocCache,
                            final MetaDataStatistic metaDataStatistic,
-                           final PropertyService propertyService) {
+                           final ProxyFileProcessorConfig proxyFileProcessorConfig,
+                           final BufferFactory bufferFactory) {
         this(
                 streamStore,
                 feedDocCache,
                 metaDataStatistic,
-                propertyService.getIntProperty("stroom.maxAggregation", DEFAULT_MAX_AGGREGATION),
-                getByteSize(propertyService.getProperty("stroom.maxStreamSize"), DEFAULT_MAX_STREAM_SIZE)
+                proxyFileProcessorConfig.getMaxAggregation(),
+                proxyFileProcessorConfig.getMaxStreamSize(),
+                bufferFactory
         );
     }
 
@@ -85,12 +87,16 @@ final class ProxyFileProcessorImpl implements ProxyFileProcessor {
                            final FeedDocCache feedDocCache,
                            final MetaDataStatistic metaDataStatistic,
                            final int maxAggregation,
-                           final long maxStreamSize) {
+                           final long maxStreamSize,
+                           final BufferFactory bufferFactory) {
         this.streamStore = streamStore;
         this.feedDocCache = feedDocCache;
         this.metaDataStatistic = metaDataStatistic;
         this.maxAggregation = maxAggregation;
         this.maxStreamSize = maxStreamSize;
+
+        feedFileProcessorHelper = new ProxyFileHandler(bufferFactory);
+        proxyFileHandler = new ProxyFileHandler(bufferFactory);
     }
 
     @Override

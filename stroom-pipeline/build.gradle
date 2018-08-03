@@ -6,14 +6,15 @@ dependencies {
     compile project(':stroom-properties:stroom-properties-api')
     compile project(':stroom-core-server')
     compile project(':stroom-core-shared')
-    compile project(':stroom-docstore-shared')
-    compile project(':stroom-docstore-server')
+    compile project(':stroom-docstore:stroom-docstore-shared')
+    compile project(':stroom-docstore:stroom-docstore-server')
     compile project(':stroom-entity-shared')
-    compile project(':stroom-security-api')
-    compile project(':stroom-statistics-api')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-statistics:stroom-statistics-api')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
-    compile project(':stroom-explorer-api')
+    compile project(':stroom-explorer:stroom-explorer-api')
+    compile project(':stroom-task:stroom-task-api')
 
     compile project(':stroom-connectors')
     permitUnusedDeclared project(':stroom-connectors')
@@ -36,7 +37,7 @@ dependencies {
     compile libs.swagger_annotations
     compile libs.dropwizard_metrics_healthchecks
 
-    testCompile project(':stroom-security-impl-mock')
+    testCompile project(':stroom-security:stroom-security-impl-mock')
     testCompile project(':stroom-data-meta:stroom-data-meta-impl-mock')
     testCompile project(':stroom-properties:stroom-properties-impl-mock')
     testCompile project(':stroom-test-common')

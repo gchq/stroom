@@ -21,8 +21,8 @@ import stroom.resource.ResourceStore;
 import stroom.security.shared.PermissionNames;
 import stroom.security.Security;
 import stroom.streamstore.shared.UploadDataAction;
-import stroom.task.AbstractTaskHandler;
-import stroom.task.TaskHandlerBean;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskHandlerBean;
 import stroom.task.TaskManager;
 import stroom.util.shared.ResourceKey;
 

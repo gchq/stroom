@@ -9,13 +9,15 @@ dependencies {
     compile project(':stroom-core-server')
     compile project(':stroom-util-shared')
     compile project(':stroom-util')
-    compile project(':stroom-security-api')
-    compile project(':stroom-explorer-api')
-    compile project(':stroom-explorer-server')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-explorer:stroom-explorer-api')
+    compile project(':stroom-explorer:stroom-explorer-server')
     compile project(':stroom-pipeline')
-    compile project(':stroom-statistics-api')
-    compile project(':stroom-docstore-server')
-    compile project(':stroom-security-impl-mock')
+    compile project(':stroom-statistics:stroom-statistics-api')
+    compile project(':stroom-docstore:stroom-docstore-server')
+    compile project(':stroom-security:stroom-security-impl-mock')
+    compile project(':stroom-properties:stroom-properties-impl')
+    compile project(':stroom-task:stroom-task-api')
 
     compile libs.stroomDocRef
     compile libs.slf4j_api

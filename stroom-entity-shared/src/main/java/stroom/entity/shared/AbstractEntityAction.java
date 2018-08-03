@@ -19,6 +19,7 @@ package stroom.entity.shared;
 
 import stroom.docref.DocRef;
 import stroom.docref.SharedObject;
+import stroom.task.shared.Action;
 
 public abstract class AbstractEntityAction<R extends SharedObject> extends Action<R> {
     private static final long serialVersionUID = 8804463889602947196L;

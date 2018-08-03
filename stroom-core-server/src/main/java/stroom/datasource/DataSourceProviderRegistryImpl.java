@@ -26,10 +26,10 @@ public class DataSourceProviderRegistryImpl implements DataSourceProviderRegistr
     @SuppressWarnings("unused")
     @Inject
     DataSourceProviderRegistryImpl(final SecurityContext securityContext,
-                                          final PropertyService stroomPropertyService,
+                                          final PropertyService propertyService,
                                           final StroomBeanStore stroomBeanStore,
                                           final HttpServletRequestHolder httpServletRequestHolder) {
-        boolean isServiceDiscoveryEnabled = stroomPropertyService.getBooleanProperty(
+        boolean isServiceDiscoveryEnabled = propertyService.getBooleanProperty(
                 PROP_KEY_SERVICE_DISCOVERY_ENABLED,
                 false);
 
@@ -44,7 +44,7 @@ public class DataSourceProviderRegistryImpl implements DataSourceProviderRegistr
             LOGGER.debug("Using local services");
             delegateDataSourceProviderRegistry = new SimpleDataSourceProviderRegistry(
                     securityContext,
-                    stroomPropertyService,
+                    propertyService,
                     httpServletRequestHolder);
         }
     }

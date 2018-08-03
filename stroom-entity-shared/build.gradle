@@ -4,6 +4,7 @@ dependencies {
     compile libs.stroomDocRef
     compile libs.stroomQueryApi
 
+    compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-util-shared')
 
     compile libs.hibernate_jpa_api

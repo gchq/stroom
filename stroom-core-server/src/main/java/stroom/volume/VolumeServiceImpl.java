@@ -40,7 +40,6 @@ import stroom.node.shared.VolumeEntity.VolumeType;
 import stroom.node.shared.VolumeEntity.VolumeUseStatus;
 import stroom.node.shared.VolumeState;
 import stroom.persist.EntityManagerSupport;
-import stroom.properties.api.PropertyService;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.statistics.internal.InternalStatisticEvent;
@@ -78,31 +77,16 @@ import java.util.stream.Stream;
 @EntityEventHandler(type = VolumeEntity.ENTITY_TYPE, action = {EntityAction.CREATE, EntityAction.DELETE})
 public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, FindVolumeCriteria>
         implements VolumeService, EntityEvent.Handler, Clearable {
-    /**
-     * How many permanent copies should we keep?
-     */
-    public static final String PROP_RESILIENT_REPLICATION_COUNT = "stroom.streamstore.resilientReplicationCount";
-    /**
-     * Whether a default volume should be created on application start, but only if other volumes don't already exist
-     */
-    static final String PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP = "stroom.volumes.createDefaultOnStart";
+
     static final Path DEFAULT_VOLUMES_SUBDIR = Paths.get("volumes");
     static final Path DEFAULT_INDEX_VOLUME_SUBDIR = Paths.get("defaultIndexVolume");
     static final Path DEFAULT_STREAM_VOLUME_SUBDIR = Paths.get("defaultStreamVolume");
-    /**
-     * Should we try to write to local volumes if possible?
-     */
-    private static final String PROP_PREFER_LOCAL_VOLUMES = "stroom.streamstore.preferLocalVolumes";
-    /**
-     * How should we select volumes to use?
-     */
-    private static final String PROP_VOLUME_SELECTOR = "stroom.streamstore.volumeSelector";
+
     private static final String INTERNAL_STAT_KEY_VOLUMES = "volumes";
     private static final Logger LOGGER = LoggerFactory.getLogger(VolumeServiceImpl.class);
 
     private static final Map<String, VolumeSelector> volumeSelectorMap;
-    private static final int DEFAULT_RESILIENT_REPLICATION_COUNT = 1;
-    private static final boolean DEFAULT_PREFER_LOCAL_VOLUMES = false;
+
     private static final VolumeSelector DEFAULT_VOLUME_SELECTOR;
 
     static {
@@ -122,7 +106,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
     private final Security security;
     private final EntityManagerSupport entityManagerSupport;
     private final NodeCache nodeCache;
-    private final PropertyService stroomPropertyService;
+    private final VolumeConfig volumeConfig;
     private final Optional<InternalStatisticsReceiver> optionalInternalStatisticsReceiver;
     private final AtomicReference<List<VolumeEntity>> currentVolumeState = new AtomicReference<>();
     private volatile boolean initialised;
@@ -132,14 +116,14 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
                       final Security security,
                       final EntityManagerSupport entityManagerSupport,
                       final NodeCache nodeCache,
-                      final PropertyService stroomPropertyService,
+                      final VolumeConfig volumeConfig,
                       final Optional<InternalStatisticsReceiver> optionalInternalStatisticsReceiver) {
         super(stroomEntityManager, security);
         this.stroomEntityManager = stroomEntityManager;
         this.security = security;
         this.entityManagerSupport = entityManagerSupport;
         this.nodeCache = nodeCache;
-        this.stroomPropertyService = stroomPropertyService;
+        this.volumeConfig = volumeConfig;
         this.optionalInternalStatisticsReceiver = optionalInternalStatisticsReceiver;
     }
 
@@ -152,7 +136,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
             synchronized (this) {
                 if (!initialised) {
                     security.insecure(() -> {
-                        boolean isEnabled = stroomPropertyService.getBooleanProperty(PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, false);
+                        boolean isEnabled = volumeConfig.isCreateOnStartup();
 
                         if (isEnabled) {
                             List<VolumeEntity> existingVolumes = getCurrentState();
@@ -172,7 +156,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
                                 LOGGER.info("Existing volumes exist, won't create default volumes");
                             }
                         } else {
-                            LOGGER.info("Creation of default volumes is currently disabled by property: " + PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP);
+                            LOGGER.info("Creation of default volumes is currently disabled by property: " + VolumeConfig.PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP);
                         }
 
                         initialised = true;
@@ -188,7 +172,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
 
         return security.insecureResult(() -> {
             LocalVolumeUse localVolumeUse = null;
-            if (isPreferLocalVolumes()) {
+            if (volumeConfig.isPreferLocalVolumes()) {
                 localVolumeUse = LocalVolumeUse.PREFERRED;
             }
 
@@ -509,17 +493,13 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
     }
 
     private int getResilientReplicationCount() {
-        int resilientReplicationCount = stroomPropertyService.getIntProperty(PROP_RESILIENT_REPLICATION_COUNT,
-                DEFAULT_RESILIENT_REPLICATION_COUNT);
+        int resilientReplicationCount = volumeConfig.getResilientReplicationCount();
         if (resilientReplicationCount < 1) {
             resilientReplicationCount = 1;
         }
         return resilientReplicationCount;
     }
 
-    private boolean isPreferLocalVolumes() {
-        return stroomPropertyService.getBooleanProperty(PROP_PREFER_LOCAL_VOLUMES, DEFAULT_PREFER_LOCAL_VOLUMES);
-    }
 
     @Override
     public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindVolumeCriteria criteria) {
@@ -533,7 +513,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
         VolumeSelector volumeSelector = null;
 
         try {
-            final String value = stroomPropertyService.getProperty(PROP_VOLUME_SELECTOR);
+            final String value = volumeConfig.getVolumeSelector();
             if (value != null) {
                 volumeSelector = volumeSelectorMap.get(value);
             }
@@ -556,7 +536,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
 //    @StroomStartup(priority = -1100)
 //    public void startup() {
 //
-//        boolean isEnabled = stroomPropertyService.getBooleanProperty(PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, false);
+//        boolean isEnabled = propertyService.getBooleanProperty(PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP, false);
 //
 //        if (isEnabled) {
 //            List<VolumeEntity> existingVolumes = getCurrentState();

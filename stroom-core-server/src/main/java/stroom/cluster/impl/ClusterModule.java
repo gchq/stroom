@@ -22,14 +22,11 @@ import com.google.inject.name.Names;
 import stroom.cluster.api.ClusterCallService;
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.entity.event.EntityEvent;
-import stroom.properties.PropertyModule;
-import stroom.task.TaskHandler;
+import stroom.task.api.TaskHandler;
 
 public class ClusterModule extends AbstractModule {
     @Override
     protected void configure() {
-        install(new PropertyModule());
-
         bind(ClusterCallService.class).annotatedWith(Names.named("clusterCallServiceLocal")).to(ClusterCallServiceLocal.class);
         bind(ClusterCallService.class).annotatedWith(Names.named("clusterCallServiceRemote")).to(ClusterCallServiceRemote.class);
         bind(ClusterNodeManager.class).to(ClusterNodeManagerImpl.class);

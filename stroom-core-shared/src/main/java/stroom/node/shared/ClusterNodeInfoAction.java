@@ -16,7 +16,7 @@
 
 package stroom.node.shared;
 
-import stroom.entity.shared.Action;
+import stroom.task.shared.Action;
 
 public class ClusterNodeInfoAction extends Action<ClusterNodeInfo> {
     private static final long serialVersionUID = 8503583077432248983L;

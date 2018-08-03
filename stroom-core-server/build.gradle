@@ -3,18 +3,19 @@ ext.moduleName = 'stroom.core.server'
 dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-entity-shared')
-    compile project(':stroom-security-api')
-    compile project(':stroom-explorer-api')
-    compile project(':stroom-docstore-shared')
-    compile project(':stroom-docstore-server')
-    compile project(':stroom-statistics-api')
-    permitUnusedDeclared project(':stroom-statistics-api') //not clear why it thinks this is unused
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-explorer:stroom-explorer-api')
+    compile project(':stroom-docstore:stroom-docstore-shared')
+    compile project(':stroom-docstore:stroom-docstore-server')
+    compile project(':stroom-statistics:stroom-statistics-api')
+    permitUnusedDeclared project(':stroom-statistics:stroom-statistics-api') //not clear why it thinks this is unused
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
     compile project(':stroom-connectors')
     compile project(':stroom-data-meta:stroom-data-meta-api')
     compile project(':stroom-data-store:stroom-data-store-api')
     compile project(':stroom-properties:stroom-properties-api')
+    compile project(':stroom-task:stroom-task-api')
 
     compile libs.eventLogging
     compile libs.stroomDocRef
@@ -79,9 +80,9 @@ dependencies {
 
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
 
-    testCompile project(':stroom-security-impl-mock')
+    testCompile project(':stroom-security:stroom-security-impl-mock')
 //    testCompile project(':stroom-data-meta:stroom-data-meta-impl-mock')
-    testCompile project(':stroom-properties:stroom-properties-impl-mock')
+//    testCompile project(':stroom-properties:stroom-properties-impl-mock')
     testCompile libs.junit
     testCompile libs.mockito_core
 

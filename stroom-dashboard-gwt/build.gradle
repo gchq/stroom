@@ -14,8 +14,8 @@ def extraDir = "${gwtBuildDir}/extra"
 dependencies {
     compile project(':stroom-core-client')
     compile project(':stroom-core-client-widget')
-    compile project(':stroom-dashboard-client')
-    compile project(':stroom-security-client')
+    compile project(':stroom-dashboard:stroom-dashboard-client')
+    compile project(':stroom-security:stroom-security-client')
 
     compile "${libs.stroomDocRef}:sources"
     permitUnusedDeclared libs.stroomDocRef

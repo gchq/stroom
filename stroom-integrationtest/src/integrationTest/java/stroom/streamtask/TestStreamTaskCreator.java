@@ -26,7 +26,7 @@ import stroom.streamstore.shared.QueryData;
 import stroom.data.meta.api.MetaDataSource;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.shared.ProcessorFilterTask;
-import stroom.task.SimpleTaskContext;
+import stroom.task.api.SimpleTaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;

@@ -27,10 +27,10 @@ public class ConnectionPoolConfig {
     private final int prepStmtCacheSize;
     private final int prepStmtCacheSqlLimit;
 
-    public ConnectionPoolConfig(final String prefix, final PropertyService stroomPropertyService) {
-        this.cachePrepStmts = stroomPropertyService.getBooleanProperty(prefix + PROP_CACHE_PREPARED_STATEMENTS, true);
-        this.prepStmtCacheSize = stroomPropertyService.getIntProperty(prefix + PROP_PREPARED_STATEMENT_CACHE_SIZE + "|trace", 250);
-        this.prepStmtCacheSqlLimit = stroomPropertyService.getIntProperty(prefix + PROP_PREPARED_STATEMENT_CACHE_SQL_LIMIT, 2048);
+    public ConnectionPoolConfig(final String prefix, final PropertyService propertyService) {
+        this.cachePrepStmts = propertyService.getBooleanProperty(prefix + PROP_CACHE_PREPARED_STATEMENTS, true);
+        this.prepStmtCacheSize = propertyService.getIntProperty(prefix + PROP_PREPARED_STATEMENT_CACHE_SIZE + "|trace", 250);
+        this.prepStmtCacheSqlLimit = propertyService.getIntProperty(prefix + PROP_PREPARED_STATEMENT_CACHE_SQL_LIMIT, 2048);
     }
 
     public boolean isCachePrepStmts() {

@@ -1,6 +1,6 @@
 package stroom.proxy.repo;
 
-import stroom.util.io.StreamProgressMonitor;
+import stroom.data.store.StreamProgressMonitor;
 
 import java.io.IOException;
 import java.io.OutputStream;

@@ -8,27 +8,27 @@ import javax.inject.Singleton;
 
 @Singleton
 class MetaValueConfig {
-    private final PropertyService stroomPropertyService;
+    private final PropertyService propertyService;
 
     @Inject
-    MetaValueConfig(final PropertyService stroomPropertyService) {
-        this.stroomPropertyService = stroomPropertyService;
+    MetaValueConfig(final PropertyService propertyService) {
+        this.propertyService = propertyService;
     }
 
     long getDeleteAge() {
-        final String metaDatabaseAge = stroomPropertyService.getProperty("stroom.meta.deleteAge", "30d");
+        final String metaDatabaseAge = propertyService.getProperty("stroom.meta.deleteAge", "30d");
         return ModelStringUtil.parseDurationString(metaDatabaseAge);
     }
 
     int getDeleteBatchSize() {
-        return stroomPropertyService.getIntProperty("stroom.meta.deleteBatchSize", 1000);
+        return propertyService.getIntProperty("stroom.meta.deleteBatchSize", 1000);
     }
 
     int getFlushBatchSize() {
-        return stroomPropertyService.getIntProperty("stroom.meta.flushBatchSize", 1000);
+        return propertyService.getIntProperty("stroom.meta.flushBatchSize", 1000);
     }
 
     boolean isAddAsync() {
-        return stroomPropertyService.getBooleanProperty("stroom.meta.addAsync", true);
+        return propertyService.getBooleanProperty("stroom.meta.addAsync", true);
     }
 }

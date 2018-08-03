@@ -35,7 +35,7 @@ public class ServiceDiscoveryManager {
     public static final String PROP_KEY_ZOOKEEPER_BASE_PATH = PROP_KEY_PREFIX + "zookeeperBasePath";
     public static final String PROP_KEY_SERVICE_DISCOVERY_ENABLED = PROP_KEY_PREFIX + "enabled";
 
-    private final PropertyService stroomPropertyService;
+    private final PropertyService propertyService;
     private final String zookeeperUrl;
 
     private final AtomicReference<CuratorFramework> curatorFrameworkRef = new AtomicReference<>();
@@ -46,12 +46,12 @@ public class ServiceDiscoveryManager {
 
     @SuppressWarnings("unused")
     @Inject
-    ServiceDiscoveryManager(final PropertyService stroomPropertyService) {
-        this.stroomPropertyService = stroomPropertyService;
-        this.zookeeperUrl = stroomPropertyService.getProperty(PROP_KEY_ZOOKEEPER_QUORUM);
+    ServiceDiscoveryManager(final PropertyService propertyService) {
+        this.propertyService = propertyService;
+        this.zookeeperUrl = propertyService.getProperty(PROP_KEY_ZOOKEEPER_QUORUM);
 
 
-        boolean isServiceDiscoveryEnabled = stroomPropertyService.getBooleanProperty(
+        boolean isServiceDiscoveryEnabled = propertyService.getBooleanProperty(
                 PROP_KEY_SERVICE_DISCOVERY_ENABLED,
                 false);
 
@@ -80,9 +80,9 @@ public class ServiceDiscoveryManager {
     }
 
     private void startCurator() {
-        int baseSleepTimeMs = stroomPropertyService.getIntProperty(PROP_KEY_CURATOR_BASE_SLEEP_TIME_MS, 5_000);
-        int maxSleepTimeMs = stroomPropertyService.getIntProperty(PROP_KEY_CURATOR_MAX_SLEEP_TIME_MS, 300_000);
-        int maxRetries = stroomPropertyService.getIntProperty(PROP_KEY_CURATOR_MAX_RETRIES, 100);
+        int baseSleepTimeMs = propertyService.getIntProperty(PROP_KEY_CURATOR_BASE_SLEEP_TIME_MS, 5_000);
+        int maxSleepTimeMs = propertyService.getIntProperty(PROP_KEY_CURATOR_MAX_SLEEP_TIME_MS, 300_000);
+        int maxRetries = propertyService.getIntProperty(PROP_KEY_CURATOR_MAX_RETRIES, 100);
 
         RetryPolicy retryPolicy = new BoundedExponentialBackoffRetry(baseSleepTimeMs, maxSleepTimeMs, maxRetries);
 
@@ -107,7 +107,7 @@ public class ServiceDiscoveryManager {
     }
 
     private void startServiceDiscovery() {
-        String basePath = Preconditions.checkNotNull(stroomPropertyService.getProperty(PROP_KEY_ZOOKEEPER_BASE_PATH));
+        String basePath = Preconditions.checkNotNull(propertyService.getProperty(PROP_KEY_ZOOKEEPER_BASE_PATH));
 
         ServiceDiscovery<String> serviceDiscovery = ServiceDiscoveryBuilder
                 .builder(String.class)

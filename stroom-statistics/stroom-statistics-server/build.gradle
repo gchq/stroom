@@ -1,0 +1,66 @@
+ext.moduleName = 'stroom.statistics.server'
+
+dependencies {
+    compile project(':stroom-properties:stroom-properties-api')
+    compile project(':stroom-core-server')
+    compile project(':stroom-core-shared')
+    compile project(':stroom-entity-shared')
+    compile project(':stroom-docstore:stroom-docstore-server')
+    compile project(':stroom-docstore:stroom-docstore-shared')
+    compile project(':stroom-pipeline')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-statistics:stroom-statistics-api')
+    compile project(':stroom-statistics:stroom-statistics-shared')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
+    compile project(':stroom-connectors')
+    compile project(':stroom-explorer:stroom-explorer-api')
+    compile project(':stroom-task:stroom-task-api')
+
+
+    compile libs.stroomDocRef
+    compile libs.stroomQueryApi
+    compile libs.stroomExpression
+    compile libs.stroomQueryCommon
+    compile libs.stroomStatsSchema
+
+    compile libs.hikari
+    compile libs.commons_lang
+    compile libs.commons_pool2
+    compile libs.dropwizard_metrics_annotation
+    compile libs.dropwizard_metrics_healthchecks
+    compile libs.flyway_core
+    compile libs.guava
+    compile libs.guice4
+    compile libs.javax_inject
+    compile libs.jaxb_api
+    compile libs.reactivestreams
+    compile libs.rxjava
+    compile libs.slf4j_api
+    compile libs.swagger_annotations
+    compile libs.vavr
+    compile libs.ws_rs_api
+    compile libs.xml_apis
+    compile(libs.hbase) { transitive = false } //hbase-common is currently only used for its Bytes class, so exclude all its deps
+    compile libs.guice4
+    compile libs.hibernate_jpa_api
+
+    compile libs.dropwizard_metrics_annotation
+    compile libs.dropwizard_metrics_healthchecks
+
+    testCompile project(':stroom-security:stroom-security-impl-mock')
+    testCompile project(':stroom-properties:stroom-properties-impl-mock')
+    testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
+//    testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
+
+    testCompile libs.assertj_core
+    testCompile libs.junit
+    testCompile libs.mockito_core
+
+    //the following logging libs are needed when running junits outside dropwizard
+    testRuntime libs.jcl_over_slf4j
+    testRuntime libs.jul_to_slf4j
+    testRuntime libs.log4j_over_slf4j
+    testRuntime libs.logback_classic
+    testRuntime libs.logback_core
+}

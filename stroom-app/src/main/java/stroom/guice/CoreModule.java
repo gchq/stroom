@@ -50,8 +50,8 @@ public class CoreModule extends AbstractModule {
         install(new stroom.pipeline.stepping.PipelineSteppingModule());
         install(new stroom.pipeline.task.PipelineStreamTaskModule());
         install(new stroom.policy.PolicyModule());
-        install(new stroom.properties.PropertyModule());
-        install(new stroom.properties.GlobalPropertyModule());
+        install(new stroom.properties.impl.PropertyModule());
+        install(new stroom.properties.global.impl.db.GlobalPropertiesDbModule());
         install(new stroom.query.QueryModule());
         install(new stroom.refdata.ReferenceDataModule());
         install(new stroom.ruleset.RulesetModule());

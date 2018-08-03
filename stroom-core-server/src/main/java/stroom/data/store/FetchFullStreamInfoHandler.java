@@ -23,8 +23,8 @@ import stroom.streamstore.shared.FetchFullStreamInfoAction;
 import stroom.streamstore.shared.FullStreamInfoResult;
 import stroom.streamstore.shared.FullStreamInfoResult.Entry;
 import stroom.streamstore.shared.FullStreamInfoResult.Section;
-import stroom.task.AbstractTaskHandler;
-import stroom.task.TaskHandlerBean;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskHandlerBean;
 import stroom.util.date.DateUtil;
 
 import javax.inject.Inject;

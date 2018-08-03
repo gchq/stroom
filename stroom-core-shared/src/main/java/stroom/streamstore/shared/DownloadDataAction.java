@@ -16,7 +16,7 @@
 
 package stroom.streamstore.shared;
 
-import stroom.entity.shared.Action;
+import stroom.task.shared.Action;
 import stroom.data.meta.api.FindDataCriteria;
 import stroom.util.shared.ResourceGeneration;
 

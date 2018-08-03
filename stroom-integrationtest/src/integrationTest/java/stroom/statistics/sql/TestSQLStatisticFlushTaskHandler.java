@@ -24,7 +24,7 @@ import stroom.entity.StroomDatabaseInfo;
 import stroom.security.Security;
 import stroom.statistics.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.sql.rollup.RolledUpStatisticEvent;
-import stroom.task.SimpleTaskContext;
+import stroom.task.api.SimpleTaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.inject.Inject;

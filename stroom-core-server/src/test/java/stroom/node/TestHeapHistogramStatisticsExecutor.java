@@ -11,7 +11,6 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
-import stroom.properties.impl.mock.MockPropertyService;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.util.test.StroomExpectedException;
@@ -24,15 +23,16 @@ import java.util.regex.Pattern;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestHeapHistogramStatisticsExecutor {
-
     @Mock
     private InternalStatisticsReceiver mockInternalStatisticsReceiver;
 
     @Captor
     private ArgumentCaptor<List<InternalStatisticEvent>> eventsCaptor;
 
-    private MockPropertyService mockStroomPropertyService = new MockPropertyService();
-    private HeapHistogramService heapHistogramService = new HeapHistogramService(mockStroomPropertyService);
+    @Mock
+    private HeapHistogramConfig heapHistogramConfig;
+
+    private HeapHistogramService heapHistogramService;
     private HeapHistogramStatisticsExecutor executor;
 
     @Before
@@ -43,9 +43,10 @@ public class TestHeapHistogramStatisticsExecutor {
             final Node node1a = Node.create(rack1, "1a");
             final NodeCache nodeCache = new NodeCache(node1a);
 
-            mockStroomPropertyService.setProperty(HeapHistogramService.CLASS_NAME_MATCH_REGEX_PROP_KEY, "^stroom\\..*$");
-            mockStroomPropertyService.setProperty(HeapHistogramService.JMAP_EXECUTABLE_PROP_KEY, "jmap");
+            Mockito.when(heapHistogramConfig.getClassNameMatchRegex()).thenReturn("^stroom\\..*$");
+            Mockito.when(heapHistogramConfig.getExecutable()).thenReturn("jmap");
 
+            heapHistogramService = new HeapHistogramService(heapHistogramConfig);
             executor = new HeapHistogramStatisticsExecutor(heapHistogramService, mockInternalStatisticsReceiver, nodeCache);
         } catch (final RuntimeException e) {
             throw new RuntimeException("Error during test setup", e);
@@ -56,7 +57,7 @@ public class TestHeapHistogramStatisticsExecutor {
             event.getTags().get(HeapHistogramStatisticsExecutor.TAG_NAME_CLASS_NAME);
 
     @Test
-    public void testExec_stroomClasses() throws InterruptedException {
+    public void testExec_stroomClasses() {
 
         //When
         executor.exec();
@@ -89,11 +90,12 @@ public class TestHeapHistogramStatisticsExecutor {
     }
 
     @Test
-    public void testExec_allClasses() throws InterruptedException {
+    public void testExec_allClasses() {
 
         //Given
         //no regex so should get all classes back
-        mockStroomPropertyService.setProperty(HeapHistogramService.CLASS_NAME_MATCH_REGEX_PROP_KEY, "");
+        Mockito.when(heapHistogramConfig.getClassNameMatchRegex()).thenReturn("");
+//        mockStroomPropertyService.setProperty(HeapHistogramService.CLASS_NAME_MATCH_REGEX_PROP_KEY, "");
 
 //        Mockito.when(statisticsFactory.instance())
 //                .thenReturn(statistics);
@@ -125,9 +127,10 @@ public class TestHeapHistogramStatisticsExecutor {
 
     @Test
     @StroomExpectedException(exception = {RuntimeException.class, IOException.class})
-    public void testExecBadExecutable() throws InterruptedException {
+    public void testExecBadExecutable() {
         //Given
-        mockStroomPropertyService.setProperty(HeapHistogramService.JMAP_EXECUTABLE_PROP_KEY, "badNameForJmapExecutable");
+        Mockito.when(heapHistogramConfig.getExecutable()).thenReturn("badNameForJmapExecutable");
+//        mockStroomPropertyService.setProperty(HeapHistogramService.JMAP_EXECUTABLE_PROP_KEY, "badNameForJmapExecutable");
 
         //When
         boolean thrownException = false;

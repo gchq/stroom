@@ -22,7 +22,7 @@ import stroom.pipeline.shared.StepType;
 import stroom.pipeline.shared.SteppingFilterSettings;
 import stroom.pipeline.shared.SteppingResult;
 import stroom.data.meta.api.FindDataCriteria;
-import stroom.task.ServerTask;
+import stroom.task.api.ServerTask;
 
 import java.util.Map;
 import java.util.Map.Entry;

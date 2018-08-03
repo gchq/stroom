@@ -21,8 +21,8 @@ import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.EntityServiceLoadAction;
 import stroom.logging.DocumentEventLog;
 import stroom.security.Security;
-import stroom.task.AbstractTaskHandler;
-import stroom.task.TaskHandlerBean;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 

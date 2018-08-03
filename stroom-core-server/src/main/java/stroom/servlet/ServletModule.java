@@ -18,7 +18,7 @@ package stroom.servlet;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.task.TaskHandler;
+import stroom.task.api.TaskHandler;
 
 public class ServletModule extends AbstractModule {
     @Override
@@ -28,8 +28,8 @@ public class ServletModule extends AbstractModule {
     }
     //    @Bean
 //    @Scope(StroomScope.PROTOTYPE)
-//    public DashboardServlet dashboardServlet(final StroomPropertyService stroomPropertyService) {
-//        return new DashboardServlet(stroomPropertyService);
+//    public DashboardServlet dashboardServlet(final StroomPropertyService propertyService) {
+//        return new DashboardServlet(propertyService);
 //    }
 //
 //    @Bean
@@ -38,8 +38,8 @@ public class ServletModule extends AbstractModule {
 //    }
 //
 //    @Bean
-//    public DynamicCSSServlet dynamicCSSServlet(final StroomPropertyService stroomPropertyService) {
-//        return new DynamicCSSServlet(stroomPropertyService);
+//    public DynamicCSSServlet dynamicCSSServlet(final StroomPropertyService propertyService) {
+//        return new DynamicCSSServlet(propertyService);
 //    }
 //
 //    @Bean
@@ -97,7 +97,7 @@ public class ServletModule extends AbstractModule {
 //
 //    @Bean
 //    @Scope(StroomScope.PROTOTYPE)
-//    public StroomServlet stroomServlet(final StroomPropertyService stroomPropertyService) {
-//        return new StroomServlet(stroomPropertyService);
+//    public StroomServlet stroomServlet(final StroomPropertyService propertyService) {
+//        return new StroomServlet(propertyService);
 //    }
 }

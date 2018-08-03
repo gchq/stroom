@@ -31,7 +31,7 @@ import stroom.util.io.ByteCountInputStream;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.InitialByteArrayOutputStream;
 import stroom.util.io.InitialByteArrayOutputStream.BufferPos;
-import stroom.util.io.StreamProgressMonitor;
+import stroom.data.store.StreamProgressMonitor;
 import stroom.util.io.StreamUtil;
 
 import javax.servlet.http.HttpServletRequest;

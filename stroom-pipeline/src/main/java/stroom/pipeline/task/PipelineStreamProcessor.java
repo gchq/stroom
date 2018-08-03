@@ -76,7 +76,7 @@ import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.streamtask.shared.Processor;
 import stroom.streamtask.shared.ProcessorFilter;
 import stroom.streamtask.shared.ProcessorFilterTask;
-import stroom.task.TaskContext;
+import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.io.PreviewInputStream;
 import stroom.util.io.WrappedOutputStream;
@@ -84,7 +84,6 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;

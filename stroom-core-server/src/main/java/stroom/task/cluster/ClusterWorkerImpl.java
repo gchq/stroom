@@ -25,7 +25,7 @@ import stroom.node.shared.Node;
 import stroom.task.TaskCallbackAdaptor;
 import stroom.task.TaskManager;
 import stroom.docref.SharedObject;
-import stroom.util.shared.TaskId;
+import stroom.task.shared.TaskId;
 
 import javax.inject.Inject;
 import javax.inject.Named;

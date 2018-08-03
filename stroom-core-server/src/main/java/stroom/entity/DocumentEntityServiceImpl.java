@@ -31,16 +31,11 @@ import stroom.entity.shared.ProvidesNamePattern;
 import stroom.entity.util.FieldMap;
 import stroom.entity.util.HqlBuilder;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.importexport.shared.ImportState;
-import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.persist.EntityManagerSupport;
 import stroom.docref.DocRef;
-import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.config.StroomProperties;
-import stroom.util.shared.Message;
-import stroom.util.shared.Severity;
 
 import javax.persistence.Transient;
 import java.util.Collections;

@@ -17,9 +17,9 @@
 package stroom.data.store.impl.fs;
 
 import stroom.node.shared.VolumeEntity;
-import stroom.util.shared.Task;
+import stroom.task.shared.Task;
 import stroom.util.shared.VoidResult;
-import stroom.task.ServerTask;
+import stroom.task.api.ServerTask;
 
 class FileSystemCleanSubTask extends ServerTask<VoidResult> {
     private final VolumeEntity volume;

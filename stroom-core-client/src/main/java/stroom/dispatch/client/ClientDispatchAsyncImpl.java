@@ -27,7 +27,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.shared.DispatchServiceAsync;
-import stroom.entity.shared.Action;
+import stroom.task.shared.Action;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.util.client.RandomId;

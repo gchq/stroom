@@ -32,7 +32,7 @@ import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.scheduler.FrequencyScheduler;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
-import stroom.util.shared.Task;
+import stroom.task.shared.Task;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

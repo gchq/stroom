@@ -16,11 +16,11 @@
 
 package stroom.node;
 
-import stroom.node.shared.ClientProperties;
-import stroom.node.shared.ClientPropertiesService;
-import stroom.node.shared.FetchClientPropertiesAction;
-import stroom.task.AbstractTaskHandler;
-import stroom.task.TaskHandlerBean;
+import stroom.properties.shared.ClientProperties;
+import stroom.properties.shared.ClientPropertiesService;
+import stroom.properties.shared.FetchClientPropertiesAction;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 

@@ -50,6 +50,8 @@
 
     <!-- Import functional areas -->
     <!-- Minimal -->
+    <inherits name="stroom.properties.Properties" />
+    <inherits name="stroom.properties.global.GlobalProperties" />
     <inherits name="stroom.data.meta.Meta" />
     <inherits name="stroom.alert.Alert"/>
     <inherits name="stroom.content.Content"/>

@@ -236,10 +236,10 @@ def projectsWithSharedTestJars = subprojects.findAll { project ->
     project.path in [
             ':stroom-core-server',
             ':stroom-pipeline',
-            ':stroom-dashboard-server',
+            ':stroom-dashboard:stroom-dashboard-server',
             ':stroom-entity-shared',
-            ':stroom-index-server',
-            ':stroom-security-server',
+            ':stroom-index:stroom-index-server',
+            ':stroom-security:stroom-security-server',
             ':stroom-util',
             'zzDUMMYzz to ease sorting'
     ]

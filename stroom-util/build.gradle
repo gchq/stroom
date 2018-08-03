@@ -5,7 +5,6 @@ ext.moduleName = 'stroom.util'
 
 dependencies {
     compile project(':stroom-util-shared')
-    compile project(':stroom-security-api')
 
     compile libs.commons_io
     permitUnusedDeclared libs.commons_io

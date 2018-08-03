@@ -24,7 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LogExecutionTime;
-import stroom.task.ExternalShutdownController;
 
 import java.nio.file.Path;
 
@@ -93,6 +92,6 @@ public class StroomJUnit4ClassRunner extends BlockJUnit4ClassRunner {
             throw new RuntimeException(e.getMessage(), e);
         }
 
-        ExternalShutdownController.shutdown();
+//        ExternalShutdownController.shutdown();
     }
 }

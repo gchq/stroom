@@ -24,7 +24,7 @@ import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.PipelineFactoryException;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.util.shared.ModelStringUtil;
-import stroom.task.TaskContext;
+import stroom.task.api.TaskContext;
 
 import java.io.IOException;
 

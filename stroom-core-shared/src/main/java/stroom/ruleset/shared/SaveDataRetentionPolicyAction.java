@@ -17,7 +17,7 @@
 
 package stroom.ruleset.shared;
 
-import stroom.entity.shared.Action;
+import stroom.task.shared.Action;
 
 public class SaveDataRetentionPolicyAction extends Action<DataRetentionPolicy> {
     private static final long serialVersionUID = 1966204124382806515L;

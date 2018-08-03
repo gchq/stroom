@@ -25,7 +25,7 @@ import stroom.security.Security;
 import stroom.statistics.shared.StatisticType;
 import stroom.statistics.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.sql.rollup.RolledUpStatisticEvent;
-import stroom.task.SimpleTaskContext;
+import stroom.task.api.SimpleTaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.util.config.StroomProperties;

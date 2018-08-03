@@ -24,7 +24,7 @@ import stroom.entity.FindService;
 import stroom.jobsystem.DistributedTaskFactory;
 import stroom.persist.EntityManagerSupport;
 import stroom.security.Security;
-import stroom.task.TaskHandler;
+import stroom.task.api.TaskHandler;
 
 import javax.inject.Named;
 

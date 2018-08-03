@@ -24,6 +24,7 @@ import stroom.data.meta.api.DataProperties;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
+import stroom.datafeed.BufferFactory;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.util.EntityServiceExceptionUtil;
 import stroom.feed.AttributeMapUtil;
@@ -36,15 +37,13 @@ import stroom.security.Security;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamTargetStroomStreamHandler;
 import stroom.streamtask.statistic.MetaDataStatistic;
-import stroom.task.AbstractTaskHandler;
-import stroom.task.TaskContext;
-import stroom.task.TaskHandlerBean;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskContext;
+import stroom.task.api.TaskHandlerBean;
 import stroom.util.date.DateUtil;
 import stroom.util.io.CloseableUtil;
-import stroom.util.io.StreamProgressMonitor;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.VoidResult;
-import stroom.util.thread.BufferFactory;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -66,18 +65,21 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
     private final FeedDocCache feedDocCache;
     private final MetaDataStatistic metaDataStatistics;
     private final Security security;
+    private final BufferFactory bufferFactory;
 
     @Inject
     StreamUploadTaskHandler(final TaskContext taskContext,
                             final StreamStore streamStore,
                             final FeedDocCache feedDocCache,
                             final MetaDataStatistic metaDataStatistics,
-                            final Security security) {
+                            final Security security,
+                            final BufferFactory bufferFactory) {
         this.taskContext = taskContext;
         this.streamStore = streamStore;
         this.feedDocCache = feedDocCache;
         this.metaDataStatistics = metaDataStatistics;
         this.security = security;
+        this.bufferFactory = bufferFactory;
     }
 
     @Override
@@ -164,7 +166,7 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
         try {
             final List<StreamTargetStroomStreamHandler> handlerList = StreamTargetStroomStreamHandler
                     .buildSingleHandlerList(streamStore, feedDocCache, metaDataStatistics, task.getFeedName(), task.getStreamTypeName());
-            final byte[] buffer = BufferFactory.create();
+            final byte[] buffer = bufferFactory.create();
             final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, handlerList,
                     buffer, "Upload");
             try (final InputStream inputStream = Files.newInputStream(streamUploadTask.getFile())) {
@@ -251,7 +253,7 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
 
     private boolean streamToStream(final InputStream inputStream, final OutputStream outputStream,
                                    final StreamProgressMonitor streamProgressMonitor) throws IOException {
-        final byte[] buffer = BufferFactory.create();
+        final byte[] buffer = bufferFactory.create();
         int len;
         while ((len = StreamUtil.eagerRead(inputStream, buffer)) != -1) {
             outputStream.write(buffer, 0, len);

@@ -36,7 +36,7 @@ import stroom.streamtask.StreamProcessorTask;
 import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.streamtask.StreamTaskCreator;
 import stroom.streamtask.shared.ProcessorFilterTask;
-import stroom.task.SimpleTaskContext;
+import stroom.task.api.SimpleTaskContext;
 import stroom.task.TaskManager;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;

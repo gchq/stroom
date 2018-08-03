@@ -25,14 +25,13 @@ import stroom.io.BasicStreamCloser;
 import stroom.io.StreamCloser;
 import stroom.node.LocalNodeProvider;
 import stroom.node.shared.Node;
-import stroom.pipeline.xsltfunctions.CommonXsltFunctionModule;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.streamtask.statistic.MetaDataStatistic;
 import stroom.task.ExecutorProvider;
-import stroom.task.SimpleTaskContext;
-import stroom.task.TaskContext;
-import stroom.task.TaskHandler;
-import stroom.util.shared.ThreadPool;
+import stroom.task.api.SimpleTaskContext;
+import stroom.task.api.TaskContext;
+import stroom.task.api.TaskHandler;
+import stroom.task.shared.ThreadPool;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -68,7 +67,7 @@ public class CliModule extends AbstractModule {
 //        install(new stroom.pipeline.stepping.PipelineSteppingModule());
 //        install(new stroom.pipeline.task.PipelineStreamTaskModule());
 //        install(new stroom.policy.PolicyModule());
-        install(new stroom.properties.PropertyModule());
+        install(new stroom.properties.impl.PropertyModule());
 //        install(new stroom.refdata.ReferenceDataModule());
 //        install(new stroom.resource.ResourceModule());
         install(new stroom.security.impl.mock.MockSecurityContextModule());

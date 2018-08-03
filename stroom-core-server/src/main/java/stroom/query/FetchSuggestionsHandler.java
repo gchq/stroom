@@ -30,8 +30,8 @@ import stroom.security.Security;
 import stroom.data.meta.api.DataMetaService;
 import stroom.data.meta.api.DataStatus;
 import stroom.data.meta.api.MetaDataSource;
-import stroom.task.AbstractTaskHandler;
-import stroom.task.TaskHandlerBean;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.SharedList;
 import stroom.util.shared.SharedString;
 

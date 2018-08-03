@@ -51,6 +51,7 @@ import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.util.test.StroomExpectedException;
+import stroom.volume.VolumeConfig;
 import stroom.volume.VolumeServiceImpl;
 
 import javax.inject.Inject;
@@ -86,7 +87,7 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
     public static void setProperties() {
         // Make sure stream attributes get flushed straight away.
         StroomProperties.setOverrideBooleanProperty("stroom.meta.addAsync", false, StroomProperties.Source.TEST);
-        StroomProperties.setOverrideIntProperty(VolumeServiceImpl.PROP_RESILIENT_REPLICATION_COUNT, 2, StroomProperties.Source.TEST);
+        StroomProperties.setOverrideIntProperty(VolumeConfig.PROP_RESILIENT_REPLICATION_COUNT, 2, StroomProperties.Source.TEST);
     }
 
     @AfterClass

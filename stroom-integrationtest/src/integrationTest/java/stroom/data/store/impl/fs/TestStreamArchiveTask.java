@@ -39,6 +39,7 @@ import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.config.StroomProperties;
 import stroom.util.test.FileSystemTestUtil;
+import stroom.volume.VolumeConfig;
 import stroom.volume.VolumeServiceImpl;
 
 import javax.inject.Inject;
@@ -83,14 +84,14 @@ public class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
 
     @Override
     protected void onBefore() {
-        initialReplicationCount = StroomProperties.getIntProperty(VolumeServiceImpl.PROP_RESILIENT_REPLICATION_COUNT, 1);
-        StroomProperties.setIntProperty(VolumeServiceImpl.PROP_RESILIENT_REPLICATION_COUNT, HIGHER_REPLICATION_COUNT,
+        initialReplicationCount = StroomProperties.getIntProperty(VolumeConfig.PROP_RESILIENT_REPLICATION_COUNT, 1);
+        StroomProperties.setIntProperty(VolumeConfig.PROP_RESILIENT_REPLICATION_COUNT, HIGHER_REPLICATION_COUNT,
                 StroomProperties.Source.TEST);
     }
 
     @Override
     protected void onAfter() {
-        StroomProperties.setIntProperty(VolumeServiceImpl.PROP_RESILIENT_REPLICATION_COUNT, initialReplicationCount,
+        StroomProperties.setIntProperty(VolumeConfig.PROP_RESILIENT_REPLICATION_COUNT, initialReplicationCount,
                 StroomProperties.Source.TEST);
     }
 
