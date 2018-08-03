@@ -603,7 +603,10 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                 totalValueEntryCount);
     }
 
-    //    @Ignore // for manual profiling testing only
+
+    /**
+     * Make entryCount very big for performance testing
+     */
     @Test
     public void testBigLoadForPerfTesting() {
 
@@ -613,9 +616,8 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         int refStreamDefCount = 5;
         int keyValueMapCount = 2;
         int rangeValueMapCount = 2;
-        int entryCount = 100_000;
+        int entryCount = 100;
         int totalMapEntries = (refStreamDefCount * keyValueMapCount) + (refStreamDefCount * rangeValueMapCount);
-//        int totalMapEntries = keyValueMapCount + rangeValueMapCount;
 
         int totalKeyValueEntryCount = refStreamDefCount * keyValueMapCount * entryCount;
         int totalRangeValueEntryCount = refStreamDefCount * rangeValueMapCount * entryCount;
