@@ -69,6 +69,7 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
 
     private static final String KV_TYPE = "KV";
     private static final String RANGE_TYPE = "Range";
+    private static final String PADDING = IntStream.rangeClosed(1,300).boxed().map(i -> "-").collect(Collectors.joining());
 
     @Override
     protected void setDbMaxSizeProperty() {
@@ -616,7 +617,7 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         int refStreamDefCount = 5;
         int keyValueMapCount = 2;
         int rangeValueMapCount = 2;
-        int entryCount = 100;
+        int entryCount = 50;
         int totalMapEntries = (refStreamDefCount * keyValueMapCount) + (refStreamDefCount * rangeValueMapCount);
 
         int totalKeyValueEntryCount = refStreamDefCount * keyValueMapCount * entryCount;
@@ -891,8 +892,9 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
     }
 
     private String buildRangeStoreValue(final String mapName, final int i, final Range<Long> range) {
-        return LambdaLogger.buildMessage("{}-{}-{}-value{}",
-                mapName, range.getFrom(), range.getTo(), i);
+        // pad the values out to make them more realistic in length to see impact on writes
+        return LambdaLogger.buildMessage("{}-{}-{}-value{}{}",
+                mapName, range.getFrom(), range.getTo(), i, PADDING);
     }
 
     private String buildMapNameWithRefStreamDef(
@@ -914,7 +916,8 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
     private String buildKeyStoreValue(final String mapName,
                                       final int i,
                                       final String key) {
-        return LambdaLogger.buildMessage("{}-{}-value{}", mapName, key, i);
+        // pad the values out to make them more realistic in length to see impact on writes
+        return LambdaLogger.buildMessage("{}-{}-value{}{}", mapName, key, i, PADDING);
     }
 
     private String buildKey(final int k) {
