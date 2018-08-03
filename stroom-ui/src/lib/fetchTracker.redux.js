@@ -60,33 +60,33 @@ export const wrappedGet = (dispatch, state, url, successCallback, options, force
   const currentState = state.fetch[url];
   let needToFetch = false;
 
-  console.group('Requesting ', url);
-  console.log('Current State of URL', { url, currentState });
+  // console.group('Requesting ', url);
+  // console.log('Current State of URL', { url, currentState });
 
   if (!forceGet) {
     switch (currentState) {
       case undefined:
-        console.log('Never even heard of it', url);
+        // console.log('Never even heard of it', url);
         needToFetch = true;
         break;
       case FETCH_STATES.UNREQUESTED:
-        console.log('Has been reset, go again!', url);
+        // console.log('Has been reset, go again!', url);
         needToFetch = true;
         break;
       case FETCH_STATES.FAILED:
-        console.log('It failed last time, second times a charm?', url);
+        // console.log('It failed last time, second times a charm?', url);
         needToFetch = true;
         break;
       case FETCH_STATES.REQUESTED:
-        console.log('Already asked, dont ask again', url);
+        // console.log('Already asked, dont ask again', url);
         needToFetch = false;
         break;
       case FETCH_STATES.RESPONDED:
-        console.log('Already got it, dont ask again', url);
+        // console.log('Already got it, dont ask again', url);
         needToFetch = false;
         break;
       default:
-        console.log('Default state? Nonsense');
+        // console.log('Default state? Nonsense');
         break;
     }
   } else {
@@ -121,7 +121,7 @@ export const wrappedGet = (dispatch, state, url, successCallback, options, force
       });
   }
 
-  console.groupEnd();
+  // console.groupEnd();
 };
 
 /**
@@ -145,7 +145,6 @@ export const wrappedFetchWithBody = (dispatch, state, url, successCallback, opti
     Authorization: `Bearer ${jwsToken}`,
     ...(options ? options.headers : {}),
   };
-  console.log('Fetch Headers', headers);
 
   fetch(url, {
     mode: 'cors',
