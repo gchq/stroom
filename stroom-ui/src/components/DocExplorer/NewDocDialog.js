@@ -36,6 +36,8 @@ const enhance = compose(
   ),
   reduxForm({
     form: 'newDocRef',
+    enableReinitialize: true,
+    touchOnChange: true,
   }),
 );
 
