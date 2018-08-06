@@ -35,7 +35,8 @@ import { withConfig } from 'startup/config';
 import { search } from './streamAttributeMapClient';
 import { getDataForSelectedRow } from './dataResourceClient';
 import DataDetails from './DataDetails';
-import StreamPopup from './StreamPopup';
+import StreamDetails from './StreamDetails';
+import DetailsTabs from './DetailsTabs';
 
 import { actionCreators } from './redux';
 
@@ -62,7 +63,10 @@ const enhance = compose(
       };
     },
     {
-      search, selectRow, deselectRow, getDataForSelectedRow,
+      search,
+      selectRow,
+      deselectRow,
+      getDataForSelectedRow,
     },
   ),
   lifecycle({
@@ -133,7 +137,21 @@ const DataViewer = ({
         // This block of code is mostly about making a sensible looking popup.
         const stream = streamAttributeMaps.find(streamAttributeMap => streamAttributeMap.stream.id === row.original.streamId);
 
-        return <StreamPopup streamData={stream}/>
+        const eventIcon = <Icon color="blue" name="file" />;
+        const warningIcon = <Icon color="orange" name="warning circle" />;
+        const errorIcon = <Icon color="red" name="warning circle" />;
+
+        let icon,
+          title;
+        if (stream.stream.streamType.name === 'Events') {
+          title = 'Events';
+          icon = eventIcon;
+        } else if (stream.stream.streamType.name === 'Error') {
+          title = 'Error';
+          icon = warningIcon;
+        }
+
+        return icon;
       },
       width: 35,
     },
@@ -152,7 +170,7 @@ const DataViewer = ({
   ];
 
   const tableData = streamAttributeMaps.map(streamAttributeMap => ({
-    streamId: path(['stream', 'id'], streamAttributeMap), 
+    streamId: path(['stream', 'id'], streamAttributeMap),
     created: moment(path(['stream', 'createMs'], streamAttributeMap)).format('MMMM Do YYYY, h:mm:ss a'),
     type: path(['stream', 'streamType', 'displayValue'], streamAttributeMap),
     feed: path(['stream', 'feed', 'displayValue'], streamAttributeMap),
@@ -196,7 +214,7 @@ const DataViewer = ({
       className="element-details__panel"
       title={<div>{path(['feed'], tableData[selectedRow]) || 'Nothing selected'}</div>}
       onClose={() => deselectRow(dataViewerId)}
-      content={<DataDetails data={dataForSelectedRow} />}
+      content={<DetailsTabs data={dataForSelectedRow} details={ streamAttributeMaps[selectedRow]}/>}
       titleColumns={6}
       menuColumns={10}
       headerSize="h3"

@@ -17,11 +17,11 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
 import { storiesOf, addDecorator } from '@storybook/react';
-import StreamPopup from './StreamPopup';
+import StreamDetails from './StreamDetails';
 
 import 'semantic/dist/semantic.min.css';
-import { event, error } from './StreamPopup.testData';
+import { event, error } from './StreamDetails.testData';
 
-storiesOf('StreamPopup', module)
-  .add('Showing event', props => <StreamPopup streamData={event} />)
-  .add('Showing error', props => <StreamPopup streamData={error} />);
+storiesOf('StreamDetails', module)
+  .add('Showing event', props => <StreamDetails data={event} />)
+  .add('Showing error', props => <StreamDetails data={error} />);
