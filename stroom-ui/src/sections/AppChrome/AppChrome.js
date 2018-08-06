@@ -30,6 +30,8 @@ import RecentItems from 'prototypes/RecentItems';
 import AppSearch from 'prototypes/AppSearch';
 import withLocalStorage from 'lib/withLocalStorage';
 
+import logoInWhite from './logo_white.png';
+
 const { recentItemsOpened } = recentItemsActionCreators;
 const { appSearchOpened } = appSearchActionCreators;
 const { prepareDocRefCreation } = docExplorerActionCreators;
@@ -65,8 +67,9 @@ const enhance = compose(
   }) => ({
     menuItems: [
       {
-        title: 'Stroom',
+        title: <img src={logoInWhite} alt='Stroom logo'/>,
         icon: 'bars',
+        className: 'app-chrome__sidebar__header',
         onClick: () => setIsExpanded(!isExpanded),
       },
     ].concat([
@@ -160,6 +163,7 @@ const AppChrome = ({
               active={menuItem.title === activeMenuItem}
               name={menuItem.title}
               onClick={menuItem.onClick}
+              className={menuItem.className}
             >
               <Icon name={menuItem.icon} />
               {menuItem.title}
