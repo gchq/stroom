@@ -20,19 +20,42 @@ stroom.ui.url=http://IP_ADDRESS:3001
 stroom.jpaHbm2DdlAuto=validate
 stroom.jpaDialect=org.hibernate.dialect.MySQLInnoDBDialect
 
-#Stroom database properties
-#~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Core database properties
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~
 stroom.jdbcDriverClassName=com.mysql.jdbc.Driver
 stroom.jdbcDriverUrl=jdbc:mysql://IP_ADDRESS:3307/stroom?useUnicode=yes&characterEncoding=UTF-8
 stroom.jdbcDriverUsername=stroomuser
 stroom.jdbcDriverPassword=stroompassword1
 
-#SQL Statistics database properties
+# SQL Statistics database properties
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 stroom.statistics.sql.jdbcDriverClassName=com.mysql.jdbc.Driver
-stroom.statistics.sql.jdbcDriverUrl=jdbc:mysql://IP_ADDRESS:3308/statistics?useUnicode=yes&characterEncoding=UTF-8
+stroom.statistics.sql.jdbcDriverUrl=jdbc:mysql://IP_ADDRESS:3307/stroom?useUnicode=yes&characterEncoding=UTF-8
 stroom.statistics.sql.jdbcDriverUsername=stroomuser
 stroom.statistics.sql.jdbcDriverPassword=stroompassword1
+
+# Data Meta database properties
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+stroom.data.meta.jdbcDriverClassName=com.mysql.jdbc.Driver
+stroom.data.meta.jdbcDriverUrl=jdbc:mysql://IP_ADDRESS:3307/stroom?useUnicode=yes&characterEncoding=UTF-8
+stroom.data.meta.jdbcDriverUsername=stroomuser
+stroom.data.meta.jdbcDriverPassword=stroompassword1
+
+# Data Store database properties
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+stroom.data.store.jdbcDriverClassName=com.mysql.jdbc.Driver
+stroom.data.store.jdbcDriverUrl=jdbc:mysql://IP_ADDRESS:3307/stroom?useUnicode=yes&characterEncoding=UTF-8
+stroom.data.store.jdbcDriverUsername=stroomuser
+stroom.data.store.jdbcDriverPassword=stroompassword1
+
+# Properties database properties
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+stroom.properties.jdbcDriverClassName=com.mysql.jdbc.Driver
+stroom.properties.jdbcDriverUrl=jdbc:mysql://IP_ADDRESS:3307/stroom?useUnicode=yes&characterEncoding=UTF-8
+stroom.properties.jdbcDriverUsername=stroomuser
+stroom.properties.jdbcDriverPassword=stroompassword1
+
 
 stroom.security.apiToken=eyJhbGciOiJSUzI1NiJ9.eyJleHAiOjE1NDQ4NjMwNDMsInN1YiI6InN0cm9vbVNlcnZpY2VVc2VyIiwiaXNzIjoic3Ryb29tIn0.gHJkpxeW5CjU_hBzuLhQd8Ot8XkLvhu45_-Ql4gOX96iNbl0AnKEwKu2QmMY3uVerGjYBHDczgKJlLVF_RQtFiwFLorT2P_Mv-9ShcCL0Ml-Tq-1i-_UnHMYHP5Nv-rP3ajUz-vTHwIYqi_WU-IEpIF56MCYBqeDkgQfe-I03VyfsLkWt-3f8L3AKESZirmqjPUB_SPi4vWGpyN28FuJe1KyqdCPo5QVKnrM_dpguE_aIj1Dy1sovmgO5WxFm3-hE7asW3WrnokSopNXQ1bJ3W77v4k1CnMpYDw5schQAKqUffPVGxNE6UxNunZTlRQJQqYihKkhpeiTiZMo9XCHGg
 
