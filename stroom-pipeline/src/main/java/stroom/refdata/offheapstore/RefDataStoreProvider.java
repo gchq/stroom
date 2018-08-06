@@ -19,9 +19,11 @@ package stroom.refdata.offheapstore;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.jobsystem.JobTrackedSchedule;
 import stroom.properties.StroomPropertyService;
 import stroom.util.ByteSizeUnit;
 import stroom.util.config.StroomProperties;
+import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.logging.LambdaLogger;
 
 import javax.inject.Inject;
@@ -38,15 +40,15 @@ public class RefDataStoreProvider implements Provider<RefDataStore> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RefDataStoreProvider.class);
 
-    public static final String OFF_HEAP_STORE_DIR_PROP_KEY = "stroom.refloader.offheapstore.localDir";
-    public static final String MAX_STORE_SIZE_BYTES_PROP_KEY = "stroom.refloader.offheapstore.maxStoreSize";
-    public static final String MAX_READERS_PROP_KEY = "stroom.refloader.offheapstore.maxReaders";
-    public static final String MAX_PUTS_BEFORE_COMMIT_PROP_KEY = "stroom.refloader.offheapstore.maxPutsBeforeCommit";
-    public static final String VALUE_BUFFER_CAPACITY_PROP_KEY = "stroom.refloader.offheapstore.valueBufferCapacity";
+    static final String OFF_HEAP_STORE_DIR_PROP_KEY = "stroom.refloader.offheapstore.localDir";
+    static final String MAX_STORE_SIZE_BYTES_PROP_KEY = "stroom.refloader.offheapstore.maxStoreSize";
+    private static final String MAX_READERS_PROP_KEY = "stroom.refloader.offheapstore.maxReaders";
+    private static final String MAX_PUTS_BEFORE_COMMIT_PROP_KEY = "stroom.refloader.offheapstore.maxPutsBeforeCommit";
+    private static final String VALUE_BUFFER_CAPACITY_PROP_KEY = "stroom.refloader.offheapstore.valueBufferCapacity";
 
     private static final String DEFAULT_STORE_SUB_DIR_NAME = "refDataOffHeapStore";
 
-    public static final int VALUE_BUFFER_CAPACITY_DEFAULT_VALUE = 1_000;
+    private static final int VALUE_BUFFER_CAPACITY_DEFAULT_VALUE = 1_000;
     private static final long MAX_STORE_SIZE_BYTES_DEFAULT = ByteSizeUnit.GIBIBYTE.longBytes(10);
     private static final int MAX_READERS_DEFAULT = 100;
     private static final int MAX_PUTS_BEFORE_COMMIT_DEFAULT = 1000;
@@ -86,6 +88,15 @@ public class RefDataStoreProvider implements Provider<RefDataStore> {
         return refDataStore;
     }
 
+    @StroomSimpleCronSchedule(cron = "0 2 *") // 02:00 every day
+    @JobTrackedSchedule(
+            jobName = "Ref Data Store Purge",
+            description = "Purge old reference data from the off heap store, as defined by " +
+                    RefDataOffHeapStore.DATA_RETENTION_AGE_PROP_KEY)
+    public void purgeOldData() {
+        this.refDataStore.purgeOldData();
+    }
+
     private Path getStoreDir() {
         String storeDirStr = stroomPropertyService.getProperty(OFF_HEAP_STORE_DIR_PROP_KEY);
         LOGGER.info("Property {} is not set, falling back to {}", OFF_HEAP_STORE_DIR_PROP_KEY, StroomProperties.STROOM_TEMP);
@@ -108,4 +119,5 @@ public class RefDataStoreProvider implements Provider<RefDataStore> {
 
         return storeDir;
     }
+
 }

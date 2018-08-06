@@ -31,7 +31,6 @@ import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Range;
-import stroom.jobsystem.JobTrackedSchedule;
 import stroom.properties.StroomPropertyService;
 import stroom.refdata.lmdb.LmdbDb;
 import stroom.refdata.lmdb.LmdbUtils;
@@ -43,7 +42,6 @@ import stroom.refdata.offheapstore.databases.RangeStoreDb;
 import stroom.refdata.offheapstore.databases.ValueStoreDb;
 import stroom.refdata.offheapstore.serdes.RefDataProcessingInfoSerde;
 import stroom.util.HasHealthCheck;
-import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
@@ -75,10 +73,10 @@ public class RefDataOffHeapStore implements RefDataStore {
     private static final Logger LOGGER = LoggerFactory.getLogger(RefDataOffHeapStore.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(RefDataOffHeapStore.class);
 
-    public static final long PROCESSING_INFO_UPDATE_DELAY_MS = Duration.of(1, ChronoUnit.HOURS).toMillis();
-
-    public static final String DATA_RETENTION_AGE_PROP_KEY = "stroom.refloader.offheapstore.purgeAge";
+    static final String DATA_RETENTION_AGE_PROP_KEY = "stroom.refloader.offheapstore.purgeAge";
     private static final String DATA_RETENTION_AGE_DEFAULT_VALUE = "30d";
+
+    public static final long PROCESSING_INFO_UPDATE_DELAY_MS = Duration.of(1, ChronoUnit.HOURS).toMillis();
 
     private final Path dbDir;
     private final long maxSize;
@@ -323,6 +321,10 @@ public class RefDataOffHeapStore implements RefDataStore {
         return wasValueFound;
     }
 
+    @Override
+    public void purgeOldData() {
+        purgeOldData(System.currentTimeMillis());
+    }
 
     /**
      * Get an instance of a {@link RefDataLoader} for bulk loading multiple entries for a given
@@ -387,14 +389,6 @@ public class RefDataOffHeapStore implements RefDataStore {
         return processingInfoDb.getEntryCount();
     }
 
-    @Override
-    @StroomSimpleCronSchedule(cron = "2 * *") // 02:00 every day
-    @JobTrackedSchedule(
-            jobName = "Ref Data Store Purge",
-            description = "Purge old reference data from the off heap store, as defined by " + DATA_RETENTION_AGE_PROP_KEY)
-    public void purgeOldData() {
-        purgeOldData(System.currentTimeMillis());
-    }
 
     /**
      * @param nowMs Allows the setting of the current time for testing purposes
