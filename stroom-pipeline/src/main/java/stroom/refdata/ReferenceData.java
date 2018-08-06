@@ -138,7 +138,7 @@ public class ReferenceData {
             final RefDataValueProxy refDataValueProxy = result.getRefDataValueProxy();
             Optional<RefDataValue> optValue = refDataValueProxy.supplyValue();
             // This is a nested map so we are expecting the value of the first map to be a simple
-            // string so we can use it as the key for the next map
+            // string so we can use it as the key for the next map. The next map could also be nested.
 
             if (!optValue.isPresent()) {
                 LOGGER.trace("sub-map not found for {}", lookupIdentifier);
@@ -147,10 +147,10 @@ public class ReferenceData {
             } else {
                 final RefDataValue refDataValue = optValue.get();
                 try {
-                    final String mapName = ((StringValue) refDataValue).getValue();
-                    LOGGER.trace("Found sub-map {}", mapName);
+                    final String nextKey = ((StringValue) refDataValue).getValue();
+                    LOGGER.trace("Found value to use as next key {}", nextKey);
                     // use the value from this lookup as the key for the nested map
-                    LookupIdentifier nestedIdentifier = lookupIdentifier.getNestedLookupIdentifier(mapName);
+                    LookupIdentifier nestedIdentifier = lookupIdentifier.getNestedLookupIdentifier(nextKey);
 
                     ensureReferenceDataAvailability(pipelineReferences, nestedIdentifier, result);
                 } catch (ClassCastException e) {
