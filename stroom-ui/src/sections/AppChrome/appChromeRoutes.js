@@ -22,7 +22,7 @@ const renderWelcome = props => (
   <AppChrome
     activeMenuItem="Welcome"
     {...props}
-    headerContent={<Header.Content>Welcome</Header.Content>}
+    headerContent={<Header.Content>Welcome to Stroom</Header.Content>}
     icon="home"
     content={<Welcome />}
   />
