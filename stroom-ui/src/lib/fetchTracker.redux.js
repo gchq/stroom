@@ -5,7 +5,7 @@ import {
   setErrorMessageAction,
   setStackTraceAction,
   setHttpErrorCodeAction,
-} from 'sections/ErrorPage';
+} from 'components/ErrorPage';
 
 import handleStatus from 'lib/handleStatus';
 

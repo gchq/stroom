@@ -29,7 +29,7 @@ import { reducer as recentItems } from 'prototypes/RecentItems';
 import { reducer as appSearch } from 'prototypes/AppSearch';
 import { reducer as xslt } from 'prototypes/XsltEditor';
 import { reducer as trackerDashboard } from 'sections/TrackerDashboard';
-import { reducer as errorPage } from 'sections/ErrorPage';
+import { reducer as errorPage } from 'components/ErrorPage';
 import { reducer as config } from './config';
 import { reducer as fetch } from 'lib/fetchTracker.redux';
 import { reducer as dataViewers } from 'components/DataViewer';
