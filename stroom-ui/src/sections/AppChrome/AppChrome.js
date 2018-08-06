@@ -175,13 +175,13 @@ const getMenuItems = (menuItems, menuItemsOpen, menuItemOpened, depth = 0) =>
   menuItems.map(menuItem => (
     <React.Fragment key={menuItem.key}>
       <div className="sidebar__menu-item" style={{ marginLeft: `${depth * 0.7}rem` }} onClick={menuItem.onClick}>
-        {menuItem.children ? (
+        {(menuItem.children && (menuItem.children.length > 0)) ? (
           <Icon
             onClick={() => menuItemOpened(menuItem.key, !menuItemsOpen[menuItem.key])}
             name={`caret ${menuItemsOpen[menuItem.key] ? 'down' : 'right'}`}
           />
         ) : (
-          <Icon />
+          (menuItem.key !== 'stroom') ? <Icon /> : undefined
         )}
         <Icon name={menuItem.icon} />
         {menuItem.title}
@@ -228,7 +228,7 @@ const AppChrome = ({
       <div className="content-tabs">
         <div className="content-tabs__content">
           <Grid className="content-tabs__grid">
-            <Grid.Column width={5}>
+            <Grid.Column width={8}>
               <Header as="h3">
                 <Icon name={icon} color="grey" />
                 {headerContent}
