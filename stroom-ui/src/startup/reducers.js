@@ -21,6 +21,7 @@ import {
   authenticationReducer as authentication,
   authorisationReducer as authorisation,
 } from 'startup/Authentication';
+import { reducer as appChrome } from 'sections/AppChrome/redux';
 import { reducer as docRefTypes } from 'components/DocRefTypes';
 import { reducer as lineContainer } from 'components/LineTo';
 import { reducer as docExplorer } from 'components/DocExplorer/redux';
@@ -55,4 +56,5 @@ export default combineReducers({
   dataViewers,
   keyIsDown,
   docRefTypes,
+  appChrome
 });

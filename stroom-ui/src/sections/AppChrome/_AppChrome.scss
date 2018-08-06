@@ -10,6 +10,23 @@
   background-color: $semantic-blue;
 }
 
+.app-chrome__sidebar-menu {
+  height: inherit;
+  background-color: $semantic-blue;
+  width: 15rem;
+  overflow-y: scroll;
+}
+
+.sidebar__menu-item {
+  padding: 0.5rem;
+  color: white;
+  outline: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  text-overflow: ellipsis;
+  overflow-x: hidden;
+}
+
 .app-chrome__content {
   flex-grow: 1;
   width: auto;
@@ -59,7 +76,6 @@
   margin-top: 0.3rem !important;
 }
 
-.app-chrome__sidebar__header img {
+.sidebar__menu-item img {
   width: 65px !important; // font-weight: bold !important; // background-color: #ff6f00 !important;
-  padding-bottom: 4px;
 }

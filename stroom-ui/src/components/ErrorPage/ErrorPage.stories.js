@@ -17,7 +17,7 @@
 import React from 'react';
 import { storiesOf } from '@storybook/react';
 import { ReduxDecoratorWithInitialisation } from 'lib/storybook/ReduxDecorator';
-import ErrorPage from 'sections/ErrorPage';
+import ErrorPage from './ErrorPage';
 
 import { setErrorMessageAction, setStackTraceAction, setHttpErrorCodeAction } from './redux';
 

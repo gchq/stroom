@@ -52,5 +52,11 @@ export default {
           name: xslt.uuid,
         })),
     },
+    {
+      uuid: 'empty12323435345',
+      name: 'Empty Directory with a Long Name',
+      type: 'Folder',
+      children: [],
+    },
   ],
 };
