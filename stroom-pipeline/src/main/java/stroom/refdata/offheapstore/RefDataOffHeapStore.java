@@ -611,8 +611,6 @@ public class RefDataOffHeapStore implements RefDataStore {
         });
         LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("Deleted {} value entries, de-referenced {} value entries",
                 valueEntryDeleteCount.get(), valueEntryDeReferenceCount.get()));
-        valueEntryDeleteCount.set(0);
-        valueEntryDeReferenceCount.set(0);
 
         LOGGER.debug("Deleting range/value entries and de-referencing/deleting their values");
         // loop over all rangeValue entries for this mapUid and dereference/delete the associated
