@@ -12,6 +12,7 @@ import PipelineEditor, {
 import XsltEditor, { ActionBarItems as XsltEditorActionBarItems } from 'prototypes/XsltEditor';
 import PipelineSearch from 'components/PipelineSearch';
 import Welcome from 'sections/Welcome';
+import FolderExplorer from 'components/FolderExplorer';
 import DocExplorer, { ActionBarItems as DocExplorerActionBarItems } from 'components/DocExplorer';
 import DataViewer, { ActionBarItems as DataViewerActionBarItems } from 'components/DataViewer';
 import UserSettings from 'prototypes/UserSettings';
@@ -142,6 +143,32 @@ export default [
         icon="file"
         content={<XsltEditor xsltId={props.match.params.xsltId} />}
         actionBarAdditionalItems={<XsltEditorActionBarItems xsltId={props.match.params.xsltId} />}
+      />
+    ),
+  },
+  {
+    exact: true,
+    path: '/s/doc/Folder/:folderUuid',
+    render: props => (
+      <AppChrome
+        activeMenuItem="Explorer"
+        {...props}
+        headerContent={<Header.Content>Folder</Header.Content>}
+        icon="file"
+        content={<FolderExplorer folderUuid={props.match.params.folderUuid} />}
+      />
+    ),
+  },
+  {
+    exact: true,
+    path: '/s/doc/System/:folderUuid',
+    render: props => (
+      <AppChrome
+        activeMenuItem="Explorer"
+        {...props}
+        headerContent={<Header.Content>Folder</Header.Content>}
+        icon="file"
+        content={<FolderExplorer folderUuid={props.match.params.folderUuid} />}
       />
     ),
   },

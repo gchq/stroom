@@ -22,36 +22,62 @@ import { withRouter } from 'react-router-dom';
 import { Button, Menu, Icon, Header, Grid } from 'semantic-ui-react';
 import Mousetrap from 'mousetrap';
 
+import { actionCreators as appChromeActionCreators } from './redux';
 import { actionCreators as recentItemsActionCreators } from 'prototypes/RecentItems/redux';
 import { actionCreators as appSearchActionCreators } from 'prototypes/AppSearch/redux';
 import { actionCreators as docExplorerActionCreators } from 'components/DocExplorer/redux';
+import { withExplorerTree } from 'components/DocExplorer';
 import ActionBarItem from './ActionBarItem';
 import RecentItems from 'prototypes/RecentItems';
 import AppSearch from 'prototypes/AppSearch';
 import withLocalStorage from 'lib/withLocalStorage';
 
+const { menuItemOpened } = appChromeActionCreators;
 const { recentItemsOpened } = recentItemsActionCreators;
 const { appSearchOpened } = appSearchActionCreators;
-const { prepareDocRefCreation } = docExplorerActionCreators;
 const withIsExpanded = withLocalStorage('isExpanded', 'setIsExpanded', true);
 
 const SIDE_BAR_COLOUR = 'blue';
 
 const pathPrefix = '/s';
 
+const getDocumentTreeMenuItems = (history, treeNode) => ({
+  key: treeNode.uuid,
+  title: treeNode.name,
+  onClick: () => history.push(`/s/doc/${treeNode.type}/${treeNode.uuid}`),
+  icon: 'folder',
+  children:
+    treeNode.children && treeNode.children.length > 0 &&
+    treeNode.children.filter(t => t.type === 'Folder').map(t => getDocumentTreeMenuItems(history, t)),
+});
+
 const enhance = compose(
-  connect((state, props) => ({}), {
-    recentItemsOpened,
-    appSearchOpened,
-    prepareDocRefCreation,
-  }),
+  withExplorerTree,
+  connect(
+    (
+      {
+        docExplorer: {
+          explorerTree: { documentTree },
+        },
+        appChrome: { menuItemsOpen },
+      },
+      props,
+    ) => ({
+      documentTree,
+      menuItemsOpen,
+    }),
+    {
+      menuItemOpened,
+      recentItemsOpened,
+      appSearchOpened,
+    },
+  ),
   withRouter,
   withIsExpanded,
   lifecycle({
     componentDidMount() {
       Mousetrap.bind('ctrl+shift+e', () => this.props.recentItemsOpened());
       Mousetrap.bind('ctrl+shift+f', () => this.props.appSearchOpened());
-      Mousetrap.bind('ctrl+shift+n', () => this.props.prepareDocRefCreation());
     },
   }),
   withProps(({
@@ -60,112 +86,129 @@ const enhance = compose(
     history,
     recentItemsOpened,
     appSearchOpened,
-    prepareDocRefCreation,
     actionBarItems,
+    documentTree,
   }) => ({
     menuItems: [
       {
+        key: 'stroom',
         title: 'Stroom',
         icon: 'bars',
         onClick: () => setIsExpanded(!isExpanded),
       },
-    ].concat([
       {
+        key: 'welcome',
         title: 'Welcome',
-        path: `${pathPrefix}/welcome/`,
+        onClick: () => history.push(`${pathPrefix}/welcome/`),
         icon: 'home',
       },
       {
+        key: 'explorer',
         title: 'Explorer',
-        path: `${pathPrefix}/docExplorer`,
+        onClick: () => history.push(`${pathPrefix}/docExplorer`),
         icon: 'eye',
+        children: [getDocumentTreeMenuItems(history, documentTree)],
       },
       {
+        key: 'data',
         title: 'Data',
-        path: `${pathPrefix}/data`,
+        onClick: () => history.push(`${pathPrefix}/data`),
         icon: 'database',
       },
       {
+        key: 'pipelines',
         title: 'Pipelines',
-        path: `${pathPrefix}/pipelines`,
+        onClick: () => history.push(`${pathPrefix}/pipelines`),
         icon: 'tasks',
       },
       {
+        key: 'processing',
         title: 'Processing',
-        path: `${pathPrefix}/processing`,
+        onClick: () => history.push(`${pathPrefix}/processing`),
         icon: 'play',
       },
       {
-        title: 'Me',
-        path: `${pathPrefix}/me`,
-        icon: 'user',
+        key: 'admin',
+        title: 'Admin',
+        onClick: () => console.log('Expand admin'),
+        icon: 'cogs',
+        children: [
+          {
+            key: 'admin-me',
+            title: 'Me',
+            onClick: () => history.push(`${pathPrefix}/me`),
+            icon: 'user',
+          },
+          {
+            key: 'admin-users',
+            title: 'Users',
+            onClick: () => history.push(`${pathPrefix}/users`),
+            icon: 'users',
+          },
+          {
+            key: 'admin-apikeys',
+            title: 'API Keys',
+            onClick: () => history.push(`${pathPrefix}/apikeys`),
+            icon: 'key',
+          },
+        ],
       },
       {
-        title: 'Users',
-        path: `${pathPrefix}/users`,
-        icon: 'users',
-      },
-      {
-        title: 'API Keys',
-        path: `${pathPrefix}/apikeys`,
-        icon: 'key',
-      },
-    ].map(menuLink => ({
-      title: menuLink.title,
-      icon: menuLink.icon,
-      onClick: () => history.push(menuLink.path),
-    }))),
-    actionBarItems: [
-      {
-        key: 'recentItems',
+        key: 'recent-items',
+        title: 'Recent Items',
         onClick: recentItemsOpened,
         icon: 'file outline',
-        content: 'Recently opened items',
       },
       {
         key: 'search',
+        title: 'Search',
         onClick: appSearchOpened,
         icon: 'search',
-        content: 'Search for things',
-      },
-      {
-        key: 'create_doc_ref',
-        onClick: prepareDocRefCreation,
-        icon: 'plus',
-        content: 'Create a new Doc Ref',
       },
     ],
   })),
 );
+
+const getMenuItems = (menuItems, menuItemsOpen, menuItemOpened, depth = 0) =>
+  menuItems.map(menuItem => (
+    <React.Fragment key={menuItem.key}>
+      <div className="sidebar__menu-item" style={{ marginLeft: `${depth * 0.7}rem` }} onClick={menuItem.onClick}>
+        {menuItem.children ? (
+          <Icon
+            onClick={() => menuItemOpened(menuItem.key, !menuItemsOpen[menuItem.key])}
+            name={`caret ${menuItemsOpen[menuItem.key] ? 'down' : 'right'}`}
+          />
+        ) : (
+          <Icon />
+        )}
+        <Icon name={menuItem.icon} />
+        {menuItem.title}
+      </div>
+      {menuItem.children &&
+        menuItemsOpen[menuItem.key] &&
+        getMenuItems(menuItem.children, menuItemsOpen, menuItemOpened, depth + 1)}
+    </React.Fragment>
+  ));
 
 const AppChrome = ({
   activeMenuItem,
   headerContent,
   icon,
   content,
-  actionBarItems,
   isExpanded,
   menuItems,
-  actionBarAdditionalItems,
+  actionBarItems,
+  menuItemsOpen,
+  menuItemOpened,
 }) => (
   <div className="app-chrome">
     <AppSearch />
     <RecentItems />
     <div className="app-chrome__sidebar">
       {isExpanded ? (
-        <Menu vertical fluid color={SIDE_BAR_COLOUR} inverted>
-          {menuItems.map(menuItem => (
-            <Menu.Item
-              key={menuItem.title}
-              active={menuItem.title === activeMenuItem}
-              name={menuItem.title}
-              onClick={menuItem.onClick}
-            >
-              <Icon name={menuItem.icon} />
-              {menuItem.title}
-            </Menu.Item>
-          ))}
-        </Menu>
+        <div className="app-chrome__sidebar-menu">
+          {getMenuItems(menuItems, menuItemsOpen, menuItemOpened)}
+        </div>
       ) : (
         <Button.Group vertical color={SIDE_BAR_COLOUR} size="large">
           {menuItems.map(menuItem => (
@@ -189,19 +232,7 @@ const AppChrome = ({
                 {headerContent}
               </Header>
             </Grid.Column>
-            <Grid.Column width={7}>{actionBarAdditionalItems}</Grid.Column>
-            <Grid.Column width={4}>
-              {actionBarItems.map(aBarItem => (
-                <ActionBarItem
-                  key={aBarItem.key}
-                  onClick={aBarItem.onClick}
-                  content={aBarItem.content}
-                  buttonProps={{
-                    icon: aBarItem.icon,
-                  }}
-                />
-              ))}
-            </Grid.Column>
+            <Grid.Column width={4}>{actionBarItems}</Grid.Column>
           </Grid>
           {content}
         </div>
@@ -222,7 +253,7 @@ AppChrome.propTypes = {
   icon: PropTypes.string.isRequired,
   headerContent: PropTypes.object.isRequired,
   content: PropTypes.object.isRequired,
-  actionBarAdditionalItems: PropTypes.object,
+  actionBarItems: PropTypes.object,
 };
 
 export default enhance(AppChrome);
