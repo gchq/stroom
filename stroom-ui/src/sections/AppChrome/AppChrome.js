@@ -186,7 +186,7 @@ const AppChrome = ({
     <div className="app-chrome__content">
       <div className="content-tabs">
         <div className="content-tabs__content">
-          <Grid>
+          <Grid className="content-tabs__grid">
             <Grid.Column width={5}>
               <Header as="h3">
                 <Icon name={icon} color="grey" />

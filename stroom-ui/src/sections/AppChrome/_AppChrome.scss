@@ -30,8 +30,11 @@
 }
 
 .app-chrome__content .ui.grid {
-  // Get rid of semantic UIs annoying margins and add bottom border as a divider.
   margin: 0;
+}
+
+.content-tabs__grid {
+  // Get rid of semantic UIs annoying margins and add bottom border as a divider.
   background-color: $hover-item-colour;
 }
 
