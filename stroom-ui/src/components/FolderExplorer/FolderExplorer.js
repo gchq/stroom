@@ -26,27 +26,24 @@ const enhance = compose(
   withRouter,
 );
 
-const FolderExplorer = ({ history, folder: { node, lineage } }) => {
-  console.log('yaas', { node, lineage });
-  return (
-    <div>
-      <Breadcrumb>
-        {lineage.map(l => (
-          <React.Fragment key={l.uuid}>
-            <Breadcrumb.Section link onClick={() => history.push(`/s/doc/Folder/${l.uuid}`)}>
-              {l.name}
-            </Breadcrumb.Section>
-            <Breadcrumb.Divider />
-          </React.Fragment>
-        ))}
+const FolderExplorer = ({ history, folder: { node, lineage } }) => (
+  <div>
+    <Breadcrumb>
+      {lineage.map(l => (
+        <React.Fragment key={l.uuid}>
+          <Breadcrumb.Section link onClick={() => history.push(`/s/doc/Folder/${l.uuid}`)}>
+            {l.name}
+          </Breadcrumb.Section>
+          <Breadcrumb.Divider />
+        </React.Fragment>
+      ))}
 
-        <Breadcrumb.Section active>{node.name}</Breadcrumb.Section>
-      </Breadcrumb>
-      <Divider />
-      {node.children && node.children.map(c => <DocRefInFolder key={c.uuid} folder={c} />)}
-    </div>
-  );
-};
+      <Breadcrumb.Section active>{node.name}</Breadcrumb.Section>
+    </Breadcrumb>
+    <Divider />
+    {node.children && node.children.map(c => <DocRefInFolder key={c.uuid} folder={c} />)}
+  </div>
+);
 
 const EnhancedFolderExplorer = enhance(FolderExplorer);
 
