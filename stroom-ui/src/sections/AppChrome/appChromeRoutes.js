@@ -15,7 +15,7 @@ import Welcome from 'sections/Welcome';
 import DocExplorer, { ActionBarItems as DocExplorerActionBarItems } from 'components/DocExplorer';
 import DataViewer, { ActionBarItems as DataViewerActionBarItems } from 'components/DataViewer';
 import UserSettings from 'prototypes/UserSettings';
-import PathNotFound from 'sections/PathNotFound';
+import PathNotFound from 'components/PathNotFound';
 import IFrame from 'components/IFrame';
 
 const renderWelcome = props => (
