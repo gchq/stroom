@@ -22,7 +22,8 @@ import { path } from 'ramda';
 
 const StreamDetails = ({ data }) => {
   return (
-    <div>
+    <div className="StreamDetails__container">
+      <div className="StreamDetails__table__container">
       <Table definition compact="very" className="StreamDetails__table">
         <Table.Body>
           <Table.Row>
@@ -75,6 +76,7 @@ const StreamDetails = ({ data }) => {
           </Table.Row>
         </Table.Body>
       </Table>
+      </div>
     </div>
   );
 };
