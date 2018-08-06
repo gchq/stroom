@@ -32,8 +32,9 @@ import RecentItems from 'prototypes/RecentItems';
 import AppSearch from 'prototypes/AppSearch';
 import withLocalStorage from 'lib/withLocalStorage';
 
-const { menuItemOpened } = appChromeActionCreators;
 import logoInWhite from './logo_white.png';
+
+const { menuItemOpened } = appChromeActionCreators;
 
 const { recentItemsOpened } = recentItemsActionCreators;
 const { appSearchOpened } = appSearchActionCreators;

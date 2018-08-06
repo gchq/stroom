@@ -21,23 +21,6 @@ import { Tab } from 'semantic-ui-react';
 import DataDetails from './DataDetails';
 import StreamDetails from './StreamDetails';
 
-const containerStyle = {
-  height: 'calc(100% - 29px)',
-  position: 'relative',
-};
-
-const containedStyle = {
-  position: 'absolute',
-  top: 0,
-  right: 0,
-  left: 0,
-  bottom: 0,
-};
-
-const fillStyle = {
-  width: '100%',
-};
-
 const DetailsTabs = ({ data, details }) => {
   const panes = [
     {
@@ -58,9 +41,9 @@ const DetailsTabs = ({ data, details }) => {
     },
   ];
   return (
-    <div style={containerStyle}>
-      <div style={containedStyle}>
-        <Tab style={fillStyle} panes={panes} />
+    <div className="DetailsTabs__container">
+      <div className="DetailsTabs__contained">
+        <Tab className="DetailsTabs__Tab" panes={panes} />
       </div>
     </div>
   );

@@ -1,0 +1,23 @@
+.DetailsTabs__container {
+  height: calc(100% - 45px);
+  position: relative;
+}
+
+.DetailsTabs__contained {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
+}
+
+.DetailsTabs__Tab {
+  width: 100%;
+  height: 100%;
+}
+
+.DetailsTabs__Tab .tab {
+  width: 100%;
+  height: 100%;
+  padding: 0 !important;
+}
