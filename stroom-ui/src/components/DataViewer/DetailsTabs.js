@@ -67,8 +67,8 @@ const DetailsTabs = ({ data, details }) => {
 };
 
 DetailsTabs.propTypes = {
-  data: PropTypes.object.isRequired,
-  details: PropTypes.object.isRequired,
+  data: PropTypes.object,
+  details: PropTypes.object,
 };
 
 export default DetailsTabs;

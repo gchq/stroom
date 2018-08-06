@@ -46,7 +46,7 @@ const EventView = ({ events }) => (
 );
 
 EventView.propTypes = {
-  events: PropTypes.array.isRequired,
+  events: PropTypes.string.isRequired,
 };
 
 export default EventView;
