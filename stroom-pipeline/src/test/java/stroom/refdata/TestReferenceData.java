@@ -27,7 +27,6 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 import stroom.docref.DocRef;
 import stroom.docstore.Persistence;
 import stroom.docstore.Store;
@@ -53,9 +52,6 @@ import stroom.streamstore.shared.StreamType;
 import stroom.util.cache.CacheManager;
 import stroom.util.date.DateUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
-import stroom.xml.event.EventList;
-import stroom.xml.event.EventListBuilder;
-import stroom.xml.event.EventListBuilderFactory;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -496,20 +492,6 @@ public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
         } catch (final Exception e) {
             throw new RuntimeException(e.getMessage(), e);
         }
-    }
-
-    private EventList getEventsFromString(final String string) {
-        final EventListBuilder builder = EventListBuilderFactory.createBuilder();
-        final char[] ch = string.toCharArray();
-        try {
-            builder.characters(ch, 0, ch.length);
-        } catch (final SAXException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-        final EventList eventList = builder.getEventList();
-        builder.reset();
-
-        return eventList;
     }
 
 

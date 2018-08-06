@@ -245,8 +245,6 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
             // Make sure we have made a consumer.
             ensureConsumer();
 
-            // TODO : Possibly replace NPEventList with TinyTree to improve performance.
-
             consumer.startDocument();
         }
 
@@ -256,7 +254,6 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
         }
 
         boolean consume(final RefDataValueProxy refDataValueProxy) throws XPathException {
-            // TODO : Possibly replace NPEventList with TinyTree to improve performance.
             return consumer.consume(refDataValueProxy);
         }
 

@@ -42,8 +42,6 @@ import stroom.streamstore.shared.StreamType;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.cache.CacheManager;
 import stroom.util.date.DateUtil;
-import stroom.xml.event.EventListBuilder;
-import stroom.xml.event.EventListBuilderFactory;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -62,8 +60,6 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
             2, DateUtil.parseNormalDateTimeString("2009-01-01T09:47:00.000Z"));
     private static final EffectiveStream EFFECTIVE_STREAM_3 = new EffectiveStream(
             3, DateUtil.parseNormalDateTimeString("2010-01-01T09:47:00.000Z"));
-
-    private final EventListBuilder builder = EventListBuilderFactory.createBuilder();
 
     @Inject
     private FeedService feedService;
