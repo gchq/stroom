@@ -47,8 +47,11 @@
 }
 
 .app-chrome__content .ui.grid {
-  // Get rid of semantic UIs annoying margins and add bottom border as a divider.
   margin: 0;
+}
+
+.content-tabs__grid {
+  // Get rid of semantic UIs annoying margins and add bottom border as a divider.
   background-color: $hover-item-colour;
 }
 
@@ -71,4 +74,8 @@
 .app-chrome__content .ui.grid h3 {
   // Correctly align the title
   margin-top: 0.3rem !important;
+}
+
+.sidebar__menu-item img {
+  width: 65px !important; // font-weight: bold !important; // background-color: #ff6f00 !important;
 }

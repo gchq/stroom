@@ -33,6 +33,8 @@ import AppSearch from 'prototypes/AppSearch';
 import withLocalStorage from 'lib/withLocalStorage';
 
 const { menuItemOpened } = appChromeActionCreators;
+import logoInWhite from './logo_white.png';
+
 const { recentItemsOpened } = recentItemsActionCreators;
 const { appSearchOpened } = appSearchActionCreators;
 const withIsExpanded = withLocalStorage('isExpanded', 'setIsExpanded', true);
@@ -92,7 +94,7 @@ const enhance = compose(
     menuItems: [
       {
         key: 'stroom',
-        title: 'Stroom',
+        title: <img src={logoInWhite} alt='Stroom logo'/>,
         icon: 'bars',
         onClick: () => setIsExpanded(!isExpanded),
       },
@@ -225,7 +227,7 @@ const AppChrome = ({
     <div className="app-chrome__content">
       <div className="content-tabs">
         <div className="content-tabs__content">
-          <Grid>
+          <Grid className="content-tabs__grid">
             <Grid.Column width={5}>
               <Header as="h3">
                 <Icon name={icon} color="grey" />

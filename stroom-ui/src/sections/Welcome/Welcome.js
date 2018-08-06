@@ -19,11 +19,10 @@ import React from 'react';
 import { Table, Container } from 'semantic-ui-react';
 
 const Welcome = props => (
-  <div>
-    <h3>Welcome to Stroom</h3>
-    <h4>Global shortcut keys</h4>
-    <Container>
-      <Table definition>
+  <div className="Welcome__container">
+    <div className="Welcome">
+      <h4>Global shortcut keys</h4>
+      <Table definition className="Welcome__shortcutKeysTable">
         <Table.Header>
           <Table.Row>
             <Table.HeaderCell />
@@ -52,7 +51,7 @@ const Welcome = props => (
           </Table.Row>
         </Table.Body>
       </Table>
-    </Container>
+    </div>
   </div>
 );
 

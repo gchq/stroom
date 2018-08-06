@@ -20,7 +20,7 @@ import { Route, Router, Switch, withRouter } from 'react-router-dom';
 import { compose, withProps } from 'recompose';
 import { connect } from 'react-redux';
 
-import ErrorPage from 'sections/ErrorPage';
+import ErrorPage from 'components/ErrorPage';
 import { appChromeRoutes } from 'sections/AppChrome';
 import TrackerDashboard from 'sections/TrackerDashboard';
 import DocExplorer from 'components/DocExplorer';
