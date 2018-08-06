@@ -20,9 +20,6 @@ import { compose, withProps } from 'recompose';
 import { Form, Checkbox } from 'semantic-ui-react';
 
 import withDocRefTypes from './withDocRefTypes';
-import { actionCreators } from './redux';
-
-const { typeFilterChanged } = actionCreators;
 
 const ALL_SELECT_STATE = {
   ALL: 0,
@@ -32,18 +29,14 @@ const ALL_SELECT_STATE = {
 
 const enhance = compose(
   withDocRefTypes,
-  connect(
-    ({ docExplorer }, { explorerId }) => ({
-      typeFilters: docExplorer.explorerTree.explorers[explorerId].typeFilters.filter(d => d !== 'Folder'),
-      docRefTypes: docExplorer.explorerTree.docRefTypes.filter(d => d !== 'Folder'),
-    }),
-    { typeFilterChanged },
-  ),
-  withProps(({ docRefTypes, typeFilters }) => {
+  connect(({ docRefTypes }) => ({
+    docRefTypes: docRefTypes.filter(d => d !== 'Folder'),
+  })),
+  withProps(({ docRefTypes, value, onChange }) => {
     let allSelectState;
-    if (typeFilters.length === 0) {
+    if (value.length === 0) {
       allSelectState = ALL_SELECT_STATE.NONE;
-    } else if (typeFilters.length === docRefTypes.length) {
+    } else if (value.length === docRefTypes.length) {
       allSelectState = ALL_SELECT_STATE.ALL;
     } else {
       allSelectState = ALL_SELECT_STATE.INDETERMINATE;
@@ -55,41 +48,59 @@ const enhance = compose(
 );
 
 const DocTypeFilters = ({
-  explorerId,
-  typeFilters,
-  docRefTypes,
-  typeFilterChanged,
-  allSelectState,
+  docRefTypes, onChange, value, allSelectState,
 }) => (
-  <div>
+  <React.Fragment>
     <Form.Field>
-      <img className="doc-ref__icon" alt="X" src={require('./images/System.svg')} />
+      <img className="doc-ref__icon" alt="X" src={require('../../images/docRefTypes/System.svg')} />
       <Checkbox
         label="All"
         indeterminate={allSelectState === ALL_SELECT_STATE.INDETERMINATE}
         checked={allSelectState === ALL_SELECT_STATE.ALL}
-        onChange={(e, { checked }) =>
-          docRefTypes.forEach(docRefType => typeFilterChanged(explorerId, docRefType, checked))
-        }
+        onChange={(e, { checked }) => {
+          if (checked) {
+            onChange(docRefTypes);
+          } else {
+            onChange([]);
+          }
+        }}
       />;
     </Form.Field>
     {docRefTypes
-      .map(docRefType => ({ docRefType, isSelected: typeFilters.includes(docRefType) }))
+      .map(docRefType => ({ docRefType, isSelected: value.includes(docRefType) }))
       .map(({ docRefType, isSelected }) => (
         <Form.Field key={docRefType}>
-          <img className="doc-ref__icon" alt="X" src={require(`./images/${docRefType}.svg`)} />
+          <img
+            className="doc-ref__icon"
+            alt="X"
+            src={require(`../../images/docRefTypes/${docRefType}.svg`)}
+          />
           <Checkbox
             label={docRefType}
             checked={isSelected}
-            onChange={() => typeFilterChanged(explorerId, docRefType, !isSelected)}
+            onChange={() => {
+              if (isSelected) {
+                onChange(value.filter(v => v !== docRefType));
+              } else {
+                onChange(value.concat([docRefType]));
+              }
+            }}
           />
         </Form.Field>
       ))}
-  </div>
+  </React.Fragment>
 );
 
-DocTypeFilters.propTypes = {
-  explorerId: PropTypes.string.isRequired,
+const EnhancedDocTypeFilters = enhance(DocTypeFilters);
+
+EnhancedDocTypeFilters.propTypes = {
+  value: PropTypes.arrayOf(PropTypes.string).isRequired,
+  onChange: PropTypes.func.isRequired,
 };
 
-export default enhance(DocTypeFilters);
+EnhancedDocTypeFilters.defaultProps = {
+  value: [],
+  onChange: v => console.log('Not implemented onChange, value ignored', v),
+};
+
+export default EnhancedDocTypeFilters;

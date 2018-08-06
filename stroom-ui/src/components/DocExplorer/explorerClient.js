@@ -1,4 +1,5 @@
-import { actionCreators } from './redux';
+import { actionCreators as docExplorerActionCreators } from './redux';
+import { actionCreators as docRefTypesActionCreators } from 'components/DocRefTypes/redux';
 import { wrappedGet, wrappedPut, wrappedPost } from 'lib/fetchTracker.redux';
 import { findByUuids, findItem } from 'lib/treeUtils';
 
@@ -8,11 +9,12 @@ const {
   docRefsCopied,
   docRefsMoved,
   docRefsDeleted,
-  docRefTypesReceived,
   docRefInfoOpened,
   docRefInfoReceived,
   docRefCreated,
-} = actionCreators;
+} = docExplorerActionCreators;
+
+const { docRefTypesReceived } = docRefTypesActionCreators;
 
 const stripDocRef = docRef => ({
   uuid: docRef.uuid,

@@ -15,9 +15,9 @@
  */
 import React from 'react';
 import { connect } from 'react-redux';
-import { branch, compose, renderComponent, lifecycle } from 'recompose';
+import { compose, lifecycle } from 'recompose';
 import { Loader } from 'semantic-ui-react';
-import { fetchDocRefTypes } from './explorerClient';
+import { fetchDocRefTypes } from 'components/DocExplorer/explorerClient';
 import { withConfig } from 'startup/config';
 
 /**
@@ -27,9 +27,8 @@ import { withConfig } from 'startup/config';
 export default compose(
   withConfig,
   connect(
-    (state, props) => ({
-      isDocRefTypeListReady: state.docExplorer.explorerTree.isDocRefTypeListReady,
-      docRefTypes: state.docExplorer.explorerTree.docRefTypes,
+    ({ docRefTypes }) => ({
+      docRefTypes,
     }),
     {
       fetchDocRefTypes,
@@ -40,8 +39,4 @@ export default compose(
       this.props.fetchDocRefTypes();
     },
   }),
-  branch(
-    ({ isDocRefTypeListReady }) => !isDocRefTypeListReady,
-    renderComponent(() => <Loader active>Awaiting DocRef type list </Loader>),
-  ),
 );

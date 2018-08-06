@@ -22,10 +22,9 @@ import { connect } from 'react-redux';
 import { Button, Modal, Input, Loader, Dropdown } from 'semantic-ui-react';
 
 import { findItem } from 'lib/treeUtils';
-import { actionCreators } from '../redux';
+import { actionCreators } from 'components/DocExplorer/redux';
 
-import withExplorerTree from '../withExplorerTree';
-import withDocRefTypes from '../withDocRefTypes';
+import withExplorerTree from 'components/DocExplorer/withExplorerTree';
 import FolderToPick from './FolderToPick';
 
 const {
@@ -36,7 +35,6 @@ const withModal = withState('isOpen', 'setIsOpen', false);
 
 const enhance = compose(
   withExplorerTree,
-  withDocRefTypes,
   connect(
     (
       {
@@ -111,7 +109,7 @@ const DocPickerModal = ({
         onFocus={handleOpen}
         trigger={
           <span>
-            <img className="doc-ref__icon" alt="X" src={require(`../images/${node.type}.svg`)} />
+            <img className="doc-ref__icon" alt="X" src={require(`../../images/docRefTypes/${node.type}.svg`)} />
             {triggerValue}
           </span>
         }

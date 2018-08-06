@@ -21,7 +21,7 @@ const withValue = withState('value', 'onChange', undefined);
 class RawControlledInput extends React.PureComponent {
   render() {
     const { children, onChange, value } = this.props;
-
+    
     const childrenWithProps = React.Children.map(children, child =>
       React.cloneElement(child, { onChange, value }));
 

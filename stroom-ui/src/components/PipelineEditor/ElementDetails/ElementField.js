@@ -8,7 +8,7 @@ import { Form, Popup, Icon, Input, Checkbox, Button, Grid } from 'semantic-ui-re
 
 import { actionCreators } from '../redux';
 
-import { DocPickerModal } from 'components/DocExplorer';
+import DocPickerModal from 'components/DocPickerModal';
 import { actionCreators as docExplorerActionCreators } from 'components/DocExplorer/redux';
 
 import NumericInput from 'prototypes/NumericInput';

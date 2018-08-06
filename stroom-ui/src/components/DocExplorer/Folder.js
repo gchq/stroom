@@ -196,7 +196,7 @@ const _Folder = ({
       {thisIsOpen && (
         <div className="folder__children">
           {hasChildren ? folder.children
-            .filter(c => !!explorer.isVisible[c.uuid])
+            .filter(c => !!explorer.inTypeFilter[c.uuid])
             .map(c =>
                 (c.type === 'Folder' ? (
                   <Folder key={c.uuid} explorerId={explorerId} folder={c} />

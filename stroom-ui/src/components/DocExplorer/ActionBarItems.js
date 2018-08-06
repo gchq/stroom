@@ -19,14 +19,11 @@ import PropTypes from 'prop-types';
 import { compose, branch, renderComponent } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Input, Button, Popup } from 'semantic-ui-react';
+import { Input, Button } from 'semantic-ui-react';
 
 import { actionCreators } from './redux';
 
 import withExplorerTree from './withExplorerTree';
-import DocTypeFilters from './DocTypeFilters';
-
-const { searchTermUpdated } = actionCreators;
 
 const enhance = compose(
   withExplorerTree,
@@ -41,23 +38,13 @@ const enhance = compose(
     ) => ({
       explorer: explorers[explorerId],
     }),
-    { searchTermUpdated },
+    {},
   ),
   branch(({ explorer }) => !explorer, renderComponent(() => <div />)),
 );
 
 const ActionBarItems = ({ explorerId, searchTermUpdated, explorer }) => (
-  <div className="DocExplorer__ActionBarItems__container">
-    <Input
-      icon="search"
-      placeholder="Search..."
-      value={explorer.searchTerm}
-      onChange={e => searchTermUpdated(explorerId, e.target.value)}
-    />
-    <Popup trigger={<Button icon="filter" />} flowing hoverable>
-      <DocTypeFilters explorerId={explorerId} />
-    </Popup>
-  </div>
+  <div className="DocExplorer__ActionBarItems__container" />
 );
 
 ActionBarItems.propTypes = {

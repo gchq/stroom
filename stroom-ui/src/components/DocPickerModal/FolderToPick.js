@@ -55,7 +55,7 @@ const FolderToPick = ({
       {thisIsOpen && (
         <div className="folder__children">
           {folder.children
-            .filter(c => !!explorer.isVisible[c.uuid])
+            .filter(c => !!explorer.inTypeFilter[c.uuid])
             .map(c =>
                 (c.type === 'Folder' ? (
                   <FolderToPick
