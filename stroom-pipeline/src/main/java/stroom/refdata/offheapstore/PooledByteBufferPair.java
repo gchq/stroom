@@ -60,6 +60,15 @@ public class PooledByteBufferPair implements AutoCloseable {
         valueBuffer = null;
     }
 
+    public void clear() {
+        if (keyBuffer != null) {
+            keyBuffer.clear();
+        }
+        if (valueBuffer != null) {
+            valueBuffer.clear();
+        }
+    }
+
     @Override
     public void close() {
         release();

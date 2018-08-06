@@ -411,6 +411,8 @@ public class RefDataOffHeapStore implements RefDataStore {
             do {
                 // with a read txn find the next proc info entry that is ready for purge
                 Optional<RefStreamDefinition> optRefStreamDef = LmdbUtils.getWithReadTxn(lmdbEnvironment, readTxn -> {
+                    // ensure the buffers are cleared as we are using them in a loop
+                    procInfoPooledBufferPair.clear();
                     Optional<PooledByteBufferPair> optProcInfoBufferPair = processingInfoDb.getNextEntryAsBytes(
                             readTxn,
                             currRefStreamDefBufRef.get(),
