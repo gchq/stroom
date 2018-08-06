@@ -25,6 +25,7 @@ import stroom.entity.util.FieldMap;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -86,8 +87,8 @@ public abstract class SystemEntityServiceImpl<E extends Entity, C extends BaseCr
     public String getEntityType() {
         if (entityType == null) {
             try {
-                entityType = getEntityClass().newInstance().getType();
-            } catch (final InstantiationException | IllegalAccessException e) {
+                entityType = getEntityClass().getConstructor().newInstance().getType();
+            } catch (final NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
         }

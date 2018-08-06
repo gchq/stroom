@@ -77,6 +77,6 @@ public class CustomRollUpMaskFields implements SharedObject, Comparable<CustomRo
 
     @Override
     public int compareTo(final CustomRollUpMaskFields that) {
-        return new Short(this.maskValue).compareTo(that.maskValue);
+        return Short.compare(this.maskValue, that.maskValue);
     }
 }

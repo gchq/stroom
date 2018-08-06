@@ -8,7 +8,11 @@ dependencies {
     compile project(':stroom-util-shared')
 
     compile libs.hibernate_jpa_api
+
     compile libs.jaxb_api
+    compile libs.jaxb_runtime
+    compile libs.javax_activation
+
     compile libs.validation_api
     
     runtime libs.jackson_annotations

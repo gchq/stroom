@@ -22,6 +22,7 @@ import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.FindNamedEntityCriteria;
 import stroom.entity.shared.NamedEntity;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Set;
 
 public abstract class MockNamedEntityService<E extends NamedEntity, C extends FindNamedEntityCriteria>
@@ -34,10 +35,10 @@ public abstract class MockNamedEntityService<E extends NamedEntity, C extends Fi
     @Override
     public E create(final String name) {
         try {
-            final E entity = getEntityClass().newInstance();
+            final E entity = getEntityClass().getConstructor().newInstance();
             entity.setName(name);
             return save(entity);
-        } catch (final InstantiationException | IllegalAccessException | RuntimeException e) {
+        } catch (final NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException | RuntimeException e) {
             throw new EntityServiceException(e.getMessage());
         }
     }

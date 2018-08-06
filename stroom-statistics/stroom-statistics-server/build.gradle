@@ -33,7 +33,11 @@ dependencies {
     compile libs.guava
     compile libs.guice4
     compile libs.javax_inject
+
     compile libs.jaxb_api
+    compile libs.jaxb_runtime
+    compile libs.javax_activation
+
     compile libs.reactivestreams
     compile libs.rxjava
     compile libs.slf4j_api

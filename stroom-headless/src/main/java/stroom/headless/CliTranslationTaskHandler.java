@@ -163,7 +163,7 @@ class CliTranslationTaskHandler extends AbstractTaskHandler<CliTranslationTask, 
                 }
 
                 // Create the stream.
-                final Data stream = new StreamImpl.Builder()
+                final Data stream = new DataImpl.Builder()
                         .effectiveMs(effectiveMs)
                         .feedName(feedName)
                         .build();

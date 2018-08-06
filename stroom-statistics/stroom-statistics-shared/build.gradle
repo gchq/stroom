@@ -6,9 +6,13 @@ dependencies {
     compile project(':stroom-statistics:stroom-statistics-api')
     compile project(':stroom-task:stroom-task-api')
 
+    compile libs.javax_annotation
     compile libs.stroomDocRef
     compile libs.jackson_annotations
+
     compile libs.jaxb_api
+    compile libs.jaxb_runtime
+    compile libs.javax_activation
 
     testCompile libs.junit
 

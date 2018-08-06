@@ -38,6 +38,7 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.config.StroomProperties;
 
 import javax.persistence.Transient;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -95,8 +96,8 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
 
         // Create a new entity instance.
         try {
-            entity = getEntityClass().newInstance();
-        } catch (final IllegalAccessException | InstantiationException e) {
+            entity = getEntityClass().getConstructor().newInstance();
+        } catch (final NoSuchMethodException | InvocationTargetException | IllegalAccessException | InstantiationException e) {
             throw new EntityServiceException(e.getMessage());
         }
 
@@ -369,8 +370,8 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     public String getEntityType() {
         if (entityType == null) {
             try {
-                entityType = getEntityClass().newInstance().getType();
-            } catch (final InstantiationException | IllegalAccessException e) {
+                entityType = getEntityClass().getConstructor().newInstance().getType();
+            } catch (final NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
         }

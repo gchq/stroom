@@ -60,7 +60,7 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
         assertEquals(8, aggregateMap.size());
 
         // time gets rounded to 100_000L
-        final long expectedKeyTime = new Long(timeMs / precision) * precision;
+        final long expectedKeyTime = (timeMs / precision) * precision;
 
         for (final Entry<SQLStatKey, MutableLong> entry : aggregateMap.countEntrySet()) {
             assertEquals(expectedKeyTime, entry.getKey().getMs());
@@ -78,7 +78,7 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
         assertEquals(8, aggregateMap.size());
 
         // time gets rounded to 100_000L
-        final long expectedKeyTime = new Long(timeMs / precision) * precision;
+        final long expectedKeyTime = (timeMs / precision) * precision;
 
         for (final Entry<SQLStatKey, MutableLong> entry : aggregateMap.countEntrySet()) {
             assertEquals(expectedKeyTime, entry.getKey().getMs());
@@ -98,7 +98,7 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
         assertEquals(8, aggregateMap.size());
 
         // time gets rounded to 100_000L
-        final long expectedKeyTime = new Long(timeMs / precision) * precision;
+        final long expectedKeyTime = (timeMs / precision) * precision;
 
         for (final Entry<SQLStatKey, MutableLong> entry : aggregateMap.countEntrySet()) {
             assertEquals(expectedKeyTime, entry.getKey().getMs());
@@ -120,7 +120,7 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
         assertEquals(8, aggregateMap.size());
 
         // time gets rounded to 100_000L
-        final long expectedKeyTime = new Long(timeMs / precision) * precision;
+        final long expectedKeyTime = (timeMs / precision) * precision;
 
         for (final Entry<SQLStatKey, MutableLong> entry : aggregateMap.countEntrySet()) {
             assertEquals(expectedKeyTime, entry.getKey().getMs());
@@ -145,7 +145,7 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
         assertEquals((8 * 3) - 2, aggregateMap.size());
 
         // time gets rounded to 100_000L
-        final long expectedKeyTime = new Long(timeMs / precision) * precision;
+        final long expectedKeyTime = (timeMs / precision) * precision;
 
         for (final Entry<SQLStatKey, MutableLong> entry : aggregateMap.countEntrySet()) {
             final int markerCount = countStringInString(entry.getKey().getName(), RollUpBitMask.ROLL_UP_TAG_VALUE);
@@ -183,7 +183,7 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
         assertEquals((8 * 3) - 2, aggregateMap.size());
 
         // time gets rounded to 100_000L
-        final long expectedKeyTime = new Long(timeMs / precision) * precision;
+        final long expectedKeyTime = (timeMs / precision) * precision;
 
         for (final Entry<SQLStatKey, MutableLong> entry : aggregateMap.countEntrySet()) {
             final int markerCount = countStringInString(entry.getKey().getName(), RollUpBitMask.ROLL_UP_TAG_VALUE);
@@ -229,7 +229,7 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
         assertEquals(8, aggregateMap2.size());
 
         // time gets rounded to 100_000L
-        final long expectedKeyTime = new Long(timeMs / precision) * precision;
+        final long expectedKeyTime = (timeMs / precision) * precision;
 
         for (final Entry<SQLStatKey, MutableLong> entry : aggregateMap1.countEntrySet()) {
             assertEquals(expectedKeyTime, entry.getKey().getMs());
@@ -262,7 +262,7 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
         assertEquals(8, aggregateMap2.size());
 
         // time gets rounded to 100_000L
-        final long expectedKeyTime = new Long(timeMs / precision) * precision;
+        final long expectedKeyTime = (timeMs / precision) * precision;
 
         for (final Entry<SQLStatKey, MutableLong> entry : aggregateMap1.countEntrySet()) {
             assertEquals(expectedKeyTime, entry.getKey().getMs());
@@ -299,7 +299,7 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
         assertEquals((8 * 3) - 2, aggregateMap2.size());
 
         // time gets rounded to 100_000L
-        final long expectedKeyTime = new Long(timeMs / precision) * precision;
+        final long expectedKeyTime = (timeMs / precision) * precision;
 
         for (final Entry<SQLStatKey, MutableLong> entry : aggregateMap1.countEntrySet()) {
             final int markerCount = countStringInString(entry.getKey().getName(), RollUpBitMask.ROLL_UP_TAG_VALUE);
@@ -349,7 +349,7 @@ public class TestSQLStatisticAggregateMap extends StroomUnitTest {
         assertEquals((8 * 3) - 2, aggregateMap2.size());
 
         // time gets rounded to 100_000L
-        final long expectedKeyTime = new Long(timeMs / precision) * precision;
+        final long expectedKeyTime = (timeMs / precision) * precision;
 
         for (final Entry<SQLStatKey, MutableLong> entry : aggregateMap1.countEntrySet()) {
             final int markerCount = countStringInString(entry.getKey().getName(), RollUpBitMask.ROLL_UP_TAG_VALUE);

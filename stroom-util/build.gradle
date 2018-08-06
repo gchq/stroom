@@ -7,9 +7,9 @@ dependencies {
     compile project(':stroom-util-shared')
 
     compile libs.commons_io
-    permitUnusedDeclared libs.commons_io
+    // permitUnusedDeclared libs.commons_io
     compile libs.commons_lang
-    permitUnusedDeclared libs.commons_lang
+    // permitUnusedDeclared libs.commons_lang
     compile libs.commons_codec
     compile libs.guava
     compile libs.jackson_annotations
@@ -17,7 +17,11 @@ dependencies {
     compile libs.jackson_databind
     compile libs.javax_servlet_api
     compile libs.javax_inject
+
     compile libs.jaxb_api
+    compile libs.jaxb_runtime
+    compile libs.javax_activation
+
     compile libs.slf4j_api
 
     testCompile libs.junit

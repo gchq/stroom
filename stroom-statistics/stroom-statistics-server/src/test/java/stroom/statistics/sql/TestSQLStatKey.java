@@ -152,7 +152,7 @@ public class TestSQLStatKey extends StroomUnitTest {
         tags.add(new StatisticTag("T2", "*"));
 
         final SQLStatKey sqlStatKey1 = new SQLStatKey(time, statName, tags);
-        final SQLStatKey sqlStatKey2 = new SQLStatKey(new Long(time), new String(statName), new ArrayList<>(tags));
+        final SQLStatKey sqlStatKey2 = new SQLStatKey(time, statName, new ArrayList<>(tags));
 
         Assert.assertTrue(sqlStatKey1.equals(sqlStatKey2));
         Assert.assertEquals(sqlStatKey1.hashCode(), sqlStatKey2.hashCode());
@@ -172,7 +172,7 @@ public class TestSQLStatKey extends StroomUnitTest {
         tags2.add(new StatisticTag("T2", "T2V"));
 
         final SQLStatKey sqlStatKey1 = new SQLStatKey(time, statName, tags);
-        final SQLStatKey sqlStatKey2 = new SQLStatKey(new Long(time), new String(statName), tags2);
+        final SQLStatKey sqlStatKey2 = new SQLStatKey(time, statName, tags2);
 
         Assert.assertFalse(sqlStatKey1.equals(sqlStatKey2));
         Assert.assertNotEquals(sqlStatKey1.hashCode(), sqlStatKey2.hashCode());

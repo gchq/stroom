@@ -210,12 +210,14 @@ public class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
         List<DataRow> relationList = streamMetaService.findRelatedData(childTarget.getStream().getId(), true);
 
+        Assert.assertEquals(3, relationList.size());
         Assert.assertEquals(streamTarget.getStream(), relationList.get(0).getData());
         Assert.assertEquals(childTarget.getStream(), relationList.get(1).getData());
         Assert.assertEquals(grandChildTarget.getStream(), relationList.get(2).getData());
 
         relationList = streamMetaService.findRelatedData(grandChildTarget.getStream().getId(), true);
 
+        Assert.assertEquals(3, relationList.size());
         Assert.assertEquals(streamTarget.getStream(), relationList.get(0).getData());
         Assert.assertEquals(childTarget.getStream(), relationList.get(1).getData());
         Assert.assertEquals(grandChildTarget.getStream(), relationList.get(2).getData());

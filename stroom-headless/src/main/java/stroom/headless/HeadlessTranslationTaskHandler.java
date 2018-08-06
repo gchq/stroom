@@ -174,7 +174,7 @@ class HeadlessTranslationTaskHandler extends AbstractTaskHandler<HeadlessTransla
                 }
 
                 // Create the stream.
-                final Data stream = new StreamImpl.Builder()
+                final Data stream = new DataImpl.Builder()
                         .effectiveMs(effectiveMs)
                         .feedName(feedName)
                         .build();

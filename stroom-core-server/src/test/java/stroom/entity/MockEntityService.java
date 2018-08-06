@@ -23,6 +23,7 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Entity;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -113,8 +114,8 @@ public abstract class MockEntityService<E extends Entity, C extends BaseCriteria
     public String getEntityType() {
         if (entityType == null) {
             try {
-                entityType = getEntityClass().newInstance().getType();
-            } catch (final InstantiationException | IllegalAccessException e) {
+                entityType = getEntityClass().getConstructor().newInstance().getType();
+            } catch (final NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
         }

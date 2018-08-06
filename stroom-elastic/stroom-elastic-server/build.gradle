@@ -11,7 +11,7 @@ dependencies {
     compile project(':stroom-util')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-security:stroom-security-server')
-    permitUnusedDeclared project(':stroom-security:stroom-security-server')
+    // permitUnusedDeclared project(':stroom-security:stroom-security-server')
 
     compile libs.guava
     compile libs.guice4

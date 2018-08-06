@@ -17,7 +17,7 @@ dependencies {
     compile project(':stroom-task:stroom-task-api')
 
     compile project(':stroom-connectors')
-    permitUnusedDeclared project(':stroom-connectors')
+    // permitUnusedDeclared project(':stroom-connectors')
 
     compile libs.commons_lang
     compile libs.guava

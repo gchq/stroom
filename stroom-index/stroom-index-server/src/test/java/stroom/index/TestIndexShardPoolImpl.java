@@ -56,8 +56,8 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
         return (int) Math.floor((Math.random() * size));
     }
 
-    @Mock
-    private NodeCache nodeCache;
+//    @Mock
+//    private NodeCache nodeCache;
 
     @Before
     public void init() {
@@ -128,7 +128,7 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
             }
         };
 
-        Mockito.when(nodeCache.getDefaultNode()).thenReturn(defaultNode);
+//        Mockito.when(nodeCache.getDefaultNode()).thenReturn(defaultNode);
 
         final IndexShardWriterCache indexShardWriterCache = new MockIndexShardWriterCache(mockIndexShardService, maxDocumentsPerIndexShard);
         final Indexer indexer = new IndexerImpl(indexShardWriterCache, null);

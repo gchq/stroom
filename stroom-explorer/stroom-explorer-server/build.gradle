@@ -19,7 +19,11 @@ dependencies {
     compile libs.guice4
     compile libs.hibernate_jpa_api
     compile libs.javax_inject
+
     compile libs.jaxb_api
+    compile libs.jaxb_runtime
+    compile libs.javax_activation
+
     compile libs.slf4j_api
 
     integrationTestRuntime libs.mysql_connector_java

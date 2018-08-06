@@ -3,7 +3,7 @@ ext.moduleName = 'stroom.core.client'
 dependencies {
     compile project(':stroom-security:stroom-security-client-api')
     compile project(':stroom-security:stroom-security-shared')
-    permitUnusedDeclared project(':stroom-security:stroom-security-shared')
+    // permitUnusedDeclared project(':stroom-security:stroom-security-shared')
     compile project(':stroom-core-shared')
     compile project(':stroom-core-client-widget')
     compile project(':stroom-entity-shared')
@@ -23,7 +23,10 @@ dependencies {
     compile libs.gwt_user
     compile libs.gwtp_mvp_client
     compile libs.javax_inject
+
     compile libs.jaxb_api
+    compile libs.jaxb_runtime
+    compile libs.javax_activation
 
     //Needed only for the GwtCompilerWrapper
     compileOnly libs.gwt_dev

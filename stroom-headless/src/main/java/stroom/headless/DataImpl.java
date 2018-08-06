@@ -5,7 +5,7 @@ import stroom.data.meta.api.DataStatus;
 
 import java.util.Objects;
 
-class StreamImpl implements Data {
+class DataImpl implements Data {
     private long id;
     private String feedName;
     private String streamTypeName;
@@ -18,7 +18,7 @@ class StreamImpl implements Data {
     private long createMs;
     private Long effectiveMs;
 
-    StreamImpl() {
+    DataImpl() {
     }
 
     @Override
@@ -80,7 +80,7 @@ class StreamImpl implements Data {
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        final StreamImpl stream = (StreamImpl) o;
+        final DataImpl stream = (DataImpl) o;
         return id == stream.id;
     }
 
@@ -95,7 +95,7 @@ class StreamImpl implements Data {
     }
 
     public static class Builder {
-        private final StreamImpl stream = new StreamImpl();
+        private final DataImpl stream = new DataImpl();
 
         public Builder id(final long id) {
             stream.id = id;

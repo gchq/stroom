@@ -36,6 +36,7 @@ import stroom.pipeline.writer.StreamAppender;
 import stroom.pipeline.writer.TextWriter;
 import stroom.pipeline.writer.XMLWriter;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -119,8 +120,8 @@ public class MockPipelineElementRegistryFactory implements ElementRegistryFactor
                 return (T) new FileAppender(null, null);
             }
 
-            return elementClass.newInstance();
-        } catch (final IllegalAccessException | InstantiationException e) {
+            return elementClass.getConstructor().newInstance();
+        } catch (final NoSuchMethodException | InvocationTargetException | IllegalAccessException | InstantiationException e) {
             throw new PipelineFactoryException(e);
         }
     }

@@ -25,7 +25,11 @@ dependencies {
     compile libs.eventLogging
     compile libs.guava
     compile libs.javax_inject
+
     compile libs.jaxb_api
+    compile libs.jaxb_runtime
+    compile libs.javax_activation
+
     compile libs.lucene_analyzers_common
     compile libs.lucene_core
     compile libs.lucene_queryparser

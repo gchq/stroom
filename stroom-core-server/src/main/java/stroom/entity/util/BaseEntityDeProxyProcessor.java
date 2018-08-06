@@ -118,7 +118,7 @@ public class BaseEntityDeProxyProcessor {
                     if (replacement == null) {
                         final String entityName = lazyInitializer.getEntityName();
                         final Class<?> clazz = Class.forName(entityName);
-                        replacement = (BaseEntity) clazz.newInstance();
+                        replacement = (BaseEntity) clazz.getConstructor().newInstance();
                         final long lazyId = ((BaseEntity) source).getId();
                         replacement.setStub(lazyId);
 
@@ -126,7 +126,7 @@ public class BaseEntityDeProxyProcessor {
                         walk = false;
                     }
                 }
-            } catch (final ClassNotFoundException e) {
+            } catch (final NoSuchMethodException | InvocationTargetException | ClassNotFoundException e) {
                 LOGGER.error("Unable to get proxy!", e);
             }
 

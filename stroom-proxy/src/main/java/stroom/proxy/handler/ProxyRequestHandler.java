@@ -2,19 +2,18 @@ package stroom.proxy.handler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.meta.api.AttributeMap;
 import stroom.datafeed.AttributeMapFilter;
 import stroom.datafeed.AttributeMapFilterFactory;
 import stroom.datafeed.RequestHandler;
-import stroom.data.meta.api.AttributeMap;
-import stroom.docref.DocRef;
-import stroom.feed.AttributeMapUtil;
 import stroom.datafeed.StroomStatusCode;
 import stroom.datafeed.StroomStreamException;
+import stroom.docref.DocRef;
+import stroom.feed.AttributeMapUtil;
 import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.util.io.ByteCountInputStream;
 import stroom.datafeed.BufferFactory;
 
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -40,7 +39,7 @@ public class ProxyRequestHandler implements RequestHandler {
     private final BufferFactory bufferFactory;
 
     @Inject
-    public ProxyRequestHandler(@Nullable final ProxyRequestConfig proxyRequestConfig,
+    public ProxyRequestHandler(final ProxyRequestConfig proxyRequestConfig,
                                final MasterStreamHandlerFactory streamHandlerFactory,
                                final AttributeMapFilterFactory attributeMapFilterFactory,
                                final LogStream logStream,
