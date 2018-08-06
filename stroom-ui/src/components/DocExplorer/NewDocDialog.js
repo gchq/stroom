@@ -9,7 +9,7 @@ import { InputField } from 'react-semantic-redux-form';
 import { required, minLength2 } from 'lib/reduxFormUtils';
 import { actionCreators } from './redux';
 import DocPickerModal from 'components/DocPickerModal';
-import DocRefTypePicker from 'components/DocRefTypes';
+import { DocRefTypePicker } from 'components/DocRefTypes';
 import explorerClient from './explorerClient';
 
 import PermissionInheritancePicker from 'components/PermissionInheritancePicker';
