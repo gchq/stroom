@@ -36,8 +36,12 @@ import { search, getDetailsForSelectedRow } from './streamAttributeMapClient';
 import { getDataForSelectedRow } from './dataResourceClient';
 import DataDetails from './DataDetails';
 import DetailsTabs from './DetailsTabs';
+import withLocalStorage from 'lib/withLocalStorage';
 
 import { actionCreators } from './redux';
+
+const withListHeight = withLocalStorage('listHeight', 'setListHeight', 500);
+const withDetailsHeight = withLocalStorage('detailsHeight', 'setDetailsHeight', 500);
 
 const { selectRow, deselectRow } = actionCreators;
 const startPage = 0;
@@ -45,6 +49,8 @@ const defaultPageSize = 20;
 
 const enhance = compose(
   withConfig,
+  withListHeight,
+  withDetailsHeight,
   connect(
     (state, props) => {
       const dataView = state.dataViewers[props.dataViewerId];
@@ -99,7 +105,15 @@ const DataViewer = ({
   getDetailsForSelectedRow,
   dataForSelectedRow,
   detailsForSelectedRow,
+  listHeight,
+  setListHeight,
+  detailsHeight,
+  setDetailsHeight,
 }) => {
+  // We need to parse these because localstorage, which is 
+  // where these come from, is always string.
+  listHeight = Number.parseInt(listHeight)
+  detailsHeight = Number.parseInt(detailsHeight)
 
   const onRowSelected = (dataViewerId, selectedRow) => {
     selectRow(dataViewerId, selectedRow);
@@ -231,6 +245,7 @@ const DataViewer = ({
       headerSize="h3"
     />
   );
+
   return (
     <div className="DataTable__container">
       <div className="DataTable__reactTable__container">
@@ -240,12 +255,21 @@ const DataViewer = ({
           <PanelGroup
             direction="column"
             panelWidths={[
-              { size: 500, resize: 'dynamic' },
+              { 
+                resize: 'dynamic',
+                minSize:100,
+                size: listHeight
+              },
               {
                 resize: 'dynamic',
-                size: 500,
+                minSize: 100,
+                size: detailsHeight,
               },
             ]}
+            onUpdate={panelWidths => {
+              setListHeight(panelWidths[0].size)
+              setDetailsHeight(panelWidths[1].size)
+            }}
           >
             {table}
             {details}
