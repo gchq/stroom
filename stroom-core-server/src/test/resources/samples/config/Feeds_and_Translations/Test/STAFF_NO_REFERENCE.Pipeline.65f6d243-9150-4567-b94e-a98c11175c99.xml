@@ -1,0 +1,29 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<pipeline>
+   <properties>
+      <add>
+         <property>
+            <element>combinedParser</element>
+            <name>textConverter</name>
+            <value>
+               <entity>
+                  <type>TextConverter</type>
+                  <uuid>7e4452ed-bf26-4187-b849-e3e721780cba</uuid>
+                  <name>CSV_WITH_HEADER</name>
+               </entity>
+            </value>
+         </property>
+         <property>
+            <element>translationFilter</element>
+            <name>xslt</name>
+            <value>
+               <entity>
+                  <type>XSLT</type>
+                  <uuid>144514e5-4bf3-416a-a623-a25d592aab94</uuid>
+                  <name>STAFF-NO-REFERENCE</name>
+               </entity>
+            </value>
+         </property>
+      </add>
+   </properties>
+</pipeline>
