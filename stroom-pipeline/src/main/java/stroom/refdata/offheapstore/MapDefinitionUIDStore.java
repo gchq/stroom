@@ -49,6 +49,10 @@ public class MapDefinitionUIDStore {
         return mapUidForwardDb.get(txn, mapDefinition);
     }
 
+    boolean exists(final MapDefinition mapDefinition) {
+        return mapUidForwardDb.exists(mapDefinition);
+    }
+
     /**
      * Returns the UID corresponding to the passed mapDefinition if it exists in the two mapping DBs. If it doesn't
      * exist, a forward and reverse mapping will be created and the new UID returned. The returned UID warps a

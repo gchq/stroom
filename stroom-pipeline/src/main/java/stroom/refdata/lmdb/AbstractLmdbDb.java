@@ -77,7 +77,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
 
     /**
      * @param lmdbEnvironment The LMDB {@link Env} to add this DB to.
-     * @param byteBufferPool  A self loading pool of ByteBuffers.
+     * @param byteBufferPool  A self loading pool of reusable ByteBuffers.
      * @param keySerde        The {@link Serde} to use for the keys.
      * @param valueSerde      The {@link Serde} to use for the values.
      * @param dbName          The name of the database.
@@ -93,7 +93,16 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         this.lmdbEnvironment = lmdbEnvironment;
         this.lmdbDbi = openDbi(lmdbEnvironment, dbName);
         this.byteBufferPool = byteBufferPool;
-        this.keyBufferCapacity = Math.min(lmdbEnvironment.getMaxKeySize(), keySerde.getBufferCapacity());
+
+        int keySerdeCapacity = keySerde.getBufferCapacity();
+        int envMaxKeySize = lmdbEnvironment.getMaxKeySize();
+        if (keySerdeCapacity > envMaxKeySize) {
+            LOGGER.warn("Key serde capacity {} is greater than the maximum key size for the environment {}. " +
+                            "BufferOverflow exceptions are likely.",
+                    keySerdeCapacity, envMaxKeySize);
+        }
+        this.keyBufferCapacity = Math.min(envMaxKeySize, keySerdeCapacity);
+
         this.valueBufferCapacity = Math.min(Serde.DEFAULT_CAPACITY, valueSerde.getBufferCapacity());
     }
 
@@ -220,6 +229,25 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
             throw new RuntimeException(LambdaLogger.buildMessage("Error getting value for key [{}]",
                     ByteBufferUtils.byteBufferInfo(keyBuffer)), e);
         }
+    }
+
+    public boolean exists(final K key) {
+        return LmdbUtils.getWithReadTxn(lmdbEnvironment, txn ->
+                exists(txn, key));
+    }
+
+    public boolean exists(final Txn<ByteBuffer> txn, final K key) {
+        try (final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()) {
+            final ByteBuffer keyBuffer = pooledKeyBuffer.getByteBuffer();
+            serializeKey(keyBuffer, key);
+            return exists(txn, keyBuffer);
+        }
+    }
+
+    public boolean exists(final Txn<ByteBuffer> txn, final ByteBuffer keyBuffer) {
+        // It is debatable whether it is cheaper to use a cursor to see if
+        // the key exists or a get like this.
+        return lmdbDbi.get(txn, keyBuffer) != null;
     }
 
     public <T> T mapValue(final K key, final Function<V, T> valueMapper) {
@@ -538,7 +566,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
                 lmdbDbi,
                 logEntryConsumer);
     }
-    
+
     public void logRawDatabaseContents() {
         logRawDatabaseContents(LOGGER::debug);
     }

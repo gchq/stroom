@@ -120,9 +120,12 @@ public class LookupIdentifier {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder();
-        append(sb);
-        return sb.toString();
+        return "LookupIdentifier{" +
+                "key='" + key + '\'' +
+                ", eventTime=" + eventTime +
+                ", primaryMapName='" + primaryMapName + '\'' +
+                ", secondaryMapName='" + secondaryMapName + '\'' +
+                '}';
     }
 
     @Override

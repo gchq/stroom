@@ -33,9 +33,15 @@ public interface RefDataStore extends HasHealthCheck {
 
     /**
      * Returns true if all the data for the passed stream definition has been successfully loaded into the
-     * store and is available for use.
+     * store and is available for use. Will also touch the last accessed time on the record (if found).
      */
     boolean isDataLoaded(final RefStreamDefinition refStreamDefinition);
+
+    /**
+     * Returns true if this {@link MapDefinition} exists in the store. It makes no guarantees about the state
+     * of the data.
+     */
+    boolean exists(final MapDefinition mapDefinition);
 
     /**
      * Gets a value from the store for the passed mapDefinition and key. If not found returns an empty {@link Optional}.

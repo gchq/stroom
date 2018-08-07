@@ -212,6 +212,17 @@ public class RefDataOffHeapStore implements RefDataStore {
         return result;
     }
 
+    /**
+     * Returns true if this {@link MapDefinition} exists in the store. It makes no guarantees about the state
+     * of the data.
+     *
+     * @param mapDefinition
+     */
+    @Override
+    public boolean exists(final MapDefinition mapDefinition) {
+        return mapDefinitionUIDStore.exists(mapDefinition);
+    }
+
     @Override
     public Optional<RefDataValue> getValue(final MapDefinition mapDefinition,
                                            final String key) {

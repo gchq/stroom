@@ -1,8 +1,8 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <feed>
    <name>USER-DETAILS-REFERENCE</name>
-   <reference>false</reference>
+   <reference>true</reference>
    <status>RECEIVE</status>
-   <streamType>Raw Events</streamType>
+   <streamType>Raw Reference</streamType>
    <uuid>309e1ca0-7a5f-4f05-847b-b706805d758c</uuid>
 </feed>
