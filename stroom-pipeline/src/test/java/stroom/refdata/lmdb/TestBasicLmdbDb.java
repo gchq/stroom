@@ -26,8 +26,11 @@ import stroom.refdata.offheapstore.databases.AbstractLmdbDbTest;
 import stroom.refdata.offheapstore.serdes.StringSerde;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -151,4 +154,39 @@ public class TestBasicLmdbDb extends AbstractLmdbDbTest {
         });
     }
 
+    @Test
+    public void testStreamAllEntries() {
+        IntStream.rangeClosed(1, 20).forEach(i -> {
+            basicLmdbDb.put("key" + i, "value" + i, false);
+
+        });
+
+        List<String> entries = LmdbUtils.getWithReadTxn(lmdbEnv, txn ->
+                basicLmdbDb.streamAllEntries(txn, stream ->
+                        stream.map(kvTuple ->
+                                kvTuple._1() + "-" + kvTuple._2())
+                                .collect(Collectors.toList())));
+
+        assertThat(entries).hasSize(20);
+    }
+
+    @Test
+    public void testStreamAllEntriesWithFilter() {
+        IntStream.rangeClosed(1, 20).forEach(i -> {
+            basicLmdbDb.put( Integer.toString(i), "value" + i, false);
+
+        });
+
+        List<String> entries = LmdbUtils.getWithReadTxn(lmdbEnv, txn ->
+                basicLmdbDb.streamAllEntries(txn, stream ->
+                        stream.filter(kvTuple -> {
+                            int i = Integer.parseInt(kvTuple._1());
+                            return i > 10 && i <= 15;
+                        })
+                        .map(kvTuple ->
+                                kvTuple._1() + "-" + kvTuple._2())
+                                .collect(Collectors.toList())));
+
+        assertThat(entries).hasSize(5);
+    }
 }

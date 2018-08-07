@@ -18,11 +18,15 @@
 package stroom.refdata.lmdb;
 
 import com.google.common.base.Preconditions;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
 import org.lmdbjava.Cursor;
+import org.lmdbjava.CursorIterator;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
 import org.lmdbjava.GetOp;
+import org.lmdbjava.KeyRange;
 import org.lmdbjava.PutFlags;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
@@ -41,6 +45,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * An abstract class representing a generic LMDB table with understanding of how to (de)serialise
@@ -228,6 +234,33 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         } catch (RuntimeException e) {
             throw new RuntimeException(LambdaLogger.buildMessage("Error getting value for key [{}]",
                     ByteBufferUtils.byteBufferInfo(keyBuffer)), e);
+        }
+    }
+
+    public <T> T streamAllEntries(final Txn<ByteBuffer> txn,
+                                  final Function<Stream<Tuple2<K, V>>, T> streamFunction) {
+
+        return streamAllEntriesAsBytes(txn, entryStream -> {
+            Stream<Tuple2<K, V>> deSerialisedStream = entryStream.map(keyVal -> {
+                K key = deserializeKey(keyVal.key());
+                V value = deserializeValue(keyVal.val());
+                return Tuple.of(key, value);
+            });
+
+            return streamFunction.apply(deSerialisedStream);
+        });
+    }
+
+    public <T> T streamAllEntriesAsBytes(final Txn<ByteBuffer> txn,
+                                         final Function<Stream<CursorIterator.KeyVal<ByteBuffer>>, T> streamFunction) {
+
+        final KeyRange<ByteBuffer> keyRange = KeyRange.all();
+
+        try (CursorIterator<ByteBuffer> cursorIterator = getLmdbDbi().iterate(txn, keyRange)) {
+            final Stream<CursorIterator.KeyVal<ByteBuffer>> stream =
+                    StreamSupport.stream(cursorIterator.iterable().spliterator(), false);
+
+            return streamFunction.apply(stream);
         }
     }
 
