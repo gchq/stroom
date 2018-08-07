@@ -21,18 +21,15 @@ import { iterateNodes } from 'lib/treeUtils';
 import { actionCreators as docExplorerActionCreators } from 'components/DocExplorer/redux';
 
 const actionCreators = createActions({
+  APP_SEARCH_CLOSED: () => ({}),
   APP_SEARCH_TERM_UPDATED: searchTerm => ({ searchTerm }),
-  APP_SEARCH_OPENED: () => ({ isOpen: true }),
-  APP_SEARCH_CLOSED: () => ({ isOpen: false }),
   APP_SEARCH_SELECTION_UP: () => ({}),
   APP_SEARCH_SELECTION_DOWN: () => ({}),
 });
 
-const { appSearchOpened, appSearchClosed } = actionCreators;
 const { docTreeReceived } = docExplorerActionCreators;
 
 const defaultState = {
-  isOpen: false,
   searchTerm: '',
   searchResults: [],
   rawData: [],
@@ -43,11 +40,12 @@ const defaultState = {
 
 const reducer = handleActions(
   {
-    [combineActions(appSearchOpened, appSearchClosed)]: (state, { payload: { isOpen } }) => ({
+    APP_SEARCH_CLOSED: (state, payload) => ({
       ...state,
-      isOpen,
       searchTerm: '',
       searchResults: [],
+      selectedItem: 0,
+      selectedDocRef: undefined,
     }),
     APP_SEARCH_TERM_UPDATED: (state, { payload: { searchTerm } }) => {
       let searchResults = [];
