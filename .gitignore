@@ -2,6 +2,7 @@
 .temp
 .DS_Store
 **/target/
+**/out/
 **/build/
 **/bin/
 *.swp
