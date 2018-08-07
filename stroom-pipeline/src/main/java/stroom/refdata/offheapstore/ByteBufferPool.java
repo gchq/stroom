@@ -60,6 +60,9 @@ import java.util.function.Function;
 @Singleton
 public class ByteBufferPool implements Clearable {
 
+    // TODO it would be preferable to use different concurrency constructs to avoid the use
+    // of synchronized methods.
+
     private final TreeMap<Key, ByteBuffer> bufferMap = new TreeMap<>();
 
     public PooledByteBuffer getPooledByteBuffer(final int minCapacity) {

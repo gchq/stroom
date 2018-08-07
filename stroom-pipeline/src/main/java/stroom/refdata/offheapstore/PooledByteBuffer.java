@@ -25,18 +25,20 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
- * Wrapper for a {@link ByteBuffer} obtained from a {@link ByteBufferPool} that can be used
+ * A lazy wrapper for a {@link ByteBuffer} obtained from a {@link ByteBufferPool} that can be used
  * with a try with resources block as it implements {@link AutoCloseable}. If not used
  * with a try with resources block then {@link PooledByteBuffer#close()} or
  * {@link PooledByteBuffer#release()} must be called when the underlying {@link ByteBuffer}
  * is no longer needed.
+ *
+ * The wrapper is empty on creation and when getByteBuffer is called, it will be populated
+ * with a {@link ByteBuffer} from the pool.
  */
 public class PooledByteBuffer implements AutoCloseable {
 
     private ByteBuffer byteBuffer;
     private Supplier<ByteBuffer> byteBufferSupplier;
     private Consumer<ByteBuffer> releaseFunc;
-
 
     PooledByteBuffer(final Supplier<ByteBuffer> byteBufferSupplier,
                      final ByteBufferPool byteBufferPool) {
@@ -46,6 +48,7 @@ public class PooledByteBuffer implements AutoCloseable {
 
     /**
      * @return The underlying {@link ByteBuffer} that was obtained from the pool.
+     * The returned {@link ByteBuffer} must not be used once release/close are called.
      */
     public ByteBuffer getByteBuffer() {
         // lazily provide the ByteBuffer
