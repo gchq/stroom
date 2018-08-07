@@ -30,6 +30,8 @@ import withLocalStorage from 'lib/withLocalStorage';
 
 import logoInWhite from './logo_white.png';
 
+const {menuItemOpened} = appChromeActionCreators;
+
 const withIsExpanded = withLocalStorage('isExpanded', 'setIsExpanded', true);
 
 const SIDE_BAR_COLOUR = 'blue';

@@ -30,7 +30,7 @@ const defaultState = {
 
 const reducer = handleActions(
   {
-    RECENT_ITEMS_CLOSED: () => ({
+    RECENT_ITEMS_CLOSED: state => ({
       ...state,
       selectedItem: 0,
       selectedDocRef: undefined,
