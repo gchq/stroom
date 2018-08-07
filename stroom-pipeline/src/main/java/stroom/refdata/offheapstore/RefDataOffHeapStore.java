@@ -754,7 +754,8 @@ public class RefDataOffHeapStore implements RefDataStore {
                     .withDetail("Environment max size", ModelStringUtil.formatIECByteSizeString(maxSize))
                     .withDetail("Environment current size", ModelStringUtil.formatIECByteSizeString(getEnvironmentDiskUsage()))
                     .withDetail("Purge age", getDataRetentionAgeString())
-                    .withDetail("Max readers", maxReaders);
+                    .withDetail("Max readers", maxReaders)
+                    .withDetail("Current buffer pool size", byteBufferPool.getCurrentPoolSize());
 
             LmdbUtils.doWithReadTxn(lmdbEnvironment, txn -> {
                 builder.withDetail("Database entry counts", databaseMap.entrySet().stream()
