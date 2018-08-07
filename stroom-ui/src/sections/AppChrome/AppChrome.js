@@ -235,7 +235,7 @@ const AppChrome = ({
                 {headerContent}
               </Header>
             </Grid.Column>
-            <Grid.Column width={4}>{actionBarItems}</Grid.Column>
+            <Grid.Column width={8}>{actionBarItems}</Grid.Column>
           </Grid>
           {content}
         </div>
