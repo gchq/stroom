@@ -34,7 +34,7 @@ const EventView = ({ events }) => (
     <div className="EventView__aceEditor__container">
       <AceEditor
         className="EventView__aceEditor"
-        style={{ width: '100%', height: '100%', minHeight: '25rem' }}
+        style={{ width: '100%', height: '100%' }}
         mode="xml"
         theme="github"
         keyboardHandler="vim"
@@ -46,7 +46,7 @@ const EventView = ({ events }) => (
 );
 
 EventView.propTypes = {
-  events: PropTypes.array.isRequired,
+  events: PropTypes.string.isRequired,
 };
 
 export default EventView;

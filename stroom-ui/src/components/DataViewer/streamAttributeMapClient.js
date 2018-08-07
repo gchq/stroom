@@ -27,3 +27,23 @@ export const search = (dataViewerId, pageOffset, pageSize) => (dispatch, getStat
     true,
   );
 };
+
+export const getDetailsForSelectedRow = dataViewerId => (dispatch, getState) => {
+  const state = getState();
+  const dataView = state.dataViewers[dataViewerId];
+  const streamId = dataView.streamAttributeMaps[dataView.selectedRow].stream.id;
+  const url = `${state.config.streamAttributeMapServiceUrl}/${streamId}`;
+
+  wrappedGet(
+    dispatch,
+    state,
+    url,
+    (response) => {
+      response.json().then((data) => {
+        dispatch(actionCreators.updateDetailsForSelectedRow(dataViewerId, data));
+      });
+    },
+    null,
+    true,
+  );
+};

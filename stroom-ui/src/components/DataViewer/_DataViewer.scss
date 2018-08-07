@@ -1,8 +1,9 @@
 @import "./DataDetails/Views/ErrorTable";
 @import "./DataDetails/Views/EventView";
 @import "./MysteriousPagination/MysteriousPagination";
+@import "./DetailsTabs";
 .DataTable__container {
-  height: calc(100% - 45px);
+  height: calc(100% - 40px);
   position: relative;
 }
 
@@ -50,4 +51,8 @@
 
 .DataTable__selectedRow {
   background-color: $selected-item-colour;
+}
+
+.StreamDetails__table {
+  font-size: 11px;
 }

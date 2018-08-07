@@ -91,6 +91,8 @@ public class StreamAttributeMap implements SharedObject {
         this.fileNameList = fileNameList;
     }
 
+    public Map<String, String> getNameValueMap() { return this.nameValueMap;}
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

@@ -37,7 +37,7 @@ const DataDetails = ({ data }) => {
 };
 
 DataDetails.propTypes = {
-  data: PropTypes.object.isRequired,
+  data: PropTypes.object,
 };
 
 export default DataDetails;

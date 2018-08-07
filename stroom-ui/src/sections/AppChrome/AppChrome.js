@@ -28,7 +28,6 @@ import { withExplorerTree } from 'components/DocExplorer';
 import ActionBarItem from './ActionBarItem';
 import withLocalStorage from 'lib/withLocalStorage';
 
-const { menuItemOpened } = appChromeActionCreators;
 import logoInWhite from './logo_white.png';
 
 const withIsExpanded = withLocalStorage('isExpanded', 'setIsExpanded', true);
@@ -229,7 +228,7 @@ const AppChrome = ({
                 {headerContent}
               </Header>
             </Grid.Column>
-            <Grid.Column width={4}>{actionBarItems}</Grid.Column>
+            <Grid.Column width={8}>{actionBarItems}</Grid.Column>
           </Grid>
           {content}
         </div>

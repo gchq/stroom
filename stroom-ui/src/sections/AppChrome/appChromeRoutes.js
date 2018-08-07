@@ -57,7 +57,7 @@ export default [
         headerContent={<Header.Content>Explorer</Header.Content>}
         icon="eye"
         content={<DocExplorer explorerId="app-chrome-stories" />}
-        actionBarAdditionalItems={<DocExplorerActionBarItems explorerId="app-chrome-stories" />}
+        actionBarItems={<DocExplorerActionBarItems explorerId="app-chrome-stories" />}
       />
     ),
   },
@@ -70,7 +70,7 @@ export default [
         headerContent={<Header.Content>Data</Header.Content>}
         icon="database"
         content={<DataViewer dataViewerId="system" />}
-        actionBarAdditionalItems={<DataViewerActionBarItems dataViewerId="system" />}
+        actionBarItems={<DataViewerActionBarItems dataViewerId="system" />}
       />
     ),
   },
@@ -168,7 +168,7 @@ export default [
         headerContent={<Header.Content>Edit XSLT</Header.Content>}
         icon="file"
         content={<XsltEditor xsltId={props.match.params.xsltId} />}
-        actionBarAdditionalItems={<XsltEditorActionBarItems xsltId={props.match.params.xsltId} />}
+        actionBarItems={<XsltEditorActionBarItems xsltId={props.match.params.xsltId} />}
       />
     ),
   },
@@ -208,9 +208,7 @@ export default [
         headerContent={<PipelineEditorHeaderContent pipelineId={props.match.params.pipelineId} />}
         icon="file"
         content={<PipelineEditor pipelineId={props.match.params.pipelineId} />}
-        actionBarAdditionalItems={
-          <PipelineEditorActionBarItems pipelineId={props.match.params.pipelineId} />
-        }
+        actionBarItems={<PipelineEditorActionBarItems pipelineId={props.match.params.pipelineId} />}
       />
     ),
   },

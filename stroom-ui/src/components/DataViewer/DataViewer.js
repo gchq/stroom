@@ -32,10 +32,10 @@ import 'react-table/react-table.css';
 import { Loader, Popup, Icon } from 'semantic-ui-react';
 
 import { withConfig } from 'startup/config';
-import { search } from './streamAttributeMapClient';
+import { search, getDetailsForSelectedRow } from './streamAttributeMapClient';
 import { getDataForSelectedRow } from './dataResourceClient';
 import DataDetails from './DataDetails';
-import StreamPopup from './StreamPopup';
+import DetailsTabs from './DetailsTabs';
 
 import { actionCreators } from './redux';
 
@@ -59,10 +59,15 @@ const enhance = compose(
         pageOffset: startPage,
         selectedRow: undefined,
         dataForSelectedRow: undefined,
+        detailsForSelectedRow: undefined,
       };
     },
     {
-      search, selectRow, deselectRow, getDataForSelectedRow,
+      search,
+      selectRow,
+      deselectRow,
+      getDataForSelectedRow,
+      getDetailsForSelectedRow,
     },
   ),
   lifecycle({
@@ -91,32 +96,37 @@ const DataViewer = ({
   deselectRow,
   selectedRow,
   getDataForSelectedRow,
+  getDetailsForSelectedRow,
   dataForSelectedRow,
+  detailsForSelectedRow,
 }) => {
+
+  const onRowSelected = (dataViewerId, selectedRow) => {
+    selectRow(dataViewerId, selectedRow);
+    getDataForSelectedRow(dataViewerId);
+    getDetailsForSelectedRow(dataViewerId);
+  };
+
   Mousetrap.bind(['k', 'up'], () => {
     // If no row is selected and the user has tried to use a shortcut key then we'll try and
     // select the first row.
     if (selectedRow === undefined) {
-      selectRow(dataViewerId, 0);
-      getDataForSelectedRow(dataViewerId);
+      onRowSelected(dataViewerId, 0);
     }
     // If the selected row isn't the first row then we'll allow the selection to go up
     else if (selectedRow > 0) {
-      selectRow(dataViewerId, selectedRow - 1);
-      getDataForSelectedRow(dataViewerId);
+      onRowSelected(dataViewerId, selectedRow - 1);
     }
   });
   Mousetrap.bind(['j', 'down'], () => {
     // If no row is selected and the user has tried to use a shortcut key then we'll try and
     // select the first row.
     if (selectedRow === undefined) {
-      selectRow(dataViewerId, 0);
-      getDataForSelectedRow(dataViewerId);
+      onRowSelected(dataViewerId, 0);
     }
     // If the selected row isn't the last row then we'll allow the selection to go down
     else if (selectedRow < pageSize - 1) {
-      selectRow(dataViewerId, selectedRow + 1);
-      getDataForSelectedRow(dataViewerId);
+      onRowSelected(dataViewerId, selectedRow + 1);
     }
   });
   Mousetrap.bind(['l', 'right'], () => search(dataViewerId, pageOffset + 1, pageSize));
@@ -133,7 +143,21 @@ const DataViewer = ({
         // This block of code is mostly about making a sensible looking popup.
         const stream = streamAttributeMaps.find(streamAttributeMap => streamAttributeMap.stream.id === row.original.streamId);
 
-        return <StreamPopup streamData={stream}/>
+        const eventIcon = <Icon color="blue" name="file" />;
+        const warningIcon = <Icon color="orange" name="warning circle" />;
+        const errorIcon = <Icon color="red" name="warning circle" />;
+
+        let icon,
+          title;
+        if (stream.stream.streamType.name === 'Events') {
+          title = 'Events';
+          icon = eventIcon;
+        } else if (stream.stream.streamType.name === 'Error') {
+          title = 'Error';
+          icon = warningIcon;
+        }
+
+        return icon;
       },
       width: 35,
     },
@@ -152,7 +176,7 @@ const DataViewer = ({
   ];
 
   const tableData = streamAttributeMaps.map(streamAttributeMap => ({
-    streamId: path(['stream', 'id'], streamAttributeMap), 
+    streamId: path(['stream', 'id'], streamAttributeMap),
     created: moment(path(['stream', 'createMs'], streamAttributeMap)).format('MMMM Do YYYY, h:mm:ss a'),
     type: path(['stream', 'streamType', 'displayValue'], streamAttributeMap),
     feed: path(['stream', 'feed', 'displayValue'], streamAttributeMap),
@@ -169,8 +193,7 @@ const DataViewer = ({
       columns={tableColumns}
       getTdProps={(state, rowInfo, column, instance) => ({
         onClick: (e, handleOriginal) => {
-          selectRow(dataViewerId, rowInfo.index);
-          getDataForSelectedRow(dataViewerId);
+          onRowSelected(dataViewerId, rowInfo.index);
 
           // IMPORTANT! React-Table uses onClick internally to trigger
           // events like expanding SubComponents and pivots.
@@ -196,7 +219,13 @@ const DataViewer = ({
       className="element-details__panel"
       title={<div>{path(['feed'], tableData[selectedRow]) || 'Nothing selected'}</div>}
       onClose={() => deselectRow(dataViewerId)}
-      content={<DataDetails data={dataForSelectedRow} />}
+      content={
+        <DetailsTabs
+          data={dataForSelectedRow}
+          details={detailsForSelectedRow}
+          dataViewerId={dataViewerId}
+        />
+      }
       titleColumns={6}
       menuColumns={10}
       headerSize="h3"

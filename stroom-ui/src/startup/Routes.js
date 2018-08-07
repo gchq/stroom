@@ -79,7 +79,9 @@ const Routes = ({
 
       <Route exact path="/error" component={ErrorPage} />
 
-      {appChromeRoutes.map((p, i) => <Route key={i} {...p} />)}
+      {appChromeRoutes.map((p, i) => (
+        <PrivateRoute key={i} {...p} />
+      ))}
 
       {/* Direct paths -- these paths make sections accessible outside the AppChrome
         i.e. for when we want to embed them in Stroom. */}
