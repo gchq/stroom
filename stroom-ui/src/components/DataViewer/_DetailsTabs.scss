@@ -1,5 +1,5 @@
 .DetailsTabs__container {
-  height: calc(100% - 35px);
+  height: calc(100% - 25px);
   position: relative;
 }
 
@@ -9,6 +9,7 @@
   right: 0;
   left: 0;
   bottom: 0;
+  overflow: hidden;
 }
 
 .DetailsTabs__Tab {
