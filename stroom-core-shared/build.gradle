@@ -12,14 +12,12 @@ dependencies {
     compile libs.stroomQueryApi
 
     compile libs.gwt_servlet
-    compile libs.hibernate_core
-    // permitUnusedDeclared libs.hibernate_core
     compile libs.hibernate_jpa_api
     compile libs.jackson_annotations
 
     compile libs.jaxb_api
-    compile libs.jaxb_runtime
-    compile libs.javax_activation
-
     compile libs.validation_api
+
+    testRuntime libs.jaxb_runtime
+    testRuntime libs.javax_activation
 }

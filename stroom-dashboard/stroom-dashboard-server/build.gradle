@@ -24,8 +24,6 @@ dependencies {
     compile libs.javax_servlet_api
 
     compile libs.jaxb_api
-    compile libs.jaxb_runtime
-    compile libs.javax_activation
 
     compile libs.poi
     compile libs.poi_ooxml
@@ -47,5 +45,6 @@ dependencies {
     testRuntime libs.log4j_over_slf4j
     testRuntime libs.logback_classic
     testRuntime libs.logback_core
-
+    testRuntime libs.jaxb_runtime
+    testRuntime libs.javax_activation
 }

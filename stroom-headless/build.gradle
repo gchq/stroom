@@ -3,34 +3,36 @@ apply plugin: 'com.github.johnrengelman.shadow'
 ext.moduleName = 'stroom.headless'
 
 dependencies {
+    compile project(':stroom-core-server')
+    compile project(':stroom-core-shared')
     compile project(':stroom-data-meta:stroom-data-meta-api')
     compile project(':stroom-data-store:stroom-data-store-api')
-    compile project(':stroom-core-shared')
-    compile project(':stroom-core-server')
-    compile project(':stroom-util-shared')
-    compile project(':stroom-util')
-    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-docstore:stroom-docstore-server')
     compile project(':stroom-explorer:stroom-explorer-api')
     compile project(':stroom-explorer:stroom-explorer-server')
     compile project(':stroom-pipeline')
-    compile project(':stroom-statistics:stroom-statistics-api')
-    compile project(':stroom-docstore:stroom-docstore-server')
-    compile project(':stroom-security:stroom-security-impl-mock')
     compile project(':stroom-properties:stroom-properties-impl')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-security:stroom-security-impl-mock')
+    compile project(':stroom-statistics:stroom-statistics-api')
     compile project(':stroom-task:stroom-task-api')
+    compile project(':stroom-util')
+    compile project(':stroom-util-shared')
 
     compile libs.stroomDocRef
+
+    compile libs.guice4
+    compile libs.hibernate_core
+    compile libs.javax_inject
     compile libs.slf4j_api
     compile libs.xml_apis
-    compile libs.javax_inject
-    compile libs.guice4
 
     compile libs.javax_el
-    // permitUnusedDeclared libs.javax_el
+    permitUnusedDeclared libs.javax_el
     compile libs.javax_el_api
-    // permitUnusedDeclared libs.javax_el_api
+    permitUnusedDeclared libs.javax_el_api
     compile libs.logback_classic
-    // permitUnusedDeclared libs.logback_classic
+    permitUnusedDeclared libs.logback_classic
 }
 
 def fatJarName = "stroom-headless-all.jar"

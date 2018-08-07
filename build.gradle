@@ -4,8 +4,8 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'ca.cutterslade.gradle:gradle-dependency-analyze:1.2.0'
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
+        classpath 'stroom:gradle-dependency-analyze:1.2.3'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.0'
     }
 }
 
@@ -265,7 +265,7 @@ subprojects {
     //println "Configuring subproject ${project.path}"
 
     apply plugin: 'java'
-//    apply plugin: 'ca.cutterslade.analyze' //analyze missing dependencies for the code base
+    apply plugin: 'ca.cutterslade.analyze' //analyze missing dependencies for the code base
     apply plugin: 'idea'
 
     sourceCompatibility = JavaVersion.VERSION_1_10

@@ -1,43 +1,33 @@
 ext.moduleName = 'stroom.integrationtest'
 
 dependencies {
-    compile project(':stroom-app')
-    // permitUnusedDeclared project(':stroom-app')
+    integrationTestCompile project(':stroom-app')
     // Use default DB config.
-    compile project(':stroom-config')
-    // permitUnusedDeclared project(':stroom-config')
-    compile project(':stroom-core-server')
-    // permitUnusedDeclared project(':stroom-core-server')
-    compile project(':stroom-dashboard:stroom-dashboard-server')
-    // permitUnusedDeclared project(':stroom-dashboard:stroom-dashboard-server')
-    compile project(':stroom-index:stroom-index-server')
-    // permitUnusedDeclared project(':stroom-index:stroom-index-server')
-    compile project(':stroom-security:stroom-security-server')
-//    compile project(':stroom-security:stroom-security-impl-mock')
-    // permitUnusedDeclared project(':stroom-security:stroom-security-server')
-    compile project(':stroom-statistics:stroom-statistics-server')
-    // permitUnusedDeclared project(':stroom-statistics:stroom-statistics-server')
-    compile project(':stroom-headless')
-    // permitUnusedDeclared project(':stroom-headless')
-    compile project(':stroom-elastic:stroom-elastic-server')
-    // permitUnusedDeclared project(':stroom-elastic:stroom-elastic-server')
-    compile project(':stroom-externaldoc:stroom-externaldoc-server')
-    // permitUnusedDeclared project(':stroom-externaldoc:stroom-externaldoc-server')
+    integrationTestCompile project(':stroom-config')
+    integrationTestCompile project(':stroom-core-server')
+    integrationTestCompile project(':stroom-dashboard:stroom-dashboard-server')
+    integrationTestCompile project(':stroom-data-meta:stroom-data-meta-impl-mock')
+    integrationTestCompile project(':stroom-data-store:stroom-data-store-impl-mock')
+    integrationTestCompile project(':stroom-elastic:stroom-elastic-server')
+    integrationTestCompile project(':stroom-externaldoc:stroom-externaldoc-server')
+    integrationTestCompile project(':stroom-headless')
+    integrationTestCompile project(':stroom-index:stroom-index-server')
+    integrationTestCompile project(':stroom-properties:stroom-properties-impl-mock')
+    integrationTestCompile project(':stroom-security:stroom-security-impl-mock')
+    integrationTestCompile project(':stroom-security:stroom-security-server')
+    integrationTestCompile project(':stroom-statistics:stroom-statistics-server')
+    integrationTestCompile project(':stroom-test-common')
+    integrationTestCompile project(':stroom-util')
+
+    integrationTestCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
+    integrationTestCompile project(path: ':stroom-dashboard:stroom-dashboard-server', configuration: 'testArtifacts')
+    integrationTestCompile project(path: ':stroom-index:stroom-index-server', configuration: 'testArtifacts')
+    integrationTestCompile project(path: ':stroom-pipeline', configuration: 'testArtifacts')
+    integrationTestCompile project(path: ':stroom-security:stroom-security-server', configuration: 'testArtifacts')
+    integrationTestCompile project(path: ':stroom-util', configuration: 'testArtifacts')
 
     integrationTestCompile libs.stroomQueryApi
     integrationTestCompile libs.stroomQueryCommon
-    integrationTestCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
-    integrationTestCompile project(path: ':stroom-pipeline', configuration: 'testArtifacts')
-    integrationTestCompile project(path: ':stroom-dashboard:stroom-dashboard-server', configuration: 'testArtifacts')
-    integrationTestCompile project(path: ':stroom-index:stroom-index-server', configuration: 'testArtifacts')
-    integrationTestCompile project(path: ':stroom-security:stroom-security-server', configuration: 'testArtifacts')
-    integrationTestCompile project(':stroom-test-common')
-    integrationTestCompile project(':stroom-util')
-    integrationTestCompile project(path: ':stroom-util', configuration: 'testArtifacts')
-    integrationTestCompile project(':stroom-security:stroom-security-impl-mock')
-    integrationTestCompile project(':stroom-properties:stroom-properties-impl-mock')
-    integrationTestCompile project(':stroom-data-meta:stroom-data-meta-impl-mock')
-    integrationTestCompile project(':stroom-data-store:stroom-data-store-impl-mock')
 
     integrationTestCompile libs.slf4j_api
     integrationTestCompile libs.junit
@@ -51,6 +41,8 @@ dependencies {
     integrationTestRuntime libs.log4j_over_slf4j
     integrationTestRuntime libs.logback_classic
     integrationTestRuntime libs.logback_core
+    integrationTestRuntime libs.jaxb_runtime
+    integrationTestRuntime libs.javax_activation
 
     integrationTestCompile libs.mockito_core
     integrationTestCompile libs.assertj_core

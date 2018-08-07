@@ -7,6 +7,7 @@ dependencies {
     compile project(':stroom-docstore:stroom-docstore-shared')
     compile project(':stroom-dashboard:stroom-dashboard-shared')
     compile project(':stroom-entity-shared')
+    compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-security:stroom-security-client-api')
     compile project(':stroom-util-shared')
     runtime project(':stroom-security:stroom-security-client')

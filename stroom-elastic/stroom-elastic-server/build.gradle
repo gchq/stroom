@@ -11,11 +11,11 @@ dependencies {
     compile project(':stroom-util')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-security:stroom-security-server')
-    // permitUnusedDeclared project(':stroom-security:stroom-security-server')
 
     compile libs.guava
     compile libs.guice4
     compile libs.javax_inject
+    compile libs.jetty_http
     compile libs.slf4j_api
     compile libs.stroomDocRef
     compile libs.stroomQueryAudit

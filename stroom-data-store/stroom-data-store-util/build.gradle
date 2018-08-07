@@ -8,6 +8,7 @@ dependencies {
     compile project(':stroom-security:stroom-security-impl-mock')
     compile project(':stroom-util')
     compile project(':stroom-core-server')
+    compile project(':stroom-core-shared')
 
     compile libs.stroomQueryApi
     compile libs.guice4

@@ -21,11 +21,12 @@ dependencies {
     compile libs.javax_inject
 
     compile libs.jaxb_api
-    compile libs.jaxb_runtime
-    compile libs.javax_activation
 
     compile libs.slf4j_api
 
-    integrationTestRuntime libs.mysql_connector_java
     integrationTestCompile libs.junit
+
+    integrationTestRuntime libs.mysql_connector_java
+    integrationTestRuntime libs.jaxb_runtime
+    integrationTestRuntime libs.javax_activation
 }

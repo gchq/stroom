@@ -8,7 +8,6 @@ dependencies {
     compile project(':stroom-docstore:stroom-docstore-shared')
     compile project(':stroom-docstore:stroom-docstore-server')
     compile project(':stroom-statistics:stroom-statistics-api')
-    // permitUnusedDeclared project(':stroom-statistics:stroom-statistics-api') //not clear why it thinks this is unused
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
     compile project(':stroom-connectors')
@@ -20,7 +19,6 @@ dependencies {
     compile libs.eventLogging
     compile libs.stroomDocRef
     compile libs.stroomQueryApi
-//    compile libs.stroomQueryCommon
 
     compile libs.curator_client
     compile libs.curator_framework
@@ -52,14 +50,10 @@ dependencies {
     compile libs.javassist
 
     compile libs.jaxb_api
-    compile libs.jaxb_runtime
-    compile libs.javax_activation
 
     compile libs.slf4j_api
     compile libs.xml_apis
     compile libs.flyway_core
-    compile libs.hsqldb
-    // permitUnusedDeclared libs.hsqldb
     compile libs.vavr
 
     compile libs.c3p0
@@ -96,4 +90,6 @@ dependencies {
     testRuntime libs.log4j_over_slf4j
     testRuntime libs.logback_classic
     testRuntime libs.logback_core
+    testRuntime libs.jaxb_runtime
+    testRuntime libs.javax_activation
 }
