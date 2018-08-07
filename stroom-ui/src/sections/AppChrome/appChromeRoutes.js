@@ -18,6 +18,8 @@ import DataViewer, { ActionBarItems as DataViewerActionBarItems } from 'componen
 import UserSettings from 'prototypes/UserSettings';
 import PathNotFound from 'components/PathNotFound';
 import IFrame from 'components/IFrame';
+import AppSearch from 'prototypes/AppSearch';
+import RecentItems from 'prototypes/RecentItems';
 
 const renderWelcome = props => (
   <AppChrome
@@ -129,6 +131,30 @@ export default [
         headerContent={<Header.Content>API Keys</Header.Content>}
         icon="key"
         content={<ApiTokensIFrameWithConfig />}
+      />
+    ),
+  },
+  {
+    exact: true,
+    path: '/s/search',
+    render: props => (
+      <AppChrome
+        activeMenuItem="Search"
+        headerContent={<Header.Content>Search</Header.Content>}
+        icon="search"
+        content={<AppSearch />}
+      />
+    ),
+  },
+  {
+    exact: true,
+    path: '/s/recentItems',
+    render: props => (
+      <AppChrome
+        activeMenuItem="Recent Items"
+        headerContent={<Header.Content>Recent Items</Header.Content>}
+        icon="file outline"
+        content={<RecentItems />}
       />
     ),
   },

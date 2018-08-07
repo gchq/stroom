@@ -17,14 +17,12 @@ import { createActions, handleActions } from 'redux-actions';
 
 const actionCreators = createActions({
   DOC_REF_OPENED: docRef => ({ docRef }),
-  RECENT_ITEMS_OPENED: () => ({ isOpen: true }),
-  RECENT_ITEMS_CLOSED: () => ({ isOpen: false }),
+  RECENT_ITEMS_CLOSED: () => ({}),
   RECENT_ITEMS_SELECTION_UP: () => ({}),
   RECENT_ITEMS_SELECTION_DOWN: () => ({}),
 });
 
 const defaultState = {
-  isOpen: false,
   openItemStack: [],
   selectedItem: 0, // Used for simple item selection, by array index
   selectedDocRef: undefined, // Used for loading
@@ -32,13 +30,8 @@ const defaultState = {
 
 const reducer = handleActions(
   {
-    RECENT_ITEMS_OPENED: (state, { payload: { isOpen } }) => ({
+    RECENT_ITEMS_CLOSED: () => ({
       ...state,
-      isOpen,
-    }),
-    RECENT_ITEMS_CLOSED: (state, { payload: { isOpen } }) => ({
-      ...state,
-      isOpen,
       selectedItem: 0,
       selectedDocRef: undefined,
     }),

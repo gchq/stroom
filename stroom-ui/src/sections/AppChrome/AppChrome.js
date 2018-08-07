@@ -23,20 +23,14 @@ import { Button, Menu, Icon, Header, Grid } from 'semantic-ui-react';
 import Mousetrap from 'mousetrap';
 
 import { actionCreators as appChromeActionCreators } from './redux';
-import { actionCreators as recentItemsActionCreators } from 'prototypes/RecentItems/redux';
-import { actionCreators as appSearchActionCreators } from 'prototypes/AppSearch/redux';
 import { actionCreators as docExplorerActionCreators } from 'components/DocExplorer/redux';
 import { withExplorerTree } from 'components/DocExplorer';
 import ActionBarItem from './ActionBarItem';
-import RecentItems from 'prototypes/RecentItems';
-import AppSearch from 'prototypes/AppSearch';
 import withLocalStorage from 'lib/withLocalStorage';
 
 const { menuItemOpened } = appChromeActionCreators;
 import logoInWhite from './logo_white.png';
 
-const { recentItemsOpened } = recentItemsActionCreators;
-const { appSearchOpened } = appSearchActionCreators;
 const withIsExpanded = withLocalStorage('isExpanded', 'setIsExpanded', true);
 
 const SIDE_BAR_COLOUR = 'blue';
@@ -49,8 +43,11 @@ const getDocumentTreeMenuItems = (history, treeNode) => ({
   onClick: () => history.push(`/s/doc/${treeNode.type}/${treeNode.uuid}`),
   icon: 'folder',
   children:
-    treeNode.children && treeNode.children.length > 0 &&
-    treeNode.children.filter(t => t.type === 'Folder').map(t => getDocumentTreeMenuItems(history, t)),
+    treeNode.children &&
+    treeNode.children.length > 0 &&
+    treeNode.children
+      .filter(t => t.type === 'Folder')
+      .map(t => getDocumentTreeMenuItems(history, t)),
 });
 
 const enhance = compose(
@@ -70,31 +67,28 @@ const enhance = compose(
     }),
     {
       menuItemOpened,
-      recentItemsOpened,
-      appSearchOpened,
     },
   ),
   withRouter,
   withIsExpanded,
   lifecycle({
     componentDidMount() {
-      Mousetrap.bind('ctrl+shift+e', () => this.props.recentItemsOpened());
-      Mousetrap.bind('ctrl+shift+f', () => this.props.appSearchOpened());
+      //Mousetrap.bind('ctrl+shift+e', () => this.props.recentItemsOpened());
+      //Mousetrap.bind('ctrl+shift+f', () => this.props.appSearchOpened());
     },
   }),
   withProps(({
     isExpanded,
     setIsExpanded,
     history,
-    recentItemsOpened,
-    appSearchOpened,
+    
     actionBarItems,
     documentTree,
   }) => ({
     menuItems: [
       {
         key: 'stroom',
-        title: <img src={logoInWhite} alt='Stroom logo'/>,
+        title: <img src={logoInWhite} alt="Stroom logo" />,
         icon: 'bars',
         onClick: () => setIsExpanded(!isExpanded),
       },
@@ -104,13 +98,7 @@ const enhance = compose(
         onClick: () => history.push(`${pathPrefix}/welcome/`),
         icon: 'home',
       },
-      {
-        key: 'explorer',
-        title: 'Explorer',
-        onClick: () => history.push(`${pathPrefix}/docExplorer`),
-        icon: 'eye',
-        children: [getDocumentTreeMenuItems(history, documentTree)],
-      },
+      getDocumentTreeMenuItems(history, documentTree),
       {
         key: 'data',
         title: 'Data',
@@ -158,42 +146,58 @@ const enhance = compose(
       {
         key: 'recent-items',
         title: 'Recent Items',
-        onClick: recentItemsOpened,
+        onClick: () => history.push(`${pathPrefix}/recentItems`),
         icon: 'file outline',
       },
       {
         key: 'search',
         title: 'Search',
-        onClick: appSearchOpened,
+        onClick: () => history.push(`${pathPrefix}/search`),
         icon: 'search',
       },
     ],
   })),
 );
 
-const getMenuItems = (menuItems, menuItemsOpen, menuItemOpened, depth = 0) =>
+const getExpandedMenuItems = (menuItems, menuItemsOpen, menuItemOpened, depth = 0) =>
   menuItems.map(menuItem => (
     <React.Fragment key={menuItem.key}>
-      <div className="sidebar__menu-item" style={{ marginLeft: `${depth * 0.7}rem` }} onClick={menuItem.onClick}>
-        {(menuItem.children && (menuItem.children.length > 0)) ? (
+      <div
+        className="sidebar__menu-item"
+        style={{ marginLeft: `${depth * 0.7}rem` }}
+        onClick={menuItem.onClick}
+      >
+        {menuItem.children && menuItem.children.length > 0 ? (
           <Icon
             onClick={() => menuItemOpened(menuItem.key, !menuItemsOpen[menuItem.key])}
             name={`caret ${menuItemsOpen[menuItem.key] ? 'down' : 'right'}`}
           />
+        ) : menuItem.key !== 'stroom' ? (
+          <Icon />
         ) : (
-          (menuItem.key !== 'stroom') ? <Icon /> : undefined
+          undefined
         )}
         <Icon name={menuItem.icon} />
         {menuItem.title}
       </div>
       {menuItem.children &&
         menuItemsOpen[menuItem.key] &&
-        getMenuItems(menuItem.children, menuItemsOpen, menuItemOpened, depth + 1)}
+        getExpandedMenuItems(menuItem.children, menuItemsOpen, menuItemOpened, depth + 1)}
     </React.Fragment>
   ));
 
+const getContractedMenuItems = (menuItems) =>
+  menuItems
+    .map(menuItem => (
+      <React.Fragment key={menuItem.key}>
+        {!menuItem.children && // just put the children of menu items into the sidebar
+          <Button key={menuItem.title} icon={menuItem.icon} onClick={menuItem.onClick} />}
+        {menuItem.children &&
+          getContractedMenuItems(menuItem.children)}
+      </React.Fragment>
+    ));
+
 const AppChrome = ({
-  activeMenuItem,
   headerContent,
   icon,
   content,
@@ -204,23 +208,14 @@ const AppChrome = ({
   menuItemOpened,
 }) => (
   <div className="app-chrome">
-    <AppSearch />
-    <RecentItems />
     <div className="app-chrome__sidebar">
       {isExpanded ? (
         <div className="app-chrome__sidebar-menu">
-          {getMenuItems(menuItems, menuItemsOpen, menuItemOpened)}
+          {getExpandedMenuItems(menuItems, menuItemsOpen, menuItemOpened)}
         </div>
       ) : (
         <Button.Group vertical color={SIDE_BAR_COLOUR} size="large">
-          {menuItems.map(menuItem => (
-            <Button
-              key={menuItem.title}
-              active={menuItem.title === activeMenuItem}
-              icon={menuItem.icon}
-              onClick={menuItem.onClick}
-            />
-          ))}
+          {getContractedMenuItems(menuItems)}
         </Button.Group>
       )}
     </div>
@@ -251,7 +246,6 @@ AppChrome.contextTypes = {
 };
 
 AppChrome.propTypes = {
-  activeMenuItem: PropTypes.string.isRequired,
   icon: PropTypes.string.isRequired,
   headerContent: PropTypes.object.isRequired,
   content: PropTypes.object.isRequired,
