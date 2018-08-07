@@ -16,10 +16,11 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Tab } from 'semantic-ui-react';
+import { Tab, Table } from 'semantic-ui-react';
+import moment from 'moment';
 
 import DataDetails from './DataDetails';
-import StreamDetails from './StreamDetails';
+// import StreamDetails from './StreamDetails';
 
 const DetailsTabs = ({ data, details, dataViewerId }) => {
   const panes = [
@@ -35,7 +36,118 @@ const DetailsTabs = ({ data, details, dataViewerId }) => {
       menuItem: 'Details',
       render: () => (
         <Tab.Pane>
-          <StreamDetails data={details} dataViewerId={dataViewerId} />
+          <div className="StreamDetails__container">
+            <div className="StreamDetails__table__container">
+              <Table definition compact="very" className="StreamDetails__table">
+                <Table.Body>
+                  <Table.Row>
+                    <Table.Cell>Stream ID</Table.Cell>
+                    <Table.Cell>
+                      <code>{details.stream.id}</code>
+                    </Table.Cell>
+                  </Table.Row>
+                  <Table.Row>
+                    <Table.Cell>Status</Table.Cell>
+                    <Table.Cell>
+                      <code> {details.stream.status}</code>
+                    </Table.Cell>
+                  </Table.Row>
+                  <Table.Row>
+                    <Table.Cell>Status MS</Table.Cell>
+                    <Table.Cell>
+                      {moment(details.stream.statusMs).format('MMMM Do YYYY, h:mm:ss a')}
+                    </Table.Cell>
+                  </Table.Row>
+                  <Table.Row>
+                    <Table.Cell>Stream Task ID</Table.Cell>
+                    <Table.Cell>
+                      <code> {details.stream.streamTaskId}</code>
+                    </Table.Cell>
+                  </Table.Row>
+                  <Table.Row>
+                    <Table.Cell>Parent Stream ID</Table.Cell>
+                    <Table.Cell>
+                      <code>{details.stream.parentStreamId}</code>
+                    </Table.Cell>
+                  </Table.Row>
+                  <Table.Row>
+                    <Table.Cell>Created</Table.Cell>
+                    <Table.Cell>
+                      {moment(details.stream.createMs).format('MMMM Do YYYY, h:mm:ss a')}
+                    </Table.Cell>
+                  </Table.Row>
+                  <Table.Row>
+                    <Table.Cell>Effective</Table.Cell>
+                    <Table.Cell>
+                      {moment(details.stream.effectiveMs).format('MMMM Do YYYY, h:mm:ss a')}
+                    </Table.Cell>
+                  </Table.Row>
+                  <Table.Row>
+                    <Table.Cell>Stream processor uuid</Table.Cell>
+                    <Table.Cell>{details.stream.streamProcessor.id}</Table.Cell>
+                  </Table.Row>
+                  <Table.Row>
+                    <Table.Cell>Files</Table.Cell>
+                    <Table.Cell>{details.fileNameList}</Table.Cell>
+                  </Table.Row>
+                </Table.Body>
+              </Table>
+            </div>
+          </div>
+        </Tab.Pane>
+      ),
+    },
+    {
+      menuItem: 'Attributes',
+      render: () => (
+        <Tab.Pane>
+          <div className="StreamDetails__container">
+            <div className="StreamDetails__table__container">
+              <Table definition compact="very" className="StreamDetails__table">
+                <Table.Body>
+                  {Object.keys(details.nameValueMap).map((key, index) => {
+                    if (key !== 'Until' && key !== 'Rule' && key !== 'Age') {
+                      return (
+                        <Table.Row>
+                          <Table.Cell>{key}</Table.Cell>
+                          <Table.Cell>
+                            <code>{details.nameValueMap[key]}</code>
+                          </Table.Cell>
+                        </Table.Row>
+                      );
+                    }
+                  })}
+                </Table.Body>
+              </Table>
+            </div>
+          </div>
+        </Tab.Pane>
+      ),
+    },
+    {
+      menuItem: 'Retention',
+      render: () => (
+        <Tab.Pane>
+          <div className="RetentionDetails__container">
+            <div className="RetentionDetails__table__container">
+              <Table definition compact="very" className="RetentionDetails__table">
+                <Table.Body>
+                  <Table.Row>
+                    <Table.Cell>Age</Table.Cell>
+                    <Table.Cell>{details.nameValueMap.Age}</Table.Cell>
+                  </Table.Row>
+                  <Table.Row>
+                    <Table.Cell>Until</Table.Cell>
+                    <Table.Cell>{details.nameValueMap.Until}</Table.Cell>
+                  </Table.Row>
+                  <Table.Row>
+                    <Table.Cell>Rule</Table.Cell>
+                    <Table.Cell>{details.nameValueMap.Rule}</Table.Cell>
+                  </Table.Row>
+                </Table.Body>
+              </Table>
+            </div>
+          </div>
         </Tab.Pane>
       ),
     },

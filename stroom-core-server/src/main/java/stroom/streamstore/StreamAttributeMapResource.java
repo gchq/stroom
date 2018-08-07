@@ -31,6 +31,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.Security;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
+import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.util.HasHealthCheck;
 
