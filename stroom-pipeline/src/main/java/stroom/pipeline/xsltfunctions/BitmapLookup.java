@@ -70,12 +70,6 @@ class BitmapLookup extends AbstractLookup {
                 final ReferenceDataResult result = getReferenceData(bitIdentifier);
                 final RefDataValueProxy refDataValueProxy = result.getRefDataValueProxy();
 
-//                final EventListProxyConsumer eventListConsumer = EventListProxyConsumerFactory.getConsumer(
-//                        eventListProxy,
-//                        context);
-
-//                final Sequence sequence = eventListConsumer.map(eventListProxy);
-
                 boolean wasFound = false;
 
                 try {
