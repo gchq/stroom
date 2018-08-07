@@ -23,6 +23,7 @@ import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
 import stroom.entity.shared.BaseResultList;
+import stroom.entity.shared.IdSet;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.PageResponse;
 import stroom.entity.shared.Sort;
@@ -35,6 +36,7 @@ import stroom.util.HasHealthCheck;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
@@ -88,6 +90,28 @@ public class StreamAttributeMapResource implements HasHealthCheck {
                 public List<StreamAttributeMap> streamAttributeMaps = results.getValues();
             };
             return Response.ok(response).build();
+        });
+    }
+
+    @GET
+    @Path("/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response search(@PathParam("id") Long id){
+        return security.secureResult(() -> {
+            // Configure default criteria
+            FindStreamAttributeMapCriteria criteria = new FindStreamAttributeMapCriteria();
+            // TODO Replace with Set.of() when we move to 1.9
+            criteria.setFetchSet(Sets.newHashSet("StreamType", "StreamProcessor", "Volume", "Feed", "Pipeline"));
+            criteria.setUseCache(false);
+            IdSet idSet = new IdSet();
+            idSet.add(id);
+            criteria.getFindStreamCriteria().setSelectedIdSet(idSet);
+
+            BaseResultList<StreamAttributeMap> results = streamAttributeMapService.find(criteria);
+            if(results.size() == 0){
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            return Response.ok(results.getFirst()).build();
         });
     }
 

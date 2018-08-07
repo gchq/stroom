@@ -21,7 +21,7 @@ import { Tab } from 'semantic-ui-react';
 import DataDetails from './DataDetails';
 import StreamDetails from './StreamDetails';
 
-const DetailsTabs = ({ data, details }) => {
+const DetailsTabs = ({ data, details, dataViewerId }) => {
   const panes = [
     {
       menuItem: 'Data',
@@ -35,7 +35,7 @@ const DetailsTabs = ({ data, details }) => {
       menuItem: 'Details',
       render: () => (
         <Tab.Pane>
-          <StreamDetails data={details} />
+          <StreamDetails data={details} dataViewerId={dataViewerId} />
         </Tab.Pane>
       ),
     },
@@ -52,6 +52,7 @@ const DetailsTabs = ({ data, details }) => {
 DetailsTabs.propTypes = {
   data: PropTypes.object,
   details: PropTypes.object,
+  dataViewerId: PropTypes.string.isRequired,
 };
 
 export default DetailsTabs;

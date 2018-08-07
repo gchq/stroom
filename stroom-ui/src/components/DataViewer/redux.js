@@ -32,6 +32,7 @@ const actionCreators = createActions({
   SELECT_ROW: (dataViewerId, rowIndex) => ({ dataViewerId, rowIndex }),
   DESELECT_ROW: (dataViewerId, rowIndex) => ({ dataViewerId }),
   UPDATE_DATA_FOR_SELECTED_ROW: (dataViewerId, data) => ({ dataViewerId, data }),
+  UPDATE_DETAILS_FOR_SELECTED_ROW: (dataViewerId, details) => ({ dataViewerId, details }),
 });
 
 const defaultState = {};
@@ -73,6 +74,13 @@ const reducer = handleActions(
       [dataViewerId]: {
         ...state[dataViewerId],
         dataForSelectedRow: data,
+      },
+    }),
+    UPDATE_DETAILS_FOR_SELECTED_ROW: (state, { payload: { dataViewerId, details } }) => ({
+      ...state,
+      [dataViewerId]: {
+        ...state[dataViewerId],
+        detailsForSelectedRow: details,
       },
     }),
   },
