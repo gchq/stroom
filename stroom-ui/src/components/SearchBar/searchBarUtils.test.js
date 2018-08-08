@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-import { stringToExpression } from './searchBarUtils';
+import { stringToExpression, processSearchString } from './searchBarUtils';
 
+import { testDataSource } from 'components/ExpressionBuilder/dataSource.testData';
+
+//TODO: move SearchBarUtils.stringToExpression to processSearchString
 describe('SearchBarUtils', () => {
-  describe('#mappings', () => {
-    test('from string to expression (simplest)', () => {
+  describe('#stringToExpression', () => {
+    test('Can map simplest query', () => {
       // Given
       const basic = 'foo1=bar1';
 
@@ -32,7 +35,7 @@ describe('SearchBarUtils', () => {
       expect(parsed.expression.children[0].condition).toBe('EQUALS');
     });
 
-    test('from string to expression (everything)', () => {
+    test('Can map a query with all operators', () => {
       // Given
       const basic = 'foo1=bar1 foo2>bar2 foo3<bar3 foo4>=bar4 foo5<=bar5';
 
@@ -49,7 +52,7 @@ describe('SearchBarUtils', () => {
       expectForTerm(parsed.expression.children[4], 'foo5', 'LESS_THAN_OR_EQUAL_TO', 'bar5');
     });
 
-    test('from string to expression (bad condition)', () => {
+    test('Returns an error for an unknown operator', () => {
       // Given
       const basic = 'foo1=bar1 foo2~bar2 foo3<bar3 foo4>=bar4 foo5<=bar5';
 
@@ -66,7 +69,7 @@ describe('SearchBarUtils', () => {
       expectForTerm(parsed.expression.children[3], 'foo5', 'LESS_THAN_OR_EQUAL_TO', 'bar5');
     });
 
-    test('from string to expression (different order)', () => {
+    test('Can map a query with all operators but a different order', () => {
       // Given
       const basic = 'foo4>=bar4 foo5<=bar5 foo1=bar1 foo2>bar2 foo3<bar3';
 
@@ -78,7 +81,7 @@ describe('SearchBarUtils', () => {
       expectForHealthy(parsed.expression.children);
     });
 
-    test('from string to expression (bad condition 2)', () => {
+    test('Returns an error for a bad condition', () => {
       // Given
       const basic = 'foo4>=bar4 foo5<=bar5 foo1=bar1 BAD_CONDITION foo2>bar2 foo3<bar3';
 
@@ -91,7 +94,7 @@ describe('SearchBarUtils', () => {
       expectForHealthy(parsed.expression.children);
     });
 
-    test('from string to expression (white space in places 1)', () => {
+    test('Handles whitespace at the start and end of the query', () => {
       // Given
       const basic = '   foo4>=bar4 foo5<=bar5 foo1=bar1 BAD_CONDITION foo2>bar2 foo3<bar3   ';
 
@@ -104,7 +107,7 @@ describe('SearchBarUtils', () => {
       expectForHealthy(parsed.expression.children);
     });
 
-    test('from string to expression (white space in places 2)', () => {
+    test('Handles whitespace at the start and end of the query and in th middle', () => {
       // Given
       const basic =
         '   foo4>=bar4            foo5<=bar5 foo1=bar1 BAD_CONDITION foo2>bar2 foo3<bar3   ';
@@ -134,3 +137,96 @@ const expectForTerm = (child, field, condition, value) => {
   expect(child.value).toBe(value);
   expect(child.condition).toBe(condition);
 };
+
+describe('SearchBarUtils', () => {
+  describe('#processSearchString', () => {
+    test('Can find single invalid field', () => {
+      // Given
+      const basic = 'foo1=bar1';
+
+      // When
+      const results = processSearchString(testDataSource, basic);
+
+      // Then
+      expect(results.fields.length).toBe(1);
+      expect(results.fields[0].fieldIsValid).toBeFalsy();
+      expect(results.fields[0].conditionIsValid).toBeFalsy();
+    });
+
+    test("Doesn't flag valid fields as being invalid", () => {
+      // Given
+      const basic = 'foo1=bar1 createTime=2018-01-01T00:00Z000';
+
+      // When
+      const results = processSearchString(testDataSource, basic);
+
+      // Then
+      expect(results.fields.length).toBe(2);
+      expect(results.fields[0].fieldIsValid).toBeFalsy();
+      expect(results.fields[0].conditionIsValid).toBeFalsy();
+      expect(results.fields[1].fieldIsValid).toBeTruthy();
+      expect(results.fields[1].conditionIsValid).toBeTruthy();
+    });
+
+    test('Finds two invalid fields', () => {
+      // Given
+      const basic = 'foo1=bar1 createTimez=2018-01-01T00:00Z000';
+
+      // When
+      const results = processSearchString(testDataSource, basic);
+
+      // Then
+      expect(results.fields.length).toBe(2);
+      expect(results.fields[0].fieldIsValid).toBeFalsy();
+      expect(results.fields[0].conditionIsValid).toBeFalsy();
+      expect(results.fields[1].fieldIsValid).toBeFalsy();
+      expect(results.fields[1].conditionIsValid).toBeFalsy();
+    });
+
+    test('Tests all fields in the datasource, along with some duffers', () => {
+      // Given
+      const basic =
+        'foo1=bar1  id=782897 colour=red     numberOfDoors=10000000 createUser=DarthVader   createTime=2018-01-01T00:00Z000 updateUser=LukeSkywalker updateTime=2018-01-01T00:00Z000    beKind=toYourself';
+
+      // When
+      const results = processSearchString(testDataSource, basic);
+      const get = fieldName => results.fields.find(field => field.parsed[0] === fieldName);
+
+      // Then
+      // console.log({ fields });
+      expect(results.fields.length).toBe(9);
+      expect(get('foo1').fieldIsValid).toBeFalsy();
+      expect(get('foo1').conditionIsValid).toBeFalsy();
+      expect(get('id').fieldIsValid).toBeTruthy();
+      expect(get('id').conditionIsValid).toBeTruthy();
+      expect(get('colour').fieldIsValid).toBeTruthy();
+      expect(get('colour').conditionIsValid).toBeTruthy();
+      expect(get('numberOfDoors').fieldIsValid).toBeTruthy();
+      expect(get('numberOfDoors').conditionIsValid).toBeTruthy();
+      expect(get('createUser').fieldIsValid).toBeTruthy();
+      expect(get('createUser').conditionIsValid).toBeTruthy();
+      expect(get('createTime').fieldIsValid).toBeTruthy();
+      expect(get('createTime').conditionIsValid).toBeTruthy();
+      expect(get('updateUser').fieldIsValid).toBeTruthy();
+      expect(get('updateUser').conditionIsValid).toBeTruthy();
+      expect(get('updateTime').fieldIsValid).toBeTruthy();
+      expect(get('updateTime').conditionIsValid).toBeTruthy();
+      expect(get('beKind').fieldIsValid).toBeFalsy();
+      expect(get('beKind').conditionIsValid).toBeFalsy();
+    });
+
+    test('Can map simplest query', () => {
+      // Given
+      const basic = 'foo1=bar1';
+
+      // When
+      const results = processSearchString(testDataSource, basic);
+
+      // Then
+      expect(results.expression.children.length).toBe(1);
+      expect(results.expression.children[0].field).toBe('foo1');
+      expect(results.expression.children[0].value).toBe('bar1');
+      expect(results.expression.children[0].condition).toBe('EQUALS');
+    });
+  });
+});
