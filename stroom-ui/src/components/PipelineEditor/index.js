@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import PipelineEditor from './PipelineEditor';
-import ActionBarItems from './ActionBarItems';
-import HeaderContent from './HeaderContent';
+import PipelineEditor, { WithHeader } from './PipelineEditor';
 
 import { reducer, actionCreators } from './redux';
 import { fetchPipeline, searchPipelines } from './pipelineResourceClient';
@@ -23,8 +21,7 @@ import { fetchElements, fetchElementProperties } from './elementResourceClient';
 
 export {
   PipelineEditor,
-  ActionBarItems,
-  HeaderContent,
+  WithHeader,
   reducer,
   fetchPipeline,
   fetchElements,

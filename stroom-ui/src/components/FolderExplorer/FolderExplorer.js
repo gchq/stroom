@@ -2,9 +2,51 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import ReactTable from 'react-table';
 import { path } from 'ramda';
+import { connect } from 'react-redux';
+import { compose, withProps } from 'recompose';
+import { withRouter } from 'react-router-dom';
+import { Header, Breadcrumb, Icon, Grid } from 'semantic-ui-react';
 
+import { actionCreators } from './redux';
+import { openDocRef } from 'prototypes/RecentItems';
+import { findItem } from 'lib/treeUtils';
 import ClickCounter from 'lib/ClickCounter';
-import enhance from './enhance';
+
+const { folderEntrySelected } = actionCreators;
+
+const enhance = compose(
+  connect(
+    (
+      {
+        docExplorer: {
+          explorerTree: { documentTree },
+        },
+        folderExplorer: { selected },
+      },
+      { folderUuid },
+    ) => ({ documentTree, selectedRow: selected[folderUuid] }),
+    {
+      folderEntrySelected,
+      openDocRef,
+    },
+  ),
+  withRouter,
+  withProps(({
+    openDocRef, history, documentTree, folderUuid, folderEntrySelected,
+  }) => {
+    const folder = findItem(documentTree, folderUuid);
+    const {
+      node: { children },
+    } = folder;
+
+    return {
+      folder,
+      tableData: children,
+      onRowSelected: folderEntrySelected,
+      openDocRef: d => openDocRef(history, d),
+    };
+  }),
+);
 
 const tableColumns = [
   {
@@ -31,7 +73,7 @@ const tableColumns = [
   },
 ];
 
-const FolderExplorer = ({
+const RawFolderExplorer = ({
   tableData,
   onRowSelected,
   selectedRow,
@@ -86,17 +128,56 @@ const FolderExplorer = ({
   );
 };
 
-const EnhancedFolderExplorer = enhance(FolderExplorer);
-
-FolderExplorer.contextTypes = {
+RawFolderExplorer.contextTypes = {
   store: PropTypes.object,
   router: PropTypes.shape({
     history: PropTypes.object.isRequired,
   }),
 };
 
-EnhancedFolderExplorer.propTypes = {
+const RawWithHeader = (props) => {
+  const {
+    openDocRef,
+    history,
+    folder: { node, lineage },
+  } = props;
+
+  return (
+    <React.Fragment>
+      <Grid className="content-tabs__grid">
+        <Grid.Column width={8}>
+          <Header as="h3">
+            <Icon name="folder" color="grey" />
+            <Header.Content>
+              <Breadcrumb>
+                {lineage.map(l => (
+                  <React.Fragment key={l.uuid}>
+                    <Breadcrumb.Section link onClick={() => openDocRef(l)}>
+                      {l.name}
+                    </Breadcrumb.Section>
+                    <Breadcrumb.Divider />
+                  </React.Fragment>
+                ))}
+
+                <Breadcrumb.Section active>{node.name}</Breadcrumb.Section>
+              </Breadcrumb>
+            </Header.Content>
+          </Header>
+        </Grid.Column>
+        <Grid.Column width={8}>{/* action bar items will go here */}</Grid.Column>
+      </Grid>
+      <RawFolderExplorer {...props} />
+    </React.Fragment>
+  );
+};
+
+const WithHeader = enhance(RawWithHeader);
+const FolderExplorer = enhance(RawFolderExplorer);
+
+FolderExplorer.propTypes = {
   folderUuid: PropTypes.string.isRequired,
 };
 
-export default EnhancedFolderExplorer;
+export default FolderExplorer;
+
+export { FolderExplorer, WithHeader };

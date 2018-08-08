@@ -19,13 +19,12 @@ import PropTypes, { object } from 'prop-types';
 import { connect } from 'react-redux';
 import { compose, lifecycle, withProps } from 'recompose';
 import { withRouter } from 'react-router-dom';
-import { Button, Menu, Icon, Header, Grid } from 'semantic-ui-react';
+import { Button, Menu, Icon, Header, Grid, Popup } from 'semantic-ui-react';
 import Mousetrap from 'mousetrap';
 
 import { actionCreators as appChromeActionCreators } from './redux';
 import { actionCreators as docExplorerActionCreators } from 'components/DocExplorer/redux';
 import { withExplorerTree } from 'components/DocExplorer';
-import ActionBarItem from './ActionBarItem';
 import withLocalStorage from 'lib/withLocalStorage';
 import { openDocRef } from 'prototypes/RecentItems';
 
@@ -76,8 +75,8 @@ const enhance = compose(
   withIsExpanded,
   lifecycle({
     componentDidMount() {
-      //Mousetrap.bind('ctrl+shift+e', () => this.props.recentItemsOpened());
-      //Mousetrap.bind('ctrl+shift+f', () => this.props.appSearchOpened());
+      Mousetrap.bind('ctrl+shift+e', () => this.props.history.push('/s/recentItems'));
+      Mousetrap.bind('ctrl+shift+f', () => this.props.history.push('/s/search'));
     },
   }),
   withProps(({
@@ -226,15 +225,6 @@ const AppChrome = ({
     <div className="app-chrome__content">
       <div className="content-tabs">
         <div className="content-tabs__content">
-          <Grid className="content-tabs__grid">
-            <Grid.Column width={8}>
-              <Header as="h3">
-                <Icon name={icon} color="grey" />
-                {headerContent}
-              </Header>
-            </Grid.Column>
-            <Grid.Column width={8}>{actionBarItems}</Grid.Column>
-          </Grid>
           {content}
         </div>
       </div>
@@ -251,9 +241,7 @@ AppChrome.contextTypes = {
 
 AppChrome.propTypes = {
   icon: PropTypes.string.isRequired,
-  headerContent: PropTypes.object.isRequired,
-  content: PropTypes.object.isRequired,
-  actionBarItems: PropTypes.object,
+  content: PropTypes.object.isRequired
 };
 
 export default enhance(AppChrome);

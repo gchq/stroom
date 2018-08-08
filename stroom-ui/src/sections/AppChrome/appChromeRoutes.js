@@ -5,16 +5,11 @@ import { Header } from 'semantic-ui-react';
 import { withConfig } from 'startup/config';
 import { AppChrome } from './index';
 import TrackerDashboard from 'sections/TrackerDashboard';
-import PipelineEditor, {
-  ActionBarItems as PipelineEditorActionBarItems,
-  HeaderContent as PipelineEditorHeaderContent,
-} from 'components/PipelineEditor';
+import { WithHeader as PipelineEditor } from 'components/PipelineEditor';
 import XsltEditor, { ActionBarItems as XsltEditorActionBarItems } from 'prototypes/XsltEditor';
 import PipelineSearch from 'components/PipelineSearch';
 import Welcome from 'sections/Welcome';
-import FolderExplorer, {
-  HeaderContent as FolderExplorerHeaderContent,
-} from 'components/FolderExplorer';
+import { WithHeader as FolderExplorer } from 'components/FolderExplorer';
 import DocExplorer, { ActionBarItems as DocExplorerActionBarItems } from 'components/DocExplorer';
 import DataViewer, { ActionBarItems as DataViewerActionBarItems } from 'components/DataViewer';
 import UserSettings from 'prototypes/UserSettings';
@@ -181,7 +176,6 @@ export default [
       <AppChrome
         activeMenuItem="Explorer"
         {...props}
-        headerContent={<FolderExplorerHeaderContent folderUuid={props.match.params.folderUuid} />}
         icon="file"
         content={<FolderExplorer folderUuid={props.match.params.folderUuid} />}
       />
@@ -194,7 +188,6 @@ export default [
       <AppChrome
         activeMenuItem="Explorer"
         {...props}
-        headerContent={<FolderExplorerHeaderContent folderUuid={props.match.params.folderUuid} />}
         icon="file"
         content={<FolderExplorer folderUuid={props.match.params.folderUuid} />}
       />
@@ -207,10 +200,8 @@ export default [
       <AppChrome
         activeMenuItem="Pipelines"
         {...props}
-        headerContent={<PipelineEditorHeaderContent pipelineId={props.match.params.pipelineId} />}
         icon="file"
         content={<PipelineEditor pipelineId={props.match.params.pipelineId} />}
-        actionBarItems={<PipelineEditorActionBarItems pipelineId={props.match.params.pipelineId} />}
       />
     ),
   },
@@ -221,7 +212,6 @@ export default [
       <AppChrome
         activeMenuItem="Explorer"
         {...props}
-        headerContent={<Header.Content>{`Edit ${props.match.params.type}`}</Header.Content>}
         icon="file"
         content={<PathNotFound message="no editor provided for this doc ref type " />}
       />
@@ -229,12 +219,7 @@ export default [
   },
   {
     render: () => (
-      <AppChrome
-        activeMenuItem="Welcome"
-        headerContent={<Header.Content>Not Found</Header.Content>}
-        icon="exclamation triangle"
-        content={<PathNotFound />}
-      />
+      <AppChrome activeMenuItem="Welcome" icon="exclamation triangle" content={<PathNotFound />} />
     ),
   },
 ];

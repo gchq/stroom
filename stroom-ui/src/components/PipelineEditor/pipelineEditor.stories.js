@@ -24,7 +24,7 @@ import { ReduxDecoratorWithInitialisation, ReduxDecorator } from 'lib/storybook/
 import { PollyDecorator } from 'lib/storybook/PollyDecorator';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
-import { PipelineEditor } from './index';
+import { PipelineEditor, WithHeader } from './index';
 
 import PipelineElement from './PipelineElement';
 import { ElementPalette } from './ElementPalette';
@@ -59,8 +59,10 @@ const pipelineStories = storiesOf('Pipeline Editor', module)
   .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator);
 
-Object.keys(testPipelines).forEach(k =>
-  pipelineStories.add(k, () => <PipelineEditor pipelineId={k} />));
+Object.keys(testPipelines).forEach((k) => {
+  pipelineStories.add(k, () => <PipelineEditor pipelineId={k} />);
+  pipelineStories.add(`${k} withHeader`, () => <WithHeader pipelineId={k} />);
+});
 
 storiesOf('Element Palette', module)
   .addDecorator(PollyDecoratorWithTestData)

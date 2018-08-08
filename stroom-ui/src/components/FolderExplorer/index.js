@@ -1,7 +1,6 @@
-import FolderExplorer from './FolderExplorer';
-import HeaderContent from './HeaderContent';
+import { FolderExplorer, WithHeader } from './FolderExplorer';
 import { actionCreators, reducer } from './redux';
 
-export { FolderExplorer, HeaderContent, actionCreators, reducer };
+export { FolderExplorer, WithHeader, actionCreators, reducer };
 
 export default FolderExplorer;

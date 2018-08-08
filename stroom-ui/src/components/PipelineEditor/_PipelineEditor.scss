@@ -9,6 +9,8 @@ $palette-width: 12rem;
   display: flex;
   flex-direction: row;
   align-content: center;
+  left: 0;
+  width: 100%;
 }
 
 /* The animation code */
@@ -20,31 +22,6 @@ $palette-width: 12rem;
   to {
     left: 0;
   }
-}
-
-.Pipeline-editor--palette-open {
-  left: 0;
-  width: 100%;
-  animation-name: open-pallete;
-  animation-duration: $animation-duration;
-}
-
-/* The animation code */
-
-@keyframes close-pallete {
-  from {
-    left: 0;
-  }
-  to {
-    left: -$palette-width;
-  }
-}
-
-.Pipeline-editor--palette-close {
-  left: -$palette-width;
-  width: calc(100% + #{$palette-width});
-  animation-name: close-pallete;
-  animation-duration: $animation-duration;
 }
 
 .Pipeline-editor__element-palette {
