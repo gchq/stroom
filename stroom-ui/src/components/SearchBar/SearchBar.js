@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Input, Button, Checkbox, Popup } from 'semantic-ui-react';
+import { Input, Button, Checkbox, Popup, Grid } from 'semantic-ui-react';
 import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
 
@@ -25,21 +25,34 @@ const SearchBar = ({
 }) => {
   const searchInput = (
     <React.Fragment>
-      <Input value={searchString} />
-      <Button>Search</Button>
       <Popup
         trigger={<Button circular icon="edit" onClick={() => setIsExpression(true)} />}
-        content="Switch to using the expression builder. You won't be able to convert back to a simple query."
+        content="Switch to using the expression builder. You won't be able to convert back to a text search and keep your expression."
       />
+      <Input value={searchString} className="SearchBar__input" />
+      <Button>Search</Button>
     </React.Fragment>
   );
 
   const expressionBuilder = (
-    <ExpressionBuilder
-      allowEdit
-      dataSourceUuid={expressionDataSourceUuid}
-      expressionId={expressionId}
-    />
+    <React.Fragment>
+      <Grid>
+        <Grid.Column width={1}>
+          <Popup
+            trigger={<Button circular icon="text cursor" onClick={() => setIsExpression(false)} />}
+            content="Switch to using text search. You'll lose the expression you've built here."
+          />
+        </Grid.Column>
+        <Grid.Column width={15}>
+          <ExpressionBuilder
+            showModeToggle={false}
+            editMode
+            dataSourceUuid={expressionDataSourceUuid}
+            expressionId={expressionId}
+          />
+        </Grid.Column>
+      </Grid>
+    </React.Fragment>
   );
 
   return <div>{isExpression ? expressionBuilder : searchInput}</div>;
