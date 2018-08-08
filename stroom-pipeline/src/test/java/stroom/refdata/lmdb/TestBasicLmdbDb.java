@@ -20,6 +20,9 @@ package stroom.refdata.lmdb;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.lmdbjava.KeyRange;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.refdata.offheapstore.ByteBufferPool;
 import stroom.refdata.offheapstore.PooledByteBuffer;
 import stroom.refdata.offheapstore.databases.AbstractLmdbDbTest;
@@ -35,6 +38,8 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestBasicLmdbDb extends AbstractLmdbDbTest {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestBasicLmdbDb.class);
 
     private BasicLmdbDb<String, String> basicLmdbDb;
 
@@ -155,38 +160,64 @@ public class TestBasicLmdbDb extends AbstractLmdbDbTest {
     }
 
     @Test
-    public void testStreamAllEntries() {
-        IntStream.rangeClosed(1, 20).forEach(i -> {
-            basicLmdbDb.put("key" + i, "value" + i, false);
-
-        });
+    public void testStreamEntries() {
+        populateDb();
 
         List<String> entries = LmdbUtils.getWithReadTxn(lmdbEnv, txn ->
-                basicLmdbDb.streamAllEntries(txn, stream ->
-                        stream.map(kvTuple ->
-                                kvTuple._1() + "-" + kvTuple._2())
+                basicLmdbDb.streamEntries(txn, KeyRange.all(), stream ->
+                        stream
+                                .map(kvTuple ->
+                                        kvTuple._1() + "-" + kvTuple._2())
+                                .peek(LOGGER::info)
                                 .collect(Collectors.toList())));
 
         assertThat(entries).hasSize(20);
     }
 
     @Test
-    public void testStreamAllEntriesWithFilter() {
-        IntStream.rangeClosed(1, 20).forEach(i -> {
-            basicLmdbDb.put( Integer.toString(i), "value" + i, false);
-
-        });
+    public void testStreamEntriesWithFilter() {
+        populateDb();
 
         List<String> entries = LmdbUtils.getWithReadTxn(lmdbEnv, txn ->
-                basicLmdbDb.streamAllEntries(txn, stream ->
-                        stream.filter(kvTuple -> {
-                            int i = Integer.parseInt(kvTuple._1());
-                            return i > 10 && i <= 15;
-                        })
-                        .map(kvTuple ->
-                                kvTuple._1() + "-" + kvTuple._2())
+                basicLmdbDb.streamEntries(txn, KeyRange.all(), stream ->
+                        stream
+                                .filter(kvTuple -> {
+                                    int i = Integer.parseInt(kvTuple._1());
+                                    return i > 10 && i <= 15;
+                                })
+                                .map(kvTuple ->
+                                        kvTuple._1() + "-" + kvTuple._2())
+                                .peek(LOGGER::info)
                                 .collect(Collectors.toList())));
 
         assertThat(entries).hasSize(5);
     }
+
+
+    @Test
+    public void testStreamEntriesWithKeyRange() {
+        populateDb();
+
+        KeyRange<String> keyRange = KeyRange.closed("06", "10");
+        List<String> entries = LmdbUtils.getWithReadTxn(lmdbEnv, txn ->
+                basicLmdbDb.streamEntries(txn, keyRange, stream ->
+                        stream
+                                .map(kvTuple ->
+                                        kvTuple._1() + "-" + kvTuple._2())
+                                .peek(LOGGER::info)
+                                .collect(Collectors.toList())));
+
+        assertThat(entries).hasSize(5);
+    }
+
+    private void populateDb() {
+        // pad the keys to a fixed length so they sort in number order
+        IntStream.rangeClosed(1, 20).forEach(i -> {
+            basicLmdbDb.put(String.format("%02d",i), "value" + i, false);
+
+        });
+
+        basicLmdbDb.logDatabaseContents(LOGGER::info);
+    }
+
 }

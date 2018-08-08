@@ -37,14 +37,6 @@ public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinit
                     (AbstractKryoSerde.VARIABLE_LENGTH_LONG_BYTES * 2) +
                     AbstractKryoSerde.BOOLEAN_BYTES;
 
-//    private static final KryoFactory kryoFactory = buildKryoFactory(
-//            RefStreamDefinition.class,
-//            RefStreamDefinitionKryoSerializer::new);
-//
-//    private static final KryoPool pool = new KryoPool.Builder(kryoFactory)
-//            .softReferences()
-//            .build();
-
     private final VariableLengthUUIDKryoSerializer variableLengthUUIDKryoSerializer;
 
     public RefStreamDefinitionSerde() {
@@ -88,16 +80,6 @@ public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinit
                 isContextData,
                 streamNo);
     }
-
-//    @Override
-//    public RefStreamDefinition deserialize(final ByteBuffer byteBuffer) {
-//        return super.deserialize(pool, byteBuffer);
-//    }
-//
-//    @Override
-//    public void serialize(final ByteBuffer byteBuffer, final RefStreamDefinition object) {
-//        super.serialize(pool, byteBuffer, object);
-//    }
 
     @Override
     public int getBufferCapacity() {

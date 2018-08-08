@@ -30,10 +30,6 @@ class VariableLengthUUIDKryoSerializer implements KryoSerializer<String> {
         output.writeLong(uuid.getLeastSignificantBits(), false);
     }
 
-//    public void read(final Kryo kryo, final Input input) {
-//        read(kryo, input, String.class);
-//    }
-
     @Override
     public String read(final Input input) {
         final long uuidHighBits = input.readLong(false);

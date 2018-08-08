@@ -747,6 +747,7 @@ public class RefDataOffHeapStore implements RefDataStore {
     public HealthCheck.Result getHealth() {
 
         try {
+            Tuple2<Instant, Instant> lastAccessedTimeRange = processingInfoDb.getLastAccessedTimeRange();
             HealthCheck.ResultBuilder builder = HealthCheck.Result.builder();
             builder
                     .healthy()
@@ -755,7 +756,9 @@ public class RefDataOffHeapStore implements RefDataStore {
                     .withDetail("Environment current size", ModelStringUtil.formatIECByteSizeString(getEnvironmentDiskUsage()))
                     .withDetail("Purge age", getDataRetentionAgeString())
                     .withDetail("Max readers", maxReaders)
-                    .withDetail("Current buffer pool size", byteBufferPool.getCurrentPoolSize());
+                    .withDetail("Current buffer pool size", byteBufferPool.getCurrentPoolSize())
+                    .withDetail("Earliest lastAccessedTime", lastAccessedTimeRange._1().toString())
+                    .withDetail("Latest lastAccessedTime", lastAccessedTimeRange._2().toString());
 
             LmdbUtils.doWithReadTxn(lmdbEnvironment, txn -> {
                 builder.withDetail("Database entry counts", databaseMap.entrySet().stream()

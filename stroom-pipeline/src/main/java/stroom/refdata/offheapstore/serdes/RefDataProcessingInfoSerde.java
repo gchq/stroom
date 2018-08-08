@@ -95,6 +95,10 @@ public class RefDataProcessingInfoSerde implements
         return ProcessingState.fromByte(bState);
     }
 
+    public static long extractLastAccessedTimeMs(final ByteBuffer byteBuffer) {
+        return byteBuffer.getLong(LAST_ACCESSED_TIME_OFFSET);
+    }
+
     /**
      * Return true if the {@link RefDataProcessingInfo} object represent by valueBuffer has a last accessed
      * time after the epoch millis time represented by timeMsBuffer.

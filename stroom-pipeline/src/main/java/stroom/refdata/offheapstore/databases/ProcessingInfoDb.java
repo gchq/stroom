@@ -1,6 +1,8 @@
 package stroom.refdata.offheapstore.databases;
 
 import com.google.inject.assistedinject.Assisted;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
 import org.lmdbjava.CursorIterator;
 import org.lmdbjava.Env;
 import org.lmdbjava.KeyRange;
@@ -22,7 +24,9 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
+import java.time.Instant;
 import java.util.Optional;
+import java.util.concurrent.atomic.LongAccumulator;
 import java.util.function.Predicate;
 
 public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDataProcessingInfo> {
@@ -129,6 +133,26 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
 
         LOGGER.debug("getNextEntryAsBytes returning {} after {} iterations", optMatchedEntry, i);
         return optMatchedEntry;
+    }
+
+    public Tuple2<Instant, Instant> getLastAccessedTimeRange() {
+
+        final LongAccumulator earliestLastAccessedTime = new LongAccumulator(Long::min, Long.MAX_VALUE);
+        final LongAccumulator latestLastAccessedTime = new LongAccumulator(Long::max, 0);
+
+        LmdbUtils.doWithReadTxn(getLmdbEnvironment(), txn ->
+                forEachEntryAsBytes(txn, KeyRange.all(), keyVal -> {
+                    // It would be quicker to keep a copy of the earliest/latest times in there byte
+                    // form and do the comparison on that but as this is only intended for use
+                    // in a health check it is probably ok as is.
+                    long lastAccessedTime = valueSerde.extractLastAccessedTimeMs(keyVal.val());
+                    earliestLastAccessedTime.accumulate(lastAccessedTime);
+                    latestLastAccessedTime.accumulate(lastAccessedTime);
+                }));
+
+        return Tuple.of(
+                Instant.ofEpochMilli(earliestLastAccessedTime.get()),
+                Instant.ofEpochMilli(latestLastAccessedTime.get()));
     }
 
     public interface Factory {

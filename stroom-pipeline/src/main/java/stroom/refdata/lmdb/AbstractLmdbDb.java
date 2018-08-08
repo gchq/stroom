@@ -103,12 +103,11 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         int keySerdeCapacity = keySerde.getBufferCapacity();
         int envMaxKeySize = lmdbEnvironment.getMaxKeySize();
         if (keySerdeCapacity > envMaxKeySize) {
-            LOGGER.warn("Key serde capacity {} is greater than the maximum key size for the environment {}. " +
-                            "BufferOverflow exceptions are likely.",
-                    keySerdeCapacity, envMaxKeySize);
+            LOGGER.debug("Key serde {} capacity {} is greater than the maximum key size for the environment {}. " +
+                            "The max environment key size {} will be used instead.",
+                    keySerde.getClass().getName(), keySerdeCapacity, envMaxKeySize);
         }
         this.keyBufferCapacity = Math.min(envMaxKeySize, keySerdeCapacity);
-
         this.valueBufferCapacity = Math.min(Serde.DEFAULT_CAPACITY, valueSerde.getBufferCapacity());
     }
 
@@ -237,30 +236,95 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         }
     }
 
-    public <T> T streamAllEntries(final Txn<ByteBuffer> txn,
-                                  final Function<Stream<Tuple2<K, V>>, T> streamFunction) {
+    public KeyRange<ByteBuffer> serialiseKeyRange(final PooledByteBuffer pooledStartKeyBuffer,
+                                                  final PooledByteBuffer pooledStopKeyBuffer,
+                                                  final KeyRange<K> keyRange) {
 
-        return streamAllEntriesAsBytes(txn, entryStream -> {
-            Stream<Tuple2<K, V>> deSerialisedStream = entryStream.map(keyVal -> {
-                K key = deserializeKey(keyVal.key());
-                V value = deserializeValue(keyVal.val());
-                return Tuple.of(key, value);
-            });
+        final ByteBuffer startKeyBuffer;
+        final ByteBuffer stopKeyBuffer;
 
-            return streamFunction.apply(deSerialisedStream);
-        });
+        if (keyRange.getStart() != null) {
+            serializeKey(pooledStartKeyBuffer.getByteBuffer(), keyRange.getStart());
+            startKeyBuffer = pooledStartKeyBuffer.getByteBuffer();
+        } else {
+            startKeyBuffer = null;
+        }
+
+        if (keyRange.getStop() != null) {
+            serializeKey(pooledStopKeyBuffer.getByteBuffer(), keyRange.getStop());
+            stopKeyBuffer = pooledStopKeyBuffer.getByteBuffer();
+        } else {
+            stopKeyBuffer = null;
+        }
+
+        final KeyRange<ByteBuffer> serialisedKeyRange = new KeyRange<>(
+                keyRange.getType(),
+                startKeyBuffer,
+                stopKeyBuffer);
+        return serialisedKeyRange;
     }
 
-    public <T> T streamAllEntriesAsBytes(final Txn<ByteBuffer> txn,
-                                         final Function<Stream<CursorIterator.KeyVal<ByteBuffer>>, T> streamFunction) {
+    public <T> T streamEntries(final Txn<ByteBuffer> txn,
+                               final KeyRange<K> keyRange,
+                               final Function<Stream<Tuple2<K, V>>, T> streamFunction) {
 
-        final KeyRange<ByteBuffer> keyRange = KeyRange.all();
+        try (final PooledByteBuffer startKeyPooledBuffer = getPooledKeyBuffer();
+             final PooledByteBuffer stopKeyPooledBuffer = getPooledKeyBuffer()) {
+
+            final KeyRange<ByteBuffer> serialisedKeyRange = serialiseKeyRange(startKeyPooledBuffer,
+                    stopKeyPooledBuffer,
+                    keyRange);
+
+            return streamEntriesAsBytes(txn, serialisedKeyRange, entryStream -> {
+                Stream<Tuple2<K, V>> deSerialisedStream = entryStream.map(keyVal -> {
+                    K key = deserializeKey(keyVal.key());
+                    V value = deserializeValue(keyVal.val());
+                    return Tuple.of(key, value);
+                });
+
+                return streamFunction.apply(deSerialisedStream);
+            });
+        }
+    }
+
+    public <T> T streamEntriesAsBytes(final Txn<ByteBuffer> txn,
+                                      final KeyRange<ByteBuffer> keyRange,
+                                      final Function<Stream<CursorIterator.KeyVal<ByteBuffer>>, T> streamFunction) {
 
         try (CursorIterator<ByteBuffer> cursorIterator = getLmdbDbi().iterate(txn, keyRange)) {
             final Stream<CursorIterator.KeyVal<ByteBuffer>> stream =
                     StreamSupport.stream(cursorIterator.iterable().spliterator(), false);
 
             return streamFunction.apply(stream);
+        }
+    }
+
+    public void forEachEntry(final Txn<ByteBuffer> txn,
+                             final KeyRange<K> keyRange,
+                             final Consumer<Tuple2<K, V>> keyValueTupleConsumer) {
+
+        try (final PooledByteBuffer startKeyPooledBuffer = getPooledKeyBuffer();
+             final PooledByteBuffer stopKeyPooledBuffer = getPooledKeyBuffer()) {
+
+            final KeyRange<ByteBuffer> serialisedKeyRange = serialiseKeyRange(startKeyPooledBuffer,
+                    stopKeyPooledBuffer,
+                    keyRange);
+            forEachEntryAsBytes(txn, serialisedKeyRange, keyVal -> {
+                final Tuple2<K, V> deserialisedKeyValue = deserializeKeyVal(keyVal);
+                keyValueTupleConsumer.accept(deserialisedKeyValue);
+            });
+        }
+
+    }
+
+    public void forEachEntryAsBytes(final Txn<ByteBuffer> txn,
+                                    final KeyRange<ByteBuffer> keyRange,
+                                    final Consumer<CursorIterator.KeyVal<ByteBuffer>> entryConsumer) {
+
+        try (CursorIterator<ByteBuffer> cursorIterator = getLmdbDbi().iterate(txn, keyRange)) {
+            for (CursorIterator.KeyVal<ByteBuffer> keyVal : cursorIterator.iterable()) {
+                entryConsumer.accept(keyVal);
+            }
         }
     }
 
@@ -610,6 +674,10 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
 
     public V deserializeValue(final ByteBuffer valueBuffer) {
         return valueSerde.deserialize(valueBuffer);
+    }
+
+    public Tuple2<K, V> deserializeKeyVal(final CursorIterator.KeyVal<ByteBuffer> keyVal) {
+        return Tuple.of(deserializeKey(keyVal.key()), deserializeValue(keyVal.val()));
     }
 
     public void serializeKey(final ByteBuffer keyBuffer, K key) {

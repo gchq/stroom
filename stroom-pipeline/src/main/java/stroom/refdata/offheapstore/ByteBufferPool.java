@@ -56,6 +56,8 @@ import java.util.function.Function;
  * smallest available buffer that is greater than or equal to the required
  * capacity will be provided. All buffers will be cleared on return to
  * the pool.
+ *
+ * As this pool is un-bounded it could grow very large under high contention
  */
 @Singleton
 public class ByteBufferPool implements Clearable {
