@@ -17,10 +17,11 @@ import React from 'react';
 import { compose, lifecycle } from 'recompose';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
-import { Menu } from 'semantic-ui-react';
+import { Menu, Header, Icon } from 'semantic-ui-react';
 
 import Mousetrap from 'mousetrap';
 
+import WithHeader from 'components/WithHeader';
 import { actionCreators as recentItemsActionCreators } from './redux';
 import openDocRef from './openDocRef';
 
@@ -80,7 +81,7 @@ const enhance = compose(
   }),
 );
 
-const RecentItemsContent = ({
+const RawRecentItems = ({
   history,
   recentItemsClosed,
   openItemStack,
@@ -111,4 +112,22 @@ const RecentItemsContent = ({
     </div>
   </Menu>
 );
-export default enhance(RecentItemsContent);
+
+const RawWithHeader = props => (
+  <WithHeader
+    header={
+      <Header as="h3">
+        <Icon color="grey" name="file outline" />
+        <Header.Content>Recent Items</Header.Content>
+      </Header>
+    }
+    content={<RawRecentItems {...props} />}
+  />
+);
+
+const RecentItems = enhance(RawRecentItems);
+const RecentItemsWithHeader = enhance(RawWithHeader);
+
+export default RecentItems;
+
+export { RecentItems, RecentItemsWithHeader };

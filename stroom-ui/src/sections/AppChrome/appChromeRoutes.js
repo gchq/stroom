@@ -6,7 +6,7 @@ import { withConfig } from 'startup/config';
 import { AppChrome } from './index';
 import { TrackerDashboardWithHeader } from 'sections/TrackerDashboard';
 import { PipelineEditorWithHeader } from 'components/PipelineEditor';
-import XsltEditor, { ActionBarItems as XsltEditorActionBarItems } from 'prototypes/XsltEditor';
+import { XsltEditorWithHeader } from 'prototypes/XsltEditor';
 import { PipelineSearchWithHeader } from 'components/PipelineSearch';
 import Welcome from 'sections/Welcome';
 import { FolderExplorerWithHeader } from 'components/FolderExplorer';
@@ -14,8 +14,8 @@ import { DataViewerWithHeader } from 'components/DataViewer';
 import { UserSettingsWithHeader } from 'prototypes/UserSettings';
 import PathNotFound from 'components/PathNotFound';
 import IFrame from 'components/IFrame';
-import AppSearch from 'prototypes/AppSearch';
-import RecentItems from 'prototypes/RecentItems';
+import { AppSearchWithHeader } from 'prototypes/AppSearch';
+import { RecentItemsWithHeader } from 'prototypes/RecentItems';
 import WithHeader from 'components/WithHeader';
 
 const renderWelcome = props => <AppChrome activeMenuItem="Welcome" content={<Welcome />} />;
@@ -98,25 +98,13 @@ export default [
   {
     exact: true,
     path: '/s/search',
-    render: props => (
-      <AppChrome
-        activeMenuItem="Search"
-        headerContent={<Header.Content>Search</Header.Content>}
-        icon="search"
-        content={<AppSearch />}
-      />
-    ),
+    render: props => <AppChrome activeMenuItem="Search" content={<AppSearchWithHeader />} />,
   },
   {
     exact: true,
     path: '/s/recentItems',
     render: props => (
-      <AppChrome
-        activeMenuItem="Recent Items"
-        headerContent={<Header.Content>Recent Items</Header.Content>}
-        icon="file outline"
-        content={<RecentItems />}
-      />
+      <AppChrome activeMenuItem="Recent Items" content={<RecentItemsWithHeader />} />
     ),
   },
   {
@@ -125,11 +113,7 @@ export default [
     render: props => (
       <AppChrome
         activeMenuItem="Explorer"
-        {...props}
-        headerContent={<Header.Content>Edit XSLT</Header.Content>}
-        icon="file"
-        content={<XsltEditor xsltId={props.match.params.xsltId} />}
-        actionBarItems={<XsltEditorActionBarItems xsltId={props.match.params.xsltId} />}
+        content={<XsltEditorWithHeader xsltId={props.match.params.xsltId} />}
       />
     ),
   },
@@ -174,8 +158,6 @@ export default [
     ),
   },
   {
-    render: () => (
-      <AppChrome activeMenuItem="Welcome" icon="exclamation triangle" content={<PathNotFound />} />
-    ),
+    render: () => <AppChrome activeMenuItem="Welcome" content={<PathNotFound />} />,
   },
 ];
