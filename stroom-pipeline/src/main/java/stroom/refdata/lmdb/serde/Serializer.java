@@ -18,6 +18,7 @@
 package stroom.refdata.lmdb.serde;
 
 import java.nio.ByteBuffer;
+import java.util.function.Supplier;
 
 public interface Serializer<T> {
 
@@ -29,6 +30,13 @@ public interface Serializer<T> {
      */
     default ByteBuffer serialize(final T object) {
         ByteBuffer byteBuffer = ByteBuffer.allocateDirect(getBufferCapacity());
+        serialize(byteBuffer, object);
+        return byteBuffer;
+    }
+
+    default ByteBuffer serialize(final Supplier<ByteBuffer> byteBufferSupplier,
+                                 final T object) {
+        ByteBuffer byteBuffer = byteBufferSupplier.get();
         serialize(byteBuffer, object);
         return byteBuffer;
     }
