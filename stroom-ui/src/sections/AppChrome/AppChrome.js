@@ -38,17 +38,18 @@ const SIDE_BAR_COLOUR = 'blue';
 
 const pathPrefix = '/s';
 
-const getDocumentTreeMenuItems = (openDocRef, treeNode) => ({
+const getDocumentTreeMenuItems = (openDocRef, treeNode, skipInContractedMenu=false) => ({
   key: treeNode.uuid,
   title: treeNode.name,
   onClick: () => openDocRef(treeNode),
   icon: 'folder',
+  skipInContractedMenu,
   children:
     treeNode.children &&
     treeNode.children.length > 0 &&
     treeNode.children
       .filter(t => t.type === 'Folder')
-      .map(t => getDocumentTreeMenuItems(openDocRef, t)),
+      .map(t => getDocumentTreeMenuItems(openDocRef, t, true)),
 });
 
 const enhance = compose(
@@ -118,8 +119,9 @@ const enhance = compose(
       {
         key: 'admin',
         title: 'Admin',
-        onClick: () => console.log('Expand admin'),
+        onClick: () => {},
         icon: 'cogs',
+        skipInContractedMenu: true,
         children: [
           {
             key: 'admin-me',
@@ -192,7 +194,7 @@ const getExpandedMenuItems = (menuItems, menuItemsOpen, menuItemOpened, depth = 
 const getContractedMenuItems = menuItems =>
   menuItems.map(menuItem => (
     <React.Fragment key={menuItem.key}>
-      {!menuItem.children && ( // just put the children of menu items into the sidebar
+      {!menuItem.skipInContractedMenu && ( // just put the children of menu items into the sidebar
         <Button key={menuItem.title} icon={menuItem.icon} onClick={menuItem.onClick} />
       )}
       {menuItem.children && getContractedMenuItems(menuItem.children)}

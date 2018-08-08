@@ -23,7 +23,6 @@ import { connect } from 'react-redux';
 import ErrorPage from 'components/ErrorPage';
 import { appChromeRoutes } from 'sections/AppChrome';
 import TrackerDashboard from 'sections/TrackerDashboard';
-import DocExplorer from 'components/DocExplorer';
 import { HandleAuthenticationResponse } from 'startup/Authentication';
 
 import { withConfig } from './config';
@@ -79,9 +78,7 @@ const Routes = ({
 
       <Route exact path="/error" component={ErrorPage} />
 
-      {appChromeRoutes.map((p, i) => (
-        <PrivateRoute key={i} {...p} />
-      ))}
+      {appChromeRoutes.map((p, i) => <PrivateRoute key={i} {...p} />)}
 
       {/* Direct paths -- these paths make sections accessible outside the AppChrome
         i.e. for when we want to embed them in Stroom. */}
@@ -90,12 +87,6 @@ const Routes = ({
         path="/trackers"
         referrer="/trackers"
         render={() => <TrackerDashboard />}
-      />
-      <PrivateRoute
-        exact
-        path="/docExplorer"
-        referrer="/docExplorer"
-        render={() => <DocExplorer />}
       />
 
       {/* Default route */}

@@ -65,12 +65,12 @@ const tableColumns = [
     ), // Custom cell components!
   },
   {
-    Header: 'UUID',
-    accessor: 'uuid',
-  },
-  {
     Header: 'Name',
     accessor: 'name',
+  },
+  {
+    Header: 'UUID',
+    accessor: 'uuid',
   },
 ];
 
