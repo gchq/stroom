@@ -30,7 +30,7 @@ import { openDocRef } from 'prototypes/RecentItems';
 
 import logoInWhite from './logo_white.png';
 
-const {menuItemOpened} = appChromeActionCreators;
+const { menuItemOpened } = appChromeActionCreators;
 
 const withIsExpanded = withLocalStorage('isExpanded', 'setIsExpanded', true);
 
@@ -80,13 +80,8 @@ const enhance = compose(
     },
   }),
   withProps(({
-    isExpanded,
-    setIsExpanded,
-    history,
-    openDocRef,
-    
-    actionBarItems,
-    documentTree,
+    isExpanded, setIsExpanded, history, openDocRef,
+    actionBarItems, documentTree,
   }) => ({
     menuItems: [
       {
@@ -168,7 +163,12 @@ const getExpandedMenuItems = (menuItems, menuItemsOpen, menuItemOpened, depth = 
       <div
         className="sidebar__menu-item"
         style={{ marginLeft: `${depth * 0.7}rem` }}
-        onClick={menuItem.onClick}
+        onClick={() => {
+          if (menuItem.children) {
+            menuItemOpened(menuItem.key, !menuItemsOpen[menuItem.key])
+          }
+          menuItem.onClick();
+        }}
       >
         {menuItem.children && menuItem.children.length > 0 ? (
           <Icon
@@ -189,16 +189,15 @@ const getExpandedMenuItems = (menuItems, menuItemsOpen, menuItemOpened, depth = 
     </React.Fragment>
   ));
 
-const getContractedMenuItems = (menuItems) =>
-  menuItems
-    .map(menuItem => (
-      <React.Fragment key={menuItem.key}>
-        {!menuItem.children && // just put the children of menu items into the sidebar
-          <Button key={menuItem.title} icon={menuItem.icon} onClick={menuItem.onClick} />}
-        {menuItem.children &&
-          getContractedMenuItems(menuItem.children)}
-      </React.Fragment>
-    ));
+const getContractedMenuItems = menuItems =>
+  menuItems.map(menuItem => (
+    <React.Fragment key={menuItem.key}>
+      {!menuItem.children && ( // just put the children of menu items into the sidebar
+        <Button key={menuItem.title} icon={menuItem.icon} onClick={menuItem.onClick} />
+      )}
+      {menuItem.children && getContractedMenuItems(menuItem.children)}
+    </React.Fragment>
+  ));
 
 const AppChrome = ({
   headerContent,
@@ -224,9 +223,7 @@ const AppChrome = ({
     </div>
     <div className="app-chrome__content">
       <div className="content-tabs">
-        <div className="content-tabs__content">
-          {content}
-        </div>
+        <div className="content-tabs__content">{content}</div>
       </div>
     </div>
   </div>
@@ -241,7 +238,7 @@ AppChrome.contextTypes = {
 
 AppChrome.propTypes = {
   icon: PropTypes.string.isRequired,
-  content: PropTypes.object.isRequired
+  content: PropTypes.object.isRequired,
 };
 
 export default enhance(AppChrome);
