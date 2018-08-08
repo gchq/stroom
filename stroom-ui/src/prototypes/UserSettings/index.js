@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import UserSettings from './UserSettings';
+import UserSettings, { UserSettingsWithHeader } from './UserSettings';
 
-export { 
-  UserSettings
-}
+export { UserSettings, UserSettingsWithHeader };
 
 export default UserSettings;

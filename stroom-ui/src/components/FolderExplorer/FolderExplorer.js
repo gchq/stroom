@@ -152,17 +152,15 @@ const RawWithHeader = (props) => {
             <Breadcrumb>
               {lineage.map(l => (
                 <React.Fragment key={l.uuid}>
-                <Breadcrumb.Divider />
+                  <Breadcrumb.Divider />
                   <Breadcrumb.Section link onClick={() => openDocRef(l)}>
                     {l.name}
                   </Breadcrumb.Section>
                 </React.Fragment>
               ))}
 
-                  <Breadcrumb.Divider />
-              <Breadcrumb.Section active>
-                {node.name}
-              </Breadcrumb.Section>
+              <Breadcrumb.Divider />
+              <Breadcrumb.Section active>{node.name}</Breadcrumb.Section>
             </Breadcrumb>
           </Header.Content>
         </Header>

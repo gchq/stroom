@@ -237,7 +237,7 @@ AppChrome.contextTypes = {
 };
 
 AppChrome.propTypes = {
-  icon: PropTypes.string.isRequired,
+  activeMenuItem: PropTypes.string.isRequired,
   content: PropTypes.object.isRequired,
 };
 

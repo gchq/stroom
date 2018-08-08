@@ -16,37 +16,48 @@
 
 import React from 'react';
 
-import { Table, Container } from 'semantic-ui-react';
+import { Table, Container, Header, Icon } from 'semantic-ui-react';
+import WithHeader from 'components/WithHeader';
 
 const Welcome = props => (
-  <div className="Welcome__container">
-    <div className="Welcome">
-      <h4>Global shortcut keys</h4>
-      <Table definition className="Welcome__shortcutKeysTable">
-        <Table.Header>
-          <Table.Row>
-            <Table.HeaderCell />
-            <Table.HeaderCell>Shortcut</Table.HeaderCell>
-          </Table.Row>
-        </Table.Header>
+  <WithHeader
+    header={
+      <Header as="h3">
+        <Icon color="grey" name="home" />
+        <Header.Content>Welcome</Header.Content>
+      </Header>
+    }
+    content={
+      <div className="Welcome__container">
+        <div className="Welcome">
+          <h4>Global shortcut keys</h4>
+          <Table definition className="Welcome__shortcutKeysTable">
+            <Table.Header>
+              <Table.Row>
+                <Table.HeaderCell />
+                <Table.HeaderCell>Shortcut</Table.HeaderCell>
+              </Table.Row>
+            </Table.Header>
 
-        <Table.Body>
-          <Table.Row>
-            <Table.Cell>Document search</Table.Cell>
-            <Table.Cell>
-              <code>ctrl + shift + f</code>
-            </Table.Cell>
-          </Table.Row>
-          <Table.Row>
-            <Table.Cell>Recent documents</Table.Cell>
-            <Table.Cell>
-              <code> ctrl + shift + e</code>
-            </Table.Cell>
-          </Table.Row>
-        </Table.Body>
-      </Table>
-    </div>
-  </div>
+            <Table.Body>
+              <Table.Row>
+                <Table.Cell>Document search</Table.Cell>
+                <Table.Cell>
+                  <code>ctrl + shift + f</code>
+                </Table.Cell>
+              </Table.Row>
+              <Table.Row>
+                <Table.Cell>Recent documents</Table.Cell>
+                <Table.Cell>
+                  <code> ctrl + shift + e</code>
+                </Table.Cell>
+              </Table.Row>
+            </Table.Body>
+          </Table>
+        </div>
+      </div>
+    }
+  />
 );
 
 export default Welcome;

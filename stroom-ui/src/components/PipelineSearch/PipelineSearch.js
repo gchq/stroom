@@ -21,7 +21,8 @@ import { compose, lifecycle } from 'recompose';
 // import Mousetrap from 'mousetrap'; //TODO
 import { push } from 'react-router-redux';
 
-import { Card, Input, Pagination, Dropdown } from 'semantic-ui-react';
+import WithHeader from 'components/WithHeader';
+import { Header, Card, Input, Pagination, Dropdown, Icon } from 'semantic-ui-react';
 
 import { withConfig } from 'startup/config';
 import ClickCounter from 'lib/ClickCounter';
@@ -65,7 +66,7 @@ const enhance = compose(
   }),
 );
 
-const PipelineSearch = ({
+const RawPipelineSearch = ({
   searchResults,
   totalPipelines,
   onPipelineSelected,
@@ -75,8 +76,8 @@ const PipelineSearch = ({
 }) => {
   // these are required to tell the difference between single/double clicks
   const clickCounter = new ClickCounter()
-    .withOnSingleClick(({uuid}) => console.log('TODO: single click behaviour -- highlight'))
-    .withOnDoubleClick(({uuid}) => {
+    .withOnSingleClick(({ uuid }) => console.log('TODO: single click behaviour -- highlight'))
+    .withOnDoubleClick(({ uuid }) => {
       onPipelineSelected(uuid);
     });
 
@@ -153,8 +154,8 @@ const PipelineSearch = ({
           {searchResults.map(pipelineSummary => (
             <Card
               key={pipelineSummary.uuid}
-              onDoubleClick={() => clickCounter.onDoubleClick({uuid: pipelineSummary.uuid})}
-              onClick={() => clickCounter.onSingleClick({uuid: pipelineSummary.uuid})}
+              onDoubleClick={() => clickCounter.onDoubleClick({ uuid: pipelineSummary.uuid })}
+              onClick={() => clickCounter.onSingleClick({ uuid: pipelineSummary.uuid })}
               className="PipelineSearch__result"
               header={pipelineSummary.name}
               meta={pipelineSummary.uuid}
@@ -167,5 +168,24 @@ const PipelineSearch = ({
   );
 };
 
+const RawWithHeader = props => (
+  <WithHeader
+    header={
+      <Header as="h3">
+        <Icon name="tasks" color="grey" />
+        Pipelines
+      </Header>
+    }
+    actionBarItems={<React.Fragment />}
+    content={<RawPipelineSearch {...props} />}
+  />
+);
+
+const PipelineSearch = enhance(RawPipelineSearch);
+const PipelineSearchWithHeader = enhance(RawWithHeader);
+
 PipelineSearch.contextTypes = contextTypes;
-export default enhance(PipelineSearch);
+
+export default PipelineSearch;
+
+export { PipelineSearch, PipelineSearchWithHeader };

@@ -17,9 +17,29 @@ import React from 'react';
 
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
+import { Header, Icon } from 'semantic-ui-react';
+
+import WithHeader from 'components/WithHeader';
 
 const enhance = compose(connect(({ state, props }) => ({}), {}));
 
-const UserSettings = props => <div>User Settings</div>;
+const RawUserSettings = props => <div>User Settings</div>;
 
-export default enhance(UserSettings);
+const RawWithHeader = props => (
+  <WithHeader
+    header={
+      <Header as="h3">
+        <Icon color="grey" name="user" />
+        <Header.Content>Me</Header.Content>
+      </Header>
+    }
+    content={<RawUserSettings {...props} />}
+  />
+);
+
+const UserSettings = enhance(RawUserSettings);
+const UserSettingsWithHeader = enhance(RawWithHeader);
+
+export default UserSettings;
+
+export { UserSettings, UserSettingsWithHeader };
