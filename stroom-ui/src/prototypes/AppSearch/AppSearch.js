@@ -170,9 +170,7 @@ const RawWithHeader = props => (
   />
 );
 
-const AppSearch = enhance(RawAppSearch);
-const AppSearchWithHeader = enhance(RawWithHeader);
+const AppSearch = enhance(RawWithHeader);
 
 export default AppSearch;
 
-export { AppSearch, AppSearchWithHeader };

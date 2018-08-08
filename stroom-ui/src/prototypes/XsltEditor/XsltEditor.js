@@ -25,8 +25,9 @@ import 'brace/keybinding/vim';
 import { compose, lifecycle, renderComponent, branch } from 'recompose';
 import { connect } from 'react-redux';
 import AceEditor from 'react-ace';
-import { Loader, Header, Icon } from 'semantic-ui-react';
+import { Loader, Header } from 'semantic-ui-react';
 
+import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import WithHeader from 'components/WithHeader';
 import { fetchXslt } from './xsltResourceClient';
 import { withConfig } from 'startup/config';
@@ -75,24 +76,24 @@ const RawWithHeader = props => (
   <WithHeader
     header={
       <Header as="h3">
-        <Icon color="grey" name="file" />
-        <Header.Content>Edit XSLT</Header.Content>
+        <img
+          className="doc-ref__icon-large"
+          alt="X"
+          src={require('../../images/docRefTypes/XSLT.svg')}
+        />
+        <Header.Content>
+          <DocRefBreadcrumb docRefUuid={props.xsltId} />
+        </Header.Content>
       </Header>
     }
     content={<RawXsltEditor {...props} />}
   />
 );
 
-const XsltEditorWithHeader = enhance(RawWithHeader);
-const XsltEditor = enhance(RawXsltEditor);
+const XsltEditor = enhance(RawWithHeader);
 
 XsltEditor.propTypes = {
   xsltId: PropTypes.string.isRequired,
 };
 
 export default XsltEditor;
-
-export {
-  XsltEditor,
-  XsltEditorWithHeader
-}

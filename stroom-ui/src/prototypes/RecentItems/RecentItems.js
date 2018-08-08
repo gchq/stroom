@@ -125,9 +125,6 @@ const RawWithHeader = props => (
   />
 );
 
-const RecentItems = enhance(RawRecentItems);
-const RecentItemsWithHeader = enhance(RawWithHeader);
+const RecentItems = enhance(RawWithHeader);
 
 export default RecentItems;
-
-export { RecentItems, RecentItemsWithHeader };

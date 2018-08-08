@@ -52,7 +52,7 @@ const DocTypeFilters = ({
 }) => (
   <React.Fragment>
     <Form.Field>
-      <img className="doc-ref__icon" alt="X" src={require('../../images/docRefTypes/System.svg')} />
+      <img className="doc-ref__icon-small" alt="X" src={require('../../images/docRefTypes/System.svg')} />
       <Checkbox
         label="All"
         indeterminate={allSelectState === ALL_SELECT_STATE.INDETERMINATE}
@@ -71,7 +71,7 @@ const DocTypeFilters = ({
       .map(({ docRefType, isSelected }) => (
         <Form.Field key={docRefType}>
           <img
-            className="doc-ref__icon"
+            className="doc-ref__icon-small"
             alt="X"
             src={require(`../../images/docRefTypes/${docRefType}.svg`)}
           />

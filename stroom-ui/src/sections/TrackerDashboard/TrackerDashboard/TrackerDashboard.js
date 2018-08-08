@@ -323,9 +323,7 @@ const RawWithHeader = props => (
   />
 );
 
-const TrackerDashboard = enhance(RawTrackerDashboard);
-const TrackerDashboardWithHeader = enhance(RawWithHeader);
+const TrackerDashboard = enhance(RawWithHeader);
 
 export default TrackerDashboard;
 
-export { TrackerDashboard, TrackerDashboardWithHeader };

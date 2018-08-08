@@ -315,13 +315,10 @@ const RawWithHeader = (props) => {
   );
 };
 
-const DataViewer = enhance(RawDataViewer);
-const DataViewerWithHeader = enhance(RawWithHeader);
+const DataViewer = enhance(RawWithHeader);
 
 DataViewer.propTypes = {
   dataViewerId: PropTypes.string.isRequired,
 };
 
 export default DataViewer;
-
-export { DataViewer, DataViewerWithHeader };

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import PipelineEditor, { PipelineEditorWithHeader } from './PipelineEditor';
+import PipelineEditor from './PipelineEditor';
 
 import { reducer, actionCreators } from './redux';
 import { fetchPipeline, searchPipelines } from './pipelineResourceClient';
@@ -21,7 +21,6 @@ import { fetchElements, fetchElementProperties } from './elementResourceClient';
 
 export {
   PipelineEditor,
-  PipelineEditorWithHeader,
   reducer,
   fetchPipeline,
   fetchElements,

@@ -23,8 +23,13 @@
   cursor: move;
 }
 
-.doc-ref__icon {
+.doc-ref__icon-small {
   width: 0.7rem;
+  margin-right: 0.3rem;
+}
+
+.doc-ref__icon-large {
+  width: 2rem !important;
   margin-right: 0.3rem;
 }
 

@@ -18,16 +18,17 @@ import PropTypes from 'prop-types';
 
 import { compose, lifecycle, withState, branch, renderComponent, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Header, Icon, Loader } from 'semantic-ui-react';
+import { Header, Loader } from 'semantic-ui-react';
 
 import PanelGroup from 'react-panelgroup';
 
+import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import SavePipeline from './SavePipeline';
 import CreateChildPipeline from './CreateChildPipeline';
 import OpenPipelineSettings from './OpenPipelineSettings';
 
 import { LineContainer, LineTo } from 'components/LineTo';
-import { mapObject } from 'lib/treeUtils';
+import { mapObject, findItem } from 'lib/treeUtils';
 import { getPipelineLayoutInformation } from './pipelineUtils';
 
 import WithHeader from 'components/WithHeader';
@@ -57,9 +58,18 @@ const withElementDetailsOpen = withState('isElementDetailsOpen', 'setElementDeta
 const enhance = compose(
   withConfig,
   connect(
-    (state, props) => ({
-      pipeline: state.pipelineEditor.pipelines[props.pipelineId],
-      elements: state.pipelineEditor.elements,
+    (
+      {
+        docExplorer: {
+          explorerTree: { documentTree },
+        },
+        pipelineEditor: { pipelines, elements },
+      },
+      { pipelineId },
+    ) => ({
+      pipeline: pipelines[pipelineId],
+      elements,
+      docRefWithLineage: findItem(documentTree, pipelineId),
     }),
     {
       // action, needed by lifecycle hook below
@@ -190,19 +200,24 @@ const RawWithHeader = (props) => {
     pipelineId,
     pipeline: {
       pipeline: {
-        docRef: { name },
+        docRef: { name, type },
         description,
       },
     },
+    docRefWithLineage: { lineage },
   } = props;
 
   return (
     <WithHeader
       header={
         <Header as="h3">
-          <Icon name="play" color="grey" />
+          <img
+            className="doc-ref__icon-large"
+            alt="X"
+            src={require(`../../images/docRefTypes/${type}.svg`)}
+          />
           <Header.Content>
-            {name}
+            <DocRefBreadcrumb docRefUuid={pipelineId}/>
             <Header.Subheader>{description}</Header.Subheader>
           </Header.Content>
         </Header>
@@ -219,13 +234,10 @@ const RawWithHeader = (props) => {
   );
 };
 
-const PipelineEditorWithHeader = enhance(RawWithHeader);
-const PipelineEditor = enhance(RawPipelineEditor);
+const PipelineEditor = enhance(RawWithHeader);
 
 PipelineEditor.propTypes = {
   pipelineId: PropTypes.string.isRequired,
 };
 
 export default PipelineEditor;
-
-export { PipelineEditorWithHeader, PipelineEditor };
