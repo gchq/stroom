@@ -27,6 +27,7 @@ import { actionCreators as docExplorerActionCreators } from 'components/DocExplo
 import { withExplorerTree } from 'components/DocExplorer';
 import ActionBarItem from './ActionBarItem';
 import withLocalStorage from 'lib/withLocalStorage';
+import { openDocRef } from 'prototypes/RecentItems';
 
 import logoInWhite from './logo_white.png';
 
@@ -38,17 +39,17 @@ const SIDE_BAR_COLOUR = 'blue';
 
 const pathPrefix = '/s';
 
-const getDocumentTreeMenuItems = (history, treeNode) => ({
+const getDocumentTreeMenuItems = (openDocRef, treeNode) => ({
   key: treeNode.uuid,
   title: treeNode.name,
-  onClick: () => history.push(`/s/doc/${treeNode.type}/${treeNode.uuid}`),
+  onClick: () => openDocRef(treeNode),
   icon: 'folder',
   children:
     treeNode.children &&
     treeNode.children.length > 0 &&
     treeNode.children
       .filter(t => t.type === 'Folder')
-      .map(t => getDocumentTreeMenuItems(history, t)),
+      .map(t => getDocumentTreeMenuItems(openDocRef, t)),
 });
 
 const enhance = compose(
@@ -68,6 +69,7 @@ const enhance = compose(
     }),
     {
       menuItemOpened,
+      openDocRef,
     },
   ),
   withRouter,
@@ -82,6 +84,7 @@ const enhance = compose(
     isExpanded,
     setIsExpanded,
     history,
+    openDocRef,
     
     actionBarItems,
     documentTree,
@@ -99,7 +102,7 @@ const enhance = compose(
         onClick: () => history.push(`${pathPrefix}/welcome/`),
         icon: 'home',
       },
-      getDocumentTreeMenuItems(history, documentTree),
+      getDocumentTreeMenuItems(d => openDocRef(history, d), documentTree),
       {
         key: 'data',
         title: 'Data',
