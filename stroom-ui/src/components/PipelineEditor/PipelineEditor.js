@@ -18,14 +18,19 @@ import PropTypes from 'prop-types';
 
 import { compose, lifecycle, withState, branch, renderComponent, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Icon, Loader } from 'semantic-ui-react';
+import { Header, Icon, Loader } from 'semantic-ui-react';
 
 import PanelGroup from 'react-panelgroup';
+
+import SavePipeline from './SavePipeline';
+import CreateChildPipeline from './CreateChildPipeline';
+import OpenPipelineSettings from './OpenPipelineSettings';
 
 import { LineContainer, LineTo } from 'components/LineTo';
 import { mapObject } from 'lib/treeUtils';
 import { getPipelineLayoutInformation } from './pipelineUtils';
 
+import WithHeader from 'components/WithHeader';
 import PipelineSettings from './PipelineSettings';
 import PipelineElement from './PipelineElement';
 import ElementPalette from './ElementPalette';
@@ -35,7 +40,7 @@ import Bin from './Bin';
 import lineElementCreators from './pipelineLineElementCreators';
 import { ElementDetails } from './ElementDetails';
 
-import { fetchPipeline } from './pipelineResourceClient';
+import { fetchPipeline, savePipeline } from './pipelineResourceClient';
 import { fetchElements, fetchElementProperties } from './elementResourceClient';
 import { withConfig } from 'startup/config';
 
@@ -47,7 +52,6 @@ const COMMON_ELEMENT_STYLE = {
   position: 'absolute',
 };
 
-const withPaletteOpen = withState('isPaletteOpen', 'setPaletteOpen', true);
 const withElementDetailsOpen = withState('isElementDetailsOpen', 'setElementDetailsOpen', false);
 
 const enhance = compose(
@@ -60,6 +64,7 @@ const enhance = compose(
     {
       // action, needed by lifecycle hook below
       fetchPipeline,
+      savePipeline,
       fetchElements,
       fetchElementProperties,
     },
@@ -87,11 +92,8 @@ const enhance = compose(
     ({ elements: { elements } }) => !elements,
     renderComponent(() => <Loader active>Loading Elements</Loader>),
   ),
-  withPaletteOpen,
   withElementDetailsOpen,
-  withProps(({
-    pipelineId, pipeline: { asTree }, setPaletteOpen, isPaletteOpen,
-  }) => ({
+  withProps(({ pipelineId, pipeline: { asTree } }) => ({
     elementStyles: mapObject(getPipelineLayoutInformation(asTree), (l) => {
       const index = l.verticalPos - 1;
       const fromTop = VERTICAL_START_PX + index * VERTICAL_SPACING;
@@ -106,26 +108,20 @@ const enhance = compose(
   })),
 );
 
-const PipelineEditor = ({
+const RawPipelineEditor = ({
   pipelineId,
   pipeline: { pipeline, isDirty, isSaving },
-  isPaletteOpen,
-  setPaletteOpen,
   isElementDetailsOpen,
   setElementDetailsOpen,
   editorClassName,
   elementStyles,
 }) => (
-  <div className={`Pipeline-editor Pipeline-editor--palette-${isPaletteOpen ? 'open' : 'close'}`}>
+  <div className="Pipeline-editor">
     <DeletePipelineElement pipelineId={pipelineId} />
     <PipelineSettings pipelineId={pipelineId} />
     <div className="Pipeline-editor__element-palette">
       <ElementPalette pipelineId={pipelineId} />
     </div>
-
-    <button className="Pipeline-editor__palette-toggle" onClick={() => setPaletteOpen(!isPaletteOpen)}>
-      {isPaletteOpen ? <Icon name="caret left" /> : <Icon name="caret right" />}
-    </button>
 
     <PanelGroup
       direction="column"
@@ -189,8 +185,47 @@ const PipelineEditor = ({
   </div>
 );
 
+const RawWithHeader = (props) => {
+  const {
+    pipelineId,
+    pipeline: {
+      pipeline: {
+        docRef: { name },
+        description,
+      },
+    },
+  } = props;
+
+  return (
+    <WithHeader
+      header={
+        <Header as="h3">
+          <Icon name="play" color="grey" />
+          <Header.Content>
+            {name}
+            <Header.Subheader>{description}</Header.Subheader>
+          </Header.Content>
+        </Header>
+      }
+      actionBarItems={
+        <React.Fragment>
+          <SavePipeline {...props} />
+          <CreateChildPipeline {...props} />
+          <OpenPipelineSettings {...props} />
+        </React.Fragment>
+      }
+      content={<RawPipelineEditor {...props} />}
+    />
+  );
+};
+
+const PipelineEditorWithHeader = enhance(RawWithHeader);
+const PipelineEditor = enhance(RawPipelineEditor);
+
 PipelineEditor.propTypes = {
   pipelineId: PropTypes.string.isRequired,
 };
 
-export default enhance(PipelineEditor);
+export default PipelineEditor;
+
+export { PipelineEditorWithHeader, PipelineEditor };

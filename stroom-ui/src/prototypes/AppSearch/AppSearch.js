@@ -18,9 +18,10 @@ import React from 'react';
 
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
-import { Menu, Input, Breadcrumb, Popup, Button } from 'semantic-ui-react';
+import { Menu, Input, Breadcrumb, Popup, Button, Header, Icon } from 'semantic-ui-react';
 import { withRouter } from 'react-router-dom';
 
+import WithHeader from 'components/WithHeader';
 import { actionCreators as appSearchActionCreators } from './redux';
 import { withExplorerTree } from 'components/DocExplorer';
 import { DocTypeFilters } from 'components/DocRefTypes';
@@ -64,7 +65,7 @@ const enhance = compose(
   ),
 );
 
-class AppSearchContent extends React.Component {
+class RawAppSearch extends React.Component {
   componentDidMount() {
     // We need to prevent up and down keys from moving the cursor around in the input
 
@@ -157,4 +158,21 @@ class AppSearchContent extends React.Component {
   }
 }
 
-export default enhance(AppSearchContent);
+const RawWithHeader = props => (
+  <WithHeader
+    header={
+      <Header as="h3">
+        <Icon color="grey" name="search" />
+        <Header.Content>Search</Header.Content>
+      </Header>
+    }
+    content={<RawAppSearch {...props} />}
+  />
+);
+
+const AppSearch = enhance(RawAppSearch);
+const AppSearchWithHeader = enhance(RawWithHeader);
+
+export default AppSearch;
+
+export { AppSearch, AppSearchWithHeader };

@@ -1,25 +1,30 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { compose } from 'recompose';
-
-import withPipeline from './withPipeline';
-import ActionBarItem from 'sections/AppChrome/ActionBarItem';
-import { savePipeline } from './pipelineResourceClient';
-
-const enhance = compose(withPipeline({ savePipeline }));
+import { Button, Popup } from 'semantic-ui-react';
 
 const SavePipeline = ({ pipeline: { isSaving, isDirty }, savePipeline, pipelineId }) => (
-  <ActionBarItem
-    buttonProps={{ icon: 'save', color: isDirty ? 'blue' : undefined, loading: isSaving }}
+  <Popup
+    trigger={
+      <Button
+        floated="right"
+        circular
+        icon="save"
+        color={isDirty ? 'blue' : undefined}
+        loading={isSaving}
+        onClick={() => {
+          if (isDirty) savePipeline(pipelineId);
+        }}
+      />
+    }
     content={isDirty ? 'Save changes' : 'Changes saved'}
-    onClick={() => {
-      if (isDirty) savePipeline(pipelineId);
-    }}
   />
 );
 
 SavePipeline.propTypes = {
   pipelineId: PropTypes.string.isRequired,
+  pipeline: PropTypes.object.isRequired,
+  savePipeline: PropTypes.func.isRequired,
 };
 
-export default enhance(SavePipeline);
+export default SavePipeline;

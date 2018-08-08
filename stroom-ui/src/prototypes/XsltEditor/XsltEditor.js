@@ -25,8 +25,9 @@ import 'brace/keybinding/vim';
 import { compose, lifecycle, renderComponent, branch } from 'recompose';
 import { connect } from 'react-redux';
 import AceEditor from 'react-ace';
-import { Loader } from 'semantic-ui-react';
+import { Loader, Header, Icon } from 'semantic-ui-react';
 
+import WithHeader from 'components/WithHeader';
 import { fetchXslt } from './xsltResourceClient';
 import { withConfig } from 'startup/config';
 
@@ -52,7 +53,7 @@ const enhance = compose(
   branch(({ xslt }) => !xslt, renderComponent(() => <Loader active>Loading XSLT</Loader>)),
 );
 
-const XsltEditor = ({ xsltId, xslt, xsltUpdated }) => (
+const RawXsltEditor = ({ xsltId, xslt, xsltUpdated }) => (
   <div className="xslt-editor">
     <div className="xslt-editor__ace-container">
       <AceEditor
@@ -70,8 +71,28 @@ const XsltEditor = ({ xsltId, xslt, xsltUpdated }) => (
   </div>
 );
 
+const RawWithHeader = props => (
+  <WithHeader
+    header={
+      <Header as="h3">
+        <Icon color="grey" name="file" />
+        <Header.Content>Edit XSLT</Header.Content>
+      </Header>
+    }
+    content={<RawXsltEditor {...props} />}
+  />
+);
+
+const XsltEditorWithHeader = enhance(RawWithHeader);
+const XsltEditor = enhance(RawXsltEditor);
+
 XsltEditor.propTypes = {
   xsltId: PropTypes.string.isRequired,
 };
 
-export default enhance(XsltEditor);
+export default XsltEditor;
+
+export {
+  XsltEditor,
+  XsltEditorWithHeader
+}

@@ -2,8 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
+import { Button, Popup } from 'semantic-ui-react';
 
-import ActionBarItem from 'sections/AppChrome/ActionBarItem';
 import { actionCreators } from './redux';
 
 const { startInheritedPipeline } = actionCreators;
@@ -11,10 +11,16 @@ const { startInheritedPipeline } = actionCreators;
 const enhance = compose(connect((state, props) => ({}), { startInheritedPipeline }));
 
 const CreateChildPipeline = ({ pipelineId, startInheritedPipeline }) => (
-  <ActionBarItem
-    buttonProps={{ icon: 'recycle' }}
+  <Popup
+    trigger={
+      <Button
+        floated="right"
+        circular
+        icon="recycle"
+        onClick={() => startInheritedPipeline(pipelineId)}
+      />
+    }
     content="Create a child pipeline, using this one as a parent"
-    onClick={() => startInheritedPipeline(pipelineId)}
   />
 );
 

@@ -19,18 +19,18 @@ import PropTypes, { object } from 'prop-types';
 import { connect } from 'react-redux';
 import { compose, lifecycle, withProps } from 'recompose';
 import { withRouter } from 'react-router-dom';
-import { Button, Menu, Icon, Header, Grid } from 'semantic-ui-react';
+import { Button, Menu, Icon, Header, Grid, Popup } from 'semantic-ui-react';
 import Mousetrap from 'mousetrap';
 
 import { actionCreators as appChromeActionCreators } from './redux';
 import { actionCreators as docExplorerActionCreators } from 'components/DocExplorer/redux';
 import { withExplorerTree } from 'components/DocExplorer';
-import ActionBarItem from './ActionBarItem';
 import withLocalStorage from 'lib/withLocalStorage';
+import { openDocRef } from 'prototypes/RecentItems';
 
 import logoInWhite from './logo_white.png';
 
-const {menuItemOpened} = appChromeActionCreators;
+const { menuItemOpened } = appChromeActionCreators;
 
 const withIsExpanded = withLocalStorage('isExpanded', 'setIsExpanded', true);
 
@@ -38,17 +38,17 @@ const SIDE_BAR_COLOUR = 'blue';
 
 const pathPrefix = '/s';
 
-const getDocumentTreeMenuItems = (history, treeNode) => ({
+const getDocumentTreeMenuItems = (openDocRef, treeNode) => ({
   key: treeNode.uuid,
   title: treeNode.name,
-  onClick: () => history.push(`/s/doc/${treeNode.type}/${treeNode.uuid}`),
+  onClick: () => openDocRef(treeNode),
   icon: 'folder',
   children:
     treeNode.children &&
     treeNode.children.length > 0 &&
     treeNode.children
       .filter(t => t.type === 'Folder')
-      .map(t => getDocumentTreeMenuItems(history, t)),
+      .map(t => getDocumentTreeMenuItems(openDocRef, t)),
 });
 
 const enhance = compose(
@@ -68,23 +68,20 @@ const enhance = compose(
     }),
     {
       menuItemOpened,
+      openDocRef,
     },
   ),
   withRouter,
   withIsExpanded,
   lifecycle({
     componentDidMount() {
-      //Mousetrap.bind('ctrl+shift+e', () => this.props.recentItemsOpened());
-      //Mousetrap.bind('ctrl+shift+f', () => this.props.appSearchOpened());
+      Mousetrap.bind('ctrl+shift+e', () => this.props.history.push('/s/recentItems'));
+      Mousetrap.bind('ctrl+shift+f', () => this.props.history.push('/s/search'));
     },
   }),
   withProps(({
-    isExpanded,
-    setIsExpanded,
-    history,
-    
-    actionBarItems,
-    documentTree,
+    isExpanded, setIsExpanded, history, openDocRef,
+    actionBarItems, documentTree,
   }) => ({
     menuItems: [
       {
@@ -99,7 +96,7 @@ const enhance = compose(
         onClick: () => history.push(`${pathPrefix}/welcome/`),
         icon: 'home',
       },
-      getDocumentTreeMenuItems(history, documentTree),
+      getDocumentTreeMenuItems(d => openDocRef(history, d), documentTree),
       {
         key: 'data',
         title: 'Data',
@@ -166,7 +163,12 @@ const getExpandedMenuItems = (menuItems, menuItemsOpen, menuItemOpened, depth = 
       <div
         className="sidebar__menu-item"
         style={{ marginLeft: `${depth * 0.7}rem` }}
-        onClick={menuItem.onClick}
+        onClick={() => {
+          if (menuItem.children) {
+            menuItemOpened(menuItem.key, !menuItemsOpen[menuItem.key])
+          }
+          menuItem.onClick();
+        }}
       >
         {menuItem.children && menuItem.children.length > 0 ? (
           <Icon
@@ -187,16 +189,15 @@ const getExpandedMenuItems = (menuItems, menuItemsOpen, menuItemOpened, depth = 
     </React.Fragment>
   ));
 
-const getContractedMenuItems = (menuItems) =>
-  menuItems
-    .map(menuItem => (
-      <React.Fragment key={menuItem.key}>
-        {!menuItem.children && // just put the children of menu items into the sidebar
-          <Button key={menuItem.title} icon={menuItem.icon} onClick={menuItem.onClick} />}
-        {menuItem.children &&
-          getContractedMenuItems(menuItem.children)}
-      </React.Fragment>
-    ));
+const getContractedMenuItems = menuItems =>
+  menuItems.map(menuItem => (
+    <React.Fragment key={menuItem.key}>
+      {!menuItem.children && ( // just put the children of menu items into the sidebar
+        <Button key={menuItem.title} icon={menuItem.icon} onClick={menuItem.onClick} />
+      )}
+      {menuItem.children && getContractedMenuItems(menuItem.children)}
+    </React.Fragment>
+  ));
 
 const AppChrome = ({
   headerContent,
@@ -222,18 +223,7 @@ const AppChrome = ({
     </div>
     <div className="app-chrome__content">
       <div className="content-tabs">
-        <div className="content-tabs__content">
-          <Grid className="content-tabs__grid">
-            <Grid.Column width={8}>
-              <Header as="h3">
-                <Icon name={icon} color="grey" />
-                {headerContent}
-              </Header>
-            </Grid.Column>
-            <Grid.Column width={8}>{actionBarItems}</Grid.Column>
-          </Grid>
-          {content}
-        </div>
+        <div className="content-tabs__content">{content}</div>
       </div>
     </div>
   </div>
@@ -247,10 +237,8 @@ AppChrome.contextTypes = {
 };
 
 AppChrome.propTypes = {
-  icon: PropTypes.string.isRequired,
-  headerContent: PropTypes.object.isRequired,
+  activeMenuItem: PropTypes.string.isRequired,
   content: PropTypes.object.isRequired,
-  actionBarItems: PropTypes.object,
 };
 
 export default enhance(AppChrome);

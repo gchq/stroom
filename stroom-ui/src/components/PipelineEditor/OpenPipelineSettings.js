@@ -2,8 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
+import { Button, Popup } from 'semantic-ui-react';
 
-import ActionBarItem from 'sections/AppChrome/ActionBarItem';
 import { actionCreators } from './redux';
 
 const { pipelineSettingsOpened } = actionCreators;
@@ -11,10 +11,16 @@ const { pipelineSettingsOpened } = actionCreators;
 const enhance = compose(connect((state, props) => ({}), { pipelineSettingsOpened }));
 
 const OpenPipelineSettings = ({ pipelineId, pipelineSettingsOpened }) => (
-  <ActionBarItem
-    buttonProps={{ icon: 'cogs' }}
+  <Popup
+    trigger={
+      <Button
+        floated="right"
+        circular
+        icon="cogs"
+        onClick={() => pipelineSettingsOpened(pipelineId)}
+      />
+    }
     content="Edit the settings for this pipeline"
-    onClick={() => pipelineSettingsOpened(pipelineId)}
   />
 );
 

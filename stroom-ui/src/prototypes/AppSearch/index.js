@@ -1,7 +1,7 @@
-import AppSearch from './AppSearch';
+import AppSearch, { AppSearchWithHeader } from './AppSearch';
 
 import { actionCreators, reducer } from './redux';
 
-export { AppSearch, actionCreators, reducer };
+export { AppSearch, AppSearchWithHeader, actionCreators, reducer };
 
 export default AppSearch;

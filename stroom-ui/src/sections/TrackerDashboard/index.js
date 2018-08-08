@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-import TrackerDashboard from './TrackerDashboard/TrackerDashboard';
+import TrackerDashboard, { TrackerDashboardWithHeader } from './TrackerDashboard/TrackerDashboard';
+import { default as reducer } from './redux';
 
-export { default as reducer } from './redux';
+export { reducer, TrackerDashboardWithHeader };
+
 export default TrackerDashboard;
