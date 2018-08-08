@@ -62,6 +62,7 @@ import java.util.stream.StreamSupport;
  * DO NOT mutate a key/value buffer inside a txn unless the DB is in MDB_WRITEMAP mode.
  * DO NOT use/mutate a value buffer outside of a txn as its content is indeterminate outside the txn
  * and belongs to LMDB.
+ * DO ensure any {@link PooledByteBuffer}s are released/closed after use.
  *
  * @param <K> The class of the database keys
  * @param <V> The class of the database values
