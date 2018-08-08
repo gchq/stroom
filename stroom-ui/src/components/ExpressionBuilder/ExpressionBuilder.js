@@ -16,7 +16,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose, withState, branch, renderComponent, withProps } from 'recompose';
+import { compose, withState, branch, renderComponent, withProps, lifecycle } from 'recompose';
 import { connect } from 'react-redux';
 import { Loader } from 'semantic-ui-react';
 
@@ -55,20 +55,25 @@ const enhance = compose(
     },
   ),
   withSetEditableByUser,
+  lifecycle({
+    componentDidMount() {
+      this.props.setEditableByUser(this.props.editMode);
+    },
+  }),
   branch(
     ({ expression }) => !expression,
     renderComponent(() => <Loader active>Loading Expression</Loader>),
   ),
-  withProps(({ allowEdit, dataSource }) => ({
-    allowEdit: allowEdit && !!dataSource,
+  withProps(({ showModeToggle, dataSource }) => ({
+    showModeToggle: showModeToggle && !!dataSource,
   })),
-  branch(({ allowEdit }) => !allowEdit, renderComponent(ROExpressionBuilder)),
 );
 
 const ExpressionBuilder = ({
   expressionId,
   dataSource,
   expression,
+  showModeToggle,
   inEditMode,
   setEditableByUser,
 }) => {
@@ -92,12 +97,16 @@ const ExpressionBuilder = ({
       lineContextId={`expression-lines-${expressionId}`}
       lineElementCreators={lineElementCreators}
     >
-      <Checkbox
-        label="Edit Mode"
-        toggle
-        checked={inEditMode}
-        onChange={() => setEditableByUser(!inEditMode)}
-      />
+      {showModeToggle ? (
+        <Checkbox
+          label="Edit Mode"
+          toggle
+          checked={inEditMode}
+          onChange={() => setEditableByUser(!inEditMode)}
+        />
+      ) : (
+        undefined
+      )}
       {inEditMode ? editOperator : roOperator}
     </LineContainer>
   );
@@ -108,11 +117,12 @@ const EnhancedExpressionBuilder = enhance(ExpressionBuilder);
 EnhancedExpressionBuilder.propTypes = {
   dataSourceUuid: PropTypes.string, // if not set, the expression will be read only
   expressionId: PropTypes.string.isRequired,
-  allowEdit: PropTypes.bool.isRequired,
+  showModeToggle: PropTypes.bool.isRequired,
+  editMode: PropTypes.bool,
 };
 
 EnhancedExpressionBuilder.defaultProps = {
-  allowEdit: false,
+  showModeToggle: false,
 };
 
 export default EnhancedExpressionBuilder;

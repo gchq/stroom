@@ -81,9 +81,13 @@ const enhance = compose(
   lifecycle({
     componentDidMount() {
       const {
-        search, dataViewerId, pageSize, pageOffset,
+        search, dataViewerId, pageSize, pageOffset, selectedRow
       } = this.props;
-      search(dataViewerId, pageOffset, pageSize);
+      // If we're got a selectedRow that means the user has already been to this page. 
+      // Re-doing the search will wipe out their previous location, and we want to remember it.
+      if(!selectedRow){
+        search(dataViewerId, pageOffset, pageSize);
+      }
     },
   }),
   branch(

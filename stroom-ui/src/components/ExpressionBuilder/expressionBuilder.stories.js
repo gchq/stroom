@@ -62,17 +62,28 @@ storiesOf('Expression Builder', module)
   })) // must be recorder after/outside of the test initialisation decorators
   .addDecorator(DragDropDecorator)
   .add('Populated Editable', () => (
-    <ExpressionBuilder allowEdit dataSourceUuid="testDs" expressionId="populatedExEdit" />
+    <ExpressionBuilder showModeToggle dataSourceUuid="testDs" expressionId="populatedExEdit" />
   ))
   .add('Populated ReadOnly', () => (
     <ExpressionBuilder dataSourceUuid="testDs" expressionId="populatedExRO" />
   ))
   .add('Simplest Editable', () => (
-    <ExpressionBuilder allowEdit dataSourceUuid="testDs" expressionId="simplestEx" />
+    <ExpressionBuilder showModeToggle dataSourceUuid="testDs" expressionId="simplestEx" />
   ))
   .add('Missing Data Source (read only)', () => (
     <ExpressionBuilder dataSourceUuid="missingDs" expressionId="populatedExNoDs" />
   ))
   .add('Missing Expression', () => (
     <ExpressionBuilder dataSourceUuid="testDs" expressionId="missingEx" />
+  ))
+  .add('Hide mode toggle', () => (
+    <ExpressionBuilder showModeToggle={false} dataSourceUuid="testDs" expressionId="simplestEx" />
+  ))
+  .add('Hide mode toggle but be in edit mode', () => (
+    <ExpressionBuilder
+      showModeToggle={false}
+      editMode
+      dataSourceUuid="testDs"
+      expressionId="simplestEx"
+    />
   ));
