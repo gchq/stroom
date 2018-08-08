@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React from 'react';
 import { connect } from 'react-redux';
 import { compose, lifecycle } from 'recompose';
-import { Loader } from 'semantic-ui-react';
 import { fetchDocRefTypes } from 'components/DocExplorer/explorerClient';
 import { withConfig } from 'startup/config';
 

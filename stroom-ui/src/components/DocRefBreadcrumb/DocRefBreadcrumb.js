@@ -58,4 +58,8 @@ const DocRefBreadcrumb = ({
   </Breadcrumb>
 );
 
+DocRefBreadcrumb.propTypes = {
+  docRefUuid: PropTypes.string.isRequired
+}
+
 export default enhance(DocRefBreadcrumb);

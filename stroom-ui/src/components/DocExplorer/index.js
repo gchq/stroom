@@ -17,7 +17,6 @@ import DocExplorer from './DocExplorer';
 import DocRefInfoModal from './DocRefInfoModal';
 import withExplorerTree from './withExplorerTree';
 import explorerClient from './explorerClient';
-import ActionBarItems from './ActionBarItems';
 import NewDocDialog from './NewDocDialog';
 
 export {
@@ -25,7 +24,6 @@ export {
   DocRefInfoModal,
   withExplorerTree,
   explorerClient,
-  ActionBarItems,
   NewDocDialog,
 };
 

@@ -27,10 +27,12 @@ import { connect } from 'react-redux';
 import AceEditor from 'react-ace';
 import { Loader, Header } from 'semantic-ui-react';
 
+import SaveXslt from './SaveXslt';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import WithHeader from 'components/WithHeader';
 import { fetchXslt } from './xsltResourceClient';
 import { withConfig } from 'startup/config';
+import { saveXslt } from './xsltResourceClient';
 
 import { actionCreators } from './redux';
 
@@ -42,7 +44,7 @@ const enhance = compose(
     (state, props) => ({
       xslt: state.xslt[props.xsltId],
     }),
-    { fetchXslt, xsltUpdated },
+    { fetchXslt, xsltUpdated, saveXslt },
   ),
   lifecycle({
     componentDidMount() {
@@ -87,6 +89,11 @@ const RawWithHeader = props => (
       </Header>
     }
     content={<RawXsltEditor {...props} />}
+    actionBarItems={
+      <React.Fragment>
+        <SaveXslt {...props} />
+      </React.Fragment>
+    }
   />
 );
 

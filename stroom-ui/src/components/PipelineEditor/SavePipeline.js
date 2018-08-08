@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { compose } from 'recompose';
 import { Button, Popup } from 'semantic-ui-react';
 
 const SavePipeline = ({ pipeline: { isSaving, isDirty }, savePipeline, pipelineId }) => (

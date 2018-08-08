@@ -19,11 +19,10 @@ import PropTypes, { object } from 'prop-types';
 import { connect } from 'react-redux';
 import { compose, lifecycle, withProps } from 'recompose';
 import { withRouter } from 'react-router-dom';
-import { Button, Menu, Icon, Header, Grid, Popup } from 'semantic-ui-react';
+import { Button, Icon } from 'semantic-ui-react';
 import Mousetrap from 'mousetrap';
 
 import { actionCreators as appChromeActionCreators } from './redux';
-import { actionCreators as docExplorerActionCreators } from 'components/DocExplorer/redux';
 import { withExplorerTree } from 'components/DocExplorer';
 import withLocalStorage from 'lib/withLocalStorage';
 import { openDocRef } from 'prototypes/RecentItems';

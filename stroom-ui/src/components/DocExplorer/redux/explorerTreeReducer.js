@@ -88,10 +88,6 @@ const defaultState = {
   isDocRefTypeListReady: false,
 };
 
-function getIsValidFilterTerm(filterTerm) {
-  return !!filterTerm && filterTerm.length > 1; // at least 2 characters
-}
-
 function getUpdatedExplorer(documentTree, explorer) {
   const typeFilterFunc = (l, n) =>
     !explorer.typeFilters || explorer.typeFilters.length === 0 || explorer.typeFilters.includes(n.type);

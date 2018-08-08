@@ -28,7 +28,7 @@ import CreateChildPipeline from './CreateChildPipeline';
 import OpenPipelineSettings from './OpenPipelineSettings';
 
 import { LineContainer, LineTo } from 'components/LineTo';
-import { mapObject, findItem } from 'lib/treeUtils';
+import { mapObject } from 'lib/treeUtils';
 import { getPipelineLayoutInformation } from './pipelineUtils';
 
 import WithHeader from 'components/WithHeader';
@@ -69,7 +69,6 @@ const enhance = compose(
     ) => ({
       pipeline: pipelines[pipelineId],
       elements,
-      docRefWithLineage: findItem(documentTree, pipelineId),
     }),
     {
       // action, needed by lifecycle hook below
@@ -200,11 +199,10 @@ const RawWithHeader = (props) => {
     pipelineId,
     pipeline: {
       pipeline: {
-        docRef: { name, type },
+        docRef: { type },
         description,
       },
-    },
-    docRefWithLineage: { lineage },
+    }
   } = props;
 
   return (

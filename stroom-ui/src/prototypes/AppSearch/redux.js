@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { createActions, handleActions, combineActions } from 'redux-actions';
+import { createActions, handleActions } from 'redux-actions';
 import * as JsSearch from 'js-search';
 
 import { iterateNodes } from 'lib/treeUtils';
