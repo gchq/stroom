@@ -5,9 +5,10 @@ import { path } from 'ramda';
 import { connect } from 'react-redux';
 import { compose, withProps } from 'recompose';
 import { withRouter } from 'react-router-dom';
-import { Header, Breadcrumb, Icon, Grid } from 'semantic-ui-react';
+import { Header, Breadcrumb, Icon } from 'semantic-ui-react';
 
 import { actionCreators } from './redux';
+import WithHeader from 'components/WithHeader';
 import { openDocRef } from 'prototypes/RecentItems';
 import { findItem } from 'lib/treeUtils';
 import ClickCounter from 'lib/ClickCounter';
@@ -143,35 +144,36 @@ const RawWithHeader = (props) => {
   } = props;
 
   return (
-    <React.Fragment>
-      <Grid className="content-tabs__grid">
-        <Grid.Column width={8}>
-          <Header as="h3">
-            <Icon name="folder" color="grey" />
-            <Header.Content>
-              <Breadcrumb>
-                {lineage.map(l => (
-                  <React.Fragment key={l.uuid}>
-                    <Breadcrumb.Section link onClick={() => openDocRef(l)}>
-                      {l.name}
-                    </Breadcrumb.Section>
-                    <Breadcrumb.Divider />
-                  </React.Fragment>
-                ))}
+    <WithHeader
+      header={
+        <Header as="h3">
+          <Icon name="folder" color="grey" />
+          <Header.Content>
+            <Breadcrumb>
+              {lineage.map(l => (
+                <React.Fragment key={l.uuid}>
+                <Breadcrumb.Divider />
+                  <Breadcrumb.Section link onClick={() => openDocRef(l)}>
+                    {l.name}
+                  </Breadcrumb.Section>
+                </React.Fragment>
+              ))}
 
-                <Breadcrumb.Section active>{node.name}</Breadcrumb.Section>
-              </Breadcrumb>
-            </Header.Content>
-          </Header>
-        </Grid.Column>
-        <Grid.Column width={8}>{/* action bar items will go here */}</Grid.Column>
-      </Grid>
-      <RawFolderExplorer {...props} />
-    </React.Fragment>
+                  <Breadcrumb.Divider />
+              <Breadcrumb.Section active>
+                {node.name}
+              </Breadcrumb.Section>
+            </Breadcrumb>
+          </Header.Content>
+        </Header>
+      }
+      actionBarItems={<React.Fragment />}
+      content={<RawFolderExplorer {...props} />}
+    />
   );
 };
 
-const WithHeader = enhance(RawWithHeader);
+const FolderExplorerWithHeader = enhance(RawWithHeader);
 const FolderExplorer = enhance(RawFolderExplorer);
 
 FolderExplorer.propTypes = {
@@ -180,4 +182,4 @@ FolderExplorer.propTypes = {
 
 export default FolderExplorer;
 
-export { FolderExplorer, WithHeader };
+export { FolderExplorer, FolderExplorerWithHeader };

@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 
 import { compose, lifecycle, withState, branch, renderComponent, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Grid, Header, Icon, Loader } from 'semantic-ui-react';
+import { Header, Icon, Loader } from 'semantic-ui-react';
 
 import PanelGroup from 'react-panelgroup';
 
@@ -30,6 +30,7 @@ import { LineContainer, LineTo } from 'components/LineTo';
 import { mapObject } from 'lib/treeUtils';
 import { getPipelineLayoutInformation } from './pipelineUtils';
 
+import WithHeader from 'components/WithHeader';
 import PipelineSettings from './PipelineSettings';
 import PipelineElement from './PipelineElement';
 import ElementPalette from './ElementPalette';
@@ -92,9 +93,7 @@ const enhance = compose(
     renderComponent(() => <Loader active>Loading Elements</Loader>),
   ),
   withElementDetailsOpen,
-  withProps(({
-    pipelineId, pipeline: { asTree },
-  }) => ({
+  withProps(({ pipelineId, pipeline: { asTree } }) => ({
     elementStyles: mapObject(getPipelineLayoutInformation(asTree), (l) => {
       const index = l.verticalPos - 1;
       const fromTop = VERTICAL_START_PX + index * VERTICAL_SPACING;
@@ -117,7 +116,7 @@ const RawPipelineEditor = ({
   editorClassName,
   elementStyles,
 }) => (
-  <div className='Pipeline-editor'>
+  <div className="Pipeline-editor">
     <DeletePipelineElement pipelineId={pipelineId} />
     <PipelineSettings pipelineId={pipelineId} />
     <div className="Pipeline-editor__element-palette">
@@ -198,29 +197,29 @@ const RawWithHeader = (props) => {
   } = props;
 
   return (
-    <React.Fragment>
-      <Grid className="content-tabs__grid">
-        <Grid.Column width={8}>
-          <Header as="h3">
-            <Icon name="play" color="grey" />
-            <Header.Content>
-              {name}
-              <Header.Subheader>{description}</Header.Subheader>
-            </Header.Content>
-          </Header>
-        </Grid.Column>
-        <Grid.Column width={8}>
+    <WithHeader
+      header={
+        <Header as="h3">
+          <Icon name="play" color="grey" />
+          <Header.Content>
+            {name}
+            <Header.Subheader>{description}</Header.Subheader>
+          </Header.Content>
+        </Header>
+      }
+      actionBarItems={
+        <React.Fragment>
           <SavePipeline {...props} />
           <CreateChildPipeline {...props} />
           <OpenPipelineSettings {...props} />
-        </Grid.Column>
-      </Grid>
-      <RawPipelineEditor {...props} />
-    </React.Fragment>
+        </React.Fragment>
+      }
+      content={<RawPipelineEditor {...props} />}
+    />
   );
 };
 
-const WithHeader = enhance(RawWithHeader);
+const PipelineEditorWithHeader = enhance(RawWithHeader);
 const PipelineEditor = enhance(RawPipelineEditor);
 
 PipelineEditor.propTypes = {
@@ -229,4 +228,4 @@ PipelineEditor.propTypes = {
 
 export default PipelineEditor;
 
-export { WithHeader, PipelineEditor };
+export { PipelineEditorWithHeader, PipelineEditor };

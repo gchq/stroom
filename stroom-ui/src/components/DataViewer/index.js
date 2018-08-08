@@ -1,7 +1,6 @@
 import { reducer } from './redux';
-import ActionBarItems from './ActionBarItems';
-import DataViewer from './DataViewer';
+import DataViewer, { DataViewerWithHeader } from './DataViewer';
 
 export default DataViewer;
 
-export { reducer, ActionBarItems };
+export { reducer, DataViewer, DataViewerWithHeader };

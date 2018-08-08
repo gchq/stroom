@@ -29,11 +29,13 @@ import Mousetrap from 'mousetrap';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
 
-import { Loader, Popup, Icon } from 'semantic-ui-react';
+import { Header, Loader, Popup, Icon } from 'semantic-ui-react';
 
+import WithHeader from 'components/WithHeader';
 import { withConfig } from 'startup/config';
 import { search, getDetailsForSelectedRow } from './streamAttributeMapClient';
 import { getDataForSelectedRow } from './dataResourceClient';
+import MysteriousPagination from './MysteriousPagination';
 import DataDetails from './DataDetails';
 import DetailsTabs from './DetailsTabs';
 import withLocalStorage from 'lib/withLocalStorage';
@@ -90,7 +92,7 @@ const enhance = compose(
   ),
 );
 
-const DataViewer = ({
+const RawDataViewer = ({
   dataViewerId,
   streamAttributeMaps,
   pageOffset,
@@ -110,10 +112,10 @@ const DataViewer = ({
   detailsHeight,
   setDetailsHeight,
 }) => {
-  // We need to parse these because localstorage, which is 
+  // We need to parse these because localstorage, which is
   // where these come from, is always string.
-  listHeight = Number.parseInt(listHeight)
-  detailsHeight = Number.parseInt(detailsHeight)
+  listHeight = Number.parseInt(listHeight);
+  detailsHeight = Number.parseInt(detailsHeight);
 
   const onRowSelected = (dataViewerId, selectedRow) => {
     selectRow(dataViewerId, selectedRow);
@@ -255,10 +257,10 @@ const DataViewer = ({
           <PanelGroup
             direction="column"
             panelWidths={[
-              { 
+              {
                 resize: 'dynamic',
-                minSize:100,
-                size: listHeight
+                minSize: 100,
+                size: listHeight,
               },
               {
                 resize: 'dynamic',
@@ -266,9 +268,9 @@ const DataViewer = ({
                 size: detailsHeight,
               },
             ]}
-            onUpdate={panelWidths => {
-              setListHeight(panelWidths[0].size)
-              setDetailsHeight(panelWidths[1].size)
+            onUpdate={(panelWidths) => {
+              setListHeight(panelWidths[0].size);
+              setDetailsHeight(panelWidths[1].size);
             }}
           >
             {table}
@@ -280,8 +282,42 @@ const DataViewer = ({
   );
 };
 
+const RawWithHeader = (props) => {
+  const {
+    dataViewerId, pageOffset, pageSize, search,
+  } = props;
+
+  return (
+    <WithHeader
+      header={
+        <Header as="h3">
+          <Icon name="database" color="grey" />
+          <Header.Content>Data</Header.Content>
+        </Header>
+      }
+      actionBarItems={
+        <div className="MysteriousPagination__ActionBarItems__container">
+          <MysteriousPagination
+            pageOffset={pageOffset}
+            pageSize={pageSize}
+            onPageChange={(pageOffset, pageSize) => {
+              search(dataViewerId, pageOffset, pageSize);
+            }}
+          />
+        </div>
+      }
+      content={<RawDataViewer {...props} />}
+    />
+  );
+};
+
+const DataViewer = enhance(RawDataViewer);
+const DataViewerWithHeader = enhance(RawWithHeader);
+
 DataViewer.propTypes = {
   dataViewerId: PropTypes.string.isRequired,
 };
 
-export default enhance(DataViewer);
+export default DataViewer;
+
+export { DataViewer, DataViewerWithHeader };
