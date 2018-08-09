@@ -41,8 +41,8 @@ const { xsltUpdated } = actionCreators;
 const enhance = compose(
   withConfig,
   connect(
-    (state, props) => ({
-      xslt: state.xslt[props.xsltId],
+    ({ xslt }, { xsltId }) => ({
+      xslt: xslt[xsltId],
     }),
     { fetchXslt, xsltUpdated, saveXslt },
   ),
@@ -56,25 +56,7 @@ const enhance = compose(
   branch(({ xslt }) => !xslt, renderComponent(() => <Loader active>Loading XSLT</Loader>)),
 );
 
-const RawXsltEditor = ({ xsltId, xslt, xsltUpdated }) => (
-  <div className="xslt-editor">
-    <div className="xslt-editor__ace-container">
-      <AceEditor
-        style={{ width: '100%', height: '100%', minHeight: '25rem' }}
-        name={`${xsltId}-ace-editor`}
-        mode="xml"
-        theme="github"
-        keyboardHandler="vim"
-        value={xslt.xsltData}
-        onChange={(newValue) => {
-          if (newValue !== xslt.xsltData) xsltUpdated(xsltId, newValue);
-        }}
-      />
-    </div>
-  </div>
-);
-
-const RawWithHeader = props => (
+const XsltEditor = ({ xsltId, xslt, xsltUpdated, saveXslt }) => (
   <WithHeader
     header={
       <Header as="h3">
@@ -84,23 +66,36 @@ const RawWithHeader = props => (
           src={require('../../images/docRefTypes/XSLT.svg')}
         />
         <Header.Content>
-          <DocRefBreadcrumb docRefUuid={props.xsltId} />
+          {xsltId}
         </Header.Content>
+        <Header.Subheader><DocRefBreadcrumb docRefUuid={xsltId} /></Header.Subheader>
       </Header>
     }
-    content={<RawXsltEditor {...props} />}
+    content={<div className="xslt-editor">
+      <div className="xslt-editor__ace-container">
+        <AceEditor
+          style={{ width: '100%', height: '100%', minHeight: '25rem' }}
+          name={`${xsltId}-ace-editor`}
+          mode="xml"
+          theme="github"
+          keyboardHandler="vim"
+          value={xslt.xsltData}
+          onChange={(newValue) => {
+            if (newValue !== xslt.xsltData) xsltUpdated(xsltId, newValue);
+          }}
+        />
+      </div>
+    </div>}
     actionBarItems={
       <React.Fragment>
-        <SaveXslt {...props} />
+        <SaveXslt saveXslt={saveXslt} xsltId={xsltId} xslt={xslt} />
       </React.Fragment>
     }
   />
 );
 
-const XsltEditor = enhance(RawWithHeader);
-
 XsltEditor.propTypes = {
   xsltId: PropTypes.string.isRequired,
 };
 
-export default XsltEditor;
+export default enhance(XsltEditor);

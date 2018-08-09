@@ -37,7 +37,7 @@ const SIDE_BAR_COLOUR = 'blue';
 
 const pathPrefix = '/s';
 
-const getDocumentTreeMenuItems = (openDocRef, treeNode, skipInContractedMenu=false) => ({
+const getDocumentTreeMenuItems = (openDocRef, treeNode, skipInContractedMenu = false) => ({
   key: treeNode.uuid,
   title: treeNode.name,
   onClick: () => openDocRef(treeNode),
@@ -80,16 +80,9 @@ const enhance = compose(
     },
   }),
   withProps(({
-    isExpanded, setIsExpanded, history, openDocRef,
-    actionBarItems, documentTree,
+    history, openDocRef, actionBarItems, documentTree,
   }) => ({
     menuItems: [
-      {
-        key: 'stroom',
-        title: <img src={logoInWhite} alt="Stroom logo" />,
-        icon: 'bars',
-        onClick: () => setIsExpanded(!isExpanded),
-      },
       {
         key: 'welcome',
         title: 'Welcome',
@@ -166,7 +159,7 @@ const getExpandedMenuItems = (menuItems, menuItemsOpen, menuItemOpened, depth = 
         style={{ marginLeft: `${depth * 0.7}rem` }}
         onClick={() => {
           if (menuItem.children) {
-            menuItemOpened(menuItem.key, !menuItemsOpen[menuItem.key])
+            menuItemOpened(menuItem.key, !menuItemsOpen[menuItem.key]);
           }
           menuItem.onClick();
         }}
@@ -209,15 +202,28 @@ const AppChrome = ({
   actionBarItems,
   menuItemsOpen,
   menuItemOpened,
+  setIsExpanded,
 }) => (
   <div className="app-chrome">
     <div className="app-chrome__sidebar">
       {isExpanded ? (
-        <div className="app-chrome__sidebar-menu">
-          {getExpandedMenuItems(menuItems, menuItemsOpen, menuItemOpened)}
-        </div>
+        <React.Fragment>
+          <div>
+            <Button
+              size="large"
+              color={SIDE_BAR_COLOUR}
+              icon="bars"
+              onClick={() => setIsExpanded(!isExpanded)}
+            />
+            <img className="sidebar__logo" alt="X" src={require('../../images/logo.svg')} />
+          </div>
+          <div className="app-chrome__sidebar-menu">
+            {getExpandedMenuItems(menuItems, menuItemsOpen, menuItemOpened)}
+          </div>
+        </React.Fragment>
       ) : (
-        <Button.Group vertical color={SIDE_BAR_COLOUR} size="large">
+        <Button.Group vertical color={SIDE_BAR_COLOUR}>
+          <Button size="large" icon="bars" onClick={() => setIsExpanded(!isExpanded)} />
           {getContractedMenuItems(menuItems)}
         </Button.Group>
       )}

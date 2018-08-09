@@ -13,50 +13,60 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { createActions, handleActions } from 'redux-actions';
+import { createActions, handleActions, combineActions } from 'redux-actions';
 
 const actionCreators = createActions({
   DOC_REF_OPENED: docRef => ({ docRef }),
-  RECENT_ITEMS_CLOSED: () => ({}),
-  RECENT_ITEMS_SELECTION_UP: () => ({}),
-  RECENT_ITEMS_SELECTION_DOWN: () => ({}),
+  RECENT_ITEMS_CLOSED: () => ({ selectedItem: 0, selectedDocRef: undefined }),
+  FILTER_TERM_UPDATED: filterTerm => ({ filterTerm }),
+  RECENT_ITEMS_SELECTION_UP: () => ({ selectionChange: -1 }),
+  RECENT_ITEMS_SELECTION_DOWN: () => ({ selectionChange: +1 })
 });
+
+const {
+  docRefOpened,
+  filterTermUpdated,
+  recentItemsClosed,
+  recentItemsSelectionUp,
+  recentItemsSelectionDown
+} = actionCreators;
 
 const defaultState = {
   openItemStack: [],
+  filteredItemStack: [],
   selectedItem: 0, // Used for simple item selection, by array index
   selectedDocRef: undefined, // Used for loading
+  filterTerm: ''
 };
 
 const reducer = handleActions(
   {
-    RECENT_ITEMS_CLOSED: state => ({
-      ...state,
-      selectedItem: 0,
-      selectedDocRef: undefined,
-    }),
-    DOC_REF_OPENED: (state, { payload: { docRef } }) => ({
-      ...state,
-      openItemStack: [docRef].concat(state.openItemStack.filter(d => d.uuid !== docRef.uuid)),
-    }),
-    RECENT_ITEMS_SELECTION_UP: (state, payload) => {
-      const nextIndex = state.selectedItem === 0 ? 0 : state.selectedItem - 1;
+    [combineActions(docRefOpened, filterTermUpdated, recentItemsClosed)]: (state, { payload: { docRef, filterTerm = '' } }) => {
+      let openItemStack = state.openItemStack;
+      if (docRef) {
+        openItemStack = [docRef].concat(state.openItemStack.filter(d => d.uuid !== docRef.uuid));
+      }
+      let filteredItemStack = openItemStack;
+
+      let selectedItem = state.selectedItem % filteredItemStack.length;
+      let selectedDocRef = filteredItemStack.length > 0 ? filteredItemStack[selectedItem] : undefined
+
       return {
-        ...state,
-        selectedItem: nextIndex,
-        selectedDocRef: state.openItemStack[nextIndex],
-      };
+        selectedItem,
+        selectedDocRef,
+        openItemStack,
+        filteredItemStack,
+        filterTerm
+      }
     },
-    RECENT_ITEMS_SELECTION_DOWN: (state, payload) => {
-      const nextIndex =
-        state.selectedItem === state.openItemStack.length - 1
-          ? state.openItemStack.length - 1
-          : state.selectedItem + 1;
+    [combineActions(recentItemsSelectionUp, recentItemsSelectionDown)]: (state, { payload: { selectionChange } }) => {
+      const nextIndex = (state.filteredItemStack.length + (state.selectedItem + selectionChange)) % state.filteredItemStack.length;
+
       return {
         ...state,
         selectedItem: nextIndex,
-        selectedDocRef: state.openItemStack[nextIndex],
-      };
+        selectedDocRef: state.filteredItemStack[nextIndex],
+      }
     },
   },
   defaultState,

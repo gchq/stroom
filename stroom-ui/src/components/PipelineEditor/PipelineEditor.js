@@ -125,81 +125,81 @@ const RawPipelineEditor = ({
   editorClassName,
   elementStyles,
 }) => (
-  <div className="Pipeline-editor">
-    <DeletePipelineElement pipelineId={pipelineId} />
-    <PipelineSettings pipelineId={pipelineId} />
-    <div className="Pipeline-editor__element-palette">
-      <ElementPalette pipelineId={pipelineId} />
-    </div>
-
-    <PanelGroup
-      direction="column"
-      className="Pipeline-editor__content"
-      panelWidths={[
-        {},
-        {
-          resize: 'dynamic',
-          size: isElementDetailsOpen ? '50%' : 0,
-        },
-      ]}
-    >
-      <div className="Pipeline-editor__topPanel">
-        <LineContainer
-          className="Pipeline-editor__graph"
-          lineContextId={`pipeline-lines-${pipelineId}`}
-          lineElementCreators={lineElementCreators}
-        >
-          <div className="Pipeline-editor__bin">
-            <Bin />
-          </div>
-          <div className="Pipeline-editor__elements">
-            {Object.keys(elementStyles)
-              .map(es => pipeline.merged.elements.add.find(e => e.id === es))
-              .map(e => (
-                <div key={e.id} id={e.id} style={elementStyles[e.id]}>
-                  <PipelineElement
-                    pipelineId={pipelineId}
-                    elementId={e.id}
-                    onClick={() => setElementDetailsOpen(true)}
-                  />
-                </div>
-              ))}
-          </div>
-          <div className="Pipeline-editor__lines">
-            {pipeline.merged.links.add
-              .filter(l => elementStyles[l.from] && elementStyles[l.to])
-              .map(l => ({ ...l, lineId: `${l.from}-${l.to}` }))
-              .map(l => (
-                <LineTo
-                  lineId={l.lineId}
-                  key={l.lineId}
-                  fromId={l.from}
-                  toId={l.to}
-                  lineType="curve"
-                />
-              ))}
-          </div>
-        </LineContainer>
+    <div className="Pipeline-editor">
+      <DeletePipelineElement pipelineId={pipelineId} />
+      <PipelineSettings pipelineId={pipelineId} />
+      <div className="Pipeline-editor__element-palette">
+        <ElementPalette pipelineId={pipelineId} />
       </div>
-      {isElementDetailsOpen ? (
-        <ElementDetails
-          pipelineId={pipelineId}
-          className="Pipeline-editor__details"
-          onClose={() => setElementDetailsOpen(false)}
-        />
-      ) : (
-        <div />
-      )}
-    </PanelGroup>
-  </div>
-);
+
+      <PanelGroup
+        direction="column"
+        className="Pipeline-editor__content"
+        panelWidths={[
+          {},
+          {
+            resize: 'dynamic',
+            size: isElementDetailsOpen ? '50%' : 0,
+          },
+        ]}
+      >
+        <div className="Pipeline-editor__topPanel">
+          <LineContainer
+            className="Pipeline-editor__graph"
+            lineContextId={`pipeline-lines-${pipelineId}`}
+            lineElementCreators={lineElementCreators}
+          >
+            <div className="Pipeline-editor__bin">
+              <Bin />
+            </div>
+            <div className="Pipeline-editor__elements">
+              {Object.keys(elementStyles)
+                .map(es => pipeline.merged.elements.add.find(e => e.id === es))
+                .map(e => (
+                  <div key={e.id} id={e.id} style={elementStyles[e.id]}>
+                    <PipelineElement
+                      pipelineId={pipelineId}
+                      elementId={e.id}
+                      onClick={() => setElementDetailsOpen(true)}
+                    />
+                  </div>
+                ))}
+            </div>
+            <div className="Pipeline-editor__lines">
+              {pipeline.merged.links.add
+                .filter(l => elementStyles[l.from] && elementStyles[l.to])
+                .map(l => ({ ...l, lineId: `${l.from}-${l.to}` }))
+                .map(l => (
+                  <LineTo
+                    lineId={l.lineId}
+                    key={l.lineId}
+                    fromId={l.from}
+                    toId={l.to}
+                    lineType="curve"
+                  />
+                ))}
+            </div>
+          </LineContainer>
+        </div>
+        {isElementDetailsOpen ? (
+          <ElementDetails
+            pipelineId={pipelineId}
+            className="Pipeline-editor__details"
+            onClose={() => setElementDetailsOpen(false)}
+          />
+        ) : (
+            <div />
+          )}
+      </PanelGroup>
+    </div>
+  );
 
 const RawWithHeader = (props) => {
   const {
     pipelineId,
     pipeline: {
       pipeline: {
-        docRef: { type },
+        docRef: { type, name },
         description,
       },
     }
@@ -215,9 +215,9 @@ const RawWithHeader = (props) => {
             src={require(`../../images/docRefTypes/${type}.svg`)}
           />
           <Header.Content>
-            <DocRefBreadcrumb docRefUuid={pipelineId}/>
-            <Header.Subheader>{description}</Header.Subheader>
+            {name}
           </Header.Content>
+          <Header.Subheader><DocRefBreadcrumb docRefUuid={pipelineId} /></Header.Subheader>
         </Header>
       }
       actionBarItems={

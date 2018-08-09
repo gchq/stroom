@@ -18,10 +18,9 @@ import React from 'react';
 
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
-import { Menu, Input, Breadcrumb, Popup, Button, Header, Icon } from 'semantic-ui-react';
+import { Menu, Input, Breadcrumb, Popup, Button, Header, Icon, Grid } from 'semantic-ui-react';
 import { withRouter } from 'react-router-dom';
 
-import WithHeader from 'components/WithHeader';
 import { actionCreators as appSearchActionCreators } from './redux';
 import { withExplorerTree } from 'components/DocExplorer';
 import { DocTypeFilters } from 'components/DocRefTypes';
@@ -65,7 +64,7 @@ const enhance = compose(
   ),
 );
 
-class RawAppSearch extends React.Component {
+class AppSearch extends React.Component {
   componentDidMount() {
     // We need to prevent up and down keys from moving the cursor around in the input
 
@@ -116,18 +115,29 @@ class RawAppSearch extends React.Component {
     } = this.props;
     return (
       <React.Fragment>
-        <Input
-          id="AppSearch__search-input"
-          icon="search"
-          placeholder="Search..."
-          value={searchTerm}
-          onChange={e => appSearchTermUpdated(e.target.value)}
-          ref="searchTermInput"
-          autoFocus
-        />
-        <Popup trigger={<Button icon="filter" />} flowing hoverable>
-          <DocTypeFilters value={[]} onChange={v => console.log('Nope', v)} />
-        </Popup>
+        <Grid className="content-tabs__grid">
+          <Grid.Column width={4}>
+            <Header as="h3">
+              <Icon color="grey" name="search" />
+              <Header.Content>Search</Header.Content>
+            </Header>
+          </Grid.Column>
+
+          <Grid.Column width={8}>
+            <Input
+              id="AppSearch__search-input"
+              icon="search"
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={e => appSearchTermUpdated(e.target.value)}
+              ref="searchTermInput"
+              autoFocus
+            />
+            <Popup trigger={<Button icon="filter" />} flowing hoverable>
+              <DocTypeFilters value={[]} onChange={v => console.log('Nope', v)} />
+            </Popup>
+          </Grid.Column>
+        </Grid>
         <Menu vertical fluid>
           {searchResults.map((searchResult, i, arr) => {
             // Compose the data that provides the breadcrumb to this node
@@ -158,19 +168,5 @@ class RawAppSearch extends React.Component {
   }
 }
 
-const RawWithHeader = props => (
-  <WithHeader
-    header={
-      <Header as="h3">
-        <Icon color="grey" name="search" />
-        <Header.Content>Search</Header.Content>
-      </Header>
-    }
-    content={<RawAppSearch {...props} />}
-  />
-);
-
-const AppSearch = enhance(RawWithHeader);
-
-export default AppSearch;
+export default enhance(AppSearch);
 
