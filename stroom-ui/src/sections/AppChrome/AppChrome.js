@@ -42,6 +42,7 @@ const getDocumentTreeMenuItems = (openDocRef, treeNode, skipInContractedMenu = f
   title: treeNode.name,
   onClick: () => openDocRef(treeNode),
   icon: 'folder',
+  style: skipInContractedMenu ? 'doc' : 'nav',
   skipInContractedMenu,
   children:
     treeNode.children &&
@@ -88,6 +89,7 @@ const enhance = compose(
         title: 'Welcome',
         onClick: () => history.push(`${pathPrefix}/welcome/`),
         icon: 'home',
+        style: 'nav',
       },
       getDocumentTreeMenuItems(d => openDocRef(history, d), documentTree),
       {
@@ -95,24 +97,28 @@ const enhance = compose(
         title: 'Data',
         onClick: () => history.push(`${pathPrefix}/data`),
         icon: 'database',
+        style: 'nav',
       },
       {
         key: 'pipelines',
         title: 'Pipelines',
         onClick: () => history.push(`${pathPrefix}/pipelines`),
         icon: 'tasks',
+        style: 'nav',
       },
       {
         key: 'processing',
         title: 'Processing',
         onClick: () => history.push(`${pathPrefix}/processing`),
         icon: 'play',
+        style: 'nav',
       },
       {
         key: 'admin',
         title: 'Admin',
         onClick: () => {},
         icon: 'cogs',
+        style: 'nav',
         skipInContractedMenu: true,
         children: [
           {
@@ -120,18 +126,21 @@ const enhance = compose(
             title: 'Me',
             onClick: () => history.push(`${pathPrefix}/me`),
             icon: 'user',
+            style: 'nav',
           },
           {
             key: 'admin-users',
             title: 'Users',
             onClick: () => history.push(`${pathPrefix}/users`),
             icon: 'users',
+            style: 'nav',
           },
           {
             key: 'admin-apikeys',
             title: 'API Keys',
             onClick: () => history.push(`${pathPrefix}/apikeys`),
             icon: 'key',
+            style: 'nav',
           },
         ],
       },
@@ -140,12 +149,14 @@ const enhance = compose(
         title: 'Recent Items',
         onClick: () => history.push(`${pathPrefix}/recentItems`),
         icon: 'file outline',
+        style: 'nav',
       },
       {
         key: 'search',
         title: 'Search',
         onClick: () => history.push(`${pathPrefix}/search`),
         icon: 'search',
+        style: 'nav',
       },
     ],
   })),
@@ -155,18 +166,15 @@ const getExpandedMenuItems = (menuItems, menuItemsOpen, menuItemOpened, depth = 
   menuItems.map(menuItem => (
     <React.Fragment key={menuItem.key}>
       <div
-        className="sidebar__menu-item"
-        style={{ marginLeft: `${depth * 0.7}rem` }}
-        onClick={() => {
-          if (menuItem.children) {
-            menuItemOpened(menuItem.key, !menuItemsOpen[menuItem.key]);
-          }
-          menuItem.onClick();
-        }}
+        className={`sidebar__menu-item--${menuItem.style}`}
+        style={{ paddingLeft: `${depth * 0.7}rem` }}
       >
         {menuItem.children && menuItem.children.length > 0 ? (
           <Icon
-            onClick={() => menuItemOpened(menuItem.key, !menuItemsOpen[menuItem.key])}
+            onClick={(e) => {
+              menuItemOpened(menuItem.key, !menuItemsOpen[menuItem.key]);
+              e.preventDefault();
+            }}
             name={`caret ${menuItemsOpen[menuItem.key] ? 'down' : 'right'}`}
           />
         ) : menuItem.key !== 'stroom' ? (
@@ -175,7 +183,16 @@ const getExpandedMenuItems = (menuItems, menuItemsOpen, menuItemOpened, depth = 
           undefined
         )}
         <Icon name={menuItem.icon} />
-        {menuItem.title}
+        <span
+          onClick={() => {
+            if (menuItem.children) {
+              menuItemOpened(menuItem.key, !menuItemsOpen[menuItem.key]);
+            }
+            menuItem.onClick();
+          }}
+        >
+          {menuItem.title}
+        </span>
       </div>
       {menuItem.children &&
         menuItemsOpen[menuItem.key] &&

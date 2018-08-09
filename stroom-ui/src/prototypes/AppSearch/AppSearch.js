@@ -18,12 +18,13 @@ import React from 'react';
 
 import { compose } from 'recompose';
 import { connect } from 'react-redux';
-import { Menu, Input, Breadcrumb, Popup, Button, Header, Icon, Grid } from 'semantic-ui-react';
+import { Input, Breadcrumb, Popup, Button, Header, Icon, Grid } from 'semantic-ui-react';
 import { withRouter } from 'react-router-dom';
 
 import { actionCreators as appSearchActionCreators } from './redux';
 import { withExplorerTree } from 'components/DocExplorer';
 import { DocTypeFilters } from 'components/DocRefTypes';
+import { DocRefListing } from 'components/DocRefListing';
 import { openDocRef } from 'prototypes/RecentItems';
 
 /**
@@ -138,35 +139,10 @@ class AppSearch extends React.Component {
             </Popup>
           </Grid.Column>
         </Grid>
-        <Menu vertical fluid>
-          {searchResults.map((searchResult, i, arr) => {
-            // Compose the data that provides the breadcrumb to this node
-            const sections = searchResult.lineage.map(l => ({
-              key: l.name,
-              content: l.name,
-              link: false,
-            }));
-
-            return (
-              <Menu.Item
-                active={selectedItem === i}
-                key={i}
-                onClick={() => {
-                  openDocRef(history, searchResult);
-                }}
-              >
-                <div style={{ width: '50rem' }}>
-                  <Breadcrumb size="mini" icon="right angle" sections={sections} />
-                  <div className="doc-ref-dropdown__item-name">{searchResult.name}</div>
-                </div>
-              </Menu.Item>
-            );
-          })}
-        </Menu>
+        <DocRefListing docRefs={searchResults} selectedItem={selectedItem} />
       </React.Fragment>
     );
   }
 }
 
 export default enhance(AppSearch);
-

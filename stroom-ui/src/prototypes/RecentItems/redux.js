@@ -20,7 +20,7 @@ const actionCreators = createActions({
   RECENT_ITEMS_CLOSED: () => ({ selectedItem: 0, selectedDocRef: undefined }),
   FILTER_TERM_UPDATED: filterTerm => ({ filterTerm }),
   RECENT_ITEMS_SELECTION_UP: () => ({ selectionChange: -1 }),
-  RECENT_ITEMS_SELECTION_DOWN: () => ({ selectionChange: +1 })
+  RECENT_ITEMS_SELECTION_DOWN: () => ({ selectionChange: +1 }),
 });
 
 const {
@@ -28,7 +28,7 @@ const {
   filterTermUpdated,
   recentItemsClosed,
   recentItemsSelectionUp,
-  recentItemsSelectionDown
+  recentItemsSelectionDown,
 } = actionCreators;
 
 const defaultState = {
@@ -36,37 +36,46 @@ const defaultState = {
   filteredItemStack: [],
   selectedItem: 0, // Used for simple item selection, by array index
   selectedDocRef: undefined, // Used for loading
-  filterTerm: ''
+  filterTerm: '',
 };
 
 const reducer = handleActions(
   {
-    [combineActions(docRefOpened, filterTermUpdated, recentItemsClosed)]: (state, { payload: { docRef, filterTerm = '' } }) => {
+    [combineActions(docRefOpened, filterTermUpdated, recentItemsClosed)]: (
+      state,
+      { payload: { docRef, filterTerm = '' } },
+    ) => {
       let openItemStack = state.openItemStack;
       if (docRef) {
         openItemStack = [docRef].concat(state.openItemStack.filter(d => d.uuid !== docRef.uuid));
       }
-      let filteredItemStack = openItemStack;
+      const filteredItemStack = openItemStack;
 
-      let selectedItem = state.selectedItem % filteredItemStack.length;
-      let selectedDocRef = filteredItemStack.length > 0 ? filteredItemStack[selectedItem] : undefined
+      const selectedItem = state.selectedItem % filteredItemStack.length;
+      const selectedDocRef =
+        filteredItemStack.length > 0 ? filteredItemStack[selectedItem] : undefined;
 
       return {
         selectedItem,
         selectedDocRef,
         openItemStack,
         filteredItemStack,
-        filterTerm
-      }
+        filterTerm,
+      };
     },
-    [combineActions(recentItemsSelectionUp, recentItemsSelectionDown)]: (state, { payload: { selectionChange } }) => {
-      const nextIndex = (state.filteredItemStack.length + (state.selectedItem + selectionChange)) % state.filteredItemStack.length;
+    [combineActions(recentItemsSelectionUp, recentItemsSelectionDown)]: (
+      state,
+      { payload: { selectionChange } },
+    ) => {
+      const nextIndex =
+        (state.filteredItemStack.length + (state.selectedItem + selectionChange)) %
+        state.filteredItemStack.length;
 
       return {
         ...state,
         selectedItem: nextIndex,
         selectedDocRef: state.filteredItemStack[nextIndex],
-      }
+      };
     },
   },
   defaultState,

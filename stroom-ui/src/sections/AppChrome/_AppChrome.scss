@@ -14,11 +14,22 @@
   height: inherit;
   background-color: $semantic-blue;
   width: 15rem;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 
-.sidebar__menu-item {
-  padding: 0.3rem;
+.sidebar__menu-item--nav {
+  padding: 0.4rem;
+  color: white;
+  outline: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  text-overflow: ellipsis;
+  overflow-x: hidden;
+}
+
+.sidebar__menu-item--doc {
+  background-color: $semantic-blue-lighten;
+  padding: 0.1rem;
   color: white;
   outline: inherit;
   white-space: nowrap;
@@ -68,12 +79,12 @@
 }
 
 .ui.header:first-child {
-  margin-top: 0.5rem !important; // semantic UI has a strange fixation with negative margins
+  padding-top: 0.5rem !important; // semantic UI has a strange fixation with negative margins
 }
 
 .app-chrome__content .ui.grid h3 {
   // Correctly align the title
-  margin-top: 0.3rem !important;
+  padding-top: 0.3rem !important;
 }
 
 .sidebar__logo {

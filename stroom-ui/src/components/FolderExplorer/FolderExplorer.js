@@ -13,6 +13,7 @@ import { openDocRef } from 'prototypes/RecentItems';
 import { findItem } from 'lib/treeUtils';
 import ClickCounter from 'lib/ClickCounter';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
+import DocRefListing from 'components/DocRefListing';
 
 const { folderEntrySelected } = actionCreators;
 
@@ -37,13 +38,9 @@ const enhance = compose(
     openDocRef, history, documentTree, folderUuid, folderEntrySelected,
   }) => {
     const folder = findItem(documentTree, folderUuid);
-    const {
-      node: { children },
-    } = folder;
 
     return {
       folder,
-      tableData: children,
       onRowSelected: folderEntrySelected,
       openDocRef: d => openDocRef(history, d),
     };
@@ -76,7 +73,6 @@ const tableColumns = [
 ];
 
 const FolderExplorer = ({
-  tableData,
   onRowSelected,
   selectedRow,
   folder: { node, lineage },
@@ -94,56 +90,60 @@ const FolderExplorer = ({
           <img
             className="doc-ref__icon-large"
             alt="X"
-            src={require(`../../images/docRefTypes/Folder.svg`)}
+            src={require('../../images/docRefTypes/Folder.svg')}
           />
-          <Header.Content>
-            {node.name}
-          </Header.Content>
+          <Header.Content>{node.name}</Header.Content>
           <Header.Subheader>
             <DocRefBreadcrumb docRefUuid={folderUuid} />
           </Header.Subheader>
         </Header>
       }
-      content={<div className="DataTable__container">
-        <div className="DataTable__reactTable__container">
-          <ReactTable
-            className="DataTable__reactTable"
-            sortable={false}
-            showPagination={false}
-            data={tableData}
-            columns={tableColumns}
-            getTdProps={(state, rowInfo, column, instance) => ({
-              onDoubleClick: (e, handleOriginal) => {
-                clickCounter.onDoubleClick({
-                  uuid: rowInfo.row.uuid,
-                  type: rowInfo.row.type,
-                });
-                if (handleOriginal) {
-                  handleOriginal();
-                }
-              },
-              onClick: (e, handleOriginal) => {
-                clickCounter.onSingleClick({ index: rowInfo.index });
+      content={
+        <DocRefListing docRefs={node.children} />
 
-                // IMPORTANT! React-Table uses onClick internally to trigger
-                // events like expanding SubComponents and pivots.
-                // By default a custom 'onClick' handler will override this functionality.
-                // If you want to fire the original onClick handler, call the
-                // 'handleOriginal' function.
-                if (handleOriginal) {
-                  handleOriginal();
-                }
-              },
-            })}
-            getTrProps={(state, rowInfo, column) => ({
-              className:
-                selectedRow !== undefined && path(['index'], rowInfo) === selectedRow
-                  ? 'DataTable__selectedRow'
-                  : undefined,
-            })}
-          />
-        </div>
-      </div>} />
+        // <div className="DataTable__container">
+        //   <div className="DataTable__reactTable__container">
+        //     <ReactTable
+        //       className="DataTable__reactTable"
+        //       sortable={false}
+        //       showPagination={false}
+        //       data={node.children}
+        //       columns={tableColumns}
+        //       getTdProps={(state, rowInfo, column, instance) => ({
+        //         onDoubleClick: (e, handleOriginal) => {
+        //           clickCounter.onDoubleClick({
+        //             uuid: rowInfo.row.uuid,
+        //             type: rowInfo.row.type,
+        //             name: rowInfo.row.name,
+        //           });
+        //           if (handleOriginal) {
+        //             handleOriginal();
+        //           }
+        //         },
+        //         onClick: (e, handleOriginal) => {
+        //           clickCounter.onSingleClick({ index: rowInfo.index });
+
+        //           // IMPORTANT! React-Table uses onClick internally to trigger
+        //           // events like expanding SubComponents and pivots.
+        //           // By default a custom 'onClick' handler will override this functionality.
+        //           // If you want to fire the original onClick handler, call the
+        //           // 'handleOriginal' function.
+        //           if (handleOriginal) {
+        //             handleOriginal();
+        //           }
+        //         },
+        //       })}
+        //       getTrProps={(state, rowInfo, column) => ({
+        //         className:
+        //           selectedRow !== undefined && path(['index'], rowInfo) === selectedRow
+        //             ? 'DataTable__selectedRow'
+        //             : undefined,
+        //       })}
+        //     />
+        //   </div>
+        // </div>
+      }
+    />
   );
 };
 

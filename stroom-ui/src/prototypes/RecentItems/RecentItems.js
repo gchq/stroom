@@ -17,10 +17,11 @@ import React from 'react';
 import { compose, lifecycle } from 'recompose';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
-import { Menu, Header, Icon, Grid, Input } from 'semantic-ui-react';
+import { Header, Icon, Grid, Input } from 'semantic-ui-react';
 
 import Mousetrap from 'mousetrap';
 
+import DocRefListing from 'components/DocRefListing';
 import { actionCreators as recentItemsActionCreators } from './redux';
 import openDocRef from './openDocRef';
 
@@ -28,7 +29,7 @@ const {
   recentItemsClosed,
   recentItemsSelectionUp,
   recentItemsSelectionDown,
-  filterTermUpdated
+  filterTermUpdated,
 } = recentItemsActionCreators;
 
 const upKeys = ['k', 'ctrl+k', 'up'];
@@ -38,18 +39,22 @@ const openKeys = ['enter'];
 const enhance = compose(
   withRouter,
   connect(
-    ({ recentItems: { filteredItemStack, selectedItem, selectedDocRef, filterTerm } }, props) => ({
+    ({
+      recentItems: {
+        filteredItemStack, selectedItem, selectedDocRef, filterTerm,
+      },
+    }, props) => ({
       filteredItemStack,
       selectedItem,
       selectedDocRef,
-      filterTerm
+      filterTerm,
     }),
     {
       recentItemsClosed,
       openDocRef,
       recentItemsSelectionUp,
       recentItemsSelectionDown,
-      filterTermUpdated
+      filterTermUpdated,
     },
   ),
   lifecycle({
@@ -87,55 +92,35 @@ const RecentItems = ({
   history,
   recentItemsClosed,
   filteredItemStack,
-  openDocRef,
   selectedItem,
   selectedDocRef,
   recentItemsSelectionUp,
   recentItemsSelectionDown,
   filterTermUpdated,
-  filterTerm
+  filterTerm,
 }) => (
-    <React.Fragment>
-      <Grid className="content-tabs__grid">
-        <Grid.Column width={4}>
-          <Header as="h3">
-            <Icon color="grey" name="file outline" />
-            <Header.Content>Recent Items</Header.Content>
-          </Header>
-        </Grid.Column>
+  <React.Fragment>
+    <Grid className="content-tabs__grid">
+      <Grid.Column width={4}>
+        <Header as="h3">
+          <Icon color="grey" name="file outline" />
+          <Header.Content>Recent Items</Header.Content>
+        </Header>
+      </Grid.Column>
 
-        <Grid.Column width={8}>
-          <Input
-            id="AppSearch__search-input"
-            icon="search"
-            placeholder="Search..."
-            value={filterTerm}
-            onChange={e => filterTermUpdated(e.target.value)}
-            autoFocus
-          />
-        </Grid.Column>
-      </Grid><Menu vertical fluid>
-        <div>
-          {filteredItemStack.map((docRef, i) => {
-            const title = docRef.name;
-            return (
-              <Menu.Item
-                active={selectedItem === i}
-                key={docRef.uuid}
-                name={title}
-                onClick={() => {
-                  openDocRef(history, docRef);
-                  recentItemsClosed();
-                }}
-              >
-                {title}
-              </Menu.Item>
-            );
-          })}
-        </div>
-      </Menu>
-    </React.Fragment>
-
-  );
+      <Grid.Column width={8}>
+        <Input
+          id="AppSearch__search-input"
+          icon="search"
+          placeholder="Search..."
+          value={filterTerm}
+          onChange={e => filterTermUpdated(e.target.value)}
+          autoFocus
+        />
+      </Grid.Column>
+    </Grid>
+    <DocRefListing docRefs={filteredItemStack} selectedItem={selectedItem} />
+  </React.Fragment>
+);
 
 export default enhance(RecentItems);
