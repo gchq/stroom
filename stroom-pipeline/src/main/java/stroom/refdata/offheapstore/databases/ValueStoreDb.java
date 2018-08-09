@@ -266,7 +266,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                             ByteBuffer valueBufClone = valuePooledBuffer.getByteBuffer();
 
                             // This copy could be expensive as some of the value can be many hundreds of bytes
-                            // May be preferable to hold the ref count in a separate table (ValueReferenceCountDb)
+                            // May be preferable to hold the ref count in a separate table (ValueStoreMetaDb)
                             // as the copy/put of those 4 bytes will be cheaper but at the expense of an extra cursor get op
                             ByteBufferUtils.copy(valueFromDbBuf, valueBufClone);
                             // we have an interest in this value so increment the reference count

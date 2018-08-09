@@ -26,8 +26,8 @@ import stroom.refdata.offheapstore.databases.MapUidForwardDb;
 import stroom.refdata.offheapstore.databases.MapUidReverseDb;
 import stroom.refdata.offheapstore.databases.ProcessingInfoDb;
 import stroom.refdata.offheapstore.databases.RangeStoreDb;
-import stroom.refdata.offheapstore.databases.ValueReferenceCountDb;
 import stroom.refdata.offheapstore.databases.ValueStoreDb;
+import stroom.refdata.offheapstore.databases.ValueStoreMetaDb;
 import stroom.refdata.offheapstore.serdes.FastInfoSetValueSerde;
 import stroom.refdata.offheapstore.serdes.RefDatValueSubSerde;
 import stroom.refdata.offheapstore.serdes.StringValueSerde;
@@ -44,12 +44,14 @@ public class RefDataStoreModule extends AbstractModule {
         // bind the various RefDataValue impls into a map keyed on their ID
         final MapBinder<Integer, RefDatValueSubSerde> refDataValueSerdeBinder = MapBinder.newMapBinder(
                 binder(), Integer.class, RefDatValueSubSerde.class);
+
         refDataValueSerdeBinder.addBinding(FastInfosetValue.TYPE_ID).to(FastInfoSetValueSerde.class);
         refDataValueSerdeBinder.addBinding(StringValue.TYPE_ID).to(StringValueSerde.class);
 
         // bind the various RefDataValue ByteBuffer consumer factories into a map keyed on their ID
         final MapBinder<Integer, AbstractByteBufferConsumer.Factory> refDataValueByteBufferConsumerBinder = MapBinder.newMapBinder(
                 binder(), Integer.class, AbstractByteBufferConsumer.Factory.class);
+
         refDataValueByteBufferConsumerBinder
                 .addBinding(FastInfosetValue.TYPE_ID)
                 .to(FastInfosetByteBufferConsumer.Factory.class);
@@ -64,7 +66,7 @@ public class RefDataStoreModule extends AbstractModule {
         install(new FactoryModuleBuilder().build(MapUidForwardDb.Factory.class));
         install(new FactoryModuleBuilder().build(MapUidReverseDb.Factory.class));
         install(new FactoryModuleBuilder().build(ProcessingInfoDb.Factory.class));
-        install(new FactoryModuleBuilder().build(ValueReferenceCountDb.Factory.class));
+        install(new FactoryModuleBuilder().build(ValueStoreMetaDb.Factory.class));
 
         install(new FactoryModuleBuilder().build(RefDataValueProxyConsumer.Factory.class));
 

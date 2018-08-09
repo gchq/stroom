@@ -93,7 +93,7 @@ public class RefDataOffHeapStore implements RefDataStore {
     private final MapUidForwardDb mapUidForwardDb;
     private final MapUidReverseDb mapUidReverseDb;
     private final ProcessingInfoDb processingInfoDb;
-//    private final ValueReferenceCountDb valueReferenceCountDb;
+//    private final ValueStoreMetaDb valueReferenceCountDb;
 
     private final MapDefinitionUIDStore mapDefinitionUIDStore;
     private final StroomPropertyService stroomPropertyService;
@@ -122,7 +122,7 @@ public class RefDataOffHeapStore implements RefDataStore {
             final MapUidForwardDb.Factory mapUidForwardDbFactory,
             final MapUidReverseDb.Factory mapUidReverseDbFactory,
             final ProcessingInfoDb.Factory processingInfoDbFactory,
-//            final ValueReferenceCountDb.Factory valueReferenceCountDbFactory,
+//            final ValueStoreMetaDb.Factory valueReferenceCountDbFactory,
             final StroomPropertyService stroomPropertyService) {
 
         this.dbDir = dbDir;
@@ -819,7 +819,7 @@ public class RefDataOffHeapStore implements RefDataStore {
         private final ValueStoreDb valueStoreDb;
         private final MapDefinitionUIDStore mapDefinitionUIDStore;
         private final ProcessingInfoDb processingInfoDb;
-//        private final ValueReferenceCountDb valueReferenceCountDb;
+//        private final ValueStoreMetaDb valueReferenceCountDb;
 
         private final Env<ByteBuffer> lmdbEnvironment;
         private final RefStreamDefinition refStreamDefinition;

@@ -27,35 +27,45 @@ import stroom.refdata.offheapstore.ByteBufferPool;
 import stroom.refdata.offheapstore.ValueStoreKey;
 import stroom.refdata.offheapstore.serdes.IntegerSerde;
 import stroom.refdata.offheapstore.serdes.ValueStoreKeySerde;
+import stroom.refdata.offheapstore.ValueStoreMeta;
+import stroom.refdata.offheapstore.serdes.ValueStoreMetaSerde;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
 
-// TODO this was created to hold the value reference counter but then that counter was
-// included in the value of the ValueStoreDb. It is debatable whether it is better
-// to mutate the ValueStoreDb value (which will involve copying all of the value bytes
-// into a new buffer and some values could be large) or use this table which would be a
-// cheaper update but would incur an additional cursor lookup.
-// Leaving it in in case perf testing reveals the cost of copying value bytes is too high.
-@Deprecated
-public class ValueReferenceCountDb extends AbstractLmdbDb<ValueStoreKey, Integer> {
+/**
+ * This store holds meta data about the corresponding entries in {@link ValueStoreDb}.
+ *
+ * The type part of the value defines the data type of the value in {@link ValueStoreDb}.
+ * The referenceCount part is used to keep track of the number of key/value or range/value
+ * entries that are associated with an entry in {@link ValueStoreDb}.
+ *
+ * key        | value
+ * (hash|id)  | (type|referenceCount)
+ * ---------------------------------------------
+ * (1234|00)  | (0|0001)
+ * (1234|01)  | (0|0001)
+ * (4567|00)  | (0|0001)
+ * (7890|00)  | (0|0001)
+ */
+public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMeta> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ValueReferenceCountDb.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ValueReferenceCountDb.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ValueStoreMetaDb.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ValueStoreMetaDb.class);
 
     private static final String DB_NAME = "ValueReferenceCountStore";
 
     private final ValueStoreKeySerde keySerde;
-    private final IntegerSerde valueSerde;
+    private final ValueStoreMetaSerde valueSerde;
 
     @Inject
-    public ValueReferenceCountDb(
+    public ValueStoreMetaDb(
             @Assisted final Env<ByteBuffer> lmdbEnvironment,
             final ByteBufferPool byteBufferPool,
             final ValueStoreKeySerde keySerde,
-            final IntegerSerde valueSerde) {
+            final ValueStoreMetaSerde valueSerde) {
 
         super(lmdbEnvironment, byteBufferPool, keySerde, valueSerde, DB_NAME);
         this.keySerde = keySerde;
@@ -68,7 +78,7 @@ public class ValueReferenceCountDb extends AbstractLmdbDb<ValueStoreKey, Integer
     public void incrementReferenceCount(final Txn<ByteBuffer> writeTxn, final ByteBuffer keyBuffer) {
 
         //TODO move this method to ValueStoreDb
-        updateValue(writeTxn, keyBuffer, valueSerde::increment);
+//        updateValue(writeTxn, keyBuffer, valueSerde::increment);
     }
 
     /**
@@ -77,10 +87,11 @@ public class ValueReferenceCountDb extends AbstractLmdbDb<ValueStoreKey, Integer
     public void decrementReferenceCount(final Txn<ByteBuffer> writeTxn, final ByteBuffer keyBuffer) {
 
         //TODO move this method to ValueStoreDb
-        updateValue(writeTxn, keyBuffer, valueSerde::decrement);
+//        updateValue(writeTxn, keyBuffer, valueSerde::decrement);
     }
 
+
     public interface Factory {
-        ValueReferenceCountDb create(final Env<ByteBuffer> lmdbEnvironment);
+        ValueStoreMetaDb create(final Env<ByteBuffer> lmdbEnvironment);
     }
 }
