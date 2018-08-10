@@ -14,129 +14,9 @@
  * limitations under the License.
  */
 
-import { stringToExpression, processSearchString } from './searchBarUtils';
+import { processSearchString } from './searchBarUtils';
 
 import { testDataSource } from 'components/ExpressionBuilder/dataSource.testData';
-
-//TODO: move SearchBarUtils.stringToExpression to processSearchString
-describe('SearchBarUtils', () => {
-  describe('#stringToExpression', () => {
-    test('Can map simplest query', () => {
-      // Given
-      const basic = 'foo1=bar1';
-
-      // When
-      const parsed = stringToExpression(basic);
-
-      // Then
-      expect(parsed.expression.children.length).toBe(1);
-      expect(parsed.expression.children[0].field).toBe('foo1');
-      expect(parsed.expression.children[0].value).toBe('bar1');
-      expect(parsed.expression.children[0].condition).toBe('EQUALS');
-    });
-
-    test('Can map a query with all operators', () => {
-      // Given
-      const basic = 'foo1=bar1 foo2>bar2 foo3<bar3 foo4>=bar4 foo5<=bar5';
-
-      // When
-      const parsed = stringToExpression(basic);
-
-      // Then
-      expect(parsed.errors.length).toBe(0);
-      expect(parsed.expression.children.length).toBe(5);
-      expectForTerm(parsed.expression.children[0], 'foo1', 'EQUALS', 'bar1');
-      expectForTerm(parsed.expression.children[1], 'foo2', 'GREATER_THAN', 'bar2');
-      expectForTerm(parsed.expression.children[2], 'foo3', 'LESS_THAN', 'bar3');
-      expectForTerm(parsed.expression.children[3], 'foo4', 'GREATER_THAN_OR_EQUAL_TO', 'bar4');
-      expectForTerm(parsed.expression.children[4], 'foo5', 'LESS_THAN_OR_EQUAL_TO', 'bar5');
-    });
-
-    test('Returns an error for an unknown operator', () => {
-      // Given
-      const basic = 'foo1=bar1 foo2~bar2 foo3<bar3 foo4>=bar4 foo5<=bar5';
-
-      // When
-      const parsed = stringToExpression(basic);
-
-      // Then
-      expect(parsed.errors.length).toBe(1);
-      expect(parsed.errors[0]).toBe('foo2~bar2');
-      expect(parsed.expression.children.length).toBe(4);
-      expectForTerm(parsed.expression.children[0], 'foo1', 'EQUALS', 'bar1');
-      expectForTerm(parsed.expression.children[1], 'foo3', 'LESS_THAN', 'bar3');
-      expectForTerm(parsed.expression.children[2], 'foo4', 'GREATER_THAN_OR_EQUAL_TO', 'bar4');
-      expectForTerm(parsed.expression.children[3], 'foo5', 'LESS_THAN_OR_EQUAL_TO', 'bar5');
-    });
-
-    test('Can map a query with all operators but a different order', () => {
-      // Given
-      const basic = 'foo4>=bar4 foo5<=bar5 foo1=bar1 foo2>bar2 foo3<bar3';
-
-      // When
-      const parsed = stringToExpression(basic);
-
-      // Then
-      expect(parsed.errors.length).toBe(0);
-      expectForHealthy(parsed.expression.children);
-    });
-
-    test('Returns an error for a bad condition', () => {
-      // Given
-      const basic = 'foo4>=bar4 foo5<=bar5 foo1=bar1 BAD_CONDITION foo2>bar2 foo3<bar3';
-
-      // When
-      const parsed = stringToExpression(basic);
-
-      // Then
-      expect(parsed.errors.length).toBe(1);
-      expect(parsed.errors[0]).toBe('BAD_CONDITION');
-      expectForHealthy(parsed.expression.children);
-    });
-
-    test('Handles whitespace at the start and end of the query', () => {
-      // Given
-      const basic = '   foo4>=bar4 foo5<=bar5 foo1=bar1 BAD_CONDITION foo2>bar2 foo3<bar3   ';
-
-      // When
-      const parsed = stringToExpression(basic);
-
-      // Then
-      expect(parsed.errors.length).toBe(1);
-      expect(parsed.errors[0]).toBe('BAD_CONDITION');
-      expectForHealthy(parsed.expression.children);
-    });
-
-    test('Handles whitespace at the start and end of the query and in th middle', () => {
-      // Given
-      const basic =
-        '   foo4>=bar4            foo5<=bar5 foo1=bar1 BAD_CONDITION foo2>bar2 foo3<bar3   ';
-
-      // When
-      const parsed = stringToExpression(basic);
-
-      // Then
-      expect(parsed.errors.length).toBe(1);
-      expect(parsed.errors[0]).toBe('BAD_CONDITION');
-      expectForHealthy(parsed.expression.children);
-    });
-  });
-});
-
-const expectForHealthy = (children) => {
-  expect(children.length).toBe(5);
-  expectForTerm(children[0], 'foo4', 'GREATER_THAN_OR_EQUAL_TO', 'bar4');
-  expectForTerm(children[1], 'foo5', 'LESS_THAN_OR_EQUAL_TO', 'bar5');
-  expectForTerm(children[2], 'foo1', 'EQUALS', 'bar1');
-  expectForTerm(children[3], 'foo2', 'GREATER_THAN', 'bar2');
-  expectForTerm(children[4], 'foo3', 'LESS_THAN', 'bar3');
-};
-
-const expectForTerm = (child, field, condition, value) => {
-  expect(child.field).toBe(field);
-  expect(child.value).toBe(value);
-  expect(child.condition).toBe(condition);
-};
 
 describe('SearchBarUtils', () => {
   describe('#processSearchString', () => {
@@ -193,7 +73,6 @@ describe('SearchBarUtils', () => {
       const get = fieldName => results.fields.find(field => field.parsed[0] === fieldName);
 
       // Then
-      // console.log({ fields });
       expect(results.fields.length).toBe(9);
       expect(get('foo1').fieldIsValid).toBeFalsy();
       expect(get('foo1').conditionIsValid).toBeFalsy();
@@ -228,5 +107,105 @@ describe('SearchBarUtils', () => {
       expect(results.expression.children[0].value).toBe('bar1');
       expect(results.expression.children[0].condition).toBe('EQUALS');
     });
+
+    test('Can map a query with all operators', () => {
+      // Given
+      const basic = 'foo1=bar1 foo2>bar2 foo3<bar3 foo4>=bar4 foo5<=bar5';
+
+      // When
+      const results = processSearchString(testDataSource, basic);
+
+      // Then
+      expect(results.expression.children.length).toBe(5);
+      expectForTerm(results.expression.children[0], 'foo1', 'EQUALS', 'bar1');
+      expectForTerm(results.expression.children[1], 'foo2', 'GREATER_THAN', 'bar2');
+      expectForTerm(results.expression.children[2], 'foo3', 'LESS_THAN', 'bar3');
+      expectForTerm(results.expression.children[3], 'foo4', 'GREATER_THAN_OR_EQUAL_TO', 'bar4');
+      expectForTerm(results.expression.children[4], 'foo5', 'LESS_THAN_OR_EQUAL_TO', 'bar5');
+    });
+
+    test('Returns an error for an unknown operator', () => {
+      // Given
+      const basic = 'foo1=bar1 foo2~bar2 foo3<bar3 foo4>=bar4 foo5<=bar5';
+
+      // When
+      const results = processSearchString(testDataSource, basic);
+
+      // Then
+      expect(results.fields.filter(field => field.parsed === undefined).length).toBe(1);
+      expect(results.fields.filter(field => field.parsed === undefined)[0].original).toBe('foo2~bar2');
+      expect(results.expression.children.length).toBe(4);
+      expectForTerm(results.expression.children[0], 'foo1', 'EQUALS', 'bar1');
+      expectForTerm(results.expression.children[1], 'foo3', 'LESS_THAN', 'bar3');
+      expectForTerm(results.expression.children[2], 'foo4', 'GREATER_THAN_OR_EQUAL_TO', 'bar4');
+      expectForTerm(results.expression.children[3], 'foo5', 'LESS_THAN_OR_EQUAL_TO', 'bar5');
+    });
+
+    test('Can map a query with all operators but a different order', () => {
+      // Given
+      const basic = 'foo4>=bar4 foo5<=bar5 foo1=bar1 foo2>bar2 foo3<bar3';
+
+      // When
+      const results = processSearchString(testDataSource, basic);
+
+      // Then
+      expect(results.fields.filter(field => field.parsed === undefined).length).toBe(0);
+      expectForHealthy(results.expression.children);
+    });
+
+    test('Returns an error for a bad condition', () => {
+      // Given
+      const basic = 'foo4>=bar4 foo5<=bar5 foo1=bar1 BAD_CONDITION foo2>bar2 foo3<bar3';
+
+      // When
+      const results = processSearchString(testDataSource, basic);
+
+      // Then
+      expect(results.fields.filter(field => field.parsed === undefined).length).toBe(1);
+      expect(results.fields.filter(field => field.parsed === undefined)[0].original).toBe('BAD_CONDITION');
+      expectForHealthy(results.expression.children);
+    });
+
+    test('Handles whitespace at the start and end of the query', () => {
+      // Given
+      const basic = '   foo4>=bar4 foo5<=bar5 foo1=bar1 BAD_CONDITION foo2>bar2 foo3<bar3   ';
+
+      // When
+      const results = processSearchString(testDataSource, basic);
+
+      // Then
+      expect(results.fields.filter(field => field.parsed === undefined).length).toBe(1);
+      expect(results.fields.filter(field => field.parsed === undefined)[0].original).toBe('BAD_CONDITION');
+      expectForHealthy(results.expression.children);
+    });
+
+    test('Handles whitespace at the start and end of the query and in th middle', () => {
+      // Given
+      const basic =
+        '   foo4>=bar4            foo5<=bar5 foo1=bar1 BAD_CONDITION foo2>bar2 foo3<bar3   ';
+
+      // When
+      const results = processSearchString(testDataSource, basic);
+
+      // Then
+      expect(results.fields.filter(field => field.parsed === undefined).length).toBe(1);
+      expect(results.fields.filter(field => field.parsed === undefined)[0].original).toBe('BAD_CONDITION');
+      expectForHealthy(results.expression.children);
+    });
   });
 });
+
+const expectForHealthy = (children) => {
+  expect(children.length).toBe(5);
+  expectForTerm(children[0], 'foo4', 'GREATER_THAN_OR_EQUAL_TO', 'bar4');
+  expectForTerm(children[1], 'foo5', 'LESS_THAN_OR_EQUAL_TO', 'bar5');
+  expectForTerm(children[2], 'foo1', 'EQUALS', 'bar1');
+  expectForTerm(children[3], 'foo2', 'GREATER_THAN', 'bar2');
+  expectForTerm(children[4], 'foo3', 'LESS_THAN', 'bar3');
+};
+
+const expectForTerm = (child, field, condition, value) => {
+  expect(child.field).toBe(field);
+  expect(child.value).toBe(value);
+  expect(child.condition).toBe(condition);
+};
