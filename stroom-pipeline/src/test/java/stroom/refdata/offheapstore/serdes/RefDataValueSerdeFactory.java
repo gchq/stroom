@@ -14,7 +14,7 @@ public class RefDataValueSerdeFactory {
     private RefDataValueSerdeFactory() {
     }
 
-    private static final Map<Integer, RefDatValueSubSerde> TYPE_TO_SERDE_MAP = ImmutableMap.of(
+    private static final Map<Integer, RefDataValueSubSerde> TYPE_TO_SERDE_MAP = ImmutableMap.of(
             FastInfosetValue.TYPE_ID, new FastInfoSetValueSerde(),
             StringValue.TYPE_ID, new StringValueSerde());
 

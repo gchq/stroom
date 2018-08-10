@@ -25,7 +25,7 @@ import stroom.util.logging.LambdaLogger;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
-public class StringValueSerde implements RefDatValueSubSerde {
+public class StringValueSerde implements RefDataValueSubSerde {
 
     @Override
     public RefDataValue deserialize(final ByteBuffer subBuffer) {

@@ -17,6 +17,7 @@
 
 package stroom.refdata.offheapstore.serdes;
 
+import org.junit.Before;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.serde.Serde;
@@ -24,23 +25,70 @@ import stroom.refdata.offheapstore.ByteBufferUtils;
 
 import java.nio.ByteBuffer;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class AbstractSerdeTest {
+abstract class AbstractSerdeTest<T, S extends Serde<T>> {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractSerdeTest.class);
 
     private static final int BYTE_BUFFER_SIZE = 10_000;
 
-    <T> void doByteBufferModificationTest(final T inputObject,
-                                          final T expectedOutputObject,
-                                          final Supplier<Serde<T>> serdeSupplier,
-                                          final BiConsumer<Serde<T>, ByteBuffer> byteBufferModifier) {
+    private S serde = null;
+
+    @Before
+    public void before() {
+        // serde is kept for the life of the test
+        serde = null;
+    }
+
+    /**
+     * Assumes a no-arg ctor, override if serde doesn't have one.
+     */
+    Supplier<S> getSerdeSupplier() {
+        return () -> {
+            try {
+                return getSerdeType().newInstance();
+            } catch (InstantiationException | IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        };
+    }
+
+    abstract Class<S> getSerdeType();
+
+    S getSerde() {
+        // serde is kept for the life of the test
+        if (serde == null) {
+            serde = getSerdeSupplier().get();
+        }
+        return serde;
+    }
+
+    ByteBuffer serialize(final T object) {
+        return getSerde().serialize(object);
+    }
+
+    T deserialize(final ByteBuffer byteBuffer) {
+        return getSerde().deserialize(byteBuffer);
+    }
+
+    void doByteBufferModificationTest(final T inputObject,
+                                      final T expectedOutputObject,
+                                      final BiConsumer<S, ByteBuffer> byteBufferModifier) {
+        doByteBufferModificationTest(inputObject, expectedOutputObject, this::getSerde, byteBufferModifier);
+
+    }
+
+    void doByteBufferModificationTest(final T inputObject,
+                                      final T expectedOutputObject,
+                                      final Supplier<S> serdeSupplier,
+                                      final BiConsumer<S, ByteBuffer> byteBufferModifier) {
 
         // use two serde instances to be sure ser and de-ser are independent
-        final Serde<T> serde1 = serdeSupplier.get();
-        final Serde<T> serde2 = serdeSupplier.get();
+        final S serde1 = serdeSupplier.get();
+        final S serde2 = serdeSupplier.get();
 
         // allocate a buffer size bigger than we need
         final ByteBuffer byteBuffer = ByteBuffer.allocate(BYTE_BUFFER_SIZE);
@@ -64,7 +112,11 @@ class AbstractSerdeTest {
         assertThat(outputObject2).isEqualTo(expectedOutputObject);
     }
 
-    <T> void doSerialisationDeserialisationTest(T object, Supplier<Serde<T>> serdeSupplier) {
+    void doSerialisationDeserialisationTest(T object) {
+        doSerialisationDeserialisationTest(object, this::getSerde);
+    }
+
+    void doSerialisationDeserialisationTest(T object, Supplier<Serde<T>> serdeSupplier) {
         // use two serde instances to be sure ser and de-ser are independent
         final Serde<T> serde1 = serdeSupplier.get();
         final Serde<T> serde2 = serdeSupplier.get();
@@ -91,5 +143,26 @@ class AbstractSerdeTest {
         // ensure hashcode work across ser-deser
         assertThat(object.hashCode()).isEqualTo(object2.hashCode());
         assertThat(object.hashCode()).isEqualTo(object3.hashCode());
+    }
+
+
+    /**
+     * Used for testing the extraction of a single value from part of the serialised form.
+     * @param object The object to be serialised
+     * @param extractionFunc The extraction method on the serde to use
+     * @param expectedValueFunc The method on the object that gets the value being tested
+     */
+    <V> void doExtractionTest(final T object,
+                              final Function<ByteBuffer, V> extractionFunc,
+                              final Function<T, V> expectedValueFunc) {
+        ByteBuffer byteBuffer = serialize(object);
+        ByteBuffer byteBufferClone = byteBuffer.asReadOnlyBuffer();
+
+        V actualExtractedValue = extractionFunc.apply(byteBuffer);
+
+        assertThat(actualExtractedValue).isEqualTo(expectedValueFunc.apply(object));
+
+        // ensure bytebuffer has not been mutated in the process
+        assertThat(byteBuffer).isEqualTo(byteBufferClone);
     }
 }

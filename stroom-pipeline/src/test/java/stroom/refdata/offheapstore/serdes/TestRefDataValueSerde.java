@@ -27,10 +27,21 @@ import stroom.refdata.offheapstore.RefDataValue;
 import stroom.refdata.offheapstore.StringValue;
 
 import java.nio.ByteBuffer;
+import java.util.function.Supplier;
 
-public class TestRefDataValueSerde extends AbstractSerdeTest {
+public class TestRefDataValueSerde extends AbstractSerdeTest<RefDataValue, RefDataValueSerde> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestRefDataValueSerde.class);
+
+    @Override
+    Class<RefDataValueSerde> getSerdeType() {
+        return RefDataValueSerde.class;
+    }
+
+    @Override
+    Supplier<RefDataValueSerde> getSerdeSupplier() {
+        return RefDataValueSerdeFactory::create;
+    }
 
     @Test
     public void testSerialisationDeserialisation_FastInfosetValue() {
@@ -38,9 +49,7 @@ public class TestRefDataValueSerde extends AbstractSerdeTest {
         byte[] bytes = new byte[] {0, 1, 2, 3, 4, 5};
         final RefDataValue refDataValue = new FastInfosetValue(bytes);
 
-        final RefDataValueSerde refDataValueSerde = RefDataValueSerdeFactory.create();
-
-        doSerialisationDeserialisationTest(refDataValue, () -> refDataValueSerde);
+        doSerialisationDeserialisationTest(refDataValue);
     }
 
     @Test
@@ -48,9 +57,7 @@ public class TestRefDataValueSerde extends AbstractSerdeTest {
 
         final RefDataValue refDataValue = new StringValue("this is my value");
 
-        final RefDataValueSerde refDataValueSerde = RefDataValueSerdeFactory.create();
-
-        doSerialisationDeserialisationTest(refDataValue, () -> refDataValueSerde);
+        doSerialisationDeserialisationTest(refDataValue);
     }
 
     @Test
@@ -128,14 +135,13 @@ public class TestRefDataValueSerde extends AbstractSerdeTest {
     private void doEqualityTest(final RefDataValue thisRefDataValue,
                            final RefDataValue thatRefDataValue,
                            final boolean expectedResult) {
-        final RefDataValueSerde refDataValueSerde = RefDataValueSerdeFactory.create();
-        ByteBuffer thisBuf = refDataValueSerde.serialize(thisRefDataValue);
-        ByteBuffer thatBuf = refDataValueSerde.serialize(thatRefDataValue);
+        ByteBuffer thisBuf = getSerde().serialize(thisRefDataValue);
+        ByteBuffer thatBuf = getSerde().serialize(thatRefDataValue);
 
         LOGGER.debug("thisBuf: {}", ByteBufferUtils.byteBufferInfo(thisBuf));
         LOGGER.debug("thatBuf: {}", ByteBufferUtils.byteBufferInfo(thatBuf));
 
-        boolean result = refDataValueSerde.areValuesEqual(thisBuf, thatBuf);
+        boolean result = getSerde().areValuesEqual(thisBuf, thatBuf);
         Assertions.assertThat(result).isEqualTo(expectedResult);
     }
 }

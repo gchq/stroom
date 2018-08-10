@@ -22,25 +22,23 @@ import org.junit.Test;
 
 import java.nio.ByteBuffer;
 
-public class TestIntegerSerde extends AbstractSerdeTest {
+public class TestIntegerSerde extends AbstractSerdeTest<Integer, IntegerSerde> {
 
     @Test
     public void testSerialisationDeSerialisation() {
 
-        doSerialisationDeserialisationTest(123, IntegerSerde::new);
+        doSerialisationDeserialisationTest(123);
     }
 
     @Test
     public void testIncrement() {
         int input = 10;
-        ByteBuffer inputBuf = ByteBuffer.allocateDirect(Integer.BYTES);
-        IntegerSerde integerSerde = new IntegerSerde();
 
-        integerSerde.serialize(inputBuf, input);
+        ByteBuffer inputBuf = serialize(input);
 
-        integerSerde.increment(inputBuf);
+        getSerde().increment(inputBuf);
 
-        Integer output = integerSerde.deserialize(inputBuf);
+        Integer output = deserialize(inputBuf);
 
         Assertions.assertThat(output).isEqualTo(input + 1);
     }
@@ -48,15 +46,17 @@ public class TestIntegerSerde extends AbstractSerdeTest {
     @Test
     public void testDecrement() {
         int input = 10;
-        ByteBuffer inputBuf = ByteBuffer.allocateDirect(Integer.BYTES);
-        IntegerSerde integerSerde = new IntegerSerde();
+        ByteBuffer inputBuf = serialize(input);
 
-        integerSerde.serialize(inputBuf, input);
+        getSerde().decrement(inputBuf);
 
-        integerSerde.decrement(inputBuf);
-
-        Integer output = integerSerde.deserialize(inputBuf);
+        Integer output = deserialize(inputBuf);
 
         Assertions.assertThat(output).isEqualTo(input - 1);
+    }
+
+    @Override
+    Class<IntegerSerde> getSerdeType() {
+        return IntegerSerde.class;
     }
 }

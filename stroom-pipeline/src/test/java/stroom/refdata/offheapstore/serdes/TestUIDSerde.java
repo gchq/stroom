@@ -20,13 +20,18 @@ package stroom.refdata.offheapstore.serdes;
 import org.junit.Test;
 import stroom.refdata.offheapstore.UID;
 
-public class TestUIDSerde extends AbstractSerdeTest {
+public class TestUIDSerde extends AbstractSerdeTest<UID, UIDSerde> {
 
     @Test
     public void testSerialisationDeserialisation() {
 
         final UID uid = UID.of(0, 1, 2, 3);
 
-        doSerialisationDeserialisationTest(uid, UIDSerde::new);
+        doSerialisationDeserialisationTest(uid);
+    }
+
+    @Override
+    Class<UIDSerde> getSerdeType() {
+        return UIDSerde.class;
     }
 }

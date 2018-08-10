@@ -23,7 +23,7 @@ import stroom.util.logging.LambdaLogger;
 
 import java.nio.ByteBuffer;
 
-public class FastInfoSetValueSerde implements RefDatValueSubSerde {
+public class FastInfoSetValueSerde implements RefDataValueSubSerde {
 
     @Override
     public RefDataValue deserialize(final ByteBuffer byteBuffer) {

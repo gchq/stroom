@@ -27,7 +27,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestMapDefinitionSerde extends AbstractSerdeTest {
+public class TestMapDefinitionSerde extends AbstractSerdeTest<MapDefinition, MapDefinitionSerde> {
 
     @Test
     public void serialize() {
@@ -37,21 +37,18 @@ public class TestMapDefinitionSerde extends AbstractSerdeTest {
                 123456L);
         final MapDefinition mapDefinition1 = new MapDefinition(refStreamDefinition, "MyMapName");
 
-        doSerialisationDeserialisationTest(mapDefinition1, MapDefinitionSerde::new);
+        doSerialisationDeserialisationTest(mapDefinition1);
     }
 
     @Test
     public void serialize_nullMapName() {
-        RefStreamDefinitionSerde refStreamDefinitionSerde = new RefStreamDefinitionSerde();
-        MapDefinitionSerde mapDefinitionSerde = new MapDefinitionSerde();
-
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 UUID.randomUUID().toString(),
                 UUID.randomUUID().toString(),
                 123456L);
         final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, null);
 
-        doSerialisationDeserialisationTest(mapDefinition, () -> mapDefinitionSerde);
+        doSerialisationDeserialisationTest(mapDefinition);
 
     }
 
@@ -81,5 +78,10 @@ public class TestMapDefinitionSerde extends AbstractSerdeTest {
         mapDefinitionSerde.serialize(mapDefBuffer2, mapDefinition2);
 
         assertThat(mapDefBuffer2.remaining()).isGreaterThan(mapDefBuffer.remaining());
+    }
+
+    @Override
+    Class<MapDefinitionSerde> getSerdeType() {
+        return MapDefinitionSerde.class;
     }
 }

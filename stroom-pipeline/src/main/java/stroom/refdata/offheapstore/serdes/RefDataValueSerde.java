@@ -38,10 +38,10 @@ public class RefDataValueSerde implements
     public static final int TYPE_ID_OFFSET = 0;
     public static final int TYPE_ID_BYTES = 1;
 
-    private final Map<Integer, RefDatValueSubSerde> typeToSerdeMap;
+    private final Map<Integer, RefDataValueSubSerde> typeToSerdeMap;
 
     @Inject
-    public RefDataValueSerde(final Map<Integer, RefDatValueSubSerde> typeToSerdeMap) {
+    public RefDataValueSerde(final Map<Integer, RefDataValueSubSerde> typeToSerdeMap) {
         this.typeToSerdeMap = typeToSerdeMap;
     }
 
@@ -59,20 +59,20 @@ public class RefDataValueSerde implements
     }
 
     private <T> T mapWithSubSerde(final ByteBuffer byteBuffer,
-                                  final BiFunction<RefDatValueSubSerde, ByteBuffer, T> subBufferFunction) {
+                                  final BiFunction<RefDataValueSubSerde, ByteBuffer, T> subBufferFunction) {
         // work out what type of serde we need from the source buffer
         // then create a new buffer from the content after the type ID
         // put the source buffer back to how it was
         int typeId = getTypeId(byteBuffer);
         ByteBuffer subBuffer = byteBuffer.slice();
         byteBuffer.rewind();
-        RefDatValueSubSerde subSerde = getSubSerde(typeId);
+        RefDataValueSubSerde subSerde = getSubSerde(typeId);
 
         return subBufferFunction.apply(subSerde, subBuffer);
     }
 
-    private RefDatValueSubSerde getSubSerde(int typeId) {
-        RefDatValueSubSerde subSerde = typeToSerdeMap.get(typeId);
+    private RefDataValueSubSerde getSubSerde(int typeId) {
+        RefDataValueSubSerde subSerde = typeToSerdeMap.get(typeId);
         Objects.requireNonNull(subSerde, () ->
                 LambdaLogger.buildMessage("Unexpected typeId value {}", typeId));
         return subSerde;
@@ -85,7 +85,7 @@ public class RefDataValueSerde implements
         return subBuffer;
     }
 
-    RefDatValueSubSerde getSubSerde(final ByteBuffer byteBuffer) {
+    RefDataValueSubSerde getSubSerde(final ByteBuffer byteBuffer) {
         return getSubSerde(extractTypeId(byteBuffer));
     }
 

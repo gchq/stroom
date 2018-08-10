@@ -22,7 +22,7 @@ import stroom.refdata.offheapstore.RefStreamDefinition;
 
 import java.util.UUID;
 
-public class TestRefStreamDefinitionSerde extends AbstractSerdeTest {
+public class TestRefStreamDefinitionSerde extends AbstractSerdeTest<RefStreamDefinition, RefStreamDefinitionSerde> {
 
     @Test
     public void testSerialisationDeserialisation() {
@@ -33,6 +33,11 @@ public class TestRefStreamDefinitionSerde extends AbstractSerdeTest {
                 true,
                 123L);
 
-        doSerialisationDeserialisationTest(refStreamDefinition, RefStreamDefinitionSerde::new);
+        doSerialisationDeserialisationTest(refStreamDefinition);
+    }
+
+    @Override
+    Class<RefStreamDefinitionSerde> getSerdeType() {
+        return RefStreamDefinitionSerde.class;
     }
 }

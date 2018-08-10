@@ -22,7 +22,7 @@ import stroom.entity.shared.Range;
 import stroom.refdata.offheapstore.RangeStoreKey;
 import stroom.refdata.offheapstore.UID;
 
-public class TestRangeStoreKeySerde extends AbstractSerdeTest {
+public class TestRangeStoreKeySerde extends AbstractSerdeTest<RangeStoreKey, RangeStoreKeySerde> {
 
     @Test
     public void testSerialiseDeserialise() {
@@ -31,6 +31,11 @@ public class TestRangeStoreKeySerde extends AbstractSerdeTest {
 
         final RangeStoreKey rangeStoreKey = new RangeStoreKey(uid, range);
 
-        doSerialisationDeserialisationTest(rangeStoreKey, RangeStoreKeySerde::new);
+        doSerialisationDeserialisationTest(rangeStoreKey);
+    }
+
+    @Override
+    Class<RangeStoreKeySerde> getSerdeType() {
+        return RangeStoreKeySerde.class;
     }
 }

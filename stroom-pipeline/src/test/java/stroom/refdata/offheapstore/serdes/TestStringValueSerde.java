@@ -4,11 +4,13 @@ import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.refdata.offheapstore.RefDataValue;
 import stroom.refdata.offheapstore.StringValue;
 
 import java.nio.ByteBuffer;
+import java.util.function.Supplier;
 
-public class TestStringValueSerde extends AbstractSerdeTest {
+public class TestStringValueSerde extends AbstractSerdeTest<RefDataValue, RefDataValueSubSerde> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestStringValueSerde.class);
 
@@ -101,6 +103,16 @@ public class TestStringValueSerde extends AbstractSerdeTest {
     public void testSerialisationDeserialisation() {
 
         StringValue stringValue = new StringValue(9, "this is my String");
-        doSerialisationDeserialisationTest(stringValue, StringValueSerde::new);
+        doSerialisationDeserialisationTest(stringValue);
+    }
+
+    @Override
+    Class<RefDataValueSubSerde> getSerdeType() {
+        return RefDataValueSubSerde.class;
+    }
+
+    @Override
+    Supplier<RefDataValueSubSerde> getSerdeSupplier() {
+        return StringValueSerde::new;
     }
 }

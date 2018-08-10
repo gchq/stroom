@@ -9,7 +9,7 @@ import java.nio.ByteBuffer;
 
 public class ValueStoreMetaSerde implements Serde<ValueStoreMeta> {
 
-    Logger LOGGER = LoggerFactory.getLogger(RefDatValueSubSerde.class);
+    Logger LOGGER = LoggerFactory.getLogger(RefDataValueSubSerde.class);
 
     public static final int TYPE_ID_OFFSET = 0;
     public static final int TYPE_ID_BYTES = 1;

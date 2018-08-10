@@ -31,7 +31,7 @@ import stroom.refdata.offheapstore.UID;
 
 import java.nio.ByteBuffer;
 
-public class TestKeyValueStoreKeySerde extends AbstractSerdeTest {
+public class TestKeyValueStoreKeySerde extends AbstractSerdeTest<KeyValueStoreKey, KeyValueStoreKeySerde> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestKeyValueStoreKeySerde.class);
 
@@ -42,7 +42,7 @@ public class TestKeyValueStoreKeySerde extends AbstractSerdeTest {
                 uid,
                 "myKey");
 
-        doSerialisationDeserialisationTest(keyValueStoreKey, KeyValueStoreKeySerde::new);
+        doSerialisationDeserialisationTest(keyValueStoreKey);
     }
 
     @Test
@@ -52,7 +52,7 @@ public class TestKeyValueStoreKeySerde extends AbstractSerdeTest {
                 uid,
                 "");
 
-        doSerialisationDeserialisationTest(keyValueStoreKey, KeyValueStoreKeySerde::new);
+        doSerialisationDeserialisationTest(keyValueStoreKey);
     }
 
 
@@ -78,5 +78,10 @@ public class TestKeyValueStoreKeySerde extends AbstractSerdeTest {
         int i = input.readInt(true);
         Assertions.assertThat(str).isEqualTo("MyTestString");
         Assertions.assertThat(i).isEqualTo(1);
+    }
+
+    @Override
+    Class<KeyValueStoreKeySerde> getSerdeType() {
+        return KeyValueStoreKeySerde.class;
     }
 }

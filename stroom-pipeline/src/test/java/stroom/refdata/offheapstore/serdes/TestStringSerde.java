@@ -19,14 +19,17 @@ package stroom.refdata.offheapstore.serdes;
 
 import org.junit.Test;
 
-import static org.junit.Assert.*;
-
-public class TestStringSerde extends AbstractSerdeTest {
+public class TestStringSerde extends AbstractSerdeTest<String, StringSerde> {
 
     @Test
     public void testSerialisationDeserialisation() {
         String str = "this is my string";
 
-        doSerialisationDeserialisationTest(str, StringSerde::new);
+        doSerialisationDeserialisationTest(str);
+    }
+
+    @Override
+    Class<StringSerde> getSerdeType() {
+        return StringSerde.class;
     }
 }
