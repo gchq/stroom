@@ -13,20 +13,28 @@ export const processSearchString = (dataSource, criteria) => {
   splitted.forEach((criterionObj) => {
     let validationResult;
     if (criterionObj.splitCriterion !== undefined) {
+      // Field validation
       const field = criterionObj.splitCriterion[0];
-      const operator = criterionObj.splitCriterion[1];
-      const value = criterionObj.splitCriterion[2];
-
       const foundField = dataSource.fields.filter(availableField => availableField.name === field);
+      const fieldIsValid = foundField.length > 0;
+
+      // Condition/operator validation
+      const operator = criterionObj.splitCriterion[1];
       const foundCondition = dataSource.fields.filter(availableField =>
         availableField.name === field &&
           availableField.conditions.find(condition => condition === operator));
+      const conditionIsValid = foundCondition.length > 0;
+
+      // Value validation
+      const value = criterionObj.splitCriterion[2];
+      const valueIsValid = value != undefined && value != '';
 
       validationResult = {
         original: criterionObj.criterion,
         parsed: criterionObj.splitCriterion,
-        fieldIsValid: foundField.length > 0,
-        conditionIsValid: foundCondition.length > 0,
+        fieldIsValid,
+        conditionIsValid,
+        valueIsValid,
         term: toTermFromArray(criterionObj.splitCriterion),
       };
     } else {
@@ -37,6 +45,7 @@ export const processSearchString = (dataSource, criteria) => {
         parsed: criterionObj.splitCriterion,
         fieldIsValid: false,
         conditionIsValid: false,
+        valueIsValid: false,
         term: undefined,
       };
     }

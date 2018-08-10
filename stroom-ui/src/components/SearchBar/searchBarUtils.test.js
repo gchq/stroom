@@ -20,6 +20,10 @@ import { testDataSource } from 'components/ExpressionBuilder/dataSource.testData
 
 describe('SearchBarUtils', () => {
   describe('#processSearchString', () => {
+    // ///////////////
+    // Field tests //
+    // ///////////////
+
     test('Can find single invalid field', () => {
       // Given
       const basic = 'foo1=bar1';
@@ -93,6 +97,24 @@ describe('SearchBarUtils', () => {
       expect(get('beKind').fieldIsValid).toBeFalsy();
       expect(get('beKind').conditionIsValid).toBeFalsy();
     });
+
+    test('Field and condition but no value is invalid', () => {
+      // Given
+      const basic = 'createTime=';
+
+      // When
+      const results = processSearchString(testDataSource, basic);
+
+      // Then
+      expect(results.fields.length).toBe(1);
+      expect(results.fields[0].fieldIsValid).toBeTruthy();
+      expect(results.fields[0].conditionIsValid).toBeTruthy();
+      expect(results.fields[0].valueIsValid).toBeFalsy();
+    });
+
+    // ////////////////////
+    // Expression tests //
+    // ////////////////////
 
     test('Can map simplest query', () => {
       // Given

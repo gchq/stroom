@@ -9,7 +9,7 @@ import {
   actionCreators as expressionBuilderActionCreators,
 } from 'components/ExpressionBuilder';
 
-import { stringToExpression } from './searchBarUtils';
+import { processSearchString } from './searchBarUtils';
 
 const { expressionChanged } = expressionBuilderActionCreators;
 
@@ -18,18 +18,30 @@ const withIsExpression = withState('isExpression', 'setIsExpression', false);
 const withSearchString = withState('searchString', 'setSearchString', '');
 const withExpression = withState('expression', 'setExpression', '');
 
+const withIsSearchStringValid = withState('isSearchStringValid', 'setIsSearchStringValid', true);
+const withSearchStringValidationMessage = withState(
+  'SearchStringValidationMessage',
+  'setSearchStringValidationMessage',
+  undefined,
+);
+
 const enhance = compose(
   connect(
-    (state, props) => ({}),
+    (state, props) => ({
+      dataSource: state.expressionBuilder.dataSources[props.expressionDataSourceUuid],
+    }),
     { expressionChanged },
   ),
   withIsExpression,
   withSearchString,
   withExpression,
+  withIsSearchStringValid,
+  withSearchStringValidationMessage,
 );
 
 const SearchBar = ({
   expressionDataSourceUuid,
+  dataSource,
   expressionId,
   expressionChanged,
   searchString,
@@ -38,6 +50,10 @@ const SearchBar = ({
   setSearchString,
   expression,
   setExpression,
+  setIsSearchStringValid,
+  isSearchStringValid,
+  setSearchStringValidationMessage,
+  SearchStringValidationMessage,
 }) => {
   const searchInput = (
     <React.Fragment>
@@ -47,15 +63,10 @@ const SearchBar = ({
             circular
             icon="edit"
             onClick={() => {
-              const parsedExpression = stringToExpression(searchString);
-              if (parsedExpression.errors.length > 0) {
-                // TODO alert user somehow
-                console.error('errors!');
-              } else {
-                expressionChanged(expressionId, parsedExpression.expression);
+              const parsedExpression = processSearchString(dataSource, searchString);
+              expressionChanged(expressionId, parsedExpression.expression);
 
-                setIsExpression(true);
-              }
+              setIsExpression(true);
             }}
           />
         }
@@ -63,8 +74,15 @@ const SearchBar = ({
       />
       <Input
         value={searchString}
+        error={!isSearchStringValid}
         className="SearchBar__input"
-        onChange={(_, data) => setSearchString(data.value)}
+        onChange={(_, data) => {
+          const expression = processSearchString(dataSource, data.value);
+          const invalidFields = expression.fields.filter(field => !field.conditionIsValid || !field.fieldIsValid || !field.valueIsValid);
+          setIsSearchStringValid(invalidFields.length === 0);
+          setSearchStringValidationMessage(invalidFields.length === 0 ? undefined : 'TODO: bad');
+          setSearchString(data.value);
+        }}
       />
       <Button>Search</Button>
     </React.Fragment>
