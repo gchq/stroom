@@ -86,16 +86,19 @@ const reducer = handleActions(
       const {
         payload: { listingId, selectionChange },
       } = action;
-      const listingState = state[listingId] || defaultStatePerListing;
-      const { filteredDocRefs, selectedItem } = listingState;
+      const listingState = state[listingId];
+      const { filteredDocRefs, selectedItem, selectedDocRef } = listingState;
 
-      const nextIndex =
-        (filteredDocRefs.length + (selectedItem + selectionChange)) % filteredDocRefs.length;
+      let nextIndex = 0;
+      if (selectedDocRef) {
+        nextIndex =
+          (filteredDocRefs.length + (selectedItem + selectionChange)) % filteredDocRefs.length;
+      }
 
       return {
         ...state,
         [listingId]: {
-          ...state[listingId],
+          ...listingState,
           selectedItem: nextIndex,
           selectedDocRef: filteredDocRefs[nextIndex],
         },

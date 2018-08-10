@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { compose, lifecycle, branch, renderComponent } from 'recompose';
+import { compose, lifecycle, branch, renderComponent, withProps } from 'recompose';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 import { Header, Icon, Grid, Input, Popup, Button, Loader } from 'semantic-ui-react';
@@ -26,6 +26,25 @@ const {
   docRefSelectionDown,
 } = actionCreators;
 
+// We need to prevent up and down keys from moving the cursor around in the input
+
+// I'd rather use Mousetrap for these shortcut keys. Historically Mousetrap
+// hasn't handled keypresses that occured inside inputs or textareas.
+// There were some changes to fix this, like binding specifically
+// to a field. But that requires getting the element from the DOM and
+// we'd rather not break outside React to do this. The other alternative
+// is adding 'mousetrap' as a class to the input, but that doesn't seem to work.
+
+// Up
+const upKeycode = 38;
+const kKeycode = 75;
+
+// Down
+const downKeycode = 40;
+const jKeycode = 74;
+
+const enterKeycode = 13;
+
 const enhance = compose(
   withRouter,
   connect(
@@ -41,6 +60,48 @@ const enhance = compose(
       openDocRef,
     },
   ),
+  withProps(({
+    listingId,
+    selectedDocRef,
+    openDocRef,
+    history,
+    docRefs,
+    docRefSelectionUp,
+    docRefSelectionDown,
+    docRefListingUnmounted,
+  }) => {
+    let onOpenKey = () => {
+      if (selectedDocRef !== undefined) {
+        openDocRef(history, selectedDocRef);
+      } else if (docRefs.length > 0) {
+        openDocRef(history, docRefs[0]);
+      }
+    }
+    let onUpKey = () => {
+      docRefSelectionUp(listingId);
+    };
+    let onDownKey = () => {
+      docRefSelectionDown(listingId);
+    };
+    let onSearchInputKeyDown = (e) => {
+      if (e.keyCode === upKeycode || (e.ctrlKey && e.keyCode === kKeycode)) {
+        onUpKey();
+        e.preventDefault();
+      } else if (e.keyCode === downKeycode || (e.ctrlKey && e.keyCode === jKeycode)) {
+        onDownKey();
+        e.preventDefault();
+      } else if (e.keyCode === enterKeycode) {
+        onOpenKey();
+        e.preventDefault();
+      }
+    };
+    return {
+      onOpenKey,
+      onUpKey,
+      onDownKey,
+      onSearchInputKeyDown
+    }
+  }),
   lifecycle({
     componentDidUpdate(prevProps, prevState, snapshot) {
       const {
@@ -55,63 +116,21 @@ const enhance = compose(
       const {
         docRefListingMounted,
         docRefListingUnmounted,
-        docRefSelectionUp,
-        docRefSelectionDown,
+        onUpKey,
+        onDownKey,
         listingId,
         docRefs,
         openDocRef,
+        onOpenKey,
         history,
         selectedDocRef,
         alwaysFilter,
       } = this.props;
       docRefListingMounted(listingId, docRefs, alwaysFilter);
 
-      Mousetrap.bind(upKeys, () => docRefSelectionUp());
-      Mousetrap.bind(downKeys, () => docRefSelectionDown());
-      Mousetrap.bind(openKeys, () => {
-        if (selectedDocRef !== undefined) {
-          openDocRef(history, selectedDocRef);
-        } else if (filteredItemStack.length > 0) {
-          openDocRef(history, filteredItemStack[0]);
-        }
-      });
-
-      // We need to prevent up and down keys from moving the cursor around in the input
-
-      // I'd rather use Mousetrap for these shortcut keys. Historically Mousetrap
-      // hasn't handled keypresses that occured inside inputs or textareas.
-      // There were some changes to fix this, like binding specifically
-      // to a field. But that requires getting the element from the DOM and
-      // we'd rather not break outside React to do this. The other alternative
-      // is adding 'mousetrap' as a class to the input, but that doesn't seem to work.
-
-      // // Up
-      // const upKeycode = 38;
-      // const kKeycode = 75;
-
-      // // Down
-      // const downKeycode = 40;
-      // const jKeycode = 74;
-
-      // const enterKeycode = 13;
-
-      // this.refs.searchTermInput.inputRef.addEventListener(
-      //   'keydown',
-      //   (event) => {
-      //     if (event.keyCode === upKeycode || (event.ctrlKey && event.keyCode === kKeycode)) {
-      //       this.props.appSearchSelectionUp();
-      //       event.preventDefault();
-      //     } else if (event.keyCode === downKeycode || (event.ctrlKey && event.keyCode === jKeycode)) {
-      //       this.props.appSearchSelectionDown();
-      //       event.preventDefault();
-      //     } else if (event.keyCode === enterKeycode) {
-      //       this.props.openDocRef(this.props.history, this.props.selectedDocRef);
-      //       this.props.appSearchClosed();
-      //       event.preventDefault();
-      //     }
-      //   },
-      //   false,
-      // );
+      Mousetrap.bind(upKeys, onUpKey);
+      Mousetrap.bind(downKeys, onDownKey);
+      Mousetrap.bind(openKeys, onOpenKey);
     },
     componentWillUnmount() {
       Mousetrap.unbind(upKeys);
@@ -133,6 +152,7 @@ const DocRefListing = ({
   docRefListing,
   filterTermUpdated,
   parentFolder,
+  onSearchInputKeyDown,
 }) => {
   const { selectedDocRef, filterTerm, filteredDocRefs } = docRefListing;
   const clickCounter = new ClickCounter()
@@ -162,6 +182,7 @@ const DocRefListing = ({
             value={filterTerm}
             onChange={e => filterTermUpdated(listingId, e.target.value)}
             autoFocus
+            onKeyDown={onSearchInputKeyDown}
           />
           <Popup trigger={<Button icon="filter" />} flowing hoverable>
             <DocTypeFilters value={[]} onChange={v => console.log('Nope', v)} />
