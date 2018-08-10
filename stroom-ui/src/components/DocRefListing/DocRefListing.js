@@ -22,6 +22,7 @@ const {
   docRefListingMounted,
   docRefListingUnmounted,
   filterTermUpdated,
+  docRefTypeFilterUpdated,
   docRefSelectionUp,
   docRefSelectionDown,
 } = actionCreators;
@@ -55,6 +56,7 @@ const enhance = compose(
       docRefListingMounted,
       docRefListingUnmounted,
       filterTermUpdated,
+      docRefTypeFilterUpdated,
       docRefSelectionUp,
       docRefSelectionDown,
       openDocRef,
@@ -62,19 +64,22 @@ const enhance = compose(
   ),
   withProps(({
     listingId,
-    selectedDocRef,
+    docRefListing,
     openDocRef,
     history,
-    docRefs,
     docRefSelectionUp,
     docRefSelectionDown,
     docRefListingUnmounted,
   }) => {
+    const {
+      selectedDocRef, 
+      filteredDocRefs
+    } = docRefListing || {};
     let onOpenKey = () => {
       if (selectedDocRef !== undefined) {
         openDocRef(history, selectedDocRef);
-      } else if (docRefs.length > 0) {
-        openDocRef(history, docRefs[0]);
+      } else if (filteredDocRefs.length > 0) {
+        openDocRef(history, filteredDocRefs[0]);
       }
     }
     let onUpKey = () => {
@@ -149,15 +154,15 @@ const DocRefListing = ({
   listingId,
   icon,
   title,
-  docRefListing,
+  docRefListing: { selectedDocRef, filterTerm, filteredDocRefs, docRefTypeFilters },
   filterTermUpdated,
+  docRefTypeFilterUpdated,
   parentFolder,
   onSearchInputKeyDown,
 }) => {
-  const { selectedDocRef, filterTerm, filteredDocRefs } = docRefListing;
-  const clickCounter = new ClickCounter()
-    .withOnSingleClick(({ index }) => onRowSelected(folderUuid, index))
-    .withOnDoubleClick(d => openDocRef(d));
+  // const clickCounter = new ClickCounter()
+  //   .withOnSingleClick(({ index }) => onRowSelected(folderUuid, index))
+  //   .withOnDoubleClick(d => openDocRef(d));
 
   return (
     <React.Fragment>
@@ -185,7 +190,7 @@ const DocRefListing = ({
             onKeyDown={onSearchInputKeyDown}
           />
           <Popup trigger={<Button icon="filter" />} flowing hoverable>
-            <DocTypeFilters value={[]} onChange={v => console.log('Nope', v)} />
+            <DocTypeFilters value={docRefTypeFilters} onChange={v => docRefTypeFilterUpdated(listingId, v)} />
           </Popup>
         </Grid.Column>
       </Grid>

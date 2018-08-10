@@ -30,7 +30,7 @@ const ALL_SELECT_STATE = {
 const enhance = compose(
   withDocRefTypes,
   connect(({ docRefTypes }) => ({
-    docRefTypes: docRefTypes.filter(d => d !== 'Folder'),
+    docRefTypes,
   })),
   withProps(({ docRefTypes, value, onChange }) => {
     let allSelectState;
@@ -52,7 +52,11 @@ const DocTypeFilters = ({
 }) => (
   <React.Fragment>
     <Form.Field>
-      <img className="doc-ref__icon-small" alt="X" src={require('../../images/docRefTypes/System.svg')} />
+      <img
+        className="doc-ref__icon-small"
+        alt="X"
+        src={require('../../images/docRefTypes/System.svg')}
+      />
       <Checkbox
         label="All"
         indeterminate={allSelectState === ALL_SELECT_STATE.INDETERMINATE}
