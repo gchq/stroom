@@ -24,7 +24,7 @@ import 'semantic/dist/semantic.min.css';
 
 import { testXslt } from './test';
 
-import { XsltEditorWithHeader } from './XsltEditor';
+import XsltEditor from './XsltEditor';
 
 const PollyDecoratorWithTestData = PollyDecorator({
   xslt: testXslt,
@@ -39,4 +39,4 @@ Object.entries(testXslt)
     name: k[0],
     data: k[1],
   }))
-  .forEach(xslt => stories.add(xslt.name, () => <XsltEditorWithHeader xsltId={xslt.name} />));
+  .forEach(xslt => stories.add(xslt.name, () => <XsltEditor xsltId={xslt.name} />));

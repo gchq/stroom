@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Button, Menu, Header, Grid } from 'semantic-ui-react';
+import { Button, Menu, Grid } from 'semantic-ui-react';
 import { compose, withState, lifecycle } from 'recompose';
 import Mousetrap from 'mousetrap';
 

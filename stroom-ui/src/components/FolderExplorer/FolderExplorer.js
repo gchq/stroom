@@ -5,13 +5,15 @@ import { path } from 'ramda';
 import { connect } from 'react-redux';
 import { compose, withProps } from 'recompose';
 import { withRouter } from 'react-router-dom';
-import { Header, Breadcrumb, Icon } from 'semantic-ui-react';
+import { Header } from 'semantic-ui-react';
 
 import { actionCreators } from './redux';
 import WithHeader from 'components/WithHeader';
 import { openDocRef } from 'prototypes/RecentItems';
 import { findItem } from 'lib/treeUtils';
 import ClickCounter from 'lib/ClickCounter';
+import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
+import DocRefListing from 'components/DocRefListing';
 
 const { folderEntrySelected } = actionCreators;
 
@@ -36,13 +38,9 @@ const enhance = compose(
     openDocRef, history, documentTree, folderUuid, folderEntrySelected,
   }) => {
     const folder = findItem(documentTree, folderUuid);
-    const {
-      node: { children },
-    } = folder;
 
     return {
       folder,
-      tableData: children,
       onRowSelected: folderEntrySelected,
       openDocRef: d => openDocRef(history, d),
     };
@@ -56,7 +54,7 @@ const tableColumns = [
     Cell: props => (
       <span>
         <img
-          className="doc-ref__icon"
+          className="doc-ref__icon-small"
           alt="X"
           src={require(`../../images/docRefTypes/${props.value}.svg`)}
         />
@@ -65,119 +63,99 @@ const tableColumns = [
     ), // Custom cell components!
   },
   {
-    Header: 'UUID',
-    accessor: 'uuid',
-  },
-  {
     Header: 'Name',
     accessor: 'name',
   },
+  {
+    Header: 'UUID',
+    accessor: 'uuid',
+  },
 ];
 
-const RawFolderExplorer = ({
-  tableData,
+const FolderExplorer = ({
   onRowSelected,
   selectedRow,
   folder: { node, lineage },
+  folderUuid,
   openDocRef,
 }) => {
   const clickCounter = new ClickCounter()
-    .withOnSingleClick(({ node, index }) => onRowSelected(node.uuid, index))
-    .withOnDoubleClick(node => openDocRef(node));
+    .withOnSingleClick(({ index }) => onRowSelected(folderUuid, index))
+    .withOnDoubleClick(d => openDocRef(d));
 
   return (
-    <div className="DataTable__container">
-      <div className="DataTable__reactTable__container">
-        <ReactTable
-          className="DataTable__reactTable"
-          sortable={false}
-          showPagination={false}
-          data={tableData}
-          columns={tableColumns}
-          getTdProps={(state, rowInfo, column, instance) => ({
-            onDoubleClick: (e, handleOriginal) => {
-              clickCounter.onDoubleClick({
-                uuid: rowInfo.row.uuid,
-                type: rowInfo.row.type,
-              });
-              if (handleOriginal) {
-                handleOriginal();
-              }
-            },
-            onClick: (e, handleOriginal) => {
-              clickCounter.onSingleClick({ node, index: rowInfo.index });
+    <WithHeader
+      header={
+        <Header as="h3">
+          <img
+            className="doc-ref__icon-large"
+            alt="X"
+            src={require('../../images/docRefTypes/Folder.svg')}
+          />
+          <Header.Content>{node.name}</Header.Content>
+          <Header.Subheader>
+            <DocRefBreadcrumb docRefUuid={folderUuid} />
+          </Header.Subheader>
+        </Header>
+      }
+      content={
+        <DocRefListing docRefs={node.children} />
 
-              // IMPORTANT! React-Table uses onClick internally to trigger
-              // events like expanding SubComponents and pivots.
-              // By default a custom 'onClick' handler will override this functionality.
-              // If you want to fire the original onClick handler, call the
-              // 'handleOriginal' function.
-              if (handleOriginal) {
-                handleOriginal();
-              }
-            },
-          })}
-          getTrProps={(state, rowInfo, column) => ({
-            className:
-              selectedRow !== undefined && path(['index'], rowInfo) === selectedRow
-                ? 'DataTable__selectedRow'
-                : undefined,
-          })}
-        />
-      </div>
-    </div>
+        // <div className="DataTable__container">
+        //   <div className="DataTable__reactTable__container">
+        //     <ReactTable
+        //       className="DataTable__reactTable"
+        //       sortable={false}
+        //       showPagination={false}
+        //       data={node.children}
+        //       columns={tableColumns}
+        //       getTdProps={(state, rowInfo, column, instance) => ({
+        //         onDoubleClick: (e, handleOriginal) => {
+        //           clickCounter.onDoubleClick({
+        //             uuid: rowInfo.row.uuid,
+        //             type: rowInfo.row.type,
+        //             name: rowInfo.row.name,
+        //           });
+        //           if (handleOriginal) {
+        //             handleOriginal();
+        //           }
+        //         },
+        //         onClick: (e, handleOriginal) => {
+        //           clickCounter.onSingleClick({ index: rowInfo.index });
+
+        //           // IMPORTANT! React-Table uses onClick internally to trigger
+        //           // events like expanding SubComponents and pivots.
+        //           // By default a custom 'onClick' handler will override this functionality.
+        //           // If you want to fire the original onClick handler, call the
+        //           // 'handleOriginal' function.
+        //           if (handleOriginal) {
+        //             handleOriginal();
+        //           }
+        //         },
+        //       })}
+        //       getTrProps={(state, rowInfo, column) => ({
+        //         className:
+        //           selectedRow !== undefined && path(['index'], rowInfo) === selectedRow
+        //             ? 'DataTable__selectedRow'
+        //             : undefined,
+        //       })}
+        //     />
+        //   </div>
+        // </div>
+      }
+    />
   );
 };
 
-RawFolderExplorer.contextTypes = {
+FolderExplorer.contextTypes = {
   store: PropTypes.object,
   router: PropTypes.shape({
     history: PropTypes.object.isRequired,
   }),
 };
 
-const RawWithHeader = (props) => {
-  const {
-    openDocRef,
-    history,
-    folder: { node, lineage },
-  } = props;
-
-  return (
-    <WithHeader
-      header={
-        <Header as="h3">
-          <Icon name="folder" color="grey" />
-          <Header.Content>
-            <Breadcrumb>
-              {lineage.map(l => (
-                <React.Fragment key={l.uuid}>
-                  <Breadcrumb.Divider />
-                  <Breadcrumb.Section link onClick={() => openDocRef(l)}>
-                    {l.name}
-                  </Breadcrumb.Section>
-                </React.Fragment>
-              ))}
-
-              <Breadcrumb.Divider />
-              <Breadcrumb.Section active>{node.name}</Breadcrumb.Section>
-            </Breadcrumb>
-          </Header.Content>
-        </Header>
-      }
-      actionBarItems={<React.Fragment />}
-      content={<RawFolderExplorer {...props} />}
-    />
-  );
-};
-
-const FolderExplorerWithHeader = enhance(RawWithHeader);
-const FolderExplorer = enhance(RawFolderExplorer);
-
 FolderExplorer.propTypes = {
   folderUuid: PropTypes.string.isRequired,
 };
 
-export default FolderExplorer;
-
-export { FolderExplorer, FolderExplorerWithHeader };
+export default enhance(FolderExplorer);

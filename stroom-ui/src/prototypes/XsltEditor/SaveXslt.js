@@ -1,12 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { compose } from 'recompose';
 import { Button, Popup } from 'semantic-ui-react';
-
-import withXslt from './withXslt';
-import { saveXslt } from './xsltResourceClient';
-
-const enhance = compose(withXslt({ saveXslt }));
 
 const SaveXslt = ({ xslt: { isSaving, isDirty }, saveXslt, xsltId }) => (
   <Popup
@@ -30,4 +24,4 @@ SaveXslt.propTypes = {
   xsltId: PropTypes.string.isRequired,
 };
 
-export default enhance(SaveXslt);
+export default SaveXslt;

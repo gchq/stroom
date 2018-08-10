@@ -29,14 +29,13 @@ import Mousetrap from 'mousetrap';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
 
-import { Header, Loader, Popup, Icon } from 'semantic-ui-react';
+import { Header, Loader, Icon } from 'semantic-ui-react';
 
 import WithHeader from 'components/WithHeader';
 import { withConfig } from 'startup/config';
 import { search, getDetailsForSelectedRow } from './streamAttributeMapClient';
 import { getDataForSelectedRow } from './dataResourceClient';
 import MysteriousPagination from './MysteriousPagination';
-import DataDetails from './DataDetails';
 import DetailsTabs from './DetailsTabs';
 import withLocalStorage from 'lib/withLocalStorage';
 
@@ -118,8 +117,8 @@ const RawDataViewer = ({
 }) => {
   // We need to parse these because localstorage, which is
   // where these come from, is always string.
-  listHeight = Number.parseInt(listHeight);
-  detailsHeight = Number.parseInt(detailsHeight);
+  listHeight = Number.parseInt(listHeight, 10);
+  detailsHeight = Number.parseInt(detailsHeight, 10);
 
   const onRowSelected = (dataViewerId, selectedRow) => {
     selectRow(dataViewerId, selectedRow);
@@ -315,13 +314,10 @@ const RawWithHeader = (props) => {
   );
 };
 
-const DataViewer = enhance(RawDataViewer);
-const DataViewerWithHeader = enhance(RawWithHeader);
+const DataViewer = enhance(RawWithHeader);
 
 DataViewer.propTypes = {
   dataViewerId: PropTypes.string.isRequired,
 };
 
 export default DataViewer;
-
-export { DataViewer, DataViewerWithHeader };

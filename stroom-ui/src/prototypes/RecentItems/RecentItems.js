@@ -17,11 +17,11 @@ import React from 'react';
 import { compose, lifecycle } from 'recompose';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
-import { Menu, Header, Icon } from 'semantic-ui-react';
+import { Header, Icon, Grid, Input } from 'semantic-ui-react';
 
 import Mousetrap from 'mousetrap';
 
-import WithHeader from 'components/WithHeader';
+import DocRefListing from 'components/DocRefListing';
 import { actionCreators as recentItemsActionCreators } from './redux';
 import openDocRef from './openDocRef';
 
@@ -29,6 +29,7 @@ const {
   recentItemsClosed,
   recentItemsSelectionUp,
   recentItemsSelectionDown,
+  filterTermUpdated,
 } = recentItemsActionCreators;
 
 const upKeys = ['k', 'ctrl+k', 'up'];
@@ -38,16 +39,22 @@ const openKeys = ['enter'];
 const enhance = compose(
   withRouter,
   connect(
-    ({ recentItems: { openItemStack, selectedItem, selectedDocRef } }, props) => ({
-      openItemStack,
+    ({
+      recentItems: {
+        filteredItemStack, selectedItem, selectedDocRef, filterTerm,
+      },
+    }, props) => ({
+      filteredItemStack,
       selectedItem,
       selectedDocRef,
+      filterTerm,
     }),
     {
       recentItemsClosed,
       openDocRef,
       recentItemsSelectionUp,
       recentItemsSelectionDown,
+      filterTermUpdated,
     },
   ),
   lifecycle({
@@ -58,7 +65,7 @@ const enhance = compose(
         openDocRef,
         recentItemsClosed,
         history,
-        openItemStack,
+        filteredItemStack,
       } = this.props;
 
       Mousetrap.bind(upKeys, () => recentItemsSelectionUp());
@@ -67,8 +74,8 @@ const enhance = compose(
         if (this.props.selectedDocRef !== undefined) {
           openDocRef(history, this.props.selectedDocRef);
           recentItemsClosed();
-        } else if (openItemStack.length > 0) {
-          openDocRef(history, openItemStack[0]);
+        } else if (filteredItemStack.length > 0) {
+          openDocRef(history, filteredItemStack[0]);
           recentItemsClosed();
         }
       });
@@ -81,53 +88,39 @@ const enhance = compose(
   }),
 );
 
-const RawRecentItems = ({
+const RecentItems = ({
   history,
   recentItemsClosed,
-  openItemStack,
-  openDocRef,
+  filteredItemStack,
   selectedItem,
   selectedDocRef,
   recentItemsSelectionUp,
   recentItemsSelectionDown,
+  filterTermUpdated,
+  filterTerm,
 }) => (
-  <Menu vertical fluid>
-    <div>
-      {openItemStack.map((docRef, i) => {
-        const title = docRef.name;
-        return (
-          <Menu.Item
-            active={selectedItem === i}
-            key={docRef.uuid}
-            name={title}
-            onClick={() => {
-              openDocRef(history, docRef);
-              recentItemsClosed();
-            }}
-          >
-            {title}
-          </Menu.Item>
-        );
-      })}
-    </div>
-  </Menu>
+  <React.Fragment>
+    <Grid className="content-tabs__grid">
+      <Grid.Column width={4}>
+        <Header as="h3">
+          <Icon color="grey" name="file outline" />
+          <Header.Content>Recent Items</Header.Content>
+        </Header>
+      </Grid.Column>
+
+      <Grid.Column width={8}>
+        <Input
+          id="AppSearch__search-input"
+          icon="search"
+          placeholder="Search..."
+          value={filterTerm}
+          onChange={e => filterTermUpdated(e.target.value)}
+          autoFocus
+        />
+      </Grid.Column>
+    </Grid>
+    <DocRefListing docRefs={filteredItemStack} selectedItem={selectedItem} />
+  </React.Fragment>
 );
 
-const RawWithHeader = props => (
-  <WithHeader
-    header={
-      <Header as="h3">
-        <Icon color="grey" name="file outline" />
-        <Header.Content>Recent Items</Header.Content>
-      </Header>
-    }
-    content={<RawRecentItems {...props} />}
-  />
-);
-
-const RecentItems = enhance(RawRecentItems);
-const RecentItemsWithHeader = enhance(RawWithHeader);
-
-export default RecentItems;
-
-export { RecentItems, RecentItemsWithHeader };
+export default enhance(RecentItems);

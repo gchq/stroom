@@ -109,7 +109,7 @@ const DocPickerModal = ({
         onFocus={handleOpen}
         trigger={
           <span>
-            <img className="doc-ref__icon" alt="X" src={require(`../../images/docRefTypes/${node.type}.svg`)} />
+            <img className="doc-ref__icon-small" alt="X" src={require(`../../images/docRefTypes/${node.type}.svg`)} />
             {triggerValue}
           </span>
         }

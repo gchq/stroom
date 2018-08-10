@@ -32,7 +32,7 @@ const DocRefToPick = ({
     <div className={className} onClick={onSingleClick}>
       <span>
         <img
-          className="doc-ref__icon"
+          className="doc-ref__icon-small"
           alt="X"
           src={require(`../../images/docRefTypes/${docRef.type}.svg`)}
         />

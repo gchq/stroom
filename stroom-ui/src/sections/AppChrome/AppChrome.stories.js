@@ -34,7 +34,6 @@ import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 import { testPipelines, elements, elementProperties } from 'components/PipelineEditor/test';
 import { testDocRefsTypes } from 'components/DocRefTypes/test';
 import { testXslt } from 'prototypes/XsltEditor/test';
-import { testTree } from './test';
 import { generateGenericTracker } from 'sections/TrackerDashboard/tracker.testData';
 
 import 'styles/main.css';
@@ -43,7 +42,7 @@ import 'semantic/dist/semantic.min.css';
 const { docTreeReceived, docRefPicked } = docExplorerActionCreators;
 
 const PollyDecoratorWithTestData = PollyDecorator({
-  documentTree: testTree,
+  documentTree: fromSetupSampleData,
   docRefTypes: testDocRefsTypes,
   elements,
   elementProperties,

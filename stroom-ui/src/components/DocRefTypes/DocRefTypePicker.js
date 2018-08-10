@@ -12,7 +12,7 @@ const DocRefTypePicker = ({ onChange, value, docRefTypes }) => (
       <span>
         {value && value.length > 0 ? (
           <img
-            className="doc-ref__icon"
+            className="doc-ref__icon-small"
             alt="X"
             src={require(`../../images/docRefTypes/${value}.svg`)}
           />
@@ -27,7 +27,7 @@ const DocRefTypePicker = ({ onChange, value, docRefTypes }) => (
       {docRefTypes.map(docRefType => (
         <Dropdown.Item key={docRefType} onClick={() => onChange(docRefType)}>
           <img
-            className="doc-ref__icon"
+            className="doc-ref__icon-small"
             alt="X"
             src={require(`../../images/docRefTypes/${docRefType}.svg`)}
           />

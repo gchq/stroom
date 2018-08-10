@@ -23,9 +23,15 @@
   cursor: move;
 }
 
-.doc-ref__icon {
+.doc-ref__icon-small {
   width: 0.7rem;
   margin-right: 0.3rem;
+}
+
+.doc-ref__icon-large {
+  width: 1.5rem !important;
+  margin-right: 0.3rem;
+  margin-left: 0.3rem;
 }
 
 .folder__children {
@@ -64,8 +70,4 @@
   height: 100%;
   width: 100%;
   padding: 10px;
-}
-
-.DocExplorer__ActionBarItems__container > * {
-  padding-right: 5px;
 }

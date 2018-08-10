@@ -16,7 +16,7 @@
 
 import React from 'react';
 
-import { Table, Container, Header, Icon } from 'semantic-ui-react';
+import { Table, Header, Icon } from 'semantic-ui-react';
 import WithHeader from 'components/WithHeader';
 
 const Welcome = props => (

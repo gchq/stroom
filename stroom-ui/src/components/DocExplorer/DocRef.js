@@ -141,7 +141,7 @@ const DocRef = ({
     />
     <span>
       <Icon />
-      <img className="doc-ref__icon" alt="X" src={require(`../../images/docRefTypes/${docRef.type}.svg`)} />
+      <img className="doc-ref__icon-small" alt="X" src={require(`../../images/docRefTypes/${docRef.type}.svg`)} />
       {docRef.name}
     </span>
                            </div>);

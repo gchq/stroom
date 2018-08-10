@@ -181,11 +181,8 @@ const RawWithHeader = props => (
   />
 );
 
-const PipelineSearch = enhance(RawPipelineSearch);
-const PipelineSearchWithHeader = enhance(RawWithHeader);
+const PipelineSearch = enhance(RawWithHeader);
 
 PipelineSearch.contextTypes = contextTypes;
 
 export default PipelineSearch;
-
-export { PipelineSearch, PipelineSearchWithHeader };

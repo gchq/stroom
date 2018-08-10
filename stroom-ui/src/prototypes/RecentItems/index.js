@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import RecentItems, { RecentItemsWithHeader } from './RecentItems';
+import RecentItems from './RecentItems';
 
 import { actionCreators, reducer } from './redux';
 import openDocRef from './openDocRef';
 
-export { RecentItemsWithHeader, RecentItems, actionCreators, reducer, openDocRef };
+export { RecentItems, actionCreators, reducer, openDocRef };
 
 export default RecentItems;

@@ -37,9 +37,6 @@ const RawWithHeader = props => (
   />
 );
 
-const UserSettings = enhance(RawUserSettings);
-const UserSettingsWithHeader = enhance(RawWithHeader);
+const UserSettings = enhance(RawWithHeader);
 
 export default UserSettings;
-
-export { UserSettings, UserSettingsWithHeader };

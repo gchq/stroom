@@ -19,11 +19,10 @@ import PropTypes, { object } from 'prop-types';
 import { connect } from 'react-redux';
 import { compose, lifecycle, withProps } from 'recompose';
 import { withRouter } from 'react-router-dom';
-import { Button, Menu, Icon, Header, Grid, Popup } from 'semantic-ui-react';
+import { Button, Icon } from 'semantic-ui-react';
 import Mousetrap from 'mousetrap';
 
 import { actionCreators as appChromeActionCreators } from './redux';
-import { actionCreators as docExplorerActionCreators } from 'components/DocExplorer/redux';
 import { withExplorerTree } from 'components/DocExplorer';
 import withLocalStorage from 'lib/withLocalStorage';
 import { openDocRef } from 'prototypes/RecentItems';
@@ -38,17 +37,19 @@ const SIDE_BAR_COLOUR = 'blue';
 
 const pathPrefix = '/s';
 
-const getDocumentTreeMenuItems = (openDocRef, treeNode) => ({
+const getDocumentTreeMenuItems = (openDocRef, treeNode, skipInContractedMenu = false) => ({
   key: treeNode.uuid,
   title: treeNode.name,
   onClick: () => openDocRef(treeNode),
   icon: 'folder',
+  style: skipInContractedMenu ? 'doc' : 'nav',
+  skipInContractedMenu,
   children:
     treeNode.children &&
     treeNode.children.length > 0 &&
     treeNode.children
       .filter(t => t.type === 'Folder')
-      .map(t => getDocumentTreeMenuItems(openDocRef, t)),
+      .map(t => getDocumentTreeMenuItems(openDocRef, t, true)),
 });
 
 const enhance = compose(
@@ -80,21 +81,15 @@ const enhance = compose(
     },
   }),
   withProps(({
-    isExpanded, setIsExpanded, history, openDocRef,
-    actionBarItems, documentTree,
+    history, openDocRef, actionBarItems, documentTree,
   }) => ({
     menuItems: [
-      {
-        key: 'stroom',
-        title: <img src={logoInWhite} alt="Stroom logo" />,
-        icon: 'bars',
-        onClick: () => setIsExpanded(!isExpanded),
-      },
       {
         key: 'welcome',
         title: 'Welcome',
         onClick: () => history.push(`${pathPrefix}/welcome/`),
         icon: 'home',
+        style: 'nav',
       },
       getDocumentTreeMenuItems(d => openDocRef(history, d), documentTree),
       {
@@ -102,42 +97,50 @@ const enhance = compose(
         title: 'Data',
         onClick: () => history.push(`${pathPrefix}/data`),
         icon: 'database',
+        style: 'nav',
       },
       {
         key: 'pipelines',
         title: 'Pipelines',
         onClick: () => history.push(`${pathPrefix}/pipelines`),
         icon: 'tasks',
+        style: 'nav',
       },
       {
         key: 'processing',
         title: 'Processing',
         onClick: () => history.push(`${pathPrefix}/processing`),
         icon: 'play',
+        style: 'nav',
       },
       {
         key: 'admin',
         title: 'Admin',
-        onClick: () => console.log('Expand admin'),
+        onClick: () => {},
         icon: 'cogs',
+        style: 'nav',
+        skipInContractedMenu: true,
         children: [
           {
             key: 'admin-me',
             title: 'Me',
             onClick: () => history.push(`${pathPrefix}/me`),
             icon: 'user',
+            style: 'nav',
           },
           {
             key: 'admin-users',
             title: 'Users',
             onClick: () => history.push(`${pathPrefix}/users`),
             icon: 'users',
+            style: 'nav',
           },
           {
             key: 'admin-apikeys',
             title: 'API Keys',
             onClick: () => history.push(`${pathPrefix}/apikeys`),
             icon: 'key',
+            style: 'nav',
           },
         ],
       },
@@ -146,12 +149,14 @@ const enhance = compose(
         title: 'Recent Items',
         onClick: () => history.push(`${pathPrefix}/recentItems`),
         icon: 'file outline',
+        style: 'nav',
       },
       {
         key: 'search',
         title: 'Search',
         onClick: () => history.push(`${pathPrefix}/search`),
         icon: 'search',
+        style: 'nav',
       },
     ],
   })),
@@ -161,18 +166,15 @@ const getExpandedMenuItems = (menuItems, menuItemsOpen, menuItemOpened, depth = 
   menuItems.map(menuItem => (
     <React.Fragment key={menuItem.key}>
       <div
-        className="sidebar__menu-item"
-        style={{ marginLeft: `${depth * 0.7}rem` }}
-        onClick={() => {
-          if (menuItem.children) {
-            menuItemOpened(menuItem.key, !menuItemsOpen[menuItem.key])
-          }
-          menuItem.onClick();
-        }}
+        className={`sidebar__menu-item--${menuItem.style}`}
+        style={{ paddingLeft: `${depth * 0.7}rem` }}
       >
         {menuItem.children && menuItem.children.length > 0 ? (
           <Icon
-            onClick={() => menuItemOpened(menuItem.key, !menuItemsOpen[menuItem.key])}
+            onClick={(e) => {
+              menuItemOpened(menuItem.key, !menuItemsOpen[menuItem.key]);
+              e.preventDefault();
+            }}
             name={`caret ${menuItemsOpen[menuItem.key] ? 'down' : 'right'}`}
           />
         ) : menuItem.key !== 'stroom' ? (
@@ -181,7 +183,16 @@ const getExpandedMenuItems = (menuItems, menuItemsOpen, menuItemOpened, depth = 
           undefined
         )}
         <Icon name={menuItem.icon} />
-        {menuItem.title}
+        <span
+          onClick={() => {
+            if (menuItem.children) {
+              menuItemOpened(menuItem.key, !menuItemsOpen[menuItem.key]);
+            }
+            menuItem.onClick();
+          }}
+        >
+          {menuItem.title}
+        </span>
       </div>
       {menuItem.children &&
         menuItemsOpen[menuItem.key] &&
@@ -192,7 +203,7 @@ const getExpandedMenuItems = (menuItems, menuItemsOpen, menuItemOpened, depth = 
 const getContractedMenuItems = menuItems =>
   menuItems.map(menuItem => (
     <React.Fragment key={menuItem.key}>
-      {!menuItem.children && ( // just put the children of menu items into the sidebar
+      {!menuItem.skipInContractedMenu && ( // just put the children of menu items into the sidebar
         <Button key={menuItem.title} icon={menuItem.icon} onClick={menuItem.onClick} />
       )}
       {menuItem.children && getContractedMenuItems(menuItem.children)}
@@ -208,15 +219,28 @@ const AppChrome = ({
   actionBarItems,
   menuItemsOpen,
   menuItemOpened,
+  setIsExpanded,
 }) => (
   <div className="app-chrome">
     <div className="app-chrome__sidebar">
       {isExpanded ? (
-        <div className="app-chrome__sidebar-menu">
-          {getExpandedMenuItems(menuItems, menuItemsOpen, menuItemOpened)}
-        </div>
+        <React.Fragment>
+          <div>
+            <Button
+              size="large"
+              color={SIDE_BAR_COLOUR}
+              icon="bars"
+              onClick={() => setIsExpanded(!isExpanded)}
+            />
+            <img className="sidebar__logo" alt="X" src={require('../../images/logo.svg')} />
+          </div>
+          <div className="app-chrome__sidebar-menu">
+            {getExpandedMenuItems(menuItems, menuItemsOpen, menuItemOpened)}
+          </div>
+        </React.Fragment>
       ) : (
-        <Button.Group vertical color={SIDE_BAR_COLOUR} size="large">
+        <Button.Group vertical color={SIDE_BAR_COLOUR}>
+          <Button size="large" icon="bars" onClick={() => setIsExpanded(!isExpanded)} />
           {getContractedMenuItems(menuItems)}
         </Button.Group>
       )}

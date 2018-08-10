@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-import XsltEditor, { XsltEditorWithHeader } from './XsltEditor';
-import ActionBarItems from './ActionBarItems';
+import XsltEditor from './XsltEditor';
 import { actionCreators, reducer } from './redux';
 
-export { XsltEditor, XsltEditorWithHeader, ActionBarItems, actionCreators, reducer };
+export { XsltEditor, actionCreators, reducer };
 
 export default XsltEditor;

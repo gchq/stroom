@@ -5,8 +5,8 @@ import { Grid } from 'semantic-ui-react';
 const WithHeader = ({ header, actionBarItems, content }) => (
   <React.Fragment>
     <Grid className="content-tabs__grid">
-      <Grid.Column width={8}>{header}</Grid.Column>
-      {actionBarItems && <Grid.Column width={8}>{actionBarItems}</Grid.Column>}
+      <Grid.Column width={12}>{header}</Grid.Column>
+      {actionBarItems && <Grid.Column width={4}>{actionBarItems}</Grid.Column>}
     </Grid>
     {content}
   </React.Fragment>

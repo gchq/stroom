@@ -14,11 +14,57 @@
  * limitations under the License.
  */
 
-const fromSetupSampleData = {
+import { testPipelines } from 'components/PipelineEditor/test';
+import { testXslt } from 'prototypes/XsltEditor/test';
+
+export default {
   uuid: '0',
   type: 'System',
   name: 'System',
   children: [
+    {
+      uuid: 'root1234567890',
+      name: 'Stuff that exists in test data',
+      type: 'Folder',
+      children: [
+        {
+          uuid: 'pipelines1234567890',
+          name: 'Pipelines',
+          type: 'Folder',
+          children: Object.entries(testPipelines)
+            .map(k => ({
+              uuid: k[0],
+              data: k[1],
+            }))
+            .map(pipeline => ({
+              uuid: pipeline.uuid,
+              type: 'Pipeline',
+              name: pipeline.uuid,
+            })),
+        },
+        {
+          uuid: 'xslt1234567890',
+          name: 'XSLT',
+          type: 'Folder',
+          children: Object.entries(testXslt)
+            .map(k => ({
+              uuid: k[0],
+              data: k[1],
+            }))
+            .map(xslt => ({
+              uuid: xslt.uuid,
+              type: 'XSLT',
+              name: xslt.uuid,
+            })),
+        },
+        {
+          uuid: 'empty12323435345',
+          name: 'Empty Directory with a Long Name',
+          type: 'Folder',
+          children: [],
+        },
+      ],
+    },
     {
       uuid: 'a4bcf7e6-e4b9-4781-b97a-0fa0af0b700b',
       type: 'Folder',
@@ -1247,5 +1293,3 @@ const fromSetupSampleData = {
     },
   ],
 };
-
-export default fromSetupSampleData;

@@ -4,18 +4,16 @@ import { Header, Icon } from 'semantic-ui-react';
 
 import { withConfig } from 'startup/config';
 import { AppChrome } from './index';
-import { TrackerDashboardWithHeader } from 'sections/TrackerDashboard';
-import { PipelineEditorWithHeader } from 'components/PipelineEditor';
-import { XsltEditorWithHeader } from 'prototypes/XsltEditor';
-import { PipelineSearchWithHeader } from 'components/PipelineSearch';
+import TrackerDashboard from 'sections/TrackerDashboard';
+import DocEditor from 'components/DocEditor';
+import PipelineSearch from 'components/PipelineSearch';
 import Welcome from 'sections/Welcome';
-import { FolderExplorerWithHeader } from 'components/FolderExplorer';
-import { DataViewerWithHeader } from 'components/DataViewer';
-import { UserSettingsWithHeader } from 'prototypes/UserSettings';
+import DataViewer from 'components/DataViewer';
+import UserSettings from 'prototypes/UserSettings';
 import PathNotFound from 'components/PathNotFound';
 import IFrame from 'components/IFrame';
-import { AppSearchWithHeader } from 'prototypes/AppSearch';
-import { RecentItemsWithHeader } from 'prototypes/RecentItems';
+import AppSearch from 'prototypes/AppSearch';
+import RecentItems from 'prototypes/RecentItems';
 import WithHeader from 'components/WithHeader';
 
 const renderWelcome = props => <AppChrome activeMenuItem="Welcome" content={<Welcome />} />;
@@ -61,27 +59,23 @@ export default [
     exact: true,
     path: '/s/data',
     render: props => (
-      <AppChrome activeMenuItem="Data" content={<DataViewerWithHeader dataViewerId="system" />} />
+      <AppChrome activeMenuItem="Data" content={<DataViewer dataViewerId="system" />} />
     ),
   },
   {
     exact: true,
     path: '/s/pipelines',
-    render: props => (
-      <AppChrome activeMenuItem="Pipelines" content={<PipelineSearchWithHeader />} />
-    ),
+    render: props => <AppChrome activeMenuItem="Pipelines" content={<PipelineSearch />} />,
   },
   {
     exact: true,
     path: '/s/processing',
-    render: props => (
-      <AppChrome activeMenuItem="Processing" content={<TrackerDashboardWithHeader />} />
-    ),
+    render: props => <AppChrome activeMenuItem="Processing" content={<TrackerDashboard />} />,
   },
   {
     exact: true,
     path: '/s/me',
-    render: props => <AppChrome activeMenuItem="Me" content={<UserSettingsWithHeader />} />,
+    render: props => <AppChrome activeMenuItem="Me" content={<UserSettings />} />,
   },
   {
     exact: true,
@@ -98,54 +92,12 @@ export default [
   {
     exact: true,
     path: '/s/search',
-    render: props => <AppChrome activeMenuItem="Search" content={<AppSearchWithHeader />} />,
+    render: props => <AppChrome activeMenuItem="Search" content={<AppSearch />} />,
   },
   {
     exact: true,
     path: '/s/recentItems',
-    render: props => (
-      <AppChrome activeMenuItem="Recent Items" content={<RecentItemsWithHeader />} />
-    ),
-  },
-  {
-    exact: true,
-    path: '/s/doc/XSLT/:xsltId',
-    render: props => (
-      <AppChrome
-        activeMenuItem="Explorer"
-        content={<XsltEditorWithHeader xsltId={props.match.params.xsltId} />}
-      />
-    ),
-  },
-  {
-    exact: true,
-    path: '/s/doc/Folder/:folderUuid',
-    render: props => (
-      <AppChrome
-        activeMenuItem="Explorer"
-        content={<FolderExplorerWithHeader folderUuid={props.match.params.folderUuid} />}
-      />
-    ),
-  },
-  {
-    exact: true,
-    path: '/s/doc/System/:folderUuid',
-    render: props => (
-      <AppChrome
-        activeMenuItem="Explorer"
-        content={<FolderExplorerWithHeader folderUuid={props.match.params.folderUuid} />}
-      />
-    ),
-  },
-  {
-    exact: true,
-    path: '/s/doc/Pipeline/:pipelineId',
-    render: props => (
-      <AppChrome
-        activeMenuItem="Pipelines"
-        content={<PipelineEditorWithHeader pipelineId={props.match.params.pipelineId} />}
-      />
-    ),
+    render: props => <AppChrome activeMenuItem="Recent Items" content={<RecentItems />} />,
   },
   {
     exact: true,
@@ -153,7 +105,7 @@ export default [
     render: props => (
       <AppChrome
         activeMenuItem="Explorer"
-        content={<PathNotFound message="no editor provided for this doc ref type " />}
+        content={<DocEditor docRef={{ ...props.match.params }} />}
       />
     ),
   },
