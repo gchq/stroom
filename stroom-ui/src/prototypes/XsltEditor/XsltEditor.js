@@ -58,6 +58,7 @@ const enhance = compose(
 
 const XsltEditor = ({ xsltId, xslt, xsltUpdated, saveXslt }) => (
   <WithHeader
+    docRefUuid={xsltId}
     header={
       <Header as="h3">
         <img
