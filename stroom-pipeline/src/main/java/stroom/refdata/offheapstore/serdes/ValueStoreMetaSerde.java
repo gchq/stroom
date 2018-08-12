@@ -47,21 +47,32 @@ public class ValueStoreMetaSerde implements Serde<ValueStoreMeta> {
         return byteBuffer.getInt(REFERENCE_COUNT_OFFSET);
     }
 
-    public int cloneAndIncrementRefCount(final ByteBuffer sourceBuffer, final ByteBuffer destBuffer) {
-
-        //TODO
-
-
-        return -1;
+    public int cloneAndDecrementRefCount(final ByteBuffer sourceBuffer, final ByteBuffer destBuffer) {
+        return cloneAndUpdateRefCount(sourceBuffer, destBuffer, -1);
     }
 
+    public int cloneAndIncrementRefCount(final ByteBuffer sourceBuffer, final ByteBuffer destBuffer) {
+        return cloneAndUpdateRefCount(sourceBuffer, destBuffer, 1);
+    }
 
-    public int updateReferenceCount(final ByteBuffer byteBuffer, int referenceCountDelta) {
-        int currRefCount = extractReferenceCount(byteBuffer);
+    public int cloneAndUpdateRefCount(final ByteBuffer sourceBuffer, final ByteBuffer destBuffer, int referenceCountDelta) {
+
+        int currRefCount = extractReferenceCount(sourceBuffer);
         int newRefCount = currRefCount + referenceCountDelta;
+        destBuffer.put(sourceBuffer.get(TYPE_ID_OFFSET));
+        destBuffer.putInt(newRefCount);
+        destBuffer.flip();
 
-        byteBuffer.putInt(REFERENCE_COUNT_OFFSET, newRefCount);
-        LOGGER.trace("Changing ref count from {} to {}", currRefCount, newRefCount);
         return newRefCount;
     }
+
+
+//    public int updateReferenceCount(final ByteBuffer byteBuffer, int referenceCountDelta) {
+//        int currRefCount = extractReferenceCount(byteBuffer);
+//        int newRefCount = currRefCount + referenceCountDelta;
+//
+//        byteBuffer.putInt(REFERENCE_COUNT_OFFSET, newRefCount);
+//        LOGGER.trace("Changing ref count from {} to {}", currRefCount, newRefCount);
+//        return newRefCount;
+//    }
 }

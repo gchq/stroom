@@ -49,8 +49,7 @@ public class StringByteBufferConsumer extends AbstractByteBufferConsumer {
         LOGGER.trace("consumeBytes()");
 
         // we should only be consuming string type values
-        final String str = StringValueSerde.decodeString(byteBuffer);
-        byteBuffer.flip();
+        final String str = stringValueSerde.extractValue(byteBuffer);
 
         LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("str {}, byteBuffer {}",
                 str, ByteBufferUtils.byteBufferInfo(byteBuffer)));
@@ -73,7 +72,7 @@ public class StringByteBufferConsumer extends AbstractByteBufferConsumer {
 
         @Override
         public RefDataValueByteBufferConsumer create(final Receiver receiver,
-                                                 final PipelineConfiguration pipelineConfiguration) {
+                                                     final PipelineConfiguration pipelineConfiguration) {
             return new StringByteBufferConsumer(receiver, stringValueSerde);
         }
     }

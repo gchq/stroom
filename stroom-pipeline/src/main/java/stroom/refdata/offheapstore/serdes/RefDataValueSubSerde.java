@@ -29,6 +29,7 @@ import java.nio.ByteBuffer;
  * A serde that understands how to (de)serialise the type specific sub part of
  * a {@link RefDataValue}. This serde will only handle/see the content it knows about.
  */
+@Deprecated
 public interface RefDataValueSubSerde extends Serde<RefDataValue> {
 
     Logger LOGGER = LoggerFactory.getLogger(RefDataValueSubSerde.class);
@@ -54,7 +55,7 @@ public interface RefDataValueSubSerde extends Serde<RefDataValue> {
     }
 
     default void putReferenceCount(final RefDataValue refDataValue, final ByteBuffer byteBuffer) {
-        byteBuffer.putInt(refDataValue.getReferenceCount());
+//        byteBuffer.putInt(refDataValue.getReferenceCount());
     }
 
     /**

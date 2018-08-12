@@ -222,7 +222,7 @@ public class TestRangeStoreDb extends AbstractLmdbDbTest {
     private void doForEachTest(final UID uid, final int expectedEntryCount) {
         LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
             AtomicInteger cnt = new AtomicInteger(0);
-            rangeStoreDb.deleteMapEntries(writeTxn, uid, (keyBuf, valBuf) -> {
+            rangeStoreDb.deleteMapEntries(writeTxn, uid, (txn, keyBuf, valBuf) -> {
                 cnt.incrementAndGet();
                 LOGGER.info("{} {}", ByteBufferUtils.byteBufferInfo(keyBuf), ByteBufferUtils.byteBufferInfo(valBuf));
             });

@@ -210,14 +210,52 @@ public class TestBasicLmdbDb extends AbstractLmdbDbTest {
         assertThat(entries).hasSize(5);
     }
 
+    @Test
+    public void testKeyReuse() {
+        basicLmdbDb.put("keyLongerThanValue1", "value1", false);
+        basicLmdbDb.put("keyLongerThanValue2", "value2", false);
+        basicLmdbDb.put("keyLongerThanValue3", "value3", false);
+
+
+        LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
+            ByteBuffer keyBuffer = ByteBuffer.allocateDirect(100);
+            basicLmdbDb.serializeKey(keyBuffer, "keyLongerThanValue2");
+            ByteBuffer keyBufferCopy = keyBuffer.asReadOnlyBuffer();
+
+            ByteBuffer valueBuffer = basicLmdbDb.getAsBytes(txn, keyBuffer).get();
+            String value = basicLmdbDb.deserializeValue(valueBuffer);
+
+            assertThat(value).isEqualTo("value2");
+            assertThat(keyBuffer).isEqualTo(keyBufferCopy);
+
+            ByteBuffer valueBuffer2 = basicLmdbDb.getAsBytes(txn, keyBuffer).get();
+
+            String value2 = basicLmdbDb.deserializeValue(valueBuffer2);
+
+            assertThat(value2).isEqualTo("value2");
+            assertThat(keyBuffer).isEqualTo(keyBufferCopy);
+
+
+        });
+
+    }
+
     private void populateDb() {
         // pad the keys to a fixed length so they sort in number order
         IntStream.rangeClosed(1, 20).forEach(i -> {
-            basicLmdbDb.put(String.format("%02d",i), "value" + i, false);
+            basicLmdbDb.put(buildKey(i), buildValue(i), false);
 
         });
 
         basicLmdbDb.logDatabaseContents(LOGGER::info);
+    }
+
+    private String buildKey(int i) {
+        return String.format("%02d",i);
+    }
+
+    private String buildValue(int i) {
+        return "value" + i;
     }
 
 }

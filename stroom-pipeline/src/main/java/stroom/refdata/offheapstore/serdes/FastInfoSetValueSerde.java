@@ -23,21 +23,21 @@ import stroom.util.logging.LambdaLogger;
 
 import java.nio.ByteBuffer;
 
-public class FastInfoSetValueSerde implements RefDataValueSubSerde {
+public class FastInfoSetValueSerde implements RefDataValueSerde {
 
     @Override
     public RefDataValue deserialize(final ByteBuffer byteBuffer) {
-        int referenceCount = getReferenceCount(byteBuffer);
+//        int referenceCount = getReferenceCount(byteBuffer);
         byte[] bytes = new byte[byteBuffer.remaining()];
         byteBuffer.get(bytes);
         byteBuffer.flip();
-        return new FastInfosetValue(referenceCount, bytes);
+        return new FastInfosetValue(bytes);
     }
 
     @Override
     public void serialize(final ByteBuffer byteBuffer, final RefDataValue refDataValue) {
         try {
-            putReferenceCount(refDataValue, byteBuffer);
+//            putReferenceCount(refDataValue, byteBuffer);
             byteBuffer.put(((FastInfosetValue) refDataValue).getValueBytes());
         } catch (ClassCastException e) {
             throw new RuntimeException(LambdaLogger.buildMessage("Unable to cast {} to {}",

@@ -40,6 +40,7 @@ import stroom.refdata.offheapstore.databases.MapUidReverseDb;
 import stroom.refdata.offheapstore.databases.ProcessingInfoDb;
 import stroom.refdata.offheapstore.databases.RangeStoreDb;
 import stroom.refdata.offheapstore.databases.ValueStoreDb;
+import stroom.refdata.offheapstore.databases.ValueStoreMetaDb;
 import stroom.refdata.offheapstore.serdes.RefDataProcessingInfoSerde;
 import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
@@ -59,6 +60,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -90,10 +92,11 @@ public class RefDataOffHeapStore implements RefDataStore {
     private final KeyValueStoreDb keyValueStoreDb;
     private final RangeStoreDb rangeStoreDb;
     private final ValueStoreDb valueStoreDb;
+    private final ValueStoreMetaDb valueStoreMetaDb;
+    private final ValueStore valueStore;
     private final MapUidForwardDb mapUidForwardDb;
     private final MapUidReverseDb mapUidReverseDb;
     private final ProcessingInfoDb processingInfoDb;
-//    private final ValueStoreMetaDb valueReferenceCountDb;
 
     private final MapDefinitionUIDStore mapDefinitionUIDStore;
     private final StroomPropertyService stroomPropertyService;
@@ -105,8 +108,8 @@ public class RefDataOffHeapStore implements RefDataStore {
     private final ByteBufferPool byteBufferPool;
 
     /**
-     * @param dbDir   The directory the LMDB environment will be created in, it must already exist
-     * @param maxSize The max size in bytes of the environment. This should be less than the available
+     * @param dbDir            The directory the LMDB environment will be created in, it must already exist
+     * @param maxSize          The max size in bytes of the environment. This should be less than the available
      */
     @Inject
     RefDataOffHeapStore(
@@ -118,11 +121,11 @@ public class RefDataOffHeapStore implements RefDataStore {
             final ByteBufferPool byteBufferPool,
             final KeyValueStoreDb.Factory keyValueStoreDbFactory,
             final ValueStoreDb.Factory valueStoreDbFactory,
+            final ValueStoreMetaDb.Factory valueStoreMetaDbFactory,
             final RangeStoreDb.Factory rangeStoreDbFactory,
             final MapUidForwardDb.Factory mapUidForwardDbFactory,
             final MapUidReverseDb.Factory mapUidReverseDbFactory,
             final ProcessingInfoDb.Factory processingInfoDbFactory,
-//            final ValueStoreMetaDb.Factory valueReferenceCountDbFactory,
             final StroomPropertyService stroomPropertyService) {
 
         this.dbDir = dbDir;
@@ -162,7 +165,7 @@ public class RefDataOffHeapStore implements RefDataStore {
         this.mapUidForwardDb = mapUidForwardDbFactory.create(lmdbEnvironment);
         this.mapUidReverseDb = mapUidReverseDbFactory.create(lmdbEnvironment);
         this.processingInfoDb = processingInfoDbFactory.create(lmdbEnvironment);
-//        this.valueReferenceCountDb = valueReferenceCountDbFactory.create(lmdbEnvironment);
+        this.valueStoreMetaDb = valueStoreMetaDbFactory.create(lmdbEnvironment);
 
         addDbToMap(keyValueStoreDb);
         addDbToMap(rangeStoreDb);
@@ -170,7 +173,9 @@ public class RefDataOffHeapStore implements RefDataStore {
         addDbToMap(mapUidForwardDb);
         addDbToMap(mapUidReverseDb);
         addDbToMap(processingInfoDb);
+        addDbToMap(valueStoreMetaDb);
 
+        this.valueStore = new ValueStore(lmdbEnvironment, valueStoreDb, valueStoreMetaDb);
         this.mapDefinitionUIDStore = new MapDefinitionUIDStore(lmdbEnvironment, mapUidForwardDb, mapUidReverseDb);
         this.stroomPropertyService = stroomPropertyService;
         this.byteBufferPool = byteBufferPool;
@@ -236,7 +241,7 @@ public class RefDataOffHeapStore implements RefDataStore {
                 LmdbUtils.getWithReadTxn(lmdbEnvironment, readTxn ->
                         getValueStoreKey(readTxn, mapDefinition, key)
                                 .flatMap(valueStoreKeyBuffer ->
-                                        valueStoreDb.get(readTxn, valueStoreKeyBuffer)));
+                                        valueStore.get(readTxn, valueStoreKeyBuffer)));
 
         LOGGER.trace("getValue({}, {}) - {}", mapDefinition, key, optionalRefDataValue);
         return optionalRefDataValue;
@@ -321,7 +326,7 @@ public class RefDataOffHeapStore implements RefDataStore {
         boolean wasValueFound = LmdbUtils.getWithReadTxn(lmdbEnvironment, txn ->
                 getValueStoreKey(txn, mapDefinition, key)
                         .flatMap(valueStoreKeyBuf ->
-                                valueStoreDb.getValueBytes(txn, valueStoreKeyBuf))
+                                getTypedValueBuffer(txn, valueStoreKeyBuf))
                         .map(valueBuf -> {
                             valueBytesConsumer.accept(valueBuf);
                             return true;
@@ -330,6 +335,19 @@ public class RefDataOffHeapStore implements RefDataStore {
 
         LOGGER.trace("consumeValueBytes({}, {}) - {}", mapDefinition, key, wasValueFound);
         return wasValueFound;
+    }
+
+    private Optional<TypedByteBuffer> getTypedValueBuffer(final Txn<ByteBuffer> txn, final ByteBuffer valueStoreKeyBuffer) {
+        OptionalInt optTypeId = valueStoreMetaDb.getTypeId(txn, valueStoreKeyBuffer);
+        if (optTypeId.isPresent()) {
+            ByteBuffer valueBuffer = valueStoreDb.getAsBytes(txn, valueStoreKeyBuffer)
+                    .orElseThrow(() -> new RuntimeException(
+                            "If we have a meta entry we should also have a value entry, data may be corrupted"));
+
+            return Optional.of(new TypedByteBuffer(optTypeId.getAsInt(), valueBuffer));
+        } else {
+            return Optional.empty();
+        }
     }
 
     @Override
@@ -352,7 +370,9 @@ public class RefDataOffHeapStore implements RefDataStore {
                 refStreamDefStripedReentrantLock,
                 keyValueStoreDb,
                 rangeStoreDb,
-                valueStoreDb,
+//                valueStoreDb,
+//                valueStoreMetaDb,
+                valueStore,
                 mapDefinitionUIDStore,
                 processingInfoDb,
                 lmdbEnvironment,
@@ -399,7 +419,6 @@ public class RefDataOffHeapStore implements RefDataStore {
     public long getProcessingInfoEntryCount() {
         return processingInfoDb.getEntryCount();
     }
-
 
     /**
      * @param nowMs Allows the setting of the current time for testing purposes
@@ -613,12 +632,7 @@ public class RefDataOffHeapStore implements RefDataStore {
         keyValueStoreDb.deleteMapEntries(writeTxn, mapUid, (keyValueStoreKeyBuffer, valueStoreKeyBuffer) -> {
 
             //dereference this value, deleting it if required
-            boolean wasDeleted = valueStoreDb.deReferenceOrDeleteValue(writeTxn, valueStoreKeyBuffer);
-            if (wasDeleted) {
-                valueEntryDeleteCount.incrementAndGet();
-            } else {
-                valueEntryDeReferenceCount.incrementAndGet();
-            }
+            deReferenceOrDeleteValue(writeTxn, valueStoreKeyBuffer, valueEntryDeleteCount, valueEntryDeReferenceCount);
         });
         LAMBDA_LOGGER.debug(() -> LambdaLogger.buildMessage("Deleted {} value entries, de-referenced {} value entries",
                 valueEntryDeleteCount.get(), valueEntryDeReferenceCount.get()));
@@ -626,21 +640,34 @@ public class RefDataOffHeapStore implements RefDataStore {
         LOGGER.debug("Deleting range/value entries and de-referencing/deleting their values");
         // loop over all rangeValue entries for this mapUid and dereference/delete the associated
         // valueStore entry
-        rangeStoreDb.deleteMapEntries(writeTxn, mapUid, (rangeValueStoreKeyBuffer, valueStoreKeyBuffer) -> {
+        rangeStoreDb.deleteMapEntries(writeTxn, mapUid, (writeTxn2, rangeValueStoreKeyBuffer, valueStoreKeyBuffer) -> {
 
             //dereference this value, deleting it if required
-            boolean wasDeleted = valueStoreDb.deReferenceOrDeleteValue(writeTxn, valueStoreKeyBuffer);
-            if (wasDeleted) {
-                valueEntryDeleteCount.incrementAndGet();
-            } else {
-                valueEntryDeReferenceCount.incrementAndGet();
-            }
+            deReferenceOrDeleteValue(writeTxn2, valueStoreKeyBuffer, valueEntryDeleteCount, valueEntryDeReferenceCount);
         });
         LOGGER.debug("Deleting range/value entries and de-referencing/deleting their values");
 
         mapDefinitionUIDStore.deletePair(writeTxn, mapUid);
 
         return Tuple.of(valueEntryDeleteCount.intValue(), valueEntryDeReferenceCount.intValue());
+    }
+
+    private void deReferenceOrDeleteValue(final Txn<ByteBuffer> writeTxn,
+                                          final ByteBuffer valueStoreKeyBuffer,
+                                          final AtomicLong valueEntryDeleteCount,
+                                          final AtomicLong valueEntryDeReferenceCount) {
+        boolean wasDeleted = valueStoreMetaDb.deReferenceOrDeleteValue(
+                writeTxn,
+                valueStoreKeyBuffer,
+                ((txn, keyBuffer, valueBuffer) -> valueStoreDb.delete(txn, keyBuffer)));
+
+        if (wasDeleted) {
+            // we deleted the meta entry so now delete the value entry
+            valueEntryDeleteCount.incrementAndGet();
+        } else {
+            // keep a count of the de-reference
+            valueEntryDeReferenceCount.incrementAndGet();
+        }
     }
 
     public void doWithRefStreamDefinitionLock(final RefStreamDefinition refStreamDefinition, final Runnable work) {
@@ -816,7 +843,9 @@ public class RefDataOffHeapStore implements RefDataStore {
 
         private final KeyValueStoreDb keyValueStoreDb;
         private final RangeStoreDb rangeStoreDb;
-        private final ValueStoreDb valueStoreDb;
+//        private final ValueStoreDb valueStoreDb;
+//        private final ValueStoreMetaDb valueStoreMetaDb;
+        private final ValueStore valueStore;
         private final MapDefinitionUIDStore mapDefinitionUIDStore;
         private final ProcessingInfoDb processingInfoDb;
 //        private final ValueStoreMetaDb valueReferenceCountDb;
@@ -850,7 +879,9 @@ public class RefDataOffHeapStore implements RefDataStore {
                                   final Striped<Lock> refStreamDefStripedReentrantLock,
                                   final KeyValueStoreDb keyValueStoreDb,
                                   final RangeStoreDb rangeStoreDb,
-                                  final ValueStoreDb valueStoreDb,
+//                                  final ValueStoreDb valueStoreDb,
+//                                  final ValueStoreMetaDb valueStoreMetaDb,
+                                  final ValueStore valueStore,
                                   final MapDefinitionUIDStore mapDefinitionUIDStore,
                                   final ProcessingInfoDb processingInfoDb,
                                   final Env<ByteBuffer> lmdbEnvironment,
@@ -861,9 +892,11 @@ public class RefDataOffHeapStore implements RefDataStore {
             this.byteBufferPool = byteBufferPool;
             this.keyValueStoreDb = keyValueStoreDb;
             this.rangeStoreDb = rangeStoreDb;
-            this.valueStoreDb = valueStoreDb;
+//            this.valueStoreDb = valueStoreDb;
+//            this.valueStoreMetaDb = valueStoreMetaDb;
             this.processingInfoDb = processingInfoDb;
 
+            this.valueStore = valueStore;
             this.mapDefinitionUIDStore = mapDefinitionUIDStore;
             this.lmdbEnvironment = lmdbEnvironment;
             this.refStreamDefinition = refStreamDefinition;
@@ -872,7 +905,7 @@ public class RefDataOffHeapStore implements RefDataStore {
             // get buffers to (re)use for the life of the loader
             this.keyValuePooledKeyBuffer = keyValueStoreDb.getPooledKeyBuffer();
             this.rangeValuePooledKeyBuffer = rangeStoreDb.getPooledKeyBuffer();
-            this.valueStorePooledKeyBuffer = valueStoreDb.getPooledKeyBuffer();
+            this.valueStorePooledKeyBuffer = valueStore.getPooledKeyBuffer();
 
             // Get the lock for this refStreamDefinition
             // This will make any other threads trying to load the same refStreamDefinition block and wait for us
@@ -993,7 +1026,7 @@ public class RefDataOffHeapStore implements RefDataStore {
 //                    RefDataValue currentValueStoreValue = valueStoreDb.get(writeTxn, currentValueStoreKey)
 //                            .orElseThrow(() -> new RuntimeException("Should have a value at this point"));
 
-                    boolean areValuesEqual = valueStoreDb.areValuesEqual(
+                    boolean areValuesEqual = valueStore.areValuesEqual(
                             writeTxn, currValueStoreKeyBuffer, refDataValue);
                     if (areValuesEqual) {
                         // value is the same as the existing value so nothing to do
@@ -1002,32 +1035,15 @@ public class RefDataOffHeapStore implements RefDataStore {
                     } else {
                         // value is different so we need to de-reference the old one
                         // and getOrCreate the new one
-                        valueStoreDb.deReferenceOrDeleteValue(writeTxn, currValueStoreKeyBuffer);
+//                        valueStoreDb.deReferenceOrDeleteValue(writeTxn, currValueStoreKeyBuffer);
+                        valueStore.deReferenceOrDeleteValue(writeTxn, currValueStoreKeyBuffer);
 
-                        //get the ValueStoreKey for the RefDataValue (creating the entry if it doesn't exist)
-                        final ByteBuffer valueStoreKeyBuffer = valueStoreDb.getOrCreate(
-                                writeTxn, refDataValue, valueStorePooledKeyBuffer, overwriteExisting);
-
-                        // assuming it is cheaper to just try the put and let LMDB handle duplicates rather than
-                        // do a get then optional put.
-                        didPutSucceed = keyValueStoreDb.put(
-                                writeTxn, keyValueKeyBuffer, valueStoreKeyBuffer, overwriteExisting);
+                        didPutSucceed = createKeyValue(refDataValue, keyValueKeyBuffer);
                     }
                 }
             } else {
                 // no existing valueStoreKey so create the entries
-                //get the ValueStoreKey for the RefDataValue (creating the entry if it doesn't exist)
-//                final ValueStoreKey valueStoreKey = valueStoreDb.getOrCreate(
-//                        writeTxn, refDataValue, overwriteExisting);
-                final ByteBuffer valueStoreKeyBuffer = valueStoreDb.getOrCreate(
-                        writeTxn, refDataValue, valueStorePooledKeyBuffer, overwriteExisting);
-                // assuming it is cheaper to just try the put and let LMDB handle duplicates rather than
-                // do a get then optional put.
-                didPutSucceed = keyValueStoreDb.put(
-                        writeTxn, keyValuePooledKeyBuffer.getByteBuffer(), valueStoreKeyBuffer, overwriteExisting);
-
-//                didPutSucceed = keyValueStoreDb.put(
-//                        writeTxn, keyValueStoreKey, valueStoreKey, overwriteExisting);
+                didPutSucceed = createKeyValue(refDataValue, keyValueKeyBuffer);
             }
 
             if (didPutSucceed) {
@@ -1040,6 +1056,8 @@ public class RefDataOffHeapStore implements RefDataStore {
 
             return didPutSucceed;
         }
+
+
 
         @Override
         public boolean put(final MapDefinition mapDefinition,
@@ -1061,9 +1079,13 @@ public class RefDataOffHeapStore implements RefDataStore {
             // if overwrite == false, we can just drop out here
             // if overwrite == true we need to de-reference the value (and maybe delete)
             // then create a new value, assuming they are different
-            rangeStoreDb.serializeKey(rangeValuePooledKeyBuffer.getByteBuffer(), rangeStoreKey);
+            final ByteBuffer rangeValueKeyBuffer = rangeValuePooledKeyBuffer.getByteBuffer();
+            // ensure the buffer is clear as we are reusing the same one for each put
+            rangeValueKeyBuffer.clear();
+            rangeStoreDb.serializeKey(rangeValueKeyBuffer, rangeStoreKey);
+
             Optional<ByteBuffer> optCurrValueStoreKeyBuffer = rangeStoreDb.getAsBytes(
-                    writeTxn, rangeValuePooledKeyBuffer.getByteBuffer());
+                    writeTxn, rangeValueKeyBuffer);
 
             boolean didPutSucceed;
             if (optCurrValueStoreKeyBuffer.isPresent()) {
@@ -1077,7 +1099,7 @@ public class RefDataOffHeapStore implements RefDataStore {
                     ByteBuffer currValueStoreKeyBuffer = optCurrValueStoreKeyBuffer.get();
 //                    ValueStoreKey currentValueStoreKey = optCurrValueStoreKeyBuffer.get();
 
-                    boolean areValuesEqual = valueStoreDb.areValuesEqual(
+                    boolean areValuesEqual = valueStore.areValuesEqual(
                             writeTxn, currValueStoreKeyBuffer, refDataValue);
                     if (areValuesEqual) {
                         // value is the same as the existing value so nothing to do
@@ -1086,28 +1108,17 @@ public class RefDataOffHeapStore implements RefDataStore {
                     } else {
                         // value is different so we need to de-reference the old one
                         // and getOrCreate the new one
-                        valueStoreDb.deReferenceOrDeleteValue(writeTxn, currValueStoreKeyBuffer);
+                        valueStore.deReferenceOrDeleteValue(writeTxn, currValueStoreKeyBuffer);
 
+//                        final ByteBuffer valueStoreKeyBuffer = valueStoreDb.getOrCreate(
+//                                writeTxn, refDataValue, valueStorePooledKeyBuffer, overwriteExisting);
                         //get the ValueStoreKey for the RefDataValue (creating the entry if it doesn't exist)
-                        final ByteBuffer valueStoreKeyBuffer = valueStoreDb.getOrCreate(
-                                writeTxn, refDataValue, valueStorePooledKeyBuffer, overwriteExisting);
-
-                        // assuming it is cheaper to just try the put and let LMDB handle duplicates rather than
-                        // do a get then optional put.
-                        didPutSucceed = rangeStoreDb.put(
-                                writeTxn, rangeValuePooledKeyBuffer.getByteBuffer(), valueStoreKeyBuffer, overwriteExisting);
+                        didPutSucceed = createRangeValue(refDataValue, rangeValueKeyBuffer);
                     }
                 }
             } else {
                 // no existing valueStoreKey so create the entries
-                //get the ValueStoreKey for the RefDataValue (creating the entry if it doesn't exist)
-                final ByteBuffer valueStoreKeyBuffer = valueStoreDb.getOrCreate(
-                        writeTxn, refDataValue, valueStorePooledKeyBuffer, overwriteExisting);
-
-                // assuming it is cheaper to just try the put and let LMDB handle duplicates rather than
-                // do a get then optional put.
-                didPutSucceed = rangeStoreDb.put(
-                        writeTxn, rangeValuePooledKeyBuffer.getByteBuffer(), valueStoreKeyBuffer, overwriteExisting);
+                didPutSucceed = createRangeValue(refDataValue, rangeValueKeyBuffer);
             }
 
             if (didPutSucceed) {
@@ -1117,6 +1128,30 @@ public class RefDataOffHeapStore implements RefDataStore {
             rangeValuePooledKeyBuffer.clear();
             return didPutSucceed;
         }
+
+
+        private boolean createKeyValue(final RefDataValue refDataValue, final ByteBuffer keyValueKeyBuffer) {
+
+            final ByteBuffer valueStoreKeyBuffer = valueStore.getOrCreateKey(
+                    writeTxn, valueStorePooledKeyBuffer, refDataValue, overwriteExisting);
+
+            // assuming it is cheaper to just try the put and let LMDB handle duplicates rather than
+            // do a get then optional put.
+            return keyValueStoreDb.put(
+                    writeTxn, keyValueKeyBuffer, valueStoreKeyBuffer, overwriteExisting);
+        }
+
+        private boolean createRangeValue(final RefDataValue refDataValue, final ByteBuffer rangeValueKeyBuffer) {
+
+            final ByteBuffer valueStoreKeyBuffer = valueStore.getOrCreateKey(
+                    writeTxn, valueStorePooledKeyBuffer, refDataValue, overwriteExisting);
+
+            // assuming it is cheaper to just try the put and let LMDB handle duplicates rather than
+            // do a get then optional put.
+            return rangeStoreDb.put(
+                    writeTxn, rangeValueKeyBuffer, valueStoreKeyBuffer, overwriteExisting);
+        }
+
 
         @Override
         public void close() {

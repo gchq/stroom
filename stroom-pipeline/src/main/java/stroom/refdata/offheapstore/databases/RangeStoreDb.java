@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Range;
 import stroom.refdata.lmdb.AbstractLmdbDb;
+import stroom.refdata.lmdb.EntryConsumer;
 import stroom.refdata.offheapstore.ByteBufferPool;
 import stroom.refdata.offheapstore.ByteBufferUtils;
 import stroom.refdata.offheapstore.PooledByteBuffer;
@@ -41,7 +42,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
 import java.util.Optional;
-import java.util.function.BiConsumer;
 
 public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
 
@@ -197,7 +197,7 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
 
     public void deleteMapEntries(final Txn<ByteBuffer> writeTxn,
                                  final UID mapUid,
-                                 final BiConsumer<ByteBuffer, ByteBuffer> entryConsumer) {
+                                 final EntryConsumer entryConsumer) {
 
         try (PooledByteBuffer startKeyIncPooledBuffer = getPooledKeyBuffer();
              PooledByteBuffer endKeyExcPooledBuffer = getPooledKeyBuffer()) {
@@ -228,7 +228,7 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
                                 ByteBufferUtils.byteBufferInfo(keyVal.val())));
 
                         // pass the found kv pair from this entry to the consumer
-                        entryConsumer.accept(keyVal.key(), keyVal.val());
+                        entryConsumer.accept(writeTxn, keyVal.key(), keyVal.val());
                         cursorIterator.remove();
                         cnt++;
                     } else {

@@ -22,19 +22,18 @@ import com.google.inject.assistedinject.Assisted;
 import org.lmdbjava.Cursor;
 import org.lmdbjava.Env;
 import org.lmdbjava.GetOp;
-import org.lmdbjava.PutFlags;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.lmdb.AbstractLmdbDb;
+import stroom.refdata.lmdb.EntryConsumer;
 import stroom.refdata.lmdb.LmdbUtils;
 import stroom.refdata.offheapstore.ByteBufferPool;
 import stroom.refdata.offheapstore.ByteBufferUtils;
 import stroom.refdata.offheapstore.PooledByteBuffer;
 import stroom.refdata.offheapstore.RefDataValue;
-import stroom.refdata.offheapstore.TypedByteBuffer;
 import stroom.refdata.offheapstore.ValueStoreKey;
-import stroom.refdata.offheapstore.serdes.RefDataValueSerde;
+import stroom.refdata.offheapstore.serdes.GenericRefDataValueSerde;
 import stroom.refdata.offheapstore.serdes.ValueStoreKeySerde;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -58,12 +57,12 @@ import java.util.concurrent.atomic.AtomicInteger;
  * to store the value one in this table and each key then stores a pointer to it (the {@link ValueStoreKey}.)
  * <p>
  * key        | value
- * (hash|id)  | (type|referenceCount|valueBytes)
+ * (hash|id)  | (valueBytes)
  * ---------------------------------------------
- * (1234|00)  | (0|0001|363838)
- * (1234|01)  | (0|0001|857489)
- * (4567|00)  | (0|0001|263673)
- * (7890|00)  | (0|0001|689390)
+ * (1234|00)  | (363838)
+ * (1234|01)  | (857489)
+ * (4567|00)  | (263673)
+ * (7890|00)  | (689390)
  */
 public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
 
@@ -73,13 +72,17 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
     public static final String DB_NAME = "ValueStore";
 
     private final ValueStoreKeySerde keySerde;
-    private final RefDataValueSerde valueSerde;
+    // the values in the DB are not typed so on retrieval we have no idea what type they are so have to extract them
+    // in their raw form and the caller can do the deserialisation. On insertion if we are given a typed object
+    // we can serialise them appropriately.
+    private final GenericRefDataValueSerde valueSerde;
 
     @Inject
     public ValueStoreDb(@Assisted final Env<ByteBuffer> lmdbEnvironment,
                         final ByteBufferPool byteBufferPool,
                         final ValueStoreKeySerde keySerde,
-                        final RefDataValueSerde valueSerde) {
+                        final GenericRefDataValueSerde valueSerde) {
+
         super(lmdbEnvironment, byteBufferPool, keySerde, valueSerde, DB_NAME);
         this.keySerde = keySerde;
         this.valueSerde = valueSerde;
@@ -108,8 +111,10 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
 
                 if (optCurrentValueBuf.isPresent()) {
                     valueSerde.serialize(newRefDataValuePooledBuf.getByteBuffer(), newRefDataValue);
-                    areValuesEqual = valueSerde.areValuesEqual(
-                            optCurrentValueBuf.get(), newRefDataValuePooledBuf.getByteBuffer());
+
+                    areValuesEqual = optCurrentValueBuf.get().equals(newRefDataValuePooledBuf.getByteBuffer());
+//                    areValuesEqual = valueSerde.areValuesEqual(
+//                            optCurrentValueBuf.get(), newRefDataValuePooledBuf.getByteBuffer());
                 } else {
                     areValuesEqual = false;
                 }
@@ -118,82 +123,95 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
         return areValuesEqual;
     }
 
-    boolean deReferenceOrDeleteValue(final Txn<ByteBuffer> writeTxn, final ValueStoreKey valueStoreKey) {
-        LOGGER.trace("deReferenceValue({}, {})", writeTxn, valueStoreKey);
+//    boolean deReferenceOrDeleteValue(final Txn<ByteBuffer> writeTxn, final ValueStoreKey valueStoreKey) {
+//        LOGGER.trace("deReferenceValue({}, {})", writeTxn, valueStoreKey);
+//
+//        try (final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()) {
+//            keySerde.serialize(pooledKeyBuffer.getByteBuffer(), valueStoreKey);
+//            return deReferenceOrDeleteValue(writeTxn, pooledKeyBuffer.getByteBuffer());
+//        }
+//    }
 
-        try (final PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()) {
-            keySerde.serialize(pooledKeyBuffer.getByteBuffer(), valueStoreKey);
-            return deReferenceOrDeleteValue(writeTxn, pooledKeyBuffer.getByteBuffer());
-        }
-    }
+//    /**
+//     * Decrements the reference count for this value. If the resulting reference count is zero or less
+//     * the value will be deleted as it is no longer required.
+//     */
+//    public boolean deReferenceOrDeleteValue(final Txn<ByteBuffer> writeTxn, final ByteBuffer keyBuffer) {
+//        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("deReferenceValue({}, {})",
+//                writeTxn, ByteBufferUtils.byteBufferInfo(keyBuffer)));
+//
+//        try (Cursor<ByteBuffer> cursor = getLmdbDbi().openCursor(writeTxn)) {
+//
+//            boolean isFound = cursor.get(keyBuffer, GetOp.MDB_SET_KEY);
+//            if (!isFound) {
+//                throw new RuntimeException(LambdaLogger.buildMessage(
+//                        "Expecting to find entry for {}", ByteBufferUtils.byteBufferInfo(keyBuffer)));
+//            }
+//            final ByteBuffer valueBuf = cursor.val();
+//
+//            // We run LMDB in its default mode of read only mmaps so we cannot mutate the key/value
+//            // bytebuffers.  Instead we must copy the content and put the replacement entry.
+//            // We could run LMDB in MDB_WRITEMAP mode which allows mutation of the buffers (and
+//            // thus avoids the buffer copy cost) but adds more risk of DB corruption. As we are not
+//            // doing a high volume of value mutations read-only mode is a safer bet.
+//            final ByteBuffer newValueBuf = ByteBufferUtils.copyToDirectBuffer(valueBuf);
+//
+//            int newRefCount = valueSerde.updateReferenceCount(newValueBuf, -1);
+//
+//            if (newRefCount <= 0) {
+//                // we had the last ref to this value so we can delete it
+//                LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Ref count is zero, deleting entry for key {}",
+//                        ByteBufferUtils.byteBufferInfo(keyBuffer)));
+//                cursor.delete();
+//                return true;
+//            } else {
+//                LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Updating entry with new ref count {} for key {}",
+//                        newRefCount,
+//                        ByteBufferUtils.byteBufferInfo(keyBuffer)));
+//                cursor.put(cursor.key(), newValueBuf, PutFlags.MDB_CURRENT);
+//                return false;
+//            }
+//        }
+//    }
 
-    /**
-     * Decrements the reference count for this value. If the resulting reference count is zero or less
-     * the value will be deleted as it is no longer required.
-     */
-    public boolean deReferenceOrDeleteValue(final Txn<ByteBuffer> writeTxn, final ByteBuffer keyBuffer) {
-        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("deReferenceValue({}, {})",
-                writeTxn, ByteBufferUtils.byteBufferInfo(keyBuffer)));
+    ByteBuffer getOrCreateKey(final Txn<ByteBuffer> writeTxn,
+                              final RefDataValue refDataValue,
+                              final PooledByteBuffer valueStoreKeyPooledBuffer,
+                              final EntryConsumer onExistingEntryAction,
+                              final EntryConsumer onNewEntryAction) {
 
-        try (Cursor<ByteBuffer> cursor = getLmdbDbi().openCursor(writeTxn)) {
-
-            boolean isFound = cursor.get(keyBuffer, GetOp.MDB_SET_KEY);
-            if (!isFound) {
-                throw new RuntimeException(LambdaLogger.buildMessage(
-                        "Expecting to find entry for {}", ByteBufferUtils.byteBufferInfo(keyBuffer)));
-            }
-            final ByteBuffer valueBuf = cursor.val();
-
-            // We run LMDB in its default mode of read only mmaps so we cannot mutate the key/value
-            // bytebuffers.  Instead we must copy the content and put the replacement entry.
-            // We could run LMDB in MDB_WRITEMAP mode which allows mutation of the buffers (and
-            // thus avoids the buffer copy cost) but adds more risk of DB corruption. As we are not
-            // doing a high volume of value mutations read-only mode is a safer bet.
-            final ByteBuffer newValueBuf = ByteBufferUtils.copyToDirectBuffer(valueBuf);
-
-            int newRefCount = valueSerde.updateReferenceCount(newValueBuf, -1);
-
-            if (newRefCount <= 0) {
-                // we had the last ref to this value so we can delete it
-                LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Ref count is zero, deleting entry for key {}",
-                        ByteBufferUtils.byteBufferInfo(keyBuffer)));
-                cursor.delete();
-                return true;
-            } else {
-                LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Updating entry with new ref count {} for key {}",
-                        newRefCount,
-                        ByteBufferUtils.byteBufferInfo(keyBuffer)));
-                cursor.put(cursor.key(), newValueBuf, PutFlags.MDB_CURRENT);
-                return false;
-            }
-        }
-    }
-
-    ByteBuffer getOrCreate(final Txn<ByteBuffer> writeTxn,
-                           final RefDataValue refDataValue,
-                           final PooledByteBuffer valueStoreKeyPooledBuffer) {
-        return getOrCreate(writeTxn, refDataValue, valueStoreKeyPooledBuffer, false);
+        return getOrCreateKey(
+                writeTxn,
+                refDataValue,
+                valueStoreKeyPooledBuffer,
+                false,
+                onExistingEntryAction,
+                onNewEntryAction);
     }
 
     /**
      * Either gets the {@link ValueStoreKey} corresponding to the passed refDataValue
      * from the database or creates the entry in the database and returns the generated
      * key.
+     * <p>
+     * onExistingValueAction Action to perform when the value is found to already exist
      *
      * @return A clone of the {@link ByteBuffer} containing the database key.
      */
-    public ByteBuffer getOrCreate(final Txn<ByteBuffer> writeTxn,
-                                  final RefDataValue refDataValue,
-                                  final PooledByteBuffer valueStoreKeyPooledBuffer,
-                                  final boolean isOverwrite) {
+    public ByteBuffer getOrCreateKey(final Txn<ByteBuffer> writeTxn,
+                                     final RefDataValue refDataValue,
+                                     final PooledByteBuffer valueStoreKeyPooledBuffer,
+                                     final boolean isOverwrite,
+                                     final EntryConsumer onExistingEntryAction,
+                                     final EntryConsumer onNewEntryAction) {
 
         Preconditions.checkArgument(!writeTxn.isReadOnly(), "A write transaction is required");
 
-        if (refDataValue.getReferenceCount() != 1) {
-            throw new RuntimeException(LambdaLogger.buildMessage(
-                    "Expecting refDataValue.getReferenceCount to be 1 at this point, found {}",
-                    refDataValue.getReferenceCount()));
-        }
+//        if (refDataValue.getReferenceCount() != 1) {
+//            throw new RuntimeException(LambdaLogger.buildMessage(
+//                    "Expecting refDataValue.getReferenceCount to be 1 at this point, found {}",
+//                    refDataValue.getReferenceCount()));
+//        }
 
         LOGGER.trace("getOrCreate called for refDataValue: {}, isOverwrite", refDataValue, isOverwrite);
 
@@ -258,31 +276,33 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                     ByteBufferUtils.copy(keyFromDbBuf, lastKeyBufferClone);
 
                     // see if the found value is identical to the value passed in
-                    if (valueSerde.areValuesEqual(valueBuffer, valueFromDbBuf)) {
+                    if (valueBuffer.equals(valueFromDbBuf)) {
                         isValueInDb.set(true);
                         LAMBDA_LOGGER.trace(() -> "Found our value so incrementing its ref count and breaking out");
 
-                        try (PooledByteBuffer valuePooledBuffer = getPooledBuffer(valueFromDbBuf.remaining())) {
-                            ByteBuffer valueBufClone = valuePooledBuffer.getByteBuffer();
+//                        try (PooledByteBuffer valuePooledBuffer = getPooledBuffer(valueFromDbBuf.remaining())) {
+//                            ByteBuffer valueBufClone = valuePooledBuffer.getByteBuffer();
 
                             // This copy could be expensive as some of the value can be many hundreds of bytes
                             // May be preferable to hold the ref count in a separate table (ValueStoreMetaDb)
                             // as the copy/put of those 4 bytes will be cheaper but at the expense of an extra cursor get op
-                            ByteBufferUtils.copy(valueFromDbBuf, valueBufClone);
+//                            ByteBufferUtils.copy(valueFromDbBuf, valueBufClone);
                             // we have an interest in this value so increment the reference count
-                            int newRefCount = valueSerde.incrementReferenceCount(valueBufClone);
+                            onExistingEntryAction.accept(writeTxn, keyFromDbBuf, valueFromDbBuf);
 
-                            LOGGER.trace("newRefCount is {}", newRefCount);
-
-                            try {
-                                cursor.put(keyFromDbBuf, valueBufClone, PutFlags.MDB_CURRENT);
-                            } catch (Exception e) {
-                                throw new RuntimeException(LambdaLogger.buildMessage(
-                                        "Error doing cursor.put with [{}] & [{}]",
-                                        ByteBufferUtils.byteBufferInfo(keyFromDbBuf),
-                                        ByteBufferUtils.byteBufferInfo(valueBufClone)), e);
-                            }
-                        }
+//                            int newRefCount = valueSerde.incrementReferenceCount(valueBufClone);
+//
+//                            LOGGER.trace("newRefCount is {}", newRefCount);
+//
+//                            try {
+//                                cursor.put(keyFromDbBuf, valueBufClone, PutFlags.MDB_CURRENT);
+//                            } catch (Exception e) {
+//                                throw new RuntimeException(LambdaLogger.buildMessage(
+//                                        "Error doing cursor.put with [{}] & [{}]",
+//                                        ByteBufferUtils.byteBufferInfo(keyFromDbBuf),
+//                                        ByteBufferUtils.byteBufferInfo(valueBufClone)), e);
+//                            }
+//                        }
 
                         break;
                     } else {
@@ -323,6 +343,8 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                 }
                 valueStoreKeyBuffer = keyBuffer;
                 boolean didPutSucceed = put(writeTxn, keyBuffer, valueBuffer, false);
+
+                onNewEntryAction.accept(writeTxn, keyBuffer, valueBuffer);
                 if (!didPutSucceed) {
                     throw new RuntimeException(LambdaLogger.buildMessage("Put failed for key: {}, value {}",
                             ByteBufferUtils.byteBufferInfo(keyBuffer),
@@ -338,10 +360,16 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                 .map(valueSerde::deserialize);
     }
 
-    public Optional<TypedByteBuffer> getValueBytes(final Txn<ByteBuffer> txn, final ByteBuffer keyBuffer) {
+    public Optional<RefDataValue> get(final Txn<ByteBuffer> txn, final ByteBuffer keyBuffer, int typeId) {
         return getAsBytes(txn, keyBuffer)
-                .map(valueSerde::extractTypedValueBuffer);
+                .map(valueBuffer -> valueSerde.deserialize(valueBuffer, typeId));
     }
+
+
+//    public Optional<TypedByteBuffer> getValueBytes(final Txn<ByteBuffer> txn, final ByteBuffer keyBuffer) {
+//        return getAsBytes(txn, keyBuffer)
+//                .map(valueSerde::extractTypedValueBuffer);
+//    }
 
     private ByteBuffer buildStartKeyBuffer(final RefDataValue value) {
         return keySerde.serialize(ValueStoreKey.lowestKey(value.getValueHashCode()));

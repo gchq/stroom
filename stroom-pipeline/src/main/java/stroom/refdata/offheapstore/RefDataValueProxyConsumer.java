@@ -23,7 +23,7 @@ public class RefDataValueProxyConsumer {
 
     // injected map of typeId to the appropriate bytebuffer consumer factory
     private final Map<Integer, AbstractByteBufferConsumer.Factory> typeToByteBufferConsumerFactoryMap;
-    // map to hold onto the
+    // map to go from TypeId to
     private final Map<Integer, RefDataValueByteBufferConsumer> typeToConsumerMap = new HashMap<>();
 
     @Inject

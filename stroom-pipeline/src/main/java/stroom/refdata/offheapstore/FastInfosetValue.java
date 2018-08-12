@@ -27,13 +27,13 @@ public class FastInfosetValue extends RefDataValue {
     private final byte[] fastInfosetBytes;
 
     public FastInfosetValue(final byte[] fastInfosetBytes) {
-        this(1, fastInfosetBytes);
-    }
-
-    public FastInfosetValue(final int referenceCount, final byte[] fastInfosetBytes) {
-        super(referenceCount);
         this.fastInfosetBytes = fastInfosetBytes;
     }
+
+//    public FastInfosetValue(final int referenceCount, final byte[] fastInfosetBytes) {
+////        super(referenceCount);
+//        this.fastInfosetBytes = fastInfosetBytes;
+//    }
 
     public static FastInfosetValue of(byte[] fastInfosetBytes) {
         return new FastInfosetValue(fastInfosetBytes);
@@ -46,9 +46,9 @@ public class FastInfosetValue extends RefDataValue {
         return new FastInfosetValue(bytes);
     }
 
-    public FastInfosetValue cloneWithNewReferenceCount(int referenceCount) {
-        return new FastInfosetValue(referenceCount, fastInfosetBytes);
-    }
+//    public FastInfosetValue cloneWithNewReferenceCount(int referenceCount) {
+//        return new FastInfosetValue(referenceCount, fastInfosetBytes);
+//    }
 
     @Override
     public int getTypeId() {
@@ -85,7 +85,6 @@ public class FastInfosetValue extends RefDataValue {
     public String toString() {
         return "FastInfosetValue{" +
                 "fastInfosetBytes=" + Arrays.toString(fastInfosetBytes) +
-                ", referenceCount=" + referenceCount +
                 '}';
     }
 }

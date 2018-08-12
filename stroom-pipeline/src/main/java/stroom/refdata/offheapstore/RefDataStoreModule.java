@@ -28,9 +28,6 @@ import stroom.refdata.offheapstore.databases.ProcessingInfoDb;
 import stroom.refdata.offheapstore.databases.RangeStoreDb;
 import stroom.refdata.offheapstore.databases.ValueStoreDb;
 import stroom.refdata.offheapstore.databases.ValueStoreMetaDb;
-import stroom.refdata.offheapstore.serdes.FastInfoSetValueSerde;
-import stroom.refdata.offheapstore.serdes.RefDataValueSubSerde;
-import stroom.refdata.offheapstore.serdes.StringValueSerde;
 
 public class RefDataStoreModule extends AbstractModule {
 
@@ -41,12 +38,12 @@ public class RefDataStoreModule extends AbstractModule {
 
         bind(RefDataStore.class).toProvider(RefDataStoreProvider.class);
 
-        // bind the various RefDataValue impls into a map keyed on their ID
-        final MapBinder<Integer, RefDataValueSubSerde> refDataValueSerdeBinder = MapBinder.newMapBinder(
-                binder(), Integer.class, RefDataValueSubSerde.class);
+//        // bind the various RefDataValue impls into a map keyed on their ID
+//        final MapBinder<Integer, RefDataValueSerde> refDataValueSerdeBinder = MapBinder.newMapBinder(
+//                binder(), Integer.class, RefDataValueSerde.class);
 
-        refDataValueSerdeBinder.addBinding(FastInfosetValue.TYPE_ID).to(FastInfoSetValueSerde.class);
-        refDataValueSerdeBinder.addBinding(StringValue.TYPE_ID).to(StringValueSerde.class);
+//        refDataValueSerdeBinder.addBinding(FastInfosetValue.TYPE_ID).to(FastInfoSetValueSerde.class);
+//        refDataValueSerdeBinder.addBinding(StringValue.TYPE_ID).to(StringValueSerde.class);
 
         // bind the various RefDataValue ByteBuffer consumer factories into a map keyed on their ID
         final MapBinder<Integer, AbstractByteBufferConsumer.Factory> refDataValueByteBufferConsumerBinder = MapBinder.newMapBinder(

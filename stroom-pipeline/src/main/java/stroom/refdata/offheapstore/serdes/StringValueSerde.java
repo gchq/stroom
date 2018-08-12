@@ -17,56 +17,56 @@
 
 package stroom.refdata.offheapstore.serdes;
 
-import stroom.refdata.offheapstore.FastInfosetValue;
 import stroom.refdata.offheapstore.RefDataValue;
 import stroom.refdata.offheapstore.StringValue;
 import stroom.util.logging.LambdaLogger;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 
-public class StringValueSerde implements RefDataValueSubSerde {
+public class StringValueSerde implements RefDataValueSerde {
+
+    private final StringSerde stringSerde;
+
+    StringValueSerde() {
+        this.stringSerde = new StringSerde();
+    }
 
     @Override
-    public RefDataValue deserialize(final ByteBuffer subBuffer) {
-        int referenceCount = getReferenceCount(subBuffer);
-        String str = decodeString(subBuffer);
-        subBuffer.flip();
-        return new StringValue(referenceCount, str);
+    public RefDataValue deserialize(final ByteBuffer byteBuffer) {
+//        int referenceCount = getReferenceCount(subBuffer);
+        String str = stringSerde.deserialize(byteBuffer);
+        return new StringValue(str);
     }
 
     @Override
     public void serialize(final ByteBuffer byteBuffer, final RefDataValue refDataValue) {
         try {
-            putReferenceCount(refDataValue, byteBuffer);
-            final StringValue stringValue = (StringValue) refDataValue;
-            byteBuffer.put(stringValue.getValue().getBytes(StandardCharsets.UTF_8));
-            byteBuffer.flip();
+            StringValue stringValue = (StringValue) refDataValue;
+//            putReferenceCount(refDataValue, byteBuffer);
+            stringSerde.serialize(byteBuffer, stringValue.getValue());
         } catch (ClassCastException e) {
             throw new RuntimeException(LambdaLogger.buildMessage("Unable to cast {} to {}",
-                    refDataValue.getClass().getCanonicalName(), FastInfosetValue.class.getCanonicalName()), e);
+                    refDataValue.getClass().getCanonicalName(), StringValue.class.getCanonicalName()), e);
         }
     }
 
-    /**
-     * Absolute method that extracts the string value from its place in the buffer.
-     * Does not change the passed buffer.
-     */
-    public static String extractStringValue(final ByteBuffer subBuffer) {
-        // advance a copy of the buffer to the value part
-        subBuffer.position(VALUE_OFFSET);
-        final ByteBuffer valueBuffer = subBuffer.slice();
-        subBuffer.rewind();
-        return StandardCharsets.UTF_8.decode(valueBuffer).toString();
+//    /**
+//     * Absolute method that extracts the string value from its place in the buffer.
+//     * Does not change the passed buffer.
+//     */
+//    public static String extractStringValue(final ByteBuffer subBuffer) {
+//        // advance a copy of the buffer to the value part
+//        subBuffer.position(VALUE_OFFSET);
+//        final ByteBuffer valueBuffer = subBuffer.slice();
+//        subBuffer.rewind();
+//        return StandardCharsets.UTF_8.decode(valueBuffer).toString();
+//
+//    }
 
-    }
-
     /**
-     * Reads a string from the passed buffer. Teh buffer is expected to have its position
-     * set to the beginning of the string portion. The position will be changed by this
-     * method.
+     * Extracts the string value from the buffer.
      */
-    public static String decodeString(final ByteBuffer byteBuffer) {
-        return StandardCharsets.UTF_8.decode(byteBuffer).toString();
+    public String extractValue(final ByteBuffer byteBuffer) {
+        return stringSerde.deserialize(byteBuffer);
     }
 }

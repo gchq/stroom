@@ -18,6 +18,8 @@
 package stroom.refdata.offheapstore.serdes;
 
 import stroom.refdata.lmdb.serde.Serde;
+import stroom.refdata.offheapstore.ByteBufferUtils;
+import stroom.util.logging.LambdaLogger;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -26,9 +28,14 @@ public class StringSerde implements Serde<String> {
 
     @Override
     public String deserialize(final ByteBuffer byteBuffer) {
-        String str = StandardCharsets.UTF_8.decode(byteBuffer).toString();
-        byteBuffer.flip();
-        return str;
+        try {
+            String str = StandardCharsets.UTF_8.decode(byteBuffer).toString();
+            byteBuffer.flip();
+            return str;
+        } catch (Exception e) {
+            throw new RuntimeException(LambdaLogger.buildMessage("Unable to decode string from byteBuffer {}",
+                    ByteBufferUtils.byteBufferInfo(byteBuffer)), e);
+        }
     }
 
     @Override
