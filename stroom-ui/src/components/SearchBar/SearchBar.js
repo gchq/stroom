@@ -1,6 +1,16 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Input, Button, Checkbox, Popup, Grid, TextArea, Form } from 'semantic-ui-react';
+import {
+  Container,
+  Input,
+  Button,
+  Checkbox,
+  Popup,
+  Grid,
+  TextArea,
+  Form,
+  Message,
+} from 'semantic-ui-react';
 import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
 
@@ -19,10 +29,10 @@ const withSearchString = withState('searchString', 'setSearchString', '');
 const withExpression = withState('expression', 'setExpression', '');
 
 const withIsSearchStringValid = withState('isSearchStringValid', 'setIsSearchStringValid', true);
-const withSearchStringValidationMessage = withState(
-  'SearchStringValidationMessage',
-  'setSearchStringValidationMessage',
-  undefined,
+const withSearchStringValidationMessages = withState(
+  'searchStringValidationMessages',
+  'setSearchStringValidationMessages',
+  [],
 );
 
 const enhance = compose(
@@ -36,7 +46,7 @@ const enhance = compose(
   withSearchString,
   withExpression,
   withIsSearchStringValid,
-  withSearchStringValidationMessage,
+  withSearchStringValidationMessages,
 );
 
 const SearchBar = ({
@@ -52,53 +62,80 @@ const SearchBar = ({
   setExpression,
   setIsSearchStringValid,
   isSearchStringValid,
-  setSearchStringValidationMessage,
-  SearchStringValidationMessage,
+  setSearchStringValidationMessages,
+  searchStringValidationMessages,
 }) => {
   const searchButton = <Button>Search</Button>;
   const searchInput = (
     <React.Fragment>
-      <Grid>
-        <Grid.Column width={1}>
-          <Popup
-            trigger={
-              <Button
-                circular
-                icon="edit"
-                onClick={() => {
-                  const parsedExpression = processSearchString(dataSource, searchString);
-                  expressionChanged(expressionId, parsedExpression.expression);
+      <Grid className="SearchBar__layoutGrid">
+        <Grid.Row>
+          <Grid.Column width={1}>
+            <Popup
+              trigger={
+                <Button
+                  circular
+                  icon="edit"
+                  onClick={() => {
+                    const parsedExpression = processSearchString(dataSource, searchString);
+                    expressionChanged(expressionId, parsedExpression.expression);
 
-                  setIsExpression(true);
-                }}
-              />
-            }
-            content="Switch to using the expression builder. You won't be able to convert back to a text search and keep your expression."
-          />
-        </Grid.Column>
-        <Grid.Column width={13}>
-          <Input
-            placeholder="I.e. field1=value1 field2=value2"
-            error={!isSearchStringValid}
-            value={searchString}
-            className="SearchBar__input"
-            onChange={(_, data) => {
-              const expression = processSearchString(dataSource, data.value);
-              const invalidFields = expression.fields.filter(field => !field.conditionIsValid || !field.fieldIsValid || !field.valueIsValid);
-              setIsSearchStringValid(invalidFields.length === 0);
-              setSearchStringValidationMessage(invalidFields.length === 0 ? undefined : 'TODO: bad');
-              setSearchString(data.value);
-            }}
-          />
-        </Grid.Column>
-        <Grid.Column width={2}>{searchButton}</Grid.Column>
+                    setIsExpression(true);
+                  }}
+                />
+              }
+              content="Switch to using the expression builder. You won't be able to convert back to a text search and keep your expression."
+            />
+          </Grid.Column>
+          <Grid.Column width={12}>
+            <Input
+              placeholder="I.e. field1=value1 field2=value2"
+              error={!isSearchStringValid}
+              value={searchString}
+              className="SearchBar__input"
+              onChange={(_, data) => {
+                const expression = processSearchString(dataSource, data.value);
+                const invalidFields = expression.fields.filter(field => !field.conditionIsValid || !field.fieldIsValid || !field.valueIsValid);
+
+                const searchStringValidationMessages = [];
+                if (invalidFields.length > 0) {
+                  invalidFields.map((invalidField) => {
+                    searchStringValidationMessages.push(`'${invalidField.original}' is not a valid search term`);
+                  });
+                }
+
+                setIsSearchStringValid(invalidFields.length === 0);
+                setSearchStringValidationMessages(searchStringValidationMessages);
+                setSearchString(data.value);
+              }}
+            />
+          </Grid.Column>
+          <Grid.Column width={2}>{searchButton}</Grid.Column>
+        </Grid.Row>
+        {searchStringValidationMessages.length > 0 ? (
+          <Grid.Row>
+            <Grid.Column width={1} />
+            <Grid.Column width={12}>
+              <Container>
+                <Message warning className="SearchBar__validationMessages">
+                  {searchStringValidationMessages.map(message => (
+                    <p>{message}</p>
+                  ))}
+                </Message>
+              </Container>
+            </Grid.Column>
+            <Grid.Column width={2} />
+          </Grid.Row>
+        ) : (
+          undefined
+        )}
       </Grid>
     </React.Fragment>
   );
 
   const expressionBuilder = (
     <React.Fragment>
-      <Grid>
+      <Grid className="SearchBar__layoutGrid">
         <Grid.Column width={1}>
           <Popup
             trigger={
@@ -126,7 +163,7 @@ const SearchBar = ({
     </React.Fragment>
   );
 
-  return <div>{isExpression ? expressionBuilder : searchInput}</div>;
+  return <div className="SearchBar">{isExpression ? expressionBuilder : searchInput}</div>;
 };
 
 SearchBar.propTypes = {

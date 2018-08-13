@@ -6,13 +6,13 @@
 }
 
 .app-chrome__sidebar {
-  height: inherit;
-  background-color: $semantic-blue;
+  height: inherit; // background-color: $semantic-blue;
+  background-color: black;
 }
 
 .app-chrome__sidebar-menu {
   height: inherit;
-  background-color: $semantic-blue;
+  background-color: black; // background-color: $semantic-blue;
   width: 15rem;
   overflow-y: auto;
 }
