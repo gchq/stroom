@@ -15,6 +15,11 @@ import stroom.util.logging.LambdaLoggerFactory;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 
+/**
+ * This class provides a front door for all interactions with the {@link MapUidForwardDb} and
+ * {@link MapUidReverseDb} databases. This is to ensure the entries in both DBs are kept in sync
+ * as each entry in one should have a corresponding entry in the other.
+ */
 public class MapDefinitionUIDStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MapDefinitionUIDStore.class);
@@ -78,6 +83,10 @@ public class MapDefinitionUIDStore {
                     .orElseGet(() ->
                             createForwardReversePair(writeTxn, mapDefinitionBuffer));
         }
+    }
+
+    Optional<UID> get(final Txn<ByteBuffer> txn, final MapDefinition mapDefinition) {
+        return mapUidForwardDb.get(txn, mapDefinition);
     }
 
     public long getEntryCount() {

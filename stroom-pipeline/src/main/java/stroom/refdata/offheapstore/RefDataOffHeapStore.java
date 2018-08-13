@@ -56,11 +56,11 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -91,14 +91,12 @@ public class RefDataOffHeapStore implements RefDataStore {
     // the DBs that make up the store
     private final KeyValueStoreDb keyValueStoreDb;
     private final RangeStoreDb rangeStoreDb;
-    private final ValueStoreDb valueStoreDb;
-    private final ValueStoreMetaDb valueStoreMetaDb;
-    private final ValueStore valueStore;
-    private final MapUidForwardDb mapUidForwardDb;
-    private final MapUidReverseDb mapUidReverseDb;
     private final ProcessingInfoDb processingInfoDb;
 
+    // classes that front multiple DBs
+    private final ValueStore valueStore;
     private final MapDefinitionUIDStore mapDefinitionUIDStore;
+
     private final StroomPropertyService stroomPropertyService;
     private final Map<String, LmdbDb> databaseMap = new HashMap<>();
 
@@ -108,8 +106,8 @@ public class RefDataOffHeapStore implements RefDataStore {
     private final ByteBufferPool byteBufferPool;
 
     /**
-     * @param dbDir            The directory the LMDB environment will be created in, it must already exist
-     * @param maxSize          The max size in bytes of the environment. This should be less than the available
+     * @param dbDir   The directory the LMDB environment will be created in, it must already exist
+     * @param maxSize The max size in bytes of the environment. This should be less than the available
      */
     @Inject
     RefDataOffHeapStore(
@@ -161,30 +159,35 @@ public class RefDataOffHeapStore implements RefDataStore {
         // create all the databases
         this.keyValueStoreDb = keyValueStoreDbFactory.create(lmdbEnvironment);
         this.rangeStoreDb = rangeStoreDbFactory.create(lmdbEnvironment);
-        this.valueStoreDb = valueStoreDbFactory.create(lmdbEnvironment);
-        this.mapUidForwardDb = mapUidForwardDbFactory.create(lmdbEnvironment);
-        this.mapUidReverseDb = mapUidReverseDbFactory.create(lmdbEnvironment);
+        ValueStoreDb valueStoreDb = valueStoreDbFactory.create(lmdbEnvironment);
+        MapUidForwardDb mapUidForwardDb = mapUidForwardDbFactory.create(lmdbEnvironment);
+        MapUidReverseDb mapUidReverseDb = mapUidReverseDbFactory.create(lmdbEnvironment);
         this.processingInfoDb = processingInfoDbFactory.create(lmdbEnvironment);
-        this.valueStoreMetaDb = valueStoreMetaDbFactory.create(lmdbEnvironment);
+        ValueStoreMetaDb valueStoreMetaDb = valueStoreMetaDbFactory.create(lmdbEnvironment);
 
-        addDbToMap(keyValueStoreDb);
-        addDbToMap(rangeStoreDb);
-        addDbToMap(valueStoreDb);
-        addDbToMap(mapUidForwardDb);
-        addDbToMap(mapUidReverseDb);
-        addDbToMap(processingInfoDb);
-        addDbToMap(valueStoreMetaDb);
+        // hold all the DBs in a map so we can get at them by name
+        addDbsToMap(
+                keyValueStoreDb,
+                rangeStoreDb,
+                valueStoreDb,
+                mapUidForwardDb,
+                mapUidReverseDb,
+                processingInfoDb,
+                valueStoreMetaDb);
 
         this.valueStore = new ValueStore(lmdbEnvironment, valueStoreDb, valueStoreMetaDb);
         this.mapDefinitionUIDStore = new MapDefinitionUIDStore(lmdbEnvironment, mapUidForwardDb, mapUidReverseDb);
+
         this.stroomPropertyService = stroomPropertyService;
         this.byteBufferPool = byteBufferPool;
 
         this.refStreamDefStripedReentrantLock = Striped.lazyWeakLock(100);
     }
 
-    private void addDbToMap(final LmdbDb lmdbDb) {
-        this.databaseMap.put(lmdbDb.getDbName(), lmdbDb);
+    private void addDbsToMap(final LmdbDb... lmdbDbs) {
+        for (LmdbDb lmdbDb : lmdbDbs) {
+            this.databaseMap.put(lmdbDb.getDbName(), lmdbDb);
+        }
     }
 
     @Override
@@ -276,7 +279,7 @@ public class RefDataOffHeapStore implements RefDataStore {
 
         // TODO we could could consider a short lived on-heap cache for this as it
         // will be hit MANY times for the same entry
-        final Optional<UID> optMapUid = mapUidForwardDb.get(readTxn, mapDefinition);
+        final Optional<UID> optMapUid = mapDefinitionUIDStore.get(readTxn, mapDefinition);
 
         Optional<ByteBuffer> optValueStoreKeyBuffer;
         if (optMapUid.isPresent()) {
@@ -344,7 +347,7 @@ public class RefDataOffHeapStore implements RefDataStore {
                                 return Optional.of(valueStoreKeyBufferClone);
                             })
                             .flatMap(valueStoreKeyBuf ->
-                                    getTypedValueBuffer(txn, valueStoreKeyBuf))
+                                    valueStore.getTypedValueBuffer(txn, valueStoreKeyBuf))
                             .map(valueBuf -> {
                                 valueBytesConsumer.accept(valueBuf);
                                 return true;
@@ -356,18 +359,18 @@ public class RefDataOffHeapStore implements RefDataStore {
         }
     }
 
-    private Optional<TypedByteBuffer> getTypedValueBuffer(final Txn<ByteBuffer> txn, final ByteBuffer valueStoreKeyBuffer) {
-        OptionalInt optTypeId = valueStoreMetaDb.getTypeId(txn, valueStoreKeyBuffer);
-        if (optTypeId.isPresent()) {
-            ByteBuffer valueBuffer = valueStoreDb.getAsBytes(txn, valueStoreKeyBuffer)
-                    .orElseThrow(() -> new RuntimeException(
-                            "If we have a meta entry we should also have a value entry, data may be corrupted"));
-
-            return Optional.of(new TypedByteBuffer(optTypeId.getAsInt(), valueBuffer));
-        } else {
-            return Optional.empty();
-        }
-    }
+//    private Optional<TypedByteBuffer> getTypedValueBuffer(final Txn<ByteBuffer> txn, final ByteBuffer valueStoreKeyBuffer) {
+//        OptionalInt optTypeId = valueStoreMetaDb.getTypeId(txn, valueStoreKeyBuffer);
+//        if (optTypeId.isPresent()) {
+//            ByteBuffer valueBuffer = valueStoreDb.getAsBytes(txn, valueStoreKeyBuffer)
+//                    .orElseThrow(() -> new RuntimeException(
+//                            "If we have a meta entry we should also have a value entry, data may be corrupted"));
+//
+//            return Optional.of(new TypedByteBuffer(optTypeId.getAsInt(), valueBuffer));
+//        } else {
+//            return Optional.empty();
+//        }
+//    }
 
     @Override
     public void purgeOldData() {
@@ -675,10 +678,13 @@ public class RefDataOffHeapStore implements RefDataStore {
                                           final ByteBuffer valueStoreKeyBuffer,
                                           final AtomicLong valueEntryDeleteCount,
                                           final AtomicLong valueEntryDeReferenceCount) {
-        boolean wasDeleted = valueStoreMetaDb.deReferenceOrDeleteValue(
-                writeTxn,
-                valueStoreKeyBuffer,
-                ((txn, keyBuffer, valueBuffer) -> valueStoreDb.delete(txn, keyBuffer)));
+
+//        boolean wasDeleted = valueStoreMetaDb.deReferenceOrDeleteValue(
+//                writeTxn,
+//                valueStoreKeyBuffer,
+//                ((txn, keyBuffer, valueBuffer) -> valueStoreDb.delete(txn, keyBuffer)));
+
+        boolean wasDeleted = valueStore.deReferenceOrDeleteValue(writeTxn, valueStoreKeyBuffer);
 
         if (wasDeleted) {
             // we deleted the meta entry so now delete the value entry
@@ -724,13 +730,17 @@ public class RefDataOffHeapStore implements RefDataStore {
      * For use in testing at SMALL scale. Dumps the content of each DB to the logger.
      */
     void logAllContents(Consumer<String> logEntryConsumer) {
-        processingInfoDb.logDatabaseContents(logEntryConsumer);
-        mapUidForwardDb.logDatabaseContents(logEntryConsumer);
-        mapUidReverseDb.logDatabaseContents(logEntryConsumer);
-        keyValueStoreDb.logDatabaseContents(logEntryConsumer);
-        rangeStoreDb.logDatabaseContents(logEntryConsumer);
-        valueStoreDb.logDatabaseContents(logEntryConsumer);
+//        processingInfoDb.logDatabaseContents(logEntryConsumer);
+//        mapUidForwardDb.logDatabaseContents(logEntryConsumer);
+//        mapUidReverseDb.logDatabaseContents(logEntryConsumer);
+//        keyValueStoreDb.logDatabaseContents(logEntryConsumer);
+//        rangeStoreDb.logDatabaseContents(logEntryConsumer);
+//        valueStoreDb.logDatabaseContents(logEntryConsumer);
 //        valueReferenceCountDb.logDatabaseContents();
+        databaseMap.entrySet().stream()
+                .sorted(Comparator.comparing(Map.Entry::getKey))
+                .map(Map.Entry::getValue)
+                .forEach(lmdbDb -> lmdbDb.logDatabaseContents(logEntryConsumer));
     }
 
     void logContents(final String dbName) {
@@ -748,14 +758,18 @@ public class RefDataOffHeapStore implements RefDataStore {
     /**
      * For use in testing at SMALL scale. Dumps the content of each DB to the logger.
      */
-    void logAllRawContents() {
-        processingInfoDb.logRawDatabaseContents();
-        mapUidForwardDb.logRawDatabaseContents();
-        mapUidReverseDb.logRawDatabaseContents();
-        keyValueStoreDb.logRawDatabaseContents();
-        rangeStoreDb.logRawDatabaseContents();
-        valueStoreDb.logRawDatabaseContents();
+    void logAllRawContents(Consumer<String> logEntryConsumer) {
+//        processingInfoDb.logRawDatabaseContents();
+//        mapUidForwardDb.logRawDatabaseContents();
+//        mapUidReverseDb.logRawDatabaseContents();
+//        keyValueStoreDb.logRawDatabaseContents();
+//        rangeStoreDb.logRawDatabaseContents();
+//        valueStoreDb.logRawDatabaseContents();
 //        valueReferenceCountDb.logRawDatabaseContents();
+        databaseMap.entrySet().stream()
+                .sorted(Comparator.comparing(Map.Entry::getKey))
+                .map(Map.Entry::getValue)
+                .forEach(lmdbDb -> lmdbDb.logDatabaseContents(logEntryConsumer));
     }
 
     void logRawContents(final String dbName) {
@@ -862,12 +876,9 @@ public class RefDataOffHeapStore implements RefDataStore {
 
         private final KeyValueStoreDb keyValueStoreDb;
         private final RangeStoreDb rangeStoreDb;
-//        private final ValueStoreDb valueStoreDb;
-//        private final ValueStoreMetaDb valueStoreMetaDb;
         private final ValueStore valueStore;
         private final MapDefinitionUIDStore mapDefinitionUIDStore;
         private final ProcessingInfoDb processingInfoDb;
-//        private final ValueStoreMetaDb valueReferenceCountDb;
 
         private final Env<ByteBuffer> lmdbEnvironment;
         private final RefStreamDefinition refStreamDefinition;
@@ -898,8 +909,6 @@ public class RefDataOffHeapStore implements RefDataStore {
                                   final Striped<Lock> refStreamDefStripedReentrantLock,
                                   final KeyValueStoreDb keyValueStoreDb,
                                   final RangeStoreDb rangeStoreDb,
-//                                  final ValueStoreDb valueStoreDb,
-//                                  final ValueStoreMetaDb valueStoreMetaDb,
                                   final ValueStore valueStore,
                                   final MapDefinitionUIDStore mapDefinitionUIDStore,
                                   final ProcessingInfoDb processingInfoDb,
@@ -911,8 +920,6 @@ public class RefDataOffHeapStore implements RefDataStore {
             this.byteBufferPool = byteBufferPool;
             this.keyValueStoreDb = keyValueStoreDb;
             this.rangeStoreDb = rangeStoreDb;
-//            this.valueStoreDb = valueStoreDb;
-//            this.valueStoreMetaDb = valueStoreMetaDb;
             this.processingInfoDb = processingInfoDb;
 
             this.valueStore = valueStore;
@@ -1075,7 +1082,6 @@ public class RefDataOffHeapStore implements RefDataStore {
 
             return didPutSucceed;
         }
-
 
 
         @Override

@@ -45,6 +45,8 @@ import java.util.OptionalInt;
 
 /**
  * This store holds meta data about the corresponding entries in {@link ValueStoreDb}.
+ * It shares the same key as {@link ValueStoreDb} and each entry in here has a corresponding
+ * entry in {@link ValueStoreDb}.
  * <p>
  * The type part of the value defines the data type of the value in {@link ValueStoreDb}.
  * The referenceCount part is used to keep track of the number of key/value or range/value
@@ -56,7 +58,7 @@ import java.util.OptionalInt;
  * (1234|00)  | (0|0001)
  * (1234|01)  | (0|0001)
  * (4567|00)  | (0|0001)
- * (7890|00)  | (0|0001)
+ * (7890|00)  | (1|0001)
  */
 public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMeta> {
 

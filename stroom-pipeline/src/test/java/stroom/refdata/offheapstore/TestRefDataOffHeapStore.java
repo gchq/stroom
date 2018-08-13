@@ -606,7 +606,7 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
 
 
     /**
-     * Make entryCount very big for performance testing
+     * Make entryCount very big for manual performance testing or profiling
      */
     @Test
     public void testBigLoadForPerfTesting() {
@@ -635,7 +635,8 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                 totalRangeValueEntryCount,
                 totalValueEntryCount);
 
-        if (entryCount < 100) {
+        // here to aid debugging problems at low volumes
+        if (entryCount < 10) {
             ((RefDataOffHeapStore) refDataStore).logAllContents(LOGGER::info);
         }
 

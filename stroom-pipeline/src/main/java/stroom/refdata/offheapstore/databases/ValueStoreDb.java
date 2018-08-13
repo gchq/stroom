@@ -51,6 +51,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  * unique identifier is just a short value to distinguish different {@link RefDataValue} objects
  * that share the same valueHashcode. On creation of an entry, if an existing entry is found with the same
  * valueHashcode but a different value then the next id will be used.
+ * The key structure is identical to the structure of the value in {@link KeyValueStoreDb} and {@link RangeStoreDb}
+ * databases. The key structure is also identical to the key structure in the {@link ValueStoreMetaDb}
+ * database. Each entry in this DB has a corresponding entry in the {@link ValueStoreMetaDb} which holds
+ * the type information and reference counts.
  * <p>
  * The purpose of this table is to de-duplicate the storage of identical reference data values. E.g. if
  * multiple reference data keys are associated with the same reference data value then we only need
