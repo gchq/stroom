@@ -65,7 +65,8 @@ const SearchBar = ({
   setSearchStringValidationMessages,
   searchStringValidationMessages,
 }) => {
-  const searchButton = <Button>Search</Button>;
+  const searchIsInvalid = searchStringValidationMessages.length > 0;
+  const searchButton = <Button disabled={searchIsInvalid}>Search</Button>;
   const searchInput = (
     <React.Fragment>
       <Grid className="SearchBar__layoutGrid">
@@ -74,6 +75,7 @@ const SearchBar = ({
             <Popup
               trigger={
                 <Button
+                  disabled={searchIsInvalid}
                   circular
                   icon="edit"
                   onClick={() => {
@@ -90,7 +92,6 @@ const SearchBar = ({
           <Grid.Column width={12}>
             <Input
               placeholder="I.e. field1=value1 field2=value2"
-              error={!isSearchStringValid}
               value={searchString}
               className="SearchBar__input"
               onChange={(_, data) => {
@@ -112,7 +113,7 @@ const SearchBar = ({
           </Grid.Column>
           <Grid.Column width={2}>{searchButton}</Grid.Column>
         </Grid.Row>
-        {searchStringValidationMessages.length > 0 ? (
+        {searchIsInvalid ? (
           <Grid.Row>
             <Grid.Column width={1} />
             <Grid.Column width={12}>
