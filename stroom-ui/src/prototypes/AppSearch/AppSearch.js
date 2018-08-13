@@ -15,134 +15,37 @@
  */
 
 import React from 'react';
-
-import { compose } from 'recompose';
 import { connect } from 'react-redux';
-import { Input, Breadcrumb, Popup, Button, Header, Icon, Grid } from 'semantic-ui-react';
-import { withRouter } from 'react-router-dom';
 
-import { actionCreators as appSearchActionCreators } from './redux';
-import { withExplorerTree } from 'components/DocExplorer';
-import { DocTypeFilters } from 'components/DocRefTypes';
+import { iterateNodes } from 'lib/treeUtils';
 import { DocRefListing } from 'components/DocRefListing';
-import { openDocRef } from 'prototypes/RecentItems';
 
-/**
- * This component is separate to AppSearch.js because the modal in AppSearch.js makes it
- * impossible to add an event listener to the input -- it's not in the DOM at the time of
- * any of the lifecycle methods. Moving the content of the modal to a separate component,
- * this one, solves this problem.
- */
+const enhance = connect(({ docExplorer: { explorerTree: { documentTree = [] } } }, props) => {
+  const allDocuments = [];
 
-const {
-  appSearchTermUpdated,
-  appSearchSelectionUp,
-  appSearchSelectionDown,
-  appSearchClosed,
-} = appSearchActionCreators;
+  iterateNodes(documentTree, (lineage, node) => {
+    allDocuments.push({
+      name: node.name,
+      type: node.type,
+      uuid: node.uuid,
+      lineage,
+      lineageNames: lineage.reduce((acc, curr) => `${acc} ${curr.name}`, ''),
+    });
+  });
 
-const enhance = compose(
-  withRouter,
-  withExplorerTree,
-  connect(
-    ({
-      appSearch: {
-        searchTerm, searchResults, selectedItem, selectedDocRef,
-      },
-    }, props) => ({
-      searchTerm,
-      searchResults,
-      selectedItem,
-      selectedDocRef,
-    }),
-    {
-      appSearchTermUpdated,
-      appSearchSelectionUp,
-      appSearchSelectionDown,
-      appSearchClosed,
-      openDocRef,
-    },
-  ),
+  return {
+    allDocuments,
+  };
+}, {});
+
+const AppSearch = ({ allDocuments }) => (
+  <DocRefListing
+    listingId="app-search"
+    alwaysFilter
+    icon="search"
+    title="Search"
+    docRefs={allDocuments}
+  />
 );
-
-class AppSearch extends React.Component {
-  componentDidMount() {
-    // We need to prevent up and down keys from moving the cursor around in the input
-
-    // I'd rather use Mousetrap for these shortcut keys. Historically Mousetrap
-    // hasn't handled keypresses that occured inside inputs or textareas.
-    // There were some changes to fix this, like binding specifically
-    // to a field. But that requires getting the element from the DOM and
-    // we'd rather not break outside React to do this. The other alternative
-    // is adding 'mousetrap' as a class to the input, but that doesn't seem to work.
-
-    // Up
-    const upKeycode = 38;
-    const kKeycode = 75;
-
-    // Down
-    const downKeycode = 40;
-    const jKeycode = 74;
-
-    const enterKeycode = 13;
-
-    this.refs.searchTermInput.inputRef.addEventListener(
-      'keydown',
-      (event) => {
-        if (event.keyCode === upKeycode || (event.ctrlKey && event.keyCode === kKeycode)) {
-          this.props.appSearchSelectionUp();
-          event.preventDefault();
-        } else if (event.keyCode === downKeycode || (event.ctrlKey && event.keyCode === jKeycode)) {
-          this.props.appSearchSelectionDown();
-          event.preventDefault();
-        } else if (event.keyCode === enterKeycode) {
-          this.props.openDocRef(this.props.history, this.props.selectedDocRef);
-          this.props.appSearchClosed();
-          event.preventDefault();
-        }
-      },
-      false,
-    );
-  }
-
-  render() {
-    const {
-      searchTerm,
-      appSearchTermUpdated,
-      searchResults,
-      selectedItem,
-      history,
-      openDocRef,
-    } = this.props;
-    return (
-      <React.Fragment>
-        <Grid className="content-tabs__grid">
-          <Grid.Column width={4}>
-            <Header as="h3">
-              <Icon color="grey" name="search" />
-              <Header.Content>Search</Header.Content>
-            </Header>
-          </Grid.Column>
-
-          <Grid.Column width={8}>
-            <Input
-              id="AppSearch__search-input"
-              icon="search"
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={e => appSearchTermUpdated(e.target.value)}
-              ref="searchTermInput"
-              autoFocus
-            />
-            <Popup trigger={<Button icon="filter" />} flowing hoverable>
-              <DocTypeFilters value={[]} onChange={v => console.log('Nope', v)} />
-            </Popup>
-          </Grid.Column>
-        </Grid>
-        <DocRefListing docRefs={searchResults} selectedItem={selectedItem} />
-      </React.Fragment>
-    );
-  }
-}
 
 export default enhance(AppSearch);

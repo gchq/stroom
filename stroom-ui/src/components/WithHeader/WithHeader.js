@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Grid } from 'semantic-ui-react';
 
-const WithHeader = ({ header, actionBarItems, content }) => (
+const WithHeader = ({ docRefUuid, header, actionBarItems, content }) => (
   <React.Fragment>
     <Grid className="content-tabs__grid">
       <Grid.Column width={12}>{header}</Grid.Column>
@@ -13,7 +13,8 @@ const WithHeader = ({ header, actionBarItems, content }) => (
 );
 
 WithHeader.propTypes = {
-  header: PropTypes.object.isRequired,
+  header: PropTypes.object,
+  docRefUuid: PropTypes.string,
   content: PropTypes.object.isRequired,
 };
 

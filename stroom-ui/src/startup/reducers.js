@@ -21,7 +21,7 @@ import {
   authenticationReducer as authentication,
   authorisationReducer as authorisation,
 } from 'startup/Authentication';
-import { reducer as folderExplorer } from 'components/FolderExplorer';
+import { reducer as docRefListing } from 'components/DocRefListing';
 import { reducer as appChrome } from 'sections/AppChrome/redux';
 import { reducer as docRefTypes } from 'components/DocRefTypes';
 import { reducer as lineContainer } from 'components/LineTo';
@@ -29,7 +29,6 @@ import { reducer as docExplorer } from 'components/DocExplorer/redux';
 import { reducer as expressionBuilder } from 'components/ExpressionBuilder';
 import { reducer as pipelineEditor } from 'components/PipelineEditor';
 import { reducer as recentItems } from 'prototypes/RecentItems';
-import { reducer as appSearch } from 'prototypes/AppSearch';
 import { reducer as xslt } from 'prototypes/XsltEditor';
 import { reducer as trackerDashboard } from 'sections/TrackerDashboard';
 import { reducer as errorPage } from 'components/ErrorPage';
@@ -53,10 +52,9 @@ export default combineReducers({
   lineContainer,
   fetch,
   recentItems,
-  appSearch,
   dataViewers,
   keyIsDown,
   docRefTypes,
   appChrome,
-  folderExplorer,
+  docRefListing,
 });

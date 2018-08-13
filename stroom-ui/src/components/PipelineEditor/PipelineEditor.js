@@ -200,7 +200,6 @@ const RawWithHeader = (props) => {
     pipeline: {
       pipeline: {
         docRef: { type, name },
-        description,
       },
     }
   } = props;
