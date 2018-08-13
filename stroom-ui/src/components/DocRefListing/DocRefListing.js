@@ -7,7 +7,6 @@ import { Header, Icon, Grid, Input, Popup, Button, Loader } from 'semantic-ui-re
 import Mousetrap from 'mousetrap';
 
 import { DocTypeFilters } from 'components/DocRefTypes';
-import ClickCounter from 'lib/ClickCounter';
 import DocRefPropType from 'lib/DocRefPropType';
 import DocRefListingEntry from './DocRefListingEntry';
 import openDocRef from 'prototypes/RecentItems/openDocRef';
@@ -49,8 +48,9 @@ const enterKeycode = 13;
 const enhance = compose(
   withRouter,
   connect(
-    ({ docRefListing }, { listingId }) => ({
+    ({ docRefListing, docRefTypes }, { listingId }) => ({
       docRefListing: docRefListing[listingId],
+      docRefTypes,
     }),
     {
       docRefListingMounted,
@@ -67,28 +67,26 @@ const enhance = compose(
     docRefListing,
     openDocRef,
     history,
+    docRefTypes,
     docRefSelectionUp,
     docRefSelectionDown,
     docRefListingUnmounted,
   }) => {
-    const {
-      selectedDocRef, 
-      filteredDocRefs
-    } = docRefListing || {};
-    let onOpenKey = () => {
+    const { selectedDocRef, filteredDocRefs, docRefTypeFilters = [] } = docRefListing || {};
+    const onOpenKey = () => {
       if (selectedDocRef !== undefined) {
         openDocRef(history, selectedDocRef);
       } else if (filteredDocRefs.length > 0) {
         openDocRef(history, filteredDocRefs[0]);
       }
-    }
-    let onUpKey = () => {
+    };
+    const onUpKey = () => {
       docRefSelectionUp(listingId);
     };
-    let onDownKey = () => {
+    const onDownKey = () => {
       docRefSelectionDown(listingId);
     };
-    let onSearchInputKeyDown = (e) => {
+    const onSearchInputKeyDown = (e) => {
       if (e.keyCode === upKeycode || (e.ctrlKey && e.keyCode === kKeycode)) {
         onUpKey();
         e.preventDefault();
@@ -100,12 +98,15 @@ const enhance = compose(
         e.preventDefault();
       }
     };
+    console.log('Doc Types', { docRefTypes, docRefTypeFilters });
+    const hasTypesFilteredOut = docRefTypes.length !== docRefTypeFilters.length;
     return {
       onOpenKey,
       onUpKey,
       onDownKey,
-      onSearchInputKeyDown
-    }
+      onSearchInputKeyDown,
+      hasTypesFilteredOut,
+    };
   }),
   lifecycle({
     componentDidUpdate(prevProps, prevState, snapshot) {
@@ -120,15 +121,11 @@ const enhance = compose(
     componentDidMount() {
       const {
         docRefListingMounted,
-        docRefListingUnmounted,
         onUpKey,
         onDownKey,
         listingId,
         docRefs,
-        openDocRef,
         onOpenKey,
-        history,
-        selectedDocRef,
         alwaysFilter,
       } = this.props;
       docRefListingMounted(listingId, docRefs, alwaysFilter);
@@ -138,10 +135,11 @@ const enhance = compose(
       Mousetrap.bind(openKeys, onOpenKey);
     },
     componentWillUnmount() {
+      const { listingId, docRefListingUnmounted } = this.props;
       Mousetrap.unbind(upKeys);
       Mousetrap.unbind(downKeys);
       Mousetrap.unbind(openKeys);
-      docRefListingUnmounted(this.props.listingId);
+      docRefListingUnmounted(listingId);
     },
   }),
   branch(
@@ -154,55 +152,58 @@ const DocRefListing = ({
   listingId,
   icon,
   title,
-  docRefListing: { selectedDocRef, filterTerm, filteredDocRefs, docRefTypeFilters },
+  docRefListing: {
+    selectedDocRef, filterTerm, filteredDocRefs, docRefTypeFilters,
+  },
   filterTermUpdated,
   docRefTypeFilterUpdated,
   parentFolder,
   onSearchInputKeyDown,
-}) => {
-  // const clickCounter = new ClickCounter()
-  //   .withOnSingleClick(({ index }) => onRowSelected(folderUuid, index))
-  //   .withOnDoubleClick(d => openDocRef(d));
+  hasTypesFilteredOut,
+}) => (
+  <React.Fragment>
+    <Grid className="content-tabs__grid">
+      <Grid.Column width={10}>
+        <Header as="h3">
+          <Icon color="grey" name={icon} />
+          <Header.Content>{title}</Header.Content>
+          {parentFolder && (
+            <Header.Subheader>
+              <DocRefBreadcrumb docRefUuid={parentFolder.uuid} />
+            </Header.Subheader>
+          )}
+        </Header>
+      </Grid.Column>
 
-  return (
-    <React.Fragment>
-      <Grid className="content-tabs__grid">
-        <Grid.Column width={10}>
-          <Header as="h3">
-            <Icon color="grey" name={icon} />
-            <Header.Content>{title}</Header.Content>
-            {parentFolder && (
-              <Header.Subheader>
-                <DocRefBreadcrumb docRefUuid={parentFolder.uuid} />
-              </Header.Subheader>
-            )}
-          </Header>
-        </Grid.Column>
-
-        <Grid.Column width={6}>
-          <Input
-            id="AppSearch__search-input"
-            icon="search"
-            placeholder="Search..."
-            value={filterTerm}
-            onChange={e => filterTermUpdated(listingId, e.target.value)}
-            autoFocus
-            onKeyDown={onSearchInputKeyDown}
+      <Grid.Column width={6}>
+        <Input
+          id="AppSearch__search-input"
+          icon="search"
+          placeholder="Search..."
+          value={filterTerm}
+          onChange={e => filterTermUpdated(listingId, e.target.value)}
+          autoFocus
+          onKeyDown={onSearchInputKeyDown}
+        />
+        <Popup
+          trigger={<Button icon="filter" color={hasTypesFilteredOut ? 'blue' : 'grey'} />}
+          flowing
+          hoverable
+        >
+          <DocTypeFilters
+            value={docRefTypeFilters}
+            onChange={v => docRefTypeFilterUpdated(listingId, v)}
           />
-          <Popup trigger={<Button icon="filter" />} flowing hoverable>
-            <DocTypeFilters value={docRefTypeFilters} onChange={v => docRefTypeFilterUpdated(listingId, v)} />
-          </Popup>
-        </Grid.Column>
-      </Grid>
-      <div className="doc-ref-listing">
-        {filteredDocRefs.map(docRef => (
-          <DocRefListingEntry key={docRef.uuid} docRef={docRef} selectedDocRef={selectedDocRef} />
-        ))}
-      </div>
-    </React.Fragment>
-  );
-};
-
+        </Popup>
+      </Grid.Column>
+    </Grid>
+    <div className="doc-ref-listing">
+      {filteredDocRefs.map(docRef => (
+        <DocRefListingEntry key={docRef.uuid} docRef={docRef} selectedDocRef={selectedDocRef} />
+      ))}
+    </div>
+  </React.Fragment>
+);
 const EnhancedDocRefListing = enhance(DocRefListing);
 
 EnhancedDocRefListing.propTypes = {
