@@ -225,6 +225,7 @@ const AppChrome = ({
         <React.Fragment>
           <div>
             <Button
+              aria-label="Show/hide the sidebar"
               size="large"
               color={SIDE_BAR_COLOUR}
               icon="bars"

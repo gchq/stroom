@@ -74,6 +74,7 @@ const MysteriousPagination = ({
     <React.Fragment>
       <Button.Group size="mini" basic>
         <Button
+          aria-label="Go to the previous page"
           icon
           disabled={pageOffsetIndexFromOne === 1}
           onClick={() => onPageChange(pageOffset - 1, pageSize)}
@@ -82,6 +83,7 @@ const MysteriousPagination = ({
         </Button>
         {pages.map(pageValue => (
           <Button
+            aria-label={`Go to page ${pageValue}`}
             key={pageValue === '?' ? uuidv4() : pageValue}
             disabled={pageValue === '?'}
             active={pageValue === pageOffsetIndexFromOne}
@@ -97,7 +99,11 @@ const MysteriousPagination = ({
           </Button>
         ))}
 
-        <Button icon onClick={() => onPageChange(pageOffset + 1, pageSize)}>
+        <Button
+          aria-label="Go to the next page"
+          icon
+          onClick={() => onPageChange(pageOffset + 1, pageSize)}
+        >
           <Icon name="right arrow" />
         </Button>
       </Button.Group>
