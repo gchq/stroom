@@ -237,14 +237,23 @@ public class RefDataOffHeapStore implements RefDataStore {
         // to do a lookup in the keyValue or rangeValue stores. The resulting
         // value store key buffer can then be used to get the actual value.
         // The value is then deserialised while still inside the txn.
-        Optional<RefDataValue> optionalRefDataValue =
-                LmdbUtils.getWithReadTxn(lmdbEnvironment, readTxn ->
-                        getValueStoreKey(readTxn, mapDefinition, key)
-                                .flatMap(valueStoreKeyBuffer ->
-                                        valueStore.get(readTxn, valueStoreKeyBuffer)));
+        try (PooledByteBuffer valueStoreKeyPooledBufferClone = valueStore.getPooledKeyBuffer()) {
+            Optional<RefDataValue> optionalRefDataValue =
+                    LmdbUtils.getWithReadTxn(lmdbEnvironment, readTxn ->
+                            getValueStoreKey(readTxn, mapDefinition, key)
+                                    .flatMap(valueStoreKeyBuffer -> {
+                                        // we are going to use the valueStoreKeyBuffer as a key in multiple
+                                        // get() calls so need to clone it first.
+                                        ByteBuffer valueStoreKeyBufferClone = valueStoreKeyPooledBufferClone.getByteBuffer();
+                                        ByteBufferUtils.copy(valueStoreKeyBuffer, valueStoreKeyBufferClone);
+                                        return Optional.of(valueStoreKeyBufferClone);
+                                    })
+                                    .flatMap(valueStoreKeyBuffer ->
+                                            valueStore.get(readTxn, valueStoreKeyBuffer)));
 
-        LOGGER.trace("getValue({}, {}) - {}", mapDefinition, key, optionalRefDataValue);
-        return optionalRefDataValue;
+            LOGGER.trace("getValue({}, {}) - {}", mapDefinition, key, optionalRefDataValue);
+            return optionalRefDataValue;
+        }
     }
 
     @Override
@@ -323,18 +332,28 @@ public class RefDataOffHeapStore implements RefDataStore {
         // lookup the value in the value store, passing the actual value part to the consumer.
         // The consumer gets only the value, not the type or ref count and has to understand how
         // to interpret the bytes in the buffer
-        boolean wasValueFound = LmdbUtils.getWithReadTxn(lmdbEnvironment, txn ->
-                getValueStoreKey(txn, mapDefinition, key)
-                        .flatMap(valueStoreKeyBuf ->
-                                getTypedValueBuffer(txn, valueStoreKeyBuf))
-                        .map(valueBuf -> {
-                            valueBytesConsumer.accept(valueBuf);
-                            return true;
-                        })
-                        .orElse(false));
 
-        LOGGER.trace("consumeValueBytes({}, {}) - {}", mapDefinition, key, wasValueFound);
-        return wasValueFound;
+        try (PooledByteBuffer valueStoreKeyPooledBufferClone = valueStore.getPooledKeyBuffer()) {
+            boolean wasValueFound = LmdbUtils.getWithReadTxn(lmdbEnvironment, txn ->
+                    getValueStoreKey(txn, mapDefinition, key)
+                            .flatMap(valueStoreKeyBuffer -> {
+                                // we are going to use the valueStoreKeyBuffer as a key in multiple
+                                // get() calls so need to clone it first.
+                                ByteBuffer valueStoreKeyBufferClone = valueStoreKeyPooledBufferClone.getByteBuffer();
+                                ByteBufferUtils.copy(valueStoreKeyBuffer, valueStoreKeyBufferClone);
+                                return Optional.of(valueStoreKeyBufferClone);
+                            })
+                            .flatMap(valueStoreKeyBuf ->
+                                    getTypedValueBuffer(txn, valueStoreKeyBuf))
+                            .map(valueBuf -> {
+                                valueBytesConsumer.accept(valueBuf);
+                                return true;
+                            })
+                            .orElse(false));
+
+            LOGGER.trace("consumeValueBytes({}, {}) - {}", mapDefinition, key, wasValueFound);
+            return wasValueFound;
+        }
     }
 
     private Optional<TypedByteBuffer> getTypedValueBuffer(final Txn<ByteBuffer> txn, final ByteBuffer valueStoreKeyBuffer) {

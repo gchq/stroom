@@ -30,11 +30,6 @@ public class FastInfosetValue extends RefDataValue {
         this.fastInfosetBytes = fastInfosetBytes;
     }
 
-//    public FastInfosetValue(final int referenceCount, final byte[] fastInfosetBytes) {
-////        super(referenceCount);
-//        this.fastInfosetBytes = fastInfosetBytes;
-//    }
-
     public static FastInfosetValue of(byte[] fastInfosetBytes) {
         return new FastInfosetValue(fastInfosetBytes);
     }
@@ -46,23 +41,11 @@ public class FastInfosetValue extends RefDataValue {
         return new FastInfosetValue(bytes);
     }
 
-//    public FastInfosetValue cloneWithNewReferenceCount(int referenceCount) {
-//        return new FastInfosetValue(referenceCount, fastInfosetBytes);
-//    }
-
     @Override
     public int getTypeId() {
         return TYPE_ID;
     }
 
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-        final FastInfosetValue that = (FastInfosetValue) o;
-        return Arrays.equals(fastInfosetBytes, that.fastInfosetBytes);
-    }
 
     @Override
     public int getValueHashCode() {
@@ -70,11 +53,16 @@ public class FastInfosetValue extends RefDataValue {
     }
 
     @Override
-    public int hashCode() {
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final FastInfosetValue that = (FastInfosetValue) o;
+        return Arrays.equals(fastInfosetBytes, that.fastInfosetBytes);
+    }
 
-        int result = super.hashCode();
-        result = 31 * result + Arrays.hashCode(fastInfosetBytes);
-        return result;
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(fastInfosetBytes);
     }
 
     public byte[] getValueBytes() {
