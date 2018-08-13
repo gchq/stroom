@@ -12,6 +12,15 @@
   background-color: $selected-item-colour;
 }
 
+.doc-ref-listing-entry__search-bar {
+  padding-top: 0.3rem;
+}
+
+.doc-ref-listing-entry__action-bar {
+  float: right;
+  padding-top: 0.3rem;
+}
+
 .doc-ref-listing__name {
   cursor: pointer;
   font-size: 1.1rem;

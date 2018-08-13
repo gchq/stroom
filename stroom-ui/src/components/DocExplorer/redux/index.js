@@ -20,45 +20,18 @@ import {
   reducer as explorerTreeReducer,
 } from './explorerTreeReducer';
 import {
-  actionCreators as moveDocRefActionCreators,
-  reducer as moveDocRefReducer,
-} from './moveDocRefReducer';
-import {
-  actionCreators as renameDocRefActionCreators,
-  reducer as renameDocRefReducer,
-} from './renameDocRefReducer';
-import {
-  actionCreators as deleteDocRefActionCreators,
-  reducer as deleteDocRefReducer,
-} from './deleteDocRefReducer';
-import {
-  actionCreators as copyDocRefActionCreators,
-  reducer as copyDocRefReducer,
-} from './copyDocRefReducer';
-import {
   actionCreators as docRefInfoActionCreators,
   reducer as docRefInfoReducer,
 } from './docRefInfoReducer';
-import { actionCreators as newDocActionCreators, reducer as newDocReducer } from './newDocReducer';
 
 const actionCreators = {
   ...docExplorerActionCreators,
-  ...moveDocRefActionCreators,
-  ...renameDocRefActionCreators,
-  ...deleteDocRefActionCreators,
-  ...copyDocRefActionCreators,
   ...docRefInfoActionCreators,
-  ...newDocActionCreators,
 };
 
 const reducer = combineReducers({
   explorerTree: explorerTreeReducer,
-  moveDocRef: moveDocRefReducer,
-  renameDocRef: renameDocRefReducer,
-  deleteDocRef: deleteDocRefReducer,
-  copyDocRef: copyDocRefReducer,
   docRefInfo: docRefInfoReducer,
-  newDoc: newDocReducer,
 });
 
 export { actionCreators, reducer };

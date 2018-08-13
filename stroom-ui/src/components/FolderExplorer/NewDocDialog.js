@@ -10,7 +10,7 @@ import { required, minLength2 } from 'lib/reduxFormUtils';
 import { actionCreators } from './redux';
 import DocPickerModal from 'components/DocPickerModal';
 import { DocRefTypePicker } from 'components/DocRefTypes';
-import explorerClient from './explorerClient';
+import explorerClient from 'components/DocExplorer/explorerClient';
 
 import PermissionInheritancePicker from 'components/PermissionInheritancePicker';
 
@@ -21,7 +21,7 @@ const { completeDocRefCreation } = actionCreators;
 const enhance = compose(
   connect(
     ({
-      docExplorer: {
+      folderExplorer: {
         newDoc: { isOpen, destination },
       },
       form,

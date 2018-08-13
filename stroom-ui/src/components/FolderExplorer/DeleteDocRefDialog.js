@@ -21,13 +21,13 @@ import { connect } from 'react-redux';
 import { Modal, Button } from 'semantic-ui-react';
 
 import { actionCreators } from './redux';
-import { deleteDocuments } from './explorerClient';
+import { deleteDocuments } from 'components/DocExplorer/explorerClient';
 
 const { completeDocRefDelete } = actionCreators;
 
 const enhance = compose(connect(
   ({
-    docExplorer: {
+    folderExplorer: {
       deleteDocRef: { isDeleting, uuids },
     },
   }) => ({

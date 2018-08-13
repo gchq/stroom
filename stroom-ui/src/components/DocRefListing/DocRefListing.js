@@ -12,6 +12,7 @@ import DocRefListingEntry from './DocRefListingEntry';
 import openDocRef from 'prototypes/RecentItems/openDocRef';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import { actionCreators } from './redux';
+import ActionBarItemsPropType from './ActionBarItemsPropType';
 
 const upKeys = ['k', 'ctrl+k', 'up'];
 const downKeys = ['j', 'ctrl+j', 'down'];
@@ -72,7 +73,7 @@ const enhance = compose(
     docRefSelectionDown,
     docRefListingUnmounted,
   }) => {
-    const { selectedDocRef, filteredDocRefs, docRefTypeFilters = [] } = docRefListing || {};
+    const { selectedDocRef, checkedDocRefs, filteredDocRefs, docRefTypeFilters = [] } = docRefListing || {};
     const onOpenKey = () => {
       if (selectedDocRef !== undefined) {
         openDocRef(history, selectedDocRef);
@@ -98,7 +99,7 @@ const enhance = compose(
         e.preventDefault();
       }
     };
-    console.log('Doc Types', { docRefTypes, docRefTypeFilters });
+
     const hasTypesFilteredOut = docRefTypes.length !== docRefTypeFilters.length;
     return {
       onOpenKey,
@@ -114,7 +115,10 @@ const enhance = compose(
         parentFolder, listingId, docRefs, docRefListingMounted,
       } = this.props;
 
-      if (parentFolder && parentFolder.uuid !== prevProps.parentFolder.uuid) {
+      const parentFolderChanged = parentFolder && parentFolder.uuid !== prevProps.parentFolder.uuid;
+      const docRefsChanged = JSON.stringify(docRefs) !== JSON.stringify(prevProps.docRefs);
+
+      if (parentFolderChanged || docRefsChanged) {
         docRefListingMounted(listingId, docRefs);
       }
     },
@@ -153,8 +157,11 @@ const DocRefListing = ({
   icon,
   title,
   docRefListing: {
-    selectedDocRef, filterTerm, filteredDocRefs, docRefTypeFilters,
+    filterTerm, filteredDocRefs, docRefTypeFilters
   },
+  includeBreadcrumbOnEntries,
+  folderActionBarItems,
+  docRefActionBarItems,
   filterTermUpdated,
   docRefTypeFilterUpdated,
   parentFolder,
@@ -163,7 +170,7 @@ const DocRefListing = ({
 }) => (
   <React.Fragment>
     <Grid className="content-tabs__grid">
-      <Grid.Column width={10}>
+      <Grid.Column width={6}>
         <Header as="h3">
           <Icon color="grey" name={icon} />
           <Header.Content>{title}</Header.Content>
@@ -176,30 +183,49 @@ const DocRefListing = ({
       </Grid.Column>
 
       <Grid.Column width={6}>
-        <Input
-          id="AppSearch__search-input"
-          icon="search"
-          placeholder="Search..."
-          value={filterTerm}
-          onChange={e => filterTermUpdated(listingId, e.target.value)}
-          autoFocus
-          onKeyDown={onSearchInputKeyDown}
-        />
-        <Popup
-          trigger={<Button icon="filter" color={hasTypesFilteredOut ? 'blue' : 'grey'} />}
-          flowing
-          hoverable
-        >
-          <DocTypeFilters
-            value={docRefTypeFilters}
-            onChange={v => docRefTypeFilterUpdated(listingId, v)}
+        <div className='doc-ref-listing-entry__search-bar'>
+          <Input
+            id="AppSearch__search-input"
+            icon="search"
+            placeholder="Search..."
+            value={filterTerm}
+            onChange={e => filterTermUpdated(listingId, e.target.value)}
+            autoFocus
+            onKeyDown={onSearchInputKeyDown}
           />
-        </Popup>
+          <Popup
+            trigger={<Button icon="filter" color={hasTypesFilteredOut ? 'blue' : 'grey'} />}
+            flowing
+            hoverable
+          >
+            <DocTypeFilters
+              value={docRefTypeFilters}
+              onChange={v => docRefTypeFilterUpdated(listingId, v)}
+            />
+          </Popup>
+        </div>
+      </Grid.Column>
+      <Grid.Column width={4}>
+        <span className="doc-ref-listing-entry__action-bar">
+          {folderActionBarItems.map(({ onClick, icon, tooltip, disabled }, i) => (
+            <Popup
+              key={i}
+              trigger={<Button circular onClick={() => onClick(parentFolder)} icon={icon} disabled={disabled} />}
+              content={tooltip}
+            />
+          ))}
+        </span>
       </Grid.Column>
     </Grid>
     <div className="doc-ref-listing">
       {filteredDocRefs.map(docRef => (
-        <DocRefListingEntry key={docRef.uuid} docRef={docRef} selectedDocRef={selectedDocRef} />
+        <DocRefListingEntry
+          key={docRef.uuid}
+          listingId={listingId}
+          docRefUuid={docRef.uuid}
+          actionBarItems={docRefActionBarItems}
+          includeBreadcrumb={includeBreadcrumbOnEntries}
+        />
       ))}
     </div>
   </React.Fragment>
@@ -211,12 +237,20 @@ EnhancedDocRefListing.propTypes = {
   title: PropTypes.string.isRequired,
   listingId: PropTypes.string.isRequired,
   parentFolder: DocRefPropType,
+  includeBreadcrumbOnEntries: PropTypes.bool.isRequired,
   docRefs: PropTypes.arrayOf(DocRefPropType).isRequired,
   alwaysFilter: PropTypes.bool.isRequired,
+  inMultiSelectMode: PropTypes.bool.isRequired,
+  folderActionBarItems: ActionBarItemsPropType.isRequired,
+  docRefActionBarItems: ActionBarItemsPropType.isRequired,
 };
 
 EnhancedDocRefListing.defaultProps = {
   alwaysFilter: false,
+  folderActionBarItems: [],
+  docRefActionBarItems: [],
+  includeBreadcrumbOnEntries: true,
+  inMultiSelectMode: false,
 };
 
 export default EnhancedDocRefListing;

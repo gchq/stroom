@@ -22,12 +22,7 @@ import { connect } from 'react-redux';
 import { Loader } from 'semantic-ui-react';
 
 import Folder from './Folder';
-import MoveDocRefDialog from './MoveDocRefDialog';
-import RenameDocRefDialog from './RenameDocRefDialog';
-import CopyDocRefDialog from './CopyDocRefDialog';
-import DeleteDocRefDialog from './DeleteDocRefDialog';
 import DocRefInfoModal from './DocRefInfoModal';
-import NewDocDialog from './NewDocDialog';
 import { actionCreators } from './redux';
 import withExplorerTree from './withExplorerTree';
 
@@ -77,12 +72,7 @@ const DocExplorer = ({
 }) => (
   <div className="DocExplorer__container">
     <div className="DocExplorer">
-      <NewDocDialog />
       <DocRefInfoModal />
-      <MoveDocRefDialog />
-      <RenameDocRefDialog />
-      <DeleteDocRefDialog />
-      <CopyDocRefDialog />
       <Folder explorerId={explorerId} folder={documentTree} />
     </div>
   </div>

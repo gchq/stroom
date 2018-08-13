@@ -15,31 +15,32 @@
  */
 import { createActions, combineActions, handleActions } from 'redux-actions';
 
-import { actionCreators as explorerTreeActionCreators } from './explorerTreeReducer';
+import { actionCreators as explorerTreeActionCreators } from 'components/DocExplorer/redux/explorerTreeReducer';
 
-const { docRefsMoved } = explorerTreeActionCreators;
+const { docRefsCopied } = explorerTreeActionCreators;
 
 const actionCreators = createActions({
-  PREPARE_DOC_REF_MOVE: (uuids, destinationUuid) => ({ uuids, destinationUuid }),
-  COMPLETE_DOC_REF_MOVE: () => ({ uuids: [] }),
+  PREPARE_DOC_REF_COPY: (uuids, destinationUuid) => ({ uuids, destinationUuid }),
+  COMPLETE_DOC_REF_COPY: () => ({ uuids: [] }),
 });
 
-const { prepareDocRefMove, completeDocRefMove } = actionCreators;
+const { prepareDocRefCopy, completeDocRefCopy } = actionCreators;
 
-// Array of doc refs being moved
-const defaultState = { isMoving: false, uuids: [], destinationUuid: undefined };
+// The state will contain a map of arrays.
+// Keyed on explorer ID, the arrays will contain the doc refs being moved
+const defaultState = { isCopying: false, uuids: [], destinationUuid: undefined };
 
 const reducer = handleActions(
   {
-    [combineActions(prepareDocRefMove, completeDocRefMove)]: (
+    [combineActions(prepareDocRefCopy, completeDocRefCopy)]: (
       state,
       { payload: { uuids, destinationUuid } },
     ) => ({
-      isMoving: uuids.length > 0,
+      isCopying: uuids.length > 0,
       uuids,
       destinationUuid,
     }),
-    [docRefsMoved]: () => defaultState,
+    [docRefsCopied]: () => defaultState,
   },
   defaultState,
 );

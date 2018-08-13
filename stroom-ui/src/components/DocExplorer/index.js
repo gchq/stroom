@@ -17,14 +17,7 @@ import DocExplorer from './DocExplorer';
 import DocRefInfoModal from './DocRefInfoModal';
 import withExplorerTree from './withExplorerTree';
 import explorerClient from './explorerClient';
-import NewDocDialog from './NewDocDialog';
 
-export {
-  DocExplorer,
-  DocRefInfoModal,
-  withExplorerTree,
-  explorerClient,
-  NewDocDialog,
-};
+export { DocExplorer, DocRefInfoModal, withExplorerTree, explorerClient };
 
 export default DocExplorer;
