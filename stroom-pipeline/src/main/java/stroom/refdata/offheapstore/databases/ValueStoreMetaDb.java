@@ -178,7 +178,8 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
 
             if (currRefCount <= 1) {
                 // we had the last ref to this value so we can delete it
-                LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Ref count is zero, deleting entry for key {}",
+                LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage(
+                        "Ref count is zero, deleting entry for key {}",
                         ByteBufferUtils.byteBufferInfo(keyBuffer)));
                 cursor.delete();
                 onDeleteAction.accept(writeTxn, keyBuffer, valueBuffer);
@@ -188,8 +189,12 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
                 // other people have a ref to it so just decrement the ref count
                 try (PooledByteBuffer pooledNewValueBuffer = getPooledValueBuffer()) {
                     final ByteBuffer newValueBuf = pooledNewValueBuffer.getByteBuffer();
-                    int newRefCount = valueSerde.cloneAndUpdateRefCount(valueBuffer, newValueBuf, -1);
-                    LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("Updating entry with new ref count {} for key {}",
+                    int newRefCount = valueSerde.cloneAndUpdateRefCount(
+                            valueBuffer,
+                            newValueBuf,
+                            -1);
+                    LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage(
+                            "Updating entry with new ref count {} for key {}",
                             newRefCount,
                             ByteBufferUtils.byteBufferInfo(keyBuffer)));
                     cursor.put(cursor.key(), newValueBuf, PutFlags.MDB_CURRENT);
