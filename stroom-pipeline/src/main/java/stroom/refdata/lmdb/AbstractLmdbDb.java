@@ -63,6 +63,11 @@ import java.util.stream.StreamSupport;
  * DO NOT use/mutate a value buffer outside of a txn as its content is indeterminate outside the txn
  * and belongs to LMDB.
  * DO ensure any {@link PooledByteBuffer}s are released/closed after use.
+ * DO be aware that a get() call is using a cursor underneath, so each call to get() will move the txn's
+ * cursor to the position of the new key. Therefore:
+ * v1 = get(k1), v1 == X, v2 = get(k2), v2 == y, v1 == y
+ * Thus if you are making multiple get() calls you may need to copy/deserialise/use the returned value before
+ * doing the next get().
  *
  * @param <K> The class of the database keys
  * @param <V> The class of the database values

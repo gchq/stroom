@@ -270,7 +270,39 @@ public class TestBasicLmdbDb extends AbstractLmdbDbTest {
             assertThat(value3).isEqualTo("value3");
             assertThat(keyBuffer).isEqualTo(keyBufferCopy);
         });
+    }
 
+    @Test
+    public void testValueReuse() {
+        basicLmdbDb.put("key1", "value1", false);
+        basicLmdbDb.put("key2", "value2", false);
+
+        LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
+
+            ByteBuffer keyBuffer1 = ByteBuffer.allocateDirect(100);
+            basicLmdbDb.serializeKey(keyBuffer1, "key1");
+
+            ByteBuffer valueBuffer1 = basicLmdbDb.getAsBytes(txn, keyBuffer1).get();
+            ByteBuffer valueBuffer1Copy = valueBuffer1.asReadOnlyBuffer();
+            assertThat(valueBuffer1Copy).isEqualTo(valueBuffer1);
+            String value1 = basicLmdbDb.deserializeValue(valueBuffer1);
+
+            assertThat(value1).isEqualTo("value1");
+
+            // now do another get on a different key to get a different value
+            ByteBuffer keyBuffer2 = ByteBuffer.allocateDirect(100);
+            basicLmdbDb.serializeKey(keyBuffer2, "key2");
+            ByteBuffer valueBuffer2 = basicLmdbDb.getAsBytes(txn, keyBuffer2).get();
+
+            String value2 = basicLmdbDb.deserializeValue(valueBuffer2);
+            assertThat(value2).isEqualTo("value2");
+
+            // The valueBuffer1 is tied to the txn's cursor which has now moved to key2 => value2,
+            // thus valueBuffer1 now contains "value2".
+            value1 = basicLmdbDb.deserializeValue(valueBuffer1);
+            assertThat(value1).isEqualTo("value2");
+            assertThat(valueBuffer1Copy).isNotEqualTo(valueBuffer1);
+        });
     }
 
     private void populateDb() {
