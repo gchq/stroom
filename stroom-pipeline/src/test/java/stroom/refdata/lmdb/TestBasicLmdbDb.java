@@ -24,6 +24,7 @@ import org.lmdbjava.KeyRange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.offheapstore.ByteBufferPool;
+import stroom.refdata.offheapstore.ByteBufferUtils;
 import stroom.refdata.offheapstore.PooledByteBuffer;
 import stroom.refdata.offheapstore.databases.AbstractLmdbDbTest;
 import stroom.refdata.offheapstore.serdes.StringSerde;
@@ -42,6 +43,7 @@ public class TestBasicLmdbDb extends AbstractLmdbDbTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestBasicLmdbDb.class);
 
     private BasicLmdbDb<String, String> basicLmdbDb;
+    private BasicLmdbDb<String, String> basicLmdbDb2;
 
     @Before
     @Override
@@ -54,6 +56,13 @@ public class TestBasicLmdbDb extends AbstractLmdbDbTest {
                 new StringSerde(),
                 new StringSerde(),
                 "MyBasicLmdb");
+
+        basicLmdbDb2 = new BasicLmdbDb<>(
+                lmdbEnv,
+                new ByteBufferPool(),
+                new StringSerde(),
+                new StringSerde(),
+                "MyBasicLmdb2");
     }
 
     @Test
@@ -212,30 +221,54 @@ public class TestBasicLmdbDb extends AbstractLmdbDbTest {
 
     @Test
     public void testKeyReuse() {
-        basicLmdbDb.put("keyLongerThanValue1", "value1", false);
-        basicLmdbDb.put("keyLongerThanValue2", "value2", false);
-        basicLmdbDb.put("keyLongerThanValue3", "value3", false);
+        // key 1 => key2 => value2 & value 3
+        basicLmdbDb.put("key1", "key2", false);
+        basicLmdbDb.put("key2", "value2", false);
 
+        // different DB with same key in it so we can test two lookups using same key
+        basicLmdbDb2.put("key2", "value3", false);
 
         LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
             ByteBuffer keyBuffer = ByteBuffer.allocateDirect(100);
-            basicLmdbDb.serializeKey(keyBuffer, "keyLongerThanValue2");
+            basicLmdbDb.serializeKey(keyBuffer, "key1");
             ByteBuffer keyBufferCopy = keyBuffer.asReadOnlyBuffer();
 
             ByteBuffer valueBuffer = basicLmdbDb.getAsBytes(txn, keyBuffer).get();
+            ByteBuffer keyBuffer2 = ByteBufferUtils.copyToDirectBuffer(valueBuffer);
             String value = basicLmdbDb.deserializeValue(valueBuffer);
+            ByteBuffer valueBufferCopy = valueBuffer.asReadOnlyBuffer();
 
-            assertThat(value).isEqualTo("value2");
+            assertThat(value).isEqualTo("key2");
             assertThat(keyBuffer).isEqualTo(keyBufferCopy);
+            assertThat(valueBuffer).isEqualTo(valueBufferCopy);
+            assertThat(valueBuffer).isEqualTo(keyBuffer2);
 
-            ByteBuffer valueBuffer2 = basicLmdbDb.getAsBytes(txn, keyBuffer).get();
+            // now use the value from the last get() as the key for a new get()
+            ByteBuffer valueBuffer2 = basicLmdbDb.getAsBytes(txn, valueBuffer).get();
 
             String value2 = basicLmdbDb.deserializeValue(valueBuffer2);
+            String valueBufferDeserialised = basicLmdbDb.deserializeKey(valueBuffer);
 
             assertThat(value2).isEqualTo("value2");
+
+            // The second get() has overwritten our original valueBuffer with the value
+            // of the second get(). This is because the txn essentially holds a cursor
+            // whose position is updated by the get and that cursor is bound to the value
+            // buffer returned by the get. The value from the get() can be used as a key
+            // in another get() once, but that second get() will mutate it prevent it from
+            // being used as a key in another get().
+            assertThat(valueBufferDeserialised).isEqualTo("value2");
+            assertThat(valueBuffer).isEqualTo(valueBuffer2);
+            assertThat(valueBuffer).isNotEqualTo(valueBufferCopy);
+            assertThat(keyBuffer2).isNotEqualTo(valueBuffer);
+
+            // We can't use valueBuffer for our key here is it now points to "value2"
+            ByteBuffer valueBuffer3 = basicLmdbDb2.getAsBytes(txn, keyBuffer2).get();
+
+            String value3 = basicLmdbDb2.deserializeValue(valueBuffer3);
+
+            assertThat(value3).isEqualTo("value3");
             assertThat(keyBuffer).isEqualTo(keyBufferCopy);
-
-
         });
 
     }
