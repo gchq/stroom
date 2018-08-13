@@ -17,18 +17,25 @@
 
 package stroom.refdata.offheapstore;
 
+import org.hibernate.validator.cfg.defs.MaxDef;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import java.util.Comparator;
 import java.util.Objects;
 
-public class MapDefinition {
+public class MapDefinition implements Comparable<MapDefinition> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MapDefinition.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(MapDefinition.class);
+
+    private static final Comparator<MapDefinition> COMPARATOR = Comparator
+            .comparing(MapDefinition::getRefStreamDefinition)
+            .thenComparing(MapDefinition::getMapName);
+
 
     private final RefStreamDefinition refStreamDefinition;
     private final String mapName;
@@ -94,5 +101,10 @@ public class MapDefinition {
                 ", streamId=" + refStreamDefinition.getStreamId() +
                 ", mapName='" + mapName + '\'' +
                 '}';
+    }
+
+    @Override
+    public int compareTo(final MapDefinition that) {
+        return COMPARATOR.compare(this, that);
     }
 }
