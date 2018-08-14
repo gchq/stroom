@@ -33,6 +33,7 @@ const actionCreators = createActions({
   DESELECT_ROW: (dataViewerId, rowIndex) => ({ dataViewerId }),
   UPDATE_DATA_FOR_SELECTED_ROW: (dataViewerId, data) => ({ dataViewerId, data }),
   UPDATE_DETAILS_FOR_SELECTED_ROW: (dataViewerId, details) => ({ dataViewerId, details }),
+  UPDATE_DATA_SOURCE: (dataViewerId, dataSource) => ({ dataViewerId, dataSource }),
 });
 
 const defaultState = {};
@@ -49,6 +50,7 @@ const reducer = handleActions(
     ) => ({
       ...state,
       [dataViewerId]: {
+        ...state[dataViewerId],
         total,
         streamAttributeMaps,
         pageSize,
@@ -81,6 +83,13 @@ const reducer = handleActions(
       [dataViewerId]: {
         ...state[dataViewerId],
         detailsForSelectedRow: details,
+      },
+    }),
+    UPDATE_DATA_SOURCE: (state, { payload: { dataViewerId, dataSource } }) => ({
+      ...state,
+      [dataViewerId]: {
+        ...state[dataViewerId],
+        dataSource,
       },
     }),
   },

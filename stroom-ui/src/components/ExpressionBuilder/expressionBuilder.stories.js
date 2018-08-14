@@ -32,7 +32,7 @@ import {
 import { actionCreators as docExplorerActionCreators } from 'components/DocExplorer';
 import { testTree, testDocRefsTypes } from 'components/DocExplorer/test';
 
-const { receiveDataSource, expressionChanged } = expressionBuilderActionCreators;
+const { expressionChanged } = expressionBuilderActionCreators;
 
 import 'styles/main.css';
 import 'semantic/dist/semantic.min.css';
@@ -54,7 +54,6 @@ storiesOf('Expression Builder', module)
     docRefTypes: testDocRefsTypes,
   }))
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(receiveDataSource('testDs', testDataSource));
     store.dispatch(expressionChanged('populatedExEdit', testExpression));
     store.dispatch(expressionChanged('populatedExRO', testExpression));
     store.dispatch(expressionChanged('populatedExNoDs', testExpression));
@@ -62,22 +61,49 @@ storiesOf('Expression Builder', module)
   })) // must be recorder after/outside of the test initialisation decorators
   .addDecorator(DragDropDecorator)
   .add('Populated Editable', () => (
-    <ExpressionBuilder showModeToggle dataSourceUuid="testDs" expressionId="populatedExEdit" />
+    <ExpressionBuilder
+      showModeToggle
+      dataSourceUuid="testDs"
+      expressionId="populatedExEdit"
+      dataSource={testDataSource}
+    />
   ))
   .add('Populated ReadOnly', () => (
-    <ExpressionBuilder dataSourceUuid="testDs" expressionId="populatedExRO" />
+    <ExpressionBuilder
+      dataSourceUuid="testDs"
+      expressionId="populatedExRO"
+      dataSource={testDataSource}
+    />
   ))
   .add('Simplest Editable', () => (
-    <ExpressionBuilder showModeToggle dataSourceUuid="testDs" expressionId="simplestEx" />
+    <ExpressionBuilder
+      showModeToggle
+      dataSourceUuid="testDs"
+      expressionId="simplestEx"
+      dataSource={testDataSource}
+    />
   ))
   .add('Missing Data Source (read only)', () => (
-    <ExpressionBuilder dataSourceUuid="missingDs" expressionId="populatedExNoDs" />
+    <ExpressionBuilder
+      dataSourceUuid="missingDs"
+      expressionId="populatedExNoDs"
+      dataSource={testDataSource}
+    />
   ))
   .add('Missing Expression', () => (
-    <ExpressionBuilder dataSourceUuid="testDs" expressionId="missingEx" />
+    <ExpressionBuilder
+      dataSourceUuid="testDs"
+      expressionId="missingEx"
+      dataSource={testDataSource}
+    />
   ))
   .add('Hide mode toggle', () => (
-    <ExpressionBuilder showModeToggle={false} dataSourceUuid="testDs" expressionId="simplestEx" />
+    <ExpressionBuilder
+      showModeToggle={false}
+      dataSourceUuid="testDs"
+      expressionId="simplestEx"
+      dataSource={testDataSource}
+    />
   ))
   .add('Hide mode toggle but be in edit mode', () => (
     <ExpressionBuilder
@@ -85,5 +111,6 @@ storiesOf('Expression Builder', module)
       editMode
       dataSourceUuid="testDs"
       expressionId="simplestEx"
+      dataSource={testDataSource}
     />
   ));

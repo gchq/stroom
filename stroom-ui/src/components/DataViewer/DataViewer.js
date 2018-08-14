@@ -29,11 +29,12 @@ import Mousetrap from 'mousetrap';
 import ReactTable from 'react-table';
 import 'react-table/react-table.css';
 
-import { Header, Loader, Icon } from 'semantic-ui-react';
+import { Header, Loader, Icon, Grid } from 'semantic-ui-react';
 
+import SearchBar from 'components/SearchBar'
 import WithHeader from 'components/WithHeader';
 import { withConfig } from 'startup/config';
-import { search, getDetailsForSelectedRow } from './streamAttributeMapClient';
+import { search, getDetailsForSelectedRow, fetchDataSource, searchWithExpression } from './streamAttributeMapClient';
 import { getDataForSelectedRow } from './dataResourceClient';
 import MysteriousPagination from './MysteriousPagination';
 import DetailsTabs from './DetailsTabs';
@@ -67,10 +68,13 @@ const enhance = compose(
         selectedRow: undefined,
         dataForSelectedRow: undefined,
         detailsForSelectedRow: undefined,
+        dataSource: undefined,
       };
     },
     {
       search,
+      searchWithExpression,
+      fetchDataSource,
       selectRow,
       deselectRow,
       getDataForSelectedRow,
@@ -80,8 +84,10 @@ const enhance = compose(
   lifecycle({
     componentDidMount() {
       const {
-        search, dataViewerId, pageSize, pageOffset, selectedRow
+        search, dataViewerId, pageSize, pageOffset, selectedRow, fetchDataSource
       } = this.props;
+
+      fetchDataSource(dataViewerId)
       // If we're got a selectedRow that means the user has already been to this page. 
       // Re-doing the search will wipe out their previous location, and we want to remember it.
       if(!selectedRow){
@@ -93,9 +99,13 @@ const enhance = compose(
     ({ streamAttributeMaps }) => !streamAttributeMaps,
     renderComponent(() => <Loader active>Loading data</Loader>),
   ),
+  branch(
+    ({ dataSource }) => !dataSource,
+    renderComponent(() => <Loader active>Loading data source</Loader>),
+  ),
 );
 
-const RawDataViewer = ({
+const DataViewer = ({
   dataViewerId,
   streamAttributeMaps,
   pageOffset,
@@ -114,6 +124,8 @@ const RawDataViewer = ({
   setListHeight,
   detailsHeight,
   setDetailsHeight,
+  dataSource,
+  searchWithExpression
 }) => {
   // We need to parse these because localstorage, which is
   // where these come from, is always string.
@@ -252,6 +264,30 @@ const RawDataViewer = ({
   );
 
   return (
+    <React.Fragment>
+    <Grid className="content-tabs__grid">
+      <Grid.Column width={4}>        <Header as="h3">
+          <Icon name="database" color="grey" />
+          <Header.Content>Data</Header.Content>
+        </Header></Grid.Column>
+      <Grid.Column width={12}>
+      <SearchBar  
+            dataSource={dataSource}
+            expressionId={dataViewerId}
+            onSearch={() => {
+              searchWithExpression(dataViewerId, pageOffset, pageSize, dataViewerId)
+            }}/> 
+          <div className="MysteriousPagination__ActionBarItems__container">
+            <MysteriousPagination
+              pageOffset={pageOffset}
+              pageSize={pageSize}
+              onPageChange={(pageOffset, pageSize) => {
+                // searchWithExpression(dataViewerId, pageOffset, pageSize, dataViewerId)
+                search(dataViewerId, pageOffset, pageSize);
+              }}
+            />
+          </div></Grid.Column>
+    </Grid>
     <div className="DataTable__container">
       <div className="DataTable__reactTable__container">
         {selectedRow === undefined ? (
@@ -282,42 +318,13 @@ const RawDataViewer = ({
         )}
       </div>
     </div>
+    </React.Fragment>
+
   );
 };
-
-const RawWithHeader = (props) => {
-  const {
-    dataViewerId, pageOffset, pageSize, search,
-  } = props;
-
-  return (
-    <WithHeader
-      header={
-        <Header as="h3">
-          <Icon name="database" color="grey" />
-          <Header.Content>Data</Header.Content>
-        </Header>
-      }
-      actionBarItems={
-        <div className="MysteriousPagination__ActionBarItems__container">
-          <MysteriousPagination
-            pageOffset={pageOffset}
-            pageSize={pageSize}
-            onPageChange={(pageOffset, pageSize) => {
-              search(dataViewerId, pageOffset, pageSize);
-            }}
-          />
-        </div>
-      }
-      content={<RawDataViewer {...props} />}
-    />
-  );
-};
-
-const DataViewer = enhance(RawWithHeader);
 
 DataViewer.propTypes = {
   dataViewerId: PropTypes.string.isRequired,
 };
 
-export default DataViewer;
+export default enhance(DataViewer);
