@@ -15,32 +15,34 @@
  */
 import React from 'react';
 
-import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
 
 import { Modal, Form, Button } from 'semantic-ui-react';
 
 import { actionCreators } from './redux';
-import { renameDocument } from './explorerClient';
+import { renameDocument } from 'components/DocExplorer/explorerClient';
 
-const withName = withState('name', 'setName', '');
+const { completeDocRefRename, renameUpdated } = actionCreators;
 
-const { completeDocRefRename } = actionCreators;
-
-const enhance = compose(
-  connect(
-    (state, props) => ({
-      isRenaming: state.docExplorer.renameDocRef.isRenaming,
-      docRef: state.docExplorer.renameDocRef.docRef,
-    }),
-    { completeDocRefRename, renameDocument },
-  ),
-  withName,
+const enhance = connect(
+  (
+    {
+      folderExplorer: {
+        renameDocRef: { isRenaming, docRef, name },
+      },
+    },
+    props,
+  ) => ({
+    isRenaming,
+    docRef,
+    name,
+  }),
+  { completeDocRefRename, renameDocument, renameUpdated },
 );
 
 const RenameDocRefDialog = ({
   name,
-  setName,
+  renameUpdated,
   isRenaming,
   docRef,
   completeDocRefRename,
@@ -53,7 +55,7 @@ const RenameDocRefDialog = ({
         <Form.Input
           label="Type"
           type="text"
-          onChange={(e, { value }) => setName(value)}
+          onChange={(e, { value }) => renameUpdated(value)}
           value={name || (docRef ? docRef.name : '')}
         />
       </Form>

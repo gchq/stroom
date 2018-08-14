@@ -18,6 +18,7 @@
 package stroom.test;
 
 import org.junit.Assert;
+import stroom.docref.DocRef;
 import stroom.feed.FeedService;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.shared.Feed;
@@ -32,7 +33,6 @@ import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Volume;
 import stroom.node.shared.Volume.VolumeUseStatus;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.streamstore.StreamStore;
@@ -132,9 +132,9 @@ public class CommonTestScenarioCreator {
         final QueryData findStreamQueryData = new QueryData.Builder()
                 .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
                 .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
-                        .addTerm(StreamDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, feed.getName())
-                        .addTerm(StreamDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
-                        .build())
+                    .addTerm(StreamDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, feed.getName())
+                    .addTerm(StreamDataSource.STREAM_TYPE_NAME, ExpressionTerm.Condition.EQUALS, StreamType.RAW_EVENTS.getName())
+                    .build())
                 .build();
 
         createStreamProcessor(findStreamQueryData);

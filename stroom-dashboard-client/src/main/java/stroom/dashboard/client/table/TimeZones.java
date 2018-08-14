@@ -16,13 +16,11 @@
 
 package stroom.dashboard.client.table;
 
-import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import stroom.dashboard.shared.FetchTimeZonesAction;
 import stroom.dispatch.client.ClientDispatchAsync;
 
-import java.util.Date;
 import java.util.List;
 
 @Singleton
@@ -32,7 +30,6 @@ public class TimeZones {
 
     @Inject
     public TimeZones(final ClientDispatchAsync dispatcher) {
-        timeZone = DateTimeFormat.getFormat("vvvv").format(new Date());
         try {
             timeZone = getIntlTimeZone();
         } catch (final RuntimeException e) {
@@ -58,6 +55,6 @@ public class TimeZones {
      */
     private native String getIntlTimeZone()
     /*-{
-    return Intl.DateTimeFormat().resolved.timeZone;
+    return Intl.DateTimeFormat().resolvedOptions().timeZone;
     }-*/;
 }

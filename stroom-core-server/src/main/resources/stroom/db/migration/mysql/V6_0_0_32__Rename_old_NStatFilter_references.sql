@@ -13,25 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { combineReducers } from 'redux';
 
-import {
-  actionCreators as docExplorerActionCreators,
-  reducer as explorerTreeReducer,
-} from './explorerTreeReducer';
-import {
-  actionCreators as docRefInfoActionCreators,
-  reducer as docRefInfoReducer,
-} from './docRefInfoReducer';
-
-const actionCreators = {
-  ...docExplorerActionCreators,
-  ...docRefInfoActionCreators,
-};
-
-const reducer = combineReducers({
-  explorerTree: explorerTreeReducer,
-  docRefInfo: docRefInfoReducer,
-});
-
-export { actionCreators, reducer };
+-- The pipeline element type 'StatisticsFilter' used to be called 'NStatFilter'
+-- This was change a long time ago but some instances in database may not have been
+-- migrated.
+update PIPE
+set DAT = REPLACE(
+    DAT,
+    '<type>NStatFilter</type>',
+    '<type>StatisticsFilter</type>')
+WHERE DAT like '%<type>NStatFilter</type>%';

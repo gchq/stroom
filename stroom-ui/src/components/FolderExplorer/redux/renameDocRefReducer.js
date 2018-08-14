@@ -15,32 +15,37 @@
  */
 import { createActions, combineActions, handleActions } from 'redux-actions';
 
-import { actionCreators as explorerTreeActionCreators } from './explorerTreeReducer';
+import { actionCreators as explorerTreeActionCreators } from 'components/DocExplorer/redux/explorerTreeReducer';
 
-const { docRefsCopied } = explorerTreeActionCreators;
+const { docRefRenamed } = explorerTreeActionCreators;
 
 const actionCreators = createActions({
-  PREPARE_DOC_REF_COPY: (uuids, destinationUuid) => ({ uuids, destinationUuid }),
-  COMPLETE_DOC_REF_COPY: () => ({ uuids: [] }),
+  PREPARE_DOC_REF_RENAME: docRef => ({ docRef }),
+  RENAME_UPDATED: name => ({ name }),
+  COMPLETE_DOC_REF_RENAME: () => ({ docRef: undefined }),
 });
 
-const { prepareDocRefCopy, completeDocRefCopy } = actionCreators;
+const { prepareDocRefRename, completeDocRefRename } = actionCreators;
 
 // The state will contain a map of arrays.
 // Keyed on explorer ID, the arrays will contain the doc refs being moved
-const defaultState = { isCopying: false, uuids: [], destinationUuid: undefined };
+const defaultState = { isRenaming: false, docRef: undefined, name: '' };
 
 const reducer = handleActions(
   {
-    [combineActions(prepareDocRefCopy, completeDocRefCopy)]: (
+    [combineActions(prepareDocRefRename, completeDocRefRename)]: (
       state,
-      { payload: { uuids, destinationUuid } },
+      { payload: { docRef } },
     ) => ({
-      isCopying: uuids.length > 0,
-      uuids,
-      destinationUuid,
+      isRenaming: !!docRef,
+      docRef,
+      name: docRef ? docRef.name : '',
     }),
-    [docRefsCopied]: () => defaultState,
+    [docRefRenamed]: () => defaultState,
+    RENAME_UPDATED: (state, { payload: { name } }) => ({
+      ...state,
+      name,
+    }),
   },
   defaultState,
 );

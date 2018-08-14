@@ -13,25 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { combineReducers } from 'redux';
 
-import {
-  actionCreators as docExplorerActionCreators,
-  reducer as explorerTreeReducer,
-} from './explorerTreeReducer';
-import {
-  actionCreators as docRefInfoActionCreators,
-  reducer as docRefInfoReducer,
-} from './docRefInfoReducer';
-
-const actionCreators = {
-  ...docExplorerActionCreators,
-  ...docRefInfoActionCreators,
-};
-
-const reducer = combineReducers({
-  explorerTree: explorerTreeReducer,
-  docRefInfo: docRefInfoReducer,
-});
-
-export { actionCreators, reducer };
+-- Ensures any old processor filters have the stream type field updated to
+-- its new type name
+update STRM_PROC_FILT
+set DAT = REPLACE(
+    DAT,
+    '<field>Stream Type</field>',
+    '<field>streamTypeName</field>')
+WHERE DAT like '%<field>Stream Type</field>%';

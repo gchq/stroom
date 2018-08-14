@@ -15,7 +15,7 @@
  */
 import { createActions, combineActions, handleActions } from 'redux-actions';
 
-import { actionCreators as explorerTreeActionCreators } from './explorerTreeReducer';
+import { actionCreators as explorerTreeActionCreators } from 'components/DocExplorer/redux/explorerTreeReducer';
 
 const { docRefsDeleted } = explorerTreeActionCreators;
 

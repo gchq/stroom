@@ -21,6 +21,8 @@ const actionCreators = createActions({
   DOC_REF_TYPE_FILTER_UPDATED: (listingId, docRefTypeFilters) => ({ listingId, docRefTypeFilters }),
   DOC_REF_SELECTION_UP: listingId => ({ listingId, selectionChange: -1 }),
   DOC_REF_SELECTION_DOWN: listingId => ({ listingId, selectionChange: +1 }),
+  DOC_REF_CHECK_TOGGLED: (listingId, uuid) => ({ listingId, uuid }),
+  MULTI_SELECT_MODE_TOGGLED: listingId => ({ listingId }),
 });
 
 const {
@@ -40,6 +42,8 @@ const defaultStatePerListing = {
   filterTerm: '',
   selectedItem: 0, // Used for simple item selection, by array index
   selectedDocRef: undefined, // Used for loading
+  checkedDocRefUuids: [],
+  inMultiSelectMode: false,
   search: undefined,
 };
 
@@ -122,6 +126,38 @@ const reducer = handleActions(
           ...listingState,
           selectedItem: nextIndex,
           selectedDocRef: filteredDocRefs[nextIndex],
+        },
+      };
+    },
+    DOC_REF_CHECK_TOGGLED: (state, action) => {
+      const {
+        payload: { listingId, uuid, isChecked },
+      } = action;
+      const listingState = state[listingId];
+
+      const checkedDocRefUuids = listingState.checkedDocRefUuids.includes(uuid)
+        ? listingState.checkedDocRefUuids.filter(u => u !== uuid)
+        : listingState.checkedDocRefUuids.concat([uuid]);
+
+      return {
+        ...state,
+        [listingId]: {
+          ...listingState,
+          checkedDocRefUuids,
+        },
+      };
+    },
+    MULTI_SELECT_MODE_TOGGLED: (state, action) => {
+      const {
+        payload: { listingId },
+      } = action;
+      const listingState = state[listingId];
+
+      return {
+        ...state,
+        [listingId]: {
+          ...listingState,
+          inMultiSelectMode: !listingState.inMultiSelectMode,
         },
       };
     },
