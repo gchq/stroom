@@ -294,8 +294,8 @@ const DataViewer = ({
           </Grid.Column>
         </Grid.Row>
         <Grid.Row>
-          <Grid.Column width={2} />
-          <Grid.Column width={14}>
+          <Grid.Column width={5} />
+          <Grid.Column width={8}>
             <div className="MysteriousPagination__ActionBarItems__container">
               <MysteriousPagination
                 pageOffset={pageOffset}
@@ -307,6 +307,7 @@ const DataViewer = ({
               />
             </div>
           </Grid.Column>
+          <Grid.Column width={3} />
         </Grid.Row>
       </Grid>
       <div className="DataTable__container">

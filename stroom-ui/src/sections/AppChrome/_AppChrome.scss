@@ -7,14 +7,24 @@
 
 .app-chrome__sidebar {
   height: inherit;
-  background-color: $semantic-blue;
+  background-color: $dark-grey;
 }
 
 .app-chrome__sidebar-menu {
   height: inherit;
-  background-color: $semantic-blue;
+  background-color: $dark-grey;
   width: 15rem;
   overflow-y: auto;
+}
+
+.app-chrome__sidebar__toggle {
+  background-color: $dark-grey !important;
+  color: #ff6f00 !important;
+}
+
+.app-chrome__sidebar__buttons .button {
+  background-color: $dark-grey !important;
+  color: white !important;
 }
 
 .sidebar__menu-item--nav {
@@ -28,7 +38,8 @@
 }
 
 .sidebar__menu-item--doc {
-  background-color: $semantic-blue-lighten;
+  background-color: $dark-grey;
+  color: #cacbcb !important;
   padding: 0.1rem;
   color: white;
   outline: inherit;
@@ -62,8 +73,8 @@
 }
 
 .content-tabs__grid {
-  // Get rid of semantic UIs annoying margins and add bottom border as a divider.
-  background-color: $hover-item-colour;
+  background-color: white; // TODO: maybe we want a bottom border, maybe we don't?
+  // border-bottom: 1px solid lightgrey;
 }
 
 .app-chrome__content .ui.grid .column {
@@ -91,4 +102,8 @@
   position: relative;
   top: 0.3rem;
   width: 90px !important; // font-weight: bold !important; // background-color: #ff6f00 !important;
+}
+
+.sidebar__logo path {
+  fill: #2185d0;
 }

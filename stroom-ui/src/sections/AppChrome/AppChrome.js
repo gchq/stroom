@@ -31,8 +31,6 @@ const { menuItemOpened } = appChromeActionCreators;
 
 const withIsExpanded = withLocalStorage('isExpanded', 'setIsExpanded', true);
 
-const SIDE_BAR_COLOUR = 'blue';
-
 const pathPrefix = '/s';
 
 const getDocumentTreeMenuItems = (openDocRef, treeNode, skipInContractedMenu = false) => ({
@@ -168,7 +166,7 @@ const getExpandedMenuItems = (menuItems, menuItemsOpen, menuItemOpened, depth = 
         style={{ paddingLeft: `${depth * 0.7}rem` }}
       >
         {menuItem.children && menuItem.children.length > 0 ? (
-          <Icon
+          <Icon 
             onClick={(e) => {
               menuItemOpened(menuItem.key, !menuItemsOpen[menuItem.key]);
               e.preventDefault();
@@ -227,19 +225,19 @@ const AppChrome = ({
             <Button
               aria-label="Show/hide the sidebar"
               size="large"
-              color={SIDE_BAR_COLOUR}
+              className='app-chrome__sidebar__toggle'
               icon="bars"
               onClick={() => setIsExpanded(!isExpanded)}
             />
-            <img className="sidebar__logo" alt="X" src={require('../../images/logo.svg')} />
+            <img className="sidebar__logo" alt="X" src={require('../../images/logo_orange.svg')} />
           </div>
           <div className="app-chrome__sidebar-menu">
             {getExpandedMenuItems(menuItems, menuItemsOpen, menuItemOpened)}
           </div>
         </React.Fragment>
       ) : (
-        <Button.Group vertical color={SIDE_BAR_COLOUR}>
-          <Button size="large" icon="bars" onClick={() => setIsExpanded(!isExpanded)} />
+        <Button.Group vertical className="app-chrome__sidebar__buttons">
+          <Button size="large" icon="bars" className="app-chrome__sidebar__toggle" onClick={() => setIsExpanded(!isExpanded)} />
           {getContractedMenuItems(menuItems)}
         </Button.Group>
       )}
