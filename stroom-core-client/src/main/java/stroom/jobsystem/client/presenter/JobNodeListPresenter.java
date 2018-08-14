@@ -178,7 +178,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
         getView().addColumn(typeEditColumn, "", 20);
 
         // Max.
-        final Column<JobNodeRow, Number> maxColumn = new Column<JobNodeRow, Number>(new ValueSpinnerCell(1, 100)) {
+        final Column<JobNodeRow, Number> maxColumn = new Column<JobNodeRow, Number>(new ValueSpinnerCell(1, 1000)) {
             @Override
             public Number getValue(final JobNodeRow row) {
                 if (row instanceof JobNodeRow) {

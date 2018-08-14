@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **817** : Increased maximum number of concurrent stream processor tasks to 1000 per node.
+
 ## [v5.4.5] - 2018-07-13
 
 * Issue **#697** : Fix for reference data sometimes failing to find the appropriate effective stream due to the incorrect use of the effective stream cache. It was incorrectly configured to use a time to idle (TTI) expiry rather than a time to live (TTL) expiry meaning that heavy use of the cache would prevent the cached effective streams being refreshed.
