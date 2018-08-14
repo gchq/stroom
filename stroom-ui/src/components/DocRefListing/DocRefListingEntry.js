@@ -77,11 +77,11 @@ const DocRefListingEntry = ({
           actionBarItems.map(({ onClick, icon, tooltip, disabled }, i) => (
             <Popup
               key={i}
-              trigger={<Button circular onClick={() => onClick(node)} icon={icon} disabled={disabled} />}
+              trigger={<Button className='action-bar__button' circular onClick={() => onClick(node)} icon={icon} disabled={disabled} />}
               content={tooltip}
             />
           ))}
-        {inMultiSelectMode && <Button circular icon="dont" disabled />}
+        {inMultiSelectMode && <Button className='action-bar__button' circular icon="dont" disabled />}
       </span>
     </div>
 

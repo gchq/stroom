@@ -182,7 +182,7 @@ const DocRefListing = ({
         </Header>
       </Grid.Column>
 
-      <Grid.Column width={6}>
+      <Grid.Column width={5}>
         <div className='doc-ref-listing-entry__search-bar'>
           <Input
             id="AppSearch__search-input"
@@ -205,12 +205,12 @@ const DocRefListing = ({
           </Popup>
         </div>
       </Grid.Column>
-      <Grid.Column width={4}>
+      <Grid.Column width={5}>
         <span className="doc-ref-listing-entry__action-bar">
           {folderActionBarItems.map(({ onClick, icon, tooltip, disabled }, i) => (
             <Popup
               key={i}
-              trigger={<Button circular onClick={() => onClick(parentFolder)} icon={icon} disabled={disabled} />}
+              trigger={<Button className='action-bar__button' circular onClick={() => onClick(parentFolder)} icon={icon} disabled={disabled} />}
               content={tooltip}
             />
           ))}
