@@ -31,10 +31,15 @@ import 'react-table/react-table.css';
 
 import { Header, Loader, Icon, Grid } from 'semantic-ui-react';
 
-import SearchBar from 'components/SearchBar'
+import SearchBar from 'components/SearchBar';
 import WithHeader from 'components/WithHeader';
 import { withConfig } from 'startup/config';
-import { search, getDetailsForSelectedRow, fetchDataSource, searchWithExpression } from './streamAttributeMapClient';
+import {
+  search,
+  getDetailsForSelectedRow,
+  fetchDataSource,
+  searchWithExpression,
+} from './streamAttributeMapClient';
 import { getDataForSelectedRow } from './dataResourceClient';
 import MysteriousPagination from './MysteriousPagination';
 import DetailsTabs from './DetailsTabs';
@@ -84,13 +89,18 @@ const enhance = compose(
   lifecycle({
     componentDidMount() {
       const {
-        search, dataViewerId, pageSize, pageOffset, selectedRow, fetchDataSource
+        search,
+        dataViewerId,
+        pageSize,
+        pageOffset,
+        selectedRow,
+        fetchDataSource,
       } = this.props;
 
-      fetchDataSource(dataViewerId)
-      // If we're got a selectedRow that means the user has already been to this page. 
+      fetchDataSource(dataViewerId);
+      // If we're got a selectedRow that means the user has already been to this page.
       // Re-doing the search will wipe out their previous location, and we want to remember it.
-      if(!selectedRow){
+      if (!selectedRow) {
         search(dataViewerId, pageOffset, pageSize);
       }
     },
@@ -125,7 +135,7 @@ const DataViewer = ({
   detailsHeight,
   setDetailsHeight,
   dataSource,
-  searchWithExpression
+  searchWithExpression,
 }) => {
   // We need to parse these because localstorage, which is
   // where these come from, is always string.
@@ -265,61 +275,71 @@ const DataViewer = ({
 
   return (
     <React.Fragment>
-    <Grid className="content-tabs__grid">
-      <Grid.Column width={4}>        <Header as="h3">
-          <Icon name="database" color="grey" />
-          <Header.Content>Data</Header.Content>
-        </Header></Grid.Column>
-      <Grid.Column width={12}>
-      <SearchBar  
-            dataSource={dataSource}
-            expressionId={dataViewerId}
-            onSearch={() => {
-              searchWithExpression(dataViewerId, pageOffset, pageSize, dataViewerId)
-            }}/> 
-          <div className="MysteriousPagination__ActionBarItems__container">
-            <MysteriousPagination
-              pageOffset={pageOffset}
-              pageSize={pageSize}
-              onPageChange={(pageOffset, pageSize) => {
-                // searchWithExpression(dataViewerId, pageOffset, pageSize, dataViewerId)
-                search(dataViewerId, pageOffset, pageSize);
+      <Grid className="content-tabs__grid">
+        <Grid.Row>
+          <Grid.Column width={2}>
+            <Header as="h3">
+              <Icon name="database" color="grey" />
+              Data
+            </Header>
+          </Grid.Column>
+          <Grid.Column width={14}>
+            <SearchBar
+              dataSource={dataSource}
+              expressionId={dataViewerId}
+              onSearch={() => {
+                searchWithExpression(dataViewerId, pageOffset, pageSize, dataViewerId);
               }}
             />
-          </div></Grid.Column>
-    </Grid>
-    <div className="DataTable__container">
-      <div className="DataTable__reactTable__container">
-        {selectedRow === undefined ? (
-          table
-        ) : (
-          <PanelGroup
-            direction="column"
-            panelWidths={[
-              {
-                resize: 'dynamic',
-                minSize: 100,
-                size: listHeight,
-              },
-              {
-                resize: 'dynamic',
-                minSize: 100,
-                size: detailsHeight,
-              },
-            ]}
-            onUpdate={(panelWidths) => {
-              setListHeight(panelWidths[0].size);
-              setDetailsHeight(panelWidths[1].size);
-            }}
-          >
-            {table}
-            {details}
-          </PanelGroup>
-        )}
+          </Grid.Column>
+        </Grid.Row>
+        <Grid.Row>
+          <Grid.Column width={2} />
+          <Grid.Column width={14}>
+            <div className="MysteriousPagination__ActionBarItems__container">
+              <MysteriousPagination
+                pageOffset={pageOffset}
+                pageSize={pageSize}
+                onPageChange={(pageOffset, pageSize) => {
+                  // searchWithExpression(dataViewerId, pageOffset, pageSize, dataViewerId)
+                  search(dataViewerId, pageOffset, pageSize);
+                }}
+              />
+            </div>
+          </Grid.Column>
+        </Grid.Row>
+      </Grid>
+      <div className="DataTable__container">
+        <div className="DataTable__reactTable__container">
+          {selectedRow === undefined ? (
+            table
+          ) : (
+            <PanelGroup
+              direction="column"
+              panelWidths={[
+                {
+                  resize: 'dynamic',
+                  minSize: 100,
+                  size: listHeight,
+                },
+                {
+                  resize: 'dynamic',
+                  minSize: 100,
+                  size: detailsHeight,
+                },
+              ]}
+              onUpdate={(panelWidths) => {
+                setListHeight(panelWidths[0].size);
+                setDetailsHeight(panelWidths[1].size);
+              }}
+            >
+              {table}
+              {details}
+            </PanelGroup>
+          )}
+        </div>
       </div>
-    </div>
     </React.Fragment>
-
   );
 };
 
