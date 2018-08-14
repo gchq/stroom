@@ -57,19 +57,7 @@ public final class DocumentPermissionNames {
      */
     public static final String OWNER = "Owner";
 
-    /**
-     * Users with import permission can import documents that they have create
-     * and update permissions for.
-     */
-    public static final String IMPORT = "Import";
-
-    /**
-     * Users with export permission can export documents.
-     */
-    public static final String EXPORT = "Export";
-
-    public static final String[] DOCUMENT_PERMISSIONS = new String[]{USE, READ, UPDATE, DELETE, OWNER, IMPORT,
-            EXPORT};
+    public static final String[] DOCUMENT_PERMISSIONS = new String[]{USE, READ, UPDATE, DELETE, OWNER};
 
     private static final Map<String, String> LOWER_PERMISSIONS = new HashMap<>();
     private static final Map<String, String> HIGHER_PERMISSIONS = new HashMap<>();

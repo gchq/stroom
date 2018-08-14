@@ -32,14 +32,17 @@ class MetaMapFilterImpl implements MetaMapFilter {
 
     @Override
     public boolean filter(final MetaMap metaMap) {
-        // We need to examine the meta map and ensure we aren't dropping or rejecting this data.
-        final DataReceiptAction dataReceiptAction = dataReceiptPolicyChecker.check(metaMap);
+        boolean allowThrough = true;
+        if (dataReceiptPolicyChecker != null) {
+            // We need to examine the meta map and ensure we aren't dropping or rejecting this data.
+            final DataReceiptAction dataReceiptAction = dataReceiptPolicyChecker.check(metaMap);
 
-        if (DataReceiptAction.REJECT.equals(dataReceiptAction)) {
-            throw new StroomStreamException(StroomStatusCode.RECEIPT_POLICY_SET_TO_REJECT_DATA);
+            if (DataReceiptAction.REJECT.equals(dataReceiptAction)) {
+                throw new StroomStreamException(StroomStatusCode.RECEIPT_POLICY_SET_TO_REJECT_DATA);
+            }
 
+            allowThrough = DataReceiptAction.RECEIVE.equals(dataReceiptAction);
         }
-
-        return DataReceiptAction.RECEIVE.equals(dataReceiptAction);
+        return allowThrough;
     }
 }

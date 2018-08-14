@@ -70,6 +70,7 @@ dependencies {
     runtime libs.hibernate_validator
     runtime libs.mysql_connector_java
     runtime libs.lucene_core
+    runtime libs.lucene_backward_codecs
     runtime libs.lucene_analyzers_common
     runtime libs.lucene_queryparser
 

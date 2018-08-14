@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 
-.tooltip {
-	background-color: #ffd;
-	padding: 0px 2px;
-	-moz-user-focus: initial;
-	-moz-user-input: initial;
-	-webkit-user-focus: initial;
-	-webkit-user-input: initial;
-	user-focus: initial;
-	user-input: initial;
-
-  	-webkit-user-select: text;
-  	-moz-user-select: text;
-  	user-select: text;
-}
+-- The pipeline element type 'StatisticsFilter' used to be called 'NStatFilter'
+-- This was change a long time ago but some instances in database may not have been
+-- migrated.
+update PIPE
+set DAT = REPLACE(
+    DAT,
+    '<type>NStatFilter</type>',
+    '<type>StatisticsFilter</type>')
+WHERE DAT like '%<type>NStatFilter</type>%';

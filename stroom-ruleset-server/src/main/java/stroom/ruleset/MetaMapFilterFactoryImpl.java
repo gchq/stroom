@@ -36,6 +36,11 @@ public class MetaMapFilterFactoryImpl implements MetaMapFilterFactory {
     }
 
     @Override
+    public MetaMapFilter create() {
+        return new MetaMapFilterImpl(null);
+    }
+
+    @Override
     public MetaMapFilter create(final DocRef policyRef) {
         return new MetaMapFilterImpl(new DataReceiptPolicyChecker(ruleSetService, dictionaryStore, policyRef));
     }

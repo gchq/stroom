@@ -43,6 +43,7 @@ public class EntityModule extends AbstractModule {
         taskHandlerBinder.addBinding().to(stroom.entity.EntityServiceFindReferenceHandler.class);
         taskHandlerBinder.addBinding().to(stroom.entity.EntityServiceFindSummaryHandler.class);
         taskHandlerBinder.addBinding().to(stroom.entity.EntityServiceSaveHandler.class);
+        taskHandlerBinder.addBinding().to(stroom.entity.EntityServiceLoadHandler.class);
     }
 
 //
