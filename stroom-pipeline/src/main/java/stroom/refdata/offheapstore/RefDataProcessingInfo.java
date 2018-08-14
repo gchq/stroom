@@ -37,11 +37,18 @@ public class RefDataProcessingInfo {
         this.processingState = processingState;
     }
 
-    RefDataProcessingInfo updateState(final ProcessingState newProcessingState) {
-        return new RefDataProcessingInfo(createTimeEpochMs, lastAccessedTimeEpochMs, effectiveTimeEpochMs, newProcessingState);
+    public RefDataProcessingInfo cloneWithNewState(final ProcessingState newProcessingState, boolean touchLastAccessedTime) {
+
+        long newLastAccessedTime;
+        if (touchLastAccessedTime) {
+            newLastAccessedTime = System.currentTimeMillis();
+        } else {
+            newLastAccessedTime = lastAccessedTimeEpochMs;
+        }
+        return new RefDataProcessingInfo(createTimeEpochMs, newLastAccessedTime, effectiveTimeEpochMs, newProcessingState);
     }
 
-    RefDataProcessingInfo updateLastAccessedTime() {
+    public RefDataProcessingInfo updateLastAccessedTime() {
         return new RefDataProcessingInfo(createTimeEpochMs, System.currentTimeMillis(), effectiveTimeEpochMs, processingState);
     }
 

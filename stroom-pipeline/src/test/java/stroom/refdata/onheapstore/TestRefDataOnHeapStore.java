@@ -15,35 +15,42 @@
  *
  */
 
-package stroom.refdata.offheapstore;
+package stroom.refdata.onheapstore;
 
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.Tuple3;
+import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Range;
-import stroom.refdata.offheapstore.databases.KeyValueStoreDb;
-import stroom.refdata.offheapstore.databases.MapUidForwardDb;
-import stroom.refdata.offheapstore.databases.MapUidReverseDb;
-import stroom.refdata.offheapstore.databases.ProcessingInfoDb;
-import stroom.refdata.offheapstore.databases.RangeStoreDb;
-import stroom.refdata.offheapstore.databases.ValueStoreDb;
-import stroom.util.ByteSizeUnit;
+import stroom.refdata.offheapstore.MapDefinition;
+import stroom.refdata.offheapstore.ProcessingState;
+import stroom.refdata.offheapstore.RefDataLoader;
+import stroom.refdata.offheapstore.RefDataProcessingInfo;
+import stroom.refdata.offheapstore.RefDataStore;
+import stroom.refdata.offheapstore.RefDataValue;
+import stroom.refdata.offheapstore.RefDataValueProxy;
+import stroom.refdata.offheapstore.RefStreamDefinition;
+import stroom.refdata.offheapstore.StringValue;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.Random;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -59,10 +66,10 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
+public class TestRefDataOnHeapStore {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestRefDataOffHeapStore.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(TestRefDataOffHeapStore.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestRefDataOnHeapStore.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(TestRefDataOnHeapStore.class);
 
     public static final String FIXED_PIPELINE_UUID = UUID.randomUUID().toString();
     public static final String FIXED_PIPELINE_VERSION = UUID.randomUUID().toString();
@@ -71,9 +78,42 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
     private static final String RANGE_TYPE = "Range";
     private static final String PADDING = IntStream.rangeClosed(1,300).boxed().map(i -> "-").collect(Collectors.joining());
 
-    @Override
-    protected void setDbMaxSizeProperty() {
-        setDbMaxSizeProperty(ByteSizeUnit.MEBIBYTE.longBytes(500));
+    private RefDataStore refDataStore;
+
+    @Before
+    public void setUp() throws Exception {
+        refDataStore = new RefDataOnHeapStore();
+    }
+
+    @Test
+    public void testTreeMapReverseOrdering() {
+        Comparator<Long> comparator = Comparator.reverseOrder();
+        NavigableMap<Long, String> treeMap = new TreeMap<>(comparator);
+
+        treeMap.put(1L, "one");
+        treeMap.put(3L, "three");
+        treeMap.put(5L, "five");
+        treeMap.put(7L, "seven");
+
+        treeMap.forEach((key, value) ->
+                LOGGER.info(LambdaLogger.buildMessage("{} => {}", key, value)));
+
+        assertThat(treeMap.ceilingEntry(3L).getValue()).isEqualTo("three");
+        assertThat(treeMap.ceilingEntry(4L).getValue()).isEqualTo("three");
+        assertThat(treeMap.ceilingEntry(9L).getValue()).isEqualTo("seven");
+
+        Map.Entry<Long, String> entryThree = treeMap.ceilingEntry(4L);
+
+        LOGGER.info("------------------");
+        
+        SortedMap<Long, String> partMap = treeMap.tailMap(4L);
+        partMap.forEach((key, value) ->
+                LOGGER.info(LambdaLogger.buildMessage("{} => {}", key, value)));
+
+
+        assertThat(treeMap.floorEntry(-1L).getValue()).isEqualTo("one");
+        assertThat(treeMap.floorEntry(3L).getValue()).isEqualTo("three");
+        assertThat(treeMap.floorEntry(4L).getValue()).isEqualTo("five");
     }
 
     @Test
@@ -246,6 +286,8 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
     }
 
 
+    @Ignore // The on heap store will probably not be thread safe as we will have one store per pipeline process
+    // for loading transient context data into
     @Test
     public void testLoaderConcurrency() {
 
@@ -324,6 +366,8 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
      * Each task is trying to load data for a different {@link RefStreamDefinition} so they will all be fighting over
      * the write txn
      */
+    @Ignore // The on heap store will probably not be thread safe as we will have one store per pipeline process
+    // for loading transient context data into
     @Test
     public void testLoaderConcurrency_multipleStreamDefs() {
 
@@ -407,202 +451,202 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
 
         // ensure reentrance works
-        ((RefDataOffHeapStore)refDataStore).doWithRefStreamDefinitionLock(refStreamDefinition, () -> {
+        ((RefDataOnHeapStore)refDataStore).doWithRefStreamDefinitionLock(refStreamDefinition, () -> {
             LOGGER.debug("Got lock");
-            ((RefDataOffHeapStore)refDataStore).doWithRefStreamDefinitionLock(refStreamDefinition, () -> {
+            ((RefDataOnHeapStore)refDataStore).doWithRefStreamDefinitionLock(refStreamDefinition, () -> {
                 LOGGER.debug("Got inner lock");
             });
         });
     }
 
-    @Test
-    public void testPurgeOldData_all() {
-
-        // two different ref stream definitions
-        List<RefStreamDefinition> refStreamDefinitions = Arrays.asList(
-                buildUniqueRefStreamDefinition(1),
-                buildUniqueRefStreamDefinition(2));
-
-        bulkLoadAndAssert(refStreamDefinitions, false, 1000);
-
-        setProperty(RefDataOffHeapStore.DATA_RETENTION_AGE_PROP_KEY, "0ms");
-
-        assertThat(refDataStore.getProcessingInfoEntryCount()).isEqualTo(2);
-        assertThat(refDataStore.getKeyValueEntryCount()).isGreaterThan(0);
-        assertThat(refDataStore.getKeyRangeValueEntryCount()).isGreaterThan(0);
-
-        refDataStore.logAllContents();
-
-        LOGGER.info("------------------------purge-starts-here--------------------------------------");
-        refDataStore.purgeOldData();
-
-        assertThat(refDataStore.getProcessingInfoEntryCount()).isEqualTo(0);
-        assertThat(refDataStore.getKeyValueEntryCount()).isEqualTo(0);
-        assertThat(refDataStore.getKeyRangeValueEntryCount()).isEqualTo(0);
-    }
-
-
-    @Test
-    public void testPurgeOldData_partial() {
-
-        setPurgeAgeProperty("1d");
-        int refStreamDefCount = 4;
-        int keyValueMapCount = 2;
-        int rangeValueMapCount = 2;
-        int entryCount = 2;
-        int totalMapEntries = (refStreamDefCount * keyValueMapCount) + (refStreamDefCount * rangeValueMapCount);
-        int totalKeyValueEntryCount = refStreamDefCount * keyValueMapCount * entryCount;
-        int totalRangeValueEntryCount = refStreamDefCount * rangeValueMapCount * entryCount;
-        int totalValueEntryCount = totalKeyValueEntryCount + totalRangeValueEntryCount;
-
-        List<RefStreamDefinition> refStreamDefs = loadBulkData(
-                refStreamDefCount, keyValueMapCount, rangeValueMapCount, entryCount);
-
-        refDataStore.logAllContents();
-
-        assertDbCounts(
-                refStreamDefCount,
-                totalMapEntries,
-                totalKeyValueEntryCount,
-                totalRangeValueEntryCount,
-                totalValueEntryCount);
-
-        long twoDaysAgoMs = Instant.now().minus(2, ChronoUnit.DAYS).toEpochMilli();
-
-        // set two of the refStreamDefs to be two days old so they should get purged
-        setLastAccessedTime(refStreamDefs.get(1), twoDaysAgoMs);
-        setLastAccessedTime(refStreamDefs.get(3), twoDaysAgoMs);
-
-        LOGGER.info("------------------------purge-starts-here--------------------------------------");
-
-        // do the purge
-        refDataStore.purgeOldData();
-
-        refDataStore.logAllContents();
-
-        int expectedRefStreamDefCount = 2;
-        assertDbCounts(
-                expectedRefStreamDefCount,
-                (expectedRefStreamDefCount + keyValueMapCount) + (expectedRefStreamDefCount * rangeValueMapCount),
-                expectedRefStreamDefCount * keyValueMapCount * entryCount,
-                expectedRefStreamDefCount * rangeValueMapCount * entryCount,
-                (expectedRefStreamDefCount * rangeValueMapCount * entryCount) +
-                        (expectedRefStreamDefCount * rangeValueMapCount * entryCount));
-    }
-
-    @Test
-    public void testPurgeOldData_nothingToPurge() {
-
-        setPurgeAgeProperty("1d");
-        int refStreamDefCount = 4;
-        int keyValueMapCount = 2;
-        int rangeValueMapCount = 2;
-        int entryCount = 2;
-        int totalMapEntries = (refStreamDefCount * keyValueMapCount) + (refStreamDefCount * rangeValueMapCount);
-        int totalKeyValueEntryCount = refStreamDefCount * keyValueMapCount * entryCount;
-        int totalRangeValueEntryCount = refStreamDefCount * rangeValueMapCount * entryCount;
-        int totalValueEntryCount = totalKeyValueEntryCount + totalRangeValueEntryCount;
-
-        List<RefStreamDefinition> refStreamDefs = loadBulkData(
-                refStreamDefCount, keyValueMapCount, rangeValueMapCount, entryCount);
-
-        refDataStore.logAllContents();
-
-        assertDbCounts(
-                refStreamDefCount,
-                totalMapEntries,
-                totalKeyValueEntryCount,
-                totalRangeValueEntryCount,
-                totalValueEntryCount);
-
-        LOGGER.info("------------------------purge-starts-here--------------------------------------");
-
-        // do the purge
-        refDataStore.purgeOldData();
-
-        refDataStore.logAllContents();
-
-        // same as above as nothing is old enough for a purge
-        assertDbCounts(
-                refStreamDefCount,
-                totalMapEntries,
-                totalKeyValueEntryCount,
-                totalRangeValueEntryCount,
-                totalValueEntryCount);
-
-    }
-
-    @Test
-    public void testPurgeOldData_deReferenceValues() {
-
-        setPurgeAgeProperty("1d");
-        int refStreamDefCount = 1;
-        int keyValueMapCount = 1;
-        int rangeValueMapCount = 1;
-        int entryCount = 1;
-        int totalMapEntries = (refStreamDefCount * keyValueMapCount) + (refStreamDefCount * rangeValueMapCount);
-        int totalKeyValueEntryCount = refStreamDefCount * keyValueMapCount * entryCount;
-        int totalRangeValueEntryCount = refStreamDefCount * rangeValueMapCount * entryCount;
-        int totalValueEntryCount = totalKeyValueEntryCount + totalRangeValueEntryCount;
-
-        final List<RefStreamDefinition> refStreamDefs = loadBulkData(
-                refStreamDefCount,
-                keyValueMapCount,
-                rangeValueMapCount,
-                entryCount,
-                0,
-                this::buildMapNameWithoutRefStreamDef);
-
-        refDataStore.logAllContents();
-
-        assertDbCounts(
-                refStreamDefCount,
-                totalMapEntries,
-                totalKeyValueEntryCount,
-                totalRangeValueEntryCount,
-                totalValueEntryCount);
-
-        LOGGER.info("---------------------second-load-starts-here----------------------------------");
-
-        loadBulkData(
-                refStreamDefCount,
-                keyValueMapCount,
-                rangeValueMapCount,
-                entryCount,
-                4,
-                this::buildMapNameWithoutRefStreamDef);
-
-        refDataStore.logAllContents();
-
-        // as we have run again with different refStreamDefs we should get 2x of everything
-        // except the value entries as those will be the same (except with high reference counts)
-        assertDbCounts(
-                refStreamDefCount * 2,
-                totalMapEntries * 2,
-                totalKeyValueEntryCount * 2,
-                totalRangeValueEntryCount * 2,
-                totalValueEntryCount);
-
-
-        long twoDaysAgoMs = Instant.now().minus(2, ChronoUnit.DAYS).toEpochMilli();
-
-        // set two of the refStreamDefs to be two days old so they should get purged
-        setLastAccessedTime(refStreamDefs.get(0), twoDaysAgoMs);
-
-        LOGGER.info("------------------------purge-starts-here--------------------------------------");
-        // do the purge
-        refDataStore.purgeOldData();
-
-        refDataStore.logAllContents();
-
-        // back to how it was after first load with no change to value entry count as they have just been de-referenced
-        assertDbCounts(
-                refStreamDefCount,
-                totalMapEntries,
-                totalKeyValueEntryCount,
-                totalRangeValueEntryCount,
-                totalValueEntryCount);
-    }
+//    @Test
+//    public void testPurgeOldData_all() {
+//
+//        // two different ref stream definitions
+//        List<RefStreamDefinition> refStreamDefinitions = Arrays.asList(
+//                buildUniqueRefStreamDefinition(1),
+//                buildUniqueRefStreamDefinition(2));
+//
+//        bulkLoadAndAssert(refStreamDefinitions, false, 1000);
+//
+//        setProperty(RefDataOffHeapStore.DATA_RETENTION_AGE_PROP_KEY, "0ms");
+//
+//        assertThat(refDataStore.getProcessingInfoEntryCount()).isEqualTo(2);
+//        assertThat(refDataStore.getKeyValueEntryCount()).isGreaterThan(0);
+//        assertThat(refDataStore.getKeyRangeValueEntryCount()).isGreaterThan(0);
+//
+//        refDataStore.logAllContents();
+//
+//        LOGGER.info("------------------------purge-starts-here--------------------------------------");
+//        refDataStore.purgeOldData();
+//
+//        assertThat(refDataStore.getProcessingInfoEntryCount()).isEqualTo(0);
+//        assertThat(refDataStore.getKeyValueEntryCount()).isEqualTo(0);
+//        assertThat(refDataStore.getKeyRangeValueEntryCount()).isEqualTo(0);
+//    }
+//
+//
+//    @Test
+//    public void testPurgeOldData_partial() {
+//
+//        setPurgeAgeProperty("1d");
+//        int refStreamDefCount = 4;
+//        int keyValueMapCount = 2;
+//        int rangeValueMapCount = 2;
+//        int entryCount = 2;
+//        int totalMapEntries = (refStreamDefCount * keyValueMapCount) + (refStreamDefCount * rangeValueMapCount);
+//        int totalKeyValueEntryCount = refStreamDefCount * keyValueMapCount * entryCount;
+//        int totalRangeValueEntryCount = refStreamDefCount * rangeValueMapCount * entryCount;
+//        int totalValueEntryCount = totalKeyValueEntryCount + totalRangeValueEntryCount;
+//
+//        List<RefStreamDefinition> refStreamDefs = loadBulkData(
+//                refStreamDefCount, keyValueMapCount, rangeValueMapCount, entryCount);
+//
+//        refDataStore.logAllContents();
+//
+//        assertDbCounts(
+//                refStreamDefCount,
+//                totalMapEntries,
+//                totalKeyValueEntryCount,
+//                totalRangeValueEntryCount,
+//                totalValueEntryCount);
+//
+//        long twoDaysAgoMs = Instant.now().minus(2, ChronoUnit.DAYS).toEpochMilli();
+//
+//        // set two of the refStreamDefs to be two days old so they should get purged
+//        setLastAccessedTime(refStreamDefs.get(1), twoDaysAgoMs);
+//        setLastAccessedTime(refStreamDefs.get(3), twoDaysAgoMs);
+//
+//        LOGGER.info("------------------------purge-starts-here--------------------------------------");
+//
+//        // do the purge
+//        refDataStore.purgeOldData();
+//
+//        refDataStore.logAllContents();
+//
+//        int expectedRefStreamDefCount = 2;
+//        assertDbCounts(
+//                expectedRefStreamDefCount,
+//                (expectedRefStreamDefCount + keyValueMapCount) + (expectedRefStreamDefCount * rangeValueMapCount),
+//                expectedRefStreamDefCount * keyValueMapCount * entryCount,
+//                expectedRefStreamDefCount * rangeValueMapCount * entryCount,
+//                (expectedRefStreamDefCount * rangeValueMapCount * entryCount) +
+//                        (expectedRefStreamDefCount * rangeValueMapCount * entryCount));
+//    }
+//
+//    @Test
+//    public void testPurgeOldData_nothingToPurge() {
+//
+//        setPurgeAgeProperty("1d");
+//        int refStreamDefCount = 4;
+//        int keyValueMapCount = 2;
+//        int rangeValueMapCount = 2;
+//        int entryCount = 2;
+//        int totalMapEntries = (refStreamDefCount * keyValueMapCount) + (refStreamDefCount * rangeValueMapCount);
+//        int totalKeyValueEntryCount = refStreamDefCount * keyValueMapCount * entryCount;
+//        int totalRangeValueEntryCount = refStreamDefCount * rangeValueMapCount * entryCount;
+//        int totalValueEntryCount = totalKeyValueEntryCount + totalRangeValueEntryCount;
+//
+//        List<RefStreamDefinition> refStreamDefs = loadBulkData(
+//                refStreamDefCount, keyValueMapCount, rangeValueMapCount, entryCount);
+//
+//        refDataStore.logAllContents();
+//
+//        assertDbCounts(
+//                refStreamDefCount,
+//                totalMapEntries,
+//                totalKeyValueEntryCount,
+//                totalRangeValueEntryCount,
+//                totalValueEntryCount);
+//
+//        LOGGER.info("------------------------purge-starts-here--------------------------------------");
+//
+//        // do the purge
+//        refDataStore.purgeOldData();
+//
+//        refDataStore.logAllContents();
+//
+//        // same as above as nothing is old enough for a purge
+//        assertDbCounts(
+//                refStreamDefCount,
+//                totalMapEntries,
+//                totalKeyValueEntryCount,
+//                totalRangeValueEntryCount,
+//                totalValueEntryCount);
+//
+//    }
+//
+//    @Test
+//    public void testPurgeOldData_deReferenceValues() {
+//
+//        setPurgeAgeProperty("1d");
+//        int refStreamDefCount = 1;
+//        int keyValueMapCount = 1;
+//        int rangeValueMapCount = 1;
+//        int entryCount = 1;
+//        int totalMapEntries = (refStreamDefCount * keyValueMapCount) + (refStreamDefCount * rangeValueMapCount);
+//        int totalKeyValueEntryCount = refStreamDefCount * keyValueMapCount * entryCount;
+//        int totalRangeValueEntryCount = refStreamDefCount * rangeValueMapCount * entryCount;
+//        int totalValueEntryCount = totalKeyValueEntryCount + totalRangeValueEntryCount;
+//
+//        final List<RefStreamDefinition> refStreamDefs = loadBulkData(
+//                refStreamDefCount,
+//                keyValueMapCount,
+//                rangeValueMapCount,
+//                entryCount,
+//                0,
+//                this::buildMapNameWithoutRefStreamDef);
+//
+//        refDataStore.logAllContents();
+//
+//        assertDbCounts(
+//                refStreamDefCount,
+//                totalMapEntries,
+//                totalKeyValueEntryCount,
+//                totalRangeValueEntryCount,
+//                totalValueEntryCount);
+//
+//        LOGGER.info("---------------------second-load-starts-here----------------------------------");
+//
+//        loadBulkData(
+//                refStreamDefCount,
+//                keyValueMapCount,
+//                rangeValueMapCount,
+//                entryCount,
+//                4,
+//                this::buildMapNameWithoutRefStreamDef);
+//
+//        refDataStore.logAllContents();
+//
+//        // as we have run again with different refStreamDefs we should get 2x of everything
+//        // except the value entries as those will be the same (except with high reference counts)
+//        assertDbCounts(
+//                refStreamDefCount * 2,
+//                totalMapEntries * 2,
+//                totalKeyValueEntryCount * 2,
+//                totalRangeValueEntryCount * 2,
+//                totalValueEntryCount);
+//
+//
+//        long twoDaysAgoMs = Instant.now().minus(2, ChronoUnit.DAYS).toEpochMilli();
+//
+//        // set two of the refStreamDefs to be two days old so they should get purged
+//        setLastAccessedTime(refStreamDefs.get(0), twoDaysAgoMs);
+//
+//        LOGGER.info("------------------------purge-starts-here--------------------------------------");
+//        // do the purge
+//        refDataStore.purgeOldData();
+//
+//        refDataStore.logAllContents();
+//
+//        // back to how it was after first load with no change to value entry count as they have just been de-referenced
+//        assertDbCounts(
+//                refStreamDefCount,
+//                totalMapEntries,
+//                totalKeyValueEntryCount,
+//                totalRangeValueEntryCount,
+//                totalValueEntryCount);
+//    }
 
 
     /**
@@ -613,13 +657,11 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
 
         MapNamFunc mapNamFunc = this::buildMapNameWithoutRefStreamDef;
 
-        setPurgeAgeProperty("1d");
+//        setPurgeAgeProperty("1d");
         int refStreamDefCount = 5;
         int keyValueMapCount = 2;
         int rangeValueMapCount = 2;
         int entryCount = 50;
-        int totalMapEntries = (refStreamDefCount * keyValueMapCount) + (refStreamDefCount * rangeValueMapCount);
-
         int totalKeyValueEntryCount = refStreamDefCount * keyValueMapCount * entryCount;
         int totalRangeValueEntryCount = refStreamDefCount * rangeValueMapCount * entryCount;
         int totalValueEntryCount = (totalKeyValueEntryCount + totalRangeValueEntryCount) / refStreamDefCount;
@@ -630,10 +672,8 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
 
         assertDbCounts(
                 refStreamDefCount,
-                totalMapEntries,
                 totalKeyValueEntryCount,
-                totalRangeValueEntryCount,
-                totalValueEntryCount);
+                totalRangeValueEntryCount);
 
         // here to aid debugging problems at low volumes
         if (entryCount < 10) {
@@ -648,10 +688,8 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
 
         assertDbCounts(
                 refStreamDefCount * 2,
-                totalMapEntries * 2,
                 totalKeyValueEntryCount * 2,
-                totalRangeValueEntryCount * 2,
-                totalValueEntryCount);
+                totalRangeValueEntryCount * 2);
 
         LOGGER.info("-------------------------gets start here---------------------------------------");
 
@@ -697,54 +735,44 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                     entryCount * 2, Duration.between(startTime, Instant.now()).toString(), refStreamDef);
         });
 
-        LOGGER.info("------------------------purge-starts-here--------------------------------------");
-
-        long twoDaysAgoMs = Instant.now().minus(2, ChronoUnit.DAYS).toEpochMilli();
-
-        refStreamDefs1.forEach(refStreamDefinition -> setLastAccessedTime(refStreamDefinition, twoDaysAgoMs));
-
-        // do the purge
-        refDataStore.purgeOldData();
-
-        assertDbCounts(
-                refStreamDefCount,
-                totalMapEntries,
-                totalKeyValueEntryCount,
-                totalRangeValueEntryCount,
-                totalValueEntryCount);
-
-        LOGGER.info("--------------------second-purge-starts-here------------------------------------");
-
-        refStreamDefs2.forEach(refStreamDefinition -> setLastAccessedTime(refStreamDefinition, twoDaysAgoMs));
-
-        // do the purge
-        refDataStore.purgeOldData();
-
-        assertDbCounts(0, 0, 0, 0, 0);
+//        LOGGER.info("------------------------purge-starts-here--------------------------------------");
+//
+//        long twoDaysAgoMs = Instant.now().minus(2, ChronoUnit.DAYS).toEpochMilli();
+//
+//        refStreamDefs1.forEach(refStreamDefinition -> setLastAccessedTime(refStreamDefinition, twoDaysAgoMs));
+//
+//        // do the purge
+//        refDataStore.purgeOldData();
+//
+//        assertDbCounts(
+//                refStreamDefCount,
+//                totalKeyValueEntryCount,
+//                totalRangeValueEntryCount);
+//
+//        LOGGER.info("--------------------second-purge-starts-here------------------------------------");
+//
+//        refStreamDefs2.forEach(refStreamDefinition -> setLastAccessedTime(refStreamDefinition, twoDaysAgoMs));
+//
+//        // do the purge
+//        refDataStore.purgeOldData();
+//
+//        assertDbCounts(0, 0, 0);
     }
 
     private void assertDbCounts(final int refStreamDefCount,
-                                final int totalMapEntries,
                                 final int totalKeyValueEntryCount,
-                                final int totalRangeValueEntryCount,
-                                final int totalValueEntryCount) {
+                                final int totalRangeValueEntryCount) {
 
-        assertThat(((RefDataOffHeapStore) refDataStore).getEntryCount(ProcessingInfoDb.DB_NAME))
+        assertThat(refDataStore.getProcessingInfoEntryCount())
                 .isEqualTo(refStreamDefCount);
-        assertThat(((RefDataOffHeapStore) refDataStore).getEntryCount(MapUidForwardDb.DB_NAME))
-                .isEqualTo(totalMapEntries);
-        assertThat(((RefDataOffHeapStore) refDataStore).getEntryCount(MapUidReverseDb.DB_NAME))
-                .isEqualTo(totalMapEntries);
-        assertThat(((RefDataOffHeapStore) refDataStore).getEntryCount(KeyValueStoreDb.DB_NAME))
+        assertThat(refDataStore.getKeyValueEntryCount())
                 .isEqualTo(totalKeyValueEntryCount);
-        assertThat(((RefDataOffHeapStore) refDataStore).getEntryCount(RangeStoreDb.DB_NAME))
+        assertThat(refDataStore.getKeyRangeValueEntryCount())
                 .isEqualTo(totalRangeValueEntryCount);
-        assertThat(((RefDataOffHeapStore) refDataStore).getEntryCount(ValueStoreDb.DB_NAME))
-                .isEqualTo(totalValueEntryCount);
     }
 
     private void setLastAccessedTime(final RefStreamDefinition refStreamDef, final long newLastAccessedTimeMs) {
-        ((RefDataOffHeapStore) refDataStore).setLastAccessedTime(refStreamDef, newLastAccessedTimeMs);
+        ((RefDataOnHeapStore) refDataStore).setLastAccessedTime(refStreamDef, newLastAccessedTimeMs);
     }
 
     private RefStreamDefinition buildUniqueRefStreamDefinition(final long streamId) {
@@ -987,7 +1015,7 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
                 throw new RuntimeException(e);
             }
 
-//            refDataStore.logAllContents();
+//            ((RefDataOffHeapStore) refDataStore).logAllContents();
 
             RefDataProcessingInfo refDataProcessingInfo = refDataStore.getAndTouchProcessingInfo(refStreamDefinition).get();
 
@@ -1129,4 +1157,5 @@ public class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         String buildMapName(final RefStreamDefinition refStreamDefinition, final String type, final int i);
 
     }
+
 }

@@ -38,7 +38,7 @@ class OnHeapRefDataLoader implements RefDataLoader {
     private boolean overwriteExisting = false;
     private final Lock refStreamDefReentrantLock;
     private final Map<RefStreamDefinition, RefDataProcessingInfo> processingInfoMap;
-    private final Map<KeyValueStoreKey, RefDataValue> keyValueMap;
+    private final Map<KeyValueMapKey, RefDataValue> keyValueMap;
     private final Map<MapDefinition, NavigableMap<Range<Long>, RefDataValue>> rangeValueNestedMap;
     private final Set<MapDefinition> loadedMapDefinitions;
 
@@ -58,7 +58,7 @@ class OnHeapRefDataLoader implements RefDataLoader {
                         final long effectiveTimeMs,
                         final Striped<Lock> refStreamDefStripedReentrantLock,
                         final Map<RefStreamDefinition, RefDataProcessingInfo> processingInfoMap,
-                        final Map<KeyValueStoreKey, RefDataValue> keyValueMap,
+                        final Map<KeyValueMapKey, RefDataValue> keyValueMap,
                         final Map<MapDefinition, NavigableMap<Range<Long>, RefDataValue>> rangeValueNestedMap) {
 
         this.refStreamDefinition = refStreamDefinition;
@@ -139,7 +139,7 @@ class OnHeapRefDataLoader implements RefDataLoader {
                        final String key,
                        final RefDataValue refDataValue) {
 
-        final KeyValueStoreKey mapKey = new KeyValueStoreKey(mapDefinition, key);
+        final KeyValueMapKey mapKey = new KeyValueMapKey(mapDefinition, key);
 
         boolean wasValuePut;
         if (overwriteExisting) {
@@ -157,9 +157,9 @@ class OnHeapRefDataLoader implements RefDataLoader {
                        final Range<Long> keyRange,
                        final RefDataValue refDataValue) {
         // ensure we have a sub map for our mapDef
-        NavigableMap<Range<Long>, RefDataValue> subMap = rangeValueNestedMap.putIfAbsent(
+        NavigableMap<Range<Long>, RefDataValue> subMap = rangeValueNestedMap.computeIfAbsent(
                 mapDefinition,
-                new TreeMap<>(RANGE_COMPARATOR));
+                k -> new TreeMap<>(RANGE_COMPARATOR.reversed()));
 
         boolean wasValuePut;
         if (overwriteExisting) {
@@ -178,18 +178,33 @@ class OnHeapRefDataLoader implements RefDataLoader {
     }
 
     private void updateProcessingState(final RefStreamDefinition refStreamDefinition,
-                                      final ProcessingState newProcessingState,
-                                      final boolean touchLastAccessedTime) {
+                                       final ProcessingState newProcessingState,
+                                       final boolean touchLastAccessedTime) {
 
-        // TODO
-
+        processingInfoMap.compute(refStreamDefinition, (refStreamDef, refDataProcessingInfo) -> {
+            if (refDataProcessingInfo != null) {
+                RefDataProcessingInfo newRefDataProcessingInfo = refDataProcessingInfo.cloneWithNewState(
+                        newProcessingState, touchLastAccessedTime);
+                return newRefDataProcessingInfo;
+            } else {
+                throw new RuntimeException(LambdaLogger.buildMessage(
+                        "No processing info entry found for {}", refStreamDefinition));
+            }
+        });
     }
 
     private boolean putProcessingInfo(final RefStreamDefinition refStreamDefinition,
                                       final RefDataProcessingInfo refDataProcessingInfo) {
 
-        // TODO
-        return false;
+        boolean wasValuePut;
+        if (overwriteExisting) {
+            processingInfoMap.putIfAbsent(refStreamDefinition, refDataProcessingInfo);
+            wasValuePut = true;
+        } else {
+            RefDataProcessingInfo prevValue = processingInfoMap.putIfAbsent(refStreamDefinition, refDataProcessingInfo);
+            wasValuePut = prevValue == null;
+        }
+        return wasValuePut;
     }
 
     private void checkCurrentState(final LoaderState... validStates) {

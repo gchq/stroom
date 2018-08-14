@@ -70,7 +70,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class RefDataOffHeapStore implements RefDataStore {
+public class RefDataOffHeapStore extends AbstractRefDataStore implements RefDataStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RefDataOffHeapStore.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(RefDataOffHeapStore.class);
@@ -259,12 +259,6 @@ public class RefDataOffHeapStore implements RefDataStore {
         }
     }
 
-    @Override
-    public RefDataValueProxy getValueProxy(final MapDefinition mapDefinition, final String key) {
-
-        return new SingleRefDataValueProxy(this, mapDefinition, key);
-    }
-
     /**
      * Intended only for testing use.
      */
@@ -383,8 +377,9 @@ public class RefDataOffHeapStore implements RefDataStore {
      * should be used in a try with resources block to ensure any transactions are closed, e.g.
      * <pre>try (RefDataLoader refDataLoader = refDataOffHeapStore.getLoader(...)) { ... }</pre>
      */
-    private RefDataLoader loader(final RefStreamDefinition refStreamDefinition,
-                                 final long effectiveTimeMs) {
+    @Override
+    protected RefDataLoader loader(final RefStreamDefinition refStreamDefinition,
+                                   final long effectiveTimeMs) {
         //TODO should we pass in an ErrorReceivingProxy so we can log errors with it?
         RefDataLoader refDataLoader = new RefDataLoaderImpl(
                 this,
@@ -403,28 +398,6 @@ public class RefDataOffHeapStore implements RefDataStore {
 
         refDataLoader.setCommitInterval(maxPutsBeforeCommit);
         return refDataLoader;
-    }
-
-    @Override
-    public boolean doWithLoaderUnlessComplete(final RefStreamDefinition refStreamDefinition,
-                                              final long effectiveTimeMs,
-                                              final Consumer<RefDataLoader> work) {
-
-        boolean result = false;
-        try (RefDataLoader refDataLoader = loader(refStreamDefinition, effectiveTimeMs)) {
-            // we now hold the lock for this RefStreamDefinition so test the completion state
-
-            if (isDataLoaded(refStreamDefinition)) {
-                LOGGER.debug("Data is already loaded for {}, so doing nothing", refStreamDefinition);
-            } else {
-                work.accept(refDataLoader);
-                result = true;
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(LambdaLogger.buildMessage(
-                    "Error closing refDataLoader for {}", refStreamDefinition), e);
-        }
-        return result;
     }
 
     @Override
@@ -695,7 +668,7 @@ public class RefDataOffHeapStore implements RefDataStore {
         }
     }
 
-    public void doWithRefStreamDefinitionLock(final RefStreamDefinition refStreamDefinition, final Runnable work) {
+    void doWithRefStreamDefinitionLock(final RefStreamDefinition refStreamDefinition, final Runnable work) {
         final Lock lock = refStreamDefStripedReentrantLock.get(refStreamDefinition);
 
         LAMBDA_LOGGER.logDurationIfDebugEnabled(
@@ -722,14 +695,16 @@ public class RefDataOffHeapStore implements RefDataStore {
     /**
      * For use in testing at SMALL scale. Dumps the content of each DB to the logger.
      */
-    void logAllContents() {
+    @Override
+    public void logAllContents() {
         logAllContents(LOGGER::debug);
     }
 
     /**
      * For use in testing at SMALL scale. Dumps the content of each DB to the logger.
      */
-    void logAllContents(Consumer<String> logEntryConsumer) {
+    @Override
+    public void logAllContents(Consumer<String> logEntryConsumer) {
 //        processingInfoDb.logDatabaseContents(logEntryConsumer);
 //        mapUidForwardDb.logDatabaseContents(logEntryConsumer);
 //        mapUidReverseDb.logDatabaseContents(logEntryConsumer);

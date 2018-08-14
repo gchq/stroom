@@ -30,11 +30,11 @@ public class TypedByteBuffer {
         this.byteBuffer = Objects.requireNonNull(byteBuffer);
     }
 
-    int getTypeId() {
+    public int getTypeId() {
         return typeId;
     }
 
-    ByteBuffer getByteBuffer() {
+    public ByteBuffer getByteBuffer() {
         return byteBuffer;
     }
 
