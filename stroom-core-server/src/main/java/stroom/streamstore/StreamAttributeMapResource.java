@@ -19,30 +19,39 @@
 package stroom.streamstore;
 
 import com.codahale.metrics.health.HealthCheck;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
+import stroom.datasource.api.v2.DataSource;
+import stroom.datasource.api.v2.DataSourceField;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.IdSet;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.PageResponse;
 import stroom.entity.shared.Sort;
+import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.Security;
 import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
-import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.util.HasHealthCheck;
 
+import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.Arrays;
 import java.util.List;
+
+import static stroom.datasource.api.v2.DataSourceField.DataSourceFieldType.FIELD;
+import static stroom.query.api.v2.ExpressionTerm.*;
 
 @Api(
         value = "stream attribute map - /v1",
@@ -64,7 +73,7 @@ public class StreamAttributeMapResource implements HasHealthCheck {
     @GET
     @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response search(@QueryParam("pageOffset") Long pageOffset,
+    public Response page(@QueryParam("pageOffset") Long pageOffset,
                            @QueryParam("pageSize") Integer pageSize){
         return security.secureResult(() -> {
             // Validate pagination params
@@ -81,7 +90,9 @@ public class StreamAttributeMapResource implements HasHealthCheck {
             // TODO Replace with Set.of() when we move to 1.9
             criteria.setFetchSet(Sets.newHashSet("StreamType", "StreamProcessor", "Volume", "Feed", "Pipeline"));
             criteria.setSort(new Sort("Create Time", Sort.Direction.DESCENDING, false));
-            ExpressionTerm expressionTerm = new ExpressionTerm("Status", ExpressionTerm.Condition.EQUALS, "Unlocked");
+
+            // Set status to unlocked
+            ExpressionTerm expressionTerm = new ExpressionTerm("Status", Condition.EQUALS, "Unlocked");
             ExpressionOperator expressionOperator = new ExpressionOperator(true, ExpressionOperator.Op.AND, expressionTerm);
             criteria.getFindStreamCriteria().setExpression(expressionOperator);
 
@@ -92,6 +103,62 @@ public class StreamAttributeMapResource implements HasHealthCheck {
             };
             return Response.ok(response).build();
         });
+    }
+
+    @POST
+    @Path("/")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response search(@QueryParam("pageOffset") Long pageOffset,
+                           @QueryParam("pageSize") Integer pageSize,
+                           final ExpressionOperator expression){
+        return security.secureResult(() -> {
+            // Validate pagination params
+            if((pageSize != null && pageOffset == null) || (pageSize == null && pageOffset != null)){
+                return Response.status(Response.Status.BAD_REQUEST).entity("A pagination request requires both a pageSize and an offset").build();
+            }
+
+            //Convert pageOffset (i.e. page from index 0) to item offset.
+            final long itemOffset = pageOffset * pageSize;
+
+            // Configure default criteria
+            FindStreamAttributeMapCriteria criteria = new FindStreamAttributeMapCriteria();
+            criteria.setPageRequest(new PageRequest(itemOffset, pageSize));
+            // TODO Replace with Set.of() when we move to 1.9
+            criteria.setFetchSet(Sets.newHashSet("StreamType", "StreamProcessor", "Volume", "Feed", "Pipeline"));
+            criteria.setSort(new Sort("Create Time", Sort.Direction.DESCENDING, false));
+
+            //TODO disbale this and have it as a default field
+            // Set status to unlocked
+            // ExpressionTerm expressionTerm = new ExpressionTerm("Status", Condition.EQUALS, "Unlocked");
+            // ExpressionOperator expressionOperator = new ExpressionOperator(true, ExpressionOperator.Op.AND, expressionTerm);
+            // criteria.getFindStreamCriteria().setExpression(expressionOperator);
+
+            criteria.getFindStreamCriteria().setExpression(expression);
+
+            BaseResultList<StreamAttributeMap> results = streamAttributeMapService.find(criteria);
+            Object response = new Object() {
+                public PageResponse pageResponse = results.getPageResponse();
+                public List<StreamAttributeMap> streamAttributeMaps = results.getValues();
+            };
+            return Response.ok(response).build();
+        });
+    }
+
+
+    @GET
+    @Path("/dataSource")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response dataSource() {
+        DataSource dataSource = new DataSource(
+                ImmutableList.of(new DataSourceField(
+                        FIELD,
+                        "feedName",
+                        true,
+                        Arrays.asList(Condition.EQUALS, Condition.CONTAINS)
+                )));
+
+        return Response.ok(dataSource).build();
     }
 
     @GET

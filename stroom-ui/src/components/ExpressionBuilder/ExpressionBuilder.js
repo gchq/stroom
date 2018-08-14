@@ -47,7 +47,6 @@ ROExpressionBuilder.propTypes = {
 const enhance = compose(
   connect(
     (state, props) => ({
-      dataSource: state.expressionBuilder.dataSources[props.dataSourceUuid],
       expression: state.expressionBuilder.expressions[props.expressionId],
     }),
     {
@@ -115,7 +114,7 @@ const ExpressionBuilder = ({
 const EnhancedExpressionBuilder = enhance(ExpressionBuilder);
 
 EnhancedExpressionBuilder.propTypes = {
-  dataSourceUuid: PropTypes.string, // if not set, the expression will be read only
+  dataSource: PropTypes.object,
   expressionId: PropTypes.string.isRequired,
   showModeToggle: PropTypes.bool.isRequired,
   editMode: PropTypes.bool,

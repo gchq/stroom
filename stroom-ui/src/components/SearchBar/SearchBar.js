@@ -38,7 +38,7 @@ const withSearchStringValidationMessages = withState(
 const enhance = compose(
   connect(
     (state, props) => ({
-      dataSource: state.expressionBuilder.dataSources[props.expressionDataSourceUuid],
+      expression: state.expressionBuilder.expressions[props.expressionId],
     }),
     { expressionChanged },
   ),
@@ -50,7 +50,6 @@ const enhance = compose(
 );
 
 const SearchBar = ({
-  expressionDataSourceUuid,
   dataSource,
   expressionId,
   expressionChanged,
@@ -64,9 +63,19 @@ const SearchBar = ({
   isSearchStringValid,
   setSearchStringValidationMessages,
   searchStringValidationMessages,
+  onSearch,
 }) => {
   const searchIsInvalid = searchStringValidationMessages.length > 0;
-  const searchButton = <Button disabled={searchIsInvalid}>Search</Button>;
+  const searchButton = (
+    <Button
+      disabled={searchIsInvalid}
+      onClick={() => {
+        onSearch(expressionId);
+      }}
+    >
+      Search
+    </Button>
+  );
   const searchInput = (
     <React.Fragment>
       <Grid className="SearchBar__layoutGrid">
@@ -108,6 +117,9 @@ const SearchBar = ({
                 setIsSearchStringValid(invalidFields.length === 0);
                 setSearchStringValidationMessages(searchStringValidationMessages);
                 setSearchString(data.value);
+
+                const parsedExpression = processSearchString(dataSource, searchString);
+                expressionChanged(expressionId, parsedExpression.expression);
               }}
             />
           </Grid.Column>
@@ -119,8 +131,8 @@ const SearchBar = ({
             <Grid.Column width={12}>
               <Container>
                 <Message warning className="SearchBar__validationMessages">
-                  {searchStringValidationMessages.map(message => (
-                    <p>{message}</p>
+                  {searchStringValidationMessages.map((message, i) => (
+                    <p key={i}>{message}</p>
                   ))}
                 </Message>
               </Container>
@@ -155,7 +167,7 @@ const SearchBar = ({
             className="SearchBar__expressionBuilder"
             showModeToggle={false}
             editMode
-            dataSourceUuid={expressionDataSourceUuid}
+            dataSource={dataSource}
             expressionId={expressionId}
           />
         </Grid.Column>
@@ -168,9 +180,10 @@ const SearchBar = ({
 };
 
 SearchBar.propTypes = {
-  expressionDataSourceUuid: PropTypes.string.isRequired,
+  dataSource: PropTypes.object.isRequired,
   expressionId: PropTypes.string.isRequired,
   searchString: PropTypes.string,
+  onSearch: PropTypes.func.isRequired,
 };
 
 export default enhance(SearchBar);

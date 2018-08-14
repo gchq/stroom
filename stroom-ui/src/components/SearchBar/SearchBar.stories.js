@@ -42,18 +42,17 @@ import { testDataSource } from 'components/ExpressionBuilder/dataSource.testData
 import 'styles/main.css';
 import 'semantic/dist/semantic.min.css';
 
-const { receiveDataSource, expressionChanged } = expressionBuilderActionCreators;
+const { expressionChanged } = expressionBuilderActionCreators;
 
 storiesOf('SearchBar', module)
   .addDecorator(ReduxDecoratorWithInitialisation((store) => {
-    store.dispatch(receiveDataSource('testDs', testDataSource));
     store.dispatch(expressionChanged('simplestEx', simplestExpression));
   }))
   .addDecorator(DragDropDecorator)
   .add('Basic', props => (
     <SearchBar
-      expressionDataSourceUuid="testDs"
       expressionId="simplestEx"
       searchString="foo1=bar1 foo2=bar2 foo3=bar3 someOtherKey=sometOtherValue"
+      dataSource={testDataSource}
     />
   ));

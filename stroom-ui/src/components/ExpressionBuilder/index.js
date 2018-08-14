@@ -17,19 +17,13 @@ import { combineReducers } from 'redux';
 import ExpressionBuilder from './ExpressionBuilder';
 
 import { reducer as expressionReducer, actionCreators as expressionActionCreators } from './redux';
-import {
-  reducer as dataSourceReducer,
-  actionCreators as dataSourceActionCreators,
-} from './DataSource';
 
 const actionCreators = {
-  ...dataSourceActionCreators,
   ...expressionActionCreators,
 };
 
 const reducer = combineReducers({
   expressions: expressionReducer,
-  dataSources: dataSourceReducer,
 });
 
 export { ExpressionBuilder, reducer, actionCreators };
