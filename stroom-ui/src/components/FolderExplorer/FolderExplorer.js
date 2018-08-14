@@ -5,13 +5,14 @@ import { compose, withProps } from 'recompose';
 
 import { findItem } from 'lib/treeUtils';
 import { actionCreators } from './redux';
-import { actionCreators as docRefListingActionCreators } from 'components/DocRefListing/redux';
-import DocRefListing from 'components/DocRefListing';
+import { fetchDocInfo } from 'components/DocExplorer/explorerClient';
+import { DocRefListingWithRouter } from 'components/DocRefListing';
 import MoveDocRefDialog from './MoveDocRefDialog';
 import RenameDocRefDialog from './RenameDocRefDialog';
 import CopyDocRefDialog from './CopyDocRefDialog';
 import DeleteDocRefDialog from './DeleteDocRefDialog';
 import NewDocDialog from './NewDocDialog';
+import DocRefInfoModal from 'components/DocRefInfoModal';
 
 const {
   prepareDocRefCreation,
@@ -21,21 +22,11 @@ const {
   prepareDocRefMove,
 } = actionCreators;
 
-const { multiSelectModeToggled } = docRefListingActionCreators;
-
 const LISTING_ID = 'folder-explorer';
 
 const enhance = compose(
   connect(
-    (
-      {
-        docExplorer: {
-          explorerTree: { documentTree },
-        },
-        docRefListing,
-      },
-      { folderUuid },
-    ) => ({
+    ({ docExplorer: { documentTree }, docRefListing }, { folderUuid }) => ({
       folder: findItem(documentTree, folderUuid),
       docRefListing: docRefListing[LISTING_ID] || {},
     }),
@@ -45,7 +36,7 @@ const enhance = compose(
       prepareDocRefCopy,
       prepareDocRefRename,
       prepareDocRefMove,
-      multiSelectModeToggled,
+      fetchDocInfo,
     },
   ),
   withProps(({
@@ -54,24 +45,22 @@ const enhance = compose(
     prepareDocRefCopy,
     prepareDocRefRename,
     prepareDocRefMove,
-    multiSelectModeToggled,
-    docRefListing: { inMultiSelectMode, checkedDocRefUuids },
-    setInMultiSelectMode,
+    fetchDocInfo,
+    docRefListing: { checkedDocRefUuids = [] },
   }) => {
     const folderActionBarItems = [
-      {
-        icon: 'list',
-        onClick: d => multiSelectModeToggled(LISTING_ID),
-        tooltip: 'Start multi select mode',
-      },
       {
         icon: 'file',
         onClick: d => prepareDocRefCreation(d),
         tooltip: 'Create a Document',
       },
     ];
+    const multipleDocsSelected = checkedDocRefUuids.length > 1;
     const docRefActionBarItems = [];
-    [folderActionBarItems, docRefActionBarItems].forEach((actionBarItems) => {
+    [
+      { applyToChecked: multipleDocsSelected, actionBarItems: folderActionBarItems },
+      { applyToChecked: false, actionBarItems: docRefActionBarItems },
+    ].forEach(({ applyToChecked, actionBarItems }) => {
       actionBarItems.push({
         icon: 'pencil',
         onClick: d => prepareDocRefRename(d),
@@ -79,21 +68,23 @@ const enhance = compose(
       });
       actionBarItems.push({
         icon: 'copy',
-        onClick: d => prepareDocRefCopy(inMultiSelectMode ? checkedDocRefUuids : [d.uuid]),
-        tooltip: inMultiSelectMode ? 'Copy checked documents' : 'Copy this document',
-        disabled: inMultiSelectMode && (checkedDocRefUuids.length === 0)
+        onClick: d => prepareDocRefCopy(applyToChecked ? checkedDocRefUuids : [d.uuid]),
+        tooltip: applyToChecked ? 'Copy checked documents' : 'Copy this document',
       });
       actionBarItems.push({
         icon: 'move',
-        onClick: d => prepareDocRefMove(inMultiSelectMode ? checkedDocRefUuids : [d.uuid]),
-        tooltip: inMultiSelectMode ? 'Move checked documents' : 'Move this document',
-        disabled: inMultiSelectMode && (checkedDocRefUuids.length === 0)
+        onClick: d => prepareDocRefMove(applyToChecked ? checkedDocRefUuids : [d.uuid]),
+        tooltip: applyToChecked ? 'Move checked documents' : 'Move this document',
+      });
+      actionBarItems.push({
+        icon: 'info',
+        onClick: d => fetchDocInfo(d),
+        tooltip: 'View Information about this document',
       });
       actionBarItems.push({
         icon: 'trash',
-        onClick: d => prepareDocRefDelete(inMultiSelectMode ? checkedDocRefUuids : [d.uuid]),
-        tooltip: inMultiSelectMode ? 'Delete checked documents' : 'Delete this document',
-        disabled: inMultiSelectMode && (checkedDocRefUuids.length === 0)
+        onClick: d => prepareDocRefDelete(applyToChecked ? checkedDocRefUuids : [d.uuid]),
+        tooltip: applyToChecked ? 'Delete checked documents' : 'Delete this document',
       });
     });
 
@@ -106,20 +97,20 @@ const FolderExplorer = ({
   folderUuid,
   folderActionBarItems,
   docRefActionBarItems,
-  inMultiSelectMode,
 }) => (
   <React.Fragment>
-    <DocRefListing
+    <DocRefListingWithRouter
       listingId={LISTING_ID}
       icon="folder"
       title={node.name}
       parentFolder={node}
       docRefs={node.children}
       includeBreadcrumbOnEntries={false}
-      inMultiSelectMode={inMultiSelectMode}
+      allowMultiSelect
       folderActionBarItems={folderActionBarItems}
       docRefActionBarItems={docRefActionBarItems}
     />
+    <DocRefInfoModal />
     <NewDocDialog />
     <MoveDocRefDialog />
     <RenameDocRefDialog />

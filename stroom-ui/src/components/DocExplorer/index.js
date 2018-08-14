@@ -13,11 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import DocExplorer from './DocExplorer';
-import DocRefInfoModal from './DocRefInfoModal';
-import withExplorerTree from './withExplorerTree';
 import explorerClient from './explorerClient';
+import withExplorerTree from './withExplorerTree';
 
-export { DocExplorer, DocRefInfoModal, withExplorerTree, explorerClient };
-
-export default DocExplorer;
+export { explorerClient, withExplorerTree };

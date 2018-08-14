@@ -31,21 +31,19 @@ import PermissionInheritancePicker from 'components/PermissionInheritancePicker'
 const { completeDocRefCopy } = actionCreators;
 
 const enhance = compose(
-  withProps(({ explorerId }) => ({
-    explorerId: `copy-doc-ref-${explorerId}`,
+  withProps(({ pickerId }) => ({
+    pickerId: `copy-doc-ref-${pickerId}`,
   })),
   connect(
     (
       {
-        docExplorer: {
-          explorerTree: { documentTree },
-        },
+        docExplorer: { documentTree },
         form,
         folderExplorer: {
           copyDocRef: { isCopying, uuids, destinationUuid },
         },
       },
-      { explorerId },
+      { pickerId },
     ) => {
       const initialDestination = findItem(documentTree, destinationUuid);
 
@@ -69,7 +67,7 @@ const enhance = compose(
 );
 
 const CopyDocRefDialog = ({
-  explorerId,
+  pickerId,
   isCopying,
   uuids,
   completeDocRefCopy,
@@ -85,7 +83,7 @@ const CopyDocRefDialog = ({
           <Field
             name="destination"
             component={({ input: { onChange, value } }) => (
-              <DocPickerModal explorerId={explorerId} onChange={onChange} value={value} />
+              <DocPickerModal pickerId={pickerId} onChange={onChange} value={value} />
             )}
           />
         </Form.Field>
@@ -122,7 +120,7 @@ const CopyDocRefDialog = ({
 );
 
 CopyDocRefDialog.propTypes = {
-  explorerId: PropTypes.string,
+  pickerId: PropTypes.string,
 };
 
 export default enhance(CopyDocRefDialog);

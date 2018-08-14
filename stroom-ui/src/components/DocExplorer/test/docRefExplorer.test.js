@@ -74,9 +74,7 @@ describe('Doc Explorer Reducer', () => {
 
       // Then
       const {
-        docExplorer: {
-          explorerTree: { explorers },
-        },
+        docExplorer: {explorers },
       } = store.getState();
       expect(explorers).toHaveProperty(explorerId);
       const explorer = explorers[explorerId];

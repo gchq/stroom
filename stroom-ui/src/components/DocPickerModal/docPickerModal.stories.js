@@ -37,13 +37,13 @@ storiesOf('Doc Ref Modal Picker', module)
   .addDecorator(ControlledInputDecorator) // must be the 'first' one
   .addDecorator(PollyDecorator({ documentTree: fromSetupSampleData }))
   .addDecorator(ReduxDecorator)
-  .add('Doc Ref Picker', () => <DocPickerModal explorerId="modal1" />)
+  .add('Doc Ref Picker', () => <DocPickerModal pickerId="modal1" />)
   .add('Doc Ref Picker (filter to pipeline)', () => (
-    <DocPickerModal explorerId="modal2" typeFilters={['Pipeline']} />
+    <DocPickerModal pickerId="modal2" typeFilters={['Pipeline']} />
   ))
   .add('Doc Ref Picker (filter to feed AND dictionary)', () => (
-    <DocPickerModal explorerId="modal3" typeFilters={['Feed', 'Dictionary']} />
+    <DocPickerModal pickerId="modal3" typeFilters={['Feed', 'Dictionary']} />
   ))
   .add('Doc Ref Picker (filter to Folders)', () => (
-    <DocPickerModal explorerId="modal4" typeFilters={['Folder']} />
+    <DocPickerModal pickerId="modal4" typeFilters={['Folder']} />
   ));

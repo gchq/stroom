@@ -79,7 +79,7 @@ const NewDocDialog = ({
             name="destination"
             component={({ input: { onChange, value } }) => (
               <DocPickerModal
-                explorerId="new-doc-ref-destination"
+                pickerId="new-doc-ref-destination"
                 typeFilters={['Folder']}
                 onChange={onChange}
                 value={value}

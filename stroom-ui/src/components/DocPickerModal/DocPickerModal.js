@@ -16,84 +16,43 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose, withState, lifecycle, branch, renderComponent } from 'recompose';
+import { compose, withState, withProps } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Button, Modal, Input, Loader, Dropdown } from 'semantic-ui-react';
+import { Button, Modal, Input, Popup, Dropdown } from 'semantic-ui-react/dist/commonjs';
 
+import DocRefPropType from 'lib/DocRefPropType';
 import { findItem } from 'lib/treeUtils';
-import { actionCreators } from 'components/DocExplorer/redux';
 
-import withExplorerTree from 'components/DocExplorer/withExplorerTree';
-import FolderToPick from './FolderToPick';
+import DocRefListing from 'components/DocRefListing';
 
-const {
-  docExplorerOpened, searchTermUpdated, folderOpenToggled, docRefSelected,
-} = actionCreators;
-
-const withModal = withState('isOpen', 'setIsOpen', false);
+const withModal = withState('modalIsOpen', 'setModalIsOpen', false);
 
 const enhance = compose(
-  withExplorerTree,
   connect(
-    (
-      {
-        docExplorer: {
-          explorerTree: { documentTree, explorers },
-        },
-      },
-      { explorerId, value },
-    ) => ({
+    ({ docExplorer: { documentTree } }, { pickerId, value }) => ({
       documentTree,
-      explorer: explorers[explorerId],
     }),
-    {
-      docExplorerOpened,
-      searchTermUpdated,
-      folderOpenToggled,
-      docRefSelected,
-    },
+    {},
   ),
-  branch(
-    ({ documentTree }) => !documentTree,
-    renderComponent(() => <Loader active>Awaiting Document Tree</Loader>),
-  ),
-  lifecycle({
-    componentDidMount() {
-      const { docExplorerOpened, explorerId, typeFilters } = this.props;
-      docExplorerOpened(explorerId, false, typeFilters);
-    },
-  }),
   withModal,
-  branch(
-    ({ explorer }) => !explorer,
-    renderComponent(() => <Loader active>Loading Explorer</Loader>),
-  ),
 );
 
 const DocPickerModal = ({
-  isSelected,
+  modalIsOpen,
+  setModalIsOpen,
+
   documentTree,
-  searchTermUpdated,
-  isOpen,
-  explorerId,
+  pickerId,
   typeFilters,
-  setIsOpen,
-  explorer,
   onChange,
   value,
-  folderOpenToggled,
-  docRefSelected,
 }) => {
-  const handleOpen = () => setIsOpen(true);
-
-  const handleClose = () => setIsOpen(false);
-
   const onDocRefPickConfirmed = () => {
-    const result = findItem(documentTree, explorer.isSelected);
-    onChange(result.node);
-
-    handleClose();
+    console.log('Do something, something has been picked');
+    // const result = findItem(documentTree, explorer.isSelected);
+    // onChange(result.node);
+    setModalIsOpen(false);
   };
 
   let trigger;
@@ -106,47 +65,52 @@ const DocPickerModal = ({
       <Dropdown
         // it moans about mixing trigger and selection, but it's the only way to make it look right..?
         selection
-        onFocus={handleOpen}
+        onFocus={() => setModalIsOpen(true)}
         trigger={
           <span>
-            <img className="doc-ref__icon-small" alt="X" src={require(`../../images/docRefTypes/${node.type}.svg`)} />
+            <img
+              className="stroom-icon--small"
+              alt="X"
+              src={require(`../../images/docRefTypes/${node.type}.svg`)}
+            />
             {triggerValue}
           </span>
         }
       />
     );
   } else {
-    trigger = <Input onFocus={handleOpen} value="..." />;
+    trigger = <Input onFocus={() => setModalIsOpen(true)} value="..." />;
   }
-
   return (
-    <Modal trigger={trigger} open={isOpen} onClose={handleClose} size="small" dimmer="inverted">
-      <Modal.Header>Select a Doc Ref</Modal.Header>
+    <Modal
+      trigger={trigger}
+      open={modalIsOpen}
+      onClose={() => setModalIsOpen(false)}
+      size="small"
+      dimmer="inverted"
+    >
       <Modal.Content scrolling>
-        <Input
-          icon="search"
-          placeholder="Search..."
-          value={explorer.searchTerm}
-          onChange={e => searchTermUpdated(explorerId, e.target.value)}
-        />
-        <FolderToPick
-          explorerId={explorerId}
-          explorer={explorer}
-          folder={documentTree}
-          typeFilters={typeFilters}
-          folderOpenToggled={folderOpenToggled}
-          docRefSelected={docRefSelected}
+        <DocRefListing
+          listingId={pickerId}
+          icon="folder"
+          title="Find stuff"
+          parentFolder={documentTree}
+          docRefs={documentTree.children}
+          includeBreadcrumbOnEntries={false}
+          fixedDocRefTypeFilters={typeFilters}
         />
       </Modal.Content>
       <Modal.Actions>
-        <Button negative onClick={handleClose}>
+        <Button negative onClick={() => setModalIsOpen(false)}>
           Cancel
         </Button>
         <Button
           positive
           onClick={onDocRefPickConfirmed}
           labelPosition="right"
-          disabled={!explorer.isSelected}
+          disabled={
+            false // come back to this
+          }
           icon="checkmark"
           content="Choose"
         />
@@ -157,19 +121,13 @@ const DocPickerModal = ({
 
 const EnhancedDocPickerModal = enhance(DocPickerModal);
 
-const docRefShape = {
-  type: PropTypes.string.isRequired,
-  uuid: PropTypes.string.isRequired,
-  name: PropTypes.string.isRequired,
-};
-
 EnhancedDocPickerModal.propTypes = {
-  explorerId: PropTypes.string.isRequired,
+  pickerId: PropTypes.string.isRequired,
   typeFilters: PropTypes.array.isRequired,
   onChange: PropTypes.func.isRequired,
   value: PropTypes.shape({
-    node: PropTypes.shape(docRefShape),
-    lineage: PropTypes.arrayOf(PropTypes.shape(docRefShape)),
+    node: PropTypes.shape(DocRefPropType),
+    lineage: PropTypes.arrayOf(PropTypes.shape(DocRefPropType)),
   }),
 };
 

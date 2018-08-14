@@ -53,7 +53,7 @@ const DocTypeFilters = ({
   <React.Fragment>
     <Form.Field>
       <img
-        className="doc-ref__icon-small"
+        className="stroom-icon--small"
         alt="X"
         src={require('../../images/docRefTypes/System.svg')}
       />
@@ -75,7 +75,7 @@ const DocTypeFilters = ({
       .map(({ docRefType, isSelected }) => (
         <Form.Field key={docRefType}>
           <img
-            className="doc-ref__icon-small"
+            className="stroom-icon--small"
             alt="X"
             src={require(`../../images/docRefTypes/${docRefType}.svg`)}
           />

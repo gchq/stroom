@@ -2,14 +2,12 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { compose, lifecycle, branch, renderComponent, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { withRouter } from 'react-router-dom';
-import { Header, Icon, Grid, Input, Popup, Button, Loader } from 'semantic-ui-react';
+import { Header, Icon, Grid, Input, Popup, Button, Loader } from 'semantic-ui-react/dist/commonjs';
 import Mousetrap from 'mousetrap';
 
 import { DocTypeFilters } from 'components/DocRefTypes';
 import DocRefPropType from 'lib/DocRefPropType';
 import DocRefListingEntry from './DocRefListingEntry';
-import openDocRef from 'prototypes/RecentItems/openDocRef';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import { actionCreators } from './redux';
 import ActionBarItemsPropType from './ActionBarItemsPropType';
@@ -47,7 +45,6 @@ const jKeycode = 74;
 const enterKeycode = 13;
 
 const enhance = compose(
-  withRouter,
   connect(
     ({ docRefListing, docRefTypes }, { listingId }) => ({
       docRefListing: docRefListing[listingId],
@@ -60,14 +57,12 @@ const enhance = compose(
       docRefTypeFilterUpdated,
       docRefSelectionUp,
       docRefSelectionDown,
-      openDocRef,
     },
   ),
   withProps(({
     listingId,
     docRefListing,
     openDocRef,
-    history,
     docRefTypes,
     docRefSelectionUp,
     docRefSelectionDown,
@@ -76,9 +71,9 @@ const enhance = compose(
     const { selectedDocRef, checkedDocRefs, filteredDocRefs, docRefTypeFilters = [] } = docRefListing || {};
     const onOpenKey = () => {
       if (selectedDocRef !== undefined) {
-        openDocRef(history, selectedDocRef);
+        openDocRef(selectedDocRef);
       } else if (filteredDocRefs.length > 0) {
-        openDocRef(history, filteredDocRefs[0]);
+        openDocRef(filteredDocRefs[0]);
       }
     };
     const onUpKey = () => {
@@ -112,14 +107,14 @@ const enhance = compose(
   lifecycle({
     componentDidUpdate(prevProps, prevState, snapshot) {
       const {
-        parentFolder, listingId, docRefs, docRefListingMounted,
+        parentFolder, listingId, docRefs, docRefListingMounted, alwaysFilter, allowMultiSelect, fixedDocRefTypeFilters
       } = this.props;
 
       const parentFolderChanged = parentFolder && parentFolder.uuid !== prevProps.parentFolder.uuid;
       const docRefsChanged = JSON.stringify(docRefs) !== JSON.stringify(prevProps.docRefs);
 
       if (parentFolderChanged || docRefsChanged) {
-        docRefListingMounted(listingId, docRefs);
+        docRefListingMounted(listingId, docRefs, alwaysFilter, allowMultiSelect, fixedDocRefTypeFilters);
       }
     },
     componentDidMount() {
@@ -131,8 +126,11 @@ const enhance = compose(
         docRefs,
         onOpenKey,
         alwaysFilter,
+        allowMultiSelect,
+        fixedDocRefTypeFilters,
       } = this.props;
-      docRefListingMounted(listingId, docRefs, alwaysFilter);
+      
+      docRefListingMounted(listingId, docRefs, alwaysFilter, allowMultiSelect, fixedDocRefTypeFilters);
 
       Mousetrap.bind(upKeys, onUpKey);
       Mousetrap.bind(downKeys, onDownKey);
@@ -157,8 +155,9 @@ const DocRefListing = ({
   icon,
   title,
   docRefListing: {
-    filterTerm, filteredDocRefs, docRefTypeFilters
+    filterTerm, filteredDocRefs, docRefTypeFilters, fixedDocRefTypeFilters
   },
+  openDocRef,
   includeBreadcrumbOnEntries,
   folderActionBarItems,
   docRefActionBarItems,
@@ -170,19 +169,19 @@ const DocRefListing = ({
 }) => (
   <React.Fragment>
     <Grid className="content-tabs__grid">
-      <Grid.Column width={6}>
+      <Grid.Column width={(folderActionBarItems.length > 0) ? 6 : 8}>
         <Header as="h3">
           <Icon color="grey" name={icon} />
           <Header.Content>{title}</Header.Content>
           {parentFolder && (
             <Header.Subheader>
-              <DocRefBreadcrumb docRefUuid={parentFolder.uuid} />
+              <DocRefBreadcrumb docRefUuid={parentFolder.uuid} openDocRef={openDocRef} />
             </Header.Subheader>
           )}
         </Header>
       </Grid.Column>
 
-      <Grid.Column width={5}>
+      <Grid.Column width={(folderActionBarItems.length > 0) ? 5 : 8}>
         <div className='doc-ref-listing-entry__search-bar'>
           <Input
             id="AppSearch__search-input"
@@ -193,6 +192,7 @@ const DocRefListing = ({
             autoFocus
             onKeyDown={onSearchInputKeyDown}
           />
+          {fixedDocRefTypeFilters.length === 0 &&
           <Popup
             trigger={<Button icon="filter" color={hasTypesFilteredOut ? 'blue' : 'grey'} />}
             flowing
@@ -203,9 +203,10 @@ const DocRefListing = ({
               onChange={v => docRefTypeFilterUpdated(listingId, v)}
             />
           </Popup>
+          }
         </div>
       </Grid.Column>
-      <Grid.Column width={5}>
+      {(folderActionBarItems.length > 0) && <Grid.Column width={5}>
         <span className="doc-ref-listing-entry__action-bar">
           {folderActionBarItems.map(({ onClick, icon, tooltip, disabled }, i) => (
             <Popup
@@ -216,6 +217,7 @@ const DocRefListing = ({
           ))}
         </span>
       </Grid.Column>
+      }
     </Grid>
     <div className="doc-ref-listing">
       {filteredDocRefs.map(docRef => (
@@ -225,6 +227,7 @@ const DocRefListing = ({
           docRefUuid={docRef.uuid}
           actionBarItems={docRefActionBarItems}
           includeBreadcrumb={includeBreadcrumbOnEntries}
+          onNameClick={node => openDocRef(node)}
         />
       ))}
     </div>
@@ -240,9 +243,11 @@ EnhancedDocRefListing.propTypes = {
   includeBreadcrumbOnEntries: PropTypes.bool.isRequired,
   docRefs: PropTypes.arrayOf(DocRefPropType).isRequired,
   alwaysFilter: PropTypes.bool.isRequired,
-  inMultiSelectMode: PropTypes.bool.isRequired,
+  allowMultiSelect: PropTypes.bool.isRequired,
   folderActionBarItems: ActionBarItemsPropType.isRequired,
   docRefActionBarItems: ActionBarItemsPropType.isRequired,
+  openDocRef: PropTypes.func.isRequired,
+  fixedDocRefTypeFilters: PropTypes.arrayOf(PropTypes.string).isRequired
 };
 
 EnhancedDocRefListing.defaultProps = {
@@ -250,7 +255,8 @@ EnhancedDocRefListing.defaultProps = {
   folderActionBarItems: [],
   docRefActionBarItems: [],
   includeBreadcrumbOnEntries: true,
-  inMultiSelectMode: false,
+  allowMultiSelect: false,
+  fixedDocRefTypeFilters: []
 };
 
 export default EnhancedDocRefListing;

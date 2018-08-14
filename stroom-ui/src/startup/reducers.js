@@ -26,6 +26,7 @@ import { reducer as docRefListing } from 'components/DocRefListing';
 import { reducer as appChrome } from 'sections/AppChrome/redux';
 import { reducer as docRefTypes } from 'components/DocRefTypes';
 import { reducer as lineContainer } from 'components/LineTo';
+import { reducer as docRefInfo } from 'components/DocRefInfoModal/redux';
 import { reducer as docExplorer } from 'components/DocExplorer/redux';
 import { reducer as expressionBuilder } from 'components/ExpressionBuilder';
 import { reducer as pipelineEditor } from 'components/PipelineEditor';
@@ -59,4 +60,5 @@ export default combineReducers({
   appChrome,
   docRefListing,
   folderExplorer,
+  docRefInfo,
 });

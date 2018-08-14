@@ -1,5 +1,6 @@
 import { actionCreators as docExplorerActionCreators } from './redux';
 import { actionCreators as docRefTypesActionCreators } from 'components/DocRefTypes/redux';
+import { actionCreators as docRefInfoActionCreators } from 'components/DocRefInfoModal';
 import { wrappedGet, wrappedPut, wrappedPost } from 'lib/fetchTracker.redux';
 import { findByUuids, findItem } from 'lib/treeUtils';
 
@@ -9,10 +10,10 @@ const {
   docRefsCopied,
   docRefsMoved,
   docRefsDeleted,
-  docRefInfoOpened,
-  docRefInfoReceived,
   docRefCreated,
 } = docExplorerActionCreators;
+
+const { docRefInfoOpened, docRefInfoReceived } = docRefInfoActionCreators;
 
 const { docRefTypesReceived } = docRefTypesActionCreators;
 
@@ -97,9 +98,7 @@ export const copyDocuments = (uuids, destinationUuid, permissionInheritance) => 
   const state = getState();
   const {
     config: { explorerServiceUrl },
-    docExplorer: {
-      explorerTree: { documentTree },
-    },
+    docExplorer: { documentTree },
   } = state;
   const url = `${explorerServiceUrl}/copy`;
   const docRefs = findByUuids(documentTree, uuids);
@@ -131,9 +130,7 @@ export const moveDocuments = (uuids, destinationUuid, permissionInheritance) => 
   const state = getState();
   const {
     config: { explorerServiceUrl },
-    docExplorer: {
-      explorerTree: { documentTree },
-    },
+    docExplorer: { documentTree },
   } = state;
 
   const url = `${explorerServiceUrl}/move`;
@@ -161,7 +158,7 @@ export const moveDocuments = (uuids, destinationUuid, permissionInheritance) => 
 export const deleteDocuments = uuids => (dispatch, getState) => {
   const state = getState();
   const url = `${state.config.explorerServiceUrl}/delete`;
-  const docRefs = findByUuids(state.docExplorer.explorerTree.documentTree, uuids);
+  const docRefs = findByUuids(state.docExplorer.documentTree, uuids);
   wrappedPost(
     dispatch,
     state,

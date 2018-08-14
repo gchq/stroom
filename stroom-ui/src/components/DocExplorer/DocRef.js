@@ -26,7 +26,6 @@ import { DragSource } from 'react-dnd';
 
 import { actionCreators } from './redux';
 
-import DocRefMenu from './DocRefMenu';
 import ClickCounter from 'lib/ClickCounter';
 import { openDocRef } from 'prototypes/RecentItems';
 
@@ -61,9 +60,7 @@ const enhance = compose(
     (
       {
         keyIsDown,
-        docExplorer: {
-          explorerTree: { explorers },
-        },
+        docExplorer: { explorers },
       },
       { explorerId },
     ) => ({
@@ -133,15 +130,9 @@ const DocRef = ({
         })
       }
   >
-    <DocRefMenu
-      explorerId={explorerId}
-      docRef={docRef}
-      isOpen={isContextMenuOpen}
-      closeContextMenu={() => docRefContextMenuClosed(explorerId)}
-    />
     <span>
       <Icon />
-      <img className="doc-ref__icon-small" alt="X" src={require(`../../images/docRefTypes/${docRef.type}.svg`)} />
+      <img className="stroom-icon--small" alt="X" src={require(`../../images/docRefTypes/${docRef.type}.svg`)} />
       {docRef.name}
     </span>
                            </div>);

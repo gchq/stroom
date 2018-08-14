@@ -55,9 +55,7 @@ const enhance = compose(
   connect(
     (
       {
-        docExplorer: {
-          explorerTree: { documentTree },
-        },
+        docExplorer: { documentTree },
         appChrome: { menuItemsOpen },
       },
       props,

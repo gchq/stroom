@@ -2,25 +2,20 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { compose, branch, renderNothing } from 'recompose';
 import { connect } from 'react-redux';
-import { withRouter } from 'react-router-dom';
-import { Popup, Button, Checkbox } from 'semantic-ui-react';
+import { Popup, Button } from 'semantic-ui-react/dist/commonjs';
 
 import { findItem } from 'lib/treeUtils';
 import { DocRefBreadcrumb } from 'components/DocRefBreadcrumb';
-import openDocRef from 'prototypes/RecentItems/openDocRef';
 import ActionBarItemsPropType from './ActionBarItemsPropType';
 import { actionCreators } from './redux';
 
 const { docRefCheckToggled } = actionCreators;
 
 const enhance = compose(
-  withRouter,
   connect(
     (
       {
-        docExplorer: {
-          explorerTree: { documentTree },
-        },
+        docExplorer: { documentTree },
         docRefListing,
       },
       { listingId, docRefUuid },
@@ -29,7 +24,6 @@ const enhance = compose(
       docRefWithLineage: findItem(documentTree, docRefUuid),
     }),
     {
-      openDocRef,
       docRefCheckToggled,
     },
   ),
@@ -38,10 +32,9 @@ const enhance = compose(
 
 const DocRefListingEntry = ({
   docRefWithLineage: { node },
-  history,
   listingId,
-  docRefListing: { selectedDocRef, checkedDocRefUuids, inMultiSelectMode },
-  openDocRef,
+  docRefListing: { checkedDocRefUuids, inMultiSelectMode },
+  onNameClick,
   actionBarItems,
   includeBreadcrumb,
   docRefCheckToggled,
@@ -49,25 +42,20 @@ const DocRefListingEntry = ({
   <div
     key={node.uuid}
     className={`doc-ref-listing__item ${
-      selectedDocRef && selectedDocRef.uuid === node.uuid ? 'doc-ref-listing__item--selected' : ''
+      checkedDocRefUuids.includes(node.uuid) ? 'doc-ref-listing__item--selected' : ''
     }`}
+    onClick={() => docRefCheckToggled(listingId, node.uuid)}
   >
     <div>
-      {inMultiSelectMode && (
-        <Checkbox
-          checked={checkedDocRefUuids.includes(node.uuid)}
-          onChange={() => docRefCheckToggled(listingId, node.uuid)}
-        />
-      )}
       <img
-        className="doc-ref__icon-large"
+        className="stroom-icon--large"
         alt="X"
         src={require(`../../images/docRefTypes/${node.type}.svg`)}
       />
       <span
         className="doc-ref-listing__name"
         onClick={() => {
-          openDocRef(history, node);
+          onNameClick(node);
         }}
       >
         {node.name}
@@ -96,6 +84,7 @@ EnhancedDocRefListingEntry.propTypes = {
   docRefUuid: PropTypes.string.isRequired,
   actionBarItems: ActionBarItemsPropType.isRequired,
   includeBreadcrumb: PropTypes.bool.isRequired,
+  onNameClick: PropTypes.func.isRequired
 };
 
 EnhancedDocRefListingEntry.defaultProps = {
