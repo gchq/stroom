@@ -16,7 +16,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-import DocRefListing from 'components/DocRefListing';
+import { DocRefListingWithRouter } from 'components/DocRefListing';
 
 const enhance = connect(
   ({ recentItems }, props) => ({
@@ -26,7 +26,7 @@ const enhance = connect(
 );
 
 const RecentItems = ({ recentItems }) => (
-  <DocRefListing
+  <DocRefListingWithRouter
     icon="file outline"
     listingId="recent-items"
     title="Recent Items"

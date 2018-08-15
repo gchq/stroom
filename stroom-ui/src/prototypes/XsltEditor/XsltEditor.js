@@ -62,7 +62,7 @@ const XsltEditor = ({ xsltId, xslt, xsltUpdated, saveXslt }) => (
     header={
       <Header as="h3">
         <img
-          className="doc-ref__icon-large"
+          className="stroom-icon--large"
           alt="X"
           src={require('../../images/docRefTypes/XSLT.svg')}
         />

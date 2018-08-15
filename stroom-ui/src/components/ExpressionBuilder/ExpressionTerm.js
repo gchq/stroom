@@ -248,7 +248,7 @@ const ExpressionTerm = ({
     case 'IN_DICTIONARY': {
       valueWidget = (
         <DocPickerModal
-          explorerId={pickerId}
+          pickerId={pickerId}
           typeFilters={['Dictionary']}
           onChange={onDictionaryValueChange}
           value={term.value}

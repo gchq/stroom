@@ -18,14 +18,24 @@
 .app-chrome__sidebar-menu {
   width: 15rem;
   overflow-y: auto;
+  padding-top:40px;
 }
 
 .app-chrome__sidebar__toggle {
   color: #ff6f00 !important;
+  position: absolute;
+}
+
+.app-chrome__sidebar__toggle_collapsed {
+  position: relative;
 }
 
 .app-chrome__sidebar__buttons .button {
   color: white !important;
+}
+
+.app-chrome__sidebar_header {
+  position:absolute;
 }
 
 .sidebar__menu-item--nav {
@@ -73,7 +83,7 @@
 }
 
 .content-tabs__grid {
-  background-color: white;
+
 }
 
 .app-chrome__content .ui.grid .column {
@@ -94,12 +104,15 @@
 
 .app-chrome__content .ui.grid h3 {
   // Correctly align the title
-  padding-top: 0.3rem !important;
+  // padding-top: 0.3rem !important;
 }
 
 .sidebar__logo {
   display: inline;
-  position: relative;
-  top: 0.3rem;
-  width: 90px !important; 
+  align-items: center;
+  position: absolute;
+  left: 40px;
+  // position: relative;
+  // top: 0.3rem;
+  // width: 90px !important;
 }

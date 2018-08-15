@@ -18,9 +18,9 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import { iterateNodes } from 'lib/treeUtils';
-import { DocRefListing } from 'components/DocRefListing';
+import { DocRefListingWithRouter } from 'components/DocRefListing';
 
-const enhance = connect(({ docExplorer: { explorerTree: { documentTree = [] } } }, props) => {
+const enhance = connect(({ docExplorer: { documentTree } }, props) => {
   const allDocuments = [];
 
   iterateNodes(documentTree, (lineage, node) => {
@@ -39,7 +39,7 @@ const enhance = connect(({ docExplorer: { explorerTree: { documentTree = [] } } 
 }, {});
 
 const AppSearch = ({ allDocuments }) => (
-  <DocRefListing
+  <DocRefListingWithRouter
     listingId="app-search"
     alwaysFilter
     icon="search"

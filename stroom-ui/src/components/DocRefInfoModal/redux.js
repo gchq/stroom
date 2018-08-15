@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { createActions, handleActions } from 'redux-actions';
+import {
+  createActions,
+  handleActions,
+} from 'redux-actions';
 
 const actionCreators = createActions({
   DOC_REF_INFO_RECEIVED: docRefInfo => ({ docRefInfo }),

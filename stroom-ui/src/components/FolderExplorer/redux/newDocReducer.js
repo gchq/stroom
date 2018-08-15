@@ -1,6 +1,6 @@
 import { createActions, combineActions, handleActions } from 'redux-actions';
 
-import { actionCreators as docExplorerActionCreators } from 'components/DocExplorer/redux/explorerTreeReducer';
+import { actionCreators as docExplorerActionCreators } from 'components/DocExplorer/redux';
 
 const { docRefCreated } = docExplorerActionCreators;
 

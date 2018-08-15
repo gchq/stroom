@@ -22,7 +22,6 @@ import { connect } from 'react-redux';
 import { Loader } from 'semantic-ui-react';
 
 import Folder from './Folder';
-import DocRefInfoModal from './DocRefInfoModal';
 import { actionCreators } from './redux';
 import withExplorerTree from './withExplorerTree';
 
@@ -31,14 +30,7 @@ const { searchTermUpdated, docExplorerOpened } = actionCreators;
 const enhance = compose(
   withExplorerTree,
   connect(
-    (
-      {
-        docExplorer: {
-          explorerTree: { documentTree, explorers },
-        },
-      },
-      { explorerId },
-    ) => ({
+    ({ docExplorer: { documentTree, explorers } }, { explorerId }) => ({
       documentTree,
       explorer: explorers[explorerId],
     }),

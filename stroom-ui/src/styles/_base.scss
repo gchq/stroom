@@ -54,3 +54,14 @@ body {
   // We don't need lines between the rows
   border-bottom: none !important;
 }
+
+.stroom-icon--small {
+  width: 0.7rem;
+  margin-right: 0.3rem;
+}
+
+.stroom-icon--large {
+  width: 1.5rem !important;
+  margin-right: 0.3rem;
+  margin-left: 0.3rem;
+}

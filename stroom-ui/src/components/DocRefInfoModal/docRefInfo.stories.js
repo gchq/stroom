@@ -1,4 +1,4 @@
-  /*
+/*
  * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,16 +19,8 @@ import { storiesOf, addDecorator } from '@storybook/react';
 import StoryRouter from 'storybook-react-router';
 import { compose, withState } from 'recompose';
 
-import {
-  DocExplorer,
-  DocRefInfoModal,
-  DocRef,
-  Folder
-} from './index';
-import { DocPickerModal } from 'components/DocPickerModal';
+import { DocRefInfoModal } from '.';
 import { actionCreators } from './redux';
-import { testTree, fromSetupSampleData, testDocRefsTypes } from './test';
-import { pickRandomItem } from 'lib/treeUtils';
 
 import { ReduxDecoratorWithInitialisation, ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 import { PollyDecorator } from 'lib/storybook/PollyDecorator';
@@ -40,23 +32,6 @@ import 'styles/main.css';
 import 'semantic/dist/semantic.min.css';
 
 const { docRefInfoReceived, docRefInfoOpened } = actionCreators;
-
-storiesOf('Document Explorer (small)', module)
-  .addDecorator(PollyDecorator({ documentTree: testTree, docRefTypes: testDocRefsTypes }))
-  .addDecorator(KeyIsDownDecorator())
-  .addDecorator(ReduxDecorator)
-  .addDecorator(DragDropDecorator)
-  .addDecorator(StoryRouter())
-  .add('Explorer Tree', () => <DocExplorer explorerId="dev-server" />);
-
-storiesOf('Document Explorer (setupSampleData)', module)
-  .addDecorator(PollyDecorator({ documentTree: fromSetupSampleData, docRefTypes: testDocRefsTypes }))
-  .addDecorator(KeyIsDownDecorator())
-  .addDecorator(ReduxDecorator)
-  .addDecorator(DragDropDecorator)
-  .addDecorator(StoryRouter())
-  .add('Explorer Tree', () => <DocExplorer explorerId="multi-select-dnd" />);
-
 
 const timeCreated = Date.now();
 
@@ -78,4 +53,3 @@ storiesOf('Doc Ref Info Modal', module)
     }));
   }))
   .add('Doc Ref Info Modal', () => <DocRefInfoModal />);
-

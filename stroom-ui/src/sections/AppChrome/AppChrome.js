@@ -55,9 +55,10 @@ const enhance = compose(
   withExplorerTree,
   connect(
     (state, props) => ({
-      documentTree: state.docExplorer.explorerTree.documentTree,
+      documentTree: state.docExplorer.documentTree,
       menuItemsOpen: state.appChrome.menuItemsOpen,
       theme: state.userSettings.theme
+
     }),
     {
       menuItemOpened,
@@ -226,7 +227,7 @@ const AppChrome = ({
       <div className="app-chrome__sidebar">
         {isExpanded ? (
           <React.Fragment>
-            <div>
+            <div  className="app-chrome__sidebar_header">
               <Button
                 aria-label="Show/hide the sidebar"
                 size="large"
@@ -235,7 +236,7 @@ const AppChrome = ({
                 onClick={() => setIsExpanded(!isExpanded)}
               />
               <div className="sidebar__logo" alt="Stroom logo">
-                <svg xmlns="http://www.w3.org/2000/svg" width="100" height="40" viewBox="0 0 2278.5303 617.98476">
+                <svg xmlns="http://www.w3.org/2000/svg" width="100" height="30" viewBox="0 0 2278.5303 617.98476">
                   <path d="M 121.99991,205.98497 C 54.999958,205.98497 0,259.98493 0,327.98487 0,394.98481 54.999958,449.98476 121.99991,449.98476 l 167.99987,0 c 24.99998,0 44.99996,20.99998 44.99996,44.99996 0,24.99998 -19.99998,44.99996 -44.99996,44.99996 l -180.79049,0 C 65.984126,553.87219 27.100843,581.57313 0.01093599,617.98462 l 289.98884401,0 c 66.99994,0 121.99991,-54.99996 121.99991,-122.9999 0,-66.99994 -54.99997,-121.99989 -121.99991,-121.99989 l -167.99987,0 c -24.999984,0 -44.999969,-19.99999 -44.999969,-44.99996 0,-24.99998 19.999985,-44.99996 44.999969,-44.99996 l 228.79045,0 c 26.9905,-35.88325 65.47093,-63.18547 108.21554,-76.99994 l -337.00599,0 z"/>
                   <path d="M 601.44485,-7.7860649e-4 C 572.6583,8.3697982 546.49491,22.822962 524.44491,41.902305 l 0,163.887385 0.002,0.19528 -0.002,0 c -65.11,4.8e-4 -123.03145,30.0199 -160.74675,76.99994 l 160.74675,0 0,334.99971 76.99994,0 0,-334.99971 144.85298,0 c 27.16134,-36.05885 65.96411,-63.39275 109.02184,-76.99994 l -253.87482,0 0,-205.98574860649 z"/>
                   <path d="m 919.42586,205.98497 c -113.99519,0 -205.99537,92.00648 -206.00296,205.99982 -1.5e-4,68.67178 0,137.32749 0,205.99983 l 77.99994,0 c -0.012,-68.6493 0.0176,-137.46869 0,-205.99983 0.0846,-70.92785 57.05747,-128.99988 128.00462,-128.99988 5.28623,0 10.49823,0.32864 15.62183,0.95311 18.2219,-24.51229 41.78461,-45.0838 68.42501,-60.15146 -25.65065,-11.43799 -54.08662,-17.80159 -84.04684,-17.80159 l 0,0 z"/>
@@ -251,7 +252,7 @@ const AppChrome = ({
           </React.Fragment>
         ) : (
           <Button.Group vertical className="app-chrome__sidebar__buttons">
-            <Button size="large" icon="bars" className="app-chrome__sidebar__toggle" onClick={() => setIsExpanded(!isExpanded)} />
+            <Button size="large" icon="bars" className="app-chrome__sidebar__toggle_collapsed" onClick={() => setIsExpanded(!isExpanded)} />
             {getContractedMenuItems(menuItems)}
           </Button.Group>
         )}

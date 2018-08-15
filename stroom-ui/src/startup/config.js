@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 import React from 'react';
-import { createActions, handleActions } from 'redux-actions';
+import {
+  createActions,
+  handleActions,
+} from 'redux-actions';
 import { connect } from 'react-redux';
 import { branch, compose, renderComponent, lifecycle } from 'recompose';
-import { Loader } from 'semantic-ui-react';
+import { Loader } from 'semantic-ui-react/dist/commonjs';
 
 import { wrappedGet } from 'lib/fetchTracker.redux';
 

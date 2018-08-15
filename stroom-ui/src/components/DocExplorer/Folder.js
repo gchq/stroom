@@ -27,7 +27,6 @@ import { Icon } from 'semantic-ui-react';
 
 import ClickCounter from 'lib/ClickCounter';
 import DocRef from './DocRef';
-import DocRefMenu from './DocRefMenu';
 import { actionCreators } from './redux';
 
 const {
@@ -89,9 +88,7 @@ const enhance = compose(
     (
       {
         keyIsDown,
-        docExplorer: {
-          explorerTree: { explorers },
-        },
+        docExplorer: { explorers },
       },
       { explorerId },
     ) => ({
@@ -173,12 +170,6 @@ const _Folder = ({
   return (
     <div>
       {connectDragSource(connectDropTarget(<span className={className} onContextMenu={onRightClick}>
-        <DocRefMenu
-          explorerId={explorerId}
-          docRef={folder}
-          isOpen={isContextMenuOpen}
-          closeContextMenu={() => docRefContextMenuClosed(explorerId)}
-        />
         <span
           onClick={e =>
                 clickCounter.onSingleClick({

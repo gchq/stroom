@@ -1,5 +1,8 @@
 import DocRefBreadcrumb from './DocRefBreadcrumb';
+import withOpenDocRef from 'prototypes/RecentItems/withOpenDocRef';
 
-export { DocRefBreadcrumb };
+const DocRefBreadcrumbWithRouter = withOpenDocRef(DocRefBreadcrumb);
+
+export { DocRefBreadcrumbWithRouter, DocRefBreadcrumb };
 
 export default DocRefBreadcrumb;

@@ -60,9 +60,7 @@ const enhance = compose(
   connect(
     (
       {
-        docExplorer: {
-          explorerTree: { documentTree },
-        },
+        docExplorer: { documentTree },
         pipelineEditor: { pipelines, elements },
       },
       { pipelineId },
@@ -209,7 +207,7 @@ const RawWithHeader = (props) => {
       header={
         <Header as="h3">
           <img
-            className="doc-ref__icon-large"
+            className="stroom-icon--large"
             alt="X"
             src={require(`../../images/docRefTypes/${type}.svg`)}
           />

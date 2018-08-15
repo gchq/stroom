@@ -66,6 +66,8 @@
   @include themify($themes) {
     background-color: themed('sidebarBackgroundColor') !important;
     color: themed('sidebarHeaderColor') !important;
+    // Override the default button look so it blends in with the rest of the sidebar.
+    border: 0 !important;
   }
 }
 

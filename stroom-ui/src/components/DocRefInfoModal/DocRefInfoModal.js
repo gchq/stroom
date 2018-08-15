@@ -18,7 +18,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { compose, branch, renderNothing, renderComponent } from 'recompose';
 
-import { Modal, Button, Form, Loader } from 'semantic-ui-react';
+import { Modal, Button, Form, Loader } from 'semantic-ui-react/dist/commonjs';
 
 import { actionCreators } from './redux';
 
@@ -26,9 +26,9 @@ const { docRefInfoClosed } = actionCreators;
 
 const enhance = compose(
   connect(
-    (state, props) => ({
-      isOpen: state.docExplorer.docRefInfo.isOpen,
-      docRefInfo: state.docExplorer.docRefInfo.docRefInfo,
+    ({ docRefInfo: { isOpen, docRefInfo } }, props) => ({
+      isOpen,
+      docRefInfo,
     }),
     { docRefInfoClosed },
   ),

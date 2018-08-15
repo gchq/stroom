@@ -3,29 +3,20 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
 import { Breadcrumb } from 'semantic-ui-react';
-import { withRouter } from 'react-router-dom';
 
 import { findItem } from 'lib/treeUtils';
-import openDocRef from 'prototypes/RecentItems/openDocRef';
 
-const enhance = compose(
-  connect(
-    (
-      {
-        docExplorer: {
-          explorerTree: { documentTree },
-        },
-      },
-      { docRefUuid },
-    ) => ({
-      docRefWithLineage: findItem(documentTree, docRefUuid),
-    }),
+const enhance = compose(connect(
+  (
     {
-      openDocRef,
+      docExplorer: { documentTree },
     },
-  ),
-  withRouter,
-);
+    { docRefUuid },
+  ) => ({
+    docRefWithLineage: findItem(documentTree, docRefUuid),
+  }),
+  {},
+));
 
 const DocRefBreadcrumb = ({
   docRefWithLineage: {
@@ -33,13 +24,12 @@ const DocRefBreadcrumb = ({
     node: { name },
   },
   openDocRef,
-  history,
 }) => (
   <Breadcrumb>
     {lineage.map(l => (
       <React.Fragment key={l.uuid}>
         <Breadcrumb.Divider />
-        <Breadcrumb.Section link onClick={() => openDocRef(history, l)}>
+        <Breadcrumb.Section link onClick={() => openDocRef(l)}>
           {l.name}
         </Breadcrumb.Section>
       </React.Fragment>
@@ -52,6 +42,7 @@ const DocRefBreadcrumb = ({
 
 DocRefBreadcrumb.propTypes = {
   docRefUuid: PropTypes.string.isRequired,
+  openDocRef: PropTypes.func.isRequired,
 };
 
 export default enhance(DocRefBreadcrumb);
