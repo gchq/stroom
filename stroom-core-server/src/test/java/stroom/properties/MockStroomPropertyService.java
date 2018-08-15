@@ -18,6 +18,7 @@ package stroom.properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.util.config.StroomProperties;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,6 +30,15 @@ public class MockStroomPropertyService implements StroomPropertyService {
 
     public MockStroomPropertyService() {
         LOGGER.debug("Initialising: {}", this.getClass().getCanonicalName());
+
+        //Ensure that we have stroom.temp available for use in the mock property service
+        String stroomTemp = StroomProperties.getProperty(StroomProperties.STROOM_TEMP);
+        if (stroomTemp != null) {
+            LOGGER.info("Setting {} to {}", StroomProperties.STROOM_TEMP, stroomTemp);
+            setProperty(StroomProperties.STROOM_TEMP, stroomTemp);
+        } else {
+            LOGGER.warn("Property {} is not set", StroomProperties.STROOM_TEMP);
+        }
     }
 
     @Override

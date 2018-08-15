@@ -16,6 +16,11 @@
 
 package stroom.refdata;
 
+import stroom.refdata.offheapstore.RefStreamDefinition;
+import stroom.util.shared.VoidResult;
+
+import java.util.List;
+
 public interface ReferenceDataLoader {
-    MapStore load(MapStoreCacheKey effectiveFeed);
+    VoidResult load(RefStreamDefinition refStreamDefinition);
 }

@@ -16,28 +16,39 @@
 
 package stroom.refdata;
 
-import stroom.feed.shared.Feed;
 import stroom.docref.DocRef;
+import stroom.feed.shared.Feed;
+import stroom.refdata.offheapstore.RefDataStore;
+import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.streamstore.shared.Stream;
 import stroom.task.ServerTask;
+import stroom.util.shared.VoidResult;
 
 import java.io.InputStream;
 
-public class ContextDataLoadTask extends ServerTask<MapStore> {
+public class ContextDataLoadTask extends ServerTask<VoidResult> {
     private InputStream inputStream;
     private Stream stream;
     private Feed feed;
     private DocRef contextPipeline;
+    private RefStreamDefinition refStreamDefinition;
+    private RefDataStore refDataStore;
 
     public ContextDataLoadTask() {
     }
 
-    public ContextDataLoadTask(final InputStream inputStream, final Stream stream, final Feed feed,
-                               final DocRef contextPipeline) {
+    public ContextDataLoadTask(final InputStream inputStream,
+                               final Stream stream,
+                               final Feed feed,
+                               final DocRef contextPipeline,
+                               final RefStreamDefinition refStreamDefinition,
+                               final RefDataStore refDataStore) {
         this.inputStream = inputStream;
         this.stream = stream;
         this.feed = feed;
         this.contextPipeline = contextPipeline;
+        this.refStreamDefinition = refStreamDefinition;
+        this.refDataStore = refDataStore;
     }
 
     public InputStream getInputStream() {
@@ -54,5 +65,13 @@ public class ContextDataLoadTask extends ServerTask<MapStore> {
 
     public DocRef getContextPipeline() {
         return contextPipeline;
+    }
+
+    public RefStreamDefinition getRefStreamDefinition() {
+        return refStreamDefinition;
+    }
+
+    public RefDataStore getRefDataStore() {
+        return refDataStore;
     }
 }

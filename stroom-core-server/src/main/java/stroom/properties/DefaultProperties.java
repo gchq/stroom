@@ -16,6 +16,7 @@
 package stroom.properties;
 
 import stroom.node.shared.GlobalProperty;
+import stroom.util.ByteSizeUnit;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,6 +33,7 @@ public class DefaultProperties {
                 .name("stroom.temp")
                 .description("Temp folder to write stuff to. Should only be set per node in application property file")
                 .build());
+
 
         // Stroom Proxy Repository and Aggregation
         list.add(new GlobalProperty.Builder()
@@ -70,6 +72,7 @@ public class DefaultProperties {
                 .description("This stops the aggregation after a certain size / nested streams")
                 .editable(true)
                 .build());
+
 
         // STREAM STORE
         list.add(new GlobalProperty.Builder()
@@ -1289,6 +1292,50 @@ public class DefaultProperties {
                 .description("How often should the stroom proxy store be rolled")
                 .editable(true)
                 .build());
+
+        // ========================================START===========================================
+        // Reference data loader properties
+
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.refloader.offheapstore.localDir")
+                .value("${stroom.temp}/refDataOffHeapStore")
+                .description("The full directory path  to use for storing the reference data store. It MUST be on local disk, NOT network storage, due to use of memory mapped files. The directory will be created if it doesn't exist.")
+                .editable(false)
+                .build());
+
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.refloader.offheapstore.maxStoreSize")
+                .value(Long.toString(ByteSizeUnit.GIBIBYTE.longBytes(50)))
+                .description("The maximum size in bytes for the ref loader off heap store. There must be available space on the disk to accommodate this size. It can be larger than the amount of available RAM.")
+                .editable(false)
+                .build());
+
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.refloader.offheapstore.purgeAge")
+                .value("30d")
+                .description("The time to retain reference data for in the off heap store. The time is taken from the time that the reference stream was last accessed, e.g. a lookup was made against it.")
+                .editable(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.refloader.offheapstore.maxReaders")
+                .value("100")
+                .description("The maximum number of concurrent readers/threads that can use the offheapstore.")
+                .editable(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.refloader.offheapstore.maxPutsBeforeCommit")
+                .value("200")
+                .description("The maximum number of puts into the store before the transaction is committed. There is only one write transaction available long running transactions are not desirable.")
+                .editable(false)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.refloader.offheapstore.valueBufferCapacity")
+                .value("500000")
+                .description("The size in bytes allocated to the value buffers used in the offheapstore. This should be large enough to accommodate reference data values.")
+                .editable(false)
+                .build());
+
+        // ========================================END===========================================
 
         return Collections.unmodifiableList(list);
     }
