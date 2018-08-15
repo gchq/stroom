@@ -19,23 +19,58 @@ import PropTypes from 'prop-types';
 import { compose, withState, withProps } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Button, Modal, Input, Popup, Dropdown } from 'semantic-ui-react/dist/commonjs';
+import { Button, Modal, Input, Dropdown, Popup } from 'semantic-ui-react/dist/commonjs';
 
 import DocRefPropType from 'lib/DocRefPropType';
-import { findItem } from 'lib/treeUtils';
-
+import { withExplorerTree } from 'components/DocExplorer';
+import { findItem, iterateNodes } from 'lib/treeUtils';
 import DocRefListing from 'components/DocRefListing';
 
 const withModal = withState('modalIsOpen', 'setModalIsOpen', false);
 
 const enhance = compose(
+  withExplorerTree,
+  withModal,
   connect(
-    ({ docExplorer: { documentTree } }, { pickerId, value }) => ({
-      documentTree,
-    }),
+    (
+      { docExplorer: { documentTree }, docRefListing },
+      {
+        pickerId, typeFilters, onChange, setModalIsOpen,
+      },
+    ) => {
+      let allDocuments = [];
+      let thisDocRefListing = docRefListing[pickerId];
+
+      iterateNodes(documentTree, (lineage, node) => {
+        allDocuments.push({
+          name: node.name,
+          type: node.type,
+          uuid: node.uuid,
+          lineage,
+          lineageNames: lineage.reduce((acc, curr) => `${acc} ${curr.name}`, ''),
+        });
+      });
+
+      if (typeFilters.length > 0) {
+        allDocuments = allDocuments.filter(n => typeFilters.includes(n.type));
+      }
+
+      const onDocRefPickConfirmed = () => {
+        const result = findItem(documentTree, thisDocRefListing.selectedDocRefUuids[0]);
+        onChange(result.node);
+        setModalIsOpen(false);
+      };
+
+      return {
+        allDocuments,
+        docRefListing: thisDocRefListing,
+        documentTree,
+        onDocRefPickConfirmed,
+        selectionNotYetMade: thisDocRefListing && thisDocRefListing.selectedDocRefUuids.length === 0,
+      };
+    },
     {},
   ),
-  withModal,
 );
 
 const DocPickerModal = ({
@@ -43,18 +78,13 @@ const DocPickerModal = ({
   setModalIsOpen,
 
   documentTree,
+  onDocRefPickConfirmed,
+  selectionNotYetMade,
+  allDocuments,
   pickerId,
   typeFilters,
-  onChange,
   value,
 }) => {
-  const onDocRefPickConfirmed = () => {
-    console.log('Do something, something has been picked');
-    // const result = findItem(documentTree, explorer.isSelected);
-    // onChange(result.node);
-    setModalIsOpen(false);
-  };
-
   let trigger;
   if (value) {
     const { lineage, node } = findItem(documentTree, value.uuid);
@@ -62,21 +92,24 @@ const DocPickerModal = ({
       lineage.length > 0 ? ' > ' : ''
     }${node.name}`;
     trigger = (
-      <Dropdown
-        // it moans about mixing trigger and selection, but it's the only way to make it look right..?
-        selection
-        onFocus={() => setModalIsOpen(true)}
+      <Popup
         trigger={
-          <span>
+          <Button
+            // it moans about mixing trigger and selection, but it's the only way to make it look right..?
+            onFocus={() => setModalIsOpen(true)}
+            basic
+          >
             <img
               className="stroom-icon--small"
               alt="X"
               src={require(`../../images/docRefTypes/${node.type}.svg`)}
             />
-            {triggerValue}
-          </span>
+            {value.name}
+          </Button>
         }
-      />
+      >
+        {triggerValue}
+      </Popup>
     );
   } else {
     trigger = <Input onFocus={() => setModalIsOpen(true)} value="..." />;
@@ -92,12 +125,12 @@ const DocPickerModal = ({
       <Modal.Content scrolling>
         <DocRefListing
           listingId={pickerId}
-          icon="folder"
-          title="Find stuff"
-          parentFolder={documentTree}
-          docRefs={documentTree.children}
-          includeBreadcrumbOnEntries={false}
+          maxResults={5}
+          icon="search"
+          title="Search"
+          allDocRefs={allDocuments}
           fixedDocRefTypeFilters={typeFilters}
+          openDocRef={d => console.log('Open Doc Ref?', d)}
         />
       </Modal.Content>
       <Modal.Actions>
@@ -108,9 +141,7 @@ const DocPickerModal = ({
           positive
           onClick={onDocRefPickConfirmed}
           labelPosition="right"
-          disabled={
-            false // come back to this
-          }
+          disabled={selectionNotYetMade}
           icon="checkmark"
           content="Choose"
         />

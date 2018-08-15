@@ -25,7 +25,6 @@ import { actionCreators } from './redux';
 import { ReduxDecoratorWithInitialisation, ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 import { PollyDecorator } from 'lib/storybook/PollyDecorator';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
-import { KeyIsDownDecorator } from 'lib/storybook/KeyIsDownDecorator';
 import { ControlledInputDecorator } from 'lib/storybook/ControlledInputDecorator';
 
 import 'styles/main.css';

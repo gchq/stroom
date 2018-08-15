@@ -9,22 +9,17 @@ import { DocRefBreadcrumb } from 'components/DocRefBreadcrumb';
 import ActionBarItemsPropType from './ActionBarItemsPropType';
 import { actionCreators } from './redux';
 
-const { docRefCheckToggled } = actionCreators;
+const { docRefSelectionToggled } = actionCreators;
 
 const enhance = compose(
   connect(
-    (
-      {
-        docExplorer: { documentTree },
-        docRefListing,
-      },
-      { listingId, docRefUuid },
-    ) => ({
+    ({ docExplorer: { documentTree }, docRefListing, keyIsDown }, { listingId, docRefUuid }) => ({
       docRefListing: docRefListing[listingId],
       docRefWithLineage: findItem(documentTree, docRefUuid),
+      keyIsDown,
     }),
     {
-      docRefCheckToggled,
+      docRefSelectionToggled,
     },
   ),
   branch(({ docRefWithLineage: { node } }) => !node, renderNothing),
@@ -33,18 +28,23 @@ const enhance = compose(
 const DocRefListingEntry = ({
   docRefWithLineage: { node },
   listingId,
-  docRefListing: { checkedDocRefUuids, inMultiSelectMode },
+  docRefListing: { selectedDocRefUuids, inMultiSelectMode },
   onNameClick,
   actionBarItems,
   includeBreadcrumb,
-  docRefCheckToggled,
+  docRefSelectionToggled,
+  openDocRef,
+  keyIsDown,
 }) => (
   <div
     key={node.uuid}
     className={`doc-ref-listing__item ${
-      checkedDocRefUuids.includes(node.uuid) ? 'doc-ref-listing__item--selected' : ''
+      selectedDocRefUuids.includes(node.uuid) ? 'doc-ref-listing__item--selected' : ''
     }`}
-    onClick={() => docRefCheckToggled(listingId, node.uuid)}
+    onClick={(e) => {
+      docRefSelectionToggled(listingId, node.uuid, keyIsDown);
+      e.preventDefault();
+    }}
   >
     <div>
       <img
@@ -54,26 +54,40 @@ const DocRefListingEntry = ({
       />
       <span
         className="doc-ref-listing__name"
-        onClick={() => {
+        onClick={(e) => {
           onNameClick(node);
+          e.stopPropagation();
+          e.preventDefault();
         }}
       >
         {node.name}
       </span>
       <span className="doc-ref-listing-entry__action-bar">
         {!inMultiSelectMode &&
-          actionBarItems.map(({ onClick, icon, tooltip, disabled }, i) => (
-            <Popup
-              key={i}
-              trigger={<Button className='action-bar__button' circular onClick={() => onClick(node)} icon={icon} disabled={disabled} />}
-              content={tooltip}
-            />
+          actionBarItems.map(({
+ onClick, icon, tooltip, disabled,
+}, i) => (
+  <Popup
+    key={i}
+    trigger={
+      <Button
+        className="action-bar__button"
+        circular
+        onClick={() => onClick(node)}
+        icon={icon}
+        disabled={disabled}
+      />
+              }
+    content={tooltip}
+  />
           ))}
-        {inMultiSelectMode && <Button className='action-bar__button' circular icon="dont" disabled />}
+        {inMultiSelectMode && (
+          <Button className="action-bar__button" circular icon="dont" disabled />
+        )}
       </span>
     </div>
 
-    {includeBreadcrumb && <DocRefBreadcrumb docRefUuid={node.uuid} />}
+    {includeBreadcrumb && <DocRefBreadcrumb docRefUuid={node.uuid} openDocRef={openDocRef} />}
   </div>
 );
 
@@ -84,7 +98,8 @@ EnhancedDocRefListingEntry.propTypes = {
   docRefUuid: PropTypes.string.isRequired,
   actionBarItems: ActionBarItemsPropType.isRequired,
   includeBreadcrumb: PropTypes.bool.isRequired,
-  onNameClick: PropTypes.func.isRequired
+  onNameClick: PropTypes.func.isRequired,
+  openDocRef: PropTypes.func.isRequired,
 };
 
 EnhancedDocRefListingEntry.defaultProps = {

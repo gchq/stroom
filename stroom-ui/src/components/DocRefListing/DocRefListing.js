@@ -107,14 +107,13 @@ const enhance = compose(
   lifecycle({
     componentDidUpdate(prevProps, prevState, snapshot) {
       const {
-        parentFolder, listingId, docRefs, docRefListingMounted, alwaysFilter, allowMultiSelect, fixedDocRefTypeFilters
+        parentFolder, listingId, allDocRefs, docRefListingMounted, maxResults, allowMultiSelect, fixedDocRefTypeFilters
       } = this.props;
 
-      const parentFolderChanged = parentFolder && parentFolder.uuid !== prevProps.parentFolder.uuid;
-      const docRefsChanged = JSON.stringify(docRefs) !== JSON.stringify(prevProps.docRefs);
+      const docRefsChanged = JSON.stringify(allDocRefs) !== JSON.stringify(prevProps.allDocRefs);
 
-      if (parentFolderChanged || docRefsChanged) {
-        docRefListingMounted(listingId, docRefs, alwaysFilter, allowMultiSelect, fixedDocRefTypeFilters);
+      if (docRefsChanged) {
+        docRefListingMounted(listingId, allDocRefs, maxResults, allowMultiSelect, fixedDocRefTypeFilters);
       }
     },
     componentDidMount() {
@@ -123,14 +122,14 @@ const enhance = compose(
         onUpKey,
         onDownKey,
         listingId,
-        docRefs,
+        allDocRefs,
         onOpenKey,
-        alwaysFilter,
+        maxResults,
         allowMultiSelect,
         fixedDocRefTypeFilters,
       } = this.props;
       
-      docRefListingMounted(listingId, docRefs, alwaysFilter, allowMultiSelect, fixedDocRefTypeFilters);
+      docRefListingMounted(listingId, allDocRefs, maxResults, allowMultiSelect, fixedDocRefTypeFilters);
 
       Mousetrap.bind(upKeys, onUpKey);
       Mousetrap.bind(downKeys, onDownKey);
@@ -228,6 +227,7 @@ const DocRefListing = ({
           actionBarItems={docRefActionBarItems}
           includeBreadcrumb={includeBreadcrumbOnEntries}
           onNameClick={node => openDocRef(node)}
+          openDocRef={openDocRef}
         />
       ))}
     </div>
@@ -241,8 +241,8 @@ EnhancedDocRefListing.propTypes = {
   listingId: PropTypes.string.isRequired,
   parentFolder: DocRefPropType,
   includeBreadcrumbOnEntries: PropTypes.bool.isRequired,
-  docRefs: PropTypes.arrayOf(DocRefPropType).isRequired,
-  alwaysFilter: PropTypes.bool.isRequired,
+  allDocRefs: PropTypes.arrayOf(DocRefPropType).isRequired,
+  maxResults: PropTypes.number.isRequired,
   allowMultiSelect: PropTypes.bool.isRequired,
   folderActionBarItems: ActionBarItemsPropType.isRequired,
   docRefActionBarItems: ActionBarItemsPropType.isRequired,
@@ -251,7 +251,7 @@ EnhancedDocRefListing.propTypes = {
 };
 
 EnhancedDocRefListing.defaultProps = {
-  alwaysFilter: false,
+  maxResults: 0,
   folderActionBarItems: [],
   docRefActionBarItems: [],
   includeBreadcrumbOnEntries: true,

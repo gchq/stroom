@@ -46,7 +46,7 @@ const enhance = compose(
     prepareDocRefRename,
     prepareDocRefMove,
     fetchDocInfo,
-    docRefListing: { checkedDocRefUuids = [] },
+    docRefListing: { selectedDocRefUuids = [] },
   }) => {
     const folderActionBarItems = [
       {
@@ -55,7 +55,7 @@ const enhance = compose(
         tooltip: 'Create a Document',
       },
     ];
-    const multipleDocsSelected = checkedDocRefUuids.length > 1;
+    const multipleDocsSelected = selectedDocRefUuids.length > 1;
     const docRefActionBarItems = [];
     [
       { applyToChecked: multipleDocsSelected, actionBarItems: folderActionBarItems },
@@ -68,12 +68,12 @@ const enhance = compose(
       });
       actionBarItems.push({
         icon: 'copy',
-        onClick: d => prepareDocRefCopy(applyToChecked ? checkedDocRefUuids : [d.uuid]),
+        onClick: d => prepareDocRefCopy(applyToChecked ? selectedDocRefUuids : [d.uuid]),
         tooltip: applyToChecked ? 'Copy checked documents' : 'Copy this document',
       });
       actionBarItems.push({
         icon: 'move',
-        onClick: d => prepareDocRefMove(applyToChecked ? checkedDocRefUuids : [d.uuid]),
+        onClick: d => prepareDocRefMove(applyToChecked ? selectedDocRefUuids : [d.uuid]),
         tooltip: applyToChecked ? 'Move checked documents' : 'Move this document',
       });
       actionBarItems.push({
@@ -83,7 +83,7 @@ const enhance = compose(
       });
       actionBarItems.push({
         icon: 'trash',
-        onClick: d => prepareDocRefDelete(applyToChecked ? checkedDocRefUuids : [d.uuid]),
+        onClick: d => prepareDocRefDelete(applyToChecked ? selectedDocRefUuids : [d.uuid]),
         tooltip: applyToChecked ? 'Delete checked documents' : 'Delete this document',
       });
     });
@@ -104,7 +104,7 @@ const FolderExplorer = ({
       icon="folder"
       title={node.name}
       parentFolder={node}
-      docRefs={node.children}
+      allDocRefs={node.children}
       includeBreadcrumbOnEntries={false}
       allowMultiSelect
       folderActionBarItems={folderActionBarItems}

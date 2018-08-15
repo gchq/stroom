@@ -29,6 +29,7 @@ import { actionCreators as docExplorerActionCreators } from 'components/DocExplo
 
 import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 import { PollyDecorator } from 'lib/storybook/PollyDecorator';
+import { KeyIsDownDecorator } from 'lib/storybook/KeyIsDownDecorator';
 import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
 import { testPipelines, elements, elementProperties } from 'components/PipelineEditor/test';
@@ -57,6 +58,7 @@ const AppChromeWithRouter = () => (
 );
 
 storiesOf('App Chrome', module)
+  .addDecorator(KeyIsDownDecorator())
   .addDecorator(PollyDecoratorWithTestData)
   .addDecorator(ReduxDecorator)
   .addDecorator(DragDropDecorator)
