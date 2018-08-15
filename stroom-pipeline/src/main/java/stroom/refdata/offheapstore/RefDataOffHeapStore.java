@@ -381,7 +381,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     protected RefDataLoader loader(final RefStreamDefinition refStreamDefinition,
                                    final long effectiveTimeMs) {
         //TODO should we pass in an ErrorReceivingProxy so we can log errors with it?
-        RefDataLoader refDataLoader = new RefDataLoaderImpl(
+        RefDataLoader refDataLoader = new OffHeapRefDataLoader(
                 this,
                 byteBufferPool,
                 refStreamDefStripedReentrantLock,
@@ -825,7 +825,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
      * The transaction will be committed when the loader is closed.
      * The loader instance is NOT thread safe so must be used by a single thread.
      */
-    public static class RefDataLoaderImpl implements RefDataLoader {
+    public static class OffHeapRefDataLoader implements RefDataLoader {
 
         private Txn<ByteBuffer> writeTxn = null;
         private final RefDataOffHeapStore refDataOffHeapStore;
@@ -862,17 +862,17 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             CLOSED
         }
 
-        private RefDataLoaderImpl(final RefDataOffHeapStore refDataOffHeapStore,
-                                  final ByteBufferPool byteBufferPool,
-                                  final Striped<Lock> refStreamDefStripedReentrantLock,
-                                  final KeyValueStoreDb keyValueStoreDb,
-                                  final RangeStoreDb rangeStoreDb,
-                                  final ValueStore valueStore,
-                                  final MapDefinitionUIDStore mapDefinitionUIDStore,
-                                  final ProcessingInfoDb processingInfoDb,
-                                  final Env<ByteBuffer> lmdbEnvironment,
-                                  final RefStreamDefinition refStreamDefinition,
-                                  final long effectiveTimeMs) {
+        private OffHeapRefDataLoader(final RefDataOffHeapStore refDataOffHeapStore,
+                                     final ByteBufferPool byteBufferPool,
+                                     final Striped<Lock> refStreamDefStripedReentrantLock,
+                                     final KeyValueStoreDb keyValueStoreDb,
+                                     final RangeStoreDb rangeStoreDb,
+                                     final ValueStore valueStore,
+                                     final MapDefinitionUIDStore mapDefinitionUIDStore,
+                                     final ProcessingInfoDb processingInfoDb,
+                                     final Env<ByteBuffer> lmdbEnvironment,
+                                     final RefStreamDefinition refStreamDefinition,
+                                     final long effectiveTimeMs) {
 
             this.refDataOffHeapStore = refDataOffHeapStore;
             this.byteBufferPool = byteBufferPool;

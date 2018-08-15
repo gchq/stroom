@@ -353,87 +353,90 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                 }
 
             } else if (REFERENCE_ELEMENT.equalsIgnoreCase(localName)) {
-
-                // end of the ref data item so ensure it is persisted in the store
-                try {
-                    if (mapName != null) {
-                        final RefDataLoader refDataLoader = Objects.requireNonNull(refDataLoaderHolder.getRefDataLoader());
-                        final MapDefinition mapDefinition = new MapDefinition(refDataLoader.getRefStreamDefinition(), mapName);
-
-                        if (key != null) {
-                            // TODO we may be able to pass a Consumer<ByteBuffer> and then use a ByteBufferOutputStream
-                            // to write directly to a direct byteBuffer, however we will not know the size up front
-                            // TODO We are holding onto a txn most of the time between put calls. It would probably be
-                            // better to hold onto the kv pairs locally then put them all in a batch so the txn is only
-                            // used for lmdb CRUD and not xml processing. Alternatively change our loader so all
-                            // put calls write txn work is done by a single thread and callers just
-                            LOGGER.trace("Putting key {} into map {}", key, mapDefinition);
-                            boolean didPutSucceed = refDataLoaderHolder.getRefDataLoader()
-                                    .put(mapDefinition, key, refDataValue);
-                            if (!didPutSucceed) {
-                                errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
-                                        LambdaLogger.buildMessage(
-                                                "Unable to load entry for key [{}] as an entry already exists in the store",
-                                                key), null);
-
-                            }
-                        } else if (rangeFrom != null && rangeTo != null) {
-                            if (rangeFrom > rangeTo) {
-                                errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
-                                        "Range from '" + rangeFrom
-                                                + "' must be less than or equal to range to '" + rangeTo + "'",
-                                        null);
-                            } else if (rangeFrom < 0 || rangeTo < 0) {
-                                // negative values cause problems for the ordering of data in LMDB so prevent their use
-                                // when using byteBuffer.putLong, -10, 0 & 10 will be stored in LMDB as 0, 10, -10
-                                errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
-                                        LambdaLogger.buildMessage(
-                                                "Only non-negative numbers are supported (from: {}, to: {})",
-                                                rangeFrom, rangeTo), null);
-
-                            } else {
-                                // convert from inclusive rangeTo to exclusive rangeTo
-                                // if from==to we still record it as a range
-                                final Range<Long> range = new Range<>(rangeFrom, rangeTo + 1);
-                                LOGGER.trace("Putting range {} into map {}", range, mapDefinition);
-                                boolean didPutSucceed = refDataLoaderHolder.getRefDataLoader()
-                                        .put(mapDefinition, range, refDataValue);
-                                if (!didPutSucceed) {
-                                    errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
-                                            LambdaLogger.buildMessage(
-                                                    "Unable to load entry for range [{}] to [{}] as an entry already exists in the store",
-                                                    rangeFrom, rangeTo), null);
-                                }
-                            }
-                        }
-                    }
-                } catch (final RuntimeException e) {
-                    if (warnOnDuplicateKeys) {
-                        errorReceiverProxy.log(Severity.WARNING, null, getElementId(), e.getMessage(), e);
-                    }
-                }
-
-                // Set keys to null.
-                mapName = null;
-                key = null;
-                rangeFrom = null;
-                rangeTo = null;
-                haveSeenXmlInValueElement = false;
-                valueXmlDefaultNamespaceUri = null;
-
-                // reset our buffers ready for the next ref data item
-//                contentBuffer.clear();
-//                byteArrayOutputStream.reset();
-//                LOGGER.trace("saxDocumentSerializer - reset()");
-//                saxDocumentSerializer.reset();
-//                LOGGER.trace("saxDocumentSerializer - startDocument()");
-//                saxDocumentSerializer.startDocument();
+                handleReferenceEndElement();
             }
         }
 
         contentBuffer.clear();
 
         super.endElement(uri, localName, qName);
+    }
+
+    private void handleReferenceEndElement() {
+        // end of the ref data item so ensure it is persisted in the store
+        try {
+            if (mapName != null) {
+                final RefDataLoader refDataLoader = Objects.requireNonNull(refDataLoaderHolder.getRefDataLoader());
+                final MapDefinition mapDefinition = new MapDefinition(refDataLoader.getRefStreamDefinition(), mapName);
+
+                if (key != null) {
+                    // TODO we may be able to pass a Consumer<ByteBuffer> and then use a ByteBufferOutputStream
+                    // to write directly to a direct byteBuffer, however we will not know the size up front
+                    // TODO We are holding onto a txn most of the time between put calls. It would probably be
+                    // better to hold onto the kv pairs locally then put them all in a batch so the txn is only
+                    // used for lmdb CRUD and not xml processing. Alternatively change our loader so all
+                    // put calls write txn work is done by a single thread and callers just
+                    LOGGER.trace("Putting key {} into map {}", key, mapDefinition);
+                    boolean didPutSucceed = refDataLoaderHolder.getRefDataLoader()
+                            .put(mapDefinition, key, refDataValue);
+                    if (!didPutSucceed) {
+                        errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
+                                LambdaLogger.buildMessage(
+                                        "Unable to load entry for key [{}] as an entry already exists in the store",
+                                        key), null);
+
+                    }
+                } else if (rangeFrom != null && rangeTo != null) {
+                    if (rangeFrom > rangeTo) {
+                        errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
+                                "Range from '" + rangeFrom
+                                        + "' must be less than or equal to range to '" + rangeTo + "'",
+                                null);
+                    } else if (rangeFrom < 0 || rangeTo < 0) {
+                        // negative values cause problems for the ordering of data in LMDB so prevent their use
+                        // when using byteBuffer.putLong, -10, 0 & 10 will be stored in LMDB as 0, 10, -10
+                        errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
+                                LambdaLogger.buildMessage(
+                                        "Only non-negative numbers are supported (from: {}, to: {})",
+                                        rangeFrom, rangeTo), null);
+
+                    } else {
+                        // convert from inclusive rangeTo to exclusive rangeTo
+                        // if from==to we still record it as a range
+                        final Range<Long> range = new Range<>(rangeFrom, rangeTo + 1);
+                        LOGGER.trace("Putting range {} into map {}", range, mapDefinition);
+                        boolean didPutSucceed = refDataLoaderHolder.getRefDataLoader()
+                                .put(mapDefinition, range, refDataValue);
+                        if (!didPutSucceed) {
+                            errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
+                                    LambdaLogger.buildMessage(
+                                            "Unable to load entry for range [{}] to [{}] as an entry already exists in the store",
+                                            rangeFrom, rangeTo), null);
+                        }
+                    }
+                }
+            }
+        } catch (final RuntimeException e) {
+            if (warnOnDuplicateKeys) {
+                errorReceiverProxy.log(Severity.WARNING, null, getElementId(), e.getMessage(), e);
+            }
+        }
+
+        // Set keys to null.
+        mapName = null;
+        key = null;
+        rangeFrom = null;
+        rangeTo = null;
+        haveSeenXmlInValueElement = false;
+        valueXmlDefaultNamespaceUri = null;
+
+        // reset our buffers ready for the next ref data item
+//                contentBuffer.clear();
+//                byteArrayOutputStream.reset();
+//                LOGGER.trace("saxDocumentSerializer - reset()");
+//                saxDocumentSerializer.reset();
+//                LOGGER.trace("saxDocumentSerializer - startDocument()");
+//                saxDocumentSerializer.startDocument();
     }
 
     private RefDataValue getRefDataValueFromBuffers() throws SAXException {
