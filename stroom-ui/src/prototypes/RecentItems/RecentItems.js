@@ -30,7 +30,7 @@ const RecentItems = ({ recentItems }) => (
     icon="file outline"
     listingId="recent-items"
     title="Recent Items"
-    docRefs={recentItems}
+    allDocRefs={recentItems}
   />
 );
 

@@ -1,8 +1,4 @@
-import {
-  createActions,
-  combineActions,
-  handleActions,
-} from 'redux-actions';
+import { createActions, combineActions, handleActions } from 'redux-actions';
 import * as JsSearch from 'js-search';
 
 import { mapObject } from 'lib/treeUtils';
@@ -13,14 +9,14 @@ const { docRefTypesReceived } = docRefTypeActionCreators;
 const actionCreators = createActions({
   DOC_REF_LISTING_MOUNTED: (
     listingId,
-    docRefs,
-    alwaysFilter,
+    allDocRefs,
+    maxResults,
     allowMultiSelect,
     fixedDocRefTypeFilters,
   ) => ({
     listingId,
-    docRefs,
-    alwaysFilter,
+    allDocRefs,
+    maxResults,
     allowMultiSelect,
     fixedDocRefTypeFilters,
   }),
@@ -32,7 +28,7 @@ const actionCreators = createActions({
   DOC_REF_TYPE_FILTER_UPDATED: (listingId, docRefTypeFilters) => ({ listingId, docRefTypeFilters }),
   DOC_REF_SELECTION_UP: listingId => ({ listingId, selectionChange: -1 }),
   DOC_REF_SELECTION_DOWN: listingId => ({ listingId, selectionChange: +1 }),
-  DOC_REF_CHECK_TOGGLED: (listingId, uuid) => ({ listingId, uuid }),
+  DOC_REF_SELECTION_TOGGLED: (listingId, uuid) => ({ listingId, uuid }),
 });
 
 const {
@@ -45,13 +41,13 @@ const {
 } = actionCreators;
 
 const defaultStatePerListing = {
-  docRefs: [],
+  allDocRefs: [],
   filteredDocRefs: [],
   docRefTypeFilters: [],
   docRefTypesReceived: false,
   filterTerm: '',
   selectedItem: -1, // Used for simple item selection, by array index
-  checkedDocRefUuids: [],
+  selectedDocRefUuids: [],
   inMultiSelectMode: false,
   search: undefined,
 };
@@ -71,8 +67,8 @@ const reducer = handleActions(
       const {
         payload: {
           listingId,
-          docRefs,
-          alwaysFilter,
+          allDocRefs,
+          maxResults,
           filterTerm,
           docRefTypeFilters,
           allowMultiSelect,
@@ -87,10 +83,9 @@ const reducer = handleActions(
           : listingState.fixedDocRefTypeFilters;
       const allowMultiSelectToUse =
         allowMultiSelect !== undefined ? allowMultiSelect : listingState.allowMultiSelect;
-      const alwaysFilterToUse =
-        alwaysFilter !== undefined ? alwaysFilter : listingState.alwaysFilter;
+      const maxResultsToUse = maxResults !== undefined ? maxResults : listingState.maxResults;
       const filterTermToUse = filterTerm !== undefined ? filterTerm : listingState.filterTerm;
-      const docRefsToUse = docRefs !== undefined ? docRefs : listingState.docRefs;
+      const docRefsToUse = allDocRefs !== undefined ? allDocRefs : listingState.allDocRefs;
       const docRefTypeFiltersToUse =
         fixedDocRefTypeFiltersToUse.length > 0
           ? fixedDocRefTypeFiltersToUse
@@ -109,8 +104,10 @@ const reducer = handleActions(
 
         if (filterTermToUse && filterTermToUse.length > 1) {
           filteredDocRefs = search.search(filterTermToUse);
-        } else if (!alwaysFilterToUse) {
+        } else if (maxResultsToUse === 0) {
           filteredDocRefs = docRefsToUse;
+        } else {
+          filteredDocRefs = docRefsToUse.filter((d, i) => i < maxResultsToUse);
         }
       }
 
@@ -123,12 +120,12 @@ const reducer = handleActions(
         ...state,
         [listingId]: {
           ...listingState,
-          docRefs: docRefsToUse,
+          allDocRefs: docRefsToUse,
           fixedDocRefTypeFilters: fixedDocRefTypeFiltersToUse,
           docRefTypeFilters: docRefTypeFiltersToUse,
           filterTerm: filterTermToUse,
           allowMultiSelect: allowMultiSelectToUse,
-          alwaysFilter: alwaysFilterToUse,
+          maxResults: maxResultsToUse,
           filteredDocRefs,
           search,
         },
@@ -147,35 +144,45 @@ const reducer = handleActions(
           (filteredDocRefs.length + (selectedItem + selectionChange)) % filteredDocRefs.length;
       }
 
+      const selectedDocRefUuids = [filteredDocRefs[nextIndex].uuid];
+
       return {
         ...state,
         [listingId]: {
           ...listingState,
           selectedItem: nextIndex,
+          selectedDocRefUuids,
         },
       };
     },
-    DOC_REF_CHECK_TOGGLED: (state, action) => {
+    DOC_REF_SELECTION_TOGGLED: (state, action) => {
       const {
         payload: { listingId, uuid, isChecked },
       } = action;
       const listingState = state[listingId];
+      let { selectedDocRefUuids, selectedItem } = listingState;
 
-      const isCurrentlySelected = listingState.checkedDocRefUuids.includes(uuid);
-      let checkedDocRefUuids = listingState.checkedDocRefUuids;
+      const isCurrentlySelected = selectedDocRefUuids.includes(uuid);
       if (isCurrentlySelected) {
-        checkedDocRefUuids = checkedDocRefUuids.filter(u => u !== uuid);
+        selectedDocRefUuids = selectedDocRefUuids.filter(u => u !== uuid);
       } else if (listingState.allowMultiSelect) {
-        checkedDocRefUuids = checkedDocRefUuids.concat([uuid]);
+        selectedDocRefUuids = selectedDocRefUuids.concat([uuid]);
       } else {
-        checkedDocRefUuids = [uuid];
+        selectedDocRefUuids = [uuid];
       }
+
+      listingState.filteredDocRefs.forEach((f, i) => {
+        if (selectedDocRefUuids.includes(f.uuid)) {
+          selectedItem = i;
+        }
+      });
 
       return {
         ...state,
         [listingId]: {
           ...listingState,
-          checkedDocRefUuids,
+          selectedDocRefUuids,
+          selectedItem,
         },
       };
     },

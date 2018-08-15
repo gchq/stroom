@@ -41,10 +41,10 @@ const enhance = connect(({ docExplorer: { documentTree } }, props) => {
 const AppSearch = ({ allDocuments }) => (
   <DocRefListingWithRouter
     listingId="app-search"
-    alwaysFilter
+    maxResults={5}
     icon="search"
     title="Search"
-    docRefs={allDocuments}
+    allDocRefs={allDocuments}
   />
 );
 

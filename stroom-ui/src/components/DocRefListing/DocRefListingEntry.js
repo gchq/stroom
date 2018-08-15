@@ -9,7 +9,7 @@ import { DocRefBreadcrumb } from 'components/DocRefBreadcrumb';
 import ActionBarItemsPropType from './ActionBarItemsPropType';
 import { actionCreators } from './redux';
 
-const { docRefCheckToggled } = actionCreators;
+const { docRefSelectionToggled } = actionCreators;
 
 const enhance = compose(
   connect(
@@ -24,7 +24,7 @@ const enhance = compose(
       docRefWithLineage: findItem(documentTree, docRefUuid),
     }),
     {
-      docRefCheckToggled,
+      docRefSelectionToggled,
     },
   ),
   branch(({ docRefWithLineage: { node } }) => !node, renderNothing),
@@ -33,18 +33,19 @@ const enhance = compose(
 const DocRefListingEntry = ({
   docRefWithLineage: { node },
   listingId,
-  docRefListing: { checkedDocRefUuids, inMultiSelectMode },
+  docRefListing: { selectedDocRefUuids, inMultiSelectMode },
   onNameClick,
   actionBarItems,
   includeBreadcrumb,
-  docRefCheckToggled,
+  docRefSelectionToggled,
+  openDocRef
 }) => (
   <div
     key={node.uuid}
     className={`doc-ref-listing__item ${
-      checkedDocRefUuids.includes(node.uuid) ? 'doc-ref-listing__item--selected' : ''
+      selectedDocRefUuids.includes(node.uuid) ? 'doc-ref-listing__item--selected' : ''
     }`}
-    onClick={() => docRefCheckToggled(listingId, node.uuid)}
+    onClick={() => docRefSelectionToggled(listingId, node.uuid)}
   >
     <div>
       <img
@@ -54,8 +55,9 @@ const DocRefListingEntry = ({
       />
       <span
         className="doc-ref-listing__name"
-        onClick={() => {
+        onClick={e => {
           onNameClick(node);
+          e.stopPropagation();
         }}
       >
         {node.name}
@@ -73,7 +75,7 @@ const DocRefListingEntry = ({
       </span>
     </div>
 
-    {includeBreadcrumb && <DocRefBreadcrumb docRefUuid={node.uuid} />}
+    {includeBreadcrumb && <DocRefBreadcrumb docRefUuid={node.uuid} openDocRef={openDocRef} />}
   </div>
 );
 
@@ -84,7 +86,8 @@ EnhancedDocRefListingEntry.propTypes = {
   docRefUuid: PropTypes.string.isRequired,
   actionBarItems: ActionBarItemsPropType.isRequired,
   includeBreadcrumb: PropTypes.bool.isRequired,
-  onNameClick: PropTypes.func.isRequired
+  onNameClick: PropTypes.func.isRequired,
+  openDocRef: PropTypes.func.isRequired
 };
 
 EnhancedDocRefListingEntry.defaultProps = {
