@@ -1,0 +1,26 @@
+$themes: (
+  light: (
+    backgroundColor: #fff,
+    textColor: rgba(0,0,0,.8),
+    buttonTextColor: rgba(0,0,0,.6),
+    buttonTextTransform: none,
+    buttonTextHoverColor: #61b0e7,
+    buttonColor: #dfe0e1,
+    buttonBorder: 0px solid #fff,
+    sidebarBackgroundColor:#2185d0,
+    sidebarColor: rgba(255,255,255,0.9),
+    sidebarHeaderColor: #fff,
+  ),
+  dark: (
+    backgroundColor: #222,
+    textColor: #ddd,
+    buttonTextColor: #aaa,
+    buttonTextTransform: uppercase,
+    buttonTextHoverColor: #ddd,
+    buttonColor: #333,
+    buttonBorder: 1px solid #aaa,
+    sidebarBackgroundColor: #4d5250,
+    sidebarColor: #fff,
+    sidebarHeaderColor: #ff6f00,
+  ),
+);

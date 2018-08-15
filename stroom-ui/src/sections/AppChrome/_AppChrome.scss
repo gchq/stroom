@@ -1,29 +1,34 @@
-.app-chrome {
+.app-container {
   display: flex;
   flex-direction: row;
   height: 100%;
   width: 100%;
 }
 
+.app-chrome {
+  display: flex;
+  flex-direction: row;
+  height: calc(
+    100% - 14px
+  ); // I don't know why we need to offset the hight here. Someone please tell me.
+  width: 100%;
+}
+
 .app-chrome__sidebar {
   height: inherit;
-  background-color: $dark-grey;
 }
 
 .app-chrome__sidebar-menu {
   height: inherit;
-  background-color: $dark-grey;
   width: 15rem;
   overflow-y: auto;
 }
 
 .app-chrome__sidebar__toggle {
-  background-color: $dark-grey !important;
   color: #ff6f00 !important;
 }
 
 .app-chrome__sidebar__buttons .button {
-  background-color: $dark-grey !important;
   color: white !important;
 }
 
@@ -39,7 +44,7 @@
 
 .sidebar__menu-item--doc {
   background-color: $dark-grey;
-  color: #cacbcb !important;
+  color: #cacbcb;
   padding: 0.1rem;
   color: white;
   outline: inherit;
@@ -50,9 +55,10 @@
 }
 
 .app-chrome__content {
-  flex-grow: 1;
-  width: auto;
-  height: inherit;
+  width: 100%;
+  height: calc(
+    100% + 14px
+  ); //TODO: sobs. This offsets the offset I can't explain on .app-chrome.
 }
 
 .content-tabs {
@@ -63,9 +69,9 @@
 }
 
 .content-tabs__content {
-  height: inherit;
-  flex-grow: 1;
-  overflow: hidden;
+  display: flex;
+  flex-flow: column;
+  height: 100%;
 }
 
 .app-chrome__content .ui.grid {
@@ -73,8 +79,7 @@
 }
 
 .content-tabs__grid {
-  background-color: white; // TODO: maybe we want a bottom border, maybe we don't?
-  // border-bottom: 1px solid lightgrey;
+  background-color: white;
 }
 
 .app-chrome__content .ui.grid .column {
@@ -99,11 +104,8 @@
 }
 
 .sidebar__logo {
+  display: inline;
   position: relative;
   top: 0.3rem;
-  width: 90px !important; // font-weight: bold !important; // background-color: #ff6f00 !important;
-}
-
-.sidebar__logo path {
-  fill: #2185d0;
+  width: 90px !important; 
 }

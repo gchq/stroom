@@ -1,0 +1,90 @@
+@import "themes.scss";
+@mixin themify($themes: $themes) {
+  @each $theme, $map in $themes {
+    .theme-#{$theme} & {
+      $theme-map: () !global;
+      @each $key, $submap in $map {
+        $value: map-get(map-get($themes, $theme), "#{$key}");
+        $theme-map: map-merge(
+          $theme-map,
+          (
+            $key: $value
+          )
+        ) !global;
+      }
+      @content;
+      $theme-map: null !global;
+    }
+  }
+}
+
+@function themed($key) {
+  @return map-get($theme-map, $key);
+}
+
+.app-chrome {
+  @include themify($themes) {
+    color: themed("textColor");
+    background-color: themed("backgroundColor");
+  }
+  .title {
+    font-family: sans-serif;
+    font-weight: lighter;
+  }
+  .button {
+    cursor: pointer;
+    border-radius: 5px;
+    padding: 15px 32px;
+    display: inline-block;
+    transition: color 0.1s, border-color 0.1s, background-color 0.1s;
+    @include themify($themes) {
+      border: themed("buttonBorder");
+      color: themed("buttonTextColor");
+      border-color: themed("buttonTextColor");
+      background-color: themed("buttonColor");
+      text-transform: themed("buttonTextTransform");
+      &:hover {
+        color: themed("buttonTextHoverColor");
+        border-color: themed("buttonTextHoverColor");
+        background-color: themed("buttonHoverColor");
+      }
+    }
+  }
+}
+
+.app-chrome__sidebar-menu {
+  @include themify($themes) {
+    background-color: themed('sidebarBackgroundColor');
+  }
+}
+.app-chrome__sidebar {
+  @include themify($themes) {
+    background-color: themed('sidebarBackgroundColor');
+  }
+}
+.app-chrome__sidebar__toggle {
+  @include themify($themes) {
+    background-color: themed('sidebarBackgroundColor') !important;
+    color: themed('sidebarHeaderColor') !important;
+  }
+}
+
+.app-chrome__sidebar__buttons .button {
+  @include themify($themes) {
+    background-color: themed('sidebarBackgroundColor');
+    color: themed('sidebarHeaderColor');
+  }
+}
+
+.sidebar__logo svg path {
+  @include themify($themes) {
+    fill: themed('sidebarHeaderColor');
+  }
+}
+
+.sidebar__menu-item--doc {
+  @include themify($themes) {
+    background-color: themed('sidebarBackgroundColor');
+    color: themed('sidebarColor');
+  }
+}
