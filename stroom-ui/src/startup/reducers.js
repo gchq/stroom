@@ -37,6 +37,7 @@ import { reducer as config } from './config';
 import { reducer as fetch } from 'lib/fetchTracker.redux';
 import { reducer as dataViewers } from 'components/DataViewer';
 import { reducer as keyIsDown } from 'prototypes/KeyIsDown';
+import { reducer as userSettings } from 'prototypes/UserSettings';
 
 export default combineReducers({
   routing: routerReducer,
@@ -59,4 +60,5 @@ export default combineReducers({
   appChrome,
   docRefListing,
   folderExplorer,
+  userSettings
 });

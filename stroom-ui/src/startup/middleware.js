@@ -18,7 +18,7 @@ import { applyMiddleware, compose } from 'redux';
 import { routerMiddleware } from 'react-router-redux';
 import thunk from 'redux-thunk';
 import createHistory from 'history/createBrowserHistory';
-// import storybookMiddleware from 'lib/storybook/actionsMiddleware';
+import persistState from 'redux-localstorage';
 import logger from 'redux-logger';
 
 const enhancers = [];
@@ -36,5 +36,6 @@ export default compose(
   // TODO: adding storybookMiddleware causes "Error: Accessing nonexistent addons channel, see https://storybook.js.org/basics/faq/#why-is-there-no-addons-channel"
   // applyMiddleware(thunk, routerMiddleware(history), logger, storybookMiddleware),
   applyMiddleware(thunk, routerMiddleware(history), logger),
+  persistState('userSettings'),
   ...enhancers,
 );

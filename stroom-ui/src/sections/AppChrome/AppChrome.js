@@ -27,7 +27,10 @@ import { withExplorerTree } from 'components/DocExplorer';
 import withLocalStorage from 'lib/withLocalStorage';
 import { openDocRef } from 'prototypes/RecentItems';
 
+import {actionCreators as userSettingsActionCreators } from 'prototypes/UserSettings'
+
 const { menuItemOpened } = appChromeActionCreators;
+const {themeChanged} = userSettingsActionCreators;
 
 const withIsExpanded = withLocalStorage('isExpanded', 'setIsExpanded', true);
 
@@ -51,21 +54,15 @@ const getDocumentTreeMenuItems = (openDocRef, treeNode, skipInContractedMenu = f
 const enhance = compose(
   withExplorerTree,
   connect(
-    (
-      {
-        docExplorer: {
-          explorerTree: { documentTree },
-        },
-        appChrome: { menuItemsOpen },
-      },
-      props,
-    ) => ({
-      documentTree,
-      menuItemsOpen,
+    (state, props) => ({
+      documentTree: state.docExplorer.explorerTree.documentTree,
+      menuItemsOpen: state.appChrome.menuItemsOpen,
+      theme: state.userSettings.theme
     }),
     {
       menuItemOpened,
       openDocRef,
+      themeChanged
     },
   ),
   withRouter,
@@ -216,8 +213,15 @@ const AppChrome = ({
   menuItemsOpen,
   menuItemOpened,
   setIsExpanded,
-}) => (
-  <div className="app-container theme-light">
+  theme,
+  themeChanged
+}) => { 
+  if(theme === undefined) {
+    theme = 'theme-light';
+    themeChanged(theme);
+  }
+  return (
+  <div className={`app-container ${theme}`}>
     <div className="app-chrome">
       <div className="app-chrome__sidebar">
         {isExpanded ? (
@@ -259,7 +263,7 @@ const AppChrome = ({
       </div>
     </div>
     </div>
-);
+)};
 
 AppChrome.contextTypes = {
   store: PropTypes.object,

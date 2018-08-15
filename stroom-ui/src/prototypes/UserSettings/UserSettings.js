@@ -17,13 +17,50 @@ import React from 'react';
 
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
-import { Header, Icon } from 'semantic-ui-react';
+import { Header, Icon, Dropdown, Container, Grid } from 'semantic-ui-react';
 
+import { actionCreators } from './redux';
+import withLocalStorage from 'lib/withLocalStorage';
 import WithHeader from 'components/WithHeader';
 
-const enhance = compose(connect(({ state, props }) => ({}), {}));
+const { themeChanged } = actionCreators;
 
-const RawUserSettings = props => <div>User Settings</div>;
+const themeOptions = [
+  {
+    text: 'Light',
+    value: 'theme-light',
+  },
+  {
+    text: 'Dark',
+    value: 'theme-dark',
+  },
+];
+const enhance = compose(connect(
+  (state, props) => ({
+    theme: state.userSettings.theme,
+  }),
+  { themeChanged },
+));
+
+const RawUserSettings = ({ theme, themeChanged }) => (
+  <div className="UserSettings__container">
+    <h3>User Settings</h3>
+    <Grid>
+      <Grid.Column width={6}>Theme:</Grid.Column>
+      <Grid.Column width={10}>
+        <Dropdown
+          fluid
+          selection
+          options={themeOptions}
+          value={theme}
+          onChange={(_, data) => {
+            themeChanged(data.value);
+          }}
+        />
+      </Grid.Column>
+    </Grid>
+  </div>
+);
 
 const RawWithHeader = props => (
   <WithHeader
