@@ -14,6 +14,5 @@
  * limitations under the License.
  */
 export default {
-  DOC_REF: 'docRef',
-  FOLDER: 'folder',
+  DOC_REF_UUIDS: 'docRef',
 };

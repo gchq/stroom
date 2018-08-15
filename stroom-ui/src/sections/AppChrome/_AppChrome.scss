@@ -17,7 +17,7 @@
   overflow-y: auto;
 }
 
-.sidebar__menu-item--nav {
+.sidebar__menu-item.nav {
   padding: 0.4rem;
   color: white;
   outline: inherit;
@@ -27,7 +27,7 @@
   overflow-x: hidden;
 }
 
-.sidebar__menu-item--doc {
+.sidebar__menu-item.doc {
   background-color: $semantic-blue-lighten;
   padding: 0.1rem;
   color: white;
@@ -38,6 +38,16 @@
   overflow-x: hidden;
 }
 
+.sidebar__menu-item.doc.dnd-over {
+  text-decoration: italic;
+}
+
+.sidebar__menu-item.doc.can-drop {
+  color: green;
+}
+.sidebar__menu-item.doc.cannot-drop {
+  color: red;
+}
 .app-chrome__content {
   flex-grow: 1;
   width: auto;

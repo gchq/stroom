@@ -166,6 +166,12 @@ const reducer = handleActions(
         selectedDocRefUuids, selectedItem, filteredDocRefs, allowMultiSelect,
       } = listingState;
 
+      const addToSelection = (arr, uuid) => {
+        if (!arr.includes(uuid)) {
+          arr.push(uuid);
+        }
+      }
+
       const isCurrentlySelected = selectedDocRefUuids.includes(uuid);
       if (isCurrentlySelected) {
         if (keyIsDown.Control || keyIsDown.Meta) {
@@ -189,19 +195,19 @@ const reducer = handleActions(
                   phase = 2
                 }
                 if (phase > 0) {
-                  selectedDocRefUuids.push(n.uuid);
+                  addToSelection(selectedDocRefUuids, n.uuid);
                 }
                 break;
               }
               case 1: { // Looking for existing selection
-                selectedDocRefUuids.push(n.uuid);
+                addToSelection(selectedDocRefUuids, n.uuid);
 
                 if (selectedDocRefUuids.includes(n.uuid)) {
                   phase = 100; // finished finding selection run
                 }
               }
               case 2: { // Looking for the newly made selection
-                selectedDocRefUuids.push(n.uuid);
+                addToSelection(selectedDocRefUuids, n.uuid);
                 
                 if (n.uuid === uuid) {
                   phase = 100; // finished finding selection run

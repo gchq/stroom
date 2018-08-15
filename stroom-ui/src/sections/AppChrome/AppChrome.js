@@ -26,6 +26,7 @@ import { actionCreators as appChromeActionCreators } from './redux';
 import { withExplorerTree } from 'components/DocExplorer';
 import withLocalStorage from 'lib/withLocalStorage';
 import { openDocRef } from 'prototypes/RecentItems';
+import MenuItem from './MenuItem';
 
 const { menuItemOpened } = appChromeActionCreators;
 
@@ -42,6 +43,7 @@ const getDocumentTreeMenuItems = (openDocRef, treeNode, skipInContractedMenu = f
   icon: 'folder',
   style: skipInContractedMenu ? 'doc' : 'nav',
   skipInContractedMenu,
+  docRef: treeNode,
   children:
     treeNode.children &&
     treeNode.children.length > 0 &&
@@ -53,13 +55,7 @@ const getDocumentTreeMenuItems = (openDocRef, treeNode, skipInContractedMenu = f
 const enhance = compose(
   withExplorerTree,
   connect(
-    (
-      {
-        docExplorer: { documentTree },
-        appChrome: { menuItemsOpen },
-      },
-      props,
-    ) => ({
+    ({ docExplorer: { documentTree }, appChrome: { menuItemsOpen } }, props) => ({
       documentTree,
       menuItemsOpen,
     }),
@@ -158,41 +154,23 @@ const enhance = compose(
   })),
 );
 
-const getExpandedMenuItems = (menuItems, menuItemsOpen, menuItemOpened, depth = 0) =>
+const getExpandedMenuItems = (
+  menuItems,
+  menuItemsOpen,
+  menuItemOpened,
+  depth = 0,
+) =>
   menuItems.map(menuItem => (
     <React.Fragment key={menuItem.key}>
-      <div
-        className={`sidebar__menu-item--${menuItem.style}`}
-        style={{ paddingLeft: `${depth * 0.7}rem` }}
-      >
-        {menuItem.children && menuItem.children.length > 0 ? (
-          <Icon
-            onClick={(e) => {
-              menuItemOpened(menuItem.key, !menuItemsOpen[menuItem.key]);
-              e.preventDefault();
-            }}
-            name={`caret ${menuItemsOpen[menuItem.key] ? 'down' : 'right'}`}
-          />
-        ) : menuItem.key !== 'stroom' ? (
-          <Icon />
-        ) : (
-          undefined
-        )}
-        <Icon name={menuItem.icon} />
-        <span
-          onClick={() => {
-            if (menuItem.children) {
-              menuItemOpened(menuItem.key, !menuItemsOpen[menuItem.key]);
-            }
-            menuItem.onClick();
-          }}
-        >
-          {menuItem.title}
-        </span>
-      </div>
+      <MenuItem menuItem={menuItem} menuItemsOpen={menuItemsOpen} menuItemOpened={menuItemOpened} depth={depth} />
       {menuItem.children &&
         menuItemsOpen[menuItem.key] &&
-        getExpandedMenuItems(menuItem.children, menuItemsOpen, menuItemOpened, depth + 1)}
+        getExpandedMenuItems(
+          menuItem.children,
+          menuItemsOpen,
+          menuItemOpened,
+          depth + 1,
+        )}
     </React.Fragment>
   ));
 

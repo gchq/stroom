@@ -3,13 +3,41 @@ import PropTypes from 'prop-types';
 import { compose, branch, renderNothing } from 'recompose';
 import { connect } from 'react-redux';
 import { Popup, Button } from 'semantic-ui-react/dist/commonjs';
+import { DragSource } from 'react-dnd';
 
 import { findItem } from 'lib/treeUtils';
 import { DocRefBreadcrumb } from 'components/DocRefBreadcrumb';
 import ActionBarItemsPropType from './ActionBarItemsPropType';
 import { actionCreators } from './redux';
+import ItemTypes from './dragDropTypes';
 
 const { docRefSelectionToggled } = actionCreators;
+
+const dragSource = {
+  canDrag(props) {
+    return true;
+  },
+  beginDrag({docRefUuid, docRefListing: { selectedDocRefUuids, filteredDocRefs}, keyIsDown:{Control, Meta}}) {
+    let docRefUuids = [docRefUuid];
+
+    // If we are dragging one of the items in a selection, bring across the entire selection
+    if (selectedDocRefUuids.includes(docRefUuid)) {
+      docRefUuids = selectedDocRefUuids;
+    }
+
+    return {
+      docRefs: filteredDocRefs.filter(d => docRefUuids.includes(d.uuid)),
+      isCopy: !!(Control || Meta),
+    };
+  },
+};
+
+function dragCollect(connect, monitor) {
+  return {
+    connectDragSource: connect.dragSource(), 
+    isDragging: monitor.isDragging(),
+  };
+}
 
 const enhance = compose(
   connect(
@@ -23,6 +51,7 @@ const enhance = compose(
     },
   ),
   branch(({ docRefWithLineage: { node } }) => !node, renderNothing),
+  DragSource(ItemTypes.DOC_REF_UUIDS, dragSource, dragCollect),
 );
 
 const DocRefListingEntry = ({
@@ -35,36 +64,36 @@ const DocRefListingEntry = ({
   docRefSelectionToggled,
   openDocRef,
   keyIsDown,
-}) => (
-  <div
-    key={node.uuid}
-    className={`doc-ref-listing__item ${
-      selectedDocRefUuids.includes(node.uuid) ? 'doc-ref-listing__item--selected' : ''
-    }`}
-    onClick={(e) => {
-      docRefSelectionToggled(listingId, node.uuid, keyIsDown);
-      e.preventDefault();
-    }}
-  >
-    <div>
-      <img
-        className="stroom-icon--large"
-        alt="X"
-        src={require(`../../images/docRefTypes/${node.type}.svg`)}
-      />
-      <span
-        className="doc-ref-listing__name"
-        onClick={(e) => {
-          onNameClick(node);
-          e.stopPropagation();
-          e.preventDefault();
-        }}
-      >
-        {node.name}
-      </span>
-      <span className="doc-ref-listing-entry__action-bar">
-        {!inMultiSelectMode &&
-          actionBarItems.map(({
+  connectDragSource,
+}) => connectDragSource(<div
+  key={node.uuid}
+  className={`doc-ref-listing__item ${
+        selectedDocRefUuids.includes(node.uuid) ? 'doc-ref-listing__item--selected' : ''
+      }`}
+  onClick={(e) => {
+        docRefSelectionToggled(listingId, node.uuid, keyIsDown);
+        e.preventDefault();
+      }}
+>
+  <div>
+    <img
+      className="stroom-icon--large"
+      alt="X"
+      src={require(`../../images/docRefTypes/${node.type}.svg`)}
+    />
+    <span
+      className="doc-ref-listing__name"
+      onClick={(e) => {
+            onNameClick(node);
+            e.stopPropagation();
+            e.preventDefault();
+          }}
+    >
+      {node.name}
+    </span>
+    <span className="doc-ref-listing-entry__action-bar">
+      {!inMultiSelectMode &&
+            actionBarItems.map(({
  onClick, icon, tooltip, disabled,
 }, i) => (
   <Popup
@@ -77,19 +106,18 @@ const DocRefListingEntry = ({
         icon={icon}
         disabled={disabled}
       />
-              }
+                }
     content={tooltip}
   />
-          ))}
-        {inMultiSelectMode && (
-          <Button className="action-bar__button" circular icon="dont" disabled />
-        )}
-      </span>
-    </div>
-
-    {includeBreadcrumb && <DocRefBreadcrumb docRefUuid={node.uuid} openDocRef={openDocRef} />}
+            ))}
+      {inMultiSelectMode && (
+      <Button className="action-bar__button" circular icon="dont" disabled />
+          )}
+    </span>
   </div>
-);
+
+  {includeBreadcrumb && <DocRefBreadcrumb docRefUuid={node.uuid} openDocRef={openDocRef} />}
+</div>);
 
 const EnhancedDocRefListingEntry = enhance(DocRefListingEntry);
 
