@@ -262,7 +262,7 @@ const ExpressionTerm = ({
 
   return connectDragSource(<div className={className}>
     <span>
-      <Icon color="grey" name="bars" />
+      <Icon name="bars" />
     </span>
     <Confirm
       open={!!pendingDeletion}

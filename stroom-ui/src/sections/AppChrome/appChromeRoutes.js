@@ -22,7 +22,7 @@ const UsersIFrame = ({ config: { authUsersUiUrl } }) => (
   <WithHeader
     header={
       <Header as="h3">
-        <Icon color="grey" name="users" />
+        <Icon name="users" />
         <Header.Content>Users</Header.Content>
       </Header>
     }
@@ -35,7 +35,7 @@ const ApiTokensIFrame = ({ config: { authTokensUiUrl } }) => (
   <WithHeader
     header={
       <Header as="h3">
-        <Icon color="grey" name="key" />
+        <Icon name="key" />
         <Header.Content>API Keys</Header.Content>
       </Header>
     }

@@ -1,20 +1,41 @@
+.app-container {
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+}
+
 .app-chrome {
   display: flex;
   flex-direction: row;
-  height: 100%;
   width: 100%;
+  height: 100%;
 }
 
 .app-chrome__sidebar {
   height: inherit;
-  background-color: $semantic-blue;
 }
 
 .app-chrome__sidebar-menu {
-  height: inherit;
-  background-color: $semantic-blue;
   width: 15rem;
   overflow-y: auto;
+  padding-top: 40px;
+}
+
+.app-chrome__sidebar__toggle {
+  color: #ff6f00 !important;
+  position: absolute;
+}
+
+.app-chrome__sidebar__toggle_collapsed {
+  position: relative;
+}
+
+.app-chrome__sidebar__buttons .button {
+  color: white !important;
+}
+
+.app-chrome__sidebar_header {
+  position: absolute;
 }
 
 .sidebar__menu-item.nav {
@@ -28,7 +49,8 @@
 }
 
 .sidebar__menu-item.doc {
-  background-color: $semantic-blue-lighten;
+  background-color: $dark-grey;
+  color: #cacbcb;
   padding: 0.1rem;
   color: white;
   outline: inherit;
@@ -49,9 +71,8 @@
   color: red;
 }
 .app-chrome__content {
-  flex-grow: 1;
-  width: auto;
-  height: inherit;
+  width: 100%;
+  height: 100%;
 }
 
 .content-tabs {
@@ -62,9 +83,9 @@
 }
 
 .content-tabs__content {
-  height: inherit;
-  flex-grow: 1;
-  overflow: hidden;
+  display: flex;
+  flex-flow: column;
+  height: 100%;
 }
 
 .app-chrome__content .ui.grid {
@@ -72,7 +93,6 @@
 }
 
 .content-tabs__grid {
-  // Get rid of semantic UIs annoying margins and add bottom border as a divider.
 }
 
 .app-chrome__content .ui.grid .column {
@@ -93,11 +113,15 @@
 
 .app-chrome__content .ui.grid h3 {
   // Correctly align the title
-  padding-top: 0.3rem !important;
+  // padding-top: 0.3rem !important;
 }
 
 .sidebar__logo {
-  position: relative;
-  top: 0.3rem;
-  width: 90px !important; // font-weight: bold !important; // background-color: #ff6f00 !important;
+  display: inline;
+  align-items: center;
+  position: absolute;
+  left: 40px;
+  // position: relative;
+  // top: 0.3rem;
+  // width: 90px !important;
 }

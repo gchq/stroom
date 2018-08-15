@@ -26,7 +26,7 @@ const PathNotFound = ({ message }) => (
   <WithHeader
     header={
       <Header as="h3">
-        <Icon color="grey" name="exclamation triangle" />
+        <Icon name="exclamation triangle" />
         <Header.Content>Not Found</Header.Content>
       </Header>
     }

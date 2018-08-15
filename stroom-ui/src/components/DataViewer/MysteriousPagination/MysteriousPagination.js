@@ -107,8 +107,8 @@ const MysteriousPagination = ({
           <Icon name="right arrow" />
         </Button>
       </Button.Group>
-      <span className="MysteriousPagination__pageSizeSelection">
-        Show{' '}
+      <div className="MysteriousPagination__pageSizeSelection">
+        <div>Show&nbsp;</div>
         <Dropdown
           floating
           inline
@@ -118,7 +118,7 @@ const MysteriousPagination = ({
             onPageChange(pageOffset, data.value);
           }}
         />
-      </span>
+      </div>
     </React.Fragment>
   );
 };

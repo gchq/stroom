@@ -1,3 +1,7 @@
+.SearchBar {
+  width: 100%;
+}
+
 .SearchBar__input {
   width: 100%;
 }
@@ -8,6 +12,7 @@
 
 .SearchBar__layoutGrid {
   margin: 0 !important;
+  width: 100%;
 }
 
 .SearchBar__validationMessages {

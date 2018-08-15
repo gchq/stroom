@@ -170,7 +170,7 @@ const DocRefListing = ({
     <Grid className="content-tabs__grid">
       <Grid.Column width={(folderActionBarItems.length > 0) ? 6 : 8}>
         <Header as="h3">
-          <Icon color="grey" name={icon} />
+          <Icon name={icon} />
           <Header.Content>{title}</Header.Content>
           {parentFolder && (
             <Header.Subheader>
