@@ -11,6 +11,8 @@ $themes: (
     sidebarColor: rgba(255,255,255,0.9),
     sidebarHeaderColor: #fff,
     headerIconColor: #2185d0,
+    tableBackgroundColor:#fff,
+    tableBorderColor: #dfe0e1,
   ),
   dark: (
     backgroundColor: #282829,
@@ -24,5 +26,7 @@ $themes: (
     sidebarColor: #fff,
     sidebarHeaderColor: #ff6f00,
     headerIconColor: #2185d0,
+    tableBackgroundColor:#4d5250,
+    tableBorderColor: #4d5250,
   ),
 );

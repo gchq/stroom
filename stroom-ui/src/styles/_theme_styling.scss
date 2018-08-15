@@ -102,3 +102,27 @@
     color: themed('headerIconColor');
   }
 }
+
+table {
+  @include themify($themes) {
+    // '!important because it overrides SUI
+    background-color: themed('tableBackgroundColor') !important ;
+    color: themed('textColor') !important;
+    border: themed('tableBorderColor') !important;
+  }
+
+  td {
+    @include themify($themes) {
+      // '!important because it overrides SUI
+      color: themed('textColor') !important;
+    }
+  }
+
+  th {
+    @include themify($themes) {
+      // '!important because it overrides SUI
+      background-color: themed('tableBackgroundColor') !important ;
+      color: themed('textColor') !important;
+    }
+  }
+}

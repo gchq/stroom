@@ -31,7 +31,7 @@ const Welcome = props => (
       <div className="Welcome__container">
         <div className="Welcome">
           <h4>Global shortcut keys</h4>
-          <Table definition className="Welcome__shortcutKeysTable">
+          <Table className="Welcome__shortcutKeysTable">
             <Table.Header>
               <Table.Row>
                 <Table.HeaderCell />
