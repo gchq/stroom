@@ -1,6 +1,5 @@
 package stroom.refdata.onheapstore;
 
-import com.google.common.util.concurrent.Striped;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Range;
@@ -23,7 +22,6 @@ import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
 class OnHeapRefDataLoader implements RefDataLoader {
@@ -37,7 +35,6 @@ class OnHeapRefDataLoader implements RefDataLoader {
     private final RefStreamDefinition refStreamDefinition;
     private final long effectiveTimeMs;
     private boolean overwriteExisting = false;
-    private final Lock refStreamDefReentrantLock;
     private final Map<RefStreamDefinition, RefDataProcessingInfo> processingInfoMap;
     private final Set<MapDefinition> mapDefinitions;
     private final Map<KeyValueMapKey, RefDataValue> keyValueMap;
@@ -58,7 +55,6 @@ class OnHeapRefDataLoader implements RefDataLoader {
 
     OnHeapRefDataLoader(final RefStreamDefinition refStreamDefinition,
                         final long effectiveTimeMs,
-                        final Striped<Lock> refStreamDefStripedReentrantLock,
                         final Map<RefStreamDefinition, RefDataProcessingInfo> processingInfoMap,
                         final Set<MapDefinition> mapDefinitions,
                         final Map<KeyValueMapKey, RefDataValue> keyValueMap,
@@ -72,19 +68,6 @@ class OnHeapRefDataLoader implements RefDataLoader {
         this.keyValueMap = keyValueMap;
         this.rangeValueNestedMap = rangeValueNestedMap;
         this.refDataStore = refDataStore;
-        this.refStreamDefReentrantLock = refStreamDefStripedReentrantLock.get(refStreamDefinition);
-
-        LAMBDA_LOGGER.logDurationIfDebugEnabled(
-                () -> {
-                    try {
-                        LOGGER.debug("Acquiring lock");
-                        refStreamDefReentrantLock.lockInterruptibly();
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        throw new RuntimeException("Load aborted due to thread interruption");
-                    }
-                },
-                () -> LambdaLogger.buildMessage("Acquiring lock for {}", refStreamDefinition));
     }
 
     @Override

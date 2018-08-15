@@ -95,15 +95,12 @@ public class TestReferenceData extends AbstractRefDataOffHeapStoreTest {
     @Mock
     private ReferenceDataLoader mockReferenceDataLoader;
 
-    //    @Inject
-//    private RefDataStoreHolder refDataStoreHolder;
     @Inject
     private PipelineScopeRunnable pipelineScopeRunnable;
 
     @Before
     public void setup() {
         super.setup();
-//        refDataStoreHolder = injector.getInstance(RefDataStoreHolder.class);
         injector.injectMembers(this);
 
         MockitoAnnotations.initMocks(this);

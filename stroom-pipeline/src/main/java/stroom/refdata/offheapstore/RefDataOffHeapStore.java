@@ -445,7 +445,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                             procInfoPooledBufferPair);
 
                     return optProcInfoBufferPair.map(procInfoBufferPair -> {
-                        RefStreamDefinition refStreamDefinition = processingInfoDb.deserializeKey(procInfoBufferPair.getKeyBuffer());
+                        RefStreamDefinition refStreamDefinition = processingInfoDb.deserializeKey(
+                                procInfoBufferPair.getKeyBuffer());
 
                         // update the current key buffer so we can search from here next time
                         currRefStreamDefBufRef.set(procInfoBufferPair.getKeyBuffer());
@@ -899,11 +900,13 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             LAMBDA_LOGGER.logDurationIfDebugEnabled(
                     () -> {
                         try {
-                            LOGGER.debug("Acquiring lock");
+                            LOGGER.debug("Acquiring lock for {}", refStreamDefinition);
                             refStreamDefReentrantLock.lockInterruptibly();
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
-                            throw new RuntimeException("Load aborted due to thread interruption");
+                            throw new RuntimeException(LambdaLogger.buildMessage(
+                                    "Acquisition of lock for {} aborted due to thread interruption",
+                                    refStreamDefinition));
                         }
                     },
                     () -> LambdaLogger.buildMessage("Acquiring lock for {}", refStreamDefinition));

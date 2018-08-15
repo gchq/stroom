@@ -137,7 +137,7 @@ abstract class AbstractSerdeTest<T, S extends Serde<T>> {
 
         T object3 = serde2.deserialize(byteBuffer);
 
-        // re-run the deser to ennsure the buffer is in the right position to be read from again
+        // re-run the deser to ensure the buffer is in the right position to be read from again
         assertThat(object3).isEqualTo(object);
 
         // ensure hashcode work across ser-deser

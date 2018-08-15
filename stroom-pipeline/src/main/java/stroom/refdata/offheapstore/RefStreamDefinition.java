@@ -27,12 +27,6 @@ public class RefStreamDefinition {
 
     private static final int DEFAULT_STREAM_NO = 0;
 
-//    private static final Comparator<RefStreamDefinition> COMPARATOR = Comparator
-//            .comparing(RefStreamDefinition::getPipelineDocRef)
-//            .thenComparing(RefStreamDefinition::getPipelineVersion)
-//            .thenComparingLong(RefStreamDefinition::getStreamId)
-//            .thenComparingLong(RefStreamDefinition::getStreamNo);
-
     // TODO consider getting rid of DocRef and just storing the uuid
     private final DocRef pipelineDocRef;
     private final String pipelineVersion;
@@ -47,11 +41,6 @@ public class RefStreamDefinition {
     public RefStreamDefinition(final String pipelineUuid,
                                final String pipelineVersion,
                                final long streamId) {
-
-//        this.pipelineDocRef = new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid);
-//        this.pipelineVersion = pipelineVersion;
-//        this.streamId = streamId;
-//        this.hashCode = buildHashCode();
         this(new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid), pipelineVersion, streamId);
     }
 
@@ -79,6 +68,7 @@ public class RefStreamDefinition {
         this.streamId = streamId;
         this.isContextData = isContextData;
         this.streamNo = streamNo;
+        // pre compute the hash
         this.hashCode = buildHashCode();
     }
 

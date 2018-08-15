@@ -44,6 +44,7 @@ public class MapDefinition {
     public MapDefinition(final RefStreamDefinition refStreamDefinition) {
         this.refStreamDefinition = refStreamDefinition;
         this.mapName = null;
+        // pre compute the hash
         this.hashCode = buildHashCode();
     }
 

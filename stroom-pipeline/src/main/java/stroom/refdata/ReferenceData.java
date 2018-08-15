@@ -215,7 +215,8 @@ public class ReferenceData {
                                           final String keyName,
                                           final ReferenceDataResult result) {
 
-        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("getNestedStreamEventList called, pipe: {}, map {}, key {}",
+        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage(
+                "getNestedStreamEventList called, pipe: {}, map {}, key {}",
                 pipelineReference.getName(),
                 mapName,
                 keyName));
@@ -236,18 +237,9 @@ public class ReferenceData {
                     true,
                     streamNo);
 
-            // TODO we may want to implement some sort of on-heap store that fronts our off-heap store
-            // Thus all writes/reads go through the on-heap store first and only data that is deemed
-            // too big for the on-heap store gets passed down to the off-heap store. This would reduce
-            // the disk io and storage for small or transient data and reduce the number of write txns
-            // used.  This may be an unnecessary optimisation.
-
             // Establish if we have the data for the context stream in the store
-
             final RefDataStore onHeapRefDataStore = refDataStoreHolder.getOnHeapRefDataStore();
             final boolean isEffectiveStreamDataLoaded = onHeapRefDataStore.isDataLoaded(refStreamDefinition);
-
-            //TODO what happens if we need to overwrite?
 
             if (!isEffectiveStreamDataLoaded) {
                 // data is not in the store so load it

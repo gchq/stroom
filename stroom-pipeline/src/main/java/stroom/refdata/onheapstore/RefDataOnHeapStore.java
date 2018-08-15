@@ -53,8 +53,6 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
     private final Map<MapDefinition, NavigableMap<Range<Long>, RefDataValue>> rangeValueNestedMap;
     private final GenericRefDataValueSerde genericRefDataValueSerde;
 
-    // For synchronising access to the data belonging to a MapDefinition
-    private final Striped<Lock> refStreamDefStripedReentrantLock;
     private ByteBuffer valueBuffer = null;
 
     public RefDataOnHeapStore(final GenericRefDataValueSerde genericRefDataValueSerde,
@@ -65,8 +63,6 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
         this.processingInfoMap = new HashMap<>();
         this.keyValueMap = new HashMap<>();
         this.rangeValueNestedMap = new HashMap<>();
-        //TODO remove lock as it is of no use as this class is not threadsafe
-        this.refStreamDefStripedReentrantLock = Striped.lazyWeakLock(100);
         this.mapDefinitions = new HashSet<>();
     }
 
@@ -233,13 +229,6 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
         throw new UnsupportedOperationException("Purge functionality is not supported for the on-heap store");
     }
 
-    /**
-     * Package-private for testing
-     */
-    void doWithRefStreamDefinitionLock(final RefStreamDefinition refStreamDefinition, final Runnable work) {
-        doWithRefStreamDefinitionLock(refStreamDefStripedReentrantLock, refStreamDefinition, work);
-    }
-
     @Override
     public void logAllContents() {
         logAllContents(LOGGER::debug);
@@ -306,7 +295,6 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
         return new OnHeapRefDataLoader(
                 refStreamDefinition,
                 effectiveTimeMs,
-                refStreamDefStripedReentrantLock,
                 processingInfoMap,
                 mapDefinitions,
                 keyValueMap,
