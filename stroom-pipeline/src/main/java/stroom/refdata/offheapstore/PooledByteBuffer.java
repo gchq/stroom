@@ -68,10 +68,12 @@ public class PooledByteBuffer implements AutoCloseable {
      * references to it. Identical behaviour to calling {@link PooledByteBuffer#close()}.
      */
     public void release() {
-        releaseFunc.accept(byteBuffer);
-        byteBuffer = null;
-        byteBufferSupplier = null;
-        releaseFunc = null;
+        if (releaseFunc != null && byteBuffer != null) {
+            releaseFunc.accept(byteBuffer);
+            byteBuffer = null;
+            byteBufferSupplier = null;
+            releaseFunc = null;
+        }
     }
 
     /**

@@ -17,6 +17,7 @@
 
 package stroom.pipeline.filter;
 
+import com.esotericsoftware.kryo.io.ByteBufferInputStream;
 import com.sun.xml.fastinfoset.sax.SAXDocumentParser;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,7 +40,9 @@ import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.util.ProcessorUtil;
 import stroom.refdata.RefDataLoaderHolder;
+import stroom.refdata.offheapstore.ByteBufferPool;
 import stroom.refdata.offheapstore.FastInfosetValue;
+import stroom.refdata.offheapstore.PooledByteBufferOutputStream;
 import stroom.refdata.offheapstore.RefDataLoader;
 import stroom.refdata.offheapstore.RefDataValue;
 import stroom.refdata.offheapstore.RefStreamDefinition;
@@ -256,7 +259,8 @@ public class TestReferenceDataFilter extends StroomUnitTest {
         RefDataLoaderHolder refDataLoaderHolder = new RefDataLoaderHolder();
         refDataLoaderHolder.setRefDataLoader(refDataLoader);
 
-        final ReferenceDataFilter referenceDataFilter = new ReferenceDataFilter(errorReceiverProxy, refDataLoaderHolder);
+        final ReferenceDataFilter referenceDataFilter = new ReferenceDataFilter(
+                errorReceiverProxy, refDataLoaderHolder, cap -> new PooledByteBufferOutputStream(new ByteBufferPool(), cap));
 
         final TestFilter testFilter = new TestFilter(null, null);
 
@@ -327,7 +331,7 @@ public class TestReferenceDataFilter extends StroomUnitTest {
 //        saxDocumentParser.setParseFragments(true);
         saxDocumentParser.setContentHandler(testSAXEventFilter);
         try {
-            saxDocumentParser.parse(new ByteArrayInputStream(fastInfosetValue.getValueBytes()));
+            saxDocumentParser.parse(new ByteBufferInputStream(fastInfosetValue.getByteBuffer()));
         } catch (IOException | FastInfosetException | SAXException e) {
             throw new RuntimeException(e);
         }

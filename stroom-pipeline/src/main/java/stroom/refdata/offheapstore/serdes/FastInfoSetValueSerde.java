@@ -17,31 +17,47 @@
 
 package stroom.refdata.offheapstore.serdes;
 
+import stroom.refdata.offheapstore.ByteBufferUtils;
 import stroom.refdata.offheapstore.FastInfosetValue;
 import stroom.refdata.offheapstore.RefDataValue;
 import stroom.util.logging.LambdaLogger;
 
 import java.nio.ByteBuffer;
+import java.util.function.Supplier;
 
 public class FastInfoSetValueSerde implements RefDataValueSerde {
 
     @Override
     public RefDataValue deserialize(final ByteBuffer byteBuffer) {
-        byte[] bytes = new byte[byteBuffer.remaining()];
-        byteBuffer.get(bytes);
-        byteBuffer.flip();
-        return new FastInfosetValue(bytes);
+
+        // just wrap the buffer, let the caller clone if required.
+        return new FastInfosetValue(byteBuffer);
     }
 
     @Override
     public void serialize(final ByteBuffer byteBuffer, final RefDataValue refDataValue) {
         try {
-            byteBuffer.put(((FastInfosetValue) refDataValue).getValueBytes());
+            // copy our buffer into the other buffer, flipping the dest buffer in the process
+            ByteBufferUtils.copy(((FastInfosetValue) refDataValue).getByteBuffer(), byteBuffer);
+
         } catch (ClassCastException e) {
             throw new RuntimeException(LambdaLogger.buildMessage("Unable to cast {} to {}",
                     refDataValue.getClass().getCanonicalName(), FastInfosetValue.class.getCanonicalName()), e);
         }
-        byteBuffer.flip();
+    }
+
+    @Override
+    public ByteBuffer serialize(final Supplier<ByteBuffer> byteBufferSupplier,
+                                final RefDataValue refDataValue) {
+
+        try {
+            // the FastInfosetValue just wraps a ByteBuffer so just return that, no
+            // serialisation to do.
+            return ((FastInfosetValue) refDataValue).getByteBuffer();
+        } catch (ClassCastException e) {
+            throw new RuntimeException(LambdaLogger.buildMessage("Unable to cast {} to {}",
+                    refDataValue.getClass().getCanonicalName(), FastInfosetValue.class.getCanonicalName()), e);
+        }
     }
 
 }

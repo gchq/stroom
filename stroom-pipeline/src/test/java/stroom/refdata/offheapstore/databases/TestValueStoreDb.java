@@ -194,7 +194,8 @@ public class TestValueStoreDb extends AbstractLmdbDbTest {
             // now try and get a value that doesn't exist
             Optional<RefDataValue> optRefDataValue = valueStoreDb.get(
                     txn,
-                    keySerde.serialize(new ValueStoreKey(123456, (short) 99)));
+                    keySerde.serialize(new ValueStoreKey(123456, (short) 99)),
+                    StringValue.TYPE_ID);
 
             assertThat(optRefDataValue).isEmpty();
         });

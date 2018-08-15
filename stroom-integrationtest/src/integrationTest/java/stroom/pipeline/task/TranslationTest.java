@@ -114,6 +114,11 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     @Inject
     private ContentImportService contentImportService;
 
+    /**
+     * NOTE some of the input data for this test is buried in the following zip file so you will need
+     * to crack it open to see what is being loaded.
+     * stroom/stroom-core-server/src/test/resources/samples/input/ZIP_TEST-DATA_SPLITTER-EVENTS~1.zip
+     */
     protected void testTranslationTask(final boolean translate, final boolean compareOutput) {
         final List<Exception> exceptions = new ArrayList<>();
 

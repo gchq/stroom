@@ -17,20 +17,30 @@
 
 package stroom.refdata.offheapstore;
 
+import com.codahale.metrics.health.HealthCheck;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Clearable;
+import stroom.util.HasHealthCheck;
 
 import javax.inject.Singleton;
 import java.nio.ByteBuffer;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
+import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 
 /*
- * This class is derived/copied from org.apache.hadoop.io.ElasticByteBufferPool
+ * This class is derived/copied from org.apache.hadoop.hbase.io.ByteBufferOutputStream
  * which has the following licence.
  *
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -60,7 +70,9 @@ import java.util.function.Function;
  * As this pool is un-bounded it could grow very large under high contention
  */
 @Singleton
-public class ByteBufferPool implements Clearable {
+public class ByteBufferPool implements Clearable, HasHealthCheck {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ByteBufferPool.class);
 
     // TODO it would be preferable to use different concurrency constructs to avoid the use
     // of synchronized methods.
@@ -168,6 +180,46 @@ public class ByteBufferPool implements Clearable {
     @Override
     public synchronized void clear() {
         bufferMap.clear();
+    }
+
+    @Override
+    public HealthCheck.Result getHealth() {
+
+        try {
+            HealthCheck.ResultBuilder builder = HealthCheck.Result.builder();
+            builder
+                    .healthy()
+                    .withDetail("Size", getCurrentPoolSize());
+
+            SortedMap<Integer, Long> capacityCountsMap = null;
+            try {
+                // getting the counts requires synchronising and we don't want to hold up all
+                // the other health checks
+                capacityCountsMap = CompletableFuture.supplyAsync(() -> {
+                    synchronized (this) {
+                        return bufferMap.entrySet().stream()
+                                .collect(Collectors.groupingBy(entry ->
+                                                entry.getValue().capacity(),
+                                        Collectors.counting()))
+                                .entrySet()
+                                .stream()
+                                .collect(HasHealthCheck.buildTreeMapCollector(Map.Entry::getKey, Map.Entry::getValue));
+                    }
+
+                })
+                        .get(5, TimeUnit.SECONDS);
+                builder.withDetail("Buffer capacity counts", capacityCountsMap);
+            } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                LOGGER.error("Error getting capacity counts", e);
+                builder.withDetail("Buffer capacity counts", "Error getting counts");
+            }
+
+            return builder.build();
+        } catch (RuntimeException e) {
+            return HealthCheck.Result.builder()
+                    .unhealthy(e)
+                    .build();
+        }
     }
 
     private static final class Key implements Comparable<Key> {

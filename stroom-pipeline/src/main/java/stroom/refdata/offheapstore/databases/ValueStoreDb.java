@@ -114,9 +114,9 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                 Optional<ByteBuffer> optCurrentValueBuf = getAsBytes(txn, valueStoreKeyBuffer);
 
                 if (optCurrentValueBuf.isPresent()) {
-                    valueSerde.serialize(newRefDataValuePooledBuf.getByteBuffer(), newRefDataValue);
+                    ByteBuffer newValueBuffer = valueSerde.serialize(newRefDataValuePooledBuf::getByteBuffer, newRefDataValue);
 
-                    areValuesEqual = optCurrentValueBuf.get().equals(newRefDataValuePooledBuf.getByteBuffer());
+                    areValuesEqual = optCurrentValueBuf.get().equals(newValueBuffer);
 //                    areValuesEqual = valueSerde.areValuesEqual(
 //                            optCurrentValueBuf.get(), newRefDataValuePooledBuf.getByteBuffer());
                 } else {
@@ -163,8 +163,10 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
         LOGGER.trace("getOrCreate called for refDataValue: {}, isOverwrite", refDataValue, isOverwrite);
 
         try (final PooledByteBuffer pooledValueBuffer = getPooledValueBuffer()) {
-            final ByteBuffer valueBuffer = pooledValueBuffer.getByteBuffer();
-            valueSerde.serialize(valueBuffer, refDataValue);
+//            final ByteBuffer valueBuffer = pooledValueBuffer.getByteBuffer();
+//            valueSerde.serialize(valueBuffer, refDataValue);
+
+            final ByteBuffer valueBuffer = valueSerde.serialize(pooledValueBuffer::getByteBuffer, refDataValue);
 
             LAMBDA_LOGGER.trace(() ->
                     LambdaLogger.buildMessage("valueBuffer: {}", ByteBufferUtils.byteBufferInfo(valueBuffer)));
@@ -173,7 +175,11 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
             final AtomicBoolean isValueInDb = new AtomicBoolean(false);
             final AtomicInteger valuesCount = new AtomicInteger(0);
             short firstUnusedKeyId = -1;
-            // We have to create a new ByteBuffer here as we may/may not return it
+
+            // TODO we may instead be able to use one from the pool then if we do the put()
+            // get the key buffer from the txn and return that.
+
+            // We have to allocate a new ByteBuffer here as we may/may not return it
             final ByteBuffer startKey = buildStartKeyBuffer(refDataValue);
             ByteBuffer lastKeyBufferClone = null;
 
@@ -283,14 +289,10 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
         }
     }
 
-    public Optional<RefDataValue> get(final Txn<ByteBuffer> txn, final ByteBuffer keyBuffer) {
+    public Optional<RefDataValue> get(final Txn<ByteBuffer> txn, final ByteBuffer keyBuffer, final int typeId) {
         return getAsBytes(txn, keyBuffer)
-                .map(valueSerde::deserialize);
-    }
-
-    public Optional<RefDataValue> get(final Txn<ByteBuffer> txn, final ByteBuffer keyBuffer, int typeId) {
-        return getAsBytes(txn, keyBuffer)
-                .map(valueBuffer -> valueSerde.deserialize(valueBuffer, typeId));
+                .map(valueBuffer ->
+                        valueSerde.deserialize(valueBuffer, typeId));
     }
 
     private ByteBuffer buildStartKeyBuffer(final RefDataValue value) {

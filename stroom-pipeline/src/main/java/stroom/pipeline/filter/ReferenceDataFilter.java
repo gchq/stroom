@@ -31,6 +31,7 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.refdata.RefDataLoaderHolder;
 import stroom.refdata.offheapstore.FastInfosetValue;
 import stroom.refdata.offheapstore.MapDefinition;
+import stroom.refdata.offheapstore.PooledByteBufferOutputStream;
 import stroom.refdata.offheapstore.RefDataLoader;
 import stroom.refdata.offheapstore.RefDataValue;
 import stroom.refdata.offheapstore.RefStreamDefinition;
@@ -41,8 +42,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -53,7 +53,7 @@ import java.util.Set;
  * This XML filter captures XML content that defines key, value maps to be
  * stored as reference data. The key, value map content is likely to have been
  * produced as the result of an XSL transformation of some reference data.
- *
+ * <p>
  * This filter will typically fire
  */
 @ConfigurableElement(
@@ -104,6 +104,8 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         or
             <value>UK</value>
      */
+    public static final int BUFFER_OUTPUT_STREAM_INITIAL_CAPACITY = 1_000;
+
     private static final String REFERENCE_ELEMENT = "reference";
     private static final String MAP_ELEMENT = "map";
     private static final String KEY_ELEMENT = "key";
@@ -115,8 +117,9 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     private final RefDataLoaderHolder refDataLoaderHolder;
 
     private final SAXDocumentSerializer saxDocumentSerializer = new SAXDocumentSerializer();
-    private final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+    private PooledByteBufferOutputStream pooledByteBufferOutputStream;
     private final CharBuffer contentBuffer = new CharBuffer(20);
+//    private ByteBuffer fastInfosetByteBuffer = null;
 
     private String mapName;
     private String key;
@@ -142,16 +145,20 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 
     @Inject
     public ReferenceDataFilter(final ErrorReceiverProxy errorReceiverProxy,
-                               final RefDataLoaderHolder refDataLoaderHolder) {
+                               final RefDataLoaderHolder refDataLoaderHolder,
+                               final PooledByteBufferOutputStream.Factory pooledByteBufferOutputStreamFactory) {
+
         this.errorReceiverProxy = errorReceiverProxy;
         this.refDataLoaderHolder = refDataLoaderHolder;
+        this.pooledByteBufferOutputStream = pooledByteBufferOutputStreamFactory
+                .create(BUFFER_OUTPUT_STREAM_INITIAL_CAPACITY);
     }
 
 
     @Override
     public void startProcessing() {
         super.startProcessing();
-        saxDocumentSerializer.setOutputStream(byteArrayOutputStream);
+        saxDocumentSerializer.setOutputStream(pooledByteBufferOutputStream);
 //        try {
 //            saxDocumentSerializer.startDocument();
 //        } catch (SAXException e) {
@@ -263,7 +270,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 
             LOGGER.trace("appliedUris {}", appliedUris);
 //            if (!appliedUris.contains(uri) && !uri.equals(valueXmlDefaultNamespaceUri)) {
-                if (!appliedUris.contains(uri) ) {
+            if (!appliedUris.contains(uri)) {
                 // we haven't seen this uri before so find its prefix and call startPrefixMapping on the
                 // serializer so it understands them
                 String prefix = prefixMap.get(uri);
@@ -370,12 +377,11 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                 final MapDefinition mapDefinition = new MapDefinition(refDataLoader.getRefStreamDefinition(), mapName);
 
                 if (key != null) {
-                    // TODO we may be able to pass a Consumer<ByteBuffer> and then use a ByteBufferOutputStream
-                    // to write directly to a direct byteBuffer, however we will not know the size up front
-                    // TODO We are holding onto a txn most of the time between put calls. It would probably be
+                    // TODO We are holding onto a txn most of the time between put calls. It may be
                     // better to hold onto the kv pairs locally then put them all in a batch so the txn is only
-                    // used for lmdb CRUD and not xml processing. Alternatively change our loader so all
-                    // put calls write txn work is done by a single thread and callers just
+                    // used for lmdb CRUD and not xml processing. However this would not work with the current
+                    // approach of a reusable bytebuffer.
+
                     LOGGER.trace("Putting key {} into map {}", key, mapDefinition);
                     boolean didPutSucceed = refDataLoaderHolder.getRefDataLoader()
                             .put(mapDefinition, key, refDataValue);
@@ -448,8 +454,12 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
             isFastInfosetDocStarted = false;
 //            appliedUris.clear();
             LOGGER.trace("Serializing fast infoset events");
-            byte[] fastInfosetBytes = byteArrayOutputStream.toByteArray();
-            refDataValue = FastInfosetValue.of(fastInfosetBytes);
+            ByteBuffer fastInfosetBuffer = pooledByteBufferOutputStream.getPooledByteBuffer().getByteBuffer();
+
+            // we are wrapping a reusable buffer up in our RefDataValue object so said object
+            // MUST not be used after we have finished with this reference element else you will
+            // mutate other data.
+            refDataValue = FastInfosetValue.wrap(fastInfosetBuffer);
         } else {
             LOGGER.trace("Getting string data");
             //serialize the event list using fastInfoset
@@ -492,12 +502,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 
     @Override
     public void endProcessing() {
-        try {
-            byteArrayOutputStream.close();
-        } catch (IOException e) {
-            errorReceiverProxy
-                    .log(Severity.ERROR, null, null, "Error closing byteArrayOutputStream", e);
-        }
+        pooledByteBufferOutputStream.release();
         super.endProcessing();
     }
 
@@ -520,7 +525,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                 break;
             }
         }
-        LOGGER.trace("isOnlyWhitespace(\"{}\") - returning {}",new String(ch, start, length), isOnlyWhitespace);
+        LOGGER.trace("isOnlyWhitespace(\"{}\") - returning {}", new String(ch, start, length), isOnlyWhitespace);
         return isOnlyWhitespace;
     }
 
@@ -528,7 +533,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         if (!isFastInfosetDocStarted) {
             LOGGER.trace("saxDocumentSerializer - startDocument()");
             saxDocumentSerializer.reset();
-            byteArrayOutputStream.reset();
+            pooledByteBufferOutputStream.clear();
             appliedUris.clear();
             saxDocumentSerializer.startDocument();
             isFastInfosetDocStarted = true;

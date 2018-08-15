@@ -34,6 +34,13 @@ public interface Serializer<T> {
         return byteBuffer;
     }
 
+    /**
+     * @param byteBufferSupplier A supplier of a {@link ByteBuffer} in a ready state for writing. The
+     *                           supplier may or may not be called depending on the impl so only use
+     *                           the return value to get the serialised form.
+     * @param object The object to be serialised.
+     * @return The serialised form of the object, flipped and ready for reading.
+     */
     default ByteBuffer serialize(final Supplier<ByteBuffer> byteBufferSupplier,
                                  final T object) {
         ByteBuffer byteBuffer = byteBufferSupplier.get();

@@ -51,6 +51,7 @@ import stroom.proxy.repo.ProxyLifecycle;
 import stroom.proxy.servlet.ConfigServlet;
 import stroom.proxy.servlet.ProxyStatusServlet;
 import stroom.proxy.servlet.ProxyWelcomeServlet;
+import stroom.refdata.offheapstore.ByteBufferPool;
 import stroom.refdata.offheapstore.RefDataStore;
 import stroom.refdata.offheapstore.RefDataStoreProvider;
 import stroom.resource.ElementResource;
@@ -145,6 +146,7 @@ public class App extends Application<Config> {
         final ServletContextHandler servletContextHandler = environment.getApplicationContext();
 
         // Add health checks
+        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, ByteBufferPool.class);
         GuiceUtil.addHealthCheck(environment.healthChecks(), injector, DictionaryResource.class);
         GuiceUtil.addHealthCheck(environment.healthChecks(), injector, DictionaryResource2.class);
         GuiceUtil.addHealthCheck(environment.healthChecks(), injector, RuleSetResource.class);

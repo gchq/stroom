@@ -18,28 +18,38 @@
 package stroom.refdata.offheapstore;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
+import java.util.Objects;
 
 public class FastInfosetValue extends RefDataValue {
 
     public static final int TYPE_ID = 1;
 
-    private final byte[] fastInfosetBytes;
+//    private final byte[] fastInfosetBytes;
+    private final ByteBuffer fastInfosetByteBuffer;
 
     public FastInfosetValue(final byte[] fastInfosetBytes) {
-        this.fastInfosetBytes = fastInfosetBytes;
+//        this.fastInfosetBytes = fastInfosetBytes;
+        this.fastInfosetByteBuffer = null;
     }
 
-    public static FastInfosetValue of(byte[] fastInfosetBytes) {
-        return new FastInfosetValue(fastInfosetBytes);
+    public FastInfosetValue(final ByteBuffer fastInfosetByteBuffer) {
+        this.fastInfosetByteBuffer = fastInfosetByteBuffer;
+//        this.fastInfosetBytes = null;
     }
 
-    static FastInfosetValue fromByteBuffer(final ByteBuffer byteBuffer) {
-
-        byte[] bytes = new byte[byteBuffer.remaining()];
-        byteBuffer.get(bytes);
-        return new FastInfosetValue(bytes);
+//    public static FastInfosetValue of(byte[] fastInfosetBytes) {
+//        return new FastInfosetValue(fastInfosetBytes);
+//    }
+    public static FastInfosetValue wrap(final ByteBuffer fastInfosetByteBuffer) {
+        return new FastInfosetValue(fastInfosetByteBuffer);
     }
+
+//    static FastInfosetValue fromByteBuffer(final ByteBuffer byteBuffer) {
+//
+//        byte[] bytes = new byte[byteBuffer.remaining()];
+//        byteBuffer.get(bytes);
+//        return new FastInfosetValue(bytes);
+//    }
 
     @Override
     public int getTypeId() {
@@ -49,7 +59,8 @@ public class FastInfosetValue extends RefDataValue {
 
     @Override
     public int getValueHashCode() {
-        return Arrays.hashCode(fastInfosetBytes);
+//        return Arrays.hashCode(fastInfosetBytes);
+        return ByteBufferUtils.hashCode(fastInfosetByteBuffer);
     }
 
     @Override
@@ -57,22 +68,26 @@ public class FastInfosetValue extends RefDataValue {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final FastInfosetValue that = (FastInfosetValue) o;
-        return Arrays.equals(fastInfosetBytes, that.fastInfosetBytes);
+        return Objects.equals(fastInfosetByteBuffer, that.fastInfosetByteBuffer);
     }
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(fastInfosetBytes);
+        return ByteBufferUtils.hashCode(fastInfosetByteBuffer);
     }
 
-    public byte[] getValueBytes() {
-        return fastInfosetBytes;
+//    public byte[] getValueBytes() {
+//        return fastInfosetBytes;
+//    }
+
+    public ByteBuffer getByteBuffer() {
+        return fastInfosetByteBuffer;
     }
 
     @Override
     public String toString() {
         return "FastInfosetValue{" +
-                "fastInfosetBytes=" + Arrays.toString(fastInfosetBytes) +
+                "fastInfosetByteBuffer=" + fastInfosetByteBuffer +
                 '}';
     }
 }

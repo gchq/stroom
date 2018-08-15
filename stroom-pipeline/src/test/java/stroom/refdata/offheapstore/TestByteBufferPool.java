@@ -143,6 +143,38 @@ public class TestByteBufferPool {
         assertPoolSizeAfterMultipleConcurrentGetRequests(threadCount, minCapacity, byteBufferPool);
     }
 
+    @Test
+    public void testGetHealthCheck() {
+        final ByteBufferPool byteBufferPool = new ByteBufferPool();
+
+        PooledByteBuffer buffer1 = byteBufferPool.getPooledByteBuffer(1);
+        PooledByteBuffer buffer2 = byteBufferPool.getPooledByteBuffer(1);
+        PooledByteBuffer buffer3 = byteBufferPool.getPooledByteBuffer(10);
+        PooledByteBuffer buffer4 = byteBufferPool.getPooledByteBuffer(10);
+        PooledByteBuffer buffer5 = byteBufferPool.getPooledByteBuffer(10);
+        PooledByteBuffer buffer6 = byteBufferPool.getPooledByteBuffer(100);
+
+        buffer1.getByteBuffer();
+        buffer2.getByteBuffer();
+        buffer3.getByteBuffer();
+        buffer4.getByteBuffer();
+        buffer5.getByteBuffer();
+        buffer6.getByteBuffer();
+
+        buffer1.release();
+        buffer2.release();
+        buffer3.release();
+        buffer4.release();
+        buffer5.release();
+        buffer6.release();
+
+        assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(6);
+
+        LOGGER.info("health: {}", byteBufferPool.getHealth());
+
+    }
+
+
     @Test(expected = IllegalStateException.class)
     public void testGetByteBuffer_fail() {
         final ByteBufferPool byteBufferPool = new ByteBufferPool();

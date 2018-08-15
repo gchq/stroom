@@ -57,6 +57,7 @@ public class RefDataStoreModule extends AbstractModule {
         install(new FactoryModuleBuilder().build(ValueStoreMetaDb.Factory.class));
 
         install(new FactoryModuleBuilder().build(RefDataValueProxyConsumer.Factory.class));
+        install(new FactoryModuleBuilder().build(PooledByteBufferOutputStream.Factory.class));
 
         install(new FactoryModuleBuilder()
                 .implement(RefDataStore.class, RefDataOffHeapStore.class)

@@ -22,6 +22,7 @@ import stroom.refdata.offheapstore.UnknownRefDataValue;
 
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
+import java.util.function.Supplier;
 
 public class GenericRefDataValueSerde implements RefDataValueSerde {
 
@@ -52,5 +53,14 @@ public class GenericRefDataValueSerde implements RefDataValueSerde {
         RefDataValueSerde serde = refDataValueSerdeFactory.get(refDataValue);
 
         serde.serialize(byteBuffer, refDataValue);
+    }
+
+    @Override
+    public ByteBuffer serialize(final Supplier<ByteBuffer> byteBufferSupplier,
+                                final RefDataValue refDataValue) {
+
+        // defer to the specific serde associated with the typeId
+        RefDataValueSerde serde = refDataValueSerdeFactory.get(refDataValue);
+        return serde.serialize(byteBufferSupplier, refDataValue);
     }
 }
