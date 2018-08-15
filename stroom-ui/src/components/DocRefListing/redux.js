@@ -28,7 +28,7 @@ const actionCreators = createActions({
   DOC_REF_TYPE_FILTER_UPDATED: (listingId, docRefTypeFilters) => ({ listingId, docRefTypeFilters }),
   DOC_REF_SELECTION_UP: listingId => ({ listingId, selectionChange: -1 }),
   DOC_REF_SELECTION_DOWN: listingId => ({ listingId, selectionChange: +1 }),
-  DOC_REF_SELECTION_TOGGLED: (listingId, uuid) => ({ listingId, uuid }),
+  DOC_REF_SELECTION_TOGGLED: (listingId, uuid, keyIsDown) => ({ listingId, uuid, keyIsDown }),
 });
 
 const {
@@ -157,21 +157,70 @@ const reducer = handleActions(
     },
     DOC_REF_SELECTION_TOGGLED: (state, action) => {
       const {
-        payload: { listingId, uuid, isChecked },
+        payload: {
+          listingId, uuid, isChecked, keyIsDown,
+        },
       } = action;
       const listingState = state[listingId];
-      let { selectedDocRefUuids, selectedItem } = listingState;
+      let {
+        selectedDocRefUuids, selectedItem, filteredDocRefs, allowMultiSelect,
+      } = listingState;
 
       const isCurrentlySelected = selectedDocRefUuids.includes(uuid);
       if (isCurrentlySelected) {
-        selectedDocRefUuids = selectedDocRefUuids.filter(u => u !== uuid);
-      } else if (listingState.allowMultiSelect) {
-        selectedDocRefUuids = selectedDocRefUuids.concat([uuid]);
+        if (keyIsDown.Control || keyIsDown.Meta) {
+          selectedDocRefUuids = selectedDocRefUuids.filter(u => u !== uuid);
+        } else {
+          selectedDocRefUuids = []
+        }
+      } else if (allowMultiSelect) {
+        if (keyIsDown.Control || keyIsDown.Meta) {
+          selectedDocRefUuids = selectedDocRefUuids.concat([uuid]);
+        } else if (keyIsDown.Shift) {
+          let phase = 0;
+          filteredDocRefs.forEach((n) => {
+            const atAnEndpoint = n.uuid === uuid || selectedDocRefUuids.includes(n.uuid);
+
+            switch (phase) {
+              case 0: { // Looking for start of selection
+                if (n.uuid === uuid) {
+                  phase = 1
+                } else if (selectedDocRefUuids.includes(n.uuid)) {
+                  phase = 2
+                }
+                if (phase > 0) {
+                  selectedDocRefUuids.push(n.uuid);
+                }
+                break;
+              }
+              case 1: { // Looking for existing selection
+                selectedDocRefUuids.push(n.uuid);
+
+                if (selectedDocRefUuids.includes(n.uuid)) {
+                  phase = 100; // finished finding selection run
+                }
+              }
+              case 2: { // Looking for the newly made selection
+                selectedDocRefUuids.push(n.uuid);
+                
+                if (n.uuid === uuid) {
+                  phase = 100; // finished finding selection run
+                }
+                break;
+              }
+              default:
+                // done, just running to the end now
+                break;
+            }
+          });
+        } else {
+          selectedDocRefUuids = [uuid];
+        }
       } else {
         selectedDocRefUuids = [uuid];
       }
 
-      listingState.filteredDocRefs.forEach((f, i) => {
+      filteredDocRefs.forEach((f, i) => {
         if (selectedDocRefUuids.includes(f.uuid)) {
           selectedItem = i;
         }

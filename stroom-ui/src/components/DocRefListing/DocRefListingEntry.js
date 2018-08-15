@@ -13,15 +13,10 @@ const { docRefSelectionToggled } = actionCreators;
 
 const enhance = compose(
   connect(
-    (
-      {
-        docExplorer: { documentTree },
-        docRefListing,
-      },
-      { listingId, docRefUuid },
-    ) => ({
+    ({ docExplorer: { documentTree }, docRefListing, keyIsDown }, { listingId, docRefUuid }) => ({
       docRefListing: docRefListing[listingId],
       docRefWithLineage: findItem(documentTree, docRefUuid),
+      keyIsDown,
     }),
     {
       docRefSelectionToggled,
@@ -38,14 +33,18 @@ const DocRefListingEntry = ({
   actionBarItems,
   includeBreadcrumb,
   docRefSelectionToggled,
-  openDocRef
+  openDocRef,
+  keyIsDown,
 }) => (
   <div
     key={node.uuid}
     className={`doc-ref-listing__item ${
       selectedDocRefUuids.includes(node.uuid) ? 'doc-ref-listing__item--selected' : ''
     }`}
-    onClick={() => docRefSelectionToggled(listingId, node.uuid)}
+    onClick={(e) => {
+      docRefSelectionToggled(listingId, node.uuid, keyIsDown);
+      e.preventDefault();
+    }}
   >
     <div>
       <img
@@ -55,23 +54,36 @@ const DocRefListingEntry = ({
       />
       <span
         className="doc-ref-listing__name"
-        onClick={e => {
+        onClick={(e) => {
           onNameClick(node);
           e.stopPropagation();
+          e.preventDefault();
         }}
       >
         {node.name}
       </span>
       <span className="doc-ref-listing-entry__action-bar">
         {!inMultiSelectMode &&
-          actionBarItems.map(({ onClick, icon, tooltip, disabled }, i) => (
-            <Popup
-              key={i}
-              trigger={<Button className='action-bar__button' circular onClick={() => onClick(node)} icon={icon} disabled={disabled} />}
-              content={tooltip}
-            />
+          actionBarItems.map(({
+ onClick, icon, tooltip, disabled,
+}, i) => (
+  <Popup
+    key={i}
+    trigger={
+      <Button
+        className="action-bar__button"
+        circular
+        onClick={() => onClick(node)}
+        icon={icon}
+        disabled={disabled}
+      />
+              }
+    content={tooltip}
+  />
           ))}
-        {inMultiSelectMode && <Button className='action-bar__button' circular icon="dont" disabled />}
+        {inMultiSelectMode && (
+          <Button className="action-bar__button" circular icon="dont" disabled />
+        )}
       </span>
     </div>
 
@@ -87,7 +99,7 @@ EnhancedDocRefListingEntry.propTypes = {
   actionBarItems: ActionBarItemsPropType.isRequired,
   includeBreadcrumb: PropTypes.bool.isRequired,
   onNameClick: PropTypes.func.isRequired,
-  openDocRef: PropTypes.func.isRequired
+  openDocRef: PropTypes.func.isRequired,
 };
 
 EnhancedDocRefListingEntry.defaultProps = {
