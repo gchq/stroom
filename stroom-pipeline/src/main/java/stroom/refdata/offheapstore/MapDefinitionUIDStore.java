@@ -19,6 +19,10 @@ import java.util.Optional;
  * This class provides a front door for all interactions with the {@link MapUidForwardDb} and
  * {@link MapUidReverseDb} databases. This is to ensure the entries in both DBs are kept in sync
  * as each entry in one should have a corresponding entry in the other.
+ *
+ * It manages the creation and retrieval of {@link MapDefinition} <==> to UID mappings. These
+ * mappings are used to reduce the storage space required for all the entries in the keyvalue
+ * and rangevalue stores by just having a 4 byte UID in the key instead of a many byte {@link MapDefinition}
  */
 public class MapDefinitionUIDStore {
 

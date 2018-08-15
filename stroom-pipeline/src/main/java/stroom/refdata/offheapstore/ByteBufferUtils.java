@@ -32,6 +32,10 @@ public class ByteBufferUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(ByteBufferUtils.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ByteBufferUtils.class);
 
+    private ByteBufferUtils() {
+        // static util methods only
+    }
+
     public static String byteBufferToString(final ByteBuffer byteBuffer) {
         return ByteArrayUtils.byteArrayToString(Bytes.getBytes(byteBuffer));
     }

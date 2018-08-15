@@ -53,14 +53,12 @@ public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinit
         // We are only ever dealing with pipeline DocRefs so we don't need
         // the type as the uuid will be unique over all pipelines. The Type is only needed
         // if we have more than one type in there
-//            output.writeString(refStreamDefinition.getPipelineDocRef().getType());
         variableLengthUUIDKryoSerializer.write(output, refStreamDefinition.getPipelineVersion());
 
         // write as fixed length bytes so we can scan down the mapUidForwardDb looking for keys
         // with the same RefStreamDefinition TODO why do we need to do this scan?
 
         output.writeLong(refStreamDefinition.getStreamId(), true);
-        output.writeBoolean(refStreamDefinition.isContextData());
         output.writeLong(refStreamDefinition.getStreamNo(), true);
     }
 
@@ -70,14 +68,12 @@ public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinit
         final String pipelineUuid = variableLengthUUIDKryoSerializer.read(input);
         final String pipelineVersion = variableLengthUUIDKryoSerializer.read(input);
         final long streamId = input.readLong(true);
-        final boolean isContextData = input.readBoolean();
         final long streamNo = input.readLong(true);
 
         return new RefStreamDefinition(
                 pipelineUuid,
                 pipelineVersion,
                 streamId,
-                isContextData,
                 streamNo);
     }
 

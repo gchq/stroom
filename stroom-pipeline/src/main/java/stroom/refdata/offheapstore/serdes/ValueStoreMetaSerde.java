@@ -9,12 +9,12 @@ import java.nio.ByteBuffer;
 
 public class ValueStoreMetaSerde implements Serde<ValueStoreMeta> {
 
-    Logger LOGGER = LoggerFactory.getLogger(RefDataValueSubSerde.class);
+    Logger LOGGER = LoggerFactory.getLogger(ValueStoreMetaSerde.class);
 
-    public static final int TYPE_ID_OFFSET = 0;
-    public static final int TYPE_ID_BYTES = 1;
-    public static final int REFERENCE_COUNT_OFFSET = TYPE_ID_OFFSET + TYPE_ID_BYTES;
-    public static final int REFERENCE_COUNT_BYTES = Integer.BYTES;
+    private static final int TYPE_ID_OFFSET = 0;
+    private static final int TYPE_ID_BYTES = 1;
+    private static final int REFERENCE_COUNT_OFFSET = TYPE_ID_OFFSET + TYPE_ID_BYTES;
+    private static final int REFERENCE_COUNT_BYTES = Integer.BYTES;
     private static final int BUFFER_CAPACITY = TYPE_ID_BYTES + REFERENCE_COUNT_BYTES;
 
     @Override
@@ -55,7 +55,9 @@ public class ValueStoreMetaSerde implements Serde<ValueStoreMeta> {
         return cloneAndUpdateRefCount(sourceBuffer, destBuffer, 1);
     }
 
-    public int cloneAndUpdateRefCount(final ByteBuffer sourceBuffer, final ByteBuffer destBuffer, int referenceCountDelta) {
+    public int cloneAndUpdateRefCount(final ByteBuffer sourceBuffer,
+                                      final ByteBuffer destBuffer,
+                                      final int referenceCountDelta) {
 
         int currRefCount = extractReferenceCount(sourceBuffer);
         int newRefCount = currRefCount + referenceCountDelta;
@@ -65,14 +67,4 @@ public class ValueStoreMetaSerde implements Serde<ValueStoreMeta> {
 
         return newRefCount;
     }
-
-
-//    public int updateReferenceCount(final ByteBuffer byteBuffer, int referenceCountDelta) {
-//        int currRefCount = extractReferenceCount(byteBuffer);
-//        int newRefCount = currRefCount + referenceCountDelta;
-//
-//        byteBuffer.putInt(REFERENCE_COUNT_OFFSET, newRefCount);
-//        LOGGER.trace("Changing ref count from {} to {}", currRefCount, newRefCount);
-//        return newRefCount;
-//    }
 }

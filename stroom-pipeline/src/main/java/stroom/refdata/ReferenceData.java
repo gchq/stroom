@@ -234,7 +234,6 @@ public class ReferenceData {
                     pipelineReference.getPipeline(),
                     getPipelineVersion(pipelineReference),
                     streamHolder.getStream().getId(),
-                    true,
                     streamNo);
 
             // Establish if we have the data for the context stream in the store

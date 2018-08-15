@@ -33,7 +33,6 @@ public class StringValueSerde implements RefDataValueSerde {
 
     @Override
     public RefDataValue deserialize(final ByteBuffer byteBuffer) {
-//        int referenceCount = getReferenceCount(subBuffer);
         String str = stringSerde.deserialize(byteBuffer);
         return new StringValue(str);
     }
@@ -42,7 +41,6 @@ public class StringValueSerde implements RefDataValueSerde {
     public void serialize(final ByteBuffer byteBuffer, final RefDataValue refDataValue) {
         try {
             StringValue stringValue = (StringValue) refDataValue;
-//            putReferenceCount(refDataValue, byteBuffer);
             stringSerde.serialize(byteBuffer, stringValue.getValue());
         } catch (ClassCastException e) {
             throw new RuntimeException(LambdaLogger.buildMessage("Unable to cast {} to {}",
@@ -50,18 +48,6 @@ public class StringValueSerde implements RefDataValueSerde {
         }
     }
 
-//    /**
-//     * Absolute method that extracts the string value from its place in the buffer.
-//     * Does not change the passed buffer.
-//     */
-//    public static String extractStringValue(final ByteBuffer subBuffer) {
-//        // advance a copy of the buffer to the value part
-//        subBuffer.position(VALUE_OFFSET);
-//        final ByteBuffer valueBuffer = subBuffer.slice();
-//        subBuffer.rewind();
-//        return StandardCharsets.UTF_8.decode(valueBuffer).toString();
-//
-//    }
 
     /**
      * Extracts the string value from the buffer.

@@ -38,14 +38,6 @@ public class RangeStoreKeySerde implements Serde<RangeStoreKey> {
 
     private static final int BUFFER_CAPACITY = UID.UID_ARRAY_LENGTH + (Long.BYTES * 2);
 
-    //    private static final KryoFactory kryoFactory = buildKryoFactory(
-//            RangeStoreKey.class,
-//            RangeStoreKeyKryoSerializer::new);
-//
-//    private static final KryoPool pool = new KryoPool.Builder(kryoFactory)
-//            .softReferences()
-//            .build();
-
     @Override
     public RangeStoreKey deserialize(final ByteBuffer byteBuffer) {
 
@@ -69,7 +61,6 @@ public class RangeStoreKeySerde implements Serde<RangeStoreKey> {
 
     public static boolean isKeyInRange(final ByteBuffer byteBuffer, final long key) {
         // from = inclusive, to = exclusive
-
         long rangeFromInc = byteBuffer.getLong(RANGE_FROM_OFFSET);
 
         if (key >= rangeFromInc) {
@@ -91,29 +82,4 @@ public class RangeStoreKeySerde implements Serde<RangeStoreKey> {
     public int getBufferCapacity() {
         return BUFFER_CAPACITY;
     }
-
-    //    private static class RangeStoreKeyKryoSerializer extends com.esotericsoftware.kryo.Serializer<RangeStoreKey> {
-//
-//        private final UIDSerde.UIDKryoSerializer uidKryoSerializer;
-//
-//        private RangeStoreKeyKryoSerializer() {
-//            uidKryoSerializer = new UIDSerde.UIDKryoSerializer();
-//        }
-//
-//        @Override
-//        public void write(final Kryo kryo, final Output output, final RangeStoreKey key) {
-//            uidKryoSerializer.write(kryo, output, key.getMapUid());
-//            Range<Long> range = key.getKeyRange();
-//            output.writeLong(range.getFrom());
-//            output.writeLong(range.getTo());
-//        }
-//
-//        @Override
-//        public RangeStoreKey read(final Kryo kryo, final Input input, final Class<RangeStoreKey> type) {
-//            final UID mapUid = uidKryoSerializer.read(kryo, input, UID.class);
-//            long rangeFromInc = input.readLong();
-//            long rangeToExc = input.readLong();
-//            return new RangeStoreKey(mapUid, new Range<>(rangeFromInc, rangeToExc));
-//        }
-//    }
 }

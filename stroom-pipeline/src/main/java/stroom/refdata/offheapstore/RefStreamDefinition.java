@@ -31,10 +31,7 @@ public class RefStreamDefinition {
     private final DocRef pipelineDocRef;
     private final String pipelineVersion;
     private final long streamId;
-
-    private final boolean isContextData;
     private final long streamNo;
-
     private final int hashCode;
 
 
@@ -44,32 +41,29 @@ public class RefStreamDefinition {
         this(new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid), pipelineVersion, streamId);
     }
 
-    public RefStreamDefinition(final DocRef pipelineDocRef,
-                               final String pipelineVersion,
-                               final long streamId) {
-        this(pipelineDocRef, pipelineVersion, streamId, false, DEFAULT_STREAM_NO);
-    }
-
     public RefStreamDefinition(final String pipelineUuid,
                                final String pipelineVersion,
                                final long streamId,
-                               final boolean isContextData,
                                final long streamNo) {
-        this(new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid), pipelineVersion, streamId, isContextData, streamNo);
+        this(new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid), pipelineVersion, streamId, streamNo);
+    }
+
+    public RefStreamDefinition(final DocRef pipelineDocRef,
+                               final String pipelineVersion,
+                               final long streamId) {
+        this(pipelineDocRef, pipelineVersion, streamId, DEFAULT_STREAM_NO);
     }
 
     public RefStreamDefinition(final DocRef pipelineDocRef,
                                final String pipelineVersion,
                                final long streamId,
-                               final boolean isContextData,
                                final long streamNo) {
         this.pipelineDocRef = pipelineDocRef;
         this.pipelineVersion = pipelineVersion;
         this.streamId = streamId;
-        this.isContextData = isContextData;
         this.streamNo = streamNo;
         // pre compute the hash
-        this.hashCode = buildHashCode();
+        this.hashCode = Objects.hash(pipelineDocRef, pipelineVersion, streamId, streamNo);
     }
 
     public DocRef getPipelineDocRef() {
@@ -84,10 +78,6 @@ public class RefStreamDefinition {
         return streamId;
     }
 
-    public boolean isContextData() {
-        return isContextData;
-    }
-
     public long getStreamNo() {
         return streamNo;
     }
@@ -98,7 +88,6 @@ public class RefStreamDefinition {
                 "pipelineDocRef=" + pipelineDocRef +
                 ", pipelineVersion='" + pipelineVersion + '\'' +
                 ", streamId=" + streamId +
-                ", isContextData=" + isContextData +
                 ", streamNo=" + streamNo +
                 '}';
     }
@@ -111,16 +100,11 @@ public class RefStreamDefinition {
         return Objects.equals(pipelineVersion, that.pipelineVersion) &&
                 streamId == that.streamId &&
                 streamNo == that.streamNo &&
-                isContextData == that.isContextData &&
                 Objects.equals(pipelineDocRef, that.pipelineDocRef);
     }
 
     @Override
     public int hashCode() {
         return hashCode;
-    }
-
-    private int buildHashCode() {
-        return Objects.hash(pipelineDocRef, pipelineVersion, streamId, isContextData, streamNo);
     }
 }

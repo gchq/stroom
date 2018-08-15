@@ -29,11 +29,6 @@ public class KeyValueStoreKey {
         this.key = Objects.requireNonNull(key);
     }
 
-//    public KeyValueStoreKey(final UID mapUid) {
-//        this.mapUid = Objects.requireNonNull(mapUid);
-//        this.key = null;
-//    }
-
     public UID getMapUid() {
         return mapUid;
     }

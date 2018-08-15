@@ -387,8 +387,6 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 refStreamDefStripedReentrantLock,
                 keyValueStoreDb,
                 rangeStoreDb,
-//                valueStoreDb,
-//                valueStoreMetaDb,
                 valueStore,
                 mapDefinitionUIDStore,
                 processingInfoDb,

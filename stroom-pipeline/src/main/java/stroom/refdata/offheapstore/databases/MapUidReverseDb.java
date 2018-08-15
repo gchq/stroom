@@ -80,8 +80,6 @@ public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
 
     }
 
-
-
     public interface Factory {
         MapUidReverseDb create(final Env<ByteBuffer> lmdbEnvironment);
     }

@@ -24,7 +24,7 @@ public class FastInfosetByteBufferConsumer extends AbstractByteBufferConsumer {
         fastInfosetContentHandler.setPipelineConfiguration(pipelineConfiguration);
         fastInfosetContentHandler.setReceiver(super.getReceiver());
 
-        //TODO should we re-use this saxparser object in some way?
+        //TODO should we re-use this saxparser object in some way? Ctor looks fairly cheap so prob not worth the bother
         saxDocumentParser = new SAXDocumentParser();
         saxDocumentParser.setContentHandler(fastInfosetContentHandler);
     }

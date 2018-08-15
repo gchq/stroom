@@ -36,16 +36,6 @@ public class RefDataStoreModule extends AbstractModule {
         //deps from other modules
         requireBinding(StroomPropertyService.class);
 
-//        bind(RefDataStore.class).toProvider(RefDataStoreProvider..class);
-//        bind(RefDataStore.class).toProvider(RefDataStoreProvider.class);
-
-//        // bind the various RefDataValue impls into a map keyed on their ID
-//        final MapBinder<Integer, RefDataValueSerde> refDataValueSerdeBinder = MapBinder.newMapBinder(
-//                binder(), Integer.class, RefDataValueSerde.class);
-
-//        refDataValueSerdeBinder.addBinding(FastInfosetValue.TYPE_ID).to(FastInfoSetValueSerde.class);
-//        refDataValueSerdeBinder.addBinding(StringValue.TYPE_ID).to(StringValueSerde.class);
-
         // bind the various RefDataValue ByteBuffer consumer factories into a map keyed on their ID
         final MapBinder<Integer, AbstractByteBufferConsumer.Factory> refDataValueByteBufferConsumerBinder = MapBinder.newMapBinder(
                 binder(), Integer.class, AbstractByteBufferConsumer.Factory.class);

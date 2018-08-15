@@ -182,6 +182,8 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
                         "Ref count is zero, deleting entry for key {}",
                         ByteBufferUtils.byteBufferInfo(keyBuffer)));
                 cursor.delete();
+
+                // perform any post delete actions
                 onDeleteAction.accept(writeTxn, keyBuffer, valueBuffer);
                 return true;
 
@@ -203,7 +205,6 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
             }
         }
     }
-
 
     public interface Factory {
         ValueStoreMetaDb create(final Env<ByteBuffer> lmdbEnvironment);

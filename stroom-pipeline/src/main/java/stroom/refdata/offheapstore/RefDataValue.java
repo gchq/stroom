@@ -19,14 +19,6 @@ package stroom.refdata.offheapstore;
 
 public abstract class RefDataValue {
 
-    // A count of the number of KeyValueStoreDb or RangeValueStoreDb keys that are associated
-    // with this value. This count should not form part of the equals or hashcode
-//    protected final int referenceCount;
-
-//    RefDataValue(final int referenceCount) {
-//        this.referenceCount = referenceCount;
-//    }
-
     /**
      * @return The hashcode of just the underlying value that this object wraps
      * rather than hashcode of the whole object.
@@ -39,27 +31,4 @@ public abstract class RefDataValue {
      */
     public abstract int getTypeId();
 
-//    public int getReferenceCount() {
-//        return referenceCount;
-//    }
-
-//    @Override
-//    public boolean equals(final Object o) {
-//        if (this == o) return true;
-//        if (o == null || getClass() != o.getClass()) return false;
-//        final RefDataValue that = (RefDataValue) o;
-//        return referenceCount == that.referenceCount;
-//    }
-//
-//    @Override
-//    public int hashCode() {
-//        return Objects.hash(referenceCount);
-//    }
-//
-//    @Override
-//    public String toString() {
-//        return "RefDataValue{" +
-//                "referenceCount=" + referenceCount +
-//                '}';
-//    }
 }

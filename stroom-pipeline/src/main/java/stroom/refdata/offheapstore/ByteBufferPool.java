@@ -116,22 +116,10 @@ public class ByteBufferPool implements Clearable {
         }
     }
 
-    private ByteBufferPair getBufferPair(final int minKeyCapacity, final int minValueCapacity) {
-        ByteBuffer keyBuffer = getBuffer(minKeyCapacity);
-        ByteBuffer valueBuffer = getBuffer(minValueCapacity);
-        return ByteBufferPair.of(keyBuffer, valueBuffer);
-    }
-
     public PooledByteBufferPair getPooledBufferPair(final int minKeyCapacity, final int minValueCapacity) {
         ByteBuffer keyBuffer = getBuffer(minKeyCapacity);
         ByteBuffer valueBuffer = getBuffer(minValueCapacity);
         return new PooledByteBufferPair(this, keyBuffer, valueBuffer);
-    }
-
-    private void release(ByteBufferPair byteBufferPair) {
-        Objects.requireNonNull(byteBufferPair);
-        release(byteBufferPair.getKeyBuffer());
-        release(byteBufferPair.getValueBuffer());
     }
 
     /**
@@ -162,38 +150,6 @@ public class ByteBufferPool implements Clearable {
         } finally {
             if (buffer != null) {
                 release(buffer);
-            }
-        }
-    }
-
-    /**
-     * Perform work with a {@link ByteBufferPair} obtained from the pool. The {@link ByteBufferPair}
-     * must not be used outside of the work lambda.
-     */
-    public <T> T getWithBufferPair(final int minKeyCapacity, final int minValueCapacity, Function<ByteBufferPair, T> work) {
-        ByteBufferPair byteBufferPair = null;
-        try {
-            byteBufferPair = getBufferPair(minKeyCapacity, minValueCapacity);
-            return work.apply(byteBufferPair);
-        } finally {
-            if (byteBufferPair != null) {
-                release(byteBufferPair);
-            }
-        }
-    }
-
-    /**
-     * Perform work with a {@link ByteBufferPair} obtained from the pool. The {@link ByteBufferPair}
-     * must not be used outside of the work lambda.
-     */
-    public void doWithBufferPair(final int minKeyCapacity, final int minValueCapacity, Consumer<ByteBufferPair> work) {
-        ByteBufferPair byteBufferPair = null;
-        try {
-            byteBufferPair = getBufferPair(minKeyCapacity, minValueCapacity);
-            work.accept(byteBufferPair);
-        } finally {
-            if (byteBufferPair != null) {
-                release(byteBufferPair);
             }
         }
     }

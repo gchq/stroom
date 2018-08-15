@@ -1,7 +1,6 @@
 package stroom.refdata.onheapstore;
 
 import com.codahale.metrics.health.HealthCheck;
-import com.google.common.util.concurrent.Striped;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Range;
@@ -28,7 +27,6 @@ import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
-import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
 
 /**

@@ -106,50 +106,6 @@ public class TestByteBufferPool {
     }
 
     @Test
-    public void doWithBufferPair_differentSize() {
-
-        ByteBufferPool byteBufferPool = new ByteBufferPool();
-
-        assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(0);
-
-        //will create two new buffers
-        byteBufferPool.getPooledBufferPair(10, 11).release();
-//        byteBufferPool.release(byteBufferPool.getBufferPair(10, 11));
-
-        assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(2);
-
-        //will use the 10 and 11 buffers
-        byteBufferPool.getPooledBufferPair(1, 2).release();
-//        byteBufferPool.release(byteBufferPool.getBufferPair(1, 2));
-
-        assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(2);
-
-        //will create two new buffers
-        byteBufferPool.getPooledBufferPair(1000, 1001).release();
-//        byteBufferPool.release(byteBufferPool.getBufferPair(1000, 1001));
-
-        assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(4);
-
-        int minKeyCapacity = 100;
-        int minValueCapacity = 101;
-        int expectedKeyCapacity = 1000;
-        int expectedValueCapacity = 1001;
-        byteBufferPool.doWithBufferPair(minKeyCapacity, minValueCapacity, bufferPair -> {
-            assertThat(bufferPair).isNotNull();
-            assertThat(bufferPair.getKeyBuffer().isDirect()).isTrue();
-            assertThat(bufferPair.getKeyBuffer().capacity()).isEqualTo(expectedKeyCapacity);
-            assertThat(bufferPair.getValueBuffer().isDirect()).isTrue();
-            assertThat(bufferPair.getValueBuffer().capacity()).isEqualTo(expectedValueCapacity);
-
-            // count is two less as our buffers are out of the pool
-            assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(2);
-        });
-
-        // our buffers are back in the pool
-        assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(4);
-    }
-
-    @Test
     public void testBufferClearing() {
         ByteBufferPool byteBufferPool = new ByteBufferPool();
 

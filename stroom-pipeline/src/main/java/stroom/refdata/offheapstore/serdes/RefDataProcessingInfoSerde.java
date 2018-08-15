@@ -54,8 +54,7 @@ public class RefDataProcessingInfoSerde implements
         final long effectiveTimeEpochMs = byteBuffer.getLong();
         final byte processingStateId = byteBuffer.get();
         byteBuffer.flip();
-        final ProcessingState processingState =
-                ProcessingState.fromByte(processingStateId);
+        final ProcessingState processingState = ProcessingState.fromByte(processingStateId);
 
         return new RefDataProcessingInfo(
                 createTimeEpochMs, lastAccessedTimeEpochMs, effectiveTimeEpochMs, processingState);

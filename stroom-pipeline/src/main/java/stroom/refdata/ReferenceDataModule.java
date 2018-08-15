@@ -32,7 +32,6 @@ public class ReferenceDataModule extends AbstractModule {
 
         final Multibinder<Clearable> clearableBinder = Multibinder.newSetBinder(binder(), Clearable.class);
         clearableBinder.addBinding().to(EffectiveStreamCache.class);
-//        clearableBinder.addBinding().to(MapStoreCache.class);
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(stroom.refdata.ContextDataLoadTaskHandler.class);

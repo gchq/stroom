@@ -35,7 +35,8 @@ public class GenericRefDataValueSerde implements RefDataValueSerde {
     @Override
     public RefDataValue deserialize(final ByteBuffer byteBuffer) {
         // to correctly deserialise you need to get the typeId from the
-        // ValueStoreMetaDb to work out which serde to use.
+        // ValueStoreMetaDb to work out which serde to use. Therefore we deserialise
+        // as an UnknownRefDataValue object
         return new UnknownRefDataValue(byteBuffer);
     }
 
