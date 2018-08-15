@@ -1,17 +1,14 @@
 .app-container {
+  height: 100%;
   display: flex;
   flex-direction: row;
-  height: 100%;
-  width: 100%;
 }
 
 .app-chrome {
   display: flex;
   flex-direction: row;
-  height: calc(
-    100% - 14px
-  ); // I don't know why we need to offset the hight here. Someone please tell me.
   width: 100%;
+  height: 100%;
 }
 
 .app-chrome__sidebar {
@@ -19,7 +16,6 @@
 }
 
 .app-chrome__sidebar-menu {
-  height: inherit;
   width: 15rem;
   overflow-y: auto;
 }
@@ -56,9 +52,7 @@
 
 .app-chrome__content {
   width: 100%;
-  height: calc(
-    100% + 14px
-  ); //TODO: sobs. This offsets the offset I can't explain on .app-chrome.
+  height: 100%;
 }
 
 .content-tabs {
