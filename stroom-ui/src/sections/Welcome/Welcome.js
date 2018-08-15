@@ -23,7 +23,7 @@ const Welcome = props => (
   <WithHeader
     header={
       <Header as="h3">
-        <Icon color="grey" name="home" />
+        <Icon name="home" />
         <Header.Content>Welcome</Header.Content>
       </Header>
     }

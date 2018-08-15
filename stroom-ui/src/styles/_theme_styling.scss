@@ -96,3 +96,9 @@
     color: themed('textColor');
   }
 }
+
+.ui.header>.icon {
+  @include themify($themes) {
+    color: themed('headerIconColor');
+  }
+}

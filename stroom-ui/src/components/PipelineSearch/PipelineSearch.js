@@ -172,7 +172,7 @@ const RawWithHeader = props => (
   <WithHeader
     header={
       <Header as="h3">
-        <Icon name="tasks" color="grey" />
+        <Icon name="tasks" />
         Pipelines
       </Header>
     }

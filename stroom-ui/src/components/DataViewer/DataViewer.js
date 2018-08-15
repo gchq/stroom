@@ -279,7 +279,7 @@ const DataViewer = ({
         <Grid.Row>
           <Grid.Column width={2}>
             <Header as="h3">
-              <Icon name="database" color="grey" />
+              <Icon name="database"/>
               Data
             </Header>
           </Grid.Column>

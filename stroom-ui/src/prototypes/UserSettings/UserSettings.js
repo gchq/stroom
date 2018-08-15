@@ -66,7 +66,7 @@ const RawWithHeader = props => (
   <WithHeader
     header={
       <Header as="h3">
-        <Icon color="grey" name="user" />
+        <Icon name="user" />
         <Header.Content>Me</Header.Content>
       </Header>
     }
