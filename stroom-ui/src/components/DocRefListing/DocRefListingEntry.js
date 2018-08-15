@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { compose, branch, renderNothing } from 'recompose';
 import { connect } from 'react-redux';
-import { Popup, Button } from 'semantic-ui-react/dist/commonjs';
+import { Popup, Button, Icon } from 'semantic-ui-react/dist/commonjs';
 import { DragSource } from 'react-dnd';
 
 import { findItem } from 'lib/treeUtils';
@@ -51,7 +51,7 @@ const enhance = compose(
     },
   ),
   branch(({ docRefWithLineage: { node } }) => !node, renderNothing),
-  DragSource(ItemTypes.DOC_REF_UUIDS, dragSource, dragCollect),
+  DragSource(ItemTypes.DOC_REF_UUIDS, dragSource, dragCollect), 
 );
 
 const DocRefListingEntry = ({

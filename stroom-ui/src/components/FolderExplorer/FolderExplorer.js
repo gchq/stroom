@@ -7,10 +7,6 @@ import { findItem } from 'lib/treeUtils';
 import { actionCreators } from './redux';
 import { fetchDocInfo } from 'components/DocExplorer/explorerClient';
 import { DocRefListingWithRouter } from 'components/DocRefListing';
-import MoveDocRefDialog from './MoveDocRefDialog';
-import RenameDocRefDialog from './RenameDocRefDialog';
-import CopyDocRefDialog from './CopyDocRefDialog';
-import DeleteDocRefDialog from './DeleteDocRefDialog';
 import NewDocDialog from './NewDocDialog';
 import DocRefInfoModal from 'components/DocRefInfoModal';
 
@@ -112,10 +108,6 @@ const FolderExplorer = ({
     />
     <DocRefInfoModal />
     <NewDocDialog />
-    <MoveDocRefDialog />
-    <RenameDocRefDialog />
-    <DeleteDocRefDialog />
-    <CopyDocRefDialog />
   </React.Fragment>
 );
 

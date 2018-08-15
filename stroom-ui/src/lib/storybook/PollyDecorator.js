@@ -19,7 +19,7 @@ import { connect } from 'react-redux';
 import { compose, lifecycle } from 'recompose';
 import { Polly } from '@pollyjs/core';
 
-import { guid, findItem } from 'lib/treeUtils';
+import { guid, findItem, copyItemsInTree, moveItemsInTree } from 'lib/treeUtils';
 import { actionCreators as fetchActionCreators } from 'lib/fetchTracker.redux';
 
 const { resetAllUrls } = fetchActionCreators;
@@ -74,7 +74,6 @@ server.get(`${testConfig.explorerServiceUrl}/all`).intercept((req, res) => {
 server
   .get(`${testConfig.explorerServiceUrl}/info/:docRefType/:docRefUuid`)
   .intercept((req, res) => {
-    console.log('Getting info', req.params);
     const { node: docRef } = findItem(testCache.data.documentTree, req.params.docRefUuid);
     const info = {
       docRef,
@@ -99,32 +98,45 @@ server.post(`${testConfig.explorerServiceUrl}/create`).intercept((req, res) => {
     name: docRefName
   });
 });
-// // Copy Document
+
+// Copies need to be deep
+const copyDocRef = docRef => ({
+  uuid: guid(),
+  type: docRef.type,
+  name: `${docRef.name}-copy-${guid()}`,
+  children: docRef.children ? docRef.children.map(copyDocRef) : undefined
+})
+
+// Copy Document
 server.post(`${testConfig.explorerServiceUrl}/copy`).intercept((req, res) => {
-  const { docRefs } = JSON.parse(req.body);
+  const { destinationFolderRef, docRefs } = JSON.parse(req.body);
+
+  const copies = docRefs.map(d => findItem(testCache.data.documentTree, d.uuid)).map(d => d.node).map(copyDocRef);
+  testCache.data.documentTree = copyItemsInTree(testCache.data.documentTree, copies, destinationFolderRef);
+
   res.json({
-    docRefs: docRefs.map(docRef => ({
-      uuid: guid(),
-      type: docRef.type,
-      name: `${docRef.name}-copy-${guid()}`,
-    })),
+    docRefs: copies,
     message: '',
   });
 });
-// // Move Document
+// Move Document
 server.put(`${testConfig.explorerServiceUrl}/move`).intercept((req, res) => {
-  const { docRefs } = JSON.parse(req.body);
+  const { destinationFolderRef, docRefs } = JSON.parse(req.body);
+
+  testCache.data.documentTree = moveItemsInTree(testCache.data.documentTree, docRefs, destinationFolderRef);
+  let movedDocRefs = docRefs.map(d => findItem(testCache.data.documentTree, d.uuid)).map(d => d.node);
+
   res.json({
-    docRefs,
+    docRefs: movedDocRefs,
     message: '',
   });
 });
-// // Rename Document
+// Rename Document
 server.put(`${testConfig.explorerServiceUrl}/rename`).intercept((req, res) => {
   const { docRef, name } = JSON.parse(req.body);
   res.json({ ...docRef, name });
 });
-// // Delete Document
+// Delete Document
 server.delete(`${testConfig.explorerServiceUrl}/delete`).intercept((req, res) => {
   const docRefs = JSON.parse(req.body);
   res.json({
@@ -197,7 +209,13 @@ const enhanceLocal = compose(
     },
     componentDidMount() {
       // Replace all the 'server side data' with the properties passed in
-      testCache.data = this.props;
+      testCache.data = {
+        documentTree: {...this.props.documentTree},
+        docRefTypes: [...this.props.docRefTypes],
+        pipelines: {...this.props.pipelines},
+        elements: [...this.props.elements],
+        elementProperties: {...this.props.elementProperties},
+      };
     },
   }),
 );
