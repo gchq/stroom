@@ -17,7 +17,9 @@
 
 package stroom.refdata.offheapstore;
 
+import com.codahale.metrics.health.HealthCheck;
 import com.google.common.util.concurrent.Striped;
+import org.assertj.core.api.Assertions;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -170,8 +172,15 @@ public class TestByteBufferPool {
 
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(6);
 
-        LOGGER.info("health: {}", byteBufferPool.getHealth());
+        HealthCheck.Result result = byteBufferPool.getHealth();
+        LOGGER.info("health: {}", result);
 
+        Map<Integer, Long> counts = (Map<Integer, Long>) result.getDetails().get("Buffer capacity counts");
+
+        assertThat(counts).containsExactly(
+                Assertions.entry(1, 2L),
+                Assertions.entry(10, 3L),
+                Assertions.entry(100, 1L));
     }
 
 
