@@ -9,10 +9,12 @@
   flex-direction: row;
   width: 100%;
   height: 100%;
+  position:absolute;
 }
 
 .app-chrome__sidebar {
   height: inherit;
+  position:relative;
 }
 
 .app-chrome__sidebar-menu {
@@ -49,7 +51,6 @@
 }
 
 .sidebar__menu-item.doc {
-  background-color: $dark-grey;
   color: #cacbcb;
   padding: 0.1rem;
   color: white;
@@ -71,6 +72,7 @@
   color: red;
 }
 .app-chrome__content {
+  position:relative;
   width: 100%;
   height: 100%;
 }
@@ -83,6 +85,8 @@
 }
 
 .content-tabs__content {
+  position:absolute;
+  width:100%;
   display: flex;
   flex-flow: column;
   height: 100%;
