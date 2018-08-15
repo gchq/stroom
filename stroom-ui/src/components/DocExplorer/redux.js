@@ -23,6 +23,7 @@ import {
   deleteItemsFromTree,
   addItemToTree,
   updateItemInTree,
+  findItem,
 } from 'lib/treeUtils';
 
 export const DEFAULT_EXPLORER_ID = 'default';

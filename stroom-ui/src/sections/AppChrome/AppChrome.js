@@ -27,6 +27,12 @@ import { withExplorerTree } from 'components/DocExplorer';
 import withLocalStorage from 'lib/withLocalStorage';
 import { openDocRef } from 'prototypes/RecentItems';
 import MenuItem from './MenuItem';
+import {
+  MoveDocRefDialog,
+  RenameDocRefDialog,
+  CopyDocRefDialog,
+  DeleteDocRefDialog,
+} from 'components/FolderExplorer';
 
 import { actionCreators as userSettingsActionCreators } from 'prototypes/UserSettings';
 
@@ -205,6 +211,10 @@ const AppChrome = ({
   return (
     <div className={`app-container ${theme}`}>
       <div className="app-chrome">
+        <MoveDocRefDialog />
+        <RenameDocRefDialog />
+        <DeleteDocRefDialog />
+        <CopyDocRefDialog />
         <div className="app-chrome__sidebar">
           {isExpanded ? (
             <React.Fragment>
