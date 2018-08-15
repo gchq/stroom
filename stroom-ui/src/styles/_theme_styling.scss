@@ -103,6 +103,7 @@
   }
 }
 
+// This is mostly about overriding SUI styles
 table {
   @include themify($themes) {
     // '!important because it overrides SUI
@@ -123,6 +124,48 @@ table {
       // '!important because it overrides SUI
       background-color: themed('tableBackgroundColor') !important ;
       color: themed('textColor') !important;
+    }
+  }
+}
+
+
+
+// This is mostly about override SUI styles
+.dropdown {
+
+  // This styles the main drop-down box
+  @include themify($themes) {
+    background-color: themed('backgroundColor') !important;
+    color: themed('textColor') !important;
+    border:1px solid themed('tableBackgroundColor') !important;
+  }
+
+  // This styles the actual drop-down bit.
+  .menu {
+    @include themify($themes) {
+      background-color: themed('backgroundColor') !important;
+      color: themed('textColor') !important;
+      border:1px solid themed('tableBackgroundColor') !important;
+    }
+  }
+
+  // This makes sure the text is the right colour
+  .text {
+    @include themify($themes) {
+      color: themed('textColor') !important;
+    }
+  }
+
+  // We need to get rid of the border for erverything inside the drop-down.
+  .text, .active, .item, .icon {
+    border:0 !important;
+  }
+
+
+  // We need a hover colour for the drop-down.
+  .item:hover, .text:hover {
+    @include themify($themes) {
+      background-color:  themed('tableBackgroundColor')  !important;
     }
   }
 }
