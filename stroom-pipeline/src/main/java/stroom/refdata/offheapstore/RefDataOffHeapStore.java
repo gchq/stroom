@@ -458,7 +458,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     LOGGER.debug("Found at least one refStreamDef ready for purge, now getting lock");
 
                     // now acquire a lock for the this ref stream def so we don't conflict with any load operations
-                    doWithRefStreamDefinitionLock(optRefStreamDef.get(), () -> {
+                    doWithRefStreamDefinitionLock(refStreamDefStripedReentrantLock, optRefStreamDef.get(), () -> {
                         // start a write txn and re-fetch the next entry for purge (should be the same one as above)
                         // TODO we currently purge a whole refStreamDef in one txn, may be better to do it in smaller
                         // chunks
@@ -668,28 +668,12 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         }
     }
 
-    void doWithRefStreamDefinitionLock(final RefStreamDefinition refStreamDefinition, final Runnable work) {
-        final Lock lock = refStreamDefStripedReentrantLock.get(refStreamDefinition);
 
-        LAMBDA_LOGGER.logDurationIfDebugEnabled(
-                () -> {
-                    try {
-                        LOGGER.debug("Acquiring lock for {}", refStreamDefinition);
-                        lock.lockInterruptibly();
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        throw new RuntimeException(LambdaLogger.buildMessage(
-                                "Thread interrupted while trying to acquire lock for refStreamDefinition {}",
-                                refStreamDefinition));
-                    }
-                },
-                () -> LambdaLogger.buildMessage("Acquiring lock for {}", refStreamDefinition));
-        try {
-            // now we have sole access to this RefStreamDefinition so perform the work on it
-            work.run();
-        } finally {
-            lock.unlock();
-        }
+    /**
+     * Package-private for testing
+     */
+    void doWithRefStreamDefinitionLock(final RefStreamDefinition refStreamDefinition, final Runnable work) {
+        doWithRefStreamDefinitionLock(refStreamDefStripedReentrantLock, refStreamDefinition, work);
     }
 
     /**

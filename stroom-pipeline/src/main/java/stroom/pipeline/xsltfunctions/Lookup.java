@@ -23,7 +23,6 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.refdata.LookupIdentifier;
 import stroom.refdata.ReferenceData;
 import stroom.refdata.ReferenceDataResult;
-import stroom.refdata.offheapstore.RefDataStoreProvider;
 import stroom.refdata.offheapstore.RefDataValueProxy;
 import stroom.refdata.offheapstore.RefDataValueProxyConsumer;
 import stroom.util.shared.Severity;
@@ -34,10 +33,11 @@ class Lookup extends AbstractLookup {
 
     @Inject
     Lookup(final ReferenceData referenceData,
-           final RefDataStoreProvider refDataStoreProvider,
+//           final RefDataStoreProvider refDataStoreProvider,
            final StreamHolder streamHolder,
            final RefDataValueProxyConsumer.Factory consumerFactory) {
-        super(referenceData, refDataStoreProvider.get(), streamHolder, consumerFactory);
+//        super(referenceData, refDataStoreProvider.get(), streamHolder, consumerFactory);
+        super(referenceData, streamHolder, consumerFactory);
     }
 
     @Override
@@ -52,7 +52,8 @@ class Lookup extends AbstractLookup {
 
         final RefDataValueProxy refDataValueProxy = result.getRefDataValueProxy();
 
-        final SequenceMaker sequenceMaker = new SequenceMaker(context, getRefDataStore(), getConsumerFactory());
+//        final SequenceMaker sequenceMaker = new SequenceMaker(context, getRefDataStore(), getConsumerFactory());
+        final SequenceMaker sequenceMaker = new SequenceMaker(context, getConsumerFactory());
 
         boolean wasFound = false;
         try {

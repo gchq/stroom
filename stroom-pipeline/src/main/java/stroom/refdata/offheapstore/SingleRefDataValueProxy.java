@@ -17,11 +17,16 @@
 
 package stroom.refdata.offheapstore;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
 public class SingleRefDataValueProxy implements RefDataValueProxy {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SingleRefDataValueProxy.class);
 
     // held for the purpose of testing equality of a ValueProxy and
     // for calling methods on the instance
@@ -48,20 +53,9 @@ public class SingleRefDataValueProxy implements RefDataValueProxy {
      */
     @Override
     public Optional<RefDataValue> supplyValue() {
+        LOGGER.trace("supplyValue()");
         return refDataStore.getValue(mapDefinition, key);
     }
-
-//    public <T> Optional<T> mapValue(final Function<RefDataValue, T> valueMapper) {
-//        return refDataStore.map(valueStoreKey, valueMapper);
-//    }
-//
-//    public <T> Optional<T> mapBytes(final Function<ByteBuffer, T> valueMapper) {
-//        return refDataStore.mapBytes(valueStoreKey, valueMapper);
-//    }
-//
-//    public void consumeValue(final Consumer<RefDataValue> valueConsumer) {
-//        refDataStore.consumeValue(valueStoreKey, valueConsumer);
-//    }
 
     /**
      * If a reference data entry exists for this {@link SingleRefDataValueProxy} pass its value to the consumer
@@ -71,6 +65,7 @@ public class SingleRefDataValueProxy implements RefDataValueProxy {
      */
     @Override
     public boolean consumeBytes(final Consumer<TypedByteBuffer> typedByteBufferConsumer) {
+        LOGGER.trace("consumeBytes(...)");
         return refDataStore.consumeValueBytes(mapDefinition, key, typedByteBufferConsumer);
     }
 

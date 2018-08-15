@@ -17,6 +17,9 @@
 
 package stroom.refdata.onheapstore;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.Tuple3;
@@ -26,11 +29,15 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Range;
+import stroom.properties.MockStroomPropertyService;
+import stroom.properties.StroomPropertyService;
 import stroom.refdata.offheapstore.MapDefinition;
 import stroom.refdata.offheapstore.ProcessingState;
 import stroom.refdata.offheapstore.RefDataLoader;
 import stroom.refdata.offheapstore.RefDataProcessingInfo;
 import stroom.refdata.offheapstore.RefDataStore;
+import stroom.refdata.offheapstore.RefDataStoreModule;
+import stroom.refdata.offheapstore.RefDataStoreProvider;
 import stroom.refdata.offheapstore.RefDataValue;
 import stroom.refdata.offheapstore.RefDataValueProxy;
 import stroom.refdata.offheapstore.RefStreamDefinition;
@@ -38,6 +45,7 @@ import stroom.refdata.offheapstore.StringValue;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import javax.inject.Inject;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
@@ -78,11 +86,25 @@ public class TestRefDataOnHeapStore {
     private static final String RANGE_TYPE = "Range";
     private static final String PADDING = IntStream.rangeClosed(1,300).boxed().map(i -> "-").collect(Collectors.joining());
 
+    private final MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
+
+    @Inject
+    private RefDataStoreProvider refDataStoreProvider;
     private RefDataStore refDataStore;
 
     @Before
     public void setUp() throws Exception {
-        refDataStore = new RefDataOnHeapStore();
+        final Injector injector = Guice.createInjector(
+                new AbstractModule() {
+                    @Override
+                    protected void configure() {
+                        bind(StroomPropertyService.class).toInstance(mockStroomPropertyService);
+                        install(new RefDataStoreModule());
+                    }
+                });
+        injector.injectMembers(this);
+        refDataStore = refDataStoreProvider.createOnHeapStore();
+//        refDataStoreProvider = new RefDataOnHeapStore(genericRefDataValueSerde);
     }
 
     @Test

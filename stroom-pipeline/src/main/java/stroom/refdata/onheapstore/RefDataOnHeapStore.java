@@ -5,6 +5,7 @@ import com.google.common.util.concurrent.Striped;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Range;
+import stroom.properties.StroomPropertyService;
 import stroom.refdata.offheapstore.AbstractRefDataStore;
 import stroom.refdata.offheapstore.MapDefinition;
 import stroom.refdata.offheapstore.ProcessingState;
@@ -13,32 +14,60 @@ import stroom.refdata.offheapstore.RefDataProcessingInfo;
 import stroom.refdata.offheapstore.RefDataValue;
 import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.refdata.offheapstore.TypedByteBuffer;
+import stroom.refdata.offheapstore.serdes.GenericRefDataValueSerde;
 import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
+import javax.annotation.concurrent.NotThreadSafe;
+import java.nio.BufferOverflowException;
+import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Optional;
+import java.util.Set;
 import java.util.SortedMap;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
 
-class RefDataOnHeapStore extends AbstractRefDataStore {
+/**
+ * A heap based implementation of the {@link stroom.refdata.offheapstore.RefDataStore}
+ * That is intended for use with reference data with a very short life, i.e. context
+ * data that is transient and only required for the life of a single pipeline processor
+ * task. As such is is not thread safe and only intended to be used to by a single thread.
+ * It also does not support purge operations as it is expected that the store will be created,
+ * populated, used then destroyed when no longer needed
+ */
+@NotThreadSafe
+public class RefDataOnHeapStore extends AbstractRefDataStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RefDataOnHeapStore.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(RefDataOnHeapStore.class);
+
+    private static final int BUFFER_ENLARGEMENT_RETRY_COUNT = 20;
 
     private final Map<RefStreamDefinition, RefDataProcessingInfo> processingInfoMap;
+    private final Set<MapDefinition> mapDefinitions;
     private final Map<KeyValueMapKey, RefDataValue> keyValueMap;
     private final Map<MapDefinition, NavigableMap<Range<Long>, RefDataValue>> rangeValueNestedMap;
+    private final GenericRefDataValueSerde genericRefDataValueSerde;
 
     // For synchronising access to the data belonging to a MapDefinition
     private final Striped<Lock> refStreamDefStripedReentrantLock;
+    private ByteBuffer valueBuffer = null;
 
-    RefDataOnHeapStore() {
-        processingInfoMap = new ConcurrentHashMap<>();
-        keyValueMap = new ConcurrentHashMap<>();
-        rangeValueNestedMap = new ConcurrentHashMap<>();
-        refStreamDefStripedReentrantLock = Striped.lazyWeakLock(100);
+    public RefDataOnHeapStore(final GenericRefDataValueSerde genericRefDataValueSerde,
+                              final StroomPropertyService stroomPropertyService) {
+
+        this.genericRefDataValueSerde = genericRefDataValueSerde;
+
+        this.processingInfoMap = new HashMap<>();
+        this.keyValueMap = new HashMap<>();
+        this.rangeValueNestedMap = new HashMap<>();
+        //TODO remove lock as it is of no use as this class is not threadsafe
+        this.refStreamDefStripedReentrantLock = Striped.lazyWeakLock(100);
+        this.mapDefinitions = new HashSet<>();
     }
 
 
@@ -53,18 +82,20 @@ class RefDataOnHeapStore extends AbstractRefDataStore {
 
     @Override
     public boolean isDataLoaded(final RefStreamDefinition refStreamDefinition) {
-        RefDataProcessingInfo refDataProcessingInfo = processingInfoMap.get(refStreamDefinition);
-        if (refDataProcessingInfo == null ||
-                !refDataProcessingInfo.getProcessingState().equals(ProcessingState.COMPLETE)) {
-            return false;
-        } else {
-            return true;
-        }
+        final boolean isDataLoaded = Optional.ofNullable(processingInfoMap.get(refStreamDefinition))
+                .filter(processingInfo ->
+                        processingInfo.getProcessingState().equals(ProcessingState.COMPLETE))
+                .isPresent();
+        LOGGER.trace("isDataLoaded({}) returning {}", refStreamDefinition, isDataLoaded);
+        return isDataLoaded;
     }
 
     @Override
     public boolean exists(final MapDefinition mapDefinition) {
-        return keyValueMap.containsKey(mapDefinition) || rangeValueNestedMap.containsKey(mapDefinition);
+        final boolean exists = mapDefinitions.contains(mapDefinition);
+
+        LOGGER.trace("exists({}) returning {}", mapDefinition, exists);
+        return exists;
     }
 
     @Override
@@ -103,6 +134,9 @@ class RefDataOnHeapStore extends AbstractRefDataStore {
                 result = Optional.empty();
             }
         }
+        final Optional<RefDataValue> result2 = result;
+        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("getValue({}, {}) returning {}",
+                mapDefinition, key, result2));
         return result;
     }
 
@@ -152,8 +186,28 @@ class RefDataOnHeapStore extends AbstractRefDataStore {
     }
 
     @Override
-    public boolean consumeValueBytes(final MapDefinition mapDefinition, final String key, final Consumer<TypedByteBuffer> valueBytesConsumer) {
-        return false;
+    public boolean consumeValueBytes(final MapDefinition mapDefinition,
+                                     final String key,
+                                     final Consumer<TypedByteBuffer> valueBytesConsumer) {
+
+        // TODO we are dealing with on-heap data so we shouldn't be involved with bytes/ByteBuffers
+        // for the moment this will do as the fast infoset values will be bytes anyway so it is just
+        // some small string serialisation.
+
+        boolean wasConsumed = getValue(mapDefinition, key)
+                .filter(refDataValue -> {
+                    // the ByteBuffer in here is shared and owned by 'this' so it should not
+                    // be used outside this consumer
+                    TypedByteBuffer typedByteBuffer = buildTypedByteBuffer(refDataValue);
+
+                    valueBytesConsumer.accept(typedByteBuffer);
+
+                    // abuse of the filter() method, as not really filtering, so always return true
+                    return true;
+                })
+                .isPresent();
+        LOGGER.trace("consumeValueBytes({}, {}, ...) returning {}", mapDefinition, key, wasConsumed);
+        return wasConsumed;
     }
 
     @Override
@@ -176,13 +230,14 @@ class RefDataOnHeapStore extends AbstractRefDataStore {
 
     @Override
     public void purgeOldData() {
-
-        throw new UnsupportedOperationException("Not implemented");
-
+        throw new UnsupportedOperationException("Purge functionality is not supported for the on-heap store");
     }
 
-    public void doWithRefStreamDefinitionLock(final RefStreamDefinition refStreamDefinition, final Runnable work) {
-
+    /**
+     * Package-private for testing
+     */
+    void doWithRefStreamDefinitionLock(final RefStreamDefinition refStreamDefinition, final Runnable work) {
+        doWithRefStreamDefinitionLock(refStreamDefStripedReentrantLock, refStreamDefinition, work);
     }
 
     @Override
@@ -253,7 +308,47 @@ class RefDataOnHeapStore extends AbstractRefDataStore {
                 effectiveTimeMs,
                 refStreamDefStripedReentrantLock,
                 processingInfoMap,
+                mapDefinitions,
                 keyValueMap,
-                rangeValueNestedMap);
+                rangeValueNestedMap,
+                this);
+    }
+
+    private TypedByteBuffer buildTypedByteBuffer(final RefDataValue refDataValue) {
+        int tryCount = 0;
+        int minCapacity = genericRefDataValueSerde.getBufferCapacity();
+        boolean success = false;
+
+        ByteBuffer valueBuffer = null;
+
+        // we have no idea how big the serialised form is
+        while (tryCount++ < BUFFER_ENLARGEMENT_RETRY_COUNT) {
+            valueBuffer = getValueBuffer(minCapacity);
+            try {
+                genericRefDataValueSerde.serialize(valueBuffer, refDataValue);
+                success = true;
+                break;
+            } catch (BufferOverflowException e) {
+                //double the capacity and try again
+                minCapacity = minCapacity * 2;
+            }
+        }
+
+        if (!success) {
+            throw new RuntimeException(LambdaLogger.buildMessage(
+                    "Failed to serialise {} after {} attempts and a capacity of {}",
+                    refDataValue, tryCount, minCapacity));
+        }
+        return new TypedByteBuffer(refDataValue.getTypeId(), valueBuffer);
+    }
+
+    private ByteBuffer getValueBuffer(final int minCapacity) {
+        if (valueBuffer != null && minCapacity <= valueBuffer.capacity()) {
+            valueBuffer.clear();
+            return valueBuffer;
+        } else {
+            valueBuffer = ByteBuffer.allocate(minCapacity);
+        }
+        return valueBuffer;
     }
 }

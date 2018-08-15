@@ -36,7 +36,8 @@ public class RefDataStoreModule extends AbstractModule {
         //deps from other modules
         requireBinding(StroomPropertyService.class);
 
-        bind(RefDataStore.class).toProvider(RefDataStoreProvider.class);
+//        bind(RefDataStore.class).toProvider(RefDataStoreProvider..class);
+//        bind(RefDataStore.class).toProvider(RefDataStoreProvider.class);
 
 //        // bind the various RefDataValue impls into a map keyed on their ID
 //        final MapBinder<Integer, RefDataValueSerde> refDataValueSerdeBinder = MapBinder.newMapBinder(

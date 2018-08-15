@@ -52,6 +52,7 @@ import stroom.proxy.servlet.ConfigServlet;
 import stroom.proxy.servlet.ProxyStatusServlet;
 import stroom.proxy.servlet.ProxyWelcomeServlet;
 import stroom.refdata.offheapstore.RefDataStore;
+import stroom.refdata.offheapstore.RefDataStoreProvider;
 import stroom.resource.ElementResource;
 import stroom.resource.PipelineResource;
 import stroom.resource.SessionResourceStoreImpl;
@@ -148,7 +149,9 @@ public class App extends Application<Config> {
         GuiceUtil.addHealthCheck(environment.healthChecks(), injector, DictionaryResource2.class);
         GuiceUtil.addHealthCheck(environment.healthChecks(), injector, RuleSetResource.class);
         GuiceUtil.addHealthCheck(environment.healthChecks(), injector, RuleSetResource2.class);
-        GuiceUtil.addHealthCheck(environment.healthChecks(), injector, RefDataStore.class);
+        GuiceUtil.addHealthCheck(
+                environment.healthChecks(),
+                injector.getInstance(RefDataStoreProvider.class).getOffHeapStore());
 
         // Add filters
         GuiceUtil.addFilter(servletContextHandler, injector, ProxySecurityFilter.class, "/*");

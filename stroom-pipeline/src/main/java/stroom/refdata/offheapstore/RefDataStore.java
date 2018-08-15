@@ -88,9 +88,6 @@ public interface RefDataStore extends HasHealthCheck {
 
     void purgeOldData();
 
-//    void doWithRefStreamDefinitionLock(final RefStreamDefinition refStreamDefinition,
-//                                       final Runnable work);
-
     void logAllContents();
 
     void logAllContents(Consumer<String> logEntryConsumer);

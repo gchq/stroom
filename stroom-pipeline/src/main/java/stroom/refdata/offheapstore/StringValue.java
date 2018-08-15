@@ -61,15 +61,6 @@ public class StringValue extends RefDataValue {
         return TYPE_ID;
     }
 
-//    @Override
-//    void putValue(final ByteBuffer byteBuffer) {
-//        byteBuffer.put(value.getBytes(StandardCharsets.UTF_8));
-//    }
-
-//    static StringValue fromByteBuffer(final ByteBuffer byteBuffer) {
-//        return new StringValue(StandardCharsets.UTF_8.decode(byteBuffer).toString());
-//    }
-
     @Override
     public String toString() {
         return "StringValue{" +

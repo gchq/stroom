@@ -32,11 +32,10 @@ import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.FeedHolder;
-import stroom.refdata.offheapstore.RefDataStore;
-import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
+import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.security.Security;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
@@ -50,8 +49,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
 
 @TaskHandlerBean(task = ContextDataLoadTask.class)
 class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask, VoidResult> {
@@ -59,7 +56,6 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
 
     private final PipelineFactory pipelineFactory;
     private final RefDataLoaderHolder refDataLoaderHolder;
-    private final RefDataStore refDataStore;
     private final FeedHolder feedHolder;
     private final MetaDataHolder metaDataHolder;
     private final ErrorReceiverProxy errorReceiverProxy;
@@ -74,7 +70,6 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
     @Inject
     ContextDataLoadTaskHandler(final PipelineFactory pipelineFactory,
                                final RefDataLoaderHolder refDataLoaderHolder,
-                               final RefDataStore refDataStore,
                                final FeedHolder feedHolder,
                                final MetaDataHolder metaDataHolder,
                                final ErrorReceiverProxy errorReceiverProxy,
@@ -85,7 +80,6 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
                                final Security security) {
         this.pipelineFactory = pipelineFactory;
         this.refDataLoaderHolder = refDataLoaderHolder;
-        this.refDataStore = refDataStore;
         this.feedHolder = feedHolder;
         this.metaDataHolder = metaDataHolder;
         this.errorReceiverProxy = errorReceiverProxy;
@@ -98,11 +92,8 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
 
     @Override
     public VoidResult exec(final ContextDataLoadTask task) {
-//        return security.secureResult(() -> {
         security.secure(() -> {
-            final List<RefStreamDefinition> loadedRefStreamDefinitions = new ArrayList<>();
             final StoredErrorReceiver storedErrorReceiver = new StoredErrorReceiver();
-//            final MapStoreBuilder mapStoreBuilder = new MapStoreBuilderImpl(storedErrorReceiver);
             errorReceiver = new ErrorReceiverIdDecorator(getClass().getSimpleName(), storedErrorReceiver);
             errorReceiverProxy.setErrorReceiver(errorReceiver);
 
@@ -152,18 +143,21 @@ class ContextDataLoadTaskHandler extends AbstractTaskHandler<ContextDataLoadTask
 
                     RefStreamDefinition refStreamDefinition = task.getRefStreamDefinition();
 
-                    refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, stream.getEffectiveMs(), refDataLoader -> {
-                        refDataLoaderHolder.setRefDataLoader(refDataLoader);
-                        // Process the boundary.
-                        try {
-                            // Parse the stream. The ReferenceDataFilter will process the context data
-                            pipeline.process(inputStream, encoding);
+                    task.getRefDataStore().doWithLoaderUnlessComplete(
+                            refStreamDefinition,
+                            stream.getEffectiveMs(),
+                            refDataLoader -> {
+                                // set this loader in the holder so it is available to the pipeline filters
+                                refDataLoaderHolder.setRefDataLoader(refDataLoader);
+                                // Process the boundary.
+                                try {
+                                    // Parse the stream. The ReferenceDataFilter will process the context data
+                                    pipeline.process(inputStream, encoding);
 
-                            loadedRefStreamDefinitions.add(refStreamDefinition);
-                        } catch (final RuntimeException e) {
-                            log(Severity.FATAL_ERROR, e.getMessage(), e);
-                        }
-                    });
+                                } catch (final RuntimeException e) {
+                                    log(Severity.FATAL_ERROR, e.getMessage(), e);
+                                }
+                            });
 
                     // clear the reference to the loader now we have finished with it
                     refDataLoaderHolder.setRefDataLoader(null);

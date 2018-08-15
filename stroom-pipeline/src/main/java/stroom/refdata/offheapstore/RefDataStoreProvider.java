@@ -21,13 +21,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.jobsystem.JobTrackedSchedule;
 import stroom.properties.StroomPropertyService;
+import stroom.refdata.offheapstore.serdes.GenericRefDataValueSerde;
+import stroom.refdata.onheapstore.RefDataOnHeapStore;
 import stroom.util.ByteSizeUnit;
 import stroom.util.config.StroomProperties;
 import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.logging.LambdaLogger;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -36,7 +37,7 @@ import java.nio.file.Paths;
 import java.util.Objects;
 
 @Singleton
-public class RefDataStoreProvider implements Provider<RefDataStore> {
+public class RefDataStoreProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RefDataStoreProvider.class);
 
@@ -54,12 +55,15 @@ public class RefDataStoreProvider implements Provider<RefDataStore> {
     private static final int MAX_PUTS_BEFORE_COMMIT_DEFAULT = 1000;
 
     private final StroomPropertyService stroomPropertyService;
-    private final RefDataStore refDataStore;
+    private final RefDataStore offHeapRefDataStore;
+    private final GenericRefDataValueSerde genericRefDataValueSerde;
 
     @Inject
     RefDataStoreProvider(final StroomPropertyService stroomPropertyService,
-                         final RefDataOffHeapStore.Factory refDataOffHeapStoreFactory) {
+                         final RefDataOffHeapStore.Factory refDataOffHeapStoreFactory,
+                         final GenericRefDataValueSerde genericRefDataValueSerde) {
         this.stroomPropertyService = stroomPropertyService;
+        this.genericRefDataValueSerde = genericRefDataValueSerde;
 
 
         final Path storeDir = getStoreDir();
@@ -75,7 +79,7 @@ public class RefDataStoreProvider implements Provider<RefDataStore> {
         int valueBufferCapacity = stroomPropertyService.getIntProperty(
                 VALUE_BUFFER_CAPACITY_PROP_KEY, VALUE_BUFFER_CAPACITY_DEFAULT_VALUE);
 
-        this.refDataStore = refDataOffHeapStoreFactory.create(
+        this.offHeapRefDataStore = refDataOffHeapStoreFactory.create(
                 storeDir,
                 maxStoreSizeBytes,
                 maxReaders,
@@ -83,10 +87,14 @@ public class RefDataStoreProvider implements Provider<RefDataStore> {
                 valueBufferCapacity);
     }
 
-    @Override
-    public RefDataStore get() {
-        return refDataStore;
+    public RefDataStore getOffHeapStore() {
+        return offHeapRefDataStore;
     }
+
+    public RefDataStore createOnHeapStore() {
+        return new RefDataOnHeapStore(genericRefDataValueSerde, stroomPropertyService);
+    }
+
 
     @StroomSimpleCronSchedule(cron = "0 2 *") // 02:00 every day
     @JobTrackedSchedule(
@@ -94,7 +102,7 @@ public class RefDataStoreProvider implements Provider<RefDataStore> {
             description = "Purge old reference data from the off heap store, as defined by " +
                     RefDataOffHeapStore.DATA_RETENTION_AGE_PROP_KEY)
     public void purgeOldData() {
-        this.refDataStore.purgeOldData();
+        this.offHeapRefDataStore.purgeOldData();
     }
 
     private Path getStoreDir() {
@@ -119,5 +127,35 @@ public class RefDataStoreProvider implements Provider<RefDataStore> {
 
         return storeDir;
     }
+
+//    public static class OffHeapRefDataStoreProvider implements Provider<RefDataStore> {
+//
+//        private final RefDataStoreProvider refDataStoreProvider;
+//
+//        @Inject
+//        public OffHeapRefDataStoreProvider(final RefDataStoreProvider refDataStoreProvider) {
+//            this.refDataStoreProvider = refDataStoreProvider;
+//        }
+//
+//        @Override
+//        public RefDataStore get() {
+//            return refDataStoreProvider.getOffHeapStore();
+//        }
+//    }
+//
+//    public static class OnHeapRefDataStoreProvider implements Provider<RefDataStore> {
+//
+//        private final RefDataStoreProvider refDataStoreProvider;
+//
+//        @Inject
+//        public OnHeapRefDataStoreProvider(final RefDataStoreProvider refDataStoreProvider) {
+//            this.refDataStoreProvider = refDataStoreProvider;
+//        }
+//
+//        @Override
+//        public RefDataStore get() {
+//            return refDataStoreProvider.createOnHeapStore();
+//        }
+//    }
 
 }

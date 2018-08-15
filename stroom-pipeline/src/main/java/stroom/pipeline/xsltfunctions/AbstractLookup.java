@@ -31,7 +31,6 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.refdata.LookupIdentifier;
 import stroom.refdata.ReferenceData;
 import stroom.refdata.ReferenceDataResult;
-import stroom.refdata.offheapstore.RefDataStore;
 import stroom.refdata.offheapstore.RefDataValueProxy;
 import stroom.refdata.offheapstore.RefDataValueProxyConsumer;
 import stroom.util.date.DateUtil;
@@ -39,31 +38,26 @@ import stroom.util.shared.Severity;
 
 import java.util.List;
 
+
 abstract class AbstractLookup extends StroomExtensionFunctionCall {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractLookup.class);
 
     private final ReferenceData referenceData;
-    private final RefDataStore refDataStore;
     private final StreamHolder streamHolder;
     private final RefDataValueProxyConsumer.Factory consumerFactory;
 
     private long defaultMs = -1;
 
     AbstractLookup(final ReferenceData referenceData,
-                   final RefDataStore refDataStore, final StreamHolder streamHolder,
+                   final StreamHolder streamHolder,
                    final RefDataValueProxyConsumer.Factory consumerFactory) {
         this.referenceData = referenceData;
-        this.refDataStore = refDataStore;
         this.streamHolder = streamHolder;
         this.consumerFactory = consumerFactory;
     }
 
     RefDataValueProxyConsumer.Factory getConsumerFactory() {
         return consumerFactory;
-    }
-
-    protected RefDataStore getRefDataStore() {
-        return refDataStore;
     }
 
     @Override
@@ -128,7 +122,6 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
             }
 
             // Create a lookup identifier if we are going to output debug.
-
             final LookupIdentifier lookupIdentifier;
             try {
                 lookupIdentifier = new LookupIdentifier(map, key, ms);
@@ -227,16 +220,13 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
 
     static class SequenceMaker {
         private final XPathContext context;
-        private final RefDataStore refDataStore;
         private final RefDataValueProxyConsumer.Factory consumerFactory;
         private Builder builder;
         private RefDataValueProxyConsumer consumer;
 
         SequenceMaker(final XPathContext context,
-                      final RefDataStore refDataStore,
                       final RefDataValueProxyConsumer.Factory consumerFactory) {
             this.context = context;
-            this.refDataStore = refDataStore;
             this.consumerFactory = consumerFactory;
         }
 
@@ -284,5 +274,4 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
             return sequence;
         }
     }
-
 }

@@ -19,18 +19,19 @@ package stroom.refdata.offheapstore;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
-import com.google.inject.Inject;
 import com.google.inject.Injector;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.guice.PipelineScopeModule;
 import stroom.properties.MockStroomPropertyService;
 import stroom.properties.StroomPropertyService;
 import stroom.refdata.offheapstore.databases.AbstractLmdbDbTest;
 import stroom.util.ByteSizeUnit;
 
+import javax.inject.Inject;
 import java.nio.file.Path;
 
 public abstract class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest {
@@ -42,8 +43,14 @@ public abstract class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest
     public final TemporaryFolder tmpDir = new TemporaryFolder();
     private final MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
 
+//    @Inject
+//    protected RefDataStoreHolder refDataStoreHolder;
+
     @Inject
+    private RefDataStoreProvider refDataStoreProvider;
+
     protected RefDataStore refDataStore;
+    protected Injector injector;
 
     @Override
     protected long getMaxSizeBytes() {
@@ -61,15 +68,17 @@ public abstract class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest
 
         setDbMaxSizeProperty();
 
-        final Injector injector = Guice.createInjector(
+        injector = Guice.createInjector(
                 new AbstractModule() {
                     @Override
                     protected void configure() {
                         bind(StroomPropertyService.class).toInstance(mockStroomPropertyService);
                         install(new RefDataStoreModule());
+                        install(new PipelineScopeModule());
                     }
                 });
         injector.injectMembers(this);
+        refDataStore = refDataStoreProvider.getOffHeapStore();
     }
 
     protected void setProperty(String name, String value) {

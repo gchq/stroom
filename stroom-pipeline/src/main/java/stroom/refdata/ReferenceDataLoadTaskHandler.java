@@ -112,7 +112,7 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
         this.pipelineStore = pipelineStore;
         this.pipelineHolder = pipelineHolder;
         this.feedHolder = feedHolder;
-        this.refDataStore = refDataStoreProvider.get();
+        this.refDataStore = refDataStoreProvider.getOffHeapStore();
         this.metaDataHolder = metaDataHolder;
         this.locationFactory = locationFactory;
         this.streamHolder = streamHolder;
@@ -220,14 +220,6 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                 final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
                 locationFactory.setLocationFactory(streamLocationFactory);
 
-//                final DocRef pipelineDocRef = Objects.requireNonNull(pipelineHolder.getPipeline());
-//                PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineDocRef);
-
-//                final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
-//                        pipelineDocRef,
-//                        pipelineDoc.getVersion(),
-//                        streamHolder.getStream().getId());
-
                 refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, stream.getEffectiveMs(), refDataLoader -> {
                     // we are now blocking any other thread loading the same refStreamDefinition
 
@@ -243,13 +235,12 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
                             // Get the stream.
                             final StreamSourceInputStream inputStream = mainProvider.getStream(streamNo);
 
-
+                            // set this loader in the holder so it is available to the pipeline filters
                             refDataLoaderHolder.setRefDataLoader(refDataLoader);
                             // Process the boundary.
                             try {
                                 //process the pipeline, ref data will be loaded via the ReferenceDataFilter
                                 pipeline.process(inputStream, encoding);
-//                                loadedRefStreamDefinitions.add(refStreamDefinition);
                             } catch (final RuntimeException e) {
                                 log(Severity.FATAL_ERROR, e.getMessage(), e);
                             }
@@ -274,7 +265,6 @@ class ReferenceDataLoadTaskHandler extends AbstractTaskHandler<ReferenceDataLoad
         } catch (final IOException | RuntimeException e) {
             log(Severity.FATAL_ERROR, e.getMessage(), e);
         }
-//        return loadedRefStreamDefinitions;
     }
 
     private void log(final Severity severity, final String message, final Throwable e) {

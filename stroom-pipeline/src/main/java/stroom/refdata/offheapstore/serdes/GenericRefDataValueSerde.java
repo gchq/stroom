@@ -52,5 +52,4 @@ public class GenericRefDataValueSerde implements RefDataValueSerde {
 
         serde.serialize(byteBuffer, refDataValue);
     }
-
 }

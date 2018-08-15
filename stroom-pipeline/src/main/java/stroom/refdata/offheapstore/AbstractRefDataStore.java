@@ -17,18 +17,23 @@
 
 package stroom.refdata.offheapstore;
 
+import com.google.common.util.concurrent.Striped;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
+import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
 
 public abstract class AbstractRefDataStore implements RefDataStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractRefDataStore.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(AbstractRefDataStore.class);
 
     @Override
     public RefDataValueProxy getValueProxy(final MapDefinition mapDefinition, final String key) {
+        LOGGER.trace("getValueProxy([{}], [{}])", mapDefinition, key);
         return new SingleRefDataValueProxy(this, mapDefinition, key);
     }
 
@@ -66,5 +71,32 @@ public abstract class AbstractRefDataStore implements RefDataStore {
                     "Error closing refDataLoader for {}", refStreamDefinition), e);
         }
         return result;
+    }
+
+    protected void doWithRefStreamDefinitionLock(final Striped<Lock> refStreamDefStripedReentrantLock,
+                                                 final RefStreamDefinition refStreamDefinition,
+                                                 final Runnable work) {
+
+        final Lock lock = refStreamDefStripedReentrantLock.get(refStreamDefinition);
+
+        LAMBDA_LOGGER.logDurationIfDebugEnabled(
+                () -> {
+                    try {
+                        LOGGER.debug("Acquiring lock for {}", refStreamDefinition);
+                        lock.lockInterruptibly();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        throw new RuntimeException(LambdaLogger.buildMessage(
+                                "Thread interrupted while trying to acquire lock for refStreamDefinition {}",
+                                refStreamDefinition));
+                    }
+                },
+                () -> LambdaLogger.buildMessage("Acquiring lock for {}", refStreamDefinition));
+        try {
+            // now we have sole access to this RefStreamDefinition so perform the work on it
+            work.run();
+        } finally {
+            lock.unlock();
+        }
     }
 }

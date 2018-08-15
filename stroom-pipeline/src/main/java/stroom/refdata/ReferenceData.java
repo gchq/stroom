@@ -69,7 +69,7 @@ public class ReferenceData {
     private final DocumentPermissionCache documentPermissionCache;
     private final Map<PipelineReference, Boolean> localDocumentPermissionCache = new HashMap<>();
     private final ReferenceDataLoader referenceDataLoader;
-    private final RefDataStore refDataStore;
+    private final RefDataStoreHolder refDataStoreHolder;
     private final RefDataLoaderHolder refDataLoaderHolder;
     private final PipelineStore pipelineStore;
     private final Security security;
@@ -82,7 +82,7 @@ public class ReferenceData {
                   final ContextDataLoader contextDataLoader,
                   final DocumentPermissionCache documentPermissionCache,
                   final ReferenceDataLoader referenceDataLoader,
-                  final RefDataStore refDataStore,
+                  final RefDataStoreHolder refDataStoreHolder,
                   final RefDataLoaderHolder refDataLoaderHolder,
                   final Security security,
                   @Named("cachedPipelineStore") final PipelineStore pipelineStore) {
@@ -93,7 +93,7 @@ public class ReferenceData {
         this.contextDataLoader = contextDataLoader;
         this.documentPermissionCache = documentPermissionCache;
         this.referenceDataLoader = referenceDataLoader;
-        this.refDataStore = refDataStore;
+        this.refDataStoreHolder = refDataStoreHolder;
         this.refDataLoaderHolder = refDataLoaderHolder;
         this.pipelineStore = pipelineStore;
         this.security = security;
@@ -196,7 +196,7 @@ public class ReferenceData {
         if (!refDataValueProxies.isEmpty()) {
             LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage(
                     "Replacing value proxy with multi proxy ({})", refDataValueProxies.size()));
-            if (refDataValueProxies.size()> 1) {
+            if (refDataValueProxies.size() > 1) {
                 referenceDataResult.setRefDataValueProxy(new MultiRefDataValueProxy(refDataValueProxies));
             } else {
                 referenceDataResult.setRefDataValueProxy(refDataValueProxies.get(0));
@@ -207,6 +207,8 @@ public class ReferenceData {
     /**
      * Get an event list from a stream that is a nested child of the current
      * stream context and is therefore not effective time sensitive.
+     * i.e. a context stream attached to this stream and contains data applicable
+     * to this stream only.
      */
     private void getNestedStreamEventList(final PipelineReference pipelineReference,
                                           final String mapName,
@@ -241,7 +243,9 @@ public class ReferenceData {
             // used.  This may be an unnecessary optimisation.
 
             // Establish if we have the data for the context stream in the store
-            final boolean isEffectiveStreamDataLoaded = refDataStore.isDataLoaded(refStreamDefinition);
+
+            final RefDataStore onHeapRefDataStore = refDataStoreHolder.getOnHeapRefDataStore();
+            final boolean isEffectiveStreamDataLoaded = onHeapRefDataStore.isDataLoaded(refStreamDefinition);
 
             //TODO what happens if we need to overwrite?
 
@@ -260,18 +264,24 @@ public class ReferenceData {
                 // have any context data stream.
                 if (provider != null) {
                     final StreamSourceInputStream inputStream = provider.getStream(streamNo);
-                    loadContextData(streamHolder.getStream(), inputStream, pipelineReference.getPipeline(), refStreamDefinition);
+                    loadContextData(
+                            streamHolder.getStream(),
+                            inputStream,
+                            pipelineReference.getPipeline(),
+                            refStreamDefinition,
+                            onHeapRefDataStore);
                 }
             }
 
-            setValueProxyOnResult(mapName, keyName, result, refStreamDefinition);
+            setValueProxyOnResult(onHeapRefDataStore, mapName, keyName, result, refStreamDefinition);
 
         } catch (final IOException e) {
             result.log(Severity.ERROR, null, getClass().getSimpleName(), e.getMessage(), e);
         }
     }
 
-    private void setValueProxyOnResult(final String mapName,
+    private void setValueProxyOnResult(final RefDataStore refDataStore,
+                                       final String mapName,
                                        final String keyName,
                                        final ReferenceDataResult result,
                                        final RefStreamDefinition refStreamDefinition) {
@@ -307,15 +317,22 @@ public class ReferenceData {
             final Stream stream,
             final StreamSourceInputStream contextStream,
             final DocRef contextPipeline,
-            final RefStreamDefinition refStreamDefinition) {
+            final RefStreamDefinition refStreamDefinition,
+            final RefDataStore refDataStore) {
 
         if (contextStream != null) {
             // Check the size of the input stream.
             final long byteCount = contextStream.size();
             // Only use context data if we actually have some.
             if (byteCount > MINIMUM_BYTE_COUNT) {
-                // build a mapstore from the context stream
-                contextDataLoader.load(contextStream, stream, feedHolder.getFeed(), contextPipeline, refStreamDefinition);
+                // load the context data into the RefDataStore so it is available for lookups
+                contextDataLoader.load(
+                        contextStream,
+                        stream,
+                        feedHolder.getFeed(),
+                        contextPipeline,
+                        refStreamDefinition,
+                        refDataStore);
             }
         }
     }
@@ -379,6 +396,7 @@ public class ReferenceData {
                             pipelineReference.getPipeline(),
                             getPipelineVersion(pipelineReference),
                             effectiveStream.getStreamId());
+                    final RefDataStore offHeapRefDataStore = refDataStoreHolder.getOffHeapRefDataStore();
 
                     // First check the pipeline scoped object to save us hitting the store for every lookup in a
                     // pipeline process run.
@@ -390,7 +408,7 @@ public class ReferenceData {
                         // we don't know what the load state is for this refStreamDefinition so need to find out
                         // by querying the store. This will also update the last accessed time so will prevent
                         // (unless the purge age is very small) a purge from removing the data we are about to use
-                        final boolean isEffectiveStreamDataLoaded = refDataStore.isDataLoaded(refStreamDefinition);
+                        final boolean isEffectiveStreamDataLoaded = offHeapRefDataStore.isDataLoaded(refStreamDefinition);
 
                         if (!isEffectiveStreamDataLoaded) {
                             // we don't have the complete data so kick off a process to load it all
@@ -412,7 +430,7 @@ public class ReferenceData {
                     // Note however that the effective stream may not contain the map we are interested in. A data
                     // may have two ref loaders on it.  When a lookup is done it must try the lookup against the two
                     // effective streams as it cannot know which ref streams contain (if at all) the map name of interest.
-                    setValueProxyOnResult(mapName, keyName, result, refStreamDefinition);
+                    setValueProxyOnResult(offHeapRefDataStore, mapName, keyName, result, refStreamDefinition);
                 } else {
                     result.log(Severity.WARNING, () -> "No effective streams can be found in the returned set (" + effectiveStreamKey + ")");
                 }

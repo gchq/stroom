@@ -18,6 +18,7 @@ package stroom.refdata;
 
 import stroom.docref.DocRef;
 import stroom.feed.shared.Feed;
+import stroom.refdata.offheapstore.RefDataStore;
 import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.streamstore.shared.Stream;
 import stroom.task.TaskManager;
@@ -35,11 +36,13 @@ public class ContextDataLoaderImpl implements ContextDataLoader {
 
     @Override
     public void load(final InputStream inputStream,
-                                          final Stream stream,
-                                          final Feed feed,
-                                          final DocRef contextPipeline,
-                                          final RefStreamDefinition refStreamDefinition) {
+                     final Stream stream,
+                     final Feed feed,
+                     final DocRef contextPipeline,
+                     final RefStreamDefinition refStreamDefinition,
+                     final RefDataStore refDataStore) {
 
-        taskManager.exec(new ContextDataLoadTask(inputStream, stream, feed, contextPipeline, refStreamDefinition));
+        taskManager.exec(new ContextDataLoadTask(
+                inputStream, stream, feed, contextPipeline, refStreamDefinition, refDataStore));
     }
 }

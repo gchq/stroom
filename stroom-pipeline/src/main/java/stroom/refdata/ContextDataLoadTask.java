@@ -18,6 +18,7 @@ package stroom.refdata;
 
 import stroom.docref.DocRef;
 import stroom.feed.shared.Feed;
+import stroom.refdata.offheapstore.RefDataStore;
 import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.streamstore.shared.Stream;
 import stroom.task.ServerTask;
@@ -31,6 +32,7 @@ public class ContextDataLoadTask extends ServerTask<VoidResult> {
     private Feed feed;
     private DocRef contextPipeline;
     private RefStreamDefinition refStreamDefinition;
+    private RefDataStore refDataStore;
 
     public ContextDataLoadTask() {
     }
@@ -39,12 +41,14 @@ public class ContextDataLoadTask extends ServerTask<VoidResult> {
                                final Stream stream,
                                final Feed feed,
                                final DocRef contextPipeline,
-                               final RefStreamDefinition refStreamDefinition) {
+                               final RefStreamDefinition refStreamDefinition,
+                               final RefDataStore refDataStore) {
         this.inputStream = inputStream;
         this.stream = stream;
         this.feed = feed;
         this.contextPipeline = contextPipeline;
         this.refStreamDefinition = refStreamDefinition;
+        this.refDataStore = refDataStore;
     }
 
     public InputStream getInputStream() {
@@ -65,5 +69,9 @@ public class ContextDataLoadTask extends ServerTask<VoidResult> {
 
     public RefStreamDefinition getRefStreamDefinition() {
         return refStreamDefinition;
+    }
+
+    public RefDataStore getRefDataStore() {
+        return refDataStore;
     }
 }

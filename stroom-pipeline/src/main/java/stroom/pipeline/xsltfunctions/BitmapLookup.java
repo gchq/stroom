@@ -24,7 +24,6 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.refdata.LookupIdentifier;
 import stroom.refdata.ReferenceData;
 import stroom.refdata.ReferenceDataResult;
-import stroom.refdata.offheapstore.RefDataStoreProvider;
 import stroom.refdata.offheapstore.RefDataValueProxy;
 import stroom.refdata.offheapstore.RefDataValueProxyConsumer;
 import stroom.util.date.DateUtil;
@@ -35,10 +34,11 @@ import javax.inject.Inject;
 class BitmapLookup extends AbstractLookup {
     @Inject
     BitmapLookup(final ReferenceData referenceData,
-                 final RefDataStoreProvider refDataStoreProvider,
+//                 final RefDataStoreProvider refDataStoreProvider,
                  final StreamHolder streamHolder,
                  final RefDataValueProxyConsumer.Factory consumerFactory) {
-        super(referenceData, refDataStoreProvider.get(), streamHolder, consumerFactory);
+//        super(referenceData, refDataStoreProvider.get(), streamHolder, consumerFactory);
+        super(referenceData, streamHolder, consumerFactory);
     }
 
     @Override
@@ -75,7 +75,8 @@ class BitmapLookup extends AbstractLookup {
                 try {
                     if (refDataValueProxy != null) {
                         if (sequenceMaker == null) {
-                            sequenceMaker = new SequenceMaker(context, getRefDataStore(), getConsumerFactory());
+//                            sequenceMaker = new SequenceMaker(context, getRefDataStore(), getConsumerFactory());
+                            sequenceMaker = new SequenceMaker(context, getConsumerFactory());
                             sequenceMaker.open();
                         }
                         wasFound = sequenceMaker.consume(refDataValueProxy);

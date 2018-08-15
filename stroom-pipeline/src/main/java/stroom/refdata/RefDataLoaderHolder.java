@@ -31,6 +31,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * A pipeline scoped holder for a {@link RefDataLoader} and a place to store transient state relating to
+ * the loading of reference data using a reference data pipeline.
+ */
 @PipelineScoped
 public class RefDataLoaderHolder {
 

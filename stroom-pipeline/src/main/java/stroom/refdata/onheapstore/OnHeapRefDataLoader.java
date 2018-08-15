@@ -8,6 +8,7 @@ import stroom.refdata.offheapstore.MapDefinition;
 import stroom.refdata.offheapstore.ProcessingState;
 import stroom.refdata.offheapstore.RefDataLoader;
 import stroom.refdata.offheapstore.RefDataProcessingInfo;
+import stroom.refdata.offheapstore.RefDataStore;
 import stroom.refdata.offheapstore.RefDataValue;
 import stroom.refdata.offheapstore.RefStreamDefinition;
 import stroom.util.logging.LambdaLogger;
@@ -17,9 +18,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.locks.Lock;
@@ -38,9 +39,10 @@ class OnHeapRefDataLoader implements RefDataLoader {
     private boolean overwriteExisting = false;
     private final Lock refStreamDefReentrantLock;
     private final Map<RefStreamDefinition, RefDataProcessingInfo> processingInfoMap;
+    private final Set<MapDefinition> mapDefinitions;
     private final Map<KeyValueMapKey, RefDataValue> keyValueMap;
     private final Map<MapDefinition, NavigableMap<Range<Long>, RefDataValue>> rangeValueNestedMap;
-    private final Set<MapDefinition> loadedMapDefinitions;
+    private final RefDataStore refDataStore;
 
     private int putsCounter = 0;
     private int successfulPutsCounter = 0;
@@ -58,16 +60,19 @@ class OnHeapRefDataLoader implements RefDataLoader {
                         final long effectiveTimeMs,
                         final Striped<Lock> refStreamDefStripedReentrantLock,
                         final Map<RefStreamDefinition, RefDataProcessingInfo> processingInfoMap,
+                        final Set<MapDefinition> mapDefinitions,
                         final Map<KeyValueMapKey, RefDataValue> keyValueMap,
-                        final Map<MapDefinition, NavigableMap<Range<Long>, RefDataValue>> rangeValueNestedMap) {
+                        final Map<MapDefinition, NavigableMap<Range<Long>, RefDataValue>> rangeValueNestedMap,
+                        final RefDataStore refDataStore) {
 
         this.refStreamDefinition = refStreamDefinition;
         this.effectiveTimeMs = effectiveTimeMs;
         this.processingInfoMap = processingInfoMap;
+        this.mapDefinitions = mapDefinitions;
         this.keyValueMap = keyValueMap;
         this.rangeValueNestedMap = rangeValueNestedMap;
+        this.refDataStore = refDataStore;
         this.refStreamDefReentrantLock = refStreamDefStripedReentrantLock.get(refStreamDefinition);
-        this.loadedMapDefinitions = new HashSet<>();
 
         LAMBDA_LOGGER.logDurationIfDebugEnabled(
                 () -> {
@@ -117,7 +122,7 @@ class OnHeapRefDataLoader implements RefDataLoader {
         updateProcessingState(
                 refStreamDefinition, ProcessingState.COMPLETE, true);
 
-        final String mapNames = loadedMapDefinitions
+        final String mapNames = mapDefinitions
                 .stream()
                 .map(MapDefinition::getMapName)
                 .collect(Collectors.joining(","));
@@ -125,6 +130,10 @@ class OnHeapRefDataLoader implements RefDataLoader {
         final Duration loadDuration = Duration.between(startTime, Instant.now());
         LOGGER.info("Successfully Loaded {} entries out of {} attempts with map names [{}] in {} for {}",
                 successfulPutsCounter, putsCounter, mapNames, loadDuration, refStreamDefinition);
+
+//        LAMBDA_LOGGER.doIfTraceEnabled(() ->
+//                refDataStore.logAllContents(LOGGER::trace));
+
         currentLoaderState = LoaderState.COMPLETED;
 
     }
@@ -142,6 +151,8 @@ class OnHeapRefDataLoader implements RefDataLoader {
         final KeyValueMapKey mapKey = new KeyValueMapKey(mapDefinition, key);
 
         boolean wasValuePut;
+        LAMBDA_LOGGER.trace(() ->
+                LambdaLogger.buildMessage("containsKey == {}", keyValueMap.containsKey(mapKey)));
         if (overwriteExisting) {
             keyValueMap.put(mapKey, refDataValue);
             wasValuePut = true;
@@ -149,6 +160,13 @@ class OnHeapRefDataLoader implements RefDataLoader {
             RefDataValue prevValue = keyValueMap.putIfAbsent(mapKey, refDataValue);
             wasValuePut = prevValue == null;
         }
+        if (wasValuePut) {
+            successfulPutsCounter++;
+        }
+        putsCounter++;
+        mapDefinitions.add(mapDefinition);
+        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("put completed for {} {} {}, size now {}",
+                mapDefinition, key, refDataValue, keyValueMap.size()));
         return wasValuePut;
     }
 
@@ -169,6 +187,16 @@ class OnHeapRefDataLoader implements RefDataLoader {
             RefDataValue prevValue = subMap.putIfAbsent(keyRange, refDataValue);
             wasValuePut = prevValue == null;
         }
+        if (wasValuePut) {
+            successfulPutsCounter++;
+        }
+        putsCounter++;
+        mapDefinitions.add(mapDefinition);
+        LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("put completed for {} {} {}, size now {}",
+                mapDefinition, keyRange, refDataValue,
+                Optional.ofNullable(rangeValueNestedMap.get(mapDefinition))
+                        .map(NavigableMap::size)
+                        .orElse(0)));
         return wasValuePut;
     }
 

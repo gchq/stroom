@@ -76,7 +76,7 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
 
     @Before
     public void setup() {
-        refDataStore = refDataStoreProvider.get();
+        refDataStore = refDataStoreProvider.getOffHeapStore();
     }
 
     /**
