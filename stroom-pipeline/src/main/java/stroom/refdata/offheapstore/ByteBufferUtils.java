@@ -209,4 +209,15 @@ public class ByteBufferUtils {
         return cmp;
     }
 
+    public static int hashCode(final ByteBuffer byteBuffer) {
+        int hash = 1;
+
+        int pos = byteBuffer.position();
+        int limit = byteBuffer.limit();
+        for(int i = pos; i < limit; ++i) {
+            hash = 31 * hash + byteBuffer.get(i);
+        }
+        return hash;
+    }
+
 }

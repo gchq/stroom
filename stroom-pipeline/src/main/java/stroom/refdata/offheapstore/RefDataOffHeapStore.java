@@ -378,7 +378,6 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         //TODO should we pass in an ErrorReceivingProxy so we can log errors with it?
         RefDataLoader refDataLoader = new OffHeapRefDataLoader(
                 this,
-                byteBufferPool,
                 refStreamDefStripedReentrantLock,
                 keyValueStoreDb,
                 rangeStoreDb,

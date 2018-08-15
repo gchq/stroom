@@ -59,7 +59,6 @@ public class OffHeapRefDataLoader implements RefDataLoader {
 
     private Txn<ByteBuffer> writeTxn = null;
     private final RefDataOffHeapStore refDataOffHeapStore;
-    private final ByteBufferPool byteBufferPool;
     private final Lock refStreamDefReentrantLock;
 
     private final KeyValueStoreDb keyValueStoreDb;
@@ -93,7 +92,6 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     }
 
     OffHeapRefDataLoader(final RefDataOffHeapStore refDataOffHeapStore,
-                         final ByteBufferPool byteBufferPool,
                          final Striped<Lock> refStreamDefStripedReentrantLock,
                          final KeyValueStoreDb keyValueStoreDb,
                          final RangeStoreDb rangeStoreDb,
@@ -105,7 +103,6 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                          final long effectiveTimeMs) {
 
         this.refDataOffHeapStore = refDataOffHeapStore;
-        this.byteBufferPool = byteBufferPool;
         this.keyValueStoreDb = keyValueStoreDb;
         this.rangeStoreDb = rangeStoreDb;
         this.processingInfoDb = processingInfoDb;

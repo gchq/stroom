@@ -176,4 +176,23 @@ public class TestByteBufferUtils {
                     val1, ByteBufferUtils.byteBufferToHex(buf1), val2, ByteBufferUtils.byteBufferToHex(buf2));
         }
     }
+
+    @Test
+    public void testHashCode() {
+
+        ByteBuffer byteBuffer1 = ByteBuffer.wrap(new byte[]{0, 0, 1, 2, 3, 4, 5, 0, 0});
+        byteBuffer1.position(2);
+        byteBuffer1.limit(7);
+        LOGGER.info(ByteBufferUtils.byteBufferInfo(byteBuffer1));
+
+        ByteBuffer byteBuffer2 = ByteBuffer.wrap(new byte[]{0, 1, 2, 3, 4, 5, 0, 0});
+        byteBuffer2.position(1);
+        byteBuffer2.limit(6);
+        LOGGER.info(ByteBufferUtils.byteBufferInfo(byteBuffer2));
+
+        int hash1 = ByteBufferUtils.hashCode(byteBuffer1);
+        int hash2 = ByteBufferUtils.hashCode(byteBuffer2);
+
+        assertThat(hash1).isEqualTo(hash2);
+    }
 }
