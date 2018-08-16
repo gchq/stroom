@@ -23,8 +23,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.jvnet.fastinfoset.FastInfosetException;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -55,6 +53,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -63,6 +63,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.registerFormatterForType;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestReferenceDataFilter extends StroomUnitTest {
@@ -79,14 +80,14 @@ public class TestReferenceDataFilter extends StroomUnitTest {
 
     @Mock
     private RefDataLoader refDataLoader;
-    @Captor
-    private ArgumentCaptor<RefDataValue> keyValueValueCaptor;
-    @Captor
-    private ArgumentCaptor<RefDataValue> rangeValueValueCaptor;
-    @Captor
-    private ArgumentCaptor<String> keyValueKeyCaptor;
-    @Captor
-    private ArgumentCaptor<Range<Long>> rangeValueKeyCaptor;
+//    @Captor
+//    private ArgumentCaptor<RefDataValue> keyValueValueCaptor;
+//    @Captor
+//    private ArgumentCaptor<RefDataValue> rangeValueValueCaptor;
+//    @Captor
+//    private ArgumentCaptor<String> keyValueKeyCaptor;
+//    @Captor
+//    private ArgumentCaptor<Range<Long>> rangeValueKeyCaptor;
 
     @Before
     public void setup() {
@@ -243,15 +244,35 @@ public class TestReferenceDataFilter extends StroomUnitTest {
     }
 
     private LoadedRefDataValues doTest(String inputPath, String expectedOutputPath) {
+        final LoadedRefDataValues loadedRefDataValues = new LoadedRefDataValues();
 
         Mockito.when(refDataLoader.getRefStreamDefinition())
                 .thenReturn(buildUniqueRefStreamDefinition());
+
         Mockito.when(refDataLoader.initialise(Mockito.anyBoolean()))
                 .thenReturn(true);
-        Mockito.when(refDataLoader.put(Mockito.any(), keyValueKeyCaptor.capture(), keyValueValueCaptor.capture()))
-                .thenReturn(true);
-        Mockito.when(refDataLoader.put(Mockito.any(), rangeValueKeyCaptor.capture(), rangeValueValueCaptor.capture()))
-                .thenReturn(true);
+
+        // capture the args passed to the two put methods. Have to use doAnswer
+        // so we can copy the buffer that is reused and therefore mutates.
+        Mockito.doAnswer(invocation -> {
+            loadedRefDataValues.addKeyValue(
+                    invocation.getArgumentAt(1, String.class),
+                    invocation.getArgumentAt(2, RefDataValue.class));
+            return true;
+        }).when(refDataLoader).put(
+                Mockito.any(),
+                Mockito.any(String.class),
+                Mockito.any(RefDataValue.class));
+
+        Mockito.doAnswer(invocation -> {
+            loadedRefDataValues.addRangeValue(
+                    invocation.getArgumentAt(1, null), // mockito can infer the type
+                    invocation.getArgumentAt(2, RefDataValue.class));
+            return true;
+        }).when(refDataLoader).put(
+                Mockito.any(),
+                Mockito.<Range<Long>>any(),
+                Mockito.any(RefDataValue.class));
 
         final ByteArrayInputStream input = new ByteArrayInputStream(getString(inputPath).getBytes());
 
@@ -260,10 +281,12 @@ public class TestReferenceDataFilter extends StroomUnitTest {
         refDataLoaderHolder.setRefDataLoader(refDataLoader);
 
         final ReferenceDataFilter referenceDataFilter = new ReferenceDataFilter(
-                errorReceiverProxy, refDataLoaderHolder, cap -> new PooledByteBufferOutputStream(new ByteBufferPool(), cap));
+                errorReceiverProxy,
+                refDataLoaderHolder,
+                cap ->
+                        new PooledByteBufferOutputStream(new ByteBufferPool(), cap));
 
         final TestFilter testFilter = new TestFilter(null, null);
-
         final TestSAXEventFilter testSAXEventFilter = new TestSAXEventFilter();
 
         referenceDataFilter.setTarget(testFilter);
@@ -283,13 +306,6 @@ public class TestReferenceDataFilter extends StroomUnitTest {
 
         actualXmlList.forEach(System.out::println);
 
-        List<RefDataValue> refDataValues = keyValueValueCaptor.getAllValues();
-
-        LoadedRefDataValues loadedRefDataValues = new LoadedRefDataValues(
-                keyValueKeyCaptor.getAllValues(),
-                keyValueValueCaptor.getAllValues(),
-                rangeValueValueCaptor.getAllValues(),
-                rangeValueKeyCaptor.getAllValues());
 
 
         final String actualSax = testSAXEventFilter.getOutput().trim();
@@ -335,6 +351,8 @@ public class TestReferenceDataFilter extends StroomUnitTest {
         } catch (IOException | FastInfosetException | SAXException e) {
             throw new RuntimeException(e);
         }
+        // flip the buffer now we have read it so it can be read again if required
+        fastInfosetValue.getByteBuffer().flip();
 
         return testSAXEventFilter.getOutput();
     }
@@ -411,17 +429,41 @@ public class TestReferenceDataFilter extends StroomUnitTest {
         List<Range<Long>> rangeValueKeys;
         List<RefDataValue> rangeValueValues;
 
-        LoadedRefDataValues(final List<String> keyValueKeys,
-                            final List<RefDataValue> keyValueValues,
-                            final List<RefDataValue> rangeValueValues,
-                            final List<Range<Long>> rangeValueKeys) {
-            this.keyValueKeys = keyValueKeys == null ? Collections.emptyList() : keyValueKeys;
-            this.keyValueValues = keyValueValues == null ? Collections.emptyList() : keyValueValues;
-            this.rangeValueValues = rangeValueValues == null ? Collections.emptyList() : rangeValueValues;
-            this.rangeValueKeys = rangeValueKeys == null ? Collections.emptyList() : rangeValueKeys;
+        LoadedRefDataValues() {
+            this.keyValueKeys = new ArrayList<>();
+            this.keyValueValues = new ArrayList<>();
+            this.rangeValueValues = new ArrayList<>();
+            this.rangeValueKeys = new ArrayList<>();
+        }
 
-            assertThat(this.keyValueKeys.size()).isEqualTo(this.keyValueValues.size());
-            assertThat(this.rangeValueKeys.size()).isEqualTo(this.rangeValueValues.size());
+        void addKeyValue(final String key, final RefDataValue value) {
+            LOGGER.info("Adding keyValue {} {}", key, value);
+            keyValueKeys.add(key);
+            if (value instanceof FastInfosetValue) {
+                FastInfosetValue fastInfosetValue = (FastInfosetValue) value;
+                assertThat(fastInfosetValue.getByteBuffer().position()).isEqualTo(0);
+                RefDataValue valueCopy = fastInfosetValue.copy(
+                        () -> ByteBuffer.allocateDirect(fastInfosetValue.size()));
+                assertThat(((FastInfosetValue)valueCopy).getByteBuffer().position()).isEqualTo(0);
+                keyValueValues.add(valueCopy);
+            } else {
+                keyValueValues.add(value);
+            }
+        }
+
+        void addRangeValue(final Range<Long> range, final RefDataValue value) {
+            LOGGER.info("Adding rangeValue {} {}", range, value);
+            rangeValueKeys.add(range);
+            if (value instanceof FastInfosetValue) {
+                FastInfosetValue fastInfosetValue = (FastInfosetValue) value;
+                assertThat(fastInfosetValue.getByteBuffer().position()).isEqualTo(0);
+                RefDataValue valueCopy = fastInfosetValue.copy(
+                        () -> ByteBuffer.allocateDirect(fastInfosetValue.size()));
+                assertThat(((FastInfosetValue)valueCopy).getByteBuffer().position()).isEqualTo(0);
+                rangeValueValues.add(valueCopy);
+            } else {
+                rangeValueValues.add(value);
+            }
         }
     }
 }

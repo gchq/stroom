@@ -19,37 +19,21 @@ package stroom.refdata.offheapstore;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 public class FastInfosetValue extends RefDataValue {
 
     public static final int TYPE_ID = 1;
 
-//    private final byte[] fastInfosetBytes;
     private final ByteBuffer fastInfosetByteBuffer;
-
-    public FastInfosetValue(final byte[] fastInfosetBytes) {
-//        this.fastInfosetBytes = fastInfosetBytes;
-        this.fastInfosetByteBuffer = null;
-    }
 
     public FastInfosetValue(final ByteBuffer fastInfosetByteBuffer) {
         this.fastInfosetByteBuffer = fastInfosetByteBuffer;
-//        this.fastInfosetBytes = null;
     }
 
-//    public static FastInfosetValue of(byte[] fastInfosetBytes) {
-//        return new FastInfosetValue(fastInfosetBytes);
-//    }
     public static FastInfosetValue wrap(final ByteBuffer fastInfosetByteBuffer) {
         return new FastInfosetValue(fastInfosetByteBuffer);
     }
-
-//    static FastInfosetValue fromByteBuffer(final ByteBuffer byteBuffer) {
-//
-//        byte[] bytes = new byte[byteBuffer.remaining()];
-//        byteBuffer.get(bytes);
-//        return new FastInfosetValue(bytes);
-//    }
 
     @Override
     public int getTypeId() {
@@ -76,12 +60,18 @@ public class FastInfosetValue extends RefDataValue {
         return ByteBufferUtils.hashCode(fastInfosetByteBuffer);
     }
 
-//    public byte[] getValueBytes() {
-//        return fastInfosetBytes;
-//    }
-
     public ByteBuffer getByteBuffer() {
         return fastInfosetByteBuffer;
+    }
+
+    public RefDataValue copy(final Supplier<ByteBuffer> byteBufferSupplier) {
+        ByteBuffer newByteBuffer = byteBufferSupplier.get();
+        ByteBufferUtils.copy(this.fastInfosetByteBuffer, newByteBuffer);
+        return new FastInfosetValue(newByteBuffer);
+    }
+
+    public int size() {
+        return fastInfosetByteBuffer.limit() - fastInfosetByteBuffer.position();
     }
 
     @Override
