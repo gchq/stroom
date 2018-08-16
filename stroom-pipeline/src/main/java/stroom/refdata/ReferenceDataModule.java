@@ -19,13 +19,17 @@ package stroom.refdata;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.Clearable;
-import stroom.refdata.offheapstore.RefDataStoreModule;
+import stroom.pipeline.factory.Element;
+import stroom.refdata.store.RefDataStoreModule;
 import stroom.task.TaskHandler;
 
 public class ReferenceDataModule extends AbstractModule {
 
     @Override
     protected void configure() {
+
+        final Multibinder<Element> elementBinder = Multibinder.newSetBinder(binder(), Element.class);
+        elementBinder.addBinding().to(ReferenceDataFilter.class);
 
         bind(ReferenceDataLoader.class).to(ReferenceDataLoaderImpl.class);
         bind(ContextDataLoader.class).to(ContextDataLoaderImpl.class);

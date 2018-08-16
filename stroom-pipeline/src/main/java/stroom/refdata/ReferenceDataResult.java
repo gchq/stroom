@@ -19,7 +19,7 @@ package stroom.refdata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.pipeline.errorhandler.ErrorReceiver;
-import stroom.refdata.offheapstore.RefDataValueProxy;
+import stroom.refdata.store.RefDataValueProxy;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 

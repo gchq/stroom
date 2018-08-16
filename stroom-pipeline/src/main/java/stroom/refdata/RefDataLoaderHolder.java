@@ -21,9 +21,9 @@ import stroom.docref.DocRef;
 import stroom.guice.PipelineScoped;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.refdata.offheapstore.MapDefinition;
-import stroom.refdata.offheapstore.RefDataLoader;
-import stroom.refdata.offheapstore.RefStreamDefinition;
+import stroom.refdata.store.MapDefinition;
+import stroom.refdata.store.RefDataLoader;
+import stroom.refdata.store.RefStreamDefinition;
 import stroom.util.logging.LambdaLogger;
 
 import java.util.HashMap;

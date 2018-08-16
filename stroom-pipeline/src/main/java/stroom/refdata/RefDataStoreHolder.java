@@ -18,8 +18,8 @@
 package stroom.refdata;
 
 import stroom.guice.PipelineScoped;
-import stroom.refdata.offheapstore.RefDataStore;
-import stroom.refdata.offheapstore.RefDataStoreProvider;
+import stroom.refdata.store.RefDataStore;
+import stroom.refdata.store.RefDataStoreProvider;
 
 import javax.inject.Inject;
 
