@@ -15,7 +15,7 @@
  */
 import React, { Component } from 'react';
 
-import KeyIsDown from 'prototypes/KeyIsDown';
+import KeyIsDown from 'lib/KeyIsDown';
 
 class WrappedComponent extends Component {
   render() {

@@ -9,11 +9,11 @@ import DocEditor from 'components/DocEditor';
 import PipelineSearch from 'components/PipelineSearch';
 import Welcome from 'sections/Welcome';
 import DataViewer from 'components/DataViewer';
-import UserSettings from 'prototypes/UserSettings';
+import UserSettings from 'sections/UserSettings';
 import PathNotFound from 'components/PathNotFound';
 import IFrame from 'components/IFrame';
-import AppSearch from 'prototypes/AppSearch';
-import RecentItems from 'prototypes/RecentItems';
+import AppSearch from 'sections/AppSearch';
+import RecentItems from 'sections/RecentItems';
 import WithHeader from 'components/WithHeader';
 
 const renderWelcome = props => <AppChrome activeMenuItem="Welcome" content={<Welcome />} />;

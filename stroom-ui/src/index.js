@@ -23,7 +23,7 @@ import { ConnectedRouter } from 'react-router-redux';
 import { DragDropContext } from 'react-dnd';
 import HTML5Backend from 'react-dnd-html5-backend';
 
-import KeyIsDown from 'prototypes/KeyIsDown';
+import KeyIsDown from 'lib/KeyIsDown';
 import Routes from 'startup/Routes';
 import store from 'startup/store';
 import { history } from 'startup/middleware';

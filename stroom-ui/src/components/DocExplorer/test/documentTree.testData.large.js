@@ -15,7 +15,7 @@
  */
 
 import { testPipelines } from 'components/PipelineEditor/test';
-import { testXslt } from 'prototypes/XsltEditor/test';
+import { testXslt } from 'components/XsltEditor/test';
 
 export default {
   uuid: '0',

@@ -1,6 +1,6 @@
 import DocRefListing from './DocRefListing';
 import DocRefListingEntry from './DocRefListingEntry';
-import withOpenDocRef from 'prototypes/RecentItems/withOpenDocRef';
+import withOpenDocRef from 'sections/RecentItems/withOpenDocRef';
 import { actionCreators, reducer } from './redux';
 
 const DocRefListingWithRouter = withOpenDocRef(DocRefListing);

@@ -5,7 +5,7 @@
 @import "../components/PipelineSearch/PipelineSearch";
 @import "../components/DataViewer/DataViewer";
 @import "../prototypes/HorizontalPanel/HorizontalPanel";
-@import "../prototypes/XsltEditor/XsltEditor";
+@import "../components/XsltEditor/XsltEditor";
 @import "../components/ExpressionBuilder/ExpressionBuilder";
 @import "../components/LineTo/LineTo";
 @import "../sections/TrackerDashboard/TrackerDashboard/TrackerDashboard";
@@ -14,6 +14,6 @@
 @import "../sections/Welcome/Welcome";
 @import "../components/SearchBar/SearchBar";
 @import "../components/DocRefListing/DocRefListing";
-@import "../prototypes/UserSettings/UserSettings";
+@import "../sections/UserSettings/UserSettings";
 @import "./themes";
 @import "./theme_styling";

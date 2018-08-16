@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 import FolderExplorer from 'components/FolderExplorer';
 import PipelineEditor from 'components/PipelineEditor';
-import XsltEditor from 'prototypes/XsltEditor';
+import XsltEditor from 'components/XsltEditor';
 import PathNotFound from 'components/PathNotFound';
 
 const DocEditor = ({ docRef: { type, uuid } }) => {

@@ -34,7 +34,7 @@ import { DragDropDecorator } from 'lib/storybook/DragDropDecorator';
 
 import { testPipelines, elements, elementProperties } from 'components/PipelineEditor/test';
 import { testDocRefsTypes } from 'components/DocRefTypes/test';
-import { testXslt } from 'prototypes/XsltEditor/test';
+import { testXslt } from 'components/XsltEditor/test';
 import { generateGenericTracker } from 'sections/TrackerDashboard/tracker.testData';
 
 import 'styles/main.css';

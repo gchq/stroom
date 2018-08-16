@@ -25,7 +25,7 @@ import Mousetrap from 'mousetrap';
 import { actionCreators as appChromeActionCreators } from './redux';
 import { withExplorerTree } from 'components/DocExplorer';
 import withLocalStorage from 'lib/withLocalStorage';
-import { openDocRef } from 'prototypes/RecentItems';
+import { openDocRef } from 'sections/RecentItems';
 import MenuItem from './MenuItem';
 import {
   MoveDocRefDialog,
@@ -34,7 +34,7 @@ import {
   DeleteDocRefDialog,
 } from 'components/FolderExplorer';
 
-import { actionCreators as userSettingsActionCreators } from 'prototypes/UserSettings';
+import { actionCreators as userSettingsActionCreators } from 'sections/UserSettings';
 
 const { menuItemOpened } = appChromeActionCreators;
 const { themeChanged } = userSettingsActionCreators;

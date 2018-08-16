@@ -1,5 +1,5 @@
 import DocRefBreadcrumb from './DocRefBreadcrumb';
-import withOpenDocRef from 'prototypes/RecentItems/withOpenDocRef';
+import withOpenDocRef from 'sections/RecentItems/withOpenDocRef';
 
 const DocRefBreadcrumbWithRouter = withOpenDocRef(DocRefBreadcrumb);
 

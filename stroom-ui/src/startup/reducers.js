@@ -30,15 +30,15 @@ import { reducer as docRefInfo } from 'components/DocRefInfoModal/redux';
 import { reducer as docExplorer } from 'components/DocExplorer/redux';
 import { reducer as expressionBuilder } from 'components/ExpressionBuilder';
 import { reducer as pipelineEditor } from 'components/PipelineEditor';
-import { reducer as recentItems } from 'prototypes/RecentItems';
-import { reducer as xslt } from 'prototypes/XsltEditor';
+import { reducer as recentItems } from 'sections/RecentItems';
+import { reducer as xslt } from 'components/XsltEditor';
 import { reducer as trackerDashboard } from 'sections/TrackerDashboard';
 import { reducer as errorPage } from 'components/ErrorPage';
 import { reducer as config } from './config';
 import { reducer as fetch } from 'lib/fetchTracker.redux';
 import { reducer as dataViewers } from 'components/DataViewer';
-import { reducer as keyIsDown } from 'prototypes/KeyIsDown';
-import { reducer as userSettings } from 'prototypes/UserSettings';
+import { reducer as keyIsDown } from 'lib/KeyIsDown';
+import { reducer as userSettings } from 'sections/UserSettings';
 
 export default combineReducers({
   routing: routerReducer,
