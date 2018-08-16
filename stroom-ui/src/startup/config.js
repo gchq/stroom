@@ -20,7 +20,7 @@ import {
 } from 'redux-actions';
 import { connect } from 'react-redux';
 import { branch, compose, renderComponent, lifecycle } from 'recompose';
-import { Loader } from 'semantic-ui-react/dist/commonjs';
+import { Loader } from 'semantic-ui-react';
 
 import { wrappedGet } from 'lib/fetchTracker.redux';
 

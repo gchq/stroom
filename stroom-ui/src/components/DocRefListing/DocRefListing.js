@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { compose, lifecycle, branch, renderComponent, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Header, Icon, Grid, Input, Popup, Button, Loader } from 'semantic-ui-react/dist/commonjs';
+import { Header, Icon, Grid, Input, Popup, Button, Loader } from 'semantic-ui-react';
 import Mousetrap from 'mousetrap';
 
 import { DocTypeFilters } from 'components/DocRefTypes';
@@ -158,8 +158,7 @@ const DocRefListing = ({
   },
   openDocRef,
   includeBreadcrumbOnEntries,
-  folderActionBarItems,
-  docRefActionBarItems,
+  actionBarItems,
   filterTermUpdated,
   docRefTypeFilterUpdated,
   parentFolder,
@@ -168,7 +167,7 @@ const DocRefListing = ({
 }) => (
   <React.Fragment>
     <Grid className="content-tabs__grid">
-      <Grid.Column width={(folderActionBarItems.length > 0) ? 6 : 8}>
+      <Grid.Column width={(actionBarItems.length > 0) ? 6 : 8}>
         <Header as="h3">
           <Icon name={icon} />
           <Header.Content>{title}</Header.Content>
@@ -180,7 +179,7 @@ const DocRefListing = ({
         </Header>
       </Grid.Column>
 
-      <Grid.Column width={(folderActionBarItems.length > 0) ? 5 : 8}>
+      <Grid.Column width={(actionBarItems.length > 0) ? 5 : 8}>
         <div className='doc-ref-listing-entry__search-bar'>
           <Input
             id="AppSearch__search-input"
@@ -205,12 +204,12 @@ const DocRefListing = ({
           }
         </div>
       </Grid.Column>
-      {(folderActionBarItems.length > 0) && <Grid.Column width={5}>
+      {(actionBarItems.length > 0) && <Grid.Column width={5}>
         <span className="doc-ref-listing-entry__action-bar">
-          {folderActionBarItems.map(({ onClick, icon, tooltip, disabled }, i) => (
+          {actionBarItems.map(({ onClick, icon, tooltip, disabled }, i) => (
             <Popup
               key={i}
-              trigger={<Button className='action-bar__button' circular onClick={() => onClick(parentFolder)} icon={icon} disabled={disabled} />}
+              trigger={<Button className='action-bar__button' circular onClick={onClick} icon={icon} disabled={disabled} />}
               content={tooltip}
             />
           ))}
@@ -224,7 +223,6 @@ const DocRefListing = ({
           key={docRef.uuid}
           listingId={listingId}
           docRefUuid={docRef.uuid}
-          actionBarItems={docRefActionBarItems}
           includeBreadcrumb={includeBreadcrumbOnEntries}
           onNameClick={node => openDocRef(node)}
           openDocRef={openDocRef}
@@ -244,16 +242,14 @@ EnhancedDocRefListing.propTypes = {
   allDocRefs: PropTypes.arrayOf(DocRefPropType).isRequired,
   maxResults: PropTypes.number.isRequired,
   allowMultiSelect: PropTypes.bool.isRequired,
-  folderActionBarItems: ActionBarItemsPropType.isRequired,
-  docRefActionBarItems: ActionBarItemsPropType.isRequired,
+  actionBarItems: ActionBarItemsPropType.isRequired,
   openDocRef: PropTypes.func.isRequired,
   fixedDocRefTypeFilters: PropTypes.arrayOf(PropTypes.string).isRequired
 };
 
 EnhancedDocRefListing.defaultProps = {
   maxResults: 0,
-  folderActionBarItems: [],
-  docRefActionBarItems: [],
+  actionBarItems: [],
   includeBreadcrumbOnEntries: true,
   allowMultiSelect: false,
   fixedDocRefTypeFilters: []
