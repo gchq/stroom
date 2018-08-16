@@ -38,7 +38,6 @@ public class FactoryModule extends AbstractModule {
         elementBinder.addBinding().to(stroom.pipeline.filter.IdEnrichmentFilter.class);
         elementBinder.addBinding().to(stroom.pipeline.filter.RecordCountFilter.class);
         elementBinder.addBinding().to(stroom.pipeline.filter.RecordOutputFilter.class);
-        elementBinder.addBinding().to(ReferenceDataFilter.class);
         elementBinder.addBinding().to(stroom.pipeline.filter.SchemaFilterSplit.class);
         elementBinder.addBinding().to(stroom.pipeline.filter.SplitFilter.class);
         elementBinder.addBinding().to(stroom.pipeline.filter.TestFilter.class);
