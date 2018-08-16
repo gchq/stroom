@@ -60,7 +60,7 @@ const enhance = compose(
   connect(
     (
       {
-        docExplorer: { documentTree },
+        folderExplorer: { documentTree },
         pipelineEditor: { pipelines, elements },
       },
       { pipelineId },

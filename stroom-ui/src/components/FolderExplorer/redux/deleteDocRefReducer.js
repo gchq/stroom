@@ -15,9 +15,9 @@
  */
 import { createActions, combineActions, handleActions } from 'redux-actions';
 
-import { actionCreators as explorerTreeActionCreators } from 'components/DocExplorer/redux';
+import { actionCreators as documentTreeActionCreators } from './documentTree';
 
-const { docRefsDeleted } = explorerTreeActionCreators;
+const { docRefsDeleted } = documentTreeActionCreators;
 
 const actionCreators = createActions({
   PREPARE_DOC_REF_DELETE: uuids => ({ uuids }),

@@ -9,7 +9,7 @@ import { Form, Popup, Icon, Input, Checkbox, Button, Grid } from 'semantic-ui-re
 import { actionCreators } from '../redux';
 
 import DocPickerModal from 'components/DocPickerModal';
-import { actionCreators as docExplorerActionCreators } from 'components/DocExplorer/redux';
+import { actionCreators as folderExplorerActionCreators } from 'components/FolderExplorer/redux';
 
 import NumericInput from 'prototypes/NumericInput';
 
@@ -19,7 +19,7 @@ const {
   pipelineElementPropertyRevertToDefault,
 } = actionCreators;
 
-const { docRefPicked } = docExplorerActionCreators;
+const { docRefPicked } = folderExplorerActionCreators;
 
 const getPickerName = settingName => `${settingName}_docRefModalPicker`;
 

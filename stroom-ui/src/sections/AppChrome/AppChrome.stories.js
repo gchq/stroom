@@ -19,13 +19,13 @@ import PropTypes from 'prop-types';
 import { storiesOf, addDecorator } from '@storybook/react';
 import StoryRouter from 'storybook-react-router';
 import { Switch, Route } from 'react-router-dom';
-import { Header } from 'semantic-ui-react';
+import { Header } from 'semantic-ui-react/dist/commonjs';
 
-import AppChrome, { appChromeRoutes } from './index';
+import AppChrome, { appChromeRoutes } from '.';
 
-import { fromSetupSampleData } from 'components/DocExplorer/test';
+import { fromSetupSampleData } from 'components/FolderExplorer/test';
 
-import { actionCreators as docExplorerActionCreators } from 'components/DocExplorer/redux';
+import { actionCreators as folderExplorerActionCreators } from 'components/FolderExplorer/redux';
 
 import { ReduxDecorator } from 'lib/storybook/ReduxDecorator';
 import { PollyDecorator } from 'lib/storybook/PollyDecorator';
@@ -40,7 +40,7 @@ import { generateGenericTracker } from 'sections/TrackerDashboard/tracker.testDa
 import 'styles/main.css';
 import 'semantic/dist/semantic.min.css';
 
-const { docTreeReceived, docRefPicked } = docExplorerActionCreators;
+const { docTreeReceived, docRefPicked } = folderExplorerActionCreators;
 
 const PollyDecoratorWithTestData = PollyDecorator({
   documentTree: fromSetupSampleData,

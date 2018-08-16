@@ -15,7 +15,7 @@
  */
 import { connect } from 'react-redux';
 import { compose, lifecycle } from 'recompose';
-import { fetchDocRefTypes } from 'components/DocExplorer/explorerClient';
+import { fetchDocRefTypes } from 'components/FolderExplorer/explorerClient';
 import { withConfig } from 'startup/config';
 
 /**

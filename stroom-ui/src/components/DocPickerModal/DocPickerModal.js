@@ -22,7 +22,7 @@ import { connect } from 'react-redux';
 import { Button, Modal, Input, Dropdown, Popup } from 'semantic-ui-react';
 
 import DocRefPropType from 'lib/DocRefPropType';
-import { withExplorerTree } from 'components/DocExplorer';
+import { withExplorerTree } from 'components/FolderExplorer';
 import { findItem, iterateNodes } from 'lib/treeUtils';
 import DocRefListing from 'components/DocRefListing';
 
@@ -33,7 +33,7 @@ const enhance = compose(
   withModal,
   connect(
     (
-      { docExplorer: { documentTree }, docRefListing },
+      { folderExplorer: { documentTree }, docRefListing },
       {
         pickerId, typeFilters, onChange, setModalIsOpen,
       },

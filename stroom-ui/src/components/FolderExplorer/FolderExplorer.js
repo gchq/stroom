@@ -5,7 +5,7 @@ import { compose, withProps } from 'recompose';
 
 import { findItem } from 'lib/treeUtils';
 import { actionCreators } from './redux';
-import { fetchDocInfo } from 'components/DocExplorer/explorerClient';
+import { fetchDocInfo } from 'components/FolderExplorer/explorerClient';
 import { DocRefListingWithRouter } from 'components/DocRefListing';
 import NewDocDialog from './NewDocDialog';
 import DocRefInfoModal from 'components/DocRefInfoModal';
@@ -22,7 +22,7 @@ const LISTING_ID = 'folder-explorer';
 
 const enhance = compose(
   connect(
-    ({ docExplorer: { documentTree }, docRefListing }, { folderUuid }) => ({
+    ({ folderExplorer: { documentTree }, docRefListing }, { folderUuid }) => ({
       folder: findItem(documentTree, folderUuid),
       docRefListing: docRefListing[LISTING_ID] || {},
     }),

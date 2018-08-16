@@ -31,13 +31,13 @@ import { ElementPalette } from './ElementPalette';
 import { ElementDetails } from './ElementDetails';
 
 import { actionCreators as pipelineActionCreators } from './redux';
-import { actionCreators as docExplorerActionCreators } from 'components/DocExplorer';
+import { actionCreators as folderExplorerActionCreators } from 'components/FolderExplorer';
 
 import 'styles/main.css';
 import 'semantic/dist/semantic.min.css';
 
 import { testTree, testPipelines, elements, elementProperties } from './test';
-import { testDocRefsTypes } from 'components/DocExplorer/test';
+import { testDocRefsTypes } from 'components/FolderExplorer/test';
 
 const {
   pipelineReceived,

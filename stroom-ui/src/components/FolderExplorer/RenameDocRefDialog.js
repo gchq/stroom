@@ -20,7 +20,7 @@ import { connect } from 'react-redux';
 import { Modal, Form, Button } from 'semantic-ui-react';
 
 import { actionCreators } from './redux';
-import { renameDocument } from 'components/DocExplorer/explorerClient';
+import { renameDocument } from 'components/FolderExplorer/explorerClient';
 
 const { completeDocRefRename, renameUpdated } = actionCreators;
 

@@ -1,4 +1,4 @@
-import { actionCreators as docExplorerActionCreators } from './redux';
+import { actionCreators as folderExplorerActionCreators } from './redux';
 import { actionCreators as docRefTypesActionCreators } from 'components/DocRefTypes/redux';
 import { actionCreators as docRefInfoActionCreators } from 'components/DocRefInfoModal';
 import { wrappedGet, wrappedPut, wrappedPost } from 'lib/fetchTracker.redux';
@@ -11,7 +11,7 @@ const {
   docRefsMoved,
   docRefsDeleted,
   docRefCreated,
-} = docExplorerActionCreators;
+} = folderExplorerActionCreators;
 
 const { docRefInfoOpened, docRefInfoReceived } = docRefInfoActionCreators;
 
@@ -98,7 +98,7 @@ export const copyDocuments = (uuids, destinationUuid, permissionInheritance) => 
   const state = getState();
   const {
     config: { explorerServiceUrl },
-    docExplorer: { documentTree },
+    folderExplorer: { documentTree },
   } = state;
   const url = `${explorerServiceUrl}/copy`;
   const docRefs = findByUuids(documentTree, uuids);
@@ -130,7 +130,7 @@ export const moveDocuments = (uuids, destinationUuid, permissionInheritance) => 
   const state = getState();
   const {
     config: { explorerServiceUrl },
-    docExplorer: { documentTree },
+    folderExplorer: { documentTree },
   } = state;
 
   const url = `${explorerServiceUrl}/move`;
@@ -158,7 +158,7 @@ export const moveDocuments = (uuids, destinationUuid, permissionInheritance) => 
 export const deleteDocuments = uuids => (dispatch, getState) => {
   const state = getState();
   const url = `${state.config.explorerServiceUrl}/delete`;
-  const docRefs = findByUuids(state.docExplorer.documentTree, uuids);
+  const docRefs = findByUuids(state.folderExplorer.documentTree, uuids);
   wrappedPost(
     dispatch,
     state,

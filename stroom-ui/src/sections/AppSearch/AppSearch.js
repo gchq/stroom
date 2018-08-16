@@ -20,7 +20,7 @@ import { connect } from 'react-redux';
 import { iterateNodes } from 'lib/treeUtils';
 import { DocRefListingWithRouter } from 'components/DocRefListing';
 
-const enhance = connect(({ docExplorer: { documentTree } }, props) => {
+const enhance = connect(({ folderExplorer: { documentTree } }, props) => {
   const allDocuments = [];
 
   iterateNodes(documentTree, (lineage, node) => {

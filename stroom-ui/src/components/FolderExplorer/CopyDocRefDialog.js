@@ -23,7 +23,7 @@ import { Modal, Button, Form } from 'semantic-ui-react';
 
 import { findItem } from 'lib/treeUtils';
 import { actionCreators } from './redux';
-import { copyDocuments } from 'components/DocExplorer/explorerClient';
+import { copyDocuments } from 'components/FolderExplorer/explorerClient';
 
 import DocPickerModal from 'components/DocPickerModal';
 import PermissionInheritancePicker from 'components/PermissionInheritancePicker';
@@ -37,7 +37,7 @@ const enhance = compose(
   connect(
     (
       {
-        docExplorer: { documentTree },
+        folderExplorer: { documentTree },
         form,
         folderExplorer: {
           copyDocRef: { isCopying, uuids, destinationUuid },

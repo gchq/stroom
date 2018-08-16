@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { compose, lifecycle, branch, renderComponent, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Header, Icon, Grid, Input, Popup, Button, Loader } from 'semantic-ui-react';
+import { Header, Icon, Grid, Input, Popup, Button, Loader } from 'semantic-ui-react/dist/commonjs';
 import Mousetrap from 'mousetrap';
 
 import { DocTypeFilters } from 'components/DocRefTypes';

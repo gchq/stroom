@@ -1,8 +1,8 @@
 import { createActions, combineActions, handleActions } from 'redux-actions';
 
-import { actionCreators as docExplorerActionCreators } from 'components/DocExplorer/redux';
+import { actionCreators as documentTreeActionCreators } from './documentTree';
 
-const { docRefCreated } = docExplorerActionCreators;
+const { docRefCreated } = documentTreeActionCreators;
 
 const actionCreators = createActions({
   PREPARE_DOC_REF_CREATION: destination => ({ isOpen: true, destination }),

@@ -26,8 +26,8 @@ import { withConfig } from 'startup/config';
  */
 export default compose(
   connect(
-    ({ docExplorer: { isTreeReady } }, props) => ({
-      isTreeReady,
+    ({ folderExplorer: { documentTree: { waitingForTree } } }, props) => ({
+      waitingForTree,
     }),
     {
       fetchDocTree,
@@ -40,7 +40,7 @@ export default compose(
     },
   }),
   branch(
-    ({ isTreeReady }) => !isTreeReady,
+    ({ waitingForTree }) => waitingForTree,
     renderComponent(() => <Loader active>Awaiting explorer tree data </Loader>),
   ),
 );

@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import { compose } from 'recompose';
 import { DropTarget } from 'react-dnd';
 import { DragSource } from 'react-dnd';
-import { Icon } from 'semantic-ui-react';
+import { Icon } from 'semantic-ui-react/dist/commonjs';
 
 import DocRefPropType from 'lib/DocRefPropType';
 import { canMove } from 'lib/treeUtils';

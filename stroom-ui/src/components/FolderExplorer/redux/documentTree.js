@@ -56,17 +56,13 @@ export const actionCreators = createActions({
 });
 
 const defaultState = {
-  documentTree: { uuid: 'none', type: 'System', name: 'None' }, // The hierarchy of doc refs in folders
-  isTreeReady: false,
+  waitingForTree: true, uuid: 'none', type: 'System', name: 'None'
 };
 
 export const reducer = handleActions(
   {
     // Receive the current state of the explorer tree
-    DOC_TREE_RECEIVED: (state, { payload: { documentTree } }) => ({
-      documentTree,
-      isTreeReady: true,
-    }),
+    DOC_TREE_RECEIVED: (state, { payload: { documentTree } }) => documentTree,
 
     // Confirm Delete Doc Ref
     DOC_REFS_DELETED: (state, action) => {
@@ -77,7 +73,7 @@ export const reducer = handleActions(
         bulkActionResult.docRefs.map(d => d.uuid),
       );
 
-      return { isTreeReady: true, documentTree };
+      return documentTree;
     },
 
     DOC_REF_CREATED: (state, action) => {
@@ -85,14 +81,14 @@ export const reducer = handleActions(
 
       const documentTree = addItemToTree(state.documentTree, parentFolder.uuid, docRef);
 
-      return { isTreeReady: true, documentTree };
+      return documentTree;
     },
 
     DOC_REF_RENAMED: (state, action) => {
       const { docRef, resultDocRef } = action.payload;
 
       const documentTree = updateItemInTree(state.documentTree, docRef.uuid, resultDocRef);
-      return { isTreeReady: true, documentTree };
+      return documentTree;
     },
 
     DOC_REFS_COPIED: (state, action) => {
@@ -103,7 +99,7 @@ export const reducer = handleActions(
 
       const documentTree = copyItemsInTree(state.documentTree, docRefs, destination);
 
-      return { isTreeReady: true, documentTree };
+      return documentTree;
     },
 
     DOC_REFS_MOVED: (state, action) => {
@@ -114,7 +110,7 @@ export const reducer = handleActions(
 
       const documentTree = moveItemsInTree(state.documentTree, docRefs, destination);
 
-      return { isTreeReady: true, documentTree };
+      return documentTree;
     },
   },
   defaultState,

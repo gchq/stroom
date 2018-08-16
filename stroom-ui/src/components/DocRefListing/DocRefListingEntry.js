@@ -39,7 +39,7 @@ function dragCollect(connect, monitor) {
 
 const enhance = compose(
   connect(
-    ({ docExplorer: { documentTree }, docRefListing, keyIsDown }, { listingId, docRefUuid }) => ({
+    ({ folderExplorer: { documentTree }, docRefListing, keyIsDown }, { listingId, docRefUuid }) => ({
       docRefListing: docRefListing[listingId],
       docRefWithLineage: findItem(documentTree, docRefUuid),
       keyIsDown,

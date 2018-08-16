@@ -29,8 +29,8 @@ import {
   actionCreators as expressionBuilderActionCreators,
 } from './index';
 
-import { actionCreators as docExplorerActionCreators } from 'components/DocExplorer';
-import { testTree, testDocRefsTypes } from 'components/DocExplorer/test';
+import { actionCreators as folderExplorerActionCreators } from 'components/FolderExplorer';
+import { testTree, testDocRefsTypes } from 'components/FolderExplorer/test';
 
 const { expressionChanged } = expressionBuilderActionCreators;
 

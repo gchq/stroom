@@ -23,9 +23,9 @@ import {
   deleteItemFromTree,
 } from 'lib/treeUtils';
 
-import { actionCreators as docExplorerActionCreators } from 'components/DocExplorer/redux';
+import { actionCreators as folderExplorerActionCreators } from 'components/FolderExplorer/redux';
 
-const { docRefPicked } = docExplorerActionCreators;
+const { docRefPicked } = folderExplorerActionCreators;
 
 // Expression Editors
 const actionCreators = createActions({

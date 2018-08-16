@@ -2,14 +2,14 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
-import { Breadcrumb } from 'semantic-ui-react';
+import { Breadcrumb } from 'semantic-ui-react/dist/commonjs';
 
 import { findItem } from 'lib/treeUtils';
 
 const enhance = compose(connect(
   (
     {
-      docExplorer: { documentTree },
+      folderExplorer: { documentTree },
     },
     { docRefUuid },
   ) => ({

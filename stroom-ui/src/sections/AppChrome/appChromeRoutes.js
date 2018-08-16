@@ -1,9 +1,9 @@
 import React from 'react';
 
-import { Header, Icon } from 'semantic-ui-react';
+import { Header, Icon } from 'semantic-ui-react/dist/commonjs';
 
 import { withConfig } from 'startup/config';
-import { AppChrome } from './index';
+import { AppChrome } from '.';
 import TrackerDashboard from 'sections/TrackerDashboard';
 import DocEditor from 'components/DocEditor';
 import PipelineSearch from 'components/PipelineSearch';

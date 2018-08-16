@@ -20,7 +20,7 @@ import StoryRouter from 'storybook-react-router';
 import { compose, withState } from 'recompose';
 
 import { DocPickerModal } from 'components/DocPickerModal';
-import { testTree, fromSetupSampleData } from 'components/DocExplorer/test';
+import { testTree, fromSetupSampleData } from 'components/FolderExplorer/test';
 
 import { pickRandomItem } from 'lib/treeUtils';
 

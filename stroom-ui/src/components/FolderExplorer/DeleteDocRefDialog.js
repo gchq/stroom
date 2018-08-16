@@ -21,7 +21,7 @@ import { connect } from 'react-redux';
 import { Modal, Button } from 'semantic-ui-react';
 
 import { actionCreators } from './redux';
-import { deleteDocuments } from 'components/DocExplorer/explorerClient';
+import { deleteDocuments } from 'components/FolderExplorer/explorerClient';
 
 const { completeDocRefDelete } = actionCreators;
 

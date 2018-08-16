@@ -15,9 +15,9 @@
  */
 import { createActions, combineActions, handleActions } from 'redux-actions';
 
-import { actionCreators as explorerTreeActionCreators } from 'components/DocExplorer/redux';
+import { actionCreators as documentTreeActionCreators } from './documentTree';
 
-const { docRefsMoved } = explorerTreeActionCreators;
+const { docRefsMoved } = documentTreeActionCreators;
 
 const actionCreators = createActions({
   PREPARE_DOC_REF_MOVE: (uuids, destinationUuid) => ({ uuids, destinationUuid }),

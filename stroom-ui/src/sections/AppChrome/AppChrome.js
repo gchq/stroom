@@ -19,11 +19,11 @@ import PropTypes, { object } from 'prop-types';
 import { connect } from 'react-redux';
 import { compose, lifecycle, withProps } from 'recompose';
 import { withRouter } from 'react-router-dom';
-import { Button, Icon } from 'semantic-ui-react';
+import { Button, Icon } from 'semantic-ui-react/dist/commonjs';
 import Mousetrap from 'mousetrap';
 
 import { actionCreators as appChromeActionCreators } from './redux';
-import { withExplorerTree } from 'components/DocExplorer';
+import { withExplorerTree } from 'components/FolderExplorer';
 import withLocalStorage from 'lib/withLocalStorage';
 import { openDocRef } from 'sections/RecentItems';
 import MenuItem from './MenuItem';
@@ -63,7 +63,7 @@ const enhance = compose(
   withExplorerTree,
   connect(
     (
-      { userSettings: { theme }, docExplorer: { documentTree }, appChrome: { menuItemsOpen } },
+      { userSettings: { theme }, folderExplorer: { documentTree }, appChrome: { menuItemsOpen } },
       props,
     ) => ({
       documentTree,
