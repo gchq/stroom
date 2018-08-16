@@ -58,6 +58,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -142,7 +143,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         LOGGER.info(
                 "Creating RefDataOffHeapStore with maxSize: {}, dbDir {}, maxReaders {}, maxPutsBeforeCommit {}, valueBufferCapacity {}",
                 FileUtils.byteCountToDisplaySize(maxSize),
-                dbDir.toAbsolutePath().toString(),
+                dbDir.toAbsolutePath().toString() + File.separatorChar,
                 maxReaders,
                 maxPutsBeforeCommit,
                 FileUtils.byteCountToDisplaySize(valueBufferCapacity));
