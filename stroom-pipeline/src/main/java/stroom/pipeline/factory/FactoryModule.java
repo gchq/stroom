@@ -19,6 +19,7 @@ package stroom.pipeline.factory;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.Clearable;
+import stroom.refdata.ReferenceDataFilter;
 
 public class FactoryModule extends AbstractModule {
     @Override
@@ -37,7 +38,7 @@ public class FactoryModule extends AbstractModule {
         elementBinder.addBinding().to(stroom.pipeline.filter.IdEnrichmentFilter.class);
         elementBinder.addBinding().to(stroom.pipeline.filter.RecordCountFilter.class);
         elementBinder.addBinding().to(stroom.pipeline.filter.RecordOutputFilter.class);
-        elementBinder.addBinding().to(stroom.pipeline.filter.ReferenceDataFilter.class);
+        elementBinder.addBinding().to(ReferenceDataFilter.class);
         elementBinder.addBinding().to(stroom.pipeline.filter.SchemaFilterSplit.class);
         elementBinder.addBinding().to(stroom.pipeline.filter.SplitFilter.class);
         elementBinder.addBinding().to(stroom.pipeline.filter.TestFilter.class);

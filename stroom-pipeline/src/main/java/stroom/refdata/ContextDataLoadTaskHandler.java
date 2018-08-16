@@ -35,7 +35,7 @@ import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
-import stroom.refdata.offheapstore.RefStreamDefinition;
+import stroom.refdata.store.RefStreamDefinition;
 import stroom.security.Security;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;

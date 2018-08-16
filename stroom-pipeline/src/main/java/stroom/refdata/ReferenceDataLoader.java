@@ -16,10 +16,8 @@
 
 package stroom.refdata;
 
-import stroom.refdata.offheapstore.RefStreamDefinition;
+import stroom.refdata.store.RefStreamDefinition;
 import stroom.util.shared.VoidResult;
-
-import java.util.List;
 
 public interface ReferenceDataLoader {
     VoidResult load(RefStreamDefinition refStreamDefinition);

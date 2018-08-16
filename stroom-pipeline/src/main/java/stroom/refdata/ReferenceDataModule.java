@@ -19,7 +19,7 @@ package stroom.refdata;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.Clearable;
-import stroom.refdata.offheapstore.RefDataStoreModule;
+import stroom.refdata.store.RefDataStoreModule;
 import stroom.task.TaskHandler;
 
 public class ReferenceDataModule extends AbstractModule {

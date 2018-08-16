@@ -18,8 +18,8 @@ package stroom.refdata;
 
 import stroom.docref.DocRef;
 import stroom.feed.shared.Feed;
-import stroom.refdata.offheapstore.RefDataStore;
-import stroom.refdata.offheapstore.RefStreamDefinition;
+import stroom.refdata.store.RefDataStore;
+import stroom.refdata.store.RefStreamDefinition;
 import stroom.streamstore.shared.Stream;
 
 import java.io.InputStream;

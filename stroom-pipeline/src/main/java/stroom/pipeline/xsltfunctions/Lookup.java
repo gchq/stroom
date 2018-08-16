@@ -23,8 +23,8 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.refdata.LookupIdentifier;
 import stroom.refdata.ReferenceData;
 import stroom.refdata.ReferenceDataResult;
-import stroom.refdata.offheapstore.RefDataValueProxy;
-import stroom.refdata.offheapstore.RefDataValueProxyConsumer;
+import stroom.refdata.store.RefDataValueProxy;
+import stroom.refdata.store.offheapstore.RefDataValueProxyConsumer;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
