@@ -16,7 +16,7 @@
 
 package stroom.pipeline.shared;
 
-import stroom.entity.shared.Action;
+import stroom.task.shared.Action;
 
 public class FetchPropertyTypesAction extends Action<FetchPropertyTypesResult> {
     private static final long serialVersionUID = -1773544031158236156L;

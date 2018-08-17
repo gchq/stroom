@@ -18,7 +18,7 @@ package stroom.pipeline.stepping;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.task.TaskHandler;
+import stroom.task.api.TaskHandler;
 
 public class PipelineSteppingModule extends AbstractModule {
     @Override

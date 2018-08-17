@@ -20,9 +20,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.event.EntityEvent;
 import stroom.entity.shared.Clearable;
-import stroom.node.shared.DBTableService;
-import stroom.node.shared.RecordCountService;
-import stroom.task.TaskHandler;
+import stroom.task.api.TaskHandler;
 
 public class NodeHandlerModule extends AbstractModule {
     @Override

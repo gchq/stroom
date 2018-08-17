@@ -16,22 +16,21 @@
 
 package stroom.pipeline.destination;
 
-import stroom.feed.shared.Feed;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 
 public class StreamKey {
-    private final Feed feed;
+    private final String feed;
     private final String streamType;
     private final boolean segmentOutput;
 
-    public StreamKey(final Feed feed, final String streamType, final boolean segmentOutput) {
+    public StreamKey(final String feed, final String streamType, final boolean segmentOutput) {
         this.feed = feed;
         this.streamType = streamType;
         this.segmentOutput = segmentOutput;
     }
 
-    public Feed getFeed() {
+    public String getFeed() {
         return feed;
     }
 
@@ -72,7 +71,7 @@ public class StreamKey {
     public String toString() {
         final StringBuilder sb = new StringBuilder();
         sb.append("StreamKey(feed=");
-        sb.append(feed.getName());
+        sb.append(feed);
         sb.append(", streamType=");
         sb.append(streamType);
         sb.append(", segmentOutput=");

@@ -36,7 +36,7 @@ public class NewPipelineReferenceViewImpl extends ViewImpl implements NewPipelin
     @UiField
     SimplePanel feed;
     @UiField
-    SimplePanel streamType;
+    SimplePanel type;
     @Inject
     public NewPipelineReferenceViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -67,9 +67,9 @@ public class NewPipelineReferenceViewImpl extends ViewImpl implements NewPipelin
     }
 
     @Override
-    public void setStreamTypeWidget(final Widget w) {
+    public void setTypeWidget(final Widget w) {
         w.getElement().getStyle().setWidth(100, Unit.PCT);
-        this.streamType.setWidget(w);
+        this.type.setWidget(w);
     }
 
     public interface Binder extends UiBinder<Widget, NewPipelineReferenceViewImpl> {

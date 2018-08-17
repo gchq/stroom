@@ -34,18 +34,15 @@ import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.shared.Feed;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.Security;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamType;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.MetaDataSource;
 
 import javax.inject.Inject;
-import java.util.Date;
 import java.util.List;
 
 public class StreamEventLog {
@@ -61,7 +58,7 @@ public class StreamEventLog {
         this.security = security;
     }
 
-    public void importStream(final Date receivedDate, final String feedName, final String path, final Throwable th) {
+    public void importStream(final String feedName, final String path, final Throwable th) {
         security.insecure(() -> {
             try {
                 final Event event = eventLoggingService.createAction("Data Upload", "Data uploaded to \"" + feedName + "\"");
@@ -87,14 +84,14 @@ public class StreamEventLog {
         });
     }
 
-    public void viewStream(final Stream stream, final Feed feed, final StreamType streamType, final Throwable th) {
+    public void viewStream(final Data stream, final String feedName, final String streamTypeName, final Throwable th) {
         security.insecure(() -> {
             try {
                 if (stream != null) {
                     final Event event = eventLoggingService.createAction("View", "Viewing Stream");
                     final ObjectOutcome objectOutcome = new ObjectOutcome();
                     event.getEventDetail().setView(objectOutcome);
-                    objectOutcome.getObjects().add(createStreamObject(stream, feed, streamType));
+                    objectOutcome.getObjects().add(createStreamObject(stream, feedName, streamTypeName));
                     objectOutcome.setOutcome(EventLoggingUtil.createOutcome(th));
                     eventLoggingService.log(event);
                 }
@@ -104,7 +101,7 @@ public class StreamEventLog {
         });
     }
 
-    public void exportStream(final FindStreamCriteria findStreamCriteria, final Throwable th) {
+    public void exportStream(final FindDataCriteria findStreamCriteria, final Throwable th) {
         security.insecure(() -> {
             try {
                 if (findStreamCriteria != null) {
@@ -131,7 +128,7 @@ public class StreamEventLog {
         });
     }
 
-    private Query createQuery(final FindStreamCriteria findStreamCriteria) {
+    private Query createQuery(final FindDataCriteria findStreamCriteria) {
         if (findStreamCriteria != null) {
             final Advanced advanced = new Advanced();
             appendCriteria(advanced.getAdvancedQueryItems(), findStreamCriteria);
@@ -145,23 +142,23 @@ public class StreamEventLog {
         return null;
     }
 
-    private event.logging.Object createStreamObject(final Stream stream, final Feed feed,
-                                                    final StreamType streamType) {
+    private event.logging.Object createStreamObject(final Data stream, final String feedName,
+                                                    final String streamTypeName) {
         final event.logging.Object object = new event.logging.Object();
         object.setType("Stream");
         object.setId(String.valueOf(stream.getId()));
-        if (feed != null) {
-            object.getData().add(EventLoggingUtil.createData("Feed", feed.getName()));
+        if (feedName != null) {
+            object.getData().add(EventLoggingUtil.createData("Feed", feedName));
         }
-        if (streamType != null) {
-            object.getData().add(EventLoggingUtil.createData("StreamType", streamType.getDisplayValue()));
+        if (streamTypeName != null) {
+            object.getData().add(EventLoggingUtil.createData("StreamType", streamTypeName));
         }
 
         return object;
     }
 
 
-    private void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindStreamCriteria findStreamCriteria) {
+    private void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindDataCriteria findStreamCriteria) {
 //        CriteriaLoggingUtil.appendEntityIdSet(items, "streamProcessorIdSet",
 //                findStreamCriteria.getStreamProcessorIdSet());
 //        CriteriaLoggingUtil.appendIncludeExcludeEntityIdSet(items, "feeds", findStreamCriteria.getFeeds());
@@ -193,7 +190,7 @@ public class StreamEventLog {
             }
 
             for (long id : findStreamCriteria.getSelectedIdSet()) {
-                idSetOp.getAdvancedQueryItems().add(EventLoggingUtil.createTerm(StreamDataSource.STREAM_ID, TermCondition.EQUALS, String.valueOf(id)));
+                idSetOp.getAdvancedQueryItems().add(EventLoggingUtil.createTerm(MetaDataSource.STREAM_ID, TermCondition.EQUALS, String.valueOf(id)));
             }
 
             appendOperator(and.getAdvancedQueryItems(), findStreamCriteria.getExpression());

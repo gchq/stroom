@@ -19,8 +19,8 @@ package stroom.streamtask;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.feed.MetaMap;
-import stroom.streamstore.StreamFactory;
+import stroom.data.meta.api.AttributeMap;
+import stroom.data.store.StreamFactory;
 import stroom.util.date.DateUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
@@ -30,10 +30,10 @@ public class TestStreamFactory extends StroomUnitTest {
     @Test
     public void testSimple() {
         final String testDate = "2000-01-01T00:00:00.000Z";
-        final MetaMap metaMap = new MetaMap();
-        metaMap.put("effectivetime", testDate);
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put("effectivetime", testDate);
 
-        final Long time = StreamFactory.getReferenceEffectiveTime(metaMap, true);
+        final Long time = StreamFactory.getReferenceEffectiveTime(attributeMap, true);
 
         Assert.assertEquals(testDate, DateUtil.createNormalDateTimeString(time));
     }

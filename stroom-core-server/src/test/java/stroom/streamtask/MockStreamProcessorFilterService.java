@@ -21,9 +21,9 @@ import stroom.entity.MockEntityService;
 import stroom.docref.DocRef;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
-import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamProcessorFilter;
-import stroom.streamtask.shared.StreamProcessorFilterTracker;
+import stroom.streamtask.shared.Processor;
+import stroom.streamtask.shared.ProcessorFilter;
+import stroom.streamtask.shared.ProcessorFilterTracker;
 
 import javax.inject.Singleton;
 
@@ -34,14 +34,14 @@ import javax.inject.Singleton;
  */
 @Singleton
 public class MockStreamProcessorFilterService
-        extends MockEntityService<StreamProcessorFilter, FindStreamProcessorFilterCriteria>
+        extends MockEntityService<ProcessorFilter, FindStreamProcessorFilterCriteria>
         implements StreamProcessorFilterService {
     @Override
-    public void addFindStreamCriteria(final StreamProcessor streamProcessor,
+    public void addFindStreamCriteria(final Processor streamProcessor,
                                       final int priority,
                                       final QueryData queryData) {
-        final StreamProcessorFilter filter = new StreamProcessorFilter();
-        filter.setStreamProcessorFilterTracker(new StreamProcessorFilterTracker());
+        final ProcessorFilter filter = new ProcessorFilter();
+        filter.setStreamProcessorFilterTracker(new ProcessorFilterTracker());
         filter.setPriority(priority);
         filter.setStreamProcessor(streamProcessor);
         filter.setQueryData(queryData);
@@ -50,15 +50,15 @@ public class MockStreamProcessorFilterService
     }
 
     @Override
-    public StreamProcessorFilter createNewFilter(final DocRef pipelineRef,
-                                                 final QueryData findStreamCriteria,
-                                                 final boolean enabled,
-                                                 final int priority) {
+    public ProcessorFilter createNewFilter(final DocRef pipelineRef,
+                                           final QueryData findStreamCriteria,
+                                           final boolean enabled,
+                                           final int priority) {
         return null;
     }
 
     @Override
-    public Class<StreamProcessorFilter> getEntityClass() {
-        return StreamProcessorFilter.class;
+    public Class<ProcessorFilter> getEntityClass() {
+        return ProcessorFilter.class;
     }
 }

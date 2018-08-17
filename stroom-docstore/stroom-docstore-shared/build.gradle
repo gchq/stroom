@@ -1,0 +1,6 @@
+ext.moduleName = 'stroom.docstore.shared'
+
+dependencies {
+    compile libs.stroomDocRef
+    compile libs.jackson_annotations
+}

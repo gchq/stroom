@@ -31,7 +31,6 @@ import stroom.util.shared.PropertyMap;
 import stroom.util.shared.ResourceKey;
 
 import javax.inject.Inject;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -39,7 +38,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +62,7 @@ public final class ImportFileServlet extends HttpServlet {
 
     @Override
     protected void doPost(final HttpServletRequest request, final HttpServletResponse response)
-            throws ServletException, IOException {
+            throws IOException {
         response.setContentType("text/plain;charset=UTF-8");
 
         final PropertyMap propertyMap = new PropertyMap();
@@ -83,7 +81,7 @@ public final class ImportFileServlet extends HttpServlet {
 
             final ResourceKey uuid = resourceStore.createTempFile(fileItem.getName());
             final Path file = resourceStore.getTempFile(uuid);
-            streamEventLog.importStream(new Date(), "Import", FileUtil.getCanonicalPath(file), null);
+            streamEventLog.importStream("Import", FileUtil.getCanonicalPath(file), null);
 
             StreamUtil.streamToStream(inputStream, Files.newOutputStream(file));
 
@@ -92,7 +90,7 @@ public final class ImportFileServlet extends HttpServlet {
             fileItem.delete();
 
         } catch (final RuntimeException e) {
-            streamEventLog.importStream(new Date(), "Import", null, e);
+            streamEventLog.importStream("Import", null, e);
             LOGGER.error(e.getMessage(), e);
             propertyMap.put("exception", e.getMessage());
         }

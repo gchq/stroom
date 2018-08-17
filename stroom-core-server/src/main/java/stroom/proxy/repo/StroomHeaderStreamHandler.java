@@ -1,10 +1,10 @@
 package stroom.proxy.repo;
 
-import stroom.feed.MetaMap;
+import stroom.data.meta.api.AttributeMap;
 
 import java.io.IOException;
 
 public interface StroomHeaderStreamHandler {
-    void handleHeader(MetaMap metaMap) throws IOException;
+    void handleHeader(AttributeMap attributeMap) throws IOException;
 
 }

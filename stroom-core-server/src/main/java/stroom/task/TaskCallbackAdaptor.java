@@ -16,6 +16,8 @@
 
 package stroom.task;
 
+import stroom.task.api.TaskCallback;
+
 public class TaskCallbackAdaptor<R> implements TaskCallback<R> {
     @Override
     public void onSuccess(final R result) {

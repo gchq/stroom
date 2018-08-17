@@ -18,11 +18,11 @@ package stroom.pipeline.destination;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.jobsystem.JobTrackedSchedule;
+import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.errorhandler.TerminatedException;
-import stroom.properties.StroomPropertyService;
-import stroom.task.TaskContext;
+import stroom.properties.api.PropertyService;
+import stroom.task.api.TaskContext;
 import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.lifecycle.StroomShutdown;
 
@@ -41,11 +41,11 @@ public class RollingDestinations {
 
     private static final ConcurrentHashMap<Object, RollingDestination> currentDestinations = new ConcurrentHashMap<>();
 
-    private final StroomPropertyService stroomPropertyService;
+    private final PropertyService propertyService;
 
     @Inject
-    public RollingDestinations(final StroomPropertyService stroomPropertyService) {
-        this.stroomPropertyService = stroomPropertyService;
+    public RollingDestinations(final PropertyService propertyService) {
+        this.propertyService = propertyService;
     }
 
     public RollingDestination borrow(final TaskContext taskContext, final Object key,
@@ -203,9 +203,9 @@ public class RollingDestinations {
 
     private int getMaxActiveDestinations() {
         int maxActiveDestinations = DEFAULT_MAX_ACTIVE_DESTINATIONS;
-        if (stroomPropertyService != null) {
+        if (propertyService != null) {
             try {
-                final String property = stroomPropertyService.getProperty("stroom.pipeline.appender.maxActiveDestinations");
+                final String property = propertyService.getProperty("stroom.pipeline.appender.maxActiveDestinations");
                 if (property != null) {
                     maxActiveDestinations = Integer.parseInt(property);
                 }

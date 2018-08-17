@@ -20,8 +20,8 @@ import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.ExternalDocRefConstants;
-import stroom.node.shared.ClientProperties;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.shared.ClientProperties;
+import stroom.properties.api.PropertyService;
 import stroom.docref.DocRef;
 import stroom.security.SecurityContext;
 import stroom.servlet.HttpServletRequestHolder;
@@ -43,15 +43,15 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
     private HttpServletRequestHolder httpServletRequestHolder;
 
     SimpleDataSourceProviderRegistry(final SecurityContext securityContext,
-                                     final StroomPropertyService stroomPropertyService,
+                                     final PropertyService propertyService,
                                      final HttpServletRequestHolder httpServletRequestHolder) {
         this.securityContext = securityContext;
         this.httpServletRequestHolder = httpServletRequestHolder;
 
-        final String basePath = stroomPropertyService.getProperty(PROP_KEY_BASE_PATH);
-        final String annotationsPath = stroomPropertyService
+        final String basePath = propertyService.getProperty(PROP_KEY_BASE_PATH);
+        final String annotationsPath = propertyService
                 .getProperty(ClientProperties.URL_DOC_REF_SERVICE_BASE + ExternalDocRefConstants.ANNOTATIONS_INDEX);
-        final String elasticPath = stroomPropertyService
+        final String elasticPath = propertyService
                 .getProperty(ClientProperties.URL_DOC_REF_SERVICE_BASE + ExternalDocRefConstants.ELASTIC_INDEX);
 
         if (basePath != null && !basePath.isEmpty()) {

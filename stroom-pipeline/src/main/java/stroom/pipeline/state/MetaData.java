@@ -16,22 +16,22 @@
 
 package stroom.pipeline.state;
 
-import stroom.feed.MetaMap;
+import stroom.data.meta.api.AttributeMap;
 import stroom.guice.PipelineScoped;
 
 @PipelineScoped
 public class MetaData {
-    private final MetaMap metaMap = new MetaMap();
+    private final AttributeMap attributeMap = new AttributeMap();
 
     public void put(final String key, final String value) {
-        metaMap.put(key, value);
+        attributeMap.put(key, value);
     }
 
-    public void putAll(final MetaMap metaMap) {
-        this.metaMap.putAll(metaMap);
+    public void putAll(final AttributeMap attributeMap) {
+        this.attributeMap.putAll(attributeMap);
     }
 
-    public MetaMap getMetaMap() {
-        return metaMap;
+    public AttributeMap getAttributeMap() {
+        return attributeMap;
     }
 }

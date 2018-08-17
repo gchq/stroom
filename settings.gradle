@@ -17,6 +17,10 @@ rootProject.name = 'stroom'
  *
  */
 
+// Task execution.
+include 'stroom-task:stroom-task-api'
+include 'stroom-task:stroom-task-impl'
+
 // Proxy project.
 include 'stroom-proxy'
 
@@ -24,32 +28,80 @@ include 'stroom-proxy'
 include 'stroom-util-shared'
 include 'stroom-entity-shared'
 
-// API projects
-include 'stroom-security-api'
-include 'stroom-explorer-api'
-include 'stroom-statistics-api'
+// Properties
+include 'stroom-properties:stroom-properties-api'
+include 'stroom-properties:stroom-properties-impl'
+include 'stroom-properties:stroom-properties-impl-mock'
 
-// More shared projects.
+include 'stroom-properties:stroom-properties-global-api'
+include 'stroom-properties:stroom-properties-global-impl-db'
+include 'stroom-properties:stroom-properties-global-impl-db-gen'
+
+// Security
+include 'stroom-security:stroom-security-api'
+include 'stroom-security:stroom-security-shared'
+include 'stroom-security:stroom-security-server'
+include 'stroom-security:stroom-security-impl-mock'
+include 'stroom-security:stroom-security-client-api'
+include 'stroom-security:stroom-security-client'
+
+// Docstore
+include 'stroom-docstore:stroom-docstore-shared'
+include 'stroom-docstore:stroom-docstore-server'
+
+// Data meta projects
+include 'stroom-data-meta:stroom-data-meta-api'
+include 'stroom-data-meta:stroom-data-meta-impl-db'
+include 'stroom-data-meta:stroom-data-meta-impl-db-gen'
+include 'stroom-data-meta:stroom-data-meta-impl-mock'
+
+// Data store projects
+include 'stroom-data-store:stroom-data-store-api'
+include 'stroom-data-store:stroom-data-store-impl-fs'
+include 'stroom-data-store:stroom-data-store-impl-fs-db-gen'
+include 'stroom-data-store:stroom-data-store-impl-mock'
+include 'stroom-data-store:stroom-data-store-util'
+
+// Explorer
+include 'stroom-explorer:stroom-explorer-api'
+include 'stroom-explorer:stroom-explorer-server'
+
+// Index
+include 'stroom-index:stroom-index-shared'
+include 'stroom-index:stroom-index-server'
+include 'stroom-index:stroom-index-client'
+
+// Elastic
+include 'stroom-elastic:stroom-elastic-server'
+include 'stroom-elastic:stroom-elastic-client-impl_5_6_4'
+
+// Statistics
+include 'stroom-statistics:stroom-statistics-api'
+include 'stroom-statistics:stroom-statistics-shared'
+include 'stroom-statistics:stroom-statistics-client'
+include 'stroom-statistics:stroom-statistics-server'
+
+// Dashboard
+include 'stroom-dashboard:stroom-dashboard-shared'
+include 'stroom-dashboard:stroom-dashboard-client'
+include 'stroom-dashboard:stroom-dashboard-server'
+include 'stroom-dashboard-gwt'
+
+// External Doc
+include 'stroom-externaldoc:stroom-externaldoc-server'
+include 'stroom-externaldoc:stroom-externaldoc-client'
+
+// Core
 include 'stroom-core-shared'
-include 'stroom-security-shared'
-include 'stroom-docstore-shared'
-include 'stroom-index-shared'
-include 'stroom-statistics-shared'
-include 'stroom-dashboard-shared'
-include 'stroom-ruleset-shared'
-
-// Client projects
-include 'stroom-security-client-api'
+include 'stroom-core-server'
 include 'stroom-core-client-widget'
 include 'stroom-core-client'
-include 'stroom-security-client'
-include 'stroom-index-client'
-include 'stroom-statistics-client'
-include 'stroom-dashboard-client'
-include 'stroom-externaldoc-client'
+
+// Ruleset
+include 'stroom-ruleset:stroom-ruleset-shared'
+include 'stroom-ruleset:stroom-ruleset-server'
 
 // GWT compilation projects.
-include 'stroom-dashboard-gwt'
 include 'stroom-app-gwt'
 
 // Common test project
@@ -59,20 +111,12 @@ include 'stroom-test-common'
 include 'stroom-config'
 
 include 'stroom-util'
-include 'stroom-core-server'
-include 'stroom-docstore-server'
-include 'stroom-explorer-server'
+
 include 'stroom-pipeline'
-include 'stroom-security-server'
-include 'stroom-index-server'
-include 'stroom-statistics-server'
-include 'stroom-dashboard-server'
-include 'stroom-ruleset-server'
+
 include 'stroom-connectors'
-include 'stroom-externaldoc-server'
-include 'stroom-elastic-server'
+
 include 'stroom-kafka-client-impl_0_10_0_1'
-include 'stroom-elastic-client-impl_5_6_4'
 
 // Package it all together.
 include 'stroom-app'

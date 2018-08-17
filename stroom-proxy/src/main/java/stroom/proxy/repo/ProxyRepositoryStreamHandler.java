@@ -2,7 +2,7 @@ package stroom.proxy.repo;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.MetaMap;
+import stroom.data.meta.api.AttributeMap;
 import stroom.proxy.handler.StreamHandler;
 
 import javax.inject.Inject;
@@ -17,7 +17,7 @@ public class ProxyRepositoryStreamHandler implements StreamHandler {
 
     private final ProxyRepositoryManager proxyRepositoryManager;
 
-    private MetaMap metaMap;
+    private AttributeMap attributeMap;
     private StroomZipOutputStream stroomZipOutputStream;
     private OutputStream entryStream;
     private boolean doneOne = false;
@@ -28,8 +28,8 @@ public class ProxyRepositoryStreamHandler implements StreamHandler {
     }
 
     @Override
-    public void setMetaMap(final MetaMap metaMap) {
-        this.metaMap = metaMap;
+    public void setAttributeMap(final AttributeMap attributeMap) {
+        this.attributeMap = attributeMap;
     }
 
     @Override
@@ -52,7 +52,7 @@ public class ProxyRepositoryStreamHandler implements StreamHandler {
     @Override
     public void handleFooter() throws IOException {
         if (doneOne) {
-            stroomZipOutputStream.addMissingMetaMap(metaMap);
+            stroomZipOutputStream.addMissingAttributeMap(attributeMap);
             stroomZipOutputStream.close();
         } else {
             stroomZipOutputStream.closeDelete();
@@ -62,7 +62,7 @@ public class ProxyRepositoryStreamHandler implements StreamHandler {
 
     @Override
     public void handleHeader() throws IOException {
-        stroomZipOutputStream = proxyRepositoryManager.getActiveRepository().getStroomZipOutputStream(metaMap);
+        stroomZipOutputStream = proxyRepositoryManager.getActiveRepository().getStroomZipOutputStream(attributeMap);
     }
 
     @Override

@@ -28,10 +28,10 @@
     </g:row>
     <g:row>
       <g:customCell>
-        <g:Label text="Stream Type:" />
+        <g:Label text="Type:" />
       </g:customCell>
       <g:customCell>
-        <g:SimplePanel ui:field="streamType" width="100%" />
+        <g:SimplePanel ui:field="type" width="100%" />
       </g:customCell>
     </g:row>
   </g:Grid>

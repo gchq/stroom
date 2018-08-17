@@ -18,8 +18,8 @@
 package stroom.dictionary;
 
 import stroom.dictionary.shared.DictionaryDoc;
-import stroom.document.DocumentStore;
 import stroom.docref.DocRef;
+import stroom.document.DocumentStore;
 
 import java.util.List;
 

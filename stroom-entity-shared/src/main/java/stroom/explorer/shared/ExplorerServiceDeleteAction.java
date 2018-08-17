@@ -17,7 +17,7 @@
 
 package stroom.explorer.shared;
 
-import stroom.entity.shared.Action;
+import stroom.task.shared.Action;
 import stroom.docref.DocRef;
 
 import java.util.List;

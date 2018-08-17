@@ -1,0 +1,17 @@
+ext.moduleName = 'stroom.docstore.server'
+
+dependencies {
+    compile project(':stroom-explorer:stroom-explorer-api')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-docstore:stroom-docstore-shared')
+
+    compile libs.stroomDocRef
+    compile libs.stroomQueryApi
+    compile libs.slf4j_api
+    compile libs.guice4
+    compile libs.jackson_annotations
+    compile libs.jackson_databind
+    compile libs.javax_inject
+
+    testCompile libs.junit
+}

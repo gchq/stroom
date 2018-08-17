@@ -21,8 +21,7 @@ import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.StringValue;
-import stroom.feed.FeedService;
-import stroom.feed.shared.Feed;
+import stroom.feed.FeedProperties;
 import stroom.pipeline.state.FeedHolder;
 import stroom.util.shared.Severity;
 
@@ -30,16 +29,16 @@ import javax.inject.Inject;
 
 class Classification extends StroomExtensionFunctionCall {
     private final FeedHolder feedHolder;
-    private final FeedService feedService;
+    private final FeedProperties feedProperties;
 
-    private Feed feed;
+    private String feedName;
     private String classification;
 
     @Inject
     Classification(final FeedHolder feedHolder,
-                   final FeedService feedService) {
+                   final FeedProperties feedProperties) {
         this.feedHolder = feedHolder;
-        this.feedService = feedService;
+        this.feedProperties = feedProperties;
     }
 
     @Override
@@ -47,9 +46,9 @@ class Classification extends StroomExtensionFunctionCall {
         String result = null;
 
         try {
-            if (feed == null || feed != feedHolder.getFeed()) {
-                feed = feedHolder.getFeed();
-                classification = feedService.getDisplayClassification(feed);
+            if (feedName == null || !feedName.equals(feedHolder.getFeedName())) {
+                feedName = feedHolder.getFeedName();
+                classification = feedProperties.getDisplayClassification(feedName);
             }
 
             result = classification;

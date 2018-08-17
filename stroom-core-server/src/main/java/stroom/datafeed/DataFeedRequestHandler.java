@@ -19,29 +19,27 @@ package stroom.datafeed;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.FeedService;
-import stroom.feed.MetaMap;
-import stroom.feed.MetaMapFactory;
-import stroom.feed.StroomHeaderArguments;
-import stroom.feed.StroomStatusCode;
-import stroom.feed.StroomStreamException;
-import stroom.feed.shared.Feed;
-import stroom.properties.StroomPropertyService;
-import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.docref.DocRef;
+import stroom.feed.FeedDocCache;
+import stroom.data.meta.api.AttributeMap;
+import stroom.feed.AttributeMapUtil;
+import stroom.feed.StroomHeaderArguments;
+import stroom.feed.shared.FeedDoc;
+import stroom.properties.api.PropertyService;
+import stroom.proxy.repo.StroomStreamProcessor;
 import stroom.security.Security;
-import stroom.streamstore.StreamStore;
+import stroom.data.store.api.StreamStore;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamTargetStroomStreamHandler;
 import stroom.streamtask.statistic.MetaDataStatistic;
-import stroom.util.thread.BufferFactory;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -54,62 +52,69 @@ class DataFeedRequestHandler implements RequestHandler {
 
     private final Security security;
     private final StreamStore streamStore;
-    private final FeedService feedService;
+    private final FeedDocCache feedDocCache;
     private final MetaDataStatistic metaDataStatistics;
-    private final MetaMapFilterFactory metaMapFilterFactory;
-    private final StroomPropertyService stroomPropertyService;
+    private final AttributeMapFilterFactory attributeMapFilterFactory;
+    private final PropertyService propertyService;
+    private final BufferFactory bufferFactory;
 
-    private volatile MetaMapFilter metaMapFilter;
+    private volatile AttributeMapFilter attributeMapFilter;
 
     @Inject
     public DataFeedRequestHandler(final Security security,
                                   final StreamStore streamStore,
-                                  @Named("cachedFeedService") final FeedService feedService,
+                                  final FeedDocCache feedDocCache,
                                   final MetaDataStatistic metaDataStatistics,
-                                  final MetaMapFilterFactory metaMapFilterFactory,
-                                  final StroomPropertyService stroomPropertyService) {
+                                  final AttributeMapFilterFactory attributeMapFilterFactory,
+                                  final PropertyService propertyService,
+                                  final BufferFactory bufferFactory) {
         this.security = security;
         this.streamStore = streamStore;
-        this.feedService = feedService;
+        this.feedDocCache = feedDocCache;
         this.metaDataStatistics = metaDataStatistics;
-        this.metaMapFilterFactory = metaMapFilterFactory;
-        this.stroomPropertyService = stroomPropertyService;
+        this.attributeMapFilterFactory = attributeMapFilterFactory;
+        this.propertyService = propertyService;
+        this.bufferFactory = bufferFactory;
     }
 
     @Override
     public void handle(final HttpServletRequest request, final HttpServletResponse response) {
-        if (metaMapFilter == null) {
-            final String receiptPolicyUuid = stroomPropertyService.getProperty("stroom.feed.receiptPolicyUuid");
+        if (attributeMapFilter == null) {
+            final String receiptPolicyUuid = propertyService.getProperty("stroom.feed.receiptPolicyUuid");
             if (receiptPolicyUuid != null && !receiptPolicyUuid.isEmpty()) {
-                this.metaMapFilter = metaMapFilterFactory.create(new DocRef("RuleSet", receiptPolicyUuid));
+                this.attributeMapFilter = attributeMapFilterFactory.create(new DocRef("RuleSet", receiptPolicyUuid));
             }
         }
 
         security.asProcessingUser(() -> {
-            final MetaMap metaMap = MetaMapFactory.create(request);
-            if (metaMapFilter == null || metaMapFilter.filter(metaMap)) {
-                debug("Receiving data", metaMap);
-                final String feedName = metaMap.get(StroomHeaderArguments.FEED);
+            final AttributeMap attributeMap = AttributeMapUtil.create(request);
+            if (attributeMapFilter == null || attributeMapFilter.filter(attributeMap)) {
+                debug("Receiving data", attributeMap);
+                final String feedName = attributeMap.get(StroomHeaderArguments.FEED);
 
                 if (feedName == null || feedName.isEmpty()) {
                     throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED);
                 }
 
-                final Feed feed = feedService.loadByName(metaMap.get(StroomHeaderArguments.FEED));
+                final Optional<FeedDoc> optional = feedDocCache.get(feedName);
+                final String streamTypeName = optional
+                        .map(FeedDoc::getStreamType)
+                        .orElse(StreamTypeNames.RAW_EVENTS);
 
-                if (feed == null) {
-                    throw new StroomStreamException(StroomStatusCode.FEED_IS_NOT_DEFINED);
-                }
-
-                if (!feed.isReceive()) {
-                    throw new StroomStreamException(StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVED_DATA);
-                }
+//                final String feedName = attributeMap.get(StroomHeaderArguments.FEED);
+//                if (feedName == null) {
+//                    throw new StroomStreamException(StroomStatusCode.FEED_IS_NOT_DEFINED);
+//                }
+//
+//                if (!feed.isReceive()) {
+//                    throw new StroomStreamException(StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVED_DATA);
+//                }
 
                 List<StreamTargetStroomStreamHandler> handlers = StreamTargetStroomStreamHandler.buildSingleHandlerList(streamStore,
-                        feedService, metaDataStatistics, feed, feed.getStreamType());
+                        feedDocCache, metaDataStatistics, feedName, streamTypeName);
 
-                final byte[] buffer = BufferFactory.create();
-                final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(metaMap, handlers, buffer, "DataFeedRequestHandler-" + metaMap.get(StroomHeaderArguments.GUID));
+                final byte[] buffer = bufferFactory.create();
+                final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, handlers, buffer, "DataFeedRequestHandler-" + attributeMap.get(StroomHeaderArguments.GUID));
 
                 try {
                     stroomStreamProcessor.processRequestHeader(request);
@@ -124,7 +129,7 @@ class DataFeedRequestHandler implements RequestHandler {
                 }
             } else {
                 // Drop the data.
-                debug("Dropping data", metaMap);
+                debug("Dropping data", attributeMap);
             }
 
             // Set the response status.
@@ -133,14 +138,14 @@ class DataFeedRequestHandler implements RequestHandler {
         });
     }
 
-    private void debug(final String message, final MetaMap metaMap) {
+    private void debug(final String message, final AttributeMap attributeMap) {
         if (LOGGER.isDebugEnabled()) {
-            final List<String> keys = metaMap.keySet().stream().sorted().collect(Collectors.toList());
+            final List<String> keys = attributeMap.keySet().stream().sorted().collect(Collectors.toList());
             final StringBuilder sb = new StringBuilder();
             keys.forEach(key -> {
                 sb.append(key);
                 sb.append("=");
-                sb.append(metaMap.get(key));
+                sb.append(attributeMap.get(key));
                 sb.append(",");
             });
             if (sb.length() > 0) {

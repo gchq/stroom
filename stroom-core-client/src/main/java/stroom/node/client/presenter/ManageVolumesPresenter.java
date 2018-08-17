@@ -29,7 +29,7 @@ import stroom.entity.shared.EntityServiceDeleteAction;
 import stroom.entity.shared.EntityServiceLoadAction;
 import stroom.node.client.view.WrapperView;
 import stroom.node.shared.FlushVolumeStatusAction;
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -85,7 +85,7 @@ public class ManageVolumesPresenter extends MyPresenter<WrapperView, ManageVolum
         }));
         registerHandler(newButton.addClickHandler(event -> {
             final VolumeEditPresenter editor = editProvider.get();
-            editor.addVolume(new Volume(), popupUiHandlers);
+            editor.addVolume(new VolumeEntity(), popupUiHandlers);
         }));
         registerHandler(openButton.addClickHandler(event -> open(popupUiHandlers)));
         registerHandler(deleteButton.addClickHandler(event -> delete()));
@@ -93,7 +93,7 @@ public class ManageVolumesPresenter extends MyPresenter<WrapperView, ManageVolum
     }
 
     private void open(final PopupUiHandlers popupUiHandlers) {
-        final Volume volume = volumeStatusListPresenter.getSelectionModel().getSelected();
+        final VolumeEntity volume = volumeStatusListPresenter.getSelectionModel().getSelected();
         if (volume != null) {
             dispatcher.exec(new EntityServiceLoadAction<>(volume))
                     .onSuccess(result -> {
@@ -104,7 +104,7 @@ public class ManageVolumesPresenter extends MyPresenter<WrapperView, ManageVolum
     }
 
     private void delete() {
-        final List<Volume> list = volumeStatusListPresenter.getSelectionModel().getSelectedItems();
+        final List<VolumeEntity> list = volumeStatusListPresenter.getSelectionModel().getSelectedItems();
         if (list != null && list.size() > 0) {
             String message = "Are you sure you want to delete the selected volume?";
             if (list.size() > 1) {
@@ -114,7 +114,7 @@ public class ManageVolumesPresenter extends MyPresenter<WrapperView, ManageVolum
                     result -> {
                         if (result) {
                             volumeStatusListPresenter.getSelectionModel().clear();
-                            for (final Volume volume : list) {
+                            for (final VolumeEntity volume : list) {
                                 dispatcher.exec(new EntityServiceDeleteAction(volume)).onSuccess(r -> refresh());
                             }
                         }

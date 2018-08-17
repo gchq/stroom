@@ -28,6 +28,7 @@ import com.gwtplatform.mvp.client.PresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
@@ -45,12 +46,10 @@ import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
-import stroom.docref.DocRef;
 import stroom.streamstore.client.presenter.ClassificationUiHandlers;
 import stroom.streamstore.client.presenter.DataPresenter;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamType;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.Data;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.task.client.TaskEndEvent;
@@ -85,7 +84,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     private SteppingResult currentResult;
     private ButtonPanel leftButtons;
 
-    private Stream stream;
+    private Data stream;
 
     @Inject
     public SteppingPresenter(final EventBus eventBus, final SteppingView view,
@@ -172,7 +171,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                             docRef = property.getValue().getEntity();
                         } else if (property.getName().toLowerCase().contains("pattern") && stream != null) {
                             String value = property.getValue().getString();
-                            value = replace(value, "feed", stream.getFeed().getName());
+                            value = replace(value, "feed", stream.getFeedName());
                             value = replace(value, "pipeline", action.getPipeline().getName());
 
                             if (element.getElementType().getType().equalsIgnoreCase("XSLTFilter")) {
@@ -273,8 +272,8 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         }
     }
 
-    public void read(final DocRef pipeline, final Stream stream, final long eventId,
-                     final StreamType childStreamType) {
+    public void read(final DocRef pipeline, final Data stream, final long eventId,
+                     final String childStreamType) {
         this.stream = stream;
 
         // Load the stream.
@@ -284,7 +283,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         action.setPipeline(pipeline);
 
         // Set the stream id on the stepping action.
-        final FindStreamCriteria findStreamCriteria = new FindStreamCriteria();
+        final FindDataCriteria findStreamCriteria = new FindDataCriteria();
         findStreamCriteria.obtainSelectedIdSet().add(stream.getId());
         action.setCriteria(findStreamCriteria);
         action.setChildStreamType(childStreamType);
@@ -390,7 +389,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
 
             if (foundRecord) {
                 // Determine the type of input for input highlighting.
-                final StreamType childStreamType = action.getChildStreamType();
+                final String childStreamType = action.getChildStreamType();
 
                 // Set the source selection and highlight.
                 sourcePresenter.showStepSource(result.getCurrentStreamOffset(), result.getStepLocation(),

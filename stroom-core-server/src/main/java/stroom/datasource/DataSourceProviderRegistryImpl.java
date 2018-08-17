@@ -2,7 +2,7 @@ package stroom.datasource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 import stroom.docref.DocRef;
 import stroom.security.SecurityContext;
 import stroom.servicediscovery.ServiceDiscoverer;
@@ -26,10 +26,10 @@ public class DataSourceProviderRegistryImpl implements DataSourceProviderRegistr
     @SuppressWarnings("unused")
     @Inject
     DataSourceProviderRegistryImpl(final SecurityContext securityContext,
-                                          final StroomPropertyService stroomPropertyService,
+                                          final PropertyService propertyService,
                                           final StroomBeanStore stroomBeanStore,
                                           final HttpServletRequestHolder httpServletRequestHolder) {
-        boolean isServiceDiscoveryEnabled = stroomPropertyService.getBooleanProperty(
+        boolean isServiceDiscoveryEnabled = propertyService.getBooleanProperty(
                 PROP_KEY_SERVICE_DISCOVERY_ENABLED,
                 false);
 
@@ -44,7 +44,7 @@ public class DataSourceProviderRegistryImpl implements DataSourceProviderRegistr
             LOGGER.debug("Using local services");
             delegateDataSourceProviderRegistry = new SimpleDataSourceProviderRegistry(
                     securityContext,
-                    stroomPropertyService,
+                    propertyService,
                     httpServletRequestHolder);
         }
     }

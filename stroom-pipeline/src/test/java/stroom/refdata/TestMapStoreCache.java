@@ -19,10 +19,9 @@ package stroom.refdata;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.feed.shared.Feed;
-import stroom.pipeline.shared.PipelineDoc;
 import stroom.docref.DocRef;
-import stroom.security.MockSecurityContext;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.security.impl.mock.MockSecurityContext;
 import stroom.security.Security;
 import stroom.util.cache.CacheManager;
 import stroom.util.test.StroomJUnit4ClassRunner;
@@ -48,10 +47,6 @@ public class TestMapStoreCache extends StroomUnitTest {
 
             long time = System.currentTimeMillis();
             for (int i = 0; i < MAX_CACHE_ITEMS; i++) {
-                final Feed feed = new Feed();
-                feed.setName("test " + i);
-                feed.setReference(true);
-                feed.setId(i);
                 final MapStoreCacheKey mapStorePoolKey = new MapStoreCacheKey(pipelineRef, 1);
                 final MapStore mapStore = mapStoreCache.get(mapStorePoolKey);
                 final EventList eventList = mapStore.getEvents("TEST_MAP_NAME", "TEST_KEY_NAME");
@@ -65,10 +60,6 @@ public class TestMapStoreCache extends StroomUnitTest {
 
             time = System.currentTimeMillis();
             for (int i = 0; i < MAX_CACHE_ITEMS; i++) {
-                final Feed feed = new Feed();
-                feed.setName("test " + i);
-                feed.setReference(true);
-                feed.setId(i);
                 final MapStoreCacheKey mapStoreCacheKey = new MapStoreCacheKey(pipelineRef, 1);
                 final MapStore mapStore = mapStoreCache.get(mapStoreCacheKey);
                 final EventList eventList = mapStore.getEvents("TEST_MAP_NAME", "TEST_KEY_NAME");

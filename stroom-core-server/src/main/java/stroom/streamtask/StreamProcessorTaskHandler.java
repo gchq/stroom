@@ -22,16 +22,16 @@ import org.slf4j.LoggerFactory;
 import stroom.guice.StroomBeanStore;
 import stroom.node.NodeCache;
 import stroom.security.Security;
-import stroom.streamstore.StreamSource;
-import stroom.streamstore.StreamStore;
-import stroom.streamstore.shared.Stream;
-import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamProcessorFilter;
-import stroom.streamtask.shared.StreamTask;
+import stroom.data.store.api.StreamSource;
+import stroom.data.store.api.StreamStore;
+import stroom.data.meta.api.Data;
+import stroom.streamtask.shared.Processor;
+import stroom.streamtask.shared.ProcessorFilter;
+import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.streamtask.shared.TaskStatus;
-import stroom.task.AbstractTaskHandler;
-import stroom.task.TaskContext;
-import stroom.task.TaskHandlerBean;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskContext;
+import stroom.task.api.TaskHandlerBean;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.VoidResult;
 
@@ -45,7 +45,7 @@ import java.util.Set;
 class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamProcessorTaskHandler.class);
     private static final Set<String> FETCH_SET = new HashSet<>(
-            Arrays.asList(StreamProcessor.ENTITY_TYPE, StreamProcessorFilter.ENTITY_TYPE));
+            Arrays.asList(Processor.ENTITY_TYPE, ProcessorFilter.ENTITY_TYPE));
     private final StroomBeanStore beanStore;
     private final StreamProcessorService streamProcessorService;
     private final StreamProcessorFilterService streamProcessorFilterService;
@@ -79,22 +79,18 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
         return security.secureResult(() -> {
             boolean complete = false;
             final long startTime = System.currentTimeMillis();
-            StreamTask streamTask = task.getStreamTask();
+            ProcessorFilterTask streamTask = task.getStreamTask();
             LOGGER.trace("Executing stream task: {}", streamTask.getId());
 
             StreamSource streamSource = null;
             try {
                 // Open the stream source.
-                streamSource = streamStore.openStreamSource(streamTask.getStream().getId());
+                streamSource = streamStore.openStreamSource(streamTask.getStreamId());
                 if (streamSource != null) {
-                    final Stream stream = streamSource.getStream();
+                    final Data stream = streamSource.getStream();
 
-                    // Load lazy stuff
-                    // stream.setStreamType(streamTypeService.load(stream.getStreamType()));
-                    final StreamProcessor sourceStreamProcessor = streamProcessorService.load(stream.getStreamProcessor());
-
-                    StreamProcessor destStreamProcessor = null;
-                    StreamProcessorFilter destStreamProcessorFilter = null;
+                    Processor destStreamProcessor = null;
+                    ProcessorFilter destStreamProcessorFilter = null;
                     if (streamTask.getStreamProcessorFilter() != null) {
                         destStreamProcessorFilter = streamProcessorFilterService.load(streamTask.getStreamProcessorFilter(),
                                 FETCH_SET);
@@ -118,10 +114,10 @@ class StreamProcessorTaskHandler extends AbstractTaskHandler<StreamProcessorTask
                     }
 
                     // Don't process any streams that we have already created
-                    if (sourceStreamProcessor != null && sourceStreamProcessor.equals(destStreamProcessor)) {
+                    if (stream.getProcessorId() != null && stream.getProcessorId() == destStreamProcessor.getId()) {
                         complete = true;
                         LOGGER.warn("Skipping stream that we seem to have created (avoid processing forever) {} {}", stream,
-                                sourceStreamProcessor);
+                                destStreamProcessor);
 
                     } else {
                         // Change the task status.... and save

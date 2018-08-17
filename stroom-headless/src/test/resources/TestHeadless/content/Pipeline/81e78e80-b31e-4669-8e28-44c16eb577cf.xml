@@ -1,0 +1,29 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<pipeline>
+   <properties>
+      <add>
+         <property>
+            <element>combinedParser</element>
+            <name>textConverter</name>
+            <value>
+               <entity>
+                  <type>TextConverter</type>
+                  <uuid>63aad52c-4e9c-424f-8836-0d2e1c3b23c0</uuid>
+                  <name>XML_FRAGMENT-EVENTS</name>
+               </entity>
+            </value>
+         </property>
+         <property>
+            <element>translationFilter</element>
+            <name>xslt</name>
+            <value>
+               <entity>
+                  <type>XSLT</type>
+                  <uuid>c688dc4a-f2a9-4888-9837-d254ba25a0a6</uuid>
+                  <name>DATA_SPLITTER-EVENTS</name>
+               </entity>
+            </value>
+         </property>
+      </add>
+   </properties>
+</pipeline>

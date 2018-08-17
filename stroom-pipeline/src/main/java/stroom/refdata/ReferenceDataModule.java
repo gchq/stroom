@@ -19,8 +19,7 @@ package stroom.refdata;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.entity.shared.Clearable;
-import stroom.pipeline.factory.PipelineDataCacheImpl;
-import stroom.task.TaskHandler;
+import stroom.task.api.TaskHandler;
 
 public class ReferenceDataModule extends AbstractModule {
     @Override

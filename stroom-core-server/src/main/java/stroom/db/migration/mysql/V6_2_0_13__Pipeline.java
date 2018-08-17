@@ -17,8 +17,8 @@
 package stroom.db.migration.mysql;
 
 import org.flywaydb.core.api.migration.jdbc.JdbcMigration;
-import stroom.pipeline.PipelineSerialiser;
-import stroom.pipeline.shared.PipelineDoc;
+import stroom.db.migration.doc.pipeline.PipelineDoc;
+import stroom.db.migration.doc.pipeline.PipelineSerialiser;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

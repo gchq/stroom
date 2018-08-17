@@ -16,7 +16,7 @@
 
 package stroom.feed.shared;
 
-import stroom.entity.shared.Action;
+import stroom.task.shared.Action;
 import stroom.util.shared.SharedList;
 import stroom.util.shared.SharedString;
 

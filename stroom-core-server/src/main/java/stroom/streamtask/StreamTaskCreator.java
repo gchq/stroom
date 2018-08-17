@@ -17,21 +17,19 @@
 package stroom.streamtask;
 
 import stroom.node.shared.Node;
-import stroom.streamtask.shared.StreamTask;
-import stroom.task.TaskContext;
+import stroom.streamtask.shared.ProcessorFilterTask;
+import stroom.task.api.TaskContext;
 
 import java.util.List;
 
 public interface StreamTaskCreator {
-    List<StreamTask> assignStreamTasks(Node node, int count);
+    List<ProcessorFilterTask> assignStreamTasks(Node node, int count);
 
-    void abandonStreamTasks(Node node, List<StreamTask> tasks);
+    void abandonStreamTasks(Node node, List<ProcessorFilterTask> tasks);
 
     void createTasks(final TaskContext taskContext);
 
     int getStreamTaskQueueSize();
-
-    StreamTaskCreatorRecentStreamDetails getStreamTaskCreatorRecentStreamDetails();
 
     void startup();
 

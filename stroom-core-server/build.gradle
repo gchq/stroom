@@ -3,20 +3,22 @@ ext.moduleName = 'stroom.core.server'
 dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-entity-shared')
-    compile project(':stroom-security-api')
-    compile project(':stroom-explorer-api')
-    compile project(':stroom-docstore-shared')
-    compile project(':stroom-docstore-server')
-    compile project(':stroom-statistics-api')
-    permitUnusedDeclared project(':stroom-statistics-api') //not clear why it thinks this is unused
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-explorer:stroom-explorer-api')
+    compile project(':stroom-docstore:stroom-docstore-shared')
+    compile project(':stroom-docstore:stroom-docstore-server')
+    compile project(':stroom-statistics:stroom-statistics-api')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
     compile project(':stroom-connectors')
+    compile project(':stroom-data-meta:stroom-data-meta-api')
+    compile project(':stroom-data-store:stroom-data-store-api')
+    compile project(':stroom-properties:stroom-properties-api')
+    compile project(':stroom-task:stroom-task-api')
 
     compile libs.eventLogging
     compile libs.stroomDocRef
     compile libs.stroomQueryApi
-    compile libs.stroomQueryCommon
 
     compile libs.curator_client
     compile libs.curator_framework
@@ -46,12 +48,12 @@ dependencies {
     compile libs.hibernate_jpa_api
     compile libs.hibernate_core
     compile libs.javassist
+
     compile libs.jaxb_api
+
     compile libs.slf4j_api
     compile libs.xml_apis
     compile libs.flyway_core
-    compile libs.hsqldb
-    permitUnusedDeclared libs.hsqldb
     compile libs.vavr
 
     compile libs.c3p0
@@ -76,6 +78,9 @@ dependencies {
 
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
 
+    testCompile project(':stroom-security:stroom-security-impl-mock')
+//    testCompile project(':stroom-data-meta:stroom-data-meta-impl-mock')
+//    testCompile project(':stroom-properties:stroom-properties-impl-mock')
     testCompile libs.junit
     testCompile libs.mockito_core
 
@@ -85,4 +90,6 @@ dependencies {
     testRuntime libs.log4j_over_slf4j
     testRuntime libs.logback_classic
     testRuntime libs.logback_core
+    testRuntime libs.jaxb_runtime
+    testRuntime libs.javax_activation
 }

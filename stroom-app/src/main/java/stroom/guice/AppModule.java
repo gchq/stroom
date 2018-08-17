@@ -1,14 +1,14 @@
 package stroom.guice;
 
 import com.google.inject.AbstractModule;
-import stroom.streamtask.statistic.MetaDataStatisticModule;
+import stroom.cluster.impl.ClusterModule;
 
 public class AppModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new CoreModule());
 
-        install(new stroom.cluster.ClusterModule());
+        install(new ClusterModule());
 //        install(new stroom.node.NodeTestConfigModule());
         install(new stroom.security.SecurityContextModule());
         install(new stroom.statistics.internal.InternalStatisticsModule());

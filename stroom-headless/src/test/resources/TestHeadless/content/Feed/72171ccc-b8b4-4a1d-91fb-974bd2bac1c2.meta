@@ -1,0 +1,9 @@
+{
+  "type" : "Feed",
+  "uuid" : "72171ccc-b8b4-4a1d-91fb-974bd2bac1c2",
+  "name" : "HDFS_OUTPUT",
+  "version" : "839a3dec-4f64-4d08-b6c7-730f5430f699",
+  "reference" : false,
+  "streamType" : "Raw Events",
+  "status" : "RECEIVE"
+}

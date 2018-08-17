@@ -16,20 +16,17 @@
 
 package stroom.refdata;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.entity.DocumentPermissionCache;
-import stroom.feed.shared.Feed;
-import stroom.pipeline.errorhandler.ErrorReceiver;
+import stroom.docref.DocRef;
+import stroom.security.DocumentPermissionCache;
+import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.StreamHolder;
-import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.streamstore.fs.serializable.StreamSourceInputStream;
-import stroom.streamstore.fs.serializable.StreamSourceInputStreamProvider;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamType;
+import stroom.data.store.api.StreamSourceInputStream;
+import stroom.data.store.api.StreamSourceInputStreamProvider;
+import stroom.data.meta.api.Data;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.util.shared.Severity;
 import stroom.xml.event.EventList;
 
@@ -119,7 +116,7 @@ public class ReferenceData {
             // Handle context data differently loading it from the
             // current stream context.
             if (pipelineReference.getStreamType() != null
-                    && StreamType.CONTEXT.getName().equals(pipelineReference.getStreamType())) {
+                    && StreamTypeNames.CONTEXT.equals(pipelineReference.getStreamType())) {
                 getNestedStreamEventList(pipelineReference, mapName, keyName, referenceDataResult);
             } else {
                 getExternalEventList(pipelineReference, time, mapName, keyName, referenceDataResult);
@@ -142,22 +139,15 @@ public class ReferenceData {
                                           final ReferenceDataResult result) {
         try {
             // Get nested stream.
-            final String streamTypeString = pipelineReference.getStreamType();
+            final String streamTypeName = pipelineReference.getStreamType();
             final long streamNo = streamHolder.getStreamNo();
-            CachedMapStore cachedMapStore = nestedStreamCache.get(streamTypeString);
+            CachedMapStore cachedMapStore = nestedStreamCache.get(streamTypeName);
             MapStore mapStore = null;
 
             if (cachedMapStore != null && cachedMapStore.getStreamNo() == streamNo) {
                 mapStore = cachedMapStore.getMapStore();
             } else {
-                StreamType streamType = null;
-                for (final StreamType st : StreamType.initialValues()) {
-                    if (st.getName().equals(streamTypeString)) {
-                        streamType = st;
-                        break;
-                    }
-                }
-                final StreamSourceInputStreamProvider provider = streamHolder.getProvider(streamType);
+                final StreamSourceInputStreamProvider provider = streamHolder.getProvider(streamTypeName);
                 // There may not be a provider for this stream type if we do not
                 // have any context data stream.
                 if (provider != null) {
@@ -166,7 +156,7 @@ public class ReferenceData {
                 }
 
                 cachedMapStore = new CachedMapStore(streamNo, mapStore);
-                nestedStreamCache.put(streamTypeString, cachedMapStore);
+                nestedStreamCache.put(streamTypeName, cachedMapStore);
             }
 
             if (mapStore != null) {
@@ -192,7 +182,7 @@ public class ReferenceData {
         }
     }
 
-    private MapStore getContextData(final Stream stream,
+    private MapStore getContextData(final Data stream,
                                     final StreamSourceInputStream contextStream,
                                     final DocRef contextPipeline) {
         if (contextStream != null) {
@@ -200,7 +190,7 @@ public class ReferenceData {
             final long byteCount = contextStream.size();
             // Only use context data if we actually have some.
             if (byteCount > MINIMUM_BYTE_COUNT) {
-                return contextDataLoader.load(contextStream, stream, feedHolder.getFeed(), contextPipeline);
+                return contextDataLoader.load(contextStream, stream, feedHolder.getFeedName(), contextPipeline);
             }
         }
 
@@ -231,14 +221,14 @@ public class ReferenceData {
         final boolean hasPermission = localDocumentPermissionCache.computeIfAbsent(pipelineReference, k ->
                 documentPermissionCache == null ||
                         documentPermissionCache.hasDocumentPermission(
-                                Feed.ENTITY_TYPE,
+                                FeedDoc.DOCUMENT_TYPE,
                                 pipelineReference.getFeed().getUuid(),
                                 DocumentPermissionNames.USE));
 
 
         if (hasPermission) {
             // Create a key to find a set of effective times in the pool.
-            final EffectiveStreamKey effectiveStreamKey = new EffectiveStreamKey(pipelineReference.getFeed(),
+            final EffectiveStreamKey effectiveStreamKey = new EffectiveStreamKey(pipelineReference.getFeed().getName(),
                     pipelineReference.getStreamType(), fromMs, toMs);
             // Try and fetch a tree set of effective streams for this key.
             final NavigableSet<EffectiveStream> streamSet = effectiveStreamCache.get(effectiveStreamKey);

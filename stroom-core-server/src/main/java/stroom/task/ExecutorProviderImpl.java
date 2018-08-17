@@ -17,8 +17,8 @@
 package stroom.task;
 
 import stroom.security.UserTokenUtil;
-import stroom.util.shared.Task;
-import stroom.util.shared.ThreadPool;
+import stroom.task.shared.Task;
+import stroom.task.shared.ThreadPool;
 
 import javax.inject.Inject;
 import java.util.concurrent.Executor;

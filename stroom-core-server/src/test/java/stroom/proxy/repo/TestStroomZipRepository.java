@@ -4,7 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.MetaMap;
+import stroom.data.meta.api.AttributeMap;
 import stroom.util.io.FileUtil;
 
 import java.io.IOException;
@@ -101,19 +101,19 @@ public class TestStroomZipRepository {
 
     @Test
     public void testTemplatedFilename() throws IOException {
-        // template should be case insensitive as far as key names go as the metamap is case insensitive
+        // template should be case insensitive as far as key names go as the attribute map is case insensitive
         final String repositoryFormat = "${id}_${FEED}_${key2}_${kEy1}_${Key3}";
 
         final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom").resolve("repo3"));
         StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, repositoryFormat, false, 10000);
 
-        MetaMap metaMap = new MetaMap();
-        metaMap.put("feed", "myFeed");
-        metaMap.put("key1", "myKey1");
-        metaMap.put("key2", "myKey2");
-        metaMap.put("key3", "myKey3");
+        AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put("feed", "myFeed");
+        attributeMap.put("key1", "myKey1");
+        attributeMap.put("key2", "myKey2");
+        attributeMap.put("key3", "myKey3");
 
-        final StroomZipOutputStreamImpl out1 = (StroomZipOutputStreamImpl) stroomZipRepository.getStroomZipOutputStream(metaMap);
+        final StroomZipOutputStreamImpl out1 = (StroomZipOutputStreamImpl) stroomZipRepository.getStroomZipOutputStream(attributeMap);
 
         StroomZipOutputStreamUtil.addSimpleEntry(out1, new StroomZipEntry(null, "file", StroomZipFileType.Data),
                 "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));
@@ -132,15 +132,15 @@ public class TestStroomZipRepository {
 
     @Test
     public void testInvalidDelimiter() throws IOException {
-        final MetaMap metaMap = new MetaMap();
-        metaMap.put("feed", "myFeed");
-        metaMap.put("key1", "myKey1");
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put("feed", "myFeed");
+        attributeMap.put("key1", "myKey1");
 
         final String repositoryFormat = "%{id}_${id}_${FEED}_${kEy1}";
         final String repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom").resolve("repo3"));
 
         final StroomZipRepository stroomZipRepository = new StroomZipRepository(repoDir, repositoryFormat, false, 10000);
-        final StroomZipOutputStreamImpl out1 = (StroomZipOutputStreamImpl) stroomZipRepository.getStroomZipOutputStream(metaMap);
+        final StroomZipOutputStreamImpl out1 = (StroomZipOutputStreamImpl) stroomZipRepository.getStroomZipOutputStream(attributeMap);
 
         StroomZipOutputStreamUtil.addSimpleEntry(out1, new StroomZipEntry(null, "file", StroomZipFileType.Data),
                 "SOME_DATA".getBytes(CharsetConstants.DEFAULT_CHARSET));

@@ -27,6 +27,7 @@ import stroom.security.Security;
 import stroom.util.config.StroomProperties;
 
 import javax.persistence.Transient;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -50,8 +51,8 @@ public abstract class NamedEntityServiceImpl<E extends NamedEntity, C extends Fi
             // Create a new entity instance.
             E entity;
             try {
-                entity = getEntityClass().newInstance();
-            } catch (final IllegalAccessException | InstantiationException e) {
+                entity = getEntityClass().getConstructor().newInstance();
+            } catch (final NoSuchMethodException | InvocationTargetException | IllegalAccessException | InstantiationException e) {
                 throw new EntityServiceException(e.getMessage());
             }
 

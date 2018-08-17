@@ -16,7 +16,7 @@
 
 package stroom.refdata;
 
-import stroom.task.ServerTask;
+import stroom.task.api.ServerTask;
 
 public class ReferenceDataLoadTask extends ServerTask<MapStore> {
     private MapStoreCacheKey mapStorePoolKey;

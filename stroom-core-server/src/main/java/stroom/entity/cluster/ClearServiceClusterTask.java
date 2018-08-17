@@ -17,7 +17,7 @@
 package stroom.entity.cluster;
 
 import stroom.task.cluster.ClusterTask;
-import stroom.util.shared.Task;
+import stroom.task.shared.Task;
 import stroom.util.shared.VoidResult;
 
 public class ClearServiceClusterTask extends ClusterTask<VoidResult> {

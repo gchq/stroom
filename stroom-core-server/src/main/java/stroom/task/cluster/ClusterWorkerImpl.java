@@ -19,13 +19,13 @@ package stroom.task.cluster;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import stroom.cluster.ClusterCallService;
+import stroom.cluster.api.ClusterCallService;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.task.TaskCallbackAdaptor;
 import stroom.task.TaskManager;
 import stroom.docref.SharedObject;
-import stroom.util.shared.TaskId;
+import stroom.task.shared.TaskId;
 
 import javax.inject.Inject;
 import javax.inject.Named;

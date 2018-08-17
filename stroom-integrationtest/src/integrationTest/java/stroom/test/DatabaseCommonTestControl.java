@@ -20,23 +20,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cache.StroomCacheManager;
 import stroom.dashboard.shared.QueryEntity;
-import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
-import stroom.feed.shared.Feed;
 import stroom.guice.StroomBeanStore;
 import stroom.index.IndexShardManager;
 import stroom.index.IndexShardWriterCache;
-import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.jobsystem.shared.ClusterLock;
 import stroom.jobsystem.shared.Job;
 import stroom.jobsystem.shared.JobNode;
-import stroom.node.NodeConfig;
+import stroom.node.NodeCreator;
 import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 import stroom.node.shared.VolumeState;
 import stroom.ruleset.shared.Policy;
 import stroom.security.AppPermission;
@@ -44,26 +41,18 @@ import stroom.security.DocumentPermission;
 import stroom.security.Permission;
 import stroom.security.User;
 import stroom.security.UserGroupUser;
-import stroom.streamstore.StreamAttributeKeyService;
-import stroom.streamstore.fs.FileSystemUtil;
-import stroom.streamstore.shared.FindStreamAttributeKeyCriteria;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamAttributeConstants;
-import stroom.streamstore.shared.StreamAttributeKey;
-import stroom.streamstore.shared.StreamAttributeValue;
-import stroom.streamstore.shared.StreamVolume;
 import stroom.streamtask.StreamTaskCreator;
-import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamProcessorFilter;
-import stroom.streamtask.shared.StreamProcessorFilterTracker;
-import stroom.streamtask.shared.StreamTask;
+import stroom.streamtask.shared.Processor;
+import stroom.streamtask.shared.ProcessorFilter;
+import stroom.streamtask.shared.ProcessorFilterTask;
+import stroom.streamtask.shared.ProcessorFilterTracker;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -82,7 +71,6 @@ public class DatabaseCommonTestControl implements CommonTestControl {
             DocumentPermission.TABLE_NAME,
             "explorerTreeNode",
             "explorerTreePath",
-            Feed.TABLE_NAME,
             "IDX_VOL", //link table between IDX and VOL so no entity of its own
             IndexShard.TABLE_NAME,
             Job.TABLE_NAME,
@@ -92,26 +80,30 @@ public class DatabaseCommonTestControl implements CommonTestControl {
             Policy.TABLE_NAME,
             QueryEntity.TABLE_NAME,
             Rack.TABLE_NAME,
-            Stream.TABLE_NAME,
-            StreamAttributeKey.TABLE_NAME,
-            StreamAttributeValue.TABLE_NAME,
-            StreamProcessor.TABLE_NAME,
-            StreamProcessorFilter.TABLE_NAME,
-            StreamProcessorFilterTracker.TABLE_NAME,
-            StreamTask.TABLE_NAME,
-            StreamVolume.TABLE_NAME,
+
+//            "stream",
+//            "stream_feed",
+//            "stream_type",
+//            "stream_processor",
+//            "meta_key",
+//            "meta_numeric_value",
+
+            Processor.TABLE_NAME,
+            ProcessorFilter.TABLE_NAME,
+            ProcessorFilterTracker.TABLE_NAME,
+            ProcessorFilterTask.TABLE_NAME,
+//            "STRM_VOL",
             User.TABLE_NAME,
             UserGroupUser.TABLE_NAME,
-            Volume.TABLE_NAME,
+            VolumeEntity.TABLE_NAME,
             VolumeState.TABLE_NAME);
 
     private final VolumeService volumeService;
     private final ContentImportService contentImportService;
-    private final StreamAttributeKeyService streamAttributeKeyService;
     private final IndexShardManager indexShardManager;
     private final IndexShardWriterCache indexShardWriterCache;
     private final DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper;
-    private final NodeConfig nodeConfig;
+    private final NodeCreator nodeConfig;
     private final StreamTaskCreator streamTaskCreator;
     private final StroomCacheManager stroomCacheManager;
     private final StroomBeanStore beanStore;
@@ -119,17 +111,15 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     @Inject
     DatabaseCommonTestControl(final VolumeService volumeService,
                               final ContentImportService contentImportService,
-                              final StreamAttributeKeyService streamAttributeKeyService,
                               final IndexShardManager indexShardManager,
                               final IndexShardWriterCache indexShardWriterCache,
                               final DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper,
-                              final NodeConfig nodeConfig,
+                              final NodeCreator nodeConfig,
                               final StreamTaskCreator streamTaskCreator,
                               final StroomCacheManager stroomCacheManager,
                               final StroomBeanStore beanStore) {
         this.volumeService = volumeService;
         this.contentImportService = contentImportService;
-        this.streamAttributeKeyService = streamAttributeKeyService;
         this.indexShardManager = indexShardManager;
         this.indexShardWriterCache = indexShardWriterCache;
         this.databaseCommonTestControlTransactionHelper = databaseCommonTestControlTransactionHelper;
@@ -145,7 +135,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         //ensure the constraints are enabled in case teardown did not happen on a previous test
         databaseCommonTestControlTransactionHelper.enableConstraints();
         nodeConfig.setup();
-        createStreamAttributeKeys();
+//        createStreamAttributeKeys();
 
         // Ensure we can create tasks.
         streamTaskCreator.startup();
@@ -166,11 +156,11 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         indexShardManager.deleteFromDisk();
 
         // Delete the contents of all volumes.
-        final List<Volume> volumes = volumeService.find(new FindVolumeCriteria());
-        for (final Volume volume : volumes) {
+        final List<VolumeEntity> volumes = volumeService.find(new FindVolumeCriteria());
+        for (final VolumeEntity volume : volumes) {
             // The parent will also pick up the index shard (as well as the
             // store)
-            FileUtil.deleteContents(FileSystemUtil.createFileTypeRoot(volume).getParent());
+            FileUtil.deleteContents(Paths.get(volume.getPath()));
         }
 
         //ensure any hibernate entities are flushed down before we clear the tables
@@ -189,24 +179,24 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         LOGGER.info("test environment teardown completed in {}", Duration.between(startTime, Instant.now()));
     }
 
-    private void createStreamAttributeKeys() {
-        final BaseResultList<StreamAttributeKey> list = streamAttributeKeyService
-                .find(new FindStreamAttributeKeyCriteria());
-        final HashSet<String> existingItems = new HashSet<>();
-        for (final StreamAttributeKey streamAttributeKey : list) {
-            existingItems.add(streamAttributeKey.getName());
-        }
-        for (final String name : StreamAttributeConstants.SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP.keySet()) {
-            if (!existingItems.contains(name)) {
-                try {
-                    streamAttributeKeyService.save(new StreamAttributeKey(name,
-                            StreamAttributeConstants.SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP.get(name)));
-                } catch (final RuntimeException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
+//    private void createStreamAttributeKeys() {
+//        final BaseResultList<StreamAttributeKey> list = streamAttributeKeyService
+//                .find(new FindStreamAttributeKeyCriteria());
+//        final HashSet<String> existingItems = new HashSet<>();
+//        for (final StreamAttributeKey streamAttributeKey : list) {
+//            existingItems.add(streamAttributeKey.getName());
+//        }
+//        for (final String name : StreamAttributeConstants.SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP.keySet()) {
+//            if (!existingItems.contains(name)) {
+//                try {
+//                    streamAttributeKeyService.save(new StreamAttributeKey(name,
+//                            StreamAttributeConstants.SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP.get(name)));
+//                } catch (final RuntimeException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        }
+//    }
 
     @Override
     public int countEntity(final Class<?> clazz) {
@@ -217,11 +207,11 @@ public class DatabaseCommonTestControl implements CommonTestControl {
 //    public int countDocs(final String type) {
 //        return databaseCommonTestControlTransactionHelper.countDocs(type);
 //    }
-
-    @Override
-    public void shutdown() {
-        databaseCommonTestControlTransactionHelper.shutdown();
-    }
+//
+//    @Override
+//    public void shutdown() {
+//        databaseCommonTestControlTransactionHelper.shutdown();
+//    }
 
     // @Override
     @Override

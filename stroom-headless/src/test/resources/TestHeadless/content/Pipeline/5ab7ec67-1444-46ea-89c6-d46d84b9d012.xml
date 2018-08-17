@@ -1,0 +1,29 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<pipeline>
+   <properties>
+      <add>
+         <property>
+            <element>combinedParser</element>
+            <name>textConverter</name>
+            <value>
+               <entity>
+                  <type>TextConverter</type>
+                  <uuid>8e43a4dd-6780-4055-b8dc-03c6318e31e0</uuid>
+                  <name>BITMAP-REFERENCE</name>
+               </entity>
+            </value>
+         </property>
+         <property>
+            <element>translationFilter</element>
+            <name>xslt</name>
+            <value>
+               <entity>
+                  <type>XSLT</type>
+                  <uuid>760d0912-858f-4b8b-b11d-c69a8b412142</uuid>
+                  <name>BITMAP-REFERENCE</name>
+               </entity>
+            </value>
+         </property>
+      </add>
+   </properties>
+</pipeline>

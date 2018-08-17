@@ -16,7 +16,7 @@
 
 package stroom.volume;
 
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -27,7 +27,7 @@ public class RoundRobinVolumeSelector implements VolumeSelector {
     private static final AtomicInteger roundRobinPosition = new AtomicInteger();
 
     @Override
-    public Volume select(final List<Volume> list) {
+    public VolumeEntity select(final List<VolumeEntity> list) {
         if (list.size() == 0) {
             return null;
         }

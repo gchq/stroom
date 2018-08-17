@@ -22,13 +22,15 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
+import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.EntityPlugin;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.feed.client.presenter.FeedPresenter;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 
-public class FeedPlugin extends EntityPlugin<Feed> {
+public class FeedPlugin extends DocumentPlugin<FeedDoc> {
     private final Provider<FeedPresenter> editorProvider;
 
     @Inject
@@ -48,6 +50,11 @@ public class FeedPlugin extends EntityPlugin<Feed> {
 
     @Override
     public String getType() {
-        return Feed.ENTITY_TYPE;
+        return FeedDoc.DOCUMENT_TYPE;
+    }
+
+    @Override
+    protected DocRef getDocRef(final FeedDoc document) {
+        return DocRefUtil.create(document);
     }
 }

@@ -16,7 +16,6 @@
 
 package stroom.task.shared;
 
-import stroom.entity.shared.Action;
 import stroom.entity.shared.BaseResultList;
 
 public class FindUserTaskProgressAction extends Action<BaseResultList<TaskProgress>> {

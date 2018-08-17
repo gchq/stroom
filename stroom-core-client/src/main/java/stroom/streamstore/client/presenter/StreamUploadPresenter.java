@@ -26,8 +26,7 @@ import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.AbstractSubmitCompleteHandler;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.client.EntityItemListBox;
-import stroom.docref.DocRef;
+import stroom.item.client.StringListBox;
 import stroom.streamstore.client.view.FileData;
 import stroom.streamstore.client.view.FileData.Status;
 import stroom.streamstore.shared.UploadDataAction;
@@ -41,11 +40,12 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 public class StreamUploadPresenter extends MyPresenterWidget<StreamUploadPresenter.DataUploadView> {
-    private DocRef feed;
+    private String feedName;
     private StreamPresenter streamPresenter;
 
     @Inject
-    public StreamUploadPresenter(final EventBus eventBus, final DataUploadView view,
+    public StreamUploadPresenter(final EventBus eventBus,
+                                 final DataUploadView view,
                                  final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
 
@@ -68,8 +68,13 @@ public class StreamUploadPresenter extends MyPresenterWidget<StreamUploadPresent
             protected void onSuccess(final ResourceKey resourceKey) {
                 final String fileName = getView().getFileUpload().getFilename();
                 final Long effectiveMs = getView().getEffectiveDate();
-                final UploadDataAction action = new UploadDataAction(resourceKey, feed,
-                        getView().getStreamType().getSelectedItem(), effectiveMs, getView().getMetaData(), fileName);
+                final UploadDataAction action = new UploadDataAction(
+                        resourceKey,
+                        feedName,
+                        getView().getType().getSelected(),
+                        effectiveMs,
+                        getView().getMetaData(),
+                        fileName);
 
                 dispatcher.exec(action)
                         .onSuccess(result -> {
@@ -91,11 +96,11 @@ public class StreamUploadPresenter extends MyPresenterWidget<StreamUploadPresent
     }
 
     public boolean valid() {
-        if (feed == null) {
+        if (feedName == null) {
             AlertEvent.fireWarn(this, "Feed not set!", null);
             return false;
         }
-        if (getView().getStreamType().getSelectedItem() == null) {
+        if (getView().getType().getSelected() == null) {
             AlertEvent.fireWarn(this, "Stream Type not set!", null);
             return false;
         }
@@ -118,9 +123,9 @@ public class StreamUploadPresenter extends MyPresenterWidget<StreamUploadPresent
         getView().getForm().submit();
     }
 
-    public void show(final StreamPresenter streamPresenter, final DocRef feed) {
+    public void show(final StreamPresenter streamPresenter, final String feedName) {
         this.streamPresenter = streamPresenter;
-        this.feed = feed;
+        this.feedName = feedName;
 
         final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
             @Override
@@ -166,7 +171,7 @@ public class StreamUploadPresenter extends MyPresenterWidget<StreamUploadPresent
     public interface DataUploadView extends View {
         FormPanel getForm();
 
-        EntityItemListBox getStreamType();
+        StringListBox getType();
 
         Long getEffectiveDate();
 

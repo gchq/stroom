@@ -29,9 +29,9 @@
         </g:customCell>
       </g:row>
       <g:row>
-        <g:cell>Stream Type:</g:cell>
+        <g:cell>Received Type:</g:cell>
         <g:customCell>
-          <l:ItemListBox ui:field="streamType" />
+          <l:StringListBox ui:field="receivedType" />
         </g:customCell>
       </g:row>
       <g:row>

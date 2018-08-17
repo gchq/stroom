@@ -16,7 +16,7 @@
 
 package stroom.cache.shared;
 
-import stroom.entity.shared.Action;
+import stroom.task.shared.Action;
 import stroom.node.shared.Node;
 import stroom.util.shared.VoidResult;
 

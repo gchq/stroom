@@ -20,7 +20,7 @@ import stroom.docref.SharedObject;
 
 public class VolumeIOStatus implements SharedObject {
     private static final long serialVersionUID = 1727071475174943132L;
-    private Volume volume;
+    private VolumeEntity volume;
     private String path;
     private String readSpeed;
     private String writeSpeed;
@@ -41,11 +41,11 @@ public class VolumeIOStatus implements SharedObject {
         this.writeSpeed = writeSpeed;
     }
 
-    public Volume getVolume() {
+    public VolumeEntity getVolume() {
         return volume;
     }
 
-    public void setVolume(Volume volume) {
+    public void setVolume(VolumeEntity volume) {
         this.volume = volume;
     }
 

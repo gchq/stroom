@@ -5,8 +5,8 @@ import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import stroom.properties.GlobalProperties;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.ConnectionConfig;
+import stroom.properties.api.PropertyService;
 import stroom.util.config.StroomProperties;
 import stroom.util.shared.Version;
 
@@ -24,12 +24,12 @@ import java.sql.Statement;
 public class DataSourceProvider implements Provider<DataSource> {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataSourceProvider.class);
 
-    private final StroomPropertyService stroomPropertyService;
+    private final PropertyService propertyService;
     private volatile DataSource dataSource;
 
     @Inject
-    DataSourceProvider(final GlobalProperties globalProperties, final StroomPropertyService stroomPropertyService) {
-        this.stroomPropertyService = stroomPropertyService;
+    DataSourceProvider(final PropertyService propertyService) {
+        this.propertyService = propertyService;
     }
 
     private ComboPooledDataSource dataSource() {
@@ -38,7 +38,7 @@ public class DataSourceProvider implements Provider<DataSource> {
             dataSource.setDataSourceName("stroom");
             dataSource.setDescription("Stroom data source");
 
-            final DataSourceConfig dataSourceConfig = getDataSourceConfig();
+            final ConnectionConfig dataSourceConfig = getDataSourceConfig();
             dataSource.setDriverClass(dataSourceConfig.getJdbcDriverClassName());
             dataSource.setJdbcUrl(dataSourceConfig.getJdbcDriverUrl());
             dataSource.setUser(dataSourceConfig.getJdbcDriverUsername());
@@ -79,6 +79,8 @@ public class DataSourceProvider implements Provider<DataSource> {
             final Flyway flyway = new Flyway();
             flyway.setDataSource(dataSource);
             flyway.setLocations("stroom/db/migration/mysql");
+            flyway.setTable("schema_version");
+            flyway.setBaselineOnMigrate(true);
 
             Version version = null;
             boolean usingFlyWay = false;
@@ -215,11 +217,11 @@ public class DataSourceProvider implements Provider<DataSource> {
         return dataSource;
     }
 
-    private DataSourceConfig getDataSourceConfig() {
-        return new DataSourceConfig("stroom.", stroomPropertyService);
+    private ConnectionConfig getDataSourceConfig() {
+        return new ConnectionConfig("stroom.", propertyService);
     }
 
     private C3P0Config getC3P0Config() {
-        return new C3P0Config("stroom.db.connectionPool.", stroomPropertyService);
+        return new C3P0Config("stroom.db.connectionPool.", propertyService);
     }
 }

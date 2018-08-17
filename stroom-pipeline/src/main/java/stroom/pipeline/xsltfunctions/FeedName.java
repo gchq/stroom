@@ -20,7 +20,6 @@ import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.StringValue;
-import stroom.feed.shared.Feed;
 import stroom.pipeline.state.FeedHolder;
 import stroom.util.shared.Severity;
 
@@ -39,10 +38,7 @@ class FeedName extends StroomExtensionFunctionCall {
         String result = null;
 
         try {
-            final Feed feed = feedHolder.getFeed();
-            if (feed != null) {
-                result = feed.getName();
-            }
+            result = feedHolder.getFeedName();
         } catch (final RuntimeException e) {
             log(context, Severity.ERROR, e.getMessage(), e);
         }

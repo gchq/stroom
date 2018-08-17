@@ -18,132 +18,103 @@ package stroom.streamtask;
 
 
 import event.logging.BaseAdvancedQueryItem;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.QueryAppender;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.SystemEntityServiceImpl;
-import stroom.entity.shared.BaseResultList;
-import stroom.entity.shared.StringCriteria;
-import stroom.entity.util.FieldMap;
 import stroom.entity.util.HqlBuilder;
 import stroom.persist.EntityManagerSupport;
-import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
-import stroom.streamstore.ExpressionToFindCriteria;
 import stroom.streamstore.shared.QueryData;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
-import stroom.streamtask.shared.FindStreamTaskCriteria;
-import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamProcessorFilter;
-import stroom.streamtask.shared.StreamProcessorFilterTracker;
+import stroom.streamtask.shared.Processor;
+import stroom.streamtask.shared.ProcessorFilter;
+import stroom.streamtask.shared.ProcessorFilterTracker;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.inject.Singleton;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 @Singleton
 class StreamProcessorFilterServiceImpl
-        extends SystemEntityServiceImpl<StreamProcessorFilter, FindStreamProcessorFilterCriteria>
+        extends SystemEntityServiceImpl<ProcessorFilter, FindStreamProcessorFilterCriteria>
         implements StreamProcessorFilterService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(StreamProcessorFilterServiceImpl.class);
-
     private final Security security;
     private final EntityManagerSupport entityManagerSupport;
     private final StreamProcessorService streamProcessorService;
     private final StreamProcessorFilterMarshaller marshaller;
-    private final ExpressionToFindCriteria expressionToFindCriteria;
-    private final PipelineStore pipelineStore;
 
     @Inject
-    StreamProcessorFilterServiceImpl(
-            final StroomEntityManager entityManager,
-            final Security security,
-            final EntityManagerSupport entityManagerSupport,
-            final StreamProcessorService streamProcessorService,
-            final ExpressionToFindCriteria expressionToFindCriteria,
-            @Named("cachedPipelineStore") final PipelineStore pipelineStore) {
+    StreamProcessorFilterServiceImpl(final StroomEntityManager entityManager,
+                                     final Security security,
+                                     final EntityManagerSupport entityManagerSupport,
+                                     final StreamProcessorService streamProcessorService) {
         super(entityManager, security);
-        this.pipelineStore = pipelineStore;
         this.security = security;
         this.entityManagerSupport = entityManagerSupport;
         this.streamProcessorService = streamProcessorService;
         this.marshaller = new StreamProcessorFilterMarshaller();
-        this.expressionToFindCriteria = expressionToFindCriteria;
     }
 
     @Override
-    public StreamProcessorFilter save(final StreamProcessorFilter entity) {
-        expressionToFindCriteria.convert(entity.getQueryData());
+    public ProcessorFilter save(final ProcessorFilter entity) {
         return super.save(entity);
     }
 
     @Override
-    public BaseResultList<StreamProcessorFilter> find(FindStreamProcessorFilterCriteria findStreamProcessorFilterCriteria) {
-        return withPipelineName(super.find(findStreamProcessorFilterCriteria));
+    public Class<ProcessorFilter> getEntityClass() {
+        return ProcessorFilter.class;
     }
 
     @Override
-    public Class<StreamProcessorFilter> getEntityClass() {
-        return StreamProcessorFilter.class;
-    }
-
-    @Override
-    public void addFindStreamCriteria(final StreamProcessor streamProcessor,
+    public void addFindStreamCriteria(final Processor streamProcessor,
                                       final int priority,
                                       final QueryData queryData) {
-        security.secure(permission(), () -> {
-            entityManagerSupport.transaction(entityManager -> {
-                StreamProcessorFilter filter = new StreamProcessorFilter();
-                // Blank tracker
-                filter.setStreamProcessorFilterTracker(new StreamProcessorFilterTracker());
-                filter.setPriority(priority);
-                filter.setStreamProcessor(streamProcessor);
-                filter.setQueryData(queryData);
-                filter.setEnabled(true);
-                filter = marshaller.marshal(filter);
-                // Save initial tracker
-                getEntityManager().saveEntity(filter.getStreamProcessorFilterTracker());
-                getEntityManager().flush();
-                save(filter);
-            });
-        });
+        security.secure(permission(), () -> entityManagerSupport.transaction(entityManager -> {
+            ProcessorFilter filter = new ProcessorFilter();
+            // Blank tracker
+            filter.setStreamProcessorFilterTracker(new ProcessorFilterTracker());
+            filter.setPriority(priority);
+            filter.setStreamProcessor(streamProcessor);
+            filter.setQueryData(queryData);
+            filter.setEnabled(true);
+            filter = marshaller.marshal(filter);
+            // Save initial tracker
+            getEntityManager().saveEntity(filter.getStreamProcessorFilterTracker());
+            getEntityManager().flush();
+            save(filter);
+        }));
     }
 
     @Override
-    public StreamProcessorFilter createNewFilter(final DocRef pipelineRef,
-                                                 final QueryData queryData,
-                                                 final boolean enabled,
-                                                 final int priority) {
+    public ProcessorFilter createNewFilter(final DocRef pipelineRef,
+                                           final QueryData queryData,
+                                           final boolean enabled,
+                                           final int priority) {
         return security.secureResult(permission(), () -> entityManagerSupport.transactionResult(entityManager -> {
             // First see if we can find a stream processor for this pipeline.
             final FindStreamProcessorCriteria findStreamProcessorCriteria = new FindStreamProcessorCriteria(pipelineRef);
-            final List<StreamProcessor> list = streamProcessorService.find(findStreamProcessorCriteria);
-            StreamProcessor processor = null;
+            final List<Processor> list = streamProcessorService.find(findStreamProcessorCriteria);
+            Processor processor;
             if (list == null || list.size() == 0) {
                 // We couldn't find one so create a new one.
-                processor = new StreamProcessor(pipelineRef);
+                processor = new Processor(pipelineRef);
                 processor.setEnabled(enabled);
                 processor = streamProcessorService.save(processor);
             } else {
                 processor = list.get(0);
             }
 
-            StreamProcessorFilter filter = new StreamProcessorFilter();
+            ProcessorFilter filter = new ProcessorFilter();
             // Blank tracker
             filter.setEnabled(enabled);
             filter.setPriority(priority);
-            filter.setStreamProcessorFilterTracker(new StreamProcessorFilterTracker());
+            filter.setStreamProcessorFilterTracker(new ProcessorFilterTracker());
             filter.setStreamProcessor(processor);
             filter.setQueryData(queryData);
             filter = marshaller.marshal(filter);
@@ -163,7 +134,7 @@ class StreamProcessorFilterServiceImpl
     }
 
     @Override
-    public Boolean delete(final StreamProcessorFilter entity) {
+    public Boolean delete(final ProcessorFilter entity) {
         return security.secureResult(permission(), () -> {
             if (Boolean.TRUE.equals(super.delete(entity))) {
                 return getEntityManager().deleteEntity(entity.getStreamProcessorFilterTracker());
@@ -175,7 +146,6 @@ class StreamProcessorFilterServiceImpl
     @Override
     public void appendCriteria(final List<BaseAdvancedQueryItem> items,
                                final FindStreamProcessorFilterCriteria criteria) {
-        CriteriaLoggingUtil.appendStringTerm(items, "pipelineName", criteria.getPipelineNameFilter());
         CriteriaLoggingUtil.appendRangeTerm(items, "priorityRange", criteria.getPriorityRange());
         CriteriaLoggingUtil.appendRangeTerm(items, "lastPollPeriod", criteria.getLastPollPeriod());
         CriteriaLoggingUtil.appendEntityIdSet(items, "streamProcessorIdSet", criteria.getStreamProcessorIdSet());
@@ -188,7 +158,7 @@ class StreamProcessorFilterServiceImpl
     }
 
     @Override
-    protected QueryAppender<StreamProcessorFilter, FindStreamProcessorFilterCriteria> createQueryAppender(final StroomEntityManager entityManager) {
+    protected QueryAppender<ProcessorFilter, FindStreamProcessorFilterCriteria> createQueryAppender(final StroomEntityManager entityManager) {
         return new StreamProcessorFilterQueryAppender(entityManager);
     }
 
@@ -197,38 +167,7 @@ class StreamProcessorFilterServiceImpl
         return PermissionNames.MANAGE_PROCESSORS_PERMISSION;
     }
 
-
-    @Override
-    protected FieldMap createFieldMap() {
-        return super.createFieldMap()
-                .add(FindStreamTaskCriteria.FIELD_PRIORITY, "PRIORITY_1", "priority");
-    }
-
-    /**
-     * Sets the pipeline name on the StreamProcessorFilter's StreamProcessors.
-     *
-     * @param streamProcessorFilters
-     * @return The StreamProcessorFilters with the pipeline name resolved
-     */
-    private BaseResultList<StreamProcessorFilter> withPipelineName(BaseResultList<StreamProcessorFilter> streamProcessorFilters){
-        final Map<DocRef, Optional<Object>> uuids = new HashMap<>();
-        for (StreamProcessorFilter streamProcessorFilter : streamProcessorFilters) {
-            StreamProcessor streamProcessor = streamProcessorService.load(streamProcessorFilter.getStreamProcessor());
-            streamProcessorFilter.setStreamProcessor(streamProcessor);
-            String pipelineUuid = streamProcessor.getPipelineUuid();
-            if (pipelineUuid != null) {
-                uuids
-                        .computeIfAbsent(
-                                new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid),
-                                innerKey -> Optional.ofNullable(pipelineStore.readDocument(innerKey)))
-                        .ifPresent(obj ->
-                                streamProcessor.setPipelineName(((PipelineDoc) obj).getName()));
-            }
-        }
-        return streamProcessorFilters;
-    }
-
-    private static class StreamProcessorFilterQueryAppender extends QueryAppender<StreamProcessorFilter, FindStreamProcessorFilterCriteria> {
+    private static class StreamProcessorFilterQueryAppender extends QueryAppender<ProcessorFilter, FindStreamProcessorFilterCriteria> {
         private final StreamProcessorFilterMarshaller marshaller;
 
         StreamProcessorFilterQueryAppender(final StroomEntityManager entityManager) {
@@ -240,10 +179,14 @@ class StreamProcessorFilterServiceImpl
         protected void appendBasicJoin(final HqlBuilder sql, final String alias, final Set<String> fetchSet) {
             super.appendBasicJoin(sql, alias, fetchSet);
             if (fetchSet != null) {
-                if (fetchSet.contains(StreamProcessor.ENTITY_TYPE) || fetchSet.contains(PipelineDoc.DOCUMENT_TYPE)) {
+                if (fetchSet.contains(Processor.ENTITY_TYPE) || fetchSet.contains(PipelineDoc.DOCUMENT_TYPE)) {
                     sql.append(" INNER JOIN FETCH ");
                     sql.append(alias);
                     sql.append(".streamProcessor as sp");
+                }
+                if (fetchSet.contains(PipelineDoc.DOCUMENT_TYPE)) {
+                    sql.append(" INNER JOIN FETCH ");
+                    sql.append("sp.pipeline");
                 }
             }
         }
@@ -252,33 +195,29 @@ class StreamProcessorFilterServiceImpl
         protected void appendBasicCriteria(final HqlBuilder sql, final String alias,
                                            final FindStreamProcessorFilterCriteria criteria) {
             super.appendBasicCriteria(sql, alias, criteria);
-
             sql.appendRangeQuery(alias + ".priority", criteria.getPriorityRange());
-            sql.appendValueQuery(alias + ".enabled", criteria.getStreamProcessorFilterEnabled());
-            sql.appendValueQuery(alias + ".createUser", criteria.getCreateUser());
 
-            sql.appendEntityIdSetQuery(alias + ".streamProcessor", criteria.getStreamProcessorIdSet());
             sql.appendValueQuery(alias + ".streamProcessor.enabled", criteria.getStreamProcessorEnabled());
+
+            sql.appendValueQuery(alias + ".enabled", criteria.getStreamProcessorFilterEnabled());
+
+            sql.appendRangeQuery(alias + ".streamProcessorFilterTracker.lastPollMs", criteria.getLastPollPeriod());
+
             sql.appendDocRefSetQuery(alias + ".streamProcessor.pipelineUuid", criteria.getPipelineSet());
 
-            sql.appendRangeQuery(alias + ".streamProcessorFilterTracker.lastPollMs",
-                    criteria.getLastPollPeriod());
-            StringCriteria statusStringCriteria = new StringCriteria(criteria.getStatus(),
-                    StringCriteria.MatchStyle.WildEnd);
-            if (criteria.getStatus() == "") {
-                statusStringCriteria.setMatchNull(true);
-            }
-            sql.appendValueQuery(alias + ".streamProcessorFilterTracker.status", statusStringCriteria);
+            sql.appendEntityIdSetQuery(alias + ".streamProcessor", criteria.getStreamProcessorIdSet());
+
+            sql.appendValueQuery(alias + ".createUser", criteria.getCreateUser());
         }
 
         @Override
-        protected void preSave(final StreamProcessorFilter entity) {
+        protected void preSave(final ProcessorFilter entity) {
             super.preSave(entity);
             marshaller.marshal(entity);
         }
 
         @Override
-        protected void postLoad(final StreamProcessorFilter entity) {
+        protected void postLoad(final ProcessorFilter entity) {
             marshaller.unmarshal(entity);
             super.postLoad(entity);
         }

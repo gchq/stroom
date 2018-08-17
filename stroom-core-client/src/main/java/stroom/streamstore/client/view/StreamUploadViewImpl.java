@@ -26,11 +26,9 @@ import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.entity.client.EntityItemListBox;
-import stroom.entity.shared.DocRefUtil;
+import stroom.item.client.StringListBox;
 import stroom.streamstore.client.presenter.StreamTypeUiManager;
 import stroom.streamstore.client.presenter.StreamUploadPresenter.DataUploadView;
-import stroom.streamstore.shared.StreamType;
 import stroom.widget.customdatebox.client.MyDateBox;
 
 public class StreamUploadViewImpl extends ViewImpl implements DataUploadView {
@@ -38,7 +36,7 @@ public class StreamUploadViewImpl extends ViewImpl implements DataUploadView {
     @UiField
     Grid grid;
     @UiField(provided = true)
-    EntityItemListBox streamType;
+    StringListBox type;
     @UiField
     FileUpload fileUpload;
     @UiField
@@ -50,10 +48,10 @@ public class StreamUploadViewImpl extends ViewImpl implements DataUploadView {
 
     @Inject
     public StreamUploadViewImpl(final Binder binder, final StreamTypeUiManager streamTypeUiManager) {
-        streamType = new EntityItemListBox("");
+        type = new StringListBox();
 
-        for (final StreamType st : streamTypeUiManager.getRawStreamTypeList()) {
-            streamType.addItem(DocRefUtil.create(st));
+        for (final String st : streamTypeUiManager.getRawStreamTypeList()) {
+            type.addItem(st);
         }
         widget = binder.createAndBindUi(this);
 
@@ -81,8 +79,8 @@ public class StreamUploadViewImpl extends ViewImpl implements DataUploadView {
     }
 
     @Override
-    public EntityItemListBox getStreamType() {
-        return streamType;
+    public StringListBox getType() {
+        return type;
     }
 
     @Override

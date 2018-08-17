@@ -39,7 +39,7 @@ WORKDIR /stroom
 #Copy all the fat jars for the application and connectors
 ADD ./build/stroom-app-all.jar /stroom/stroom-app-all.jar
 ADD ./build/stroom-kafka-client-impl_0_10_0_1-all.jar /stroom/plugins/stroom-kafka-client-impl_0_10_0_1-all.jar
-ADD ./build/stroom-elastic-client-impl_5_6_4-all.jar /stroom/plugins/stroom-elastic-client-impl_5_6_4-all.jar
+ADD ./build/stroom-elastic/stroom-elastic-client-impl_5_6_4-all.jar /stroom/plugins/stroom-elastic-client-impl_5_6_4-all.jar
 ADD ./build/prod.yml /stroom/config.yml
 ADD docker-entrypoint.sh /usr/local/bin/
 

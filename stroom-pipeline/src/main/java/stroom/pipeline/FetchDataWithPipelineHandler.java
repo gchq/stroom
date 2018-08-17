@@ -18,14 +18,13 @@
 package stroom.pipeline;
 
 import stroom.entity.shared.EntityServiceException;
-import stroom.feed.FeedService;
+import stroom.feed.FeedProperties;
 import stroom.guice.PipelineScopeRunnable;
 import stroom.logging.StreamEventLog;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.shared.AbstractFetchDataResult;
-import stroom.pipeline.shared.FetchDataAction;
 import stroom.pipeline.shared.FetchDataWithPipelineAction;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaDataHolder;
@@ -33,10 +32,8 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
-import stroom.streamstore.StreamStore;
-import stroom.streamtask.StreamProcessorService;
-import stroom.task.AbstractTaskHandler;
-import stroom.task.TaskHandlerBean;
+import stroom.data.store.api.StreamStore;
+import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -50,8 +47,7 @@ class FetchDataWithPipelineHandler extends AbstractTaskHandler<FetchDataWithPipe
 
     @Inject
     FetchDataWithPipelineHandler(final StreamStore streamStore,
-                                 final FeedService feedService,
-                                 final StreamProcessorService streamProcessorService,
+                                 final FeedProperties feedProperties,
                                  final Provider<FeedHolder> feedHolderProvider,
                                  final Provider<MetaDataHolder> metaDataHolderProvider,
                                  final Provider<PipelineHolder> pipelineHolderProvider,

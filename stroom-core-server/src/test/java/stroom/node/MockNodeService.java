@@ -31,18 +31,18 @@ import java.util.List;
  */
 @Singleton
 public class MockNodeService extends MockNamedEntityService<Node, FindNodeCriteria>
-        implements NodeService, NodeServiceGetDefaultNode {
+        implements NodeService, LocalNodeProvider {
     private Node node = null;
 
     @Override
     public BaseResultList<Node> find(final FindNodeCriteria criteria) {
         final List<Node> nodeList = new ArrayList<>();
-        nodeList.add(getDefaultNode());
+        nodeList.add(get());
         return new BaseResultList<>(nodeList, 0L, (long) nodeList.size(), true);
     }
 
     @Override
-    public Node getDefaultNode() {
+    public Node get() {
         if (node == null) {
             node = new Node();
             node.setName("MockNode");

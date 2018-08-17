@@ -4,10 +4,13 @@ dependencies {
     compile libs.stroomDocRef
     compile libs.stroomQueryApi
 
+    compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-util-shared')
 
     compile libs.hibernate_jpa_api
+
     compile libs.jaxb_api
+
     compile libs.validation_api
     
     runtime libs.jackson_annotations
@@ -21,4 +24,6 @@ dependencies {
     testRuntime libs.log4j_over_slf4j
     testRuntime libs.logback_classic
     testRuntime libs.logback_core
+    testRuntime libs.jaxb_runtime
+    testRuntime libs.javax_activation
 }

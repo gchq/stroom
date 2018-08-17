@@ -24,8 +24,8 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import stroom.alert.client.event.AlertEvent;
-import stroom.node.client.ClientPropertyCache;
-import stroom.node.shared.ClientProperties;
+import stroom.properties.global.client.ClientPropertyCache;
+import stroom.properties.shared.ClientProperties;
 
 import java.util.ArrayList;
 import java.util.List;

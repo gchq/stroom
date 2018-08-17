@@ -20,8 +20,8 @@ import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import stroom.streamtask.shared.StreamProcessorFilter;
-import stroom.streamtask.shared.StreamProcessorFilterTracker;
+import stroom.streamtask.shared.ProcessorFilter;
+import stroom.streamtask.shared.ProcessorFilterTracker;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
@@ -33,18 +33,18 @@ import java.util.LinkedList;
 public class TestStreamProcessorFilter extends StroomUnitTest {
     @Test
     public void testCompare() {
-        final StreamProcessorFilter t1 = new StreamProcessorFilter();
-        t1.setStreamProcessorFilterTracker(new StreamProcessorFilterTracker());
+        final ProcessorFilter t1 = new ProcessorFilter();
+        t1.setStreamProcessorFilterTracker(new ProcessorFilterTracker());
         t1.getStreamProcessorFilterTracker().setMinStreamId(1L);
         t1.setPriority(1);
 
-        final StreamProcessorFilter t2 = new StreamProcessorFilter();
-        t2.setStreamProcessorFilterTracker(new StreamProcessorFilterTracker());
+        final ProcessorFilter t2 = new ProcessorFilter();
+        t2.setStreamProcessorFilterTracker(new ProcessorFilterTracker());
         t2.getStreamProcessorFilterTracker().setMinStreamId(2L);
         t2.setPriority(1);
 
-        final StreamProcessorFilter t3 = new StreamProcessorFilter();
-        t3.setStreamProcessorFilterTracker(new StreamProcessorFilterTracker());
+        final ProcessorFilter t3 = new ProcessorFilter();
+        t3.setStreamProcessorFilterTracker(new ProcessorFilterTracker());
         t3.getStreamProcessorFilterTracker().setMinStreamId(3L);
         t3.setPriority(3);
 
@@ -52,12 +52,12 @@ public class TestStreamProcessorFilter extends StroomUnitTest {
         Assert.assertTrue(t3.isHigherPriority(t2));
         Assert.assertTrue(t3.isHigherPriority(t1));
 
-        final ArrayList<StreamProcessorFilter> taskList = new ArrayList<>();
+        final ArrayList<ProcessorFilter> taskList = new ArrayList<>();
         taskList.add(t1);
         taskList.add(t2);
         taskList.add(t3);
 
-        Collections.sort(taskList, StreamProcessorFilter.HIGHEST_PRIORITY_FIRST_COMPARATOR);
+        Collections.sort(taskList, ProcessorFilter.HIGHEST_PRIORITY_FIRST_COMPARATOR);
 
         Assert.assertTrue(taskList.get(0) == t3);
         Assert.assertTrue(taskList.get(1) == t1);
@@ -66,19 +66,19 @@ public class TestStreamProcessorFilter extends StroomUnitTest {
 
     @Test
     public void testSort() {
-        final LinkedList<StreamProcessorFilter> newStreamTaskList = new LinkedList<>();
+        final LinkedList<ProcessorFilter> newStreamTaskList = new LinkedList<>();
         for (int i = 0; i < 10000; i++) {
             newStreamTaskList.add(createFilter());
         }
 
         // Sort the new list
-        Collections.sort(newStreamTaskList, StreamProcessorFilter.HIGHEST_PRIORITY_FIRST_COMPARATOR);
+        Collections.sort(newStreamTaskList, ProcessorFilter.HIGHEST_PRIORITY_FIRST_COMPARATOR);
     }
 
-    private StreamProcessorFilter createFilter() {
-        final StreamProcessorFilter filter = new StreamProcessorFilter();
+    private ProcessorFilter createFilter() {
+        final ProcessorFilter filter = new ProcessorFilter();
         filter.setPriority(RandomUtils.nextInt() % 10);
-        filter.setStreamProcessorFilterTracker(new StreamProcessorFilterTracker());
+        filter.setStreamProcessorFilterTracker(new ProcessorFilterTracker());
         filter.getStreamProcessorFilterTracker().setMinStreamId(RandomUtils.nextInt() % 10);
         return filter;
     }
@@ -87,7 +87,7 @@ public class TestStreamProcessorFilter extends StroomUnitTest {
     public void testPercent1() {
         final long now = System.currentTimeMillis();
 
-        final StreamProcessorFilterTracker filter = new StreamProcessorFilterTracker();
+        final ProcessorFilterTracker filter = new ProcessorFilterTracker();
         filter.setStreamCreateMs(1414075939113L);
         filter.setMinStreamCreateMs(1414074711896L);
         filter.setMaxStreamCreateMs(1414075927731L);
@@ -101,7 +101,7 @@ public class TestStreamProcessorFilter extends StroomUnitTest {
 
         final long now = System.currentTimeMillis();
 
-        final StreamProcessorFilterTracker filter = new StreamProcessorFilterTracker();
+        final ProcessorFilterTracker filter = new ProcessorFilterTracker();
         filter.setMinStreamCreateMs(0L);
         filter.setMaxStreamCreateMs(1000L);
         filter.setStreamCreateMs(500L);
@@ -115,7 +115,7 @@ public class TestStreamProcessorFilter extends StroomUnitTest {
 
         final long now = System.currentTimeMillis();
 
-        final StreamProcessorFilterTracker filter = new StreamProcessorFilterTracker();
+        final ProcessorFilterTracker filter = new ProcessorFilterTracker();
 
         Assert.assertNull(filter.getTrackerStreamCreatePercentage(now));
 
@@ -136,7 +136,7 @@ public class TestStreamProcessorFilter extends StroomUnitTest {
         final long now = System.currentTimeMillis();
         final long oneDayMs = 1000 * 60 * 60 * 24;
 
-        final StreamProcessorFilterTracker filter = new StreamProcessorFilterTracker();
+        final ProcessorFilterTracker filter = new ProcessorFilterTracker();
 
         Assert.assertNull(filter.getTrackerStreamCreatePercentage(now));
 

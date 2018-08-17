@@ -19,7 +19,6 @@ package stroom.importexport;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.feed.FeedService;
 import stroom.importexport.shared.ImportState;
 import stroom.pipeline.PipelineStore;
 import stroom.resource.ResourceStore;
@@ -38,12 +37,6 @@ import java.util.regex.Pattern;
 public class TestImportExportServiceImpl2 extends AbstractCoreIntegrationTest {
     @Inject
     private ImportExportService importExportService;
-    @Inject
-    private ResourceStore resourceStore;
-    @Inject
-    private PipelineStore pipelineStore;
-    @Inject
-    private FeedService feedService;
 
     @Test
     public void testImportZip() throws IOException {

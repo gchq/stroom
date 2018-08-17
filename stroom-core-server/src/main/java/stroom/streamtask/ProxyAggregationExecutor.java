@@ -19,19 +19,19 @@ package stroom.streamtask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.jobsystem.JobTrackedSchedule;
-import stroom.properties.StroomPropertyService;
+import stroom.util.lifecycle.JobTrackedSchedule;
+import stroom.properties.api.PropertyService;
 import stroom.proxy.repo.RepositoryProcessor;
 import stroom.proxy.repo.StroomZipRepository;
 import stroom.task.ExecutorProvider;
-import stroom.task.TaskContext;
+import stroom.task.api.TaskContext;
 import stroom.task.ThreadPoolImpl;
 import stroom.util.date.DateUtil;
 import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.Task;
-import stroom.util.shared.ThreadPool;
+import stroom.task.shared.Task;
+import stroom.task.shared.ThreadPool;
 
 import javax.inject.Inject;
 import java.util.concurrent.Executor;
@@ -58,7 +58,7 @@ class ProxyAggregationExecutor {
     ProxyAggregationExecutor(final ProxyFileProcessorImpl proxyFileProcessor,
                              final TaskContext taskContext,
                              final ExecutorProvider executorProvider,
-                             final StroomPropertyService propertyService) {
+                             final PropertyService propertyService) {
         this(
                 proxyFileProcessor,
                 taskContext,

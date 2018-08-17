@@ -148,11 +148,13 @@ public class CriteriaSet<T>
         return set.remove(id);
     }
 
-    protected Set<T> getSet() {
+    @XmlTransient
+    public Set<T> getSet() {
         return set;
     }
 
-    protected void setSet(final Set<T> set) {
+    @XmlTransient
+    public void setSet(final Set<T> set) {
         this.set = set;
     }
 

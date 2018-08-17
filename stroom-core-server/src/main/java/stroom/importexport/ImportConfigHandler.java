@@ -22,8 +22,8 @@ import stroom.logging.ImportExportEventLog;
 import stroom.resource.ResourceStore;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
-import stroom.task.AbstractTaskHandler;
-import stroom.task.TaskHandlerBean;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.ResourceKey;
 
 import javax.inject.Inject;

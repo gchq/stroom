@@ -21,9 +21,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.streamstore.shared.StreamDataSource;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.streamstore.shared.QueryData;
-import stroom.streamtask.shared.StreamProcessorFilter;
+import stroom.streamtask.shared.ProcessorFilter;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
@@ -36,23 +36,23 @@ public class TestXMLMarshallUtil extends StroomUnitTest {
         final String createdPeriod = String.format("%d%s%d", 1L, ExpressionTerm.Condition.IN_CONDITION_DELIMITER, 2L);
 
         final QueryData queryData1 = new QueryData.Builder()
-                .dataSource(StreamDataSource.STREAM_STORE_DOC_REF)
+                .dataSource(MetaDataSource.STREAM_STORE_DOC_REF)
                 .expression(new ExpressionOperator.Builder(ExpressionOperator.Op.AND)
                     .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                        .addTerm(StreamDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(999L))
-                        .addTerm(StreamDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(7L))
-                        .addTerm(StreamDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(77L))
+                        .addTerm(MetaDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(999L))
+                        .addTerm(MetaDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(7L))
+                        .addTerm(MetaDataSource.STREAM_ID, ExpressionTerm.Condition.EQUALS, Long.toString(77L))
                         .build())
                     .addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.OR)
-                        .addTerm(StreamDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, Long.toString(88L))
-                        .addTerm(StreamDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, Long.toString(889L))
+                        .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, Long.toString(88L))
+                        .addTerm(MetaDataSource.FEED_NAME, ExpressionTerm.Condition.EQUALS, Long.toString(889L))
                         .build())
-                    .addTerm(StreamDataSource.CREATE_TIME, ExpressionTerm.Condition.BETWEEN, createdPeriod)
+                    .addTerm(MetaDataSource.CREATE_TIME, ExpressionTerm.Condition.BETWEEN, createdPeriod)
                     .build())
                 .build();
 
         // Test Writing
-        StreamProcessorFilter streamProcessorFilter = new StreamProcessorFilter();
+        ProcessorFilter streamProcessorFilter = new ProcessorFilter();
         streamProcessorFilter.setQueryData(queryData1);
         streamProcessorFilter = MARSHALLER.marshal(streamProcessorFilter);
         final String xml1 = streamProcessorFilter.getData();
@@ -67,7 +67,7 @@ public class TestXMLMarshallUtil extends StroomUnitTest {
 
     @Test
     public void testShort() {
-        StreamProcessorFilter streamProcessorFilter = new StreamProcessorFilter();
+        ProcessorFilter streamProcessorFilter = new ProcessorFilter();
         streamProcessorFilter.setData(
                 "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><QueryData></QueryData>");
         streamProcessorFilter = MARSHALLER.unmarshal(streamProcessorFilter);

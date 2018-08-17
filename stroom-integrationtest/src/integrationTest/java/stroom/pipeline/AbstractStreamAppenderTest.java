@@ -17,12 +17,13 @@
 package stroom.pipeline;
 
 import org.junit.Assert;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataMetaService;
+import stroom.data.store.api.SegmentInputStream;
+import stroom.data.store.api.StreamSource;
+import stroom.data.store.api.StreamStore;
 import stroom.docref.DocRef;
-import stroom.streamstore.StreamSource;
-import stroom.streamstore.StreamStore;
-import stroom.streamstore.fs.serializable.RASegmentInputStream;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
 
@@ -35,6 +36,8 @@ import java.util.List;
 public abstract class AbstractStreamAppenderTest extends AbstractAppenderTest {
     @Inject
     private StreamStore streamStore;
+    @Inject
+    private DataMetaService streamMetaService;
 
     void test(final DocRef pipelineRef,
               final String dir,
@@ -44,7 +47,7 @@ public abstract class AbstractStreamAppenderTest extends AbstractAppenderTest {
               final String encoding) {
         super.test(pipelineRef, dir, name, type, outputReference, encoding);
 
-        final List<Stream> streams = streamStore.find(new FindStreamCriteria());
+        final List<Data> streams = streamMetaService.find(new FindDataCriteria());
         Assert.assertEquals(1, streams.size());
 
         try {
@@ -162,7 +165,7 @@ public abstract class AbstractStreamAppenderTest extends AbstractAppenderTest {
         }
     }
 
-    private void checkFull(final long streamId, final String outputReference) {
+    private void checkFull(final long streamId, final String outputReference) throws IOException {
         final StreamSource streamSource = streamStore.openStreamSource(streamId);
         final Path refFile = StroomPipelineTestFileUtil.getTestResourcesFile(outputReference);
         final String refData = StreamUtil.fileToString(refFile);
@@ -173,7 +176,7 @@ public abstract class AbstractStreamAppenderTest extends AbstractAppenderTest {
 
     private void checkOuterData(final long streamId, final int count, final String ref) throws IOException {
         final StreamSource streamSource = streamStore.openStreamSource(streamId);
-        final RASegmentInputStream segmentInputStream = new RASegmentInputStream(streamSource);
+        final SegmentInputStream segmentInputStream = streamSource.getSegmentInputStream();
 
         Assert.assertEquals(count, segmentInputStream.count());
 
@@ -189,7 +192,7 @@ public abstract class AbstractStreamAppenderTest extends AbstractAppenderTest {
 
     private void checkInnerData(final long streamId, final int count, final String ref) throws IOException {
         final StreamSource streamSource = streamStore.openStreamSource(streamId);
-        final RASegmentInputStream segmentInputStream = new RASegmentInputStream(streamSource);
+        final SegmentInputStream segmentInputStream = streamSource.getSegmentInputStream();
 
         Assert.assertEquals(count, segmentInputStream.count());
 

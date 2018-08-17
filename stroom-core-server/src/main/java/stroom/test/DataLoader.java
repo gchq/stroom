@@ -19,25 +19,24 @@ package stroom.test;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.shared.BaseResultList;
-import stroom.feed.FeedService;
-import stroom.feed.MetaMap;
-import stroom.feed.shared.Feed;
-import stroom.feed.shared.FindFeedCriteria;
+import stroom.data.meta.api.AttributeMap;
+import stroom.data.meta.api.DataProperties;
+import stroom.data.store.api.OutputStreamProvider;
+import stroom.data.store.api.SegmentOutputStream;
+import stroom.data.store.api.StreamStore;
+import stroom.data.store.api.StreamTarget;
+import stroom.feed.AttributeMapUtil;
+import stroom.feed.FeedDocCache;
+import stroom.feed.shared.FeedDoc;
 import stroom.proxy.repo.StroomZipEntry;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
-import stroom.streamstore.StreamStore;
-import stroom.streamstore.StreamTarget;
-import stroom.streamstore.fs.serializable.RASegmentOutputStream;
-import stroom.streamstore.fs.serializable.RawInputSegmentWriter;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamType;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamTargetStroomStreamHandler;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
+import stroom.util.io.StreamUtil;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -47,6 +46,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
+import java.util.Optional;
 
 public class DataLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataLoader.class);
@@ -54,11 +54,11 @@ public class DataLoader {
     private static final String INPUT_EXTENSION = ".in";
     private static final String ZIP_EXTENSION = ".zip";
 
-    private final FeedService feedService;
+    private final FeedDocCache feedDocCache;
     private final StreamStore streamStore;
 
-    public DataLoader(final FeedService feedService, final StreamStore streamStore) {
-        this.feedService = feedService;
+    public DataLoader(final FeedDocCache feedDocCache, final StreamStore streamStore) {
+        this.feedDocCache = feedDocCache;
         this.streamStore = streamStore;
     }
 
@@ -91,7 +91,7 @@ public class DataLoader {
     }
 
     private void loadInputFile(final Path file, final boolean mandateEffectiveDate, final Long effectiveMs) {
-        final Feed feed = getFeed(file);
+        final FeedDoc feed = getFeed(file);
         try (final InputStream inputStream = Files.newInputStream(file)) {
             loadInputStream(feed, FileUtil.getCanonicalPath(file), inputStream, mandateEffectiveDate, effectiveMs);
         } catch (final IOException e) {
@@ -99,28 +99,34 @@ public class DataLoader {
         }
     }
 
-    public void loadInputStream(final Feed feed, final String info, final InputStream inputStream,
+    public void loadInputStream(final FeedDoc feed, final String info, final InputStream inputStream,
                                 final boolean mandateEffectiveDate, final Long effectiveMs) {
         if (feed.isReference() == mandateEffectiveDate) {
             LOGGER.info("Loading data: " + info);
 
-            StreamType streamType = StreamType.RAW_EVENTS;
+            String streamTypeName = StreamTypeNames.RAW_EVENTS;
             if (feed.isReference()) {
-                streamType = StreamType.RAW_REFERENCE;
+                streamTypeName = StreamTypeNames.RAW_REFERENCE;
             }
 
-            final Stream stream = Stream.createStream(streamType, feed, effectiveMs);
-            final StreamTarget streamTarget = streamStore.openStreamTarget(stream);
+            final DataProperties streamProperties = new DataProperties.Builder()
+                    .feedName(feed.getName())
+                    .typeName(streamTypeName)
+                    .effectiveMs(effectiveMs)
+                    .build();
 
-            try {
-                final RASegmentOutputStream outputStream = new RASegmentOutputStream(streamTarget);
-                final RawInputSegmentWriter writer = new RawInputSegmentWriter();
-                writer.write(new BufferedInputStream(inputStream), outputStream);
+            final StreamTarget streamTarget = streamStore.openStreamTarget(streamProperties);
 
-                final MetaMap map = new MetaMap();
-                map.put("TestData", "Loaded By SetupSampleData");
+            try (final OutputStreamProvider outputStreamProvider = streamTarget.getOutputStreamProvider()) {
+                try (final SegmentOutputStream outputStream = outputStreamProvider.next()) {
+                    StreamUtil.streamToStream(inputStream, outputStream);
+                }
 
-                map.write(streamTarget.addChildStream(StreamType.META).getOutputStream(), true);
+                try (final SegmentOutputStream outputStream = outputStreamProvider.next(StreamTypeNames.META)) {
+                    final AttributeMap map = new AttributeMap();
+                    map.put("TestData", "Loaded By SetupSampleData");
+                    AttributeMapUtil.write(map, outputStream, true);
+                }
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
@@ -130,7 +136,7 @@ public class DataLoader {
     }
 
     private void loadZipFile(final Path file, final boolean mandateEffectiveDate, final Long effectiveMs) {
-        final Feed feed = getFeed(file);
+        final FeedDoc feed = getFeed(file);
 
         if (feed.isReference() == mandateEffectiveDate) {
             LOGGER.info("Loading data: " + FileUtil.getCanonicalPath(file));
@@ -139,9 +145,9 @@ public class DataLoader {
                 final StroomZipFile stroomZipFile = new StroomZipFile(file);
                 final byte[] buffer = new byte[1024];
                 final StreamTargetStroomStreamHandler streamTargetStroomStreamHandler = new StreamTargetStroomStreamHandler(
-                        streamStore, feedService, null, feed, feed.getStreamType());
+                        streamStore, feedDocCache, null, feed.getName(), feed.getStreamType());
 
-                final MetaMap map = new MetaMap();
+                final AttributeMap map = new AttributeMap();
                 map.put("TestData", "Loaded By SetupSampleData");
 
                 streamTargetStroomStreamHandler.handleHeader(map);
@@ -149,7 +155,7 @@ public class DataLoader {
                     streamTargetStroomStreamHandler
                             .handleEntryStart(new StroomZipEntry(null, baseName, StroomZipFileType.Context));
                     InputStream inputStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Context);
-                    int read = 0;
+                    int read;
                     while ((read = inputStream.read(buffer)) != -1) {
                         streamTargetStroomStreamHandler.handleEntryData(buffer, 0, read);
                     }
@@ -157,7 +163,6 @@ public class DataLoader {
 
                     streamTargetStroomStreamHandler.handleEntryStart(new StroomZipEntry(null, baseName, StroomZipFileType.Data));
                     inputStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Data);
-                    read = 0;
                     while ((read = inputStream.read(buffer)) != -1) {
                         streamTargetStroomStreamHandler.handleEntryData(buffer, 0, read);
                     }
@@ -174,7 +179,7 @@ public class DataLoader {
         }
     }
 
-    private Feed getFeed(final Path file) {
+    private FeedDoc getFeed(final Path file) {
         // Get the stem of the file name.
         String stem = file.getFileName().toString();
         int index = stem.indexOf('.');
@@ -189,16 +194,14 @@ public class DataLoader {
         return getFeed(stem);
     }
 
-    public Feed getFeed(final String name) {
+    public FeedDoc getFeed(final String name) {
         // Find the associated feed.
-        final FindFeedCriteria findFeedCriteria = new FindFeedCriteria();
-        findFeedCriteria.getName().setString(name);
-        final BaseResultList<Feed> list = feedService.find(findFeedCriteria);
+        final Optional<FeedDoc> optional = feedDocCache.get(name);
 
-        if (list.size() == 0) {
+        if (!optional.isPresent()) {
             throw new RuntimeException("Feed not found \"" + name + "\"");
         }
 
-        return list.getFirst();
+        return optional.get();
     }
 }

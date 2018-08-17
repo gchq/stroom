@@ -16,7 +16,7 @@
 
 package stroom.jobsystem;
 
-import stroom.util.shared.Task;
+import stroom.task.shared.Task;
 
 import java.io.Serializable;
 

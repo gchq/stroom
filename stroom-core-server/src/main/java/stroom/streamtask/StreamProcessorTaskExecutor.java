@@ -16,12 +16,12 @@
 
 package stroom.streamtask;
 
-import stroom.streamstore.StreamSource;
-import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamProcessorFilter;
-import stroom.streamtask.shared.StreamTask;
+import stroom.data.store.api.StreamSource;
+import stroom.streamtask.shared.Processor;
+import stroom.streamtask.shared.ProcessorFilter;
+import stroom.streamtask.shared.ProcessorFilterTask;
 
 public interface StreamProcessorTaskExecutor {
-    void exec(StreamProcessor streamProcessor, StreamProcessorFilter streamProcessorFilter, StreamTask streamTask,
+    void exec(Processor streamProcessor, ProcessorFilter streamProcessorFilter, ProcessorFilterTask streamTask,
               StreamSource streamSource);
 }

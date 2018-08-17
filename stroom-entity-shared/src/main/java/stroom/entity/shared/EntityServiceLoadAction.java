@@ -16,6 +16,8 @@
 
 package stroom.entity.shared;
 
+import stroom.task.shared.Action;
+
 public class EntityServiceLoadAction<E extends Entity> extends Action<E> {
     private static final long serialVersionUID = 800905016214418723L;
 

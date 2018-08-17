@@ -55,7 +55,10 @@ public class PersistServiceImpl implements Provider<EntityManager>, PersistServi
         if (currentContext != null) {
             context = new ChildContext(currentContext);
         } else {
-            Preconditions.checkState(null != emFactory, "Persistence service has not been initialized.");
+            if (emFactory == null) {
+                start();
+            }
+//            Preconditions.checkState(null != emFactory, "Persistence service has not been initialized.");
 
             final EntityManager entityManager = emFactory.createEntityManager();
             context = new RootContext(entityManager);
@@ -78,8 +81,11 @@ public class PersistServiceImpl implements Provider<EntityManager>, PersistServi
 
     @Override
     public synchronized void start() {
-        Preconditions.checkState(null == emFactory, "Persistence service was already initialized.");
-        this.emFactory = entityManagerFactory(dataSource);
+//        Preconditions.checkState(null == emFactory, "Persistence service was already initialized.");
+
+        if (emFactory == null) {
+            this.emFactory = entityManagerFactory(dataSource);
+        }
     }
 
     @Override
@@ -114,15 +120,14 @@ public class PersistServiceImpl implements Provider<EntityManager>, PersistServi
                 "stroom.dashboard.shared.QueryEntity",
                 "stroom.explorer.ExplorerTreeNode",
                 "stroom.explorer.ExplorerTreePath",
-                "stroom.feed.shared.Feed",
                 "stroom.index.shared.IndexShard",
                 "stroom.jobsystem.shared.ClusterLock",
                 "stroom.jobsystem.shared.Job",
                 "stroom.jobsystem.shared.JobNode",
-                "stroom.node.shared.GlobalProperty",
+//                "stroom.properties.api.GlobalProperty",
                 "stroom.node.shared.Node",
                 "stroom.node.shared.Rack",
-                "stroom.node.shared.Volume",
+                "stroom.node.shared.VolumeEntity",
                 "stroom.node.shared.VolumeState",
                 "stroom.ruleset.shared.Policy",
                 "stroom.security.AppPermission",
@@ -130,15 +135,16 @@ public class PersistServiceImpl implements Provider<EntityManager>, PersistServi
                 "stroom.security.Permission",
                 "stroom.security.User",
                 "stroom.security.UserGroupUser",
-                "stroom.streamstore.shared.Stream",
-                "stroom.streamstore.shared.StreamAttributeKey",
-                "stroom.streamstore.shared.StreamAttributeValue",
-                "stroom.streamstore.shared.StreamType",
-                "stroom.streamstore.shared.StreamVolume",
-                "stroom.streamtask.shared.StreamProcessor",
-                "stroom.streamtask.shared.StreamProcessorFilter",
-                "stroom.streamtask.shared.StreamProcessorFilterTracker",
-                "stroom.streamtask.shared.StreamTask"
+//                "stroom.streamstore.shared.FeedEntity",
+//                "stroom.streamstore.shared.StreamEntity",
+//                "stroom.streamstore.meta.db.StreamAttributeKey",
+//                "stroom.streamstore.meta.db.StreamAttributeValue",
+//                "stroom.streamstore.shared.StreamTypeEntity",
+//                "stroom.streamstore.shared.StreamVolumeEntity",
+                "stroom.streamtask.shared.Processor",
+                "stroom.streamtask.shared.ProcessorFilter",
+                "stroom.streamtask.shared.ProcessorFilterTracker",
+                "stroom.streamtask.shared.ProcessorFilterTask"
         );
 
         return new PersistenceUnitInfoImpl(name, entityClassNames, properties(dataSource));

@@ -23,21 +23,18 @@ import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.EntityServiceFindAction;
+import stroom.docref.DocRef;
 import stroom.entity.shared.SharedDocRef;
 import stroom.explorer.client.presenter.EntityChooser;
-import stroom.feed.shared.Feed;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.GetPipelineForStreamAction;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.pipeline.stepping.client.presenter.SteppingContentTabPresenter;
-import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamAttributeMap;
-import stroom.streamstore.shared.StreamType;
-import stroom.streamtask.shared.StreamProcessor;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.Data;
+import stroom.streamstore.shared.FindStreamAction;
+import stroom.data.meta.api.DataRow;
 
 public class PipelineSteppingPlugin extends Plugin implements BeginPipelineSteppingEvent.Handler {
     private final Provider<EntityChooser> pipelineSelection;
@@ -67,14 +64,16 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
             } else {
                 // If we don't have a pipeline id then try to guess one for the
                 // supplied stream.
-                dispatcher.exec(new GetPipelineForStreamAction(event.getStreamId(), event.getChildStreamId())).onSuccess(result -> choosePipeline(result, event.getStreamId(), event.getEventId(),
-                        event.getChildStreamType()));
+                dispatcher.exec(new GetPipelineForStreamAction(event.getStreamId(), event.getChildStreamId())).onSuccess(result ->
+                        choosePipeline(result, event.getStreamId(), event.getEventId(), event.getChildStreamType()));
             }
         }
     }
 
-    private void choosePipeline(final SharedDocRef initialPipelineRef, final long streamId, final long eventId,
-                                final StreamType childStreamType) {
+    private void choosePipeline(final SharedDocRef initialPipelineRef,
+                                final long streamId,
+                                final long eventId,
+                                final String childStreamType) {
         final EntityChooser chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Step With");
         chooser.setIncludedTypes(PipelineDoc.DOCUMENT_TYPE);
@@ -82,17 +81,13 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
         chooser.addDataSelectionHandler(event -> {
             final DocRef pipeline = chooser.getSelectedEntityReference();
             if (pipeline != null) {
-                final FindStreamAttributeMapCriteria streamAttributeMapCriteria = new FindStreamAttributeMapCriteria();
-                streamAttributeMapCriteria.obtainFindStreamCriteria().obtainSelectedIdSet().add(streamId);
-                streamAttributeMapCriteria.getFetchSet().add(Feed.ENTITY_TYPE);
-                streamAttributeMapCriteria.getFetchSet().add(StreamType.ENTITY_TYPE);
-                streamAttributeMapCriteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
-                streamAttributeMapCriteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
+                final FindDataCriteria streamAttributeMapCriteria = new FindDataCriteria();
+                streamAttributeMapCriteria.obtainSelectedIdSet().add(streamId);
 
-                dispatcher.exec(new EntityServiceFindAction<FindStreamAttributeMapCriteria, StreamAttributeMap>(streamAttributeMapCriteria)).onSuccess(result -> {
+                dispatcher.exec(new FindStreamAction(streamAttributeMapCriteria)).onSuccess(result -> {
                     if (result != null && result.size() == 1) {
-                        final StreamAttributeMap row = result.get(0);
-                        openEditor(pipeline, row.getStream(), eventId, childStreamType);
+                        final DataRow row = result.get(0);
+                        openEditor(pipeline, row.getData(), eventId, childStreamType);
                     }
                 });
             }
@@ -105,8 +100,8 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
         chooser.show();
     }
 
-    private void openEditor(final DocRef pipeline, final Stream stream, final long eventId,
-                            final StreamType childStreamType) {
+    private void openEditor(final DocRef pipeline, final Data stream, final long eventId,
+                            final String childStreamType) {
         final SteppingContentTabPresenter editor = editorProvider.get();
         editor.read(pipeline, stream, eventId, childStreamType);
         contentManager.open(editor, editor, editor);

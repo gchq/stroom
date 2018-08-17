@@ -22,6 +22,7 @@ import stroom.entity.shared.HasUuid;
 import stroom.entity.util.HqlBuilder;
 import stroom.util.shared.HasId;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Set;
 
@@ -181,8 +182,8 @@ public class EntityServiceHelper<E extends Entity> {
     public String getEntityType() {
         if (entityType == null) {
             try {
-                entityType = entityClass.newInstance().getType();
-            } catch (final InstantiationException | IllegalAccessException e) {
+                entityType = entityClass.getConstructor().newInstance().getType();
+            } catch (final NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
         }

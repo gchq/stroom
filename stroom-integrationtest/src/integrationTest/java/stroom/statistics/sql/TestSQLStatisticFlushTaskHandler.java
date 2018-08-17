@@ -24,12 +24,10 @@ import stroom.entity.StroomDatabaseInfo;
 import stroom.security.Security;
 import stroom.statistics.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.sql.rollup.RolledUpStatisticEvent;
-import stroom.task.SimpleTaskContext;
+import stroom.task.api.SimpleTaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.inject.Inject;
-import javax.inject.Named;
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -39,8 +37,7 @@ public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTes
     private static final Logger LOGGER = LoggerFactory.getLogger(TestSQLStatisticFlushTaskHandler.class);
 
     @Inject
-    @Named("statisticsDataSource")
-    private DataSource statisticsDataSource;
+    private ConnectionProvider connectionProvider;
     @Inject
     private SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService;
     @Inject
@@ -194,7 +191,7 @@ public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTes
 
     private int getRowCount() throws SQLException {
         int count;
-        try (final Connection connection = statisticsDataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement("select count(*) from " + SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME)) {
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     resultSet.next();
@@ -206,7 +203,7 @@ public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTes
     }
 
     private void deleteRows() throws SQLException {
-        try (final Connection connection = statisticsDataSource.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement("delete from " + SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME)) {
                 preparedStatement.execute();
             }

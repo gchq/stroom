@@ -4,6 +4,11 @@ import org.junit.Ignore;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import stroom.dashboard.TestDashboardStoreImpl;
+import stroom.data.store.impl.fs.TestFileSystemZipProcessor;
+import stroom.data.store.impl.fs.TestFileSystemCleanTask;
+import stroom.data.store.impl.fs.TestFileSystemStreamMaintenanceService;
+import stroom.data.store.impl.fs.TestFileSystemStreamStore;
+import stroom.data.store.impl.fs.TestStreamArchiveTask;
 import stroom.xmlschema.TestXMLSchemaStoreImpl;
 
 @Ignore("Don't run this test suite automatically as the tests are already run on their own")
@@ -11,10 +16,7 @@ import stroom.xmlschema.TestXMLSchemaStoreImpl;
 @Suite.SuiteClasses({
         TestDashboardStoreImpl.class,
         stroom.docstore.db.TestDBPersistence.class,
-        stroom.entity.TestEntityServiceImpl.class,
         stroom.explorer.TestExplorerTree.class,
-        stroom.feed.TestFeedServiceCache.class,
-        stroom.feed.TestFeedServiceImpl.class,
         stroom.importexport.TestImportExportDashboards.class,
         stroom.importexport.TestImportExportSerializer.class,
         stroom.importexport.TestImportExportServiceImpl.class,
@@ -48,18 +50,15 @@ import stroom.xmlschema.TestXMLSchemaStoreImpl;
         stroom.statistics.sql.TestSQLStatisticAggregationManager.class,
         stroom.statistics.sql.TestSQLStatisticFlushTaskHandler.class,
         stroom.stats.TestStroomStatsStoreImportExportSerializer.class,
-        stroom.streamstore.TestFileSystemZipProcessor.class,
-        stroom.streamstore.TestStreamAttributeMapServiceImpl.class,
-        stroom.streamstore.TestStreamAttributeValueFlushImpl.class,
-        stroom.streamstore.TestStreamTypeServiceImpl.class,
-        stroom.streamstore.fs.TestFileSystemStreamMaintenanceService.class,
-        stroom.streamstore.fs.TestFileSystemStreamStore.class,
-        stroom.streamstore.upload.TestStreamUploadDownloadTaskHandler.class,
+        TestFileSystemZipProcessor.class,
+        TestFileSystemStreamMaintenanceService.class,
+        TestFileSystemStreamStore.class,
+        stroom.data.store.upload.TestStreamUploadDownloadTaskHandler.class,
         stroom.streamtask.TestDataRetentionExecutor.class,
         stroom.streamtask.TestDataRetentionTransactionHelper.class,
-        stroom.streamtask.TestFileSystemCleanTask.class,
+        TestFileSystemCleanTask.class,
         stroom.streamtask.TestProxyAggregationTask.class,
-        stroom.streamtask.TestStreamArchiveTask.class,
+        TestStreamArchiveTask.class,
         stroom.streamtask.TestStreamProcessorFilterService.class,
         stroom.streamtask.TestStreamRetentionExecutor.class,
         stroom.streamtask.TestStreamTaskCreator.class,

@@ -18,7 +18,6 @@ package stroom.pipeline.writer;
 
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
-import stroom.streamstore.fs.serializable.SegmentOutputStream;
 import stroom.util.shared.Severity;
 
 import java.io.IOException;
@@ -28,7 +27,6 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
     private final ErrorReceiverProxy errorReceiverProxy;
 
     private OutputStream outputStream;
-    private SegmentOutputStream segmentOutputStream;
     private byte[] footer;
 
     AbstractAppender(final ErrorReceiverProxy errorReceiverProxy) {
@@ -61,13 +59,6 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
 
     @Override
     public void returnDestination(final Destination destination) throws IOException {
-        // We assume that the parent will write an entire segment when it borrows a destination so add a segment marker
-        // here after a segment is written.
-
-        // Writing a segment marker here ensures there is always a marker written before the footer regardless or
-        // whether a footer is actually written. We do this because we always make an allowance for a footer for data
-        // display purposes.
-        insertSegmentMarker();
     }
 
     @Override
@@ -81,9 +72,6 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
 
         if (outputStream == null) {
             outputStream = createOutputStream();
-            if (outputStream != null && outputStream instanceof SegmentOutputStream) {
-                segmentOutputStream = (SegmentOutputStream) outputStream;
-            }
 
             // If we haven't written yet then create the output stream and
             // write a header if we have one.
@@ -91,11 +79,6 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
                 // Write the header.
                 write(header);
             }
-
-            // Insert a segment marker before we write the next record regardless of whether the header has actually
-            // been written. This is because we always make an allowance for the existence of a header in a segmented
-            // stream when viewing data.
-            insertSegmentMarker();
         }
 
         return outputStream;
@@ -110,13 +93,6 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
 
     private void write(final byte[] bytes) throws IOException {
         outputStream.write(bytes, 0, bytes.length);
-    }
-
-    private void insertSegmentMarker() throws IOException {
-        // Add a segment marker to the output stream if we are segmenting.
-        if (segmentOutputStream != null) {
-            segmentOutputStream.addSegment();
-        }
     }
 
     protected abstract OutputStream createOutputStream() throws IOException;

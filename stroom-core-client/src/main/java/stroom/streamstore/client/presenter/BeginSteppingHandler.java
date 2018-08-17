@@ -16,8 +16,6 @@
 
 package stroom.streamstore.client.presenter;
 
-import stroom.streamstore.shared.StreamType;
-
 public interface BeginSteppingHandler {
-    void beginStepping(Long streamId, StreamType childStreamType);
+    void beginStepping(Long streamId, String childStreamType);
 }

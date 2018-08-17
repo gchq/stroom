@@ -1,7 +1,8 @@
 package stroom.task;
 
 import stroom.security.UserTokenUtil;
-import stroom.util.shared.Task;
+import stroom.task.api.ServerTask;
+import stroom.task.shared.Task;
 import stroom.util.shared.VoidResult;
 
 public final class GenericServerTask extends ServerTask<VoidResult> {

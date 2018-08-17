@@ -19,6 +19,7 @@ package stroom.xmlschema;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.docref.DocRef;
 import stroom.docstore.Persistence;
 import stroom.docstore.Serialiser2;
 import stroom.docstore.Store;
@@ -27,7 +28,6 @@ import stroom.explorer.shared.DocumentType;
 import stroom.importexport.LegacyXMLSerialiser;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.util.shared.Message;
@@ -165,40 +165,38 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
             final String uuid = docRef.getUuid();
             try {
                 final boolean exists = persistence.exists(docRef);
-                if (importState.ok(importMode)) {
-                    XmlSchemaDoc document;
-                    if (exists) {
-                        document = readDocument(docRef);
+                XmlSchemaDoc document;
+                if (exists) {
+                    document = readDocument(docRef);
 
-                    } else {
-                        final OldXMLSchema oldXmlSchema = new OldXMLSchema();
-                        final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
-                        legacySerialiser.performImport(oldXmlSchema, dataMap);
+                } else {
+                    final OldXMLSchema oldXmlSchema = new OldXMLSchema();
+                    final LegacyXMLSerialiser legacySerialiser = new LegacyXMLSerialiser();
+                    legacySerialiser.performImport(oldXmlSchema, dataMap);
 
-                        final long now = System.currentTimeMillis();
-                        final String userId = securityContext.getUserId();
+                    final long now = System.currentTimeMillis();
+                    final String userId = securityContext.getUserId();
 
-                        document = new XmlSchemaDoc();
-                        document.setType(docRef.getType());
-                        document.setUuid(uuid);
-                        document.setName(docRef.getName());
-                        document.setVersion(UUID.randomUUID().toString());
-                        document.setCreateTime(now);
-                        document.setUpdateTime(now);
-                        document.setCreateUser(userId);
-                        document.setUpdateUser(userId);
-                        document.setDescription(oldXmlSchema.getDescription());
-                        document.setNamespaceURI(oldXmlSchema.getNamespaceURI());
-                        document.setSystemId(oldXmlSchema.getSystemId());
-                        document.setData(oldXmlSchema.getData());
-                        document.setDeprecated(oldXmlSchema.isDeprecated());
-                        document.setSchemaGroup(oldXmlSchema.getSchemaGroup());
-                    }
+                    document = new XmlSchemaDoc();
+                    document.setType(docRef.getType());
+                    document.setUuid(uuid);
+                    document.setName(docRef.getName());
+                    document.setVersion(UUID.randomUUID().toString());
+                    document.setCreateTime(now);
+                    document.setUpdateTime(now);
+                    document.setCreateUser(userId);
+                    document.setUpdateUser(userId);
+                    document.setDescription(oldXmlSchema.getDescription());
+                    document.setNamespaceURI(oldXmlSchema.getNamespaceURI());
+                    document.setSystemId(oldXmlSchema.getSystemId());
+                    document.setData(oldXmlSchema.getData());
+                    document.setDeprecated(oldXmlSchema.isDeprecated());
+                    document.setSchemaGroup(oldXmlSchema.getSchemaGroup());
+                }
 
-                    result = serialiser.write(document);
-                    if (dataMap.containsKey("data.xsd")) {
-                        result.put("xsd", dataMap.remove("data.xsd"));
-                    }
+                result = serialiser.write(document);
+                if (dataMap.containsKey("data.xsd")) {
+                    result.put("xsd", dataMap.remove("data.xsd"));
                 }
 
             } catch (final IOException | RuntimeException e) {

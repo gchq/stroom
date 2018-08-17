@@ -22,7 +22,7 @@ import com.google.inject.multibindings.Multibinder;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.explorer.ExplorerActionHandler;
 import stroom.importexport.ImportExportActionHandler;
-import stroom.task.TaskHandler;
+import stroom.task.api.TaskHandler;
 
 
 public class DictionaryHandlerModule extends AbstractModule {

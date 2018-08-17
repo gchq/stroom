@@ -17,27 +17,27 @@
 package stroom.streamtask;
 
 import stroom.jobsystem.DistributedTask;
-import stroom.streamtask.shared.StreamTask;
-import stroom.util.shared.SimpleThreadPool;
-import stroom.util.shared.ThreadPool;
+import stroom.streamtask.shared.ProcessorFilterTask;
+import stroom.task.shared.SimpleThreadPool;
+import stroom.task.shared.ThreadPool;
 import stroom.util.shared.VoidResult;
-import stroom.task.ServerTask;
+import stroom.task.api.ServerTask;
 
 public class StreamProcessorTask extends ServerTask<VoidResult> implements DistributedTask<VoidResult> {
     public static final String JOB_NAME = "Stream Processor";
     private static final long serialVersionUID = 5719364078026952526L;
     private static final ThreadPool THREAD_POOL = new SimpleThreadPool("Stream Processor#", 1);
 
-    private StreamTask streamTask;
+    private ProcessorFilterTask streamTask;
 
     // Used for test code
     private transient StreamProcessorTaskExecutor streamProcessorTaskExecutor;
 
-    public StreamProcessorTask(final StreamTask streamTask) {
+    public StreamProcessorTask(final ProcessorFilterTask streamTask) {
         this.streamTask = streamTask;
     }
 
-    public StreamTask getStreamTask() {
+    public ProcessorFilterTask getStreamTask() {
         return streamTask;
     }
 

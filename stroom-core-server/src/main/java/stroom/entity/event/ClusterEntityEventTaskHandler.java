@@ -18,9 +18,9 @@ package stroom.entity.event;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.task.TaskCallback;
-import stroom.task.TaskHandler;
-import stroom.task.TaskHandlerBean;
+import stroom.task.api.TaskCallback;
+import stroom.task.api.TaskHandler;
+import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;

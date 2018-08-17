@@ -1,0 +1,12 @@
+{
+  "type" : "Feed",
+  "uuid" : "a3280267-6507-447d-aa1b-2a28b0960eba",
+  "name" : "RAW_STREAMING_FORK-EVENTS",
+  "version" : "0130373b-5685-4b8d-a819-8d62e96fee98",
+  "description" : "RAW_STREAMING_FORK-EVENTS",
+  "encoding" : "UTF-8",
+  "contextEncoding" : "UTF-8",
+  "reference" : false,
+  "streamType" : "Raw Events",
+  "status" : "RECEIVE"
+}

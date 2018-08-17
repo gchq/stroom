@@ -8,7 +8,6 @@ import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.commons.exec.ShutdownHookProcessDestroyer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.properties.StroomPropertyService;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -34,23 +33,18 @@ import java.util.stream.Collectors;
 @Singleton
 @SuppressWarnings("unused")
 class HeapHistogramService {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(HeapHistogramService.class);
 
-    static final String CLASS_NAME_MATCH_REGEX_PROP_KEY = "stroom.node.status.heapHistogram.classNameMatchRegex";
-    static final String ANON_ID_REGEX_PROP_KEY = "stroom.node.status.heapHistogram.classNameReplacementRegex";
-    static final String JMAP_EXECUTABLE_PROP_KEY = "stroom.node.status.heapHistogram.jMapExecutable";
+    private static final int STRING_TRUNCATE_LIMIT = 200;
     private static String ID_REPLACEMENT = "--ID-REMOVED--";
 
-    private static final int STRING_TRUNCATE_LIMIT = 200;
-
-    private final StroomPropertyService stroomPropertyService;
+    private final HeapHistogramConfig heapHistogramConfig;
     private final Pattern lineMatchPattern;
 
     @SuppressWarnings("unused")
     @Inject
-    HeapHistogramService(final StroomPropertyService stroomPropertyService) {
-        this.stroomPropertyService = stroomPropertyService;
+    HeapHistogramService(final HeapHistogramConfig heapHistogramConfig) {
+        this.heapHistogramConfig = heapHistogramConfig;
         this.lineMatchPattern = Pattern.compile("\\s*\\d+:\\s+(?<instances>\\d+)\\s+(?<bytes>\\d+)\\s+(?<class>.*)");
     }
 
@@ -96,10 +90,10 @@ class HeapHistogramService {
     }
 
     private String getExecutable() {
-        String executable = stroomPropertyService.getProperty(JMAP_EXECUTABLE_PROP_KEY);
+        String executable = heapHistogramConfig.getExecutable();
 
         if (executable == null || executable.isEmpty()) {
-            throw new RuntimeException(String.format("Property %s has no value", JMAP_EXECUTABLE_PROP_KEY));
+            throw new RuntimeException(String.format("Property %s has no value", HeapHistogramConfig.JMAP_EXECUTABLE_PROP_KEY));
         }
         return executable;
     }
@@ -165,8 +159,8 @@ class HeapHistogramService {
         }
     }
 
-    private static Predicate<String> getClassNameMatchPredicate(final StroomPropertyService stroomPropertyService) {
-        String classNameRegexStr = stroomPropertyService.getProperty(CLASS_NAME_MATCH_REGEX_PROP_KEY);
+    private Predicate<String> getClassNameMatchPredicate() {
+        String classNameRegexStr = heapHistogramConfig.getClassNameMatchRegex();
 
         if (classNameRegexStr == null || classNameRegexStr.isEmpty()) {
             //no prop value so return an always true predicate
@@ -181,7 +175,7 @@ class HeapHistogramService {
     }
 
     private Function<String, String> getClassReplacementMapper() {
-        final String anonymousIdRegex = stroomPropertyService.getProperty(ANON_ID_REGEX_PROP_KEY);
+        final String anonymousIdRegex = heapHistogramConfig.getAnonymousIdRegex();
 
         if (anonymousIdRegex == null || anonymousIdRegex.isEmpty()) {
             return Function.identity();
@@ -191,7 +185,7 @@ class HeapHistogramService {
                 return className -> pattern.matcher(className).replaceAll(ID_REPLACEMENT);
             } catch (final RuntimeException e) {
                 LOGGER.error("Value [{}] for property [{}] is not valid regex",
-                        anonymousIdRegex, ANON_ID_REGEX_PROP_KEY, e);
+                        anonymousIdRegex, HeapHistogramConfig.ANON_ID_REGEX_PROP_KEY, e);
                 return Function.identity();
             }
         }
@@ -221,7 +215,7 @@ class HeapHistogramService {
         Preconditions.checkNotNull(stdOut);
 
         try {
-            Predicate<String> classNamePredicate = getClassNameMatchPredicate(stroomPropertyService);
+            Predicate<String> classNamePredicate = getClassNameMatchPredicate();
             Function<String, String> classNameReplacer = getClassReplacementMapper();
             Function<String, Optional<HeapHistogramEntry>> lineToEntryMapper = buildLineToEntryMapper(classNameReplacer);
 

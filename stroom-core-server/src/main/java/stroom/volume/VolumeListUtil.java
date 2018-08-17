@@ -17,15 +17,15 @@
 package stroom.volume;
 
 import stroom.node.shared.Rack;
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class VolumeListUtil {
-    public static List<Volume> removeFullVolumes(final List<Volume> list) {
-        final List<Volume> newList = new ArrayList<>(list.size());
-        for (final Volume volume : list) {
+    public static List<VolumeEntity> removeFullVolumes(final List<VolumeEntity> list) {
+        final List<VolumeEntity> newList = new ArrayList<>(list.size());
+        for (final VolumeEntity volume : list) {
             if (!volume.isFull()) {
                 newList.add(volume);
             }
@@ -33,9 +33,9 @@ public class VolumeListUtil {
         return newList;
     }
 
-    public static List<Volume> removeMatchingRack(final List<Volume> list, final Rack rack) {
-        final List<Volume> newList = new ArrayList<>(list.size());
-        for (final Volume volume : list) {
+    public static List<VolumeEntity> removeMatchingRack(final List<VolumeEntity> list, final Rack rack) {
+        final List<VolumeEntity> newList = new ArrayList<>(list.size());
+        for (final VolumeEntity volume : list) {
             if (!volume.getNode().getRack().equals(rack)) {
                 newList.add(volume);
             }
@@ -43,9 +43,9 @@ public class VolumeListUtil {
         return newList;
     }
 
-    public static List<Volume> removeVolumesWithoutValidState(final List<Volume> list) {
-        final List<Volume> newList = new ArrayList<>(list.size());
-        for (final Volume volume : list) {
+    public static List<VolumeEntity> removeVolumesWithoutValidState(final List<VolumeEntity> list) {
+        final List<VolumeEntity> newList = new ArrayList<>(list.size());
+        for (final VolumeEntity volume : list) {
             if (volume.getVolumeState() != null && volume.getVolumeState().getBytesUsed() != null
                     && volume.getVolumeState().getBytesFree() != null
                     && volume.getVolumeState().getBytesTotal() != null) {

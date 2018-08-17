@@ -24,17 +24,17 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.feed.client.presenter.FeedSettingsPresenter.FeedSettingsView;
-import stroom.feed.shared.Feed;
-import stroom.feed.shared.Feed.FeedStatus;
+import stroom.feed.shared.FeedDoc;
+import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.item.client.ItemListBox;
 import stroom.item.client.StringListBox;
 import stroom.pipeline.shared.SupportedRetentionAge;
-import stroom.streamstore.shared.StreamType;
 import stroom.util.shared.HasReadOnly;
 import stroom.widget.tickbox.client.view.TickBox;
 
 public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, HasReadOnly {
     private final Widget widget;
+
     @UiField
     TextArea description;
     @UiField
@@ -44,13 +44,14 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
     @UiField
     StringListBox contextEncoding;
     @UiField
-    ItemListBox<Feed.FeedStatus> feedStatus;
+    ItemListBox<FeedDoc.FeedStatus> feedStatus;
     @UiField
-    ItemListBox<StreamType> streamType;
+    StringListBox receivedType;
     @UiField
     ItemListBox<SupportedRetentionAge> retentionAge;
     @UiField
     TickBox reference;
+
     @Inject
     public FeedSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -87,8 +88,8 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
     }
 
     @Override
-    public ItemListBox<StreamType> getStreamType() {
-        return streamType;
+    public StringListBox getReceivedType() {
+        return receivedType;
     }
 
     @Override

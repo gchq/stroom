@@ -16,29 +16,29 @@
 
 package stroom.streamtask.shared;
 
-import stroom.entity.shared.Action;
-import stroom.streamstore.shared.FindStreamCriteria;
+import stroom.task.shared.Action;
+import stroom.data.meta.api.FindDataCriteria;
 import stroom.streamstore.shared.ReprocessDataInfo;
 import stroom.util.shared.SharedList;
 
 public class ReprocessDataAction extends Action<SharedList<ReprocessDataInfo>> {
     private static final long serialVersionUID = -3560107233301674555L;
 
-    private FindStreamCriteria criteria;
+    private FindDataCriteria criteria;
 
     public ReprocessDataAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public ReprocessDataAction(final FindStreamCriteria criteria) {
+    public ReprocessDataAction(final FindDataCriteria criteria) {
         this.criteria = criteria;
     }
 
-    public FindStreamCriteria getCriteria() {
+    public FindDataCriteria getCriteria() {
         return criteria;
     }
 
-    public void setCriteria(FindStreamCriteria criteria) {
+    public void setCriteria(FindDataCriteria criteria) {
         this.criteria = criteria;
     }
 

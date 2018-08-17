@@ -16,8 +16,8 @@
 
 package stroom.task.cluster;
 
-import stroom.cluster.ClusterNodeManager;
-import stroom.cluster.ClusterState;
+import stroom.cluster.api.ClusterNodeManager;
+import stroom.cluster.api.ClusterState;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 

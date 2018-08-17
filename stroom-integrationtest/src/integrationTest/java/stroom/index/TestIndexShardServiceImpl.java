@@ -31,7 +31,7 @@ import stroom.node.NodeCache;
 import stroom.node.VolumeService;
 import stroom.node.shared.FindVolumeCriteria;
 import stroom.node.shared.Node;
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 import stroom.docref.DocRef;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
@@ -61,7 +61,7 @@ public class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
      */
     @Test
     public void test() {
-        final Volume volume = volumeService.find(new FindVolumeCriteria()).getFirst();
+        final VolumeEntity volume = volumeService.find(new FindVolumeCriteria()).getFirst();
 
         final DocRef indexRef1 = indexStore.createDocument("Test Index 1");
         final IndexDoc index1 = indexStore.readDocument(indexRef1);
@@ -106,7 +106,7 @@ public class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
 
     @Test
     public void testOrderBy() {
-        final Volume volume = volumeService.find(new FindVolumeCriteria()).getFirst();
+        final VolumeEntity volume = volumeService.find(new FindVolumeCriteria()).getFirst();
 
         final DocRef indexRef = indexStore.createDocument("Test Index 1");
         final IndexDoc index = indexStore.readDocument(indexRef);

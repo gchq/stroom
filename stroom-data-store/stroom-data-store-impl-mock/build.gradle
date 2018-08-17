@@ -1,0 +1,19 @@
+ext.moduleName = 'stroom.data.store.impl.mock'
+
+dependencies {
+    compile project(':stroom-data-store:stroom-data-store-api')
+    compile project(':stroom-data-store:stroom-data-store-impl-fs')
+    compile project(':stroom-data-meta:stroom-data-meta-api')
+    compile project(':stroom-data-meta:stroom-data-meta-impl-mock')
+    compile project(':stroom-util')
+    compile project(':stroom-entity-shared')
+//    compile project(':stroom-core-server')
+
+//    compile libs.stroomQueryApi
+    compile libs.guice4
+    compile libs.javax_inject
+//    compile libs.slf4j_api
+
+    testCompile libs.junit_jupiter
+    testCompile libs.assertj_core
+}

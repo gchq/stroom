@@ -17,12 +17,12 @@
 package stroom.task;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
+import stroom.task.api.TaskContext;
 
 public class MockTaskModule extends AbstractModule {
     @Override
     protected void configure() {
-//        bind(ExecutorProvider.class).to(ExecutorProviderImpl.class);
+        bind(ExecutorProvider.class).to(ExecutorProviderImpl.class);
         bind(TaskManager.class).to(TaskManagerImpl.class);
         bind(TaskContext.class).to(TaskContextImpl.class);
 //

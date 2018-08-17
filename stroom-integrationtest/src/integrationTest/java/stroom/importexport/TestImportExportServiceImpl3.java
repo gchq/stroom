@@ -22,13 +22,9 @@ import org.junit.Test;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.feed.FeedService;
-import stroom.feed.shared.Feed;
+import stroom.feed.shared.FeedDoc;
 import stroom.importexport.shared.ImportState;
-import stroom.pipeline.PipelineStore;
-import stroom.resource.ResourceStore;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.CommonTestScenarioCreator;
 import stroom.util.shared.Message;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.util.zip.ZipUtil;
@@ -43,21 +39,13 @@ public class TestImportExportServiceImpl3 extends AbstractCoreIntegrationTest {
     @Inject
     private ImportExportService importExportService;
     @Inject
-    private ResourceStore resourceStore;
-    @Inject
-    private PipelineStore pipelineStore;
-    @Inject
-    private FeedService feedService;
-    @Inject
-    private CommonTestScenarioCreator commonTestScenarioCreator;
-    @Inject
     private ExplorerService explorerService;
 
     @Test
     public void testImportZip() throws IOException {
         final int BATCH_SIZE = 200;
         for (int i = 0; i < BATCH_SIZE; i++) {
-            explorerService.create(Feed.ENTITY_TYPE, FileSystemTestUtil.getUniqueTestString(), null, null);
+            explorerService.create(FeedDoc.DOCUMENT_TYPE, FileSystemTestUtil.getUniqueTestString(), null, null);
         }
         final List<Message> msgList = new ArrayList<>();
 

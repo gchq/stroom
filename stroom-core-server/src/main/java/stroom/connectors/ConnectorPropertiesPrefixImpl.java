@@ -1,13 +1,13 @@
 package stroom.connectors;
 
-import stroom.properties.StroomPropertyService;
+import stroom.properties.api.PropertyService;
 
 import java.util.Properties;
 
 /**
- * This class provides properties to external connectors, where the properties are defined in the {@link StroomPropertyService}
+ * This class provides properties to external connectors, where the properties are defined in the {@link PropertyService}
  * with prefixes. When a connector requests a property, the prefix will be applied to the key before being passed off
- * to the {@link StroomPropertyService}.
+ * to the {@link PropertyService}.
  *
  * A set of override properties are provided, this can be used by one class wishing to give specific values to the connector.
  * It will mostly be used for backwards compatibility and testing.
@@ -15,7 +15,7 @@ import java.util.Properties;
 public class ConnectorPropertiesPrefixImpl implements ConnectorProperties {
 
     private final String prefix;
-    private final StroomPropertyService propertyService;
+    private final PropertyService propertyService;
     private final Properties overriddenValues;
 
     /**
@@ -31,7 +31,7 @@ public class ConnectorPropertiesPrefixImpl implements ConnectorProperties {
      * @param prefix The prefix to apply.
      * @param propertyService The full stroom property service.
      */
-    public ConnectorPropertiesPrefixImpl(final String prefix, final StroomPropertyService propertyService) {
+    public ConnectorPropertiesPrefixImpl(final String prefix, final PropertyService propertyService) {
         this.prefix = prefix;
         this.propertyService = propertyService;
         this.overriddenValues = new Properties();

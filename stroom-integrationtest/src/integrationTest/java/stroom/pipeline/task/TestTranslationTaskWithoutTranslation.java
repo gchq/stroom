@@ -18,15 +18,16 @@ package stroom.pipeline.task;
 
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.impl.mock.MockDataMetaService;
+import stroom.data.store.impl.fs.MockStreamStore;
+import stroom.data.store.tools.StoreCreationTool;
 import stroom.node.NodeCache;
-import stroom.streamstore.MockStreamStore;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamType;
-import stroom.streamstore.tools.StoreCreationTool;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamProcessorTask;
 import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.streamtask.StreamTaskCreator;
-import stroom.streamtask.shared.StreamTask;
+import stroom.streamtask.shared.ProcessorFilterTask;
 import stroom.task.TaskManager;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.ComparisonHelper;
@@ -39,6 +40,7 @@ import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
 
 public class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegrationTest {
     private static final String DIR = "TestTranslationTaskWithoutTranslation/";
@@ -47,6 +49,8 @@ public class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegr
 
     @Inject
     private MockStreamStore streamStore;
+    @Inject
+    private MockDataMetaService streamMetaService;
     @Inject
     private NodeCache nodeCache;
     @Inject
@@ -64,7 +68,7 @@ public class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegr
     @Test
     public void test() throws IOException {
         setup(FEED_NAME, RESOURCE_NAME);
-        Assert.assertEquals(0, streamStore.getLockCount());
+        Assert.assertEquals(0, streamMetaService.getLockCount());
 
         final List<StreamProcessorTaskExecutor> results = processAll();
         Assert.assertEquals(1, results.size());
@@ -82,9 +86,11 @@ public class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegr
         final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(DIR);
         final Path outputDir = StroomPipelineTestFileUtil.getTestOutputDir().resolve(DIR);
 
-        for (final Stream stream : streamStore.getFileData().keySet()) {
-            if (stream.getStreamType() == StreamType.EVENTS) {
-                final byte[] data = streamStore.getFileData().get(stream).get(stream.getStreamType().getId());
+        for (final Entry<Long, Data> entry : streamMetaService.getDataMap().entrySet()) {
+            final long streamId = entry.getKey();
+            final Data stream = entry.getValue();
+            if (StreamTypeNames.EVENTS.equals(stream.getTypeName())) {
+                final byte[] data = streamStore.getFileData().get(streamId).get(stream.getTypeName());
 
                 // Write the actual XML out.
                 final OutputStream os = StroomPipelineTestFileUtil.getOutputStream(outputDir, "TestTask.out");
@@ -107,9 +113,9 @@ public class TestTranslationTaskWithoutTranslation extends AbstractProcessIntegr
      */
     private List<StreamProcessorTaskExecutor> processAll() {
         final List<StreamProcessorTaskExecutor> results = new ArrayList<>();
-        List<StreamTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getDefaultNode(), 100);
+        List<ProcessorFilterTask> streamTasks = streamTaskCreator.assignStreamTasks(nodeCache.getDefaultNode(), 100);
         while (streamTasks.size() > 0) {
-            for (final StreamTask streamTask : streamTasks) {
+            for (final ProcessorFilterTask streamTask : streamTasks) {
                 final StreamProcessorTask task = new StreamProcessorTask(streamTask);
                 taskManager.exec(task);
                 results.add(task.getStreamProcessorTaskExecutor());

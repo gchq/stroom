@@ -18,8 +18,6 @@ package stroom.pipeline.shared.data;
 
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.DocRefUtil;
-import stroom.feed.shared.Feed;
-import stroom.pipeline.shared.PipelineDoc;
 import stroom.docref.DocRef;
 
 import java.util.Collections;

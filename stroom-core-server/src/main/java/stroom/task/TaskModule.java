@@ -18,10 +18,17 @@ package stroom.task;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
+import stroom.guice.PipelineScopeModule;
+import stroom.task.api.TaskContext;
+import stroom.task.api.TaskHandler;
+import stroom.task.cluster.ClusterTaskModule;
 
 public class TaskModule extends AbstractModule {
     @Override
     protected void configure() {
+        install(new ClusterTaskModule());
+        install(new PipelineScopeModule());
+
         bind(ExecutorProvider.class).to(ExecutorProviderImpl.class);
         bind(TaskManager.class).to(TaskManagerImpl.class);
         bind(TaskContext.class).to(TaskContextImpl.class);
@@ -93,4 +100,16 @@ public class TaskModule extends AbstractModule {
 //    public TerminateTaskProgressHandler terminateTaskProgressHandler(final ClusterDispatchAsyncHelper dispatchHelper) {
 //        return new TerminateTaskProgressHandler(dispatchHelper);
 //    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return 0;
+    }
 }

@@ -26,12 +26,12 @@ import stroom.security.SecurityContext;
 import stroom.streamtask.shared.FetchProcessorAction;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
-import stroom.streamtask.shared.StreamProcessor;
-import stroom.streamtask.shared.StreamProcessorFilter;
-import stroom.streamtask.shared.StreamProcessorFilterRow;
-import stroom.streamtask.shared.StreamProcessorRow;
-import stroom.task.AbstractTaskHandler;
-import stroom.task.TaskHandlerBean;
+import stroom.streamtask.shared.Processor;
+import stroom.streamtask.shared.ProcessorFilter;
+import stroom.streamtask.shared.ProcessorFilterRow;
+import stroom.streamtask.shared.ProcessorRow;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskHandlerBean;
 import stroom.util.shared.Expander;
 import stroom.docref.SharedObject;
 
@@ -76,18 +76,18 @@ class FetchProcessorHandler extends AbstractTaskHandler<FetchProcessorAction, Re
                 criteria.setCreateUser(securityContext.getUserId());
             }
 
-            criteria.getFetchSet().add(StreamProcessor.ENTITY_TYPE);
+            criteria.getFetchSet().add(Processor.ENTITY_TYPE);
             criteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
 
-            final BaseResultList<StreamProcessor> streamProcessors = streamProcessorService.find(criteriaRoot);
+            final BaseResultList<Processor> streamProcessors = streamProcessorService.find(criteriaRoot);
 
-            final BaseResultList<StreamProcessorFilter> streamProcessorFilters = streamProcessorFilterService
+            final BaseResultList<ProcessorFilter> streamProcessorFilters = streamProcessorFilterService
                     .find(criteria);
 
             // Get unique processors.
-            final Set<StreamProcessor> processors = new HashSet<>(streamProcessors);
+            final Set<Processor> processors = new HashSet<>(streamProcessors);
 
-            final List<StreamProcessor> sorted = new ArrayList<>(processors);
+            final List<Processor> sorted = new ArrayList<>(processors);
             sorted.sort((o1, o2) -> {
                 if (o1.getPipelineUuid() != null && o2.getPipelineUuid() != null) {
                     return o1.getPipelineUuid().compareTo(o2.getPipelineUuid());
@@ -101,9 +101,9 @@ class FetchProcessorHandler extends AbstractTaskHandler<FetchProcessorAction, Re
                 return o1.compareTo(o2);
             });
 
-            for (final StreamProcessor streamProcessor : sorted) {
+            for (final Processor streamProcessor : sorted) {
                 final Expander processorExpander = new Expander(0, false, false);
-                final StreamProcessorRow streamProcessorRow = new StreamProcessorRow(processorExpander,
+                final ProcessorRow streamProcessorRow = new ProcessorRow(processorExpander,
                         streamProcessor);
                 values.add(streamProcessorRow);
 
@@ -112,9 +112,9 @@ class FetchProcessorHandler extends AbstractTaskHandler<FetchProcessorAction, Re
                     processorExpander.setExpanded(true);
 
                     // Add filters.
-                    for (final StreamProcessorFilter streamProcessorFilter : streamProcessorFilters) {
+                    for (final ProcessorFilter streamProcessorFilter : streamProcessorFilters) {
                         if (streamProcessor.equals(streamProcessorFilter.getStreamProcessor())) {
-                            final StreamProcessorFilterRow streamProcessorFilterRow = new StreamProcessorFilterRow(
+                            final ProcessorFilterRow streamProcessorFilterRow = new ProcessorFilterRow(
                                     streamProcessorFilter);
                             values.add(streamProcessorFilterRow);
                         }

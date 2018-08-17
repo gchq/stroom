@@ -17,6 +17,7 @@
 package stroom.pipeline;
 
 import org.junit.Assert;
+import stroom.docref.DocRef;
 import stroom.guice.PipelineScopeRunnable;
 import stroom.io.StreamCloser;
 import stroom.pipeline.destination.RollingDestinations;
@@ -33,9 +34,7 @@ import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.RecordCount;
-import stroom.docref.DocRef;
 import stroom.test.AbstractProcessIntegrationTest;
-import stroom.test.CommonTestScenarioCreator;
 import stroom.test.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
@@ -71,15 +70,11 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
     @Inject
     private RollingDestinations destinations;
     @Inject
-    private CommonTestScenarioCreator commonTestScenarioCreator;
-    @Inject
     private Provider<StreamCloser> streamCloserProvider;
     @Inject
     private PipelineScopeRunnable pipelineScopeRunnable;
 
     void test(final String name, final String type) {
-        // Ensure a test feed exists.
-        commonTestScenarioCreator.createSimpleFeed("TEST", "12345");
         final String dir = name + "/";
         final String stem = dir + name + "_" + type;
         final DocRef textConverterRef = createTextConverter(dir + name + ".ds3.xml", name, TextConverterType.DATA_SPLITTER);

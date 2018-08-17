@@ -16,7 +16,7 @@
 
 package stroom.dispatch.client;
 
-import stroom.entity.shared.Action;
+import stroom.task.shared.Action;
 import stroom.docref.SharedObject;
 import stroom.widget.util.client.Future;
 

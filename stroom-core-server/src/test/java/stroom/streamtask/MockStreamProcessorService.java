@@ -21,7 +21,7 @@ import stroom.entity.MockEntityService;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.docref.DocRef;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
-import stroom.streamtask.shared.StreamProcessor;
+import stroom.streamtask.shared.Processor;
 
 import javax.inject.Singleton;
 
@@ -31,15 +31,15 @@ import javax.inject.Singleton;
  * In memory simple process manager that also uses the mock stream store.
  */
 @Singleton
-public class MockStreamProcessorService extends MockEntityService<StreamProcessor, FindStreamProcessorCriteria>
+public class MockStreamProcessorService extends MockEntityService<Processor, FindStreamProcessorCriteria>
         implements StreamProcessorService {
     @Override
-    public StreamProcessor loadByIdInsecure(final long id) {
+    public Processor loadByIdInsecure(final long id) {
         return loadById(id);
     }
 
     @Override
-    public boolean isMatch(final FindStreamProcessorCriteria criteria, final StreamProcessor entity) {
+    public boolean isMatch(final FindStreamProcessorCriteria criteria, final Processor entity) {
         if (!super.isMatch(criteria, entity)) {
             return false;
         }
@@ -47,7 +47,7 @@ public class MockStreamProcessorService extends MockEntityService<StreamProcesso
     }
 
     @Override
-    public Class<StreamProcessor> getEntityClass() {
-        return StreamProcessor.class;
+    public Class<Processor> getEntityClass() {
+        return Processor.class;
     }
 }

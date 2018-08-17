@@ -20,8 +20,8 @@ package stroom.policy;
 import stroom.ruleset.shared.DataRetentionPolicy;
 import stroom.ruleset.shared.FetchDataRetentionPolicyAction;
 import stroom.security.Security;
-import stroom.task.AbstractTaskHandler;
-import stroom.task.TaskHandlerBean;
+import stroom.task.api.AbstractTaskHandler;
+import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
 

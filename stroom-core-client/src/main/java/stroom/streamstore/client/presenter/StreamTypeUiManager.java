@@ -16,90 +16,31 @@
 
 package stroom.streamstore.client.presenter;
 
-import com.google.inject.Inject;
-import com.google.web.bindery.event.shared.EventBus;
-import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.shared.EntityServiceFindAction;
-import stroom.security.client.event.CurrentUserChangedEvent;
-import stroom.streamstore.shared.FindStreamTypeCriteria;
-import stroom.streamstore.shared.StreamType;
-
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 public class StreamTypeUiManager {
-    private List<StreamType> streamTypeList = new ArrayList<>();
+//    private List<StreamTypeEntity> streamTypeList = new ArrayList<>();
+//
+//    @Inject
+//    public StreamTypeUiManager(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
+//        updateList(Arrays.asList(StreamTypeEntity.initialValues()));
+//
+//        // We can only find out the real list when they are logged in
+//        eventBus.addHandler(CurrentUserChangedEvent.getType(), event -> dispatcher.exec(
+//                new EntityServiceFindAction<FindStreamTypeCriteria, StreamTypeEntity>(new FindStreamTypeCriteria()))
+//                .onSuccess(this::updateList));
+//
+//    }
+//
+//    private void updateList(final List<StreamTypeEntity> list) {
+//        streamTypeList = list;
+//    }
 
-    @Inject
-    public StreamTypeUiManager(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
-        updateList(Arrays.asList(StreamType.initialValues()));
-
-        // We can only find out the real list when they are logged in
-        eventBus.addHandler(CurrentUserChangedEvent.getType(), event -> dispatcher.exec(
-                new EntityServiceFindAction<FindStreamTypeCriteria, StreamType>(new FindStreamTypeCriteria()))
-                .onSuccess(this::updateList));
-
-    }
-
-    private void updateList(final List<StreamType> list) {
-        streamTypeList = list;
-    }
-
-    public List<StreamType> getRawStreamTypeList() {
-        final List<StreamType> rtn = new ArrayList<>();
-        for (final StreamType streamType : streamTypeList) {
-            if (streamType.isStreamTypeRaw()) {
-                rtn.add(streamType);
-            }
-        }
-        Collections.sort(rtn, new StreamTypeCompare());
+    public List<String> getRawStreamTypeList() {
+        final List<String> rtn = new ArrayList<>();
+        rtn.add("Raw Events");
+        rtn.add("Raw Reference");
         return rtn;
     }
-
-    public List<StreamType> getProcessedStreamTypeList() {
-        final List<StreamType> rtn = new ArrayList<>();
-        for (final StreamType streamType : streamTypeList) {
-            if (streamType.isStreamTypeProcessed()) {
-                rtn.add(streamType);
-            }
-        }
-        Collections.sort(rtn, new StreamTypeCompare());
-        return rtn;
-    }
-
-    public List<StreamType> getRootStreamTypeList() {
-        final List<StreamType> rtnList = new ArrayList<>();
-        for (final StreamType streamType : streamTypeList) {
-            if (!streamType.isStreamTypeChild()) {
-                rtnList.add(streamType);
-            }
-        }
-        Collections.sort(rtnList, new StreamTypeCompare());
-        return rtnList;
-    }
-
-    static class StreamTypeCompare implements Comparator<StreamType> {
-        @Override
-        public int compare(final StreamType o1, final StreamType o2) {
-            if (o1.isStreamTypeRaw() == o2.isStreamTypeRaw()) {
-                if (o1.isStreamTypeError()) {
-                    return +1;
-                }
-                if (o2.isStreamTypeError()) {
-                    return -1;
-                }
-                return o1.getName().compareTo(o2.getName());
-            }
-            if (o1.isStreamTypeRaw()) {
-                return -1;
-            } else {
-                return +1;
-            }
-
-        }
-    }
-
 }

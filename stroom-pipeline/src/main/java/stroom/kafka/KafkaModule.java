@@ -16,16 +16,13 @@
 
 package stroom.kafka;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
-import stroom.pipeline.factory.Element;
+import stroom.pipeline.factory.PipelineElementModule;
 
-public class KafkaModule extends AbstractModule {
+public class KafkaModule extends PipelineElementModule {
     @Override
-    protected void configure() {
-        final Multibinder<Element> elementBinder = Multibinder.newSetBinder(binder(), Element.class);
-        elementBinder.addBinding().to(stroom.kafka.GenericKafkaProducerFilter.class);
-        elementBinder.addBinding().to(stroom.kafka.KafkaAppender.class);
-        elementBinder.addBinding().to(stroom.kafka.RollingKafkaAppender.class);
+    protected void configureElements() {
+        bindElement(stroom.kafka.GenericKafkaProducerFilter.class);
+        bindElement(stroom.kafka.KafkaAppender.class);
+        bindElement(stroom.kafka.RollingKafkaAppender.class);
     }
 }

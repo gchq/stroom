@@ -28,23 +28,22 @@ import com.gwtplatform.mvp.client.View;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.feed.client.presenter.FeedSettingsPresenter.FeedSettingsView;
-import stroom.feed.shared.Feed;
-import stroom.feed.shared.Feed.FeedStatus;
+import stroom.feed.shared.FeedDoc;
+import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.feed.shared.FetchSupportedEncodingsAction;
 import stroom.item.client.ItemListBox;
 import stroom.item.client.StringListBox;
 import stroom.pipeline.shared.SupportedRetentionAge;
-import stroom.docref.DocRef;
 import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.client.presenter.StreamTypeUiManager;
-import stroom.streamstore.shared.StreamType;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.SharedString;
 import stroom.widget.tickbox.client.view.TickBox;
 
-public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSettingsView, Feed> {
+public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSettingsView, FeedDoc> {
     @Inject
     public FeedSettingsPresenter(final EventBus eventBus, final FeedSettingsView view,
                                  final ClientSecurityContext securityContext, final StreamTypeUiManager streamTypeUiManager,
@@ -63,7 +62,7 @@ public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSetting
                 }
             }
 
-            final Feed feed = getEntity();
+            final FeedDoc feed = getEntity();
             if (feed != null) {
                 view.getDataEncoding().setSelected(ensureEncoding(feed.getEncoding()));
                 view.getContextEncoding().setSelected(ensureEncoding(feed.getContextEncoding()));
@@ -72,7 +71,7 @@ public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSetting
 
         view.getRetentionAge().addItems(SupportedRetentionAge.values());
         view.getFeedStatus().addItems(FeedStatus.values());
-        view.getStreamType().addItems(streamTypeUiManager.getRawStreamTypeList());
+        view.getReceivedType().addItems(streamTypeUiManager.getRawStreamTypeList());
 
         // Add listeners for dirty events.
         final KeyDownHandler keyDownHander = new DirtyKeyDownHander() {
@@ -106,30 +105,38 @@ public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSetting
         }));
         registerHandler(view.getRetentionAge().addSelectionHandler(event -> setDirty(true)));
         registerHandler(view.getFeedStatus().addSelectionHandler(event -> setDirty(true)));
-        registerHandler(view.getStreamType().addSelectionHandler(event -> setDirty(true)));
+        registerHandler(view.getReceivedType().addChangeHandler(event -> {
+            final String streamType = view.getReceivedType().getSelected();
+            getView().getReceivedType().setSelected(streamType);
+
+            if (!EqualsUtil.isEquals(streamType, getEntity().getStreamType())) {
+                setDirty(true);
+                getEntity().setStreamType(streamType);
+            }
+        }));
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final Feed feed) {
+    protected void onRead(final DocRef docRef, final FeedDoc feed) {
         getView().getDescription().setText(feed.getDescription());
         getView().getReference().setBooleanValue(feed.isReference());
         getView().getClassification().setText(feed.getClassification());
         getView().getDataEncoding().setSelected(ensureEncoding(feed.getEncoding()));
         getView().getContextEncoding().setSelected(ensureEncoding(feed.getContextEncoding()));
-        getView().getStreamType().setSelectedItem(feed.getStreamType());
+        getView().getReceivedType().setSelected(feed.getStreamType());
         getView().getRetentionAge().setSelectedItem(SupportedRetentionAge.get(feed.getRetentionDayAge()));
         getView().getFeedStatus().setSelectedItem(feed.getStatus());
     }
 
     @Override
-    protected void onWrite(final Feed feed) {
+    protected void onWrite(final FeedDoc feed) {
         feed.setDescription(getView().getDescription().getText().trim());
         feed.setReference(getView().getReference().getBooleanValue());
         feed.setClassification(getView().getClassification().getText());
         feed.setEncoding(ensureEncoding(getView().getDataEncoding().getSelected()));
         feed.setContextEncoding(ensureEncoding(getView().getContextEncoding().getSelected()));
         feed.setRetentionDayAge(getView().getRetentionAge().getSelectedItem().getDays());
-        feed.setStreamType(getView().getStreamType().getSelectedItem());
+        feed.setStreamType(getView().getReceivedType().getSelected());
         // Set the process stage.
         feed.setStatus(getView().getFeedStatus().getSelectedItem());
     }
@@ -143,7 +150,7 @@ public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSetting
 
     @Override
     public String getType() {
-        return Feed.ENTITY_TYPE;
+        return FeedDoc.DOCUMENT_TYPE;
     }
 
     public interface FeedSettingsView extends View {
@@ -157,7 +164,7 @@ public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSetting
 
         StringListBox getContextEncoding();
 
-        ItemListBox<StreamType> getStreamType();
+        StringListBox getReceivedType();
 
         ItemListBox<SupportedRetentionAge> getRetentionAge();
 

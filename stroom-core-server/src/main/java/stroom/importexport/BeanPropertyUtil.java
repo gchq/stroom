@@ -21,6 +21,7 @@ import stroom.entity.shared.ExternalFile;
 import stroom.pipeline.shared.ExtensionProvider;
 
 import javax.xml.bind.annotation.XmlTransient;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -93,8 +94,8 @@ public final class BeanPropertyUtil {
                             if (ExtensionProvider.class.isAssignableFrom(extensionProvider)) {
                                 ExtensionProvider instance;
                                 try {
-                                    instance = (ExtensionProvider) extensionProvider.newInstance();
-                                } catch (final InstantiationException | IllegalAccessException e) {
+                                    instance = (ExtensionProvider) extensionProvider.getConstructor().newInstance();
+                                } catch (final NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
                                     throw new RuntimeException(e.getMessage(), e);
                                 }
                                 exportProperty = new Property(propertyName, true, instance, getMethod, setMethod);

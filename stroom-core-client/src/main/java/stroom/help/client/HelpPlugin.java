@@ -23,8 +23,8 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.node.client.ClientPropertyCache;
-import stroom.node.shared.ClientProperties;
+import stroom.properties.global.client.ClientPropertyCache;
+import stroom.properties.shared.ClientProperties;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 

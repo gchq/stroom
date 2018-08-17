@@ -1,6 +1,6 @@
 package stroom.proxy.repo;
 
-import stroom.feed.MetaMap;
+import stroom.data.meta.api.AttributeMap;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -13,7 +13,7 @@ public interface StroomZipOutputStream extends Closeable, AutoCloseable {
 
     long getEntryCount();
 
-    void addMissingMetaMap(MetaMap metaMap) throws IOException;
+    void addMissingAttributeMap(AttributeMap attributeMap) throws IOException;
 
     void closeDelete() throws IOException;
 }

@@ -16,7 +16,7 @@
 
 package stroom.volume;
 
-import stroom.node.shared.Volume;
+import stroom.node.shared.VolumeEntity;
 import stroom.node.shared.VolumeState;
 
 import java.util.List;
@@ -27,8 +27,8 @@ public class WeightedFreePercentRandomVolumeSelector implements VolumeSelector {
     private final RandomVolumeSelector randomVolumeSelector = new RandomVolumeSelector();
 
     @Override
-    public Volume select(final List<Volume> list) {
-        final List<Volume> filtered = VolumeListUtil.removeVolumesWithoutValidState(list);
+    public VolumeEntity select(final List<VolumeEntity> list) {
+        final List<VolumeEntity> filtered = VolumeListUtil.removeVolumesWithoutValidState(list);
         if (filtered.size() == 0) {
             return randomVolumeSelector.select(list);
         }
@@ -50,9 +50,9 @@ public class WeightedFreePercentRandomVolumeSelector implements VolumeSelector {
         return filtered.get(index);
     }
 
-    private double[] getWeightingThresholds(final List<Volume> list) {
+    private double[] getWeightingThresholds(final List<VolumeEntity> list) {
         double totalFractionFree = 0;
-        for (final Volume volume : list) {
+        for (final VolumeEntity volume : list) {
             final VolumeState volumeState = volume.getVolumeState();
             final double total = volumeState.getBytesTotal();
             final double free = volumeState.getBytesFree();
@@ -64,7 +64,7 @@ public class WeightedFreePercentRandomVolumeSelector implements VolumeSelector {
         final double increment = 1D / totalFractionFree;
         final double[] thresholds = new double[list.size()];
         int i = 0;
-        for (final Volume volume : list) {
+        for (final VolumeEntity volume : list) {
             final VolumeState volumeState = volume.getVolumeState();
             final double total = volumeState.getBytesTotal();
             final double free = volumeState.getBytesFree();

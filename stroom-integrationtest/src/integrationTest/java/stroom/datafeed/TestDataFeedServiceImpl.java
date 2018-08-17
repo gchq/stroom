@@ -20,11 +20,8 @@ package stroom.datafeed;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import stroom.feed.FeedService;
+import stroom.data.store.impl.fs.MockStreamStore;
 import stroom.feed.StroomHeaderArguments;
-import stroom.feed.shared.Feed;
-import stroom.feed.shared.Feed.FeedStatus;
-import stroom.streamstore.MockStreamStore;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 
@@ -47,8 +44,8 @@ import java.util.zip.ZipOutputStream;
 public class TestDataFeedServiceImpl extends TestBase {
     @Inject
     private DataFeedServlet dataFeedService;
-    @Inject
-    private FeedService feedService;
+    //    @Inject
+//    private FeedService feedService;
     @Inject
     private MockHttpServletRequest request;
     @Inject
@@ -61,10 +58,10 @@ public class TestDataFeedServiceImpl extends TestBase {
         request.resetMock();
         response.resetMock();
         streamStore.clear();
-        final Feed referenceFeed = feedService.create("TEST-FEED");
-        referenceFeed.setStatus(FeedStatus.RECEIVE);
-        referenceFeed.setReference(true);
-        feedService.save(referenceFeed);
+//        final FeedDoc referenceFeed = feedService.create("TEST-FEED");
+//        referenceFeed.setStatus(FeedStatus.RECEIVE);
+//        referenceFeed.setReference(true);
+//        feedService.save(referenceFeed);
     }
 
     @Test

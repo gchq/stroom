@@ -19,21 +19,19 @@ package stroom.importexport;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.entity.shared.DocRefUtil;
+import stroom.docref.DocRef;
 import stroom.entity.shared.DocRefs;
 import stroom.explorer.ExplorerNodeService;
 import stroom.explorer.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.feed.FeedService;
-import stroom.feed.shared.Feed;
+import stroom.feed.FeedStore;
+import stroom.feed.shared.FeedDoc;
 import stroom.importexport.shared.ImportState;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.docref.DocRef;
 import stroom.resource.ResourceStore;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.CommonTestControl;
 import stroom.util.shared.ResourceKey;
 import stroom.util.test.FileSystemTestUtil;
 
@@ -48,9 +46,7 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
     @Inject
     private PipelineStore pipelineStore;
     @Inject
-    private FeedService feedService;
-    @Inject
-    private CommonTestControl commonTestControl;
+    private FeedStore feedStore;
     @Inject
     private ExplorerService explorerService;
     @Inject
@@ -81,25 +77,25 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
         tran2.setParentPipeline(tran1Ref);
         tran2 = pipelineStore.writeDocument(tran2);
 
-        final DocRef referenceFeedRef = explorerService.create(Feed.ENTITY_TYPE, FileSystemTestUtil.getUniqueTestString(), folder1, null);
-        final Feed referenceFeed = feedService.readDocument(referenceFeedRef);
+        final DocRef referenceFeedRef = explorerService.create(FeedDoc.DOCUMENT_TYPE, FileSystemTestUtil.getUniqueTestString(), folder1, null);
+        final FeedDoc referenceFeed = feedStore.readDocument(referenceFeedRef);
         referenceFeed.setDescription("Description");
-        feedService.save(referenceFeed);
+        feedStore.writeDocument(referenceFeed);
 
-        final DocRef eventFeedRef = explorerService.create(Feed.ENTITY_TYPE, FileSystemTestUtil.getUniqueTestString(), folder2, null);
-        Feed eventFeed = feedService.readDocument(eventFeedRef);
+        final DocRef eventFeedRef = explorerService.create(FeedDoc.DOCUMENT_TYPE, FileSystemTestUtil.getUniqueTestString(), folder2, null);
+        FeedDoc eventFeed = feedStore.readDocument(eventFeedRef);
         eventFeed.setDescription("Description");
         // eventFeed.getReferenceFeed().add(referenceFeed);
-        eventFeed = feedService.save(eventFeed);
+        eventFeed = feedStore.writeDocument(eventFeed);
 
-        final DocRef eventFeedChildRef = explorerService.create(Feed.ENTITY_TYPE, FileSystemTestUtil.getUniqueTestString(), folder2child1, null);
-        final Feed eventFeedChild = feedService.readDocument(eventFeedChildRef);
+        final DocRef eventFeedChildRef = explorerService.create(FeedDoc.DOCUMENT_TYPE, FileSystemTestUtil.getUniqueTestString(), folder2child1, null);
+        final FeedDoc eventFeedChild = feedStore.readDocument(eventFeedChildRef);
         eventFeedChild.setDescription("Description");
         // eventFeedChild.getReferenceFeed().add(referenceFeed);
-        feedService.save(eventFeedChild);
+        feedStore.writeDocument(eventFeedChild);
 
         final int startTranslationSize = pipelineStore.list().size();
-        final int startFeedSize = commonTestControl.countEntity(Feed.class);
+        final int startFeedSize = feedStore.list().size();
 
         final ResourceKey file = resourceStore.createTempFile("Export.zip");
         final DocRefs docRefs = new DocRefs();
@@ -117,8 +113,8 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
         pipelineStore.deleteDocument(tran2.getUuid());
         Assert.assertEquals(startTranslationSize - 1, pipelineStore.list().size());
 
-        feedService.delete(eventFeed);
-        Assert.assertEquals(startFeedSize - 1, commonTestControl.countEntity(Feed.class));
+        feedStore.deleteDocument(eventFeedRef.getUuid());
+        Assert.assertEquals(startFeedSize - 1, feedStore.list().size());
 
         // Import
         final List<ImportState> confirmations = importExportService
@@ -130,7 +126,7 @@ public class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
 
         importExportService.performImportWithConfirmation(resourceStore.getTempFile(file), confirmations);
 
-        Assert.assertEquals(startFeedSize, commonTestControl.countEntity(Feed.class));
+        Assert.assertEquals(startFeedSize, feedStore.list().size());
         Assert.assertEquals(startTranslationSize, pipelineStore.list().size());
 
         final ResourceKey fileChild = resourceStore.createTempFile("ExportChild.zip");

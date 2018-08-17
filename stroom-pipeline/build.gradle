@@ -1,19 +1,22 @@
 ext.moduleName = 'stroom.pipeline'
 
 dependencies {
-    //testCompile project(':stroom-core-server')
+    compile project(':stroom-data-meta:stroom-data-meta-api')
+    compile project(':stroom-data-store:stroom-data-store-api')
+    compile project(':stroom-properties:stroom-properties-api')
     compile project(':stroom-core-server')
     compile project(':stroom-core-shared')
-    compile project(':stroom-docstore-shared')
+    compile project(':stroom-docstore:stroom-docstore-shared')
+    compile project(':stroom-docstore:stroom-docstore-server')
     compile project(':stroom-entity-shared')
-    compile project(':stroom-security-api')
-    compile project(':stroom-statistics-api')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-statistics:stroom-statistics-api')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
-    compile project(':stroom-explorer-api')
+    compile project(':stroom-explorer:stroom-explorer-api')
+    compile project(':stroom-task:stroom-task-api')
 
     compile project(':stroom-connectors')
-    permitUnusedDeclared project(':stroom-connectors')
 
     compile libs.commons_lang
     compile libs.guava
@@ -23,7 +26,7 @@ dependencies {
     compile libs.jackson_core
     compile libs.javax_inject
     compile libs.jersey_client
-    compile libs.javax_validation
+    compile libs.jetty_http
     compile libs.saxon_he
     compile libs.slf4j_api
     compile libs.stax_api
@@ -34,6 +37,9 @@ dependencies {
     compile libs.swagger_annotations
     compile libs.dropwizard_metrics_healthchecks
 
+    testCompile project(':stroom-security:stroom-security-impl-mock')
+    testCompile project(':stroom-data-meta:stroom-data-meta-impl-mock')
+    testCompile project(':stroom-properties:stroom-properties-impl-mock')
     testCompile project(':stroom-test-common')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')

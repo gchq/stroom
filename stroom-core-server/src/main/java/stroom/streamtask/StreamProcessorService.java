@@ -20,8 +20,8 @@ package stroom.streamtask;
 import stroom.entity.BaseEntityService;
 import stroom.entity.FindService;
 import stroom.streamtask.shared.FindStreamProcessorCriteria;
-import stroom.streamtask.shared.StreamProcessor;
+import stroom.streamtask.shared.Processor;
 
-public interface StreamProcessorService extends BaseEntityService<StreamProcessor>, FindService<StreamProcessor, FindStreamProcessorCriteria> {
-    StreamProcessor loadByIdInsecure(long id);
+public interface StreamProcessorService extends BaseEntityService<Processor>, FindService<Processor, FindStreamProcessorCriteria> {
+    Processor loadByIdInsecure(long id);
 }

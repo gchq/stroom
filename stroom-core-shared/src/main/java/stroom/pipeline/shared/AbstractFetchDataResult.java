@@ -16,31 +16,30 @@
 
 package stroom.pipeline.shared;
 
-import stroom.streamstore.shared.StreamType;
+import stroom.docref.SharedObject;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.RowCount;
-import stroom.docref.SharedObject;
 
 import java.util.List;
 
 public abstract class AbstractFetchDataResult implements SharedObject {
     private static final long serialVersionUID = 7559713171858774241L;
 
-    private StreamType streamType;
+    private String streamType;
     private String classification;
     private OffsetRange<Long> streamRange;
     private RowCount<Long> streamRowCount;
     private OffsetRange<Long> pageRange;
     private RowCount<Long> pageRowCount;
-    private List<StreamType> availableChildStreamTypes;
+    private List<String> availableChildStreamTypes;
 
     public AbstractFetchDataResult() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public AbstractFetchDataResult(final StreamType streamType, final String classification,
+    public AbstractFetchDataResult(final String streamType, final String classification,
                                    final OffsetRange<Long> streamRange, final RowCount<Long> streamRowCount, final OffsetRange<Long> pageRange,
-                                   final RowCount<Long> pageRowCount, final List<StreamType> availableChildStreamTypes) {
+                                   final RowCount<Long> pageRowCount, final List<String> availableChildStreamTypes) {
         this.streamType = streamType;
         this.classification = classification;
         this.streamRange = streamRange;
@@ -50,7 +49,7 @@ public abstract class AbstractFetchDataResult implements SharedObject {
         this.availableChildStreamTypes = availableChildStreamTypes;
     }
 
-    public StreamType getStreamType() {
+    public String getStreamType() {
         return streamType;
     }
 
@@ -74,7 +73,7 @@ public abstract class AbstractFetchDataResult implements SharedObject {
         return pageRowCount;
     }
 
-    public List<StreamType> getAvailableChildStreamTypes() {
+    public List<String> getAvailableChildStreamTypes() {
         return availableChildStreamTypes;
     }
 }

@@ -1,0 +1,50 @@
+ext.moduleName = 'stroom.dashboard.server'
+
+dependencies {
+    compile project(':stroom-properties:stroom-properties-api')
+    compile project(':stroom-dashboard:stroom-dashboard-shared')
+    compile project(':stroom-core-server')
+//    compile project(':stroom-core-shared')
+    compile project(':stroom-docstore:stroom-docstore-server')
+    compile project(':stroom-entity-shared')
+    compile project(':stroom-util-shared')
+    compile project(':stroom-util')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-explorer:stroom-explorer-api')
+    compile project(':stroom-task:stroom-task-api')
+
+    compile libs.stroomExpression
+    compile libs.stroomDocRef
+    compile libs.stroomQueryApi
+    compile libs.eventLogging
+    compile libs.guava
+    compile libs.jackson_annotations
+    compile libs.jackson_databind
+    compile libs.javax_inject
+    compile libs.javax_servlet_api
+
+    compile libs.jaxb_api
+
+    compile libs.poi
+    compile libs.poi_ooxml
+    compile libs.slf4j_api
+    compile libs.ws_rs_api
+    compile libs.guice4
+//    compile libs.flyway_core
+    compile libs.hibernate_jpa_api
+
+//    testCompile project(':stroom-test-common')
+
+    testCompile libs.hamcrest_core
+    testCompile libs.junit
+    testCompile libs.mockito_core
+
+    //the following logging libs are needed when running junits outside dropwizard
+    testRuntime libs.jcl_over_slf4j
+    testRuntime libs.jul_to_slf4j
+    testRuntime libs.log4j_over_slf4j
+    testRuntime libs.logback_classic
+    testRuntime libs.logback_core
+    testRuntime libs.jaxb_runtime
+    testRuntime libs.javax_activation
+}

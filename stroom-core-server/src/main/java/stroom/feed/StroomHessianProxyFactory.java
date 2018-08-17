@@ -20,6 +20,8 @@ import com.caucho.hessian.client.HessianConnectionFactory;
 import com.caucho.hessian.client.HessianProxyFactory;
 import com.caucho.hessian.client.StroomHessianURLConnectionFactory;
 
+import java.lang.reflect.InvocationTargetException;
+
 public class StroomHessianProxyFactory extends HessianProxyFactory {
     private boolean ignoreSSLHostnameVerifier = true;
 
@@ -34,11 +36,11 @@ public class StroomHessianProxyFactory extends HessianProxyFactory {
 
                 final Class<?> cl = Class.forName(className, false, loader);
 
-                factory = (HessianConnectionFactory) cl.newInstance();
+                factory = (HessianConnectionFactory) cl.getConstructor().newInstance();
 
                 return factory;
             }
-        } catch (final ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+        } catch (final NoSuchMethodException | InvocationTargetException | ClassNotFoundException | InstantiationException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
 

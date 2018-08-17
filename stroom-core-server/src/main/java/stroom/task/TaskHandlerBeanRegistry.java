@@ -18,7 +18,9 @@ package stroom.task;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.shared.Task;
+import stroom.task.api.TaskHandler;
+import stroom.task.api.TaskHandlerBean;
+import stroom.task.shared.Task;
 import stroom.guice.StroomBeanStore;
 
 import javax.inject.Inject;

@@ -24,8 +24,8 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.AlertEvent;
-import stroom.node.client.ClientPropertyCache;
-import stroom.node.shared.ClientProperties;
+import stroom.properties.global.client.ClientPropertyCache;
+import stroom.properties.shared.ClientProperties;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 

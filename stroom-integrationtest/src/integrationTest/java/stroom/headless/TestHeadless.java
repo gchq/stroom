@@ -18,6 +18,7 @@ package stroom.headless;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import stroom.test.ComparisonHelper;
 import stroom.test.ContentImportService.ContentPack;
@@ -37,6 +38,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
+@Ignore
 public class TestHeadless {
     private static final Version CORE_XML_SCHEMAS_VERSION = Version.of(1, 0);
     private static final Version EVENT_LOGGING_XML_SCHEMA_VERSION = Version.of(1, 0);

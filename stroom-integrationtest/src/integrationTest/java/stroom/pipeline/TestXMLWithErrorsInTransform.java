@@ -19,7 +19,6 @@ package stroom.pipeline;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-import stroom.feed.shared.Feed;
 import stroom.guice.PipelineScopeRunnable;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.RecordErrorReceiver;
@@ -35,7 +34,6 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.RecordCount;
-import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.docref.DocRef;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.StroomPipelineTestFileUtil;
@@ -130,8 +128,8 @@ public class TestXMLWithErrorsInTransform extends AbstractProcessIntegrationTest
             final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
             final Pipeline pipeline = pipelineFactory.create(pipelineData);
 
-            feedHolder.setFeed(new Feed());
-
+//            feedHolder.setFeedName("");
+//
 //            // Setup the meta data holder.
 //            metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(streamHolder, streamProcessorService, pipelineStore));
 

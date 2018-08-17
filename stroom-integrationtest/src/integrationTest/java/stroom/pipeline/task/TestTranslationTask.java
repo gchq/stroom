@@ -18,9 +18,10 @@ package stroom.pipeline.task;
 
 import org.junit.Assert;
 import org.junit.Test;
-import stroom.streamstore.MockStreamStore;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamType;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.impl.mock.MockDataMetaService;
+import stroom.data.store.impl.fs.MockStreamStore;
+import stroom.streamstore.shared.StreamTypeNames;
 import stroom.streamtask.StreamProcessorTaskExecutor;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.CommonTranslationTest;
@@ -33,6 +34,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map.Entry;
 
 public class TestTranslationTask extends AbstractProcessIntegrationTest {
     private static final int N3 = 3;
@@ -40,6 +42,8 @@ public class TestTranslationTask extends AbstractProcessIntegrationTest {
 
     private static final String DIR = "TestTranslationTask/";
 
+    @Inject
+    private MockDataMetaService streamMetaService;
     @Inject
     private MockStreamStore streamStore;
     @Inject
@@ -66,9 +70,11 @@ public class TestTranslationTask extends AbstractProcessIntegrationTest {
         final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(DIR);
         final Path outputDir = StroomPipelineTestFileUtil.getTestOutputDir().resolve(DIR);
 
-        for (final Stream stream : streamStore.getFileData().keySet()) {
-            if (stream.getStreamType().equals(StreamType.EVENTS)) {
-                final byte[] data = streamStore.getFileData().get(stream).get(stream.getStreamType().getId());
+        for (final Entry<Long, Data> entry : streamMetaService.getDataMap().entrySet()) {
+            final long streamId = entry.getKey();
+            final Data stream = entry.getValue();
+            if (StreamTypeNames.EVENTS.equals(stream.getTypeName())) {
+                final byte[] data = streamStore.getFileData().get(streamId).get(stream.getTypeName());
 
                 // Write the actual XML out.
                 final OutputStream os = StroomPipelineTestFileUtil.getOutputStream(outputDir, "TestTranslationTask.out");
@@ -91,7 +97,7 @@ public class TestTranslationTask extends AbstractProcessIntegrationTest {
      * @throws IOException Could be thrown.
      */
     @Test
-    public void testInvalidResource() throws IOException {
+    public void testInvalidResource() {
         commonPipelineTest.setup(CommonTranslationTest.FEED_NAME, CommonTranslationTest.INVALID_RESOURCE_NAME);
 
         final List<StreamProcessorTaskExecutor> results = commonPipelineTest.processAll();

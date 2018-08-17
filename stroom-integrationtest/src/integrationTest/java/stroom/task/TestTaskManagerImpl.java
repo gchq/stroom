@@ -5,7 +5,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.util.shared.ThreadPool;
+import stroom.task.shared.ThreadPool;
 
 import javax.inject.Inject;
 import java.util.Queue;

@@ -1,0 +1,47 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<pipeline>
+   <elements>
+      <add>
+         <element>
+            <id>hdfsFileAppender</id>
+            <type>HDFSFileAppender</type>
+         </element>
+         <element>
+            <id>fileAppender</id>
+            <type>FileAppender</type>
+         </element>
+      </add>
+   </elements>
+   <properties>
+      <add>
+         <property>
+            <element>hdfsFileAppender</element>
+            <name>fileSystemUri</name>
+            <value>
+               <string>hdfs://some.host.name.uk:nameNodePort</string>
+            </value>
+         </property>
+         <property>
+            <element>hdfsFileAppender</element>
+            <name>runAsUser</name>
+            <value>
+               <string>hdfs</string>
+            </value>
+         </property>
+         <property>
+            <element>hdfsFileAppender</element>
+            <name>outputPaths</name>
+            <value>
+               <string>/stroom/${year}-${month}-${day}T${hour}:${minute}:${second}.${millis}Z${uuid}.txt</string>
+            </value>
+         </property>
+         <property>
+            <element>fileAppender</element>
+            <name>outputPaths</name>
+            <value>
+               <string>${stroom.temp}/output.log</string>
+            </value>
+         </property>
+      </add>
+   </properties>
+</pipeline>

@@ -16,8 +16,8 @@
 
 package stroom.importexport;
 
-import stroom.node.shared.ClientProperties;
-import stroom.properties.StroomPropertyService;
+import stroom.properties.shared.ClientProperties;
+import stroom.properties.api.PropertyService;
 import stroom.guice.StroomBeanStore;
 
 import javax.inject.Inject;
@@ -30,12 +30,12 @@ import java.util.concurrent.ConcurrentHashMap;
 class ImportExportActionHandlers {
     private final StroomBeanStore beanStore;
     private final ImportExportActionHandlerFactory importExportActionHandlerFactory;
-    private final StroomPropertyService propertyService;
+    private final PropertyService propertyService;
 
     private volatile Handlers handlers;
 
     @Inject
-    ImportExportActionHandlers(final StroomBeanStore beanStore, final ImportExportActionHandlerFactory importExportActionHandlerFactory, final StroomPropertyService propertyService) {
+    ImportExportActionHandlers(final StroomBeanStore beanStore, final ImportExportActionHandlerFactory importExportActionHandlerFactory, final PropertyService propertyService) {
         this.beanStore = beanStore;
         this.importExportActionHandlerFactory = importExportActionHandlerFactory;
         this.propertyService = propertyService;
@@ -62,7 +62,7 @@ class ImportExportActionHandlers {
 
         Handlers(final StroomBeanStore beanStore,
                  final ImportExportActionHandlerFactory importExportActionHandlerFactory,
-                 final StroomPropertyService propertyService) {
+                 final PropertyService propertyService) {
             // Add external handlers.
             propertyService.getCsvProperty(ClientProperties.EXTERNAL_DOC_REF_TYPES)
                     .forEach(type -> {

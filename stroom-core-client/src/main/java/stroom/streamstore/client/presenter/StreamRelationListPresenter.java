@@ -26,20 +26,16 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
 import stroom.entity.shared.Sort.Direction;
-import stroom.feed.shared.Feed;
-import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
-import stroom.streamstore.shared.FindStreamCriteria;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamAttributeConstants;
-import stroom.streamstore.shared.StreamAttributeMap;
-import stroom.streamstore.shared.StreamDataSource;
-import stroom.streamstore.shared.StreamStatus;
-import stroom.streamstore.shared.StreamType;
+import stroom.data.meta.api.FindDataCriteria;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataStatus;
+import stroom.data.meta.api.DataRow;
+import stroom.data.meta.api.MetaDataSource;
 import stroom.util.shared.Expander;
+import stroom.util.shared.ModelStringUtil;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 
 import java.util.ArrayList;
@@ -48,10 +44,10 @@ import java.util.List;
 import java.util.Map;
 
 public class StreamRelationListPresenter extends AbstractStreamListPresenter {
-    private final Map<Long, StreamAttributeMap> streamMap = new HashMap<>();
+    private final Map<Long, DataRow> streamMap = new HashMap<>();
     private int maxDepth = -1;
 
-    private Column<StreamAttributeMap, Expander> expanderColumn;
+    private Column<DataRow, Expander> expanderColumn;
 
     @Inject
     public StreamRelationListPresenter(final EventBus eventBus,
@@ -61,7 +57,7 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
         dataProvider.setAllowNoConstraint(false);
     }
 
-    public void setSelectedStream(final StreamAttributeMap streamAttributeMap, final boolean fireEvents,
+    public void setSelectedStream(final DataRow streamAttributeMap, final boolean fireEvents,
                                   final boolean showSystemFiles) {
         if (streamAttributeMap == null) {
             setCriteria(null);
@@ -69,18 +65,13 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
         } else {
             final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
             if (!showSystemFiles) {
-                builder.addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue());
+                builder.addTerm(MetaDataSource.STATUS, Condition.EQUALS, DataStatus.UNLOCKED.getDisplayValue());
             }
-            builder.addTerm(StreamDataSource.STREAM_ID, Condition.EQUALS, String.valueOf(streamAttributeMap.getStream().getId()));
+            builder.addTerm(MetaDataSource.STREAM_ID, Condition.EQUALS, String.valueOf(streamAttributeMap.getData().getId()));
 
-            final FindStreamAttributeMapCriteria criteria = new FindStreamAttributeMapCriteria();
-            final FindStreamCriteria findStreamCriteria = criteria.obtainFindStreamCriteria();
-            findStreamCriteria.setExpression(builder.build());
-            findStreamCriteria.getFetchSet().add(Stream.ENTITY_TYPE);
-            findStreamCriteria.getFetchSet().add(Feed.ENTITY_TYPE);
-            findStreamCriteria.getFetchSet().add(PipelineDoc.DOCUMENT_TYPE);
-            findStreamCriteria.getFetchSet().add(StreamType.ENTITY_TYPE);
-            findStreamCriteria.setSort(StreamDataSource.CREATE_TIME, Direction.ASCENDING, false);
+            final FindDataCriteria criteria = new FindDataCriteria();
+            criteria.setExpression(builder.build());
+            criteria.setSort(MetaDataSource.CREATE_TIME, Direction.ASCENDING, false);
 
             setCriteria(criteria);
         }
@@ -89,22 +80,22 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
     }
 
     @Override
-    protected ResultList<StreamAttributeMap> onProcessData(final ResultList<StreamAttributeMap> data) {
+    protected ResultList<DataRow> onProcessData(final ResultList<DataRow> data) {
         // Store streams against id.
         streamMap.clear();
-        for (final StreamAttributeMap row : data) {
-            final Stream stream = row.getStream();
+        for (final DataRow row : data) {
+            final Data stream = row.getData();
             streamMap.put(stream.getId(), row);
         }
 
-        for (final StreamAttributeMap row : data) {
-            final Stream stream = row.getStream();
+        for (final DataRow row : data) {
+            final Data stream = row.getData();
             streamMap.put(stream.getId(), row);
         }
 
         // Now use the root streams and attach child streams to them.
         maxDepth = -1;
-        final List<StreamAttributeMap> newData = new ArrayList<>();
+        final List<DataRow> newData = new ArrayList<>();
         addChildren(null, data, newData, 0);
 
         // Set the width of the expander column so that all expanders
@@ -115,19 +106,19 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
             getView().setColumnWidth(expanderColumn, 0, Unit.PX);
         }
 
-        final ResultList<StreamAttributeMap> processed = new BaseResultList<>(newData,
+        final ResultList<DataRow> processed = new BaseResultList<>(newData,
                 (long) data.getStart(), (long) data.getSize(), data.isExact());
         return super.onProcessData(processed);
     }
 
-    private void addChildren(final StreamAttributeMap parent, final List<StreamAttributeMap> data,
-                             final List<StreamAttributeMap> newData, final int depth) {
-        for (final StreamAttributeMap row : data) {
-            final Stream stream = row.getStream();
+    private void addChildren(final DataRow parent, final List<DataRow> data,
+                             final List<DataRow> newData, final int depth) {
+        for (final DataRow row : data) {
+            final Data stream = row.getData();
 
             if (parent == null) {
                 // Add roots.
-                if (stream.getParentStreamId() == null || streamMap.get(stream.getParentStreamId()) == null) {
+                if (stream.getParentDataId() == null || streamMap.get(stream.getParentDataId()) == null) {
                     newData.add(row);
                     addChildren(row, data, newData, depth + 1);
 
@@ -137,8 +128,8 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
                 }
             } else {
                 // Add children.
-                if (stream.getParentStreamId() != null) {
-                    final StreamAttributeMap thisParent = streamMap.get(stream.getParentStreamId());
+                if (stream.getParentDataId() != null) {
+                    final DataRow thisParent = streamMap.get(stream.getParentDataId());
                     if (thisParent != null && thisParent.equals(parent)) {
                         newData.add(row);
                         addChildren(row, data, newData, depth + 1);
@@ -156,9 +147,9 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
     protected void addColumns(final boolean allowSelectAll) {
         addSelectedColumn(allowSelectAll);
 
-        expanderColumn = new Column<StreamAttributeMap, Expander>(new ExpanderCell()) {
+        expanderColumn = new Column<DataRow, Expander>(new ExpanderCell()) {
             @Override
-            public Expander getValue(final StreamAttributeMap row) {
+            public Expander getValue(final DataRow row) {
                 return buildExpander(row);
             }
         };
@@ -171,34 +162,36 @@ public class StreamRelationListPresenter extends AbstractStreamListPresenter {
         addFeedColumn();
         addPipelineColumn();
 
-        addAttributeColumn("Raw", StreamAttributeConstants.STREAM_SIZE, ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Disk", StreamAttributeConstants.FILE_SIZE, ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Read", StreamAttributeConstants.REC_READ, ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Write", StreamAttributeConstants.REC_WRITE, ColumnSizeConstants.SMALL_COL);
-        addAttributeColumn("Fatal", StreamAttributeConstants.REC_FATAL, 40);
-        addAttributeColumn("Error", StreamAttributeConstants.REC_ERROR, 40);
-        addAttributeColumn("Warn", StreamAttributeConstants.REC_WARN, 40);
-        addAttributeColumn("Info", StreamAttributeConstants.REC_INFO, 40);
-        addAttributeColumn("Retention", StreamAttributeConstants.RETENTION_AGE, ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Raw", MetaDataSource.STREAM_SIZE, v -> ModelStringUtil.formatIECByteSizeString(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Disk", MetaDataSource.FILE_SIZE, v -> ModelStringUtil.formatIECByteSizeString(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Read", MetaDataSource.REC_READ, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Write", MetaDataSource.REC_WRITE, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Fatal", MetaDataSource.REC_FATAL, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
+        addAttributeColumn("Error", MetaDataSource.REC_ERROR, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
+        addAttributeColumn("Warn", MetaDataSource.REC_WARN, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
+        addAttributeColumn("Info", MetaDataSource.REC_INFO, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
+
+        // TODO : @66 Add data retention column back into the table.
+//        addAttributeColumn("Retention", StreamAttributeConstants.RETENTION_AGE, ColumnSizeConstants.SMALL_COL);
 
         getView().addEndColumn(new EndColumn<>());
     }
 
-    private Expander buildExpander(final StreamAttributeMap row) {
+    private Expander buildExpander(final DataRow row) {
         return new Expander(getDepth(row), true, true);
     }
 
-    private int getDepth(final StreamAttributeMap row) {
+    private int getDepth(final DataRow row) {
         int depth = 0;
-        Long parentId = row.getStream().getParentStreamId();
+        Long parentId = row.getData().getParentDataId();
         while (parentId != null) {
             depth++;
 
-            final StreamAttributeMap parentRow = streamMap.get(parentId);
+            final DataRow parentRow = streamMap.get(parentId);
             if (parentRow == null) {
                 parentId = null;
             } else {
-                parentId = parentRow.getStream().getParentStreamId();
+                parentId = parentRow.getData().getParentDataId();
             }
         }
 

@@ -18,9 +18,9 @@ package stroom.pipeline.task;
 
 import org.junit.Ignore;
 import org.junit.Test;
+import stroom.data.store.impl.fs.MockStreamStore;
+import stroom.data.store.tools.StoreCreationTool;
 import stroom.node.NodeCache;
-import stroom.streamstore.MockStreamStore;
-import stroom.streamstore.tools.StoreCreationTool;
 import stroom.task.TaskManager;
 import stroom.test.AbstractProcessIntegrationTest;
 
@@ -123,10 +123,10 @@ public class TestTranslationTaskContextAndFlattening extends AbstractProcessInte
     // // First try and look for raw reference streams that need processing.
     // final FindTranslationStreamTaskCriteria criteria = new
     // FindTranslationStreamTaskCriteria();
-    // criteria.setNode(nodeCache.getDefaultNode());
+    // criteria.setNode(nodeCache.get());
     // criteria.getPageRequest().setLength(1);
     // criteria.setStreamTaskStatus(TaskStatus.UNPROCESSED);
-    // criteria.setStreamType(StreamType.RAW_REFERENCE);
+    // criteria.setType(StreamType.RAW_REFERENCE);
     // List<TranslationStreamTask> processTasks = translationStreamTaskService
     // .assignUnprocessed(criteria);
     //
@@ -136,7 +136,7 @@ public class TestTranslationTaskContextAndFlattening extends AbstractProcessInte
     // task = new StreamProcessorTask(processTask.getElementId());
     // } else {
     // // Otherwise look for some raw event streams that need processing.
-    // criteria.setStreamType(StreamType.RAW_EVENTS);
+    // criteria.setType(StreamType.RAW_EVENTS);
     // processTasks = translationStreamTaskService
     // .assignUnprocessed(criteria);
     //

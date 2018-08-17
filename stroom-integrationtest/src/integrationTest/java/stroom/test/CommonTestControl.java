@@ -27,10 +27,10 @@ public interface CommonTestControl {
 
     void createRequiredXMLSchemas();
 
-    /**
-     * Shutdown database.
-     */
-    void shutdown();
+//    /**
+//     * Shutdown database.
+//     */
+//    void shutdown();
 
     /**
      * Return a entity count.

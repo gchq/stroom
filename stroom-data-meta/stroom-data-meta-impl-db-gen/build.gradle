@@ -1,0 +1,47 @@
+apply plugin: 'nu.studer.jooq'
+
+ext.moduleName = 'stroom.data.meta.impl.db.gen'
+
+dependencies {
+    compile libs.javax_annotation
+    // permitUnusedDeclared libs.javax_annotation
+    compile libs.jooq
+
+    jooqRuntime libs.mysql_connector_java
+}
+
+def propNameJooqGeneration = 'jooqGeneration'
+
+// to run the jooq code generation add the following to the gradle command arguments
+// -PjooqGeneration=true
+if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
+    configure(project) {
+        //configure jooq plugin to generate code
+        jooq {
+            version = versions.jooq
+            edition = 'OSS'
+            sample(sourceSets.main) {
+                jdbc {
+                    driver = 'com.mysql.jdbc.Driver'
+                    url = 'jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8'
+                    user = 'stroomuser'
+                    password = 'stroompassword1'
+                }
+                generator {
+                    name = 'org.jooq.util.DefaultGenerator'
+                    database {
+                        name = 'org.jooq.util.mysql.MySQLDatabase'
+                        // Add anything you want included in generation below
+                        includes = 'data_feed|data_type|data_processor|data|meta_key|meta_val'
+                        // We don't want to include flyway versioning
+                        excludes = 'schema_version'
+                    }
+                    target {
+                        packageName = 'stroom.data.meta.impl.db'
+                        directory = 'src/main/java'
+                    }
+                }
+            }
+        }
+    }
+}

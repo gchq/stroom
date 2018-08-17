@@ -26,7 +26,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.task.shared.TaskProgress;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.TaskId;
+import stroom.task.shared.TaskId;
 
 public class TaskPresenter extends MyPresenterWidget<TaskPresenter.TaskView> {
     @Inject

@@ -16,7 +16,7 @@
 
 package stroom.importexport.shared;
 
-import stroom.entity.shared.Action;
+import stroom.task.shared.Action;
 import stroom.entity.shared.ResultList;
 
 public class FetchDependenciesAction extends Action<ResultList<Dependency>> {

@@ -4,7 +4,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import stroom.content.ContentSyncConfig;
-import stroom.datafeed.MetaMapFilterFactory;
+import stroom.datafeed.AttributeMapFilterFactory;
 import stroom.datafeed.RequestHandler;
 import stroom.docstore.Persistence;
 import stroom.docstore.fs.FSPersistence;
@@ -18,7 +18,7 @@ import stroom.proxy.repo.ProxyRepositoryConfig;
 import stroom.proxy.repo.ProxyRepositoryManager;
 import stroom.proxy.repo.ProxyRepositoryReader;
 import stroom.proxy.repo.ProxyRepositoryReaderConfig;
-import stroom.ruleset.MetaMapFilterFactoryImpl;
+import stroom.ruleset.AttributeMapFilterFactoryImpl;
 import stroom.ruleset.RuleSetService;
 import stroom.ruleset.RuleSetServiceImpl;
 import stroom.security.SecurityContext;
@@ -46,7 +46,7 @@ public class ProxyModule extends AbstractModule {
         bind(ProxyRepositoryManager.class).asEagerSingleton();
         bind(ProxyRepositoryReader.class).asEagerSingleton();
 
-        bind(MetaMapFilterFactory.class).to(MetaMapFilterFactoryImpl.class);
+        bind(AttributeMapFilterFactory.class).to(AttributeMapFilterFactoryImpl.class);
         bind(RuleSetService.class).to(RuleSetServiceImpl.class);
         bind(SecurityContext.class).to(NoSecurityContext.class);
     }

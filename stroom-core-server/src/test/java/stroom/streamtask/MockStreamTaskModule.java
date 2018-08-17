@@ -20,7 +20,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import stroom.entity.shared.Clearable;
-import stroom.task.TaskHandler;
+import stroom.task.api.TaskHandler;
 
 public class MockStreamTaskModule extends AbstractModule {
     @Override

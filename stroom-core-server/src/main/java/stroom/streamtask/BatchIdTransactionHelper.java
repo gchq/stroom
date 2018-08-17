@@ -19,9 +19,9 @@ package stroom.streamtask;
 import stroom.entity.StroomDatabaseInfo;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.util.SqlBuilder;
-import stroom.streamstore.shared.Stream;
 
 import javax.inject.Inject;
+import java.util.List;
 
 
 // @Transactional
@@ -57,15 +57,25 @@ public class BatchIdTransactionHelper {
         return executeUpdate(sql);
     }
 
-    public long insertIntoTempIdTable(final String tempIdTable, final SqlBuilder select) {
-        final SqlBuilder sql = new SqlBuilder();
+    public long insertIntoTempIdTable(final String tempIdTable, final List<Long> idList) {
+        if (idList == null || idList.size() == 0) {
+            return 0;
+        }
 
+        final SqlBuilder sql = new SqlBuilder();
         sql.append("INSERT INTO ");
         sql.append(tempIdTable);
-        sql.append(" (");
-        sql.append(Stream.ID);
-        sql.append(") ");
-        sql.append(select);
+        sql.append(" (ID)");
+        sql.append(" VALUES (");
+
+        if (idList.size() > 0) {
+            for (Long id : idList) {
+                sql.arg(id);
+                sql.append(",");
+            }
+            sql.setLength(sql.length() - 1);
+            sql.append(")");
+        }
 
         if (stroomDatabaseInfo.isMysql()) {
             return executeUpdate(sql);

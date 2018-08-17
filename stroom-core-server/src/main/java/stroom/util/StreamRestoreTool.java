@@ -18,14 +18,9 @@ package stroom.util;
 
 import com.google.common.base.Strings;
 import org.apache.commons.lang.mutable.MutableInt;
-import stroom.entity.shared.SQLNameConstants;
-import stroom.feed.MetaMap;
-import stroom.feed.shared.Feed;
-import stroom.node.shared.Volume;
-import stroom.streamstore.shared.Stream;
-import stroom.streamstore.shared.StreamAttributeConstants;
-import stroom.streamstore.shared.StreamStatus;
-import stroom.streamstore.shared.StreamType;
+import stroom.data.meta.api.AttributeMap;
+import stroom.feed.AttributeMapUtil;
+import stroom.node.shared.VolumeEntity;
 import stroom.util.concurrent.SimpleConcurrentMap;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
@@ -39,11 +34,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -54,12 +47,16 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 public class StreamRestoreTool extends DatabaseTool {
-    static final int KEY_PAD = 30;
-    static final int COUNT_PAD = 10;
+    private static final int KEY_PAD = 30;
+    private static final int COUNT_PAD = 10;
     private static final String VOLUME_PATH = "VolumePath";
     private static final String STREAM_TYPE_PATH = "StreamTypePath";
     private static final String FILE_NAME = "FileName";
     private static final String FEED_ID = "FeedId";
+    private static final String STREAM_ID = "StreamId";
+    private static final String PARENT_STREAM_ID = "ParentStreamId";
+    private static final String CREATE_TIME = "CreateTime";
+    private static final String EFFECTIVE_TIME = "EffectiveTime";
     private static final String DATE_PATH = "DatePath";
     private static final String DEPTH = "Depth";
     private final BufferedReader inputReader = new BufferedReader(
@@ -92,11 +89,9 @@ public class StreamRestoreTool extends DatabaseTool {
             };
         }
     };
-    private Integer autoDeleteThreshold = null;
     private String deleteFile = null;
     private Map<String, Long> pathStreamTypeMap = null;
     private Map<String, Long> pathVolumeMap = null;
-    private Map<Long, String> feedIdNameMap = null;
     private boolean mock = false;
     private boolean inspect = false;
     private boolean sortKey = false;
@@ -125,16 +120,20 @@ public class StreamRestoreTool extends DatabaseTool {
         if (pathStreamTypeMap == null) {
             pathStreamTypeMap = new HashMap<>();
 
-            final String sql = "select " + StreamType.PATH + "," + StreamType.ID + " from " + StreamType.TABLE_NAME;
-            try (final Connection connection = getConnection()) {
-                try (final Statement statement = connection.createStatement()) {
-                    try (final ResultSet resultSet = statement.executeQuery(sql)) {
-                        while (resultSet.next()) {
-                            pathStreamTypeMap.put(resultSet.getString(1), resultSet.getLong(2));
-                        }
-                    }
-                }
-            }
+            // TODO : @66 FIX THIS
+//            final String sql = "select " + StreamTypeEntity.NAME + "," + StreamTypeEntity.ID + " from " + StreamTypeEntity.TABLE_NAME;
+//            try (final Connection connection = getConnection()) {
+//                try (final Statement statement = connection.createStatement()) {
+//                    try (final ResultSet resultSet = statement.executeQuery(sql)) {
+//                        while (resultSet.next()) {
+//                            final String name = resultSet.getString(1);
+//                            final long id = resultSet.getLong(2);
+//                            final String path = FileSystemStreamTypePaths.getPath(name);
+//                            pathStreamTypeMap.put(path, id);
+//                        }
+//                    }
+//                }
+//            }
         }
         return pathStreamTypeMap;
     }
@@ -142,7 +141,7 @@ public class StreamRestoreTool extends DatabaseTool {
     private Map<String, Long> getPathVolumeMap() throws SQLException {
         if (pathVolumeMap == null) {
             pathVolumeMap = new HashMap<>();
-            final String sql = "select " + Volume.PATH + "," + Volume.ID + " from " + Volume.TABLE_NAME;
+            final String sql = "select " + VolumeEntity.PATH + "," + VolumeEntity.ID + " from " + VolumeEntity.TABLE_NAME;
             try (final Connection connection = getConnection()) {
                 try (final Statement statement = connection.createStatement()) {
                     try (final ResultSet resultSet = statement.executeQuery(sql)) {
@@ -156,21 +155,21 @@ public class StreamRestoreTool extends DatabaseTool {
         return pathVolumeMap;
     }
 
-    private Map<Long, String> getFeedIdNameMap() throws SQLException {
-        if (feedIdNameMap == null) {
-            feedIdNameMap = new HashMap<>();
-            try (final Connection connection = getConnection()) {
-                try (final Statement statement = connection.createStatement()) {
-                    try (final ResultSet resultSet = statement.executeQuery("select " + Feed.ID + "," + SQLNameConstants.NAME + " from " + Feed.TABLE_NAME)) {
-                        while (resultSet.next()) {
-                            feedIdNameMap.put(resultSet.getLong(1), resultSet.getString(2));
-                        }
-                    }
-                }
-            }
-        }
-        return feedIdNameMap;
-    }
+//    private Map<Long, String> getFeedIdNameMap() throws SQLException {
+//        if (feedIdNameMap == null) {
+//            feedIdNameMap = new HashMap<>();
+//            try (final Connection connection = getConnection()) {
+//                try (final Statement statement = connection.createStatement()) {
+//                    try (final ResultSet resultSet = statement.executeQuery("select " + FeedEntity.ID + "," + SQLNameConstants.NAME + " from " + FeedEntity.TABLE_NAME)) {
+//                        while (resultSet.next()) {
+//                            feedIdNameMap.put(resultSet.getLong(1), resultSet.getString(2));
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//        return feedIdNameMap;
+//    }
 
     private void writeLine(final String msg) {
         System.out.println(msg);
@@ -255,33 +254,34 @@ public class StreamRestoreTool extends DatabaseTool {
             final List<KeyCount> sortedStreamTypeFeed = new ArrayList<>(streamTypeFeedStreamCount.values());
             sort(sortedStreamTypeFeed);
 
-            for (final KeyCount streamTypeFeed : sortedStreamTypeFeed) {
-                final String streamType = streamTypeFeed.getKey().get(0);
-                final String feed = streamTypeFeed.getKey().get(1);
-                if (inspect || streamTypeResponse.get(streamType).charValue() == 'i') {
-                    final String feedName = getFeedIdNameMap().get(Long.parseLong(feed));
-
-                    final String longLabel = "Feed " + feed + " '" + feedName + "', Stream Type " + streamType;
-
-                    writeTable(streamTypeFeedDateStreamCount.get(streamType).get(feed).values(), longLabel);
-
-                    if (!inspect) {
-                        if (autoDeleteThreshold != null && streamTypeFeedDateStreamCount.get(streamType).get(feed)
-                                .keySet().size() < autoDeleteThreshold) {
-                            writeLine(longLabel + " Lower than threshold ... deleting");
-
-                            processStreamTypeFeed(fileName, streamType, feed, 'd');
-                        } else {
-                            final char response = readQuestion(longLabel + " (D)elete, (R)estore, (S)kip",
-                                    new char[]{'d', 'r', 's'}, 's');
-
-                            if (response == 'd' || response == 'r') {
-                                processStreamTypeFeed(fileName, streamType, feed, response);
-                            }
-                        }
-                    }
-                }
-            }
+            // TODO : @66 FIX THIS
+//            for (final KeyCount streamTypeFeed : sortedStreamTypeFeed) {
+//                final String streamType = streamTypeFeed.getKey().get(0);
+//                final String feed = streamTypeFeed.getKey().get(1);
+//                if (inspect || streamTypeResponse.get(streamType).charValue() == 'i') {
+//                    final String feedName = getFeedIdNameMap().get(Long.parseLong(feed));
+//
+//                    final String longLabel = "Feed " + feed + " '" + feedName + "', Stream Type " + streamType;
+//
+//                    writeTable(streamTypeFeedDateStreamCount.get(streamType).get(feed).values(), longLabel);
+//
+//                    if (!inspect) {
+//                        if (autoDeleteThreshold != null && streamTypeFeedDateStreamCount.get(streamType).get(feed)
+//                                .keySet().size() < autoDeleteThreshold) {
+//                            writeLine(longLabel + " Lower than threshold ... deleting");
+//
+//                            processStreamTypeFeed(fileName, streamType, feed, 'd');
+//                        } else {
+//                            final char response = readQuestion(longLabel + " (D)elete, (R)estore, (S)kip",
+//                                    new char[]{'d', 'r', 's'}, 's');
+//
+//                            if (response == 'd' || response == 'r') {
+//                                processStreamTypeFeed(fileName, streamType, feed, response);
+//                            }
+//                        }
+//                    }
+//                }
+//            }
 
         } catch (final IOException | SQLException e) {
             e.printStackTrace();
@@ -299,7 +299,7 @@ public class StreamRestoreTool extends DatabaseTool {
     }
 
     public void setAutoDeleteThreshold(final Integer autoDeleteThreshold) {
-        this.autoDeleteThreshold = autoDeleteThreshold;
+        final Integer autoDeleteThreshold1 = autoDeleteThreshold;
     }
 
     public void setSortKey(final boolean sortKey) {
@@ -342,7 +342,7 @@ public class StreamRestoreTool extends DatabaseTool {
         if (fileName.indexOf(".") > 0) {
             final int splitPos = fileName.indexOf("=");
             rtnMap.put(FEED_ID, fileName.substring(1, splitPos));
-            rtnMap.put(StreamAttributeConstants.STREAM_ID, fileName.substring(splitPos + 1, fileName.indexOf(".")));
+            rtnMap.put(STREAM_ID, fileName.substring(splitPos + 1, fileName.indexOf(".")));
 
             int dotCount = 0;
             int dotPos = 0;
@@ -356,7 +356,7 @@ public class StreamRestoreTool extends DatabaseTool {
         if ((streamType == null || streamType.equals(rtnMap.get(STREAM_TYPE_PATH)))
                 && (feedId == null || feedId.equals(rtnMap.get(FEED_ID)))) {
             final Path file = Paths.get(line);
-            rtnMap.put(StreamAttributeConstants.CREATE_TIME, rtnMap.get(DATE_PATH) + getTime(file, datePart));
+            rtnMap.put(CREATE_TIME, rtnMap.get(DATE_PATH) + getTime(file, datePart));
         }
 
         return rtnMap;
@@ -379,12 +379,12 @@ public class StreamRestoreTool extends DatabaseTool {
         final Map<String, String> rtnMap = new HashMap<>();
         final Path manifest = Paths.get(rootFile.substring(0, rootFile.lastIndexOf(".")) + ".mf.dat");
         if (Files.isRegularFile(manifest)) {
-            final MetaMap metaMap = new MetaMap();
+            final AttributeMap attributeMap = new AttributeMap();
             try (final InputStream inputStream = Files.newInputStream(manifest)) {
-                metaMap.read(inputStream, true);
+                AttributeMapUtil.read(inputStream, true, attributeMap);
             } catch (final IOException ioEx) {
             }
-            rtnMap.putAll(metaMap);
+            rtnMap.putAll(attributeMap);
         }
         return rtnMap;
     }
@@ -423,75 +423,58 @@ public class StreamRestoreTool extends DatabaseTool {
                     if (action == 'r' && "0".equals(streamAttributes.get(DEPTH))) {
                         streamAttributes.putAll(readManifestAttributes(line));
 
-                        final Stream stream = new Stream();
-                        stream.setId(Long.parseLong(streamAttributes.get(StreamAttributeConstants.STREAM_ID)));
-                        stream.setVersion((byte) 1);
-
-                        stream.setCreateMs(DateUtil
-                                .parseNormalDateTimeString(streamAttributes.get(StreamAttributeConstants.CREATE_TIME)));
-                        if (streamAttributes.containsKey(StreamAttributeConstants.EFFECTIVE_TIME)) {
-                            stream.setEffectiveMs(DateUtil.parseNormalDateTimeString(
-                                    streamAttributes.get(StreamAttributeConstants.EFFECTIVE_TIME)));
-                        }
-                        if (stream.getEffectiveMs() == null) {
-                            stream.setEffectiveMs(stream.getCreateMs());
+                        final long streamId = Long.parseLong(streamAttributes.get(STREAM_ID));
+                        final long createMs = DateUtil.parseNormalDateTimeString(streamAttributes.get(CREATE_TIME));
+                        long effectiveMs = createMs;
+                        if (streamAttributes.containsKey(EFFECTIVE_TIME)) {
+                            effectiveMs = DateUtil.parseNormalDateTimeString(streamAttributes.get(EFFECTIVE_TIME));
                         }
 
-                        if (streamAttributes.containsKey(StreamAttributeConstants.PARENT_STREAM_ID)) {
-                            stream.setParentStreamId(
-                                    Long.valueOf(streamAttributes.get(StreamAttributeConstants.PARENT_STREAM_ID)));
+                        Long parentStreamId = null;
+                        if (streamAttributes.containsKey(PARENT_STREAM_ID)) {
+                            parentStreamId = Long.valueOf(streamAttributes.get(PARENT_STREAM_ID));
                         }
-                        stream.updateStatus(StreamStatus.UNLOCKED);
-                        stream.setFeed(Feed.createStub(Long.valueOf(streamAttributes.get(FEED_ID))));
-                        stream.setStreamType(
-                                StreamType.createStub(getPathStreamTypeMap().get(streamAttributes.get(STREAM_TYPE_PATH))));
+                        final long feedId = Long.valueOf(streamAttributes.get(FEED_ID));
+                        final long streamTypeId = getPathStreamTypeMap().get(streamAttributes.get(STREAM_TYPE_PATH));
 
-                        final String logInfo = Strings.padStart(String.valueOf(stream.getId()), 10, ' ') + " "
-                                + DateUtil.createNormalDateTimeString(stream.getCreateMs());
+                        final String logInfo = Strings.padStart(String.valueOf(streamId), 10, ' ') + " "
+                                + DateUtil.createNormalDateTimeString(createMs);
 
                         writeLine("Restore " + logInfo + " for file " + line);
 
-                        if (!mock) {
-                            try (final Connection connection = getConnection()) {
-                                try (final PreparedStatement statement1 = connection.prepareStatement(
-                                        "insert into strm (id,ver, crt_ms,effect_ms, parnt_strm_id,stat, fk_fd_id,fk_strm_proc_id, fk_strm_tp_id) "
-                                                + " values (?,1, ?,?, ?,?, ?,?, ?)")) {
-                                    int s1i = 1;
-                                    statement1.setLong(s1i++, stream.getId());
-
-                                    statement1.setLong(s1i++, stream.getCreateMs());
-                                    if (stream.getEffectiveMs() != null) {
-                                        statement1.setLong(s1i++, stream.getEffectiveMs());
-                                    } else {
-                                        statement1.setNull(s1i++, Types.BIGINT);
-                                    }
-
-                                    if (stream.getParentStreamId() != null) {
-                                        statement1.setLong(s1i++, stream.getParentStreamId());
-                                    } else {
-                                        statement1.setNull(s1i++, Types.BIGINT);
-                                    }
-                                    statement1.setByte(s1i++, stream.getStatus().getPrimitiveValue());
-
-                                    statement1.setLong(s1i++, stream.getFeed().getId());
-                                    statement1.setNull(s1i++, Types.BIGINT);
-
-                                    statement1.setLong(s1i++, stream.getStreamType().getId());
-
-                                    statement1.executeUpdate();
-                                }
-
-                                try (final PreparedStatement statement2 = connection.prepareStatement(
-                                        "insert into strm_vol (ver, fk_strm_id,fk_vol_id) " + " values (1, ?,?)")) {
-                                    int s2i = 1;
-                                    statement2.setLong(s2i++, stream.getId());
-                                    statement2.setLong(s2i++, getPathVolumeMap().get(streamAttributes.get(VOLUME_PATH)));
-                                    statement2.executeUpdate();
-                                }
-                            } catch (final RuntimeException e) {
-                                writeLine("Failed " + logInfo + " " + e.getMessage());
-                            }
-                        }
+                        // TODO : @66 FIX THIS
+//                        if (!mock) {
+//                            try (final Connection connection = getConnection()) {
+//                                try (final PreparedStatement statement1 = connection.prepareStatement(
+//                                        "insert into strm (id,ver, crt_ms,effect_ms, parnt_strm_id,stat, fk_fd_id,fk_strm_proc_id, fk_strm_tp_id) "
+//                                                + " values (?,1, ?,?, ?,?, ?,?, ?)")) {
+//                                    int s1i = 1;
+//                                    statement1.setLong(s1i++, streamId);
+//                                    statement1.setLong(s1i++, createMs);
+//                                    statement1.setLong(s1i++, effectiveMs);
+//                                    if (parentStreamId != null) {
+//                                        statement1.setLong(s1i++, parentStreamId);
+//                                    } else {
+//                                        statement1.setNull(s1i++, Types.BIGINT);
+//                                    }
+//                                    statement1.setByte(s1i++, StreamStatusId.UNLOCKED);
+//                                    statement1.setLong(s1i++, feedId);
+//                                    statement1.setNull(s1i++, Types.BIGINT);
+//                                    statement1.setLong(s1i++, streamTypeId);
+//                                    statement1.executeUpdate();
+//                                }
+//
+//                                try (final PreparedStatement statement2 = connection.prepareStatement(
+//                                        "insert into strm_vol (ver, fk_strm_id,fk_vol_id) " + " values (1, ?,?)")) {
+//                                    int s2i = 1;
+//                                    statement2.setLong(s2i++, streamId);
+//                                    statement2.setLong(s2i++, getPathVolumeMap().get(streamAttributes.get(VOLUME_PATH)));
+//                                    statement2.executeUpdate();
+//                                }
+//                            } catch (final RuntimeException e) {
+//                                writeLine("Failed " + logInfo + " " + e.getMessage());
+//                            }
+//                        }
                         count++;
                     }
                 }
