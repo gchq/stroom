@@ -3,13 +3,54 @@ import PropTypes from 'prop-types';
 import { compose, branch, renderNothing } from 'recompose';
 import { connect } from 'react-redux';
 import { DragSource } from 'react-dnd';
+import { DropTarget } from 'react-dnd';
 
-import { findItem } from 'lib/treeUtils';
+import { findItem, canMove } from 'lib/treeUtils';
 import { DocRefBreadcrumb } from 'components/DocRefBreadcrumb';
-import { actionCreators } from './redux';
+import { actionCreators as docRefListingActionCreators } from './redux';
+import { actionCreators as folderExplorerActionCreators } from 'components/FolderExplorer/redux';
 import ItemTypes from './dragDropTypes';
 
-const { docRefSelectionToggled } = actionCreators;
+const { docRefSelectionToggled } = docRefListingActionCreators;
+const { prepareDocRefCopy, prepareDocRefMove } = folderExplorerActionCreators;
+
+const dropTarget = {
+  canDrop(
+    {
+      docRefWithLineage: { node },
+    },
+    monitor,
+  ) {
+    const { docRefs } = monitor.getItem();
+
+    return !!node && docRefs.reduce((acc, curr) => acc && canMove(curr, node), true);
+  },
+  drop(
+    {
+      prepareDocRefCopy,
+      prepareDocRefMove,
+      docRefWithLineage: { node },
+    },
+    monitor,
+  ) {
+    const { docRefs, isCopy } = monitor.getItem();
+    const docRefUuids = docRefs.map(d => d.uuid);
+
+    if (isCopy) {
+      prepareDocRefCopy(docRefUuids, node.uuid);
+    } else {
+      prepareDocRefMove(docRefUuids, node.uuid);
+    }
+  },
+};
+
+function dropCollect(connect, monitor) {
+  return {
+    connectDropTarget: connect.dropTarget(),
+    isOver: monitor.isOver(),
+    canDrop: monitor.canDrop(),
+  };
+}
 
 const dragSource = {
   canDrag(props) {
@@ -46,9 +87,12 @@ const enhance = compose(
     }),
     {
       docRefSelectionToggled,
+      prepareDocRefCopy,
+      prepareDocRefMove,
     },
   ),
   branch(({ docRefWithLineage: { node } }) => !node, renderNothing),
+  DropTarget([ItemTypes.DOC_REF_UUIDS], dropTarget, dropCollect),
   DragSource(ItemTypes.DOC_REF_UUIDS, dragSource, dragCollect), 
 );
 
@@ -61,12 +105,29 @@ const DocRefListingEntry = ({
   docRefSelectionToggled,
   openDocRef,
   keyIsDown,
+  connectDropTarget,
   connectDragSource,
-}) => connectDragSource(<div
+  isOver,
+  canDrop,
+}) => {
+  let className = 'doc-ref-listing__item';
+  if (selectedDocRefUuids.includes(node.uuid)) {
+    className += ' doc-ref-listing__item--selected';
+  }
+  if (isOver) {
+    className += ' dnd-over';
+  }
+  if (isOver) {
+    if (canDrop) {
+      className += ' can-drop';
+    } else {
+      className += ' cannot-drop';
+    }
+  }
+  
+  return connectDragSource(connectDropTarget(<div
   key={node.uuid}
-  className={`doc-ref-listing__item ${
-        selectedDocRefUuids.includes(node.uuid) ? 'doc-ref-listing__item--selected' : ''
-      }`}
+  className={className}
   onClick={(e) => {
         docRefSelectionToggled(listingId, node.uuid, keyIsDown);
         e.preventDefault();
@@ -91,7 +152,9 @@ const DocRefListingEntry = ({
   </div>
 
   {includeBreadcrumb && <DocRefBreadcrumb docRefUuid={node.uuid} openDocRef={openDocRef} />}
-</div>);
+</div>))
+
+        };
 
 const EnhancedDocRefListingEntry = enhance(DocRefListingEntry);
 
