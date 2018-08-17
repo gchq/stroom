@@ -86,7 +86,8 @@ const DocPickerModal = ({
   value,
 }) => {
   let trigger;
-  if (value) {
+  console.log('Value?', value);
+  if (value && value.uuid) {
     const { lineage, node } = findItem(documentTree, value.uuid);
     const triggerValue = `${lineage.map(d => d.name).join(' > ')}${
       lineage.length > 0 ? ' > ' : ''
@@ -156,10 +157,7 @@ EnhancedDocPickerModal.propTypes = {
   pickerId: PropTypes.string.isRequired,
   typeFilters: PropTypes.array.isRequired,
   onChange: PropTypes.func.isRequired,
-  value: PropTypes.shape({
-    node: PropTypes.shape(DocRefPropType),
-    lineage: PropTypes.arrayOf(PropTypes.shape(DocRefPropType)),
-  }),
+  value: DocRefPropType,
 };
 
 EnhancedDocPickerModal.defaultProps = {

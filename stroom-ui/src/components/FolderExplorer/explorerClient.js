@@ -65,7 +65,7 @@ export const createDocument = (
       body: JSON.stringify({
         docRefType,
         docRefName,
-        destinationFolderRef,
+        destinationFolderRef: stripDocRef(destinationFolderRef),
         permissionInheritance,
       }),
     },

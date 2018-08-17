@@ -36,6 +36,7 @@ const enhance = compose(
     },
   ),
   withProps(({
+    folder,
     prepareDocRefCreation,
     prepareDocRefDelete,
     prepareDocRefCopy,
@@ -47,7 +48,7 @@ const enhance = compose(
     const actionBarItems = [
       {
         icon: 'file',
-        onClick: d => prepareDocRefCreation(d),
+        onClick: () => prepareDocRefCreation(folder.node),
         tooltip: 'Create a Document',
       },
     ];

@@ -15,11 +15,7 @@
  */
 import { createActions, handleActions } from 'redux-actions';
 
-import {
-  deleteItemsFromTree,
-  addItemsToTree,
-  updateItemInTree,
-} from 'lib/treeUtils';
+import { deleteItemsFromTree, addItemsToTree, updateItemInTree } from 'lib/treeUtils';
 
 export const DEFAULT_EXPLORER_ID = 'default';
 
@@ -66,10 +62,7 @@ export const reducer = handleActions(
     DOC_REFS_DELETED: (state, action) => {
       const { bulkActionResult } = action.payload;
 
-      const documentTree = deleteItemsFromTree(
-        state.documentTree,
-        bulkActionResult.docRefs.map(d => d.uuid),
-      );
+      const documentTree = deleteItemsFromTree(state, bulkActionResult.docRefs.map(d => d.uuid));
 
       return documentTree;
     },
@@ -77,7 +70,7 @@ export const reducer = handleActions(
     DOC_REF_CREATED: (state, action) => {
       const { docRef, parentFolder } = action.payload;
 
-      const documentTree = addItemsToTree(state.documentTree, parentFolder.uuid, [docRef]);
+      const documentTree = addItemsToTree(state, parentFolder.uuid, [docRef]);
 
       return documentTree;
     },
@@ -85,7 +78,7 @@ export const reducer = handleActions(
     DOC_REF_RENAMED: (state, action) => {
       const { docRef, resultDocRef } = action.payload;
 
-      const documentTree = updateItemInTree(state.documentTree, docRef.uuid, resultDocRef);
+      const documentTree = updateItemInTree(state, docRef.uuid, resultDocRef);
       return documentTree;
     },
 
@@ -95,7 +88,7 @@ export const reducer = handleActions(
         bulkActionResult: { docRefs },
       } = action.payload;
 
-      const documentTree = addItemsToTree(state.documentTree, destination.uuid, docRefs);
+      const documentTree = addItemsToTree(state, destination.uuid, docRefs);
 
       return documentTree;
     },
@@ -106,7 +99,7 @@ export const reducer = handleActions(
         bulkActionResult: { docRefs },
       } = action.payload;
 
-      let documentTree = deleteItemsFromTree(state.documentTree, docRefs.map(d => d.uuid));
+      let documentTree = deleteItemsFromTree(state, docRefs.map(d => d.uuid));
       documentTree = addItemsToTree(documentTree, destination.uuid, deleteItemsFromTree);
 
       return documentTree;
