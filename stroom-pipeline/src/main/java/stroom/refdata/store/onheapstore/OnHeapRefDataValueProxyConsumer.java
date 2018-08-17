@@ -24,9 +24,8 @@ import net.sf.saxon.trans.XPathException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.RefDataValueByteBufferConsumer;
-import stroom.refdata.store.AbstractRefDataValueProxyConsumer;
+import stroom.refdata.store.AbstractConsumer;
 import stroom.refdata.store.FastInfosetValue;
-import stroom.refdata.store.RefDataValue;
 import stroom.refdata.store.RefDataValueProxy;
 import stroom.refdata.store.StringValue;
 import stroom.refdata.store.offheapstore.FastInfosetByteBufferConsumer;
@@ -41,7 +40,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public class OnHeapRefDataValueProxyConsumer
-        extends AbstractRefDataValueProxyConsumer
+        extends AbstractConsumer
         implements RefDataValueProxyConsumer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OnHeapRefDataValueProxyConsumer.class);

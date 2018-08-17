@@ -7,8 +7,7 @@ import net.sf.saxon.trans.XPathException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.RefDataValueByteBufferConsumer;
-import stroom.refdata.store.AbstractByteBufferConsumer;
-import stroom.refdata.store.AbstractRefDataValueProxyConsumer;
+import stroom.refdata.store.AbstractConsumer;
 import stroom.refdata.store.RefDataValueProxy;
 import stroom.util.logging.LambdaLogger;
 
@@ -18,20 +17,19 @@ import java.util.Objects;
 
 
 public class OffHeapRefDataValueProxyConsumer
-        extends AbstractRefDataValueProxyConsumer
+        extends AbstractConsumer
         implements RefDataValueProxyConsumer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OffHeapRefDataValueProxyConsumer.class);
 
     // injected map of typeId to the appropriate bytebuffer consumer factory
-    private final Map<Integer, AbstractByteBufferConsumer.Factory> typeToByteBufferConsumerFactoryMap;
-
+    private final Map<Integer, RefDataValueByteBufferConsumer.Factory> typeToByteBufferConsumerFactoryMap;
 
     @Inject
     public OffHeapRefDataValueProxyConsumer(
             @Assisted final Receiver receiver,
             @Assisted final PipelineConfiguration pipelineConfiguration,
-            final Map<Integer, AbstractByteBufferConsumer.Factory> typeToByteBufferConsumerFactoryMap) {
+            final Map<Integer, RefDataValueByteBufferConsumer.Factory> typeToByteBufferConsumerFactoryMap) {
 
         super(pipelineConfiguration, receiver);
         this.typeToByteBufferConsumerFactoryMap = typeToByteBufferConsumerFactoryMap;

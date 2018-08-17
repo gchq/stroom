@@ -9,22 +9,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 import stroom.refdata.RefDataValueByteBufferConsumer;
-import stroom.refdata.store.AbstractByteBufferConsumer;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-public class FastInfosetByteBufferConsumer extends AbstractByteBufferConsumer {
+public class FastInfosetByteBufferConsumer implements RefDataValueByteBufferConsumer {
     private static final Logger LOGGER = LoggerFactory.getLogger(FastInfosetByteBufferConsumer.class);
 
     private final SAXDocumentParser saxDocumentParser;
 
     public FastInfosetByteBufferConsumer(final Receiver receiver, final PipelineConfiguration pipelineConfiguration) {
-        super(receiver);
 
         final FastInfosetContentHandler fastInfosetContentHandler = new FastInfosetContentHandler();
         fastInfosetContentHandler.setPipelineConfiguration(pipelineConfiguration);
-        fastInfosetContentHandler.setReceiver(super.getReceiver());
+        fastInfosetContentHandler.setReceiver(receiver);
 
         //TODO should we re-use this saxparser object in some way? Ctor looks fairly cheap so prob not worth the bother
         saxDocumentParser = new SAXDocumentParser();

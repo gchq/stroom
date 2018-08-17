@@ -17,17 +17,22 @@
 
 package stroom.refdata.store;
 
+import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
-import stroom.refdata.RefDataValueByteBufferConsumer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public abstract class AbstractByteBufferConsumer implements RefDataValueByteBufferConsumer {
-    private final Receiver receiver;
+public abstract class AbstractConsumer {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractConsumer.class);
 
-    public AbstractByteBufferConsumer(final Receiver receiver) {
+    protected final Receiver receiver;
+    protected final PipelineConfiguration pipelineConfiguration;
+
+    public AbstractConsumer(
+            final PipelineConfiguration pipelineConfiguration,
+            final Receiver receiver) {
+
+        this.pipelineConfiguration = pipelineConfiguration;
         this.receiver = receiver;
-    }
-
-    public Receiver getReceiver() {
-        return receiver;
     }
 }
