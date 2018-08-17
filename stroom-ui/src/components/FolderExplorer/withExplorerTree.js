@@ -26,7 +26,14 @@ import { withConfig } from 'startup/config';
  */
 export default compose(
   connect(
-    ({ folderExplorer: { documentTree: { waitingForTree } } }, props) => ({
+    (
+      {
+        folderExplorer: {
+          documentTree: { waitingForTree },
+        },
+      },
+      props,
+    ) => ({
       waitingForTree,
     }),
     {

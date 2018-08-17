@@ -19,7 +19,7 @@ import { connect } from 'react-redux';
 import { compose, lifecycle } from 'recompose';
 import { Polly } from '@pollyjs/core';
 
-import { guid, findItem, copyItemsInTree, moveItemsInTree } from 'lib/treeUtils';
+import { guid, findItem, addItemsToTree } from 'lib/treeUtils';
 import { actionCreators as fetchActionCreators } from 'lib/fetchTracker.redux';
 
 const { resetAllUrls } = fetchActionCreators;
@@ -112,7 +112,7 @@ server.post(`${testConfig.explorerServiceUrl}/copy`).intercept((req, res) => {
   const { destinationFolderRef, docRefs } = JSON.parse(req.body);
 
   const copies = docRefs.map(d => findItem(testCache.data.documentTree, d.uuid)).map(d => d.node).map(copyDocRef);
-  testCache.data.documentTree = copyItemsInTree(testCache.data.documentTree, copies, destinationFolderRef);
+  testCache.data.documentTree = addItemsToTree(testCache.data.documentTree, destinationFolderRef.uuid, copies);
 
   res.json({
     docRefs: copies,
@@ -123,11 +123,13 @@ server.post(`${testConfig.explorerServiceUrl}/copy`).intercept((req, res) => {
 server.put(`${testConfig.explorerServiceUrl}/move`).intercept((req, res) => {
   const { destinationFolderRef, docRefs } = JSON.parse(req.body);
 
-  testCache.data.documentTree = moveItemsInTree(testCache.data.documentTree, docRefs, destinationFolderRef);
-  let movedDocRefs = docRefs.map(d => findItem(testCache.data.documentTree, d.uuid)).map(d => d.node);
+  let docRefUuidsToDelete = docRefs.map(d => d.uuid);
+  let itemsToMove = findByUuids(testCache.data.documentTree, docRefUuidsToDelete);
+  testCache.data.documentTree = deleteItemsFromTree(testCache.data.documentTree, docRefUuidsToDelete);
+  testCache.data.documentTree = addItemsToTree(testCache.data.documentTree, itemsToMove);
 
   res.json({
-    docRefs: movedDocRefs,
+    docRefs: itemsToMove,
     message: '',
   });
 });
@@ -223,12 +225,20 @@ const enhanceLocal = compose(
 const PollyComponent = enhanceLocal(({ children }) => <div className="fill-space">{children}</div>);
 
 PollyComponent.propTypes = {
-  documentTree: PropTypes.object,
-  docRefTypes: PropTypes.array,
-  pipelines: PropTypes.object,
-  elements: PropTypes.array,
-  elementProperties: PropTypes.object,
+  documentTree: PropTypes.object.isRequired,
+  docRefTypes: PropTypes.array.isRequired,
+  pipelines: PropTypes.object.isRequired,
+  elements: PropTypes.array.isRequired,
+  elementProperties: PropTypes.object.isRequired,
 };
+
+PollyComponent.defaultProps = {
+  documentTree: {},
+  docRefTypes: [],
+  pipelines: {},
+  elements: [],
+  elementProperties: {}
+}
 
 export const PollyDecorator = props => storyFn => (
   <PollyComponent {...props}>{storyFn()}</PollyComponent>

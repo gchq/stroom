@@ -23,6 +23,7 @@ import 'brace/theme/github';
 import 'brace/keybinding/vim';
 
 import { compose, lifecycle, renderComponent, branch } from 'recompose';
+import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 import AceEditor from 'react-ace';
 import { Loader, Header } from 'semantic-ui-react';
@@ -33,6 +34,7 @@ import WithHeader from 'components/WithHeader';
 import { fetchXslt } from './xsltResourceClient';
 import { withConfig } from 'startup/config';
 import { saveXslt } from './xsltResourceClient';
+import { openDocRef } from 'sections/RecentItems';
 
 import { actionCreators } from './redux';
 
@@ -40,11 +42,12 @@ const { xsltUpdated } = actionCreators;
 
 const enhance = compose(
   withConfig,
+  withRouter,
   connect(
     ({ xslt }, { xsltId }) => ({
       xslt: xslt[xsltId],
     }),
-    { fetchXslt, xsltUpdated, saveXslt },
+    { fetchXslt, xsltUpdated, saveXslt, openDocRef },
   ),
   lifecycle({
     componentDidMount() {
@@ -56,7 +59,7 @@ const enhance = compose(
   branch(({ xslt }) => !xslt, renderComponent(() => <Loader active>Loading XSLT</Loader>)),
 );
 
-const XsltEditor = ({ xsltId, xslt, xsltUpdated, saveXslt }) => (
+const XsltEditor = ({ xsltId, xslt, xsltUpdated, saveXslt, openDocRef, history }) => (
   <WithHeader
     docRefUuid={xsltId}
     header={
@@ -69,7 +72,7 @@ const XsltEditor = ({ xsltId, xslt, xsltUpdated, saveXslt }) => (
         <Header.Content>
           {xsltId}
         </Header.Content>
-        <Header.Subheader><DocRefBreadcrumb docRefUuid={xsltId} /></Header.Subheader>
+        <Header.Subheader><DocRefBreadcrumb docRefUuid={xsltId} openDocRef={l => openDocRef(history, l)} /></Header.Subheader>
       </Header>
     }
     content={<div className="xslt-editor">

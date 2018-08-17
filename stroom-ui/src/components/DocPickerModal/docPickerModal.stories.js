@@ -37,6 +37,7 @@ storiesOf('Doc Ref Modal Picker', module)
   .addDecorator(ControlledInputDecorator) // must be the 'first' one
   .addDecorator(PollyDecorator({ documentTree: fromSetupSampleData }))
   .addDecorator(KeyIsDownDecorator())
+  .addDecorator(DragDropDecorator)
   .addDecorator(ReduxDecorator)
   .add('Doc Ref Picker', () => <DocPickerModal pickerId="modal1" />)
   .add('Doc Ref Picker (filter to pipeline)', () => (

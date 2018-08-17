@@ -43,86 +43,10 @@ export function mapObject(input, mapper) {
 }
 
 /**
- * Given a tree of data, returns a new tree with the item to move
- * relocated to the intended destination.
  *
- * @param {treeNode} rootNode The current entire tree of doc refs
- * @param {treeNode} itemToMove The item being moved
- * @param {treeNode} destination The destination tree node
+ * @param {treeNode} treeNode
+ * @param {array of strings} uuids
  */
-export function moveItemInTree(rootNode, itemToMove, destination) {
-  let children;
-  if (rootNode.children) {
-    const itemToInsert = rootNode.uuid === destination.uuid ? itemToMove : undefined; // if this is the destination, insert the item to move
-    const filteredItemsToCopy = rootNode.children.filter(c => c.uuid !== itemToMove.uuid); // remove the 'item to move'
-    children = [
-      itemToInsert, // insert at beginning
-      ...filteredItemsToCopy,
-    ]
-      .filter(c => !!c) // filter out undefined
-      .map(c => moveItemInTree(c, itemToMove, destination)); // recurse children
-  }
-
-  return {
-    ...rootNode,
-    children,
-  };
-}
-
-/**
- * Given a tree of data, returns a new tree with the item to move
- * relocated to the intended destination.
- *
- * @param {treeNode} rootNode The current entire tree of doc refs
- * @param {treeNode} itemToMove The item being moved
- * @param {treeNode} destination The destination tree node
- */
-export function moveItemsInTree(rootNode, itemsToMove, destination) {
-  let children;
-  if (rootNode.children) {
-    const itemsToInsert = rootNode.uuid === destination.uuid ? itemsToMove : []; // if this is the destination, insert the item to move
-    const uuidsToMove = itemsToMove.map(i => i.uuid);
-    const filteredItemsToCopy = rootNode.children.filter(c => !uuidsToMove.includes(c.uuid)); // remove the 'item to move'
-    children = [
-      ...itemsToInsert, // insert at beginning
-      ...filteredItemsToCopy,
-    ]
-      .filter(c => !!c) // filter out undefined
-      .map(c => moveItemsInTree(c, itemsToMove, destination)); // recurse children
-  }
-
-  return {
-    ...rootNode,
-    children,
-  };
-}
-
-/**
- * Given a tree of data, returns a new tree with the item to move
- * relocated to the intended destination.
- *
- * @param {treeNode} rootNode The current entire tree of doc refs
- * @param {treeNode} itemToMove The item being moved
- * @param {treeNode} destination The destination tree node
- */
-export function copyItemsInTree(rootNode, itemsToCopy, destination) {
-  let children;
-  if (rootNode.children) {
-    const itemsToInsert = rootNode.uuid === destination.uuid ? itemsToCopy : []; // if this is the destination, insert the item to move
-    children = [
-      ...itemsToInsert, // insert at beginning
-      ...rootNode.children,
-    ]
-      .filter(c => !!c) // filter out undefined
-      .map(c => copyItemsInTree(c, itemsToCopy, destination)); // recurse children
-  }
-
-  return {
-    ...rootNode,
-    children,
-  };
-}
-
 export function findByUuids(treeNode, uuids) {
   const results = [];
 
@@ -141,13 +65,13 @@ export function findByUuids(treeNode, uuids) {
  * @param {treeNode} treeNode The node we are looking into, this will be recursed through children
  * @param {treeNode} itemToFind The item to find
  */
-export function findMatch(treeNode, itemToFind) {
+export function itemIsInSubtree(treeNode, itemToFind) {
   if (treeNode.uuid === itemToFind.uuid) {
     return true;
   }
 
   if (treeNode.children) {
-    return treeNode.children.filter(c => findMatch(c, itemToFind)).length !== 0;
+    return treeNode.children.filter(c => itemIsInSubtree(c, itemToFind)).length !== 0;
   }
 
   return false;
@@ -166,7 +90,7 @@ export function findMatch(treeNode, itemToFind) {
  */
 export function canMove(itemToMove, destinationFolder) {
   // If the item being dropped is a folder, and is being dropped into itself
-  if (findMatch(itemToMove, destinationFolder)) {
+  if (itemIsInSubtree(itemToMove, destinationFolder)) {
     return false;
   }
   if (!!itemToMove.children && itemToMove.uuid === destinationFolder.uuid) {
@@ -360,26 +284,25 @@ export function deleteItemsFromTree(treeNode, uuids) {
 }
 
 /**
- * Given a tree, returns a copy with the given item added to the node with the matching UUID.
- * The new item will be given an automatic UUID if it doesn't already have one
+ * Given a tree, returns a copy of the tree with the given items added the node with the matching UUID.
  *
- * @param {treeNode} treeNode The tree node, recursively called.
- * @param {string} parentUuid The UUID of the node to add this item to
- * @param {object} item The item to add
- *
- * @return {treeNode} the updated tree
+ * @param {treeNode} treeNode
+ * @param {string} parentUuid
+ * @param {array of items} items
  */
-export function addItemToTree(treeNode, parentUuid, item) {
+export function addItemsToTree(treeNode, parentUuid, items) {
   let children;
   if (treeNode.children) {
-    children = treeNode.children.map(x => addItemToTree(x, parentUuid, item));
+    children = treeNode.children.map(x => addItemsToTree(x, parentUuid, items));
   }
 
   if (treeNode.uuid === parentUuid) {
-    if (!item.uuid) {
-      item.uuid = guid();
-    }
-    children.push(item);
+    items.forEach((item) => {
+      if (!item.uuid) {
+        item.uuid = guid();
+      }
+      children.push(item);
+    });
   }
 
   return {
@@ -389,36 +312,55 @@ export function addItemToTree(treeNode, parentUuid, item) {
 }
 
 /**
- * This function returns an object with a key for the UUID of every node.
- * The value is true/false depending on if that item either
- * 1) Passes the filter function
- * 2) Contains in it's children (at any nesting level) anything that passes the filter function.
+ * Given a tree of data, returns a new tree with the item to move
+ * relocated to the intended destination.
  *
- * @param {treeNode} treeNode The root level tree
- * @param {function} filterFunction Applied to every (lineage, node) to see if that node is a direct pass of the filter
- *
- * @return {object} keys for every node in the tree, values are boolean that indicate if the node is required by the filter.
+ * @param {treeNode} rootNode The current entire tree of doc refs
+ * @param {treeNode} itemToMove The item being moved
+ * @param {treeNode} destination The destination tree node
  */
-export function getIsInFilteredMap(treeNode, filterFunction) {
-  // This will be the return map
-  const inFilteredMap = {};
+export function moveItemsInTree(rootNode, destination, itemsToMove) {
+  let children;
+  if (rootNode.children) {
+    const itemsToInsert = rootNode.uuid === destination.uuid ? itemsToMove : []; // if this is the destination, insert the item to move
+    const uuidsToMove = itemsToMove.map(i => i.uuid);
+    const filteredItemsToCopy = rootNode.children.filter(c => !uuidsToMove.includes(c.uuid)); // remove the 'item to move'
+    children = [
+      ...itemsToInsert, // insert at beginning
+      ...filteredItemsToCopy,
+    ]
+      .filter(c => !!c) // filter out undefined
+      .map(c => moveItemsInTree(c, destination, itemsToMove)); // recurse children
+  }
 
-  // compose a map that indicates 'true' for all directly passing nodes
-  iterateNodes(treeNode, (lineage, node) => {
-    if (inFilteredMap[node.uuid] === undefined) {
-      inFilteredMap[node.uuid] = false;
-    }
+  return {
+    ...rootNode,
+    children,
+  };
+}
 
-    const thisOneMatches = filterFunction(lineage, node);
-    if (thisOneMatches) {
-      // Place this node's uuid, and the UUID's of it's ancestry within the filtered map, if they aren't there already
-      lineage
-        .map(n => n.uuid)
-        .concat([node.uuid])
-        .filter(matchUuid => !inFilteredMap[matchUuid])
-        .forEach(matchUuid => (inFilteredMap[matchUuid] = true));
-    }
-  });
+/**
+ * Given a tree of data, returns a new tree with the item to move
+ * relocated to the intended destination.
+ *
+ * @param {treeNode} rootNode The current entire tree of doc refs
+ * @param {treeNode} itemToMove The item being moved
+ * @param {treeNode} destination The destination tree node
+ */
+export function copyItemsInTree(rootNode, destination, itemsToCopy) {
+  let children;
+  if (rootNode.children) {
+    const itemsToInsert = rootNode.uuid === destination.uuid ? itemsToCopy : []; // if this is the destination, insert the item to move
+    children = [
+      ...itemsToInsert, // insert at beginning
+      ...rootNode.children,
+    ]
+      .filter(c => !!c) // filter out undefined
+      .map(c => copyItemsInTree(c, destination, itemsToCopy)); // recurse children
+  }
 
-  return inFilteredMap;
+  return {
+    ...rootNode,
+    children,
+  };
 }

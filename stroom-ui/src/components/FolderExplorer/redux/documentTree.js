@@ -13,17 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { createActions, handleActions, combineActions } from 'redux-actions';
+import { createActions, handleActions } from 'redux-actions';
 
 import {
-  moveItemsInTree,
-  copyItemsInTree,
-  iterateNodes,
-  getIsInFilteredMap,
   deleteItemsFromTree,
-  addItemToTree,
+  addItemsToTree,
   updateItemInTree,
-  findItem,
 } from 'lib/treeUtils';
 
 export const DEFAULT_EXPLORER_ID = 'default';
@@ -56,7 +51,10 @@ export const actionCreators = createActions({
 });
 
 const defaultState = {
-  waitingForTree: true, uuid: 'none', type: 'System', name: 'None'
+  waitingForTree: true,
+  uuid: 'none',
+  type: 'System',
+  name: 'None',
 };
 
 export const reducer = handleActions(
@@ -79,7 +77,7 @@ export const reducer = handleActions(
     DOC_REF_CREATED: (state, action) => {
       const { docRef, parentFolder } = action.payload;
 
-      const documentTree = addItemToTree(state.documentTree, parentFolder.uuid, docRef);
+      const documentTree = addItemsToTree(state.documentTree, parentFolder.uuid, [docRef]);
 
       return documentTree;
     },
@@ -97,7 +95,7 @@ export const reducer = handleActions(
         bulkActionResult: { docRefs },
       } = action.payload;
 
-      const documentTree = copyItemsInTree(state.documentTree, docRefs, destination);
+      const documentTree = addItemsToTree(state.documentTree, destination.uuid, docRefs);
 
       return documentTree;
     },
@@ -108,7 +106,8 @@ export const reducer = handleActions(
         bulkActionResult: { docRefs },
       } = action.payload;
 
-      const documentTree = moveItemsInTree(state.documentTree, docRefs, destination);
+      let documentTree = deleteItemsFromTree(state.documentTree, docRefs.map(d => d.uuid));
+      documentTree = addItemsToTree(documentTree, destination.uuid, deleteItemsFromTree);
 
       return documentTree;
     },

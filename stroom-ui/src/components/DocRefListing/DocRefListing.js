@@ -68,7 +68,7 @@ const enhance = compose(
     docRefSelectionDown,
     docRefListingUnmounted,
   }) => {
-    const { selectedDocRef, checkedDocRefs, filteredDocRefs, docRefTypeFilters = [] } = docRefListing || {};
+    const { selectedDocRef, filteredDocRefs, docRefTypeFilters = [] } = docRefListing || {};
     const onOpenKey = () => {
       if (selectedDocRef !== undefined) {
         openDocRef(selectedDocRef);
@@ -107,7 +107,7 @@ const enhance = compose(
   lifecycle({
     componentDidUpdate(prevProps, prevState, snapshot) {
       const {
-        parentFolder, listingId, allDocRefs, docRefListingMounted, maxResults, allowMultiSelect, fixedDocRefTypeFilters
+        listingId, allDocRefs, docRefListingMounted, maxResults, allowMultiSelect, fixedDocRefTypeFilters
       } = this.props;
 
       const docRefsChanged = JSON.stringify(allDocRefs) !== JSON.stringify(prevProps.allDocRefs);

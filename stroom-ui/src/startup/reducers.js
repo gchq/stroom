@@ -59,7 +59,6 @@ export default combineReducers({
   docRefTypes,
   appChrome,
   docRefListing,
-  folderExplorer,
   userSettings,
   docRefInfo,
 });

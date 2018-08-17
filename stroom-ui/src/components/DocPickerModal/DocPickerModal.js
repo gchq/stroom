@@ -16,13 +16,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import { compose, withState, withProps } from 'recompose';
+import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
 
-import { Button, Modal, Input, Dropdown, Popup } from 'semantic-ui-react';
+import { Button, Modal, Input, Popup } from 'semantic-ui-react';
 
 import DocRefPropType from 'lib/DocRefPropType';
-import { withExplorerTree } from 'components/FolderExplorer';
+import withExplorerTree from 'components/FolderExplorer/withExplorerTree';
 import { findItem, iterateNodes } from 'lib/treeUtils';
 import DocRefListing from 'components/DocRefListing';
 
@@ -40,7 +40,7 @@ const enhance = compose(
     ) => {
       let allDocuments = [];
       let thisDocRefListing = docRefListing[pickerId];
-
+      
       iterateNodes(documentTree, (lineage, node) => {
         allDocuments.push({
           name: node.name,

@@ -17,10 +17,9 @@ import React from 'react';
 
 import { connect } from 'react-redux';
 import { compose } from 'recompose';
-import { Header, Icon, Dropdown, Container, Grid } from 'semantic-ui-react';
+import { Header, Icon, Dropdown, Grid } from 'semantic-ui-react';
 
 import { actionCreators } from './redux';
-import withLocalStorage from 'lib/withLocalStorage';
 import WithHeader from 'components/WithHeader';
 
 const { themeChanged } = actionCreators;
