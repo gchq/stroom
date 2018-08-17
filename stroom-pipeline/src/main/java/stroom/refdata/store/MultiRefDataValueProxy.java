@@ -57,6 +57,11 @@ public class MultiRefDataValueProxy implements RefDataValueProxy {
     }
 
     @Override
+    public RefDataStore.StorageType getStorageType() {
+        throw new UnsupportedOperationException("Not valid for this implementation");
+    }
+
+    @Override
     public boolean consumeBytes(final Consumer<TypedByteBuffer> typedByteBufferConsumer) {
         // try each of our proxies in turn and as soon as one finds a result break out
         boolean result = false;
@@ -69,6 +74,32 @@ public class MultiRefDataValueProxy implements RefDataValueProxy {
         for (RefDataValueProxy refDataValueProxy : refDataValueProxies) {
             LOGGER.trace("Attempting to consumeBytes with sub-proxy {}", refDataValueProxy);
             result = refDataValueProxy.consumeBytes(typedByteBufferConsumer);
+            if (result) {
+                LOGGER.trace("Found result with sub-proxy {}", refDataValueProxy);
+                break;
+            }
+        }
+        if (result) {
+            LOGGER.trace("Result found for proxy {}", this);
+        } else {
+            LOGGER.trace("No result found for proxy {}", this);
+        }
+        return result;
+    }
+
+    @Override
+    public boolean consumeValue(final RefDataValueProxyConsumerFactory refDataValueProxyConsumerFactory) {
+        // try each of our proxies in turn and as soon as one finds a result break out
+        boolean result = false;
+        // We could construct this object with a pipeline scoped object to hold a
+        // map of mapName to refDataValueProxy which we could populate when we find a
+        // result. Thus for any future lookups we could try that one first before looping over
+        // the rest.  For pipelines with a lot of ref loaders this should speed things up.
+        // The downside of this is that it would change the behavior in the event that two
+        // ref streams can supply a value for the same map/key
+        for (RefDataValueProxy refDataValueProxy : refDataValueProxies) {
+            LOGGER.trace("Attempting to consumeBytes with sub-proxy {}", refDataValueProxy);
+            result = refDataValueProxy.consumeValue(refDataValueProxyConsumerFactory);
             if (result) {
                 LOGGER.trace("Found result with sub-proxy {}", refDataValueProxy);
                 break;

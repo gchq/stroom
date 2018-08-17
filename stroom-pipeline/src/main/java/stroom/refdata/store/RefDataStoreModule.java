@@ -21,13 +21,10 @@ import com.google.inject.AbstractModule;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
 import stroom.properties.StroomPropertyService;
-import stroom.refdata.store.FastInfosetValue;
-import stroom.refdata.store.RefDataStore;
-import stroom.refdata.store.StringValue;
-import stroom.refdata.store.offheapstore.AbstractByteBufferConsumer;
+import stroom.refdata.RefDataValueByteBufferConsumer;
 import stroom.refdata.store.offheapstore.FastInfosetByteBufferConsumer;
+import stroom.refdata.store.offheapstore.OffHeapRefDataValueProxyConsumer;
 import stroom.refdata.store.offheapstore.RefDataOffHeapStore;
-import stroom.refdata.store.offheapstore.RefDataValueProxyConsumer;
 import stroom.refdata.store.offheapstore.StringByteBufferConsumer;
 import stroom.refdata.store.offheapstore.databases.KeyValueStoreDb;
 import stroom.refdata.store.offheapstore.databases.MapUidForwardDb;
@@ -36,6 +33,10 @@ import stroom.refdata.store.offheapstore.databases.ProcessingInfoDb;
 import stroom.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.refdata.store.offheapstore.databases.ValueStoreMetaDb;
+import stroom.refdata.store.onheapstore.FastInfosetValueConsumer;
+import stroom.refdata.store.onheapstore.OnHeapRefDataValueProxyConsumer;
+import stroom.refdata.store.onheapstore.RefDataValueConsumer;
+import stroom.refdata.store.onheapstore.StringValueConsumer;
 import stroom.refdata.util.PooledByteBufferOutputStream;
 
 public class RefDataStoreModule extends AbstractModule {
@@ -46,15 +47,28 @@ public class RefDataStoreModule extends AbstractModule {
         requireBinding(StroomPropertyService.class);
 
         // bind the various RefDataValue ByteBuffer consumer factories into a map keyed on their ID
-        final MapBinder<Integer, AbstractByteBufferConsumer.Factory> refDataValueByteBufferConsumerBinder = MapBinder.newMapBinder(
-                binder(), Integer.class, AbstractByteBufferConsumer.Factory.class);
+        final MapBinder<Integer, RefDataValueByteBufferConsumer.Factory> refDataValueByteBufferConsumerBinder = MapBinder.newMapBinder(
+                binder(), Integer.class, RefDataValueByteBufferConsumer.Factory.class);
 
         refDataValueByteBufferConsumerBinder
                 .addBinding(FastInfosetValue.TYPE_ID)
                 .to(FastInfosetByteBufferConsumer.Factory.class);
+
         refDataValueByteBufferConsumerBinder
                 .addBinding(StringValue.TYPE_ID)
                 .to(StringByteBufferConsumer.Factory.class);
+
+        // bind the various RefDataValue consumer factories into a map keyed on their ID
+        final MapBinder<Integer, RefDataValueConsumer.Factory> refDataValueConsumerBinder = MapBinder.newMapBinder(
+                binder(), Integer.class, RefDataValueConsumer.Factory.class);
+
+        refDataValueConsumerBinder
+                .addBinding(FastInfosetValue.TYPE_ID)
+                .to(FastInfosetValueConsumer.Factory.class);
+
+        refDataValueConsumerBinder
+                .addBinding(StringValue.TYPE_ID)
+                .to(StringValueConsumer.Factory.class);
 
         // bind all the reference data off heap tables
         install(new FactoryModuleBuilder().build(KeyValueStoreDb.Factory.class));
@@ -65,11 +79,14 @@ public class RefDataStoreModule extends AbstractModule {
         install(new FactoryModuleBuilder().build(ProcessingInfoDb.Factory.class));
         install(new FactoryModuleBuilder().build(ValueStoreMetaDb.Factory.class));
 
-        install(new FactoryModuleBuilder().build(RefDataValueProxyConsumer.Factory.class));
+        install(new FactoryModuleBuilder().build(OffHeapRefDataValueProxyConsumer.Factory.class));
+        install(new FactoryModuleBuilder().build(OnHeapRefDataValueProxyConsumer.Factory.class));
         install(new FactoryModuleBuilder().build(PooledByteBufferOutputStream.Factory.class));
 
         install(new FactoryModuleBuilder()
                 .implement(RefDataStore.class, RefDataOffHeapStore.class)
                 .build(RefDataOffHeapStore.Factory.class));
+
+        install(new FactoryModuleBuilder().build(RefDataValueProxyConsumerFactory.Factory.class));
     }
 }

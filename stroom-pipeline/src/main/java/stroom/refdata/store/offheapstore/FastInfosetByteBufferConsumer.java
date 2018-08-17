@@ -13,17 +13,16 @@ import stroom.refdata.RefDataValueByteBufferConsumer;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-public class FastInfosetByteBufferConsumer extends AbstractByteBufferConsumer {
+public class FastInfosetByteBufferConsumer implements RefDataValueByteBufferConsumer {
     private static final Logger LOGGER = LoggerFactory.getLogger(FastInfosetByteBufferConsumer.class);
 
     private final SAXDocumentParser saxDocumentParser;
 
-    FastInfosetByteBufferConsumer(final Receiver receiver, final PipelineConfiguration pipelineConfiguration) {
-        super(receiver);
+    public FastInfosetByteBufferConsumer(final Receiver receiver, final PipelineConfiguration pipelineConfiguration) {
 
         final FastInfosetContentHandler fastInfosetContentHandler = new FastInfosetContentHandler();
         fastInfosetContentHandler.setPipelineConfiguration(pipelineConfiguration);
-        fastInfosetContentHandler.setReceiver(super.getReceiver());
+        fastInfosetContentHandler.setReceiver(receiver);
 
         //TODO should we re-use this saxparser object in some way? Ctor looks fairly cheap so prob not worth the bother
         saxDocumentParser = new SAXDocumentParser();
@@ -45,7 +44,7 @@ public class FastInfosetByteBufferConsumer extends AbstractByteBufferConsumer {
         saxDocumentParser.reset();
     }
 
-    public static class Factory implements AbstractByteBufferConsumer.Factory {
+    public static class Factory implements RefDataValueByteBufferConsumer.Factory {
 
         @Override
         public RefDataValueByteBufferConsumer create(

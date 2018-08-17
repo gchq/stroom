@@ -93,7 +93,7 @@ public class RefDataStoreProvider {
     }
 
     public RefDataStore createOnHeapStore() {
-        return new RefDataOnHeapStore(genericRefDataValueSerde, stroomPropertyService);
+        return new RefDataOnHeapStore();
     }
 
 
@@ -104,6 +104,7 @@ public class RefDataStoreProvider {
                     RefDataOffHeapStore.DATA_RETENTION_AGE_PROP_KEY)
     public void purgeOldData() {
         this.offHeapRefDataStore.purgeOldData();
+        // nothing to purge in the heap stores as they are transient objects
     }
 
     private Path getStoreDir() {

@@ -4,23 +4,19 @@ import com.codahale.metrics.health.HealthCheck;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.shared.Range;
-import stroom.properties.StroomPropertyService;
-import stroom.refdata.store.RefDataStore;
 import stroom.refdata.store.AbstractRefDataStore;
 import stroom.refdata.store.MapDefinition;
 import stroom.refdata.store.ProcessingState;
 import stroom.refdata.store.RefDataLoader;
 import stroom.refdata.store.RefDataProcessingInfo;
+import stroom.refdata.store.RefDataStore;
 import stroom.refdata.store.RefDataValue;
 import stroom.refdata.store.RefStreamDefinition;
 import stroom.refdata.store.offheapstore.TypedByteBuffer;
-import stroom.refdata.store.offheapstore.serdes.GenericRefDataValueSerde;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.annotation.concurrent.NotThreadSafe;
-import java.nio.BufferOverflowException;
-import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -44,20 +40,12 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
     private static final Logger LOGGER = LoggerFactory.getLogger(RefDataOnHeapStore.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(RefDataOnHeapStore.class);
 
-    private static final int BUFFER_ENLARGEMENT_RETRY_COUNT = 20;
-
     private final Map<RefStreamDefinition, RefDataProcessingInfo> processingInfoMap;
     private final Set<MapDefinition> mapDefinitions;
     private final Map<KeyValueMapKey, RefDataValue> keyValueMap;
     private final Map<MapDefinition, NavigableMap<Range<Long>, RefDataValue>> rangeValueNestedMap;
-    private final GenericRefDataValueSerde genericRefDataValueSerde;
 
-    private ByteBuffer valueBuffer = null;
-
-    public RefDataOnHeapStore(final GenericRefDataValueSerde genericRefDataValueSerde,
-                              final StroomPropertyService stroomPropertyService) {
-
-        this.genericRefDataValueSerde = genericRefDataValueSerde;
+    public RefDataOnHeapStore() {
 
         this.processingInfoMap = new HashMap<>();
         this.keyValueMap = new HashMap<>();
@@ -65,6 +53,10 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
         this.mapDefinitions = new HashSet<>();
     }
 
+    @Override
+    public StorageType getStorageType() {
+        return StorageType.ON_HEAP;
+    }
 
     @Override
     public Optional<RefDataProcessingInfo> getAndTouchProcessingInfo(final RefStreamDefinition refStreamDefinition) {
@@ -185,25 +177,10 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
                                      final String key,
                                      final Consumer<TypedByteBuffer> valueBytesConsumer) {
 
-        // TODO we are dealing with on-heap data so we shouldn't be involved with bytes/ByteBuffers
-        // for the moment this will do as the fast infoset values will be bytes anyway so it is just
-        // some small string serialisation.
-
-        boolean wasConsumed = getValue(mapDefinition, key)
-                .filter(refDataValue -> {
-                    // the ByteBuffer in here is shared and owned by 'this' so it should not
-                    // be used outside this consumer
-                    TypedByteBuffer typedByteBuffer = buildTypedByteBuffer(refDataValue);
-
-                    valueBytesConsumer.accept(typedByteBuffer);
-
-                    // abuse of the filter() method, as not really filtering, so always return true
-                    return true;
-                })
-                .isPresent();
-        LOGGER.trace("consumeValueBytes({}, {}, ...) returning {}", mapDefinition, key, wasConsumed);
-        return wasConsumed;
+        throw new UnsupportedOperationException(
+                "This implementation doesn't support this method as the values are heap objects ");
     }
+
 
     @Override
     public long getKeyValueEntryCount() {
@@ -301,41 +278,4 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
                 this);
     }
 
-    private TypedByteBuffer buildTypedByteBuffer(final RefDataValue refDataValue) {
-        int tryCount = 0;
-        int minCapacity = genericRefDataValueSerde.getBufferCapacity();
-        boolean success = false;
-
-        ByteBuffer valueBuffer = null;
-
-        // we have no idea how big the serialised form is
-        while (tryCount++ < BUFFER_ENLARGEMENT_RETRY_COUNT) {
-            valueBuffer = getValueBuffer(minCapacity);
-            try {
-                genericRefDataValueSerde.serialize(valueBuffer, refDataValue);
-                success = true;
-                break;
-            } catch (BufferOverflowException e) {
-                //double the capacity and try again
-                minCapacity = minCapacity * 2;
-            }
-        }
-
-        if (!success) {
-            throw new RuntimeException(LambdaLogger.buildMessage(
-                    "Failed to serialise {} after {} attempts and a capacity of {}",
-                    refDataValue, tryCount, minCapacity));
-        }
-        return new TypedByteBuffer(refDataValue.getTypeId(), valueBuffer);
-    }
-
-    private ByteBuffer getValueBuffer(final int minCapacity) {
-        if (valueBuffer != null && minCapacity <= valueBuffer.capacity()) {
-            valueBuffer.clear();
-            return valueBuffer;
-        } else {
-            valueBuffer = ByteBuffer.allocate(minCapacity);
-        }
-        return valueBuffer;
-    }
 }

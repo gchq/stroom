@@ -31,8 +31,9 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.refdata.LookupIdentifier;
 import stroom.refdata.ReferenceData;
 import stroom.refdata.ReferenceDataResult;
+import stroom.refdata.store.GenericRefDataValueProxyConsumer;
 import stroom.refdata.store.RefDataValueProxy;
-import stroom.refdata.store.offheapstore.RefDataValueProxyConsumer;
+import stroom.refdata.store.RefDataValueProxyConsumerFactory;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.Severity;
 
@@ -44,21 +45,25 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
 
     private final ReferenceData referenceData;
     private final StreamHolder streamHolder;
-    private final RefDataValueProxyConsumer.Factory consumerFactory;
+    private final RefDataValueProxyConsumerFactory.Factory consumerFactoryFactory;
 
     private long defaultMs = -1;
 
     AbstractLookup(final ReferenceData referenceData,
                    final StreamHolder streamHolder,
-                   final RefDataValueProxyConsumer.Factory consumerFactory) {
+                   final RefDataValueProxyConsumerFactory.Factory consumerFactoryFactory) {
         this.referenceData = referenceData;
         this.streamHolder = streamHolder;
-        this.consumerFactory = consumerFactory;
+        this.consumerFactoryFactory = consumerFactoryFactory;
     }
 
-    RefDataValueProxyConsumer.Factory getConsumerFactory() {
-        return consumerFactory;
+    RefDataValueProxyConsumerFactory.Factory getRefDataValueProxyConsumerFactoryFactory() {
+        return consumerFactoryFactory;
     }
+
+//    OffHeapRefDataValueProxyConsumer.Factory getConsumerFactory() {
+//        return consumerFactory;
+//    }
 
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {
@@ -220,14 +225,15 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
 
     static class SequenceMaker {
         private final XPathContext context;
-        private final RefDataValueProxyConsumer.Factory consumerFactory;
+        private final RefDataValueProxyConsumerFactory.Factory consumerFactoryFactory;
         private Builder builder;
-        private RefDataValueProxyConsumer consumer;
+        private RefDataValueProxyConsumerFactory consumerFactory;
+        private GenericRefDataValueProxyConsumer consumer;
 
         SequenceMaker(final XPathContext context,
-                      final RefDataValueProxyConsumer.Factory consumerFactory) {
+                      final RefDataValueProxyConsumerFactory.Factory consumerFactoryFactory) {
             this.context = context;
-            this.consumerFactory = consumerFactory;
+            this.consumerFactoryFactory = consumerFactoryFactory;
         }
 
         void open() throws XPathException {
@@ -256,7 +262,15 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                 final PipelineConfiguration pipelineConfiguration = configuration.makePipelineConfiguration();
 
                 builder = new TinyBuilder(pipelineConfiguration);
-                consumer = consumerFactory.create(builder, pipelineConfiguration);
+
+                // At this point we don't know if we are dealing with heap object values or off-heap bytebuffer values.
+                // We also don't know if the value is a string or a fastinfoset.
+                consumer = new GenericRefDataValueProxyConsumer(
+                        builder,
+                        pipelineConfiguration,
+                        consumerFactoryFactory.create(builder, pipelineConfiguration));
+
+//                consumer = consumerFactory.create(builder, pipelineConfiguration);
             }
         }
 

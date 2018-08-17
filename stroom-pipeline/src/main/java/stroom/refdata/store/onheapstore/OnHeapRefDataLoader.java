@@ -17,6 +17,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Optional;
@@ -40,6 +41,7 @@ class OnHeapRefDataLoader implements RefDataLoader {
     private final Map<KeyValueMapKey, RefDataValue> keyValueMap;
     private final Map<MapDefinition, NavigableMap<Range<Long>, RefDataValue>> rangeValueNestedMap;
     private final RefDataStore refDataStore;
+    private final Set<String> loadedMapNames = new HashSet<>();
 
     private int putsCounter = 0;
     private int successfulPutsCounter = 0;
@@ -105,9 +107,8 @@ class OnHeapRefDataLoader implements RefDataLoader {
         updateProcessingState(
                 refStreamDefinition, ProcessingState.COMPLETE, true);
 
-        final String mapNames = mapDefinitions
+        final String mapNames = loadedMapNames
                 .stream()
-                .map(MapDefinition::getMapName)
                 .collect(Collectors.joining(","));
 
         final Duration loadDuration = Duration.between(startTime, Instant.now());
@@ -131,6 +132,7 @@ class OnHeapRefDataLoader implements RefDataLoader {
                        final String key,
                        final RefDataValue refDataValue) {
 
+        checkCurrentState(LoaderState.INITIALISED);
         final KeyValueMapKey mapKey = new KeyValueMapKey(mapDefinition, key);
 
         boolean wasValuePut;
@@ -143,11 +145,7 @@ class OnHeapRefDataLoader implements RefDataLoader {
             RefDataValue prevValue = keyValueMap.putIfAbsent(mapKey, refDataValue);
             wasValuePut = prevValue == null;
         }
-        if (wasValuePut) {
-            successfulPutsCounter++;
-        }
-        putsCounter++;
-        mapDefinitions.add(mapDefinition);
+        recordPut(mapDefinition, wasValuePut);
         LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("put completed for {} {} {}, size now {}",
                 mapDefinition, key, refDataValue, keyValueMap.size()));
         return wasValuePut;
@@ -157,6 +155,8 @@ class OnHeapRefDataLoader implements RefDataLoader {
     public boolean put(final MapDefinition mapDefinition,
                        final Range<Long> keyRange,
                        final RefDataValue refDataValue) {
+
+        checkCurrentState(LoaderState.INITIALISED);
         // ensure we have a sub map for our mapDef
         NavigableMap<Range<Long>, RefDataValue> subMap = rangeValueNestedMap.computeIfAbsent(
                 mapDefinition,
@@ -170,17 +170,22 @@ class OnHeapRefDataLoader implements RefDataLoader {
             RefDataValue prevValue = subMap.putIfAbsent(keyRange, refDataValue);
             wasValuePut = prevValue == null;
         }
-        if (wasValuePut) {
-            successfulPutsCounter++;
-        }
-        putsCounter++;
-        mapDefinitions.add(mapDefinition);
+        recordPut(mapDefinition, wasValuePut);
         LAMBDA_LOGGER.trace(() -> LambdaLogger.buildMessage("put completed for {} {} {}, size now {}",
                 mapDefinition, keyRange, refDataValue,
                 Optional.ofNullable(rangeValueNestedMap.get(mapDefinition))
                         .map(NavigableMap::size)
                         .orElse(0)));
         return wasValuePut;
+    }
+
+    private void recordPut(final MapDefinition mapDefinition, final boolean wasValuePut) {
+        if (wasValuePut) {
+            successfulPutsCounter++;
+        }
+        putsCounter++;
+        mapDefinitions.add(mapDefinition);
+        loadedMapNames.add(mapDefinition.getMapName());
     }
 
     @Override
