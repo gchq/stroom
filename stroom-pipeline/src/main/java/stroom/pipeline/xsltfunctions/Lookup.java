@@ -24,7 +24,7 @@ import stroom.refdata.LookupIdentifier;
 import stroom.refdata.ReferenceData;
 import stroom.refdata.ReferenceDataResult;
 import stroom.refdata.store.RefDataValueProxy;
-import stroom.refdata.store.offheapstore.RefDataValueProxyConsumer;
+import stroom.refdata.store.RefDataValueProxyConsumerFactory;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
@@ -33,11 +33,9 @@ class Lookup extends AbstractLookup {
 
     @Inject
     Lookup(final ReferenceData referenceData,
-//           final RefDataStoreProvider refDataStoreProvider,
            final StreamHolder streamHolder,
-           final RefDataValueProxyConsumer.Factory consumerFactory) {
-//        super(referenceData, refDataStoreProvider.get(), streamHolder, consumerFactory);
-        super(referenceData, streamHolder, consumerFactory);
+           final RefDataValueProxyConsumerFactory.Factory consumerFactoryFactory) {
+        super(referenceData, streamHolder, consumerFactoryFactory);
     }
 
     @Override
@@ -53,7 +51,7 @@ class Lookup extends AbstractLookup {
         final RefDataValueProxy refDataValueProxy = result.getRefDataValueProxy();
 
 //        final SequenceMaker sequenceMaker = new SequenceMaker(context, getRefDataStore(), getConsumerFactory());
-        final SequenceMaker sequenceMaker = new SequenceMaker(context, getConsumerFactory());
+        final SequenceMaker sequenceMaker = new SequenceMaker(context, getRefDataValueProxyConsumerFactoryFactory());
 
         boolean wasFound = false;
         try {

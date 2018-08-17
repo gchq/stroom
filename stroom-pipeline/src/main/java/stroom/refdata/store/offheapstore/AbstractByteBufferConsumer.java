@@ -1,6 +1,5 @@
 package stroom.refdata.store.offheapstore;
 
-import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
 import stroom.refdata.RefDataValueByteBufferConsumer;
 
@@ -20,11 +19,4 @@ public abstract class AbstractByteBufferConsumer implements RefDataValueByteBuff
     @Override
     public abstract void consumeBytes(Receiver receiver, ByteBuffer byteBuffer);
 
-
-
-    public interface Factory {
-        RefDataValueByteBufferConsumer create(
-                final Receiver receiver,
-                final PipelineConfiguration pipelineConfiguration);
-    }
 }

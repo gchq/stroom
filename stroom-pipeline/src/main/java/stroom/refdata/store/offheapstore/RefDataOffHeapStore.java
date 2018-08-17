@@ -192,6 +192,11 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         this.refStreamDefStripedReentrantLock = Striped.lazyWeakLock(100);
     }
 
+    @Override
+    public StorageType getStorageType() {
+        return StorageType.OFF_HEAP;
+    }
+
     private void addDbsToMap(final LmdbDb... lmdbDbs) {
         for (LmdbDb lmdbDb : lmdbDbs) {
             this.databaseMap.put(lmdbDb.getDbName(), lmdbDb);

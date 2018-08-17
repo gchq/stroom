@@ -65,6 +65,10 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
         this.mapDefinitions = new HashSet<>();
     }
 
+    @Override
+    public StorageType getStorageType() {
+        return StorageType.ON_HEAP;
+    }
 
     @Override
     public Optional<RefDataProcessingInfo> getAndTouchProcessingInfo(final RefStreamDefinition refStreamDefinition) {
@@ -185,24 +189,26 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
                                      final String key,
                                      final Consumer<TypedByteBuffer> valueBytesConsumer) {
 
+        throw new UnsupportedOperationException("This implementation doesn't deal in bytes");
+
         // TODO we are dealing with on-heap data so we shouldn't be involved with bytes/ByteBuffers
         // for the moment this will do as the fast infoset values will be bytes anyway so it is just
         // some small string serialisation.
 
-        boolean wasConsumed = getValue(mapDefinition, key)
-                .filter(refDataValue -> {
-                    // the ByteBuffer in here is shared and owned by 'this' so it should not
-                    // be used outside this consumer
-                    TypedByteBuffer typedByteBuffer = buildTypedByteBuffer(refDataValue);
-
-                    valueBytesConsumer.accept(typedByteBuffer);
-
-                    // abuse of the filter() method, as not really filtering, so always return true
-                    return true;
-                })
-                .isPresent();
-        LOGGER.trace("consumeValueBytes({}, {}, ...) returning {}", mapDefinition, key, wasConsumed);
-        return wasConsumed;
+//        boolean wasConsumed = getValue(mapDefinition, key)
+//                .filter(refDataValue -> {
+//                    // the ByteBuffer in here is shared and owned by 'this' so it should not
+//                    // be used outside this consumer
+//                    TypedByteBuffer typedByteBuffer = buildTypedByteBuffer(refDataValue);
+//
+//                    valueBytesConsumer.accept(typedByteBuffer);
+//
+//                    // abuse of the filter() method, as not really filtering, so always return true
+//                    return true;
+//                })
+//                .isPresent();
+//        LOGGER.trace("consumeValueBytes({}, {}, ...) returning {}", mapDefinition, key, wasConsumed);
+//        return wasConsumed;
     }
 
     @Override

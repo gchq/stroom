@@ -17,9 +17,12 @@
 
 package stroom.refdata.store;
 
+import net.sf.saxon.trans.XPathException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.refdata.store.offheapstore.RefDataValueProxyConsumer;
 import stroom.refdata.store.offheapstore.TypedByteBuffer;
+import stroom.util.logging.LambdaLogger;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -58,6 +61,11 @@ public class SingleRefDataValueProxy implements RefDataValueProxy {
         return refDataStore.getValue(mapDefinition, key);
     }
 
+    @Override
+    public RefDataStore.StorageType getStorageType() {
+        return refDataStore.getStorageType();
+    }
+
     /**
      * If a reference data entry exists for this {@link SingleRefDataValueProxy} pass its value to the consumer
      * as a {@link TypedByteBuffer}.
@@ -68,6 +76,23 @@ public class SingleRefDataValueProxy implements RefDataValueProxy {
     public boolean consumeBytes(final Consumer<TypedByteBuffer> typedByteBufferConsumer) {
         LOGGER.trace("consumeBytes(...)");
         return refDataStore.consumeValueBytes(mapDefinition, key, typedByteBufferConsumer);
+    }
+
+    @Override
+    public boolean consumeValue(final RefDataValueProxyConsumerFactory refDataValueProxyConsumerFactory) {
+        LOGGER.trace("consume(...)");
+
+        // get the consumer appropriate to the refDataStore that this proxy came from. The refDataStore knows
+        // what its values look like (e.g. heap objects or bytebuffers)
+        final RefDataValueProxyConsumer refDataValueProxyConsumer = refDataValueProxyConsumerFactory
+                .getConsumer(refDataStore.getStorageType());
+
+        try {
+            return refDataValueProxyConsumer.consume(this);
+        } catch (XPathException e) {
+            throw new RuntimeException(LambdaLogger.buildMessage(
+                    "Error handing rerence data value: {}", e.getMessage()), e);
+        }
     }
 
     @Override

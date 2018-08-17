@@ -38,4 +38,8 @@ public interface RefDataValueProxy {
      * @return True if the entry is found and the consumer is called.
      */
     boolean consumeBytes(Consumer<TypedByteBuffer> typedByteBufferConsumer);
+
+    RefDataStore.StorageType getStorageType();
+
+    boolean consumeValue(final RefDataValueProxyConsumerFactory refDataValueProxyConsumerFactory);
 }

@@ -92,4 +92,11 @@ public interface RefDataStore extends HasHealthCheck {
     void logAllContents();
 
     void logAllContents(Consumer<String> logEntryConsumer);
+
+    StorageType getStorageType();
+
+    enum StorageType {
+        ON_HEAP,
+        OFF_HEAP
+    }
 }
