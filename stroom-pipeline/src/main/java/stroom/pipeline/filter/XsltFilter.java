@@ -28,7 +28,6 @@ import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import stroom.cache.StoredXsltExecutable;
 import stroom.cache.XsltPool;
-import stroom.docref.DocRef;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.SupportsCodeInjection;
 import stroom.pipeline.XsltStore;
@@ -50,6 +49,8 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.PipelineContext;
 import stroom.pipeline.writer.PathCreator;
 import stroom.pool.PoolItem;
+import stroom.properties.api.PropertyService;
+import stroom.docref.DocRef;
 import stroom.util.CharBuffer;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
@@ -73,10 +74,12 @@ import java.util.List;
 public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjection {
     private static final Logger LOGGER = LoggerFactory.getLogger(XsltFilter.class);
 
+    private static final int DEFAULT_MAX_ELEMENTS = 1000000;
+
     private final XsltPool xsltPool;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final XsltStore xsltStore;
-    private final XsltConfig xsltConfig;
+    private final PropertyService propertyService;
     private final LocationFactoryProxy locationFactory;
     private final PipelineContext pipelineContext;
     private final PathCreator pathCreator;
@@ -108,14 +111,14 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     public XsltFilter(final XsltPool xsltPool,
                       final ErrorReceiverProxy errorReceiverProxy,
                       final XsltStore xsltStore,
-                      final XsltConfig xsltConfig,
+                      final PropertyService propertyService,
                       final LocationFactoryProxy locationFactory,
                       final PipelineContext pipelineContext,
                       final PathCreator pathCreator) {
         this.xsltPool = xsltPool;
         this.errorReceiverProxy = errorReceiverProxy;
         this.xsltStore = xsltStore;
-        this.xsltConfig = xsltConfig;
+        this.propertyService = propertyService;
         this.locationFactory = locationFactory;
         this.pipelineContext = pipelineContext;
         this.pathCreator = pathCreator;
@@ -125,7 +128,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     public void startProcessing() {
         try {
             errorListener = new ErrorListenerAdaptor(getElementId(), locationFactory, errorReceiverProxy);
-            maxElementCount = xsltConfig.getMaxElements();
+            maxElementCount = getMaxElements();
             XsltDoc xslt = null;
 
             // Load XSLT from a name pattern if one has been specified.
@@ -575,23 +578,39 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         return pipelineReferences;
     }
 
-    @PipelineProperty(description = "The XSLT to use.")
+    private int getMaxElements() {
+        int maxElements = DEFAULT_MAX_ELEMENTS;
+        if (propertyService != null) {
+            try {
+                final String property = propertyService.getProperty("stroom.pipeline.xslt.maxElements");
+                if (property != null) {
+                    maxElements = Integer.parseInt(property);
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.error("getMaxElements() - Integer.parseInt stroom.pipeline.xslt.maxElements", e);
+            }
+        }
+        return maxElements;
+    }
+
+    @PipelineProperty(description = "The XSLT to use.", displayPriority = 1)
     @PipelinePropertyDocRef(types = XsltDoc.DOCUMENT_TYPE)
     public void setXslt(final DocRef xsltRef) {
         this.xsltRef = xsltRef;
     }
 
-    @PipelineProperty(description = "A name pattern to load XSLT dynamically.")
+    @PipelineProperty(description = "A name pattern to load XSLT dynamically.", displayPriority = 2)
     public void setXsltNamePattern(final String xsltNamePattern) {
         this.xsltNamePattern = xsltNamePattern;
     }
 
-    @PipelineProperty(description = "If XSLT cannot be found to match the name pattern suppress warnings.", defaultValue = "false")
+    @PipelineProperty(description = "If XSLT cannot be found to match the name pattern suppress warnings.",
+            defaultValue = "false", displayPriority = 3)
     public void setSuppressXSLTNotFoundWarnings(final boolean suppressXSLTNotFoundWarnings) {
         this.suppressXSLTNotFoundWarnings = suppressXSLTNotFoundWarnings;
     }
 
-    @PipelineProperty(description = "A list of places to load reference data from if required.")
+    @PipelineProperty(description = "A list of places to load reference data from if required.", displayPriority = 5)
     public void setPipelineReference(final PipelineReference pipelineReference) {
         if (pipelineReferences == null) {
             pipelineReferences = new ArrayList<>();
@@ -600,7 +619,10 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         pipelineReferences.add(pipelineReference);
     }
 
-    @PipelineProperty(description = "Advanced: Choose whether or not you want to use cached XSLT templates to improve performance.", defaultValue = "true")
+    @PipelineProperty(
+            description = "Advanced: Choose whether or not you want to use cached XSLT templates to improve performance.",
+            defaultValue = "true",
+            displayPriority = 4)
     public void setUsePool(final boolean usePool) {
         this.usePool = usePool;
     }
