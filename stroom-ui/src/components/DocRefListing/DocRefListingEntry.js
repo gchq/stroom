@@ -23,7 +23,7 @@ const dropTarget = {
   ) {
     const { docRefs } = monitor.getItem();
 
-    return !!node && docRefs.reduce((acc, curr) => acc && canMove(curr, node), true);
+    return !!node && node.type === 'Folder' && docRefs.reduce((acc, curr) => acc && canMove(curr, node), true);
   },
   drop(
     {
