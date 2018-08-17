@@ -250,6 +250,7 @@ EnhancedDocRefListing.propTypes = {
 EnhancedDocRefListing.defaultProps = {
   maxResults: 0,
   actionBarItems: [],
+  allDocRefs: [],
   includeBreadcrumbOnEntries: true,
   allowMultiSelect: false,
   fixedDocRefTypeFilters: []

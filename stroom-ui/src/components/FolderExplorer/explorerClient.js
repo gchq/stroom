@@ -60,7 +60,7 @@ export const createDocument = (
     response =>
       response
         .json()
-        .then(resultDocRef => dispatch(docRefCreated(resultDocRef, destinationFolderRef))),
+        .then(updatedTree => dispatch(docRefCreated(updatedTree))),
     {
       body: JSON.stringify({
         docRefType,
@@ -111,8 +111,7 @@ export const copyDocuments = (uuids, destinationUuid, permissionInheritance) => 
     response =>
       response
         .json()
-        .then(bulkActionResult =>
-          dispatch(docRefsCopied(docRefs, destination.node, bulkActionResult))),
+        .then(updatedTree => dispatch(docRefsCopied(docRefs, destination.node, updatedTree))),
     {
       body: JSON.stringify({
         docRefs: docRefs.map(stripDocRef),
@@ -143,8 +142,7 @@ export const moveDocuments = (uuids, destinationUuid, permissionInheritance) => 
     response =>
       response
         .json()
-        .then(bulkActionResult =>
-          dispatch(docRefsMoved(docRefs, destination.node, bulkActionResult))),
+        .then(updatedTree => dispatch(docRefsMoved(docRefs, destination.node, updatedTree))),
     {
       body: JSON.stringify({
         docRefs: docRefs.map(stripDocRef),
@@ -163,8 +161,7 @@ export const deleteDocuments = uuids => (dispatch, getState) => {
     dispatch,
     state,
     url,
-    response =>
-      response.json().then(bulkActionResult => dispatch(docRefsDeleted(docRefs, bulkActionResult))),
+    response => response.json().then(updatedTree => dispatch(docRefsDeleted(docRefs, updatedTree))),
     {
       method: 'delete',
       body: JSON.stringify(docRefs.map(stripDocRef)),

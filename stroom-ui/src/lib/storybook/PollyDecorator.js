@@ -92,11 +92,16 @@ server.get(`${testConfig.explorerServiceUrl}/docRefTypes`).intercept((req, res) 
 // // Create Document
 server.post(`${testConfig.explorerServiceUrl}/create`).intercept((req, res) => {
   const { docRefType, docRefName, destinationFolderRef, permissionInheritance } = JSON.parse(req.body);
-  res.json({
+
+  let newDocRef = {
     uuid: guid(),
     type: docRefType,
-    name: docRefName
-  });
+    name: docRefName,
+    children: (docRefType === 'Folder') ? [] : undefined
+  }
+  testCache.data.documentTree = addItemsToTree(testCache.data.documentTree, destinationFolderRef.uuid, [newDocRef]);
+
+  res.json(testCache.data.documentTree);
 });
 
 // Copies need to be deep
@@ -114,10 +119,7 @@ server.post(`${testConfig.explorerServiceUrl}/copy`).intercept((req, res) => {
   const copies = docRefs.map(d => findItem(testCache.data.documentTree, d.uuid)).map(d => d.node).map(copyDocRef);
   testCache.data.documentTree = addItemsToTree(testCache.data.documentTree, destinationFolderRef.uuid, copies);
 
-  res.json({
-    docRefs: copies,
-    message: '',
-  });
+  res.json(testCache.data.documentTree);
 });
 // Move Document
 server.put(`${testConfig.explorerServiceUrl}/move`).intercept((req, res) => {
@@ -128,10 +130,7 @@ server.put(`${testConfig.explorerServiceUrl}/move`).intercept((req, res) => {
   testCache.data.documentTree = deleteItemsFromTree(testCache.data.documentTree, docRefUuidsToDelete);
   testCache.data.documentTree = addItemsToTree(testCache.data.documentTree, itemsToMove);
 
-  res.json({
-    docRefs: itemsToMove,
-    message: '',
-  });
+  res.json(testCache.data.documentTree);
 });
 // Rename Document
 server.put(`${testConfig.explorerServiceUrl}/rename`).intercept((req, res) => {
@@ -141,10 +140,7 @@ server.put(`${testConfig.explorerServiceUrl}/rename`).intercept((req, res) => {
 // Delete Document
 server.delete(`${testConfig.explorerServiceUrl}/delete`).intercept((req, res) => {
   const docRefs = JSON.parse(req.body);
-  res.json({
-    docRefs,
-    message: '',
-  });
+  res.json(testCache.data.documentTree);
 });
 
 // Elements Resource

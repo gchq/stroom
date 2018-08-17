@@ -126,9 +126,9 @@ public class ExplorerResource {
     @POST
     @Path("/create")
     public Response createDocument(final CreateOp op) {
-        final DocRef result = explorerService.create(op.docRefType, op.docRefName, op.destinationFolderRef, op.permissionInheritance);
+        explorerService.create(op.docRefType, op.docRefName, op.destinationFolderRef, op.permissionInheritance);
 
-        return Response.ok(result).build();
+        return getExplorerTree();
     }
 
     static class CopyOp {
@@ -165,8 +165,11 @@ public class ExplorerResource {
     @Path("/copy")
     public Response copyDocument(final CopyOp op) {
         final BulkActionResult result = explorerService.copy(op.docRefs, op.destinationFolderRef, op.permissionInheritance);
-
-        return Response.ok(result).build();
+        if (result.getMessage().isEmpty()) {
+            return getExplorerTree();
+        } else {
+            return Response.serverError().entity(result.getMessage()).build();
+        }
     }
 
     static class MoveOp {
@@ -203,8 +206,11 @@ public class ExplorerResource {
     @Path("/move")
     public Response moveDocument(final MoveOp op) {
         final BulkActionResult result = explorerService.move(op.docRefs, op.destinationFolderRef, op.permissionInheritance);
-
-        return Response.ok(result).build();
+        if (result.getMessage().isEmpty()) {
+            return getExplorerTree();
+        } else {
+            return Response.serverError().entity(result.getMessage()).build();
+        }
     }
 
     static class RenameOp {
@@ -233,15 +239,18 @@ public class ExplorerResource {
     public Response renameDocument(final RenameOp renameOp) {
         final DocRef result = explorerService.rename(renameOp.docRef, renameOp.name);
 
-        return Response.ok(result).build();
+        return getExplorerTree();
     }
 
     @DELETE
     @Path("/delete")
     public Response deleteDocument(final List<DocRef> docRefs) {
         final BulkActionResult result = explorerService.delete(docRefs);
-
-        return Response.ok(result).build();
+        if (result.getMessage().isEmpty()) {
+            return getExplorerTree();
+        } else {
+            return Response.serverError().entity(result.getMessage()).build();
+        }
     }
 
     private boolean filterDescendants(final ExplorerNode parent,
