@@ -17,6 +17,7 @@
 
 package stroom.pipeline;
 
+import stroom.data.store.api.StreamStore;
 import stroom.entity.shared.EntityServiceException;
 import stroom.feed.FeedProperties;
 import stroom.guice.PipelineScopeRunnable;
@@ -32,7 +33,7 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
-import stroom.data.store.api.StreamStore;
+import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
@@ -40,10 +41,8 @@ import javax.inject.Provider;
 
 @TaskHandlerBean(task = FetchDataWithPipelineAction.class)
 class FetchDataWithPipelineHandler extends AbstractTaskHandler<FetchDataWithPipelineAction, AbstractFetchDataResult> {
-
-        private final Security security;
+    private final Security security;
     private final DataFetcher dataFetcher;
-
 
     @Inject
     FetchDataWithPipelineHandler(final StreamStore streamStore,
@@ -60,8 +59,7 @@ class FetchDataWithPipelineHandler extends AbstractTaskHandler<FetchDataWithPipe
                                  final Security security,
                                  final PipelineScopeRunnable pipelineScopeRunnable) {
         dataFetcher = new DataFetcher(streamStore,
-                feedService,
-                streamProcessorService,
+                feedProperties,
                 feedHolderProvider,
                 metaDataHolderProvider,
                 pipelineHolderProvider,

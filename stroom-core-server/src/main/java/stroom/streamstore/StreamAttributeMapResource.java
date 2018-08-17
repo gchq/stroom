@@ -20,9 +20,11 @@ package stroom.streamstore;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
+import stroom.data.meta.api.DataMetaService;
+import stroom.data.meta.api.DataRow;
+import stroom.data.meta.api.FindDataCriteria;
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.entity.shared.BaseResultList;
@@ -30,12 +32,9 @@ import stroom.entity.shared.IdSet;
 import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.PageResponse;
 import stroom.entity.shared.Sort;
-import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.Security;
-import stroom.streamstore.shared.FindStreamAttributeMapCriteria;
-import stroom.streamstore.shared.StreamAttributeMap;
 import stroom.util.HasHealthCheck;
 
 import javax.ws.rs.Consumes;
@@ -51,7 +50,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static stroom.datasource.api.v2.DataSourceField.DataSourceFieldType.FIELD;
-import static stroom.query.api.v2.ExpressionTerm.*;
+import static stroom.query.api.v2.ExpressionTerm.Condition;
 
 @Api(
         value = "stream attribute map - /v1",
@@ -60,13 +59,13 @@ import static stroom.query.api.v2.ExpressionTerm.*;
 @Produces(MediaType.APPLICATION_JSON)
 public class StreamAttributeMapResource implements HasHealthCheck {
 
-    private StreamAttributeMapService streamAttributeMapService;
+    private DataMetaService dataMetaService;
     private Security security;
 
     @Inject
-    public StreamAttributeMapResource(final StreamAttributeMapService streamAttributeMapService,
-                                      final Security security){
-        this.streamAttributeMapService = streamAttributeMapService;
+    public StreamAttributeMapResource(final DataMetaService dataMetaService,
+                                      final Security security) {
+        this.dataMetaService = dataMetaService;
         this.security = security;
     }
 
@@ -74,10 +73,10 @@ public class StreamAttributeMapResource implements HasHealthCheck {
     @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
     public Response page(@QueryParam("pageOffset") Long pageOffset,
-                           @QueryParam("pageSize") Integer pageSize){
+                         @QueryParam("pageSize") Integer pageSize) {
         return security.secureResult(() -> {
             // Validate pagination params
-            if((pageSize != null && pageOffset == null) || (pageSize == null && pageOffset != null)){
+            if ((pageSize != null && pageOffset == null) || (pageSize == null && pageOffset != null)) {
                 return Response.status(Response.Status.BAD_REQUEST).entity("A pagination request requires both a pageSize and an offset").build();
             }
 
@@ -85,21 +84,19 @@ public class StreamAttributeMapResource implements HasHealthCheck {
             final long itemOffset = pageOffset * pageSize;
 
             // Configure default criteria
-            FindStreamAttributeMapCriteria criteria = new FindStreamAttributeMapCriteria();
+            FindDataCriteria criteria = new FindDataCriteria();
             criteria.setPageRequest(new PageRequest(itemOffset, pageSize));
-            // TODO Replace with Set.of() when we move to 1.9
-            criteria.setFetchSet(Sets.newHashSet("StreamType", "StreamProcessor", "Volume", "Feed", "Pipeline"));
             criteria.setSort(new Sort("Create Time", Sort.Direction.DESCENDING, false));
 
             // Set status to unlocked
             ExpressionTerm expressionTerm = new ExpressionTerm("Status", Condition.EQUALS, "Unlocked");
             ExpressionOperator expressionOperator = new ExpressionOperator(true, ExpressionOperator.Op.AND, expressionTerm);
-            criteria.getFindStreamCriteria().setExpression(expressionOperator);
+            criteria.setExpression(expressionOperator);
 
-            BaseResultList<StreamAttributeMap> results = streamAttributeMapService.find(criteria);
+            BaseResultList<DataRow> results = dataMetaService.findRows(criteria);
             Object response = new Object() {
                 public PageResponse pageResponse = results.getPageResponse();
-                public List<StreamAttributeMap> streamAttributeMaps = results.getValues();
+                public List<DataRow> streamAttributeMaps = results.getValues();
             };
             return Response.ok(response).build();
         });
@@ -111,10 +108,10 @@ public class StreamAttributeMapResource implements HasHealthCheck {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response search(@QueryParam("pageOffset") Long pageOffset,
                            @QueryParam("pageSize") Integer pageSize,
-                           final ExpressionOperator expression){
+                           final ExpressionOperator expression) {
         return security.secureResult(() -> {
             // Validate pagination params
-            if((pageSize != null && pageOffset == null) || (pageSize == null && pageOffset != null)){
+            if ((pageSize != null && pageOffset == null) || (pageSize == null && pageOffset != null)) {
                 return Response.status(Response.Status.BAD_REQUEST).entity("A pagination request requires both a pageSize and an offset").build();
             }
 
@@ -122,10 +119,8 @@ public class StreamAttributeMapResource implements HasHealthCheck {
             final long itemOffset = pageOffset * pageSize;
 
             // Configure default criteria
-            FindStreamAttributeMapCriteria criteria = new FindStreamAttributeMapCriteria();
+            FindDataCriteria criteria = new FindDataCriteria();
             criteria.setPageRequest(new PageRequest(itemOffset, pageSize));
-            // TODO Replace with Set.of() when we move to 1.9
-            criteria.setFetchSet(Sets.newHashSet("StreamType", "StreamProcessor", "Volume", "Feed", "Pipeline"));
             criteria.setSort(new Sort("Create Time", Sort.Direction.DESCENDING, false));
 
             //TODO disbale this and have it as a default field
@@ -134,12 +129,12 @@ public class StreamAttributeMapResource implements HasHealthCheck {
             // ExpressionOperator expressionOperator = new ExpressionOperator(true, ExpressionOperator.Op.AND, expressionTerm);
             // criteria.getFindStreamCriteria().setExpression(expressionOperator);
 
-            criteria.getFindStreamCriteria().setExpression(expression);
+            criteria.setExpression(expression);
 
-            BaseResultList<StreamAttributeMap> results = streamAttributeMapService.find(criteria);
+            BaseResultList<DataRow> results = dataMetaService.findRows(criteria);
             Object response = new Object() {
                 public PageResponse pageResponse = results.getPageResponse();
-                public List<StreamAttributeMap> streamAttributeMaps = results.getValues();
+                public List<DataRow> streamAttributeMaps = results.getValues();
             };
             return Response.ok(response).build();
         });
@@ -164,19 +159,16 @@ public class StreamAttributeMapResource implements HasHealthCheck {
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response search(@PathParam("id") Long id){
+    public Response search(@PathParam("id") Long id) {
         return security.secureResult(() -> {
             // Configure default criteria
-            FindStreamAttributeMapCriteria criteria = new FindStreamAttributeMapCriteria();
-            // TODO Replace with Set.of() when we move to 1.9
-            criteria.setFetchSet(Sets.newHashSet("StreamType", "StreamProcessor", "Volume", "Feed", "Pipeline"));
-            criteria.setUseCache(false);
+            FindDataCriteria criteria = new FindDataCriteria();
             IdSet idSet = new IdSet();
             idSet.add(id);
-            criteria.getFindStreamCriteria().setSelectedIdSet(idSet);
+            criteria.setSelectedIdSet(idSet);
 
-            BaseResultList<StreamAttributeMap> results = streamAttributeMapService.find(criteria);
-            if(results.size() == 0){
+            BaseResultList<DataRow> results = dataMetaService.findRows(criteria);
+            if (results.size() == 0) {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }
             return Response.ok(results.getFirst()).build();

@@ -21,7 +21,8 @@ package stroom.resource;
 import io.swagger.annotations.Api;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.feed.FeedService;
+import stroom.data.store.api.StreamStore;
+import stroom.feed.FeedProperties;
 import stroom.guice.PipelineScopeRunnable;
 import stroom.logging.StreamEventLog;
 import stroom.pipeline.DataFetcher;
@@ -36,9 +37,6 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
-import stroom.streamstore.StreamStore;
-import stroom.streamstore.shared.StreamType;
-import stroom.streamtask.StreamProcessorService;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.Severity;
 
@@ -65,8 +63,7 @@ public class DataResource {
 
     @Inject
     public DataResource(final StreamStore streamStore,
-                        final FeedService feedService,
-                        final StreamProcessorService streamProcessorService,
+                        final FeedProperties feedProperties,
                         final Provider<FeedHolder> feedHolderProvider,
                         final Provider<MetaDataHolder> metaDataHolderProvider,
                         final Provider<PipelineHolder> pipelineHolderProvider,
@@ -79,8 +76,7 @@ public class DataResource {
                         final Security security,
                         final PipelineScopeRunnable pipelineScopeRunnable) {
         dataFetcher = new DataFetcher(streamStore,
-                feedService,
-                streamProcessorService,
+                feedProperties,
                 feedHolderProvider,
                 metaDataHolderProvider,
                 pipelineHolderProvider,
@@ -103,7 +99,7 @@ public class DataResource {
             final @QueryParam("streamsOffset") Long streamsOffset,
             final @QueryParam("streamsLength") Long streamsLength,
             final @QueryParam("pageOffset") Long pageOffset,
-            final @QueryParam("pageSize") Long pageSize){
+            final @QueryParam("pageSize") Long pageSize) {
 
         final OffsetRange<Long> pageRange = new OffsetRange<>(pageOffset, pageSize);
         final OffsetRange<Long> streamRange = new OffsetRange<>(streamsOffset, streamsLength);
@@ -113,13 +109,13 @@ public class DataResource {
         final Severity[] expandedSeverities = new Severity[]{Severity.INFO, Severity.WARNING, Severity.ERROR, Severity.FATAL_ERROR};
 
         //TODO Used for child streams. Needs implementing.
-        StreamType childStreamType = null;
+        String childStreamTypeName = null;
 
         return security.secureResult(PermissionNames.VIEW_DATA_PERMISSION, () -> {
             dataFetcher.reset();
             AbstractFetchDataResult data = dataFetcher.getData(
                     streamId,
-                    childStreamType,
+                    childStreamTypeName,
                     streamRange,
                     pageRange,
                     isMarkerMode,
@@ -130,5 +126,4 @@ public class DataResource {
 
         });
     }
-
 }

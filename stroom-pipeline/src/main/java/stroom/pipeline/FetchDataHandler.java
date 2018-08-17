@@ -32,6 +32,7 @@ import stroom.pipeline.state.StreamHolder;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.data.store.api.StreamStore;
+import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskHandlerBean;
 
 import javax.inject.Inject;
@@ -57,8 +58,7 @@ class FetchDataHandler extends AbstractTaskHandler<FetchDataAction, AbstractFetc
                      final Security security,
                      final PipelineScopeRunnable pipelineScopeRunnable) {
         dataFetcher = new DataFetcher(streamStore,
-                feedService,
-                streamProcessorService,
+                feedProperties,
                 feedHolderProvider,
                 metaDataHolderProvider,
                 pipelineHolderProvider,
