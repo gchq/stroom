@@ -24,6 +24,7 @@ import net.sf.saxon.trans.XPathException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.RefDataValueByteBufferConsumer;
+import stroom.refdata.store.AbstractByteBufferConsumer;
 import stroom.refdata.store.offheapstore.serdes.StringValueSerde;
 import stroom.refdata.util.ByteBufferUtils;
 import stroom.util.logging.LambdaLogger;
@@ -61,7 +62,7 @@ public class StringByteBufferConsumer extends AbstractByteBufferConsumer {
         }
     }
 
-    public static class Factory implements AbstractByteBufferConsumer.Factory {
+    public static class Factory implements RefDataValueByteBufferConsumer.Factory {
 
         private final StringValueSerde stringValueSerde;
 

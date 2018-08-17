@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.refdata.store.offheapstore;
+package stroom.refdata.store;
 
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;

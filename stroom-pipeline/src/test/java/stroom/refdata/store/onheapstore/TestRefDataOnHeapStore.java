@@ -46,7 +46,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -84,7 +83,7 @@ public class TestRefDataOnHeapStore {
 
     private static final String KV_TYPE = "KV";
     private static final String RANGE_TYPE = "Range";
-    private static final String PADDING = IntStream.rangeClosed(1,300).boxed().map(i -> "-").collect(Collectors.joining());
+    private static final String PADDING = IntStream.rangeClosed(1, 300).boxed().map(i -> "-").collect(Collectors.joining());
 
     private final MockStroomPropertyService mockStroomPropertyService = new MockStroomPropertyService();
 
@@ -127,7 +126,7 @@ public class TestRefDataOnHeapStore {
         Map.Entry<Long, String> entryThree = treeMap.ceilingEntry(4L);
 
         LOGGER.info("------------------");
-        
+
         SortedMap<Long, String> partMap = treeMap.tailMap(4L);
         partMap.forEach((key, value) ->
                 LOGGER.info(LambdaLogger.buildMessage("{} => {}", key, value)));
@@ -832,13 +831,6 @@ public class TestRefDataOnHeapStore {
 
             assertThat(refDataValue).isInstanceOf(StringValue.class);
             assertThat((StringValue) refDataValue).isEqualTo(tuple3._3);
-
-            // now consume the proxied value in a txn
-            valueProxy.consumeBytes(typedByteBuffer -> {
-                assertThat(typedByteBuffer.getTypeId()).isEqualTo(StringValue.TYPE_ID);
-                String foundStrVal = StandardCharsets.UTF_8.decode(typedByteBuffer.getByteBuffer()).toString();
-                assertThat(foundStrVal).isEqualTo(tuple3._3.getValue());
-            });
         });
     }
 
@@ -875,12 +867,6 @@ public class TestRefDataOnHeapStore {
                 optRefDataValue.ifPresent(refDataValue -> {
                     assertThat(refDataValue).isInstanceOf(StringValue.class);
                     assertThat((StringValue) refDataValue).isEqualTo(tuple3._3);
-
-                    valueProxy.consumeBytes(typedByteBuffer -> {
-                        assertThat(typedByteBuffer.getTypeId()).isEqualTo(StringValue.TYPE_ID);
-                        String foundStrVal = StandardCharsets.UTF_8.decode(typedByteBuffer.getByteBuffer()).toString();
-                        assertThat(foundStrVal).isEqualTo(tuple3._3.getValue());
-                    });
                 });
             });
         });

@@ -19,7 +19,7 @@
     <logger name="stroom" level="info" />
 
     <logger name="stroom.statistics" level="info" />
-    
+
     <!--
     <logger name="stroom.refdata.store.onheapstore.OnHeapRefDataValueProxyConsumer" level="trace" />
     <logger name="stroom.refdata.store.offheapstore.OffHeapRefDataValueProxyConsumer" level="trace" />

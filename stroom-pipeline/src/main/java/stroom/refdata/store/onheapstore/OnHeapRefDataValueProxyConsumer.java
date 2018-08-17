@@ -20,17 +20,15 @@ package stroom.refdata.store.onheapstore;
 import com.google.inject.assistedinject.Assisted;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
-import net.sf.saxon.event.ReceiverOptions;
 import net.sf.saxon.trans.XPathException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.RefDataValueByteBufferConsumer;
+import stroom.refdata.store.AbstractRefDataValueProxyConsumer;
 import stroom.refdata.store.FastInfosetValue;
 import stroom.refdata.store.RefDataValue;
 import stroom.refdata.store.RefDataValueProxy;
 import stroom.refdata.store.StringValue;
-import stroom.refdata.store.offheapstore.AbstractByteBufferConsumer;
-import stroom.refdata.store.offheapstore.AbstractRefDataValueProxyConsumer;
 import stroom.refdata.store.offheapstore.FastInfosetByteBufferConsumer;
 import stroom.refdata.store.offheapstore.RefDataValueProxyConsumer;
 import stroom.refdata.util.ByteBufferUtils;
@@ -40,6 +38,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import javax.inject.Inject;
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.Objects;
 
 public class OnHeapRefDataValueProxyConsumer
         extends AbstractRefDataValueProxyConsumer
@@ -49,16 +48,18 @@ public class OnHeapRefDataValueProxyConsumer
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(OnHeapRefDataValueProxyConsumer.class);
 
     private final RefDataValueByteBufferConsumer fastInfosetByteBufferConsumer;
+    private final Map<Integer, RefDataValueConsumer.Factory> typeToRefDataValueConsumerFactoryMap;
 
     @Inject
     public OnHeapRefDataValueProxyConsumer(
             @Assisted final Receiver receiver,
             @Assisted final PipelineConfiguration pipelineConfiguration,
             final FastInfosetByteBufferConsumer.Factory fastInfosetByteBufferConsumerFactory,
-            final Map<Integer, AbstractByteBufferConsumer.Factory> typeToByteBufferConsumerFactoryMap) {
+            final Map<Integer, RefDataValueConsumer.Factory> typeToRefDataValueConsumerFactoryMap) {
 
         super(pipelineConfiguration, receiver);
         this.fastInfosetByteBufferConsumer = fastInfosetByteBufferConsumerFactory.create(receiver, pipelineConfiguration);
+        this.typeToRefDataValueConsumerFactoryMap = typeToRefDataValueConsumerFactoryMap;
     }
 
     @Override
@@ -68,15 +69,18 @@ public class OnHeapRefDataValueProxyConsumer
                 .filter(refDataValue -> {
                     // abuse of filter() method, we just want to optionally consume the value
 
-                    if (refDataValue.getTypeId() == StringValue.TYPE_ID) {
-                        String value = ((StringValue) refDataValue).getValue();
-                        LOGGER.trace("consuming {}", value);
+                    // find out what type of value we are dealing with
+                    final int typeId = refDataValue.getTypeId();
 
-                        try {
-                            receiver.characters(value, RefDataValueProxyConsumer.NULL_LOCATION, ReceiverOptions.WHOLE_TEXT_NODE);
-                        } catch (XPathException e) {
-                            throw new RuntimeException(LambdaLogger.buildMessage("Error passing string {} to receiver", value), e);
-                        }
+                    // work out which byteBufferConsumer to use based on the typeId in the value byteBuffer
+                    final RefDataValueConsumer.Factory consumerFactory = typeToRefDataValueConsumerFactoryMap.get(typeId);
+
+                    Objects.requireNonNull(consumerFactory, () -> LambdaLogger.buildMessage("No factory found for typeId {}", typeId));
+                    final RefDataValueConsumer consumer = consumerFactory.create(receiver, pipelineConfiguration);
+
+                    consumer.consume(refDataValue);
+
+                    if (refDataValue.getTypeId() == StringValue.TYPE_ID) {
 
                     } else if (refDataValue.getTypeId() == FastInfosetValue.TYPE_ID) {
 
@@ -97,15 +101,4 @@ public class OnHeapRefDataValueProxyConsumer
                                                final PipelineConfiguration pipelineConfiguration);
     }
 
-    public interface RefDataValueConsumer {
-        boolean consume(final RefDataValue refDataValue);
-    }
-
-    public static class StringValueConsumer implements RefDataValueConsumer {
-
-        @Override
-        public boolean consume(final RefDataValue refDataValue) {
-            return false;
-        }
-    }
 }

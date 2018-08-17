@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 import stroom.refdata.RefDataValueByteBufferConsumer;
+import stroom.refdata.store.AbstractByteBufferConsumer;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -18,7 +19,7 @@ public class FastInfosetByteBufferConsumer extends AbstractByteBufferConsumer {
 
     private final SAXDocumentParser saxDocumentParser;
 
-    FastInfosetByteBufferConsumer(final Receiver receiver, final PipelineConfiguration pipelineConfiguration) {
+    public FastInfosetByteBufferConsumer(final Receiver receiver, final PipelineConfiguration pipelineConfiguration) {
         super(receiver);
 
         final FastInfosetContentHandler fastInfosetContentHandler = new FastInfosetContentHandler();
@@ -45,7 +46,7 @@ public class FastInfosetByteBufferConsumer extends AbstractByteBufferConsumer {
         saxDocumentParser.reset();
     }
 
-    public static class Factory implements AbstractByteBufferConsumer.Factory {
+    public static class Factory implements RefDataValueByteBufferConsumer.Factory {
 
         @Override
         public RefDataValueByteBufferConsumer create(

@@ -33,7 +33,10 @@ import stroom.refdata.store.offheapstore.databases.ProcessingInfoDb;
 import stroom.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.refdata.store.offheapstore.databases.ValueStoreMetaDb;
+import stroom.refdata.store.onheapstore.FastInfosetValueConsumer;
 import stroom.refdata.store.onheapstore.OnHeapRefDataValueProxyConsumer;
+import stroom.refdata.store.onheapstore.RefDataValueConsumer;
+import stroom.refdata.store.onheapstore.StringValueConsumer;
 import stroom.refdata.util.PooledByteBufferOutputStream;
 
 public class RefDataStoreModule extends AbstractModule {
@@ -54,6 +57,18 @@ public class RefDataStoreModule extends AbstractModule {
         refDataValueByteBufferConsumerBinder
                 .addBinding(StringValue.TYPE_ID)
                 .to(StringByteBufferConsumer.Factory.class);
+
+        // bind the various RefDataValue consumer factories into a map keyed on their ID
+        final MapBinder<Integer, RefDataValueConsumer.Factory> refDataValueConsumerBinder = MapBinder.newMapBinder(
+                binder(), Integer.class, RefDataValueConsumer.Factory.class);
+
+        refDataValueConsumerBinder
+                .addBinding(FastInfosetValue.TYPE_ID)
+                .to(FastInfosetValueConsumer.Factory.class);
+
+        refDataValueConsumerBinder
+                .addBinding(StringValue.TYPE_ID)
+                .to(StringValueConsumer.Factory.class);
 
         // bind all the reference data off heap tables
         install(new FactoryModuleBuilder().build(KeyValueStoreDb.Factory.class));

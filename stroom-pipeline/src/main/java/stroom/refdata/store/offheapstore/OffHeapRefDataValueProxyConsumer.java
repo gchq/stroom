@@ -7,11 +7,12 @@ import net.sf.saxon.trans.XPathException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.refdata.RefDataValueByteBufferConsumer;
+import stroom.refdata.store.AbstractByteBufferConsumer;
+import stroom.refdata.store.AbstractRefDataValueProxyConsumer;
 import stroom.refdata.store.RefDataValueProxy;
 import stroom.util.logging.LambdaLogger;
 
 import javax.inject.Inject;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -25,8 +26,6 @@ public class OffHeapRefDataValueProxyConsumer
     // injected map of typeId to the appropriate bytebuffer consumer factory
     private final Map<Integer, AbstractByteBufferConsumer.Factory> typeToByteBufferConsumerFactoryMap;
 
-    // map to go from TypeId to
-    private final Map<Integer, RefDataValueByteBufferConsumer> typeToConsumerMap = new HashMap<>();
 
     @Inject
     public OffHeapRefDataValueProxyConsumer(
@@ -50,11 +49,10 @@ public class OffHeapRefDataValueProxyConsumer
             final int typeId = typedByteBuffer.getTypeId();
 
             // work out which byteBufferConsumer to use based on the typeId in the value byteBuffer
-            final RefDataValueByteBufferConsumer consumer = typeToConsumerMap.computeIfAbsent(
-                    typeId, typeIdKey ->
-                            typeToByteBufferConsumerFactoryMap.get(typeIdKey)
-                                    .create(receiver, pipelineConfiguration)
-            );
+            final RefDataValueByteBufferConsumer.Factory consumerFactory = typeToByteBufferConsumerFactoryMap.get(typeId);
+
+            Objects.requireNonNull(consumerFactory, () -> LambdaLogger.buildMessage("No factory found for typeId {}", typeId));
+            final RefDataValueByteBufferConsumer consumer = consumerFactory.create(receiver, pipelineConfiguration);
 
             Objects.requireNonNull(consumer, () -> LambdaLogger.buildMessage("No consumer for typeId {}", typeId));
 
