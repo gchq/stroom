@@ -451,11 +451,10 @@ class ExplorerServiceImpl implements ExplorerService {
             // Check that the user is allowed to create an item of this type in the destination folder.
             checkCreatePermission(getUUID(destinationFolderRef), sourceDocRef.getType());
             // Copy the item to the destination folder.
-            final DocRef destinationDocRef = handler.copyDocument(sourceDocRef.getUuid(),
+            DocRef destinationDocRef = handler.copyDocument(sourceDocRef.getUuid(),
                     destinationUuid,
                     copiesByOriginalUuid);
             explorerEventLog.copy(sourceDocRef, destinationFolderRef, permissionInheritance, null);
-            resultDocRefs.add(destinationDocRef);
 
             // Create the explorer node
             if (destinationDocRef != null) {
@@ -464,16 +463,18 @@ class ExplorerServiceImpl implements ExplorerService {
                 // If the source directory and destination directory are the same, rename it with 'copy of'
                 if (sourceDirectoryFolderRef.getUuid().equals(destinationFolderRef.getUuid())) {
                     final String copyName = getCopyName(destinationFolderRef, destinationDocRef);
-                    rename(handler, destinationDocRef, copyName);
+                    destinationDocRef = rename(handler, destinationDocRef, copyName);
                 }
             }
+            resultDocRefs.add(destinationDocRef);
 
             // Handle recursion
+            final DocRef finalDestination = destinationDocRef;
             childNodesByParent.get(sourceDocRef)
                     .forEach(sourceDescendant ->
                             recurseCopy(sourceDocRef,
                                     sourceDescendant.getDocRef(),
-                                    destinationDocRef,
+                                    finalDestination,
                                     permissionInheritance,
                                     resultDocRefs,
                                     resultMessage,
