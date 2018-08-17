@@ -5,7 +5,6 @@ import { connect } from 'react-redux';
 import { Header, Icon, Grid, Input, Popup, Button, Loader } from 'semantic-ui-react/dist/commonjs';
 import Mousetrap from 'mousetrap';
 
-import { DocTypeFilters } from 'components/DocRefTypes';
 import DocRefPropType from 'lib/DocRefPropType';
 import DocRefListingEntry from './DocRefListingEntry';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
@@ -20,7 +19,6 @@ const {
   docRefListingMounted,
   docRefListingUnmounted,
   filterTermUpdated,
-  docRefTypeFilterUpdated,
   docRefSelectionUp,
   docRefSelectionDown,
 } = actionCreators;
@@ -54,7 +52,6 @@ const enhance = compose(
       docRefListingMounted,
       docRefListingUnmounted,
       filterTermUpdated,
-      docRefTypeFilterUpdated,
       docRefSelectionUp,
       docRefSelectionDown,
     },
@@ -68,7 +65,7 @@ const enhance = compose(
     docRefSelectionDown,
     docRefListingUnmounted,
   }) => {
-    const { selectedDocRef, filteredDocRefs, docRefTypeFilters = [] } = docRefListing || {};
+    const { selectedDocRef, filteredDocRefs } = docRefListing || {};
     const onOpenKey = () => {
       if (selectedDocRef !== undefined) {
         openDocRef(selectedDocRef);
@@ -95,25 +92,23 @@ const enhance = compose(
       }
     };
 
-    const hasTypesFilteredOut = docRefTypes.length !== docRefTypeFilters.length;
     return {
       onOpenKey,
       onUpKey,
       onDownKey,
       onSearchInputKeyDown,
-      hasTypesFilteredOut,
     };
   }),
   lifecycle({
     componentDidUpdate(prevProps, prevState, snapshot) {
       const {
-        listingId, allDocRefs, docRefListingMounted, maxResults, allowMultiSelect, fixedDocRefTypeFilters
+        listingId, allDocRefs, docRefListingMounted, maxResults, allowMultiSelect
       } = this.props;
 
       const docRefsChanged = JSON.stringify(allDocRefs) !== JSON.stringify(prevProps.allDocRefs);
 
       if (docRefsChanged) {
-        docRefListingMounted(listingId, allDocRefs, maxResults, allowMultiSelect, fixedDocRefTypeFilters);
+        docRefListingMounted(listingId, allDocRefs, maxResults, allowMultiSelect);
       }
     },
     componentDidMount() {
@@ -126,10 +121,9 @@ const enhance = compose(
         onOpenKey,
         maxResults,
         allowMultiSelect,
-        fixedDocRefTypeFilters,
       } = this.props;
       
-      docRefListingMounted(listingId, allDocRefs, maxResults, allowMultiSelect, fixedDocRefTypeFilters);
+      docRefListingMounted(listingId, allDocRefs, maxResults, allowMultiSelect);
 
       Mousetrap.bind(upKeys, onUpKey);
       Mousetrap.bind(downKeys, onDownKey);
@@ -154,13 +148,12 @@ const DocRefListing = ({
   icon,
   title,
   docRefListing: {
-    filterTerm, filteredDocRefs, docRefTypeFilters, fixedDocRefTypeFilters
+    filterTerm, filteredDocRefs
   },
   openDocRef,
   includeBreadcrumbOnEntries,
   actionBarItems,
   filterTermUpdated,
-  docRefTypeFilterUpdated,
   parentFolder,
   onSearchInputKeyDown,
   hasTypesFilteredOut,
@@ -190,7 +183,7 @@ const DocRefListing = ({
             autoFocus
             onKeyDown={onSearchInputKeyDown}
           />
-          {fixedDocRefTypeFilters.length === 0 &&
+          {false &&
           <Popup
             trigger={<Button icon="filter" color={hasTypesFilteredOut ? 'blue' : 'grey'} />}
             flowing
@@ -244,7 +237,6 @@ EnhancedDocRefListing.propTypes = {
   allowMultiSelect: PropTypes.bool.isRequired,
   actionBarItems: ActionBarItemsPropType.isRequired,
   openDocRef: PropTypes.func.isRequired,
-  fixedDocRefTypeFilters: PropTypes.arrayOf(PropTypes.string).isRequired
 };
 
 EnhancedDocRefListing.defaultProps = {
@@ -253,7 +245,6 @@ EnhancedDocRefListing.defaultProps = {
   allDocRefs: [],
   includeBreadcrumbOnEntries: true,
   allowMultiSelect: false,
-  fixedDocRefTypeFilters: []
 };
 
 export default EnhancedDocRefListing;

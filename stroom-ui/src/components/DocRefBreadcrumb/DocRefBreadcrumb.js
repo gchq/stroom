@@ -6,12 +6,12 @@ import { Breadcrumb } from 'semantic-ui-react/dist/commonjs';
 
 import { findItem } from 'lib/treeUtils';
 
-const enhance = compose(connect(
-  ({ folderExplorer: { documentTree } }, { docRefUuid }) => ({
-    docRefWithLineage: findItem(documentTree, docRefUuid),
-  }),
-  {},
-));
+const enhance = compose(connect(({ folderExplorer: { documentTree } }, { docRefUuid }) => {
+  const docRefWithLineage = findItem(documentTree, docRefUuid);
+  return {
+    docRefWithLineage,
+  };
+}, {}));
 
 const DocRefBreadcrumb = ({
   docRefWithLineage: {
@@ -24,10 +24,7 @@ const DocRefBreadcrumb = ({
     {lineage.map(l => (
       <React.Fragment key={l.uuid}>
         <Breadcrumb.Divider />
-        <Breadcrumb.Section
-          link
-          onClick={() => openDocRef(l)}
-        >
+        <Breadcrumb.Section link onClick={() => openDocRef(l)}>
           {l.name}
         </Breadcrumb.Section>
       </React.Fragment>

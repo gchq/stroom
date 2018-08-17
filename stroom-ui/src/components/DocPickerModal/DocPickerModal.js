@@ -23,48 +23,40 @@ import { Button, Modal, Input, Popup } from 'semantic-ui-react';
 
 import DocRefPropType from 'lib/DocRefPropType';
 import withExplorerTree from 'components/FolderExplorer/withExplorerTree';
-import { findItem, iterateNodes } from 'lib/treeUtils';
+import { findItem, iterateNodes, filterTree } from 'lib/treeUtils';
 import DocRefListing from 'components/DocRefListing';
 
 const withModal = withState('modalIsOpen', 'setModalIsOpen', false);
+const withFolderUuid = withState('folderUuid', 'setFolderUuid', undefined);
 
 const enhance = compose(
   withExplorerTree,
   withModal,
+  withFolderUuid,
   connect(
     (
       { folderExplorer: { documentTree }, docRefListing },
       {
-        pickerId, typeFilters, onChange, setModalIsOpen,
+        pickerId, onChange, setModalIsOpen, folderUuid, typeFilters
       },
     ) => {
-      let allDocuments = [];
-      let thisDocRefListing = docRefListing[pickerId];
-      
-      iterateNodes(documentTree, (lineage, node) => {
-        allDocuments.push({
-          name: node.name,
-          type: node.type,
-          uuid: node.uuid,
-          lineage,
-          lineageNames: lineage.reduce((acc, curr) => `${acc} ${curr.name}`, ''),
-        });
-      });
+      let documentTreeToUse = typeFilters.length > 0 ? filterTree(documentTree, d => typeFilters.includes(d.type)) : documentTree;
+      let folderUuidToUse = folderUuid || documentTree.uuid;
 
-      if (typeFilters.length > 0) {
-        allDocuments = allDocuments.filter(n => typeFilters.includes(n.type));
-      }
+      let thisDocRefListing = docRefListing[pickerId];
+      let currentFolderWithLineage = findItem(documentTreeToUse, folderUuidToUse);
+
 
       const onDocRefPickConfirmed = () => {
-        const result = findItem(documentTree, thisDocRefListing.selectedDocRefUuids[0]);
+        const result = findItem(documentTreeToUse, thisDocRefListing.selectedDocRefUuids[0]);
         onChange(result.node);
         setModalIsOpen(false);
       };
 
       return {
-        allDocuments,
+        currentFolderWithLineage,
         docRefListing: thisDocRefListing,
-        documentTree,
+        documentTree: documentTreeToUse,
         onDocRefPickConfirmed,
         selectionNotYetMade: thisDocRefListing && thisDocRefListing.selectedDocRefUuids.length === 0,
       };
@@ -76,17 +68,17 @@ const enhance = compose(
 const DocPickerModal = ({
   modalIsOpen,
   setModalIsOpen,
+  setFolderUuid,
 
+  currentFolderWithLineage,
   documentTree,
   onDocRefPickConfirmed,
   selectionNotYetMade,
-  allDocuments,
   pickerId,
-  typeFilters,
   value,
 }) => {
   let trigger;
-  console.log('Value?', value);
+  
   if (value && value.uuid) {
     const { lineage, node } = findItem(documentTree, value.uuid);
     const triggerValue = `${lineage.map(d => d.name).join(' > ')}${
@@ -129,9 +121,15 @@ const DocPickerModal = ({
           maxResults={5}
           icon="search"
           title="Search"
-          allDocRefs={allDocuments}
-          fixedDocRefTypeFilters={typeFilters}
-          openDocRef={d => console.log('Open Doc Ref?', d)}
+          includeBreadcrumbOnEntries={false}
+          parentFolder={currentFolderWithLineage.node}
+          allDocRefs={currentFolderWithLineage.node.children}
+          openDocRef={d => {
+            // This will open a folder even if children are hidden by filtering...
+            if (d.children && d.children.length > 0) {
+              setFolderUuid(d.uuid);
+            }
+          }}
         />
       </Modal.Content>
       <Modal.Actions>

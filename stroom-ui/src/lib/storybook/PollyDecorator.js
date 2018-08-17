@@ -19,7 +19,7 @@ import { connect } from 'react-redux';
 import { compose, lifecycle } from 'recompose';
 import { Polly } from '@pollyjs/core';
 
-import { guid, findItem, addItemsToTree } from 'lib/treeUtils';
+import { guid, findItem, addItemsToTree, findByUuids, deleteItemsFromTree } from 'lib/treeUtils';
 import { actionCreators as fetchActionCreators } from 'lib/fetchTracker.redux';
 
 const { resetAllUrls } = fetchActionCreators;
@@ -128,7 +128,7 @@ server.put(`${testConfig.explorerServiceUrl}/move`).intercept((req, res) => {
   let docRefUuidsToDelete = docRefs.map(d => d.uuid);
   let itemsToMove = findByUuids(testCache.data.documentTree, docRefUuidsToDelete);
   testCache.data.documentTree = deleteItemsFromTree(testCache.data.documentTree, docRefUuidsToDelete);
-  testCache.data.documentTree = addItemsToTree(testCache.data.documentTree, itemsToMove);
+  testCache.data.documentTree = addItemsToTree(testCache.data.documentTree, destinationFolderRef.uuid, itemsToMove);
 
   res.json(testCache.data.documentTree);
 });

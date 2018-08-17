@@ -42,6 +42,26 @@ export function mapObject(input, mapper) {
   }, {});
 }
 
+export function filterTree(treeNode, filterFunction) {
+  let includeThisOne = filterFunction(treeNode);
+
+  let filteredChildren = 
+    treeNode.children ? 
+      treeNode.children
+        .map(c => filterTree(c, filterFunction))
+        .filter(c => c !== undefined) 
+      : 
+      []
+  if (includeThisOne || filteredChildren.length > 0) {
+    return {
+      ...treeNode,
+      children: filteredChildren
+    }
+  }
+ 
+  return undefined;
+}
+
 /**
  *
  * @param {treeNode} treeNode
