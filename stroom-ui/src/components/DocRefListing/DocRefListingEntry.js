@@ -6,7 +6,7 @@ import { DragSource } from 'react-dnd';
 import { DropTarget } from 'react-dnd';
 
 import { findItem, canMove } from 'lib/treeUtils';
-import { DocRefBreadcrumb } from 'components/DocRefBreadcrumb';
+import RawDocRefListingEntry from './RawDocRefListingEntry';
 import { actionCreators as docRefListingActionCreators } from './redux';
 import { actionCreators as folderExplorerActionCreators } from 'components/FolderExplorer/redux';
 import ItemTypes from './dragDropTypes';
@@ -23,7 +23,11 @@ const dropTarget = {
   ) {
     const { docRefs } = monitor.getItem();
 
-    return !!node && node.type === 'Folder' && docRefs.reduce((acc, curr) => acc && canMove(curr, node), true);
+    return (
+      !!node &&
+      node.type === 'Folder' &&
+      docRefs.reduce((acc, curr) => acc && canMove(curr, node), true)
+    );
   },
   drop(
     {
@@ -56,7 +60,11 @@ const dragSource = {
   canDrag(props) {
     return true;
   },
-  beginDrag({docRefUuid, docRefListing: { selectedDocRefUuids, filteredDocRefs}, keyIsDown:{Control, Meta}}) {
+  beginDrag({
+    docRefUuid,
+    docRefListing: { selectedDocRefUuids, filteredDocRefs },
+    keyIsDown: { Control, Meta },
+  }) {
     let docRefUuids = [docRefUuid];
 
     // If we are dragging one of the items in a selection, bring across the entire selection
@@ -73,14 +81,17 @@ const dragSource = {
 
 function dragCollect(connect, monitor) {
   return {
-    connectDragSource: connect.dragSource(), 
+    connectDragSource: connect.dragSource(),
     isDragging: monitor.isDragging(),
   };
 }
 
 const enhance = compose(
   connect(
-    ({ folderExplorer: { documentTree }, docRefListing, keyIsDown }, { listingId, docRefUuid }) => ({
+    (
+      { folderExplorer: { documentTree }, docRefListing, keyIsDown },
+      { listingId, docRefUuid },
+    ) => ({
       docRefListing: docRefListing[listingId],
       docRefWithLineage: findItem(documentTree, docRefUuid),
       keyIsDown,
@@ -93,7 +104,7 @@ const enhance = compose(
   ),
   branch(({ docRefWithLineage: { node } }) => !node, renderNothing),
   DropTarget([ItemTypes.DOC_REF_UUIDS], dropTarget, dropCollect),
-  DragSource(ItemTypes.DOC_REF_UUIDS, dragSource, dragCollect), 
+  DragSource(ItemTypes.DOC_REF_UUIDS, dragSource, dragCollect),
 );
 
 const DocRefListingEntry = ({
@@ -124,37 +135,17 @@ const DocRefListingEntry = ({
       className += ' cannot-drop';
     }
   }
-  
-  return connectDragSource(connectDropTarget(<div
-  key={node.uuid}
-  className={className}
-  onClick={(e) => {
-        docRefSelectionToggled(listingId, node.uuid, keyIsDown);
-        e.preventDefault();
-      }}
->
-  <div>
-    <img
-      className="stroom-icon--large"
-      alt="X"
-      src={require(`../../images/docRefTypes/${node.type}.svg`)}
-    />
-    <span
-      className="doc-ref-listing__name"
-      onClick={(e) => {
-            onNameClick(node);
-            e.stopPropagation();
-            e.preventDefault();
-          }}
-    >
-      {node.name}
-    </span>
-  </div>
 
-  {includeBreadcrumb && <DocRefBreadcrumb docRefUuid={node.uuid} openDocRef={openDocRef} />}
-</div>))
-
-        };
+  return connectDragSource(connectDropTarget(<div><RawDocRefListingEntry
+    className={className}
+    onRowClick={() => {
+          docRefSelectionToggled(listingId, node.uuid, keyIsDown);
+        }}
+    onNameClick={() => onNameClick(node)}
+    includeBreadcrumb={includeBreadcrumb}
+    openDocRef={openDocRef}
+  /></div>));
+};
 
 const EnhancedDocRefListingEntry = enhance(DocRefListingEntry);
 
