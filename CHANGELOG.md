@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **820** : Fix updating index shards so that they are loaded, updated and saved under lock.
+
 * Issue **819** : Updated `stroom-expression` to v1.4.3 to fix violation of contract exception when sorting search results.
 
 * Issue **817** : Increased maximum number of concurrent stream processor tasks to 1000 per node.
