@@ -2,8 +2,6 @@ package stroom.data.store.impl.fs;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import stroom.properties.api.ConnectionConfig;
-import stroom.properties.api.ConnectionPoolConfig;
 import stroom.streamtask.BatchDeleteConfig;
 
 import javax.inject.Singleton;

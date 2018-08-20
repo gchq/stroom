@@ -59,7 +59,7 @@ task setupSampleData(type: JavaExec) {
     main = 'stroom.test.SetupSampleData'
 }
 
-//TODO This specific dep is needed to ensure TestKafkaExternalLoader has the jar available 
-//for its test. This is a TODO as stroom-connectors needs a big refactor once we
-//decide what we are doing with plugable client libs and pipeline elements.
-tasks.integrationTest.dependsOn ':stroom-kafka:stroom-kafka-client-impl_0_10_0_1:copyPluginJar'
+////TODO This specific dep is needed to ensure TestKafkaExternalLoader has the jar available
+////for its test. This is a TODO as stroom-connectors needs a big refactor once we
+////decide what we are doing with plugable client libs and pipeline elements.
+//tasks.integrationTest.dependsOn ':stroom-kafka:stroom-kafka-client-impl_0_10_0_1:copyPluginJar'

@@ -6,9 +6,6 @@ import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import stroom.properties.api.ConnectionConfig;
-import stroom.properties.api.ConnectionPoolConfig;
-import stroom.util.config.StroomProperties;
 import stroom.util.shared.Version;
 
 import javax.inject.Inject;

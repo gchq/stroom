@@ -1,7 +1,6 @@
 ext.moduleName = 'stroom.statistics.server'
 
 dependencies {
-    compile project(':stroom-properties:stroom-properties-api')
     compile project(':stroom-core-server')
     compile project(':stroom-core-shared')
     compile project(':stroom-entity-shared')

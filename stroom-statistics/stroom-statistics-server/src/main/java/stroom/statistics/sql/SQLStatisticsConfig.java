@@ -2,8 +2,6 @@ package stroom.statistics.sql;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import stroom.properties.api.ConnectionConfig;
-import stroom.properties.api.ConnectionPoolConfig;
 import stroom.statistics.sql.search.SearchConfig;
 
 import javax.inject.Inject;

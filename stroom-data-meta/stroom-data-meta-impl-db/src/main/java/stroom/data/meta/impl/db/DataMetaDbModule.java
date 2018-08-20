@@ -8,8 +8,6 @@ import org.flywaydb.core.Flyway;
 import stroom.data.meta.api.DataMetaService;
 import stroom.data.meta.api.DataSecurityFilter;
 import stroom.entity.shared.Clearable;
-import stroom.properties.api.ConnectionConfig;
-import stroom.properties.api.ConnectionPoolConfig;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;

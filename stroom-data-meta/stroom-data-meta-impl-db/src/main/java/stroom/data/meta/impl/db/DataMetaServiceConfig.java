@@ -1,8 +1,6 @@
 package stroom.data.meta.impl.db;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.properties.api.ConnectionConfig;
-import stroom.properties.api.ConnectionPoolConfig;
 
 import javax.inject.Singleton;
 

@@ -121,14 +121,14 @@ dependencies {
 }
 
 run {
-    //Ensure we have the latest kafka plugin jar available for runtime
-    dependsOn ':stroom-kafka:stroom-kafka-client-impl_0_10_0_1:copyPluginJar'
+//    //Ensure we have the latest kafka plugin jar available for runtime
+//    dependsOn ':stroom-kafka:stroom-kafka-client-impl_0_10_0_1:copyPluginJar'
     args 'server', './dev.yml'
 }
 
 runShadow {
-    //Ensure we have the latest kafka plugin jar available for runtime
-    dependsOn ':stroom-kafka:stroom-kafka-client-impl_0_10_0_1:copyPluginJar'
+//    //Ensure we have the latest kafka plugin jar available for runtime
+//    dependsOn ':stroom-kafka:stroom-kafka-client-impl_0_10_0_1:copyPluginJar'
     args 'server', './dev.yml'
 }
 

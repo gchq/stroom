@@ -1,7 +1,6 @@
 ext.moduleName = 'stroom.config'
 
 dependencies {
-    compile project(':stroom-properties:stroom-properties-api')
     compile project(':stroom-data-meta:stroom-data-meta-impl-db')
 
 //    compile project(':stroom-core-shared')
@@ -23,6 +22,7 @@ dependencies {
 //    compile project(':stroom-ruleset:stroom-ruleset-server')
 //    compile project(':stroom-ruleset:stroom-ruleset-shared')
     compile project(':stroom-data-store:stroom-data-store-impl-fs')
+    compile project(':stroom-properties:stroom-properties-global-impl-db')
 
 //    compile libs.stroomDocRef
 ////    compile libs.stroomQueryApi

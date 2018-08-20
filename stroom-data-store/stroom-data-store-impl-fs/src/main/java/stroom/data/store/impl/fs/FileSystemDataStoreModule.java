@@ -26,8 +26,6 @@ import stroom.data.store.api.StreamStore;
 import stroom.data.store.impl.SteamStoreStreamCloserImpl;
 import stroom.io.StreamCloser;
 import stroom.node.NodeServiceModule;
-import stroom.properties.api.ConnectionConfig;
-import stroom.properties.api.ConnectionPoolConfig;
 import stroom.task.TaskModule;
 import stroom.task.api.TaskHandler;
 import stroom.volume.VolumeModule;

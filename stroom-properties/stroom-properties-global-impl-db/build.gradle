@@ -1,14 +1,12 @@
 ext.moduleName = 'stroom.properties.global.impl.db'
 
 dependencies {
-    compile project(':stroom-properties:stroom-properties-api')
     compile project(':stroom-properties:stroom-properties-global-api')
     compile project(':stroom-properties:stroom-properties-global-impl-db-gen')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-task:stroom-task-api')
-    compile project(':stroom-config')
 
 //    compile libs.stroomDocRef
 //    compile libs.stroomQueryApi

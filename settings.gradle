@@ -29,10 +29,6 @@ include 'stroom-util-shared'
 include 'stroom-entity-shared'
 
 // Properties
-include 'stroom-properties:stroom-properties-api'
-include 'stroom-properties:stroom-properties-impl'
-include 'stroom-properties:stroom-properties-impl-mock'
-
 include 'stroom-properties:stroom-properties-global-api'
 include 'stroom-properties:stroom-properties-global-impl-db'
 include 'stroom-properties:stroom-properties-global-impl-db-gen'
