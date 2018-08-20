@@ -305,10 +305,10 @@ public class IndexShardManagerImpl implements IndexShardManager {
     public void setStatus(final long indexShardId, final IndexShardStatus status) {
         // Allow the thing to run without a service (e.g. benchmark mode)
         if (indexShardService != null) {
-            final Lock lock = shardUpdateLocks.getLockForKey(indexShardId);
-            lock.lock();
-            try {
-                run(() -> {
+            run(() -> {
+                final Lock lock = shardUpdateLocks.getLockForKey(indexShardId);
+                lock.lock();
+                try {
                     final IndexShard indexShard = indexShardService.loadById(indexShardId);
                     if (indexShard != null) {
                         // Only allow certain state transitions.
@@ -318,12 +318,12 @@ public class IndexShardManagerImpl implements IndexShardManager {
                             indexShardService.save(indexShard);
                         }
                     }
-                });
-            } catch (final Exception e) {
-                LOGGER.error(e::getMessage, e);
-            } finally {
-                lock.unlock();
-            }
+                } catch (final Exception e) {
+                    LOGGER.error(e::getMessage, e);
+                } finally {
+                    lock.unlock();
+                }
+            });
         }
     }
 
