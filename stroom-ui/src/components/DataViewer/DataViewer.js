@@ -32,7 +32,6 @@ import 'react-table/react-table.css';
 import { Header, Loader, Icon, Grid } from 'semantic-ui-react';
 
 import SearchBar from 'components/SearchBar';
-import WithHeader from 'components/WithHeader';
 import {
   search,
   getDetailsForSelectedRow,

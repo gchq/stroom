@@ -1,7 +1,7 @@
 import { actionCreators as folderExplorerActionCreators } from './redux';
 import { actionCreators as docRefTypesActionCreators } from 'components/DocRefTypes/redux';
 import { actionCreators as docRefInfoActionCreators } from 'components/DocRefInfoModal';
-import { actionCreators as appSearchActionCreators } from 'sections/AppSearch/redux';
+import { actionCreators as appSearchActionCreators } from 'components/AppSearchBar/redux';
 import { wrappedGet, wrappedPut, wrappedPost } from 'lib/fetchTracker.redux';
 import { findByUuids, findItem } from 'lib/treeUtils';
 

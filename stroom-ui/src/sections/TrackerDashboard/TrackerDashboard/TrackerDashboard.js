@@ -19,7 +19,6 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { compose, lifecycle } from 'recompose';
 import Mousetrap from 'mousetrap';
-import WithHeader from 'components/WithHeader';
 
 import PanelGroup from 'react-panelgroup';
 
@@ -33,6 +32,7 @@ import {
   Input,
   Menu,
   Pagination,
+  Grid
 } from 'semantic-ui-react';
 
 import { actionCreators, Directions, SortByOptions } from '../redux';
@@ -51,7 +51,7 @@ const {
   pageLeft,
 } = actionCreators;
 
-class RawTrackerDashboard extends Component {
+class TrackerDashboard extends Component {
   handleSort(newSortBy, currentSortBy, currentDirection) {
     if (currentSortBy === newSortBy) {
       if (currentDirection === Directions.ascending) {
@@ -111,118 +111,128 @@ class RawTrackerDashboard extends Component {
     Mousetrap.bind('return', () => onHandleSearch());
 
     return (
-      <div className="tracker-container">
-        <div className="tracker">
-          <Menu attached="top">
-            <Menu.Menu position="left" className="search-container">
-              <Input
-                fluid
-                placeholder="Search..."
-                value={searchCriteria}
-                onChange={(event, data) => onHandleSearchChange(data)}
-                onKeyPress={(event, data) => onHandleSearch(event, data)}
-                action={<Button onClick={() => onHandleSearch()}>Search</Button>}
-                // We can set the ref to 'this', which means we can call this.searchInputRef.focus() elsewhere.
-                ref={input => (this.searchInputRef = input)}
-              />
-            </Menu.Menu>
-          </Menu>
-          <PanelGroup direction="column" panelWidths={panelSizes}>
-            <div>
-              <div
-                id="table-container"
-                className={`table-container${showDetails ? ' showing-details' : ''}`}
-              >
-                <Table selectable sortable basic="very" className="tracker-table" columns={15}>
-                  <Table.Header>
-                    <Table.Row>
-                      <Table.HeaderCell
-                        sorted={sortBy === SortByOptions.pipelineUuid ? sortDirection : null}
-                        onClick={() =>
-                          this.handleSort(SortByOptions.pipeline, sortBy, sortDirection)
-                        }
-                      >
-                        Pipeline name
-                      </Table.HeaderCell>
-                      <Table.HeaderCell
-                        sorted={sortBy === SortByOptions.priority ? sortDirection : null}
-                        onClick={() =>
-                          this.handleSort(SortByOptions.priority, sortBy, sortDirection)
-                        }
-                      >
-                        Priority
-                      </Table.HeaderCell>
-                      <Table.HeaderCell
-                        sorted={sortBy === SortByOptions.progress ? sortDirection : null}
-                        onClick={() =>
-                          this.handleSort(SortByOptions.progress, sortBy, sortDirection)
-                        }
-                      >
-                        Progress
-                      </Table.HeaderCell>
-                    </Table.Row>
-                  </Table.Header>
-
-                  <Table.Body>
-                    {trackers.map(({
-                        pipelineName,
-                        priority,
-                        trackerPercent,
-                        filterId,
-                        createdOn,
-                        createUser,
-                        updateUser,
-                        updatedOn,
-                        enabled,
-                        status,
-                        lastPollAge,
-                        taskCount,
-                        trackerMs,
-                        streamCount,
-                        eventCount,
-                      }) => (
-                        <Table.Row
-                          key={filterId}
-                          className="tracker-row"
-                          onClick={() => onHandleTrackerSelection(filterId, trackers)}
-                          active={selectedTrackerId === filterId}
+      <React.Fragment>
+        <Grid className="content-tabs__grid">
+          <Grid.Column width={12}>
+            <Header as="h3">
+              <Icon name="play" />
+              <Header.Content>Processing</Header.Content>
+            </Header>
+          </Grid.Column>
+        </Grid>
+        <div className="tracker-container">
+          <div className="tracker">
+            <Menu attached="top">
+              <Menu.Menu position="left" className="search-container">
+                <Input
+                  fluid
+                  placeholder="Search..."
+                  value={searchCriteria}
+                  onChange={(event, data) => onHandleSearchChange(data)}
+                  onKeyPress={(event, data) => onHandleSearch(event, data)}
+                  action={<Button onClick={() => onHandleSearch()}>Search</Button>}
+                  // We can set the ref to 'this', which means we can call this.searchInputRef.focus() elsewhere.
+                  ref={input => (this.searchInputRef = input)}
+                />
+              </Menu.Menu>
+            </Menu>
+            <PanelGroup direction="column" panelWidths={panelSizes}>
+              <div>
+                <div
+                  id="table-container"
+                  className={`table-container${showDetails ? ' showing-details' : ''}`}
+                >
+                  <Table selectable sortable basic="very" className="tracker-table" columns={15}>
+                    <Table.Header>
+                      <Table.Row>
+                        <Table.HeaderCell
+                          sorted={sortBy === SortByOptions.pipelineUuid ? sortDirection : null}
+                          onClick={() =>
+                            this.handleSort(SortByOptions.pipeline, sortBy, sortDirection)
+                          }
                         >
-                          <Table.Cell className="name-column" textAlign="left" width={7}>
-                            {pipelineName}
-                          </Table.Cell>
-                          <Table.Cell className="priority-column" textAlign="center" width={1}>
-                            <Label circular color="green">
-                              {priority}
-                            </Label>
-                          </Table.Cell>
-                          <Table.Cell className="progress-column" width={7}>
-                            <Progress indicating percent={trackerPercent} />
-                          </Table.Cell>
-                        </Table.Row>
-                      ))}
-                  </Table.Body>
-                </Table>
-                <div className="pagination-container">
-                  <Pagination
-                    activePage={pageOffset + 1}
-                    totalPages={numberOfPages || 1}
-                    firstItem={null}
-                    lastItem={null}
-                    size="tiny"
-                    onPageChange={(event, data) => onHandlePageChange(data)}
-                  />
+                          Pipeline name
+                        </Table.HeaderCell>
+                        <Table.HeaderCell
+                          sorted={sortBy === SortByOptions.priority ? sortDirection : null}
+                          onClick={() =>
+                            this.handleSort(SortByOptions.priority, sortBy, sortDirection)
+                          }
+                        >
+                          Priority
+                        </Table.HeaderCell>
+                        <Table.HeaderCell
+                          sorted={sortBy === SortByOptions.progress ? sortDirection : null}
+                          onClick={() =>
+                            this.handleSort(SortByOptions.progress, sortBy, sortDirection)
+                          }
+                        >
+                          Progress
+                        </Table.HeaderCell>
+                      </Table.Row>
+                    </Table.Header>
+
+                    <Table.Body>
+                      {trackers.map(({
+                          pipelineName,
+                          priority,
+                          trackerPercent,
+                          filterId,
+                          createdOn,
+                          createUser,
+                          updateUser,
+                          updatedOn,
+                          enabled,
+                          status,
+                          lastPollAge,
+                          taskCount,
+                          trackerMs,
+                          streamCount,
+                          eventCount,
+                        }) => (
+                          <Table.Row
+                            key={filterId}
+                            className="tracker-row"
+                            onClick={() => onHandleTrackerSelection(filterId, trackers)}
+                            active={selectedTrackerId === filterId}
+                          >
+                            <Table.Cell className="name-column" textAlign="left" width={7}>
+                              {pipelineName}
+                            </Table.Cell>
+                            <Table.Cell className="priority-column" textAlign="center" width={1}>
+                              <Label circular color="green">
+                                {priority}
+                              </Label>
+                            </Table.Cell>
+                            <Table.Cell className="progress-column" width={7}>
+                              <Progress indicating percent={trackerPercent} />
+                            </Table.Cell>
+                          </Table.Row>
+                        ))}
+                    </Table.Body>
+                  </Table>
+                  <div className="pagination-container">
+                    <Pagination
+                      activePage={pageOffset + 1}
+                      totalPages={numberOfPages || 1}
+                      firstItem={null}
+                      lastItem={null}
+                      size="tiny"
+                      onPageChange={(event, data) => onHandlePageChange(data)}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-            <TrackerDetails />
-          </PanelGroup>
+              <TrackerDetails />
+            </PanelGroup>
+          </div>
         </div>
-      </div>
+      </React.Fragment>
     );
   }
 }
 
-RawTrackerDashboard.contextTypes = {
+TrackerDashboard.contextTypes = {
   store: PropTypes.object.isRequired,
 };
 
@@ -309,19 +319,4 @@ const enhance = compose(
   }),
 );
 
-const RawWithHeader = props => (
-  <WithHeader
-    header={
-      <Header as="h3">
-        <Icon name="play" />
-        <Header.Content>Processing</Header.Content>
-      </Header>
-    }
-    content={<RawTrackerDashboard {...props} />}
-  />
-);
-
-const TrackerDashboard = enhance(RawWithHeader);
-
-export default TrackerDashboard;
-
+export default enhance(TrackerDashboard);

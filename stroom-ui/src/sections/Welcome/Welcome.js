@@ -16,48 +16,47 @@
 
 import React from 'react';
 
-import { Table, Header, Icon } from 'semantic-ui-react';
-import WithHeader from 'components/WithHeader';
+import { Table, Header, Icon, Grid } from 'semantic-ui-react';
 
 const Welcome = props => (
-  <WithHeader
-    header={
-      <Header as="h3">
-        <Icon name="home" />
-        <Header.Content>Welcome</Header.Content>
-      </Header>
-    }
-    content={
-      <div className="Welcome__container">
-        <div className="Welcome">
-          <h4>Global shortcut keys</h4>
-          <Table className="Welcome__shortcutKeysTable">
-            <Table.Header>
-              <Table.Row>
-                <Table.HeaderCell />
-                <Table.HeaderCell>Shortcut</Table.HeaderCell>
-              </Table.Row>
-            </Table.Header>
+  <React.Fragment>
+    <Grid className="content-tabs__grid">
+      <Grid.Column width={12}>
+        <Header as="h3">
+          <Icon name="home" />
+          <Header.Content>Welcome</Header.Content>
+        </Header>
+      </Grid.Column>
+    </Grid>
+    <div className="Welcome__container">
+      <div className="Welcome">
+        <h4>Global shortcut keys</h4>
+        <Table className="Welcome__shortcutKeysTable">
+          <Table.Header>
+            <Table.Row>
+              <Table.HeaderCell />
+              <Table.HeaderCell>Shortcut</Table.HeaderCell>
+            </Table.Row>
+          </Table.Header>
 
-            <Table.Body>
-              <Table.Row>
-                <Table.Cell>Document search</Table.Cell>
-                <Table.Cell>
-                  <code>ctrl + shift + f</code>
-                </Table.Cell>
-              </Table.Row>
-              <Table.Row>
-                <Table.Cell>Recent documents</Table.Cell>
-                <Table.Cell>
-                  <code> ctrl + shift + e</code>
-                </Table.Cell>
-              </Table.Row>
-            </Table.Body>
-          </Table>
-        </div>
+          <Table.Body>
+            <Table.Row>
+              <Table.Cell>Document search</Table.Cell>
+              <Table.Cell>
+                <code>ctrl + shift + f</code>
+              </Table.Cell>
+            </Table.Row>
+            <Table.Row>
+              <Table.Cell>Recent documents</Table.Cell>
+              <Table.Cell>
+                <code> ctrl + shift + e</code>
+              </Table.Cell>
+            </Table.Row>
+          </Table.Body>
+        </Table>
       </div>
-    }
-  />
+    </div>
+  </React.Fragment>
 );
 
 export default Welcome;

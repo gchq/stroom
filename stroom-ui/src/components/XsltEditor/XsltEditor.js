@@ -30,7 +30,6 @@ import { Loader, Header } from 'semantic-ui-react';
 
 import SaveXslt from './SaveXslt';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
-import WithHeader from 'components/WithHeader';
 import { fetchXslt } from './xsltResourceClient';
 import { saveXslt } from './xsltResourceClient';
 import { openDocRef } from 'sections/RecentItems';
@@ -45,7 +44,9 @@ const enhance = compose(
     ({ xslt }, { xsltId }) => ({
       xslt: xslt[xsltId],
     }),
-    { fetchXslt, xsltUpdated, saveXslt, openDocRef },
+    {
+      fetchXslt, xsltUpdated, saveXslt, openDocRef,
+    },
   ),
   lifecycle({
     componentDidMount() {
@@ -57,23 +58,29 @@ const enhance = compose(
   branch(({ xslt }) => !xslt, renderComponent(() => <Loader active>Loading XSLT</Loader>)),
 );
 
-const XsltEditor = ({ xsltId, xslt, xsltUpdated, saveXslt, openDocRef, history }) => (
-  <WithHeader
-    docRefUuid={xsltId}
-    header={
-      <Header as="h3">
-        <img
-          className="stroom-icon--large"
-          alt="X"
-          src={require('../../images/docRefTypes/XSLT.svg')}
-        />
-        <Header.Content>
-          {xsltId}
-        </Header.Content>
-        <Header.Subheader><DocRefBreadcrumb docRefUuid={xsltId} openDocRef={l => openDocRef(history, l)} /></Header.Subheader>
-      </Header>
-    }
-    content={<div className="xslt-editor">
+const XsltEditor = ({
+  xsltId, xslt, xsltUpdated, saveXslt, openDocRef, history,
+}) => (
+  <React.Fragment>
+    <Grid className="content-tabs__grid">
+      <Grid.Column width={12}>
+        <Header as="h3">
+          <img
+            className="stroom-icon--large"
+            alt="X"
+            src={require('../../images/docRefTypes/XSLT.svg')}
+          />
+          <Header.Content>{xsltId}</Header.Content>
+          <Header.Subheader>
+            <DocRefBreadcrumb docRefUuid={xsltId} openDocRef={l => openDocRef(history, l)} />
+          </Header.Subheader>
+        </Header>
+      </Grid.Column>
+      <Grid.Column width={4}>
+        <SaveXslt saveXslt={saveXslt} xsltId={xsltId} xslt={xslt} />
+      </Grid.Column>
+    </Grid>
+    <div className="xslt-editor">
       <div className="xslt-editor__ace-container">
         <AceEditor
           style={{ width: '100%', height: '100%', minHeight: '25rem' }}
@@ -87,13 +94,8 @@ const XsltEditor = ({ xsltId, xslt, xsltUpdated, saveXslt, openDocRef, history }
           }}
         />
       </div>
-    </div>}
-    actionBarItems={
-      <React.Fragment>
-        <SaveXslt saveXslt={saveXslt} xsltId={xsltId} xslt={xslt} />
-      </React.Fragment>
-    }
-  />
+    </div>
+  </React.Fragment>
 );
 
 XsltEditor.propTypes = {

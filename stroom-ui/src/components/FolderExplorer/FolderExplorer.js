@@ -43,7 +43,7 @@ const enhance = compose(
     prepareDocRefRename,
     prepareDocRefMove,
     fetchDocInfo,
-    docRefListing: { selectedDocRefUuids = [], filteredDocRefs },
+    docRefListing: { selectedDocRefUuids = [], allDocRefs },
   }) => {
     const actionBarItems = [
       {
@@ -55,7 +55,7 @@ const enhance = compose(
 
     const singleSelectedDocRef =
         selectedDocRefUuids.length === 1
-          ? filteredDocRefs.find(f => f.uuid === selectedDocRefUuids[0])
+          ? allDocRefs.find(f => f.uuid === selectedDocRefUuids[0])
           : undefined;
 
     if (selectedDocRefUuids.length > 0) {

@@ -1,6 +1,7 @@
 import React from 'react';
+import { connect } from 'react-redux';
 
-import { Header, Icon } from 'semantic-ui-react/dist/commonjs';
+import { Header, Icon, Grid } from 'semantic-ui-react/dist/commonjs';
 
 import { AppChrome } from '.';
 import TrackerDashboard from 'sections/TrackerDashboard';
@@ -13,33 +14,38 @@ import PathNotFound from 'components/PathNotFound';
 import IFrame from 'components/IFrame';
 import AppSearch from 'sections/AppSearch';
 import RecentItems from 'sections/RecentItems';
-import WithHeader from 'components/WithHeader';
 
 const renderWelcome = props => <AppChrome activeMenuItem="Welcome" content={<Welcome />} />;
 
-const UsersIFrame = ({ config: { authUsersUiUrl } }) => (
-  <WithHeader
-    header={
-      <Header as="h3">
-        <Icon name="users" />
-        <Header.Content>Users</Header.Content>
-      </Header>
-    }
-    content={<IFrame key="users" url={authUsersUiUrl} />}
-  />
-);
+const withConfig = connect(({ config }) => ({ config }));
 
-const ApiTokensIFrame = ({ config: { authTokensUiUrl } }) => (
-  <WithHeader
-    header={
-      <Header as="h3">
-        <Icon name="key" />
-        <Header.Content>API Keys</Header.Content>
-      </Header>
-    }
-    content={<IFrame key="apikeys" url={authTokensUiUrl} />}
-  />
-);
+const UsersIFrame = withConfig(({ config: { authUsersUiUrl } }) => (
+  <React.Fragment>
+    <Grid className="content-tabs__grid">
+      <Grid.Column width={12}>
+        <Header as="h3">
+          <Icon name="users" />
+          <Header.Content>Users</Header.Content>
+        </Header>
+      </Grid.Column>
+    </Grid>
+    <IFrame key="users" url={authUsersUiUrl} />
+  </React.Fragment>
+));
+
+const ApiTokensIFrame = withConfig(({ config: { authTokensUiUrl } }) => (
+  <React.Fragment>
+    <Grid className="content-tabs__grid">
+      <Grid.Column width={12}>
+        <Header as="h3">
+          <Icon name="key" />
+          <Header.Content>API Keys</Header.Content>
+        </Header>
+      </Grid.Column>
+    </Grid>
+    <IFrame key="apikeys" url={authTokensUiUrl} />
+  </React.Fragment>
+));
 
 export default [
   {
@@ -82,9 +88,7 @@ export default [
   {
     exact: true,
     path: '/s/apikeys',
-    render: props => (
-      <AppChrome activeMenuItem="API Keys" content={<ApiTokensIFrame />} />
-    ),
+    render: props => <AppChrome activeMenuItem="API Keys" content={<ApiTokensIFrame />} />,
   },
   {
     exact: true,

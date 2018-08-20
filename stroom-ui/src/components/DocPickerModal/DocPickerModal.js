@@ -116,7 +116,6 @@ const DocPickerModal = ({
       <Modal.Content scrolling>
         <DocRefListing
           listingId={pickerId}
-          maxResults={5}
           icon="search"
           title="Search"
           includeBreadcrumbOnEntries={false}

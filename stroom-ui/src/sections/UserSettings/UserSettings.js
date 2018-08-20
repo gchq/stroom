@@ -20,7 +20,6 @@ import { compose } from 'recompose';
 import { Header, Icon, Dropdown, Grid } from 'semantic-ui-react';
 
 import { actionCreators } from './redux';
-import WithHeader from 'components/WithHeader';
 
 const { themeChanged } = actionCreators;
 
@@ -41,38 +40,34 @@ const enhance = compose(connect(
   { themeChanged },
 ));
 
-const RawUserSettings = ({ theme, themeChanged }) => (
-  <div className="UserSettings__container">
-    <h3>User Settings</h3>
-    <Grid>
-      <Grid.Column width={6}>Theme:</Grid.Column>
-      <Grid.Column width={10}>
-        <Dropdown
-          fluid
-          selection
-          options={themeOptions}
-          value={theme}
-          onChange={(_, data) => {
-            themeChanged(data.value);
-          }}
-        />
+const UserSettings = ({ theme, themeChanged }) => (
+  <React.Fragment>
+    <Grid className="content-tabs__grid">
+      <Grid.Column width={12}>
+        <Header as="h3">
+          <Icon name="user" />
+          <Header.Content>Me</Header.Content>
+        </Header>
       </Grid.Column>
     </Grid>
-  </div>
+    <div className="UserSettings__container">
+      <h3>User Settings</h3>
+      <Grid>
+        <Grid.Column width={6}>Theme:</Grid.Column>
+        <Grid.Column width={10}>
+          <Dropdown
+            fluid
+            selection
+            options={themeOptions}
+            value={theme}
+            onChange={(_, data) => {
+              themeChanged(data.value);
+            }}
+          />
+        </Grid.Column>
+      </Grid>
+    </div>
+  </React.Fragment>
 );
-
-const RawWithHeader = props => (
-  <WithHeader
-    header={
-      <Header as="h3">
-        <Icon name="user" />
-        <Header.Content>Me</Header.Content>
-      </Header>
-    }
-    content={<RawUserSettings {...props} />}
-  />
-);
-
-const UserSettings = enhance(RawWithHeader);
 
 export default UserSettings;

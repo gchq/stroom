@@ -22,6 +22,7 @@ const AppSearchBar = ({
   searchResults, searchApp, openDocRef, searchTerm, setSearchTerm,
 }) => (
   <Dropdown
+    fluid
     icon={null}
     trigger={
       <Input
