@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **824** : Fix for replace method in PathCreator also found in stroom proxy.
+
 * Issue **820** : Fix updating index shards so that they are loaded, updated and saved under lock.
 
 * Issue **819** : Updated `stroom-expression` to v1.4.3 to fix violation of contract exception when sorting search results.
