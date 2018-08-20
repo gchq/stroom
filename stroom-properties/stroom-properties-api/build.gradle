@@ -1,8 +1,0 @@
-ext.moduleName = 'stroom.properties.api'
-
-dependencies {
-    compile project(':stroom-task:stroom-task-api')
-
-    compile libs.stroomDocRef
-    compile libs.javax_inject
-}
