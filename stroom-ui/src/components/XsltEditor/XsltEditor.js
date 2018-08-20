@@ -32,7 +32,6 @@ import SaveXslt from './SaveXslt';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
 import WithHeader from 'components/WithHeader';
 import { fetchXslt } from './xsltResourceClient';
-import { withConfig } from 'startup/config';
 import { saveXslt } from './xsltResourceClient';
 import { openDocRef } from 'sections/RecentItems';
 
@@ -41,7 +40,6 @@ import { actionCreators } from './redux';
 const { xsltUpdated } = actionCreators;
 
 const enhance = compose(
-  withConfig,
   withRouter,
   connect(
     ({ xslt }, { xsltId }) => ({

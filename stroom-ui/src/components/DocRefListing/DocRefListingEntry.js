@@ -121,7 +121,7 @@ const DocRefListingEntry = ({
   isOver,
   canDrop,
 }) => {
-  let className = 'doc-ref-listing__item';
+  let className = '';
   if (selectedDocRefUuids.includes(node.uuid)) {
     className += ' doc-ref-listing__item--selected';
   }
@@ -136,15 +136,18 @@ const DocRefListingEntry = ({
     }
   }
 
-  return connectDragSource(connectDropTarget(<div><RawDocRefListingEntry
-    className={className}
-    onRowClick={() => {
-          docRefSelectionToggled(listingId, node.uuid, keyIsDown);
-        }}
-    onNameClick={() => onNameClick(node)}
-    includeBreadcrumb={includeBreadcrumb}
-    openDocRef={openDocRef}
-  /></div>));
+  return connectDragSource(connectDropTarget(<div>
+    <RawDocRefListingEntry
+      className={className}
+      onRowClick={() => {
+            docRefSelectionToggled(listingId, node.uuid, keyIsDown);
+          }}
+      onNameClick={() => onNameClick(node)}
+      includeBreadcrumb={includeBreadcrumb}
+      openDocRef={openDocRef}
+      node={node}
+    />
+  </div>));
 };
 
 const EnhancedDocRefListingEntry = enhance(DocRefListingEntry);

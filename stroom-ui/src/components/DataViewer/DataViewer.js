@@ -33,7 +33,6 @@ import { Header, Loader, Icon, Grid } from 'semantic-ui-react';
 
 import SearchBar from 'components/SearchBar';
 import WithHeader from 'components/WithHeader';
-import { withConfig } from 'startup/config';
 import {
   search,
   getDetailsForSelectedRow,
@@ -55,7 +54,6 @@ const startPage = 0;
 const defaultPageSize = 20;
 
 const enhance = compose(
-  withConfig,
   withListHeight,
   withDetailsHeight,
   connect(

@@ -16,11 +16,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { compose, lifecycle } from 'recompose';
+import { compose, lifecycle, branch, renderComponent } from 'recompose';
 import { Polly } from '@pollyjs/core';
+import * as JsSearch from 'js-search';
 
-import { guid, findItem, addItemsToTree, findByUuids, deleteItemsFromTree } from 'lib/treeUtils';
+import { guid, findItem, addItemsToTree, findByUuids, deleteItemsFromTree, iterateNodes } from 'lib/treeUtils';
 import { actionCreators as fetchActionCreators } from 'lib/fetchTracker.redux';
+import withConfigAndGlobalData from 'startup/withConfigAndGlobalData';
 
 const { resetAllUrls } = fetchActionCreators;
 
@@ -69,6 +71,42 @@ server.get('/config.json').intercept((req, res) => {
 // // Get Explorer Tree
 server.get(`${testConfig.explorerServiceUrl}/all`).intercept((req, res) => {
   res.json(testCache.data.documentTree);
+});
+// Search
+server.post(`${testConfig.explorerServiceUrl}/search`).intercept((req, res) => {
+  const { searchTerm } = JSON.parse(req.body);
+  let searchResults = [];
+
+  const allDocuments = [];
+  iterateNodes(testCache.data.documentTree, (lineage, node) => {
+    allDocuments.push({
+      name: node.name,
+      type: node.type,
+      uuid: node.uuid,
+      lineage,
+      lineageNames: lineage.reduce((acc, curr) => `${acc} ${curr.name}`, ''),
+    });
+  });
+
+  const search = new JsSearch.Search('uuid');
+  search.addIndex('name');
+  search.addIndex('lineageNames');
+  search.addDocuments(allDocuments);
+
+  console.log('Searching', {searchTerm, tree: testCache.data.documentTree});
+
+  if (searchTerm && searchTerm.length > 1) {
+    searchResults = search.search(searchTerm).map(s => ({
+      node: {
+        name: s.name,
+        type: s.type,
+        uuid: s.uuid,
+        lineage: s.lineage,
+      },
+    }));
+  }
+
+  res.json(searchResults);
 });
 // // Get Info
 server
@@ -194,7 +232,7 @@ server.get(`${testConfig.streamTaskServiceUrl}/`).intercept((req, res) =>
   }));
 
 const enhanceLocal = compose(
-  connect(state => ({}), {
+  connect(({config}) => ({config}), {
     resetAllUrls,
   }),
   lifecycle({
@@ -216,6 +254,7 @@ const enhanceLocal = compose(
       };
     },
   }),
+  withConfigAndGlobalData
 );
 
 const PollyComponent = enhanceLocal(({ children }) => <div className="fill-space">{children}</div>);

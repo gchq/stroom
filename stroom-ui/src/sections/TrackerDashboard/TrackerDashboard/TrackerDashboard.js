@@ -39,7 +39,6 @@ import { actionCreators, Directions, SortByOptions } from '../redux';
 import { actionCreators as expressionActionCreators } from 'components/ExpressionBuilder';
 import { fetchTrackers, TrackerSelection } from '../streamTasksResourceClient';
 import TrackerDetails from '../TrackerDetails/TrackerDetails';
-import { withConfig } from 'startup/config';
 
 const {
   updateSort,
@@ -292,7 +291,6 @@ const mapDispatchToProps = dispatch => ({
 });
 
 const enhance = compose(
-  withConfig,
   connect(mapStateToProps, mapDispatchToProps),
   lifecycle({
     componentDidMount() {

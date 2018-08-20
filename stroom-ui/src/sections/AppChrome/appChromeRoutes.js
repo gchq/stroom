@@ -2,7 +2,6 @@ import React from 'react';
 
 import { Header, Icon } from 'semantic-ui-react/dist/commonjs';
 
-import { withConfig } from 'startup/config';
 import { AppChrome } from '.';
 import TrackerDashboard from 'sections/TrackerDashboard';
 import DocEditor from 'components/DocEditor';
@@ -29,7 +28,6 @@ const UsersIFrame = ({ config: { authUsersUiUrl } }) => (
     content={<IFrame key="users" url={authUsersUiUrl} />}
   />
 );
-const UsersIFrameWithConfig = withConfig(UsersIFrame);
 
 const ApiTokensIFrame = ({ config: { authTokensUiUrl } }) => (
   <WithHeader
@@ -42,7 +40,6 @@ const ApiTokensIFrame = ({ config: { authTokensUiUrl } }) => (
     content={<IFrame key="apikeys" url={authTokensUiUrl} />}
   />
 );
-const ApiTokensIFrameWithConfig = withConfig(ApiTokensIFrame);
 
 export default [
   {
@@ -80,13 +77,13 @@ export default [
   {
     exact: true,
     path: '/s/users',
-    render: props => <AppChrome activeMenuItem="Users" content={<UsersIFrameWithConfig />} />,
+    render: props => <AppChrome activeMenuItem="Users" content={<UsersIFrame />} />,
   },
   {
     exact: true,
     path: '/s/apikeys',
     render: props => (
-      <AppChrome activeMenuItem="API Keys" content={<ApiTokensIFrameWithConfig />} />
+      <AppChrome activeMenuItem="API Keys" content={<ApiTokensIFrame />} />
     ),
   },
   {

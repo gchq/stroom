@@ -1,29 +1,25 @@
 import React from 'react';
 
-import { compose } from 'recompose';
+import { compose, withState } from 'recompose';
 import { connect } from 'react-redux';
 import { Input, Dropdown } from 'semantic-ui-react';
 
-import { actionCreators } from './redux';
-import { withExplorerTree } from 'components/FolderExplorer';
+import { searchApp } from 'components/FolderExplorer/explorerClient';
 import withOpenDocRef from 'sections/RecentItems/withOpenDocRef';
 import { RawDocRefListingEntry } from 'components/DocRefListing';
 
-const { appSearchTermUpdated } = actionCreators;
+const withSearchTerm = withState('searchTerm', 'setSearchTerm', '');
 
 const enhance = compose(
-  withExplorerTree,
   withOpenDocRef,
-  connect(
-    ({ appSearch: { searchTerm, searchResults } }, props) => ({ searchTerm, searchResults }),
-    {
-      appSearchTermUpdated,
-    },
-  ),
+  withSearchTerm,
+  connect(({ appSearch: { searchResults } }, props) => ({ searchResults }), {
+    searchApp,
+  }),
 );
 
 const AppSearchBar = ({
-  searchTerm, searchResults, appSearchTermUpdated, openDocRef,
+  searchResults, searchApp, openDocRef, searchTerm, setSearchTerm,
 }) => (
   <Dropdown
     icon={null}
@@ -33,20 +29,26 @@ const AppSearchBar = ({
         icon="search"
         placeholder="Search..."
         value={searchTerm}
-        onChange={e => appSearchTermUpdated(e.target.value)}
+        onChange={({ target: { value } }) => {
+          setSearchTerm(value);
+          searchApp(value);
+        }}
         autoFocus
       />
     }
   >
     <Dropdown.Menu>
-      {searchResults.map(({ node, lineage }) => (
-        <RawDocRefListingEntry
-          onRowClick={() => console.log('Row Click', node)}
-          onNameClick={() => console.log('Name Click', node)}
-          node={node}
-          openDocRef={openDocRef}
-        />
-      ))}
+      {searchResults.length === 0 && <Dropdown.Item text="no results" />}
+      {searchResults.length > 0 &&
+        searchResults.map(({ node, lineage }) => (
+          <RawDocRefListingEntry
+            key={node.uuid}
+            onRowClick={() => console.log('Row Click', node)}
+            onNameClick={() => console.log('Name Click', node)}
+            node={node}
+            openDocRef={openDocRef}
+          />
+        ))}
     </Dropdown.Menu>
   </Dropdown>
 );

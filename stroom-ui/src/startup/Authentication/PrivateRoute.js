@@ -21,10 +21,7 @@ import { connect } from 'react-redux';
 
 import { AuthenticationRequest } from 'startup/Authentication';
 
-import { withConfig } from '../config';
-
 const enhance = compose(
-  withConfig,
   connect(
     state => ({
       idToken: state.authentication.idToken,

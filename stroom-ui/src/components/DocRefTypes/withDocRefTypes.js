@@ -16,14 +16,12 @@
 import { connect } from 'react-redux';
 import { compose, lifecycle } from 'recompose';
 import { fetchDocRefTypes } from 'components/FolderExplorer/explorerClient';
-import { withConfig } from 'startup/config';
 
 /**
  * Higher Order Component that kicks off the fetch of the doc ref types, and waits by rendering a Loader until
  * they are returned.
  */
 export default compose(
-  withConfig,
   connect(
     ({ docRefTypes }) => ({
       docRefTypes,

@@ -14,7 +14,7 @@ const RawDocRefListingEntry = ({
 }) => (
   <div
     key={node.uuid}
-    className="doc-ref-listing__item"
+    className={`doc-ref-listing__item ${className}`}
     onClick={(e) => {
       onRowClick();
       e.preventDefault();
@@ -43,7 +43,7 @@ const RawDocRefListingEntry = ({
 );
 
 RawDocRefListingEntry.propTypes = {
-  className: PropTypes.string.isRequired,
+  className: PropTypes.string,
   node: DocRefPropType,
   openDocRef: PropTypes.func.isRequired,
   onRowClick: PropTypes.func.isRequired,
@@ -51,7 +51,6 @@ RawDocRefListingEntry.propTypes = {
 };
 
 RawDocRefListingEntry.defaultProps = {
-  className: 'doc-ref-listing__item',
   includeBreadcrumb: true,
 };
 

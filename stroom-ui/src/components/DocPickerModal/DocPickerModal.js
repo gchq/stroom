@@ -22,7 +22,6 @@ import { connect } from 'react-redux';
 import { Button, Modal, Input, Popup } from 'semantic-ui-react';
 
 import DocRefPropType from 'lib/DocRefPropType';
-import withExplorerTree from 'components/FolderExplorer/withExplorerTree';
 import { findItem, iterateNodes, filterTree } from 'lib/treeUtils';
 import DocRefListing from 'components/DocRefListing';
 
@@ -30,7 +29,6 @@ const withModal = withState('modalIsOpen', 'setModalIsOpen', false);
 const withFolderUuid = withState('folderUuid', 'setFolderUuid', undefined);
 
 const enhance = compose(
-  withExplorerTree,
   withModal,
   withFolderUuid,
   connect(

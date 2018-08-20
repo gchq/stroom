@@ -1,6 +1,7 @@
 import { actionCreators as folderExplorerActionCreators } from './redux';
 import { actionCreators as docRefTypesActionCreators } from 'components/DocRefTypes/redux';
 import { actionCreators as docRefInfoActionCreators } from 'components/DocRefInfoModal';
+import { actionCreators as appSearchActionCreators } from 'sections/AppSearch/redux';
 import { wrappedGet, wrappedPut, wrappedPost } from 'lib/fetchTracker.redux';
 import { findByUuids, findItem } from 'lib/treeUtils';
 
@@ -13,6 +14,8 @@ const {
   docRefCreated,
 } = folderExplorerActionCreators;
 
+const { searchResultsReturned } = appSearchActionCreators;
+
 const { docRefInfoOpened, docRefInfoReceived } = docRefInfoActionCreators;
 
 const { docRefTypesReceived } = docRefTypesActionCreators;
@@ -22,6 +25,15 @@ const stripDocRef = docRef => ({
   type: docRef.type,
   name: docRef.name,
 });
+
+export const searchApp = (searchTerm) => (dispatch, getState) => {
+  const state = getState();
+  const url = `${state.config.explorerServiceUrl}/search`;
+  wrappedPost(dispatch, state, url, response =>
+    response.json().then(searchResults => dispatch(searchResultsReturned(searchResults))), {
+      body: JSON.stringify({searchTerm})
+    });
+}
 
 export const fetchDocTree = () => (dispatch, getState) => {
   const state = getState();

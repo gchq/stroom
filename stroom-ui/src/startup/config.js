@@ -54,28 +54,4 @@ const fetchConfig = () => (dispatch, getState) => {
   });
 };
 
-/**
- * Higher Order Component that kicks off the fetch of the config, and waits by rendering a Loader until
- * that config is returned. This will generally be used by top level components in the app.
- */
-const withConfig = compose(
-  connect(
-    ({ config }, props) => ({
-      config,
-    }),
-    {
-      fetchConfig,
-    },
-  ),
-  lifecycle({
-    componentDidMount() {
-      this.props.fetchConfig();
-    },
-  }),
-  branch(
-    ({ config: { isReady } }) => !isReady,
-    renderComponent(() => <Loader active>Awaiting Config</Loader>),
-  ),
-);
-
-export { actionCreators, reducer, fetchConfig, withConfig };
+export { actionCreators, reducer, fetchConfig };

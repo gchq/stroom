@@ -23,7 +23,6 @@ import { Button } from 'semantic-ui-react/dist/commonjs';
 import Mousetrap from 'mousetrap';
 
 import { actionCreators as appChromeActionCreators } from './redux';
-import { withExplorerTree } from 'components/FolderExplorer';
 import withLocalStorage from 'lib/withLocalStorage';
 import { openDocRef } from 'sections/RecentItems';
 import MenuItem from './MenuItem';
@@ -60,7 +59,6 @@ const getDocumentTreeMenuItems = (openDocRef, treeNode, skipInContractedMenu = f
 });
 
 const enhance = compose(
-  withExplorerTree,
   connect(
     (
       { userSettings: { theme }, folderExplorer: { documentTree }, appChrome: { menuItemsOpen } },

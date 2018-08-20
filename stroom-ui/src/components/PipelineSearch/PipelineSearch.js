@@ -24,7 +24,6 @@ import { push } from 'react-router-redux';
 import WithHeader from 'components/WithHeader';
 import { Header, Card, Input, Pagination, Dropdown, Icon } from 'semantic-ui-react';
 
-import { withConfig } from 'startup/config';
 import ClickCounter from 'lib/ClickCounter';
 
 import { searchPipelines, actionCreators } from 'components/PipelineEditor';
@@ -34,7 +33,6 @@ const contextTypes = {
 };
 
 const enhance = compose(
-  withConfig,
   connect(
     (state, props) => ({
       totalPipelines: state.pipelineEditor.search.total,

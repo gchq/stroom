@@ -45,7 +45,6 @@ import { ElementDetails } from './ElementDetails';
 import { openDocRef } from 'sections/RecentItems';
 import { fetchPipeline, savePipeline } from './pipelineResourceClient';
 import { fetchElements, fetchElementProperties } from './elementResourceClient';
-import { withConfig } from 'startup/config';
 import { actionCreators } from './redux';
 
 const {
@@ -64,7 +63,6 @@ const COMMON_ELEMENT_STYLE = {
 const withElementDetailsOpen = withState('isElementDetailsOpen', 'setElementDetailsOpen', false);
 
 const enhance = compose(
-  withConfig,
   withRouter,
   connect(
     (
