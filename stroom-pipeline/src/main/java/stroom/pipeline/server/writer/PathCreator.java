@@ -38,8 +38,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.LongSupplier;
-import java.util.function.Supplier;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
@@ -79,8 +77,13 @@ public class PathCreator {
     private NodeCache nodeCache;
 
     public static String replaceTimeVars(String path) {
-        // Replace some of the path elements with system variables.
+        // Replace some of the path elements with time variables.
         final ZonedDateTime dateTime = ZonedDateTime.now(ZoneOffset.UTC);
+        return replaceTimeVars(path, dateTime);
+    }
+
+    static String replaceTimeVars(String path, final ZonedDateTime dateTime) {
+        // Replace some of the path elements with time variables.
         path = replace(path, "year", dateTime::getYear, 4);
         path = replace(path, "month", dateTime::getMonthValue, 2);
         path = replace(path, "day", dateTime::getDayOfMonth, 2);
@@ -180,7 +183,7 @@ public class PathCreator {
         while (start != -1) {
             final int end = start + param.length();
             newPath = newPath.substring(0, start) + replacementSupplier.get() + newPath.substring(end);
-            start = newPath.indexOf(param, end);
+            start = newPath.indexOf(param, start);
         }
 
         return newPath;
