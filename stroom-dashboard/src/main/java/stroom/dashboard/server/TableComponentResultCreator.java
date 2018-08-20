@@ -23,7 +23,6 @@ import stroom.dashboard.shared.Row;
 import stroom.dashboard.shared.TableResult;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.query.Item;
-import stroom.query.Items;
 import stroom.query.ResultStore;
 import stroom.query.shared.ComponentResultRequest;
 import stroom.query.shared.Field;
@@ -74,11 +73,11 @@ public class TableComponentResultCreator implements ComponentResultCreator {
     }
 
     private int addTableResults(final ResultStore resultStore, final List<Field> fields, final int offset,
-            final int length, final Set<String> openGroups, final List<Row> resultList, final String parentKey,
-            final int depth, final int position) {
+                                final int length, final Set<String> openGroups, final List<Row> resultList, final String parentKey,
+                                final int depth, final int position) {
         int pos = position;
         // Get top level items.
-        final Items<Item> items = resultStore.getChildMap().get(parentKey);
+        final List<Item> items = resultStore.getChildMap().get(parentKey);
         if (items != null) {
             for (final Item item : items) {
                 if (pos >= offset && resultList.size() < length) {

@@ -16,20 +16,21 @@
 
 package stroom.query;
 
+import java.util.List;
 import java.util.Map;
 
 public class ResultStore {
-    private final Map<String, Items<Item>> childMap;
+    private final Map<String, List<Item>> childMap;
     private final long size;
     private final long totalSize;
 
-    public ResultStore(final Map<String, Items<Item>> childMap, final long size, final long totalSize) {
+    public ResultStore(final Map<String, List<Item>> childMap, final long size, final long totalSize) {
         this.childMap = childMap;
         this.size = size;
         this.totalSize = totalSize;
     }
 
-    public Map<String, Items<Item>> getChildMap() {
+    public Map<String, List<Item>> getChildMap() {
         return childMap;
     }
 

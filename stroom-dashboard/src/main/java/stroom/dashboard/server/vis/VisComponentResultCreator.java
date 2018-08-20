@@ -38,7 +38,6 @@ import stroom.dashboard.server.vis.CompiledStructure.Values;
 import stroom.dashboard.shared.VisResult;
 import stroom.dashboard.shared.VisResultRequest;
 import stroom.query.Item;
-import stroom.query.Items;
 import stroom.query.ResultStore;
 import stroom.query.shared.ComponentResultRequest;
 import stroom.query.shared.Format.Type;
@@ -136,8 +135,9 @@ public class VisComponentResultCreator implements ComponentResultCreator {
         private final String[] types;
         private String keyType;
 
-        public Store(final Object key, final String keyType, final String[] types) {
+        public Store(final Object key, final Map<Object, Store> map, final String keyType, final String[] types) {
             this.key = key;
+            this.map = map;
             this.keyType = keyType;
             this.types = types;
         }
@@ -197,9 +197,9 @@ public class VisComponentResultCreator implements ComponentResultCreator {
             return map;
         }
 
-        public void setMap(final Map<Object, Store> map) {
-            this.map = map;
-        }
+//        public void setMap(final Map<Object, Store> map) {
+//            this.map = map;
+//        }
 
         @JsonIgnore
         public List<Object> getList() {
@@ -251,7 +251,7 @@ public class VisComponentResultCreator implements ComponentResultCreator {
         if (error == null) {
             try {
                 // Get top level items.
-                final Items<Item> items = resultStore.getChildMap().get(null);
+                final List<Item> items = resultStore.getChildMap().get(null);
                 final Store store = create(items);
 
                 int dataPoints = 0;
@@ -285,14 +285,14 @@ public class VisComponentResultCreator implements ComponentResultCreator {
     /**
      * Public method for testing purposes.
      */
-    public Store create(final Items<Item> items) throws JsonProcessingException {
+    public Store create(final List<Item> items) throws JsonProcessingException {
         return create(items, structure);
     }
 
     /**
      * Public method for testing purposes.
      */
-    public Store create(final Items<Item> items, final Structure structure) {
+    public Store create(final List<Item> items, final Structure structure) {
         if (structure.getNest() != null) {
             return create(items, structure.getNest());
         } else if (structure.getValues() != null) {
@@ -304,15 +304,14 @@ public class VisComponentResultCreator implements ComponentResultCreator {
     /**
      * Public method for testing purposes.
      */
-    public Store create(final Items<Item> items, final Nest structure) {
+    public Store create(final List<Item> items, final Nest structure) {
         if (items != null && items.size() > 0) {
             final String keyType = getKeyType(structure);
             final Field[] fields = getFields(structure);
             final String[] types = getTypes(fields);
 
-            final Map<Object, Store> map = new HashMap<Object, Store>();
-            final Store store = new Store(null, keyType, types);
-            store.setMap(map);
+            final Map<Object, Store> map = new HashMap<>();
+            final Store store = new Store(null, map, keyType, types);
 
             // Iterate over the items.
             for (final Item item : items) {
@@ -331,13 +330,13 @@ public class VisComponentResultCreator implements ComponentResultCreator {
     /**
      * Public method for testing purposes.
      */
-    public Store create(final Items<Item> items, final Values structure) {
+    public Store create(final List<Item> items, final Values structure) {
         if (items != null && items.size() > 0) {
             final Field[] fields = structure.getFields();
             final String[] types = getTypes(fields);
 
             final int len = fields.length;
-            final Store store = new Store(null, new ArrayList<Object>(), types, len);
+            final Store store = new Store(null, new ArrayList<>(), types, len);
 
             // Iterate over the items.
             for (final Item item : items) {
@@ -496,19 +495,17 @@ public class VisComponentResultCreator implements ComponentResultCreator {
             key = getValue(item, structure.getKey().getId().getIndex(), structure.getKey().getId().getType());
         }
 
-        Store store = map.get(key);
-        if (store == null) {
+        final Store store = map.computeIfAbsent(key, k -> {
             if (structure.getNest() != null) {
                 final String keyType = getKeyType(structure);
-                store = new Store(key, keyType, null);
-                store.setMap(new HashMap<>());
-                map.put(key, store);
+                return new Store(k, new HashMap<>(), keyType, null);
             } else if (structure.getValues() != null) {
                 final int len = structure.getValues().getFields().length;
-                store = new Store(key, new ArrayList<>(), null, len);
-                map.put(key, store);
+                return new Store(k, new ArrayList<>(), null, len);
             }
-        }
+
+            return null;
+        });
 
         if (structure.getNest() != null) {
             final Nest subStructure = structure.getNest();

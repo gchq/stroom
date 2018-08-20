@@ -27,8 +27,6 @@ import stroom.dashboard.server.vis.StructureBuilder;
 import stroom.dashboard.server.vis.VisComponentResultCreator;
 import stroom.dashboard.shared.VisResult;
 import stroom.query.Item;
-import stroom.query.Items;
-import stroom.query.ItemsArrayList;
 import stroom.query.ResultStore;
 import stroom.query.shared.Field;
 import stroom.query.shared.Format;
@@ -52,7 +50,7 @@ public class TestChartResultCreator extends StroomUnitTest {
 
     @Test
     public void test() throws Exception {
-        final Items<Item> items = new ItemsArrayList<>();
+        final List<Item> items = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
             final Generator[] values = new Generator[3];
             values[0] = getSeries();
@@ -63,7 +61,7 @@ public class TestChartResultCreator extends StroomUnitTest {
             items.add(item);
         }
 
-        final Map<String, Items<Item>> childMap = new HashMap<>();
+        final Map<String, List<Item>> childMap = new HashMap<>();
         childMap.put(null, items);
 
         final long size = items.size();

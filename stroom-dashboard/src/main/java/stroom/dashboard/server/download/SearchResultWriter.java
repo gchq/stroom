@@ -20,7 +20,6 @@ import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.server.SampleGenerator;
 import stroom.query.Item;
-import stroom.query.Items;
 import stroom.query.ResultStore;
 import stroom.query.shared.Field;
 
@@ -81,7 +80,7 @@ public class SearchResultWriter {
                               final List<Field> fields,
                               final SampleGenerator sampleGenerator,
                               final Target target) throws IOException {
-        final Items<Item> items = resultStore.getChildMap().get(null);
+        final List<Item> items = resultStore.getChildMap().get(null);
         if (items != null) {
             for (final Item item : items) {
                 if (sampleGenerator.includeResult()) {

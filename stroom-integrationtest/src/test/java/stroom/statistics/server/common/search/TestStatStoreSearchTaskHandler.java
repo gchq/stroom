@@ -34,7 +34,6 @@ import stroom.entity.shared.DocRef;
 import stroom.entity.shared.FolderService;
 import stroom.query.CoprocessorMap;
 import stroom.query.Item;
-import stroom.query.Items;
 import stroom.query.ResultStore;
 import stroom.query.SearchResultHandler;
 import stroom.query.shared.ComponentResultRequest;
@@ -285,7 +284,7 @@ public class TestStatStoreSearchTaskHandler extends AbstractCoreIntegrationTest 
 
 
             //get the root level
-            Items<Item> items = resultStore.getChildMap().get(null);
+            List<Item> items = resultStore.getChildMap().get(null);
 
             //row count
             Assert.assertEquals(expectedRowCount, items.size());

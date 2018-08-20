@@ -36,8 +36,6 @@ import stroom.dashboard.server.vis.VisSettings;
 import stroom.dashboard.server.vis.VisSettingsUtil;
 import stroom.dashboard.shared.ParamUtil;
 import stroom.query.Item;
-import stroom.query.Items;
-import stroom.query.ItemsArrayList;
 import stroom.query.shared.Field;
 import stroom.query.shared.Format;
 import stroom.query.shared.Format.Type;
@@ -55,7 +53,7 @@ public class TestVisComponentResultCreator extends StroomUnitTest {
 
     @Test
     public void testValues() throws Exception {
-        final Items<Item> items = createData();
+        final List<Item> items = createData();
 
         final CompiledStructure.Field xField = new CompiledStructure.Field(new FieldRef(Type.NUMBER, 0), null);
         final CompiledStructure.Field yField = new CompiledStructure.Field(new FieldRef(Type.NUMBER, 1), null);
@@ -73,7 +71,7 @@ public class TestVisComponentResultCreator extends StroomUnitTest {
 
     @Test
     public void testNest() throws Exception {
-        final Items<Item> items = createData();
+        final List<Item> items = createData();
 
         final CompiledStructure.Field xField = new CompiledStructure.Field(new FieldRef(Type.NUMBER, 0), null);
         final CompiledStructure.Field yField = new CompiledStructure.Field(new FieldRef(Type.NUMBER, 1), null);
@@ -93,7 +91,7 @@ public class TestVisComponentResultCreator extends StroomUnitTest {
 
     @Test
     public void testDeepNest() throws Exception {
-        final Items<Item> items = createData();
+        final List<Item> items = createData();
 
         final CompiledStructure.Field xField = new CompiledStructure.Field(new FieldRef(Type.NUMBER, 0), null);
         final CompiledStructure.Field yField = new CompiledStructure.Field(new FieldRef(Type.NUMBER, 1), null);
@@ -152,7 +150,7 @@ public class TestVisComponentResultCreator extends StroomUnitTest {
 
         final VisComponentResultCreator resultCreator = new VisComponentResultCreator(structure);
 
-        final Items<Item> items = createData();
+        final List<Item> items = createData();
 
         final Store store = resultCreator.create(items);
 
@@ -182,8 +180,8 @@ public class TestVisComponentResultCreator extends StroomUnitTest {
         }
     }
 
-    private Items<Item> createData() {
-        final Items<Item> items = new ItemsArrayList<>();
+    private List<Item> createData() {
+        final List<Item> items = new ArrayList<>();
         int seriesCount = 0;
         for (int i = 100; i < 120; i++) {
             for (int j = 20; j < 30; j++) {

@@ -22,12 +22,12 @@ import stroom.mapreduce.Reader;
 import stroom.mapreduce.Source;
 import stroom.mapreduce.UnsafePairQueue;
 import stroom.node.shared.ClientProperties;
-import stroom.query.Items.RemoveHandler;
 import stroom.query.shared.Field;
 import stroom.util.config.StroomProperties;
 import stroom.util.logging.StroomLogger;
 import stroom.util.shared.HasTerminate;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +40,7 @@ public class TablePayloadHandler implements PayloadHandler {
 
     private static class ResultStoreCreator implements Reader<String, Item> {
         private final CompiledSorter sorter;
-        private final Map<String, Items<Item>> childMap;
+        private final Map<String, List<Item>> childMap;
 
         public ResultStoreCreator(final CompiledSorter sorter) {
             this.sorter = sorter;
@@ -56,19 +56,9 @@ public class TablePayloadHandler implements PayloadHandler {
             // We should now have a reduction in the reducedQueue.
             for (final Pair<String, Item> pair : source) {
                 final Item item = pair.getValue();
-                final Items<Item> items = getItems(childMap, item.parentKey, item.depth);
+                final List<Item> items = childMap.computeIfAbsent(item.parentKey, k -> new ArrayList<>());
                 items.add(item);
             }
-        }
-
-        private Items<Item> getItems(final Map<String, Items<Item>> childMap, final String parentKey, final int depth) {
-            Items<Item> children = childMap.get(parentKey);
-            if (children == null) {
-                children = new ItemsArrayList<>();
-                childMap.put(parentKey, children);
-            }
-
-            return children;
         }
 
         public void trim(final int[] sizes) {
@@ -81,17 +71,23 @@ public class TablePayloadHandler implements PayloadHandler {
                 size = sizes[depth];
             }
 
-            final Items<Item> parentItems = childMap.get(parentKey);
-            if (parentItems != null) {
-                parentItems.trim(size, sorter, new RemoveHandler<Item>() {
-                    @Override
-                    public void onRemove(final Item item) {
-                        // If there is a group key then cascade removal.
-                        if (item.groupKey != null) {
-                            remove(item.groupKey);
-                        }
+            final List<Item> list = childMap.get(parentKey);
+            if (list != null) {
+
+                // Sort the list before trimming if we have a comparator.
+                if (sorter != null) {
+                    list.sort(sorter);
+                }
+
+                while (list.size() > size) {
+                    final Item lastItem = list.remove(list.size() - 1);
+
+                    // Tell the remove handler that we have removed an item.
+                    // If there is a group key then cascade removal.
+                    if (lastItem.groupKey != null) {
+                        remove(lastItem.groupKey);
                     }
-                });
+                }
 
                 // Ensure remaining items children are also trimmed by cascading
                 // trim operation.
@@ -103,7 +99,7 @@ public class TablePayloadHandler implements PayloadHandler {
                 // if (sz < 1) {
                 // sz = 1;
                 // }
-                for (final Item item : parentItems) {
+                for (final Item item : list) {
                     if (item.groupKey != null) {
                         trim(sizes, item.groupKey, depth + 1);
                     }
@@ -112,7 +108,7 @@ public class TablePayloadHandler implements PayloadHandler {
         }
 
         private void remove(final String parentKey) {
-            final Items<Item> items = childMap.get(parentKey);
+            final List<Item> items = childMap.get(parentKey);
             if (items != null) {
                 childMap.remove(parentKey);
 
@@ -292,7 +288,7 @@ public class TablePayloadHandler implements PayloadHandler {
         // result.
         final PairQueue<String, Item> remaining = new UnsafePairQueue<>();
         long size = 0;
-        for (final Items<Item> items : resultStoreCreator.childMap.values()) {
+        for (final List<Item> items : resultStoreCreator.childMap.values()) {
             for (final Item item : items) {
                 remaining.collect(item.groupKey, item);
                 size++;
