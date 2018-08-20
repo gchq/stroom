@@ -12,6 +12,11 @@ class PathCreator {
     static String replaceTimeVars(String path) {
         // Replace some of the path elements with system variables.
         final ZonedDateTime dateTime = ZonedDateTime.now(ZoneOffset.UTC);
+        return replaceTimeVars(path, dateTime);
+    }
+
+    static String replaceTimeVars(String path, final ZonedDateTime dateTime) {
+        // Replace some of the path elements with system variables.
         path = replace(path, "year", dateTime.getYear(), 4);
         path = replace(path, "month", dateTime.getMonthValue(), 2);
         path = replace(path, "day", dateTime.getDayOfMonth(), 2);
@@ -59,7 +64,7 @@ class PathCreator {
         while (start != -1) {
             final int end = start + param.length();
             newPath = newPath.substring(0, start) + replacement + newPath.substring(end);
-            start = newPath.indexOf(param, end);
+            start = newPath.indexOf(param, start);
         }
 
         return newPath;
