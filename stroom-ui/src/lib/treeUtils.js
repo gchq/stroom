@@ -43,22 +43,18 @@ export function mapObject(input, mapper) {
 }
 
 export function filterTree(treeNode, filterFunction) {
-  let includeThisOne = filterFunction(treeNode);
+  const includeThisOne = filterFunction(treeNode);
 
-  let filteredChildren = 
-    treeNode.children ? 
-      treeNode.children
-        .map(c => filterTree(c, filterFunction))
-        .filter(c => c !== undefined) 
-      : 
-      []
+  const filteredChildren = treeNode.children
+    ? treeNode.children.map(c => filterTree(c, filterFunction)).filter(c => c !== undefined)
+    : [];
   if (includeThisOne || filteredChildren.length > 0) {
     return {
       ...treeNode,
-      children: filteredChildren
-    }
+      children: filteredChildren,
+    };
   }
- 
+
   return undefined;
 }
 
@@ -211,10 +207,13 @@ export function findItem(tree, uuid) {
     }
   });
 
-  return {
-    node: foundNode,
-    lineage: foundLineage,
-  };
+  if (foundNode && foundLineage) {
+    return {
+      node: foundNode,
+      lineage: foundLineage,
+    };
+  }
+  return undefined;
 }
 
 /**

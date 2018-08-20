@@ -251,6 +251,8 @@ const enhanceLocal = compose(
         pipelines: {...this.props.pipelines},
         elements: [...this.props.elements],
         elementProperties: {...this.props.elementProperties},
+        xslt: {...this.props.xslt},
+        trackers: [...this.props.trackers]
       };
     },
   }),
@@ -265,6 +267,8 @@ PollyComponent.propTypes = {
   pipelines: PropTypes.object.isRequired,
   elements: PropTypes.array.isRequired,
   elementProperties: PropTypes.object.isRequired,
+  xslt: PropTypes.object.isRequired,
+  trackers: PropTypes.array.isRequired
 };
 
 PollyComponent.defaultProps = {
@@ -272,7 +276,9 @@ PollyComponent.defaultProps = {
   docRefTypes: [],
   pipelines: {},
   elements: [],
-  elementProperties: {}
+  elementProperties: {},
+  xslt: {},
+  trackers: []
 }
 
 export const PollyDecorator = props => storyFn => (

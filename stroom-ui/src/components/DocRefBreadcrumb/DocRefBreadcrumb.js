@@ -1,17 +1,20 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { compose } from 'recompose';
+import { compose, branch, renderNothing } from 'recompose';
 import { Breadcrumb } from 'semantic-ui-react/dist/commonjs';
 
 import { findItem } from 'lib/treeUtils';
 
-const enhance = compose(connect(({ folderExplorer: { documentTree } }, { docRefUuid }) => {
-  const docRefWithLineage = findItem(documentTree, docRefUuid);
-  return {
-    docRefWithLineage,
-  };
-}, {}));
+const enhance = compose(
+  connect(({ folderExplorer: { documentTree } }, { docRefUuid }) => {
+    const docRefWithLineage = findItem(documentTree, docRefUuid);
+    return {
+      docRefWithLineage,
+    };
+  }, {}),
+  branch(({ docRefWithLineage }) => !docRefWithLineage || !docRefWithLineage.node, renderNothing),
+);
 
 const DocRefBreadcrumb = ({
   docRefWithLineage: {

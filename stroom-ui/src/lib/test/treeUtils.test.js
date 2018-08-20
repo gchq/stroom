@@ -164,8 +164,8 @@ describe('Tree Utils', () => {
       expect(found).toBe(oneThreeOne);
     });
     test('should not find a match when missing', () => {
-      const { node: found } = findItem(testTree, { uuid: 'fifty' });
-      expect(found).toBe(undefined);
+      const result = findItem(testTree, { uuid: 'fifty' });
+      expect(result).toBe(undefined);
     });
   });
 });
