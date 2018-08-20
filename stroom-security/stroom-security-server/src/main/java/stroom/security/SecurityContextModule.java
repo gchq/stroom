@@ -37,6 +37,6 @@ public class SecurityContextModule extends AbstractModule {
     @Provides
     @Singleton
     public Security security(final SecurityContext securityContext) {
-        return new Security(securityContext);
+        return new SecurityImpl(securityContext);
     }
 }
