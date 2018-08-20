@@ -16,6 +16,21 @@
 
 package stroom.pipeline.server.writer;
 
+import org.apache.commons.lang.StringUtils;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import stroom.node.server.NodeCache;
+import stroom.pipeline.state.FeedHolder;
+import stroom.pipeline.state.PipelineHolder;
+import stroom.pipeline.state.SearchIdHolder;
+import stroom.pipeline.state.StreamHolder;
+import stroom.util.SystemPropertyUtil;
+import stroom.util.config.StroomProperties;
+import stroom.util.spring.StroomScope;
+
+import javax.annotation.Resource;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,23 +38,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-
-import javax.annotation.Resource;
-
-import stroom.util.config.StroomProperties;
-import org.apache.commons.lang.StringUtils;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-
-import stroom.node.server.NodeCache;
-import stroom.pipeline.state.FeedHolder;
-import stroom.pipeline.state.PipelineHolder;
-import stroom.pipeline.state.SearchIdHolder;
-import stroom.pipeline.state.StreamHolder;
-import stroom.util.SystemPropertyUtil;
-import stroom.util.spring.StroomScope;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
@@ -55,9 +53,9 @@ public class PathCreator {
     @Resource
     private NodeCache nodeCache;
 
-    private static final String[] NON_ENV_VARS = { "feed", "pipeline", "streamId", "searchId", "node", "year", "month",
+    private static final String[] NON_ENV_VARS = {"feed", "pipeline", "streamId", "searchId", "node", "year", "month",
             "day", "hour", "minute", "second", "millis", "ms", "uuid", "fileName", "fileStem", "fileExtension",
-            StroomProperties.STROOM_TEMP };
+            StroomProperties.STROOM_TEMP};
     private static final Set<String> NON_ENV_VARS_SET = Collections
             .unmodifiableSet(new HashSet<>(Arrays.asList(NON_ENV_VARS)));
 
@@ -91,15 +89,20 @@ public class PathCreator {
 
     public static String replaceTimeVars(String path) {
         // Replace some of the path elements with system variables.
-        final DateTime dateTime = new DateTime(DateTimeZone.UTC);
+        final ZonedDateTime dateTime = ZonedDateTime.now(ZoneOffset.UTC);
+        return replaceTimeVars(path, dateTime);
+    }
+
+    static String replaceTimeVars(String path, final ZonedDateTime dateTime) {
+        // Replace some of the path elements with system variables.
         path = replace(path, "year", dateTime.getYear(), 4);
-        path = replace(path, "month", dateTime.getMonthOfYear(), 2);
+        path = replace(path, "month", dateTime.getMonthValue(), 2);
         path = replace(path, "day", dateTime.getDayOfMonth(), 2);
-        path = replace(path, "hour", dateTime.getHourOfDay(), 2);
-        path = replace(path, "minute", dateTime.getMinuteOfHour(), 2);
-        path = replace(path, "second", dateTime.getSecondOfMinute(), 2);
-        path = replace(path, "millis", dateTime.getMillisOfSecond(), 3);
-        path = replace(path, "ms", dateTime.getMillis(), 0);
+        path = replace(path, "hour", dateTime.getHour(), 2);
+        path = replace(path, "minute", dateTime.getMinute(), 2);
+        path = replace(path, "second", dateTime.getSecond(), 2);
+        path = replace(path, "millis", dateTime.toInstant().toEpochMilli(), 3);
+        path = replace(path, "ms", dateTime.toInstant().toEpochMilli(), 0);
 
         return path;
     }
@@ -163,14 +166,14 @@ public class PathCreator {
         return replace(path, type, value);
     }
 
-    private static String replace(final String path, final String type, final String replacement) {
+    static String replace(final String path, final String type, final String replacement) {
         String newPath = path;
         final String param = "${" + type + "}";
         int start = newPath.indexOf(param);
         while (start != -1) {
             final int end = start + param.length();
             newPath = newPath.substring(0, start) + replacement + newPath.substring(end);
-            start = newPath.indexOf(param, end);
+            start = newPath.indexOf(param, start);
         }
 
         return newPath;

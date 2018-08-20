@@ -16,9 +16,12 @@
 
 package stroom.pipeline.server.writer;
 
-import stroom.util.test.StroomUnitTest;
 import org.junit.Assert;
 import org.junit.Test;
+import stroom.util.test.StroomUnitTest;
+
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 
 public class TestPathCreator extends StroomUnitTest {
     @Test
@@ -44,5 +47,23 @@ public class TestPathCreator extends StroomUnitTest {
         Assert.assertEquals("pipe", vars[1]);
         Assert.assertEquals("uuid", vars[2]);
         Assert.assertEquals("searchId", vars[3]);
+    }
+
+    @Test
+    public void testReplaceTime() {
+        final ZonedDateTime zonedDateTime = ZonedDateTime.of(2018, 8, 20, 13, 17, 22, 2111444, ZoneOffset.UTC);
+
+        String path = "${feed}/${year}/${year}-${month}/${year}-${month}-${day}/${pathId}/${id}";
+
+        // Replace pathId variable with path id.
+        path = PathCreator.replace(path, "pathId", "1234");
+        // Replace id variable with file id.
+        path = PathCreator.replace(path, "id", "5678");
+
+        Assert.assertEquals("${feed}/${year}/${year}-${month}/${year}-${month}-${day}/1234/5678", path);
+
+        path = PathCreator.replaceTimeVars(path, zonedDateTime);
+
+        Assert.assertEquals("${feed}/2018/2018-08/2018-08-20/1234/5678", path);
     }
 }
