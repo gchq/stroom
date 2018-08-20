@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.4.6] - 2018-08-20
+
 * Issue **824** : Fix for replace method in PathCreator also found in stroom proxy.
 
 * Issue **820** : Fix updating index shards so that they are loaded, updated and saved under lock.
@@ -846,7 +848,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.4.5...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.4.6...HEAD
+[v5.4.6]: https://github.com/gchq/stroom/compare/v5.4.5...v5.4.6
 [v5.4.5]: https://github.com/gchq/stroom/compare/v5.4.4...v5.4.5
 [v5.4.4]: https://github.com/gchq/stroom/compare/v5.4.3...v5.4.4
 [v5.4.3]: https://github.com/gchq/stroom/compare/v5.4.2...v5.4.3
