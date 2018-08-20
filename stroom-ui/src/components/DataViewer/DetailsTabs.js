@@ -116,6 +116,7 @@ const DetailsTabs = ({ data, details, dataViewerId }) => {
                         </Table.Row>
                       );
                     }
+                      return undefined;
                   })}
                 </Table.Body>
               </Table>

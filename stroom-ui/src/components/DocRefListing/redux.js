@@ -1,7 +1,5 @@
 import { createActions, combineActions, handleActions } from 'redux-actions';
 
-import { mapObject } from 'lib/treeUtils';
-
 const defaultStatePerListing = {
   allDocRefs: [],
   selectedItem: -1, // Used for simple item selection, by array index
@@ -74,7 +72,7 @@ const reducer = handleActions(
     DOC_REF_SELECTION_TOGGLED: (state, action) => {
       const {
         payload: {
-          listingId, uuid, isChecked, keyIsDown,
+          listingId, uuid, keyIsDown,
         },
       } = action;
       const listingState = state[listingId];
@@ -101,8 +99,6 @@ const reducer = handleActions(
         } else if (keyIsDown.Shift) {
           let phase = 0;
           allDocRefs.forEach((n) => {
-            const atAnEndpoint = n.uuid === uuid || selectedDocRefUuids.includes(n.uuid);
-
             switch (phase) {
               case 0: {
                 // Looking for start of selection
@@ -123,6 +119,7 @@ const reducer = handleActions(
                 if (selectedDocRefUuids.includes(n.uuid)) {
                   phase = 100; // finished finding selection run
                 }
+                break;
               }
               case 2: {
                 // Looking for the newly made selection

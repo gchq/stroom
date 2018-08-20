@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { compose, lifecycle, branch, renderComponent, withProps } from 'recompose';
 import { connect } from 'react-redux';
-import { Header, Icon, Grid, Input, Popup, Button, Loader } from 'semantic-ui-react/dist/commonjs';
+import { Header, Icon, Grid, Popup, Button, Loader } from 'semantic-ui-react/dist/commonjs';
 import Mousetrap from 'mousetrap';
 
 import DocRefPropType from 'lib/DocRefPropType';
@@ -31,15 +31,15 @@ const {
 // we'd rather not break outside React to do this. The other alternative
 // is adding 'mousetrap' as a class to the input, but that doesn't seem to work.
 
-// Up
-const upKeycode = 38;
-const kKeycode = 75;
+// // Up
+// const upKeycode = 38;
+// const kKeycode = 75;
 
-// Down
-const downKeycode = 40;
-const jKeycode = 74;
+// // Down
+// const downKeycode = 40;
+// const jKeycode = 74;
 
-const enterKeycode = 13;
+// const enterKeycode = 13;
 
 const enhance = compose(
   connect(

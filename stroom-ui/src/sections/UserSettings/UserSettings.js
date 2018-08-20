@@ -70,4 +70,4 @@ const UserSettings = ({ theme, themeChanged }) => (
   </React.Fragment>
 );
 
-export default UserSettings;
+export default enhance(UserSettings);

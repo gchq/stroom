@@ -15,7 +15,7 @@
  */
 import { createActions, handleActions, combineActions } from 'redux-actions';
 
-import { deleteItemsFromTree, addItemsToTree, updateItemInTree } from 'lib/treeUtils';
+import { updateItemInTree } from 'lib/treeUtils';
 
 export const DEFAULT_EXPLORER_ID = 'default';
 

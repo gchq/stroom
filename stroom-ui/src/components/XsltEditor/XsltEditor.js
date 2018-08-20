@@ -26,7 +26,7 @@ import { compose, lifecycle, renderComponent, branch } from 'recompose';
 import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 import AceEditor from 'react-ace';
-import { Loader, Header } from 'semantic-ui-react';
+import { Loader, Header, Grid } from 'semantic-ui-react';
 
 import SaveXslt from './SaveXslt';
 import DocRefBreadcrumb from 'components/DocRefBreadcrumb';
