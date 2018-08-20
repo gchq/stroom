@@ -1,13 +1,16 @@
 package stroom.kafka;
 
-import stroom.connectors.kafka.StroomKafkaProducer;
+import stroom.docref.DocRef;
+import stroom.kafka.api.StroomKafkaProducer;
+import stroom.kafka.api.StroomKafkaProducerFactory;
+import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.pipeline.destination.RollingDestination;
 import stroom.pipeline.destination.RollingDestinations;
 import stroom.pipeline.destination.RollingKafkaDestination;
-import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
+import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.writer.AbstractRollingAppender;
@@ -25,30 +28,32 @@ import javax.inject.Inject;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.KAFKA)
 class RollingKafkaAppender extends AbstractRollingAppender {
-    private final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService;
+    private final StroomKafkaProducerFactory stroomKafkaProducerFactory;
     private final PathCreator pathCreator;
-    private final ErrorReceiverProxy errorReceiverProxy;
 
     private String topic;
     private String recordKey;
     private boolean flushOnSend = true;
+    private DocRef kafkaConfigRef;
 
     private String key;
 
     @Inject
     RollingKafkaAppender(final RollingDestinations destinations,
                          final TaskContext taskContext,
-                         final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
-                         final PathCreator pathCreator,
-                         final ErrorReceiverProxy errorReceiverProxy) {
+                         final StroomKafkaProducerFactory stroomKafkaProducerFactory,
+                         final PathCreator pathCreator) {
         super(destinations, taskContext);
-        this.stroomKafkaProducerFactoryService = stroomKafkaProducerFactoryService;
+        this.stroomKafkaProducerFactory = stroomKafkaProducerFactory;
         this.pathCreator = pathCreator;
-        this.errorReceiverProxy = errorReceiverProxy;
     }
 
     @Override
     protected void validateSpecificSettings() {
+        if (kafkaConfigRef == null) {
+            throw new ProcessException("No Kafka config has been specified");
+        }
+
         if (recordKey == null || recordKey.length() == 0) {
             throw new ProcessException("No recordKey has been specified");
         }
@@ -70,9 +75,8 @@ class RollingKafkaAppender extends AbstractRollingAppender {
 
     @Override
     public RollingDestination createDestination() {
-        StroomKafkaProducer stroomKafkaProducer = stroomKafkaProducerFactoryService.getConnector()
+        final StroomKafkaProducer stroomKafkaProducer = stroomKafkaProducerFactory.createProducer(kafkaConfigRef)
                 .orElseThrow(() -> new ProcessException("No kafka producer available to use"));
-
         return new RollingKafkaDestination(
                 key,
                 getFrequency(),
@@ -100,5 +104,11 @@ class RollingKafkaAppender extends AbstractRollingAppender {
             defaultValue = "false")
     public void setFlushOnSend(final boolean flushOnSend) {
         this.flushOnSend = flushOnSend;
+    }
+
+    @PipelineProperty(description = "The Kafka config to use.")
+    @PipelinePropertyDocRef(types = KafkaConfigDoc.DOCUMENT_TYPE)
+    public void setKafkaConfig(final DocRef kafkaConfigRef) {
+        this.kafkaConfigRef = kafkaConfigRef;
     }
 }

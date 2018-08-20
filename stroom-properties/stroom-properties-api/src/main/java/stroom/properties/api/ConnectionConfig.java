@@ -16,40 +16,65 @@
 
 package stroom.properties.api;
 
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+
 import java.util.Objects;
 
 public class ConnectionConfig {
-    private static final String PROP_JDBC_CLASS_NAME = "jdbcDriverClassName";
-    private static final String PROP_JDBC_DRIVER_URL = "jdbcDriverUrl";
-    private static final String PROP_JDBC_DRIVER_USERNAME = "jdbcDriverUsername";
-    private static final String PROP_JDBC_DRIVER_PASSWORD = "jdbcDriverPassword";
+    private String jdbcDriverClassName;
+    private String jdbcDriverUrl;
+    private String jdbcDriverUsername;
+    private String jdbcDriverPassword;
 
-    private final String jdbcDriverClassName;
-    private final String jdbcDriverUrl;
-    private final String jdbcDriverUsername;
-    private final String jdbcDriverPassword;
-
-    public ConnectionConfig(final String prefix, final PropertyService propertyService) {
-        this.jdbcDriverClassName = propertyService.getProperty(prefix + PROP_JDBC_CLASS_NAME);
-        this.jdbcDriverUrl = propertyService.getProperty(prefix + PROP_JDBC_DRIVER_URL + "|trace");
-        this.jdbcDriverUsername = propertyService.getProperty(prefix + PROP_JDBC_DRIVER_USERNAME);
-        this.jdbcDriverPassword = propertyService.getProperty(prefix + PROP_JDBC_DRIVER_PASSWORD);
-    }
-
+    @JsonPropertyDescription("Should only be set per node in application property file")
     public String getJdbcDriverClassName() {
         return jdbcDriverClassName;
     }
 
+    public void setJdbcDriverClassName(final String jdbcDriverClassName) {
+        this.jdbcDriverClassName = jdbcDriverClassName;
+    }
+
+    @JsonPropertyDescription("Should only be set per node in application property file")
     public String getJdbcDriverUrl() {
         return jdbcDriverUrl;
     }
 
+    public void setJdbcDriverUrl(final String jdbcDriverUrl) {
+        this.jdbcDriverUrl = jdbcDriverUrl;
+    }
+
+    @JsonPropertyDescription("Should only be set per node in application property file")
     public String getJdbcDriverUsername() {
         return jdbcDriverUsername;
     }
 
+    public void setJdbcDriverUsername(final String jdbcDriverUsername) {
+        this.jdbcDriverUsername = jdbcDriverUsername;
+    }
+
+    @JsonPropertyDescription("Should only be set per node in application property file")
     public String getJdbcDriverPassword() {
         return jdbcDriverPassword;
+    }
+
+    public void setJdbcDriverPassword(final String jdbcDriverPassword) {
+        this.jdbcDriverPassword = jdbcDriverPassword;
+    }
+
+    public void validate() {
+        if (jdbcDriverClassName == null) {
+            throw new NullPointerException("jdbcDriverClassName is null");
+        }
+        if (jdbcDriverUrl == null) {
+            throw new NullPointerException("jdbcDriverUrl is null");
+        }
+        if (jdbcDriverUsername == null) {
+            throw new NullPointerException("jdbcDriverUsername is null");
+        }
+        if (jdbcDriverPassword == null) {
+            throw new NullPointerException("jdbcDriverPassword is null");
+        }
     }
 
     @Override

@@ -25,9 +25,8 @@ import stroom.index.LuceneVersionUtil;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.node.NodeCache;
-import stroom.properties.shared.ClientProperties;
 import stroom.node.shared.Node;
-import stroom.properties.api.PropertyService;
+import stroom.ui.config.shared.UiConfig;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
@@ -52,11 +51,12 @@ import java.util.stream.Collectors;
 public class LuceneSearchStoreFactory implements StoreFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(LuceneSearchStoreFactory.class);
     private static final int SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY = 500;
-    private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
+
 
     private final IndexStore indexStore;
     private final DictionaryStore dictionaryStore;
-    private final PropertyService propertyService;
+    private final SearchConfig searchConfig;
+    private final UiConfig clientConfig;
     private final NodeCache nodeCache;
     private final int maxBooleanClauseCount;
     private final SecurityContext securityContext;
@@ -66,16 +66,18 @@ public class LuceneSearchStoreFactory implements StoreFactory {
     @Inject
     public LuceneSearchStoreFactory(final IndexStore indexStore,
                                     final DictionaryStore dictionaryStore,
-                                    final PropertyService propertyService,
+                                    final SearchConfig searchConfig,
+                                    final UiConfig clientConfig,
                                     final NodeCache nodeCache,
                                     final SecurityContext securityContext,
                                     final Security security,
                                     final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory) {
         this.indexStore = indexStore;
         this.dictionaryStore = dictionaryStore;
-        this.propertyService = propertyService;
+        this.searchConfig = searchConfig;
+        this.clientConfig = clientConfig;
         this.nodeCache = nodeCache;
-        this.maxBooleanClauseCount = propertyService.getIntProperty("stroom.search.maxBooleanClauseCount", DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT);
+        this.maxBooleanClauseCount = searchConfig.getMaxBooleanClauseCount();
         this.securityContext = securityContext;
         this.security = security;
         this.clusterSearchResultCollectorFactory = clusterSearchResultCollectorFactory;
@@ -144,12 +146,12 @@ public class LuceneSearchStoreFactory implements StoreFactory {
     }
 
     private List<Integer> getDefaultMaxResultsSizes() {
-        final String value = propertyService.getProperty(ClientProperties.DEFAULT_MAX_RESULTS);
+        final String value = clientConfig.getDefaultMaxResults();
         return extractValues(value);
     }
 
     private List<Integer> getStoreSizes() {
-        final String value = propertyService.getProperty(ClusterSearchResultCollector.PROP_KEY_STORE_SIZE);
+        final String value = searchConfig.getStoreSize();
         return extractValues(value);
     }
 

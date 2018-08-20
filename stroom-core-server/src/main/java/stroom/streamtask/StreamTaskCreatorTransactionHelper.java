@@ -21,24 +21,18 @@ package stroom.streamtask;
 import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataMetaService;
+import stroom.data.meta.api.DataStatus;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.CriteriaSet;
-import stroom.entity.shared.Sort.Direction;
-import stroom.entity.util.ConnectionUtil;
 import stroom.entity.util.SqlBuilder;
 import stroom.jobsystem.ClusterLockService;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
+import stroom.persist.CoreConfig;
 import stroom.persist.EntityManagerSupport;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.data.meta.api.FindDataCriteria;
-import stroom.data.meta.api.Data;
-import stroom.data.meta.api.DataMetaService;
-import stroom.data.meta.api.DataStatus;
-import stroom.data.meta.api.MetaDataSource;
 import stroom.streamtask.InclusiveRanges.InclusiveRange;
 import stroom.streamtask.shared.FindStreamTaskCriteria;
 import stroom.streamtask.shared.ProcessorFilter;
@@ -80,6 +74,7 @@ class StreamTaskCreatorTransactionHelper {
     private final DataMetaService streamMetaService;
     private final StroomEntityManager stroomEntityManager;
     private final EntityManagerSupport entityManagerSupport;
+    private final CoreConfig coreConfig;
 
     @Inject
     StreamTaskCreatorTransactionHelper(final NodeCache nodeCache,
@@ -87,13 +82,15 @@ class StreamTaskCreatorTransactionHelper {
                                        final StreamTaskService streamTaskService,
                                        final DataMetaService streamMetaService,
                                        final StroomEntityManager stroomEntityManager,
-                                       final EntityManagerSupport entityManagerSupport) {
+                                       final EntityManagerSupport entityManagerSupport,
+                                       final CoreConfig coreConfig) {
         this.nodeCache = nodeCache;
         this.clusterLockService = clusterLockService;
         this.streamTaskService = streamTaskService;
         this.streamMetaService = streamMetaService;
         this.stroomEntityManager = stroomEntityManager;
         this.entityManagerSupport = entityManagerSupport;
+        this.coreConfig = coreConfig;
     }
 
     /**
@@ -123,7 +120,6 @@ class StreamTaskCreatorTransactionHelper {
                 "doStartup() - Set {} Tasks back to UNPROCESSED (Reprocess), NULL that were UNPROCESSED, ASSIGNED, PROCESSING for node {}",
                 results, nodeCache.getDefaultNode().getName());
     }
-
 
 
 //    private ExpressionOperator copyExpression(final ExpressionOperator expression) {
@@ -174,18 +170,18 @@ class StreamTaskCreatorTransactionHelper {
     /**
      * Create new tasks for the specified filter and add them to the queue.
      *
-     * @param filter           The fitter to create tasks for
-     * @param tracker          The tracker that tracks the task creation progress for the
-     *                         filter.
-     * @param streamQueryTime  The time that we queried for streams that match the stream
-     *                         processor filter.
-     * @param streams          The map of streams and optional event ranges to create stream
-     *                         tasks for.
-     * @param thisNode         This node, the node that will own the created tasks.
-     * @param reachedLimit     For search based stream task creation this indicates if we
-     *                         have reached the limit of stream tasks created for a single
-     *                         search. This limit is imposed to stop search based task
-     *                         creation running forever.
+     * @param filter          The fitter to create tasks for
+     * @param tracker         The tracker that tracks the task creation progress for the
+     *                        filter.
+     * @param streamQueryTime The time that we queried for streams that match the stream
+     *                        processor filter.
+     * @param streams         The map of streams and optional event ranges to create stream
+     *                        tasks for.
+     * @param thisNode        This node, the node that will own the created tasks.
+     * @param reachedLimit    For search based stream task creation this indicates if we
+     *                        have reached the limit of stream tasks created for a single
+     *                        search. This limit is imposed to stop search based task
+     *                        creation running forever.
      * @return A list of tasks that we have created and that are owned by this
      * node and available to be handed to workers (i.e. their associated
      * streams are not locked).
@@ -285,10 +281,11 @@ class StreamTaskCreatorTransactionHelper {
                     final Session session = em.unwrap(Session.class);
                     session.doWork(connection -> {
                         try {
-                            try (final ConnectionUtil.MultiInsertExecutor multiInsertExecutor = new ConnectionUtil.MultiInsertExecutor(
+                            try (final MultiInsertExecutor multiInsertExecutor = new MultiInsertExecutor(
                                     connection,
                                     ProcessorFilterTask.TABLE_NAME,
-                                    columnNames)) {
+                                    columnNames,
+                                    coreConfig.getDatabaseMultiInsertMaxBatchSize())) {
 
                                 multiInsertExecutor.execute(allArgs);
                             }

@@ -21,8 +21,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
-import stroom.properties.global.client.ClientPropertyCache;
-import stroom.properties.shared.ClientProperties;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -40,14 +39,14 @@ public class QueryInfoPresenter extends MyPresenterWidget<QueryInfoPresenter.Que
     private String queryInfoPopupValidationRegex = DEFAULT_QUERY_INFO_VALIDATION_REGEX;
 
     @Inject
-    public QueryInfoPresenter(final EventBus eventBus, final QueryInfoView view, final ClientPropertyCache clientPropertyCache) {
+    public QueryInfoPresenter(final EventBus eventBus, final QueryInfoView view, final UiConfigCache clientPropertyCache) {
         super(eventBus, view);
 
         clientPropertyCache.get()
                 .onSuccess(result -> {
-                    queryInfoPopupEnabled = result.getBoolean(ClientProperties.QUERY_INFO_POPUP_ENABLED, false);
-                    queryInfoPopupTitle = result.get(ClientProperties.QUERY_INFO_POPUP_TITLE, DEFAULT_QUERY_INFO_POPUP_TITLE);
-                    queryInfoPopupValidationRegex = result.get(ClientProperties.QUERY_INFO_POPUP_VALIDATION_REGEX, DEFAULT_QUERY_INFO_VALIDATION_REGEX);
+                    queryInfoPopupEnabled = result.getQueryConfig().getInfoPopupConfig().isEnabled();
+                    queryInfoPopupTitle = result.getQueryConfig().getInfoPopupConfig().getTitle();
+                    queryInfoPopupValidationRegex = result.getQueryConfig().getInfoPopupConfig().getValidationRegex();
                 })
                 .onFailure(caught -> AlertEvent.fireError(QueryInfoPresenter.this, caught.getMessage(), null));
     }

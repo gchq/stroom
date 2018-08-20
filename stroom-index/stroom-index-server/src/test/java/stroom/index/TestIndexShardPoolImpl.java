@@ -19,12 +19,9 @@ package stroom.index;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.index.shared.IndexDoc;
@@ -32,20 +29,21 @@ import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-import stroom.node.NodeCache;
 import stroom.node.shared.Node;
 import stroom.node.shared.VolumeEntity;
 import stroom.node.shared.VolumeEntity.VolumeType;
 import stroom.util.concurrent.SimpleExecutor;
 import stroom.util.io.FileUtil;
-import stroom.util.test.StroomUnitTest;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 @RunWith(MockitoJUnitRunner.class)
-public class TestIndexShardPoolImpl extends StroomUnitTest {
+public class TestIndexShardPoolImpl {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestIndexShardPoolImpl.class);
 
     private static AtomicLong indexShardId = new AtomicLong(0);
@@ -58,11 +56,11 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
 
 //    @Mock
 //    private NodeCache nodeCache;
-
-    @Before
-    public void init() {
-        FileUtil.deleteContents(getCurrentTestDir().resolve("index"));
-    }
+//
+//    @Before
+//    public void init() {
+//        FileUtil.deleteContents(getCurrentTestDir().resolve("index"));
+//    }
 
     @Test
     public void testOneIndex() throws InterruptedException {
@@ -112,6 +110,14 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
             @Override
             public IndexShard createIndexShard(final IndexShardKey indexShardKey, final Node node) {
                 indexShardsCreated.incrementAndGet();
+
+                VolumeEntity volumeEntity;
+                try {
+                    volumeEntity = VolumeEntity.create(defaultNode, FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")), VolumeType.PUBLIC);
+                } catch (final IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+
                 // checkedLimit.increment();
                 final IndexShard indexShard = new IndexShard();
                 indexShard.setIndexUuid(indexShardKey.getIndexUuid());
@@ -120,8 +126,7 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
                 indexShard.setPartitionToTime(indexShardKey.getPartitionToTime());
                 indexShard.setNode(node);
                 indexShard.setId(indexShardId.incrementAndGet());
-                indexShard.setVolume(
-                        VolumeEntity.create(defaultNode, FileUtil.getCanonicalPath(getCurrentTestDir()), VolumeType.PUBLIC));
+                indexShard.setVolume(volumeEntity);
                 indexShard.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
                 FileUtil.deleteContents(IndexShardUtil.getIndexPath(indexShard));
                 return indexShard;
@@ -169,7 +174,7 @@ public class TestIndexShardPoolImpl extends StroomUnitTest {
         private final int testNumber;
 
         IndexThread(final Indexer indexer, final IndexShardKey indexShardKey,
-                           final IndexField indexField, final int testNumber) {
+                    final IndexField indexField, final int testNumber) {
             this.indexer = indexer;
             this.indexShardKey = indexShardKey;
             this.indexField = indexField;

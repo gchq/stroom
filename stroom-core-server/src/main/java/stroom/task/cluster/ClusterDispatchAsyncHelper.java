@@ -18,11 +18,10 @@ package stroom.task.cluster;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.node.shared.Node;
-import stroom.properties.api.PropertyService;
-import stroom.task.cluster.TargetNodeSetFactory.TargetType;
-import stroom.util.shared.ModelStringUtil;
+import stroom.cluster.ClusterConfig;
 import stroom.docref.SharedObject;
+import stroom.node.shared.Node;
+import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -33,11 +32,9 @@ import java.util.concurrent.TimeUnit;
 public class ClusterDispatchAsyncHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterDispatchAsyncHelper.class);
 
-    private static final String CLUSTER_RESPONSE_TIMEOUT = "stroom.clusterResponseTimeout";
     private static final Long ONE_MINUTE = 60000L;
-    private static final Long DEFAULT_CLUSTER_RESPONSE_TIMEOUT = ONE_MINUTE;
 
-    private final PropertyService propertyService;
+    private final ClusterConfig clusterConfig;
     private final ClusterResultCollectorCache collectorCache;
     private final Provider<ClusterDispatchAsync> dispatchAsyncProvider;
     private final TargetNodeSetFactory targetNodeSetFactory;
@@ -45,11 +42,11 @@ public class ClusterDispatchAsyncHelper {
     private volatile long lastClusterStateWarn;
 
     @Inject
-    public ClusterDispatchAsyncHelper(final PropertyService propertyService,
+    public ClusterDispatchAsyncHelper(final ClusterConfig clusterConfig,
                                       final ClusterResultCollectorCache collectorCache,
                                       final Provider<ClusterDispatchAsync> dispatchAsyncProvider,
                                       final TargetNodeSetFactory targetNodeSetFactory) {
-        this.propertyService = propertyService;
+        this.clusterConfig = clusterConfig;
         this.collectorCache = collectorCache;
         this.dispatchAsyncProvider = dispatchAsyncProvider;
         this.targetNodeSetFactory = targetNodeSetFactory;
@@ -57,7 +54,7 @@ public class ClusterDispatchAsyncHelper {
 
     public <R extends SharedObject> DefaultClusterResultCollector<R> execAsync(final ClusterTask<R> task,
                                                                                final Node targetNode) {
-        final Long waitTimeMs = getClusterResponseTimeout();
+        final Long waitTimeMs = clusterConfig.getClusterResponseTimeoutMs();
         final Node sourceNode = targetNodeSetFactory.getSourceNode();
         final Set<Node> targetNodes = Collections.singleton(targetNode);
         return execAsync(task, waitTimeMs, TimeUnit.MILLISECONDS, sourceNode, targetNodes);
@@ -72,7 +69,7 @@ public class ClusterDispatchAsyncHelper {
 
     public <R extends SharedObject> DefaultClusterResultCollector<R> execAsync(final ClusterTask<R> task,
                                                                                final TargetType targetType) {
-        final Long waitTimeMs = getClusterResponseTimeout();
+        final Long waitTimeMs = clusterConfig.getClusterResponseTimeoutMs();
         final Node sourceNode = targetNodeSetFactory.getSourceNode();
         final Set<Node> targetNodes = getTargetNodesByType(targetType);
         return execAsync(task, waitTimeMs, TimeUnit.MILLISECONDS, sourceNode, targetNodes);
@@ -125,21 +122,6 @@ public class ClusterDispatchAsyncHelper {
         }
 
         return collector;
-    }
-
-    private Long getClusterResponseTimeout() {
-        Long timeout = DEFAULT_CLUSTER_RESPONSE_TIMEOUT;
-        try {
-            final Long tmp = ModelStringUtil
-                    .parseDurationString(propertyService.getProperty(CLUSTER_RESPONSE_TIMEOUT));
-            if (tmp != null) {
-                timeout = tmp;
-            }
-        } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-
-        return timeout;
     }
 
     public boolean isClusterStateInitialised() {

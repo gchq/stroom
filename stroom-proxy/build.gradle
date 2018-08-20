@@ -11,16 +11,14 @@ dependencies {
     compile project(':stroom-task:stroom-task-api')
 
     compile libs.stroomDocRef
-    compile libs.slf4j_api
-//    compile libs.google_findbugs
-    compile libs.guava
-    compile libs.jackson_annotations
 
-    compile libs.javax_inject
-    compile libs.guice4
-
-    compile libs.javax_servlet_api
     compile libs.dropwizard_lifecycle
+    compile libs.guava
+    compile libs.guice4
+    compile libs.jackson_annotations
+    compile libs.javax_inject
+    compile libs.javax_servlet_api
+    compile libs.slf4j_api
 
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile libs.junit

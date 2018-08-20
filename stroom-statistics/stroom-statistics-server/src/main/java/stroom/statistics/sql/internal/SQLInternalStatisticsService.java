@@ -4,10 +4,10 @@ import com.google.common.base.Preconditions;
 import io.vavr.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.properties.api.PropertyService;
 import stroom.docref.DocRef;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsService;
+import stroom.statistics.sql.SQLStatisticsConfig;
 import stroom.statistics.sql.StatisticEvent;
 import stroom.statistics.sql.StatisticTag;
 import stroom.statistics.sql.Statistics;
@@ -19,21 +19,16 @@ import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
 class SQLInternalStatisticsService implements InternalStatisticsService {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(SQLInternalStatisticsService.class);
 
-    private static final String PROP_KEY_DOC_REF_TYPE = "stroom.services.sqlStatistics.docRefType";
-
-    private final PropertyService propertyService;
     private final Statistics statisticsService;
     private final String docRefType;
 
     @Inject
-    SQLInternalStatisticsService(final PropertyService propertyService,
+    SQLInternalStatisticsService(final SQLStatisticsConfig config,
                                  final Statistics statisticsService) {
-        this.propertyService = propertyService;
         this.statisticsService = statisticsService;
-        this.docRefType = propertyService.getProperty(PROP_KEY_DOC_REF_TYPE);
+        this.docRefType = config.getDocRefType();
     }
 
     @Override

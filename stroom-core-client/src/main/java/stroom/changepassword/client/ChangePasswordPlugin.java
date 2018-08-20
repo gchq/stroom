@@ -10,24 +10,22 @@ import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.properties.global.client.ClientPropertyCache;
-import stroom.properties.shared.ClientProperties;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.iframe.client.presenter.IFrameContentPresenter;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 public class ChangePasswordPlugin extends Plugin {
-
     private final Provider<IFrameContentPresenter> presenterProvider;
     private final ContentManager contentManager;
-    private final ClientPropertyCache clientPropertyCache;
+    private final UiConfigCache clientPropertyCache;
 
     @Inject
     public ChangePasswordPlugin(final EventBus eventBus,
                                 final Provider<IFrameContentPresenter> presenterProvider,
                                 final ContentManager contentManager,
-                                final ClientPropertyCache clientPropertyCache) {
+                                final UiConfigCache clientPropertyCache) {
         super(eventBus);
         this.presenterProvider = presenterProvider;
         this.contentManager = contentManager;
@@ -47,7 +45,7 @@ public class ChangePasswordPlugin extends Plugin {
                 .onSuccess(result -> {
                     final IconMenuItem changePasswordMenuItem;
                     final SvgPreset icon = SvgPresets.PASSWORD;
-                    final String changePasswordUiUrl = result.get(ClientProperties.CHANGE_PASSWORD_UI_URL);
+                    final String changePasswordUiUrl = result.getUrlConfig().getChangepassword();
                     if (changePasswordUiUrl != null && changePasswordUiUrl.trim().length() > 0) {
                         changePasswordMenuItem = new IconMenuItem(5, icon, null, "Change password", null, true, () -> {
                             final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()

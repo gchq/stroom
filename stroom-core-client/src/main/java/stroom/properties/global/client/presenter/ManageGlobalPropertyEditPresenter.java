@@ -26,7 +26,7 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.properties.global.api.GlobalProperty;
 import stroom.properties.global.api.LoadGlobalPropertyAction;
 import stroom.properties.global.api.SaveGlobalPropertyAction;
-import stroom.properties.global.client.ClientPropertyCache;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.security.client.ClientSecurityContext;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -37,7 +37,7 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 public final class ManageGlobalPropertyEditPresenter extends MyPresenterWidget<ManageGlobalPropertyEditPresenter.GlobalPropertyEditView> {
     private final ClientDispatchAsync dispatcher;
     private final ClientSecurityContext securityContext;
-    private final ClientPropertyCache clientPropertyCache;
+    private final UiConfigCache clientPropertyCache;
     private GlobalProperty globalProperty;
 
     @Inject
@@ -45,7 +45,7 @@ public final class ManageGlobalPropertyEditPresenter extends MyPresenterWidget<M
                                              final GlobalPropertyEditView view,
                                              final ClientDispatchAsync dispatcher,
                                              final ClientSecurityContext securityContext,
-                                             final ClientPropertyCache clientPropertyCache) {
+                                             final UiConfigCache clientPropertyCache) {
         super(eventBus, view);
         this.dispatcher = dispatcher;
         this.securityContext = securityContext;

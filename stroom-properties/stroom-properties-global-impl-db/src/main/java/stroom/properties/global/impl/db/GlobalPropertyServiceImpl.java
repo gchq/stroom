@@ -27,7 +27,7 @@ import stroom.properties.global.api.GlobalProperty;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.util.config.StroomProperties;
+import stroom.util.config.StroomProperties.Source;
 import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.util.lifecycle.StroomFrequencySchedule;
 
@@ -53,23 +53,193 @@ class GlobalPropertyServiceImpl implements GlobalPropertyService {
     private final Security security;
     private final SecurityContext securityContext;
     private final Map<String, GlobalProperty> globalProperties = new HashMap<>();
+    private final ConfigMapper configMapper;
+
+//    private final Map<String, Prop> propertyMap = new HashMap<>();
 
     @Inject
     GlobalPropertyServiceImpl(final ConnectionProvider connectionProvider,
                               final Security security,
-                              final SecurityContext securityContext) {
+                              final SecurityContext securityContext,
+                              final ConfigMapper configMapper) {
         this.connectionProvider = connectionProvider;
         this.security = security;
         this.securityContext = securityContext;
+        this.configMapper = configMapper;
+
+//        addMethods(stroomConfig.getClass(), "stroom");
 
         initialise();
     }
 
+//    private void addMethods(final Class<?> clazz, final String path) {
+//        final Method[] methods = clazz.getMethods();
+//        final Map<String, Prop> propMap = new HashMap<>();
+//        for (final Method method : methods) {
+//            final String methodName = method.getName();
+//            if (methodName.length() > 3) {
+//                String name = methodName.substring(3);
+//                name = name.substring(0, 1).toLowerCase() + name.substring(1);
+//                Prop prop = null;
+//
+//                if (methodName.startsWith("get") && method.getParameterTypes().length == 0 && !method.getReturnType().equals(Void.TYPE)) {
+//                    // Getter.
+//                    prop = propMap.computeIfAbsent(name, k -> new Prop());
+//                    prop.name = name;
+//                    prop.getter = method;
+//                } else if (methodName.startsWith("set") && method.getParameterTypes().length == 1 && method.getReturnType().equals(Void.TYPE)) {
+//                    // Setter.
+//                    prop = propMap.computeIfAbsent(name, k -> new Prop());
+//                    prop.name = name;
+//                    prop.setter = method;
+//                }
+//
+//                if (prop != null) {
+//                    final String specifiedName = getName(method);
+//                    final String specifiedDescription = getDescription(method);
+//                    if (specifiedName != null) {
+//                        prop.name = specifiedName;
+//                    }
+//                    if (specifiedDescription != null) {
+//                        prop.description = specifiedDescription;
+//                    }
+//                }
+//            }
+//        }
+//
+//        propMap.forEach((k, v) -> {
+//            if (v.getter == null || v.setter == null) {
+//                LOGGER.warn("Invalid property " + k + " on " + clazz.getName());
+//            } else {
+//                final String fullPath = path + "." + v.name;
+//
+//                final Class<?> type = v.getter.getReturnType();
+//                if (type.equals(String.class) ||
+//                        type.equals(Byte.class) ||
+//                        type.equals(Integer.class) ||
+//                        type.equals(Long.class) ||
+//                        type.equals(Short.class) ||
+//                        type.equals(Float.class) ||
+//                        type.equals(Double.class) ||
+//                        type.equals(Character.class)) {
+//                    propertyMap.put(fullPath, v);
+//
+//                    // Create global property.
+//                    final String defaultValue = getDefaultValue(v.getter);
+//                    final GlobalProperty globalProperty = new GlobalProperty();
+//                    globalProperty.setSource("Code");
+//                    globalProperty.setName(fullPath);
+//                    globalProperty.setDefaultValue(defaultValue);
+//                    globalProperty.setValue(defaultValue);
+//                    globalProperty.setDescription(v.description);
+//                    globalProperty.setEditable(true);
+//                    globalProperty.setPassword(fullPath.toLowerCase().contains("pass"));
+//                    globalProperties.put(fullPath, globalProperty);
+//
+//                } else {
+//                    addMethods(type, fullPath);
+//                }
+//            }
+//        });
+//    }
+//
+//    private String getName(final Method method) {
+//        for (final Annotation declaredAnnotation : method.getDeclaredAnnotations()) {
+//            if (declaredAnnotation.getClass().equals(JsonProperty.class)) {
+//                final JsonProperty jsonProperty = (JsonProperty) declaredAnnotation;
+//                return jsonProperty.value();
+//            }
+//        }
+//        return null;
+//    }
+//
+//    private String getDescription(final Method method) {
+//        for (final Annotation declaredAnnotation : method.getDeclaredAnnotations()) {
+//            if (declaredAnnotation.getClass().equals(JsonPropertyDescription.class)) {
+//                final JsonPropertyDescription jsonPropertyDescription = (JsonPropertyDescription) declaredAnnotation;
+//                return jsonPropertyDescription.value();
+//            }
+//        }
+//        return null;
+//    }
+//
+//    private String getDefaultValue(final Method method) {
+//        try {
+//            final Object o = method.invoke(this, (Object[]) new Class[0]);
+//            if (o != null) {
+//                return o.toString();
+//            }
+//        } catch (final IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
+//            LOGGER.debug(e.getMessage(), e);
+//        }
+//        return null;
+//    }
+
+    private void update(final String key, final String value, final Source source) {
+//        try {
+//            if (value != null) {
+//                StroomProperties.setProperty(key, value, source);
+//            }
+
+            configMapper.update(key, value);
+
+//            final Prop prop = propertyMap.get(key);
+//            if (prop != null) {
+//                final Class<?> type = prop.setter.getParameterTypes()[0];
+//                prop.setter.invoke(this, convert(value, type));
+//            }
+//        } catch (final IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
+//            LOGGER.debug(e.getMessage(), e);
+//        }
+    }
+
+//    private Object convert(final String value, final Class<?> type) {
+//        if (value == null) {
+//            return null;
+//        }
+//
+//        if (type.equals(String.class)) {
+//            return value;
+//        } else if (type.equals(Byte.class)) {
+//            return Byte.valueOf(value);
+//        } else if (type.equals(Integer.class)) {
+//            return Integer.valueOf(value);
+//        } else if (type.equals(Long.class)) {
+//            return Long.valueOf(value);
+//        } else if (type.equals(Short.class)) {
+//            return Short.valueOf(value);
+//        } else if (type.equals(Float.class)) {
+//            return Float.valueOf(value);
+//        } else if (type.equals(Double.class)) {
+//            return Double.valueOf(value);
+//        } else if (type.equals(Character.class) && value.length() > 0) {
+//            return value.charAt(0);
+//        }
+//
+//        return null;
+//    }
+
     private void initialise() {
         // Setup DB properties.
         LOGGER.info("Adding global properties to the DB");
+        loadMappedProperties();
         loadDefaultProperties();
         loadDBProperties();
+    }
+
+    private void loadMappedProperties() {
+        try {
+            final List<GlobalProperty> globalPropertyList = configMapper.getGlobalProperties();
+            for (final GlobalProperty globalProperty : globalPropertyList) {
+//                globalProperty.setSource(Source.GUICE);
+//                globalProperty.setDefaultValue(globalProperty.getValue());
+                globalProperties.put(globalProperty.getName(), globalProperty);
+
+                update(globalProperty.getName(), globalProperty.getValue(), Source.GUICE);
+            }
+        } catch (final RuntimeException e) {
+            e.printStackTrace();
+        }
     }
 
     @SuppressWarnings("resource")
@@ -81,9 +251,7 @@ class GlobalPropertyServiceImpl implements GlobalPropertyService {
                 globalProperty.setDefaultValue(globalProperty.getValue());
                 globalProperties.put(globalProperty.getName(), globalProperty);
 
-                if (globalProperty.getValue() != null) {
-                    StroomProperties.setProperty(globalProperty.getName(), globalProperty.getValue(), StroomProperties.Source.GUICE);
-                }
+                update(globalProperty.getName(), globalProperty.getValue(), Source.GUICE);
             }
         } catch (final RuntimeException e) {
             e.printStackTrace();
@@ -103,7 +271,8 @@ class GlobalPropertyServiceImpl implements GlobalPropertyService {
                                 globalProperty.setId(record.getId());
                                 globalProperty.setValue(record.getVal());
                                 globalProperty.setSource("Database");
-                                StroomProperties.setProperty(record.getName(), record.getVal(), StroomProperties.Source.DB);
+
+                                update(record.getName(), record.getVal(), Source.DB);
                             } else {
                                 // Delete old property.
                                 delete(record.getName());
@@ -124,13 +293,13 @@ class GlobalPropertyServiceImpl implements GlobalPropertyService {
         loadDBProperties();
     }
 
-    public GlobalProperty getGlobalProperty(final String name) {
-        return globalProperties.get(name);
-    }
-
-    public Map<String, GlobalProperty> getGlobalProperties() {
-        return globalProperties;
-    }
+//    public GlobalProperty getGlobalProperty(final String name) {
+//        return globalProperties.get(name);
+//    }
+//
+//    public Map<String, GlobalProperty> getGlobalProperties() {
+//        return globalProperties;
+//    }
 
     @Override
     public List<GlobalProperty> list() {
@@ -191,7 +360,7 @@ class GlobalPropertyServiceImpl implements GlobalPropertyService {
                         .execute();
 
                 // Update property.
-                StroomProperties.setProperty(globalProperty.getName(), globalProperty.getValue(), StroomProperties.Source.DB);
+                update(globalProperty.getName(), globalProperty.getValue(), Source.DB);
             } catch (final SQLException e) {
                 LOGGER.error(e.getMessage(), e);
             }
@@ -224,4 +393,11 @@ class GlobalPropertyServiceImpl implements GlobalPropertyService {
         }
         return sb.toString();
     }
+
+//    private static class Prop {
+//        private String name;
+//        private String description;
+//        private Method getter;
+//        private Method setter;
+//    }
 }

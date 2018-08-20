@@ -18,20 +18,17 @@
 package stroom.data.meta.impl.db;
 
 import com.google.inject.Guice;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import stroom.data.meta.api.AttributeMap;
+import stroom.data.meta.api.Data;
+import stroom.data.meta.api.DataProperties;
 import stroom.data.meta.api.ExpressionUtil;
 import stroom.data.meta.api.FindDataCriteria;
-import stroom.data.meta.api.Data;
 import stroom.data.meta.api.MetaDataSource;
-import stroom.data.meta.api.DataProperties;
-import stroom.properties.impl.mock.MockPropertyModule;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.impl.mock.MockSecurityContextModule;
-import stroom.util.config.StroomProperties;
 import stroom.util.date.DateUtil;
 
 import javax.inject.Inject;
@@ -46,20 +43,19 @@ class TestMetaValueServiceImpl {
     @Inject
     private MetaValueConfig metaValueConfig;
 
-    @BeforeAll
-    static void setProperties() {
-        // Make sure attributes get flushed straight away.
-        StroomProperties.setOverrideBooleanProperty("stroom.meta.addAsync", false, StroomProperties.Source.TEST);
+    @BeforeEach
+    void setProperties() {
+        metaValueConfig.setAddAsync(false);
     }
 
-    @AfterAll
-    static void unsetProperties() {
-        StroomProperties.removeOverrides();
+    @AfterEach
+    void unsetProperties() {
+        metaValueConfig.setAddAsync(true);
     }
 
     @BeforeEach
     void setup() {
-        Guice.createInjector(new DataMetaDbModule(), new MockSecurityContextModule(), new MockPropertyModule()).injectMembers(this);
+        Guice.createInjector(new DataMetaDbModule(), new MockSecurityContextModule()).injectMembers(this);
     }
 
     @Test

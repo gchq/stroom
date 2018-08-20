@@ -38,8 +38,7 @@ import stroom.entity.shared.EntityRow;
 import stroom.entity.shared.ResultList;
 import stroom.jobsystem.shared.FindJobCriteria;
 import stroom.jobsystem.shared.Job;
-import stroom.properties.global.client.ClientPropertyCache;
-import stroom.properties.shared.ClientProperties;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -53,7 +52,7 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
 
     @Inject
     public JobListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
-                            final ClientPropertyCache clientPropertyCache) {
+                            final UiConfigCache clientPropertyCache) {
         super(eventBus, new DataGridViewImpl<>(true));
 
         jobSaver = new SaveQueue<>(dispatcher);
@@ -71,7 +70,7 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
             protected void showHelp(final Job row) {
                 clientPropertyCache.get()
                         .onSuccess(result -> {
-                            final String helpUrl = result.get(ClientProperties.HELP_URL);
+                            final String helpUrl = result.getHelpUrl();
                             if (helpUrl != null && helpUrl.trim().length() > 0) {
                                 String url = helpUrl + "/user-guide/tasks.html" + formatAnchor(row.getName());
                                 Window.open(url, "_blank", "");

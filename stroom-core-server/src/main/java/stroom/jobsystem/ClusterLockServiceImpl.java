@@ -18,7 +18,6 @@ package stroom.jobsystem;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.StroomDatabaseInfo;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.SQLNameConstants;
 import stroom.entity.util.SqlBuilder;
@@ -26,9 +25,9 @@ import stroom.jobsystem.shared.ClusterLock;
 import stroom.node.NodeCache;
 import stroom.persist.EntityManagerSupport;
 import stroom.task.TaskManager;
+import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.SharedBoolean;
-import stroom.util.lifecycle.StroomFrequencySchedule;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -43,7 +42,6 @@ class ClusterLockServiceImpl implements ClusterLockService {
 
     private final StroomEntityManager stroomEntityManager;
     private final EntityManagerSupport entityManagerSupport;
-    private final StroomDatabaseInfo stroomDatabaseInfo;
     private final ClusterLockServiceTransactionHelper clusterLockServiceTransactionHelper;
     private final TaskManager taskManager;
     private final NodeCache nodeCache;
@@ -51,13 +49,11 @@ class ClusterLockServiceImpl implements ClusterLockService {
     @Inject
     ClusterLockServiceImpl(final StroomEntityManager stroomEntityManager,
                            final EntityManagerSupport entityManagerSupport,
-                           final StroomDatabaseInfo stroomDatabaseInfo,
                            final ClusterLockServiceTransactionHelper clusterLockServiceTransactionHelper,
                            final TaskManager taskManager,
                            final NodeCache nodeCache) {
         this.stroomEntityManager = stroomEntityManager;
         this.entityManagerSupport = entityManagerSupport;
-        this.stroomDatabaseInfo = stroomDatabaseInfo;
         this.clusterLockServiceTransactionHelper = clusterLockServiceTransactionHelper;
         this.taskManager = taskManager;
         this.nodeCache = nodeCache;
@@ -82,9 +78,7 @@ class ClusterLockServiceImpl implements ClusterLockService {
             sql.arg(lockName);
 
             // Here we lock the records read until the transaction commits.
-            if (stroomDatabaseInfo.isMysql()) {
-                sql.append(" FOR UPDATE");
-            }
+            sql.append(" FOR UPDATE");
 
             final List<ClusterLock> result = stroomEntityManager.executeNativeQueryResultList(sql, ClusterLock.class);
             if (result == null || result.size() != 1) {

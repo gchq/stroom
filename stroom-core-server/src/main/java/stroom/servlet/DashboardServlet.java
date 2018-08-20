@@ -16,14 +16,14 @@
 
 package stroom.servlet;
 
-import stroom.properties.api.PropertyService;
+import stroom.ui.config.shared.UiConfig;
 
 import javax.inject.Inject;
 
 public class DashboardServlet extends AppServlet {
     @Inject
-    DashboardServlet(final PropertyService propertyService) {
-        super(propertyService);
+    DashboardServlet(final UiConfig uiConfig) {
+        super(uiConfig);
     }
 
     String getScript() {

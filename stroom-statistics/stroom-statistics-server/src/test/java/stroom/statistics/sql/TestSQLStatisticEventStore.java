@@ -25,7 +25,6 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import stroom.properties.impl.mock.MockPropertyService;
 import stroom.docref.DocRef;
 import stroom.statistics.shared.StatisticStoreDoc;
 import stroom.statistics.sql.entity.StatisticStoreCache;
@@ -44,7 +43,7 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
     private final AtomicLong destroyCount = new AtomicLong();
     private final AtomicLong eventCount = new AtomicLong();
     private final AtomicSequence atomicSequence = new AtomicSequence(10);
-    private final MockPropertyService propertyService = new MockPropertyService();
+    private final SQLStatisticsConfig sqlStatisticsConfig = new SQLStatisticsConfig();
     private final StatisticStoreCache mockStatisticsDataSourceCache = new StatisticStoreCache() {
         @Override
         public StatisticStoreDoc getStatisticsDataSource(final String statisticName) {
@@ -88,7 +87,7 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
         // Max Pool size of 5 with 10 items in the pool Add 1000 and we should
         // expect APROX the below
         final SQLStatisticEventStore store = new SQLStatisticEventStore(5, 10, 10000, null,
-                mockStatisticsDataSourceCache, null, propertyService) {
+                mockStatisticsDataSourceCache, null, sqlStatisticsConfig) {
             @Override
             public SQLStatisticAggregateMap createAggregateMap() {
                 createCount.incrementAndGet();
@@ -104,12 +103,7 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
         final SimpleExecutor simpleExecutor = new SimpleExecutor(10);
 
         for (int i = 0; i < 1000; i++) {
-            simpleExecutor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    store.putEvent(createEvent());
-                }
-            });
+            simpleExecutor.execute(() -> store.putEvent(createEvent()));
             store.putEvent(createEvent());
         }
 
@@ -125,7 +119,7 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
         // Max Pool size of 5 with 10 items in the pool Add 1000 and we should
         // expect APROX the below
         final SQLStatisticEventStore store = new SQLStatisticEventStore(10, 10, 100, null,
-                mockStatisticsDataSourceCache, null, propertyService) {
+                mockStatisticsDataSourceCache, null, sqlStatisticsConfig) {
             @Override
             public SQLStatisticAggregateMap createAggregateMap() {
                 createCount.incrementAndGet();
@@ -161,7 +155,7 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
         final int eventCount = 100;
         final long firstEventTimeMs = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(1);
 
-        propertyService.setProperty(SQLStatisticConstants.PROP_KEY_STATS_MAX_PROCESSING_AGE, "");
+        sqlStatisticsConfig.setMaxProcessingAge("");
 
         processEvents(eventCount, eventCount, firstEventTimeMs, TimeUnit.MINUTES.toMillis(1));
 
@@ -174,7 +168,7 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
         final long firstEventTimeMs = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(10);
 
         // only process stuff younger than a day
-        propertyService.setProperty(SQLStatisticConstants.PROP_KEY_STATS_MAX_PROCESSING_AGE, "1d");
+        sqlStatisticsConfig.setMaxProcessingAge("1d");
 
         // no events should be processed
         processEvents(eventCount, 0, firstEventTimeMs, TimeUnit.MINUTES.toMillis(1));
@@ -191,7 +185,7 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
                 + TimeUnit.SECONDS.toMillis(10);
 
         // only process stuff younger than 25days
-        propertyService.setProperty(SQLStatisticConstants.PROP_KEY_STATS_MAX_PROCESSING_AGE, "25d");
+        sqlStatisticsConfig.setMaxProcessingAge("25d");
 
         // no events should be processed
         processEvents(eventCount, 25, firstEventTimeMs, TimeUnit.DAYS.toMillis(1));
@@ -201,7 +195,7 @@ public class TestSQLStatisticEventStore extends StroomUnitTest {
     private void processEvents(final int eventCount, final int expectedProcessedCount, final long firstEventTimeMs,
                                final long eventTimeDeltaMs) {
         final SQLStatisticEventStore store = new SQLStatisticEventStore(1, 1, 10000, null,
-                mockStatisticsDataSourceCache, mockSqlStatisticCache, propertyService);
+                mockStatisticsDataSourceCache, mockSqlStatisticCache, sqlStatisticsConfig);
 
         for (int i = 0; i < eventCount; i++) {
             store.putEvent(createEvent(firstEventTimeMs + (i * eventTimeDeltaMs)));

@@ -2,6 +2,7 @@ package stroom.guice;
 
 import com.google.inject.AbstractModule;
 import stroom.data.meta.impl.db.DataMetaDbModule;
+import stroom.elastic.impl.ElasticModule;
 import stroom.entity.event.EntityClusterTaskModule;
 import stroom.persist.EntityManagerModule;
 import stroom.statistics.sql.SQLStatisticsModule;
@@ -19,7 +20,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.dictionary.DictionaryHandlerModule());
         install(new stroom.docstore.db.DBPersistenceModule());
         install(new stroom.document.DocumentModule());
-        install(new stroom.elastic.ElasticModule());
+        install(new ElasticModule());
         install(new stroom.entity.EntityModule());
         install(new stroom.entity.event.EntityEventModule());
         install(new stroom.entity.cluster.EntityClusterModule());
@@ -50,7 +51,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.pipeline.stepping.PipelineSteppingModule());
         install(new stroom.pipeline.task.PipelineStreamTaskModule());
         install(new stroom.policy.PolicyModule());
-        install(new stroom.properties.impl.PropertyModule());
+//        install(new stroom.properties.impl.PropertyModule());
         install(new stroom.properties.global.impl.db.GlobalPropertiesDbModule());
         install(new stroom.query.QueryModule());
         install(new stroom.refdata.ReferenceDataModule());
@@ -77,6 +78,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.streamtask.StreamTaskModule());
         install(new stroom.task.TaskModule());
         install(new stroom.task.cluster.ClusterTaskModule());
+        install(new stroom.ui.config.server.UiConfigModule());
         install(new stroom.visualisation.VisualisationModule());
         install(new stroom.volume.VolumeModule());
         install(new stroom.xmlschema.XmlSchemaModule());

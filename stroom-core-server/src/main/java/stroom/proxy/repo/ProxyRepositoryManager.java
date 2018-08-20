@@ -38,7 +38,7 @@ public class ProxyRepositoryManager {
 
     @Inject
     public ProxyRepositoryManager(final ProxyRepositoryConfig proxyRepositoryConfig) {
-        this(getPath(proxyRepositoryConfig.getRepoDir()), getFormat(proxyRepositoryConfig.getRepositoryFormat()), createScheduler(proxyRepositoryConfig.getRollCron()));
+        this(getPath(proxyRepositoryConfig.getDir()), getFormat(proxyRepositoryConfig.getFormat()), createScheduler(proxyRepositoryConfig.getRollCron()));
     }
 
     ProxyRepositoryManager(final Path repoDir,

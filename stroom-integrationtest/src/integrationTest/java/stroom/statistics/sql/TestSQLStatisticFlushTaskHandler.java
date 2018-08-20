@@ -20,7 +20,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.StroomDatabaseInfo;
 import stroom.security.Security;
 import stroom.statistics.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.sql.rollup.RolledUpStatisticEvent;
@@ -43,128 +42,108 @@ public class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTes
     @Inject
     private SQLStatisticAggregationManager sqlStatisticAggregationManager;
     @Inject
-    private StroomDatabaseInfo stroomDatabaseInfo;
-    @Inject
     private Security security;
 
     @Test(expected = StatisticsEventValidationException.class)
     public void testExec_tenGoodRowsTwoBad() throws StatisticsEventValidationException, SQLException {
-        if (!stroomDatabaseInfo.isMysql()) {
-            LOGGER.warn("Database is not MySQL, skipping test");
-            throw new StatisticsEventValidationException("Expected");
-        } else {
-            deleteRows();
+        deleteRows();
 
-            Assert.assertEquals(0, getRowCount());
+        Assert.assertEquals(0, getRowCount());
 
-            final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                    sqlStatisticValueBatchSaveService, new SimpleTaskContext(), security);
+        final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
+                sqlStatisticValueBatchSaveService, new SimpleTaskContext(), security);
 
-            final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
+        final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
 
-            aggregateMap.addRolledUpEvent(buildGoodEvent(1), 1000);
-            aggregateMap.addRolledUpEvent(buildBadEvent(1), 1000);
-            aggregateMap.addRolledUpEvent(buildGoodEvent(2), 1000);
-            aggregateMap.addRolledUpEvent(buildBadEvent(2), 1000);
-            aggregateMap.addRolledUpEvent(buildGoodEvent(3), 1000);
-            aggregateMap.addRolledUpEvent(buildGoodEvent(4), 1000);
-            aggregateMap.addRolledUpEvent(buildGoodEvent(5), 1000);
-            aggregateMap.addRolledUpEvent(buildGoodEvent(6), 1000);
-            aggregateMap.addRolledUpEvent(buildGoodEvent(7), 1000);
-            aggregateMap.addRolledUpEvent(buildGoodEvent(8), 1000);
+        aggregateMap.addRolledUpEvent(buildGoodEvent(1), 1000);
+        aggregateMap.addRolledUpEvent(buildBadEvent(1), 1000);
+        aggregateMap.addRolledUpEvent(buildGoodEvent(2), 1000);
+        aggregateMap.addRolledUpEvent(buildBadEvent(2), 1000);
+        aggregateMap.addRolledUpEvent(buildGoodEvent(3), 1000);
+        aggregateMap.addRolledUpEvent(buildGoodEvent(4), 1000);
+        aggregateMap.addRolledUpEvent(buildGoodEvent(5), 1000);
+        aggregateMap.addRolledUpEvent(buildGoodEvent(6), 1000);
+        aggregateMap.addRolledUpEvent(buildGoodEvent(7), 1000);
+        aggregateMap.addRolledUpEvent(buildGoodEvent(8), 1000);
 
-            final SQLStatisticFlushTask flushTask = new SQLStatisticFlushTask(aggregateMap);
+        final SQLStatisticFlushTask flushTask = new SQLStatisticFlushTask(aggregateMap);
 
-            taskHandler.exec(flushTask);
-        }
+        taskHandler.exec(flushTask);
     }
 
     @Test
     public void testExec_threeGoodRows() throws StatisticsEventValidationException, SQLException {
-        if (!stroomDatabaseInfo.isMysql()) {
-            LOGGER.warn("Database is not MySQL, skipping test");
-        } else {
-            deleteRows();
+        deleteRows();
 
-            Assert.assertEquals(0, getRowCount());
+        Assert.assertEquals(0, getRowCount());
 
-            final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                    sqlStatisticValueBatchSaveService, new SimpleTaskContext(), security);
+        final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
+                sqlStatisticValueBatchSaveService, new SimpleTaskContext(), security);
 
-            final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
+        final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
 
-            aggregateMap.addRolledUpEvent(buildGoodEvent(1), 1000);
-            aggregateMap.addRolledUpEvent(buildGoodEvent(2), 1000);
-            aggregateMap.addRolledUpEvent(buildGoodEvent(3), 1000);
+        aggregateMap.addRolledUpEvent(buildGoodEvent(1), 1000);
+        aggregateMap.addRolledUpEvent(buildGoodEvent(2), 1000);
+        aggregateMap.addRolledUpEvent(buildGoodEvent(3), 1000);
 
-            final SQLStatisticFlushTask flushTask = new SQLStatisticFlushTask(aggregateMap);
+        final SQLStatisticFlushTask flushTask = new SQLStatisticFlushTask(aggregateMap);
 
-            taskHandler.exec(flushTask);
+        taskHandler.exec(flushTask);
 
-            Assert.assertEquals(3, getRowCount());
-        }
+        Assert.assertEquals(3, getRowCount());
     }
 
     @Test(expected = StatisticsEventValidationException.class)
     public void testExec_twoBadRows() throws StatisticsEventValidationException, SQLException {
-        if (!stroomDatabaseInfo.isMysql()) {
-            LOGGER.warn("Database is not MySQL, skipping test");
-            throw new StatisticsEventValidationException("Expected");
-        } else {
-            deleteRows();
+        deleteRows();
 
-            Assert.assertEquals(0, getRowCount());
+        Assert.assertEquals(0, getRowCount());
 
-            final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                    sqlStatisticValueBatchSaveService, new SimpleTaskContext(), security);
+        final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
+                sqlStatisticValueBatchSaveService, new SimpleTaskContext(), security);
 
-            final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
+        final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
 
-            aggregateMap.addRolledUpEvent(buildBadEvent(1), 1000);
-            aggregateMap.addRolledUpEvent(buildBadEvent(2), 1000);
+        aggregateMap.addRolledUpEvent(buildBadEvent(1), 1000);
+        aggregateMap.addRolledUpEvent(buildBadEvent(2), 1000);
 
-            final SQLStatisticFlushTask flushTask = new SQLStatisticFlushTask(aggregateMap);
+        final SQLStatisticFlushTask flushTask = new SQLStatisticFlushTask(aggregateMap);
 
-            taskHandler.exec(flushTask);
-        }
+        taskHandler.exec(flushTask);
     }
 
     @Test
     public void testExec_hugeNumbers() throws StatisticsEventValidationException, SQLException {
-        if (!stroomDatabaseInfo.isMysql()) {
-            LOGGER.warn("Database is not MySQL, skipping test");
-        } else {
-            deleteRows();
+        deleteRows();
 
-            Assert.assertEquals(0, getRowCount());
+        Assert.assertEquals(0, getRowCount());
 
-            final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
-                    sqlStatisticValueBatchSaveService, new SimpleTaskContext(), security);
+        final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
+                sqlStatisticValueBatchSaveService, new SimpleTaskContext(), security);
 
-            final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
+        final SQLStatisticAggregateMap aggregateMap = new SQLStatisticAggregateMap();
 
-            aggregateMap.addRolledUpEvent(buildCustomCountEvent(1, 66666666666L), 1000);
+        aggregateMap.addRolledUpEvent(buildCustomCountEvent(1, 66666666666L), 1000);
 
-            final SQLStatisticFlushTask flushTask = new SQLStatisticFlushTask(aggregateMap);
+        final SQLStatisticFlushTask flushTask = new SQLStatisticFlushTask(aggregateMap);
 
-            taskHandler.exec(flushTask);
+        taskHandler.exec(flushTask);
 
-            Assert.assertEquals(1, getRowCount());
+        Assert.assertEquals(1, getRowCount());
 
-            sqlStatisticAggregationManager.aggregate(System.currentTimeMillis());
+        sqlStatisticAggregationManager.aggregate(System.currentTimeMillis());
 
-            aggregateMap.addRolledUpEvent(buildCustomCountEvent(1, 66666666666L), 1000);
+        aggregateMap.addRolledUpEvent(buildCustomCountEvent(1, 66666666666L), 1000);
 
-            final SQLStatisticFlushTask flushTask2 = new SQLStatisticFlushTask(aggregateMap);
+        final SQLStatisticFlushTask flushTask2 = new SQLStatisticFlushTask(aggregateMap);
 
-            taskHandler.exec(flushTask2);
+        taskHandler.exec(flushTask2);
 
-            Assert.assertEquals(1, getRowCount());
+        Assert.assertEquals(1, getRowCount());
 
-            sqlStatisticAggregationManager.aggregate(System.currentTimeMillis());
+        sqlStatisticAggregationManager.aggregate(System.currentTimeMillis());
 
-            Assert.assertEquals(0, getRowCount());
-        }
+        Assert.assertEquals(0, getRowCount());
     }
 
     private RolledUpStatisticEvent buildGoodEvent(final int id) {

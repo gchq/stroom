@@ -26,8 +26,7 @@ import stroom.entity.shared.EntityAction;
 import stroom.node.NodeCache;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.Node;
-import stroom.properties.api.PropertyService;
-import stroom.properties.shared.ClientProperties;
+import stroom.ui.config.shared.UiConfig;
 import stroom.task.TaskCallbackAdaptor;
 import stroom.task.TaskManager;
 import stroom.util.date.DateUtil;
@@ -62,15 +61,17 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
     private final ClusterState clusterState = new ClusterState();
     private final AtomicBoolean updatingState = new AtomicBoolean();
     private final AtomicBoolean pendingUpdate = new AtomicBoolean();
-    private final PropertyService propertyService;
     private final NodeCache nodeCache;
     private final TaskManager taskManager;
+    private final UiConfig clientProperties;
 
     @Inject
-    ClusterNodeManagerImpl(final PropertyService propertyService, final NodeCache nodeCache, final TaskManager taskManager) {
-        this.propertyService = propertyService;
+    ClusterNodeManagerImpl(final NodeCache nodeCache,
+                           final TaskManager taskManager,
+                           final UiConfig clientProperties) {
         this.nodeCache = nodeCache;
         this.taskManager = taskManager;
+        this.clientProperties = clientProperties;
     }
 
     @StroomStartup
@@ -206,9 +207,9 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
         final String discoverTime = DateUtil.createNormalDateTimeString(clusterState.getUpdateTime());
 
         final ClusterNodeInfo clusterNodeInfo = new ClusterNodeInfo(discoverTime,
-                propertyService.getProperty(ClientProperties.BUILD_DATE),
-                propertyService.getProperty(ClientProperties.BUILD_VERSION),
-                propertyService.getProperty(ClientProperties.UP_DATE),
+                clientProperties.getBuildDate(),
+                clientProperties.getBuildVersion(),
+                clientProperties.getUpDate(),
                 thisNode.getName(),
                 thisNode.getClusterURL());
 

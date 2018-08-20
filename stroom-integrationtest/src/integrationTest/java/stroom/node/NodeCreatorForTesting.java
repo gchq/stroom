@@ -97,7 +97,7 @@ public class NodeCreatorForTesting implements NodeCreator {
 
     private VolumeEntity createVolume(final String path, final Node node) {
         final VolumeEntity vol = new VolumeEntity();
-        final String p = StroomProperties.replaceProperties(path);
+        final String p = path;//StroomProperties.replaceProperties(path);
         vol.setPath(p);
         vol.setNode(node);
         return vol;

@@ -19,30 +19,32 @@ package stroom.properties.api;
 import java.util.Objects;
 
 public class ConnectionPoolConfig {
-    private static final String PROP_CACHE_PREPARED_STATEMENTS = "cachePrepStmts";
-    private static final String PROP_PREPARED_STATEMENT_CACHE_SIZE = "prepStmtCacheSize";
-    private static final String PROP_PREPARED_STATEMENT_CACHE_SQL_LIMIT = "prepStmtCacheSqlLimit";
-
-    private final boolean cachePrepStmts;
-    private final int prepStmtCacheSize;
-    private final int prepStmtCacheSqlLimit;
-
-    public ConnectionPoolConfig(final String prefix, final PropertyService propertyService) {
-        this.cachePrepStmts = propertyService.getBooleanProperty(prefix + PROP_CACHE_PREPARED_STATEMENTS, true);
-        this.prepStmtCacheSize = propertyService.getIntProperty(prefix + PROP_PREPARED_STATEMENT_CACHE_SIZE + "|trace", 250);
-        this.prepStmtCacheSqlLimit = propertyService.getIntProperty(prefix + PROP_PREPARED_STATEMENT_CACHE_SQL_LIMIT, 2048);
-    }
+    private boolean cachePrepStmts = true;
+    private int prepStmtCacheSize = 250;
+    private int prepStmtCacheSqlLimit = 2048;
 
     public boolean isCachePrepStmts() {
         return cachePrepStmts;
+    }
+
+    public void setCachePrepStmts(final boolean cachePrepStmts) {
+        this.cachePrepStmts = cachePrepStmts;
     }
 
     public int getPrepStmtCacheSize() {
         return prepStmtCacheSize;
     }
 
+    public void setPrepStmtCacheSize(final int prepStmtCacheSize) {
+        this.prepStmtCacheSize = prepStmtCacheSize;
+    }
+
     public int getPrepStmtCacheSqlLimit() {
         return prepStmtCacheSqlLimit;
+    }
+
+    public void setPrepStmtCacheSqlLimit(final int prepStmtCacheSqlLimit) {
+        this.prepStmtCacheSqlLimit = prepStmtCacheSqlLimit;
     }
 
     @Override

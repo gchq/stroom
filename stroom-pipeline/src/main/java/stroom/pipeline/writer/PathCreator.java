@@ -18,6 +18,7 @@ package stroom.pipeline.writer;
 
 import com.google.common.base.Strings;
 import stroom.node.NodeCache;
+import stroom.persist.CoreConfig;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.SearchIdHolder;
@@ -38,6 +39,7 @@ import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 
 public class PathCreator {
+    public static final String STROOM_TEMP = "stroom.temp";
     private static final String[] NON_ENV_VARS = {
             "feed",
             "pipeline",
@@ -56,7 +58,7 @@ public class PathCreator {
             "fileName",
             "fileStem",
             "fileExtension",
-            StroomProperties.STROOM_TEMP};
+            STROOM_TEMP};
 
     private static final Set<String> NON_ENV_VARS_SET = Collections
             .unmodifiableSet(new HashSet<>(Arrays.asList(NON_ENV_VARS)));
@@ -66,18 +68,21 @@ public class PathCreator {
     private final StreamHolder streamHolder;
     private final SearchIdHolder searchIdHolder;
     private final NodeCache nodeCache;
+    private final CoreConfig coreConfig;
 
     @Inject
     PathCreator(final FeedHolder feedHolder,
                 final PipelineHolder pipelineHolder,
                 final StreamHolder streamHolder,
                 final SearchIdHolder searchIdHolder,
-                final NodeCache nodeCache) {
+                final NodeCache nodeCache,
+                final CoreConfig coreConfig) {
         this.feedHolder = feedHolder;
         this.pipelineHolder = pipelineHolder;
         this.streamHolder = streamHolder;
         this.searchIdHolder = searchIdHolder;
         this.nodeCache = nodeCache;
+        this.coreConfig = coreConfig;
     }
 
     public static String replaceTimeVars(String path) {
@@ -95,12 +100,12 @@ public class PathCreator {
         return path;
     }
 
-    public static String replaceSystemProperties(String path) {
+    public String replaceSystemProperties(String path) {
         // Replace stroom.temp
         path = replace(
                 path,
-                StroomProperties.STROOM_TEMP,
-                () -> StroomProperties.getProperty(StroomProperties.STROOM_TEMP));
+                STROOM_TEMP,
+                coreConfig::getTemp);
 
         return SystemPropertyUtil.replaceSystemProperty(path, NON_ENV_VARS_SET);
     }

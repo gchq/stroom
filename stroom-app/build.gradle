@@ -74,7 +74,7 @@ dependencies {
     compile project(':stroom-dashboard:stroom-dashboard-server')
     compile project(':stroom-statistics:stroom-statistics-server')
     compile project(':stroom-externaldoc:stroom-externaldoc-server')
-    compile project(':stroom-elastic:stroom-elastic-server')
+    compile project(':stroom-elastic:stroom-elastic-impl')
     compile project(':stroom-ruleset:stroom-ruleset-server')
     compile project(':stroom-ruleset:stroom-ruleset-shared')
     compile project(':stroom-data-meta:stroom-data-meta-impl-db')
@@ -122,13 +122,13 @@ dependencies {
 
 run {
     //Ensure we have the latest kafka plugin jar available for runtime
-    dependsOn ':stroom-kafka-client-impl_0_10_0_1:copyPluginJar'
+    dependsOn ':stroom-kafka:stroom-kafka-client-impl_0_10_0_1:copyPluginJar'
     args 'server', './dev.yml'
 }
 
 runShadow {
     //Ensure we have the latest kafka plugin jar available for runtime
-    dependsOn ':stroom-kafka-client-impl_0_10_0_1:copyPluginJar'
+    dependsOn ':stroom-kafka:stroom-kafka-client-impl_0_10_0_1:copyPluginJar'
     args 'server', './dev.yml'
 }
 
@@ -147,30 +147,30 @@ clean {
 //Copy all the files needed by the docker build into stroom-app/docker/build
 task copyFilesForDockerBuild() {
     dependsOn shadowJar
-    dependsOn tasks.getByPath(':stroom-kafka-client-impl_0_10_0_1:shadowJar')
-    dependsOn tasks.getByPath(':stroom-elastic:stroom-elastic-client-impl_5_6_4:shadowJar')
+//    dependsOn tasks.getByPath(':stroom-kafka:stroom-kafka-client-impl_0_10_0_1:shadowJar')
+//    dependsOn tasks.getByPath(':stroom-elastic:stroom-elastic-client-impl_5_6_4:shadowJar')
     doFirst {
         new File(stroomPluginsDir).mkdirs()
 
-        //Copy the stroom app fat jar
+        // Copy the stroom app fat jar
         copy {
             from "${project.buildDir}/libs/${fatJarName}"
             into dockerBuildDir
         }
 
-        //Copy the kafka client fat jar
+        // Copy the kafka client fat jar
         copy {
-            from project(':stroom-kafka-client-impl_0_10_0_1').file('build/libs/stroom-kafka-client-impl_0_10_0_1-all.jar')
+            from project(':stroom-kafka:stroom-kafka-client-impl_0_10_0_1').file('build/libs/stroom-kafka-client-impl_0_10_0_1-all.jar')
             into dockerBuildDir
         }
 
-        //Copy the elastic client fat jar
+        // Copy the elastic client fat jar
         copy {
-            from project(':stroom-elastic:stroom-elastic-client-impl_5_6_4').file('build/libs/stroom-elastic-client-impl_5_6_4-all.jar')
+            from project(':stroom-elastic:stroom-elastic-impl-http').file('build/libs/stroom-elastic-impl-http.jar')
             into dockerBuildDir
         }
 
-        //Copy the dropwizard yml configuration
+        // Copy the dropwizard yml configuration
         copy {
             from "${projectDir}/prod.yml"
             into dockerBuildDir

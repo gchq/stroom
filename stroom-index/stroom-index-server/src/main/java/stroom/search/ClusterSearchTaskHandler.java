@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.expression.v1.Val;
+import stroom.data.meta.api.DataMetaService;
 import stroom.dictionary.DictionaryStore;
 import stroom.docref.DocRef;
 import stroom.index.IndexStore;
@@ -31,7 +32,6 @@ import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.MessageUtil;
-import stroom.properties.api.PropertyService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Param;
 import stroom.query.common.v2.Coprocessor;
@@ -39,28 +39,27 @@ import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.Payload;
 import stroom.search.SearchExpressionQueryBuilder.SearchExpressionQuery;
+import stroom.search.extraction.ExtractionConfig;
 import stroom.search.extraction.ExtractionTaskExecutor;
 import stroom.search.extraction.ExtractionTaskHandler;
 import stroom.search.extraction.ExtractionTaskProducer;
-import stroom.search.extraction.ExtractionTaskProperties;
 import stroom.search.extraction.StreamMapCreator;
+import stroom.search.shard.IndexShardSearchConfig;
 import stroom.search.shard.IndexShardSearchTask.IndexShardQueryFactory;
 import stroom.search.shard.IndexShardSearchTaskExecutor;
 import stroom.search.shard.IndexShardSearchTaskHandler;
 import stroom.search.shard.IndexShardSearchTaskProducer;
-import stroom.search.shard.IndexShardSearchTaskProperties;
 import stroom.security.Security;
-import stroom.data.meta.api.DataMetaService;
 import stroom.task.ExecutorProvider;
+import stroom.task.TaskTerminatedException;
+import stroom.task.ThreadPoolImpl;
 import stroom.task.api.TaskCallback;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskHandler;
 import stroom.task.api.TaskHandlerBean;
-import stroom.task.TaskTerminatedException;
-import stroom.task.ThreadPoolImpl;
+import stroom.task.shared.ThreadPool;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
-import stroom.task.shared.ThreadPool;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -85,22 +84,14 @@ import java.util.stream.Collectors;
 class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeResult>, ErrorReceiver {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterSearchTaskHandler.class);
 
-    /**
-     * We don't want to collect more than 10k doc's data into the queue by
-     * default. When the queue is full the index shard data tasks will pause
-     * until the docs are drained from the queue.
-     */
-    private static final int DEFAULT_MAX_STORED_DATA_QUEUE_SIZE = 1000;
-    private static final int DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT = 1024;
-
     private final IndexStore indexStore;
     private final DictionaryStore dictionaryStore;
     private final TaskContext taskContext;
     private final CoprocessorFactory coprocessorFactory;
     private final IndexShardSearchTaskExecutor indexShardSearchTaskExecutor;
-    private final IndexShardSearchTaskProperties indexShardSearchTaskProperties;
+    private final IndexShardSearchConfig indexShardSearchConfig;
     private final ExtractionTaskExecutor extractionTaskExecutor;
-    private final ExtractionTaskProperties extractionTaskProperties;
+    private final ExtractionConfig extractionConfig;
     private final DataMetaService streamMetaService;
     private final Security security;
     private final int maxBooleanClauseCount;
@@ -121,12 +112,12 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                              final TaskContext taskContext,
                              final CoprocessorFactory coprocessorFactory,
                              final IndexShardSearchTaskExecutor indexShardSearchTaskExecutor,
-                             final IndexShardSearchTaskProperties indexShardSearchTaskProperties,
+                             final IndexShardSearchConfig indexShardSearchConfig,
                              final ExtractionTaskExecutor extractionTaskExecutor,
-                             final ExtractionTaskProperties extractionTaskProperties,
+                             final ExtractionConfig extractionConfig,
                              final DataMetaService streamMetaService,
                              final Security security,
-                             final PropertyService propertyService,
+                             final SearchConfig searchConfig,
                              final Provider<IndexShardSearchTaskHandler> indexShardSearchTaskHandlerProvider,
                              final Provider<ExtractionTaskHandler> extractionTaskHandlerProvider,
                              final ExecutorProvider executorProvider) {
@@ -135,13 +126,13 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
         this.taskContext = taskContext;
         this.coprocessorFactory = coprocessorFactory;
         this.indexShardSearchTaskExecutor = indexShardSearchTaskExecutor;
-        this.indexShardSearchTaskProperties = indexShardSearchTaskProperties;
+        this.indexShardSearchConfig = indexShardSearchConfig;
         this.extractionTaskExecutor = extractionTaskExecutor;
-        this.extractionTaskProperties = extractionTaskProperties;
+        this.extractionConfig = extractionConfig;
         this.streamMetaService = streamMetaService;
         this.security = security;
-        this.maxBooleanClauseCount = propertyService.getIntProperty("stroom.search.maxBooleanClauseCount", DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT);
-        this.maxStoredDataQueueSize = propertyService.getIntProperty("stroom.search.maxStoredDataQueueSize", DEFAULT_MAX_STORED_DATA_QUEUE_SIZE);
+        this.maxBooleanClauseCount = searchConfig.getMaxBooleanClauseCount();
+        this.maxStoredDataQueueSize = searchConfig.getMaxStoredDataQueueSize();
         this.indexShardSearchTaskHandlerProvider = indexShardSearchTaskHandlerProvider;
         this.extractionTaskHandlerProvider = extractionTaskHandlerProvider;
         this.executorProvider = executorProvider;
@@ -321,7 +312,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                 final AtomicLong hitCount = new AtomicLong();
 
                 // Update config for the index shard search task executor.
-                indexShardSearchTaskExecutor.setMaxThreads(indexShardSearchTaskProperties.getMaxThreads());
+                indexShardSearchTaskExecutor.setMaxThreads(indexShardSearchConfig.getMaxThreads());
 
                 // Make a task producer that will create event data extraction tasks when requested by the executor.
                 final Executor searchExecutor = executorProvider.getExecutor(IndexShardSearchTaskProducer.THREAD_POOL);
@@ -333,7 +324,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                         storedFieldNames,
                         this,
                         hitCount,
-                        indexShardSearchTaskProperties.getMaxThreadsPerTask(),
+                        indexShardSearchConfig.getMaxThreadsPerTask(),
                         searchExecutor,
                         indexShardSearchTaskHandlerProvider);
 
@@ -343,7 +334,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
                 } else {
                     // Update config for extraction task executor.
-                    extractionTaskExecutor.setMaxThreads(extractionTaskProperties.getMaxThreads());
+                    extractionTaskExecutor.setMaxThreads(extractionConfig.getMaxThreads());
 
                     // Create an object to make event lists from raw index data.
                     final StreamMapCreator streamMapCreator = new StreamMapCreator(task.getStoredFields(), this,
@@ -359,7 +350,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                             extractionFieldIndexMap,
                             extractionCoprocessorsMap,
                             this,
-                            extractionTaskProperties.getMaxThreadsPerTask(),
+                            extractionConfig.getMaxThreadsPerTask(),
                             extractionExecutor,
                             extractionTaskHandlerProvider);
 
@@ -457,7 +448,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
             LOGGER.debug(e.getMessage(), e);
         }
 
-        if (e == null || !(e instanceof TaskTerminatedException)) {
+        if (!(e instanceof TaskTerminatedException)) {
             final String msg = MessageUtil.getMessage(message, e);
             try {
                 errors.put(msg);

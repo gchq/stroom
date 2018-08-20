@@ -44,15 +44,18 @@ public class FeedStoreImpl implements FeedStore {
     private final Store<FeedDoc> store;
     private final SecurityContext securityContext;
     private final Persistence persistence;
+    private final FeedNameValidator feedNameValidator;
     private final FeedSerialiser serialiser;
 
     @Inject
     public FeedStoreImpl(final Store<FeedDoc> store,
                          final SecurityContext securityContext,
-                         final Persistence persistence) {
+                         final Persistence persistence,
+                         final FeedNameValidator feedNameValidator) {
         this.store = store;
         this.securityContext = securityContext;
         this.persistence = persistence;
+        this.feedNameValidator = feedNameValidator;
 
         serialiser = new FeedSerialiser();
 
@@ -66,7 +69,7 @@ public class FeedStoreImpl implements FeedStore {
 
     @Override
     public DocRef createDocument(final String name) {
-        FeedNameValidator.validateName(name);
+        feedNameValidator.validateName(name);
         return store.createDocument(name);
     }
 
@@ -84,7 +87,7 @@ public class FeedStoreImpl implements FeedStore {
 
     @Override
     public DocRef renameDocument(final String uuid, final String name) {
-        FeedNameValidator.validateName(name);
+        feedNameValidator.validateName(name);
         return store.renameDocument(uuid, name);
     }
 

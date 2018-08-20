@@ -8,7 +8,6 @@ import stroom.datafeed.StroomStatusCode;
 import stroom.datafeed.StroomStreamException;
 import stroom.util.io.StreamUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
-import stroom.util.test.StroomUnitTest;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -23,7 +22,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 @RunWith(StroomJUnit4ClassRunner.class)
-public class TestStroomStreamProcessor extends StroomUnitTest {
+public class TestStroomStreamProcessor {
     @Test
     public void testSimple() throws IOException {
         final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(
@@ -34,7 +33,7 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
 
         final byte[] buffer = new byte[1000];
 
-        final Path zipFile = getCurrentTestDir().resolve("test.zip");
+        final Path zipFile = Files.createTempFile("test", "zip");
 
         final StroomZipOutputStream stroomZipOutputStream = new StroomZipOutputStreamImpl(zipFile);
         final List<StroomStreamHandler> list = new ArrayList<StroomStreamHandler>();
@@ -69,7 +68,7 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
 
         final byte[] buffer = new byte[1000];
 
-        final Path zipFile = getCurrentTestDir().resolve("test.zip");
+        final Path zipFile = Files.createTempFile("test", "zip");
 
         final StroomZipOutputStream stroomZipOutputStream = new StroomZipOutputStreamImpl(zipFile);
         final List<StroomStreamHandler> list = new ArrayList<StroomStreamHandler>();
@@ -110,7 +109,7 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
 
         final byte[] buffer = new byte[1000];
 
-        final Path zipFile = getCurrentTestDir().resolve("test.zip");
+        final Path zipFile = Files.createTempFile("test", "zip");
 
         final StroomZipOutputStream stroomZipOutputStream = new StroomZipOutputStreamImpl(zipFile);
         final List<StroomStreamHandler> list = new ArrayList<StroomStreamHandler>();
@@ -144,7 +143,7 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
 
         final byte[] buffer = new byte[1000];
 
-        final Path zipFile = getCurrentTestDir().resolve("test.zip");
+        final Path zipFile = Files.createTempFile("test", "zip");
 
         final StroomZipOutputStream stroomZipOutputStream = new StroomZipOutputStreamImpl(zipFile);
         final List<StroomStreamHandler> list = new ArrayList<>();
@@ -168,7 +167,7 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
         }
         zipOutputStream.close();
 
-        final Path zipFile = getCurrentTestDir().resolve("test.zip");
+        final Path zipFile = Files.createTempFile("test", "zip");
         doCheckOrder(byteArrayOutputStream, zipFile);
 
         final StroomZipFile stroomZipFile = new StroomZipFile(zipFile);
@@ -197,7 +196,7 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
         }
         zipOutputStream.close();
 
-        final Path zipFile = getCurrentTestDir().resolve("test.zip");
+        final Path zipFile = Files.createTempFile("test", "zip");
         doCheckOrder(byteArrayOutputStream, zipFile);
 
         final StroomZipFile stroomZipFile = new StroomZipFile(zipFile);
@@ -226,7 +225,7 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
         }
         zipOutputStream.close();
 
-        final Path zipFile = getCurrentTestDir().resolve("test.zip");
+        final Path zipFile = Files.createTempFile("test", "zip");
         doCheckOrder(byteArrayOutputStream, zipFile);
 
         final StroomZipFile stroomZipFile = new StroomZipFile(zipFile);
@@ -255,7 +254,7 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
         }
         zipOutputStream.close();
 
-        final Path zipFile = getCurrentTestDir().resolve("test.zip");
+        final Path zipFile = Files.createTempFile("test", "zip");
         doCheckOrder(byteArrayOutputStream, zipFile);
 
         final StroomZipFile stroomZipFile = new StroomZipFile(zipFile);
@@ -286,7 +285,7 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
         }
         zipOutputStream.close();
 
-        final Path zipFile = getCurrentTestDir().resolve("test.zip");
+        final Path zipFile = Files.createTempFile("test", "zip");
         doCheckOrder(byteArrayOutputStream, zipFile);
 
         final StroomZipFile stroomZipFile = new StroomZipFile(zipFile);
@@ -317,7 +316,7 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
         }
         zipOutputStream.close();
 
-        final Path zipFile = getCurrentTestDir().resolve("test.zip");
+        final Path zipFile = Files.createTempFile("test", "zip");
 
         doCheckOrder(byteArrayOutputStream, zipFile);
 
@@ -349,7 +348,7 @@ public class TestStroomStreamProcessor extends StroomUnitTest {
         }
         zipOutputStream.close();
 
-        final Path zipFile = getCurrentTestDir().resolve("test.zip");
+        final Path zipFile = Files.createTempFile("test", "zip");
 
         doCheckOrder(byteArrayOutputStream, zipFile, true);
     }

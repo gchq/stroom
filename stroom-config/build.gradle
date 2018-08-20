@@ -1,1 +1,65 @@
 ext.moduleName = 'stroom.config'
+
+dependencies {
+    compile project(':stroom-properties:stroom-properties-api')
+    compile project(':stroom-data-meta:stroom-data-meta-impl-db')
+
+//    compile project(':stroom-core-shared')
+    compile project(':stroom-core-server')
+//    compile project(':stroom-pipeline')
+//    compile project(':stroom-proxy')
+//    compile project(':stroom-properties:stroom-properties-impl')
+//    compile project(':stroom-properties:stroom-properties-global-impl-db')
+//    compile project(':stroom-explorer:stroom-explorer-api')
+//    compile project(':stroom-explorer:stroom-explorer-server')
+    compile project(':stroom-security:stroom-security-server')
+    compile project(':stroom-index:stroom-index-server')
+//    compile project(':stroom-docstore:stroom-docstore-server')
+//    compile project(':stroom-pipeline')
+    compile project(':stroom-dashboard:stroom-dashboard-server')
+    compile project(':stroom-statistics:stroom-statistics-server')
+//    compile project(':stroom-externaldoc:stroom-externaldoc-server')
+//    compile project(':stroom-elastic:stroom-elastic-server')
+//    compile project(':stroom-ruleset:stroom-ruleset-server')
+//    compile project(':stroom-ruleset:stroom-ruleset-shared')
+    compile project(':stroom-data-store:stroom-data-store-impl-fs')
+
+//    compile libs.stroomDocRef
+////    compile libs.stroomQueryApi
+//
+//    compile libs.dropwizard_lifecycle
+//    compile libs.guava
+//    compile libs.guice3
+    compile libs.jackson_annotations
+//    compile libs.javax_inject
+//    compile libs.jcommander
+//    compile libs.jetty_servlet
+//
+//    compile(libs.dropwizard_assets) {
+//        exclude(group: "org.glassfish.web", module: "javax.el")
+//    }
+//    compile(libs.dropwizard_core) {
+//        exclude(group: "org.glassfish.web", module: "javax.el")
+//    }
+//    compile libs.dropwizard_jersey
+//    compile libs.dropwizard_jetty
+//    compile libs.dropwizard_metrics_healthchecks
+//    compile libs.dropwizard_servlets
+//    compile libs.dropwizard_metrics_annotation
+//    compile libs.dropwizard_configuration
+//    compile libs.flyway_core
+//    compile libs.guava
+//    compile libs.jackson_annotations
+    compile libs.javax_inject
+//    compile libs.javax_servlet_api
+////    compile libs.javax_validation
+//    compile libs.javax_servlet_api
+//    compile libs.jetty_server
+//    compile libs.jetty_servlets
+//    compile libs.logback_classic
+//    compile libs.slf4j_api
+//    compile libs.ws_rs_api
+//
+//    runtime libs.javax_el
+//    runtime libs.javax_el_api
+}

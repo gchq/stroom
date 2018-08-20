@@ -28,6 +28,7 @@ import stroom.data.meta.api.MetaDataSource;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.util.ConnectionUtil;
 import stroom.entity.util.SqlBuilder;
+import stroom.persist.ConnectionProvider;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -52,6 +53,8 @@ import java.util.stream.StreamSupport;
 public class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrationTest {
     public static final Logger LOGGER = LoggerFactory.getLogger(TestStreamTaskCreatorTransactionHelper.class);
 
+    @Inject
+    private ConnectionProvider connectionProvider;
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
@@ -203,7 +206,7 @@ public class TestStreamTaskCreatorTransactionHelper extends AbstractCoreIntegrat
         List<Object> args = null;
         startTime = Instant.now();
 
-        try (final Connection connection = ConnectionUtil.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             for (int i = 1; i <= n; i++) {
                 if (stringBuilder == null) {
                     stringBuilder = new StringBuilder();

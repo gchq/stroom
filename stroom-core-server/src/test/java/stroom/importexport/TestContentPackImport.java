@@ -23,7 +23,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
@@ -42,12 +42,11 @@ import java.nio.file.Paths;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestContentPackImport {
-
     private static Path CONTENT_PACK_DIR;
 
     static {
         String userHome = System.getProperty("user.home");
-        CONTENT_PACK_DIR = Paths.get(userHome, StroomProperties.USER_CONF_DIR).resolve(ContentPackImport.CONTENT_PACK_IMPORT_DIR);
+        CONTENT_PACK_DIR = Paths.get(userHome, ContentPackImport.USER_CONF_DIR).resolve(ContentPackImport.CONTENT_PACK_IMPORT_DIR);
     }
 
     //This is needed as you can't have to RunWith annotations
@@ -66,7 +65,7 @@ public class TestContentPackImport {
     @Before
     public void setup() throws IOException {
         String userHome = System.getProperty("user.home");
-        Path contentPackDir = Paths.get(userHome, StroomProperties.USER_CONF_DIR).resolve(ContentPackImport.CONTENT_PACK_IMPORT_DIR);
+        Path contentPackDir = Paths.get(userHome, ContentPackImport.USER_CONF_DIR).resolve(ContentPackImport.CONTENT_PACK_IMPORT_DIR);
         Files.createDirectories(contentPackDir);
 
         try (final DirectoryStream<Path> stream = Files.newDirectoryStream(contentPackDir)) {
@@ -149,7 +148,7 @@ public class TestContentPackImport {
 
         Mockito.doThrow(new RuntimeException("Error thrown by mock import service for test"))
                 .when(importExportService)
-                .performImportWithoutConfirmation(Matchers.any());
+                .performImportWithoutConfirmation(ArgumentMatchers.any());
 
         FileUtil.touch(testPack1);
 

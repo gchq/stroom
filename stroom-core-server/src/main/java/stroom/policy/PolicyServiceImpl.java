@@ -25,6 +25,7 @@ import stroom.ruleset.shared.FindPolicyCriteria;
 import stroom.ruleset.shared.Policy;
 import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
+import stroom.ui.config.shared.UiConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -37,8 +38,9 @@ public class PolicyServiceImpl extends NamedEntityServiceImpl<Policy, FindPolicy
 
     @Inject
     PolicyServiceImpl(final StroomEntityManager entityManager,
-                      final Security security) {
-        super(entityManager, security);
+                      final Security security,
+                      final UiConfig uiConfig) {
+        super(entityManager, security, uiConfig);
         this.security = security;
     }
 

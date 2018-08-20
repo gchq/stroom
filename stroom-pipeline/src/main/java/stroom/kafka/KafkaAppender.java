@@ -1,5 +1,6 @@
 package stroom.kafka;
 
+import stroom.kafka.api.StroomKafkaProducerFactory;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
@@ -30,9 +31,9 @@ class KafkaAppender extends AbstractKafkaAppender {
     @SuppressWarnings("unused")
     @Inject
     KafkaAppender(final ErrorReceiverProxy errorReceiverProxy,
-                  final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
+                  final StroomKafkaProducerFactory stroomKafkaProducerFactory,
                   final PathCreator pathCreator) {
-        super(errorReceiverProxy, stroomKafkaProducerFactoryService);
+        super(errorReceiverProxy, stroomKafkaProducerFactory);
         this.pathCreator = pathCreator;
     }
 

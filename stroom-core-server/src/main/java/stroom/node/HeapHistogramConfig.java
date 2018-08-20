@@ -1,29 +1,39 @@
 package stroom.node;
 
-import com.google.inject.Inject;
-import stroom.properties.api.PropertyService;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
-class HeapHistogramConfig {
-    static final String CLASS_NAME_MATCH_REGEX_PROP_KEY = "stroom.node.status.heapHistogram.classNameMatchRegex";
-    static final String ANON_ID_REGEX_PROP_KEY = "stroom.node.status.heapHistogram.classNameReplacementRegex";
-    static final String JMAP_EXECUTABLE_PROP_KEY = "stroom.node.status.heapHistogram.jMapExecutable";
+import javax.inject.Singleton;
 
-    private PropertyService propertyService;
+@Singleton
+public class HeapHistogramConfig {
+    private String classNameMatchRegex = "^stroom\\..*$";
+    private String classNameReplacementRegex = "((?<=\\$Proxy)[0-9]+|(?<=\\$\\$)[0-9a-f]+|(?<=\\$\\$Lambda\\$)[0-9]+\\/[0-9]+)";
+    private String jMapExecutable = "jmap";
 
-    @Inject
-    HeapHistogramConfig(final PropertyService propertyService) {
-        this.propertyService = propertyService;
+    @JsonPropertyDescription("A single regex that will be used to filter classes from the jmap histogram internal statistic based on their name. e.g '^(stroom\\..*)$'. If no value is supplied all classes will be included. If a value is supplied only those class names matching the regex will be included.")
+    public String getClassNameMatchRegex() {
+        return classNameMatchRegex;
     }
 
-    String getClassNameMatchRegex() {
-        return propertyService.getProperty(CLASS_NAME_MATCH_REGEX_PROP_KEY);
+    public void setClassNameMatchRegex(final String classNameMatchRegex) {
+        this.classNameMatchRegex = classNameMatchRegex;
     }
 
-    String getExecutable() {
-        return propertyService.getProperty(JMAP_EXECUTABLE_PROP_KEY);
+    @JsonPropertyDescription("A single regex that will be used to replace all matches in the class name with '--REPLACED--'. This is to prevent ids for anonymous inner classes and lambdas from being included in the class name. E.g '....DocRefResourceHttpClient$$Lambda$46/1402766141' becomes '....DocRefResourceHttpClient$$Lambda$--REPLACED--'. ")
+    public String getClassNameReplacementRegex() {
+        return classNameReplacementRegex;
     }
 
-    String getAnonymousIdRegex() {
-        return propertyService.getProperty(ANON_ID_REGEX_PROP_KEY);
+    public void setClassNameReplacementRegex(final String classNameReplacementRegex) {
+        this.classNameReplacementRegex = classNameReplacementRegex;
+    }
+
+    @JsonPropertyDescription("The jmap executable name if it is available on the PATH or a fully qualified form")
+    public String getjMapExecutable() {
+        return jMapExecutable;
+    }
+
+    public void setjMapExecutable(final String jMapExecutable) {
+        this.jMapExecutable = jMapExecutable;
     }
 }

@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
 public class ContentPackImport {
+    static final String USER_CONF_DIR = ".stroom";
     static final Path CONTENT_PACK_IMPORT_DIR = Paths.get("contentPackImport");
     static final String FAILED_DIR = "failed";
     static final String IMPORTED_DIR = "imported";
@@ -63,7 +64,7 @@ public class ContentPackImport {
         if (isEnabled) {
             doImport();
         } else {
-            LOGGER.info("Content pack import currently disabled via property: {}", ContentPackImportConfig.AUTO_IMPORT_ENABLED_PROP_KEY);
+            LOGGER.info("Content pack import currently disabled via property");
         }
     }
 
@@ -152,7 +153,7 @@ public class ContentPackImport {
 
     private Optional<Path> getUserHomeDir() {
         return Optional.ofNullable(System.getProperty("user.home"))
-                .flatMap(userHome -> Optional.of(Paths.get(userHome, StroomProperties.USER_CONF_DIR)));
+                .flatMap(userHome -> Optional.of(Paths.get(userHome, USER_CONF_DIR)));
     }
 
 

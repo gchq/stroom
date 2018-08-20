@@ -9,9 +9,9 @@ import stroom.cell.clickable.client.HyperlinkTarget;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.properties.global.client.ClientPropertyCache;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.node.client.NodeToolsPlugin;
-import stroom.properties.shared.ClientProperties;
+import stroom.ui.config.shared.UiConfig;
 import stroom.security.client.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPreset;
@@ -20,17 +20,16 @@ import stroom.widget.iframe.client.presenter.IFrameContentPresenter;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 public class ApiKeysPlugin extends NodeToolsPlugin {
-
     private final Provider<IFrameContentPresenter> presenterProvider;
     private final ContentManager contentManager;
-    private final ClientPropertyCache clientPropertyCache;
+    private final UiConfigCache clientPropertyCache;
 
     @Inject
     public ApiKeysPlugin(final EventBus eventBus,
                          final ClientSecurityContext securityContext,
                          final Provider<IFrameContentPresenter> presenterProvider,
                          final ContentManager contentManager,
-                         final ClientPropertyCache clientPropertyCache) {
+                         final UiConfigCache clientPropertyCache) {
         super(eventBus, securityContext);
         this.presenterProvider = presenterProvider;
         this.contentManager = contentManager;
@@ -44,7 +43,7 @@ public class ApiKeysPlugin extends NodeToolsPlugin {
                     .onSuccess(result -> {
                         final IconMenuItem apiKeysMenuItem;
                         final SvgPreset icon = SvgPresets.PASSWORD;
-                        final String apiKeysUi = result.get(ClientProperties.API_KEYS_UI_URL);
+                        final String apiKeysUi = result.getUrlConfig().getApiKeys();
                         if (apiKeysUi != null && apiKeysUi.trim().length() > 0) {
                             apiKeysMenuItem = new IconMenuItem(5, icon, null, "API Keys", null, true, () -> {
                                 final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()

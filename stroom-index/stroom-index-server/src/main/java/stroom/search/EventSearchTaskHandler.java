@@ -19,9 +19,8 @@ package stroom.search;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.node.NodeCache;
-import stroom.properties.shared.ClientProperties;
 import stroom.node.shared.Node;
-import stroom.properties.api.PropertyService;
+import stroom.ui.config.shared.UiConfig;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.CoprocessorSettings;
@@ -45,17 +44,20 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
     private static final Logger LOGGER = LoggerFactory.getLogger(EventSearchTaskHandler.class);
 
     private final NodeCache nodeCache;
-    private final PropertyService propertyService;
+    private final SearchConfig searchConfig;
+    private final UiConfig clientConfig;
     private final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory;
     private final Security security;
 
     @Inject
     EventSearchTaskHandler(final NodeCache nodeCache,
-                           final PropertyService propertyService,
+                           final SearchConfig searchConfig,
+                           final UiConfig clientConfig,
                            final ClusterSearchResultCollectorFactory clusterSearchResultCollectorFactory,
                            final Security security) {
         this.nodeCache = nodeCache;
-        this.propertyService = propertyService;
+        this.searchConfig = searchConfig;
+        this.clientConfig = clientConfig;
         this.clusterSearchResultCollectorFactory = clusterSearchResultCollectorFactory;
         this.security = security;
     }
@@ -132,12 +134,12 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
     }
 
     private List<Integer> getDefaultMaxResultsSizes() {
-        final String value = propertyService.getProperty(ClientProperties.DEFAULT_MAX_RESULTS);
+        final String value = clientConfig.getDefaultMaxResults();
         return extractValues(value);
     }
 
     private List<Integer> getStoreSizes() {
-        final String value = propertyService.getProperty(ClusterSearchResultCollector.PROP_KEY_STORE_SIZE);
+        final String value = searchConfig.getStoreSize();
         return extractValues(value);
     }
 

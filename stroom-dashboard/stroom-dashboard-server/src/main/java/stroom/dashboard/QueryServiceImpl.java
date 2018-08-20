@@ -27,9 +27,9 @@ import stroom.entity.StroomEntityManager;
 import stroom.entity.util.FieldMap;
 import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
-import stroom.persist.EntityManagerSupport;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
+import stroom.ui.config.shared.UiConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -45,10 +45,10 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
 
     @Inject
     public QueryServiceImpl(final StroomEntityManager entityManager,
-                            final EntityManagerSupport entityManagerSupport,
                             final SecurityContext securityContext,
+                            final UiConfig uiConfig,
                             final Security security) {
-        super(entityManager, entityManagerSupport, securityContext);
+        super(entityManager, securityContext, uiConfig);
         this.entityManager = entityManager;
         this.securityContext = securityContext;
         this.security = security;

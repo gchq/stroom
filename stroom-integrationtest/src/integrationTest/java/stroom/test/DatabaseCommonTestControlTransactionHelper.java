@@ -19,7 +19,7 @@ package stroom.test;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.util.ConnectionUtil;
 import stroom.entity.util.HqlBuilder;
-import stroom.entity.util.SqlBuilder;
+import stroom.persist.ConnectionProvider;
 
 import javax.inject.Inject;
 import java.sql.Connection;
@@ -35,10 +35,13 @@ import java.util.stream.Collectors;
  */
 public class DatabaseCommonTestControlTransactionHelper {
     private final StroomEntityManager entityManager;
+    private final ConnectionProvider connectionProvider;
 
     @Inject
-    DatabaseCommonTestControlTransactionHelper(final StroomEntityManager entityManager) {
+    DatabaseCommonTestControlTransactionHelper(final StroomEntityManager entityManager,
+                                               final ConnectionProvider connectionProvider) {
         this.entityManager = entityManager;
+        this.connectionProvider = connectionProvider;
     }
 
     /**
@@ -96,7 +99,7 @@ public class DatabaseCommonTestControlTransactionHelper {
 
     void enableConstraints() {
         final String sql = "SET FOREIGN_KEY_CHECKS=1";
-        try (final Connection connection = ConnectionUtil.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             ConnectionUtil.executeStatement(connection, sql);
         } catch (SQLException e) {
             throw new RuntimeException(String.format("Error executing %s", sql), e);
@@ -109,7 +112,7 @@ public class DatabaseCommonTestControlTransactionHelper {
         allStatements.addAll(statements);
         allStatements.add("SET FOREIGN_KEY_CHECKS=1");
 
-        try (final Connection connection = ConnectionUtil.getConnection()) {
+        try (final Connection connection = connectionProvider.getConnection()) {
             ConnectionUtil.executeStatements(connection, allStatements);
         } catch (SQLException e) {
             throw new RuntimeException(String.format("Error executing %s", allStatements), e);

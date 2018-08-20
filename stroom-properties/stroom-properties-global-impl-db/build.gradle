@@ -8,6 +8,7 @@ dependencies {
     compile project(':stroom-util-shared')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-task:stroom-task-api')
+    compile project(':stroom-config')
 
 //    compile libs.stroomDocRef
 //    compile libs.stroomQueryApi
@@ -20,4 +21,5 @@ dependencies {
     compile libs.jooq
     compile libs.javax_inject
     compile libs.slf4j_api
+    compile libs.snakeyaml
 }

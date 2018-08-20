@@ -16,7 +16,6 @@
 
 package stroom.util.test;
 
-import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
 
 import java.io.IOException;
@@ -48,13 +47,14 @@ public class TestState {
             try {
                 if (testDir == null) {
                     final Path testDir = Files.createTempDirectory("stroom");
+                    FileUtil.setTempDir(testDir);
 //                    final Path rootTestDir = StroomTestUtil.createRootTestDir(initialTempPath);
 //                    testDir = StroomTestUtil.createPerThreadTestDir(rootTestDir);
-
-                    // Redirect the temp dir for the tests.
-                    StroomProperties.setOverrideProperty(StroomProperties.STROOM_TEMP, FileUtil.getCanonicalPath(testDir), StroomProperties.Source.TEST);
-
-                    FileUtil.forgetTempDir();
+//
+//                    // Redirect the temp dir for the tests.
+//                    StroomProperties.setOverrideProperty(StroomProperties.STROOM_TEMP, FileUtil.getCanonicalPath(testDir), StroomProperties.Source.TEST);
+//
+//                    FileUtil.forgetTempDir();
 
                     // Let tests update the database
 //                    StroomProperties.setOverrideProperty("stroom.jpaHbm2DdlAuto", "update", "test");
@@ -75,7 +75,7 @@ public class TestState {
                 if (testDir != null) {
                     FileUtil.deleteDir(testDir);
                     FileUtil.forgetTempDir();
-                    StroomProperties.removeOverrides();
+//                    StroomProperties.removeOverrides();
                 }
             } catch (final RuntimeException e) {
                 e.printStackTrace(System.err);

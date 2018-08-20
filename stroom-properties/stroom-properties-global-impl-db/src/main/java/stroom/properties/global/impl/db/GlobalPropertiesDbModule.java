@@ -4,28 +4,31 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.zaxxer.hikari.HikariConfig;
 import org.flywaydb.core.Flyway;
+import stroom.config.PropertyServiceConfig;
 import stroom.properties.api.ConnectionConfig;
 import stroom.properties.api.ConnectionPoolConfig;
-import stroom.properties.api.PropertyService;
 
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
 
 public class GlobalPropertiesDbModule extends AbstractModule {
     private static final String FLYWAY_LOCATIONS = "stroom/properties/impl/db";
     private static final String FLYWAY_TABLE = "property_schema_history";
-    private static final String CONNECTION_PROPERTY_PREFIX = "stroom.properties.";
 
     @Override
     protected void configure() {
-        bind(GlobalPropertyService.class).to(GlobalPropertyServiceImpl.class).asEagerSingleton();
+        bind(GlobalPropertyService.class).to(GlobalPropertyServiceImpl.class);
+        bind(ConfigInitialiser.class).asEagerSingleton();
     }
 
     @Provides
     @Singleton
-    ConnectionProvider getConnectionProvider(final PropertyService propertyService) {
-        final ConnectionConfig connectionConfig = getConnectionConfig(propertyService);
-        final ConnectionPoolConfig connectionPoolConfig = getConnectionPoolConfig(propertyService);
+    ConnectionProvider getConnectionProvider(final Provider<PropertyServiceConfig> configProvider) {
+        final ConnectionConfig connectionConfig = configProvider.get().getConnectionConfig();
+        final ConnectionPoolConfig connectionPoolConfig = configProvider.get().getConnectionPoolConfig();
+
+        connectionConfig.validate();
 
         final HikariConfig config = new HikariConfig();
         config.setJdbcUrl(connectionConfig.getJdbcDriverUrl());
@@ -34,10 +37,8 @@ public class GlobalPropertiesDbModule extends AbstractModule {
         config.addDataSourceProperty("cachePrepStmts", String.valueOf(connectionPoolConfig.isCachePrepStmts()));
         config.addDataSourceProperty("prepStmtCacheSize", String.valueOf(connectionPoolConfig.getPrepStmtCacheSize()));
         config.addDataSourceProperty("prepStmtCacheSqlLimit", String.valueOf(connectionPoolConfig.getPrepStmtCacheSqlLimit()));
-
         final ConnectionProvider connectionProvider = new ConnectionProvider(config);
         flyway(connectionProvider);
-
         return connectionProvider;
     }
 
@@ -49,14 +50,6 @@ public class GlobalPropertiesDbModule extends AbstractModule {
         flyway.setBaselineOnMigrate(true);
         flyway.migrate();
         return flyway;
-    }
-
-    private ConnectionConfig getConnectionConfig(final PropertyService propertyService) {
-        return new ConnectionConfig(CONNECTION_PROPERTY_PREFIX, propertyService);
-    }
-
-    private ConnectionPoolConfig getConnectionPoolConfig(final PropertyService propertyService) {
-        return new ConnectionPoolConfig(CONNECTION_PROPERTY_PREFIX, propertyService);
     }
 
     @Override

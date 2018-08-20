@@ -25,8 +25,7 @@ import stroom.node.shared.VolumeEntity;
 import stroom.node.shared.VolumeEntity.VolumeType;
 import stroom.node.shared.VolumeEntity.VolumeUseStatus;
 import stroom.node.shared.VolumeState;
-import stroom.properties.api.PropertyService;
-import stroom.properties.shared.ClientProperties;
+import stroom.ui.config.shared.UiConfig;
 import stroom.security.Security;
 
 import javax.inject.Inject;
@@ -59,17 +58,17 @@ public class StatusServlet extends HttpServlet {
     private static final String MSG_OK = "OK";
 
     private final NodeService nodeService;
-    private final PropertyService propertyService;
+    private final UiConfig clientProperties;
     private final VolumeService volumeService;
     private final Security security;
 
     @Inject
     StatusServlet(final NodeService nodeService,
-                  final PropertyService propertyService,
+                  final UiConfig clientProperties,
                   final VolumeService volumeService,
                   final Security security) {
         this.nodeService = nodeService;
-        this.propertyService = propertyService;
+        this.clientProperties = clientProperties;
         this.volumeService = volumeService;
         this.security = security;
     }
@@ -124,10 +123,10 @@ public class StatusServlet extends HttpServlet {
      */
     private void reportNodeStatus(final PrintWriter pw) {
         try {
-            writeInfoLine(pw, AREA_BUILD, "Build version " + propertyService.getProperty(ClientProperties.BUILD_VERSION));
-            writeInfoLine(pw, AREA_BUILD, "Build date " + propertyService.getProperty(ClientProperties.BUILD_DATE));
-            writeInfoLine(pw, AREA_BUILD, "Up date " + propertyService.getProperty(ClientProperties.UP_DATE));
-            writeInfoLine(pw, AREA_BUILD, "Node name " + propertyService.getProperty(ClientProperties.NODE_NAME));
+            writeInfoLine(pw, AREA_BUILD, "Build version " + clientProperties.getBuildVersion());
+            writeInfoLine(pw, AREA_BUILD, "Build date " + clientProperties.getBuildDate());
+            writeInfoLine(pw, AREA_BUILD, "Up date " + clientProperties.getUpDate());
+            writeInfoLine(pw, AREA_BUILD, "Node name " + clientProperties.getNodeName());
             // This will query the database...
             nodeService.find(new FindNodeCriteria());
             writeInfoLine(pw, AREA_DB, MSG_OK);

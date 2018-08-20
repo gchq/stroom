@@ -1,20 +1,8 @@
 ext.moduleName = 'stroom.properties.global.api'
 
 dependencies {
-//    compile project(':stroom-properties:stroom-properties-api')
     compile project(':stroom-util-shared')
     compile project(':stroom-entity-shared')
     compile project(':stroom-task:stroom-task-api')
-//
     compile libs.stroomDocRef
-////    compile libs.stroomQueryApi
-////
-////    compile libs.jaxb_api
-////    compile libs.swagger_annotations
-//    compile libs.flyway_core
-//    compile libs.guice4
-//    compile libs.hikari
-//    compile libs.jooq
-////    compile libs.javax_inject
-//    compile libs.slf4j_api
 }

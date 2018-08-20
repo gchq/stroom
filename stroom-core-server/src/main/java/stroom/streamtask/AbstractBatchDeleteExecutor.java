@@ -19,7 +19,6 @@ package stroom.streamtask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.jobsystem.ClusterLockService;
-import stroom.properties.api.PropertyService;
 import stroom.task.api.TaskContext;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
@@ -32,31 +31,27 @@ public abstract class AbstractBatchDeleteExecutor {
 
     private final BatchIdTransactionHelper batchIdTransactionHelper;
     private final ClusterLockService clusterLockService;
-    private final PropertyService propertyService;
     private final TaskContext taskContext;
 
     private final String taskName;
     private final String clusterLockName;
-    private final String deleteAgePropertyName;
-    private final String deleteBatchSizePropertyName;
-    private final int deleteBatchSizeDefaultValue;
+    private final BatchDeleteConfig batchDeleteConfig;
     private final String tempIdTable;
 
     public AbstractBatchDeleteExecutor(final BatchIdTransactionHelper batchIdTransactionHelper,
-                                       final ClusterLockService clusterLockService, final PropertyService propertyService,
-                                       final TaskContext taskContext, final String taskName, final String clusterLockName,
-                                       final String deleteAgePropertyName, final String deleteBatchSizePropertyName,
-                                       final int deleteBatchSizeDefaultValue, final String tempIdTable) {
+                                       final ClusterLockService clusterLockService,
+                                       final TaskContext taskContext,
+                                       final String taskName,
+                                       final String clusterLockName,
+                                       final BatchDeleteConfig batchDeleteConfig,
+                                       final String tempIdTable) {
         this.batchIdTransactionHelper = batchIdTransactionHelper;
         this.clusterLockService = clusterLockService;
-        this.propertyService = propertyService;
         this.taskContext = taskContext;
 
         this.taskName = taskName;
         this.clusterLockName = clusterLockName;
-        this.deleteAgePropertyName = deleteAgePropertyName;
-        this.deleteBatchSizePropertyName = deleteBatchSizePropertyName;
-        this.deleteBatchSizeDefaultValue = deleteBatchSizeDefaultValue;
+        this.batchDeleteConfig = batchDeleteConfig;
         this.tempIdTable = tempIdTable;
     }
 
@@ -66,8 +61,8 @@ public abstract class AbstractBatchDeleteExecutor {
         if (clusterLockService.tryLock(clusterLockName)) {
             try {
                 if (!Thread.currentThread().isInterrupted()) {
-                    final Long age = getDeleteAge(deleteAgePropertyName);
-                    if (age != null) {
+                    final long age = getDeleteAge(batchDeleteConfig);
+                    if (age > 0) {
                         delete(age);
                     }
                     LOGGER.info(taskName + " - finished in {}", logExecutionTime);
@@ -89,7 +84,7 @@ public abstract class AbstractBatchDeleteExecutor {
 
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-            final int deleteBatchSize = getDeleteBatchSize(deleteBatchSizePropertyName, deleteBatchSizeDefaultValue);
+            final int deleteBatchSize = batchDeleteConfig.getDeleteBatchSize();
 
             // Ensure the temp id table exists.
             createTempIdTable();
@@ -177,21 +172,17 @@ public abstract class AbstractBatchDeleteExecutor {
         Arrays.asList(args).forEach(arg -> LOGGER.debug(arg.toString()));
     }
 
-    private Long getDeleteAge(final String property) {
+    private Long getDeleteAge(final BatchDeleteConfig config) {
         Long age = null;
-        final String durationString = propertyService.getProperty(property);
+        final String durationString = config.getDeletePurgeAge();
         if (durationString != null && !durationString.isEmpty()) {
             try {
                 final long duration = ModelStringUtil.parseDurationString(durationString);
                 age = System.currentTimeMillis() - duration;
             } catch (final RuntimeException e) {
-                LOGGER.error("Error reading {}", property);
+                LOGGER.error("Error reading config");
             }
         }
         return age;
-    }
-
-    private int getDeleteBatchSize(final String property, final int defaultSize) {
-        return propertyService.getIntProperty(property, defaultSize);
     }
 }

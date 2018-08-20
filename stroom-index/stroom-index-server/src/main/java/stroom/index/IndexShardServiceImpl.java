@@ -20,6 +20,7 @@ package stroom.index;
 import event.logging.BaseAdvancedQueryItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.QueryAppender;
@@ -35,7 +36,6 @@ import stroom.index.shared.IndexShardKey;
 import stroom.node.VolumeService;
 import stroom.node.shared.Node;
 import stroom.node.shared.VolumeEntity;
-import stroom.docref.DocRef;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -56,7 +56,7 @@ public class IndexShardServiceImpl
     private final Security security;
     private final VolumeService volumeService;
     private final IndexVolumeService indexVolumeService;
-    private final IndexConfigCache indexConfigCache;
+    private final IndexStructureCache indexStructureCache;
     private final SecurityContext securityContext;
 
     @Inject
@@ -64,20 +64,20 @@ public class IndexShardServiceImpl
                           final Security security,
                           final VolumeService volumeService,
                           final IndexVolumeService indexVolumeService,
-                          final IndexConfigCache indexConfigCache,
+                          final IndexStructureCache indexStructureCache,
                           final SecurityContext securityContext) {
         super(entityManager, security);
         this.security = security;
         this.volumeService = volumeService;
         this.indexVolumeService = indexVolumeService;
-        this.indexConfigCache = indexConfigCache;
+        this.indexStructureCache = indexStructureCache;
         this.securityContext = securityContext;
     }
 
     @Override
     public IndexShard createIndexShard(final IndexShardKey indexShardKey, final Node ownerNode) {
-        final IndexConfig indexConfig = indexConfigCache.get(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
-        final IndexDoc index = indexConfig.getIndex();
+        final IndexStructure indexStructure = indexStructureCache.get(new DocRef(IndexDoc.DOCUMENT_TYPE, indexShardKey.getIndexUuid()));
+        final IndexDoc index = indexStructure.getIndex();
         final Set<VolumeEntity> allowedVolumes = indexVolumeService.getVolumesForIndex(DocRefUtil.create(index));
         if (allowedVolumes == null || allowedVolumes.size() == 0) {
             LOGGER.debug(VOLUME_ERROR);

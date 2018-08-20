@@ -5,7 +5,6 @@ import com.google.inject.Provider;
 import org.hibernate.integrator.spi.Integrator;
 import org.hibernate.jpa.HibernatePersistenceProvider;
 import org.hibernate.jpa.boot.spi.IntegratorProvider;
-import stroom.util.config.StroomProperties;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -25,13 +24,16 @@ import java.util.Properties;
 @Singleton
 public class PersistServiceImpl implements Provider<EntityManager>, PersistService {
     private final DataSource dataSource;
+    private final Provider<HibernateConfig> hibernateConfigProvider;
 
     private volatile EntityManagerFactory emFactory;
     private final ThreadLocal<Deque<Context>> threadLocal = ThreadLocal.withInitial(ArrayDeque::new);
 
     @Inject
-    PersistServiceImpl(final DataSource dataSource) {
+    PersistServiceImpl(final DataSource dataSource,
+                       final Provider<HibernateConfig> hibernateConfigProvider) {
         this.dataSource = dataSource;
+        this.hibernateConfigProvider = hibernateConfigProvider;
     }
 
     @Override
@@ -151,17 +153,19 @@ public class PersistServiceImpl implements Provider<EntityManager>, PersistServi
     }
 
     private Properties properties(final DataSource dataSource) {
+        final HibernateConfig hibernateConfig = hibernateConfigProvider.get();
+
         Properties properties = new Properties();
-        properties.put("hibernate.dialect", StroomProperties.getProperty("stroom.jpaDialect", "org.hibernate.dialect.MySQLInnoDBDialect"));
-        properties.put("hibernate.show_sql", StroomProperties.getProperty("stroom.showSql", "false"));
-        properties.put("hibernate.format_sql", "false");
-        properties.put("hibernate.hbm2ddl.auto", StroomProperties.getProperty("stroom.jpaHbm2DdlAuto", "validate"));
+        properties.put("hibernate.dialect", hibernateConfig.getDialect());
+        properties.put("hibernate.show_sql", String.valueOf(hibernateConfig.isShowSql()));
+        properties.put("hibernate.format_sql", String.valueOf(hibernateConfig.isFormatSql()));
+        properties.put("hibernate.hbm2ddl.auto", hibernateConfig.getJpaHbm2DdlAuto());
 
         if (dataSource != null) {
             properties.put("hibernate.connection.datasource", dataSource);
         }
 
-        properties.put("hibernate.generate_statistics", Boolean.TRUE.toString());
+        properties.put("hibernate.generate_statistics", String.valueOf(hibernateConfig.isGenerateStatistics()));
 
         return properties;
     }

@@ -19,11 +19,10 @@ package stroom.dashboard;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.lifecycle.JobTrackedSchedule;
-import stroom.properties.api.PropertyService;
-import stroom.task.shared.Task;
-import stroom.util.lifecycle.StroomSimpleCronSchedule;
 import stroom.task.api.TaskContext;
+import stroom.task.shared.Task;
+import stroom.util.lifecycle.JobTrackedSchedule;
+import stroom.util.lifecycle.StroomSimpleCronSchedule;
 
 import javax.inject.Inject;
 import java.time.ZonedDateTime;
@@ -37,13 +36,13 @@ public class QueryHistoryCleanExecutor {
 
     private final TaskContext taskContext;
     private final QueryService queryService;
-    private final PropertyService propertyService;
+    private final QueryHistoryConfig queryHistoryConfig;
 
     @Inject
-    public QueryHistoryCleanExecutor(final TaskContext taskContext, final QueryService queryService, final PropertyService propertyService) {
+    public QueryHistoryCleanExecutor(final TaskContext taskContext, final QueryService queryService, final QueryHistoryConfig queryHistoryConfig) {
         this.taskContext = taskContext;
         this.queryService = queryService;
-        this.propertyService = propertyService;
+        this.queryHistoryConfig = queryHistoryConfig;
     }
 
     @StroomSimpleCronSchedule(cron = "0 0 *")
@@ -55,8 +54,8 @@ public class QueryHistoryCleanExecutor {
     public void clean(final Task<?> task, final boolean favourite) {
         info("Starting history clean task");
 
-        final int historyItemsRetention = propertyService.getIntProperty("stroom.query.history.itemsRetention", 100);
-        final int historyDaysRetention = propertyService.getIntProperty("stroom.query.history.daysRetention", 365);
+        final int historyItemsRetention = queryHistoryConfig.getItemsRetention();
+        final int historyDaysRetention = queryHistoryConfig.getDaysRetention();
 
         final long oldestCrtMs = ZonedDateTime.now().minusDays(historyDaysRetention).toInstant().toEpochMilli();
 

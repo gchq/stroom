@@ -5,12 +5,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-import stroom.connectors.kafka.StroomKafkaProducer;
-import stroom.connectors.kafka.StroomKafkaProducerRecord;
+import stroom.docref.DocRef;
+import stroom.kafka.api.StroomKafkaProducer;
+import stroom.kafka.api.StroomKafkaProducerFactory;
+import stroom.kafka.api.StroomKafkaProducerRecord;
+import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
+import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.PipelineProperty;
+import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.filter.AbstractSamplingFilter;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
@@ -21,22 +26,23 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractKafkaProducerFilter.class);
 
     private boolean flushOnSend;
+    private DocRef kafkaConfigRef;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final LocationFactoryProxy locationFactory;
-    private final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService;
+    private final StroomKafkaProducerFactory stroomKafkaProducerFactory;
 
     private StroomKafkaProducer stroomKafkaProducer;
 
     private Locator locator;
 
     protected AbstractKafkaProducerFilter(final ErrorReceiverProxy errorReceiverProxy,
-                                       final LocationFactoryProxy locationFactory,
-                                       final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService) {
+                                          final LocationFactoryProxy locationFactory,
+                                          final StroomKafkaProducerFactory stroomKafkaProducerFactory) {
 
         super(errorReceiverProxy, locationFactory);
         this.errorReceiverProxy = errorReceiverProxy;
         this.locationFactory = locationFactory;
-        this.stroomKafkaProducerFactoryService = stroomKafkaProducerFactoryService;
+        this.stroomKafkaProducerFactory = stroomKafkaProducerFactory;
         this.flushOnSend = true;
     }
 
@@ -54,6 +60,10 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
 
     @Override
     public void startProcessing() {
+        if (kafkaConfigRef == null) {
+            throw new ProcessException("No Kafka config has been specified");
+        }
+
         if (Strings.isNullOrEmpty(getTopic())) {
             String msg = "A Kafka topic has not been set";
             log(Severity.FATAL_ERROR, msg, null);
@@ -64,8 +74,9 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
             log(Severity.FATAL_ERROR, msg, null);
             throw new LoggedException(msg);
         }
+
         try {
-            this.stroomKafkaProducer = stroomKafkaProducerFactoryService.getConnector().orElse(null);
+            this.stroomKafkaProducer = stroomKafkaProducerFactory.createProducer(kafkaConfigRef).orElse(null);
         } catch (final RuntimeException e) {
             String msg = "Error initialising kafka producer - " + e.getMessage();
             log(Severity.FATAL_ERROR, msg, e);
@@ -84,6 +95,12 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
             defaultValue = "false")
     public void setFlushOnSend(final boolean flushOnSend) {
         this.flushOnSend = flushOnSend;
+    }
+
+    @PipelineProperty(description = "The Kafka config to use.")
+    @PipelinePropertyDocRef(types = KafkaConfigDoc.DOCUMENT_TYPE)
+    public void setKafkaConfig(final DocRef kafkaConfigRef) {
+        this.kafkaConfigRef = kafkaConfigRef;
     }
 
     void sendOutputToKafka() {

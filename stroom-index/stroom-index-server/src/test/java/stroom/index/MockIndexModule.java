@@ -19,11 +19,9 @@ package stroom.index;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.multibindings.Multibinder;
-import stroom.entity.FindService;
 import stroom.entity.shared.Clearable;
 import stroom.importexport.ImportExportActionHandler;
 import stroom.index.shared.IndexDoc;
-import stroom.pipeline.factory.Element;
 
 public class MockIndexModule extends AbstractModule {
     @Override
@@ -32,7 +30,7 @@ public class MockIndexModule extends AbstractModule {
 
 //        bind(IndexShardManager.class).to(MockIndexShardManagerImpl.class);
         bind(IndexShardWriterCache.class).to(MockIndexShardWriterCache.class);
-        bind(IndexConfigCache.class).to(IndexConfigCacheImpl.class);
+        bind(IndexStructureCache.class).to(IndexStructureCacheImpl.class);
         bind(IndexStore.class).to(IndexStoreImpl.class);
         bind(IndexVolumeService.class).to(MockIndexVolumeService.class);
         bind(IndexShardService.class).to(MockIndexShardService.class);

@@ -10,22 +10,21 @@ import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.properties.global.client.ClientPropertyCache;
-import stroom.properties.shared.ClientProperties;
 import stroom.svg.client.SvgPresets;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.iframe.client.presenter.IFrameContentPresenter;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 public class ElasticPlugin extends Plugin {
     private final Provider<IFrameContentPresenter> iFramePresenterProvider;
     private final ContentManager contentManager;
-    private final ClientPropertyCache clientPropertyCache;
+    private final UiConfigCache clientPropertyCache;
 
     @Inject
     public ElasticPlugin(final EventBus eventBus,
                          final Provider<IFrameContentPresenter> iFramePresenterProvider,
                          final ContentManager contentManager,
-                         final ClientPropertyCache clientPropertyCache) {
+                         final UiConfigCache clientPropertyCache) {
         super(eventBus);
         this.iFramePresenterProvider = iFramePresenterProvider;
         this.contentManager = contentManager;
@@ -44,7 +43,7 @@ public class ElasticPlugin extends Plugin {
         clientPropertyCache.get()
                 .onSuccess(result -> {
                     final IconMenuItem annotationsMenuItem;
-                    final String elasticUiUrl = result.get(ClientProperties.URL_KIBANA_UI);
+                    final String elasticUiUrl = result.getUrlConfig().getKibana();
                     if (elasticUiUrl != null && elasticUiUrl.trim().length() > 0) {
                         annotationsMenuItem = new IconMenuItem(6, SvgPresets.ELASTIC_SEARCH, null, "Elastic Search", null, true, () -> {
                             final Hyperlink hyperlink = new Hyperlink.HyperlinkBuilder()

@@ -26,6 +26,7 @@ import stroom.security.AuthenticationStateSessionUtil.AuthenticationState;
 import stroom.security.exception.AuthenticationException;
 import stroom.security.shared.UserRef;
 import stroom.servlet.HttpSessionUtil;
+import stroom.ui.config.shared.UiConfig;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
@@ -60,6 +61,7 @@ public class SecurityFilter implements Filter {
     private static final Logger LOGGER = LoggerFactory.getLogger(SecurityFilter.class);
 
     private final SecurityConfig config;
+    private final UiConfig uiConfig;
     private final JWTService jwtService;
     private final AuthenticationServiceClients authenticationServiceClients;
     private final AuthenticationService authenticationService;
@@ -69,10 +71,12 @@ public class SecurityFilter implements Filter {
     @Inject
     public SecurityFilter(
             final SecurityConfig config,
+            final UiConfig uiConfig,
             final JWTService jwtService,
             final AuthenticationServiceClients authenticationServiceClients,
             final AuthenticationService authenticationService) {
         this.config = config;
+        this.uiConfig = uiConfig;
         this.jwtService = jwtService;
         this.authenticationServiceClients = authenticationServiceClients;
         this.authenticationService = authenticationService;
@@ -269,9 +273,9 @@ public class SecurityFilter implements Filter {
         }
 
         // In some cases we might need to use an external URL as the current incoming one might have been proxied.
-        if (config.getAdvertisedStroomUrl() != null && config.getAdvertisedStroomUrl().trim().length() > 0) {
+        if (uiConfig.getUrlConfig() != null && uiConfig.getUrlConfig().getUi() != null && uiConfig.getUrlConfig().getUi().trim().length() > 0) {
             LOGGER.debug("Using the advertised URL as the OpenID redirect URL");
-            redirectUrl = config.getAdvertisedStroomUrl();
+            redirectUrl = uiConfig.getUrlConfig().getUi();
         }
 
         String authenticationRequestParams = "" +

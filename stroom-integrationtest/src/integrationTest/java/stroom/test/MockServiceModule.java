@@ -1,7 +1,6 @@
 package stroom.test;
 
 import com.google.inject.AbstractModule;
-import stroom.pipeline.xsltfunctions.CommonXsltFunctionModule;
 
 public class MockServiceModule extends AbstractModule {
     @Override
@@ -25,7 +24,7 @@ public class MockServiceModule extends AbstractModule {
         install(new stroom.pipeline.xsltfunctions.CommonXsltFunctionModule());
         install(new stroom.pipeline.xsltfunctions.DataStoreXsltFunctionModule());
         install(new stroom.pipeline.task.PipelineStreamTaskModule());
-        install(new stroom.properties.impl.mock.MockPropertyModule());
+//        install(new stroom.properties.impl.mock.MockPropertyModule());
         install(new stroom.refdata.ReferenceDataModule());
         install(new stroom.resource.MockResourceModule());
         install(new stroom.security.impl.mock.MockSecurityContextModule());

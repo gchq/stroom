@@ -23,7 +23,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.entity.CriteriaLoggingUtil;
 import stroom.entity.QueryAppender;
-import stroom.entity.StroomDatabaseInfo;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.SystemEntityServiceImpl;
 import stroom.entity.shared.BaseResultList;
@@ -61,9 +60,6 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
     private static final String DELETE_ORPHAN_JOBS_MYSQL = "DELETE JB FROM " + Job.TABLE_NAME + " JB LEFT OUTER JOIN "
             + JobNode.TABLE_NAME + " JB_ND ON (JB." + Job.ID + " = JB_ND." + Job.FOREIGN_KEY + ") WHERE JB_ND."
             + JobNode.ID + " IS NULL;";
-    private static final String DELETE_ORPHAN_JOBS_HSQLDB = "DELETE FROM " + Job.TABLE_NAME + " WHERE " + Job.ID
-            + " IN (" + "SELECT " + Job.ID + " FROM " + Job.TABLE_NAME + " JB LEFT OUTER JOIN " + JobNode.TABLE_NAME
-            + " JB_ND ON (JB." + Job.ID + " = JB_ND." + Job.FOREIGN_KEY + ") WHERE JB_ND." + JobNode.ID + " IS NULL);";
     private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeServiceImpl.class);
     private static final String LOCK_NAME = "JobNodeService";
 
@@ -73,7 +69,6 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
     private final NodeCache nodeCache;
     private final JobService jobService;
     private final StroomBeanStore stroomBeanStore;
-    private final StroomDatabaseInfo stroomDatabaseInfo;
     private final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry;
 
 
@@ -85,7 +80,6 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
                        final NodeCache nodeCache,
                        final JobService jobService,
                        final StroomBeanStore stroomBeanStore,
-                       final StroomDatabaseInfo stroomDatabaseInfo,
                        final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry) {
         super(entityManager, security);
         this.entityManager = entityManager;
@@ -94,7 +88,6 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
         this.nodeCache = nodeCache;
         this.jobService = jobService;
         this.stroomBeanStore = stroomBeanStore;
-        this.stroomDatabaseInfo = stroomDatabaseInfo;
         this.distributedTaskFactoryBeanRegistry = distributedTaskFactoryBeanRegistry;
     }
 
@@ -242,11 +235,7 @@ public class JobNodeServiceImpl extends SystemEntityServiceImpl<JobNode, FindJob
             entityManager.flush();
 
             final SqlBuilder sql = new SqlBuilder();
-            if (stroomDatabaseInfo.isMysql()) {
-                sql.append(DELETE_ORPHAN_JOBS_MYSQL);
-            } else {
-                sql.append(DELETE_ORPHAN_JOBS_HSQLDB);
-            }
+            sql.append(DELETE_ORPHAN_JOBS_MYSQL);
 
             final Long deleteCount = entityManager.executeNativeUpdate(sql);
             if (deleteCount != null && deleteCount > 0) {

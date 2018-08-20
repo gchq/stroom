@@ -136,7 +136,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
             synchronized (this) {
                 if (!initialised) {
                     security.insecure(() -> {
-                        boolean isEnabled = volumeConfig.isCreateOnStartup();
+                        boolean isEnabled = volumeConfig.isCreateDefaultOnStart();
 
                         if (isEnabled) {
                             List<VolumeEntity> existingVolumes = getCurrentState();
@@ -156,7 +156,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
                                 LOGGER.info("Existing volumes exist, won't create default volumes");
                             }
                         } else {
-                            LOGGER.info("Creation of default volumes is currently disabled by property: " + VolumeConfig.PROP_CREATE_DEFAULT_VOLUME_ON_STARTUP);
+                            LOGGER.info("Creation of default volumes is currently disabled");
                         }
 
                         initialised = true;
@@ -614,7 +614,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
     private Optional<Path> getDefaultVolumesPath() {
         return Stream.<Supplier<Optional<Path>>>of(
                 this::getApplicationJarDir,
-                this::getUserHomeDir,
+//                this::getUserHomeDir,
                 Optional::empty)
                 .map(Supplier::get)
                 .filter(Optional::isPresent)
@@ -623,10 +623,10 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
                 .flatMap(path -> Optional.of(path.resolve(DEFAULT_VOLUMES_SUBDIR)));
     }
 
-    private Optional<Path> getUserHomeDir() {
-        return Optional.ofNullable(System.getProperty("user.home"))
-                .flatMap(userHome -> Optional.of(Paths.get(userHome, StroomProperties.USER_CONF_DIR)));
-    }
+//    private Optional<Path> getUserHomeDir() {
+//        return Optional.ofNullable(System.getProperty("user.home"))
+//                .flatMap(userHome -> Optional.of(Paths.get(userHome, StroomProperties.USER_CONF_DIR)));
+//    }
 
     private Optional<Path> getApplicationJarDir() {
         try {

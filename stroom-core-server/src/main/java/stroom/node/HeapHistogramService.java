@@ -90,10 +90,10 @@ class HeapHistogramService {
     }
 
     private String getExecutable() {
-        String executable = heapHistogramConfig.getExecutable();
+        String executable = heapHistogramConfig.getjMapExecutable();
 
         if (executable == null || executable.isEmpty()) {
-            throw new RuntimeException(String.format("Property %s has no value", HeapHistogramConfig.JMAP_EXECUTABLE_PROP_KEY));
+            throw new RuntimeException("Property jMapExecutable has no value");
         }
         return executable;
     }
@@ -175,7 +175,7 @@ class HeapHistogramService {
     }
 
     private Function<String, String> getClassReplacementMapper() {
-        final String anonymousIdRegex = heapHistogramConfig.getAnonymousIdRegex();
+        final String anonymousIdRegex = heapHistogramConfig.getClassNameReplacementRegex();
 
         if (anonymousIdRegex == null || anonymousIdRegex.isEmpty()) {
             return Function.identity();
@@ -185,7 +185,7 @@ class HeapHistogramService {
                 return className -> pattern.matcher(className).replaceAll(ID_REPLACEMENT);
             } catch (final RuntimeException e) {
                 LOGGER.error("Value [{}] for property [{}] is not valid regex",
-                        anonymousIdRegex, HeapHistogramConfig.ANON_ID_REGEX_PROP_KEY, e);
+                        anonymousIdRegex, "classNameReplacementRegex", e);
                 return Function.identity();
             }
         }

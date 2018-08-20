@@ -1,17 +1,17 @@
 package stroom.statistics.stroomstats.pipeline;
 
-import stroom.kafka.StroomKafkaProducerFactoryService;
+import stroom.docref.DocRef;
+import stroom.kafka.AbstractKafkaAppender;
+import stroom.kafka.api.StroomKafkaProducerFactory;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
-import stroom.kafka.AbstractKafkaAppender;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.docref.DocRef;
 import stroom.statistics.stroomstats.entity.StroomStatsStoreStore;
-import stroom.statistics.stroomstats.kafka.TopicNameFactory;
+import stroom.statistics.stroomstats.internal.HBaseStatisticsConfig;
 import stroom.stats.shared.StroomStatsStoreDoc;
 import stroom.util.shared.Severity;
 
@@ -31,9 +31,8 @@ import javax.inject.Inject;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.STROOM_STATS)
 class StroomStatsAppender extends AbstractKafkaAppender {
-    private final TopicNameFactory topicNameFactory;
     private final StroomStatsStoreStore stroomStatsStoreStore;
-
+    private final HBaseStatisticsConfig hBaseStatisticsConfig;
     private String topic;
     private String recordKey;
     private DocRef stroomStatStoreRef;
@@ -41,11 +40,11 @@ class StroomStatsAppender extends AbstractKafkaAppender {
     @SuppressWarnings("unused")
     @Inject
     public StroomStatsAppender(final ErrorReceiverProxy errorReceiverProxy,
-                               final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService,
-                               final TopicNameFactory topicNameFactory,
+                               final StroomKafkaProducerFactory stroomKafkaProducerFactoryService,
+                               final HBaseStatisticsConfig hBaseStatisticsConfig,
                                final StroomStatsStoreStore stroomStatsStoreStore) {
         super(errorReceiverProxy, stroomKafkaProducerFactoryService);
-        this.topicNameFactory = topicNameFactory;
+        this.hBaseStatisticsConfig = hBaseStatisticsConfig;
         this.stroomStatsStoreStore = stroomStatsStoreStore;
     }
 
@@ -79,7 +78,14 @@ class StroomStatsAppender extends AbstractKafkaAppender {
             throw new LoggedException(msg);
         }
 
-        topic = topicNameFactory.getTopic(stroomStatsStoreEntity.getStatisticType());
+        switch (stroomStatsStoreEntity.getStatisticType()) {
+            case COUNT:
+                topic = hBaseStatisticsConfig.getKafkaTopicsConfig().getCount();
+                break;
+            case VALUE:
+                topic = hBaseStatisticsConfig.getKafkaTopicsConfig().getValue();
+                break;
+        }
         recordKey = stroomStatsStoreEntity.getUuid();
 
         super.startProcessing();

@@ -16,6 +16,7 @@
 
 package stroom.entity;
 
+import stroom.docref.DocRef;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseEntity;
 import stroom.entity.shared.BaseResultList;
@@ -31,11 +32,9 @@ import stroom.entity.shared.ProvidesNamePattern;
 import stroom.entity.util.FieldMap;
 import stroom.entity.util.HqlBuilder;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.persist.EntityManagerSupport;
-import stroom.docref.DocRef;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.config.StroomProperties;
+import stroom.ui.config.shared.UiConfig;
 
 import javax.persistence.Transient;
 import java.lang.reflect.InvocationTargetException;
@@ -51,15 +50,15 @@ import java.util.stream.Collectors;
 // @Transactional
 public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C extends FindDocumentEntityCriteria> implements DocumentEntityService<E>, BaseEntityService<E>, FindService<E, C>, ProvidesNamePattern {
     public static final String FOLDER = ExplorerConstants.FOLDER;
-    private static final String NAME_PATTERN_PROPERTY = "stroom.namePattern";
-    private static final String NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
+    //    private static final String NAME_PATTERN_PROPERTY = "stroom.namePattern";
+//    private static final String NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
     public static final String ID = "@ID@";
     public static final String TYPE = "@TYPE@";
     public static final String NAME = "@NAME@";
 
     private final StroomEntityManager entityManager;
-    private final EntityManagerSupport entityManagerSupport;
     private final SecurityContext securityContext;
+    private final UiConfig uiConfig;
     private final EntityServiceHelper<E> entityServiceHelper;
     private final FindServiceHelper<E, C> findServiceHelper;
 
@@ -68,11 +67,11 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     private FieldMap sqlFieldMap;
 
     protected DocumentEntityServiceImpl(final StroomEntityManager entityManager,
-                                        final EntityManagerSupport entityManagerSupport,
-                                        final SecurityContext securityContext) {
+                                        final SecurityContext securityContext,
+                                        final UiConfig uiConfig) {
         this.entityManager = entityManager;
-        this.entityManagerSupport = entityManagerSupport;
         this.securityContext = securityContext;
+        this.uiConfig = uiConfig;
         this.queryAppender = createQueryAppender(entityManager);
         this.entityServiceHelper = new EntityServiceHelper<>(entityManager, getEntityClass());
         this.findServiceHelper = new FindServiceHelper<>(entityManager, getEntityClass(), queryAppender);
@@ -355,7 +354,7 @@ public abstract class DocumentEntityServiceImpl<E extends DocumentEntity, C exte
     @Transient
     @Override
     public String getNamePattern() {
-        return StroomProperties.getProperty(NAME_PATTERN_PROPERTY, NAME_PATTERN_VALUE);
+        return uiConfig.getNamePattern();
     }
 
     private String getDocReference(BaseEntity entity) {

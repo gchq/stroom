@@ -16,12 +16,8 @@
 
 package stroom.datasource;
 
-import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.shared.ExternalDocRefConstants;
-import stroom.properties.shared.ClientProperties;
-import stroom.properties.api.PropertyService;
 import stroom.docref.DocRef;
 import stroom.security.SecurityContext;
 import stroom.servlet.HttpServletRequestHolder;
@@ -32,10 +28,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegistry {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleDataSourceProviderRegistry.class);
-
-    private static final String PROP_KEY_BASE_PATH = "stroom.serviceDiscovery.simpleLookup.basePath";
 
     private final Map<String, String> urlMap;
 
@@ -43,44 +36,44 @@ public class SimpleDataSourceProviderRegistry implements DataSourceProviderRegis
     private HttpServletRequestHolder httpServletRequestHolder;
 
     SimpleDataSourceProviderRegistry(final SecurityContext securityContext,
-                                     final PropertyService propertyService,
+                                     final DataSourceUrlConfig dataSourceUrlConfig,
                                      final HttpServletRequestHolder httpServletRequestHolder) {
         this.securityContext = securityContext;
         this.httpServletRequestHolder = httpServletRequestHolder;
 
-        final String basePath = propertyService.getProperty(PROP_KEY_BASE_PATH);
-        final String annotationsPath = propertyService
-                .getProperty(ClientProperties.URL_DOC_REF_SERVICE_BASE + ExternalDocRefConstants.ANNOTATIONS_INDEX);
-        final String elasticPath = propertyService
-                .getProperty(ClientProperties.URL_DOC_REF_SERVICE_BASE + ExternalDocRefConstants.ELASTIC_INDEX);
+//        final String basePath = serviceDiscoveryConfig.getSimpleLookupBasePath();
+//        final String annotationsPath = propertyService
+//                .getProperty(UiConfig.URL_DOC_REF_SERVICE_BASE + ExternalDocRefConstants.ANNOTATIONS_INDEX);
+//        final String elasticPath = propertyService
+//                .getProperty(UiConfig.URL_DOC_REF_SERVICE_BASE + ExternalDocRefConstants.ELASTIC_INDEX);
+//
+//        if (basePath != null && !basePath.isEmpty()) {
+        //TODO the path strings are defined in ResourcePaths but this is not accessible from here
+        //if this code is kept long term then ResourcePaths needs to be mode so that is accessible to all
+        urlMap = new HashMap<>();
+        urlMap.put("Index", dataSourceUrlConfig.getIndex());
+        urlMap.put("StatisticStore", dataSourceUrlConfig.getStatisticStore());
+        urlMap.put("AnnotationsIndex", dataSourceUrlConfig.getAnnotations());
+        urlMap.put("ElasticIndex", dataSourceUrlConfig.getElasticIndex());
+        //strooom-stats is not available as a local service as if you have stroom-stats you have zookeeper so
+        //you can run service discovery
 
-        if (basePath != null && !basePath.isEmpty()) {
-            //TODO the path strings are defined in ResourcePaths but this is not accessible from here
-            //if this code is kept long term then ResourcePaths needs to be mode so that is accessible to all
-            urlMap = new HashMap<>();
-            urlMap.put("Index", basePath + "/api/stroom-index/v2");
-            urlMap.put("StatisticStore", basePath + "/api/sqlstatistics/v2");
-            urlMap.put(ExternalDocRefConstants.ANNOTATIONS_INDEX, annotationsPath + "/queryApi/v1");
-            urlMap.put(ExternalDocRefConstants.ELASTIC_INDEX, elasticPath + "/queryApi/v1");
-            //strooom-stats is not available as a local service as if you have stroom-stats you have zookeeper so
-            //you can run service discovery
-
-            //No idea why these two are here, neither are data source providers
+        //No idea why these two are here, neither are data source providers
 //            urlMap.put("authentication", basePath + "/api/authentication/v1");
 //            urlMap.put("authorisation", basePath + "/api/authorisation/v1");
 
-            LOGGER.info("Using the following local URLs for services:\n" +
-                    urlMap.entrySet().stream()
-                            .map(entry -> "    " + entry.getKey() + " - " + entry.getValue())
-                            .sorted()
-                            .collect(Collectors.joining("\n"))
-            );
-            LOGGER.info("Stroom-stats is not available when service discovery is disabled");
-        } else {
-            LOGGER.error("Property value for {} is null or empty, local service lookup will not function",
-                    PROP_KEY_BASE_PATH);
-            urlMap = ImmutableMap.of();
-        }
+        LOGGER.info("Using the following local URLs for services:\n" +
+                urlMap.entrySet().stream()
+                        .map(entry -> "    " + entry.getKey() + " - " + entry.getValue())
+                        .sorted()
+                        .collect(Collectors.joining("\n"))
+        );
+        LOGGER.info("Stroom-stats is not available when service discovery is disabled");
+//        } else {
+//            LOGGER.error("Property value for {} is null or empty, local service lookup will not function",
+//                    PROP_KEY_BASE_PATH);
+//            urlMap = ImmutableMap.of();
+//        }
     }
 
     /**

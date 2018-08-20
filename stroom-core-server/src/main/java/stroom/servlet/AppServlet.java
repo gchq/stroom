@@ -16,7 +16,7 @@
 
 package stroom.servlet;
 
-import stroom.properties.api.PropertyService;
+import stroom.ui.config.shared.UiConfig;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
 
@@ -32,12 +32,12 @@ public abstract class AppServlet extends HttpServlet {
     private static final String ON_CONTEXT_MENU = "@ON_CONTEXT_MENU@";
     private static final String SCRIPT = "@SCRIPT@";
 
-    private final PropertyService propertyService;
+    private final UiConfig uiConfig;
 
     private String template;
 
-    AppServlet(final PropertyService propertyService) {
-        this.propertyService = propertyService;
+    AppServlet(final UiConfig uiConfig) {
+        this.uiConfig = uiConfig;
     }
 
     private String getHtmlTemplate() {
@@ -56,8 +56,8 @@ public abstract class AppServlet extends HttpServlet {
         response.setContentType("text/html");
 
         String html = getHtmlTemplate();
-        html = html.replace(TITLE, propertyService.getProperty("stroom.htmlTitle", "Stroom"));
-        html = html.replace(ON_CONTEXT_MENU, propertyService.getProperty("stroom.ui.oncontextmenu", "return false;"));
+        html = html.replace(TITLE, uiConfig.getHtmlTitle());
+        html = html.replace(ON_CONTEXT_MENU, uiConfig.getOncontextmenu());
         html = html.replace(SCRIPT, getScript());
 
         pw.write(html);

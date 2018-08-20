@@ -33,7 +33,6 @@ import stroom.entity.util.SqlBuilder;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserRef;
-import stroom.util.config.StroomProperties;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -48,9 +47,6 @@ import java.util.UUID;
 
 @Singleton
 class UserServiceImpl implements UserService {
-    private static final String USER_NAME_PATTERN_PROPERTY = "stroom.security.userNamePattern";
-    private static final String USER_NAME_PATTERN_VALUE = "^[a-zA-Z0-9_-]{3,}$";
-
     private static final Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
     private static final String SQL_ADD_USER_TO_GROUP;
     private static final String SQL_REMOVE_USER_FROM_GROUP;
@@ -86,6 +82,7 @@ class UserServiceImpl implements UserService {
 
     private final EntityServiceHelper<User> entityServiceHelper;
     private final DocumentPermissionService documentPermissionService;
+    private final SecurityConfig securityConfig;
 
     private final QueryAppender<User, FindUserCriteria> queryAppender;
 
@@ -95,10 +92,12 @@ class UserServiceImpl implements UserService {
     @Inject
     UserServiceImpl(final StroomEntityManager entityManager,
                     final Security security,
-                    final DocumentPermissionService documentPermissionService) {
+                    final DocumentPermissionService documentPermissionService,
+                    final SecurityConfig securityConfig) {
         this.entityManager = entityManager;
         this.security = security;
         this.documentPermissionService = documentPermissionService;
+        this.securityConfig = securityConfig;
 
         this.queryAppender = createQueryAppender(entityManager);
         this.entityServiceHelper = new EntityServiceHelper<>(entityManager, getEntityClass());
@@ -348,7 +347,7 @@ class UserServiceImpl implements UserService {
     @Transient
     @Override
     public String getNamePattern() {
-        return StroomProperties.getProperty(USER_NAME_PATTERN_PROPERTY, USER_NAME_PATTERN_VALUE);
+        return securityConfig.getUserNamePattern();
     }
 
     @Override

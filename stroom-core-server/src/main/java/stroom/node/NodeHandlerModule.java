@@ -30,7 +30,6 @@ public class NodeHandlerModule extends AbstractModule {
 
         final Multibinder<TaskHandler> taskHandlerBinder = Multibinder.newSetBinder(binder(), TaskHandler.class);
         taskHandlerBinder.addBinding().to(ClusterNodeInfoHandler.class);
-        taskHandlerBinder.addBinding().to(FetchClientPropertiesHandler.class);
         taskHandlerBinder.addBinding().to(FetchNodeInfoHandler.class);
         taskHandlerBinder.addBinding().to(FindSystemTableStatusHandler.class);
         taskHandlerBinder.addBinding().to(FlushVolumeStatusHandler.class);

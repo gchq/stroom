@@ -98,11 +98,11 @@ public class IndexShardWriterImpl implements IndexShardWriter {
     /**
      * Convenience constructor used in tests.
      */
-    IndexShardWriterImpl(final IndexShardManager indexShardManager, final IndexConfig indexConfig, final IndexShardKey indexShardKey, final IndexShard indexShard) throws IOException {
-        this(indexShardManager, indexConfig, indexShardKey, indexShard, DEFAULT_RAM_BUFFER_MB_SIZE);
+    IndexShardWriterImpl(final IndexShardManager indexShardManager, final IndexStructure indexStructure, final IndexShardKey indexShardKey, final IndexShard indexShard) throws IOException {
+        this(indexShardManager, indexStructure, indexShardKey, indexShard, DEFAULT_RAM_BUFFER_MB_SIZE);
     }
 
-    IndexShardWriterImpl(final IndexShardManager indexShardManager, final IndexConfig indexConfig, final IndexShardKey indexShardKey, final IndexShard indexShard, final int ramBufferSizeMB) throws IOException {
+    IndexShardWriterImpl(final IndexShardManager indexShardManager, final IndexStructure indexStructure, final IndexShardKey indexShardKey, final IndexShard indexShard, final int ramBufferSizeMB) throws IOException {
         this.indexShardManager = indexShardManager;
         this.indexShardKey = indexShardKey;
         this.indexShardId = indexShard.getId();
@@ -116,7 +116,7 @@ public class IndexShardWriterImpl implements IndexShardWriter {
         LAMBDA_LOGGER.debug(() -> "Updating field analysers");
 
         // Update the settings for this shard from the index.
-        updateIndexConfig(indexConfig);
+        updateIndexStructure(indexStructure);
 
         Directory directory;
         IndexWriter indexWriter;
@@ -222,10 +222,10 @@ public class IndexShardWriterImpl implements IndexShardWriter {
     }
 
     @Override
-    public void updateIndexConfig(final IndexConfig indexConfig) {
-        this.maxDocumentCount = indexConfig.getIndex().getMaxDocsPerShard();
-        if (indexConfig.getIndexFields() != null) {
-            for (final IndexField indexField : indexConfig.getIndexFields()) {
+    public void updateIndexStructure(final IndexStructure indexStructure) {
+        this.maxDocumentCount = indexStructure.getIndex().getMaxDocsPerShard();
+        if (indexStructure.getIndexFields() != null) {
+            for (final IndexField indexField : indexStructure.getIndexFields()) {
                 // Add the field analyser.
                 final Analyzer analyzer = AnalyzerFactory.create(indexField.getAnalyzerType(),
                         indexField.isCaseSensitive());

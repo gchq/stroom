@@ -18,8 +18,6 @@ package stroom.explorer;
 
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypes;
-import stroom.properties.shared.ClientProperties;
-import stroom.properties.api.PropertyService;
 import stroom.guice.StroomBeanStore;
 
 import javax.inject.Inject;
@@ -35,18 +33,15 @@ import java.util.stream.Collectors;
 @Singleton
 class ExplorerActionHandlers {
     private final StroomBeanStore beanStore;
-    private final ExplorerActionHandlerFactory explorerActionHandlerFactory;
-    private final PropertyService propertyService;
+    private final ExplorerActionHandlerProvider explorerActionHandlerProvider;
 
     private volatile Handlers handlers;
 
     @Inject
     ExplorerActionHandlers(final StroomBeanStore beanStore,
-                           final ExplorerActionHandlerFactory explorerActionHandlerFactory,
-                           final PropertyService propertyService) {
+                           final ExplorerActionHandlerProvider explorerActionHandlerProvider) {
         this.beanStore = beanStore;
-        this.explorerActionHandlerFactory = explorerActionHandlerFactory;
-        this.propertyService = propertyService;
+        this.explorerActionHandlerProvider = explorerActionHandlerProvider;
     }
 
     List<DocumentType> getNonSystemTypes() {
@@ -68,7 +63,7 @@ class ExplorerActionHandlers {
 
     private Handlers getHandlers() {
         if (handlers == null) {
-            handlers = new Handlers(beanStore, explorerActionHandlerFactory, propertyService);
+            handlers = new Handlers(beanStore, explorerActionHandlerProvider);
         }
         return handlers;
     }
@@ -79,14 +74,12 @@ class ExplorerActionHandlers {
         private final List<DocumentType> documentTypes;
 
         Handlers(final StroomBeanStore beanStore,
-                 final ExplorerActionHandlerFactory explorerActionHandlerFactory,
-                 final PropertyService propertyService) {
+                 final ExplorerActionHandlerProvider explorerActionHandlerProvider) {
             // Add external handlers.
-            propertyService.getCsvProperty(String.format("%s|trace", ClientProperties.EXTERNAL_DOC_REF_TYPES))
-                    .forEach(type -> {
-                        final ExplorerActionHandler explorerActionHandler = explorerActionHandlerFactory.create(type);
-                        addExplorerActionHandler(explorerActionHandler);
-                    });
+            if (explorerActionHandlerProvider != null) {
+                final Set<ExplorerActionHandler> set = explorerActionHandlerProvider.getExplorerActionHandlers();
+                set.forEach(this::addExplorerActionHandler);
+            }
 
             // Add internal handlers.
             final Set<ExplorerActionHandler> set = beanStore.getInstancesOfType(ExplorerActionHandler.class);

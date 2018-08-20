@@ -22,8 +22,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.properties.global.client.ClientPropertyCache;
-import stroom.properties.shared.ClientProperties;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.security.client.ClientSecurityContext;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgIcon;
@@ -33,16 +32,16 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
 
     @Inject
     public WelcomePresenter(final EventBus eventBus, final WelcomeView view,
-                            final ClientPropertyCache clientPropertyCache, final ClientSecurityContext securityContext) {
+                            final UiConfigCache clientPropertyCache, final ClientSecurityContext securityContext) {
         super(eventBus, view);
 
         clientPropertyCache.get()
                 .onSuccess(result -> {
-                    view.setHTML(result.get(ClientProperties.WELCOME_HTML));
-                    view.getBuildVersion().setText("Build Version: " + result.get(ClientProperties.BUILD_VERSION));
-                    view.getBuildDate().setText("Build Date: " + result.get(ClientProperties.BUILD_DATE));
-                    view.getUpDate().setText("Up Date: " + result.get(ClientProperties.UP_DATE));
-                    view.getNodeName().setText("Node Name: " + result.get(ClientProperties.NODE_NAME));
+                    view.setHTML(result.getWelcomeHtml());
+                    view.getBuildVersion().setText("Build Version: " + result.getBuildVersion());
+                    view.getBuildDate().setText("Build Date: " + result.getBuildDate());
+                    view.getUpDate().setText("Up Date: " + result.getUpDate());
+                    view.getNodeName().setText("Node Name: " + result.getNodeName());
 
                     // final CurrentUser currentUser = currentUserProvider.get();
                     view.getUserName().setText("User Name: " + securityContext.getUserId());

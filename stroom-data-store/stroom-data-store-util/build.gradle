@@ -11,7 +11,9 @@ dependencies {
     compile project(':stroom-core-shared')
 
     compile libs.stroomQueryApi
+
     compile libs.guice4
+
     compile libs.slf4j_api
 //    compile libs.javax_inject
 

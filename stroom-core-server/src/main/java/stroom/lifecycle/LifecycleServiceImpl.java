@@ -18,15 +18,12 @@ package stroom.lifecycle;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.StroomEntityManager;
 import stroom.jobsystem.ScheduledTaskExecutor;
-import stroom.properties.api.PropertyService;
 import stroom.security.Security;
 import stroom.task.StroomThreadGroup;
 import stroom.task.TaskCallbackAdaptor;
 import stroom.task.TaskManager;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.VoidResult;
 import stroom.util.thread.CustomThreadFactory;
 
@@ -46,11 +43,9 @@ public class LifecycleServiceImpl implements LifecycleService {
     private static final String STROOM_LIFECYCLE_THREAD_POOL = "Stroom Lifecycle#";
 
     private static final int ONE_SECOND = 1000;
-    private static final long DEFAULT_INTERVAL = 10 * ONE_SECOND;
 
     private final TaskManager taskManager;
     private final StroomBeanLifeCycle stroomBeanLifeCycle;
-    private final StroomEntityManager entityManager;
     private final ScheduledTaskExecutor scheduledTaskExecutor;
     private final Security security;
     private final AtomicInteger startingBeanCount = new AtomicInteger();
@@ -65,29 +60,15 @@ public class LifecycleServiceImpl implements LifecycleService {
     @Inject
     public LifecycleServiceImpl(final TaskManager taskManager,
                                 final StroomBeanLifeCycle stroomBeanLifeCycle,
-                                final StroomEntityManager entityManager,
                                 final ScheduledTaskExecutor scheduledTaskExecutor,
                                 final Security security,
-                                final PropertyService propertyService) {
+                                final LifecycleConfig lifecycleConfig) {
         this.taskManager = taskManager;
         this.stroomBeanLifeCycle = stroomBeanLifeCycle;
-        this.entityManager = entityManager;
         this.scheduledTaskExecutor = scheduledTaskExecutor;
         this.security = security;
-        this.enabled.set(propertyService.getBooleanProperty("stroom.lifecycle.enabled", false));
-
-        Long executionInterval;
-        try {
-            executionInterval = ModelStringUtil.parseDurationString(propertyService.getProperty("stroom.lifecycle.executionInterval"));
-            if (executionInterval == null) {
-                executionInterval = DEFAULT_INTERVAL;
-            }
-        } catch (final NumberFormatException e) {
-            LOGGER.error("Unable to parse property 'stroom.lifecycle.executionInterval' value '" + propertyService.getProperty("stroom.lifecycle.executionInterval")
-                    + "', using default of '10s' instead", e);
-            executionInterval = DEFAULT_INTERVAL;
-        }
-        this.executionInterval = executionInterval;
+        this.enabled.set(lifecycleConfig.isEnabled());
+        this.executionInterval = lifecycleConfig.getExecutionIntervalMs();
     }
 
     /**
@@ -176,7 +157,7 @@ public class LifecycleServiceImpl implements LifecycleService {
         final StroomBeanMethodExecutable executable = stroomBeanLifeCycle.getStartExecutable();
         if (executable != null) {
             startingBeanCount.getAndIncrement();
-            taskManager.execAsync(new LifecycleTask(executable), new TaskCallbackAdaptor<VoidResult>() {
+            taskManager.execAsync(new LifecycleTask(executable), new TaskCallbackAdaptor<>() {
                 @Override
                 public void onSuccess(final VoidResult result) {
                     startNext();
@@ -237,7 +218,7 @@ public class LifecycleServiceImpl implements LifecycleService {
         final StroomBeanMethodExecutable executable = stroomBeanLifeCycle.getStopExecutable();
         if (executable != null) {
             stoppingBeanCount.getAndIncrement();
-            taskManager.execAsync(new LifecycleTask(executable), new TaskCallbackAdaptor<VoidResult>() {
+            taskManager.execAsync(new LifecycleTask(executable), new TaskCallbackAdaptor<>() {
                 @Override
                 public void onSuccess(final VoidResult result) {
                     stopNext();

@@ -21,7 +21,6 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import stroom.data.meta.api.DataProperties;
-import stroom.data.store.StreamDeleteExecutor;
 import stroom.data.store.StreamRetentionExecutor;
 import stroom.data.store.api.StreamStore;
 import stroom.data.store.api.StreamTarget;
@@ -37,10 +36,8 @@ import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.streamstore.shared.StreamTypeNames;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.util.config.StroomProperties;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.volume.VolumeConfig;
-import stroom.volume.VolumeServiceImpl;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -61,6 +58,8 @@ public class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
     private static final int FIFTY_FIVE = 55;
     private static final int FIFTY = 50;
 
+    @Inject
+    private VolumeConfig volumeConfig;
     @Inject
     private StreamStore streamStore;
     @Inject
@@ -84,15 +83,13 @@ public class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
 
     @Override
     protected void onBefore() {
-        initialReplicationCount = StroomProperties.getIntProperty(VolumeConfig.PROP_RESILIENT_REPLICATION_COUNT, 1);
-        StroomProperties.setIntProperty(VolumeConfig.PROP_RESILIENT_REPLICATION_COUNT, HIGHER_REPLICATION_COUNT,
-                StroomProperties.Source.TEST);
+        initialReplicationCount = volumeConfig.getResilientReplicationCount();
+        volumeConfig.setResilientReplicationCount(HIGHER_REPLICATION_COUNT);
     }
 
     @Override
     protected void onAfter() {
-        StroomProperties.setIntProperty(VolumeConfig.PROP_RESILIENT_REPLICATION_COUNT, initialReplicationCount,
-                StroomProperties.Source.TEST);
+        volumeConfig.setResilientReplicationCount(initialReplicationCount);
     }
 
     @Test

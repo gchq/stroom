@@ -1,7 +1,6 @@
 ext.moduleName = 'stroom.properties.impl'
 
 dependencies {
-    compile project(':stroom-properties:stroom-properties-api')
     compile project(':stroom-util')
 //    compile project(':stroom-core-shared')
 

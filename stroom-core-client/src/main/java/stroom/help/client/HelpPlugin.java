@@ -23,16 +23,15 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.properties.global.client.ClientPropertyCache;
-import stroom.properties.shared.ClientProperties;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 public class HelpPlugin extends Plugin {
-    private final ClientPropertyCache clientPropertyCache;
+    private final UiConfigCache clientPropertyCache;
 
     @Inject
-    public HelpPlugin(final EventBus eventBus, final ClientPropertyCache clientPropertyCache) {
+    public HelpPlugin(final EventBus eventBus, final UiConfigCache clientPropertyCache) {
         super(eventBus);
         this.clientPropertyCache = clientPropertyCache;
     }
@@ -44,7 +43,7 @@ public class HelpPlugin extends Plugin {
         clientPropertyCache.get()
                 .onSuccess(result -> {
                     IconMenuItem helpMenuItem;
-                    final String helpUrl = result.get(ClientProperties.HELP_URL);
+                    final String helpUrl = result.getHelpUrl();
                     if (helpUrl != null && helpUrl.trim().length() > 0) {
                         helpMenuItem = new IconMenuItem(1, SvgPresets.HELP, SvgPresets.HELP, "Help", null, true, () -> Window.open(helpUrl, "_blank", ""));
                     } else {

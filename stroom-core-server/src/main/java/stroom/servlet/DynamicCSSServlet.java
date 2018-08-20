@@ -16,12 +16,11 @@
 
 package stroom.servlet;
 
-import stroom.properties.api.PropertyService;
+import stroom.ui.config.shared.ThemeConfig;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -30,30 +29,21 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 
 public class DynamicCSSServlet extends HttpServlet {
-    public static final String THEME_BACKGROUND_ATTACHMENT = "@THEME_BACKGROUND_ATTACHMENT@";
-    public static final String THEME_BACKGROUND_COLOR = "@THEME_BACKGROUND_COLOR@";
-    public static final String THEME_BACKGROUND_IMAGE = "@THEME_BACKGROUND_IMAGE@";
-    public static final String THEME_BACKGROUND_POSITION = "@THEME_BACKGROUND_POSITION@";
-    public static final String THEME_BACKGROUND_REPEAT = "@THEME_BACKGROUND_REPEAT@";
-    public static final String THEME_BACKGROUND_OPACITY = "@THEME_BACKGROUND_OPACITY@";
-    public static final String THEME_TUBE_VISIBLE = "@THEME_TUBE_VISIBLE@";
-    public static final String THEME_TUBE_OPACITY = "@THEME_TUBE_OPACITY@";
-    private static final long serialVersionUID = 1L;
-    private static final String STROOM_THEME_BACKGROUND_ATTACHMENT = "stroom.theme.background-attachment";
-    private static final String STROOM_THEME_BACKGROUND_COLOR = "stroom.theme.background-color";
-    private static final String STROOM_THEME_BACKGROUND_IMAGE = "stroom.theme.background-image";
-    private static final String STROOM_THEME_BACKGROUND_POSITION = "stroom.theme.background-position";
-    private static final String STROOM_THEME_BACKGROUND_REPEAT = "stroom.theme.background-repeat";
-    private static final String STROOM_THEME_BACKGROUND_OPACITY = "stroom.theme.background-opacity";
-    private static final String STROOM_THEME_TUBE_VISIBLE = "stroom.theme.tube.visible";
-    private static final String STROOM_THEME_TUBE_OPACITY = "stroom.theme.tube.opacity";
+    private static final String THEME_BACKGROUND_ATTACHMENT = "@THEME_BACKGROUND_ATTACHMENT@";
+    private static final String THEME_BACKGROUND_COLOR = "@THEME_BACKGROUND_COLOR@";
+    private static final String THEME_BACKGROUND_IMAGE = "@THEME_BACKGROUND_IMAGE@";
+    private static final String THEME_BACKGROUND_POSITION = "@THEME_BACKGROUND_POSITION@";
+    private static final String THEME_BACKGROUND_REPEAT = "@THEME_BACKGROUND_REPEAT@";
+    private static final String THEME_BACKGROUND_OPACITY = "@THEME_BACKGROUND_OPACITY@";
+    private static final String THEME_TUBE_VISIBLE = "@THEME_TUBE_VISIBLE@";
+    private static final String THEME_TUBE_OPACITY = "@THEME_TUBE_OPACITY@";
 
-    private final transient PropertyService propertyService;
+    private final transient ThemeConfig themeConfig;
     private String cssTemplate;
 
     @Inject
-    DynamicCSSServlet(final PropertyService propertyService) {
-        this.propertyService = propertyService;
+    DynamicCSSServlet(final ThemeConfig themeConfig) {
+        this.themeConfig = themeConfig;
     }
 
     public String getCssTemplate() {
@@ -67,36 +57,34 @@ public class DynamicCSSServlet extends HttpServlet {
     }
 
     @Override
-    protected void doGet(final HttpServletRequest request, final HttpServletResponse response)
-            throws ServletException, IOException {
+    protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
         final PrintWriter pw = response.getWriter();
         response.setContentType("text/css");
 
         String css = getCssTemplate();
 
-        css = replaceAll(css, THEME_BACKGROUND_ATTACHMENT, STROOM_THEME_BACKGROUND_ATTACHMENT);
+        css = replaceAll(css, THEME_BACKGROUND_ATTACHMENT, themeConfig.getBackgroundAttachment());
 
-        css = replaceAll(css, THEME_BACKGROUND_COLOR, STROOM_THEME_BACKGROUND_COLOR);
+        css = replaceAll(css, THEME_BACKGROUND_COLOR, themeConfig.getBackgroundColor());
 
-        css = replaceAll(css, THEME_BACKGROUND_IMAGE, STROOM_THEME_BACKGROUND_IMAGE);
+        css = replaceAll(css, THEME_BACKGROUND_IMAGE, themeConfig.getBackgroundImage());
 
-        css = replaceAll(css, THEME_BACKGROUND_POSITION, STROOM_THEME_BACKGROUND_POSITION);
+        css = replaceAll(css, THEME_BACKGROUND_POSITION, themeConfig.getBackgroundPosition());
 
-        css = replaceAll(css, THEME_BACKGROUND_REPEAT, STROOM_THEME_BACKGROUND_REPEAT);
+        css = replaceAll(css, THEME_BACKGROUND_REPEAT, themeConfig.getBackgroundRepeat());
 
-        css = replaceAll(css, THEME_BACKGROUND_OPACITY, STROOM_THEME_BACKGROUND_OPACITY);
+        css = replaceAll(css, THEME_BACKGROUND_OPACITY, themeConfig.getBackgroundOpacity());
 
-        css = replaceAll(css, THEME_TUBE_OPACITY, STROOM_THEME_TUBE_OPACITY);
+        css = replaceAll(css, THEME_TUBE_OPACITY, themeConfig.getTubeOpacity());
 
-        css = replaceAll(css, THEME_TUBE_VISIBLE, STROOM_THEME_TUBE_VISIBLE);
+        css = replaceAll(css, THEME_TUBE_VISIBLE, themeConfig.getTubeVisible());
 
         pw.write(css);
         pw.close();
 
     }
 
-    private String replaceAll(final String css, final String sourcePattern, final String key) {
-        final String value = propertyService.getProperty(key);
+    private String replaceAll(final String css, final String sourcePattern, final String value) {
         if (value != null) {
             return css.replace(sourcePattern, value);
         }

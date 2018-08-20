@@ -1,11 +1,10 @@
 package stroom.proxy.repo;
 
 public interface ProxyRepositoryConfig {
-
     /**
      * Optional Repository DIR. If set any incoming request will be written to the file system.
      */
-    String getRepoDir();
+    String getDir();
 
     /**
      * Optionally supply a template for naming the files in the repository. This can be specified using multiple replacement variables.
@@ -20,7 +19,7 @@ public interface ProxyRepositoryConfig {
      * Replacement variables that cannot be resolved will be output as '_'.
      * Please ensure that all templates include the '${id}' replacement variable at the start of the file name, failure to do this will result in an invalid repository.
      */
-    String getRepositoryFormat();
+    String getFormat();
 
     /**
      * Interval to roll any writing repositories.

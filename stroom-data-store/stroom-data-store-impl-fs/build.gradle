@@ -16,10 +16,11 @@ dependencies {
     compile libs.stroomDocRef
     compile libs.stroomQueryApi
     compile libs.eventLogging
-//
+
+    compile libs.guice4
+
     compile libs.flyway_core
     compile libs.guava
-    compile libs.guice4
     compile libs.hikari
     compile libs.jooq
     compile libs.javax_inject

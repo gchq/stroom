@@ -19,15 +19,19 @@ package stroom.kafka;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.connectors.kafka.StroomKafkaProducer;
-import stroom.connectors.kafka.StroomKafkaProducerRecord;
-import stroom.connectors.kafka.StroomKafkaRecordMetaData;
+import stroom.docref.DocRef;
+import stroom.kafka.api.StroomKafkaProducer;
+import stroom.kafka.api.StroomKafkaProducerFactory;
+import stroom.kafka.api.StroomKafkaProducerRecord;
+import stroom.kafka.api.StroomKafkaRecordMetaData;
+import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.PipelineFactoryException;
 import stroom.pipeline.factory.PipelineProperty;
+import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.writer.AbstractDestinationProvider;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
@@ -45,29 +49,34 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
 
     private final ErrorReceiverProxy errorReceiverProxy;
     private StroomKafkaProducer stroomKafkaProducer;
-    private final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService;
+    private final StroomKafkaProducerFactory stroomKafkaProducerFactory;
 
     private final ByteArrayOutputStream byteArrayOutputStream;
     private final Queue<CompletableFuture<StroomKafkaRecordMetaData>> kafkaMetaFutures;
 
     private boolean flushOnSend = false;
+    private DocRef kafkaConfigRef;
     private long maxRecordCount;
     private long recordCount = 0;
     private byte[] header;
     private byte[] footer;
 
     protected AbstractKafkaAppender(final ErrorReceiverProxy errorReceiverProxy,
-                                    final StroomKafkaProducerFactoryService stroomKafkaProducerFactoryService) {
+                                    final StroomKafkaProducerFactory stroomKafkaProducerFactory) {
         this.errorReceiverProxy = errorReceiverProxy;
-        this.stroomKafkaProducerFactoryService = stroomKafkaProducerFactoryService;
+        this.stroomKafkaProducerFactory = stroomKafkaProducerFactory;
         this.byteArrayOutputStream = new ByteArrayOutputStream();
         this.kafkaMetaFutures = new ArrayDeque<>();
     }
 
     @Override
     public void startProcessing() {
+        if (kafkaConfigRef == null) {
+            throw new ProcessException("No Kafka config has been specified");
+        }
+
         try {
-            this.stroomKafkaProducer = stroomKafkaProducerFactoryService.getConnector().orElse(null);
+            this.stroomKafkaProducer = stroomKafkaProducerFactory.createProducer(kafkaConfigRef).orElse(null);
         } catch (final RuntimeException e) {
             String msg = "Error initialising kafka producer - " + e.getMessage();
             log(Severity.FATAL_ERROR, msg, e);
@@ -197,6 +206,12 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
             defaultValue = "false")
     public void setFlushOnSend(final boolean flushOnSend) {
         this.flushOnSend = flushOnSend;
+    }
+
+    @PipelineProperty(description = "The Kafka config to use.")
+    @PipelinePropertyDocRef(types = KafkaConfigDoc.DOCUMENT_TYPE)
+    public void setKafkaConfig(final DocRef kafkaConfigRef) {
+        this.kafkaConfigRef = kafkaConfigRef;
     }
 
     @SuppressWarnings("unused")

@@ -34,7 +34,6 @@ import stroom.entity.util.EntityServiceLogUtil;
 import stroom.entity.util.HqlBuilder;
 import stroom.entity.util.SqlBuilder;
 import stroom.entity.util.SqlUtil;
-import stroom.guice.StroomBeanStore;
 import stroom.persist.EntityManagerSupport;
 import stroom.security.SecurityContext;
 import stroom.util.logging.LogExecutionTime;
@@ -58,21 +57,21 @@ public class StroomEntityManagerImpl implements StroomEntityManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomEntityManagerImpl.class);
 
     private final EntityManagerSupport entityManagerSupport;
-    private final StroomBeanStore beanStore;
     private final Provider<EntityEventBus> entityEventBusProvider;
+    private final Provider<SecurityContext> securityContextProvider;
 
     @Inject
     StroomEntityManagerImpl(final EntityManagerSupport entityManagerSupport,
-                            final StroomBeanStore beanStore,
-                            final Provider<EntityEventBus> entityEventBusProvider) {
+                            final Provider<EntityEventBus> entityEventBusProvider,
+                            final Provider<SecurityContext> securityContextProvider) {
         this.entityManagerSupport = entityManagerSupport;
-        this.beanStore = beanStore;
         this.entityEventBusProvider = entityEventBusProvider;
+        this.securityContextProvider = securityContextProvider;
     }
 
     private String getCurrentUser() {
         try {
-            final SecurityContext securityContext = beanStore.getInstance(SecurityContext.class);
+            final SecurityContext securityContext = securityContextProvider.get();
             if (securityContext != null) {
                 return securityContext.getUserId();
             }
@@ -83,10 +82,6 @@ public class StroomEntityManagerImpl implements StroomEntityManager {
         return null;
     }
 
-    //    private EntityManager getEntityManager() {
-//        return entityManagerProvider.get();
-//    }
-//
     @Override
     @SuppressWarnings({"unchecked"})
     public <T extends Entity> T loadEntity(final Class<?> clazz, final T entity) {

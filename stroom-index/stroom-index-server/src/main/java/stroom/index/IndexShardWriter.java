@@ -38,7 +38,7 @@ public interface IndexShardWriter {
 
     int getDocumentCount();
 
-    void updateIndexConfig(IndexConfig indexConfig);
+    void updateIndexStructure(IndexStructure indexStructure);
 
     long getCreationTime();
 

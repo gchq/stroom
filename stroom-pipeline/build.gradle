@@ -3,7 +3,6 @@ ext.moduleName = 'stroom.pipeline'
 dependencies {
     compile project(':stroom-data-meta:stroom-data-meta-api')
     compile project(':stroom-data-store:stroom-data-store-api')
-    compile project(':stroom-properties:stroom-properties-api')
     compile project(':stroom-core-server')
     compile project(':stroom-core-shared')
     compile project(':stroom-docstore:stroom-docstore-shared')
@@ -14,9 +13,8 @@ dependencies {
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
     compile project(':stroom-explorer:stroom-explorer-api')
+    compile project(':stroom-kafka:stroom-kafka-api')
     compile project(':stroom-task:stroom-task-api')
-
-    compile project(':stroom-connectors')
 
     compile libs.commons_lang
     compile libs.guava

@@ -312,7 +312,7 @@ class MetaValueServiceImpl implements MetaValueService {
      * @return The oldest data attribute that we should keep
      */
     private Long getAttributeDatabaseAgeMs() {
-        final long age = metaValueConfig.getDeleteAge();
+        final long age = metaValueConfig.getDeleteAgeMs();
         return System.currentTimeMillis() - age;
     }
 

@@ -16,7 +16,6 @@
 
 package stroom.streamtask;
 
-import stroom.entity.StroomDatabaseInfo;
 import stroom.entity.StroomEntityManager;
 import stroom.entity.util.SqlBuilder;
 
@@ -26,13 +25,10 @@ import java.util.List;
 
 // @Transactional
 public class BatchIdTransactionHelper {
-    private final StroomDatabaseInfo stroomDatabaseInfo;
     private final StroomEntityManager stroomEntityManager;
 
     @Inject
-    BatchIdTransactionHelper(final StroomDatabaseInfo stroomDatabaseInfo,
-                             final StroomEntityManager stroomEntityManager) {
-        this.stroomDatabaseInfo = stroomDatabaseInfo;
+    BatchIdTransactionHelper(final StroomEntityManager stroomEntityManager) {
         this.stroomEntityManager = stroomEntityManager;
     }
 
@@ -44,15 +40,9 @@ public class BatchIdTransactionHelper {
         sql.append(tempIdTable);
         sql.append(" (");
         sql.append("ID");
-        if (stroomDatabaseInfo.isMysql()) {
-            sql.append(" bigint(20) NOT NULL");
-        } else {
-            sql.append(" BIGINT");
-        }
+        sql.append(" bigint(20) NOT NULL");
         sql.append(")");
-        if (stroomDatabaseInfo.isMysql()) {
-            sql.append(" ENGINE=InnoDB DEFAULT CHARSET=latin1;");
-        }
+        sql.append(" ENGINE=InnoDB DEFAULT CHARSET=latin1;");
 
         return executeUpdate(sql);
     }
@@ -77,15 +67,7 @@ public class BatchIdTransactionHelper {
             sql.append(")");
         }
 
-        if (stroomDatabaseInfo.isMysql()) {
-            return executeUpdate(sql);
-        } else {
-            // sql.append(") WITH DATA");
-            executeUpdate(sql);
-            // HSQLDB does not return the number of rows added so return 1 so
-            // that the rest of the code runs.
-            return getTempIdCount(tempIdTable);
-        }
+        return executeUpdate(sql);
     }
 
     public Long getTempIdCount(final String tempIdTable) {
@@ -100,39 +82,24 @@ public class BatchIdTransactionHelper {
     public long deleteWithJoin(final String fromTable, final String fromColumn, final String joinTable,
                                final String joinColumn) {
         final SqlBuilder sql = new SqlBuilder();
-        if (stroomDatabaseInfo.isMysql()) {
-            // MySQL does a delete much faster if we join to the table
-            // containing the ids to delete.
-            sql.append("DELETE ");
-            sql.append(fromTable);
-            sql.append(" FROM ");
-            sql.append(fromTable);
-            sql.append(" INNER JOIN ");
-            sql.append(joinTable);
-            sql.append(" ON ");
-            sql.append("(");
-            sql.append(fromTable);
-            sql.append(".");
-            sql.append(fromColumn);
-            sql.append(" = ");
-            sql.append(joinTable);
-            sql.append(".");
-            sql.append(joinColumn);
-            sql.append(")");
-        } else {
-            // HSQLDB cannot do a delete with a join so instead use WHERE IN and
-            // select the ids to delete.
-            sql.append("DELETE FROM ");
-            sql.append(fromTable);
-            sql.append(" WHERE ");
-            sql.append(fromColumn);
-            sql.append(" IN (");
-            sql.append("SELECT ");
-            sql.append(joinColumn);
-            sql.append(" FROM ");
-            sql.append(joinTable);
-            sql.append(")");
-        }
+        // MySQL does a delete much faster if we join to the table
+        // containing the ids to delete.
+        sql.append("DELETE ");
+        sql.append(fromTable);
+        sql.append(" FROM ");
+        sql.append(fromTable);
+        sql.append(" INNER JOIN ");
+        sql.append(joinTable);
+        sql.append(" ON ");
+        sql.append("(");
+        sql.append(fromTable);
+        sql.append(".");
+        sql.append(fromColumn);
+        sql.append(" = ");
+        sql.append(joinTable);
+        sql.append(".");
+        sql.append(joinColumn);
+        sql.append(")");
         return executeUpdate(sql);
     }
 

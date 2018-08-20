@@ -1,34 +1,54 @@
 package stroom.data.meta.impl.db;
 
-import stroom.properties.api.PropertyService;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.shared.ModelStringUtil;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-class MetaValueConfig {
-    private final PropertyService propertyService;
+public class MetaValueConfig {
+    private String deleteAge = "30d";
+    private int deleteBatchSize = 1000;
+    private int flushBatchSize = 1000;
+    private boolean addAsync = true;
 
-    @Inject
-    MetaValueConfig(final PropertyService propertyService) {
-        this.propertyService = propertyService;
+    @JsonPropertyDescription("The age of streams that we store meta data in the database for")
+    public String getDeleteAge() {
+        return deleteAge;
     }
 
-    long getDeleteAge() {
-        final String metaDatabaseAge = propertyService.getProperty("stroom.meta.deleteAge", "30d");
-        return ModelStringUtil.parseDurationString(metaDatabaseAge);
+    public void setDeleteAge(final String deleteAge) {
+        this.deleteAge = deleteAge;
     }
 
-    int getDeleteBatchSize() {
-        return propertyService.getIntProperty("stroom.meta.deleteBatchSize", 1000);
+    @JsonIgnore
+    long getDeleteAgeMs() {
+        return ModelStringUtil.parseDurationString(deleteAge);
     }
 
-    int getFlushBatchSize() {
-        return propertyService.getIntProperty("stroom.meta.flushBatchSize", 1000);
+    @JsonPropertyDescription("How many stream attributes we want to try and delete in a single batch")
+    public int getDeleteBatchSize() {
+        return deleteBatchSize;
     }
 
-    boolean isAddAsync() {
-        return propertyService.getBooleanProperty("stroom.meta.addAsync", true);
+    public void setDeleteBatchSize(final int deleteBatchSize) {
+        this.deleteBatchSize = deleteBatchSize;
+    }
+
+    public int getFlushBatchSize() {
+        return flushBatchSize;
+    }
+
+    public void setFlushBatchSize(final int flushBatchSize) {
+        this.flushBatchSize = flushBatchSize;
+    }
+
+    public boolean isAddAsync() {
+        return addAsync;
+    }
+
+    public void setAddAsync(final boolean addAsync) {
+        this.addAsync = addAsync;
     }
 }

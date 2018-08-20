@@ -55,8 +55,6 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ClusterSearchResultCollector implements Store, ClusterResultCollector<NodeResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterSearchResultCollector.class);
 
-    public static final String PROP_KEY_STORE_SIZE = "stroom.search.storeSize";
-
     private final ClusterResultCollectorCache clusterResultCollectorCache;
     private final CollectorId id;
     private final ConcurrentHashMap<Node, Set<String>> errors = new ConcurrentHashMap<>();

@@ -8,7 +8,6 @@ dependencies {
     compile project(':stroom-security:stroom-security-client-api')
     compile project(':stroom-statistics:stroom-statistics-api')
     compile project(':stroom-statistics:stroom-statistics-shared')
-    compile project(':stroom-properties:stroom-properties-api')
 
     compile libs.stroomDocRef
     compile libs.gwt_user

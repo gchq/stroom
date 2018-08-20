@@ -10,10 +10,8 @@ dependencies {
     compile project(':stroom-statistics:stroom-statistics-api')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
-    compile project(':stroom-connectors')
     compile project(':stroom-data-meta:stroom-data-meta-api')
     compile project(':stroom-data-store:stroom-data-store-api')
-    compile project(':stroom-properties:stroom-properties-api')
     compile project(':stroom-task:stroom-task-api')
 
     compile libs.eventLogging
@@ -56,7 +54,7 @@ dependencies {
     compile libs.flyway_core
     compile libs.vavr
 
-    compile libs.c3p0
+    compile libs.hikari
     compile libs.commons_fileupload
     compile libs.guice4
     compile libs.fast_classpath_scanner

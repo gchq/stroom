@@ -72,8 +72,9 @@ include 'stroom-index:stroom-index-server'
 include 'stroom-index:stroom-index-client'
 
 // Elastic
-include 'stroom-elastic:stroom-elastic-server'
-include 'stroom-elastic:stroom-elastic-client-impl_5_6_4'
+include 'stroom-elastic:stroom-elastic-impl-http'
+include 'stroom-elastic:stroom-elastic-impl'
+include 'stroom-elastic:stroom-elastic-api'
 
 // Statistics
 include 'stroom-statistics:stroom-statistics-api'
@@ -114,9 +115,11 @@ include 'stroom-util'
 
 include 'stroom-pipeline'
 
-include 'stroom-connectors'
-
-include 'stroom-kafka-client-impl_0_10_0_1'
+// Kafka
+include 'stroom-kafka:stroom-kafka-client-impl_0_10_0_1'
+include 'stroom-kafka:stroom-kafka-shared'
+include 'stroom-kafka:stroom-kafka-server'
+include 'stroom-kafka:stroom-kafka-api'
 
 // Package it all together.
 include 'stroom-app'

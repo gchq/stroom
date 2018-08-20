@@ -9,7 +9,6 @@ import org.apache.curator.x.discovery.ServiceDiscovery;
 import org.apache.curator.x.discovery.ServiceDiscoveryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.properties.api.PropertyService;
 import stroom.util.lifecycle.StroomShutdown;
 
 import javax.inject.Inject;
@@ -27,15 +26,7 @@ public class ServiceDiscoveryManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceDiscoveryManager.class);
 
-    public static final String PROP_KEY_PREFIX = "stroom.serviceDiscovery.";
-    public static final String PROP_KEY_ZOOKEEPER_QUORUM = PROP_KEY_PREFIX + "zookeeperUrl";
-    public static final String PROP_KEY_CURATOR_BASE_SLEEP_TIME_MS = PROP_KEY_PREFIX + "curator.baseSleepTimeMs";
-    public static final String PROP_KEY_CURATOR_MAX_SLEEP_TIME_MS = PROP_KEY_PREFIX + "curator.maxSleepTimeMs";
-    public static final String PROP_KEY_CURATOR_MAX_RETRIES = PROP_KEY_PREFIX + "curator.maxRetries";
-    public static final String PROP_KEY_ZOOKEEPER_BASE_PATH = PROP_KEY_PREFIX + "zookeeperBasePath";
-    public static final String PROP_KEY_SERVICE_DISCOVERY_ENABLED = PROP_KEY_PREFIX + "enabled";
-
-    private final PropertyService propertyService;
+    private final ServiceDiscoveryConfig serviceDiscoveryConfig;
     private final String zookeeperUrl;
 
     private final AtomicReference<CuratorFramework> curatorFrameworkRef = new AtomicReference<>();
@@ -46,14 +37,12 @@ public class ServiceDiscoveryManager {
 
     @SuppressWarnings("unused")
     @Inject
-    ServiceDiscoveryManager(final PropertyService propertyService) {
-        this.propertyService = propertyService;
-        this.zookeeperUrl = propertyService.getProperty(PROP_KEY_ZOOKEEPER_QUORUM);
+    ServiceDiscoveryManager(final ServiceDiscoveryConfig serviceDiscoveryConfig) {
+        this.serviceDiscoveryConfig = serviceDiscoveryConfig;
+        this.zookeeperUrl = serviceDiscoveryConfig.getZookeeperUrl();
 
 
-        boolean isServiceDiscoveryEnabled = propertyService.getBooleanProperty(
-                PROP_KEY_SERVICE_DISCOVERY_ENABLED,
-                false);
+        boolean isServiceDiscoveryEnabled = serviceDiscoveryConfig.isEnabled();
 
         if (isServiceDiscoveryEnabled) {
             //try and start the connection with ZK in another thread to prevent connection problems from stopping the bean
@@ -80,9 +69,9 @@ public class ServiceDiscoveryManager {
     }
 
     private void startCurator() {
-        int baseSleepTimeMs = propertyService.getIntProperty(PROP_KEY_CURATOR_BASE_SLEEP_TIME_MS, 5_000);
-        int maxSleepTimeMs = propertyService.getIntProperty(PROP_KEY_CURATOR_MAX_SLEEP_TIME_MS, 300_000);
-        int maxRetries = propertyService.getIntProperty(PROP_KEY_CURATOR_MAX_RETRIES, 100);
+        int baseSleepTimeMs = serviceDiscoveryConfig.getCuratorBaseSleepTimeMs();
+        int maxSleepTimeMs = serviceDiscoveryConfig.getCuratorMaxSleepTimeMs();
+        int maxRetries = serviceDiscoveryConfig.getCuratorMaxRetries();
 
         RetryPolicy retryPolicy = new BoundedExponentialBackoffRetry(baseSleepTimeMs, maxSleepTimeMs, maxRetries);
 
@@ -107,8 +96,7 @@ public class ServiceDiscoveryManager {
     }
 
     private void startServiceDiscovery() {
-        String basePath = Preconditions.checkNotNull(propertyService.getProperty(PROP_KEY_ZOOKEEPER_BASE_PATH));
-
+        String basePath = Preconditions.checkNotNull(serviceDiscoveryConfig.getZookeeperBasePath());
         ServiceDiscovery<String> serviceDiscovery = ServiceDiscoveryBuilder
                 .builder(String.class)
                 .client(Preconditions.checkNotNull(curatorFrameworkRef.get(), "curatorFramework should not be null at this point"))

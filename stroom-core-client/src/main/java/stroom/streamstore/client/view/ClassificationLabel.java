@@ -24,8 +24,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import stroom.alert.client.event.AlertEvent;
-import stroom.properties.global.client.ClientPropertyCache;
-import stroom.properties.shared.ClientProperties;
+import stroom.ui.config.client.UiConfigCache;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,12 +36,12 @@ public class ClassificationLabel extends Composite {
     Label classification;
 
     @Inject
-    public ClassificationLabel(final ClientPropertyCache clientPropertyCache) {
+    public ClassificationLabel(final UiConfigCache clientPropertyCache) {
         initWidget(binder.createAndBindUi(this));
 
         clientPropertyCache.get()
                 .onSuccess(result -> {
-                    final String csv = result.get(ClientProperties.LABEL_COLOURS);
+                    final String csv = result.getThemeConfig().getLabelColours();
                     if (csv != null) {
                         final String[] parts = csv.split(",");
                         for (final String part : parts) {

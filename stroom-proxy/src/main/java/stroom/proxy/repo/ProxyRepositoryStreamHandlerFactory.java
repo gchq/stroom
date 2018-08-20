@@ -23,7 +23,7 @@ public class ProxyRepositoryStreamHandlerFactory implements StreamHandlerFactory
 
     @Override
     public List<StreamHandler> addReceiveHandlers(final List<StreamHandler> handlers) {
-        if (proxyRepositoryConfig != null && !Strings.isNullOrEmpty(proxyRepositoryConfig.getRepoDir())) {
+        if (proxyRepositoryConfig != null && !Strings.isNullOrEmpty(proxyRepositoryConfig.getDir())) {
             handlers.add(proxyRepositoryStreamHandlerProvider.get());
         }
         return handlers;

@@ -18,10 +18,8 @@ package stroom.statistics.sql;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.StroomDatabaseInfo;
 import stroom.entity.util.ConnectionUtil;
 import stroom.entity.util.SqlUtil;
-import stroom.properties.api.PropertyService;
 import stroom.statistics.shared.StatisticType;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
@@ -214,8 +212,7 @@ public class SQLStatisticAggregationTransactionHelper {
             .append("AND VAL_TP = ?")
             .toString();
     private final ConnectionProvider connectionProvider;
-    private final StroomDatabaseInfo stroomDatabaseInfo;
-    private final PropertyService propertyService;
+    private final SQLStatisticsConfig config;
 
     // @formatter:on
     private final AggregateConfig[] aggregateConfig = new AggregateConfig[]{
@@ -251,11 +248,9 @@ public class SQLStatisticAggregationTransactionHelper {
 
     @Inject
     SQLStatisticAggregationTransactionHelper(final ConnectionProvider connectionProvider,
-                                             final StroomDatabaseInfo stroomDatabaseInfo,
-                                             final PropertyService propertyService) {
+                                             final SQLStatisticsConfig config) {
         this.connectionProvider = connectionProvider;
-        this.stroomDatabaseInfo = stroomDatabaseInfo;
-        this.propertyService = propertyService;
+        this.config = config;
     }
 
     public static final long round(final long timeMs, final int precision) {
@@ -350,10 +345,6 @@ public class SQLStatisticAggregationTransactionHelper {
 
     public long aggregateConfigStage1(final TaskContext taskContext, final String prefix, final long batchSize,
                                       final long timeNowMs) throws SQLException {
-        if (!isMySqlDialect()) {
-            throw new UnsupportedOperationException("Need MySQL to do statistics aggregation");
-        }
-
         long processCount = 0;
 
         try (final Connection connection = connectionProvider.getConnection()) {
@@ -419,10 +410,6 @@ public class SQLStatisticAggregationTransactionHelper {
 
     public void aggregateConfigStage2(final TaskContext taskContext, final String prefix, final long timeNowMs)
             throws SQLException {
-        if (!isMySqlDialect()) {
-            throw new UnsupportedOperationException("Need MySQL to do statistics aggregation");
-        }
-
         try (final Connection connection = connectionProvider.getConnection()) {
             // Stage 2 is about moving stats from one precision in STAT_VAL to a
             // coarser one once they have become too old for their current
@@ -479,12 +466,8 @@ public class SQLStatisticAggregationTransactionHelper {
         }
     }
 
-    protected boolean isMySqlDialect() {
-        return stroomDatabaseInfo.isMysql();
-    }
-
     private Long getStatsRetentionAgeMs() {
-        final String propVal = propertyService.getProperty(SQLStatisticConstants.PROP_KEY_STATS_MAX_PROCESSING_AGE);
+        final String propVal = config.getMaxProcessingAge();
         final Long ageMs = ModelStringUtil.parseDurationString(propVal);
         return ageMs;
     }

@@ -23,16 +23,15 @@ import com.zaxxer.hikari.HikariConfig;
 import org.flywaydb.core.Flyway;
 import stroom.properties.api.ConnectionConfig;
 import stroom.properties.api.ConnectionPoolConfig;
-import stroom.properties.api.PropertyService;
 import stroom.task.api.TaskHandler;
 
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
 
 public class SQLStatisticsModule extends AbstractModule {
     private static final String FLYWAY_LOCATIONS = "stroom/statistics/sql/db/migration/mysql";
     private static final String FLYWAY_TABLE = "statistics_schema_history";
-    private static final String CONNECTION_PROPERTY_PREFIX = "stroom.statistics.sql.";
 
     @Override
     protected void configure() {
@@ -45,9 +44,11 @@ public class SQLStatisticsModule extends AbstractModule {
 
     @Provides
     @Singleton
-    ConnectionProvider getConnectionProvider(final PropertyService propertyService) {
-        final ConnectionConfig connectionConfig = getConnectionConfig(propertyService);
-        final ConnectionPoolConfig connectionPoolConfig = getConnectionPoolConfig(propertyService);
+    ConnectionProvider getConnectionProvider(final Provider<SQLStatisticsConfig> configProvider) {
+        final ConnectionConfig connectionConfig = configProvider.get().getConnectionConfig();
+        final ConnectionPoolConfig connectionPoolConfig = configProvider.get().getConnectionPoolConfig();
+
+        connectionConfig.validate();
 
         final HikariConfig config = new HikariConfig();
         config.setJdbcUrl(connectionConfig.getJdbcDriverUrl());
@@ -69,14 +70,6 @@ public class SQLStatisticsModule extends AbstractModule {
         flyway.setBaselineOnMigrate(true);
         flyway.migrate();
         return flyway;
-    }
-
-    private ConnectionConfig getConnectionConfig(final PropertyService propertyService) {
-        return new ConnectionConfig(CONNECTION_PROPERTY_PREFIX, propertyService);
-    }
-
-    private ConnectionPoolConfig getConnectionPoolConfig(final PropertyService propertyService) {
-        return new ConnectionPoolConfig(CONNECTION_PROPERTY_PREFIX, propertyService);
     }
 
     @Override

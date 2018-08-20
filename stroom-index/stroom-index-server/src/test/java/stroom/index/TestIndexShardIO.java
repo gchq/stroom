@@ -33,21 +33,21 @@ import stroom.search.shard.IndexShardSearcher;
 import stroom.search.shard.IndexShardSearcherImpl;
 import stroom.util.io.FileUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
-import stroom.util.test.StroomUnitTest;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 
 @RunWith(StroomJUnit4ClassRunner.class)
-public class TestIndexShardIO extends StroomUnitTest {
+public class TestIndexShardIO {
 
     //    private static final IndexShardService INDEX_SHARD_SERVICE = new MockIndexShardService();
     private static final List<IndexField> INDEX_FIELDS = IndexFields.createStreamIndexFields();
     //    private static final IndexShardWriterCache INDEX_SHARD_WRITER_CACHE = new MockIndexShardWriterCache();
 //    private static final IndexShardManager INDEX_SHARD_MANAGER = new MockIndexShardManager();
-    private static final IndexConfig INDEX_CONFIG;
+    private static final IndexStructure INDEX_CONFIG;
 
     static {
         INDEX_FIELDS.add(IndexField.createField("Id"));
@@ -56,7 +56,7 @@ public class TestIndexShardIO extends StroomUnitTest {
 
         final IndexDoc index = new IndexDoc();
         index.setName("Test");
-        INDEX_CONFIG = new IndexConfig(index, INDEX_FIELDS, new IndexFieldsMap(INDEX_FIELDS));
+        INDEX_CONFIG = new IndexStructure(index, INDEX_FIELDS, new IndexFieldsMap(INDEX_FIELDS));
     }
 
     private Document buildDocument(final int id) {
@@ -77,7 +77,7 @@ public class TestIndexShardIO extends StroomUnitTest {
     @Test
     public void testOpenCloseManyWrite() throws IOException {
         final VolumeEntity volume = new VolumeEntity();
-        volume.setPath(FileUtil.getCanonicalPath(getCurrentTestDir()));
+        volume.setPath(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")));
         final IndexDoc index = new IndexDoc();
         index.setName("Test");
 
@@ -110,7 +110,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         index.setName("Test");
 
         final VolumeEntity volume = new VolumeEntity();
-        volume.setPath(FileUtil.getCanonicalPath(getCurrentTestDir()));
+        volume.setPath(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")));
         final IndexShard idx1 = new IndexShard();
         idx1.setIndexUuid(index.getUuid());
         idx1.setPartition("all");
@@ -287,7 +287,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         index.setName("Test");
 
         final VolumeEntity volume = new VolumeEntity();
-        volume.setPath(FileUtil.getCanonicalPath(getCurrentTestDir()));
+        volume.setPath(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")));
         final IndexShard idx1 = new IndexShard();
         idx1.setIndexUuid(index.getUuid());
         idx1.setPartition("all");
@@ -318,7 +318,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         index.setName("Test");
 
         final VolumeEntity volume = new VolumeEntity();
-        volume.setPath(FileUtil.getCanonicalPath(getCurrentTestDir()));
+        volume.setPath(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")));
         final IndexShard idx1 = new IndexShard();
         idx1.setIndexUuid(index.getUuid());
         idx1.setPartition("all");
@@ -349,7 +349,7 @@ public class TestIndexShardIO extends StroomUnitTest {
         index.setName("Test");
 
         final VolumeEntity volume = new VolumeEntity();
-        final Path testDir = getCurrentTestDir();
+        final Path testDir = Files.createTempDirectory("stroom");
         volume.setPath(FileUtil.getCanonicalPath(testDir));
         FileUtil.deleteDir(testDir);
         final IndexShard idx1 = new IndexShard();

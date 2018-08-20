@@ -13,7 +13,6 @@ dependencies {
     compile project(':stroom-statistics:stroom-statistics-shared')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
-    compile project(':stroom-connectors')
     compile project(':stroom-explorer:stroom-explorer-api')
     compile project(':stroom-task:stroom-task-api')
 
@@ -31,8 +30,9 @@ dependencies {
     compile libs.dropwizard_metrics_healthchecks
     compile libs.flyway_core
     compile libs.guava
-    compile libs.guice4
     compile libs.javax_inject
+
+    compile libs.guice4
 
     compile libs.jaxb_api
 
@@ -44,8 +44,8 @@ dependencies {
     compile libs.ws_rs_api
     compile libs.xml_apis
     compile(libs.hbase) { transitive = false } //hbase-common is currently only used for its Bytes class, so exclude all its deps
-    compile libs.guice4
     compile libs.hibernate_jpa_api
+    compile libs.guice4
 
     compile libs.dropwizard_metrics_annotation
     compile libs.dropwizard_metrics_healthchecks

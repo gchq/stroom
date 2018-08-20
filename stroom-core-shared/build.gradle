@@ -16,6 +16,7 @@ dependencies {
     compile libs.jackson_annotations
 
     compile libs.jaxb_api
+    compile libs.javax_inject;
     compile libs.validation_api
 
     testRuntime libs.jaxb_runtime

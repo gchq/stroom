@@ -40,9 +40,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class StroomProperties {
     public static final String STROOM_TEMP = "stroom.temp";
-    public static final String USER_CONF_DIR = ".stroom";
+//    public static final String USER_CONF_DIR = ".stroom";
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomProperties.class);
-    private static final String USER_CONF_PATH = USER_CONF_DIR + "/stroom.conf";
+//    private static final String USER_CONF_PATH = USER_CONF_DIR + "/stroom.conf";
     private static final String STROOM_TMP_ENV = "STROOM_TMP";
     private static final String JAVA_IO_TMPDIR = "java.io.tmpdir";
     private static final String TRACE = "TRACE";
@@ -68,11 +68,11 @@ public class StroomProperties {
             setProperty("buildVersion", BuildInfoUtil.getBuildVersion(), Source.SYSTEM);
             setProperty("upDate", upDate, Source.SYSTEM);
 
-            // Get properties for the current user if there are any.
-            final Path file = Paths.get(System.getProperty("user.home") + "/" + USER_CONF_PATH);
-            if (Files.isRegularFile(file)) {
-                loadResource(file, Source.USER_CONF);
-            }
+//            // Get properties for the current user if there are any.
+//            final Path file = Paths.get(System.getProperty("user.home") + "/" + USER_CONF_PATH);
+//            if (Files.isRegularFile(file)) {
+//                loadResource(file, Source.USER_CONF);
+//            }
             ensureStroomTempEstablished();
         }
     }
@@ -410,7 +410,6 @@ public class StroomProperties {
     private static String getEnv(final String propertyName, final boolean trace) {
         // Environment variable names are transformations of property names.
         // E.g. stroom.temp => STROOM_TEMP.
-        // E.g. stroom.jdbcDriverUsername => STROOM_JDBC_DRIVER_USERNAME
         final String environmentVariableName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, propertyName.replace('.', '_'));
         final String environmentVariable = System.getenv(environmentVariableName);
 
@@ -450,7 +449,7 @@ public class StroomProperties {
         GUICE(1, "Guice context"),
         DB(2, "Database"),
         WAR(3, "WAR property file"),
-        USER_CONF(4, USER_CONF_PATH),
+//        USER_CONF(4, USER_CONF_PATH),
         ENV(5, "Environment variable"),
         SYSTEM(6, "System property"),
         TEST(7, "Test");

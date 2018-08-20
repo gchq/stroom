@@ -8,11 +8,10 @@ dependencies {
     integrationTestCompile project(':stroom-dashboard:stroom-dashboard-server')
     integrationTestCompile project(':stroom-data-meta:stroom-data-meta-impl-mock')
     integrationTestCompile project(':stroom-data-store:stroom-data-store-impl-mock')
-    integrationTestCompile project(':stroom-elastic:stroom-elastic-server')
+    integrationTestCompile project(':stroom-elastic:stroom-elastic-impl')
     integrationTestCompile project(':stroom-externaldoc:stroom-externaldoc-server')
     integrationTestCompile project(':stroom-headless')
     integrationTestCompile project(':stroom-index:stroom-index-server')
-    integrationTestCompile project(':stroom-properties:stroom-properties-impl-mock')
     integrationTestCompile project(':stroom-security:stroom-security-impl-mock')
     integrationTestCompile project(':stroom-security:stroom-security-server')
     integrationTestCompile project(':stroom-statistics:stroom-statistics-server')
@@ -63,4 +62,4 @@ task setupSampleData(type: JavaExec) {
 //TODO This specific dep is needed to ensure TestKafkaExternalLoader has the jar available 
 //for its test. This is a TODO as stroom-connectors needs a big refactor once we
 //decide what we are doing with plugable client libs and pipeline elements.
-tasks.integrationTest.dependsOn ':stroom-kafka-client-impl_0_10_0_1:copyPluginJar'
+tasks.integrationTest.dependsOn ':stroom-kafka:stroom-kafka-client-impl_0_10_0_1:copyPluginJar'

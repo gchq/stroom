@@ -2,8 +2,8 @@ package stroom.pipeline.destination;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.connectors.kafka.StroomKafkaProducer;
-import stroom.connectors.kafka.StroomKafkaProducerRecord;
+import stroom.kafka.api.StroomKafkaProducer;
+import stroom.kafka.api.StroomKafkaProducerRecord;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

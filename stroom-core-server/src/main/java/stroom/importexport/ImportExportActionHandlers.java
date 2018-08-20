@@ -16,8 +16,6 @@
 
 package stroom.importexport;
 
-import stroom.properties.shared.ClientProperties;
-import stroom.properties.api.PropertyService;
 import stroom.guice.StroomBeanStore;
 
 import javax.inject.Inject;
@@ -30,15 +28,13 @@ import java.util.concurrent.ConcurrentHashMap;
 class ImportExportActionHandlers {
     private final StroomBeanStore beanStore;
     private final ImportExportActionHandlerFactory importExportActionHandlerFactory;
-    private final PropertyService propertyService;
 
     private volatile Handlers handlers;
 
     @Inject
-    ImportExportActionHandlers(final StroomBeanStore beanStore, final ImportExportActionHandlerFactory importExportActionHandlerFactory, final PropertyService propertyService) {
+    ImportExportActionHandlers(final StroomBeanStore beanStore, final ImportExportActionHandlerFactory importExportActionHandlerFactory) {
         this.beanStore = beanStore;
         this.importExportActionHandlerFactory = importExportActionHandlerFactory;
-        this.propertyService = propertyService;
     }
 
     ImportExportActionHandler getHandler(final String type) {
@@ -52,7 +48,7 @@ class ImportExportActionHandlers {
 
     private Handlers getHandlers() {
         if (handlers == null) {
-            handlers = new Handlers(beanStore, importExportActionHandlerFactory, propertyService);
+            handlers = new Handlers(beanStore, importExportActionHandlerFactory);
         }
         return handlers;
     }
@@ -61,16 +57,12 @@ class ImportExportActionHandlers {
         private final Map<String, ImportExportActionHandler> allHandlers = new ConcurrentHashMap<>();
 
         Handlers(final StroomBeanStore beanStore,
-                 final ImportExportActionHandlerFactory importExportActionHandlerFactory,
-                 final PropertyService propertyService) {
+                 final ImportExportActionHandlerFactory importExportActionHandlerFactory) {
             // Add external handlers.
-            propertyService.getCsvProperty(ClientProperties.EXTERNAL_DOC_REF_TYPES)
-                    .forEach(type -> {
-                        final ImportExportActionHandler importExportActionHandler = importExportActionHandlerFactory.create(type);
-                        if (importExportActionHandler != null) {
-                            addImportExportActionHandler(importExportActionHandler);
-                        }
-                    });
+            final Set<ImportExportActionHandler> importExportActionHandlers = importExportActionHandlerFactory.getImportExportActionHandlers();
+            if (importExportActionHandlers != null) {
+                importExportActionHandlers.forEach(this::addImportExportActionHandler);
+            }
 
             // Add internal handlers.
             final Set<ImportExportActionHandler> set = beanStore.getInstancesOfType(ImportExportActionHandler.class);

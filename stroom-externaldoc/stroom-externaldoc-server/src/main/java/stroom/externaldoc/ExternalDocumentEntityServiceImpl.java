@@ -18,14 +18,12 @@ package stroom.externaldoc;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.eclipse.jetty.http.HttpStatus;
+import stroom.docref.DocRef;
 import stroom.docstore.EncodingUtil;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.SharedDocRef;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
-import stroom.properties.shared.ClientProperties;
-import stroom.properties.api.PropertyService;
-import stroom.docref.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.query.audit.ExportDTO;
 import stroom.query.audit.client.DocRefResourceHttpClient;
@@ -52,13 +50,10 @@ public class ExternalDocumentEntityServiceImpl implements ExternalDocumentEntity
     private final DocRefResourceHttpClient docRefHttpClient;
 
     ExternalDocumentEntityServiceImpl(final String type,
-                                      final SecurityContext securityContext,
-                                      final PropertyService propertyService) {
+                                      final String serviceUrl,
+                                      final SecurityContext securityContext) {
         this.type = type;
         this.securityContext = securityContext;
-
-        final String urlPropKey = ClientProperties.URL_DOC_REF_SERVICE_BASE + type;
-        final String serviceUrl = propertyService.getProperty(String.format("%s|trace", urlPropKey));
         this.docRefHttpClient = new DocRefResourceHttpClient(serviceUrl);
     }
 

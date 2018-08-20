@@ -24,23 +24,22 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.AlertEvent;
-import stroom.properties.global.client.ClientPropertyCache;
-import stroom.properties.shared.ClientProperties;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 public class AboutPresenter extends MyPresenter<AboutPresenter.AboutView, AboutPresenter.AboutProxy> {
     @Inject
     public AboutPresenter(final EventBus eventBus, final AboutView view, final AboutProxy proxy,
-                          final ClientPropertyCache clientPropertyCache) {
+                          final UiConfigCache clientPropertyCache) {
         super(eventBus, view, proxy);
         clientPropertyCache.get()
                 .onSuccess(result -> {
-                    view.setHTML(result.get(ClientProperties.ABOUT_HTML));
-                    view.getBuildVersion().setText("Build Version: " + result.get(ClientProperties.BUILD_VERSION));
-                    view.getBuildDate().setText("Build Date: " + result.get(ClientProperties.BUILD_DATE));
-                    view.getUpDate().setText("Up Date: " + result.get(ClientProperties.UP_DATE));
-                    view.getNodeName().setText("Node Name: " + result.get(ClientProperties.NODE_NAME));
+                    view.setHTML(result.getAboutHtml());
+                    view.getBuildVersion().setText("Build Version: " + result.getBuildVersion());
+                    view.getBuildDate().setText("Build Date: " + result.getBuildDate());
+                    view.getUpDate().setText("Up Date: " + result.getUpDate());
+                    view.getNodeName().setText("Node Name: " + result.getNodeName());
                 })
                 .onFailure(caught -> AlertEvent.fireError(AboutPresenter.this, caught.getMessage(), null));
     }

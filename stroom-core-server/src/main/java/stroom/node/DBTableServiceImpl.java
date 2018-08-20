@@ -18,7 +18,6 @@ package stroom.node;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.StroomDatabaseInfo;
 import stroom.entity.shared.Sort;
 import stroom.entity.shared.Sort.Direction;
 import stroom.guice.StroomBeanStore;
@@ -32,7 +31,6 @@ import stroom.util.shared.CompareUtil;
 import javax.inject.Inject;
 import javax.sql.DataSource;
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -43,15 +41,12 @@ public class DBTableServiceImpl implements DBTableService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DBTableServiceImpl.class);
 
     private final StroomBeanStore beanStore;
-    private final StroomDatabaseInfo stroomDatabaseInfo;
     private final Security security;
 
     @Inject
     DBTableServiceImpl(final StroomBeanStore beanStore,
-                       final StroomDatabaseInfo stroomDatabaseInfo,
                        final Security security) {
         this.beanStore = beanStore;
-        this.stroomDatabaseInfo = stroomDatabaseInfo;
         this.security = security;
     }
 
@@ -120,31 +115,19 @@ public class DBTableServiceImpl implements DBTableService {
         try (final Connection connection = dataSource.getConnection()) {
             connection.setReadOnly(true);
 
-            if (stroomDatabaseInfo.isMysql()) {
-                try (final PreparedStatement preparedStatement = connection.prepareStatement("show table status where comment != 'VIEW'",
-                        ResultSet.TYPE_FORWARD_ONLY,
-                        ResultSet.CONCUR_READ_ONLY,
-                        ResultSet.CLOSE_CURSORS_AT_COMMIT)) {
-                    try (final ResultSet resultSet = preparedStatement.executeQuery()) {
-                        while (resultSet.next()) {
-                            final DBTableStatus status = new DBTableStatus();
-                            status.setDb(connection.getCatalog());
-                            status.setTable(resultSet.getString("Name"));
-                            status.setCount(resultSet.getLong("Rows"));
-                            status.setDataSize(resultSet.getLong("Data_length"));
-                            status.setIndexSize(resultSet.getLong("Index_length"));
-
-                            rtnList.add(status);
-                        }
-                    }
-                }
-
-            } else {
-                final DatabaseMetaData databaseMetaData = connection.getMetaData();
-                try (final ResultSet resultSet = databaseMetaData.getTables(null, null, null, new String[]{"TABLE"})) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement("show table status where comment != 'VIEW'",
+                    ResultSet.TYPE_FORWARD_ONLY,
+                    ResultSet.CONCUR_READ_ONLY,
+                    ResultSet.CLOSE_CURSORS_AT_COMMIT)) {
+                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {
                         final DBTableStatus status = new DBTableStatus();
-                        status.setTable(resultSet.getString("TABLE_NAME"));
+                        status.setDb(connection.getCatalog());
+                        status.setTable(resultSet.getString("Name"));
+                        status.setCount(resultSet.getLong("Rows"));
+                        status.setDataSize(resultSet.getLong("Data_length"));
+                        status.setIndexSize(resultSet.getLong("Index_length"));
+
                         rtnList.add(status);
                     }
                 }

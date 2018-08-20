@@ -10,15 +10,14 @@ import stroom.data.meta.api.DataSecurityFilter;
 import stroom.entity.shared.Clearable;
 import stroom.properties.api.ConnectionConfig;
 import stroom.properties.api.ConnectionPoolConfig;
-import stroom.properties.api.PropertyService;
 
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
 
 public class DataMetaDbModule extends AbstractModule {
     private static final String FLYWAY_LOCATIONS = "stroom/data/meta/impl/db";
     private static final String FLYWAY_TABLE = "data_meta_schema_history";
-    private static final String CONNECTION_PROPERTY_PREFIX = "stroom.data.meta.";
 
     @Override
     protected void configure() {
@@ -36,9 +35,11 @@ public class DataMetaDbModule extends AbstractModule {
 
     @Provides
     @Singleton
-    ConnectionProvider getConnectionProvider(final PropertyService propertyService) {
-        final ConnectionConfig connectionConfig = getConnectionConfig(propertyService);
-        final ConnectionPoolConfig connectionPoolConfig = getConnectionPoolConfig(propertyService);
+    ConnectionProvider getConnectionProvider(final Provider<DataMetaServiceConfig> configProvider) {
+        final ConnectionConfig connectionConfig = configProvider.get().getConnectionConfig();
+        final ConnectionPoolConfig connectionPoolConfig = configProvider.get().getConnectionPoolConfig();
+
+        connectionConfig.validate();
 
         final HikariConfig config = new HikariConfig();
         config.setJdbcUrl(connectionConfig.getJdbcDriverUrl());
@@ -60,14 +61,6 @@ public class DataMetaDbModule extends AbstractModule {
         flyway.setBaselineOnMigrate(true);
         flyway.migrate();
         return flyway;
-    }
-
-    private ConnectionConfig getConnectionConfig(final PropertyService propertyService) {
-        return new ConnectionConfig(CONNECTION_PROPERTY_PREFIX, propertyService);
-    }
-
-    private ConnectionPoolConfig getConnectionPoolConfig(final PropertyService propertyService) {
-        return new ConnectionPoolConfig(CONNECTION_PROPERTY_PREFIX, propertyService);
     }
 
     @Override

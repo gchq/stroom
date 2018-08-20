@@ -25,8 +25,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dictionary.DictionaryStore;
-import stroom.index.IndexStore;
 import stroom.docref.DocRef;
+import stroom.index.IndexStore;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.Field;
@@ -37,6 +37,8 @@ import stroom.query.shared.v2.ParamUtil;
 import stroom.search.AbstractSearchTest;
 import stroom.search.CommonIndexingTest;
 import stroom.search.LuceneSearchResponseCreatorManager;
+import stroom.search.extraction.ExtractionConfig;
+import stroom.search.shard.IndexShardSearchConfig;
 import stroom.task.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
@@ -80,6 +82,10 @@ public class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationT
     private LuceneSearchResponseCreatorManager searchResponseCreatorManager;
     @Inject
     private CommonTestControl commonTestControl;
+    @Inject
+    private IndexShardSearchConfig indexShardSearchConfig;
+    @Inject
+    private ExtractionConfig extractionConfig;
 
     Path testDir = FileUtil.getTempDir();
 
@@ -88,10 +94,10 @@ public class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationT
 
         LOGGER.info("Setting temp dir to {}", testDir.toAbsolutePath().toString());
 
-        StroomProperties.setOverrideProperty(
-                StroomProperties.STROOM_TEMP,
-                testDir.toFile().getCanonicalPath(),
-                StroomProperties.Source.TEST);
+//        StroomProperties.setOverrideProperty(
+//                StroomProperties.STROOM_TEMP,
+//                testDir.toFile().getCanonicalPath(),
+//                StroomProperties.Source.TEST);
     }
 
     //    @Override
@@ -176,15 +182,8 @@ public class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationT
     }
 
     private void setProperties() {
-        StroomProperties.setOverrideProperty(
-                "stroom.search.shard.maxThreads",
-                "5",
-                StroomProperties.Source.TEST);
-
-        StroomProperties.setOverrideProperty(
-                "stroom.search.extraction.maxThreads",
-                "5",
-                StroomProperties.Source.TEST);
+        indexShardSearchConfig.setMaxThreads(5);
+        extractionConfig.setMaxThreads(5);
     }
 
 

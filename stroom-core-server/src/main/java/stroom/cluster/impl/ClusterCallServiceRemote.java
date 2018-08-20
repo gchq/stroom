@@ -20,14 +20,13 @@ import com.caucho.hessian.client.HessianProxyFactory;
 import com.caucho.hessian.client.HessianRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.cluster.ClusterConfig;
 import stroom.cluster.api.ClusterCallService;
 import stroom.feed.StroomHessianProxyFactory;
 import stroom.guice.StroomBeanStore;
 import stroom.node.NodeCache;
 import stroom.node.shared.Node;
-import stroom.properties.api.PropertyService;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -59,15 +58,15 @@ class ClusterCallServiceRemote implements ClusterCallService {
     @Inject
     ClusterCallServiceRemote(final NodeCache nodeCache,
                              final StroomBeanStore beanStore,
-                             final PropertyService propertyService) {
+                             final ClusterConfig clusterConfig) {
         this.nodeCache = nodeCache;
         this.beanStore = beanStore;
-        this.clusterCallUseLocal = propertyService.getBooleanProperty("stroom.clusterCallUseLocal", true);
-        this.clusterCallReadTimeout = ModelStringUtil.parseDurationString(propertyService.getProperty("stroom.clusterCallReadTimeout"));
-        this.ignoreSSLHostnameVerifier = propertyService.getBooleanProperty("stroom.clusterCallIgnoreSSLHostnameVerifier", true);
+        this.clusterCallUseLocal = clusterConfig.isClusterCallUseLocal();
+        this.clusterCallReadTimeout = clusterConfig.getClusterCallReadTimeoutMs();
+        this.ignoreSSLHostnameVerifier = clusterConfig.isClusterCallIgnoreSSLHostnameVerifier();
     }
 
-    public HessianProxyFactory getProxyFactory() {
+    private HessianProxyFactory getProxyFactory() {
         if (proxyFactory == null) {
             // In Stroom when we talk to individual nodes in the cluster they present a certificate. For ease of
             // configuration with multiple nodes the certificate is often that of an alias. E.g. A server might
@@ -87,7 +86,7 @@ class ClusterCallServiceRemote implements ClusterCallService {
         return proxyFactory;
     }
 
-    protected ClusterCallService createHessianProxy(final Node node) throws MalformedURLException {
+    private ClusterCallService createHessianProxy(final Node node) throws MalformedURLException {
         final String nodeServiceUrl = node.getClusterURL();
 
         if (LOGGER.isDebugEnabled()) {

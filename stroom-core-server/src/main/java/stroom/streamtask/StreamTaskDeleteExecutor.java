@@ -23,16 +23,15 @@ import stroom.entity.StroomEntityManager;
 import stroom.entity.shared.Period;
 import stroom.entity.util.SqlBuilder;
 import stroom.jobsystem.ClusterLockService;
-import stroom.util.lifecycle.JobTrackedSchedule;
-import stroom.properties.api.PropertyService;
 import stroom.streamtask.shared.FindStreamProcessorFilterCriteria;
 import stroom.streamtask.shared.ProcessorFilter;
-import stroom.streamtask.shared.ProcessorFilterTracker;
 import stroom.streamtask.shared.ProcessorFilterTask;
+import stroom.streamtask.shared.ProcessorFilterTracker;
 import stroom.streamtask.shared.TaskStatus;
-import stroom.util.date.DateUtil;
-import stroom.util.lifecycle.StroomFrequencySchedule;
 import stroom.task.api.TaskContext;
+import stroom.util.date.DateUtil;
+import stroom.util.lifecycle.JobTrackedSchedule;
+import stroom.util.lifecycle.StroomFrequencySchedule;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -43,9 +42,6 @@ class StreamTaskDeleteExecutor extends AbstractBatchDeleteExecutor {
 
     private static final String TASK_NAME = "Stream Task Delete Executor";
     private static final String LOCK_NAME = "StreamTaskDeleteExecutor";
-    private static final String STREAM_TASKS_DELETE_AGE_PROPERTY = "stroom.streamTask.deleteAge";
-    private static final String STREAM_TASKS_DELETE_BATCH_SIZE_PROPERTY = "stroom.streamTask.deleteBatchSize";
-    private static final int DEFAULT_STREAM_TASK_DELETE_BATCH_SIZE = 1000;
     private static final String TEMP_STRM_TASK_ID_TABLE = "TEMP_STRM_TASK_ID";
 
     private final StreamTaskCreatorImpl streamTaskCreator;
@@ -55,22 +51,20 @@ class StreamTaskDeleteExecutor extends AbstractBatchDeleteExecutor {
     @Inject
     StreamTaskDeleteExecutor(final BatchIdTransactionHelper batchIdTransactionHelper,
                              final ClusterLockService clusterLockService,
-                             final PropertyService propertyService,
+                             final ProcessConfig processConfig,
                              final TaskContext taskContext,
                              final StreamTaskCreatorImpl streamTaskCreator,
                              final StreamProcessorFilterService streamProcessorFilterService,
                              final StroomEntityManager stroomEntityManager) {
-        super(batchIdTransactionHelper, clusterLockService, propertyService, taskContext, TASK_NAME, LOCK_NAME,
-                STREAM_TASKS_DELETE_AGE_PROPERTY, STREAM_TASKS_DELETE_BATCH_SIZE_PROPERTY,
-                DEFAULT_STREAM_TASK_DELETE_BATCH_SIZE, TEMP_STRM_TASK_ID_TABLE);
+        super(batchIdTransactionHelper, clusterLockService, taskContext, TASK_NAME, LOCK_NAME,
+                processConfig, TEMP_STRM_TASK_ID_TABLE);
         this.streamTaskCreator = streamTaskCreator;
         this.streamProcessorFilterService = streamProcessorFilterService;
         this.stroomEntityManager = stroomEntityManager;
     }
 
     @StroomFrequencySchedule("1m")
-    @JobTrackedSchedule(jobName = "Stream Task Retention", description = "Physically delete stream tasks that have been logically deleted or complete based on age ("
-            + STREAM_TASKS_DELETE_AGE_PROPERTY + ")")
+    @JobTrackedSchedule(jobName = "Stream Task Retention", description = "Physically delete stream tasks that have been logically deleted or complete based on age (stroom.process.deletePurgeAge)")
     public void exec() {
         final AtomicLong nextDeleteMs = streamTaskCreator.getNextDeleteMs();
 
