@@ -42,7 +42,6 @@ import stroom.search.shard.IndexShardSearchConfig;
 import stroom.task.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
-import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;

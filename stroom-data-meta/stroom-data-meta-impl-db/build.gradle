@@ -23,5 +23,4 @@ dependencies {
     testCompile libs.assertj_core
 
     testCompile project(':stroom-security:stroom-security-impl-mock')
-    testCompile project(':stroom-properties:stroom-properties-impl-mock')
 }

@@ -11,7 +11,6 @@ dependencies {
     compile project(':stroom-explorer:stroom-explorer-api')
     compile project(':stroom-explorer:stroom-explorer-server')
     compile project(':stroom-pipeline')
-    compile project(':stroom-properties:stroom-properties-impl')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-security:stroom-security-impl-mock')
     compile project(':stroom-statistics:stroom-statistics-api')

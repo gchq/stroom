@@ -25,7 +25,6 @@ import stroom.entity.util.FieldMap;
 import stroom.entity.util.HqlBuilder;
 import stroom.security.Security;
 import stroom.ui.config.shared.UiConfig;
-import stroom.util.config.StroomProperties;
 
 import javax.persistence.Transient;
 import java.lang.reflect.InvocationTargetException;
@@ -39,7 +38,7 @@ public abstract class NamedEntityServiceImpl<E extends NamedEntity, C extends Fi
 //    private static final String NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
 
     private final Security security;
-    private  final UiConfig uiConfig;
+    private final UiConfig uiConfig;
 
     protected NamedEntityServiceImpl(final StroomEntityManager entityManager,
                                      final Security security,

@@ -27,7 +27,6 @@ import stroom.properties.global.api.GlobalProperty;
 import stroom.security.Security;
 import stroom.security.SecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.util.config.StroomProperties.Source;
 import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.util.lifecycle.StroomFrequencySchedule;
 
@@ -175,13 +174,13 @@ class GlobalPropertyServiceImpl implements GlobalPropertyService {
 //        return null;
 //    }
 
-    private void update(final String key, final String value, final Source source) {
+    private void update(final String key, final String value) {
 //        try {
 //            if (value != null) {
 //                StroomProperties.setProperty(key, value, source);
 //            }
 
-            configMapper.update(key, value);
+        configMapper.update(key, value);
 
 //            final Prop prop = propertyMap.get(key);
 //            if (prop != null) {
@@ -223,7 +222,7 @@ class GlobalPropertyServiceImpl implements GlobalPropertyService {
         // Setup DB properties.
         LOGGER.info("Adding global properties to the DB");
         loadMappedProperties();
-        loadDefaultProperties();
+//        loadDefaultProperties();
         loadDBProperties();
     }
 
@@ -235,28 +234,28 @@ class GlobalPropertyServiceImpl implements GlobalPropertyService {
 //                globalProperty.setDefaultValue(globalProperty.getValue());
                 globalProperties.put(globalProperty.getName(), globalProperty);
 
-                update(globalProperty.getName(), globalProperty.getValue(), Source.GUICE);
+                update(globalProperty.getName(), globalProperty.getValue());
             }
         } catch (final RuntimeException e) {
             e.printStackTrace();
         }
     }
 
-    @SuppressWarnings("resource")
-    private void loadDefaultProperties() {
-        try {
-            final List<GlobalProperty> globalPropertyList = DefaultProperties.getList();
-            for (final GlobalProperty globalProperty : globalPropertyList) {
-                globalProperty.setSource("Default");
-                globalProperty.setDefaultValue(globalProperty.getValue());
-                globalProperties.put(globalProperty.getName(), globalProperty);
-
-                update(globalProperty.getName(), globalProperty.getValue(), Source.GUICE);
-            }
-        } catch (final RuntimeException e) {
-            e.printStackTrace();
-        }
-    }
+//    @SuppressWarnings("resource")
+//    private void loadDefaultProperties() {
+//        try {
+//            final List<GlobalProperty> globalPropertyList = DefaultProperties.getList();
+//            for (final GlobalProperty globalProperty : globalPropertyList) {
+//                globalProperty.setSource("Default");
+//                globalProperty.setDefaultValue(globalProperty.getValue());
+//                globalProperties.put(globalProperty.getName(), globalProperty);
+//
+//                update(globalProperty.getName(), globalProperty.getValue(), Source.GUICE);
+//            }
+//        } catch (final RuntimeException e) {
+//            e.printStackTrace();
+//        }
+//    }
 
     private void loadDBProperties() {
         try (final Connection connection = connectionProvider.getConnection()) {
@@ -272,7 +271,7 @@ class GlobalPropertyServiceImpl implements GlobalPropertyService {
                                 globalProperty.setValue(record.getVal());
                                 globalProperty.setSource("Database");
 
-                                update(record.getName(), record.getVal(), Source.DB);
+                                update(record.getName(), record.getVal());
                             } else {
                                 // Delete old property.
                                 delete(record.getName());
@@ -360,7 +359,7 @@ class GlobalPropertyServiceImpl implements GlobalPropertyService {
                         .execute();
 
                 // Update property.
-                update(globalProperty.getName(), globalProperty.getValue(), Source.DB);
+                update(globalProperty.getName(), globalProperty.getValue());
             } catch (final SQLException e) {
                 LOGGER.error(e.getMessage(), e);
             }

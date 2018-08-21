@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.properties.global.impl.db;
+package stroom.config;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 

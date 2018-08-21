@@ -7,12 +7,8 @@ dependencies {
     compile project(':stroom-util-shared')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-task:stroom-task-api')
+    compile project(':stroom-config')
 
-//    compile libs.stroomDocRef
-//    compile libs.stroomQueryApi
-//
-//    compile libs.jaxb_api
-//    compile libs.swagger_annotations
     compile libs.flyway_core
     compile libs.guice4
     compile libs.hikari

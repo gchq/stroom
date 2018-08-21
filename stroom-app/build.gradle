@@ -63,7 +63,6 @@ dependencies {
     compile project(':stroom-core-server')
     compile project(':stroom-pipeline')
     compile project(':stroom-proxy')
-    compile project(':stroom-properties:stroom-properties-impl')
     compile project(':stroom-properties:stroom-properties-global-impl-db')
     compile project(':stroom-explorer:stroom-explorer-api')
     compile project(':stroom-explorer:stroom-explorer-server')

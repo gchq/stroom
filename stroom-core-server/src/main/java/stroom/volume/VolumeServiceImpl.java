@@ -44,7 +44,6 @@ import stroom.security.Security;
 import stroom.security.shared.PermissionNames;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
-import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
 import stroom.util.lifecycle.JobTrackedSchedule;
 import stroom.util.lifecycle.StroomFrequencySchedule;
@@ -78,6 +77,7 @@ import java.util.stream.Stream;
 public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, FindVolumeCriteria>
         implements VolumeService, EntityEvent.Handler, Clearable {
 
+    static final String USER_CONF_DIR = ".stroom";
     static final Path DEFAULT_VOLUMES_SUBDIR = Paths.get("volumes");
     static final Path DEFAULT_INDEX_VOLUME_SUBDIR = Paths.get("defaultIndexVolume");
     static final Path DEFAULT_STREAM_VOLUME_SUBDIR = Paths.get("defaultStreamVolume");
@@ -141,8 +141,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
                         if (isEnabled) {
                             List<VolumeEntity> existingVolumes = getCurrentState();
                             if (existingVolumes.size() == 0) {
-                                Optional<Path> optDefaultVolumePath = getDefaultVolumesPath();
-
+                                final Optional<Path> optDefaultVolumePath = getDefaultVolumesPath();
                                 if (optDefaultVolumePath.isPresent()) {
                                     Node node = nodeCache.getDefaultNode();
                                     Path indexVolPath = optDefaultVolumePath.get().resolve(DEFAULT_INDEX_VOLUME_SUBDIR);
@@ -614,7 +613,7 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
     private Optional<Path> getDefaultVolumesPath() {
         return Stream.<Supplier<Optional<Path>>>of(
                 this::getApplicationJarDir,
-//                this::getUserHomeDir,
+                this::getUserHomeDir,
                 Optional::empty)
                 .map(Supplier::get)
                 .filter(Optional::isPresent)
@@ -623,10 +622,10 @@ public class VolumeServiceImpl extends SystemEntityServiceImpl<VolumeEntity, Fin
                 .flatMap(path -> Optional.of(path.resolve(DEFAULT_VOLUMES_SUBDIR)));
     }
 
-//    private Optional<Path> getUserHomeDir() {
-//        return Optional.ofNullable(System.getProperty("user.home"))
-//                .flatMap(userHome -> Optional.of(Paths.get(userHome, StroomProperties.USER_CONF_DIR)));
-//    }
+    private Optional<Path> getUserHomeDir() {
+        return Optional.ofNullable(System.getProperty("user.home"))
+                .flatMap(userHome -> Optional.of(Paths.get(userHome, USER_CONF_DIR)));
+    }
 
     private Optional<Path> getApplicationJarDir() {
         try {

@@ -35,13 +35,10 @@ import stroom.persist.EntityManagerSupport;
 import stroom.security.Security;
 import stroom.security.impl.mock.MockSecurityContext;
 import stroom.statistics.internal.InternalStatisticsReceiver;
-import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -52,24 +49,14 @@ import java.util.Set;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestVolumeServiceImpl extends StroomUnitTest {
-
     private static final Path DEFAULT_VOLUMES_PATH;
-
-    private static final Path DEFAULT_INDEX_VOLUME_PATH ;
+    private static final Path DEFAULT_INDEX_VOLUME_PATH;
     private static final Path DEFAULT_STREAM_VOLUME_PATH;
 
     static {
-        try {
-            DEFAULT_VOLUMES_PATH = Files.createTempDirectory("stroom");//  Paths.get(
-//            System.getProperty("user.home"),
-//            StroomProperties.USER_CONF_DIR
-//    ).resolve(VolumeServiceImpl.DEFAULT_VOLUMES_SUBDIR);
-
-            DEFAULT_INDEX_VOLUME_PATH = DEFAULT_VOLUMES_PATH.resolve(VolumeServiceImpl.DEFAULT_INDEX_VOLUME_SUBDIR);
-            DEFAULT_STREAM_VOLUME_PATH = DEFAULT_VOLUMES_PATH.resolve(VolumeServiceImpl.DEFAULT_STREAM_VOLUME_SUBDIR);
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        DEFAULT_VOLUMES_PATH = Paths.get(System.getProperty("user.home"), VolumeServiceImpl.USER_CONF_DIR).resolve(VolumeServiceImpl.DEFAULT_VOLUMES_SUBDIR);
+        DEFAULT_INDEX_VOLUME_PATH = DEFAULT_VOLUMES_PATH.resolve(VolumeServiceImpl.DEFAULT_INDEX_VOLUME_SUBDIR);
+        DEFAULT_STREAM_VOLUME_PATH = DEFAULT_VOLUMES_PATH.resolve(VolumeServiceImpl.DEFAULT_STREAM_VOLUME_SUBDIR);
     }
 
     private final Rack rack1 = Rack.create("rack1");

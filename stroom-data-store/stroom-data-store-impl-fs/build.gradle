@@ -24,14 +24,9 @@ dependencies {
     compile libs.jooq
     compile libs.javax_inject
     compile libs.slf4j_api
-//
-//    runtime libs.mysql_connector_java
-//
+
     testCompile libs.junit_jupiter
     testCompile libs.assertj_core
     testCompile libs.mockito_core
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
-//
-//    testCompile project(':stroom-security:stroom-security-impl-mock')
-//    testCompile project(':stroom-properties-impl-mock')
 }

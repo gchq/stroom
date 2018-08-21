@@ -37,7 +37,6 @@ dependencies {
 
     testCompile project(':stroom-security:stroom-security-impl-mock')
     testCompile project(':stroom-data-meta:stroom-data-meta-impl-mock')
-    testCompile project(':stroom-properties:stroom-properties-impl-mock')
     testCompile project(':stroom-test-common')
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')
     testCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
@@ -47,7 +46,7 @@ dependencies {
     testCompile libs.mockito_core
     testCompile libs.assertj_core
 
-    //the following logging libs are needed when running junits outside dropwizard
+    // The following logging libs are needed when running junits outside dropwizard
     testRuntime libs.jcl_over_slf4j
     testRuntime libs.jul_to_slf4j
     testRuntime libs.log4j_over_slf4j

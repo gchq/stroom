@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 
 @Singleton
-class ConfigMapper {
+public class ConfigMapper {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigMapper.class);
 
     private final List<GlobalProperty> globalProperties = new ArrayList<>();
@@ -47,7 +47,7 @@ class ConfigMapper {
         addMethods(stroomConfig.getClass(), "stroom");
     }
 
-    List<GlobalProperty> getGlobalProperties() {
+    public List<GlobalProperty> getGlobalProperties() {
         return globalProperties;
     }
 
@@ -156,7 +156,7 @@ class ConfigMapper {
         return null;
     }
 
-    void update(final String key, final String value) {
+    public void update(final String key, final String value) {
         try {
 //            if (value != null) {
 //                StroomProperties.setProperty(key, value, source);

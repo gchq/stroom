@@ -13,7 +13,6 @@ import stroom.node.NodeConfig;
 import stroom.persist.CoreConfig;
 import stroom.pipeline.PipelineConfig;
 import stroom.policy.PolicyConfig;
-import stroom.properties.global.impl.db.PropertyServiceConfig;
 import stroom.search.SearchConfig;
 import stroom.security.AuthenticationConfig;
 import stroom.servicediscovery.ServiceDiscoveryConfig;

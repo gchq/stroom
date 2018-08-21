@@ -26,7 +26,6 @@ import stroom.node.shared.Node;
 import stroom.node.shared.Rack;
 import stroom.node.shared.VolumeEntity;
 import stroom.node.shared.VolumeState;
-import stroom.util.config.StroomProperties;
 
 import javax.inject.Inject;
 import java.io.IOException;

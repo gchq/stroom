@@ -4,6 +4,9 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.zaxxer.hikari.HikariConfig;
 import org.flywaydb.core.Flyway;
+import stroom.config.ConnectionConfig;
+import stroom.config.ConnectionPoolConfig;
+import stroom.config.PropertyServiceConfig;
 
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -16,7 +19,6 @@ public class GlobalPropertiesDbModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(GlobalPropertyService.class).to(GlobalPropertyServiceImpl.class);
-        bind(ConfigInitialiser.class).asEagerSingleton();
     }
 
     @Provides
