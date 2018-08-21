@@ -31,4 +31,9 @@ EnhancedDocRefTypePicker.propTypes = {
   value: PropTypes.string.isRequired,
 };
 
+EnhancedDocRefTypePicker.defaultProps = {
+  value: [],
+  onChange: v => console.log('Not implemented onChange, value ignored', v),
+};
+
 export default EnhancedDocRefTypePicker;
