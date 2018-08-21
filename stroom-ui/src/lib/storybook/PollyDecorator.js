@@ -22,7 +22,7 @@ import * as JsSearch from 'js-search';
 
 import { guid, findItem, addItemsToTree, findByUuids, deleteItemsFromTree, iterateNodes } from 'lib/treeUtils';
 import { actionCreators as fetchActionCreators } from 'lib/fetchTracker.redux';
-import withConfigAndGlobalData from 'startup/withConfigAndGlobalData';
+import withConfig from 'startup/withConfig';
 
 const { resetAllUrls } = fetchActionCreators;
 
@@ -256,7 +256,7 @@ const enhanceLocal = compose(
       };
     },
   }),
-  withConfigAndGlobalData
+  withConfig
 );
 
 const PollyComponent = enhanceLocal(({ children }) => <div className="fill-space">{children}</div>);

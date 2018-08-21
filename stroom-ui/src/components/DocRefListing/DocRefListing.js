@@ -188,7 +188,6 @@ EnhancedDocRefListing.propTypes = {
   parentFolder: DocRefPropType,
   includeBreadcrumbOnEntries: PropTypes.bool.isRequired,
   allDocRefs: PropTypes.arrayOf(DocRefPropType).isRequired,
-  allowMultiSelect: PropTypes.bool.isRequired,
   actionBarItems: ActionBarItemsPropType.isRequired,
   openDocRef: PropTypes.func.isRequired,
 };

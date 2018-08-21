@@ -7,6 +7,7 @@ import { DropTarget } from 'react-dnd';
 
 import { findItem, canMove } from 'lib/treeUtils';
 import RawDocRefListingEntry from './RawDocRefListingEntry';
+import withDocumentTree from 'components/FolderExplorer/withDocumentTree';
 import { actionCreators as docRefListingActionCreators } from './redux';
 import { actionCreators as folderExplorerActionCreators } from 'components/FolderExplorer/redux';
 import ItemTypes from './dragDropTypes';
@@ -87,6 +88,7 @@ function dragCollect(connect, monitor) {
 }
 
 const enhance = compose(
+  withDocumentTree,
   connect(
     (
       { folderExplorer: { documentTree }, docRefListing, keyIsDown },

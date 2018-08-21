@@ -65,7 +65,7 @@ const enhance = compose(
   withRouter,
   connect(
     (
-      { folderExplorer: { documentTree }, pipelineEditor: { pipelines, elements } },
+      { pipelineEditor: { pipelines, elements } },
       { pipelineId },
     ) => ({
       pipeline: pipelines[pipelineId],

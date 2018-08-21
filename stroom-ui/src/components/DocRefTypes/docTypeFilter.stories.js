@@ -20,6 +20,7 @@ import StoryRouter from 'storybook-react-router';
 import { compose, withState } from 'recompose';
 
 import DocTypeFilters from './DocTypeFilters';
+import DocRefTypePicker from './DocRefTypePicker';
 import { actionCreators } from './redux';
 import { testDocRefsTypes } from './test';
 
@@ -31,9 +32,17 @@ import 'styles/main.css';
 import 'semantic/dist/semantic.min.css';
 
 storiesOf('Doc Type Filters', module)
-.addDecorator(ControlledInputDecorator) // must be the 'first' one
-.addDecorator(PollyDecorator({ docRefTypes: testDocRefsTypes }))
-.addDecorator(ReduxDecorator)
-.add('Doc Type Filter', ({ value, onChange }) => (
-  <DocTypeFilters value={value} onChange={onChange} />
-));
+  .addDecorator(ControlledInputDecorator) // must be the 'first' one
+  .addDecorator(PollyDecorator({ docRefTypes: testDocRefsTypes }))
+  .addDecorator(ReduxDecorator)
+  .add('Doc Type Filter', ({ value, onChange }) => (
+    <DocTypeFilters value={value} onChange={onChange} />
+  ));
+
+storiesOf('Doc Type Picker', module)
+  .addDecorator(ControlledInputDecorator) // must be the 'first' one
+  .addDecorator(PollyDecorator({ docRefTypes: testDocRefsTypes }))
+  .addDecorator(ReduxDecorator)
+  .add('Doc Type Picker', ({ value, onChange }) => (
+    <DocRefTypePicker value={value} onChange={onChange} />
+  ));
